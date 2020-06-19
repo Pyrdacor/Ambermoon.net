@@ -2,7 +2,7 @@
 {
     public enum MapType
     {
-        Map2D,
-        Map3D
+        Map3D = 1,
+        Map2D = 2
     }
 }
