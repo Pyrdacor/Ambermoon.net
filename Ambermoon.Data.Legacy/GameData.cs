@@ -3,14 +3,14 @@ using System.IO;
 
 namespace Ambermoon.Data.Legacy
 {
-    internal class GameData : IGameData
+    public class GameData : IGameData
     {
         public Dictionary<string, IFileContainer> Files { get; } = new Dictionary<string, IFileContainer>();
         private readonly Dictionary<char, Dictionary<string, byte[]>> _loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
 
         private static bool TryDiskFilename(string folderPath, string filename, out string fullPath)
         {
-            fullPath = Path.Combine(folderPath, filename, ".adf");
+            fullPath = Path.Combine(folderPath, filename + ".adf");
 
             return File.Exists(fullPath);
         }

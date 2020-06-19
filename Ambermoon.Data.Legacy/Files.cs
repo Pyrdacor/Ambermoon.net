@@ -41,7 +41,7 @@ namespace Ambermoon.Data.Legacy
             { "3Overlay3D.amb", 'F' },
             { "3Wall3D.amb", 'F' },
             // Disk G
-            { "Automap_graphics", 'A' },
+            { "Automap_graphics", 'G' },
             { "Combat_graphics", 'G' },
             { "Dictionary.german", 'G' },
             { "Event_pix.amb", 'G' },
