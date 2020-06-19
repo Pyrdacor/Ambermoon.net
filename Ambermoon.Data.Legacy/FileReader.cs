@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
 namespace Ambermoon.Data.Legacy
@@ -24,6 +23,11 @@ namespace Ambermoon.Data.Legacy
             byte[] rawData = new byte[stream.Length - stream.Position];
             stream.Read(rawData, 0, rawData.Length);
 
+            return ReadFile(name, rawData);
+        }
+
+        public IFileContainer ReadFile(string name, byte[] rawData)
+        {
             var reader = new DataReader(rawData);
             var header = reader.ReadDword();
             var fileType = ((header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)header;
