@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data
 {
-    public enum CharacterType
+    public enum CharacterType : byte
     {
         PartyMember,
         NPC,
