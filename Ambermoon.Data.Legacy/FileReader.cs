@@ -141,60 +141,96 @@ namespace Ambermoon.Data.Legacy
 
         private static DataReader UnLOB(DataReader reader, uint decodedSize)
         {
-            unsafe
+            var decodedData = new byte[decodedSize];
+            uint decodeIndex = 0;
+            uint matchOffset;
+            uint matchLength;
+            uint matchIndex;
+
+            while (decodeIndex < decodedSize)
             {
-                var decodedData = new byte[decodedSize];
+                byte header = reader.ReadByte();
 
-                fixed (byte* dataPtr = decodedData)
+                for (int i = 0; i < 8; ++i)
                 {
-                    byte* dstPtr = dataPtr;
-                    byte* matchPtr;
-                    uint remainingSize = decodedSize;
-                    ushort flag = 0x80;
-                    ushort matchOffset;
-                    int matchLength;
-                    bool carry;
-
-                    while (remainingSize != 0)
+                    if ((header & 0x80) == 0) // match
                     {
+                        matchOffset = reader.ReadByte();
+                        matchLength = (matchOffset & 0x000f) + 3;
+                        matchOffset <<= 4;
+                        matchOffset &= 0xff00;
+                        matchOffset |= reader.ReadByte();
+                        matchIndex = decodeIndex - matchOffset;
+
+                        while (matchLength-- != 0)
+                        {
+                            decodedData[decodeIndex++] = decodedData[matchIndex++];
+                        }
+                    }
+                    else // normal byte
+                    {
+                        decodedData[decodeIndex++] = reader.ReadByte();
+                    }
+
+                    if (decodeIndex == decodedSize)
+                        break;
+
+                    header <<= 1;
+                }
+            }
+
+            // Old algorithm (C# port of amblib C snippet).
+            // Works too but is harder to understand.
+            // Left here in case someone is interested.
+            /*fixed (byte* dataPtr = decodedData)
+            {
+                byte* dstPtr = dataPtr;
+                byte* matchPtr;
+                uint remainingSize = decodedSize;
+                ushort flag = 0x80;
+                ushort matchOffset;
+                int matchLength;
+                bool carry;
+
+                while (remainingSize != 0)
+                {
+                    flag += flag;
+                    carry = (flag > 0xff);
+                    flag &= 0x00ff;
+
+                    if (flag == 0)
+                    {
+                        flag = reader.ReadByte();
                         flag += flag;
+                        if (carry)
+                            ++flag;
                         carry = (flag > 0xff);
                         flag &= 0x00ff;
+                    }
 
-                        if (flag == 0)
+                    if (!carry)
+                    {
+                        matchOffset = reader.ReadByte();
+                        matchLength = (matchOffset & 0x000f) + 3;
+                        matchOffset <<= 4;
+                        matchOffset &= 0xff00;
+                        matchOffset |= reader.ReadByte();
+                        matchPtr = dstPtr - matchOffset;
+                        while (matchLength-- != 0)
                         {
-                            flag = reader.ReadByte();
-                            flag += flag;
-                            if (carry)
-                                ++flag;
-                            carry = (flag > 0xff);
-                            flag &= 0x00ff;
-                        }
-
-                        if (!carry)
-                        {
-                            matchOffset = reader.ReadByte();
-                            matchLength = (matchOffset & 0x000f) + 3;
-                            matchOffset <<= 4;
-                            matchOffset &= 0xff00;
-                            matchOffset |= reader.ReadByte();
-                            matchPtr = dstPtr - matchOffset;
-                            while (matchLength-- != 0)
-                            {
-                                *(dstPtr++) = *(matchPtr++);
-                                --remainingSize;
-                            }
-                        }
-                        else
-                        {
-                            *(dstPtr++) = reader.ReadByte();
+                            *(dstPtr++) = *(matchPtr++);
                             --remainingSize;
                         }
                     }
+                    else
+                    {
+                        *(dstPtr++) = reader.ReadByte();
+                        --remainingSize;
+                    }
                 }
+            }*/
 
-                return new DataReader(decodedData);
-            }
+            return new DataReader(decodedData);
         }
 
         private static byte[] DecryptJHFile(DataReader reader, ushort key, int offset = 0)
