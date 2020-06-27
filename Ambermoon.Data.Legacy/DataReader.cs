@@ -114,6 +114,19 @@ namespace Ambermoon.Data.Legacy
             return (dword)((_data[Position] << 24) | (_data[Position + 1] << 16) | (_data[Position + 2] << 8) | _data[Position + 3]);
         }
 
+        public byte[] ReadToEnd()
+        {
+            return ReadBytes(Size - Position);
+        }
+
+        public byte[] ReadBytes(int amount)
+        {
+            var data = new byte[amount];
+            Buffer.BlockCopy(_data, Position, data, 0, data.Length);
+            Position += amount;
+            return data;
+        }
+
         protected void CheckOutOfRange(int sizeToRead)
         {
             if (Position + sizeToRead > _data.Length)

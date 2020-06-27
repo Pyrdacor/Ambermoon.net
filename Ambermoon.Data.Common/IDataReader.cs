@@ -18,5 +18,7 @@ namespace Ambermoon.Data
         dword PeekDword();
         int Position { get; set; }
         int Size { get; }
+        byte[] ReadToEnd();
+        byte[] ReadBytes(int amount);
     }
 }
