@@ -249,7 +249,7 @@ namespace Ambermoon.Data.Legacy
                 WriteWord(data, offset + i * 2, value);
                 d1 = d0;
                 d0 <<= 4;
-                d0 = (ushort)((d0 + d1 + 87) % (ushort.MaxValue + 1));
+                d0 = (ushort)((d0 + d1 + 87) & 0xffff);
             }
 
             return data;
