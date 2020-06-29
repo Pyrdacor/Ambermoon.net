@@ -97,7 +97,7 @@ namespace Ambermoon.Data.Legacy
                         graphic.Data[i * 4 + 1] = (byte)(((color >> 4) & 0x0f) << 4);
                         graphic.Data[i * 4 + 2] = (byte)((color & 0x0f) << 4);
                         graphic.Data[i * 4 + 3] = 255;
-                    }                        
+                    }
                     break;
                 default:
                     throw new Exception("Invalid legacy graphic format.");
