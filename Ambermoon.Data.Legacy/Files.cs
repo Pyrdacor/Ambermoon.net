@@ -8,6 +8,10 @@ namespace Ambermoon.Data.Legacy
     {
         public static readonly string[] RawFiles = new string[]
         {
+            "AM2_BLIT",
+            "AM2_CPU",
+            "Ambermoon_extro",
+            "Ambermoon_intro",
             "Extro_music",
             "Intro_music",
             "Saves",
@@ -17,7 +21,11 @@ namespace Ambermoon.Data.Legacy
         // Key: Filename, Value: Disk letter
         public static readonly Dictionary<string, char> AmigaFiles = new Dictionary<string, char>
         {
+            // Disk A
+            { "AM2_BLIT", 'A' },
+            { "AM2_CPU", 'A' },
             // Disk B
+            { "Ambermoon_intro", 'B' },
             { "Intro_music", 'B' },
             // Disk C
             { "1Icon_gfx.amb", 'C' },
@@ -69,6 +77,7 @@ namespace Ambermoon.Data.Legacy
             { "Monster_gfx.amb", 'H' },
             { "Monster_groups.amb", 'H' },
             // Disk I
+            { "Ambermoon_extro", 'I' },
             { "Extro_music", 'I' },
             { "Music.amb", 'I' },
             // Disk J
