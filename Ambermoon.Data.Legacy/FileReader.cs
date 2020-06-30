@@ -95,7 +95,7 @@ namespace Ambermoon.Data.Legacy
             if (fileType == FileType.JH)
             {
                 reader.Position += 4; // skip header
-                reader = new DataReader(DecryptJHFile(reader, (ushort)((((uint)fileType & 0xffff0000) >> 16) ^ ((uint)fileType & 0x0000ffff))));
+                reader = new DataReader(DecryptJHFile(reader, (ushort)((((uint)header & 0xffff0000) >> 16) ^ ((uint)header & 0x0000ffff))));
             }
             else if (containerType == FileType.AMNC) // AMNC archives are always encoded
             {
