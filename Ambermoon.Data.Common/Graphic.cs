@@ -3,7 +3,8 @@
     public enum GraphicFormat
     {
         Palette5Bit,
-        Texture4Bit,
+        Palette4Bit,
+        Palette3Bit,
         XRGB16,
         RGBA32,
     }
