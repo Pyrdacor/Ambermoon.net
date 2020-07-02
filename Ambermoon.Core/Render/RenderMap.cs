@@ -34,6 +34,7 @@ namespace Ambermoon.Render
         const int NUM_TILES = NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
         public Map Map { get; private set; } = null;
         Map[] adjacentMaps = null;
+        readonly Tileset tileset = null;
         readonly IMapManager mapManager = null;
         readonly ITextureAtlas textureAtlas = null;
         readonly List<IAnimatedSprite> backgroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
@@ -45,11 +46,12 @@ namespace Ambermoon.Render
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
 
-        public RenderMap(Map map, IMapManager mapManager, IRenderView renderView,
+        public RenderMap(Map map, Tileset tileset, IMapManager mapManager, IRenderView renderView,
             ITextureAtlas textureAtlas, uint initialScrollX = 0, uint initialScrollY = 0)
         {
             this.mapManager = mapManager;
             this.textureAtlas = textureAtlas;
+            this.tileset = tileset;
 
             var spriteFactory = renderView.SpriteFactory;
             var backgroundLayer = renderView.GetLayer(Layer.MapBackground4); // TODO
@@ -67,7 +69,7 @@ namespace Ambermoon.Render
                     backgroundSprite.X = column * TILE_WIDTH;
                     backgroundSprite.Y = row * TILE_HEIGHT;
                     foregroundSprite.Layer = foregroundLayer;
-                    foregroundSprite.Visible = true;
+                    foregroundSprite.Visible = false;
                     foregroundSprite.X = column * TILE_WIDTH;
                     foregroundSprite.Y = row * TILE_HEIGHT;
 
@@ -106,25 +108,28 @@ namespace Ambermoon.Render
         void UpdateTiles()
         {
             int index = 0;
-            var tilesetOffset = textureAtlas.GetOffset(Map.TilesetIndex);
 
             for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {
                 for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                 {
                     var tile = Map.Tiles[ScrollX + column, ScrollY + row];
+                    var backGraphicIndex = tileset.Tiles[(int)tile.BackTileIndex].GraphicIndex;
 
-                    backgroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(tile.BackGraphicIndex);
+                    backgroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex);
 
-                    if (tile.FrontGraphicIndex == 0)
+                    if (tile.FrontTileIndex == 0)
                     {
                         foregroundTileSprites[index].Visible = false;
                     }
                     else
                     {
-                        foregroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(tile.FrontGraphicIndex);
+                        var frontGraphicIndex = tileset.Tiles[(int)tile.FrontTileIndex].GraphicIndex;
+                        foregroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(frontGraphicIndex);
                         foregroundTileSprites[index].Visible = true;
                     }
+
+                    ++index;
                 }
             }
 
@@ -133,11 +138,11 @@ namespace Ambermoon.Render
 
         public void SetMap(Map map, uint initialScrollX = 0, uint initialScrollY = 0)
         {
-            if (this.Map == map)
+            if (Map == map)
                 return;
 
-            this.Map = map;
-            this.ticksPerFrame = map.TicksPerAnimationFrame;
+            Map = map;
+            ticksPerFrame = map.TicksPerAnimationFrame;
 
             if (map.IsWorldMap)
             {

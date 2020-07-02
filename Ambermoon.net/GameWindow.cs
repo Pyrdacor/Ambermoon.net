@@ -28,7 +28,7 @@ namespace Ambermoon
             var gameData = new GameData();
             gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), Width, Height);
-            Game = new Game(renderView, new MapManager(gameData, new MapReader()));
+            Game = new Game(renderView, new MapManager(gameData, new MapReader(), new TilesetReader()));
             Game.StartNew();
         }
 

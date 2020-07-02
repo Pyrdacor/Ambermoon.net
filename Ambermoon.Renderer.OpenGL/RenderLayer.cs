@@ -53,7 +53,7 @@ namespace Ambermoon.Renderer
         readonly Texture texture = null;
         bool disposed = false;
 
-        // Each map layer (back, player, front has a range of 0.2f for object y-ordering).
+        // The back map layers and the front layers plus characters have a range of 0.3f for object y-ordering).
         // The UI background has a range of 0.1f for UI layers.
         // The battle monster rows use range of 0.01f (more right monsters are drawn above their left neighbors).
         // The UI foreground (like controls and borders) has a range of 0.2f for UI layers.
@@ -69,15 +69,15 @@ namespace Ambermoon.Renderer
             0.01f,  // MapBackground6
             0.01f,  // MapBackground7
             0.01f,  // MapBackground8
-            0.21f,  // Characters
-            0.41f,  // MapForeground1
-            0.41f,  // MapForeground2
-            0.41f,  // MapForeground3
-            0.41f,  // MapForeground4
-            0.41f,  // MapForeground5
-            0.41f,  // MapForeground6
-            0.41f,  // MapForeground7
-            0.41f,  // MapForeground8
+            0.31f,  // Characters
+            0.31f,  // MapForeground1
+            0.31f,  // MapForeground2
+            0.31f,  // MapForeground3
+            0.31f,  // MapForeground4
+            0.31f,  // MapForeground5
+            0.31f,  // MapForeground6
+            0.31f,  // MapForeground7
+            0.31f,  // MapForeground8
             0.61f,  // UIBackground
             0.71f,  // BattleMonsterRowFarthest
             0.72f,  // BattleMonsterRowFar

@@ -6,6 +6,24 @@ namespace Ambermoon.Data.Legacy
 {
     public class GraphicProvider : IGraphicProvider
     {
+        struct GraphicFile
+        {
+            public string File;
+            public int[] SubFiles; // null means all
+
+            public GraphicFile(string file)
+            {
+                File = file;
+                SubFiles = null;
+            }
+
+            public GraphicFile(string file, params int[] subFiles)
+            {
+                File = file;
+                SubFiles = subFiles;
+            }
+        };
+
         readonly GameData gameData;
 
         public GraphicProvider(GameData gameData)
@@ -31,19 +49,19 @@ namespace Ambermoon.Data.Legacy
             Width = 32, Height = 1, GraphicFormat = GraphicFormat.XRGB16
         };
         static readonly string paletteFile = "Palettes.amb";
-        static readonly Dictionary<GraphicType, string[]> graphicFiles = new Dictionary<GraphicType, string[]>
+        static readonly Dictionary<GraphicType, GraphicFile> graphicFiles = new Dictionary<GraphicType, GraphicFile>
         {
-            { GraphicType.Tileset1, new string [] { "1Icon_gfx.amb" } },
-            { GraphicType.Tileset2, new string [] { "3Icon_gfx.amb" } },
-            { GraphicType.Tileset3, new string [] { "2Icon_gfx.amb" } },
-            { GraphicType.Tileset4, new string [] { "2Icon_gfx.amb" } },
-            { GraphicType.Tileset5, new string [] { "2Icon_gfx.amb" } },
-            { GraphicType.Tileset6, new string [] { "2Icon_gfx.amb" } },
-            { GraphicType.Tileset7, new string [] { "2Icon_gfx.amb" } },
-            { GraphicType.Tileset8, new string [] { "3Icon_gfx.amb" } },
-            { GraphicType.Player, new string [] { "Party_gfx.amb" } },
-            { GraphicType.Portrait, new string [] { "Portraits.amb" } },
-            { GraphicType.Item, new string [] { "Object_icons" } },
+            { GraphicType.Tileset1, new GraphicFile("1Icon_gfx.amb", 1) },
+            { GraphicType.Tileset2, new GraphicFile("3Icon_gfx.amb", 2) },
+            { GraphicType.Tileset3, new GraphicFile("2Icon_gfx.amb", 3) },
+            { GraphicType.Tileset4, new GraphicFile("2Icon_gfx.amb", 4) },
+            { GraphicType.Tileset5, new GraphicFile("2Icon_gfx.amb", 5) },
+            { GraphicType.Tileset6, new GraphicFile("2Icon_gfx.amb", 6) },
+            { GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 7) },
+            { GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 8) },
+            { GraphicType.Player, new GraphicFile("Party_gfx.amb") },
+            { GraphicType.Portrait, new GraphicFile("Portraits.amb") },
+            { GraphicType.Item, new GraphicFile("Object_icons") },
         };
         readonly Dictionary<GraphicType, List<Graphic>> graphics = new Dictionary<GraphicType, List<Graphic>>();
 
@@ -60,19 +78,32 @@ namespace Ambermoon.Data.Legacy
                 var reader = new GraphicReader();
                 var info = GraphicInfoFromType(type, palettes);
                 var graphicList = graphics[type];
+                var containerFile = gameData.Files[graphicFiles[type].File];
 
-                foreach (var file in graphicFiles[type])
+                void LoadGraphic(IDataReader graphicDataReader)
                 {
-                    foreach (var graphicFile in gameData.Files[file].Files)
+                    graphicDataReader.Position = 0;
+                    int end = graphicDataReader.Size - info.DataSize;
+                    while (graphicDataReader.Position <= end)
                     {
-                        graphicFile.Value.Position = 0;
-                        int end = graphicFile.Value.Size - info.DataSize;
-                        while (graphicFile.Value.Position <= end)
-                        {
-                            var graphic = new Graphic();
-                            reader.ReadGraphic(graphic, graphicFile.Value, info);
-                            graphicList.Add(graphic);
-                        }
+                        var graphic = new Graphic();
+                        reader.ReadGraphic(graphic, graphicDataReader, info);
+                        graphicList.Add(graphic);
+                    }
+                }
+
+                if (graphicFiles[type].SubFiles == null)
+                {
+                    foreach (var graphicFile in containerFile.Files)
+                    {
+                        LoadGraphic(graphicFile.Value);
+                    }
+                }
+                else
+                {
+                    foreach (var file in graphicFiles[type].SubFiles)
+                    {
+                        LoadGraphic(containerFile.Files[file]);
                     }
                 }
             }

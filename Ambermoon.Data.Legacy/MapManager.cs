@@ -5,8 +5,9 @@ namespace Ambermoon.Data.Legacy
     public class MapManager : IMapManager
     {
         readonly Dictionary<uint, Map> maps = new Dictionary<uint, Map>();
+        readonly Dictionary<uint, Tileset> tilesets = new Dictionary<uint, Tileset>(8);
 
-        public MapManager(IGameData gameData, IMapReader mapReader)
+        public MapManager(IGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader)
         {
             // Map 1-256 -> File 1
             // Map 300-369 -> File 2
@@ -21,8 +22,14 @@ namespace Ambermoon.Data.Legacy
                     maps.Add(index, Map.Load(index, mapReader, mapFile.Value));
                 }
             }
+
+            foreach (var tilesetFile in gameData.Files["Icon_data.amb"].Files)
+            {
+                tilesets.Add((uint)tilesetFile.Key, Tileset.Load(tilesetReader, tilesetFile.Value));
+            }
         }
 
         public Map GetMap(uint index) => maps[index];
+        public Tileset GetTilesetForMap(Map map) => tilesets[map.TilesetIndex];
     }
 }

@@ -57,7 +57,7 @@ namespace Ambermoon.Renderer
 
             while (Size <= arrayIndex + 6)
             {
-                base.Add(InsertIndexData, (uint)Size, Size);
+                base.Add(InsertIndexData, (uint)vertexIndex, quadIndex);
             }
         }
     }

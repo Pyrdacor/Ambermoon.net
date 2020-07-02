@@ -42,7 +42,8 @@ namespace Ambermoon
         {
             ingame = true;
             player = new Player();
-            renderMap = new RenderMap(mapManager.GetMap(257u), mapManager, renderView, TextureAtlasManager.Instance.GetOrCreate(Layer.MapBackground4));
+            var map = mapManager.GetMap(257u); // grandfather's house
+            renderMap = new RenderMap(map, mapManager.GetTilesetForMap(map), mapManager, renderView, TextureAtlasManager.Instance.GetOrCreate(Layer.MapBackground4));
             player2D = new Player2D(renderView.GetLayer(Layer.Characters), player, renderMap, renderView.SpriteFactory, renderView.GameData);
             player2D.Visible = true;
             // TODO

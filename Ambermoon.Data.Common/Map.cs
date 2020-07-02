@@ -17,8 +17,8 @@
 
         public class Tile
         {
-            public uint BackGraphicIndex { get; set; }
-            public uint FrontGraphicIndex { get; set; }
+            public uint BackTileIndex { get; set; }
+            public uint FrontTileIndex { get; set; }
             public uint BackRemain { get; set; }
             public uint FrontRemain { get; set; }
             public TileType Type { get; set; }
