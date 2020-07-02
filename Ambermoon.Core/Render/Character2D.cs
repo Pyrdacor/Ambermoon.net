@@ -19,8 +19,13 @@ namespace Ambermoon.Render
 
         public Map Map { get; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
         public Position Position { get; } // in Tiles
+        public bool Visible
+        {
+            get => sprite.Visible;
+            set => sprite.Visible = value;
+        }
 
-        public Character2D(ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
+        public Character2D(IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
             Character2DAnimationInfo animationInfo, Map map, Position startPosition)
         {
             this.textureAtlas = textureAtlas;
@@ -29,6 +34,9 @@ namespace Ambermoon.Render
             var textureOffset = textureAtlas.GetOffset(currentFrameIndex);
             sprite = spriteFactory.CreateAnimated(animationInfo.FrameWidth, animationInfo.FrameHeight,
                 textureOffset.X, textureOffset.Y, textureAtlas.Texture.Width, animationInfo.NumStandFrames);
+            sprite.Layer = layer;
+            sprite.X = Global.MapViewX + startPosition.X * RenderMap.TILE_WIDTH; // TODO: scroll
+            sprite.Y = Global.MapViewY + startPosition.Y * RenderMap.TILE_HEIGHT; // TODO: scroll
             Map = map;
             Position = startPosition;
         }

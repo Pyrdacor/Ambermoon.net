@@ -7,8 +7,8 @@ namespace Ambermoon.Render
         readonly RenderMap renderMap;
         readonly Player player;
 
-        public Player2D(Player player, RenderMap map, ISpriteFactory spriteFactory, IGameData gameData)
-            : base(TextureAtlasManager.Instance.GetOrCreate(Layer.Player), spriteFactory, gameData.PlayerAnimationInfo, map.Map, new Position())
+        public Player2D(IRenderLayer layer, Player player, RenderMap map, ISpriteFactory spriteFactory, IGameData gameData)
+            : base(layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters), spriteFactory, gameData.PlayerAnimationInfo, map.Map, new Position())
         {
             this.player = player;
             renderMap = map;

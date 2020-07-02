@@ -1,4 +1,4 @@
-﻿namespace Ambermoon.Render
+﻿namespace Ambermoon
 {
     public partial class Global
     {

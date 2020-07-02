@@ -10,9 +10,11 @@ namespace Ambermoon
         bool ingame = false;
         readonly IMapManager mapManager;
         readonly IRenderView renderView;
+        Player player;
 
         // Rendering
         RenderMap renderMap = null;
+        Player2D player2D = null;
 
         public Game(IRenderView renderView, IMapManager mapManager)
         {
@@ -38,10 +40,11 @@ namespace Ambermoon
 
         public void StartNew()
         {
-            
             ingame = true;
-            renderMap = new RenderMap(mapManager.GetMap(257u), mapManager, renderView, TextureAtlasManager.Instance.GetOrCreate(Layer.MapBackground));
-
+            player = new Player();
+            renderMap = new RenderMap(mapManager.GetMap(257u), mapManager, renderView, TextureAtlasManager.Instance.GetOrCreate(Layer.MapBackground4));
+            player2D = new Player2D(renderView.GetLayer(Layer.Characters), player, renderMap, renderView.SpriteFactory, renderView.GameData);
+            player2D.Visible = true;
             // TODO
         }
 

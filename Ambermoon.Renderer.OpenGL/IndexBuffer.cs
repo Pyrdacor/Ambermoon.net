@@ -37,8 +37,12 @@ namespace Ambermoon.Renderer
 
         bool InsertIndexData(uint[] buffer, int index, uint startIndex)
         {
-            for (int i = 0; i < Dimension; ++i)
-                buffer[index + i] = startIndex++;
+            buffer[index++] = startIndex + 0;
+            buffer[index++] = startIndex + 1;
+            buffer[index++] = startIndex + 2;
+            buffer[index++] = startIndex + 3;
+            buffer[index++] = startIndex + 0;
+            buffer[index++] = startIndex + 2;
 
             return true;
         }

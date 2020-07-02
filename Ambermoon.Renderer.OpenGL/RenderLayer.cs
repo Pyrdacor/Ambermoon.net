@@ -61,9 +61,23 @@ namespace Ambermoon.Renderer
         // Popup and cursor are single objects and has therefore a small range of 0.01f.
         private static readonly float[] LayerBaseZ = new float[]
         {
-            0.01f,  // MapBackground
-            0.21f,  // Player
-            0.41f,  // MapForeground
+            0.01f,  // MapBackground1
+            0.01f,  // MapBackground2
+            0.01f,  // MapBackground3
+            0.01f,  // MapBackground4
+            0.01f,  // MapBackground5
+            0.01f,  // MapBackground6
+            0.01f,  // MapBackground7
+            0.01f,  // MapBackground8
+            0.21f,  // Characters
+            0.41f,  // MapForeground1
+            0.41f,  // MapForeground2
+            0.41f,  // MapForeground3
+            0.41f,  // MapForeground4
+            0.41f,  // MapForeground5
+            0.41f,  // MapForeground6
+            0.41f,  // MapForeground7
+            0.41f,  // MapForeground8
             0.61f,  // UIBackground
             0.71f,  // BattleMonsterRowFarthest
             0.72f,  // BattleMonsterRowFar
@@ -83,8 +97,9 @@ namespace Ambermoon.Renderer
 
             this.state = state;
             bool masked = false; // TODO: do we need this for some layer?
-            bool supportAnimations = layer == Layer.MapBackground || layer == Layer.MapForeground;
-            bool layered = layer != Layer.MapBackground && layer != Layer.MapForeground && layer != Layer.Player; // map is not layered, drawing order depends on y-coordinate and not given layer
+            bool supportAnimations = layer == Layer.MapBackground4 || layer == Layer.MapForeground4; // TODO
+            // TODO
+            bool layered = layer != Layer.MapBackground4 && layer != Layer.MapForeground4 && layer != Layer.Characters; // map is not layered, drawing order depends on y-coordinate and not given layer
 
             renderBuffer = new RenderBuffer(state, masked, supportAnimations, layered);
 

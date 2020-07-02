@@ -90,11 +90,13 @@ namespace Ambermoon.Render
             for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset8; ++i)
             {
                 var tilesetGraphics = graphicProvider.GetGraphics((GraphicType)i);
-                var tilesetGraphic = Graphic.CreateTilesetGraphic(64, tilesetGraphics);
+                // var tilesetGraphic = Graphic.CreateTilesetGraphic(64, tilesetGraphics);
 
-                uint tilesetIndex = (uint)(i + 1);
-                AddTexture(Layer.MapBackground, tilesetIndex, tilesetGraphic);
-                AddTexture(Layer.MapForeground, tilesetIndex, tilesetGraphic);
+                for (uint graphicIndex = 0; graphicIndex < tilesetGraphics.Count; ++graphicIndex)
+                {
+                    AddTexture(Layer.MapBackground1 + i, graphicIndex, tilesetGraphics[(int)graphicIndex]);
+                    AddTexture(Layer.MapForeground1 + i, graphicIndex, tilesetGraphics[(int)graphicIndex]);
+                }
             }
 
             #endregion
@@ -113,7 +115,7 @@ namespace Ambermoon.Render
             {
                 var playerGraphic = Graphic.CreateCompoundGraphic(playerGraphics.Skip(i * 17).Take(17));
 
-                AddTexture(Layer.Player, (uint)i, playerGraphic);
+                AddTexture(Layer.Characters, (uint)i, playerGraphic);
             }
 
             #endregion

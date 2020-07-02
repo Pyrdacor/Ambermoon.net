@@ -29,10 +29,14 @@ namespace Ambermoon.Data.Legacy
                 {
                     for (int x = 0; x < map.Width; ++x)
                     {
+                        var tileData = dataReader.ReadBytes(4);
                         map.Tiles[x, y] = new Map.Tile
                         {
-                            BackGraphicIndex = dataReader.ReadWord(),
-                            FrontGraphicIndex = dataReader.ReadWord()
+                            BackGraphicIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
+                            FrontGraphicIndex = ((uint)(tileData[2] & 0x07) << 8) | tileData[3],
+                            BackRemain = tileData[1] & 0x1fu,
+                            FrontRemain = (tileData[2] & 0xf8u) >> 3,
+                            // TODO: TileType
                         };
                     }
                 }

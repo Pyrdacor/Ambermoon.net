@@ -67,13 +67,14 @@ namespace Ambermoon.Renderer.OpenGL
 
         public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
 
-        public IGameData GameData => throw new NotImplementedException();
+        public IGameData GameData { get; }
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             int screenWidth, int screenHeight, DeviceType deviceType = DeviceType.Desktop,
             SizingPolicy sizingPolicy = SizingPolicy.FitRatio, OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
+            GameData = gameData;
             VirtualScreen = new Rect(0, 0, screenWidth, screenHeight);
             virtualScreenDisplay = new Rect(VirtualScreen);
             this.sizingPolicy = sizingPolicy;

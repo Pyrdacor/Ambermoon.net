@@ -65,6 +65,7 @@ namespace Ambermoon.Data.Legacy
                 {
                     foreach (var graphicFile in gameData.Files[file].Files)
                     {
+                        graphicFile.Value.Position = 0;
                         int end = graphicFile.Value.Size - info.DataSize;
                         while (graphicFile.Value.Position <= end)
                         {

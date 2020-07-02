@@ -13,7 +13,7 @@ namespace Ambermoon
         {
             var gameWindow = new GameWindow();
 
-            gameWindow.Run(640, 480);
+            gameWindow.Run(1280, 960);
         }
     }
 }

@@ -27,8 +27,8 @@ namespace Ambermoon.Render
 {
     internal class RenderMap
     {
-        public const int TILE_WIDTH = 32;
-        public const int TILE_HEIGHT = 32;
+        public const int TILE_WIDTH = 16;
+        public const int TILE_HEIGHT = 16;
         public const int NUM_VISIBLE_TILES_X = 11; // maps will always be at least 11x11 in size
         public const int NUM_VISIBLE_TILES_Y = 9; // maps will always be at least 11x11 in size
         const int NUM_TILES = NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
@@ -52,8 +52,8 @@ namespace Ambermoon.Render
             this.textureAtlas = textureAtlas;
 
             var spriteFactory = renderView.SpriteFactory;
-            var backgroundLayer = renderView.GetLayer(Layer.MapBackground);
-            var foregroundLayer = renderView.GetLayer(Layer.MapForeground);
+            var backgroundLayer = renderView.GetLayer(Layer.MapBackground4); // TODO
+            var foregroundLayer = renderView.GetLayer(Layer.MapForeground4); // TODO
 
             for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {
@@ -63,11 +63,11 @@ namespace Ambermoon.Render
                     var foregroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 0, textureAtlas.Texture.Width);
 
                     backgroundSprite.Layer = backgroundLayer;
-                    backgroundSprite.Visible = false;
+                    backgroundSprite.Visible = true;
                     backgroundSprite.X = column * TILE_WIDTH;
                     backgroundSprite.Y = row * TILE_HEIGHT;
                     foregroundSprite.Layer = foregroundLayer;
-                    foregroundSprite.Visible = false;
+                    foregroundSprite.Visible = true;
                     foregroundSprite.X = column * TILE_WIDTH;
                     foregroundSprite.Y = row * TILE_HEIGHT;
 
@@ -106,6 +106,7 @@ namespace Ambermoon.Render
         void UpdateTiles()
         {
             int index = 0;
+            var tilesetOffset = textureAtlas.GetOffset(Map.TilesetIndex);
 
             for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {

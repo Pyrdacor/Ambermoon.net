@@ -29,18 +29,27 @@ namespace Ambermoon
             gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), Width, Height);
             Game = new Game(renderView, new MapManager(gameData, new MapReader()));
+            Game.StartNew();
         }
 
         void Window_Render(double delta)
         {
-            window.MakeCurrent();
+            try
+            {
+                window.MakeCurrent();
+            }
+            catch
+            {
+                // ignore for now
+            }
+
             renderView.Render();
             window.SwapBuffers();
         }
 
         void Window_Update(double delta)
         {
-            window.MakeCurrent();
+            Game.Update(delta);
         }
 
         public void Run(int width, int height)
