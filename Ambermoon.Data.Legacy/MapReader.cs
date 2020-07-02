@@ -12,6 +12,7 @@ namespace Ambermoon.Data.Legacy
             if (map.Type != MapType.Map2D || map.Type != MapType.Map3D)
                 throw new Exception("Invalid map data.");
 
+            dataReader.ReadByte(); // Unknown
             map.Width = dataReader.ReadByte();
             map.Height = dataReader.ReadByte();
             map.TilesetIndex = dataReader.ReadByte();

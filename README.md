@@ -10,4 +10,4 @@ I have also created another github project called [Ambermoon](https://github.com
 
 Let's bring this game to life on modern PCs with modern resolutions and graphic APIs. :)
 
-You may also checkout my already working Settlers I rewrite at [Freeserf.net](https://github.com/Pyrdacor/freeserf.net).
+You may also checkout my already working Settlers I rewrite at [Ambermoon.net](https://github.com/Pyrdacor/freeserf.net).

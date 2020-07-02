@@ -5,4 +5,8 @@
     <RootNamespace>Ambermoon.Data</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Common\Ambermoon.Common.csproj" />
+  </ItemGroup>
+
 </Project>

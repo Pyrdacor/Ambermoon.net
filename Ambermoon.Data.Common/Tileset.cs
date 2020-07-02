@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Ambermoon.Data
+﻿namespace Ambermoon.Data
 {
     public class Tileset
     {
