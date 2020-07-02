@@ -86,34 +86,4 @@ namespace Ambermoon.Renderer
             data = new byte[width * height * 4]; // initialized with zeros so non-occupied areas will be transparent
         }
     }
-
-    public class MinimapTextureFactory : Render.IMinimapTextureFactory
-    {
-        static MutableTexture minimap = null;
-        readonly State state = null;
-
-        public MinimapTextureFactory(State state)
-        {
-            this.state = state;
-        }
-
-        public Render.Texture GetMinimapTexture()
-        {
-            if (minimap == null)
-                minimap = new MutableTexture(state, 128, 128);
-
-            return minimap;
-        }
-
-        public void FillMinimapTexture(byte[] colorData)
-        {
-            minimap.SetPixels(colorData);
-            minimap.Finish(0);
-        }
-
-        public void ResizeMinimapTexture(int width, int height)
-        {
-            minimap.Resize(width, height);
-        }
-    }
 }

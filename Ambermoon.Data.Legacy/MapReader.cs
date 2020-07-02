@@ -9,7 +9,7 @@ namespace Ambermoon.Data.Legacy
             dataReader.ReadWord(); // Unknown
             map.Type = (MapType)dataReader.ReadByte();
 
-            if (map.Type != MapType.Map2D || map.Type != MapType.Map3D)
+            if (map.Type != MapType.Map2D && map.Type != MapType.Map3D)
                 throw new Exception("Invalid map data.");
 
             dataReader.ReadByte(); // Unknown
@@ -21,18 +21,25 @@ namespace Ambermoon.Data.Legacy
             dataReader.ReadDword(); // Unknown
             dataReader.Position += 320; // Event data (format unknown)
 
-            map.Tiles = new Map.Tile[map.Width, map.Height];
-
-            for (int y = 0; y < map.Height; ++y)
+            if (map.Type == MapType.Map2D)
             {
-                for (int x = 0; x < map.Width; ++x)
+                map.Tiles = new Map.Tile[map.Width, map.Height];
+
+                for (int y = 0; y < map.Height; ++y)
                 {
-                    map.Tiles[x, y] = new Map.Tile
+                    for (int x = 0; x < map.Width; ++x)
                     {
-                        BackGraphicIndex = dataReader.ReadWord(),
-                        FrontGraphicIndex = dataReader.ReadWord()
-                    };
+                        map.Tiles[x, y] = new Map.Tile
+                        {
+                            BackGraphicIndex = dataReader.ReadWord(),
+                            FrontGraphicIndex = dataReader.ReadWord()
+                        };
+                    }
                 }
+            }
+            else
+            {
+                // TODO: 3D maps (looks like 1 word per tile -> first byte texture index, second maybe overlay texture index?)
             }
 
             // Remaining bytes unknown

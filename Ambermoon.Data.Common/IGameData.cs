@@ -7,5 +7,6 @@ namespace Ambermoon.Data
         Dictionary<string, IFileContainer> Files { get; }
 
         void Load(string folderPath);
+        Character2DAnimationInfo PlayerAnimationInfo { get; }
     }
 }

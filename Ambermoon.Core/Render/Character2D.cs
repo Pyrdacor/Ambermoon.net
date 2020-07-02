@@ -2,26 +2,13 @@
 
 namespace Ambermoon.Render
 {
-    public struct Character2DAnimationInfo
-    {
-        public int FrameWidth;
-        public int FrameHeight;
-        public uint StandFrameIndex;
-        public uint SitFrameIndex;
-        public uint SleepFrameIndex;
-        public uint NumStandFrames;
-        public uint NumSitFrames;
-        public uint NumSleepFrames;
-        public uint TicksPerFrame;
-    }
-
     // A 2D character like the player, NPCs or enemies
     // is a movable sprite which supports animation.
     // On each movement the animation frame changes.
     // Some characters may have also animations while
     // not moving. Characters will sit if they move onto
     // a chair and will sleep if they move onto a bed.
-    public class Character2D
+    internal class Character2D
     {
         readonly ITextureAtlas textureAtlas;
         readonly IAnimatedSprite sprite;
@@ -31,7 +18,7 @@ namespace Ambermoon.Render
         CharacterDirection direction = CharacterDirection.Down;
 
         public Map Map { get; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
-        public Position Position { get; }
+        public Position Position { get; } // in Tiles
 
         public Character2D(ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
             Character2DAnimationInfo animationInfo, Map map, Position startPosition)

@@ -69,5 +69,18 @@ namespace Ambermoon.Data.Legacy
 
             }
         }
+
+        public Character2DAnimationInfo PlayerAnimationInfo => new Character2DAnimationInfo
+        {
+            FrameWidth = 16,
+            FrameHeight = 32,
+            StandFrameIndex = 1,
+            SitFrameIndex = 13,
+            SleepFrameIndex = 17,
+            NumStandFrames = 3,
+            NumSitFrames = 1,
+            NumSleepFrames = 1,
+            TicksPerFrame = 0
+        };
     }
 }

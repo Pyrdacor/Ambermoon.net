@@ -87,9 +87,15 @@ namespace Ambermoon.Render
 
             #region Map
 
-            //gameData.Files["1Icon"]
+            for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset8; ++i)
+            {
+                var tilesetGraphics = graphicProvider.GetGraphics((GraphicType)i);
+                var tilesetGraphic = Graphic.CreateTilesetGraphic(64, tilesetGraphics);
 
-            //AddTexture(layer, )
+                uint tilesetIndex = (uint)(i + 1);
+                AddTexture(Layer.MapBackground, tilesetIndex, tilesetGraphic);
+                AddTexture(Layer.MapForeground, tilesetIndex, tilesetGraphic);
+            }
 
             #endregion
 

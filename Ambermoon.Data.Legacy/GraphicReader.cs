@@ -9,6 +9,9 @@ namespace Ambermoon.Data.Legacy
             if (graphicInfo.Palette == null)
                 throw new ArgumentNullException("Legacy palette graphics need a palette.");
 
+            graphic.Width = graphicInfo.Width;
+            graphic.Height = graphicInfo.Height;
+
             var data = dataReader.ReadBytes(graphic.Width * graphic.Height * planes / 8); // as width is always a multiple of 8 this will work
             int planeSize = graphic.Width / 8; // as width is always a multiple of 8 this will work
             int bitIndex = 0;

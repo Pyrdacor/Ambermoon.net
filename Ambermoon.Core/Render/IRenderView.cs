@@ -42,7 +42,6 @@ namespace Ambermoon.Render
 
         ISpriteFactory SpriteFactory { get; }
         IColoredRectFactory ColoredRectFactory { get; }
-        IMinimapTextureFactory MinimapTextureFactory { get; }
 
         IGameData GameData { get; }
     }

@@ -30,7 +30,7 @@ namespace Ambermoon.Data.Legacy
         {
             Width = 32, Height = 1, GraphicFormat = GraphicFormat.XRGB16
         };
-        static string paletteFile = "Palettes.amb";
+        static readonly string paletteFile = "Palettes.amb";
         static readonly Dictionary<GraphicType, string[]> graphicFiles = new Dictionary<GraphicType, string[]>
         {
             { GraphicType.Tileset1, new string [] { "1Icon_gfx.amb" } },
@@ -65,9 +65,13 @@ namespace Ambermoon.Data.Legacy
                 {
                     foreach (var graphicFile in gameData.Files[file].Files)
                     {
-                        var graphic = new Graphic();
-                        reader.ReadGraphic(graphic, graphicFile.Value, info);
-                        graphicList.Add(graphic);
+                        int end = graphicFile.Value.Size - info.DataSize;
+                        while (graphicFile.Value.Position <= end)
+                        {
+                            var graphic = new Graphic();
+                            reader.ReadGraphic(graphic, graphicFile.Value, info);
+                            graphicList.Add(graphic);
+                        }
                     }
                 }
             }
@@ -104,6 +108,16 @@ namespace Ambermoon.Data.Legacy
                     info.Width = 16;
                     info.Height = 32;
                     info.Palette = palettes[7];
+                    break;
+                case GraphicType.Portrait:
+                    info.Width = 32;
+                    info.Height = 32;
+                    info.Palette = palettes[1]; // TODO
+                    break;
+                case GraphicType.Item:
+                    info.Width = 16;
+                    info.Height = 16;
+                    info.Palette = palettes[33]; // TODO
                     break;
                 // TODO
             }

@@ -7,7 +7,7 @@
             Free,
             Chair,
             Bed,
-            Obstacle, // can be passed by witch broom and eagle
+            Obstacle, // can be passed by witch broom and eagle (this is also used for obstacles in water!)
             Water, // can swim in it, flying disc can fly over
             Ocean, // can not swim in it, flying disc can not fly over
             Mountain, // only pass with eagle
@@ -65,6 +65,22 @@
 
             return baseIndex + relativeIndex;
         }
+        public uint? LeftMapIndex
+        {
+            get
+            {
+                if (IsLyramionMap)
+                    return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, 0);
+
+                if (IsForestMoonMap)
+                    return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, 0);
+
+                if (IsMoragMap)
+                    return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, 0);
+
+                return null;
+            }
+        }
         public uint? RightMapIndex
         {
             get
@@ -81,6 +97,23 @@
                 return null;
             }
         }
+        public uint? UpMapIndex
+        {
+            get
+            {
+                if (IsLyramionMap)
+                    return MoveWorldMapIndex(1u, 16u, 16u, Index, 0, -1);
+
+                if (IsForestMoonMap)
+                    return MoveWorldMapIndex(300u, 6u, 6u, Index, 0, -1);
+
+                if (IsMoragMap)
+                    return MoveWorldMapIndex(513u, 4u, 4u, Index, 0, -1);
+
+                return null;
+            }
+        }
+
         public uint? DownMapIndex
         {
             get
@@ -113,6 +146,7 @@
                 return null;
             }
         }
+        public uint TicksPerAnimationFrame { get; set; } = 60; // TODO: changeable later? correct value?
 
         private Map()
         {

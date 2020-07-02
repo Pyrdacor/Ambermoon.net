@@ -207,11 +207,11 @@ namespace Ambermoon.Renderer
 
     public class RenderLayerFactory : IRenderLayerFactory
     {
-        readonly State state;
+        public State State { get; }
 
         public RenderLayerFactory(State state)
         {
-            this.state = state;
+            State = state;
         }
 
         public IRenderLayer Create(Layer layer, Render.Texture texture, bool supportColoredRects = false)
@@ -222,7 +222,7 @@ namespace Ambermoon.Renderer
             return layer switch
             {
                 Layer.None => throw new AmbermoonException(ExceptionScope.Render, $"Cannot create render layer for layer {Enum.GetName(typeof(Layer), layer)}"),
-                _ => new RenderLayer(state, layer, texture as Texture, supportColoredRects),
+                _ => new RenderLayer(State, layer, texture as Texture, supportColoredRects),
             };
         }
     }

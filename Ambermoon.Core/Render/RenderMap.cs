@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Render
@@ -31,7 +32,7 @@ namespace Ambermoon.Render
         public const int NUM_VISIBLE_TILES_X = 11; // maps will always be at least 11x11 in size
         public const int NUM_VISIBLE_TILES_Y = 9; // maps will always be at least 11x11 in size
         const int NUM_TILES = NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
-        Map map = null;
+        public Map Map { get; private set; } = null;
         Map[] adjacentMaps = null;
         readonly IMapManager mapManager = null;
         readonly ITextureAtlas textureAtlas = null;
@@ -45,12 +46,12 @@ namespace Ambermoon.Render
         public uint ScrollY { get; private set; } = 0;
 
         public RenderMap(Map map, IMapManager mapManager, IRenderView renderView,
-            ISpriteFactory spriteFactory, ITextureAtlas textureAtlas, uint ticksPerFrame,
-            uint initialScrollX = 0, uint initialScrollY = 0)
+            ITextureAtlas textureAtlas, uint initialScrollX = 0, uint initialScrollY = 0)
         {
             this.mapManager = mapManager;
             this.textureAtlas = textureAtlas;
 
+            var spriteFactory = renderView.SpriteFactory;
             var backgroundLayer = renderView.GetLayer(Layer.MapBackground);
             var foregroundLayer = renderView.GetLayer(Layer.MapForeground);
 
@@ -75,7 +76,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            SetMap(map, ticksPerFrame, initialScrollX, initialScrollY);
+            SetMap(map, initialScrollX, initialScrollY);
         }
 
         public void UpdateAnimations(uint ticks)
@@ -110,7 +111,7 @@ namespace Ambermoon.Render
             {
                 for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                 {
-                    var tile = map.Tiles[ScrollX + column, ScrollY + row];
+                    var tile = Map.Tiles[ScrollX + column, ScrollY + row];
 
                     backgroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(tile.BackGraphicIndex);
 
@@ -129,13 +130,13 @@ namespace Ambermoon.Render
             UpdateAnimations(0);
         }
 
-        public void SetMap(Map map, uint ticksPerFrame, uint initialScrollX = 0, uint initialScrollY = 0)
+        public void SetMap(Map map, uint initialScrollX = 0, uint initialScrollY = 0)
         {
-            if (this.map == map)
+            if (this.Map == map)
                 return;
 
-            this.map = map;
-            this.ticksPerFrame = ticksPerFrame;
+            this.Map = map;
+            this.ticksPerFrame = map.TicksPerAnimationFrame;
 
             if (map.IsWorldMap)
             {
@@ -156,6 +157,48 @@ namespace Ambermoon.Render
             ScrollTo(initialScrollX, initialScrollY, true); // also updates tiles etc
         }
 
+        public bool Scroll(int x, int y)
+        {
+            int newScrollX = (int)ScrollX + x;
+            int newScrollY = (int)ScrollY + y;
+
+            if (worldMap)
+            {
+                if (newScrollX < 0 || newScrollY < 0 || newScrollX >= Map.Width || newScrollY >= Map.Height)
+                {
+                    Map newMap;
+
+                    if (newScrollX < 0)
+                        newMap = mapManager.GetMap(Map.LeftMapIndex.Value);
+                    else if (newScrollX >= Map.Width)
+                        newMap = mapManager.GetMap(Map.RightMapIndex.Value);
+                    else
+                        newMap = Map;
+
+                    if (newScrollY < 0)
+                        newMap = mapManager.GetMap(newMap.UpMapIndex.Value);
+                    else if (newScrollY >= Map.Height)
+                        newMap = mapManager.GetMap(newMap.DownMapIndex.Value);
+
+                    uint newMapScrollX = newScrollX < 0 ? (uint)(Map.Width + newScrollX) : (uint)(newScrollX % Map.Width);
+                    uint newMapScrollY = newScrollY < 0 ? (uint)(Map.Height + newScrollY) : (uint)(newScrollY % Map.Height);
+
+                    SetMap(newMap, newMapScrollX, newMapScrollY);
+
+                    return true;
+                }
+            }
+            else
+            {
+                if (newScrollX < 0 || newScrollY < 0 || newScrollX > Map.Width - NUM_VISIBLE_TILES_X || newScrollY > Map.Height - NUM_VISIBLE_TILES_Y)
+                    return false;
+            }
+
+            ScrollTo((uint)newScrollX, (uint)newScrollY);
+
+            return true;
+        }
+
         public void ScrollTo(uint x, uint y, bool forceUpdate = false)
         {
             if (!forceUpdate && ScrollX == x && ScrollY == y)
@@ -167,9 +210,9 @@ namespace Ambermoon.Render
             if (!worldMap)
             {
                 // check scroll offset for non-world maps
-                if (ScrollX > map.Width - NUM_VISIBLE_TILES_X)
+                if (ScrollX > Map.Width - NUM_VISIBLE_TILES_X)
                     throw new AmbermoonException(ExceptionScope.Render, "Map scroll x position is outside the map bounds.");
-                if (ScrollY > map.Height - NUM_VISIBLE_TILES_Y)
+                if (ScrollY > Map.Height - NUM_VISIBLE_TILES_Y)
                     throw new AmbermoonException(ExceptionScope.Render, "Map scroll y position is outside the map bounds.");
             }
 
