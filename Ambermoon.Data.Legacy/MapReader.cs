@@ -34,8 +34,8 @@ namespace Ambermoon.Data.Legacy
                         {
                             BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
                             FrontTileIndex = ((uint)(tileData[2] & 0x07) << 8) | tileData[3],
-                            BackRemain = tileData[1] & 0x1fu,
-                            FrontRemain = (tileData[2] & 0xf8u) >> 3,
+                            InteractionEventId = tileData[1] & 0x1fu,
+                            Unknown = (tileData[2] & 0xf8u) >> 3,
                             // TODO: TileType
                         };
                     }

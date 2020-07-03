@@ -19,8 +19,8 @@
         {
             public uint BackTileIndex { get; set; }
             public uint FrontTileIndex { get; set; }
-            public uint BackRemain { get; set; }
-            public uint FrontRemain { get; set; }
+            public uint InteractionEventId { get; set; }
+            public uint Unknown { get; set; }
             public TileType Type { get; set; }
         }
 
