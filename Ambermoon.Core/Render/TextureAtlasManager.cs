@@ -111,12 +111,8 @@ namespace Ambermoon.Render
             // There are 3 player characters (one for each world, first lyramion, second forest moon, third morag).
             // Each has 17 frames: 3 back, 3 right, 3 front, 3 left, 1 sit back, 1 sit right, 1 sit front, 1 sit left, 1 bed/sleep.
             // All have a dimension of 16x32 pixels.
-            for (int i = 0; i < 3; ++i)
-            {
-                var playerGraphic = Graphic.CreateCompoundGraphic(playerGraphics.Skip(i * 17).Take(17));
-
-                AddTexture(Layer.Characters, (uint)i, playerGraphic);
-            }
+            for (int i = 0; i < playerGraphics.Count; ++i)
+                AddTexture(Layer.Characters, (uint)i, playerGraphics[i]);
 
             #endregion
 

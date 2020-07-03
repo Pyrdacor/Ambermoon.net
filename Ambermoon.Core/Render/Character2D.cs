@@ -17,7 +17,7 @@ namespace Ambermoon.Render
         uint lastFrameReset = 0u;
         CharacterDirection direction = CharacterDirection.Down;
 
-        public Map Map { get; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
+        public RenderMap Map { get; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
         public Position Position { get; } // in Tiles
         public bool Visible
         {
@@ -26,7 +26,7 @@ namespace Ambermoon.Render
         }
 
         public Character2D(IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
-            Character2DAnimationInfo animationInfo, Map map, Position startPosition)
+            Character2DAnimationInfo animationInfo, RenderMap map, Position startPosition)
         {
             this.textureAtlas = textureAtlas;
             this.animationInfo = animationInfo;
@@ -35,8 +35,8 @@ namespace Ambermoon.Render
             sprite = spriteFactory.CreateAnimated(animationInfo.FrameWidth, animationInfo.FrameHeight,
                 textureOffset.X, textureOffset.Y, textureAtlas.Texture.Width, animationInfo.NumStandFrames);
             sprite.Layer = layer;
-            sprite.X = Global.MapViewX + startPosition.X * RenderMap.TILE_WIDTH; // TODO: scroll
-            sprite.Y = Global.MapViewY + startPosition.Y * RenderMap.TILE_HEIGHT; // TODO: scroll
+            sprite.X = Global.MapViewX + (startPosition.X - (int)map.ScrollX) * RenderMap.TILE_WIDTH;
+            sprite.Y = Global.MapViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap.TILE_HEIGHT;
             Map = map;
             Position = startPosition;
         }
@@ -60,23 +60,23 @@ namespace Ambermoon.Render
                 // Move purely left
                 direction = CharacterDirection.Left;
             }
-            else if (x > Position.Y)
+            else if (x > Position.X)
             {
                 // Move purely right
                 direction = CharacterDirection.Right;
             }
 
-            var tileType = map.Tiles[x, y].Type;
+            var tileType = Map.Map.Tiles[x, y].Type;
             sprite.NumFrames = tileType switch
             {
-                Map.TileType.Chair => animationInfo.NumSitFrames,
-                Map.TileType.Bed => animationInfo.NumSleepFrames,
+                Data.Map.TileType.Chair => animationInfo.NumSitFrames,
+                Data.Map.TileType.Bed => animationInfo.NumSleepFrames,
                 _ => animationInfo.NumStandFrames
             };
             currentFrameIndex = tileType switch
             {
-                Map.TileType.Chair => animationInfo.SitFrameIndex,
-                Map.TileType.Bed => animationInfo.SleepFrameIndex,
+                Data.Map.TileType.Chair => animationInfo.SitFrameIndex,
+                Data.Map.TileType.Bed => animationInfo.SleepFrameIndex,
                 _ => animationInfo.StandFrameIndex
             } + (uint)direction * sprite.NumFrames;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(currentFrameIndex);
@@ -84,6 +84,8 @@ namespace Ambermoon.Render
             lastFrameReset = ticks;
             Position.X = (int)x;
             Position.Y = (int)y;
+            sprite.X = Global.MapViewX + (Position.X - (int)Map.ScrollX) * RenderMap.TILE_WIDTH;
+            sprite.Y = Global.MapViewY + (Position.Y - (int)Map.ScrollY) * RenderMap.TILE_HEIGHT;
         }
 
         public void Update(uint ticks)

@@ -4,64 +4,63 @@ namespace Ambermoon.Render
 {
     internal class Player2D : Character2D
     {
-        readonly RenderMap renderMap;
         readonly Player player;
 
         public Player2D(IRenderLayer layer, Player player, RenderMap map,
             ISpriteFactory spriteFactory, IGameData gameData, Position startPosition)
             : base(layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
-                  spriteFactory, gameData.PlayerAnimationInfo, map.Map, startPosition)
+                  spriteFactory, gameData.PlayerAnimationInfo, map, startPosition)
         {
             this.player = player;
-            renderMap = map;
         }
 
-        public bool Move(int x, int y) // in Tiles
+        public bool Move(int x, int y, uint ticks) // in Tiles
         {
             if (player.MovementAbility == PlayerMovementAbility.NoMovement)
                 return false;
 
             int newX = Position.X + x;
             int newY = Position.Y + y;
+            var map = Map.Map;
 
-            if (!Map.IsWorldMap)
+            if (!map.IsWorldMap)
             {
                 // Each map should have a border of 1 (walls)
-                if (newX < 1 || newY < 1 || newX >= Map.Width - 1 || newY >= Map.Height - 1)
+                if (newX < 1 || newY < 1 || newX >= map.Width - 1 || newY >= map.Height - 1)
                     return false;
             }
             else
             {
                 while (newX < 0)
-                    newX += Map.Width;
-                while (newX >= Map.Width)
-                    newX -= Map.Width;
+                    newX += map.Width;
+                while (newX >= map.Width)
+                    newX -= map.Width;
                 while (newY < 0)
-                    newY += Map.Height;
-                while (newY >= Map.Height)
-                    newY -= Map.Height;
+                    newY += map.Height;
+                while (newY >= map.Height)
+                    newY -= map.Height;
             }
 
-            var tile = Map.Tiles[newX, newY];
+            var tile = map.Tiles[newX, newY];
             bool canMove;
 
             switch (tile.Type)
             {
-                case Map.TileType.Free:
-                case Map.TileType.Chair:
-                case Map.TileType.Bed:
+                case Data.Map.TileType.Free:
+                case Data.Map.TileType.Chair:
+                case Data.Map.TileType.Bed:
                     canMove = true; // no movement was checked above
                     break;
-                case Map.TileType.Obstacle:
+                case Data.Map.TileType.Obstacle:
                     canMove = player.MovementAbility >= PlayerMovementAbility.WitchBroom;
                     break;
-                case Map.TileType.Water:
+                case Data.Map.TileType.Water:
                     canMove = player.MovementAbility >= PlayerMovementAbility.Swimming;
                     break;
-                case Map.TileType.Ocean:
+                case Data.Map.TileType.Ocean:
                     canMove = player.MovementAbility >= PlayerMovementAbility.Sailing;
                     break;
-                case Map.TileType.Mountain:
+                case Data.Map.TileType.Mountain:
                     canMove = player.MovementAbility >= PlayerMovementAbility.Eagle;
                     break;
                 default:
@@ -71,22 +70,30 @@ namespace Ambermoon.Render
 
             if (canMove)
             {
-                Position.X = newX;
-                Position.Y = newY;
+                var oldMap = map;
                 int scrollX = 0;
                 int scrollY = 0;
 
-                if (x > 0 && (Map.IsWorldMap || newX == 6))
+                if (x > 0 && (map.IsWorldMap || (newX >= 6 && newX <= map.Width - 6)))
                     scrollX = 1;
-                else if (x < 0 && (Map.IsWorldMap || newX == Map.Width - 7))
+                else if (x < 0 && (map.IsWorldMap || (newX <= map.Width - 7 && newX >= 5)))
                     scrollX = -1;
 
-                if (y > 0 && (Map.IsWorldMap || newY == 5))
+                if (y > 0 && (map.IsWorldMap || (newY >= 5 && newY <= map.Height - 5)))
                     scrollY = 1;
-                else if (y < 0 && (Map.IsWorldMap || newY == Map.Height - 6))
+                else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 6 && newY >= 4)))
                     scrollY = -1;
 
-                renderMap.Scroll(scrollX, scrollY);
+                Map.Scroll(scrollX, scrollY);
+
+                if (oldMap == Map.Map)
+                {
+                    MoveTo(oldMap, (uint)newX, (uint)newY, ticks);
+                }
+                else
+                {
+                    // TODO: adjust player position on map transition
+                }
             }
 
             return canMove;

@@ -2,6 +2,6 @@
 {
     internal class Player
     {
-        public PlayerMovementAbility MovementAbility { get; } = PlayerMovementAbility.NoMovement;
+        public PlayerMovementAbility MovementAbility { get; set; } = PlayerMovementAbility.NoMovement;
     }
 }

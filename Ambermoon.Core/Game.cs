@@ -48,6 +48,7 @@ namespace Ambermoon
             player2D = new Player2D(renderView.GetLayer(Layer.Characters), player, renderMap,
                 renderView.SpriteFactory, renderView.GameData, new Position(2, 2));
             player2D.Visible = true;
+            player.MovementAbility = PlayerMovementAbility.Walking;
             // TODO
         }
 
@@ -59,6 +60,35 @@ namespace Ambermoon
         public void Continue()
         {
             // TODO: load latest game
+        }
+
+        public void OnKeyDown(Key key, KeyModifiers modifiers)
+        {
+            switch (key)
+            {
+                case Key.Left:
+                    player2D.Move(-1, 0, currentTicks);
+                    break;
+                case Key.Right:
+                    player2D.Move(1, 0, currentTicks);
+                    break;
+                case Key.Up:
+                    player2D.Move(0, -1, currentTicks);
+                    break;
+                case Key.Down:
+                    player2D.Move(0, 1, currentTicks);
+                    break;
+            }
+        }
+
+        public void OnKeyChar(char keyChar)
+        {
+
+        }
+
+        public void OnMouseDown(MouseButtons buttons)
+        {
+
         }
     }
 }
