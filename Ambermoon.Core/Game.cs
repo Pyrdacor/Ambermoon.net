@@ -24,7 +24,7 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
-            uint add = (uint)Util.Round(ticksPerSecond * (float)deltaTime / 1000.0f);
+            uint add = (uint)Util.Round(ticksPerSecond * (float)deltaTime);
 
             if (currentTicks <= uint.MaxValue - add)
                 currentTicks += add;

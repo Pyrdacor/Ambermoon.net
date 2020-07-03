@@ -115,7 +115,6 @@
                 return null;
             }
         }
-
         public uint? DownMapIndex
         {
             get
@@ -148,7 +147,7 @@
                 return null;
             }
         }
-        public uint TicksPerAnimationFrame { get; set; } = 60; // TODO: changeable later? correct value?
+        public uint TicksPerAnimationFrame { get; set; } = 10; // This matches the frame speed in real game quiet good. TODO: changeable later? same for every map?
 
         private Map()
         {

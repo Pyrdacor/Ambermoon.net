@@ -121,8 +121,11 @@ namespace Ambermoon.Render
                     }
                     else
                     {
-                        var backGraphicIndex = tileset.Tiles[(int)tile.BackTileIndex - 1].GraphicIndex;
+                        var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
+                        var backGraphicIndex = backTile.GraphicIndex;
                         backgroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex - 1);
+                        backgroundTileSprites[index].NumFrames = (uint)backTile.NumAnimationFrames;
+                        backgroundTileSprites[index].CurrentFrame = 0;
                         backgroundTileSprites[index].Visible = true;
                     }
                     
@@ -133,8 +136,11 @@ namespace Ambermoon.Render
                     }
                     else
                     {
-                        var frontGraphicIndex = tileset.Tiles[(int)tile.FrontTileIndex - 1].GraphicIndex;
+                        var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+                        var frontGraphicIndex = frontTile.GraphicIndex;
                         foregroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(frontGraphicIndex - 1);
+                        foregroundTileSprites[index].NumFrames = (uint)frontTile.NumAnimationFrames;
+                        foregroundTileSprites[index].CurrentFrame = 0;
                         foregroundTileSprites[index].Visible = true;
                     }
 

@@ -25,6 +25,7 @@ namespace Ambermoon
 
         void Window_Load()
         {
+            window.MakeCurrent();
             var gameData = new GameData();
             gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), Width, Height);
@@ -34,15 +35,6 @@ namespace Ambermoon
 
         void Window_Render(double delta)
         {
-            try
-            {
-                window.MakeCurrent();
-            }
-            catch
-            {
-                // ignore for now
-            }
-
             renderView.Render();
             window.SwapBuffers();
         }

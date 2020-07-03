@@ -66,7 +66,7 @@ namespace Ambermoon.Renderer
             if (pixelData.Length != data.Length)
                 throw new AmbermoonException(ExceptionScope.Data, "Pixel data size does not match texture data size.");
 
-            System.Buffer.BlockCopy(pixelData, 0, data, 0, pixelData.Length);
+            Buffer.BlockCopy(pixelData, 0, data, 0, pixelData.Length);
         }
 
         public void Finish(int numMipMapLevels)

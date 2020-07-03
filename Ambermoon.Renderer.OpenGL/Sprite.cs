@@ -39,7 +39,7 @@ namespace Ambermoon.Renderer
             textureAtlasOffset = new Position(textureAtlasX, textureAtlasY);
         }
 
-        public Position TextureAtlasOffset
+        public virtual Position TextureAtlasOffset
         {
             get => textureAtlasOffset;
             set
@@ -263,7 +263,7 @@ namespace Ambermoon.Renderer
 
     internal class AnimatedSprite : Sprite, IAnimatedSprite
     {
-        readonly Position initialTextureOffset;
+        Position initialTextureOffset;
         readonly int textureAtlasWidth;
         uint currentFrame = 0;
 
@@ -276,23 +276,42 @@ namespace Ambermoon.Renderer
             CurrentFrame = 0;
         }
 
+        public override Position TextureAtlasOffset
+        {
+            get => base.TextureAtlasOffset;
+            set
+            {
+                if (TextureAtlasOffset == value)
+                    return;
+
+                base.TextureAtlasOffset = value;
+                initialTextureOffset = value;
+            }
+        }
         public uint NumFrames { get; set; }
         public uint CurrentFrame
         {
             get => currentFrame;
             set
             {
-                currentFrame = value % NumFrames;
-                int newTextureOffsetX = initialTextureOffset.X + (int)currentFrame * Width;
-                int newTextureOffsetY = initialTextureOffset.Y;
-
-                while (newTextureOffsetX >= textureAtlasWidth)
+                if (NumFrames > 1)
                 {
-                    newTextureOffsetX -= textureAtlasWidth;
-                    newTextureOffsetY += Height;
-                }
+                    currentFrame = value % NumFrames;
+                    int newTextureOffsetX = initialTextureOffset.X + (int)currentFrame * Width;
+                    int newTextureOffsetY = initialTextureOffset.Y;
 
-                TextureAtlasOffset = new Position(newTextureOffsetX, newTextureOffsetY);
+                    while (newTextureOffsetX >= textureAtlasWidth)
+                    {
+                        newTextureOffsetX -= textureAtlasWidth;
+                        newTextureOffsetY += Height;
+                    }
+
+                    base.TextureAtlasOffset = new Position(newTextureOffsetX, newTextureOffsetY);
+                }
+                else
+                {
+                    currentFrame = 0;
+                }
             }
         }
     }
