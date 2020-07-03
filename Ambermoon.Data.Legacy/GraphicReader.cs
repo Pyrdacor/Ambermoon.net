@@ -33,7 +33,7 @@ namespace Ambermoon.Data.Legacy
                     if (!graphicInfo.Alpha || paletteIndex != 0)
                         paletteIndex += graphicInfo.PaletteOffset;
 
-                    graphicInfo.Palette.Fill(graphic.Data, (x + y * graphic.Width) * 4, paletteIndex);
+                    graphicInfo.Palette.Fill(graphic.Data, (x + y * graphic.Width) * 4, paletteIndex, graphicInfo.Alpha);
 
                     if (++bitIndex == 8)
                     {

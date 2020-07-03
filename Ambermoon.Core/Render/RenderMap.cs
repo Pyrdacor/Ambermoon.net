@@ -66,12 +66,12 @@ namespace Ambermoon.Render
 
                     backgroundSprite.Layer = backgroundLayer;
                     backgroundSprite.Visible = true;
-                    backgroundSprite.X = column * TILE_WIDTH;
-                    backgroundSprite.Y = row * TILE_HEIGHT;
+                    backgroundSprite.X = Global.MapViewX + column * TILE_WIDTH;
+                    backgroundSprite.Y = Global.MapViewY + row * TILE_HEIGHT;
                     foregroundSprite.Layer = foregroundLayer;
                     foregroundSprite.Visible = false;
-                    foregroundSprite.X = column * TILE_WIDTH;
-                    foregroundSprite.Y = row * TILE_HEIGHT;
+                    foregroundSprite.X = Global.MapViewX + column * TILE_WIDTH;
+                    foregroundSprite.Y = Global.MapViewY + row * TILE_HEIGHT;
 
                     backgroundTileSprites.Add(backgroundSprite);
                     foregroundTileSprites.Add(foregroundSprite);
@@ -114,9 +114,18 @@ namespace Ambermoon.Render
                 for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                 {
                     var tile = Map.Tiles[ScrollX + column, ScrollY + row];
-                    var backGraphicIndex = tileset.Tiles[(int)tile.BackTileIndex].GraphicIndex;
 
-                    backgroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex);
+                    if (tile.BackTileIndex == 0)
+                    {
+                        backgroundTileSprites[index].Visible = false;
+                    }
+                    else
+                    {
+                        var backGraphicIndex = tileset.Tiles[(int)tile.BackTileIndex - 1].GraphicIndex;
+                        backgroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex - 1);
+                        backgroundTileSprites[index].Visible = true;
+                    }
+                    
 
                     if (tile.FrontTileIndex == 0)
                     {
@@ -124,8 +133,8 @@ namespace Ambermoon.Render
                     }
                     else
                     {
-                        var frontGraphicIndex = tileset.Tiles[(int)tile.FrontTileIndex].GraphicIndex;
-                        foregroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(frontGraphicIndex);
+                        var frontGraphicIndex = tileset.Tiles[(int)tile.FrontTileIndex - 1].GraphicIndex;
+                        foregroundTileSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(frontGraphicIndex - 1);
                         foregroundTileSprites[index].Visible = true;
                     }
 

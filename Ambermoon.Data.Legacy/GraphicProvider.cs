@@ -123,23 +123,28 @@ namespace Ambermoon.Data.Legacy
                 case GraphicType.Tileset1:
                 case GraphicType.Tileset2:
                     info.Palette = palettes[1];
+                    info.Alpha = true;
                     break;
                 case GraphicType.Tileset3:
                     info.Palette = palettes[3];
+                    info.Alpha = true;
                     break;
                 case GraphicType.Tileset4:
                 case GraphicType.Tileset5:
                 case GraphicType.Tileset6:
                 case GraphicType.Tileset7:
                     info.Palette = palettes[7];
+                    info.Alpha = true;
                     break;
                 case GraphicType.Tileset8:
                     info.Palette = palettes[10];
+                    info.Alpha = true;
                     break;
                 case GraphicType.Player:
                     info.Width = 16;
                     info.Height = 32;
                     info.Palette = palettes[7];
+                    info.Alpha = true;
                     break;
                 case GraphicType.Portrait:
                     info.Width = 32;
