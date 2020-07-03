@@ -10,6 +10,8 @@
     {
         public ChestType Type { get; set; }
         public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
+        public uint Gold { get; set; }
+        public uint Food { get; set; }
 
         public static Chest Load(IChestReader chestReader, IDataReader dataReader)
         {

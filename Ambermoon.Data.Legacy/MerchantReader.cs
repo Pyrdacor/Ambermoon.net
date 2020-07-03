@@ -9,13 +9,15 @@
                 for (int x = 0; x < 6; ++x)
                 {
                     int amount = dataReader.ReadByte();
-                    dataReader.ReadBytes(3); // Unknown
+                    dataReader.ReadBytes(2); // Unknown
+                    ItemFlags flags = (ItemFlags)dataReader.ReadByte();
                     uint itemIndex = dataReader.ReadWord();
 
                     merchant.Slots[x, y] = new ItemSlot
                     {
                         ItemIndex = itemIndex,
-                        Amount = amount                        
+                        Amount = amount,
+                        Flags = flags
                     };
                 }
             }

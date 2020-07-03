@@ -3,7 +3,8 @@
     public class ItemSlot
     {
         public uint ItemIndex;
-        public int Amount;
+        public int Amount; // 0-255, 255 = unlimited (**)
+        public ItemFlags Flags;
         // TODO ...
     }
 }
