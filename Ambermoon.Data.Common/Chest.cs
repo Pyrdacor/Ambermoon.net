@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Ambermoon.Data
+﻿namespace Ambermoon.Data
 {
     public enum ChestType
     {        
@@ -14,5 +10,14 @@ namespace Ambermoon.Data
     {
         public ChestType Type { get; set; }
         public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
+
+        public static Chest Load(IChestReader chestReader, IDataReader dataReader)
+        {
+            var chest = new Chest();
+
+            chestReader.ReadChest(chest, dataReader);
+
+            return chest;
+        }
     }
 }

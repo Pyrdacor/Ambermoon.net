@@ -8,7 +8,7 @@
             chest.Type = (ChestType)dataReader.ReadByte(); // TODO: check if this is correct and which are possible values
             dataReader.ReadWord(); // Unknown
 
-            for (int y = 0; y < 4; ++i)
+            for (int y = 0; y < 4; ++y)
             {
                 for (int x = 0; x < 6; ++x)
                 {
