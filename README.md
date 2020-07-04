@@ -11,3 +11,10 @@ I have also created another github project called [Ambermoon](https://github.com
 Let's bring this game to life on modern PCs with modern resolutions and graphic APIs. :)
 
 You may also checkout my already working Settlers I rewrite at [Ambermoon.net](https://github.com/Pyrdacor/freeserf.net).
+
+
+## Current state
+
+2D map rendering is working. Moreover the player can be moved on 2D maps and map changes are possible (as long as the map isn't 3D). World map scrolling is also working.
+
+![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRenderingAlpha.png "Map rendering")
