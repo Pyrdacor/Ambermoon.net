@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy
 {
+    // TODO: Where is the information stored for:
+    // - tile blocking states [would make sense to find it in tileset tile data]
+    // - chair / bed [would make sense to find it in tileset tile data]
+    // - interaction type (move onto, hand, eye, mouth, etc)
     public class MapReader : IMapReader
     {
         public void ReadMap(Map map, IDataReader dataReader)
@@ -50,6 +54,10 @@ namespace Ambermoon.Data.Legacy
                 // A map event has 12 bytes. Per map event id (tile event) there can be multiple
                 // events (I guess depending on some conditions).
                 // So there are offset - lastOffset map events associated with an event id.
+                // Another possibility would be that map events can have n*12 bytes of data
+                // and there is only 1 event possible per tile.
+                // Change map events (type = 1) seem to have only 12 bytes of data.
+                // More research is needed though.
                 uint[] offsets = new uint[numMapEvents + 1];
 
                 for (uint i = 0; i < numMapEvents + 1; ++i)
