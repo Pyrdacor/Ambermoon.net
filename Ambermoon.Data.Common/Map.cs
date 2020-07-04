@@ -1,4 +1,7 @@
-﻿namespace Ambermoon.Data
+﻿using Ambermoon.Render;
+using System.Collections.Generic;
+
+namespace Ambermoon.Data
 {
     public class Map
     {
@@ -19,7 +22,7 @@
         {
             public uint BackTileIndex { get; set; }
             public uint FrontTileIndex { get; set; }
-            public uint InteractionEventId { get; set; }
+            public uint MapEventId { get; set; }
             public uint Unknown { get; set; }
             public TileType Type { get; set; }
         }
@@ -30,6 +33,7 @@
         public int Height { get; set; }
         public uint TilesetIndex { get; set; }
         public Tile[,] Tiles { get; set; }
+        public List<List<MapEvent>> Events { get; } = new List<List<MapEvent>>();
         public bool IsLyramionMap => Index >= 1 && Index <= 256;
         public bool IsForestMoonMap => Index >= 300 && Index <= 335;
         public bool IsMoragMap => Index >= 513 && Index <= 528;
@@ -152,6 +156,48 @@
         private Map()
         {
 
+        }
+
+        void ExecuteEvents(IRenderPlayer player, uint x, uint y, IMapManager mapManager, uint ticks, List<MapEvent> mapEvents)
+        {
+            foreach (var mapEvent in mapEvents)
+            {
+                if (mapEvent.Type == MapEventType.MapChange)
+                {
+                    // TODO: conditions?
+                    if (mapEvent is MapChangeEvent mapChangeEvent)
+                    {
+                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X, mapChangeEvent.Y, ticks);
+                    }
+                }
+            }
+        }
+
+        public void TriggerEvents(IRenderPlayer player, MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
+        {
+            var mapEventId = Tiles[x, y].MapEventId;
+
+            if (mapEventId == 0)
+                return; // no map events at this position
+
+            var mapEvents = Events[(int)mapEventId - 1];
+
+            switch (trigger)
+            {
+                case MapEventTrigger.Move:
+                    ExecuteEvents(player, x, y, mapManager, ticks, mapEvents);
+                    // TODO
+                    break;
+                case MapEventTrigger.Hand:
+                    // TODO
+                    break;
+                case MapEventTrigger.Eye:
+                    // TODO
+                    break;
+                case MapEventTrigger.Mouth:
+                    // TODO
+                    break;
+            }
         }
 
         public static Map Load(uint index, IMapReader mapReader, IDataReader dataReader)

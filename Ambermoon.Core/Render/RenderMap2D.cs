@@ -20,12 +20,12 @@
  */
 
 using Ambermoon.Data;
-using System;
 using System.Collections.Generic;
+using System.Data.Common;
 
 namespace Ambermoon.Render
 {
-    internal class RenderMap
+    internal class RenderMap2D : IRenderMap
     {
         public const int TILE_WIDTH = 16;
         public const int TILE_HEIGHT = 16;
@@ -34,9 +34,10 @@ namespace Ambermoon.Render
         const int NUM_TILES = NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
         public Map Map { get; private set; } = null;
         Map[] adjacentMaps = null;
-        readonly Tileset tileset = null;
+        Tileset tileset = null;
         readonly IMapManager mapManager = null;
-        readonly ITextureAtlas textureAtlas = null;
+        readonly IRenderView renderView = null;
+        ITextureAtlas textureAtlas = null;
         readonly List<IAnimatedSprite> backgroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
         readonly List<IAnimatedSprite> foregroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
         uint ticksPerFrame = 0;
@@ -46,29 +47,24 @@ namespace Ambermoon.Render
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
 
-        public RenderMap(Map map, Tileset tileset, IMapManager mapManager, IRenderView renderView,
-            ITextureAtlas textureAtlas, uint initialScrollX = 0, uint initialScrollY = 0)
+        public RenderMap2D(Map map, IMapManager mapManager, IRenderView renderView,
+            uint initialScrollX = 0, uint initialScrollY = 0)
         {
             this.mapManager = mapManager;
-            this.textureAtlas = textureAtlas;
-            this.tileset = tileset;
+            this.renderView = renderView;
 
             var spriteFactory = renderView.SpriteFactory;
-            var backgroundLayer = renderView.GetLayer(Layer.MapBackground4); // TODO
-            var foregroundLayer = renderView.GetLayer(Layer.MapForeground4); // TODO
 
             for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {
                 for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                 {
-                    var backgroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 0, textureAtlas.Texture.Width);
-                    var foregroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 0, textureAtlas.Texture.Width);
+                    var backgroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 0, 0);
+                    var foregroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 0, 0);
 
-                    backgroundSprite.Layer = backgroundLayer;
                     backgroundSprite.Visible = true;
                     backgroundSprite.X = Global.MapViewX + column * TILE_WIDTH;
                     backgroundSprite.Y = Global.MapViewY + row * TILE_HEIGHT;
-                    foregroundSprite.Layer = foregroundLayer;
                     foregroundSprite.Visible = false;
                     foregroundSprite.X = Global.MapViewX + column * TILE_WIDTH;
                     foregroundSprite.Y = Global.MapViewY + row * TILE_HEIGHT;
@@ -105,15 +101,45 @@ namespace Ambermoon.Render
             }
         }
 
+        private Map.Tile this[uint x, uint y]
+        {
+            get
+            {
+                if (x >= Map.Width)
+                {
+                    if (y >= Map.Height)
+                        return adjacentMaps[2].Tiles[x - Map.Width, y - Map.Height];
+                    else
+                        return adjacentMaps[0].Tiles[x - Map.Width, y];
+                }
+                else if (y >= Map.Height)
+                {
+                    return adjacentMaps[1].Tiles[x, y - Map.Height];
+                }
+                else
+                {
+                    return Map.Tiles[x, y];
+                }
+            }
+        }
+
         void UpdateTiles()
         {
+            var backLayer = renderView.GetLayer((Layer)((uint)Layer.MapBackground1 + tileset.Index - 1));
+            var frontLayer = renderView.GetLayer((Layer)((uint)Layer.MapForeground1 + tileset.Index - 1));
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate((Layer)((uint)Layer.MapBackground1 + tileset.Index - 1));
             int index = 0;
 
-            for (int row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
+            for (uint row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {
-                for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
+                for (uint column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                 {
-                    var tile = Map.Tiles[ScrollX + column, ScrollY + row];
+                    var tile = this[ScrollX + column, ScrollY + row];
+
+                    backgroundTileSprites[index].Layer = backLayer;
+                    backgroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
+                    foregroundTileSprites[index].Layer = frontLayer;
+                    foregroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
 
                     if (tile.BackTileIndex == 0)
                     {
@@ -128,7 +154,6 @@ namespace Ambermoon.Render
                         backgroundTileSprites[index].CurrentFrame = 0;
                         backgroundTileSprites[index].Visible = true;
                     }
-                    
 
                     if (tile.FrontTileIndex == 0)
                     {
@@ -157,6 +182,7 @@ namespace Ambermoon.Render
                 return;
 
             Map = map;
+            tileset = mapManager.GetTilesetForMap(map);
             ticksPerFrame = map.TicksPerAnimationFrame;
 
             if (map.IsWorldMap)

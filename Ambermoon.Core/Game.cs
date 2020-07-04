@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
+using System;
 
 namespace Ambermoon
 {
@@ -13,7 +14,7 @@ namespace Ambermoon
         Player player;
 
         // Rendering
-        RenderMap renderMap = null;
+        RenderMap2D renderMap = null;
         Player2D player2D = null;
 
         public Game(IRenderView renderView, IMapManager mapManager)
@@ -43,10 +44,9 @@ namespace Ambermoon
             ingame = true;
             player = new Player();
             var map = mapManager.GetMap(258u); // grandfather's house
-            renderMap = new RenderMap(map, mapManager.GetTilesetForMap(map), mapManager,
-                renderView, TextureAtlasManager.Instance.GetOrCreate(Layer.MapBackground4));
+            renderMap = new RenderMap2D(map, mapManager, renderView);
             player2D = new Player2D(renderView.GetLayer(Layer.Characters), player, renderMap,
-                renderView.SpriteFactory, renderView.GameData, new Position(2, 2));
+                renderView.SpriteFactory, renderView.GameData, new Position(2, 2), mapManager);
             player2D.Visible = true;
             player.MovementAbility = PlayerMovementAbility.Walking;
             // TODO

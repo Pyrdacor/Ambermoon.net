@@ -264,13 +264,12 @@ namespace Ambermoon.Renderer
     internal class AnimatedSprite : Sprite, IAnimatedSprite
     {
         Position initialTextureOffset;
-        readonly int textureAtlasWidth;
         uint currentFrame = 0;
 
         public AnimatedSprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen, uint numFrames, int textureAtlasWidth)
             : base(width, height, textureAtlasX, textureAtlasY, virtualScreen)
         {
-            this.textureAtlasWidth = textureAtlasWidth;
+            TextureAtlasWidth = textureAtlasWidth;
             initialTextureOffset = new Position(textureAtlasX, textureAtlasY);
             NumFrames = numFrames;
             CurrentFrame = 0;
@@ -288,6 +287,7 @@ namespace Ambermoon.Renderer
                 initialTextureOffset = value;
             }
         }
+        public int TextureAtlasWidth { get; set; }
         public uint NumFrames { get; set; }
         public uint CurrentFrame
         {
@@ -300,9 +300,9 @@ namespace Ambermoon.Renderer
                     int newTextureOffsetX = initialTextureOffset.X + (int)currentFrame * Width;
                     int newTextureOffsetY = initialTextureOffset.Y;
 
-                    while (newTextureOffsetX >= textureAtlasWidth)
+                    while (newTextureOffsetX >= TextureAtlasWidth)
                     {
-                        newTextureOffsetX -= textureAtlasWidth;
+                        newTextureOffsetX -= TextureAtlasWidth;
                         newTextureOffsetY += Height;
                     }
 

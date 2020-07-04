@@ -8,6 +8,7 @@
             public int NumAnimationFrames { get; set; }
         }
 
+        public uint Index { get; set; }
         public Tile[] Tiles { get; set; }
 
         private Tileset()

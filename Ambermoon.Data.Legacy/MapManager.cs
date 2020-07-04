@@ -25,7 +25,9 @@ namespace Ambermoon.Data.Legacy
 
             foreach (var tilesetFile in gameData.Files["Icon_data.amb"].Files)
             {
-                tilesets.Add((uint)tilesetFile.Key, Tileset.Load(tilesetReader, tilesetFile.Value));
+                var tileset = Tileset.Load(tilesetReader, tilesetFile.Value);
+                tilesets.Add((uint)tilesetFile.Key, tileset);
+                tileset.Index = (uint)tilesetFile.Key;
             }
         }
 

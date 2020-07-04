@@ -72,6 +72,12 @@ namespace Ambermoon.Render
             get;
             set;
         }
+
+        int TextureAtlasWidth
+        {
+            get;
+            set;
+        }
     }
 
     public interface ISpriteFactory

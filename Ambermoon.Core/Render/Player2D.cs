@@ -1,17 +1,21 @@
 ﻿using Ambermoon.Data;
+using System;
 
 namespace Ambermoon.Render
 {
-    internal class Player2D : Character2D
+    internal class Player2D : Character2D, IRenderPlayer
     {
         readonly Player player;
+        readonly IMapManager mapManager;
 
-        public Player2D(IRenderLayer layer, Player player, RenderMap map,
-            ISpriteFactory spriteFactory, IGameData gameData, Position startPosition)
+        public Player2D(IRenderLayer layer, Player player, RenderMap2D map,
+            ISpriteFactory spriteFactory, IGameData gameData, Position startPosition,
+            IMapManager mapManager)
             : base(layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
                   spriteFactory, gameData.PlayerAnimationInfo, map, startPosition)
         {
             this.player = player;
+            this.mapManager = mapManager;
         }
 
         public bool Move(int x, int y, uint ticks) // in Tiles
@@ -89,6 +93,8 @@ namespace Ambermoon.Render
                 if (oldMap == Map.Map)
                 {
                     MoveTo(oldMap, (uint)newX, (uint)newY, ticks);
+                    // We trigger with our lower half so add 1 to y
+                    oldMap.TriggerEvents(this, MapEventTrigger.Move, (uint)newX, (uint)newY + 1, mapManager, ticks);
                 }
                 else
                 {
