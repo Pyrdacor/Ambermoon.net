@@ -167,7 +167,7 @@ namespace Ambermoon.Data
                     // TODO: conditions?
                     if (mapEvent is MapChangeEvent mapChangeEvent)
                     {
-                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X, mapChangeEvent.Y, ticks);
+                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X, mapChangeEvent.Y, ticks, true);
                     }
                 }
             }

@@ -77,6 +77,8 @@ namespace Ambermoon.Render
                 var oldMap = map;
                 int scrollX = 0;
                 int scrollY = 0;
+                var prevDirection = Direction;
+                var newDirection = CharacterDirection.Down;
 
                 if (x > 0 && (map.IsWorldMap || (newX >= 6 && newX <= map.Width - 6)))
                     scrollX = 1;
@@ -88,13 +90,28 @@ namespace Ambermoon.Render
                 else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 6 && newY >= 4)))
                     scrollY = -1;
 
+                if (y > 0)
+                    newDirection = CharacterDirection.Down;
+                else if (y < 0)
+                    newDirection = CharacterDirection.Up;
+                else if (x > 0)
+                    newDirection = CharacterDirection.Right;
+                else if (x < 0)
+                    newDirection = CharacterDirection.Left;
+
                 Map.Scroll(scrollX, scrollY);
 
                 if (oldMap == Map.Map)
                 {
-                    MoveTo(oldMap, (uint)newX, (uint)newY, ticks);
+                    bool frameReset = NumFrames == 1 || newDirection != prevDirection;
+                    var prevState = CurrentState;
+
+                    MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset);
                     // We trigger with our lower half so add 1 to y
                     oldMap.TriggerEvents(this, MapEventTrigger.Move, (uint)newX, (uint)newY + 1, mapManager, ticks);
+
+                    if (!frameReset && CurrentState == prevState)
+                        SetCurrentFrame((CurrentFrame + 1) % NumFrames);
                 }
                 else
                 {
@@ -103,6 +120,11 @@ namespace Ambermoon.Render
             }
 
             return canMove;
+        }
+
+        public override void Update(uint ticks)
+        {
+            // do not animate so don't call base.Update here
         }
     }
 }

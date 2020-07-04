@@ -11,13 +11,21 @@ namespace Ambermoon.Render
     // a chair and will sleep if they move onto a bed.
     internal class Character2D
     {
+        public enum State
+        {
+            Stand,
+            Sit,
+            Sleep
+        }
+
         readonly ITextureAtlas textureAtlas;
         readonly IAnimatedSprite sprite;
         readonly Character2DAnimationInfo animationInfo;
-        uint currentFrameIndex;
+        public uint CurrentBaseFrameIndex { get; private set; }
+        public uint CurrentFrameIndex { get; private set; }
+        public uint CurrentFrame => sprite.CurrentFrame;
         uint lastFrameReset = 0u;
-        CharacterDirection direction = CharacterDirection.Down;
-
+        public CharacterDirection Direction { get; private set; } = CharacterDirection.Down;
         public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
         public Position Position { get; } // in Tiles
         public bool Visible
@@ -25,14 +33,22 @@ namespace Ambermoon.Render
             get => sprite.Visible;
             set => sprite.Visible = value;
         }
+        public State CurrentState { get; private set; }
+        public uint NumFrames => CurrentState switch
+        {
+            State.Stand => animationInfo.NumStandFrames,
+            State.Sit => animationInfo.NumSitFrames,
+            State.Sleep => animationInfo.NumSleepFrames,
+            _ => throw new ArgumentOutOfRangeException("Invalid character state")
+        };
 
         public Character2D(IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
             Character2DAnimationInfo animationInfo, RenderMap2D map, Position startPosition)
         {
             this.textureAtlas = textureAtlas;
             this.animationInfo = animationInfo;
-            currentFrameIndex = animationInfo.StandFrameIndex;
-            var textureOffset = textureAtlas.GetOffset(currentFrameIndex);
+            CurrentBaseFrameIndex = CurrentFrameIndex = animationInfo.StandFrameIndex;
+            var textureOffset = textureAtlas.GetOffset(CurrentFrameIndex);
             sprite = spriteFactory.CreateAnimated(animationInfo.FrameWidth, animationInfo.FrameHeight,
                 textureOffset.X, textureOffset.Y, textureAtlas.Texture.Width, animationInfo.NumStandFrames);
             sprite.Layer = layer;
@@ -43,7 +59,7 @@ namespace Ambermoon.Render
             Position = startPosition;
         }
 
-        public void MoveTo(Map map, uint x, uint y, uint ticks)
+        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset)
         {
             if (map != Map.Map)
             {
@@ -55,39 +71,44 @@ namespace Ambermoon.Render
             if (y < Position.Y)
             {
                 // Move back (look up)
-                direction = CharacterDirection.Up;
+                Direction = CharacterDirection.Up;
             }
             else if (y > Position.Y)
             {
                 // Move front (look down)
-                direction = CharacterDirection.Down;
+                Direction = CharacterDirection.Down;
             }
             else if (x < Position.X)
             {
                 // Move purely left
-                direction = CharacterDirection.Left;
+                Direction = CharacterDirection.Left;
             }
             else if (x > Position.X)
             {
                 // Move purely right
-                direction = CharacterDirection.Right;
+                Direction = CharacterDirection.Right;
             }
 
             var tileType = Map.Map.Tiles[x, y].Type;
-            sprite.NumFrames = tileType switch
+            CurrentState = tileType switch
             {
-                Data.Map.TileType.Chair => animationInfo.NumSitFrames,
-                Data.Map.TileType.Bed => animationInfo.NumSleepFrames,
-                _ => animationInfo.NumStandFrames
+                Data.Map.TileType.Chair => State.Sit,
+                Data.Map.TileType.Bed => State.Sleep,
+                _ => State.Stand
             };
-            currentFrameIndex = tileType switch
+            sprite.NumFrames = NumFrames;
+            CurrentBaseFrameIndex = tileType switch
             {
                 Data.Map.TileType.Chair => animationInfo.SitFrameIndex,
                 Data.Map.TileType.Bed => animationInfo.SleepFrameIndex,
                 _ => animationInfo.StandFrameIndex
-            } + (uint)direction * sprite.NumFrames;
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset(currentFrameIndex);
-            sprite.CurrentFrame = 0;
+            } + (uint)Direction * sprite.NumFrames;
+            CurrentFrameIndex = CurrentBaseFrameIndex;
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
+            if (frameReset)
+                sprite.CurrentFrame = 0;
+            else
+                sprite.CurrentFrame = sprite.CurrentFrame; // this may correct the value if NumFrames has changed
             lastFrameReset = ticks;
             Position.X = (int)x;
             Position.Y = (int)y;
@@ -95,10 +116,17 @@ namespace Ambermoon.Render
             sprite.Y = Global.MapViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT;
         }
 
-        public void Update(uint ticks)
+        public virtual void Update(uint ticks)
         {
             uint elapsedTicks = ticks - lastFrameReset;
-            currentFrameIndex = sprite.CurrentFrame = elapsedTicks / animationInfo.TicksPerFrame;
+            sprite.CurrentFrame = elapsedTicks / animationInfo.TicksPerFrame; // this will take care of modulo frame count
+            CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
+        }
+
+        public void SetCurrentFrame(uint frameIndex)
+        {
+            sprite.CurrentFrame = frameIndex; // this will take care of modulo frame count
+            CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
         }
     }
 }
