@@ -21,7 +21,6 @@
 
 using Ambermoon.Data;
 using System.Collections.Generic;
-using System.Data.Common;
 
 namespace Ambermoon.Render
 {
@@ -101,7 +100,31 @@ namespace Ambermoon.Render
             }
         }
 
-        private Map.Tile this[uint x, uint y]
+        public void TriggerEvents(IRenderPlayer player, MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
+        {
+            if (x >= Map.Width)
+            {
+                if (y >= Map.Height)
+                    adjacentMaps[2].TriggerEvents(player, trigger, x - (uint)Map.Width, y - (uint)Map.Height, mapManager, ticks);
+                else
+                    adjacentMaps[0].TriggerEvents(player, trigger, x - (uint)Map.Width, y, mapManager, ticks);
+            }
+            else if (y >= Map.Height)
+            {
+                adjacentMaps[1].TriggerEvents(player, trigger, x, y - (uint)Map.Height, mapManager, ticks);
+            }
+            else
+            {
+                Map.TriggerEvents(player, trigger, x, y, mapManager, ticks);
+            }
+        }
+
+        public Position GetCenterPosition()
+        {
+            return new Position((int)ScrollX + NUM_VISIBLE_TILES_X / 2, (int)ScrollY + NUM_VISIBLE_TILES_Y / 2);
+        }
+
+        public Map.Tile this[uint x, uint y]
         {
             get
             {

@@ -37,15 +37,19 @@ namespace Ambermoon.Render
             {
                 while (newX < 0)
                     newX += map.Width;
-                while (newX >= map.Width)
-                    newX -= map.Width;
                 while (newY < 0)
                     newY += map.Height;
-                while (newY >= map.Height)
-                    newY -= map.Height;
+
+                if (!Map.Map.IsWorldMap)
+                {
+                    while (newX >= map.Width)
+                        newX -= map.Width;
+                    while (newY >= map.Height)
+                        newY -= map.Height;
+                }
             }
 
-            var tile = map.Tiles[newX, newY];
+            var tile = Map[(uint)newX, (uint)newY];
             bool canMove;
 
             switch (tile.Type)
@@ -106,16 +110,18 @@ namespace Ambermoon.Render
                     bool frameReset = NumFrames == 1 || newDirection != prevDirection;
                     var prevState = CurrentState;
 
-                    MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset);
+                    MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset, false);
                     // We trigger with our lower half so add 1 to y
-                    oldMap.TriggerEvents(this, MapEventTrigger.Move, (uint)newX, (uint)newY + 1, mapManager, ticks);
+                    Map.TriggerEvents(this, MapEventTrigger.Move, (uint)newX, (uint)newY + 1, mapManager, ticks);
 
                     if (!frameReset && CurrentState == prevState)
                         SetCurrentFrame((CurrentFrame + 1) % NumFrames);
                 }
                 else
                 {
-                    // TODO: adjust player position on map transition
+                    // adjust player position on map transition
+                    var position = Map.GetCenterPosition();
+                    MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, true);
                 }
             }
 

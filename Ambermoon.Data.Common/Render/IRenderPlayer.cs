@@ -6,6 +6,6 @@ namespace Ambermoon.Render
     {
         Position Position { get; } // in Tiles
         bool Move(int x, int y, uint ticks);
-        void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset);
+        void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, bool keepDirection);
     }
 }

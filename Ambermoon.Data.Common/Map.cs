@@ -58,7 +58,7 @@ namespace Ambermoon.Data
 
             if (changeY != 0)
             {
-                int newIndex = (int)relativeIndex + changeY;
+                int newIndex = (int)relativeIndex + changeY * (int)mapsPerRow;
                 int totalMaps = (int)numMapRows * (int)mapsPerRow;
 
                 while (newIndex < 0)
@@ -119,6 +119,38 @@ namespace Ambermoon.Data
                 return null;
             }
         }
+        public uint? UpLeftMapIndex
+        {
+            get
+            {
+                if (IsLyramionMap)
+                    return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, -1);
+
+                if (IsForestMoonMap)
+                    return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, -1);
+
+                if (IsMoragMap)
+                    return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, -1);
+
+                return null;
+            }
+        }
+        public uint? UpRightMapIndex
+        {
+            get
+            {
+                if (IsLyramionMap)
+                    return MoveWorldMapIndex(1u, 16u, 16u, Index, 1, -1);
+
+                if (IsForestMoonMap)
+                    return MoveWorldMapIndex(300u, 6u, 6u, Index, 1, -1);
+
+                if (IsMoragMap)
+                    return MoveWorldMapIndex(513u, 4u, 4u, Index, 1, -1);
+
+                return null;
+            }
+        }
         public uint? DownMapIndex
         {
             get
@@ -131,6 +163,22 @@ namespace Ambermoon.Data
 
                 if (IsMoragMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, 0, 1);
+
+                return null;
+            }
+        }
+        public uint? DownLeftMapIndex
+        {
+            get
+            {
+                if (IsLyramionMap)
+                    return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, 1);
+
+                if (IsForestMoonMap)
+                    return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, 1);
+
+                if (IsMoragMap)
+                    return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, 1);
 
                 return null;
             }
@@ -168,7 +216,8 @@ namespace Ambermoon.Data
                     if (mapEvent is MapChangeEvent mapChangeEvent)
                     {
                         // The position (x, y) is 1-based in the data so we subtract 1.
-                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X - 1, mapChangeEvent.Y - 1, ticks, true);
+                        // Morover the players position is 1 tile below its drawing position so subtract another 1 from y.
+                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X - 1, mapChangeEvent.Y - 2, ticks, true, true);
                     }
                 }
             }

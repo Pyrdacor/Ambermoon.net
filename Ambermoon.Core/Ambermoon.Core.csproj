@@ -18,6 +18,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Common\Ambermoon.Common.csproj" />
     <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
   </ItemGroup>
 </Project>

@@ -59,13 +59,15 @@ namespace Ambermoon.Render
             Position = startPosition;
         }
 
-        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset)
+        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, bool keepDirection)
         {
             if (map != Map.Map)
             {
-                Map.SetMap(map, (uint)Math.Max(0, (int)x - 7), (uint)Math.Max(0, (int)y - 6));
+                Map.SetMap(map,
+                    (uint)Util.Limit(0, (int)x - 5, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
+                    (uint)Util.Limit(0, (int)y - 4, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
             }
-            else
+            else if (!keepDirection)
             {
                 // Only adjust direction when not changing the map.
 
@@ -93,7 +95,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            var tileType = Map.Map.Tiles[x, y].Type;
+            var tileType = Map[x, y].Type;
             CurrentState = tileType switch
             {
                 Data.Map.TileType.Chair => State.Sit,
