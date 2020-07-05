@@ -15,6 +15,7 @@ namespace Ambermoon.Data
         Player,
         Portrait,
         Item,
+        Layout,
         // TODO ...
     }
 

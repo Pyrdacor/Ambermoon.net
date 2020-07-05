@@ -62,6 +62,7 @@ namespace Ambermoon.Data.Legacy
             { GraphicType.Player, new GraphicFile("Party_gfx.amb") },
             { GraphicType.Portrait, new GraphicFile("Portraits.amb") },
             { GraphicType.Item, new GraphicFile("Object_icons") },
+            { GraphicType.Layout, new GraphicFile("Layouts.amb") }
         };
         readonly Dictionary<GraphicType, List<Graphic>> graphics = new Dictionary<GraphicType, List<Graphic>>();
 
@@ -155,6 +156,14 @@ namespace Ambermoon.Data.Legacy
                     info.Width = 16;
                     info.Height = 16;
                     info.Palette = palettes[33]; // TODO
+                    break;
+                case GraphicType.Layout:
+                    info.Width = 320;
+                    info.Height = 163;
+                    info.GraphicFormat = GraphicFormat.Palette3Bit;
+                    info.PaletteOffset = 24;
+                    info.Palette = palettes[1];
+                    info.Alpha = true;
                     break;
                 // TODO
             }

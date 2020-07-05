@@ -32,8 +32,6 @@ namespace Ambermoon.Renderer.OpenGL
 
     public class RenderView : RenderLayerFactory, IRenderView, IDisposable
     {
-        // this is for the background map at start
-        int mapScrollTicks = 0;
         bool disposed = false;
         readonly Context context;
         Rect virtualScreenDisplay;
@@ -82,7 +80,9 @@ namespace Ambermoon.Renderer.OpenGL
             this.deviceType = deviceType;
             isLandscapeRatio = VirtualScreen.Size.Width > VirtualScreen.Size.Height;
 
-            context = new Context(State, VirtualScreen.Size.Width, VirtualScreen.Size.Height);
+            Resize(screenWidth, screenHeight);
+
+            context = new Context(State, virtualScreenDisplay.Size.Width, virtualScreenDisplay.Size.Height);
 
             // factories
             spriteFactory = new SpriteFactory(VirtualScreen);
@@ -99,31 +99,27 @@ namespace Ambermoon.Renderer.OpenGL
                 if (layer == Layer.None)
                     continue;
 
-                // TODO: REMOVE
-                if (layer == Layer.UIBackground)
-                    break; // Stop here for now
-
                 try
                 {
-                    var texture = textureAtlas.GetOrCreate(layer).Texture;
-                    var renderLayer = Create(layer, texture, layer == Layer.UIBackground || layer == Layer.UIForeground);
+                    var texture = textureAtlas.GetOrCreate(layer)?.Texture;
+                    var renderLayer = Create(layer, texture, layer == Layer.UIBackground);
 
                     renderLayer.PositionTransformation = (Position position) =>
                     {
-                        float factorX = (float)VirtualScreen.Size.Width / Global.VirtualScreenWidth;
-                        float factorY = (float)VirtualScreen.Size.Height / Global.VirtualScreenHeight;
+                        float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
+                        float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
 
                         return new Position(Misc.Round(position.X * factorX), Misc.Round(position.Y * factorY));
                     };
 
                     renderLayer.SizeTransformation = (Size size) =>
                     {
-                        float factorX = (float)VirtualScreen.Size.Width / Global.VirtualScreenWidth;
-                        float factorY = (float)VirtualScreen.Size.Height / Global.VirtualScreenHeight;
+                        float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
+                        float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
 
                         // don't scale a dimension of 0
-                        int width = (size.Width == 0) ? 0 : Misc.Round(size.Width * factorX);
-                        int height = (size.Height == 0) ? 0 : Misc.Round(size.Height * factorY);
+                        int width = (size.Width == 0) ? 0 : Misc.Ceiling(size.Width * factorX);
+                        int height = (size.Height == 0) ? 0 : Misc.Ceiling(size.Height * factorY);
 
                         return new Size(width, height);
                     };
@@ -259,9 +255,7 @@ namespace Ambermoon.Renderer.OpenGL
         {
             SetRotation(orientation);
 
-            if ((width == VirtualScreen.Size.Width &&
-                height == VirtualScreen.Size.Height) ||
-                sizingPolicy == SizingPolicy.FitWindow ||
+            if (sizingPolicy == SizingPolicy.FitWindow ||
                 sizingPolicy == SizingPolicy.FitWindowKeepOrientation ||
                 sizingPolicy == SizingPolicy.FitWindowForcePortrait ||
                 sizingPolicy == SizingPolicy.FitWindowForceLandscape)
@@ -274,7 +268,7 @@ namespace Ambermoon.Renderer.OpenGL
             else
             {
                 float ratio = (float)width / (float)height;
-                float virtualRatio = (float)VirtualScreen.Size.Width / (float)VirtualScreen.Size.Height;
+                float virtualRatio = Global.VirtualAspectRatio;
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
                     virtualRatio = 1.0f / virtualRatio;

@@ -160,9 +160,9 @@ namespace Ambermoon
             Width = width;
             Height = height;
 
-            var videoMode = new VideoMode(new System.Drawing.Size(1024, 768), 60);
+            var videoMode = new VideoMode(new System.Drawing.Size(width, height), 60);
             var options = new WindowOptions(true, true, new System.Drawing.Point(100, 100),
-                new System.Drawing.Size(1024, 768), 60.0, 60.0, GraphicsAPI.Default,
+                new System.Drawing.Size(width, height), 60.0, 60.0, GraphicsAPI.Default,
                 "Ambermoon.net", WindowState.Normal, WindowBorder.Fixed, VSyncMode.Off,
                 10, false, videoMode);
 

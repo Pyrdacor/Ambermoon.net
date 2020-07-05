@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Drawing;
-using Ambermoon.Renderer.OpenGL;
-using Silk.NET.Windowing;
-using Silk.NET.Windowing.Common;
 
 namespace Ambermoon
 {
@@ -13,7 +9,7 @@ namespace Ambermoon
         {
             var gameWindow = new GameWindow();
 
-            gameWindow.Run(1280, 960);
+            gameWindow.Run(1280, 800);
         }
     }
 }

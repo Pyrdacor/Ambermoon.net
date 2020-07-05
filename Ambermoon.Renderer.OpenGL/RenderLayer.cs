@@ -112,7 +112,7 @@ namespace Ambermoon.Renderer
 
         public void Render()
         {
-            if (!Visible || texture == null)
+            if (!Visible)
                 return;
 
             if (renderBufferColorRects != null)
@@ -125,16 +125,19 @@ namespace Ambermoon.Renderer
                 renderBufferColorRects.Render();
             }
 
-            TextureShader shader = renderBuffer.Masked ? renderBuffer.MaskedTextureShader : renderBuffer.TextureShader;
+            if (texture != null)
+            {
+                TextureShader shader = renderBuffer.Masked ? renderBuffer.MaskedTextureShader : renderBuffer.TextureShader;
 
-            shader.UpdateMatrices(state);
+                shader.UpdateMatrices(state);
 
-            shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
-            state.Gl.ActiveTexture(GLEnum.Texture0);
-            texture.Bind();
+                shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                state.Gl.ActiveTexture(GLEnum.Texture0);
+                texture.Bind();
 
-            shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
-            shader.SetZ(LayerBaseZ[(int)Layer]);
+                shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
+                shader.SetZ(LayerBaseZ[(int)Layer]);
+            }
 
             renderBuffer.Render();
         }
@@ -231,7 +234,7 @@ namespace Ambermoon.Renderer
 
         public IRenderLayer Create(Layer layer, Render.Texture texture, bool supportColoredRects = false)
         {
-            if (!(texture is Texture))
+            if (texture != null && !(texture is Texture))
                 throw new AmbermoonException(ExceptionScope.Render, "The given texture is not valid for this renderer.");
 
             return layer switch

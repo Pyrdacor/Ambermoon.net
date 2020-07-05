@@ -72,7 +72,12 @@ namespace Ambermoon.Render
         public ITextureAtlas GetOrCreate(Layer layer)
         {
             if (!atlas.ContainsKey(layer))
+            {
+                if (!atlasBuilders.ContainsKey(layer))
+                    return null; // no texture for this layer
+
                 atlas.Add(layer, atlasBuilders[layer].Create());
+            }
 
             return atlas[layer];
         }
@@ -113,6 +118,15 @@ namespace Ambermoon.Render
             // All have a dimension of 16x32 pixels.
             for (int i = 0; i < playerGraphics.Count; ++i)
                 AddTexture(Layer.Characters, (uint)i, playerGraphics[i]);
+
+            #endregion
+
+            #region UI Layout
+
+            var layoutGraphics = graphicProvider.GetGraphics(GraphicType.Layout);
+
+            for (int i = 0; i < layoutGraphics.Count; ++i)
+                AddTexture(Layer.UIForeground, (uint)i, layoutGraphics[i]);
 
             #endregion
 
