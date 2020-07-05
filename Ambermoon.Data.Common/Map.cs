@@ -1,8 +1,27 @@
 ﻿using Ambermoon.Render;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
+    [Flags]
+    public enum MapFlags
+    {
+        None = 0,
+        Indoor = 1 << 0,
+        Outdoor = 1 << 1,
+        Dungeon = 1 << 2,
+        Automapper = 1 << 3, // If active the map has to be explored
+        Unknown1 = 1 << 4,
+        WorldSurface = 1 << 5,
+        SecondaryUI3D = 1 << 6,
+        NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours
+        StationaryGraphics = 1 << 8,
+        Unknown2 = 1 << 9,
+        SecondaryUI2D = 1 << 10,
+        Unknown3 = 1 << 11 // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
+    }
+
     public class Map
     {
         public enum TileType
@@ -28,16 +47,22 @@ namespace Ambermoon.Data
         }
 
         public uint Index { get; private set; }
+        public MapFlags Flags { get; set; }
         public MapType Type { get; set; }
+        public uint MusicIndex { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
         public uint TilesetIndex { get; set; }
+        public uint NPCGfxIndex { get; set; }
+        public uint LabyrinthBackIndex { get; set; }
+        public uint PaletteIndex { get; set; }
+        public World World { get; set; }
         public Tile[,] Tiles { get; set; }
         public List<List<MapEvent>> Events { get; } = new List<List<MapEvent>>();
-        public bool IsLyramionMap => Index >= 1 && Index <= 256;
-        public bool IsForestMoonMap => Index >= 300 && Index <= 335;
-        public bool IsMoragMap => Index >= 513 && Index <= 528;
-        public bool IsWorldMap => IsLyramionMap || IsForestMoonMap || IsMoragMap;
+        public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
+        public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
+        public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;
+        public bool IsWorldMap => Flags.HasFlag(MapFlags.WorldSurface);
         public uint MoveWorldMapIndex(uint baseIndex, uint mapsPerRow, uint numMapRows, uint currentIndex, int changeX, int changeY)
         {
             uint relativeIndex = currentIndex - baseIndex;
@@ -75,13 +100,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, 0);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, 0);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, 0);
 
                 return null;
@@ -91,13 +116,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, 1, 0);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, 1, 0);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, 1, 0);
 
                 return null;
@@ -107,13 +132,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, 0, -1);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, 0, -1);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, 0, -1);
 
                 return null;
@@ -123,13 +148,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, -1);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, -1);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, -1);
 
                 return null;
@@ -139,13 +164,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, 1, -1);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, 1, -1);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, 1, -1);
 
                 return null;
@@ -155,13 +180,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, 0, 1);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, 0, 1);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, 0, 1);
 
                 return null;
@@ -171,13 +196,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, 1);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, 1);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, 1);
 
                 return null;
@@ -187,13 +212,13 @@ namespace Ambermoon.Data
         {
             get
             {
-                if (IsLyramionMap)
+                if (IsLyramionWorldMap)
                     return MoveWorldMapIndex(1u, 16u, 16u, Index, 1, 1);
 
-                if (IsForestMoonMap)
+                if (IsForestMoonWorldMap)
                     return MoveWorldMapIndex(300u, 6u, 6u, Index, 1, 1);
 
-                if (IsMoragMap)
+                if (IsMoragWorldMap)
                     return MoveWorldMapIndex(513u, 4u, 4u, Index, 1, 1);
 
                 return null;

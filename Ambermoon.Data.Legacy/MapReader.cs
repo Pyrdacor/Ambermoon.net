@@ -11,20 +11,26 @@ namespace Ambermoon.Data.Legacy
     {
         public void ReadMap(Map map, IDataReader dataReader)
         {
-            dataReader.ReadWord(); // Unknown
+            map.Flags = (MapFlags)dataReader.ReadWord();
             map.Type = (MapType)dataReader.ReadByte();
 
             if (map.Type != MapType.Map2D && map.Type != MapType.Map3D)
                 throw new Exception("Invalid map data.");
 
-            dataReader.ReadByte(); // Unknown
+            map.MusicIndex = dataReader.ReadByte();
             map.Width = dataReader.ReadByte();
             map.Height = dataReader.ReadByte();
             map.TilesetIndex = dataReader.ReadByte();
 
-            dataReader.ReadByte(); // Unknown
-            dataReader.ReadDword(); // Unknown
-            dataReader.Position += 320; // Event data (format unknown)
+            map.NPCGfxIndex = dataReader.ReadByte();
+            map.LabyrinthBackIndex = dataReader.ReadByte();
+            map.PaletteIndex = dataReader.ReadByte();
+            map.World = (World)dataReader.ReadByte();
+
+            if (dataReader.ReadByte() != 0) // end of map header
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid map data");
+
+            dataReader.Position += 320; // Unknown 320 bytes
 
             if (map.Type == MapType.Map2D)
             {
