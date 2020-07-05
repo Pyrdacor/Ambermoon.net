@@ -51,52 +51,68 @@ namespace Ambermoon.Data.Legacy
                         };
                     }
                 }
-
-                uint numMapEvents = dataReader.ReadWord();
-
-                // Assumption: There are numMapEvents + 1 values.
-                // Each is a offset. The offset is relative to the position behind these offsets
-                // and the offset is multiplied by 12.
-                // A map event has 12 bytes. Per map event id (tile event) there can be multiple
-                // events (I guess depending on some conditions).
-                // So there are offset - lastOffset map events associated with an event id.
-                // Another possibility would be that map events can have n*12 bytes of data
-                // and there is only 1 event possible per tile.
-                // Change map events (type = 1) seem to have only 12 bytes of data.
-                // More research is needed though.
-                uint[] offsets = new uint[numMapEvents + 1];
-
-                for (uint i = 0; i < numMapEvents + 1; ++i)
-                    offsets[i] = dataReader.ReadWord();
-
-                map.Events.Clear();
-
-                if (numMapEvents > 0)
-                {
-                    for (uint i = 0; i < numMapEvents; ++i)
-                    {
-                        uint numSubEvents = offsets[i + 1] - offsets[i];
-                        List<MapEvent> mapEvents = new List<MapEvent>((int)numSubEvents);
-
-                        for (uint s = 0; s < numSubEvents; ++s)
-                        {
-                            // Each event seems to have 12 bytes of data starting with the event type byte
-                            mapEvents.Add(ParseEvent(dataReader));
-                        }
-
-                        map.Events.Add(mapEvents);
-                    }
-                }
-
-                // TODO
-
-                //if (dataReader.ReadWord() != 0) // 00 00 -> end of map
-                    //throw new AmbermoonException(ExceptionScope.Data, "Invalid map format");
             }
             else
             {
                 // TODO: 3D maps (looks like 1 word per tile -> first byte texture index, second maybe overlay texture index?)
+                for (int y = 0; y < map.Height; ++y)
+                {
+                    for (int x = 0; x < map.Width; ++x)
+                    {
+                        dataReader.ReadWord();
+                    }
+                }
             }
+
+            uint numMapEvents = dataReader.ReadWord();
+
+            // There are numMapEvents 16 bit values.
+            // Each gives the offset of the map event to use.
+            // Each event data is 12 bytes in size.
+
+            // After this the total number of map events is given.
+            // Map events can be chained (linked list). Each chain
+            // is identified by a map event id on some map tiles.
+
+            // The last two bytes of each event data contain the
+            // offset of the next event data or 0xFFFF if this is
+            // the last map event of the chain/list.
+            // Note that the linked list can have a non-linear order.
+
+            // E.g. in map 8 the first map event (index 0) references
+            // map event 2 and this references map event 1 which is the
+            // end chunk of the first map event chain.
+            uint[] mapEventOffsets = new uint[numMapEvents];
+
+            for (uint i = 0; i < numMapEvents; ++i)
+                mapEventOffsets[i] = dataReader.ReadWord();
+
+            map.Events.Clear();
+
+            if (numMapEvents > 0)
+            {
+                uint numTotalMapEvents = dataReader.ReadWord();
+                var mapEvents = new List<Tuple<MapEvent, int>>();
+
+                // read all map events and the next map event index
+                for (uint i = 0; i < numTotalMapEvents; ++i)
+                {
+                    mapEvents.Add(Tuple.Create(ParseEvent(dataReader), (int)dataReader.ReadWord()));
+                }
+
+                foreach (var mapEvent in mapEvents)
+                {
+                    mapEvent.Item1.Next = mapEvent.Item2 == 0xffff ? null : mapEvents[mapEvent.Item2].Item1;
+                }
+
+                foreach (var mapEventOffset in mapEventOffsets)
+                    map.Events.Add(mapEvents[(int)mapEventOffset].Item1);
+            }
+
+            // TODO
+
+            //if (dataReader.ReadWord() != 0) // 00 00 -> end of map
+                //throw new AmbermoonException(ExceptionScope.Data, "Invalid map format");
 
             // Remaining bytes unknown
         }
@@ -109,28 +125,59 @@ namespace Ambermoon.Data.Legacy
             switch (type)
             {
                 case MapEventType.MapChange:
-                    // 1. byte is the x coordinate
-                    // 2. byte is the y coordinate
-                    // Then 3 unknown bytes
-                    // Then a word for the map index
-                    // Then 4 unknown bytes (seem to be 00 FF FF FF)
-                    uint x = dataReader.ReadByte();
-                    uint y = dataReader.ReadByte();
-                    dataReader.ReadBytes(3);
-                    uint mapIndex = dataReader.ReadWord();
-                    dataReader.ReadBytes(3);
-                    mapEvent = new MapChangeEvent
                     {
-                        MapIndex = mapIndex,
-                        X = x,
-                        Y = y
-                    };
-                    break;
+                        // 1. byte is the x coordinate
+                        // 2. byte is the y coordinate
+                        // Then 3 unknown bytes
+                        // Then a word for the map index
+                        // Then 2 unknown bytes (seem to be 00 FF)
+                        uint x = dataReader.ReadByte();
+                        uint y = dataReader.ReadByte();
+                        dataReader.ReadBytes(3);
+                        uint mapIndex = dataReader.ReadWord();
+                        dataReader.ReadBytes(2);
+                        mapEvent = new MapChangeEvent
+                        {
+                            MapIndex = mapIndex,
+                            X = x,
+                            Y = y
+                        };
+                        break;
+                    }
+                case MapEventType.Chest:
+                    {
+                        // 1. byte unknown (seen 0x64 when the chest was locked, otherwise 0x00)
+                        // 2. byte unknown
+                        // 3. byte is the lock status (0xFF is open, 0x02 is a special key)
+                        // 4. byte is the chest index
+                        // 5. byte (0 = chest, 1 = pile/removable loot or item)
+                        // word at position 6 is the key index if a key must unlock it
+                        // the last word is unknown (seems to be 0xffff for unlocked, and some id otherwise)
+                        // maybe open it will trigger change/something else?
+                        dataReader.ReadBytes(2); // Unknown
+                        var lockType = (ChestMapEvent.LockType)dataReader.ReadByte();
+                        uint chestIndex = dataReader.ReadByte();
+                        bool removeWhenEmpty = dataReader.ReadByte() != 0;
+                        uint keyIndex = dataReader.ReadWord();
+                        dataReader.ReadWord(); // Unknown
+                        mapEvent = new ChestMapEvent
+                        {
+                            Lock = lockType,
+                            ChestIndex = chestIndex,
+                            RemoveWhenEmpty = removeWhenEmpty,
+                            KeyIndex = keyIndex
+                        };
+                        break;
+                    }
                 default:
-                    // TODO
-                    mapEvent = new MapEvent();
-                    dataReader.ReadBytes(11);
-                    break;
+                    {
+                        // TODO
+                        mapEvent = new DebugMapEvent
+                        {
+                            Data = dataReader.ReadBytes(9)
+                        };
+                        break;
+                    }
             }
 
             mapEvent.Type = type;

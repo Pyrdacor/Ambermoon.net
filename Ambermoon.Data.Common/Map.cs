@@ -58,7 +58,7 @@ namespace Ambermoon.Data
         public uint PaletteIndex { get; set; }
         public World World { get; set; }
         public Tile[,] Tiles { get; set; }
-        public List<List<MapEvent>> Events { get; } = new List<List<MapEvent>>();
+        public List<MapEvent> Events { get; } = new List<MapEvent>();
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;
@@ -231,19 +231,16 @@ namespace Ambermoon.Data
 
         }
 
-        void ExecuteEvents(IRenderPlayer player, uint x, uint y, IMapManager mapManager, uint ticks, List<MapEvent> mapEvents)
+        void ExecuteEvent(IRenderPlayer player, uint x, uint y, IMapManager mapManager, uint ticks, MapEvent mapEvent)
         {
-            foreach (var mapEvent in mapEvents)
+            if (mapEvent.Type == MapEventType.MapChange)
             {
-                if (mapEvent.Type == MapEventType.MapChange)
+                // TODO: conditions?
+                if (mapEvent is MapChangeEvent mapChangeEvent)
                 {
-                    // TODO: conditions?
-                    if (mapEvent is MapChangeEvent mapChangeEvent)
-                    {
-                        // The position (x, y) is 1-based in the data so we subtract 1.
-                        // Morover the players position is 1 tile below its drawing position so subtract another 1 from y.
-                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X - 1, mapChangeEvent.Y - 2, ticks, true, true);
-                    }
+                    // The position (x, y) is 1-based in the data so we subtract 1.
+                    // Morover the players position is 1 tile below its drawing position so subtract another 1 from y.
+                    player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X - 1, mapChangeEvent.Y - 2, ticks, true, true);
                 }
             }
         }
@@ -260,7 +257,7 @@ namespace Ambermoon.Data
             switch (trigger)
             {
                 case MapEventTrigger.Move:
-                    ExecuteEvents(player, x, y, mapManager, ticks, mapEvents);
+                    ExecuteEvent(player, x, y, mapManager, ticks, mapEvents);
                     // TODO
                     break;
                 case MapEventTrigger.Hand:
