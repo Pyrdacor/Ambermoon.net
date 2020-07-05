@@ -63,30 +63,34 @@ namespace Ambermoon.Render
         {
             if (map != Map.Map)
             {
-                Map.SetMap(map, (uint)Math.Max(0, (int)x - 6), (uint)Math.Max(0, (int)y - 5));
+                Map.SetMap(map, (uint)Math.Max(0, (int)x - 7), (uint)Math.Max(0, (int)y - 6));
             }
+            else
+            {
+                // Only adjust direction when not changing the map.
 
-            // Note: Whenever y changes the front/back frame is used.
-            // Only for pure x movements the side frames are used.
-            if (y < Position.Y)
-            {
-                // Move back (look up)
-                Direction = CharacterDirection.Up;
-            }
-            else if (y > Position.Y)
-            {
-                // Move front (look down)
-                Direction = CharacterDirection.Down;
-            }
-            else if (x < Position.X)
-            {
-                // Move purely left
-                Direction = CharacterDirection.Left;
-            }
-            else if (x > Position.X)
-            {
-                // Move purely right
-                Direction = CharacterDirection.Right;
+                // Note: Whenever y changes the front/back frame is used.
+                // Only for pure x movements the side frames are used.
+                if (y < Position.Y)
+                {
+                    // Move back (look up)
+                    Direction = CharacterDirection.Up;
+                }
+                else if (y > Position.Y)
+                {
+                    // Move front (look down)
+                    Direction = CharacterDirection.Down;
+                }
+                else if (x < Position.X)
+                {
+                    // Move purely left
+                    Direction = CharacterDirection.Left;
+                }
+                else if (x > Position.X)
+                {
+                    // Move purely right
+                    Direction = CharacterDirection.Right;
+                }
             }
 
             var tileType = Map.Map.Tiles[x, y].Type;

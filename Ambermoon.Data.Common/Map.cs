@@ -167,7 +167,8 @@ namespace Ambermoon.Data
                     // TODO: conditions?
                     if (mapEvent is MapChangeEvent mapChangeEvent)
                     {
-                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X, mapChangeEvent.Y, ticks, true);
+                        // The position (x, y) is 1-based in the data so we subtract 1.
+                        player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X - 1, mapChangeEvent.Y - 1, ticks, true);
                     }
                 }
             }
