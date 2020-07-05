@@ -17,4 +17,5 @@ You may also checkout my already working Settlers I rewrite at [freeserf.net](ht
 
 2D map rendering is working. Moreover the player can be moved on 2D maps and map changes are possible (as long as the map isn't 3D). World map scrolling is also working.
 
-![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRenderingAlpha.png "Map rendering")
+![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
+![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
