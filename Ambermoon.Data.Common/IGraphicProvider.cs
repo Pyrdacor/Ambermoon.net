@@ -21,6 +21,7 @@ namespace Ambermoon.Data
 
     public interface IGraphicProvider
     {
+        Dictionary<int, Graphic> Palettes { get; }
         List<Graphic> GetGraphics(GraphicType type);
     }
 }

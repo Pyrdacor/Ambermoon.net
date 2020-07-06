@@ -12,7 +12,7 @@ namespace Ambermoon.Render
             ISpriteFactory spriteFactory, IGameData gameData, Position startPosition,
             IMapManager mapManager)
             : base(layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
-                  spriteFactory, gameData.PlayerAnimationInfo, map, startPosition)
+                  spriteFactory, gameData.PlayerAnimationInfo, map, startPosition, 7u)
         {
             this.player = player;
             this.mapManager = mapManager;

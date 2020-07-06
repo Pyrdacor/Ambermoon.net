@@ -76,10 +76,21 @@ namespace Ambermoon.Render
                 if (!atlasBuilders.ContainsKey(layer))
                     return null; // no texture for this layer
 
-                atlas.Add(layer, atlasBuilders[layer].Create());
+                atlas.Add(layer, atlasBuilders[layer].CreateUnpacked(320, 1));
             }
 
             return atlas[layer];
+        }
+
+        public Texture CreatePalette(IGraphicProvider graphicProvider)
+        {
+            var paletteBuilder = factory.Create();
+            uint index = 0;
+
+            foreach (var palette in graphicProvider.Palettes)
+                paletteBuilder.AddTexture(index++, palette.Value);
+
+            return paletteBuilder.CreateUnpacked(32, 4).Texture;
         }
 
         public void AddAll(IGameData gameData, IGraphicProvider graphicProvider)

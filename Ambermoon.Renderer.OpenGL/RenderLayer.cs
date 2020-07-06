@@ -51,6 +51,7 @@ namespace Ambermoon.Renderer
         readonly RenderBuffer renderBuffer = null;
         readonly RenderBuffer renderBufferColorRects = null;
         readonly Texture texture = null;
+        readonly Texture palette = null;
         bool disposed = false;
 
         // The back map layers and the front layers plus characters have a range of 0.3f for object y-ordering).
@@ -90,7 +91,7 @@ namespace Ambermoon.Renderer
             0.99f   // Cursor
         };
 
-        public RenderLayer(State state, Layer layer, Texture texture, bool supportColoredRects = false)
+        public RenderLayer(State state, Layer layer, Texture texture, Texture palette, bool supportColoredRects = false)
         {
             if (layer == Layer.None)
                 throw new AmbermoonException(ExceptionScope.Application, "Layer.None should never be used.");
@@ -108,6 +109,7 @@ namespace Ambermoon.Renderer
 
             Layer = layer;
             this.texture = texture;
+            this.palette = palette;
         }
 
         public void Render()
@@ -134,6 +136,13 @@ namespace Ambermoon.Renderer
                 shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
                 state.Gl.ActiveTexture(GLEnum.Texture0);
                 texture.Bind();
+
+                if (palette != null)
+                {
+                    shader.SetPalette(1);
+                    state.Gl.ActiveTexture(GLEnum.Texture1);
+                    palette.Bind();
+                }
 
                 shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
                 shader.SetZ(LayerBaseZ[(int)Layer]);
@@ -165,6 +174,11 @@ namespace Ambermoon.Renderer
         public void UpdateDisplayLayer(int index, byte displayLayer)
         {
             renderBuffer.UpdateDisplayLayer(index, displayLayer);
+        }
+
+        public void UpdatePaletteIndex(int index, byte paletteIndex)
+        {
+            renderBuffer.UpdatePaletteIndex(index, paletteIndex);
         }
 
         public int GetColoredRectDrawIndex(ColoredRect coloredRect)
@@ -232,15 +246,17 @@ namespace Ambermoon.Renderer
             State = state;
         }
 
-        public IRenderLayer Create(Layer layer, Render.Texture texture, bool supportColoredRects = false)
+        public IRenderLayer Create(Layer layer, Render.Texture texture, Render.Texture palette, bool supportColoredRects = false)
         {
             if (texture != null && !(texture is Texture))
                 throw new AmbermoonException(ExceptionScope.Render, "The given texture is not valid for this renderer.");
+            if (palette != null && !(palette is Texture))
+                throw new AmbermoonException(ExceptionScope.Render, "The given palette is not valid for this renderer.");
 
             return layer switch
             {
                 Layer.None => throw new AmbermoonException(ExceptionScope.Render, $"Cannot create render layer for layer {Enum.GetName(typeof(Layer), layer)}"),
-                _ => new RenderLayer(State, layer, texture as Texture, supportColoredRects),
+                _ => new RenderLayer(State, layer, texture as Texture, palette as Texture, supportColoredRects),
             };
         }
     }

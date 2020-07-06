@@ -36,7 +36,8 @@ namespace Ambermoon.Render
     public interface ITextureAtlasBuilder
     {
         void AddTexture(uint index, Graphic texture);
-        ITextureAtlas Create();
+        ITextureAtlas CreateUnpacked(uint maxWidth, uint bytesPerPixel);
+        ITextureAtlas Create(uint bytesPerPixel);
     }
 
     public interface ITextureAtlasBuilderFactory

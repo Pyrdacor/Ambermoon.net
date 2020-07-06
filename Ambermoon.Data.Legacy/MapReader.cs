@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -46,7 +48,7 @@ namespace Ambermoon.Data.Legacy
                             BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
                             FrontTileIndex = ((uint)(tileData[2] & 0x07) << 8) | tileData[3],
                             MapEventId = tileData[1] & 0x1fu,
-                            Unknown = (tileData[2] & 0xf8u) >> 3,
+                            Unused = (tileData[2] & 0xf8u) >> 3,
                             // TODO: TileType
                         };
                     }
@@ -146,22 +148,23 @@ namespace Ambermoon.Data.Legacy
                     }
                 case MapEventType.Chest:
                     {
-                        // 1. byte unknown (seen 0x64 when the chest was locked, otherwise 0x00)
-                        // 2. byte unknown
-                        // 3. byte is the lock status (0xFF is open, 0x02 is a special key)
-                        // 4. byte is the chest index
-                        // 5. byte (0 = chest, 1 = pile/removable loot or item)
+                        // 1. byte are the lock flags
+                        // 2. byte is unknown (always 0 except for one chest with 20 blue discs which has 0x32 and lock flags of 0x00)
+                        // 3. byte is unknown (0xff for unlocked chests)
+                        // 4. byte is the chest index (0-based)
+                        // 5. byte (0 = chest, 1 = pile/removable loot or item) or "remove if empty"
                         // word at position 6 is the key index if a key must unlock it
                         // the last word is unknown (seems to be 0xffff for unlocked, and some id otherwise)
                         // maybe open it will trigger change/something else?
-                        dataReader.ReadBytes(2); // Unknown
-                        var lockType = (ChestMapEvent.LockType)dataReader.ReadByte();
+                        var lockType = (ChestMapEvent.LockFlags)dataReader.ReadByte();
+                        var unknown = dataReader.ReadWord(); // Unknown
                         uint chestIndex = dataReader.ReadByte();
                         bool removeWhenEmpty = dataReader.ReadByte() != 0;
                         uint keyIndex = dataReader.ReadWord();
                         dataReader.ReadWord(); // Unknown
                         mapEvent = new ChestMapEvent
                         {
+                            Unknown = unknown,
                             Lock = lockType,
                             ChestIndex = chestIndex,
                             RemoveWhenEmpty = removeWhenEmpty,

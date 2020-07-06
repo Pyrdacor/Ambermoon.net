@@ -41,6 +41,7 @@ namespace Ambermoon.Renderer
         readonly ColorBuffer colorBuffer = null;
         readonly LayerBuffer layerBuffer = null;
         readonly IndexBuffer indexBuffer = null;
+        readonly LayerBuffer paletteIndexBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
@@ -82,6 +83,7 @@ namespace Ambermoon.Renderer
             }
             else
             {
+                paletteIndexBuffer = new LayerBuffer(state, true);
                 textureAtlasOffsetBuffer = new PositionBuffer(state, !supportAnimations);
 
                 if (layered)
@@ -109,7 +111,10 @@ namespace Ambermoon.Renderer
             vertexArrayObject.AddBuffer("index", indexBuffer);
 
             if (!noTexture)
+            {
+                vertexArrayObject.AddBuffer(TextureShader.DefaultPaletteIndexName, paletteIndexBuffer);
                 vertexArrayObject.AddBuffer(TextureShader.DefaultTexCoordName, textureAtlasOffsetBuffer);
+            }
         }
 
         internal ColorShader ColorShader => colorShaders[state];
@@ -183,6 +188,18 @@ namespace Ambermoon.Renderer
             positionBuffer.Add((short)position.X, (short)(position.Y + size.Height), index + 3);
 
             indexBuffer.InsertQuad(index / 4);
+
+            if (paletteIndexBuffer != null)
+            {
+                int paletteIndexBufferIndex = paletteIndexBuffer.Add((byte)sprite.PaletteIndex);
+
+                if (paletteIndexBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                paletteIndexBuffer.Add((byte)sprite.PaletteIndex, paletteIndexBufferIndex + 1);
+                paletteIndexBuffer.Add((byte)sprite.PaletteIndex, paletteIndexBufferIndex + 2);
+                paletteIndexBuffer.Add((byte)sprite.PaletteIndex, paletteIndexBufferIndex + 3);
+            }
 
             if (textureAtlasOffsetBuffer != null)
             {
@@ -308,6 +325,17 @@ namespace Ambermoon.Renderer
             }
         }
 
+        public void UpdatePaletteIndex(int index, byte paletteIndex)
+        {
+            if (paletteIndexBuffer != null)
+            {
+                paletteIndexBuffer.Update(index, paletteIndex);
+                paletteIndexBuffer.Update(index + 1, paletteIndex);
+                paletteIndexBuffer.Update(index + 2, paletteIndex);
+                paletteIndexBuffer.Update(index + 3, paletteIndex);
+            }
+        }
+
         public void FreeDrawIndex(int index)
         {
             /*int newSize = -1;
@@ -328,6 +356,14 @@ namespace Ambermoon.Renderer
             {
                 positionBuffer.Update(index + i, short.MaxValue, short.MaxValue); // ensure it is not visible
                 positionBuffer.Remove(index + i);
+            }
+
+            if (paletteIndexBuffer != null)
+            {
+                paletteIndexBuffer.Remove(index);
+                paletteIndexBuffer.Remove(index + 1);
+                paletteIndexBuffer.Remove(index + 2);
+                paletteIndexBuffer.Remove(index + 3);
             }
 
             if (textureAtlasOffsetBuffer != null)
@@ -431,6 +467,7 @@ namespace Ambermoon.Renderer
                 {
                     vertexArrayObject?.Dispose();
                     positionBuffer?.Dispose();
+                    paletteIndexBuffer?.Dispose();
                     textureAtlasOffsetBuffer?.Dispose();
                     maskTextureAtlasOffsetBuffer?.Dispose();
                     baseLineBuffer?.Dispose();

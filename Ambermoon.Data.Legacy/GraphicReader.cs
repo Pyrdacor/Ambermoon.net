@@ -6,9 +6,6 @@ namespace Ambermoon.Data.Legacy
     {
         void ReadPaletteGraphic(Graphic graphic, IDataReader dataReader, int planes, GraphicInfo graphicInfo)
         {
-            if (graphicInfo.Palette == null)
-                throw new ArgumentNullException("Legacy palette graphics need a palette.");
-
             graphic.Width = graphicInfo.Width;
             graphic.Height = graphicInfo.Height;
 
@@ -22,18 +19,18 @@ namespace Ambermoon.Data.Legacy
             {
                 for (int x = 0; x < graphic.Width; ++x)
                 {
-                    int paletteIndex = 0;
+                    byte paletteIndex = 0;
 
                     for (int p = 0; p < planes; ++p)
                     {
                         if ((data[offset + p * planeSize + byteIndex] & (1 << (7 - bitIndex))) != 0)
-                            paletteIndex |= (1 << p);
+                            paletteIndex |= (byte)(1 << p);
                     }
 
                     if (!graphicInfo.Alpha || paletteIndex != 0)
                         paletteIndex += graphicInfo.PaletteOffset;
 
-                    graphicInfo.Palette.Fill(graphic.Data, (x + y * graphic.Width) * 4, paletteIndex, graphicInfo.Alpha);
+                    graphic.Data[x + y * graphic.Width] = paletteIndex;
 
                     if (++bitIndex == 8)
                     {
@@ -54,23 +51,30 @@ namespace Ambermoon.Data.Legacy
             if (graphicInfo == null)
                 throw new ArgumentNullException("Legacy graphics need information about the graphic to load.");
 
-            int width = graphicInfo.Value.Width;
-            int height = graphicInfo.Value.Height;
-            graphic.Data = new byte[width * height * 4];
+            graphic.Width = graphicInfo.Value.Width;
+            graphic.Height = graphicInfo.Value.Height;
 
             switch (graphicInfo.Value.GraphicFormat)
             {
                 case GraphicFormat.Palette5Bit:
+                    graphic.IndexedGraphic = true;
+                    graphic.Data = new byte[graphic.Width * graphic.Height];
                     ReadPaletteGraphic(graphic, dataReader, 5, graphicInfo.Value);
                     break;
                 case GraphicFormat.Palette4Bit:
+                    graphic.IndexedGraphic = true;
+                    graphic.Data = new byte[graphic.Width * graphic.Height];
                     ReadPaletteGraphic(graphic, dataReader, 4, graphicInfo.Value);
                     break;
                 case GraphicFormat.Palette3Bit:
+                    graphic.IndexedGraphic = true;
+                    graphic.Data = new byte[graphic.Width * graphic.Height];
                     ReadPaletteGraphic(graphic, dataReader, 3, graphicInfo.Value);
                     break;
                 case GraphicFormat.XRGB16:
-                    for (int i = 0; i < width * height; ++i)
+                    graphic.IndexedGraphic = false;
+                    graphic.Data = new byte[graphic.Width * graphic.Height * 4];
+                    for (int i = 0; i < graphic.Width * graphic.Height; ++i)
                     {
                         ushort color = dataReader.ReadWord();
                         graphic.Data[i * 4 + 0] = (byte)(((color >> 8) & 0x0f) << 4);
@@ -80,7 +84,9 @@ namespace Ambermoon.Data.Legacy
                     }
                     break;
                 case GraphicFormat.RGBA32:
-                    for (int i = 0; i < width * height; ++i)
+                    graphic.IndexedGraphic = false;
+                    graphic.Data = new byte[graphic.Width * graphic.Height * 4];
+                    for (int i = 0; i < graphic.Width * graphic.Height; ++i)
                     {
                         ulong color = dataReader.ReadDword();
                         graphic.Data[i * 4 + 0] = (byte)((color >> 24) & 0xff);

@@ -42,7 +42,7 @@ namespace Ambermoon.Data
             public uint BackTileIndex { get; set; }
             public uint FrontTileIndex { get; set; }
             public uint MapEventId { get; set; }
-            public uint Unknown { get; set; }
+            public uint Unused { get; set; } // always 0
             public TileType Type { get; set; }
         }
 

@@ -72,8 +72,64 @@ namespace Ambermoon.Renderer
             textures.Add(index, texture);
         }
 
+        public ITextureAtlas CreateUnpacked(uint maxWidth, uint bytesPerPixel)
+        {
+            uint width = 0u;
+            uint height = 0u;
+            uint xOffset = 0u;
+            uint yOffset = 0u;
+            Dictionary<uint, Position> textureOffsets = new Dictionary<uint, Position>();
+
+            foreach (var textureEntry in textures)
+            {
+                var textureIndex = textureEntry.Key;
+                var texture = textureEntry.Value;                
+
+                if (xOffset + texture.Width <= maxWidth)
+                {
+                    if (yOffset + texture.Height > height)
+                        height = yOffset + (uint)texture.Height;
+
+                    textureOffsets.Add(textureIndex, new Position((int)xOffset, (int)yOffset));
+
+                    xOffset += (uint)texture.Width;
+
+                    if (xOffset > width)
+                        width = xOffset;
+                }
+                else
+                {
+                    xOffset = 0;
+                    yOffset = height;
+
+                    height = yOffset + (uint)texture.Height;
+
+                    textureOffsets.Add(textureIndex, new Position((int)xOffset, (int)yOffset));
+
+                    xOffset += (uint)texture.Width;
+
+                    if (xOffset > width)
+                        width = xOffset;
+                }
+            }
+
+            // create texture
+            var atlasTexture = new MutableTexture(state, (int)width, (int)height, bytesPerPixel);
+
+            foreach (var offset in textureOffsets)
+            {
+                var subTexture = textures[offset.Key];
+
+                atlasTexture.AddSubTexture(offset.Value, subTexture.Data, subTexture.Width, subTexture.Height);
+            }
+
+            atlasTexture.Finish(0);
+
+            return new TextureAtlas(atlasTexture, textureOffsets);
+        }
+
         // Note: It is not the best texture packing algorithm but it will do its job
-        public ITextureAtlas Create()
+        public ITextureAtlas Create(uint bytesPerPixel)
         {
             // sort textures by similar heights (16-pixel bands)
             // heights of items are < key * 16
@@ -172,7 +228,7 @@ namespace Ambermoon.Renderer
                     }
                 }
 
-                if (xOffset > maxWidth - 360) // we do not expect textures with a width greater than 360
+                if (xOffset > maxWidth - 320) // we do not expect textures with a width greater than 320
                 {
                     xOffset = 0;
                     yOffset = height;
@@ -180,7 +236,7 @@ namespace Ambermoon.Renderer
             }
 
             // create texture
-            var atlasTexture = new MutableTexture(state, (int)width, (int)height);
+            var atlasTexture = new MutableTexture(state, (int)width, (int)height, bytesPerPixel);
 
             foreach (var offset in textureOffsets)
             {

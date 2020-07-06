@@ -26,22 +26,33 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultTexCoordName = "texCoord";
         internal static readonly string DefaultSamplerName = "sampler";
         internal static readonly string DefaultAtlasSizeName = "atlasSize";
+        internal static readonly string DefaultPaletteName = "palette";
+        internal static readonly string DefaultPaletteIndexName = "paletteIndex";
 
         readonly string texCoordName;
         readonly string samplerName;
         readonly string atlasSizeName;
+        readonly string paletteName;
+        readonly string paletteIndexName;
 
+        // The palette has a size of 32x49 pixels.
+        // Each row represents one palette of 32 colors.
+        // So the palette index determines the pixel row.
+        // The column is the palette color index from 0 to 31.
         static string[] TextureFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
             $"uniform sampler2D {DefaultSamplerName};",
+            $"uniform sampler2D {DefaultPaletteName};",
             $"in vec2 varTexCoord;",
+            $"flat in float palIndex;",
             $"",
             $"void main()",
             $"{{",
-            $"    vec4 pixelColor = texture({DefaultSamplerName}, varTexCoord);",
+            $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
+            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2(colorIndex / 32.0f, palIndex / 49.0f));",
             $"    ",
-            $"    if (pixelColor.a < 0.5)",
+            $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
             $"        discard;",
             $"    else",
             $"        {DefaultFragmentOutColorName} = pixelColor;",
@@ -54,11 +65,13 @@ namespace Ambermoon.Renderer
             $"in ivec2 {DefaultPositionName};",
             $"in ivec2 {DefaultTexCoordName};",
             $"in uint {DefaultLayerName};",
+            $"in uint {DefaultPaletteIndexName};",
             $"uniform uvec2 {DefaultAtlasSizeName};",
             $"uniform float {DefaultZName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
             $"out vec2 varTexCoord;",
+            $"flat out float palIndex;",
             $"",
             $"void main()",
             $"{{",
@@ -67,13 +80,14 @@ namespace Ambermoon.Renderer
             $"    varTexCoord = vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    ",
             $"    varTexCoord *= atlasFactor;",
+            $"    palIndex = float({DefaultPaletteIndexName});",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
             $"}}"
         };
 
         TextureShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultZName, DefaultPositionName,
-                  DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultLayerName,
+                  DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultLayerName, DefaultPaletteName,
                   TextureFragmentShader(state), TextureVertexShader(state))
         {
 
@@ -81,18 +95,24 @@ namespace Ambermoon.Renderer
 
         protected TextureShader(State state, string modelViewMatrixName, string projectionMatrixName, string zName,
             string positionName, string texCoordName, string samplerName, string atlasSizeName, string layerName,
-            string[] fragmentShaderLines, string[] vertexShaderLines)
+            string paletteName, string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, DefaultColorName, zName, positionName, layerName,
                   fragmentShaderLines, vertexShaderLines)
         {
             this.texCoordName = texCoordName;
             this.samplerName = samplerName;
             this.atlasSizeName = atlasSizeName;
+            this.paletteName = paletteName;
         }
 
         public void SetSampler(int textureUnit = 0)
         {
             shaderProgram.SetInput(samplerName, textureUnit);
+        }
+
+        public void SetPalette(int textureUnit = 1)
+        {
+            shaderProgram.SetInput(paletteName, textureUnit);
         }
 
         public void SetAtlasSize(uint width, uint height)

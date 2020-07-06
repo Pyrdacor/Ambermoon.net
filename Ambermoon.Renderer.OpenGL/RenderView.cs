@@ -90,9 +90,10 @@ namespace Ambermoon.Renderer.OpenGL
 
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
-            var textureAtlas = TextureAtlasManager.Instance;
+            var textureAtlasManager = TextureAtlasManager.Instance;
 
-            textureAtlas.AddAll(gameData, graphicProvider);
+            textureAtlasManager.AddAll(gameData, graphicProvider);
+            var palette = textureAtlasManager.CreatePalette(graphicProvider);
 
             foreach (Layer layer in Enum.GetValues(typeof(Layer)))
             {
@@ -101,8 +102,8 @@ namespace Ambermoon.Renderer.OpenGL
 
                 try
                 {
-                    var texture = textureAtlas.GetOrCreate(layer)?.Texture;
-                    var renderLayer = Create(layer, texture, layer == Layer.UIBackground);
+                    var texture = textureAtlasManager.GetOrCreate(layer)?.Texture;
+                    var renderLayer = Create(layer, texture, palette, layer == Layer.UIBackground);
 
                     renderLayer.PositionTransformation = (Position position) =>
                     {

@@ -32,11 +32,26 @@ namespace Ambermoon.Renderer
         protected int drawIndex = -1;
         Position textureAtlasOffset = null;
         int baseLineOffset = 0;
+        byte paletteIndex = 0;
 
         public Sprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
             : base(width, height, virtualScreen)
         {
             textureAtlasOffset = new Position(textureAtlasX, textureAtlasY);
+        }
+
+        public byte PaletteIndex
+        {
+            get => paletteIndex;
+            set
+            {
+                if (paletteIndex == value)
+                    return;
+
+                paletteIndex = value;
+
+                UpdatePaletteIndex();
+            }
         }
 
         public virtual Position TextureAtlasOffset
@@ -93,6 +108,12 @@ namespace Ambermoon.Renderer
                 (Layer as RenderLayer).UpdateTextureAtlasOffset(drawIndex, this);
         }
 
+        protected virtual void UpdatePaletteIndex()
+        {
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdatePaletteIndex(drawIndex, PaletteIndex);
+        }
+
         public override void Resize(int width, int height)
         {
             if (Width == width && Height == height)
@@ -111,12 +132,27 @@ namespace Ambermoon.Renderer
         Position textureAtlasOffset = null;
         int baseLineOffset = 0;
         Position maskTextureAtlasOffset = null;
+        byte paletteIndex = 0;
 
         public MaskedSprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
             : base(width, height, virtualScreen)
         {
             textureAtlasOffset = new Position(textureAtlasX, textureAtlasY);
             maskTextureAtlasOffset = new Position(textureAtlasX, textureAtlasY);
+        }
+
+        public byte PaletteIndex
+        {
+            get => paletteIndex;
+            set
+            {
+                if (paletteIndex == value)
+                    return;
+
+                paletteIndex = value;
+
+                UpdatePaletteIndex();
+            }
         }
 
         public Position TextureAtlasOffset
@@ -196,6 +232,12 @@ namespace Ambermoon.Renderer
         {
             if (drawIndex != -1) // -1 means not attached to a layer
                 (Layer as RenderLayer).UpdateTextureAtlasOffset(drawIndex, this, maskTextureAtlasOffset);
+        }
+
+        protected virtual void UpdatePaletteIndex()
+        {
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdatePaletteIndex(drawIndex, PaletteIndex);
         }
     }
 

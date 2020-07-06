@@ -22,7 +22,6 @@
                 }
             }
 
-            // TODO: Check if this is correct
             chest.Gold = dataReader.ReadWord();
             chest.Food = dataReader.ReadWord();
         }

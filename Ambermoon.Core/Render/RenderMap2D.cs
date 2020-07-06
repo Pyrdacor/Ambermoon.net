@@ -161,8 +161,10 @@ namespace Ambermoon.Render
 
                     backgroundTileSprites[index].Layer = backLayer;
                     backgroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
+                    backgroundTileSprites[index].PaletteIndex = (byte)Map.PaletteIndex;
                     foregroundTileSprites[index].Layer = frontLayer;
                     foregroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
+                    foregroundTileSprites[index].PaletteIndex = (byte)Map.PaletteIndex;
 
                     if (tile.BackTileIndex == 0)
                     {

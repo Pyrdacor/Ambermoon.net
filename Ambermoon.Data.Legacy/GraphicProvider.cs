@@ -25,23 +25,25 @@ namespace Ambermoon.Data.Legacy
         };
 
         readonly GameData gameData;
+        public Dictionary<int, Graphic> Palettes { get; }
 
         public GraphicProvider(GameData gameData)
         {
             this.gameData = gameData;
-            var palettes = gameData.Files[paletteFile].Files.ToDictionary(f => f.Key, f => ReadPalette(f.Value));
+            var graphicReader = new GraphicReader();
+            Palettes = gameData.Files[paletteFile].Files.ToDictionary(f => f.Key, f => ReadPalette(graphicReader, f.Value));
 
             foreach (GraphicType type in Enum.GetValues(typeof(GraphicType)))
             {
-                LoadGraphics(type, palettes);
+                LoadGraphics(type);
             }
         }
 
-        Palette ReadPalette(IDataReader reader)
+        Graphic ReadPalette(GraphicReader graphicReader, IDataReader reader)
         {
             var paletteGraphic = new Graphic();
-            new GraphicReader().ReadGraphic(paletteGraphic, reader, paletteGraphicInfo);
-            return new Palette(paletteGraphic);
+            graphicReader.ReadGraphic(paletteGraphic, reader, paletteGraphicInfo);
+            return paletteGraphic;
         }
 
         static GraphicInfo paletteGraphicInfo = new GraphicInfo
@@ -71,13 +73,13 @@ namespace Ambermoon.Data.Legacy
             return graphics[type];
         }
 
-        void LoadGraphics(GraphicType type, Dictionary<int, Palette> palettes)
+        void LoadGraphics(GraphicType type)
         {
             if (!graphics.ContainsKey(type))
             {
                 graphics.Add(type, new List<Graphic>());
                 var reader = new GraphicReader();
-                var info = GraphicInfoFromType(type, palettes);
+                var info = GraphicInfoFromType(type);
                 var graphicList = graphics[type];
                 var containerFile = gameData.Files[graphicFiles[type].File];
 
@@ -110,7 +112,7 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        GraphicInfo GraphicInfoFromType(GraphicType type, Dictionary<int, Palette> palettes)
+        GraphicInfo GraphicInfoFromType(GraphicType type)
         {
             var info = new GraphicInfo
             {
@@ -123,46 +125,38 @@ namespace Ambermoon.Data.Legacy
             {
                 case GraphicType.Tileset1:
                 case GraphicType.Tileset2:
-                    info.Palette = palettes[1];
                     info.Alpha = true;
                     break;
                 case GraphicType.Tileset3:
-                    info.Palette = palettes[3];
                     info.Alpha = true;
                     break;
                 case GraphicType.Tileset4:
                 case GraphicType.Tileset5:
                 case GraphicType.Tileset6:
                 case GraphicType.Tileset7:
-                    info.Palette = palettes[7];
                     info.Alpha = true;
                     break;
                 case GraphicType.Tileset8:
-                    info.Palette = palettes[10];
                     info.Alpha = true;
                     break;
                 case GraphicType.Player:
                     info.Width = 16;
                     info.Height = 32;
-                    info.Palette = palettes[7];
                     info.Alpha = true;
                     break;
                 case GraphicType.Portrait:
                     info.Width = 32;
                     info.Height = 32;
-                    info.Palette = palettes[1]; // TODO
                     break;
                 case GraphicType.Item:
                     info.Width = 16;
                     info.Height = 16;
-                    info.Palette = palettes[33]; // TODO
                     break;
                 case GraphicType.Layout:
                     info.Width = 320;
                     info.Height = 163;
                     info.GraphicFormat = GraphicFormat.Palette3Bit;
                     info.PaletteOffset = 24;
-                    info.Palette = palettes[1];
                     info.Alpha = true;
                     break;
                 // TODO

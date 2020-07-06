@@ -31,6 +31,7 @@ namespace Ambermoon.UI
             _sprite.Layer = renderView.GetLayer(Layer.UIForeground);
             _sprite.X = Global.LayoutX;
             _sprite.Y = Global.LayoutY;
+            _sprite.PaletteIndex = 0;
 
             SetLayout(LayoutType.None);
         }

@@ -34,6 +34,12 @@ namespace Ambermoon.Render
             get;
             set;
         }
+
+        byte PaletteIndex
+        {
+            get;
+            set;
+        }
     }
 
     public interface IMaskedSprite : ISprite

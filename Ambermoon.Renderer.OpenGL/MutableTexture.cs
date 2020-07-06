@@ -25,16 +25,18 @@ namespace Ambermoon.Renderer
 {
     internal class MutableTexture : Texture
     {
+        uint bytesPerPixel = 4;
         int width = 0;
         int height = 0;
         byte[] data = null;
 
-        public MutableTexture(State state, int width, int height)
+        public MutableTexture(State state, int width, int height, uint bytesPerPixel)
             : base(state, width, height)
         {
+            this.bytesPerPixel = bytesPerPixel;
             this.width = width;
             this.height = height;
-            data = new byte[width * height * 4]; // initialized with zeros so non-occupied areas will be transparent
+            data = new byte[width * height * bytesPerPixel]; // initialized with zeros so non-occupied areas will be transparent
         }
 
         public override int Width => width;
@@ -44,34 +46,20 @@ namespace Ambermoon.Renderer
         {
             for (int y = 0; y < height; ++y)
             {
-                Buffer.BlockCopy(data, y * width * 4, this.data, (position.X + (position.Y + y) * Width) * 4, width * 4);
+                Buffer.BlockCopy(data, y * width * (int)bytesPerPixel, this.data, (position.X + (position.Y + y) * Width) * (int)bytesPerPixel, width * (int)bytesPerPixel);
             }
-        }
-
-        public void SetPixel(int x, int y, byte r, byte g, byte b, byte a = 255)
-        {
-            int index = y * Width + x;
-
-            data[index * 4 + 0] = r;
-            data[index * 4 + 1] = g;
-            data[index * 4 + 2] = b;
-            data[index * 4 + 3] = a;
-        }
-
-        public void SetPixels(byte[] pixelData)
-        {
-            if (pixelData == null)
-                throw new AmbermoonException(ExceptionScope.Data, "Pixel data was null.");
-
-            if (pixelData.Length != data.Length)
-                throw new AmbermoonException(ExceptionScope.Data, "Pixel data size does not match texture data size.");
-
-            Buffer.BlockCopy(pixelData, 0, data, 0, pixelData.Length);
         }
 
         public void Finish(int numMipMapLevels)
         {
-            Create(PixelFormat.RGBA8, data, numMipMapLevels);
+            var pixelFormat = bytesPerPixel switch
+            {
+                1 => PixelFormat.Alpha,
+                4 => PixelFormat.RGBA8,
+                _ => throw new ArgumentOutOfRangeException($"Unsupported bytes per pixel value: {bytesPerPixel}")
+            };
+
+            Create(pixelFormat, data, numMipMapLevels);
 
             data = null;
         }
@@ -83,7 +71,7 @@ namespace Ambermoon.Renderer
 
             this.width = width;
             this.height = height;
-            data = new byte[width * height * 4]; // initialized with zeros so non-occupied areas will be transparent
+            data = new byte[width * height * bytesPerPixel]; // initialized with zeros so non-occupied areas will be transparent
         }
     }
 }

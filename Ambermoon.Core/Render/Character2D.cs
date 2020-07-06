@@ -43,7 +43,7 @@ namespace Ambermoon.Render
         };
 
         public Character2D(IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
-            Character2DAnimationInfo animationInfo, RenderMap2D map, Position startPosition)
+            Character2DAnimationInfo animationInfo, RenderMap2D map, Position startPosition, uint paletteIndex)
         {
             this.textureAtlas = textureAtlas;
             this.animationInfo = animationInfo;
@@ -55,6 +55,7 @@ namespace Ambermoon.Render
             sprite.X = Global.MapViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH;
             sprite.Y = Global.MapViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT;
             sprite.BaseLineOffset = 1;
+            sprite.PaletteIndex = (byte)paletteIndex;
             Map = map;
             Position = startPosition;
         }

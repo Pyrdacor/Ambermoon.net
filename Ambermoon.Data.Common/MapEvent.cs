@@ -58,21 +58,44 @@ namespace Ambermoon.Data
 
     public class ChestMapEvent : MapEvent
     {
-        public enum LockType
+        [Flags]
+        public enum LockFlags
         {
-            Lockpick = 1,
-            Key = 2,
-            Open = 255
+            // Seen these hex values only:
+            // 01, 05, 0A, 0F, 14, 19, 1E, 32, 37, 4B, 55, 63, 64
+            // In binary:
+            // 0000 0001
+            // 0000 0101
+            // 0000 1010
+            // 0000 1111
+            // 0001 0100
+            // 0001 1001
+            // 0001 1110
+            // 0011 0010
+            // 0011 0111
+            // 0100 1011
+            // 0101 0101
+            // 0110 0011
+            // 0110 0100
+            // ---------
+            // 0x01 is a locked chest that can be opened with a lockpick.
+            // 0x64 could be a locked chest that needs a special key.
+            Open = 0,
+            Lockpick = 0x01 // these also have a trap attached
         }
 
-        public LockType Lock { get; set; }
+        public ushort Unknown { get; set; }
+        public LockFlags Lock { get; set; }
+        /// <summary>
+        /// Note: This is 0-based but the files might by 1-based.
+        /// </summary>
         public uint ChestIndex { get; set; }
         public bool RemoveWhenEmpty { get; set; }
         public uint KeyIndex { get; set; }
 
         public override string ToString()
         {
-            return $"Chest {ChestIndex}, {Lock}, RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}";
+            return $"Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Unknown {Unknown:X4}";
         }
     }
 
