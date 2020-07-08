@@ -18,6 +18,7 @@ namespace Ambermoon.Render
             Sleep
         }
 
+        readonly Game game;
         readonly ITextureAtlas textureAtlas;
         readonly IAnimatedSprite sprite;
         readonly Character2DAnimationInfo animationInfo;
@@ -42,9 +43,10 @@ namespace Ambermoon.Render
             _ => throw new ArgumentOutOfRangeException("Invalid character state")
         };
 
-        public Character2D(IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
+        public Character2D(Game game, IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
             Character2DAnimationInfo animationInfo, RenderMap2D map, Position startPosition, uint paletteIndex)
         {
+            this.game = game;
             this.textureAtlas = textureAtlas;
             this.animationInfo = animationInfo;
             CurrentBaseFrameIndex = CurrentFrameIndex = animationInfo.StandFrameIndex;
@@ -64,9 +66,17 @@ namespace Ambermoon.Render
         {
             if (map != Map.Map)
             {
-                Map.SetMap(map,
-                    (uint)Util.Limit(0, (int)x - 5, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                    (uint)Util.Limit(0, (int)y - 4, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
+                if (map.Type == MapType.Map2D)
+                {
+                    Map.SetMap(map,
+                        (uint)Util.Limit(0, (int)x - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
+                        (uint)Util.Limit(0, (int)y - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
+                }
+                else
+                {
+                    game.Start3D(map, x, y);
+                    return;
+                }
             }
             else if (!keepDirection)
             {

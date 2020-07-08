@@ -8,10 +8,10 @@ namespace Ambermoon.Render
         readonly Player player;
         readonly IMapManager mapManager;
 
-        public Player2D(IRenderLayer layer, Player player, RenderMap2D map,
+        public Player2D(Game game, IRenderLayer layer, Player player, RenderMap2D map,
             ISpriteFactory spriteFactory, IGameData gameData, Position startPosition,
             IMapManager mapManager)
-            : base(layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
+            : base(game, layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
                   spriteFactory, gameData.PlayerAnimationInfo, map, startPosition, 7u)
         {
             this.player = player;
@@ -116,12 +116,25 @@ namespace Ambermoon.Render
 
                     if (!frameReset && CurrentState == prevState)
                         SetCurrentFrame((CurrentFrame + 1) % NumFrames);
+
+                    var mapOffset = oldMap.MapOffset;
+                    player.Position.X = mapOffset.X + Position.X - (int)Map.ScrollX;
+                    player.Position.Y = mapOffset.Y + Position.Y - (int)Map.ScrollY;
                 }
                 else
                 {
                     // adjust player position on map transition
                     var position = Map.GetCenterPosition();
                     MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, true);
+                    
+                    if (Map.Map.Type == MapType.Map2D)
+                    {
+                        var mapOffset = oldMap.MapOffset;
+                        player.Position.X = mapOffset.X + Position.X - (int)Map.ScrollX;
+                        player.Position.Y = mapOffset.Y + Position.Y - (int)Map.ScrollY;
+
+                        // Note: For 3D maps the game/3D map will handle player position updating.
+                    }
                 }
             }
 

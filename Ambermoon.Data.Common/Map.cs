@@ -69,28 +69,28 @@ namespace Ambermoon.Data
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;
         public bool IsWorldMap => Flags.HasFlag(MapFlags.WorldSurface);
-        public uint MoveWorldMapIndex(uint baseIndex, uint mapsPerRow, uint numMapRows, uint currentIndex, int changeX, int changeY)
+        public uint MoveWorldMapIndex(uint baseIndex, uint worldMapDimension, uint currentIndex, int changeX, int changeY)
         {
             uint relativeIndex = currentIndex - baseIndex;
-            uint row = relativeIndex / mapsPerRow;
+            uint row = relativeIndex / worldMapDimension;
 
             if (changeX != 0)
             {
-                uint rowBaseIndex = row * mapsPerRow;
-                int indexInRow = ((int)relativeIndex % (int)mapsPerRow) + changeX;
+                uint rowBaseIndex = row * worldMapDimension;
+                int indexInRow = ((int)relativeIndex % (int)worldMapDimension) + changeX;
 
                 while (indexInRow < 0)
-                    indexInRow += (int)mapsPerRow;
-                while (indexInRow >= mapsPerRow)
-                    indexInRow -= (int)mapsPerRow;
+                    indexInRow += (int)worldMapDimension;
+                while (indexInRow >= worldMapDimension)
+                    indexInRow -= (int)worldMapDimension;
 
                 relativeIndex = rowBaseIndex + (uint)indexInRow;
             }
 
             if (changeY != 0)
             {
-                int newIndex = (int)relativeIndex + changeY * (int)mapsPerRow;
-                int totalMaps = (int)numMapRows * (int)mapsPerRow;
+                int newIndex = (int)relativeIndex + changeY * (int)worldMapDimension;
+                int totalMaps = (int)worldMapDimension * (int)worldMapDimension;
 
                 while (newIndex < 0)
                     newIndex += totalMaps;
@@ -102,132 +102,60 @@ namespace Ambermoon.Data
 
             return baseIndex + relativeIndex;
         }
-        public uint? LeftMapIndex
+        public uint BaseWorldMapIndex
         {
             get
             {
                 if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, 0);
+                    return 1u;
 
                 if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, 0);
+                    return 300u;
 
                 if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, 0);
+                    return 513u;
 
-                return null;
+                return 0u;
             }
         }
-        public uint? RightMapIndex
+        public uint WorldMapDimension
         {
             get
             {
                 if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, 1, 0);
+                    return 16u;
 
                 if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, 1, 0);
+                    return 6u;
 
                 if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, 1, 0);
+                    return 4u;
 
-                return null;
+                return 0u;
             }
         }
-        public uint? UpMapIndex
+        public uint? LeftMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, -1, 0);
+        public uint? RightMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, 1, 0);
+        public uint? UpMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, 0, -1);
+        public uint? UpLeftMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, -1, -1);
+        public uint? UpRightMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, 1, -1);
+        public uint? DownMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, 0, 1);
+        public uint? DownLeftMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, -1, 1);
+        public uint? DownRightMapIndex => !IsWorldMap ? (uint?)null : MoveWorldMapIndex(BaseWorldMapIndex, WorldMapDimension, Index, 1, 1);
+        public Position MapOffset
         {
             get
             {
-                if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, 0, -1);
+                if (!IsWorldMap)
+                    return new Position(0, 0);
 
-                if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, 0, -1);
+                var relativeIndex = Index - BaseWorldMapIndex;
+                var dimension = WorldMapDimension;
 
-                if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, 0, -1);
+                int x = (int)(relativeIndex % dimension) * Width; // world maps should all have the same width
+                int y = (int)(relativeIndex / dimension) * Height; // world maps should all have the same height
 
-                return null;
-            }
-        }
-        public uint? UpLeftMapIndex
-        {
-            get
-            {
-                if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, -1);
-
-                if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, -1);
-
-                if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, -1);
-
-                return null;
-            }
-        }
-        public uint? UpRightMapIndex
-        {
-            get
-            {
-                if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, 1, -1);
-
-                if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, 1, -1);
-
-                if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, 1, -1);
-
-                return null;
-            }
-        }
-        public uint? DownMapIndex
-        {
-            get
-            {
-                if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, 0, 1);
-
-                if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, 0, 1);
-
-                if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, 0, 1);
-
-                return null;
-            }
-        }
-        public uint? DownLeftMapIndex
-        {
-            get
-            {
-                if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, -1, 1);
-
-                if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, -1, 1);
-
-                if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, -1, 1);
-
-                return null;
-            }
-        }
-        public uint? DownRightMapIndex
-        {
-            get
-            {
-                if (IsLyramionWorldMap)
-                    return MoveWorldMapIndex(1u, 16u, 16u, Index, 1, 1);
-
-                if (IsForestMoonWorldMap)
-                    return MoveWorldMapIndex(300u, 6u, 6u, Index, 1, 1);
-
-                if (IsMoragWorldMap)
-                    return MoveWorldMapIndex(513u, 4u, 4u, Index, 1, 1);
-
-                return null;
+                return new Position(x, y);
             }
         }
         public uint TicksPerAnimationFrame { get; set; } = 10; // This matches the frame speed in real game quiet good. TODO: changeable later? same for every map?

@@ -32,6 +32,7 @@
         Popup,
         Cursor,
 
-        First2DLayer = MapBackground1
+        First2DLayer = MapBackground1,
+        Last2DLayer = MapForeground8
     }
 }

@@ -43,6 +43,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly SpriteFactory spriteFactory = null;
         readonly ColoredRectFactory coloredRectFactory = null;
         readonly Surface3DFactory surface3DFactory = null;
+        readonly Camera3D camera3D = null;
         bool fullscreen = false;
 
         float sizeFactorX = 1.0f;
@@ -67,7 +68,7 @@ namespace Ambermoon.Renderer.OpenGL
 
         public ISurface3DFactory Surface3DFactory => surface3DFactory;
 
-        public ICamera3D Camera3D { get; } = new Camera3D();
+        public ICamera3D Camera3D => camera3D;
 
         public IGameData GameData { get; }
 
@@ -119,6 +120,8 @@ namespace Ambermoon.Renderer.OpenGL
             coloredRectFactory = new ColoredRectFactory(visibleArea);
             surface3DFactory = new Surface3DFactory(visibleArea);
 
+            camera3D = new Camera3D(State);
+
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
             var textureAtlasManager = TextureAtlasManager.Instance;
@@ -128,7 +131,7 @@ namespace Ambermoon.Renderer.OpenGL
 
             foreach (Layer layer in Enum.GetValues(typeof(Layer)))
             {
-                if (layer == Layer.None || layer == Layer.First2DLayer)
+                if (layer == Layer.None || layer == Layer.First2DLayer || layer == Layer.Last2DLayer)
                     continue;
 
                 try
@@ -358,7 +361,8 @@ namespace Ambermoon.Renderer.OpenGL
                     if (layer.Key == Layer.Map3D)
                     {
                         // Setup 3D stuff
-                        State.PushProjectionMatrix(State.ProjectionMatrix3D);
+                        State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
+                        camera3D.Activate();
                         var mapViewArea = new Rect(Global.MapViewX, Global.MapViewY, Global.MapViewWidth, Global.MapViewHeight);
                         mapViewArea.Position = PositionTransformation(mapViewArea.Position);
                         mapViewArea.Size = SizeTransformation(mapViewArea.Size);

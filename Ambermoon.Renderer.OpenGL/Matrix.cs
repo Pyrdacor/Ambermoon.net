@@ -282,7 +282,7 @@ namespace Ambermoon.Renderer
 
         public Matrix4(Matrix4 matrix)
         {
-            System.Buffer.BlockCopy(matrix.matrix, 0, this.matrix, 0, 16 * sizeof(float));
+            Buffer.BlockCopy(matrix.matrix, 0, this.matrix, 0, 16 * sizeof(float));
         }
 
         public bool EqualTo(Matrix4 matrix)
@@ -299,6 +299,20 @@ namespace Ambermoon.Renderer
         public float[] ToArray()
         {
             return matrix;
+        }
+
+        public void Reset()
+        {
+            for (int i = 0; i < 16; ++i)
+                this.matrix[i] = Identity.matrix[i];
+        }
+
+        public void Multiply(Matrix4 matrix)
+        {
+            var multipliedMatrix = this * matrix;
+
+            for (int i = 0; i < 16; ++i)
+                this.matrix[i] = multipliedMatrix.matrix[i];
         }
 
         public static Matrix4 Multiply(Matrix4 matrix1, Matrix4 matrix2)
