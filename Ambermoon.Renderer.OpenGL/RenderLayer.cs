@@ -99,10 +99,10 @@ namespace Ambermoon.Renderer
 
             this.state = state;
             bool masked = false; // TODO: do we need this for some layer?
-            bool supportAnimations = layer > Layer.Map3D && layer < Layer.MapBackground1; // TODO
-            bool layered = layer > Layer.MapForeground8; // map is not layered, drawing order depends on y-coordinate and not given layer
+            bool supportAnimations = layer >= Global.First2DLayer && layer <= Global.Last2DLayer; // TODO
+            bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
 
-            renderBuffer = new RenderBuffer(state, Layer == Layer.Map3D, masked, supportAnimations, layered);
+            renderBuffer = new RenderBuffer(state, layer == Layer.Map3D, masked, supportAnimations, layered);
 
             if (Layer == Layer.UIBackground)
                 renderBufferColorRects = new RenderBuffer(state, false, supportAnimations, true, true);
@@ -129,23 +129,45 @@ namespace Ambermoon.Renderer
 
             if (texture != null)
             {
-                TextureShader shader = renderBuffer.Masked ? renderBuffer.MaskedTextureShader : renderBuffer.TextureShader;
-
-                shader.UpdateMatrices(state);
-
-                shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
-                state.Gl.ActiveTexture(GLEnum.Texture0);
-                texture.Bind();
-
-                if (palette != null)
+                if (Layer == Layer.Map3D)
                 {
-                    shader.SetPalette(1);
-                    state.Gl.ActiveTexture(GLEnum.Texture1);
-                    palette.Bind();
-                }
+                    Texture3DShader shader = renderBuffer.Texture3DShader;
 
-                shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
-                shader.SetZ(LayerBaseZ[(int)Layer]);
+                    shader.UpdateMatrices(state);
+
+                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                    state.Gl.ActiveTexture(GLEnum.Texture0);
+                    texture.Bind();
+
+                    if (palette != null)
+                    {
+                        shader.SetPalette(1);
+                        state.Gl.ActiveTexture(GLEnum.Texture1);
+                        palette.Bind();
+                    }
+
+                    shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
+                }
+                else
+                {
+                    TextureShader shader = renderBuffer.Masked ? renderBuffer.MaskedTextureShader : renderBuffer.TextureShader;
+
+                    shader.UpdateMatrices(state);
+
+                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                    state.Gl.ActiveTexture(GLEnum.Texture0);
+                    texture.Bind();
+
+                    if (palette != null)
+                    {
+                        shader.SetPalette(1);
+                        state.Gl.ActiveTexture(GLEnum.Texture1);
+                        palette.Bind();
+                    }
+
+                    shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
+                    shader.SetZ(LayerBaseZ[(int)Layer]);
+                }
             }
 
             renderBuffer.Render();

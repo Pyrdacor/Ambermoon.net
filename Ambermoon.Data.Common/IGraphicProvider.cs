@@ -13,6 +13,7 @@ namespace Ambermoon.Data
         Tileset7,
         Tileset8,
         Player,
+        Map3D,
         Portrait,
         Item,
         Layout,

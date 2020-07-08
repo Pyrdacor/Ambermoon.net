@@ -70,6 +70,7 @@ namespace Ambermoon.Render
                 wall.Y = WallHeight;
                 wall.Z = z;
                 wall.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+                wall.Visible = true; // TODO: not all walls should be always visible
                 walls.Add(wall);
             }
 
@@ -110,12 +111,14 @@ namespace Ambermoon.Render
             floor.X = 0.0f;
             floor.Y = 0.0f;
             floor.Z = -Map.Height * DistancePerTile;
+            floor.Visible = true;
             ceiling = surfaceFactory.Create(SurfaceType.Ceiling, Map.Width * DistancePerTile, Map.Height * DistancePerTile);
             ceiling.PaletteIndex = (byte)Map.PaletteIndex;
             ceiling.Layer = layer;
             ceiling.X = 0.0f;
             ceiling.Y = WallHeight;
             ceiling.Z = 0.0f;
+            ceiling.Visible = true;
 
             // Add walls
             for (uint y = 0; y < Map.Height; ++y)

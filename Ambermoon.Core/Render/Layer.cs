@@ -1,4 +1,4 @@
-﻿namespace Ambermoon.Render
+﻿namespace Ambermoon
 {
     public enum Layer
     {
@@ -30,9 +30,12 @@
         UIForeground, // including borders
         Items,
         Popup,
-        Cursor,
+        Cursor
+    }
 
-        First2DLayer = MapBackground1,
-        Last2DLayer = MapForeground8
+    public partial class Global
+    {
+        public const Layer First2DLayer = Layer.MapBackground1;
+        public const Layer Last2DLayer = Layer.MapForeground8;
     }
 }

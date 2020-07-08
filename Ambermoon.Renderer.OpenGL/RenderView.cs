@@ -131,7 +131,7 @@ namespace Ambermoon.Renderer.OpenGL
 
             foreach (Layer layer in Enum.GetValues(typeof(Layer)))
             {
-                if (layer == Layer.None || layer == Layer.First2DLayer || layer == Layer.Last2DLayer)
+                if (layer == Layer.None)
                     continue;
 
                 try
@@ -361,8 +361,8 @@ namespace Ambermoon.Renderer.OpenGL
                     if (layer.Key == Layer.Map3D)
                     {
                         // Setup 3D stuff
-                        State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
                         camera3D.Activate();
+                        State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
                         var mapViewArea = new Rect(Global.MapViewX, Global.MapViewY, Global.MapViewWidth, Global.MapViewHeight);
                         mapViewArea.Position = PositionTransformation(mapViewArea.Position);
                         mapViewArea.Size = SizeTransformation(mapViewArea.Size);
@@ -373,9 +373,10 @@ namespace Ambermoon.Renderer.OpenGL
                             (uint)mapViewArea.Size.Width, (uint)mapViewArea.Size.Height
                         );
                     }
-                    else if (layer.Key == Layer.First2DLayer)
+                    else if (layer.Key == Global.First2DLayer)
                     {
                         // Reset to 2D stuff
+                        State.RestoreModelViewMatrix(Matrix4.Identity);
                         State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
                         State.Gl.Viewport(virtualScreenDisplay.Position.X, virtualScreenDisplay.Position.Y,
                             (uint)virtualScreenDisplay.Size.Width, (uint)virtualScreenDisplay.Size.Height);

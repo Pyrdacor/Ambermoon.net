@@ -11,12 +11,12 @@ namespace Ambermoon.Renderer.OpenGL
         public Camera3D(State state)
         {
             this.state = state;
-            currentMatrix = new Matrix4(state.ProjectionMatrix3D);
+            currentMatrix = new Matrix4(Matrix4.Identity);
         }
 
         public void Activate()
         {
-            state.RestoreModelViewMatrix(state.ProjectionMatrix3D);
+            state.RestoreModelViewMatrix(Matrix4.Identity);
             state.PushModelViewMatrix(currentMatrix);
         }
 

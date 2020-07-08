@@ -10,17 +10,20 @@ namespace Ambermoon.Data.Legacy
         {
             public string File;
             public int[] SubFiles; // null means all
+            public int FileIndexOffset;
 
-            public GraphicFile(string file)
+            public GraphicFile(string file, int fileIndexOffset = 0)
             {
                 File = file;
                 SubFiles = null;
+                FileIndexOffset = fileIndexOffset;
             }
 
-            public GraphicFile(string file, params int[] subFiles)
+            public GraphicFile(string file, int fileIndexOffset, params int[] subFiles)
             {
                 File = file;
                 SubFiles = subFiles;
+                FileIndexOffset = fileIndexOffset;
             }
         };
 
@@ -51,22 +54,34 @@ namespace Ambermoon.Data.Legacy
             Width = 32, Height = 1, GraphicFormat = GraphicFormat.XRGB16
         };
         static readonly string paletteFile = "Palettes.amb";
-        static readonly Dictionary<GraphicType, GraphicFile> graphicFiles = new Dictionary<GraphicType, GraphicFile>
-        {
-            { GraphicType.Tileset1, new GraphicFile("1Icon_gfx.amb", 1) },
-            { GraphicType.Tileset2, new GraphicFile("3Icon_gfx.amb", 2) },
-            { GraphicType.Tileset3, new GraphicFile("2Icon_gfx.amb", 3) },
-            { GraphicType.Tileset4, new GraphicFile("2Icon_gfx.amb", 4) },
-            { GraphicType.Tileset5, new GraphicFile("2Icon_gfx.amb", 5) },
-            { GraphicType.Tileset6, new GraphicFile("2Icon_gfx.amb", 6) },
-            { GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 7) },
-            { GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 8) },
-            { GraphicType.Player, new GraphicFile("Party_gfx.amb") },
-            { GraphicType.Portrait, new GraphicFile("Portraits.amb") },
-            { GraphicType.Item, new GraphicFile("Object_icons") },
-            { GraphicType.Layout, new GraphicFile("Layouts.amb") }
-        };
+        static readonly Dictionary<GraphicType, GraphicFile[]> graphicFiles = new Dictionary<GraphicType, GraphicFile[]>();
         readonly Dictionary<GraphicType, List<Graphic>> graphics = new Dictionary<GraphicType, List<Graphic>>();
+
+        static void AddGraphicFiles(GraphicType type, params GraphicFile[] files)
+        {
+            graphicFiles.Add(type, files);
+        }
+
+        static GraphicProvider()
+        {
+            AddGraphicFiles(GraphicType.Tileset1, new GraphicFile("1Icon_gfx.amb", 0, 1));
+            AddGraphicFiles(GraphicType.Tileset2, new GraphicFile("3Icon_gfx.amb", 0, 2));
+            AddGraphicFiles(GraphicType.Tileset3, new GraphicFile("2Icon_gfx.amb", 0, 3));
+            AddGraphicFiles(GraphicType.Tileset4, new GraphicFile("2Icon_gfx.amb", 0, 4));
+            AddGraphicFiles(GraphicType.Tileset5, new GraphicFile("2Icon_gfx.amb", 0, 5));
+            AddGraphicFiles(GraphicType.Tileset6, new GraphicFile("2Icon_gfx.amb", 0, 6));
+            AddGraphicFiles(GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 0, 7));
+            AddGraphicFiles(GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 0, 8));
+            AddGraphicFiles(GraphicType.Player, new GraphicFile("Party_gfx.amb"));
+            AddGraphicFiles(GraphicType.Map3D,
+                new GraphicFile("2Wall3D.amb"),
+                new GraphicFile("3Wall3D.amb"),
+                new GraphicFile("2Overlay3D.amb", 172),
+                new GraphicFile("3Overlay3D.amb", 172));
+            AddGraphicFiles(GraphicType.Portrait, new GraphicFile("Portraits.amb"));
+            AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
+            AddGraphicFiles(GraphicType.Layout, new GraphicFile("Layouts.amb"));
+        }
 
         public List<Graphic> GetGraphics(GraphicType type)
         {
@@ -81,7 +96,6 @@ namespace Ambermoon.Data.Legacy
                 var reader = new GraphicReader();
                 var info = GraphicInfoFromType(type);
                 var graphicList = graphics[type];
-                var containerFile = gameData.Files[graphicFiles[type].File];
 
                 void LoadGraphic(IDataReader graphicDataReader)
                 {
@@ -95,19 +109,32 @@ namespace Ambermoon.Data.Legacy
                     }
                 }
 
-                if (graphicFiles[type].SubFiles == null)
+                var allFiles = new SortedDictionary<int, IDataReader>();
+
+                foreach (var graphicFile in graphicFiles[type])
                 {
-                    foreach (var graphicFile in containerFile.Files)
+                    var containerFile = gameData.Files[graphicFile.File];
+
+                    if (graphicFile.SubFiles == null)
                     {
-                        LoadGraphic(graphicFile.Value);
+                        foreach (var file in containerFile.Files)
+                        {
+                            // TODO: wall texture containers have the same files multiple times (e.g. 116). This might be on purpose but I'm not sure.
+                            allFiles[graphicFile.FileIndexOffset + file.Key] = file.Value;
+                        }
+                    }
+                    else
+                    {
+                        foreach (var file in graphicFile.SubFiles)
+                        {
+                            allFiles[graphicFile.FileIndexOffset + file] = containerFile.Files[file];
+                        }
                     }
                 }
-                else
+
+                foreach (var file in allFiles)
                 {
-                    foreach (var file in graphicFiles[type].SubFiles)
-                    {
-                        LoadGraphic(containerFile.Files[file]);
-                    }
+                    LoadGraphic(file.Value);
                 }
             }
         }

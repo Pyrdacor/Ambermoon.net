@@ -72,7 +72,7 @@ namespace Ambermoon
 
             is3D = false;
             renderView.GetLayer(Layer.Map3D).Visible = false;
-            for (int i = (int)Layer.First2DLayer; i <= (int)Layer.Last2DLayer; ++i)
+            for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                 renderView.GetLayer((Layer)i).Visible = true;
         }
 
@@ -92,7 +92,7 @@ namespace Ambermoon
 
             is3D = true;
             renderView.GetLayer(Layer.Map3D).Visible = true;
-            for (int i = (int)Layer.First2DLayer; i <= (int)Layer.Last2DLayer; ++i)
+            for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                 renderView.GetLayer((Layer)i).Visible = false;
         }
 

@@ -47,6 +47,7 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
+        static readonly Dictionary<State, Texture3DShader> texture3DShaders = new Dictionary<State, Texture3DShader>();
 
         public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered, bool noTexture = false)
         {
@@ -73,9 +74,18 @@ namespace Ambermoon.Renderer
             }
             else
             {
-                if (!textureShaders.ContainsKey(state))
-                    textureShaders[state] = TextureShader.Create(state);
-                vertexArrayObject = new VertexArrayObject(state, textureShaders[state].ShaderProgram);
+                if (is3D)
+                {
+                    if (!texture3DShaders.ContainsKey(state))
+                        texture3DShaders[state] = Texture3DShader.Create(state);
+                    vertexArrayObject = new VertexArrayObject(state, texture3DShaders[state].ShaderProgram);
+                }
+                else
+                {
+                    if (!textureShaders.ContainsKey(state))
+                        textureShaders[state] = TextureShader.Create(state);
+                    vertexArrayObject = new VertexArrayObject(state, textureShaders[state].ShaderProgram);
+                }
             }
 
             if (is3D)
@@ -118,7 +128,10 @@ namespace Ambermoon.Renderer
                 vertexArrayObject.AddBuffer(MaskedTextureShader.DefaultMaskTexCoordName, maskTextureAtlasOffsetBuffer);
             }
 
-            vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
+            if (is3D)
+                vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, vectorBuffer);
+            else
+                vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
             vertexArrayObject.AddBuffer("index", indexBuffer);
 
             if (!noTexture)
@@ -131,6 +144,7 @@ namespace Ambermoon.Renderer
         internal ColorShader ColorShader => colorShaders[state];
         internal MaskedTextureShader MaskedTextureShader => maskedTextureShaders[state];
         internal TextureShader TextureShader => textureShaders[state];
+        internal Texture3DShader Texture3DShader => texture3DShaders[state];
 
         public int GetDrawIndex(Render.IColoredRect coloredRect,
             Render.PositionTransformation positionTransformation,
@@ -562,7 +576,12 @@ namespace Ambermoon.Renderer
 
                 try
                 {
-                    state.Gl.DrawElements(PrimitiveType.Triangles, (uint)positionBuffer.Size / 4 * 3, DrawElementsType.UnsignedInt, (void*)0);
+                    if (positionBuffer != null)
+                        state.Gl.DrawElements(PrimitiveType.Triangles, (uint)(positionBuffer.Size / 4) * 3, DrawElementsType.UnsignedInt, (void*)0);
+                    else if (vectorBuffer != null)
+                        state.Gl.DrawElements(PrimitiveType.Triangles, (uint)vectorBuffer.Size / 2, DrawElementsType.UnsignedInt, (void*)0);
+                    else
+                        throw new AmbermoonException(ExceptionScope.Render, "Neither position nor vector buffer exists.");
                 }
                 catch
                 {

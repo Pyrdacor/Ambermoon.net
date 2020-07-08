@@ -22,7 +22,6 @@
 using Ambermoon.Data;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Ambermoon.Render
 {
@@ -101,7 +100,7 @@ namespace Ambermoon.Render
             if (graphicProvider == null)
                 throw new ArgumentNullException(nameof(graphicProvider));
 
-            #region Map
+            #region Map 2D
 
             for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset8; ++i)
             {
@@ -117,7 +116,7 @@ namespace Ambermoon.Render
 
             #endregion
 
-            #region Player
+            #region Player 2D
 
             var playerGraphics = graphicProvider.GetGraphics(GraphicType.Player);
 
@@ -129,6 +128,15 @@ namespace Ambermoon.Render
             // All have a dimension of 16x32 pixels.
             for (int i = 0; i < playerGraphics.Count; ++i)
                 AddTexture(Layer.Characters, (uint)i, playerGraphics[i]);
+
+            #endregion
+
+            #region Map 3D
+
+            var textures = graphicProvider.GetGraphics(GraphicType.Map3D);
+
+            for (int i = 0; i < textures.Count; ++i)
+                AddTexture(Layer.Map3D, (uint)i, textures[i]);
 
             #endregion
 
