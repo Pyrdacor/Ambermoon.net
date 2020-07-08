@@ -39,7 +39,13 @@ namespace Ambermoon.Data
 
         public class Tile
         {
+            /// <summary>
+            /// Back layer in 2D maps, base texture in 3D maps
+            /// </summary>
             public uint BackTileIndex { get; set; }
+            /// <summary>
+            /// Front layer in 2D maps, overlay texture in 3D maps
+            /// </summary>
             public uint FrontTileIndex { get; set; }
             public uint MapEventId { get; set; }
             public uint Unused { get; set; } // always 0

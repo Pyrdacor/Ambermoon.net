@@ -1,5 +1,5 @@
 ﻿/*
- * RenderMap.cs - Handles map rendering
+ * RenderMap2D.cs - Handles 2D map rendering
  *
  * Copyright (C) 2020  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *

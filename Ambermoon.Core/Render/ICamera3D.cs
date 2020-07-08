@@ -1,5 +1,5 @@
 ﻿/*
- * ISprite.cs - Texture atlas interface
+ * ICamera3D.cs - 3D camera interface
  *
  * Copyright (C) 2020  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
@@ -19,29 +19,17 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Ambermoon.Data;
-
 namespace Ambermoon.Render
 {
-    public interface ITextureAtlas
+    public interface ICamera3D
     {
-        Texture Texture
-        {
-            get;
-        }
-
-        Position GetOffset(uint textureIndex);
-    }
-
-    public interface ITextureAtlasBuilder
-    {
-        void AddTexture(uint index, Graphic texture);
-        ITextureAtlas CreateUnpacked(uint maxWidth, uint bytesPerPixel);
-        ITextureAtlas Create(uint bytesPerPixel);
-    }
-
-    public interface ITextureAtlasBuilderFactory
-    {
-        ITextureAtlasBuilder Create();
+        void SetPosition(float x, float y); // x and y in tiles
+        void MoveForward(float distance); // in tiles
+        void MoveBackward(float distance); // in tiles
+        void TurnLeft(float angle); // in degrees
+        void TurnRight(float angle); // in degrees
+        void TurnTowards(float angle); // turn to attacking monster or stand on a spinner (in degrees)
+        void LevitateUp(float distance); // used for climbing up ladders/ropes or use levitation spell (distance is in the range of 0 to 1 where 1 is full room height)
+        void LevitateDown(float distance); // used for climbing down ladders/ropes (distance is in the range of 0 to 1 where 1 is full room height)
     }
 }

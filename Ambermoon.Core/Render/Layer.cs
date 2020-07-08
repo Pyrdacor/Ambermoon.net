@@ -3,6 +3,7 @@
     public enum Layer
     {
         None = -1,
+        Map3D,
         MapBackground1,
         MapBackground2,
         MapBackground3,
@@ -29,6 +30,8 @@
         UIForeground, // including borders
         Items,
         Popup,
-        Cursor
+        Cursor,
+
+        First2DLayer = MapBackground1
     }
 }

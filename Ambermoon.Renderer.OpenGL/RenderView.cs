@@ -21,7 +21,6 @@
 
 using Ambermoon.Data;
 using Ambermoon.Render;
-using Ambermoon.Renderer;
 using Silk.NET.OpenGL;
 using System;
 using System.Collections.Generic;
@@ -43,6 +42,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly SortedDictionary<Layer, RenderLayer> layers = new SortedDictionary<Layer, RenderLayer>();
         readonly SpriteFactory spriteFactory = null;
         readonly ColoredRectFactory coloredRectFactory = null;
+        readonly Surface3DFactory surface3DFactory = null;
         bool fullscreen = false;
 
         float sizeFactorX = 1.0f;
@@ -65,7 +65,36 @@ namespace Ambermoon.Renderer.OpenGL
 
         public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
 
+        public ISurface3DFactory Surface3DFactory => surface3DFactory;
+
+        public ICamera3D Camera3D { get; } = new Camera3D();
+
         public IGameData GameData { get; }
+
+        #region Coordinate transformations
+
+        PositionTransformation PositionTransformation => (Position position) =>
+        {
+            float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
+            float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
+
+            return new Position(Misc.Round(position.X * factorX), Misc.Round(position.Y * factorY));
+        };
+
+        SizeTransformation SizeTransformation => (Size size) =>
+        {
+            float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
+            float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
+
+            // don't scale a dimension of 0
+            int width = (size.Width == 0) ? 0 : Misc.Ceiling(size.Width * factorX);
+            int height = (size.Height == 0) ? 0 : Misc.Ceiling(size.Height * factorY);
+
+            return new Size(width, height);
+        };
+
+        #endregion
+
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             int screenWidth, int screenHeight, DeviceType deviceType = DeviceType.Desktop,
@@ -85,8 +114,10 @@ namespace Ambermoon.Renderer.OpenGL
             context = new Context(State, virtualScreenDisplay.Size.Width, virtualScreenDisplay.Size.Height);
 
             // factories
-            spriteFactory = new SpriteFactory(VirtualScreen);
-            coloredRectFactory = new ColoredRectFactory(VirtualScreen);
+            var visibleArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+            spriteFactory = new SpriteFactory(visibleArea);
+            coloredRectFactory = new ColoredRectFactory(visibleArea);
+            surface3DFactory = new Surface3DFactory(visibleArea);
 
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
@@ -97,35 +128,21 @@ namespace Ambermoon.Renderer.OpenGL
 
             foreach (Layer layer in Enum.GetValues(typeof(Layer)))
             {
-                if (layer == Layer.None)
+                if (layer == Layer.None || layer == Layer.First2DLayer)
                     continue;
 
                 try
                 {
                     var texture = textureAtlasManager.GetOrCreate(layer)?.Texture;
-                    var renderLayer = Create(layer, texture, palette, layer == Layer.UIBackground);
+                    var renderLayer = Create(layer, texture, palette);
 
-                    renderLayer.PositionTransformation = (Position position) =>
+                    if (layer != Layer.Map3D)
                     {
-                        float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
-                        float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
+                        renderLayer.PositionTransformation = PositionTransformation;
+                        renderLayer.SizeTransformation = SizeTransformation;
 
-                        return new Position(Misc.Round(position.X * factorX), Misc.Round(position.Y * factorY));
-                    };
-
-                    renderLayer.SizeTransformation = (Size size) =>
-                    {
-                        float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
-                        float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
-
-                        // don't scale a dimension of 0
-                        int width = (size.Width == 0) ? 0 : Misc.Ceiling(size.Width * factorX);
-                        int height = (size.Height == 0) ? 0 : Misc.Ceiling(size.Height * factorY);
-
-                        return new Size(width, height);
-                    };
-
-                    renderLayer.Visible = true;
+                        renderLayer.Visible = true;
+                    }
 
                     AddLayer(renderLayer);
                 }
@@ -332,11 +349,37 @@ namespace Ambermoon.Renderer.OpenGL
 
             State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
-            // TODO: draw gui
-            // TODO: draw cursor
+            bool render3DMap = layers[Layer.Map3D].Visible;
 
             foreach (var layer in layers)
+            {
+                if (render3DMap)
+                {
+                    if (layer.Key == Layer.Map3D)
+                    {
+                        // Setup 3D stuff
+                        State.PushProjectionMatrix(State.ProjectionMatrix3D);
+                        var mapViewArea = new Rect(Global.MapViewX, Global.MapViewY, Global.MapViewWidth, Global.MapViewHeight);
+                        mapViewArea.Position = PositionTransformation(mapViewArea.Position);
+                        mapViewArea.Size = SizeTransformation(mapViewArea.Size);
+                        State.Gl.Viewport
+                        (
+                            virtualScreenDisplay.Position.X + mapViewArea.Position.X,
+                            virtualScreenDisplay.Position.Y + mapViewArea.Position.Y,
+                            (uint)mapViewArea.Size.Width, (uint)mapViewArea.Size.Height
+                        );
+                    }
+                    else if (layer.Key == Layer.First2DLayer)
+                    {
+                        // Reset to 2D stuff
+                        State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
+                        State.Gl.Viewport(virtualScreenDisplay.Position.X, virtualScreenDisplay.Position.Y,
+                            (uint)virtualScreenDisplay.Size.Width, (uint)virtualScreenDisplay.Size.Height);
+                    }
+                }
+
                 layer.Value.Render();
+            }
         }
 
         public void SetCursorPosition(int x, int y)

@@ -34,10 +34,10 @@ namespace Ambermoon.Data.Legacy
 
             dataReader.Position += 320; // Unknown 320 bytes
 
+            map.Tiles = new Map.Tile[map.Width, map.Height];
+
             if (map.Type == MapType.Map2D)
             {
-                map.Tiles = new Map.Tile[map.Width, map.Height];
-
                 for (int y = 0; y < map.Height; ++y)
                 {
                     for (int x = 0; x < map.Width; ++x)
@@ -61,7 +61,12 @@ namespace Ambermoon.Data.Legacy
                 {
                     for (int x = 0; x < map.Width; ++x)
                     {
-                        dataReader.ReadWord();
+                        map.Tiles[x, y] = new Map.Tile
+                        {
+                            BackTileIndex = dataReader.ReadByte(),
+                            FrontTileIndex = dataReader.ReadByte()
+                            // TODO: blocking etc
+                        };
                     }
                 }
             }
@@ -109,6 +114,21 @@ namespace Ambermoon.Data.Legacy
 
                 foreach (var mapEventOffset in mapEventOffsets)
                     map.Events.Add(mapEvents[(int)mapEventOffset].Item1);
+
+                if (false/*map.Index == 267 || map.Index == 258 || map.Index == 262*/)
+                {
+                    int foo = 1;
+                    foreach (var ev in map.Events)
+                    {
+                        Console.WriteLine($"{foo++}: {ev.Type} -> {ev}");
+                        var x = ev.Next;
+                        while (x != null)
+                        {
+                            Console.WriteLine($"\t{x.Type} -> {x}");
+                            x = x.Next;
+                        }
+                    }
+                }
             }
 
             // TODO
@@ -161,6 +181,11 @@ namespace Ambermoon.Data.Legacy
                         uint chestIndex = dataReader.ReadByte();
                         bool removeWhenEmpty = dataReader.ReadByte() != 0;
                         uint keyIndex = dataReader.ReadWord();
+                        /*if (keyIndex != 0)
+                        {
+                            int offset = dataReader.Position - 3;
+                            Console.WriteLine("Found chest with key: " + string.Join(" ", new DataReader(dataReader as DataReader, offset, 3).ReadToEnd().Select(v => v.ToString("x2"))));
+                        }*/
                         dataReader.ReadWord(); // Unknown
                         mapEvent = new ChestMapEvent
                         {
@@ -170,6 +195,8 @@ namespace Ambermoon.Data.Legacy
                             RemoveWhenEmpty = removeWhenEmpty,
                             KeyIndex = keyIndex
                         };
+                        /*if (unknown != 0x00ff)
+                            Console.WriteLine(mapEvent.ToString());*/
                         break;
                     }
                 default:

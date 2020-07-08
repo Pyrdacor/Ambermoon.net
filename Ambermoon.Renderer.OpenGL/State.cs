@@ -72,6 +72,8 @@ namespace Ambermoon.Renderer
 
         readonly Stack<Matrix4> projectionMatrixStack = new Stack<Matrix4>();
         readonly Stack<Matrix4> modelViewMatrixStack = new Stack<Matrix4>();
+        public Matrix4 ProjectionMatrix2D { get; set; } = Matrix4.Identity;
+        public Matrix4 ProjectionMatrix3D { get; set; } = Matrix4.Identity;
 
         public void PushProjectionMatrix(Matrix4 matrix)
         {

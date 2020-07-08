@@ -54,6 +54,35 @@ namespace Ambermoon.Renderer
             });
         }
 
+        public static Matrix4 CreatePerspective(float fovY, float aspect, float near, float far)
+        {
+            if (aspect <= float.Epsilon)
+                throw new ArgumentException("Aspect is 0 which is not allowed.");
+
+            if (near <= float.Epsilon)
+                throw new ArgumentException("Near z value is 0 which is not allowed.");
+
+            if (far - near <= float.Epsilon)
+                throw new ArgumentException("Near z value equals far z value or far is smaller than near which is not allowed.");
+
+            var f = 0.5 * Math.PI * fovY / 180.0;
+            var cos = Math.Cos(f);
+            var sin = Math.Sin(f);
+
+            if (sin <= double.Epsilon)
+                throw new ArgumentException("Sinus of the given field of view y-angle is 0 which is not allowed.");
+
+            f = cos / sin;
+
+            return new Matrix4(new float[16]
+            {
+                (float)(f / aspect),    0.0f,       0.0f,                   0.0f,
+                0.0f,                   (float)f,   0.0f,                   0.0f,
+                0.0f,                   0.0f,       (near+far)/(near-far),  (2.0f*near*far)/(near-far),
+                0.0f,                   0.0f,       -1.0f,                  0.0f
+            });
+        }
+
         public static Matrix4 CreateTranslationMatrix(float x, float y, float z = 0.0f)
         {
             return new Matrix4(new float[16]

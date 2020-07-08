@@ -1,5 +1,5 @@
 ﻿/*
- * PositionBuffer.cs - Buffer for shader position data
+ * VectorBuffer.cs - Buffer for shader 3D position data
  *
  * Copyright (C) 2020  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
@@ -21,43 +21,46 @@
 
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon.Renderer.OpenGL
 {
-    internal class PositionBuffer : BufferObject<short>
+    class VectorBuffer : BufferObject<float>
     {
-        public override int Dimension => 2;
+        public override int Dimension => 3;
 
-        public PositionBuffer(State state, bool staticData)
+        public VectorBuffer(State state, bool staticData)
             : base(state, staticData)
         {
 
         }
 
-        bool UpdatePositionData(short[] buffer, int index, Tuple<short, short> position)
+        bool UpdateVectorData(float[] buffer, int index, Tuple<float, float, float> vector)
         {
             bool changed = false;
-            short x = position.Item1;
-            short y = position.Item2;
+            float x = vector.Item1;
+            float y = vector.Item2;
+            float z = vector.Item3;
 
             if (buffer[index + 0] != x ||
-                buffer[index + 1] != y)
+                buffer[index + 1] != y ||
+                buffer[index + 2] != z)
             {
                 buffer[index + 0] = x;
                 buffer[index + 1] = y;
+                buffer[index + 2] = z;
                 changed = true;
             }
 
             return index == Size || changed;
         }
 
-        public int Add(short x, short y, int index = -1)
+        public int Add(float x, float y, float z, int index = -1)
         {
-            return base.Add(UpdatePositionData, Tuple.Create(x, y), index);
+            return base.Add(UpdateVectorData, Tuple.Create(x, y, z), index);
         }
 
-        public void Update(int index, short x, short y)
+        public void Update(int index, float x, float y, float z)
         {
-            base.Update(UpdatePositionData, index, Tuple.Create(x, y));
+            base.Update(UpdateVectorData, index, Tuple.Create(x, y, z));
         }
     }
 }

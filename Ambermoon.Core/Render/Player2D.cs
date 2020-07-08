@@ -125,6 +125,22 @@ namespace Ambermoon.Render
                 }
             }
 
+            // TODO: REMOVE
+            var t = Map[(uint)Position.X, (uint)Position.Y];
+            var ts = mapManager.GetTilesetForMap(Map.Map);
+            Console.WriteLine("Current map: " + Map.Map.Index + " (" + Map.Map.World + ")");
+            if (t.FrontTileIndex != 0)
+            {
+                //var backTile = ts.Tiles[t.BackTileIndex - 1];
+                var frontTile = ts.Tiles[t.FrontTileIndex - 1];
+                //Console.WriteLine($"BT: {backTile.Unknown1:X8} : {backTile.Unknown2:X2}");
+                Console.WriteLine($"FT: {frontTile.Unknown1:X8} : {frontTile.Unknown2:X2}");
+            }
+            else
+            {
+                Console.WriteLine("FT: none");
+            }
+
             return canMove;
         }
 

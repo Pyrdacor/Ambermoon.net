@@ -48,6 +48,6 @@ namespace Ambermoon.Render
 
     public interface IRenderLayerFactory
     {
-        IRenderLayer Create(Layer layer, Texture texture, Texture palette, bool supportColoredRects = false);
+        IRenderLayer Create(Layer layer, Texture texture, Texture palette);
     }
 }

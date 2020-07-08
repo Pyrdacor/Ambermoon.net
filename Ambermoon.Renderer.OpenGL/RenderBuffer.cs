@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Ambermoon.Renderer.OpenGL;
 using Silk.NET.OpenGL;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,7 @@ namespace Ambermoon.Renderer
         readonly State state;
 
         readonly VertexArrayObject vertexArrayObject = null;
+        readonly VectorBuffer vectorBuffer = null;
         readonly PositionBuffer positionBuffer = null;
         readonly PositionBuffer textureAtlasOffsetBuffer = null;
         readonly PositionBuffer maskTextureAtlasOffsetBuffer = null; // is null for normal sprites
@@ -46,10 +48,16 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
 
-        public RenderBuffer(State state, bool masked, bool supportAnimations, bool layered, bool noTexture = false)
+        public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered, bool noTexture = false)
         {
             this.state = state;
             Masked = masked;
+
+            if (is3D)
+            {
+                if (masked || layered || noTexture)
+                    throw new AmbermoonException(ExceptionScope.Render, "3D render buffers can't be masked nor layered and must not lack a texture.");
+            }
 
             if (noTexture)
             {
@@ -70,7 +78,10 @@ namespace Ambermoon.Renderer
                 vertexArrayObject = new VertexArrayObject(state, textureShaders[state].ShaderProgram);
             }
 
-            positionBuffer = new PositionBuffer(state, false);
+            if (is3D)
+                vectorBuffer = new VectorBuffer(state, false);
+            else
+                positionBuffer = new PositionBuffer(state, false);
             indexBuffer = new IndexBuffer(state);
 
             if (noTexture)
@@ -256,6 +267,64 @@ namespace Ambermoon.Renderer
             return index;
         }
 
+        public int GetDrawIndex(Render.ISurface3D surface)
+        {
+            int index = vectorBuffer.Add(surface.X, surface.Y, surface.Z);
+
+            switch (surface.Type)
+            {
+                case Ambermoon.Render.SurfaceType.Floor:
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
+                    vectorBuffer.Add(surface.X, surface.Y, surface.Z + surface.Height);
+                    break;
+                case Ambermoon.Render.SurfaceType.Ceiling:
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
+                    break;
+                case Ambermoon.Render.SurfaceType.Wall:
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
+                    break;
+                case Ambermoon.Render.SurfaceType.Billboard:
+                    // TODO
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
+                    break;
+            }
+
+            indexBuffer.InsertQuad(index / 4);
+
+            if (paletteIndexBuffer != null)
+            {
+                int paletteIndexBufferIndex = paletteIndexBuffer.Add((byte)surface.PaletteIndex);
+
+                if (paletteIndexBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 1);
+                paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 2);
+                paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 3);
+            }
+
+            if (textureAtlasOffsetBuffer != null)
+            {
+                int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+
+                if (textureAtlasOffsetBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.Width), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
+                textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.Width), (short)(surface.TextureAtlasOffset.Y + surface.Height), textureAtlasOffsetBufferIndex + 2);
+                textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.Height), textureAtlasOffsetBufferIndex + 3);
+            }
+
+            return index;
+        }
+
         public void UpdatePosition(int index, Render.IRenderNode renderNode, int baseLineOffset,
             Render.PositionTransformation positionTransformation, Render.SizeTransformation sizeTransformation)
         {
@@ -284,6 +353,36 @@ namespace Ambermoon.Renderer
             }
         }
 
+        public void UpdatePosition(int index, Render.ISurface3D surface)
+        {
+            vectorBuffer.Update(index, surface.X, surface.Y, surface.Z);
+
+            switch (surface.Type)
+            {
+                case Ambermoon.Render.SurfaceType.Floor:
+                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
+                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z + surface.Height);
+                    break;
+                case Ambermoon.Render.SurfaceType.Ceiling:
+                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
+                    break;
+                case Ambermoon.Render.SurfaceType.Wall:
+                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
+                    break;
+                case Ambermoon.Render.SurfaceType.Billboard:
+                    // TODO
+                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
+                    break;
+            }
+        }
+
         public void UpdateTextureAtlasOffset(int index, Render.ISprite sprite, Position maskSpriteTextureAtlasOffset = null)
         {
             if (textureAtlasOffsetBuffer == null)
@@ -301,6 +400,17 @@ namespace Ambermoon.Renderer
                 maskTextureAtlasOffsetBuffer.Update(index + 2, (short)(maskSpriteTextureAtlasOffset.X + sprite.Width), (short)(maskSpriteTextureAtlasOffset.Y + sprite.Height));
                 maskTextureAtlasOffsetBuffer.Update(index + 3, (short)maskSpriteTextureAtlasOffset.X, (short)(maskSpriteTextureAtlasOffset.Y + sprite.Height));
             }
+        }
+
+        public void UpdateTextureAtlasOffset(int index, Render.ISurface3D surface)
+        {
+            if (textureAtlasOffsetBuffer == null)
+                return;
+
+            textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+            textureAtlasOffsetBuffer.Update(index + 1, (short)(surface.TextureAtlasOffset.X + surface.Width), (short)surface.TextureAtlasOffset.Y);
+            textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + surface.Width), (short)(surface.TextureAtlasOffset.Y + surface.Height));
+            textureAtlasOffsetBuffer.Update(index + 3, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.Height));
         }
 
         public void UpdateColor(int index, Render.Color color)
@@ -352,10 +462,21 @@ namespace Ambermoon.Renderer
                 }
             }*/
 
-            for (int i = 0; i < 4; ++i)
+            if (positionBuffer != null)
             {
-                positionBuffer.Update(index + i, short.MaxValue, short.MaxValue); // ensure it is not visible
-                positionBuffer.Remove(index + i);
+                for (int i = 0; i < 4; ++i)
+                {
+                    positionBuffer.Update(index + i, short.MaxValue, short.MaxValue); // ensure it is not visible
+                    positionBuffer.Remove(index + i);
+                }
+            }
+            else if (vectorBuffer != null)
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    vectorBuffer.Update(index + i, float.MaxValue, float.MaxValue, float.MaxValue); // ensure it is not visible
+                    vectorBuffer.Remove(index + i);
+                }
             }
 
             if (paletteIndexBuffer != null)

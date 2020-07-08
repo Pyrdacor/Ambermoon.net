@@ -62,6 +62,7 @@ namespace Ambermoon.Renderer
         // Popup and cursor are single objects and has therefore a small range of 0.01f.
         private static readonly float[] LayerBaseZ = new float[]
         {
+            0.00f,  // Map3D
             0.01f,  // MapBackground1
             0.01f,  // MapBackground2
             0.01f,  // MapBackground3
@@ -91,20 +92,19 @@ namespace Ambermoon.Renderer
             0.99f   // Cursor
         };
 
-        public RenderLayer(State state, Layer layer, Texture texture, Texture palette, bool supportColoredRects = false)
+        public RenderLayer(State state, Layer layer, Texture texture, Texture palette)
         {
             if (layer == Layer.None)
                 throw new AmbermoonException(ExceptionScope.Application, "Layer.None should never be used.");
 
             this.state = state;
             bool masked = false; // TODO: do we need this for some layer?
-            bool supportAnimations = layer == Layer.MapBackground4 || layer == Layer.MapForeground4; // TODO
-            // TODO
-            bool layered = layer != Layer.MapBackground4 && layer != Layer.MapForeground4 && layer != Layer.Characters; // map is not layered, drawing order depends on y-coordinate and not given layer
+            bool supportAnimations = layer > Layer.Map3D && layer < Layer.MapBackground1; // TODO
+            bool layered = layer > Layer.MapForeground8; // map is not layered, drawing order depends on y-coordinate and not given layer
 
-            renderBuffer = new RenderBuffer(state, masked, supportAnimations, layered);
+            renderBuffer = new RenderBuffer(state, Layer == Layer.Map3D, masked, supportAnimations, layered);
 
-            if (supportColoredRects)
+            if (Layer == Layer.UIBackground)
                 renderBufferColorRects = new RenderBuffer(state, false, supportAnimations, true, true);
 
             Layer = layer;
@@ -156,6 +156,11 @@ namespace Ambermoon.Renderer
             return renderBuffer.GetDrawIndex(sprite, PositionTransformation, SizeTransformation, maskSpriteTextureAtlasOffset);
         }
 
+        public int GetDrawIndex(ISurface3D surface)
+        {
+            return renderBuffer.GetDrawIndex(surface);
+        }
+
         public void FreeDrawIndex(int index)
         {
             renderBuffer.FreeDrawIndex(index);
@@ -169,6 +174,16 @@ namespace Ambermoon.Renderer
         public void UpdateTextureAtlasOffset(int index, ISprite sprite, Position maskSpriteTextureAtlasOffset = null)
         {
             renderBuffer.UpdateTextureAtlasOffset(index, sprite, maskSpriteTextureAtlasOffset);
+        }
+
+        public void UpdatePosition(int index, ISurface3D surface)
+        {
+            renderBuffer.UpdatePosition(index, surface);
+        }
+
+        public void UpdateTextureAtlasOffset(int index, ISurface3D surface)
+        {
+            renderBuffer.UpdateTextureAtlasOffset(index, surface);
         }
 
         public void UpdateDisplayLayer(int index, byte displayLayer)
@@ -246,7 +261,7 @@ namespace Ambermoon.Renderer
             State = state;
         }
 
-        public IRenderLayer Create(Layer layer, Render.Texture texture, Render.Texture palette, bool supportColoredRects = false)
+        public IRenderLayer Create(Layer layer, Render.Texture texture, Render.Texture palette)
         {
             if (texture != null && !(texture is Texture))
                 throw new AmbermoonException(ExceptionScope.Render, "The given texture is not valid for this renderer.");
@@ -256,7 +271,7 @@ namespace Ambermoon.Renderer
             return layer switch
             {
                 Layer.None => throw new AmbermoonException(ExceptionScope.Render, $"Cannot create render layer for layer {Enum.GetName(typeof(Layer), layer)}"),
-                _ => new RenderLayer(State, layer, texture as Texture, palette as Texture, supportColoredRects),
+                _ => new RenderLayer(State, layer, texture as Texture, palette as Texture),
             };
         }
     }
