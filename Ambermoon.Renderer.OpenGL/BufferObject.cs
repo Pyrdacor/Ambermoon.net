@@ -177,14 +177,8 @@ namespace Ambermoon.Renderer
 
             lock (bufferLock)
             {
-                unsafe
-                {
-                    fixed (T* ptr = &buffer[0])
-                    {
-                        state.Gl.BufferData(BufferTarget, (uint)(Size * Marshal.SizeOf<T>()),
-                            ptr, usageHint);
-                    }
-                }
+                state.Gl.BufferData(BufferTarget, (uint)(Size * Marshal.SizeOf<T>()),
+                    new Span<T>(buffer), usageHint);
             }
 
             changedSinceLastCreation = false;
@@ -202,14 +196,8 @@ namespace Ambermoon.Renderer
 
             lock (bufferLock)
             {
-                unsafe
-                {
-                    fixed (T* ptr = &buffer[0])
-                    {
-                        state.Gl.BufferData(BufferTarget, (uint)(Size * Marshal.SizeOf<T>()),
-                            ptr, usageHint);
-                    }
-                }
+                state.Gl.BufferData(BufferTarget, (uint)(Size * Marshal.SizeOf<T>()),
+                    new Span<T>(buffer), usageHint);
             }
 
             changedSinceLastCreation = false;

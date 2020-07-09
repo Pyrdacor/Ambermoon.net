@@ -1,12 +1,21 @@
 ﻿using Ambermoon.Render;
+using System;
 
 namespace Ambermoon.Renderer.OpenGL
 {
     internal class Camera3D : ICamera3D
     {
+        const double AngleFactor = Math.PI / 180.0;
         readonly State state;
         readonly Matrix4 currentMatrix;
+        Matrix4 rotationMatrix = new Matrix4(Matrix4.Identity);
+        Matrix4 translateMatrix = new Matrix4(Matrix4.Identity);
         float currentAngle = 0.0f;
+        double currentAngleCos = 0.0;
+        double currentAngleSin = -1.0;
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
 
         public Camera3D(State state)
         {
@@ -20,14 +29,26 @@ namespace Ambermoon.Renderer.OpenGL
             state.PushModelViewMatrix(currentMatrix);
         }
 
+        private void UpdateMatrix()
+        {
+            currentMatrix.Reset();
+            currentMatrix.Multiply(rotationMatrix);
+            currentMatrix.Multiply(translateMatrix);
+        }
+
         private void Move(float x, float y, float z)
         {
-            currentMatrix.Multiply(Matrix4.CreateTranslationMatrix(x, y, z));
+            this.x += x;
+            this.y += y;
+            this.z += z;
+            translateMatrix = Matrix4.CreateTranslationMatrix(this.x, this.y, this.z);
+            UpdateMatrix();
         }
 
         private void Rotate(float angle)
         {
-            currentMatrix.Multiply(Matrix4.CreateRotationMatrix(angle));
+            rotationMatrix = Matrix4.CreateZRotationMatrix(angle);
+            UpdateMatrix();
         }
 
         public void LevitateDown(float distance)
@@ -42,19 +63,24 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void MoveBackward(float distance)
         {
-            Move(0.0f, 0.0f, distance);
+            Move((float)currentAngleCos * distance, 0.0f, (float)currentAngleSin * distance);
         }
 
         public void MoveForward(float distance)
         {
-            Move(0.0f, 0.0f, -distance);
+            Move(-(float)currentAngleCos * distance, 0.0f, -(float)currentAngleSin * distance);
         }
 
-        public void SetPosition(float x, float y)
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public void SetPosition(float x, float z)
         {
-            // Note: x and y are from top-down so x is real x and y is real z
-            currentMatrix.Reset();
-            Move(x, 0.0f, y);
+            this.x = x;
+            this.y = -1.0f;
+            this.z = z;
+            translateMatrix = Matrix4.CreateTranslationMatrix(this.x, this.y, this.z);
+            UpdateMatrix();
         }
 
         public void TurnLeft(float angle)
@@ -70,6 +96,9 @@ namespace Ambermoon.Renderer.OpenGL
         public void TurnTowards(float angle)
         {
             currentAngle = angle;
+            var radiant = AngleFactor * (currentAngle - 90.0f);
+            currentAngleCos = Math.Cos(radiant);
+            currentAngleSin = Math.Sin(radiant);
             Rotate(currentAngle);
         }
     }

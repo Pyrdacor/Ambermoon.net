@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
+using System;
 
 namespace Ambermoon
 {
@@ -8,22 +9,26 @@ namespace Ambermoon
         const uint TicksPerSecond = 60; // TODO
         uint currentTicks = 0;
         uint lastMapTicksReset = 0;
+        uint lastKeyTicksReset = 0;
         bool ingame = false;
-        UI.Layout layout;
+        readonly UI.Layout layout;
         readonly IMapManager mapManager;
         readonly IRenderView renderView;
         Player player;
         bool is3D = false;
+        readonly bool[] keys = new bool[Enum.GetValues(typeof(Key)).Length];
 
         // Rendering
         RenderMap2D renderMap2D = null;
         Player2D player2D = null;
         RenderMap3D renderMap3D = null;
+        readonly ICamera3D camera3D = null;
 
         public Game(IRenderView renderView, IMapManager mapManager)
         {
             this.renderView = renderView;
             this.mapManager = mapManager;
+            camera3D = renderView.Camera3D;
             layout = new UI.Layout(renderView);
         }
 
@@ -46,8 +51,45 @@ namespace Ambermoon
                 }
                 else // 2D
                 {
-                    renderMap2D.UpdateAnimations(currentTicks >= lastMapTicksReset ? currentTicks - lastMapTicksReset : (uint)((long)currentTicks + uint.MaxValue - lastMapTicksReset));
+                    var animationTicks = currentTicks >= lastMapTicksReset ? currentTicks - lastMapTicksReset : (uint)((long)currentTicks + uint.MaxValue - lastMapTicksReset);
+                    renderMap2D.UpdateAnimations(animationTicks);
                 }
+            }
+
+            var keyTicks = currentTicks >= lastKeyTicksReset ? currentTicks - lastKeyTicksReset : (uint)((long)currentTicks + uint.MaxValue - lastKeyTicksReset);
+
+            if (keyTicks >= TicksPerSecond / 8)
+            {
+                if (keys[(int)Key.Left] && !keys[(int)Key.Right])
+                {
+                    if (renderMap2D != null)
+                        player2D.Move(-1, 0, currentTicks);
+                    else if (renderMap3D != null)
+                        camera3D.TurnLeft(10.0f); // TODO
+                }
+                if (keys[(int)Key.Right] && !keys[(int)Key.Left])
+                {
+                    if (renderMap2D != null)
+                        player2D.Move(1, 0, currentTicks);
+                    else if (renderMap3D != null)
+                        camera3D.TurnRight(10.0f); // TODO
+                }
+                if (keys[(int)Key.Up] && !keys[(int)Key.Down])
+                {
+                    if (renderMap2D != null)
+                        player2D.Move(0, -1, currentTicks);
+                    else if (renderMap3D != null)
+                        camera3D.MoveForward(0.2f); // TODO
+                }
+                if (keys[(int)Key.Down] && !keys[(int)Key.Up])
+                {
+                    if (renderMap2D != null)
+                        player2D.Move(0, 1, currentTicks);
+                    else if (renderMap3D != null)
+                        camera3D.MoveBackward(0.2f); // TODO
+                }
+
+                lastKeyTicksReset = currentTicks;
             }
         }
 
@@ -84,7 +126,9 @@ namespace Ambermoon
             if (renderMap3D != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Render map 3D should not be present.");
 
-            renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, player.Direction);
+            // TODO: player direction is not neccessarily the one of the previous map
+            renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, /*player.Direction*/CharacterDirection.Up);
+            renderMap2D = null;
 
             player2D.Visible = false;
             player.Position.X = (int)playerX;
@@ -103,6 +147,7 @@ namespace Ambermoon
             player = new Player();
             var map = mapManager.GetMap(258u); // grandfather's house
             renderMap2D = new RenderMap2D(map, mapManager, renderView);
+            renderMap3D = null;
             player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
                 renderView.SpriteFactory, renderView.GameData, new Position(2, 2), mapManager);
             player2D.Visible = true;
@@ -122,21 +167,43 @@ namespace Ambermoon
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
-            switch (key)
+            keys[(int)key] = true;
+
+            if (keys[(int)Key.Left] && !keys[(int)Key.Right])
             {
-                case Key.Left:
+                if (renderMap2D != null)
                     player2D.Move(-1, 0, currentTicks);
-                    break;
-                case Key.Right:
-                    player2D.Move(1, 0, currentTicks);
-                    break;
-                case Key.Up:
-                    player2D.Move(0, -1, currentTicks);
-                    break;
-                case Key.Down:
-                    player2D.Move(0, 1, currentTicks);
-                    break;
+                else if (renderMap3D != null)
+                    camera3D.TurnLeft(10.0f); // TODO
             }
+            if (keys[(int)Key.Right] && !keys[(int)Key.Left])
+            {
+                if (renderMap2D != null)
+                    player2D.Move(1, 0, currentTicks);
+                else if (renderMap3D != null)
+                    camera3D.TurnRight(10.0f); // TODO
+            }
+            if (keys[(int)Key.Up] && !keys[(int)Key.Down])
+            {
+                if (renderMap2D != null)
+                    player2D.Move(0, -1, currentTicks);
+                else if (renderMap3D != null)
+                    camera3D.MoveForward(0.2f); // TODO
+            }
+            if (keys[(int)Key.Down] && !keys[(int)Key.Up])
+            {
+                if (renderMap2D != null)
+                    player2D.Move(0, 1, currentTicks);
+                else if (renderMap3D != null)
+                    camera3D.MoveBackward(0.2f); // TODO
+            }
+
+            lastKeyTicksReset = currentTicks;
+        }
+
+        public void OnKeyUp(Key key, KeyModifiers modifiers)
+        {
+            keys[(int)key] = false;
         }
 
         public void OnKeyChar(char keyChar)

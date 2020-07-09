@@ -113,7 +113,7 @@ namespace Ambermoon.Renderer
 
                     vertexArrayObject.AddBuffer(ColorShader.DefaultLayerName, layerBuffer);
                 }
-                else
+                else if (!is3D)
                 {
                     baseLineBuffer = new BaseLineBuffer(state, false);
 
@@ -298,9 +298,29 @@ namespace Ambermoon.Renderer
                     vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
                     break;
                 case Ambermoon.Render.SurfaceType.Wall:
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
-                    vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
+                    switch (surface.WallOrientation)
+                    {
+                        case Ambermoon.Render.WallOrientation.Normal:
+                            vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
+                            vectorBuffer.Add(surface.X + surface.Width, surface.Y - surface.Height, surface.Z);
+                            vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                        case Ambermoon.Render.WallOrientation.Rotated90:
+                            vectorBuffer.Add(surface.X, surface.Y, surface.Z + surface.Width);
+                            vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z + surface.Width);
+                            vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                        case Ambermoon.Render.WallOrientation.Rotated180:
+                            vectorBuffer.Add(surface.X - surface.Width, surface.Y, surface.Z);
+                            vectorBuffer.Add(surface.X - surface.Width, surface.Y - surface.Height, surface.Z);
+                            vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                        case Ambermoon.Render.WallOrientation.Rotated270:
+                            vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Width);
+                            vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z - surface.Width);
+                            vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                    }
                     break;
                 case Ambermoon.Render.SurfaceType.Billboard:
                     // TODO
@@ -384,9 +404,29 @@ namespace Ambermoon.Renderer
                     vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
                     break;
                 case Ambermoon.Render.SurfaceType.Wall:
-                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
-                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
+                    switch (surface.WallOrientation)
+                    {
+                        case Ambermoon.Render.WallOrientation.Normal:
+                            vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                            vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y - surface.Height, surface.Z);
+                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                        case Ambermoon.Render.WallOrientation.Rotated90:
+                            vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z + surface.Width);
+                            vectorBuffer.Update(index + 2, surface.X, surface.Y - surface.Height, surface.Z + surface.Width);
+                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                        case Ambermoon.Render.WallOrientation.Rotated180:
+                            vectorBuffer.Update(index + 1, surface.X - surface.Width, surface.Y, surface.Z);
+                            vectorBuffer.Update(index + 2, surface.X - surface.Width, surface.Y - surface.Height, surface.Z);
+                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                        case Ambermoon.Render.WallOrientation.Rotated270:
+                            vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z - surface.Width);
+                            vectorBuffer.Update(index + 2, surface.X, surface.Y - surface.Height, surface.Z - surface.Width);
+                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                            break;
+                    }
                     break;
                 case Ambermoon.Render.SurfaceType.Billboard:
                     // TODO

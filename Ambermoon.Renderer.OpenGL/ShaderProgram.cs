@@ -20,6 +20,7 @@
  */
 
 using System;
+using Silk.NET.OpenGL;
 
 namespace Ambermoon.Renderer
 {
@@ -160,7 +161,10 @@ namespace Ambermoon.Renderer
 
             unsafe
             {
-                state.Gl.VertexAttribIPointer(location, buffer.Dimension, buffer.Type, 0, (void*)0);
+                if (buffer.Type == VertexAttribPointerType.Float)
+                    state.Gl.VertexAttribPointer(location, buffer.Dimension, buffer.Type, buffer.Normalized, 0, (void*)0);
+                else
+                    state.Gl.VertexAttribIPointer(location, buffer.Dimension, buffer.Type, 0, (void*)0);
             }
 
             return location;

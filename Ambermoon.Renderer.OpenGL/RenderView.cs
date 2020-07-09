@@ -369,7 +369,7 @@ namespace Ambermoon.Renderer.OpenGL
                         State.Gl.Viewport
                         (
                             virtualScreenDisplay.Position.X + mapViewArea.Position.X,
-                            virtualScreenDisplay.Position.Y + mapViewArea.Position.Y,
+                            VirtualScreen.Size.Height - (virtualScreenDisplay.Position.Y + mapViewArea.Position.Y + mapViewArea.Size.Height),
                             (uint)mapViewArea.Size.Width, (uint)mapViewArea.Size.Height
                         );
                     }

@@ -26,12 +26,12 @@ namespace Ambermoon.Render
 {
     internal class RenderMap3D : IRenderMap
     {
-        public const int DistancePerTile = 10; // TODO
-        public const int WallHeight = 20; // TODO
+        public const int DistancePerTile = 1; // TODO
+        public const int WallHeight = 2; // TODO
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
-        ITextureAtlas textureAtlas = null;
+        readonly ITextureAtlas textureAtlas = null;
         ISurface3D floor = null;
         ISurface3D ceiling = null;
         readonly List<ISurface3D> walls = new List<ISurface3D>();
@@ -49,7 +49,7 @@ namespace Ambermoon.Render
 
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
-            camera.SetPosition(playerX, playerY);
+            camera.SetPosition(playerX * DistancePerTile, playerY * DistancePerTile);
             camera.TurnTowards((float)playerDirection * 90.0f);
 
             if (Map != map)
@@ -68,7 +68,7 @@ namespace Ambermoon.Render
                 wall.PaletteIndex = (byte)Map.PaletteIndex;
                 wall.X = x;
                 wall.Y = WallHeight;
-                wall.Z = z;
+                wall.Z = -z;
                 wall.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
                 wall.Visible = true; // TODO: not all walls should be always visible
                 walls.Add(wall);

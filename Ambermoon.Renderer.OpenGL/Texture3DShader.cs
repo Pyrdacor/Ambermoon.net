@@ -39,7 +39,8 @@ namespace Ambermoon.Renderer
         // Each row represents one palette of 32 colors.
         // So the palette index determines the pixel row.
         // The column is the palette color index from 0 to 31.
-        static string[] TextureFragmentShader(State state) => new string[]
+        // TODO: use gl_FrontFacing?
+        static string[] Texture3DFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
             $"uniform sampler2D {DefaultSamplerName};",
@@ -59,7 +60,7 @@ namespace Ambermoon.Renderer
             $"}}"
         };
 
-        static string[] TextureVertexShader(State state) => new string[]
+        static string[] Texture3DVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
             $"in vec3 {DefaultPositionName};",
@@ -74,9 +75,7 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
-            $"    varTexCoord = vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
-            $"    ",
-            $"    varTexCoord *= atlasFactor;",
+            $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4({DefaultPositionName}, 1.0f);",
             $"}}"
@@ -85,7 +84,7 @@ namespace Ambermoon.Renderer
         Texture3DShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
                   DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultPaletteName,
-                  TextureFragmentShader(state), TextureVertexShader(state))
+                  Texture3DFragmentShader(state), Texture3DVertexShader(state))
         {
 
         }

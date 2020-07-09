@@ -55,9 +55,7 @@ namespace Ambermoon.Renderer
         public void Resize(int width, int height)
         {
             State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, width, 0, height, 0, 1);
-            // TODO: 9.0f cause 10 is distance per tile and -1 is enough as there can not be any surface in last row
-            // TODO: 500.0f cause max map height should be 50 (50 * 10 = 500)
-            State.ProjectionMatrix3D = Matrix4.CreatePerspective(60.0f, (float)Global.MapViewWidth / Global.MapViewHeight, 9.0f, 500.0f);
+            State.ProjectionMatrix3D = Matrix4.CreatePerspective(90.0f, (float)Global.MapViewWidth / Global.MapViewHeight, 0.9f, 100.0f);
 
             State.ClearMatrices();
             State.PushModelViewMatrix(Matrix4.Identity);
@@ -116,7 +114,7 @@ namespace Ambermoon.Renderer
 
                     modelViewMatrix =
                         Matrix4.CreateTranslationMatrix(x, y) *
-                        Matrix4.CreateRotationMatrix(rotationDegree) *
+                        Matrix4.CreateYRotationMatrix(rotationDegree) *
                         Matrix4.CreateScalingMatrix(factor, 1.0f / factor) *
                         Matrix4.CreateTranslationMatrix(-x, -y);
                 }
@@ -124,7 +122,7 @@ namespace Ambermoon.Renderer
                 {
                     modelViewMatrix =
                         Matrix4.CreateTranslationMatrix(x, y) *
-                        Matrix4.CreateRotationMatrix(rotationDegree) *
+                        Matrix4.CreateYRotationMatrix(rotationDegree) *
                         Matrix4.CreateTranslationMatrix(-x, -y);
                 }
             }

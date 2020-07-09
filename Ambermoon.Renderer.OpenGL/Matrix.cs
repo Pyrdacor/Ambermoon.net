@@ -65,21 +65,28 @@ namespace Ambermoon.Renderer
             if (far - near <= float.Epsilon)
                 throw new ArgumentException("Near z value equals far z value or far is smaller than near which is not allowed.");
 
-            var f = 0.5 * Math.PI * fovY / 180.0;
-            var cos = Math.Cos(f);
-            var sin = Math.Sin(f);
+            var scale = /*near * */0.5 * Math.PI * fovY / 180.0;
+            var cos = Math.Cos(scale);
+            var sin = Math.Sin(scale);
 
             if (sin <= double.Epsilon)
                 throw new ArgumentException("Sinus of the given field of view y-angle is 0 which is not allowed.");
 
-            f = cos / sin;
+            scale = cos / sin; // = tan
+
+            float r = aspect * (float)scale; // right
+            float l = -r; // left
+            float t = (float)scale; // top
+            float b = -t; // bottom
+            float w = r - l; // width
+            float h = t - b; // height
 
             return new Matrix4(new float[16]
             {
-                (float)(f / aspect),    0.0f,       0.0f,                   0.0f,
-                0.0f,                   (float)f,   0.0f,                   0.0f,
-                0.0f,                   0.0f,       (near+far)/(near-far),  (2.0f*near*far)/(near-far),
-                0.0f,                   0.0f,       -1.0f,                  0.0f
+                2.0f * near / w,    0.0f,               (r + l) / w,                0.0f,
+                0.0f,               2.0f * near / h,    (t + b) / h,                0.0f,
+                0.0f,               0.0f,               -(near+far)/(far-near),     -(2.0f*near*far)/(far-near),
+                0.0f,               0.0f,               -1.0f,                      0.0f
             });
         }
 
@@ -105,7 +112,7 @@ namespace Ambermoon.Renderer
             });
         }
 
-        public static Matrix4 CreateRotationMatrix(float angle)
+        public static Matrix4 CreateYRotationMatrix(float angle)
         {
             // TODO: maybe angle = -angle
             const float deg2rad = (float)(Math.PI / 180.0);
@@ -118,6 +125,23 @@ namespace Ambermoon.Renderer
                 cos,  -sin, 0.0f, 0.0f,
                 sin,  cos,  0.0f, 0.0f,
                 0.0f, 0.0f, 1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f
+            });
+        }
+
+        public static Matrix4 CreateZRotationMatrix(float angle)
+        {
+            // TODO: maybe angle = -angle
+            const float deg2rad = (float)(Math.PI / 180.0);
+
+            var sin = (float)Math.Sin(angle * deg2rad);
+            var cos = (float)Math.Cos(angle * deg2rad);
+
+            return new Matrix4(new float[16]
+            {
+                cos,  0.0f, sin,  0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                -sin, 0.0f, cos,  0.0f,
                 0.0f, 0.0f, 0.0f, 1.0f
             });
         }

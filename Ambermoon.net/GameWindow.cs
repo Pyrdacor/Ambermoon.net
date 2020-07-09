@@ -34,6 +34,7 @@ namespace Ambermoon
             if (keyboard != null)
             {
                 keyboard.KeyDown += Keyboard_KeyDown;
+                keyboard.KeyUp += Keyboard_KeyUp;
                 keyboard.KeyChar += Keyboard_KeyChar;
             }
 
@@ -104,6 +105,11 @@ namespace Ambermoon
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Common.Key key, int value)
         {
             Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
+        }
+
+        void Keyboard_KeyUp(IKeyboard keyboard, Silk.NET.Input.Common.Key key, int value)
+        {
+            Game.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
         }
 
         static MouseButtons GetMouseButtons(IMouse mouse)

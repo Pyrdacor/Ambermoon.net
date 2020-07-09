@@ -23,9 +23,12 @@ namespace Ambermoon.Render
 {
     public interface ICamera3D
     {
-        void SetPosition(float x, float y); // x and y in tiles
-        void MoveForward(float distance); // in tiles
-        void MoveBackward(float distance); // in tiles
+        /// <summary>
+        /// This will reset the view angle to up
+        /// </summary>
+        void SetPosition(float x, float z);
+        void MoveForward(float distance);
+        void MoveBackward(float distance);
         void TurnLeft(float angle); // in degrees
         void TurnRight(float angle); // in degrees
         void TurnTowards(float angle); // turn to attacking monster or stand on a spinner (in degrees)
