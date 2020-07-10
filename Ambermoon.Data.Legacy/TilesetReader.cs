@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Ambermoon.Data.Legacy
+﻿namespace Ambermoon.Data.Legacy
 {
     public class TilesetReader : ITilesetReader
     {

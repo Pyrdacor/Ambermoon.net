@@ -125,7 +125,6 @@ namespace Ambermoon.Renderer.OpenGL
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
             var textureAtlasManager = TextureAtlasManager.Instance;
-
             textureAtlasManager.AddAll(gameData, graphicProvider);
             var palette = textureAtlasManager.CreatePalette(graphicProvider);
 

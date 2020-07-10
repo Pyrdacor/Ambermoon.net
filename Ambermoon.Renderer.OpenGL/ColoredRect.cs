@@ -23,7 +23,7 @@ using Ambermoon.Render;
 
 namespace Ambermoon.Renderer
 {
-    public class ColoredRect : Node, IColoredRect
+    public class ColoredRect : RenderNode, IColoredRect
     {
         protected int drawIndex = -1;
         Color color;

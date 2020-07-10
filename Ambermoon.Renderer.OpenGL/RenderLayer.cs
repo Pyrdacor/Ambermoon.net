@@ -245,7 +245,7 @@ namespace Ambermoon.Renderer
 
         public void TestNode(IRenderNode node)
         {
-            if (!(node is Node))
+            if (!(node is RenderNode))
                 throw new AmbermoonException(ExceptionScope.Render, "The given render node is not valid for this renderer.");
 
             if (node is ColoredRect && renderBufferColorRects == null)

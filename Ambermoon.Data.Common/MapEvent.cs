@@ -7,9 +7,9 @@ namespace Ambermoon.Data
     {
         Unknown,
         MapChange, // doors, etc
-        TextPopup, // TODO: not sure yet, could be a text from the map_texts file
+        Unknown2,
         Chest, // all kinds of lootable map objects
-        Event, // looks like events that start a sequence (like grandfather in bed at the beginning)
+        TextEvent, // events with text popup
         Unknown5,
         Hurt, // the burning fire places in grandfathers house have these
         Unknown7,
@@ -40,6 +40,7 @@ namespace Ambermoon.Data
 
     public class MapEvent
     {
+        public uint Index { get; set; }
         public MapEventType Type { get; set; }
         public MapEvent Next { get; set; }
     }
@@ -49,10 +50,13 @@ namespace Ambermoon.Data
         public uint MapIndex { get; set; }
         public uint X { get; set; }
         public uint Y { get; set; }
+        public CharacterDirection Direction { get; set; }
+        public byte[] Unknown1 { get; set; }
+        public byte[] Unknown2 { get; set; }
 
         public override string ToString()
         {
-            return $"Map {MapIndex} / Position {X},{Y}";
+            return $"{Type}: Map {MapIndex} / Position {X},{Y} / Direction {Direction}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -84,7 +88,7 @@ namespace Ambermoon.Data
             Lockpick = 0x01 // these also have a trap attached
         }
 
-        public ushort Unknown { get; set; }
+        public ushort Unknown1 { get; set; }
         public LockFlags Lock { get; set; }
         /// <summary>
         /// Note: This is 0-based but the files might by 1-based.
@@ -92,10 +96,23 @@ namespace Ambermoon.Data
         public uint ChestIndex { get; set; }
         public bool RemoveWhenEmpty { get; set; }
         public uint KeyIndex { get; set; }
+        public ushort Unknown2 { get; set; }
 
         public override string ToString()
         {
-            return $"Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Unknown {Unknown:X4}";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Unknown1 {Unknown1:X4}, Unknown2 {Unknown2:X4}";
+        }
+    }
+
+    public class TextEvent : MapEvent
+    {
+        public uint TextIndex { get; set; }
+        public byte[] Unknown1 { get; set; }
+        public byte[] Unknown2 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Text {TextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -105,7 +122,7 @@ namespace Ambermoon.Data
 
         public override string ToString()
         {
-            return string.Join(" ", Data.Select(d => d.ToString("X2")));
+            return Type.ToString() + ": " + string.Join(" ", Data.Select(d => d.ToString("X2")));
         }
     }
 }

@@ -139,6 +139,9 @@ namespace Ambermoon
             var gameData = new GameData();
             gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
 
+            // TODO: REMOVE
+            new LabdataReader().ReadLabdata(null, gameData.Files["2Lab_data.amb"].Files[1]);
+
             // Create render view
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), Width, Height);
 

@@ -30,6 +30,8 @@ namespace Ambermoon.Renderer
     // the indices will not fit inside the different buffers. We can't use different sprite types per layer!
     public class RenderBuffer : IDisposable
     {
+        const int TextureWidth = 128;
+        const int TextureHeight = 80;
         public bool Masked { get; } = false;
         bool disposed = false;
         readonly State state;
@@ -351,9 +353,9 @@ namespace Ambermoon.Renderer
                 if (textureAtlasOffsetBufferIndex != index)
                     throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
 
-                textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.Width), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.Width), (short)(surface.TextureAtlasOffset.Y + surface.Height), textureAtlasOffsetBufferIndex + 2);
-                textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.Height), textureAtlasOffsetBufferIndex + 3);
+                textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + TextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
+                textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + TextureWidth), (short)(surface.TextureAtlasOffset.Y + TextureHeight), textureAtlasOffsetBufferIndex + 2);
+                textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + TextureHeight), textureAtlasOffsetBufferIndex + 3);
             }
 
             return index;
@@ -462,9 +464,9 @@ namespace Ambermoon.Renderer
                 return;
 
             textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 1, (short)(surface.TextureAtlasOffset.X + surface.Width), (short)surface.TextureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + surface.Width), (short)(surface.TextureAtlasOffset.Y + surface.Height));
-            textureAtlasOffsetBuffer.Update(index + 3, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.Height));
+            textureAtlasOffsetBuffer.Update(index + 1, (short)(surface.TextureAtlasOffset.X + TextureWidth), (short)surface.TextureAtlasOffset.Y);
+            textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + TextureWidth), (short)(surface.TextureAtlasOffset.Y + TextureHeight));
+            textureAtlasOffsetBuffer.Update(index + 3, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + TextureHeight));
         }
 
         public void UpdateColor(int index, Render.Color color)

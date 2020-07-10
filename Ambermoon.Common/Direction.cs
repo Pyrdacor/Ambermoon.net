@@ -1,5 +1,4 @@
-﻿using System;
-namespace Ambermoon
+﻿namespace Ambermoon
 {
     public enum Direction
     {

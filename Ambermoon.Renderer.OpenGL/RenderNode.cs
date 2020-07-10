@@ -24,7 +24,7 @@ using System;
 
 namespace Ambermoon.Renderer
 {
-    public abstract class Node : IRenderNode
+    public abstract class RenderNode : IRenderNode
     {
         int x = short.MaxValue;
         int y = short.MaxValue;
@@ -35,7 +35,7 @@ namespace Ambermoon.Renderer
         bool notOnScreen = true;
         readonly Rect virtualScreen = null;
 
-        protected Node(int width, int height, Rect virtualScreen)
+        protected RenderNode(int width, int height, Rect virtualScreen)
         {
             Width = width;
             Height = height;

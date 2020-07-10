@@ -76,7 +76,7 @@ namespace Ambermoon.Renderer.OpenGL
         /// </summary>
         public void SetPosition(float x, float z)
         {
-            this.x = x;
+            this.x = -x;
             this.y = -1.0f;
             this.z = z;
             translateMatrix = Matrix4.CreateTranslationMatrix(this.x, this.y, this.z);

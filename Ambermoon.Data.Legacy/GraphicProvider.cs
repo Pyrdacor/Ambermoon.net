@@ -186,6 +186,12 @@ namespace Ambermoon.Data.Legacy
                     info.PaletteOffset = 24;
                     info.Alpha = true;
                     break;
+                case GraphicType.Map3D:
+                    info.Width = 128;
+                    info.Height = 80;
+                    info.GraphicFormat = GraphicFormat.Palette4Bit;
+                    info.Alpha = true;
+                    break;
                 // TODO
             }
 

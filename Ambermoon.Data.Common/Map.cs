@@ -65,6 +65,7 @@ namespace Ambermoon.Data
         public World World { get; set; }
         public Tile[,] Tiles { get; set; }
         public List<MapEvent> Events { get; } = new List<MapEvent>();
+        public List<string> Texts { get; } = new List<string>();
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;
@@ -174,7 +175,7 @@ namespace Ambermoon.Data
                 {
                     // The position (x, y) is 1-based in the data so we subtract 1.
                     // Morover the players position is 1 tile below its drawing position so subtract another 1 from y.
-                    player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X - 1, mapChangeEvent.Y - 2, ticks, true, true);
+                    player.MoveTo(mapManager.GetMap(mapChangeEvent.MapIndex), mapChangeEvent.X - 1, mapChangeEvent.Y - 2, ticks, true, mapChangeEvent.Direction);
                 }
             }
         }
@@ -206,11 +207,11 @@ namespace Ambermoon.Data
             }
         }
 
-        public static Map Load(uint index, IMapReader mapReader, IDataReader dataReader)
+        public static Map Load(uint index, IMapReader mapReader, IDataReader dataReader, IDataReader textDataReader)
         {
             var map = new Map { Index = index };
 
-            mapReader.ReadMap(map, dataReader);
+            mapReader.ReadMap(map, dataReader, textDataReader);
 
             return map;
         }

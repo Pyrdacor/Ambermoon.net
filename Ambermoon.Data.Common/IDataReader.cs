@@ -11,6 +11,7 @@ namespace Ambermoon.Data
         byte ReadByte();
         word ReadWord();
         dword ReadDword();
+        string ReadChar();
         string ReadString();
         string ReadString(int length);
         byte PeekByte();

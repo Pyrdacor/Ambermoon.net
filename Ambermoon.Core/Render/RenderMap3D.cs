@@ -20,14 +20,15 @@
  */
 
 using Ambermoon.Data;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Render
 {
     internal class RenderMap3D : IRenderMap
     {
-        public const int DistancePerTile = 1; // TODO
-        public const int WallHeight = 2; // TODO
+        public const int DistancePerTile = 2; // TODO
+        public const int WallHeight = 3; // TODO
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
@@ -45,6 +46,56 @@ namespace Ambermoon.Render
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Map3D);
 
             SetMap(map, playerX, playerY, playerDirection);
+
+            // TODO: REMOVE
+            for (int y = 0; y < map.Height; ++y)
+            {
+                for (int x = 0; x < map.Width; ++x)
+                {
+                    Console.Write(Math.Max(1, ((int)Map.Tiles[x, y].BackTileIndex - 1)).ToString("x2") + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+            var allEvents = new SortedDictionary<uint, MapEvent>();
+            foreach (var e in map.Events)
+            {
+                if (!allEvents.ContainsKey(e.Index))
+                    allEvents.Add(e.Index, e);
+
+                var next = e.Next;
+
+                while (next != null)
+                {
+                    if (!allEvents.ContainsKey(next.Index))
+                        allEvents.Add(next.Index, next);
+
+                    next = next.Next;
+                }
+            }
+            for (int y = 0; y < map.Height; ++y)
+            {
+                for (int x = 0; x < map.Width; ++x)
+                {
+                    if ((int)Map.Tiles[x, y].MapEventId == 0)
+                        Console.Write("00 ");
+                    else
+                        Console.Write(map.Events[(int)Map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+            foreach (var e in allEvents)
+            {
+                Console.Write($"{e.Key:x2} -> {e.Value} -> {(e.Value.Next == null ? 255 : e.Value.Next.Index):x2}");
+                if (e.Value is TextEvent textEvent)
+                {
+                    var text = Map.Texts[(int)textEvent.TextIndex];
+                    Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
+                }
+                else
+                    Console.WriteLine();
+            }
         }
 
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)
@@ -75,23 +126,23 @@ namespace Ambermoon.Render
             }
 
             float baseX = mapX * DistancePerTile;
-            float baseY = -(Map.Height - mapY) * (float)DistancePerTile; // negative z means further afar
+            float baseY = mapY * DistancePerTile;
 
             // front face
-            if (overlay || (mapY < Map.Height - 1 && Map.Tiles[mapX, mapY + 1].BackTileIndex == 0))
+            //if (overlay || (mapY < Map.Height - 1 && Map.Tiles[mapX, mapY + 1].BackTileIndex == 0))
                 AddSurface(WallOrientation.Normal, baseX, baseY);
 
             // left face
-            if (overlay || (mapX > 0 && Map.Tiles[mapX - 1, mapY].BackTileIndex == 0))
+            //if (overlay || (mapX > 0 && Map.Tiles[mapX - 1, mapY].BackTileIndex == 0))
                 AddSurface(WallOrientation.Rotated90, baseX + DistancePerTile, baseY);
 
             // back face
-            if (overlay || (mapY > 0 && Map.Tiles[mapX, mapY - 1].BackTileIndex == 0))
+            //if (overlay || (mapY > 0 && Map.Tiles[mapX, mapY - 1].BackTileIndex == 0))
                 AddSurface(WallOrientation.Rotated180, baseX + DistancePerTile, baseY + DistancePerTile);
 
             // right face
-            if (overlay || (mapX < Map.Width - 1 && Map.Tiles[mapX + 1, mapY].BackTileIndex == 0))
-                AddSurface(WallOrientation.Rotated270, baseX, mapY + DistancePerTile);
+            //if (overlay || (mapX < Map.Width - 1 && Map.Tiles[mapX + 1, mapY].BackTileIndex == 0))
+                AddSurface(WallOrientation.Rotated270, baseX, baseY + DistancePerTile);
         }
 
         void UpdateSurfaces()
@@ -127,11 +178,12 @@ namespace Ambermoon.Render
                 {
                     var tile = Map.Tiles[x, y];
 
-                    if (tile.BackTileIndex != 0)
+                    if (tile.BackTileIndex != 0 && tile.BackTileIndex != 255)
                         AddWall(surfaceFactory, layer, x, y, tile.BackTileIndex, false);
 
-                    if (tile.FrontTileIndex != 0)
-                        AddWall(surfaceFactory, layer, x, y, tile.FrontTileIndex, true);
+                    // TODO
+                    /*if (tile.FrontTileIndex != 0)
+                        AddWall(surfaceFactory, layer, x, y, tile.FrontTileIndex, true);*/
                 }
             }
 

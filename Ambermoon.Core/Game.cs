@@ -93,7 +93,7 @@ namespace Ambermoon
             }
         }
 
-        internal void Start2D(Map map, uint playerX, uint playerY)
+        internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
@@ -106,9 +106,12 @@ namespace Ambermoon
                 (uint)Util.Limit(0, (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
 
             player2D.Visible = true;
+            player2D.MoveTo(map, playerX, playerY, currentTicks, true, direction);
+
             var mapOffset = map.MapOffset;
             player.Position.X = mapOffset.X + (int)playerX - (int)renderMap2D.ScrollX;
             player.Position.Y = mapOffset.Y + (int)playerY - (int)renderMap2D.ScrollY;
+            player.Direction = direction;
 
             renderMap3D = null;
 
@@ -118,7 +121,7 @@ namespace Ambermoon
                 renderView.GetLayer((Layer)i).Visible = true;
         }
 
-        internal void Start3D(Map map, uint playerX, uint playerY)
+        internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
@@ -127,12 +130,14 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Render map 3D should not be present.");
 
             // TODO: player direction is not neccessarily the one of the previous map
-            renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, /*player.Direction*/CharacterDirection.Up);
+            renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
             renderMap2D = null;
+            camera3D.SetPosition(playerX * RenderMap3D.DistancePerTile, playerY * RenderMap3D.DistancePerTile);
 
             player2D.Visible = false;
             player.Position.X = (int)playerX;
             player.Position.Y = (int)playerY;
+            player.Direction = direction;
 
             is3D = true;
             renderView.GetLayer(Layer.Map3D).Visible = true;

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -11,8 +9,69 @@ namespace Ambermoon.Data.Legacy
     // - interaction type (move onto, hand, eye, mouth, etc)
     public class MapReader : IMapReader
     {
-        public void ReadMap(Map map, IDataReader dataReader)
+        void ReadMapTexts(Map map, IDataReader textDataReader)
         {
+            map.Texts.Clear();
+
+            if (textDataReader != null)
+            {
+                int numMapTexts = textDataReader.ReadWord();
+                if (numMapTexts == 0)
+                {
+                    textDataReader.ReadWord(); // unknown
+                    numMapTexts = textDataReader.ReadWord();
+
+                    string currentText = "";
+
+                    for (int i = 0; i < numMapTexts; ++i)
+                    {
+                        while (true)
+                        {
+                            var ch = textDataReader.ReadChar();
+
+                            if (ch == "\0" || (textDataReader.Position == textDataReader.Size && i == numMapTexts - 1))
+                            {
+                                map.Texts.Add(currentText.Trim());
+                                currentText = "";
+                                break;
+                            }
+
+                            currentText += ch;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < numMapTexts; ++i)
+                        textDataReader.ReadWord(); // unknown numMapTexts words
+
+                    string currentText = "";
+
+                    for (int i = 0; i < numMapTexts; ++i)
+                    {
+                        while (true)
+                        {
+                            var ch = textDataReader.ReadChar();
+
+                            if (ch == "\0" || (textDataReader.Position == textDataReader.Size && i == numMapTexts - 1))
+                            {
+                                map.Texts.Add(currentText.Trim());
+                                currentText = "";
+                                break;
+                            }
+
+                            currentText += ch;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader)
+        {
+            // Load map texts
+            ReadMapTexts(map, textDataReader);
+
             map.Flags = (MapFlags)dataReader.ReadWord();
             map.Type = (MapType)dataReader.ReadByte();
 
@@ -56,15 +115,15 @@ namespace Ambermoon.Data.Legacy
             }
             else
             {
-                // TODO: 3D maps (looks like 1 word per tile -> first byte texture index, second maybe overlay texture index?)
                 for (int y = 0; y < map.Height; ++y)
                 {
                     for (int x = 0; x < map.Width; ++x)
                     {
+                        var tileData = dataReader.ReadBytes(2);
                         map.Tiles[x, y] = new Map.Tile
                         {
-                            BackTileIndex = dataReader.ReadByte(),
-                            FrontTileIndex = dataReader.ReadByte()
+                            BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
+                            MapEventId = tileData[1] & 0x1fu
                             // TODO: blocking etc
                         };
                     }
@@ -104,7 +163,9 @@ namespace Ambermoon.Data.Legacy
                 // read all map events and the next map event index
                 for (uint i = 0; i < numTotalMapEvents; ++i)
                 {
-                    mapEvents.Add(Tuple.Create(ParseEvent(dataReader), (int)dataReader.ReadWord()));
+                    var mapEvent = ParseEvent(dataReader);
+                    mapEvent.Index = i + 1;
+                    mapEvents.Add(Tuple.Create(mapEvent, (int)dataReader.ReadWord()));
                 }
 
                 foreach (var mapEvent in mapEvents)
@@ -155,14 +216,18 @@ namespace Ambermoon.Data.Legacy
                         // Then 2 unknown bytes (seem to be 00 FF)
                         uint x = dataReader.ReadByte();
                         uint y = dataReader.ReadByte();
-                        dataReader.ReadBytes(3);
+                        var direction = (CharacterDirection)dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(2);
                         uint mapIndex = dataReader.ReadWord();
-                        dataReader.ReadBytes(2);
+                        var unknown2 = dataReader.ReadBytes(2);
                         mapEvent = new MapChangeEvent
                         {
                             MapIndex = mapIndex,
                             X = x,
-                            Y = y
+                            Y = y,
+                            Direction = direction,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2
                         };
                         break;
                     }
@@ -177,26 +242,36 @@ namespace Ambermoon.Data.Legacy
                         // the last word is unknown (seems to be 0xffff for unlocked, and some id otherwise)
                         // maybe open it will trigger change/something else?
                         var lockType = (ChestMapEvent.LockFlags)dataReader.ReadByte();
-                        var unknown = dataReader.ReadWord(); // Unknown
+                        var unknown1 = dataReader.ReadWord(); // Unknown
                         uint chestIndex = dataReader.ReadByte();
                         bool removeWhenEmpty = dataReader.ReadByte() != 0;
                         uint keyIndex = dataReader.ReadWord();
-                        /*if (keyIndex != 0)
-                        {
-                            int offset = dataReader.Position - 3;
-                            Console.WriteLine("Found chest with key: " + string.Join(" ", new DataReader(dataReader as DataReader, offset, 3).ReadToEnd().Select(v => v.ToString("x2"))));
-                        }*/
-                        dataReader.ReadWord(); // Unknown
+                        var unknown2 = dataReader.ReadWord(); // Unknown
                         mapEvent = new ChestMapEvent
                         {
-                            Unknown = unknown,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2,
                             Lock = lockType,
                             ChestIndex = chestIndex,
                             RemoveWhenEmpty = removeWhenEmpty,
                             KeyIndex = keyIndex
                         };
-                        /*if (unknown != 0x00ff)
-                            Console.WriteLine(mapEvent.ToString());*/
+                        break;
+                    }
+                case MapEventType.TextEvent:
+                    {
+                        // 3 unknown bytes
+                        // 4. word is the map text index
+                        // 4 unknown bytes
+                        var unknown1 = dataReader.ReadBytes(3);
+                        var textIndex = dataReader.ReadWord();
+                        var unknown2 = dataReader.ReadBytes(4);
+                        mapEvent = new TextEvent
+                        {
+                            TextIndex = textIndex,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2
+                        };
                         break;
                     }
                 default:

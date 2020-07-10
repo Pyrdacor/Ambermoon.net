@@ -62,23 +62,27 @@ namespace Ambermoon.Render
             Position = startPosition;
         }
 
-        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, bool keepDirection)
+        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
             if (map != Map.Map)
             {
+                if (newDirection == null)
+                    throw new AmbermoonException(ExceptionScope.Application, "Direction must be given when changing maps.");
+
                 if (map.Type == MapType.Map2D)
                 {
                     Map.SetMap(map,
                         (uint)Util.Limit(0, (int)x - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
                         (uint)Util.Limit(0, (int)y - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
+                    Direction = newDirection.Value;
                 }
                 else
                 {
-                    game.Start3D(map, x, y);
+                    game.Start3D(map, x, y, newDirection.Value);
                     return;
                 }
             }
-            else if (!keepDirection)
+            else if (newDirection == null)
             {
                 // Only adjust direction when not changing the map.
 
@@ -104,6 +108,10 @@ namespace Ambermoon.Render
                     // Move purely right
                     Direction = CharacterDirection.Right;
                 }
+            }
+            else
+            {
+                Direction = newDirection.Value;
             }
 
             var tileType = Map[x, y].Type;

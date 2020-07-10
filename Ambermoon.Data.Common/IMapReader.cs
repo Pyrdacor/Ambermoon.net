@@ -2,6 +2,6 @@
 {
     public interface IMapReader
     {
-        void ReadMap(Map map, IDataReader dataReader);
+        void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader);
     }
 }

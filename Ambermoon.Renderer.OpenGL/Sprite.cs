@@ -27,7 +27,7 @@ namespace Ambermoon.Renderer
     /// A sprite has a fixed size and an offset into the layer's texture atlas.
     /// The layer will sort sprites by size and then by the texture atlas offset.
     /// </summary>
-    internal class Sprite : Node, ISprite
+    internal class Sprite : RenderNode, ISprite
     {
         protected int drawIndex = -1;
         Position textureAtlasOffset = null;
@@ -126,7 +126,7 @@ namespace Ambermoon.Renderer
         }
     }
 
-    internal class MaskedSprite : Node, IMaskedSprite
+    internal class MaskedSprite : RenderNode, IMaskedSprite
     {
         protected int drawIndex = -1;
         Position textureAtlasOffset = null;

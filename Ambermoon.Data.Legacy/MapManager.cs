@@ -15,11 +15,13 @@ namespace Ambermoon.Data.Legacy
             for (int i = 1; i <= 3; ++i)
             {
                 var file = gameData.Files[$"{i}Map_data.amb"];
+                var textFiles = gameData.Files[$"{i}Map_texts.amb"];
 
                 foreach (var mapFile in file.Files)
                 {
                     uint index = (uint)mapFile.Key;
-                    maps.Add(index, Map.Load(index, mapReader, mapFile.Value));
+                    var textFile = textFiles.Files.ContainsKey(mapFile.Key) ? textFiles.Files[mapFile.Key] : null;
+                    maps.Add(index, Map.Load(index, mapReader, mapFile.Value, textFile));
                 }
             }
 

@@ -110,7 +110,7 @@ namespace Ambermoon.Render
                     bool frameReset = NumFrames == 1 || newDirection != prevDirection;
                     var prevState = CurrentState;
 
-                    MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset, false);
+                    MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset, null);
                     // We trigger with our lower half so add 1 to y
                     Map.TriggerEvents(this, MapEventTrigger.Move, (uint)newX, (uint)newY + 1, mapManager, ticks);
 
@@ -125,7 +125,7 @@ namespace Ambermoon.Render
                 {
                     // adjust player position on map transition
                     var position = Map.GetCenterPosition();
-                    MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, true);
+                    MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, Direction);
                     
                     if (Map.Map.Type == MapType.Map2D)
                     {

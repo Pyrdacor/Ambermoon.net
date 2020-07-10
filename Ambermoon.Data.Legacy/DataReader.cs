@@ -81,6 +81,11 @@ namespace Ambermoon.Data.Legacy
             return (dword)((_data[Position++] << 24) | (_data[Position++] << 16) | (_data[Position++] << 8) | _data[Position++]);
         }
 
+        public string ReadChar()
+        {
+            return ReadString(1);
+        }
+
         public string ReadString()
         {
             CheckOutOfRange(1);
