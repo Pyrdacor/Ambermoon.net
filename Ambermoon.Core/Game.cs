@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon
 {
@@ -93,8 +94,71 @@ namespace Ambermoon
             }
         }
 
+        // TODO: REMOVE
+        void ShowMapInfo(Map map)
+        {
+            Console.WriteLine();
+            for (int y = 0; y < map.Height; ++y)
+            {
+                for (int x = 0; x < map.Width; ++x)
+                {
+                    Console.Write(Math.Max(1, ((int)map.Tiles[x, y].BackTileIndex - 1)).ToString("x2") + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+            var allEvents = new SortedDictionary<uint, MapEvent>();
+            foreach (var e in map.Events)
+            {
+                if (!allEvents.ContainsKey(e.Index))
+                    allEvents.Add(e.Index, e);
+
+                var next = e.Next;
+
+                while (next != null)
+                {
+                    if (!allEvents.ContainsKey(next.Index))
+                        allEvents.Add(next.Index, next);
+
+                    next = next.Next;
+                }
+            }
+            for (int y = 0; y < map.Height; ++y)
+            {
+                for (int x = 0; x < map.Width; ++x)
+                {
+                    if ((int)map.Tiles[x, y].MapEventId == 0)
+                        Console.Write("00 ");
+                    else
+                        Console.Write(map.Events[(int)map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+            foreach (var e in allEvents)
+            {
+                Console.Write($"{e.Key:x2} -> {e.Value} -> {(e.Value.Next == null ? 255 : e.Value.Next.Index):x2}");
+                if (e.Value is TextEvent textEvent)
+                {
+                    var text = map.Texts[(int)textEvent.TextIndex];
+                    Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
+                }
+                else if (e.Value is RiddlemouthEvent riddlemouthEvent)
+                {
+                    var introText = map.Texts[(int)riddlemouthEvent.IntroTextIndex];
+                    var solutionText = map.Texts[(int)riddlemouthEvent.SolutionTextIndex];
+                    Console.WriteLine(" -> \r\n\t" + introText.Substring(0, Math.Min(24, introText.Length)) + "\r\n\t" + solutionText.Substring(0, Math.Min(24, solutionText.Length)));
+                }
+                else
+                    Console.WriteLine();
+            }
+        }
+
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
+            // TODO: REMOVE
+            ShowMapInfo(map);
+
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
@@ -123,6 +187,9 @@ namespace Ambermoon
 
         internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
+            // TODO: REMOVE
+            ShowMapInfo(map);
+
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
@@ -158,6 +225,9 @@ namespace Ambermoon
             player2D.Visible = true;
             player.MovementAbility = PlayerMovementAbility.Walking;
             // TODO
+
+            // TODO: REMOVE
+            ShowMapInfo(map);
         }
 
         public void LoadGame()

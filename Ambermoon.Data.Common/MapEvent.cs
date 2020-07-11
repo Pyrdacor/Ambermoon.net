@@ -13,13 +13,13 @@ namespace Ambermoon.Data
         Unknown5,
         Hurt, // the burning fire places in grandfathers house have these
         Unknown7,
-        Unknown8,
+        Riddlemouth,
         Unknown9,
-        Unknown10,
+        ChangeTile,
         Unknown11,
         Unknown12,
-        UseMapObject, // buckets, candles, etc
-        Unknown14,
+        Condition,
+        Action,
         Unknown15,
         Unknown16,
         Unknown17,
@@ -113,6 +113,107 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}: Text {TextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class RiddlemouthEvent : MapEvent
+    {
+        public uint IntroTextIndex { get; set; }
+        public uint SolutionTextIndex { get; set; }
+        public byte[] Unknown1 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: IntroText {IntroTextIndex}, SolutionText {SolutionTextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class ChangeTileEvent : MapEvent
+    {
+        public uint X { get; set; }
+        public uint Y { get; set; }
+        public byte[] Unknown1 { get; set; }
+        public uint FrontTileIndex { get; set; }
+        public byte[] Unknown2 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: X {X}, Y {Y}, Front tile {FrontTileIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class ConditionEvent : MapEvent
+    {
+        public enum ConditionType
+        {
+            MapVariable = 0x00,
+            GlobalVariable = 0x01,
+            UseItem = 0x07,
+            TreasureLooted = 0x09,
+            Hand = 0x0e,
+            // TODO
+        };
+
+        public ConditionType TypeOfCondition { get; set; }
+        public byte[] Unknown1 { get; set; }
+        /// <summary>
+        /// This depends on condition type.
+        /// It can be the item or variable index for example.
+        /// </summary>
+        public uint ObjectIndex { get; set; } // 0 = no variable needed
+        public uint Value { get; set; }
+        public byte[] Unknown2 { get; set; }
+
+        public override string ToString()
+        {
+            switch (TypeOfCondition)
+            {
+                case ConditionType.MapVariable:
+                    return $"{Type}: Map variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ConditionType.GlobalVariable:
+                    return $"{Type}: Global variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ConditionType.UseItem:
+                    return $"{Type}: Item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ConditionType.TreasureLooted:
+                    return $"{Type}: Treasure looted, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ConditionType.Hand:
+                    return $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                default:
+                    return $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            }
+        }
+    }
+
+    public class ActionEvent : MapEvent
+    {
+        public enum ActionType
+        {
+            SetMapVariable = 0x00,
+            SetGlobalVariable = 0x01,
+            // TODO
+        };
+
+        public ActionType TypeOfAction { get; set; }
+        public byte[] Unknown1 { get; set; }
+        /// <summary>
+        /// This depends on condition type.
+        /// It can be the item or variable index for example.
+        /// </summary>
+        public uint ObjectIndex { get; set; } // 0 = no variable needed
+        public uint Value { get; set; }
+        public byte[] Unknown2 { get; set; }
+
+        public override string ToString()
+        {
+            switch (TypeOfAction)
+            {
+                case ActionType.SetMapVariable:
+                    return $"{Type}: Set map variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ActionType.SetGlobalVariable:
+                    return $"{Type}: Set global variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                default:
+                    return $"{Type}: Unknown ({TypeOfAction}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            }
         }
     }
 

@@ -20,7 +20,6 @@
  */
 
 using Ambermoon.Data;
-using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Render
@@ -46,56 +45,6 @@ namespace Ambermoon.Render
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Map3D);
 
             SetMap(map, playerX, playerY, playerDirection);
-
-            // TODO: REMOVE
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    Console.Write(Math.Max(1, ((int)Map.Tiles[x, y].BackTileIndex - 1)).ToString("x2") + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            var allEvents = new SortedDictionary<uint, MapEvent>();
-            foreach (var e in map.Events)
-            {
-                if (!allEvents.ContainsKey(e.Index))
-                    allEvents.Add(e.Index, e);
-
-                var next = e.Next;
-
-                while (next != null)
-                {
-                    if (!allEvents.ContainsKey(next.Index))
-                        allEvents.Add(next.Index, next);
-
-                    next = next.Next;
-                }
-            }
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    if ((int)Map.Tiles[x, y].MapEventId == 0)
-                        Console.Write("00 ");
-                    else
-                        Console.Write(map.Events[(int)Map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            foreach (var e in allEvents)
-            {
-                Console.Write($"{e.Key:x2} -> {e.Value} -> {(e.Value.Next == null ? 255 : e.Value.Next.Index):x2}");
-                if (e.Value is TextEvent textEvent)
-                {
-                    var text = Map.Texts[(int)textEvent.TextIndex];
-                    Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
-                }
-                else
-                    Console.WriteLine();
-            }
         }
 
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)

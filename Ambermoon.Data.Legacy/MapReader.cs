@@ -263,12 +263,76 @@ namespace Ambermoon.Data.Legacy
                         // 3 unknown bytes
                         // 4. word is the map text index
                         // 4 unknown bytes
-                        var unknown1 = dataReader.ReadBytes(3);
-                        var textIndex = dataReader.ReadWord();
+                        var unknown1 = dataReader.ReadBytes(4);
+                        var textIndex = dataReader.ReadByte();
                         var unknown2 = dataReader.ReadBytes(4);
                         mapEvent = new TextEvent
                         {
                             TextIndex = textIndex,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2
+                        };
+                        break;
+                    }
+                case MapEventType.Riddlemouth:
+                    {
+                        var introTextIndex = dataReader.ReadByte();
+                        var solutionTextIndex = dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(7);
+                        mapEvent = new RiddlemouthEvent
+                        {
+                            IntroTextIndex = introTextIndex,
+                            SolutionTextIndex = solutionTextIndex,
+                            Unknown1 = unknown1
+                        };
+                        break;
+                    }
+                case MapEventType.ChangeTile:
+                    {
+                        var x = dataReader.ReadByte();
+                        var y = dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(3);
+                        var frontTileIndex = dataReader.ReadWord();
+                        var unknown2 = dataReader.ReadBytes(2);
+                        mapEvent = new ChangeTileEvent
+                        {
+                            X = x,
+                            Y = y,
+                            FrontTileIndex = frontTileIndex,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2
+                        };
+                        break;
+                    }
+                case MapEventType.Condition:
+                    {
+                        var conditionType = (ConditionEvent.ConditionType)dataReader.ReadByte(); // TODO: this needs more research
+                        var value = dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(4);
+                        var objectIndex = dataReader.ReadByte();
+                        var unknown2 = dataReader.ReadBytes(2);
+                        mapEvent = new ConditionEvent
+                        {
+                            TypeOfCondition = conditionType,
+                            ObjectIndex = objectIndex,
+                            Value = value,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2
+                        };
+                        break;
+                    }
+                case MapEventType.Action:
+                    {
+                        var actionType = (ActionEvent.ActionType)dataReader.ReadByte(); // TODO: this needs more research
+                        var value = dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(4);
+                        var objectIndex = dataReader.ReadByte();
+                        var unknown2 = dataReader.ReadBytes(2);
+                        mapEvent = new ActionEvent
+                        {
+                            TypeOfAction = actionType,
+                            ObjectIndex = objectIndex,
+                            Value = value,
                             Unknown1 = unknown1,
                             Unknown2 = unknown2
                         };
