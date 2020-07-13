@@ -97,6 +97,11 @@ namespace Ambermoon
         // TODO: REMOVE
         void ShowMapInfo(Map map)
         {
+            if (map.Texts.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine(map.Texts[0]);
+            }
             Console.WriteLine();
             for (int y = 0; y < map.Height; ++y)
             {
@@ -141,6 +146,11 @@ namespace Ambermoon
                 if (e.Value is TextEvent textEvent)
                 {
                     var text = map.Texts[(int)textEvent.TextIndex];
+                    Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
+                }
+                else if (e.Value is QuestionEvent questionEvent)
+                {
+                    var text = map.Texts[(int)questionEvent.TextIndex];
                     Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
                 }
                 else if (e.Value is RiddlemouthEvent riddlemouthEvent)
@@ -199,7 +209,7 @@ namespace Ambermoon
             // TODO: player direction is not neccessarily the one of the previous map
             renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
             renderMap2D = null;
-            camera3D.SetPosition(playerX * RenderMap3D.DistancePerTile, playerY * RenderMap3D.DistancePerTile);
+            camera3D.SetPosition(playerX * RenderMap3D.DistancePerTile, (map.Height - playerY) * RenderMap3D.DistancePerTile);
 
             player2D.Visible = false;
             player.Position.X = (int)playerX;
@@ -228,6 +238,7 @@ namespace Ambermoon
 
             // TODO: REMOVE
             ShowMapInfo(map);
+            Start3D(mapManager.GetMap(294), 0, 0, CharacterDirection.Down);
         }
 
         public void LoadGame()

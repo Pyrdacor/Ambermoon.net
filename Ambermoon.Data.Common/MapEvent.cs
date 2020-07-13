@@ -10,11 +10,11 @@ namespace Ambermoon.Data
         Unknown2,
         Chest, // all kinds of lootable map objects
         TextEvent, // events with text popup
-        Unknown5,
-        Hurt, // the burning fire places in grandfathers house have these
+        Spinner, // rotates the player to a random direction
+        Damage, // the burning fire places in grandfathers house have these
         Unknown7,
         Riddlemouth,
-        Unknown9,
+        ChangePlayerAttribute,
         ChangeTile,
         Unknown11,
         Unknown12,
@@ -24,7 +24,7 @@ namespace Ambermoon.Data
         Unknown16,
         Unknown17,
         Unknown18,
-        Unknown19,
+        Question, // yes/no popup with text
         Unknown20,
         // TODO ...
         // Maybe: Message popup, activatable by hand/eye/mouth cursor, etc
@@ -116,6 +116,26 @@ namespace Ambermoon.Data
         }
     }
 
+    public class SpinnerEvent : MapEvent
+    {
+        public byte[] Unknown1 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class DamageEvent : MapEvent
+    {
+        public byte[] Unknown1 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+        }
+    }
+
     public class RiddlemouthEvent : MapEvent
     {
         public uint IntroTextIndex { get; set; }
@@ -125,6 +145,19 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}: IntroText {IntroTextIndex}, SolutionText {SolutionTextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class ChangePlayerAttributeEvent : MapEvent
+    {
+        public Attribute Attribute { get; set; }
+        public uint Value { get; set; }
+        public byte[] Unknown1 { get; set; }
+        public byte Unknown2 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Attribute {Attribute}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {Unknown2:x2}";
         }
     }
 
@@ -214,6 +247,17 @@ namespace Ambermoon.Data
                 default:
                     return $"{Type}: Unknown ({TypeOfAction}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
             }
+        }
+    }
+
+    public class QuestionEvent : MapEvent
+    {
+        public uint TextIndex { get; set; }
+        public byte[] Unknown1 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Text {TextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
         }
     }
 

@@ -44,6 +44,7 @@ namespace Ambermoon.Data.Legacy
 
         Graphic ReadPalette(GraphicReader graphicReader, IDataReader reader)
         {
+            reader.Position = 0;
             var paletteGraphic = new Graphic();
             graphicReader.ReadGraphic(paletteGraphic, reader, paletteGraphicInfo);
             return paletteGraphic;

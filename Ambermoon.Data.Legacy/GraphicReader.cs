@@ -77,10 +77,14 @@ namespace Ambermoon.Data.Legacy
                     for (int i = 0; i < graphic.Width * graphic.Height; ++i)
                     {
                         ushort color = dataReader.ReadWord();
-                        graphic.Data[i * 4 + 0] = (byte)(((color >> 8) & 0x0f) << 4);
-                        graphic.Data[i * 4 + 1] = (byte)(((color >> 4) & 0x0f) << 4);
-                        graphic.Data[i * 4 + 2] = (byte)((color & 0x0f) << 4);
+                        graphic.Data[i * 4 + 0] = (byte)((color >> 8) & 0x0f);
+                        graphic.Data[i * 4 + 1] = (byte)((color >> 4) & 0x0f);
+                        graphic.Data[i * 4 + 2] = (byte)(color & 0x0f);
                         graphic.Data[i * 4 + 3] = 255;
+
+                        graphic.Data[i * 4 + 0] |= (byte)(graphic.Data[i * 4 + 0] << 4);
+                        graphic.Data[i * 4 + 1] |= (byte)(graphic.Data[i * 4 + 1] << 4);
+                        graphic.Data[i * 4 + 2] |= (byte)(graphic.Data[i * 4 + 2] << 4);
                     }
                     break;
                 case GraphicFormat.RGBA32:

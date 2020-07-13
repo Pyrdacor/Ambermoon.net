@@ -15,7 +15,9 @@ namespace Ambermoon.Data.Legacy
             "Extro_music",
             "Intro_music",
             "Saves",
-            "Party_data.sav"
+            "Party_data.sav",
+            "Fantasy_intro",
+            "Keymap"
         };
 
         // Key: Filename, Value: Disk letter
@@ -24,8 +26,10 @@ namespace Ambermoon.Data.Legacy
             // Disk A
             { "AM2_BLIT", 'A' },
             { "AM2_CPU", 'A' },
+            { "Keymap", 'A' },
             // Disk B
             { "Ambermoon_intro", 'B' },
+            { "Fantasy_intro", 'B' },
             { "Intro_music", 'B' },
             // Disk C
             { "1Icon_gfx.amb", 'C' },

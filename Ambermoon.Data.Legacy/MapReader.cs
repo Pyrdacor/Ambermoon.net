@@ -274,6 +274,24 @@ namespace Ambermoon.Data.Legacy
                         };
                         break;
                     }
+                case MapEventType.Spinner:
+                    {
+                        var unknown1 = dataReader.ReadBytes(9);
+                        mapEvent = new SpinnerEvent
+                        {
+                            Unknown1 = unknown1,
+                        };
+                        break;
+                    }
+                case MapEventType.Damage:
+                    {
+                        var unknown1 = dataReader.ReadBytes(9);
+                        mapEvent = new DamageEvent
+                        {
+                            Unknown1 = unknown1,
+                        };
+                        break;
+                    }
                 case MapEventType.Riddlemouth:
                     {
                         var introTextIndex = dataReader.ReadByte();
@@ -284,6 +302,22 @@ namespace Ambermoon.Data.Legacy
                             IntroTextIndex = introTextIndex,
                             SolutionTextIndex = solutionTextIndex,
                             Unknown1 = unknown1
+                        };
+                        break;
+                    }
+                case MapEventType.ChangePlayerAttribute:
+                    {
+                        var unknown1 = dataReader.ReadBytes(6);
+                        var attribute = (Attribute)dataReader.ReadByte();
+                        var unknown2 = dataReader.ReadByte();
+                        var value = dataReader.ReadByte();
+
+                        mapEvent = new ChangePlayerAttributeEvent
+                        {
+                            Attribute = attribute,
+                            Value = value,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2
                         };
                         break;
                     }
@@ -335,6 +369,17 @@ namespace Ambermoon.Data.Legacy
                             Value = value,
                             Unknown1 = unknown1,
                             Unknown2 = unknown2
+                        };
+                        break;
+                    }
+                case MapEventType.Question:
+                    {
+                        var textIndex = dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(8);
+                        mapEvent = new QuestionEvent
+                        {
+                            TextIndex = textIndex,
+                            Unknown1 = unknown1
                         };
                         break;
                     }

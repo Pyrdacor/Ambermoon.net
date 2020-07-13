@@ -49,7 +49,7 @@ namespace Ambermoon.Render
 
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
-            camera.SetPosition(playerX * DistancePerTile, playerY * DistancePerTile);
+            camera.SetPosition(playerX * DistancePerTile, (map.Height - playerY) * DistancePerTile);
             camera.TurnTowards((float)playerDirection * 90.0f);
 
             if (Map != map)
@@ -111,6 +111,8 @@ namespace Ambermoon.Render
             floor.X = 0.0f;
             floor.Y = 0.0f;
             floor.Z = -Map.Height * DistancePerTile;
+            // Floors can have single colors or even tiled textures
+            floor.TextureAtlasOffset = textureAtlas.GetOffset(0); // TODO: seems to have color rgb hex 11 22 33 in grandfathers cellar but couldn't find this color in the data
             floor.Visible = true;
             ceiling = surfaceFactory.Create(SurfaceType.Ceiling, Map.Width * DistancePerTile, Map.Height * DistancePerTile);
             ceiling.PaletteIndex = (byte)Map.PaletteIndex;
@@ -118,6 +120,8 @@ namespace Ambermoon.Render
             ceiling.X = 0.0f;
             ceiling.Y = WallHeight;
             ceiling.Z = 0.0f;
+            // Ceilings can have single colors, tiled textures or skyboxes
+            ceiling.TextureAtlasOffset = textureAtlas.GetOffset(0); // TODO: seems to have color rgb hex 22 00 00 in grandfathers cellar but couldn't find this color in the data
             ceiling.Visible = true;
 
             // Add walls
