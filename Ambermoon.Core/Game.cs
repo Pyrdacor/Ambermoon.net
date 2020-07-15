@@ -2,6 +2,7 @@
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -100,7 +101,7 @@ namespace Ambermoon
             if (map.Texts.Count > 0)
             {
                 Console.WriteLine();
-                Console.WriteLine(map.Texts[0]);
+                Console.WriteLine(map.Texts[0] + " - " + map.Index);
             }
             Console.WriteLine();
             for (int y = 0; y < map.Height; ++y)
@@ -112,22 +113,15 @@ namespace Ambermoon
                 Console.WriteLine();
             }
             Console.WriteLine();
-            var allEvents = new SortedDictionary<uint, MapEvent>();
-            foreach (var e in map.Events)
+            for (int y = 0; y < map.Height; ++y)
             {
-                if (!allEvents.ContainsKey(e.Index))
-                    allEvents.Add(e.Index, e);
-
-                var next = e.Next;
-
-                while (next != null)
+                for (int x = 0; x < map.Width; ++x)
                 {
-                    if (!allEvents.ContainsKey(next.Index))
-                        allEvents.Add(next.Index, next);
-
-                    next = next.Next;
+                    Console.Write(map.Tiles[x, y].MapEventId.ToString("x2") + " ");
                 }
+                Console.WriteLine();
             }
+            Console.WriteLine();
             for (int y = 0; y < map.Height; ++y)
             {
                 for (int x = 0; x < map.Width; ++x)
@@ -135,25 +129,25 @@ namespace Ambermoon
                     if ((int)map.Tiles[x, y].MapEventId == 0)
                         Console.Write("00 ");
                     else
-                        Console.Write(map.Events[(int)map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
+                        Console.Write(map.EventLists[(int)map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
                 }
                 Console.WriteLine();
             }
             Console.WriteLine();
-            foreach (var e in allEvents)
+            foreach (var e in map.Events)
             {
-                Console.Write($"{e.Key:x2} -> {e.Value} -> {(e.Value.Next == null ? 255 : e.Value.Next.Index):x2}");
-                if (e.Value is TextEvent textEvent)
+                Console.Write($"{e.Index:x2} -> {e} -> {(e.Next == null ? 255 : e.Next.Index):x2}");
+                if (e is TextEvent textEvent)
                 {
                     var text = map.Texts[(int)textEvent.TextIndex];
                     Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
                 }
-                else if (e.Value is QuestionEvent questionEvent)
+                else if (e is QuestionEvent questionEvent)
                 {
                     var text = map.Texts[(int)questionEvent.TextIndex];
                     Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
                 }
-                else if (e.Value is RiddlemouthEvent riddlemouthEvent)
+                else if (e is RiddlemouthEvent riddlemouthEvent)
                 {
                     var introText = map.Texts[(int)riddlemouthEvent.IntroTextIndex];
                     var solutionText = map.Texts[(int)riddlemouthEvent.SolutionTextIndex];
@@ -162,6 +156,25 @@ namespace Ambermoon
                 else
                     Console.WriteLine();
             }
+            Console.WriteLine();
+            var eventTiles = new SortedDictionary<uint, List<Position>>();
+            for (int y = 0; y < map.Height; ++y)
+            {
+                for (int x = 0; x < map.Width; ++x)
+                {
+                    if ((int)map.Tiles[x, y].MapEventId != 0)
+                    {
+                        var index = map.EventLists[(int)map.Tiles[x, y].MapEventId - 1].Index;
+
+                        if (!eventTiles.ContainsKey(index))
+                            eventTiles.Add(index, new List<Position>());
+                        eventTiles[index].Add(new Position(x, y));
+                    }
+                }
+            }
+            foreach (var tile in eventTiles)
+                Console.WriteLine($"{tile.Key:x2} -> {string.Join(" | ", tile.Value.Select(p => $"{p.X},{p.Y}"))}");
+            Console.WriteLine();
         }
 
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
@@ -238,7 +251,7 @@ namespace Ambermoon
 
             // TODO: REMOVE
             ShowMapInfo(map);
-            Start3D(mapManager.GetMap(294), 0, 0, CharacterDirection.Down);
+            Start3D(mapManager.GetMap(277), 0, 0, CharacterDirection.Down);
         }
 
         public void LoadGame()

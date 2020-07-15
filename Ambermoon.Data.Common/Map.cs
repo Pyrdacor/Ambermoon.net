@@ -65,6 +65,7 @@ namespace Ambermoon.Data
         public World World { get; set; }
         public Tile[,] Tiles { get; set; }
         public List<MapEvent> Events { get; } = new List<MapEvent>();
+        public List<MapEvent> EventLists { get; } = new List<MapEvent>();
         public List<string> Texts { get; } = new List<string>();
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;

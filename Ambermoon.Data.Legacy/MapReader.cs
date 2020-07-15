@@ -122,10 +122,14 @@ namespace Ambermoon.Data.Legacy
                         var tileData = dataReader.ReadBytes(2);
                         map.Tiles[x, y] = new Map.Tile
                         {
-                            BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
-                            MapEventId = tileData[1] & 0x1fu
+                            BackTileIndex = ((uint)(tileData[1] & 0xc0) << 2) | tileData[0],
+                            MapEventId = tileData[1] & 0x2fu
                             // TODO: blocking etc
                         };
+                        if (map.Index == 277 && x == 8 && y == 26)
+                        {
+                            Console.WriteLine();
+                        }
                     }
                 }
             }
@@ -166,6 +170,7 @@ namespace Ambermoon.Data.Legacy
                     var mapEvent = ParseEvent(dataReader);
                     mapEvent.Index = i + 1;
                     mapEvents.Add(Tuple.Create(mapEvent, (int)dataReader.ReadWord()));
+                    map.Events.Add(mapEvent);
                 }
 
                 foreach (var mapEvent in mapEvents)
@@ -174,7 +179,7 @@ namespace Ambermoon.Data.Legacy
                 }
 
                 foreach (var mapEventOffset in mapEventOffsets)
-                    map.Events.Add(mapEvents[(int)mapEventOffset].Item1);
+                    map.EventLists.Add(mapEvents[(int)mapEventOffset].Item1);
 
                 if (false/*map.Index == 267 || map.Index == 258 || map.Index == 262*/)
                 {
@@ -239,22 +244,21 @@ namespace Ambermoon.Data.Legacy
                         // 4. byte is the chest index (0-based)
                         // 5. byte (0 = chest, 1 = pile/removable loot or item) or "remove if empty"
                         // word at position 6 is the key index if a key must unlock it
-                        // the last word is unknown (seems to be 0xffff for unlocked, and some id otherwise)
-                        // maybe open it will trigger change/something else?
+                        // last word is the event index (0-based) of the event that is called when unlocking fails
                         var lockType = (ChestMapEvent.LockFlags)dataReader.ReadByte();
                         var unknown1 = dataReader.ReadWord(); // Unknown
                         uint chestIndex = dataReader.ReadByte();
                         bool removeWhenEmpty = dataReader.ReadByte() != 0;
                         uint keyIndex = dataReader.ReadWord();
-                        var unknown2 = dataReader.ReadWord(); // Unknown
+                        var unlockFailEventIndex = dataReader.ReadWord();
                         mapEvent = new ChestMapEvent
                         {
                             Unknown1 = unknown1,
-                            Unknown2 = unknown2,
                             Lock = lockType,
                             ChestIndex = chestIndex,
                             RemoveWhenEmpty = removeWhenEmpty,
-                            KeyIndex = keyIndex
+                            KeyIndex = keyIndex,
+                            UnlockFailedEventIndex = unlockFailEventIndex
                         };
                         break;
                     }
@@ -359,14 +363,14 @@ namespace Ambermoon.Data.Legacy
                         var value = dataReader.ReadByte();
                         var unknown1 = dataReader.ReadBytes(4);
                         var objectIndex = dataReader.ReadByte();
-                        var unknown2 = dataReader.ReadBytes(2);
+                        var jumpToIfNotFulfilled = dataReader.ReadWord();
                         mapEvent = new ConditionEvent
                         {
                             TypeOfCondition = conditionType,
                             ObjectIndex = objectIndex,
                             Value = value,
                             Unknown1 = unknown1,
-                            Unknown2 = unknown2
+                            ContinueIfFalseWithMapEventIndex = jumpToIfNotFulfilled
                         };
                         break;
                     }
@@ -390,10 +394,12 @@ namespace Ambermoon.Data.Legacy
                 case MapEventType.Question:
                     {
                         var textIndex = dataReader.ReadByte();
-                        var unknown1 = dataReader.ReadBytes(8);
+                        var unknown1 = dataReader.ReadBytes(6);
+                        var noEventIndex = dataReader.ReadWord();
                         mapEvent = new QuestionEvent
                         {
                             TextIndex = textIndex,
+                            NoEventIndex = noEventIndex,
                             Unknown1 = unknown1
                         };
                         break;

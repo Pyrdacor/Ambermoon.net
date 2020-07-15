@@ -97,11 +97,11 @@ namespace Ambermoon.Data
         public uint ChestIndex { get; set; }
         public bool RemoveWhenEmpty { get; set; }
         public uint KeyIndex { get; set; }
-        public ushort Unknown2 { get; set; }
+        public uint UnlockFailedEventIndex { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Unknown1 {Unknown1:X4}, Unknown2 {Unknown2:X4}";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Unknown1 {Unknown1:x4}";
         }
     }
 
@@ -196,7 +196,7 @@ namespace Ambermoon.Data
             MapVariable = 0x00,
             GlobalVariable = 0x01,
             UseItem = 0x07,
-            TreasureLooted = 0x09,
+            Success = 0x09, // treasure fully looted, battle won, etc
             Hand = 0x0e,
             // TODO
         };
@@ -209,24 +209,32 @@ namespace Ambermoon.Data
         /// </summary>
         public uint ObjectIndex { get; set; } // 0 = no variable needed
         public uint Value { get; set; }
-        public byte[] Unknown2 { get; set; }
+        /// <summary>
+        /// Next map event to continue with if the condition was met.
+        /// 0xffff means continue with next map event from the list.
+        /// </summary>
+        public uint ContinueIfFalseWithMapEventIndex { get; set; }
 
         public override string ToString()
         {
+            string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff
+                ? "Stop here if false"
+                : $"Jump to event {ContinueIfFalseWithMapEventIndex + 1:x2} if false";
+
             switch (TypeOfCondition)
             {
                 case ConditionType.MapVariable:
-                    return $"{Type}: Map variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                    return $"{Type}: Map variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.GlobalVariable:
-                    return $"{Type}: Global variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                    return $"{Type}: Global variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.UseItem:
-                    return $"{Type}: Item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
-                case ConditionType.TreasureLooted:
-                    return $"{Type}: Treasure looted, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                    return $"{Type}: Item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
+                case ConditionType.Success:
+                    return $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.Hand:
-                    return $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                    return $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 default:
-                    return $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                    return $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
             }
         }
     }
@@ -268,10 +276,15 @@ namespace Ambermoon.Data
     {
         public uint TextIndex { get; set; }
         public byte[] Unknown1 { get; set; }
+        /// <summary>
+        /// Event index to continue with if "No" is selected.
+        /// 0xffff means just stop the event list when selecting "No".
+        /// </summary>
+        public uint NoEventIndex { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Event index when selecting 'No' {NoEventIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
         }
     }
 
