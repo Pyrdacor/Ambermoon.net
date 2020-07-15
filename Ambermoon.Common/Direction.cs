@@ -17,6 +17,7 @@
         Up,
         Right,
         Down,
-        Left
+        Left,
+        Random
     }
 }

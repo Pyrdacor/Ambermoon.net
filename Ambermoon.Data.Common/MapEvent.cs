@@ -119,11 +119,12 @@ namespace Ambermoon.Data
 
     public class SpinnerEvent : MapEvent
     {
+        public CharacterDirection Direction { get; set; }
         public byte[] Unknown1 { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Direction {Direction}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
         }
     }
 

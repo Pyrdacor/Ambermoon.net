@@ -276,9 +276,11 @@ namespace Ambermoon.Data.Legacy
                     }
                 case MapEventType.Spinner:
                     {
-                        var unknown1 = dataReader.ReadBytes(9);
+                        var direction = (CharacterDirection)dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(8);
                         mapEvent = new SpinnerEvent
                         {
+                            Direction = direction,
                             Unknown1 = unknown1,
                         };
                         break;
