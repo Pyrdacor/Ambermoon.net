@@ -52,6 +52,14 @@ namespace Ambermoon.Data
             public TileType Type { get; set; }
         }
 
+        public class CharacterReference
+        {
+            public int Type { get; set; } // 0 = None, 4 = party member, 5 = npc, 6 = monster
+            public byte Unknown1 { get; set; }
+            public uint Index { get; set; } // of party member, npc and monster
+            public byte[] Unknown2 { get; set; }
+        }
+
         public uint Index { get; private set; }
         public MapFlags Flags { get; set; }
         public MapType Type { get; set; }
@@ -67,6 +75,7 @@ namespace Ambermoon.Data
         public List<MapEvent> Events { get; } = new List<MapEvent>();
         public List<MapEvent> EventLists { get; } = new List<MapEvent>();
         public List<string> Texts { get; } = new List<string>();
+        public CharacterReference[] CharacterReferences { get; } = new CharacterReference[32];
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;

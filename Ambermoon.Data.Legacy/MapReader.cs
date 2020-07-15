@@ -16,10 +16,16 @@ namespace Ambermoon.Data.Legacy
             if (textDataReader != null)
             {
                 int numMapTexts = textDataReader.ReadWord();
+
                 if (numMapTexts == 0)
                 {
                     textDataReader.ReadWord(); // unknown
                     numMapTexts = textDataReader.ReadWord();
+
+                    var textLengths = new List<int>(numMapTexts);
+
+                    for (int i = 0; i < numMapTexts; ++i)
+                        textLengths.Add(textDataReader.ReadWord());
 
                     string currentText = "";
 
@@ -31,6 +37,9 @@ namespace Ambermoon.Data.Legacy
 
                             if (ch == "\0" || (textDataReader.Position == textDataReader.Size && i == numMapTexts - 1))
                             {
+                                if (currentText.Length + 2 != textLengths[i] && currentText.Length + 1 != textLengths[i]) // there is an additional null byte and optional an optional space
+                                    throw new AmbermoonException(ExceptionScope.Data, "Invalid map text format");
+
                                 map.Texts.Add(currentText.Trim());
                                 currentText = "";
                                 break;
@@ -91,7 +100,22 @@ namespace Ambermoon.Data.Legacy
             if (dataReader.ReadByte() != 0) // end of map header
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid map data");
 
-            dataReader.Position += 320; // Unknown 320 bytes
+            // Up to 32 character references (10 bytes each -> total 320 bytes)
+            for (int i = 0; i < 32; ++i)
+            {
+                var index = dataReader.ReadByte();
+                var unknown1 = dataReader.ReadByte();
+                var type = dataReader.ReadByte();
+                var unknown2 = dataReader.ReadBytes(7);
+
+                map.CharacterReferences[i] = type == 0 ? null : new Map.CharacterReference
+                {
+                    Index = index,
+                    Unknown1 = unknown1,
+                    Type = type,
+                    Unknown2 = unknown2
+                };
+            }
 
             map.Tiles = new Map.Tile[map.Width, map.Height];
 
@@ -122,14 +146,10 @@ namespace Ambermoon.Data.Legacy
                         var tileData = dataReader.ReadBytes(2);
                         map.Tiles[x, y] = new Map.Tile
                         {
-                            BackTileIndex = ((uint)(tileData[1] & 0xc0) << 2) | tileData[0],
-                            MapEventId = tileData[1] & 0x2fu
+                            BackTileIndex = tileData[0],
+                            MapEventId = tileData[1]
                             // TODO: blocking etc
                         };
-                        if (map.Index == 277 && x == 8 && y == 26)
-                        {
-                            Console.WriteLine();
-                        }
                     }
                 }
             }
