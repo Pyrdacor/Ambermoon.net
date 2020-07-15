@@ -17,7 +17,7 @@ namespace Ambermoon.Data
         Riddlemouth,
         ChangePlayerAttribute,
         ChangeTile,
-        Unknown11,
+        StartBattle,
         Unknown12,
         Condition,
         Action,
@@ -174,6 +174,18 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}: X {X}, Y {Y}, Front tile {FrontTileIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class StartBattleEvent : MapEvent
+    {
+        public uint MonsterGroupIndex { get; set; }
+        public byte[] Unknown1 { get; set; }
+        public byte[] Unknown2 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Monster group {MonsterGroupIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 

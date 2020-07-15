@@ -340,6 +340,19 @@ namespace Ambermoon.Data.Legacy
                         };
                         break;
                     }
+                case MapEventType.StartBattle:
+                    {
+                        var unknown1 = dataReader.ReadBytes(6);
+                        var monsterGroupIndex = dataReader.ReadByte();
+                        var unknown2 = dataReader.ReadBytes(2);
+                        mapEvent = new StartBattleEvent
+                        {
+                            MonsterGroupIndex = monsterGroupIndex,
+                            Unknown1 = unknown1,
+                            Unknown2 = unknown2
+                        };
+                        break;
+                    }
                 case MapEventType.Condition:
                     {
                         var conditionType = (ConditionEvent.ConditionType)dataReader.ReadByte(); // TODO: this needs more research
