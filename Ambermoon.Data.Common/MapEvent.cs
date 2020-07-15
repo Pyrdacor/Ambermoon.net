@@ -108,12 +108,16 @@ namespace Ambermoon.Data
     public class TextEvent : MapEvent
     {
         public uint TextIndex { get; set; }
+        /// <summary>
+        /// From event_pix (0-based). 0xff -> no image.
+        /// </summary>
+        public uint EventImageIndex { get; set; }
         public byte[] Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -284,7 +288,7 @@ namespace Ambermoon.Data
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Event index when selecting 'No' {NoEventIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Event index when selecting 'No' {(NoEventIndex == 0xffff ? "None" : $"{NoEventIndex + 1:x4}")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
         }
     }
 

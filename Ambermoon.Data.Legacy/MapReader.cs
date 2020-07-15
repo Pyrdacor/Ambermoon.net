@@ -264,14 +264,17 @@ namespace Ambermoon.Data.Legacy
                     }
                 case MapEventType.TextEvent:
                     {
+                        // event image index (0xff = no image)
                         // 3 unknown bytes
-                        // 4. word is the map text index
+                        // 5. byte is the map text index
                         // 4 unknown bytes
-                        var unknown1 = dataReader.ReadBytes(4);
+                        var eventImageIndex = dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(3);
                         var textIndex = dataReader.ReadByte();
                         var unknown2 = dataReader.ReadBytes(4);
                         mapEvent = new TextEvent
                         {
+                            EventImageIndex = eventImageIndex,
                             TextIndex = textIndex,
                             Unknown1 = unknown1,
                             Unknown2 = unknown2
