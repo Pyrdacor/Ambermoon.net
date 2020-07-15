@@ -383,6 +383,19 @@ namespace Ambermoon.Data.Legacy
                         };
                         break;
                     }
+                case MapEventType.ChangeMusic:
+                    {
+                        var musicIndex = dataReader.ReadWord();
+                        var volume = dataReader.ReadByte();
+                        var unknown1 = dataReader.ReadBytes(6);
+                        mapEvent = new ChangeMusicEvent
+                        {
+                            MusicIndex = musicIndex,
+                            Volume = volume,
+                            Unknown1 = unknown1
+                        };
+                        break;
+                    }
                 default:
                     {
                         // TODO

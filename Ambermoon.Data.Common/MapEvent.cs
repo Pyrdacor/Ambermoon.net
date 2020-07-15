@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Ambermoon.Data
@@ -25,7 +26,7 @@ namespace Ambermoon.Data
         Unknown17,
         Unknown18,
         Question, // yes/no popup with text
-        Unknown20,
+        ChangeMusic,
         // TODO ...
         // Maybe: Message popup, activatable by hand/eye/mouth cursor, etc
     }
@@ -258,6 +259,18 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}: Text {TextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class ChangeMusicEvent : MapEvent
+    {
+        public uint MusicIndex { get; set; }
+        public byte Volume { get; set; }
+        public byte[] Unknown1 { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Music {(MusicIndex == 255 ? "<Map music>" : MusicIndex.ToString())}, Volume {(Volume / 255.0f).ToString("0.0", CultureInfo.InvariantCulture)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
         }
     }
 
