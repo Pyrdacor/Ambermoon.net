@@ -54,9 +54,9 @@ namespace Ambermoon.Data
 
         public class CharacterReference
         {
-            public int Type { get; set; } // 0 = None, 4 = party member, 5 = npc, 6 = monster
+            public int Type { get; set; } // 0 = None, 4 = party member, 5 = npc, 6 = monster, 21 = text npc (Index = map text index)
             public byte Unknown1 { get; set; }
-            public uint Index { get; set; } // of party member, npc and monster
+            public uint Index { get; set; } // of party member, npc, monster or map text
             public byte[] Unknown2 { get; set; }
         }
 
