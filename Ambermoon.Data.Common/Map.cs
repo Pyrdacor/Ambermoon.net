@@ -81,7 +81,7 @@ namespace Ambermoon.Data
         /// Tileset index in 2D
         /// Labdata index in 3D
         /// </summary>
-        public uint TilesetIndex { get; set; }
+        public uint TilesetOrLabdataIndex { get; set; }
         public uint NPCGfxIndex { get; set; } // TODO: combat background gfx?
         public uint LabyrinthBackgroundIndex { get; set; }
         public uint PaletteIndex { get; set; }

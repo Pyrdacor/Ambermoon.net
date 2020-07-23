@@ -138,10 +138,6 @@ namespace Ambermoon
             var gameData = new GameData();
             gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
 
-            // TODO: REMOVE
-            var labdataTest = new Data.Labdata();
-            new LabdataReader().ReadLabdata(labdataTest, gameData.Files["2Lab_data.amb"].Files[1]);
-
             // Create render view
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), Width, Height);
 
@@ -149,7 +145,7 @@ namespace Ambermoon
             SetupInput(window.CreateInput());
 
             // Create game
-            Game = new Game(renderView, new MapManager(gameData, new MapReader(), new TilesetReader()));
+            Game = new Game(renderView, new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()));
             Game.StartNew(); // TODO: Remove later
         }
 

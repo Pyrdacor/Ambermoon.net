@@ -45,8 +45,8 @@ namespace Ambermoon.Data
         [Flags]
         public enum WallFlags
         {
-            Removable = 0x01, // riddlemouth, spiderweb, etc
-            BlockSight = 0x02,
+            BlockSight = 0x02, // Not sure but beside walls this is also used by non-bocking doors or exits
+            Transparency = 0x08,
             BlockMovement = 0x80,
             // TODO
         }
@@ -61,7 +61,7 @@ namespace Ambermoon.Data
 
             public override string ToString()
             {
-                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}, Texture: {TextureIndex}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}";
+                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x2}), Texture: {TextureIndex}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}";
 
                 if (Overlays != null && Overlays.Length != 0)
                 {
@@ -80,7 +80,24 @@ namespace Ambermoon.Data
         public List<ObjectInfo> ObjectInfos { get; } = new List<ObjectInfo>();
         public List<WallData> Walls { get; } = new List<WallData>();
 
-        public Dictionary<uint, Graphic> WallGraphics { get; } = new Dictionary<uint, Graphic>();
-        public Dictionary<uint, Graphic> OverlayGraphics { get; } = new Dictionary<uint, Graphic>();
+        public List<Graphic> ObjectGraphics { get; } = new List<Graphic>();
+        /// <summary>
+        /// They include optional overlays.
+        /// </summary>
+        public List<Graphic> WallGraphics { get; } = new List<Graphic>();
+
+        private Labdata()
+        {
+
+        }
+
+        public static Labdata Load(ILabdataReader labdataReader, IDataReader dataReader, IGameData gameData)
+        {
+            var labdata = new Labdata();
+
+            labdataReader.ReadLabdata(labdata, dataReader, gameData);
+
+            return labdata;
+        }
     }
 }

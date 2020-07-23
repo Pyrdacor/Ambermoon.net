@@ -47,10 +47,15 @@ namespace Ambermoon.Renderer
             set;
         } = null;
 
+        public Render.Texture Texture
+        {
+            get;
+            set;
+        } = null;
+        
         readonly State state = null;
         readonly RenderBuffer renderBuffer = null;
         readonly RenderBuffer renderBufferColorRects = null;
-        readonly Texture texture = null;
         readonly Texture palette = null;
         bool disposed = false;
 
@@ -108,7 +113,7 @@ namespace Ambermoon.Renderer
                 renderBufferColorRects = new RenderBuffer(state, false, supportAnimations, true, true);
 
             Layer = layer;
-            this.texture = texture;
+            Texture = texture;
             this.palette = palette;
         }
 
@@ -127,8 +132,11 @@ namespace Ambermoon.Renderer
                 renderBufferColorRects.Render();
             }
 
-            if (texture != null)
+            if (Texture != null)
             {
+                if (!(Texture is Texture texture))
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid texture for this renderer.");
+
                 if (Layer == Layer.Map3D)
                 {
                     Texture3DShader shader = renderBuffer.Texture3DShader;
@@ -146,7 +154,7 @@ namespace Ambermoon.Renderer
                         palette.Bind();
                     }
 
-                    shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
+                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                 }
                 else
                 {
@@ -165,7 +173,7 @@ namespace Ambermoon.Renderer
                         palette.Bind();
                     }
 
-                    shader.SetAtlasSize((uint)texture.Width, (uint)texture.Height);
+                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                     shader.SetZ(LayerBaseZ[(int)Layer]);
                 }
             }
@@ -265,7 +273,8 @@ namespace Ambermoon.Renderer
                 {
                     renderBuffer?.Dispose();
                     renderBufferColorRects?.Dispose();
-                    texture?.Dispose();
+                    if (Texture is Texture texture)
+                        texture?.Dispose();
                     Visible = false;
 
                     disposed = true;

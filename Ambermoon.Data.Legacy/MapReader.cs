@@ -90,7 +90,7 @@ namespace Ambermoon.Data.Legacy
             map.MusicIndex = dataReader.ReadByte();
             map.Width = dataReader.ReadByte();
             map.Height = dataReader.ReadByte();
-            map.TilesetIndex = dataReader.ReadByte();
+            map.TilesetOrLabdataIndex = dataReader.ReadByte();
 
             map.NPCGfxIndex = dataReader.ReadByte();
             map.LabyrinthBackgroundIndex = dataReader.ReadByte();

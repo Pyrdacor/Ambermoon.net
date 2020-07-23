@@ -26,15 +26,20 @@ namespace Ambermoon.Render
 {
     internal class RenderMap3D : IRenderMap
     {
+        public const int TextureWidth = 128;
+        public const int TextureHeight = 80;
         public const int DistancePerTile = 2; // TODO
         public const int WallHeight = 3; // TODO
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
-        readonly ITextureAtlas textureAtlas = null;
+        ITextureAtlas textureAtlas = null;
         ISurface3D floor = null;
         ISurface3D ceiling = null;
+        Labdata labdata = null;
         readonly List<ISurface3D> walls = new List<ISurface3D>();
+        readonly List<ISurface3D> overlays = new List<ISurface3D>();
+        static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
         public Map Map { get; private set; } = null;
 
         public RenderMap3D(Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
@@ -42,34 +47,87 @@ namespace Ambermoon.Render
             camera = renderView.Camera3D;
             this.mapManager = mapManager;
             this.renderView = renderView;
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Map3D);
 
             SetMap(map, playerX, playerY, playerDirection);
         }
 
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
+            if (map.Type != MapType.Map3D)
+                throw new AmbermoonException(ExceptionScope.Application, "Tried to load a 2D map into a 3D render map.");
+
             camera.SetPosition(playerX * DistancePerTile, (map.Height - playerY) * DistancePerTile);
             camera.TurnTowards((float)playerDirection * 90.0f);
 
             if (Map != map)
             {
+                CleanUp();
+
                 Map = map;
+                labdata = mapManager.GetLabdataForMap(map);
+                EnsureLabdataTextureAtlas();
                 UpdateSurfaces();
             }
         }
 
-        void AddWall(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, uint textureIndex, bool overlay)
+        void CleanUp()
         {
+            floor?.Delete();
+            ceiling?.Delete();
+
+            floor = null;
+            ceiling = null;
+
+            walls.ForEach(wall => wall?.Delete());
+            overlays.ForEach(overlay => overlay?.Delete());
+
+            walls.Clear();
+            overlays.Clear();
+
+            // TODO: objects
+        }
+
+        void EnsureLabdataTextureAtlas()
+        {
+            if (!labdataTextures.ContainsKey(Map.TilesetOrLabdataIndex))
+            {
+                var graphics = new Dictionary<uint, Graphic>();
+
+                for (int i = 0; i < labdata.ObjectGraphics.Count; ++i)
+                    graphics.Add((uint)i, labdata.ObjectGraphics[i]);
+                for (int i = 0; i < labdata.WallGraphics.Count; ++i)
+                    graphics.Add((uint)i + 1000u, labdata.WallGraphics[i]);
+
+                labdataTextures.Add(Map.TilesetOrLabdataIndex, TextureAtlasManager.Instance.CreateFromGraphics(graphics, 1));
+            }
+
+            textureAtlas = labdataTextures[Map.TilesetOrLabdataIndex];
+            renderView.GetLayer(Layer.Map3D).Texture = textureAtlas.Texture;
+        }
+
+        Position GetObjectTextureOffset(uint objectIndex)
+        {
+            return textureAtlas.GetOffset(objectIndex);
+        }
+
+        Position GetWallTextureOffset(uint wallIndex)
+        {
+            return textureAtlas.GetOffset(wallIndex + 1000u);
+        }
+
+        void AddWall(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, uint wallIndex)
+        {
+            var wallTextureOffset = GetWallTextureOffset(wallIndex);
+
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
-                var wall = surfaceFactory.Create(SurfaceType.Wall, DistancePerTile, WallHeight, wallOrientation);
+                var wall = surfaceFactory.Create(SurfaceType.Wall, DistancePerTile, WallHeight, TextureWidth, TextureHeight, wallOrientation);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)Map.PaletteIndex;
                 wall.X = x;
                 wall.Y = WallHeight;
                 wall.Z = -z;
-                wall.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+                wall.TextureAtlasOffset = wallTextureOffset;
                 wall.Visible = true; // TODO: not all walls should be always visible
                 walls.Add(wall);
             }
@@ -78,19 +136,19 @@ namespace Ambermoon.Render
             float baseY = mapY * DistancePerTile;
 
             // front face
-            //if (overlay || (mapY < Map.Height - 1 && Map.Tiles[mapX, mapY + 1].BackTileIndex == 0))
+            if (mapY < Map.Height - 1 && Map.Blocks[mapX, mapY + 1].WallIndex == 0)
                 AddSurface(WallOrientation.Normal, baseX, baseY);
 
             // left face
-            //if (overlay || (mapX > 0 && Map.Tiles[mapX - 1, mapY].BackTileIndex == 0))
+            if (mapX > 0 && Map.Blocks[mapX - 1, mapY].WallIndex == 0)
                 AddSurface(WallOrientation.Rotated90, baseX + DistancePerTile, baseY);
 
             // back face
-            //if (overlay || (mapY > 0 && Map.Tiles[mapX, mapY - 1].BackTileIndex == 0))
+            if (mapY > 0 && Map.Blocks[mapX, mapY - 1].WallIndex == 0)
                 AddSurface(WallOrientation.Rotated180, baseX + DistancePerTile, baseY + DistancePerTile);
 
             // right face
-            //if (overlay || (mapX < Map.Width - 1 && Map.Tiles[mapX + 1, mapY].BackTileIndex == 0))
+            if (mapX < Map.Width - 1 && Map.Blocks[mapX + 1, mapY].WallIndex == 0)
                 AddSurface(WallOrientation.Rotated270, baseX, baseY + DistancePerTile);
         }
 
@@ -105,23 +163,23 @@ namespace Ambermoon.Render
             var layer = renderView.GetLayer(Layer.Map3D);
 
             // Add floor and ceiling
-            floor = surfaceFactory.Create(SurfaceType.Floor, Map.Width * DistancePerTile, Map.Height * DistancePerTile);
+            floor = surfaceFactory.Create(SurfaceType.Floor, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64); // TODO: texture size
             floor.PaletteIndex = (byte)Map.PaletteIndex;
             floor.Layer = layer;
             floor.X = 0.0f;
             floor.Y = 0.0f;
             floor.Z = -Map.Height * DistancePerTile;
             // Floors can have single colors or even tiled textures
-            floor.TextureAtlasOffset = textureAtlas.GetOffset(0); // TODO: seems to have color rgb hex 11 22 33 in grandfathers cellar but couldn't find this color in the data
+            floor.TextureAtlasOffset = textureAtlas.GetOffset(1); // TODO: seems to have color rgb hex 11 22 33 in grandfathers cellar but couldn't find this color in the data
             floor.Visible = true;
-            ceiling = surfaceFactory.Create(SurfaceType.Ceiling, Map.Width * DistancePerTile, Map.Height * DistancePerTile);
+            ceiling = surfaceFactory.Create(SurfaceType.Ceiling, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64); // TODO: texture size
             ceiling.PaletteIndex = (byte)Map.PaletteIndex;
             ceiling.Layer = layer;
             ceiling.X = 0.0f;
             ceiling.Y = WallHeight;
             ceiling.Z = 0.0f;
             // Ceilings can have single colors, tiled textures or skyboxes
-            ceiling.TextureAtlasOffset = textureAtlas.GetOffset(0); // TODO: seems to have color rgb hex 22 00 00 in grandfathers cellar but couldn't find this color in the data
+            ceiling.TextureAtlasOffset = textureAtlas.GetOffset(1); // TODO: seems to have color rgb hex 22 00 00 in grandfathers cellar but couldn't find this color in the data
             ceiling.Visible = true;
 
             // Add walls
@@ -131,9 +189,8 @@ namespace Ambermoon.Render
                 {
                     var block = Map.Blocks[x, y];
 
-                    // TODO
-                    //if (block.WallIndex != 0)
-                    //    AddWall(surfaceFactory, layer, x, y, block.WallIndex, false);
+                    if (block.WallIndex != 0)
+                        AddWall(surfaceFactory, layer, x, y, block.WallIndex - 1);
                 }
             }
 

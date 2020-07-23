@@ -5,5 +5,6 @@ namespace Ambermoon.Data
     {
         Map GetMap(uint index);
         Tileset GetTilesetForMap(Map map);
+        Labdata GetLabdataForMap(Map map);
     }
 }

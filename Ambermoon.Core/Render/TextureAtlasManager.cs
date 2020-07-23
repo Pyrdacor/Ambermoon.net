@@ -81,6 +81,16 @@ namespace Ambermoon.Render
             return atlas[layer];
         }
 
+        public ITextureAtlas CreateFromGraphics(Dictionary<uint, Graphic> graphics, uint bytesPerPixel)
+        {
+            var builder = factory.Create();
+
+            foreach (var graphic in graphics)
+                builder.AddTexture(graphic.Key, graphic.Value);
+
+            return builder.Create(bytesPerPixel);
+        }
+
         public Texture CreatePalette(IGraphicProvider graphicProvider)
         {
             var paletteBuilder = factory.Create();
@@ -128,15 +138,6 @@ namespace Ambermoon.Render
             // All have a dimension of 16x32 pixels.
             for (int i = 0; i < playerGraphics.Count; ++i)
                 AddTexture(Layer.Characters, (uint)i, playerGraphics[i]);
-
-            #endregion
-
-            #region Map 3D
-
-            var textures = graphicProvider.GetGraphics(GraphicType.Map3D);
-
-            for (int i = 0; i < textures.Count; ++i)
-                AddTexture(Layer.Map3D, (uint)i, textures[i]);
 
             #endregion
 

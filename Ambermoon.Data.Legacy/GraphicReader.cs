@@ -4,13 +4,19 @@ namespace Ambermoon.Data.Legacy
 {
     public class GraphicReader : IGraphicReader
     {
+        static int ToNextWordBoundary(int size)
+        {
+            return size % 2 == 0 ? size : size + 1;
+        }
+
         void ReadPaletteGraphic(Graphic graphic, IDataReader dataReader, int planes, GraphicInfo graphicInfo)
         {
             graphic.Width = graphicInfo.Width;
             graphic.Height = graphicInfo.Height;
 
-            var data = dataReader.ReadBytes((graphic.Width * graphic.Height * planes + 7) / 8);
-            int planeSize = (graphic.Width + 7) / 8;
+            int calcWidth = ToNextWordBoundary(graphic.Width);
+            var data = dataReader.ReadBytes((calcWidth * graphic.Height * planes + 7) / 8);
+            int planeSize = (calcWidth + 7) / 8;
             int bitIndex = 0;
             int byteIndex = 0;
             int offset = 0;
@@ -27,10 +33,12 @@ namespace Ambermoon.Data.Legacy
                             paletteIndex |= (byte)(1 << p);
                     }
 
-                    if (!graphicInfo.Alpha || paletteIndex != 0)
-                        paletteIndex += graphicInfo.PaletteOffset;
+                    paletteIndex += graphicInfo.PaletteOffset;
 
-                    graphic.Data[x + y * graphic.Width] = paletteIndex;
+                    if (graphicInfo.Alpha && paletteIndex == graphicInfo.PaletteOffset)
+                        graphic.Data[x + y * graphic.Width] = 0;
+                    else
+                        graphic.Data[x + y * graphic.Width] = paletteIndex;
 
                     if (++bitIndex == 8)
                     {

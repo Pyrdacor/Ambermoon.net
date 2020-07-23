@@ -38,8 +38,10 @@ namespace Ambermoon.Renderer.OpenGL
         Position textureAtlasOffset = null;
         byte paletteIndex = 0;
         public WallOrientation WallOrientation { get; } = WallOrientation.Normal;
+        public uint TextureWidth { get; } = 0;
+        public uint TextureHeight { get; } = 0;
 
-        public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, Rect virtualScreen, WallOrientation wallOrientation)
+        public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, uint textureWidth, uint textureHeight, Rect virtualScreen, WallOrientation wallOrientation)
         {
             Type = type;
             Width = width;
@@ -47,6 +49,8 @@ namespace Ambermoon.Renderer.OpenGL
             this.virtualScreen = virtualScreen;
             textureAtlasOffset = new Position(textureAtlasX, textureAtlasY);
             WallOrientation = wallOrientation;
+            TextureWidth = textureWidth;
+            TextureHeight = textureHeight;
         }
 
         public bool Visible
@@ -278,9 +282,9 @@ namespace Ambermoon.Renderer.OpenGL
             this.virtualScreen = virtualScreen;
         }
 
-        public ISurface3D Create(SurfaceType type, int width, int height, WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0)
+        public ISurface3D Create(SurfaceType type, int width, int height, uint textureWidth, uint textureHeight, WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0)
         {
-            return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, virtualScreen, wallOrientation);
+            return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, textureWidth, textureHeight, virtualScreen, wallOrientation);
         }
     }
 }

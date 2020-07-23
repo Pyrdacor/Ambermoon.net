@@ -6,8 +6,9 @@ namespace Ambermoon.Data.Legacy
 {
     public class LabdataReader : ILabdataReader
     {
-        public void ReadLabdata(Labdata labdata, IDataReader dataReader)
+        public void ReadLabdata(Labdata labdata, IDataReader dataReader, IGameData gameData)
         {
+            // TODO: there must be the floor texture index inside these 8 bytes
             dataReader.ReadBytes(8); // Unknown
 
             labdata.Objects.Clear();
@@ -78,6 +79,7 @@ namespace Ambermoon.Data.Legacy
                 });
             }
 
+            labdata.Walls.Clear();
             int numWalls = dataReader.ReadWord();
             Console.WriteLine();
             Console.WriteLine("NUM WALLS: " + numWalls);
@@ -109,12 +111,71 @@ namespace Ambermoon.Data.Legacy
                         };
                     }
                 }
+                labdata.Walls.Add(wallData);
 
                 Console.WriteLine($"Wall{i+1} -> {wallData}");
             }
 
             Console.WriteLine("Remaining bytes: " + (dataReader.Size - dataReader.Position));
             Console.WriteLine(string.Join(" ", dataReader.ReadToEnd().Select(b => b.ToString("x2"))));
+
+            // Load labyrinth graphics
+            var graphicReader = new GraphicReader();
+            var objectTextureFiles = gameData.Files[$"2Object3D.amb"].Files;
+            gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f => objectTextureFiles[f.Key] = f.Value);
+            labdata.ObjectGraphics.Clear();
+            foreach (var objectInfo in labdata.ObjectInfos)
+            {
+                labdata.ObjectGraphics.Add(ReadGraphic(graphicReader, objectTextureFiles[(int)objectInfo.TextureIndex],
+                    (int)objectInfo.TextureWidth, (int)objectInfo.TextureHeight, true));
+            }
+            var wallTextureFiles = gameData.Files[$"2Wall3D.amb"].Files;
+            var overlayTextureFiles = gameData.Files[$"2Overlay3D.amb"].Files;
+            gameData.Files[$"3Wall3D.amb"].Files.ToList().ForEach(f => wallTextureFiles[f.Key] = f.Value);
+            gameData.Files[$"3Overlay3D.amb"].Files.ToList().ForEach(f => overlayTextureFiles[f.Key] = f.Value);
+            labdata.WallGraphics.Clear();
+            int wallIndex = 0;
+            foreach (var wall in labdata.Walls)
+            {
+                var wallGraphic = ReadGraphic(graphicReader, wallTextureFiles[(int)wall.TextureIndex],
+                    128, 80, wall.Flags.HasFlag(Labdata.WallFlags.Transparency));
+
+                labdata.WallGraphics.Add(wallGraphic);
+
+                if (wall.Overlays != null && wall.Overlays.Length != 0)
+                {
+                    foreach (var overlay in wall.Overlays)
+                    {
+                        wallGraphic.AddOverlay(overlay.PositionY, overlay.PositionY, ReadGraphic(graphicReader,
+                            overlayTextureFiles[(int)overlay.TextureIndex], (int)overlay.TextureWidth, (int)overlay.TextureHeight, true));
+                    }
+                }
+
+                ++wallIndex;
+            }
+        }
+
+        static Graphic ReadGraphic(GraphicReader graphicReader, IDataReader file, int width, int height, bool alpha)
+        {
+            var graphic = new Graphic
+            {
+                Width = width,
+                Height = height,
+                IndexedGraphic = true
+            };
+
+            file.Position = 0; // TODO: or 4? sometimes the file is 4 bytes bigger than expected
+
+            graphicReader.ReadGraphic(graphic, file, new GraphicInfo
+            {
+                Width = width,
+                Height = height,
+                GraphicFormat = GraphicFormat.Palette4Bit,
+                PaletteOffset = 16,
+                Alpha = alpha
+            });
+
+            return graphic;
         }
     }
 }

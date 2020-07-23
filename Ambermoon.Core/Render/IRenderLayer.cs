@@ -42,6 +42,11 @@ namespace Ambermoon.Render
             get;
             set;
         }
+        Texture Texture
+        {
+            get;
+            set;
+        }
 
         void Render();
     }

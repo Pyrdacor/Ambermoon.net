@@ -74,11 +74,6 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 0, 7));
             AddGraphicFiles(GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 0, 8));
             AddGraphicFiles(GraphicType.Player, new GraphicFile("Party_gfx.amb"));
-            AddGraphicFiles(GraphicType.Map3D,
-                new GraphicFile("2Wall3D.amb"),
-                new GraphicFile("3Wall3D.amb"),
-                new GraphicFile("2Overlay3D.amb", 172),
-                new GraphicFile("3Overlay3D.amb", 172));
             AddGraphicFiles(GraphicType.Portrait, new GraphicFile("Portraits.amb"));
             AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
             AddGraphicFiles(GraphicType.Layout, new GraphicFile("Layouts.amb"));
@@ -185,12 +180,6 @@ namespace Ambermoon.Data.Legacy
                     info.Height = 163;
                     info.GraphicFormat = GraphicFormat.Palette3Bit;
                     info.PaletteOffset = 24;
-                    info.Alpha = true;
-                    break;
-                case GraphicType.Map3D:
-                    info.Width = 128;
-                    info.Height = 80;
-                    info.GraphicFormat = GraphicFormat.Palette4Bit;
                     info.Alpha = true;
                     break;
                 // TODO

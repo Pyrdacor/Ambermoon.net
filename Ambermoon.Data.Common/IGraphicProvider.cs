@@ -2,6 +2,7 @@
 
 namespace Ambermoon.Data
 {
+    // Note: 3D graphics are loaded through labdata
     public enum GraphicType
     {
         Tileset1,
@@ -13,7 +14,6 @@ namespace Ambermoon.Data
         Tileset7,
         Tileset8,
         Player,
-        Map3D,
         Portrait,
         Item,
         Layout,

@@ -38,5 +38,25 @@ namespace Ambermoon.Data
         public int Height { get; set; }
         public byte[] Data { get; set; }
         public bool IndexedGraphic { get; set; }
+
+        public void AddOverlay(uint x, uint y, Graphic overlay)
+        {
+            if (!overlay.IndexedGraphic || !IndexedGraphic)
+                throw new AmbermoonException(ExceptionScope.Application, "Non-indexed graphics can not be used with overlays.");
+
+            if (x + overlay.Width > Width || y + overlay.Height > Height)
+                throw new IndexOutOfRangeException("Overlay is outside the bounds.");
+
+            for (uint r = 0; r < overlay.Height; ++r)
+            {
+                for (uint c = 0; c < overlay.Width; ++c)
+                {
+                    byte index = overlay.Data[c + r * overlay.Width];
+
+                    if (index != 0)
+                        Data[x + c + (y + r) * Width] = index;
+                }
+            }
+        }
     }
 }

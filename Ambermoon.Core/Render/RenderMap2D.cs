@@ -206,6 +206,9 @@ namespace Ambermoon.Render
             if (Map == map)
                 return;
 
+            if (map.Type != MapType.Map2D)
+                throw new AmbermoonException(ExceptionScope.Application, "Tried to load a 3D map into a 2D render map.");
+
             Map = map;
             tileset = mapManager.GetTilesetForMap(map);
             ticksPerFrame = map.TicksPerAnimationFrame;

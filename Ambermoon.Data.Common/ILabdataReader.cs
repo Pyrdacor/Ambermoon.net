@@ -2,6 +2,6 @@
 {
     public interface ILabdataReader
     {
-        void ReadLabdata(Labdata labdata, IDataReader dataReader);
+        void ReadLabdata(Labdata labdata, IDataReader dataReader, IGameData gameData);
     }
 }
