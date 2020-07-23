@@ -129,14 +129,11 @@ namespace Ambermoon.Render
             {
                 for (uint x = 0; x < Map.Width; ++x)
                 {
-                    var tile = Map.Tiles[x, y];
-
-                    if (tile.BackTileIndex != 0 && tile.BackTileIndex != 255)
-                        AddWall(surfaceFactory, layer, x, y, tile.BackTileIndex, false);
+                    var block = Map.Blocks[x, y];
 
                     // TODO
-                    /*if (tile.FrontTileIndex != 0)
-                        AddWall(surfaceFactory, layer, x, y, tile.FrontTileIndex, true);*/
+                    //if (block.WallIndex != 0)
+                    //    AddWall(surfaceFactory, layer, x, y, block.WallIndex, false);
                 }
             }
 

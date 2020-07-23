@@ -108,28 +108,53 @@ namespace Ambermoon
             {
                 for (int x = 0; x < map.Width; ++x)
                 {
-                    Console.Write(Math.Max(1, ((int)map.Tiles[x, y].BackTileIndex - 1)).ToString("x2") + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    Console.Write(map.Tiles[x, y].MapEventId.ToString("x2") + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    if ((int)map.Tiles[x, y].MapEventId == 0)
-                        Console.Write("00 ");
+                    if (map.Type == MapType.Map2D)
+                        Console.Write(Math.Max(1, ((int)map.Tiles[x, y].BackTileIndex - 1)).ToString("x2") + " ");
                     else
-                        Console.Write(map.EventLists[(int)map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
+                    {
+                        var block = map.Blocks[x, y];
+
+                        if (block.MapBorder)
+                            Console.Write("## ");
+                        else if (block.WallIndex == 0)
+                            Console.Write("   ");
+                        else
+                            Console.Write(block.WallIndex.ToString("x2") + " ");
+                    }
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+            for (int y = 0; y < map.Height; ++y)
+            {
+                for (int x = 0; x < map.Width; ++x)
+                {
+                    if (map.Type == MapType.Map2D)
+                        Console.Write(map.Tiles[x, y].MapEventId.ToString("x2") + " ");
+                    else
+                        Console.Write(map.Blocks[x, y].MapEventId.ToString("x2") + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+            for (int y = 0; y < map.Height; ++y)
+            {
+                for (int x = 0; x < map.Width; ++x)
+                {
+                    if (map.Type == MapType.Map2D)
+                    {
+                        if ((int)map.Tiles[x, y].MapEventId == 0)
+                            Console.Write("00 ");
+                        else
+                            Console.Write(map.EventLists[(int)map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
+                    }
+                    else
+                    {
+                        if ((int)map.Blocks[x, y].MapEventId == 0)
+                            Console.Write("00 ");
+                        else
+                            Console.Write(map.EventLists[(int)map.Blocks[x, y].MapEventId - 1].Index.ToString("x2") + " ");
+                    }
                 }
                 Console.WriteLine();
             }
@@ -157,7 +182,7 @@ namespace Ambermoon
                     Console.WriteLine();
             }
             Console.WriteLine();
-            var eventTiles = new SortedDictionary<uint, List<Position>>();
+            /*var eventTiles = new SortedDictionary<uint, List<Position>>();
             for (int y = 0; y < map.Height; ++y)
             {
                 for (int x = 0; x < map.Width; ++x)
@@ -174,7 +199,7 @@ namespace Ambermoon
             }
             foreach (var tile in eventTiles)
                 Console.WriteLine($"{tile.Key:x2} -> {string.Join(" | ", tile.Value.Select(p => $"{p.X},{p.Y}"))}");
-            Console.WriteLine();
+            Console.WriteLine();*/
         }
 
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
@@ -251,7 +276,7 @@ namespace Ambermoon
 
             // TODO: REMOVE
             ShowMapInfo(map);
-            Start3D(mapManager.GetMap(277), 0, 0, CharacterDirection.Down);
+            Start3D(mapManager.GetMap(/*277*//*282*/259), 0, 0, CharacterDirection.Down);
         }
 
         public void LoadGame()

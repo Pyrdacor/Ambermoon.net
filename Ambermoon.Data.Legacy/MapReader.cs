@@ -93,7 +93,7 @@ namespace Ambermoon.Data.Legacy
             map.TilesetIndex = dataReader.ReadByte();
 
             map.NPCGfxIndex = dataReader.ReadByte();
-            map.LabyrinthBackIndex = dataReader.ReadByte();
+            map.LabyrinthBackgroundIndex = dataReader.ReadByte();
             map.PaletteIndex = dataReader.ReadByte();
             map.World = (World)dataReader.ReadByte();
 
@@ -117,10 +117,11 @@ namespace Ambermoon.Data.Legacy
                 };
             }
 
-            map.Tiles = new Map.Tile[map.Width, map.Height];
-
             if (map.Type == MapType.Map2D)
             {
+                map.Tiles = new Map.Tile[map.Width, map.Height];
+                map.Blocks = null;
+
                 for (int y = 0; y < map.Height; ++y)
                 {
                     for (int x = 0; x < map.Width; ++x)
@@ -139,16 +140,20 @@ namespace Ambermoon.Data.Legacy
             }
             else
             {
+                map.Blocks = new Map.Block[map.Width, map.Height];
+                map.Tiles = null;
+
                 for (int y = 0; y < map.Height; ++y)
                 {
                     for (int x = 0; x < map.Width; ++x)
                     {
-                        var tileData = dataReader.ReadBytes(2);
-                        map.Tiles[x, y] = new Map.Tile
+                        var blockData = dataReader.ReadBytes(2);
+                        map.Blocks[x, y] = new Map.Block
                         {
-                            BackTileIndex = tileData[0],
-                            MapEventId = tileData[1]
-                            // TODO: blocking etc
+                            ObjectIndex = blockData[0] <= 100 ? (uint)blockData[0] : 0,
+                            WallIndex = blockData[0] >= 101 && blockData[0] < 255 ? (uint)blockData[0] - 100 : 0,
+                            MapEventId = blockData[1],
+                            MapBorder = blockData[0] == 255
                         };
                     }
                 }

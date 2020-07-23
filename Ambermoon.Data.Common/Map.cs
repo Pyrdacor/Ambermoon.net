@@ -52,6 +52,17 @@ namespace Ambermoon.Data
             public TileType Type { get; set; }
         }
 
+        public class Block
+        {
+            public uint ObjectIndex { get; set; }
+            public uint WallIndex { get; set; }
+            public uint MapEventId { get; set; }
+            /// <summary>
+            /// This block is not drawn at all.
+            /// </summary>
+            public bool MapBorder { get; set; }
+        }
+
         public class CharacterReference
         {
             public int Type { get; set; } // 0 = None, 4 = party member, 5 = npc, 6 = monster, 21 = text npc (Index = map text index)
@@ -66,12 +77,17 @@ namespace Ambermoon.Data
         public uint MusicIndex { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+        /// <summary>
+        /// Tileset index in 2D
+        /// Labdata index in 3D
+        /// </summary>
         public uint TilesetIndex { get; set; }
-        public uint NPCGfxIndex { get; set; }
-        public uint LabyrinthBackIndex { get; set; }
+        public uint NPCGfxIndex { get; set; } // TODO: combat background gfx?
+        public uint LabyrinthBackgroundIndex { get; set; }
         public uint PaletteIndex { get; set; }
         public World World { get; set; }
         public Tile[,] Tiles { get; set; }
+        public Block[,] Blocks { get; set; }
         public List<MapEvent> Events { get; } = new List<MapEvent>();
         public List<MapEvent> EventLists { get; } = new List<MapEvent>();
         public List<string> Texts { get; } = new List<string>();
@@ -192,7 +208,7 @@ namespace Ambermoon.Data
 
         public void TriggerEvents(IRenderPlayer player, MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
         {
-            var mapEventId = Tiles[x, y].MapEventId;
+            var mapEventId = Type == MapType.Map2D ? Tiles[x, y].MapEventId : Blocks[x, y].MapEventId;
 
             if (mapEventId == 0)
                 return; // no map events at this position

@@ -6,7 +6,6 @@ using Silk.NET.Input;
 using Silk.NET.Input.Common;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Common;
-using System;
 using System.Linq;
 
 namespace Ambermoon
@@ -140,7 +139,8 @@ namespace Ambermoon
             gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
 
             // TODO: REMOVE
-            new LabdataReader().ReadLabdata(null, gameData.Files["2Lab_data.amb"].Files[1]);
+            var labdataTest = new Data.Labdata();
+            new LabdataReader().ReadLabdata(labdataTest, gameData.Files["2Lab_data.amb"].Files[1]);
 
             // Create render view
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), Width, Height);

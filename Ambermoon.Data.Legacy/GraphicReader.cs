@@ -9,8 +9,8 @@ namespace Ambermoon.Data.Legacy
             graphic.Width = graphicInfo.Width;
             graphic.Height = graphicInfo.Height;
 
-            var data = dataReader.ReadBytes(graphic.Width * graphic.Height * planes / 8); // as width is always a multiple of 8 this will work
-            int planeSize = graphic.Width / 8; // as width is always a multiple of 8 this will work
+            var data = dataReader.ReadBytes((graphic.Width * graphic.Height * planes + 7) / 8);
+            int planeSize = (graphic.Width + 7) / 8;
             int bitIndex = 0;
             int byteIndex = 0;
             int offset = 0;
