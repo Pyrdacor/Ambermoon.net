@@ -85,6 +85,8 @@ namespace Ambermoon.Data
         /// They include optional overlays.
         /// </summary>
         public List<Graphic> WallGraphics { get; } = new List<Graphic>();
+        public Graphic FloorGraphic { get; set; } = null;
+        public Graphic CeilingGraphic { get; set; } = null;
 
         private Labdata()
         {

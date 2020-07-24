@@ -40,8 +40,11 @@ namespace Ambermoon.Renderer.OpenGL
         public WallOrientation WallOrientation { get; } = WallOrientation.Normal;
         public uint TextureWidth { get; } = 0;
         public uint TextureHeight { get; } = 0;
+        public uint MappedTextureWidth { get; } = 0;
+        public uint MappedTextureHeight { get; } = 0;
 
-        public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, uint textureWidth, uint textureHeight, Rect virtualScreen, WallOrientation wallOrientation)
+        public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, uint textureWidth, uint textureHeight,
+            uint mappedTextureWidth, uint mappedTextureHeight, Rect virtualScreen, WallOrientation wallOrientation)
         {
             Type = type;
             Width = width;
@@ -51,6 +54,8 @@ namespace Ambermoon.Renderer.OpenGL
             WallOrientation = wallOrientation;
             TextureWidth = textureWidth;
             TextureHeight = textureHeight;
+            MappedTextureWidth = mappedTextureWidth;
+            MappedTextureHeight = mappedTextureHeight;
         }
 
         public bool Visible
@@ -282,9 +287,12 @@ namespace Ambermoon.Renderer.OpenGL
             this.virtualScreen = virtualScreen;
         }
 
-        public ISurface3D Create(SurfaceType type, int width, int height, uint textureWidth, uint textureHeight, WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0)
+        public ISurface3D Create(SurfaceType type, int width, int height, uint textureWidth, uint textureHeight,
+            uint mappedTextureWidth, uint mappedTextureHeight, WallOrientation wallOrientation = WallOrientation.Normal,
+            int textureAtlasX = 0, int textureAtlasY = 0)
         {
-            return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, textureWidth, textureHeight, virtualScreen, wallOrientation);
+            return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, textureWidth, textureHeight,
+                mappedTextureWidth, mappedTextureHeight, virtualScreen, wallOrientation);
         }
     }
 }

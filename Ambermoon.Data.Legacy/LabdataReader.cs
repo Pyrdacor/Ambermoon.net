@@ -8,8 +8,9 @@ namespace Ambermoon.Data.Legacy
     {
         public void ReadLabdata(Labdata labdata, IDataReader dataReader, IGameData gameData)
         {
-            // TODO: there must be the floor texture index inside these 8 bytes
-            dataReader.ReadBytes(8); // Unknown
+            dataReader.ReadBytes(6); // Unknown
+            uint ceilingTextureIndex = dataReader.ReadByte();
+            uint floorTextureIndex = dataReader.ReadByte();
 
             labdata.Objects.Clear();
             int numObjects = dataReader.ReadWord();
@@ -116,13 +117,17 @@ namespace Ambermoon.Data.Legacy
 
             // Load labyrinth graphics
             var graphicReader = new GraphicReader();
+            if (floorTextureIndex != 0)
+                labdata.FloorGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)floorTextureIndex], 64, 64, false, false);
+            if (ceilingTextureIndex != 0)
+                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)ceilingTextureIndex], 64, 64, false, false); // TODO
             var objectTextureFiles = gameData.Files[$"2Object3D.amb"].Files;
             gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f => objectTextureFiles[f.Key] = f.Value);
             labdata.ObjectGraphics.Clear();
             foreach (var objectInfo in labdata.ObjectInfos)
             {
                 labdata.ObjectGraphics.Add(ReadGraphic(graphicReader, objectTextureFiles[(int)objectInfo.TextureIndex],
-                    (int)objectInfo.TextureWidth, (int)objectInfo.TextureHeight, true));
+                    (int)objectInfo.TextureWidth, (int)objectInfo.TextureHeight, true, true));
             }
             var wallTextureFiles = gameData.Files[$"2Wall3D.amb"].Files;
             var overlayTextureFiles = gameData.Files[$"2Overlay3D.amb"].Files;
@@ -133,7 +138,7 @@ namespace Ambermoon.Data.Legacy
             foreach (var wall in labdata.Walls)
             {
                 var wallGraphic = ReadGraphic(graphicReader, wallTextureFiles[(int)wall.TextureIndex],
-                    128, 80, wall.Flags.HasFlag(Labdata.WallFlags.Transparency));
+                    128, 80, wall.Flags.HasFlag(Labdata.WallFlags.Transparency), true);
 
                 labdata.WallGraphics.Add(wallGraphic);
 
@@ -142,7 +147,7 @@ namespace Ambermoon.Data.Legacy
                     foreach (var overlay in wall.Overlays)
                     {
                         wallGraphic.AddOverlay(overlay.PositionY, overlay.PositionY, ReadGraphic(graphicReader,
-                            overlayTextureFiles[(int)overlay.TextureIndex], (int)overlay.TextureWidth, (int)overlay.TextureHeight, true));
+                            overlayTextureFiles[(int)overlay.TextureIndex], (int)overlay.TextureWidth, (int)overlay.TextureHeight, true, true));
                     }
                 }
 
@@ -150,7 +155,7 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        static Graphic ReadGraphic(GraphicReader graphicReader, IDataReader file, int width, int height, bool alpha)
+        static Graphic ReadGraphic(GraphicReader graphicReader, IDataReader file, int width, int height, bool alpha, bool texture)
         {
             var graphic = new Graphic
             {
@@ -165,7 +170,7 @@ namespace Ambermoon.Data.Legacy
             {
                 Width = width,
                 Height = height,
-                GraphicFormat = GraphicFormat.Texture4Bit,
+                GraphicFormat = texture ? GraphicFormat.Texture4Bit : GraphicFormat.Palette4Bit,
                 PaletteOffset = 0,
                 Alpha = alpha
             });

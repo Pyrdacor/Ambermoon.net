@@ -26,10 +26,14 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultTexCoordName = TextureShader.DefaultTexCoordName;
         internal static readonly string DefaultSamplerName = TextureShader.DefaultSamplerName;
         internal static readonly string DefaultAtlasSizeName = TextureShader.DefaultAtlasSizeName;
+        internal static readonly string DefaultTexEndCoordName = "texEndCoord";
+        internal static readonly string DefaultTexSizeName = "texSize";
         internal static readonly string DefaultPaletteName = TextureShader.DefaultPaletteName;
         internal static readonly string DefaultPaletteIndexName = TextureShader.DefaultPaletteIndexName;
 
         readonly string texCoordName;
+        readonly string texEndCoordName;
+        readonly string texSizeName;
         readonly string samplerName;
         readonly string atlasSizeName;
         readonly string paletteName;
@@ -47,10 +51,18 @@ namespace Ambermoon.Renderer
             $"uniform sampler2D {DefaultPaletteName};",
             $"in vec2 varTexCoord;",
             $"flat in float palIndex;",
+            $"flat in vec2 textureEndCoord;",
+            $"flat in vec2 textureSize;",
+            $"flat in vec2 oneTexturePixel;",
             $"",
             $"void main()",
             $"{{",
-            $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
+            $"    vec2 realTexCoord = varTexCoord;",
+            $"    if (realTexCoord.x > textureEndCoord.x)",
+            $"        realTexCoord.x -= int((textureSize.x - oneTexturePixel.x + realTexCoord.x - textureEndCoord.x) / textureSize.x) * textureSize.x;",
+            $"    if (realTexCoord.y > textureEndCoord.y)",
+            $"        realTexCoord.y -= int((textureSize.y - oneTexturePixel.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
+            $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
             $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2(colorIndex / 32.0f, palIndex / 49.0f));",
             $"    ",
             $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
@@ -65,37 +77,48 @@ namespace Ambermoon.Renderer
             GetVertexShaderHeader(state),
             $"in vec3 {DefaultPositionName};",
             $"in ivec2 {DefaultTexCoordName};",
+            $"in ivec2 {DefaultTexEndCoordName};",
+            $"in ivec2 {DefaultTexSizeName};",
             $"in uint {DefaultPaletteIndexName};",
             $"uniform uvec2 {DefaultAtlasSizeName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
             $"out vec2 varTexCoord;",
             $"flat out float palIndex;",
+            $"flat out vec2 textureEndCoord;",
+            $"flat out vec2 textureSize;",
+            $"flat out vec2 oneTexturePixel;",
             $"",
             $"void main()",
             $"{{",
             $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
+            $"    textureEndCoord = atlasFactor * vec2({DefaultTexEndCoordName}.x, {DefaultTexEndCoordName}.y);",
+            $"    textureSize = atlasFactor * vec2({DefaultTexSizeName}.x, {DefaultTexSizeName}.y);",
+            $"    oneTexturePixel = atlasFactor;",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4({DefaultPositionName}, 1.0f);",
             $"}}"
         };
 
         Texture3DShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
-                  DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultPaletteName,
-                  Texture3DFragmentShader(state), Texture3DVertexShader(state))
+                  DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
+                  DefaultAtlasSizeName, DefaultPaletteName, Texture3DFragmentShader(state), Texture3DVertexShader(state))
         {
 
         }
 
         protected Texture3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
-            string positionName, string texCoordName, string samplerName, string atlasSizeName,
-            string paletteName, string[] fragmentShaderLines, string[] vertexShaderLines)
+            string positionName, string texCoordName, string texEndCoordName, string texSizeName,
+            string samplerName, string atlasSizeName, string paletteName, string[] fragmentShaderLines,
+            string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, DefaultColorName, DefaultZName,
                   positionName, DefaultLayerName, fragmentShaderLines, vertexShaderLines)
         {
             this.texCoordName = texCoordName;
+            this.texEndCoordName = texEndCoordName;
+            this.texSizeName = texSizeName;
             this.samplerName = samplerName;
             this.atlasSizeName = atlasSizeName;
             this.paletteName = paletteName;

@@ -41,6 +41,21 @@ namespace Ambermoon.Data
         public byte[] Data { get; set; }
         public bool IndexedGraphic { get; set; }
 
+        public Graphic()
+        {
+
+        }
+
+        public Graphic(int width, int height, byte colorIndex)
+        {
+            Width = width;
+            Height = height;
+            Data = new byte[Width * Height];
+            IndexedGraphic = true;
+
+            Array.Fill(Data, colorIndex);
+        }
+
         public void AddOverlay(uint x, uint y, Graphic overlay)
         {
             if (!overlay.IndexedGraphic || !IndexedGraphic)
