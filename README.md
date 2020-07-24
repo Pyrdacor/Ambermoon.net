@@ -23,7 +23,8 @@ No collision detection yet for 2D nor 3D. You can freely walk through 2D and 3D 
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
-![3D map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D1.png "3D map rendering")
+![3D map rendering 1](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D1.png "3D map rendering 1")
+![3D map rendering 2](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D2.png "3D map rendering 2")
 
 
 ## Support development
