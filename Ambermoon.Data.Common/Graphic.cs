@@ -7,6 +7,7 @@ namespace Ambermoon.Data
         Palette5Bit,
         Palette4Bit,
         Palette3Bit,
+        Texture4Bit,
         XRGB16,
         RGBA32
     }
@@ -24,6 +25,7 @@ namespace Ambermoon.Data
             GraphicFormat.Palette5Bit => 5,
             GraphicFormat.Palette4Bit => 4,
             GraphicFormat.Palette3Bit => 3,
+            GraphicFormat.Texture4Bit => 4,
             GraphicFormat.XRGB16 => 16,
             GraphicFormat.RGBA32 => 32,
             _ => throw new ArgumentOutOfRangeException("Invalid graphic format")

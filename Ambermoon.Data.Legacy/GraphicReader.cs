@@ -9,47 +9,51 @@ namespace Ambermoon.Data.Legacy
             return size % 2 == 0 ? size : size + 1;
         }
 
-        void ReadPaletteGraphic(Graphic graphic, IDataReader dataReader, int planes, GraphicInfo graphicInfo)
+        void ReadPaletteGraphic(Graphic graphic, IDataReader dataReader, int planes, GraphicInfo graphicInfo, int? pixelsPerPlane = null)
         {
             graphic.Width = graphicInfo.Width;
             graphic.Height = graphicInfo.Height;
 
-            int calcWidth = ToNextWordBoundary(graphic.Width);
-            var data = dataReader.ReadBytes((calcWidth * graphic.Height * planes + 7) / 8);
+            int ppp = pixelsPerPlane ?? graphicInfo.Width;
+            int calcWidth = ToNextWordBoundary(ppp);
             int planeSize = (calcWidth + 7) / 8;
+            var data = dataReader.ReadBytes((graphic.Width * planes * graphic.Height + 7) / 8);
             int bitIndex = 0;
             int byteIndex = 0;
             int offset = 0;
 
             for (int y = 0; y < graphic.Height; ++y)
             {
-                for (int x = 0; x < graphic.Width; ++x)
+                for (int n = 0; n < graphic.Width / ppp; ++n)
                 {
-                    byte paletteIndex = 0;
-
-                    for (int p = 0; p < planes; ++p)
+                    for (int x = 0; x < ppp; ++x)
                     {
-                        if ((data[offset + p * planeSize + byteIndex] & (1 << (7 - bitIndex))) != 0)
-                            paletteIndex |= (byte)(1 << p);
+                        byte paletteIndex = 0;
+
+                        for (int p = 0; p < planes; ++p)
+                        {
+                            if ((data[offset + p * planeSize + byteIndex] & (1 << (7 - bitIndex))) != 0)
+                                paletteIndex |= (byte)(1 << p);
+                        }
+
+                        paletteIndex += graphicInfo.PaletteOffset;
+
+                        if (graphicInfo.Alpha && paletteIndex == graphicInfo.PaletteOffset)
+                            graphic.Data[n * ppp + x + y * graphic.Width] = 0;
+                        else
+                            graphic.Data[n * ppp + x + y * graphic.Width] = paletteIndex;
+
+                        if (++bitIndex == 8)
+                        {
+                            bitIndex = 0;
+                            ++byteIndex;
+                        }
                     }
 
-                    paletteIndex += graphicInfo.PaletteOffset;
-
-                    if (graphicInfo.Alpha && paletteIndex == graphicInfo.PaletteOffset)
-                        graphic.Data[x + y * graphic.Width] = 0;
-                    else
-                        graphic.Data[x + y * graphic.Width] = paletteIndex;
-
-                    if (++bitIndex == 8)
-                    {
-                        bitIndex = 0;
-                        ++byteIndex;
-                    }
+                    offset += planes * planeSize;
+                    byteIndex = 0;
+                    bitIndex = 0;
                 }
-
-                offset += planes * planeSize;
-                byteIndex = 0;
-                bitIndex = 0;
             }
         }
 
@@ -78,6 +82,11 @@ namespace Ambermoon.Data.Legacy
                     graphic.IndexedGraphic = true;
                     graphic.Data = new byte[graphic.Width * graphic.Height];
                     ReadPaletteGraphic(graphic, dataReader, 3, graphicInfo.Value);
+                    break;
+                case GraphicFormat.Texture4Bit:
+                    graphic.IndexedGraphic = true;
+                    graphic.Data = new byte[graphic.Width * graphic.Height];
+                    ReadPaletteGraphic(graphic, dataReader, 4, graphicInfo.Value, 8);
                     break;
                 case GraphicFormat.XRGB16:
                     graphic.IndexedGraphic = false;
