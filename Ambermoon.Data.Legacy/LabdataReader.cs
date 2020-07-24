@@ -81,8 +81,6 @@ namespace Ambermoon.Data.Legacy
 
             labdata.Walls.Clear();
             int numWalls = dataReader.ReadWord();
-            Console.WriteLine();
-            Console.WriteLine("NUM WALLS: " + numWalls);
 
             for (int i = 0; i < numWalls; ++i)
             {
@@ -113,11 +111,8 @@ namespace Ambermoon.Data.Legacy
                 }
                 labdata.Walls.Add(wallData);
 
-                Console.WriteLine($"Wall{i+1} -> {wallData}");
+                //Console.WriteLine($"Wall{i+1} -> {wallData}");
             }
-
-            Console.WriteLine("Remaining bytes: " + (dataReader.Size - dataReader.Position));
-            Console.WriteLine(string.Join(" ", dataReader.ReadToEnd().Select(b => b.ToString("x2"))));
 
             // Load labyrinth graphics
             var graphicReader = new GraphicReader();

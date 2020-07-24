@@ -55,7 +55,7 @@ namespace Ambermoon.Renderer
         public void Resize(int width, int height)
         {
             State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, width, 0, height, 0, 1);
-            State.ProjectionMatrix3D = Matrix4.CreatePerspective(90.0f, (float)Global.MapViewWidth / Global.MapViewHeight, 0.9f, 100.0f);
+            State.ProjectionMatrix3D = Matrix4.CreatePerspective(170.0f, (float)Global.MapViewWidth / Global.MapViewHeight, 0.225f, 100.0f);
 
             State.ClearMatrices();
             State.PushModelViewMatrix(Matrix4.Identity);

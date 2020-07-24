@@ -81,14 +81,14 @@ namespace Ambermoon
                     if (renderMap2D != null)
                         player2D.Move(0, -1, currentTicks);
                     else if (renderMap3D != null)
-                        camera3D.MoveForward(0.2f); // TODO
+                        camera3D.MoveForward(0.75f); // TODO
                 }
                 if (keys[(int)Key.Down] && !keys[(int)Key.Up])
                 {
                     if (renderMap2D != null)
                         player2D.Move(0, 1, currentTicks);
                     else if (renderMap3D != null)
-                        camera3D.MoveBackward(0.2f); // TODO
+                        camera3D.MoveBackward(0.75f); // TODO
                 }
 
                 lastKeyTicksReset = currentTicks;

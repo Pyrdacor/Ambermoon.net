@@ -28,8 +28,8 @@ namespace Ambermoon.Render
     {
         public const int TextureWidth = 128;
         public const int TextureHeight = 80;
-        public const int DistancePerTile = 2; // TODO
-        public const int WallHeight = 3; // TODO
+        public const int DistancePerTile = 3; // TODO
+        public const int WallHeight = 2; // TODO
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
@@ -67,6 +67,7 @@ namespace Ambermoon.Render
                 labdata = mapManager.GetLabdataForMap(map);
                 EnsureLabdataTextureAtlas();
                 UpdateSurfaces();
+                // TODO: objects
             }
         }
 
@@ -126,29 +127,29 @@ namespace Ambermoon.Render
                 wall.PaletteIndex = (byte)Map.PaletteIndex;
                 wall.X = x;
                 wall.Y = WallHeight;
-                wall.Z = -z;
+                wall.Z = z;
                 wall.TextureAtlasOffset = wallTextureOffset;
                 wall.Visible = true; // TODO: not all walls should be always visible
                 walls.Add(wall);
             }
 
             float baseX = mapX * DistancePerTile;
-            float baseY = mapY * DistancePerTile;
+            float baseY = (-Map.Height + mapY) * DistancePerTile;
 
             // front face
-            if (mapY < Map.Height - 1 && Map.Blocks[mapX, mapY + 1].WallIndex == 0)
+            //if (mapY < Map.Height - 1 && Map.Blocks[mapX, mapY + 1].WallIndex == 0 && !Map.Blocks[mapX, mapY + 1].MapBorder)
                 AddSurface(WallOrientation.Normal, baseX, baseY);
 
             // left face
-            if (mapX > 0 && Map.Blocks[mapX - 1, mapY].WallIndex == 0)
+            //if (mapX > 0 && Map.Blocks[mapX - 1, mapY].WallIndex == 0 && !Map.Blocks[mapX - 1, mapY].MapBorder)
                 AddSurface(WallOrientation.Rotated90, baseX + DistancePerTile, baseY);
 
             // back face
-            if (mapY > 0 && Map.Blocks[mapX, mapY - 1].WallIndex == 0)
+            //if (mapY > 0 && Map.Blocks[mapX, mapY - 1].WallIndex == 0 && !Map.Blocks[mapX, mapY - 1].MapBorder)
                 AddSurface(WallOrientation.Rotated180, baseX + DistancePerTile, baseY + DistancePerTile);
 
             // right face
-            if (mapX < Map.Width - 1 && Map.Blocks[mapX + 1, mapY].WallIndex == 0)
+            //if (mapX < Map.Width - 1 && Map.Blocks[mapX + 1, mapY].WallIndex == 0 && !Map.Blocks[mapX + 1, mapY].MapBorder)
                 AddSurface(WallOrientation.Rotated270, baseX, baseY + DistancePerTile);
         }
 
