@@ -333,8 +333,8 @@ namespace Ambermoon.Renderer
                 case Ambermoon.Render.SurfaceType.Billboard:
                     // TODO
                     vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
-                    vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y - surface.Height, surface.Z);
+                    vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z);
                     break;
             }
 

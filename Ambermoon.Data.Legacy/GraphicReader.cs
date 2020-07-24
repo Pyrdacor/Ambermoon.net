@@ -17,7 +17,10 @@ namespace Ambermoon.Data.Legacy
             int ppp = pixelsPerPlane ?? graphicInfo.Width;
             int calcWidth = ToNextWordBoundary(ppp);
             int planeSize = (calcWidth + 7) / 8;
-            var data = dataReader.ReadBytes((graphic.Width * planes * graphic.Height + 7) / 8);
+            int sizeToRead = (graphic.Width * planes * graphic.Height + 7) / 8;
+            if (dataReader.Position == 0 && dataReader.Size == sizeToRead + 4)
+                dataReader.Position = 4;
+            var data = dataReader.ReadBytes(sizeToRead);
             int bitIndex = 0;
             int byteIndex = 0;
             int offset = 0;

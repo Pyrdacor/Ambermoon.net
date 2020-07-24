@@ -276,7 +276,7 @@ namespace Ambermoon
 
             // TODO: REMOVE
             ShowMapInfo(map);
-            Start3D(mapManager.GetMap(/*277*//*282*/259), 0, 0, CharacterDirection.Down);
+            Start3D(mapManager.GetMap(/*277/*282*/259), 0, 0, CharacterDirection.Down);
         }
 
         public void LoadGame()

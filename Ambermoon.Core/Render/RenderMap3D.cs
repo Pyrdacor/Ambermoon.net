@@ -38,7 +38,7 @@ namespace Ambermoon.Render
         ISurface3D ceiling = null;
         Labdata labdata = null;
         readonly List<ISurface3D> walls = new List<ISurface3D>();
-        readonly List<ISurface3D> overlays = new List<ISurface3D>();
+        readonly List<ISurface3D> objects = new List<ISurface3D>();
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
         public Map Map { get; private set; } = null;
 
@@ -80,10 +80,10 @@ namespace Ambermoon.Render
             ceiling = null;
 
             walls.ForEach(wall => wall?.Delete());
-            overlays.ForEach(overlay => overlay?.Delete());
+            objects.ForEach(obj => obj?.Delete());
 
             walls.Clear();
-            overlays.Clear();
+            objects.Clear();
 
             // TODO: objects
         }
@@ -94,8 +94,14 @@ namespace Ambermoon.Render
             {
                 var graphics = new Dictionary<uint, Graphic>();
 
-                for (int i = 0; i < labdata.ObjectGraphics.Count; ++i)
-                    graphics.Add((uint)i, labdata.ObjectGraphics[i]);
+                foreach (var obj in labdata.Objects)
+                {
+                    foreach (var subObj in obj.SubObjects)
+                    {
+                        if (!graphics.ContainsKey(subObj.Object.TextureIndex))
+                            graphics.Add(subObj.Object.TextureIndex, labdata.ObjectGraphics[labdata.ObjectInfos.IndexOf(subObj.Object)]);
+                    }
+                }
                 for (int i = 0; i < labdata.WallGraphics.Count; ++i)
                     graphics.Add((uint)i + 1000u, labdata.WallGraphics[i]);
                 graphics.Add(10000u, labdata.FloorGraphic ?? new Graphic(64, 64, 0)); // TODO
@@ -121,6 +127,31 @@ namespace Ambermoon.Render
         Position FloorTextureOffset => textureAtlas.GetOffset(10000u);
         Position CeilingTextureOffset => textureAtlas.GetOffset(10001u);
 
+        void AddObject(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, Labdata.Object obj)
+        {
+            float baseX = mapX * DistancePerTile;
+            float baseY = (-Map.Height + mapY) * DistancePerTile;
+
+            // TODO: animations
+
+            foreach (var subObject in obj.SubObjects)
+            {
+                var objectInfo = subObject.Object;
+                var mapObject = surfaceFactory.Create(SurfaceType.Billboard,
+                    (objectInfo.MappedTextureWidth / 512.0f) * DistancePerTile,
+                    (objectInfo.MappedTextureHeight / 256.0f) * WallHeight,
+                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight);
+                mapObject.Layer = layer;
+                mapObject.PaletteIndex = (byte)Map.PaletteIndex;
+                mapObject.X = baseX + (subObject.X / 512.0f) * DistancePerTile; // TODO
+                mapObject.Y = (subObject.Z / 512.0f + mapObject.Height / WallHeight) * WallHeight; // TODO
+                mapObject.Z = baseY + (subObject.Y / 512.0f) * DistancePerTile; // TODO
+                mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
+                mapObject.Visible = true; // TODO: not all objects should be always visible
+                objects.Add(mapObject);
+            }
+        }
+
         void AddWall(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, uint wallIndex)
         {
             var wallTextureOffset = GetWallTextureOffset(wallIndex);
@@ -141,6 +172,8 @@ namespace Ambermoon.Render
 
             float baseX = mapX * DistancePerTile;
             float baseY = (-Map.Height + mapY) * DistancePerTile;
+
+            // TODO
 
             // front face
             //if (mapY < Map.Height - 1 && Map.Blocks[mapX, mapY + 1].WallIndex == 0 && !Map.Blocks[mapX, mapY + 1].MapBorder)
@@ -189,7 +222,7 @@ namespace Ambermoon.Render
             ceiling.TextureAtlasOffset = CeilingTextureOffset; // TODO: seems to have color rgb hex 22 00 00 in grandfathers cellar but couldn't find this color in the data
             ceiling.Visible = true;
 
-            // Add walls
+            // Add walls and objects
             for (uint y = 0; y < Map.Height; ++y)
             {
                 for (uint x = 0; x < Map.Width; ++x)
@@ -198,10 +231,10 @@ namespace Ambermoon.Render
 
                     if (block.WallIndex != 0)
                         AddWall(surfaceFactory, layer, x, y, block.WallIndex - 1);
+                    else if (block.ObjectIndex != 0)
+                        AddObject(surfaceFactory, layer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
                 }
             }
-
-            // TODO: add billboards (monsters, NPCs, flames, etc)
         }
     }
 }

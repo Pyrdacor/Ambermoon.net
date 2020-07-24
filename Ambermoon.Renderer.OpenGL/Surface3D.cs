@@ -287,7 +287,7 @@ namespace Ambermoon.Renderer.OpenGL
             this.virtualScreen = virtualScreen;
         }
 
-        public ISurface3D Create(SurfaceType type, int width, int height, uint textureWidth, uint textureHeight,
+        public ISurface3D Create(SurfaceType type, float width, float height, uint textureWidth, uint textureHeight,
             uint mappedTextureWidth, uint mappedTextureHeight, WallOrientation wallOrientation = WallOrientation.Normal,
             int textureAtlasX = 0, int textureAtlasY = 0)
         {
