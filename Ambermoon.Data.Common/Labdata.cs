@@ -15,11 +15,11 @@ namespace Ambermoon.Data
 
         public struct ObjectInfo
         {
-            public byte Type;
-            public byte[] Collision;
+            public byte[] Unknown1;
+            public ObjectFlags Flags;
             public uint TextureIndex;
             public uint NumAnimationFrames;
-            public byte Unknown;
+            public byte Unknown2;
             public uint TextureWidth;
             public uint TextureHeight;
             public uint MappedTextureWidth;
@@ -45,8 +45,18 @@ namespace Ambermoon.Data
         [Flags]
         public enum WallFlags
         {
+            None = 0,
             BlockSight = 0x02, // Not sure but beside walls this is also used by non-bocking doors or exits
             Transparency = 0x08,
+            BlockMovement = 0x80,
+            // TODO
+        }
+
+        [Flags]
+        public enum ObjectFlags
+        {
+            None = 0,
+            FloorObject = 0x08, // like holes in the ground
             BlockMovement = 0x80,
             // TODO
         }

@@ -39,11 +39,11 @@ namespace Ambermoon.Data.Legacy
             {
                 var objectInfo = new Labdata.ObjectInfo
                 {
-                    Type = dataReader.ReadByte(),
-                    Collision = dataReader.ReadBytes(3),
+                    Unknown1 = dataReader.ReadBytes(3),
+                    Flags = (Labdata.ObjectFlags)dataReader.ReadByte(),
                     TextureIndex = dataReader.ReadWord(),
                     NumAnimationFrames = dataReader.ReadByte(),
-                    Unknown = dataReader.ReadByte(),
+                    Unknown2 = dataReader.ReadByte(),
                     TextureWidth = dataReader.ReadByte(),
                     TextureHeight = dataReader.ReadByte(),
                     MappedTextureWidth = dataReader.ReadWord(),
