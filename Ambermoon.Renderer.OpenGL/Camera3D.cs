@@ -29,6 +29,12 @@ namespace Ambermoon.Renderer.OpenGL
             state.PushModelViewMatrix(currentMatrix);
         }
 
+        public void ActivateBillboards(Billboard3DShader shader)
+        {
+            shader.SetCameraPosition(x, y, z);
+            shader.SetCameraDirection((float)currentAngleCos, 0.0f, (float)currentAngleSin);
+        }
+
         private void UpdateMatrix()
         {
             currentMatrix.Reset();

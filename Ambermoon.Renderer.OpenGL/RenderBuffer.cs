@@ -43,13 +43,15 @@ namespace Ambermoon.Renderer
         readonly IndexBuffer indexBuffer = null;
         readonly LayerBuffer paletteIndexBuffer = null;
         readonly PositionBuffer textureEndCoordBuffer = null;
-        readonly PositionBuffer textureSizeBuffer = null;        
+        readonly PositionBuffer textureSizeBuffer = null;
+        readonly VectorBuffer billboardCenterBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
         static readonly Dictionary<State, Texture3DShader> texture3DShaders = new Dictionary<State, Texture3DShader>();
+        static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = new Dictionary<State, Billboard3DShader>();
 
-        public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered, bool noTexture = false)
+        public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered, bool noTexture = false, bool isBillboard = false)
         {
             this.state = state;
             Masked = masked;
@@ -76,9 +78,18 @@ namespace Ambermoon.Renderer
             {
                 if (is3D)
                 {
-                    if (!texture3DShaders.ContainsKey(state))
-                        texture3DShaders[state] = Texture3DShader.Create(state);
-                    vertexArrayObject = new VertexArrayObject(state, texture3DShaders[state].ShaderProgram);
+                    if (isBillboard)
+                    {
+                        if (!billboard3DShaders.ContainsKey(state))
+                            billboard3DShaders[state] = Billboard3DShader.Create(state);
+                        vertexArrayObject = new VertexArrayObject(state, billboard3DShaders[state].ShaderProgram);
+                    }
+                    else
+                    {
+                        if (!texture3DShaders.ContainsKey(state))
+                            texture3DShaders[state] = Texture3DShader.Create(state);
+                        vertexArrayObject = new VertexArrayObject(state, texture3DShaders[state].ShaderProgram);
+                    }
                 }
                 else
                 {
@@ -129,6 +140,13 @@ namespace Ambermoon.Renderer
                 }
             }
 
+            if (isBillboard)
+            {
+                billboardCenterBuffer = new VectorBuffer(state, false);
+
+                vertexArrayObject.AddBuffer(Billboard3DShader.DefaultBillboardCenterName, billboardCenterBuffer);
+            }
+
             if (masked && !noTexture)
             {
                 maskTextureAtlasOffsetBuffer = new PositionBuffer(state, !supportAnimations);
@@ -153,6 +171,7 @@ namespace Ambermoon.Renderer
         internal MaskedTextureShader MaskedTextureShader => maskedTextureShaders[state];
         internal TextureShader TextureShader => textureShaders[state];
         internal Texture3DShader Texture3DShader => texture3DShaders[state];
+        internal Billboard3DShader Billboard3DShader => billboard3DShaders[state];
 
         public int GetDrawIndex(Render.IColoredRect coloredRect,
             Render.PositionTransformation positionTransformation,
@@ -404,6 +423,18 @@ namespace Ambermoon.Renderer
                 textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, textureSizeBufferIndex + 3);
             }
 
+            if (billboardCenterBuffer != null)
+            {
+                int billboardCenterBufferIndex = billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z);
+
+                if (billboardCenterBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, billboardCenterBufferIndex + 1);
+                billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, billboardCenterBufferIndex + 2);
+                billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, billboardCenterBufferIndex + 3);
+            }
+
             return index;
         }
 
@@ -437,51 +468,71 @@ namespace Ambermoon.Renderer
 
         public void UpdatePosition(int index, Render.ISurface3D surface)
         {
-            vectorBuffer.Update(index, surface.X, surface.Y, surface.Z);
-
-            switch (surface.Type)
+            if (surface.Type == Ambermoon.Render.SurfaceType.Billboard)
             {
-                case Ambermoon.Render.SurfaceType.Floor:
-                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
-                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z + surface.Height);
-                    break;
-                case Ambermoon.Render.SurfaceType.Ceiling:
-                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
-                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
-                    break;
-                case Ambermoon.Render.SurfaceType.Wall:
-                    switch (surface.WallOrientation)
-                    {
-                        case Ambermoon.Render.WallOrientation.Normal:
-                            vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
-                            vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y - surface.Height, surface.Z);
-                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
-                            break;
-                        case Ambermoon.Render.WallOrientation.Rotated90:
-                            vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z + surface.Width);
-                            vectorBuffer.Update(index + 2, surface.X, surface.Y - surface.Height, surface.Z + surface.Width);
-                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
-                            break;
-                        case Ambermoon.Render.WallOrientation.Rotated180:
-                            vectorBuffer.Update(index + 1, surface.X - surface.Width, surface.Y, surface.Z);
-                            vectorBuffer.Update(index + 2, surface.X - surface.Width, surface.Y - surface.Height, surface.Z);
-                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
-                            break;
-                        case Ambermoon.Render.WallOrientation.Rotated270:
-                            vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z - surface.Width);
-                            vectorBuffer.Update(index + 2, surface.X, surface.Y - surface.Height, surface.Z - surface.Width);
-                            vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
-                            break;
-                    }
-                    break;
-                case Ambermoon.Render.SurfaceType.Billboard:
-                    // TODO
-                    vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
-                    vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
-                    break;
+                float x = surface.X - surface.Width * 0.5f;
+                float z = surface.Z - surface.Height * 0.5f;
+
+                // TODO ?
+                vectorBuffer.Update(index, x, surface.Y, z);
+                vectorBuffer.Update(index + 1, x + surface.Width, surface.Y, z);
+                vectorBuffer.Update(index + 2, x + surface.Width, surface.Y, z - surface.Height);
+                vectorBuffer.Update(index + 3, x, surface.Y, z - surface.Height);
+
+                if (billboardCenterBuffer != null)
+                {
+                    billboardCenterBuffer.Update(index, surface.X, surface.Y, surface.Z);
+                    billboardCenterBuffer.Update(index + 1, surface.X, surface.Y, surface.Z);
+                    billboardCenterBuffer.Update(index + 2, surface.X, surface.Y, surface.Z);
+                    billboardCenterBuffer.Update(index + 3, surface.X, surface.Y, surface.Z);
+                }
+            }
+            else
+            {
+                vectorBuffer.Update(index, surface.X, surface.Y, surface.Z);
+
+                switch (surface.Type)
+                {
+                    case Ambermoon.Render.SurfaceType.Floor:
+                        vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                        vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
+                        vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z + surface.Height);
+                        break;
+                    case Ambermoon.Render.SurfaceType.Ceiling:
+                        vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                        vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                        vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
+                        break;
+                    case Ambermoon.Render.SurfaceType.Wall:
+                        switch (surface.WallOrientation)
+                        {
+                            case Ambermoon.Render.WallOrientation.Normal:
+                                vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                                vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y - surface.Height, surface.Z);
+                                vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                                break;
+                            case Ambermoon.Render.WallOrientation.Rotated90:
+                                vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z + surface.Width);
+                                vectorBuffer.Update(index + 2, surface.X, surface.Y - surface.Height, surface.Z + surface.Width);
+                                vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                                break;
+                            case Ambermoon.Render.WallOrientation.Rotated180:
+                                vectorBuffer.Update(index + 1, surface.X - surface.Width, surface.Y, surface.Z);
+                                vectorBuffer.Update(index + 2, surface.X - surface.Width, surface.Y - surface.Height, surface.Z);
+                                vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                                break;
+                            case Ambermoon.Render.WallOrientation.Rotated270:
+                                vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z - surface.Width);
+                                vectorBuffer.Update(index + 2, surface.X, surface.Y - surface.Height, surface.Z - surface.Width);
+                                vectorBuffer.Update(index + 3, surface.X, surface.Y - surface.Height, surface.Z);
+                                break;
+                            default:
+                                throw new AmbermoonException(ExceptionScope.Render, "Invalid wall orientation.");
+                        }
+                        break;
+                    default:
+                        throw new AmbermoonException(ExceptionScope.Render, "Invalid surface type.");
+                }
             }
         }
 

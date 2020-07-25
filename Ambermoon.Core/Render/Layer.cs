@@ -4,6 +4,7 @@
     {
         None = -1,
         Map3D,
+        Billboards3D,
         MapBackground1,
         MapBackground2,
         MapBackground3,

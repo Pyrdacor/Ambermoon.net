@@ -52,9 +52,10 @@ namespace Ambermoon.Renderer
             get;
             set;
         } = null;
-        
+
+        internal RenderBuffer RenderBuffer { get; } = null;
+
         readonly State state = null;
-        readonly RenderBuffer renderBuffer = null;
         readonly RenderBuffer renderBufferColorRects = null;
         readonly Texture palette = null;
         bool disposed = false;
@@ -68,6 +69,7 @@ namespace Ambermoon.Renderer
         private static readonly float[] LayerBaseZ = new float[]
         {
             0.00f,  // Map3D
+            0.00f,  // Billboards3D
             0.01f,  // MapBackground1
             0.01f,  // MapBackground2
             0.01f,  // MapBackground3
@@ -107,7 +109,7 @@ namespace Ambermoon.Renderer
             bool supportAnimations = layer >= Global.First2DLayer && layer <= Global.Last2DLayer; // TODO
             bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
 
-            renderBuffer = new RenderBuffer(state, layer == Layer.Map3D, masked, supportAnimations, layered);
+            RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D, masked, supportAnimations, layered, false, layer == Layer.Billboards3D);
 
             if (Layer == Layer.UIBackground)
                 renderBufferColorRects = new RenderBuffer(state, false, supportAnimations, true, true);
@@ -139,7 +141,26 @@ namespace Ambermoon.Renderer
 
                 if (Layer == Layer.Map3D)
                 {
-                    Texture3DShader shader = renderBuffer.Texture3DShader;
+                    Texture3DShader shader = RenderBuffer.Texture3DShader;
+
+                    shader.UpdateMatrices(state);
+
+                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                    state.Gl.ActiveTexture(GLEnum.Texture0);
+                    texture.Bind();
+
+                    if (palette != null)
+                    {
+                        shader.SetPalette(1);
+                        state.Gl.ActiveTexture(GLEnum.Texture1);
+                        palette.Bind();
+                    }
+
+                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                }
+                else if (Layer == Layer.Billboards3D)
+                {
+                    Billboard3DShader shader = RenderBuffer.Billboard3DShader;
 
                     shader.UpdateMatrices(state);
 
@@ -158,7 +179,7 @@ namespace Ambermoon.Renderer
                 }
                 else
                 {
-                    TextureShader shader = renderBuffer.Masked ? renderBuffer.MaskedTextureShader : renderBuffer.TextureShader;
+                    TextureShader shader = RenderBuffer.Masked ? RenderBuffer.MaskedTextureShader : RenderBuffer.TextureShader;
 
                     shader.UpdateMatrices(state);
 
@@ -178,52 +199,52 @@ namespace Ambermoon.Renderer
                 }
             }
 
-            renderBuffer.Render();
+            RenderBuffer.Render();
         }
 
         public int GetDrawIndex(ISprite sprite, Position maskSpriteTextureAtlasOffset = null)
         {
-            return renderBuffer.GetDrawIndex(sprite, PositionTransformation, SizeTransformation, maskSpriteTextureAtlasOffset);
+            return RenderBuffer.GetDrawIndex(sprite, PositionTransformation, SizeTransformation, maskSpriteTextureAtlasOffset);
         }
 
         public int GetDrawIndex(ISurface3D surface)
         {
-            return renderBuffer.GetDrawIndex(surface);
+            return RenderBuffer.GetDrawIndex(surface);
         }
 
         public void FreeDrawIndex(int index)
         {
-            renderBuffer.FreeDrawIndex(index);
+            RenderBuffer.FreeDrawIndex(index);
         }
 
         public void UpdatePosition(int index, ISprite sprite)
         {
-            renderBuffer.UpdatePosition(index, sprite, sprite.BaseLineOffset, PositionTransformation, SizeTransformation);
+            RenderBuffer.UpdatePosition(index, sprite, sprite.BaseLineOffset, PositionTransformation, SizeTransformation);
         }
 
         public void UpdateTextureAtlasOffset(int index, ISprite sprite, Position maskSpriteTextureAtlasOffset = null)
         {
-            renderBuffer.UpdateTextureAtlasOffset(index, sprite, maskSpriteTextureAtlasOffset);
+            RenderBuffer.UpdateTextureAtlasOffset(index, sprite, maskSpriteTextureAtlasOffset);
         }
 
         public void UpdatePosition(int index, ISurface3D surface)
         {
-            renderBuffer.UpdatePosition(index, surface);
+            RenderBuffer.UpdatePosition(index, surface);
         }
 
         public void UpdateTextureAtlasOffset(int index, ISurface3D surface)
         {
-            renderBuffer.UpdateTextureAtlasOffset(index, surface);
+            RenderBuffer.UpdateTextureAtlasOffset(index, surface);
         }
 
         public void UpdateDisplayLayer(int index, byte displayLayer)
         {
-            renderBuffer.UpdateDisplayLayer(index, displayLayer);
+            RenderBuffer.UpdateDisplayLayer(index, displayLayer);
         }
 
         public void UpdatePaletteIndex(int index, byte paletteIndex)
         {
-            renderBuffer.UpdatePaletteIndex(index, paletteIndex);
+            RenderBuffer.UpdatePaletteIndex(index, paletteIndex);
         }
 
         public int GetColoredRectDrawIndex(ColoredRect coloredRect)
@@ -271,7 +292,7 @@ namespace Ambermoon.Renderer
             {
                 if (disposing)
                 {
-                    renderBuffer?.Dispose();
+                    RenderBuffer?.Dispose();
                     renderBufferColorRects?.Dispose();
                     if (Texture is Texture texture)
                         texture?.Dispose();

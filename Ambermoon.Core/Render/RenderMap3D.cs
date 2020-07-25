@@ -112,6 +112,7 @@ namespace Ambermoon.Render
 
             textureAtlas = labdataTextures[Map.TilesetOrLabdataIndex];
             renderView.GetLayer(Layer.Map3D).Texture = textureAtlas.Texture;
+            renderView.GetLayer(Layer.Billboards3D).Texture = textureAtlas.Texture;
         }
 
         Position GetObjectTextureOffset(uint objectIndex)
@@ -201,6 +202,7 @@ namespace Ambermoon.Render
 
             var surfaceFactory = renderView.Surface3DFactory;
             var layer = renderView.GetLayer(Layer.Map3D);
+            var billboardLayer = renderView.GetLayer(Layer.Billboards3D);
 
             // Add floor and ceiling
             floor = surfaceFactory.Create(SurfaceType.Floor, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64); // TODO: texture size
@@ -232,7 +234,7 @@ namespace Ambermoon.Render
                     if (block.WallIndex != 0)
                         AddWall(surfaceFactory, layer, x, y, block.WallIndex - 1);
                     else if (block.ObjectIndex != 0)
-                        AddObject(surfaceFactory, layer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
+                        AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
                 }
             }
         }

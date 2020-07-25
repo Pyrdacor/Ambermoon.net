@@ -138,7 +138,7 @@ namespace Ambermoon.Renderer.OpenGL
                     var texture = textureAtlasManager.GetOrCreate(layer)?.Texture;
                     var renderLayer = Create(layer, texture, palette);
 
-                    if (layer != Layer.Map3D)
+                    if (layer != Layer.Map3D && layer != Layer.Billboards3D)
                     {
                         renderLayer.PositionTransformation = PositionTransformation;
                         renderLayer.SizeTransformation = SizeTransformation;
@@ -371,6 +371,11 @@ namespace Ambermoon.Renderer.OpenGL
                             VirtualScreen.Size.Height - (virtualScreenDisplay.Position.Y + mapViewArea.Position.Y + mapViewArea.Size.Height),
                             (uint)mapViewArea.Size.Width, (uint)mapViewArea.Size.Height
                         );
+                    }
+                    else if (layer.Key == Layer.Billboards3D)
+                    {
+                        camera3D.ActivateBillboards(layer.Value.RenderBuffer.Billboard3DShader);
+                        layer.Value.RenderBuffer.Billboard3DShader.SetScale(1.0f);
                     }
                     else if (layer.Key == Global.First2DLayer)
                     {
