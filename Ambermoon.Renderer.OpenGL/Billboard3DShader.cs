@@ -31,7 +31,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultPaletteName = Texture3DShader.DefaultPaletteName;
         internal static readonly string DefaultPaletteIndexName = Texture3DShader.DefaultPaletteIndexName;
         internal static readonly string DefaultCameraPositionName = "camPos";
-        internal static readonly string DefaultCameraDirectionName = "camDir";
+        internal static readonly string DefaultCameraDirectionName = "camDir"; // TODO: not used anymore. delete later.
         internal static readonly string DefaultBillboardCenterName = "center";
         internal static readonly string DefaultScaleName = "scale";
 
@@ -57,6 +57,7 @@ namespace Ambermoon.Renderer
             $"flat in vec2 textureEndCoord;",
             $"flat in vec2 textureSize;",
             $"flat in vec2 oneTexturePixel;",
+            $"flat in float depth;",
             $"",
             $"void main()",
             $"{{",
@@ -72,6 +73,7 @@ namespace Ambermoon.Renderer
             $"        discard;",
             $"    else",
             $"        {DefaultFragmentOutColorName} = pixelColor;",
+            $"     gl_FragDepth = 0.5 * depth + 0.5;",
             $"}}"
         };
 
@@ -95,6 +97,7 @@ namespace Ambermoon.Renderer
             $"flat out vec2 textureEndCoord;",
             $"flat out vec2 textureSize;",
             $"flat out vec2 oneTexturePixel;",
+            $"flat out float depth;",
             $"",
             $"void main()",
             $"{{",
@@ -114,6 +117,8 @@ namespace Ambermoon.Renderer
             $"    textureSize = atlasFactor * vec2({DefaultTexSizeName}.x, {DefaultTexSizeName}.y);",
             $"    oneTexturePixel = atlasFactor;",
             $"    gl_Position = {DefaultProjectionMatrixName} * localPos;",
+            $"    vec4 realPos = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1);",
+            $"    depth = realPos.z / realPos.w;",
             $"}}"
         };
 
