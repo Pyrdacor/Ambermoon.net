@@ -143,7 +143,7 @@ namespace Ambermoon.Render
                 var mapObject = surfaceFactory.Create(SurfaceType.Billboard,
                     (objectInfo.MappedTextureWidth / 512.0f) * DistancePerTile,
                     (objectInfo.MappedTextureHeight / mappedWallHeight) * WallHeight,
-                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight);
+                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true);
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)Map.PaletteIndex;
                 mapObject.X = baseX + (subObject.X / 512.0f) * DistancePerTile; // TODO
@@ -158,11 +158,12 @@ namespace Ambermoon.Render
         void AddWall(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, uint wallIndex)
         {
             var wallTextureOffset = GetWallTextureOffset(wallIndex);
+            bool alpha = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.Transparency);
 
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
                 var wall = surfaceFactory.Create(SurfaceType.Wall, DistancePerTile, WallHeight,
-                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, wallOrientation);
+                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, wallOrientation);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)Map.PaletteIndex;
                 wall.X = x;
@@ -207,23 +208,21 @@ namespace Ambermoon.Render
             var billboardLayer = renderView.GetLayer(Layer.Billboards3D);
 
             // Add floor and ceiling
-            floor = surfaceFactory.Create(SurfaceType.Floor, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64); // TODO: texture size
+            floor = surfaceFactory.Create(SurfaceType.Floor, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
             floor.PaletteIndex = (byte)Map.PaletteIndex;
             floor.Layer = layer;
             floor.X = 0.0f;
             floor.Y = 0.0f;
             floor.Z = -Map.Height * DistancePerTile;
-            // Floors can have single colors or even tiled textures
-            floor.TextureAtlasOffset = FloorTextureOffset; // TODO: seems to have color rgb hex 11 22 33 in grandfathers cellar but couldn't find this color in the data
+            floor.TextureAtlasOffset = FloorTextureOffset;
             floor.Visible = true;
-            ceiling = surfaceFactory.Create(SurfaceType.Ceiling, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64); // TODO: texture size
+            ceiling = surfaceFactory.Create(SurfaceType.Ceiling, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
             ceiling.PaletteIndex = (byte)Map.PaletteIndex;
             ceiling.Layer = layer;
             ceiling.X = 0.0f;
             ceiling.Y = WallHeight;
             ceiling.Z = 0.0f;
-            // Ceilings can have single colors, tiled textures or skyboxes
-            ceiling.TextureAtlasOffset = CeilingTextureOffset; // TODO: seems to have color rgb hex 22 00 00 in grandfathers cellar but couldn't find this color in the data
+            ceiling.TextureAtlasOffset = CeilingTextureOffset;
             ceiling.Visible = true;
 
             // Add walls and objects

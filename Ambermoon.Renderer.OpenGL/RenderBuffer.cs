@@ -45,6 +45,7 @@ namespace Ambermoon.Renderer
         readonly PositionBuffer textureEndCoordBuffer = null;
         readonly PositionBuffer textureSizeBuffer = null;
         readonly VectorBuffer billboardCenterBuffer = null;
+        readonly LayerBuffer alphaBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
@@ -100,7 +101,10 @@ namespace Ambermoon.Renderer
             }
 
             if (is3D)
+            {
                 vectorBuffer = new VectorBuffer(state, false);
+                alphaBuffer = new LayerBuffer(state, true);
+            }
             else
                 positionBuffer = new PositionBuffer(state, false);
             indexBuffer = new IndexBuffer(state);
@@ -155,7 +159,10 @@ namespace Ambermoon.Renderer
             }
 
             if (is3D)
+            {
                 vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, vectorBuffer);
+                vertexArrayObject.AddBuffer(Texture3DShader.DefaultAlphaName, alphaBuffer);
+            }
             else
                 vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
             vertexArrayObject.AddBuffer("index", indexBuffer);
@@ -369,6 +376,19 @@ namespace Ambermoon.Renderer
                 paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 1);
                 paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 2);
                 paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 3);
+            }
+
+            if (alphaBuffer != null)
+            {
+                byte alpha = (byte)(surface.Alpha ? 1 : 0);
+                int alphaBufferIndex = alphaBuffer.Add(alpha);
+
+                if (alphaBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                alphaBuffer.Add(alpha, alphaBufferIndex + 1);
+                alphaBuffer.Add(alpha, alphaBufferIndex + 2);
+                alphaBuffer.Add(alpha, alphaBufferIndex + 3);
             }
 
             if (textureAtlasOffsetBuffer != null)

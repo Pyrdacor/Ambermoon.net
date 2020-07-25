@@ -139,7 +139,7 @@ namespace Ambermoon.Renderer
             string cameraDirectionName, string billboardCenterName, string scaleName,
             string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, positionName, texCoordName, texEndCoordName,
-                  texSizeName, samplerName, atlasSizeName, paletteName, fragmentShaderLines, vertexShaderLines)
+                  texSizeName, samplerName, atlasSizeName, paletteName, null, fragmentShaderLines, vertexShaderLines)
         {
             this.cameraPositionName = cameraPositionName;
             this.cameraDirectionName = cameraDirectionName;
