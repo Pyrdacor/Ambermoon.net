@@ -315,14 +315,14 @@ namespace Ambermoon.Renderer
             switch (surface.Type)
             {
                 case Ambermoon.Render.SurfaceType.Floor:
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
                     vectorBuffer.Add(surface.X, surface.Y, surface.Z + surface.Height);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);                   
                     break;
                 case Ambermoon.Render.SurfaceType.Ceiling:
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
                     vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);                    
                     break;
                 case Ambermoon.Render.SurfaceType.Wall:
                     switch (surface.WallOrientation)
@@ -380,13 +380,24 @@ namespace Ambermoon.Renderer
                     if (textureAtlasOffsetBufferIndex != index)
                         throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
 
-                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 1);
+                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 2);
-                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 3);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 3);
+                }
+                else if (surface.Type == Ambermoon.Render.SurfaceType.Ceiling)
+                {
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+
+                    if (textureAtlasOffsetBufferIndex != index)
+                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                    textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 1);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 2);
+                    textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 3);
                 }
                 else
                 {
-                     int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
 
                     if (textureAtlasOffsetBufferIndex != index)
                         throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
@@ -494,14 +505,14 @@ namespace Ambermoon.Renderer
                 switch (surface.Type)
                 {
                     case Ambermoon.Render.SurfaceType.Floor:
-                        vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                        vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z + surface.Height);
                         vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
-                        vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z + surface.Height);
+                        vectorBuffer.Update(index + 3, surface.X + surface.Width, surface.Y, surface.Z);                        
                         break;
                     case Ambermoon.Render.SurfaceType.Ceiling:
-                        vectorBuffer.Update(index + 1, surface.X + surface.Width, surface.Y, surface.Z);
+                        vectorBuffer.Update(index + 1, surface.X, surface.Y, surface.Z - surface.Height);
                         vectorBuffer.Update(index + 2, surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
-                        vectorBuffer.Update(index + 3, surface.X, surface.Y, surface.Z - surface.Height);
+                        vectorBuffer.Update(index + 3, surface.X + surface.Width, surface.Y, surface.Z);
                         break;
                     case Ambermoon.Render.SurfaceType.Wall:
                         switch (surface.WallOrientation)
@@ -563,9 +574,16 @@ namespace Ambermoon.Renderer
             if (surface.Type == Ambermoon.Render.SurfaceType.Floor)
             {
                 textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
-                textureAtlasOffsetBuffer.Update(index + 1, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
+                textureAtlasOffsetBuffer.Update(index + 1, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
                 textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y);
-                textureAtlasOffsetBuffer.Update(index + 3, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+                textureAtlasOffsetBuffer.Update(index + 3, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
+            }
+            else if (surface.Type == Ambermoon.Render.SurfaceType.Ceiling)
+            {
+                textureAtlasOffsetBuffer.Update(index, (short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
+                textureAtlasOffsetBuffer.Update(index + 1, (short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
+                textureAtlasOffsetBuffer.Update(index + 2, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y);
+                textureAtlasOffsetBuffer.Update(index + 3, (short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
             }
             else
             {

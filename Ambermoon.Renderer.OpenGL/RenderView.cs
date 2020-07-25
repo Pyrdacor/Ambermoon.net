@@ -371,9 +371,11 @@ namespace Ambermoon.Renderer.OpenGL
                             VirtualScreen.Size.Height - (virtualScreenDisplay.Position.Y + mapViewArea.Position.Y + mapViewArea.Size.Height),
                             (uint)mapViewArea.Size.Width, (uint)mapViewArea.Size.Height
                         );
+                        State.Gl.Enable(EnableCap.CullFace);
                     }
                     else if (layer.Key == Layer.Billboards3D)
                     {
+                        State.Gl.Disable(EnableCap.CullFace);
                         camera3D.ActivateBillboards(layer.Value.RenderBuffer.Billboard3DShader);
                         layer.Value.RenderBuffer.Billboard3DShader.SetScale(1.0f);
                     }

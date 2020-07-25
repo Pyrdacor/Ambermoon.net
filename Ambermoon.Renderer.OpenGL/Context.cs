@@ -44,6 +44,7 @@ namespace Ambermoon.Renderer
 
             State.Gl.Enable(EnableCap.DepthTest);
             State.Gl.DepthFunc(DepthFunction.Lequal);
+            State.Gl.Disable(EnableCap.CullFace);
 
             State.Gl.Enable(EnableCap.Blend);
             State.Gl.BlendEquationSeparate(BlendEquationModeEXT.FuncAdd, BlendEquationModeEXT.FuncAdd);

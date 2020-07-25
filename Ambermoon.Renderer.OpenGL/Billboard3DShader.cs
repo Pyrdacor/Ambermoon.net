@@ -76,6 +76,8 @@ namespace Ambermoon.Renderer
             $"     gl_FragDepth = 0.5 * depth + 0.5;",
             $"}}"
         };
+        // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).
+        // If the depth range is changed, this formula has to be adjusted accordingly!
 
         static string[] Texture3DVertexShader(State state) => new string[]
         {

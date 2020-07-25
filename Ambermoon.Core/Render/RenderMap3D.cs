@@ -135,18 +135,20 @@ namespace Ambermoon.Render
 
             // TODO: animations
 
+            const float mappedWallHeight = WallHeight * 512.0f / DistancePerTile;
+
             foreach (var subObject in obj.SubObjects)
             {
                 var objectInfo = subObject.Object;
                 var mapObject = surfaceFactory.Create(SurfaceType.Billboard,
                     (objectInfo.MappedTextureWidth / 512.0f) * DistancePerTile,
-                    (objectInfo.MappedTextureHeight / 256.0f) * WallHeight,
+                    (objectInfo.MappedTextureHeight / mappedWallHeight) * WallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight);
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)Map.PaletteIndex;
                 mapObject.X = baseX + (subObject.X / 512.0f) * DistancePerTile; // TODO
-                mapObject.Y = (subObject.Z / 512.0f + mapObject.Height / WallHeight) * WallHeight; // TODO
-                mapObject.Z = baseY + (subObject.Y / 512.0f) * DistancePerTile; // TODO
+                mapObject.Y = ((subObject.Z + objectInfo.MappedTextureHeight) / mappedWallHeight) * WallHeight; // TODO
+                mapObject.Z = baseY + DistancePerTile - (subObject.Y / 512.0f) * DistancePerTile; // TODO
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
                 objects.Add(mapObject);
