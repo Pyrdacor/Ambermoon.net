@@ -61,17 +61,30 @@ namespace Ambermoon.Data
             // TODO
         }
 
+        public enum AutomapType
+        {
+            None = 0, // empty / no automap symbol
+            Wall = 1,
+            Riddlemouth = 2,
+            DoorClosed = 9,
+            DoorOpen = 10,
+            Exit = 14,
+            // TODO: fake wall? secret door?
+            // TODO
+        }
+
         public struct WallData
         {
             public byte[] Unknown1;
             public WallFlags Flags;
             public uint TextureIndex;
-            public byte[] Unknown2;
+            public AutomapType AutomapType;
+            public byte Unknown2;
             public OverlayData[] Overlays;
 
             public override string ToString()
             {
-                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x2}), Texture: {TextureIndex}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}";
+                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x2}), Texture: {TextureIndex}, AutomapType: {AutomapType}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}";
 
                 if (Overlays != null && Overlays.Length != 0)
                 {

@@ -90,7 +90,8 @@ namespace Ambermoon.Data.Legacy
                     Unknown1 = dataReader.ReadBytes(3),
                     Flags = (Labdata.WallFlags)dataReader.ReadByte(),
                     TextureIndex = dataReader.ReadByte(),
-                    Unknown2 = dataReader.ReadBytes(2)
+                    AutomapType = (Labdata.AutomapType)dataReader.ReadByte(),
+                    Unknown2 = dataReader.ReadByte()
                 };
                 int numOverlays = dataReader.ReadByte();
                 if (numOverlays != 0)
