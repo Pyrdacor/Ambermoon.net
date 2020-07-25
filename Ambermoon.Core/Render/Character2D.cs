@@ -114,20 +114,28 @@ namespace Ambermoon.Render
                 Direction = newDirection.Value;
             }
 
-            var tileType = Map[x, y].Type;
+            var tileType = Map[x, y + 1].Type;
             CurrentState = tileType switch
             {
-                Data.Map.TileType.Chair => State.Sit,
+                Data.Map.TileType.ChairUp => State.Sit,
+                Data.Map.TileType.ChairRight => State.Sit,
+                Data.Map.TileType.ChairDown => State.Sit,
+                Data.Map.TileType.ChairLeft => State.Sit,
                 Data.Map.TileType.Bed => State.Sleep,
                 _ => State.Stand
             };
             sprite.NumFrames = NumFrames;
             CurrentBaseFrameIndex = tileType switch
             {
-                Data.Map.TileType.Chair => animationInfo.SitFrameIndex,
+                Data.Map.TileType.ChairUp => animationInfo.SitFrameIndex,
+                Data.Map.TileType.ChairRight => animationInfo.SitFrameIndex + 1,
+                Data.Map.TileType.ChairDown => animationInfo.SitFrameIndex + 2,
+                Data.Map.TileType.ChairLeft => animationInfo.SitFrameIndex + 3,
                 Data.Map.TileType.Bed => animationInfo.SleepFrameIndex,
                 _ => animationInfo.StandFrameIndex
-            } + (uint)Direction * sprite.NumFrames;
+            };
+            if (CurrentBaseFrameIndex == animationInfo.StandFrameIndex )
+                CurrentBaseFrameIndex += (uint)Direction * sprite.NumFrames;
             CurrentFrameIndex = CurrentBaseFrameIndex;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
             if (frameReset)

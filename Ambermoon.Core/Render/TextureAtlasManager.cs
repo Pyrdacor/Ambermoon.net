@@ -115,7 +115,6 @@ namespace Ambermoon.Render
             for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset8; ++i)
             {
                 var tilesetGraphics = graphicProvider.GetGraphics((GraphicType)i);
-                // var tilesetGraphic = Graphic.CreateTilesetGraphic(64, tilesetGraphics);
 
                 for (uint graphicIndex = 0; graphicIndex < tilesetGraphics.Count; ++graphicIndex)
                 {

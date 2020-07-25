@@ -27,7 +27,10 @@ namespace Ambermoon.Data
         public enum TileType
         {
             Free,
-            Chair,
+            ChairUp,
+            ChairRight,
+            ChairDown,
+            ChairLeft,
             Bed,
             Obstacle, // can be passed by witch broom and eagle (this is also used for obstacles in water!)
             Water, // can swim in it, flying disc can fly over
@@ -40,11 +43,11 @@ namespace Ambermoon.Data
         public class Tile
         {
             /// <summary>
-            /// Back layer in 2D maps, base texture in 3D maps
+            /// Back layer in 2D maps
             /// </summary>
             public uint BackTileIndex { get; set; }
             /// <summary>
-            /// Front layer in 2D maps, overlay texture in 3D maps
+            /// Front layer in 2D maps
             /// </summary>
             public uint FrontTileIndex { get; set; }
             public uint MapEventId { get; set; }
@@ -233,11 +236,12 @@ namespace Ambermoon.Data
             }
         }
 
-        public static Map Load(uint index, IMapReader mapReader, IDataReader dataReader, IDataReader textDataReader)
+        public static Map Load(uint index, IMapReader mapReader, IDataReader dataReader, IDataReader textDataReader,
+            Dictionary<uint, Tileset> tilesets)
         {
             var map = new Map { Index = index };
 
-            mapReader.ReadMap(map, dataReader, textDataReader);
+            mapReader.ReadMap(map, dataReader, textDataReader, tilesets);
 
             return map;
         }

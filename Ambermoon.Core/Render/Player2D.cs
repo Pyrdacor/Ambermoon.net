@@ -18,7 +18,7 @@ namespace Ambermoon.Render
             this.mapManager = mapManager;
         }
 
-        public bool Move(int x, int y, uint ticks) // in Tiles
+        public bool Move(int x, int y, uint ticks) // in tiles
         {
             if (player.MovementAbility == PlayerMovementAbility.NoMovement)
                 return false;
@@ -49,13 +49,16 @@ namespace Ambermoon.Render
                 }
             }
 
-            var tile = Map[(uint)newX, (uint)newY];
+            var tile = Map[(uint)newX, (uint)newY + 1];
             bool canMove;
 
             switch (tile.Type)
             {
                 case Data.Map.TileType.Free:
-                case Data.Map.TileType.Chair:
+                case Data.Map.TileType.ChairUp:
+                case Data.Map.TileType.ChairRight:
+                case Data.Map.TileType.ChairDown:
+                case Data.Map.TileType.ChairLeft:
                 case Data.Map.TileType.Bed:
                     canMove = true; // no movement was checked above
                     break;
@@ -75,6 +78,8 @@ namespace Ambermoon.Render
                     canMove = false;
                     break;
             }
+
+            // TODO: display OUCH if moving against obstacles
 
             if (canMove)
             {
@@ -139,19 +144,13 @@ namespace Ambermoon.Render
             }
 
             // TODO: REMOVE
-            var t = Map[(uint)Position.X, (uint)Position.Y];
+            var t = Map[(uint)Position.X, (uint)Position.Y + 1];
             var ts = mapManager.GetTilesetForMap(Map.Map);
-            Console.WriteLine("Current map: " + Map.Map.Index + " (" + Map.Map.World + ")");
+            //Console.WriteLine("Current map: " + Map.Map.Index + " (" + Map.Map.World + ")");
             if (t.FrontTileIndex != 0)
             {
-                //var backTile = ts.Tiles[t.BackTileIndex - 1];
                 var frontTile = ts.Tiles[t.FrontTileIndex - 1];
-                //Console.WriteLine($"BT: {backTile.Unknown1:X8} : {backTile.Unknown2:X2}");
-                Console.WriteLine($"FT: {frontTile.Unknown1:X8} : {frontTile.Unknown2:X2}");
-            }
-            else
-            {
-                Console.WriteLine("FT: none");
+                Console.WriteLine($"FT: Block={frontTile.BlockMovement}, Sit={frontTile.SitDirection}, Sleep={frontTile.Sleep}");
             }
 
             return canMove;

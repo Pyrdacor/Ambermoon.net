@@ -148,17 +148,11 @@ namespace Ambermoon.Data.Legacy
             {
                 case GraphicType.Tileset1:
                 case GraphicType.Tileset2:
-                    info.Alpha = true;
-                    break;
                 case GraphicType.Tileset3:
-                    info.Alpha = true;
-                    break;
                 case GraphicType.Tileset4:
                 case GraphicType.Tileset5:
                 case GraphicType.Tileset6:
                 case GraphicType.Tileset7:
-                    info.Alpha = true;
-                    break;
                 case GraphicType.Tileset8:
                     info.Alpha = true;
                     break;

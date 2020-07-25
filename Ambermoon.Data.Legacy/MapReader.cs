@@ -76,7 +76,23 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        public void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader)
+        static Map.TileType TileTypeFromTile(Map.Tile tile, Tileset tileset)
+        {
+            var tilesetTile = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1] : tileset.Tiles[tile.FrontTileIndex - 1];
+
+            if (tilesetTile.Sleep)
+                return Map.TileType.Bed;
+            if (tilesetTile.SitDirection != null)
+                return Map.TileType.ChairUp + (int)tilesetTile.SitDirection.Value;
+            if (tilesetTile.BlockMovement)
+                return Map.TileType.Obstacle;
+
+            // TODO
+
+            return Map.TileType.Free;
+        }
+
+        public void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader, Dictionary<uint, Tileset> tilesets)
         {
             // Load map texts
             ReadMapTexts(map, textDataReader);
@@ -132,9 +148,9 @@ namespace Ambermoon.Data.Legacy
                             BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
                             FrontTileIndex = ((uint)(tileData[2] & 0x07) << 8) | tileData[3],
                             MapEventId = tileData[1] & 0x1fu,
-                            Unused = (tileData[2] & 0xf8u) >> 3,
-                            // TODO: TileType
+                            Unused = (tileData[2] & 0xf8u) >> 3
                         };
+                        map.Tiles[x, y].Type = TileTypeFromTile(map.Tiles[x, y], tilesets[map.TilesetOrLabdataIndex]);
                     }
                 }
             }

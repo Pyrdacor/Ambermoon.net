@@ -70,6 +70,7 @@ namespace Ambermoon.Data
             DoorOpen = 10,
             Exit = 14,
             // TODO: fake wall? secret door?
+            // TODO: trap, teleporter, spinner, monster, npc, merchant, goto point, ...
             // TODO
         }
 

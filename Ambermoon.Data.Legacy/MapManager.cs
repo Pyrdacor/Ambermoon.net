@@ -10,6 +10,13 @@ namespace Ambermoon.Data.Legacy
 
         public MapManager(IGameData gameData, IMapReader mapReader, ITilesetReader tilesetReader, ILabdataReader labdataReader)
         {
+            foreach (var tilesetFile in gameData.Files["Icon_data.amb"].Files)
+            {
+                var tileset = Tileset.Load(tilesetReader, tilesetFile.Value);
+                tilesets.Add((uint)tilesetFile.Key, tileset);
+                tileset.Index = (uint)tilesetFile.Key;
+            }
+
             // Map 1-256 -> File 1
             // Map 300-369 -> File 2
             // Map 257-299, 400-455, 513-528 -> File 3
@@ -22,15 +29,8 @@ namespace Ambermoon.Data.Legacy
                 {
                     uint index = (uint)mapFile.Key;
                     var textFile = textFiles.Files.ContainsKey(mapFile.Key) ? textFiles.Files[mapFile.Key] : null;
-                    maps.Add(index, Map.Load(index, mapReader, mapFile.Value, textFile));
+                    maps.Add(index, Map.Load(index, mapReader, mapFile.Value, textFile, tilesets));
                 }
-            }
-
-            foreach (var tilesetFile in gameData.Files["Icon_data.amb"].Files)
-            {
-                var tileset = Tileset.Load(tilesetReader, tilesetFile.Value);
-                tilesets.Add((uint)tilesetFile.Key, tileset);
-                tileset.Index = (uint)tilesetFile.Key;
             }
 
             foreach (var labdataFile in gameData.Files["2Lab_data.amb"].Files) // Note: 2Lab_data.amb and 3Lab_data.amb both contain all lab data files
