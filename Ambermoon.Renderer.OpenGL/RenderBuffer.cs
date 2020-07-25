@@ -317,7 +317,9 @@ namespace Ambermoon.Renderer
 
         public int GetDrawIndex(Render.ISurface3D surface)
         {
-            int index = vectorBuffer.Add(surface.X, surface.Y, surface.Z);
+            int index = surface.Type == Ambermoon.Render.SurfaceType.Billboard
+                ? vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y, surface.Z)
+                : vectorBuffer.Add(surface.X, surface.Y, surface.Z);
 
             switch (surface.Type)
             {
@@ -358,9 +360,9 @@ namespace Ambermoon.Renderer
                     break;
                 case Ambermoon.Render.SurfaceType.Billboard:
                     // TODO
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y - surface.Height, surface.Z);
-                    vectorBuffer.Add(surface.X, surface.Y - surface.Height, surface.Z);
+                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y, surface.Z);
+                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y - surface.Height, surface.Z);
+                    vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y - surface.Height, surface.Z);
                     break;
             }
 
