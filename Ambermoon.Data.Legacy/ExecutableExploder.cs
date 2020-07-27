@@ -194,10 +194,28 @@ namespace Ambermoon.Data.Legacy
 			byte[] explodedData = new byte[totalSize];
 			Buffer.BlockCopy(data, 0, explodedData, 0, data.Length);
 
+			// Values are located at offset 0x188 in last code hunk.
+			// The bit length (last 12 bytes) can have a special encoding.
+			// If smaller than 8 the normal value is stored (e.g. 0x07).
+			// But if 8 or more the lenght is encoded by subtracting 8 and setting the most significant bit to 1.
+			// Examples:
+			// - bitlength = 8 -> stored as 0x80
+			// - bitlength = 9 -> stored as 0x81
+			// In those cases first a full byte from the input stream is read and then continued with the remaining
+			// bits from the bit buffer.
+			// Example with bitlength 9 (0x81):
+			//  result = (read_byte() << 1) | read_bit_from_bit_buffer();
 			var table = new byte[8 * 2 + 12] // TODO
 			{
-				0, 0, 0, 0, 0, 32, 0, 32, 0, 64, 0, 64, 0, 128, 0, 128,
-				6, 7, 7, 7, 6, 7, 7, 10, 7, 8, 9, 10
+				0, 64, // 64 (0x0040)
+				0, 128, // 128 (0x0080)
+				0, 128, // 128 (0x0080)
+				1, 0, // 256 (0x0100)
+				0, 192, // 192 (0x00C0)
+				2, 128, // 640 (0x0280)
+				4, 128, // 1152 (0x0480)
+				0, 128, // 2304 (0x0900)
+				6, 7, 7, 128, 7, 129, 130, 131, 8, 131, 132, 133
 			};
 
 			fixed (byte* ptr = &explodedData[0])
@@ -237,8 +255,8 @@ namespace Ambermoon.Data.Legacy
 			byte[] compareData = System.IO.File.ReadAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\AM2_CPU_unc");
 
 			byte* input = buffer + implodedSize - 3; /* input pointer  */
-			byte* output = buffer + explodedSize;   /* output pointer */
-			byte* match;                      /* match pointer  */
+			byte* output = buffer + explodedSize; /* output pointer */
+			byte* match; /* match pointer  */
 			byte bitBuffer;
 			uint literalLength;
 			uint matchLength;
@@ -248,6 +266,12 @@ namespace Ambermoon.Data.Legacy
 			uint ReadBits(uint count)
 			{
 				uint result = 0;
+
+				if ((count & 0x80) != 0)
+				{
+					result = *(--input);
+					count &= 0x7f;
+				}
 
 				for (int i = 0; i < count; i++)
 				{
@@ -290,8 +314,8 @@ namespace Ambermoon.Data.Legacy
 				literalLength = (uint)((input[1] << 24) | (input[2] << 16) | (input[3] << 8) | input[4]);
 			}*/
 
-			literalLength = 0x3c;
-			bitBuffer = 0xa2;
+			literalLength = 0x3c; // word at offset 0x1E6 in the last code hunk
+			bitBuffer = 0xa2; // byte at offset 0x1E8 in the last code hunk
 			int i;
 
 			while (true)
