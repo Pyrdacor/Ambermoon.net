@@ -145,7 +145,9 @@ namespace Ambermoon
             SetupInput(window.CreateInput());
 
             // Create game
-            Game = new Game(renderView, new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()));
+            Game = new Game(renderView,
+                new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()),
+                new ItemManager(gameData, new ItemReader()));
             Game.StartNew(); // TODO: Remove later
         }
 

@@ -6,7 +6,7 @@ namespace Ambermoon.Data
     public enum ItemFlags
     {
         None = 0,
-        Broken = 0x02,
-        // TODO: curse?, identified?, etc
+        Accursed = 0x01,
+        Purchasable = 0x02
     }
 }

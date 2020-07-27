@@ -137,5 +137,37 @@ namespace Ambermoon.Data.Legacy
             if (Position + sizeToRead > _data.Length)
                 throw new IndexOutOfRangeException("Read beyond the data size.");
         }
+
+        public long FindByteSequence(byte[] sequence, long offset)
+        {
+            if (_data == null)
+                return -1;
+
+            if (offset + sequence.Length > _data.Length)
+                return -1;
+
+            long lastIndex = _data.Length - sequence.Length;
+
+            for (long i = offset; i <= lastIndex; ++i)
+            {
+                int j = 0;
+
+                for (; j < sequence.Length; ++j)
+                {
+                    if (_data[i + j] != sequence[j])
+                        break;
+                }
+
+                if (j == sequence.Length)
+                    return offset;
+            }
+
+            return -1;
+        }
+
+        public long FindString(string str, long offset)
+        {
+            return FindByteSequence(encoding.GetBytes(str), offset);
+        }
     }
 }

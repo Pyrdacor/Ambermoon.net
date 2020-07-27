@@ -15,6 +15,7 @@ namespace Ambermoon
         bool ingame = false;
         readonly UI.Layout layout;
         readonly IMapManager mapManager;
+        readonly IItemManager itemManager;
         readonly IRenderView renderView;
         Player player;
         bool is3D = false;
@@ -26,12 +27,51 @@ namespace Ambermoon
         RenderMap3D renderMap3D = null;
         readonly ICamera3D camera3D = null;
 
-        public Game(IRenderView renderView, IMapManager mapManager)
+        public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager)
         {
             this.renderView = renderView;
             this.mapManager = mapManager;
+            this.itemManager = itemManager;
             camera3D = renderView.Camera3D;
             layout = new UI.Layout(renderView);
+
+            // TODO: REMOVE
+            string html = "<html><head><title>Ambermoon Items</title></head><body>";
+
+            void addRow<T>(string key, T value)
+            {
+                html += $"<tr><td>{Uri.EscapeDataString(key)}</td><td colspan=\"3\">{Uri.EscapeDataString(value.ToString())}</td></tr>";
+            }
+
+            void addRow2<T, U>(string key1, T value1, string key2, U value2)
+            {
+                html += $"<tr><td>{Uri.EscapeDataString(key1)}</td><td>{Uri.EscapeDataString(value1.ToString())}</td><td>{Uri.EscapeDataString(key2)}</td><td>{Uri.EscapeDataString(value2.ToString())}</td></tr>";
+            }
+
+            for (uint i = 1; i <= 402; ++i)
+            {
+                var item = itemManager.GetItem(i);
+                html += $"<table><th><td colspan=\"4\">{i:000}: {item.Name}</td></th>";
+                addRow2("Type", item.Type, "GfxId", item.GraphicIndex);
+                addRow2("Atk", item.Damage, "Def", item.Defense);
+                addRow2("M-B-W", item.MagicAttackLevel, "M-B-R", item.MagicArmorLevel);
+                addRow2("Attribute", item.Attribute == null ? "-" : $"{item.Attribute} {item.AttributeValue}", "Ability", item.Ability == null ? "-" : $"{item.Ability} {item.AbilityValue}");
+                addRow2("Hands", item.NumberOfHands, "Fingers", item.NumberOfFingers);
+                addRow("Usable by", item.Classes.ToString().Replace(", ", "|") + (item.Genders == GenderFlag.Female ? " (female only)" : ""));
+                addRow2("Price", item.Price, "Weight", item.Weight);
+                addRow("Flags", item.Flags.ToString());
+                List<byte> unknown = new List<byte>(18);
+                unknown.Add(item.Unknown1);
+                unknown.Add(item.Unknown2);
+                unknown.AddRange(item.Unknown3);
+                unknown.Add(item.Unknown4);
+                addRow("Unknown bytes (hex)", string.Join(", ", unknown.Select(b => b.ToString("x2"))));
+                html += "</table>";
+            }
+
+            html += "</body></html>";
+
+            System.IO.File.WriteAllText(@"C:\Projects\ambermoon.net\Resources\items.html", html);
         }
 
         public void Update(double deltaTime)

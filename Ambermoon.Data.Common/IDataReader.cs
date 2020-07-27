@@ -21,5 +21,7 @@ namespace Ambermoon.Data
         int Size { get; }
         byte[] ReadToEnd();
         byte[] ReadBytes(int amount);
+        long FindByteSequence(byte[] sequence, long offset);
+        long FindString(string str, long offset);
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-namespace Ambermoon.Data
+﻿namespace Ambermoon.Data
 {
     public interface IMapManager
     {
