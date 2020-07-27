@@ -214,8 +214,8 @@ namespace Ambermoon.Data.Legacy
 				0, 192, // 192 (0x00C0)
 				2, 128, // 640 (0x0280)
 				4, 128, // 1152 (0x0480)
-				0, 128, // 2304 (0x0900)
-				6, 7, 7, 128, 7, 129, 130, 131, 8, 131, 132, 133
+				9, 0, // 2304 (0x0900)
+				0x06, 0x07, 0x07, 0x80, 0x07, 0x81, 0x82, 0x83, 0x80, 0x83, 0x85, 0x86
 			};
 
 			fixed (byte* ptr = &explodedData[0])
@@ -467,15 +467,16 @@ namespace Ambermoon.Data.Legacy
 				if ((output - buffer) < matchLength)
 					return false; /* enough space? */
 
+				for (i = 0; i < matchLength + 1; ++i)
+					*--output = *--match;
+
 				// TODO: REMOVE
+				byte* test = match + matchLength + 1;
 				for (i = 0; i < matchLength + 1; ++i)
 				{
-					if (compareData[compareDataIndex++] != *(match - i - 1))
+					if (compareData[compareDataIndex++] != *(test - i - 1))
 						throw new Exception();
 				}
-
-				for (i = 0; i < matchLength + 1; ++i)
-					*--output = *--match;				
 			}
 
 			/* return true if we used up all input bytes (as we should) */
