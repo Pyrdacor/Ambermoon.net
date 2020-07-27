@@ -46,48 +46,8 @@ namespace Ambermoon.Data.Legacy
 			END = 0x3F2
         }
 
-		static byte[] explode_literal_base = { 6, 10, 10, 18 };
-		static byte[] explode_literal_extra_bits = { 1, 1, 1, 1, 2, 3, 3, 4, 4, 5, 7, 14 };
-
-		unsafe byte* src;
-		unsafe byte* cmpr_data;
-		uint write_pos, src_size, src_end /*a4*/, token_run_len /*d2*/;
-		int cmpr_pos /*a3*/;
-
-		byte token;
-
-		ushort[] run_base_off_tbl = new ushort[8];
-		byte[] run_extra_bits_tbl = new byte[12];
-
-		unsafe static void copy_bytes(byte* dst, byte* src, int count)
-		{
-			for (int i = 0; i < count; i++)
-			{
-				dst[i] = src[i];
-			}
-		}
-
-		unsafe static ushort read_word(byte* buf)
-		{
-			return (ushort)((buf[0] << 8) | buf[1]);
-		}
-
-		unsafe static uint read_dword(byte* buf)
-		{
-			return (uint)((read_word(&buf[0]) << 16) | read_word(&buf[2]));
-		}
-
-		unsafe static void write_word(byte* dst, ushort value)
-		{
-			dst[0] = (byte)((value >> 8) & 0xFF);
-			dst[1] = (byte)((value >> 0) & 0xFF);
-		}
-
-		unsafe static void write_dword(byte* dst, uint value)
-		{
-			write_word(&dst[0], (ushort)((value >> 16) & 0xFFFF));
-			write_word(&dst[2], (ushort)((value >> 0) & 0xFFFF));
-		}
+		static readonly byte[] ExplodeLiteralBase = { 6, 10, 10, 18 };
+		static readonly byte[] ExplodeLiteralExtraBits = { 1, 1, 1, 1, 2, 3, 3, 4, 4, 5, 7, 14 };
 
 		public unsafe byte[] Explode(IDataReader dataReader)
         {
@@ -401,7 +361,7 @@ namespace Ambermoon.Data.Legacy
 				{
 					if (ReadBits(1) != 0) // 11
 					{
-						y = explode_literal_base[x];
+						y = ExplodeLiteralBase[x];
 						x += 8;
 					}
 					else // 10
@@ -410,7 +370,7 @@ namespace Ambermoon.Data.Legacy
 						x += 4;
 					}
 				}
-				x = explode_literal_extra_bits[x];
+				x = ExplodeLiteralExtraBits[x];
 
 				/* next literal run length: read [x] bits and add [y] */
 				literalLength = y + ReadBits(x);
