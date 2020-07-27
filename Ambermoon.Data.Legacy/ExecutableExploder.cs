@@ -34,6 +34,7 @@ namespace Ambermoon.Data.Legacy
         {
 			public HunkType Type;
 			public uint NumEntries;
+			public byte[] Data;
         }
 
 		enum HunkType
@@ -111,7 +112,6 @@ namespace Ambermoon.Data.Legacy
 			if (lastHunk - firstHunk + 1 != numHunks)
 				Throw();
 
-			byte[] data = null;
 			uint[] hunkSizes = new uint[numHunks];
 
 			for (int i = 0; i < numHunks; ++i)
@@ -123,10 +123,10 @@ namespace Ambermoon.Data.Legacy
 					dataReader.Position += 4;
 
 				hunkSizes[i] = hunkSize & 0x3FFFFFFF;
-
 			}
 
 			Hunk[] hunks = new Hunk[numHunks];
+			int j = 0;
 
 			for (int i = 0; i < numHunks; ++i)
 			{
@@ -136,34 +136,34 @@ namespace Ambermoon.Data.Legacy
 				if (hunkMemFlags == 3) // skip extended mem flags
 					dataReader.Position += 4;
 
-				hunks[i] = new Hunk
-				{
-					Type = (HunkType)(hunkHeader & 0x3FFFFFFF)
-				};
+				var type = (HunkType)(hunkHeader & 0x3FFFFFFF);
 
-				switch (hunks[i].Type)
+				if (type != HunkType.RELOC32 && type != HunkType.END)
+				{
+					hunks[j] = new Hunk
+					{
+						Type = (HunkType)(hunkHeader & 0x3FFFFFFF)
+					};
+				}
+
+				switch (type)
                 {
 					case HunkType.Code:
 					case HunkType.Data:
 						{
 							uint numEntries = dataReader.ReadDword();
-							hunks[i].NumEntries = numEntries;
-							Console.WriteLine($"Hunk{i:00}: {hunks[i].Type}, Size: {4 + numEntries * 4}, NumEntries: {numEntries}");
-
-							if (hunks[i].Type == HunkType.Code)
-								System.IO.File.WriteAllBytes($@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\cruncher{i}.code", dataReader.ReadBytes((int)numEntries * 4));
-							else
-							{
-								data = dataReader.ReadBytes((int)numEntries * 4);
-								System.IO.File.WriteAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\crunch.dat", data);
-							}
+							hunks[j].NumEntries = numEntries;
+							hunks[j].Data = dataReader.ReadBytes((int)numEntries * 4);
+							Console.WriteLine($"Hunk{i:00}: {type}, Size: {4 + numEntries * 4}, NumEntries: {numEntries}");
+							++j;
 						}
 						break;
 					case HunkType.BSS:
 						{
 							uint allocSize = dataReader.ReadDword();
-							hunks[i].NumEntries = allocSize;
-							Console.WriteLine($"Hunk{i:00}: {hunks[i].Type}, Size: 4, AllocSize: {allocSize * 4}");
+							hunks[j].NumEntries = allocSize;
+							Console.WriteLine($"Hunk{i:00}: {type}, Size: 4, AllocSize: {allocSize * 4}");
+							++j;
 						}
 						break;
 					case HunkType.RELOC32:
@@ -179,20 +179,26 @@ namespace Ambermoon.Data.Legacy
 								dataReader.Position += 4 + (int)numOffsets * 4;
                             }
 
-							Console.WriteLine($"Hunk{i:00}: {hunks[i].Type}, Size: {size - 4}, Num offsets: {totalOffsets}");
+							Console.WriteLine($"Hunk{i:00}: {type}, Size: {size - 4}, Num offsets: {totalOffsets}");
 							++numHunks;
 						}
 						break;
+					case HunkType.END:
+						{
+							Console.WriteLine($"Hunk{i:00}: {type}");
+							++numHunks;
+						}
+						break;
+					default:
+						throw new AmbermoonException(ExceptionScope.Data, $"Unsupported hunk type: {type}.");
 				}
 
 				if (dataReader.ReadDword() != (uint)HunkType.END)
 					dataReader.Position -= 4; // a hunk may end with HUNK_END (0x000003F2)
 			}
 
-			uint totalSize = (uint)hunks.Where(h => h.Type == HunkType.BSS).Take(5).Select(h => h.NumEntries * 4).Sum(x => x);
-
-			byte[] explodedData = new byte[totalSize];
-			Buffer.BlockCopy(data, 0, explodedData, 0, data.Length);
+			var lastCodeHunk = hunks.LastOrDefault(h => h.Type == HunkType.Code);
+			var dataHunk = hunks.LastOrDefault(h => h.Type == HunkType.Data);
 
 			// Values are located at offset 0x188 in last code hunk.
 			// The bit length (last 12 bytes) can have a special encoding.
@@ -205,7 +211,7 @@ namespace Ambermoon.Data.Legacy
 			// bits from the bit buffer.
 			// Example with bitlength 9 (0x81):
 			//  result = (read_byte() << 1) | read_bit_from_bit_buffer();
-			var table = new byte[8 * 2 + 12] // TODO
+			/*var table = new byte[8 * 2 + 12 * 1]
 			{
 				0, 64, // 64 (0x0040)
 				0, 128, // 128 (0x0080)
@@ -216,26 +222,29 @@ namespace Ambermoon.Data.Legacy
 				4, 128, // 1152 (0x0480)
 				9, 0, // 2304 (0x0900)
 				0x06, 0x07, 0x07, 0x80, 0x07, 0x81, 0x82, 0x83, 0x80, 0x83, 0x85, 0x86
-			};
+			};*/
+			var table = new byte[8 * 2 + 12 * 1];
+			Buffer.BlockCopy(lastCodeHunk.Data, 0x188, table, 0, table.Length);
+
+			var bssHunks = hunks.Where(h => h.Type == HunkType.BSS).ToList();
+			var data = dataHunk.Data;
+			uint firstLiteralLength = ((uint)lastCodeHunk.Data[0x1E6] << 8) | lastCodeHunk.Data[0x1E7];
+			byte initialBitBuffer = lastCodeHunk.Data[0x1E8];
+			var totalSize = (uint)bssHunks.Take(bssHunks.Count - 1) // skip last BSS hunk as it is only a temp buffer hunk
+				.Select(h => h.NumEntries * 4).Sum(x => x);
+			totalSize = 347796; // 347796; // TODO: REMOVE
+			byte[] explodedData = new byte[totalSize];
+			Buffer.BlockCopy(data, 0, explodedData, 0, data.Length);
 
 			fixed (byte* ptr = &explodedData[0])
 			{
-				Explode(ptr, table, (uint)data.Length, totalSize);
-            }
+				if (!Explode(ptr, table, (uint)data.Length, (uint)explodedData.Length, firstLiteralLength, initialBitBuffer))
+					throw new AmbermoonException(ExceptionScope.Data, "Invalid imploded data.");
+			}
 
-			System.IO.File.WriteAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\exploded.dat", explodedData);
+			Console.WriteLine();
 
-			throw new Exception("FOO");
-
-			/*fixed (byte* ptr = &data[0])
-            {
-				uint size = exploded_size(ptr);
-				byte[] result = new byte[size];
-				Buffer.BlockCopy(data, 0, result, 0, data.Length);
-				if (explode(ptr) != size)
-					throw new AmbermoonException(ExceptionScope.Data, "Invalid imploded file.");
-				return result;
-            }*/
+			return explodedData;
         }
 
 		/// <summary>
@@ -249,11 +258,11 @@ namespace Ambermoon.Data.Legacy
 		/// <param name="implodedSize">Compressed size in bytes</param>
 		/// <param name="explodedSize">Decompressed size in bytes</param>
 		/// <returns></returns>
-		unsafe bool Explode(byte* buffer, byte[] table, uint implodedSize, uint explodedSize)
+		unsafe bool Explode(byte* buffer, byte[] table, uint implodedSize, uint explodedSize, uint firstLiteralLength, byte initialBitBuffer)
 		{
-			int compareDataIndex = 0x30;
-			byte[] compareData = System.IO.File.ReadAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\AM2_CPU_unc");
-
+			byte[] compareData = System.IO.File.ReadAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\hunk_data_unc");
+			int compareDataOffset = 0;
+			uint debugOffset = 0; // TODO: REMOVE
 			byte* input = buffer + implodedSize - 3; /* input pointer  */
 			byte* output = buffer + explodedSize; /* output pointer */
 			byte* match; /* match pointer  */
@@ -302,20 +311,8 @@ namespace Ambermoon.Data.Legacy
 				matchBase[x] = (uint)((table[x * 2] << 8) | table[x * 2 + 1]);
 			}
 
-			/* get initial bit buffer contents, and first literal length */
-			/*if ((implodedSize & 1) != 0)
-			{
-				bitBuffer = input[4];
-				literalLength = (uint)((input[0] << 24) | (input[1] << 16) | (input[2] << 8) | input[3]);
-			}
-			else
-			{
-				bitBuffer = input[0];
-				literalLength = (uint)((input[1] << 24) | (input[2] << 16) | (input[3] << 8) | input[4]);
-			}*/
-
-			literalLength = 0x3c; // word at offset 0x1E6 in the last code hunk
-			bitBuffer = 0xa2; // byte at offset 0x1E8 in the last code hunk
+			literalLength = firstLiteralLength; //0x3c; // word at offset 0x1E6 in the last code hunk
+			bitBuffer = initialBitBuffer; //0xa2; // byte at offset 0x1E8 in the last code hunk
 			int i;
 
 			while (true)
@@ -324,9 +321,19 @@ namespace Ambermoon.Data.Legacy
 				if ((output - buffer) < literalLength)
 					return false; /* enough space? */
 
+				Console.WriteLine($"Processing offset {debugOffset:x8} (imploded pos = {(int)((implodedSize - 3) - (input - buffer)):x4}) ...");
+
+				// TODO: REMOVE
+				for (i = 0; i < literalLength; ++i)
+				{
+					if (*(input - i - 1) != compareData[compareDataOffset++])
+						throw new Exception("ERROR");
+				}
+
 				for (i = 0; i < literalLength; ++i)
 					*--output = *--input;
-				compareDataIndex += (int)literalLength; // TODO:REMOVE
+
+				debugOffset += literalLength; // TODO: REMOVE
 
 				/* main exit point - after the literal copy */
 				if (output <= buffer)
@@ -416,23 +423,6 @@ namespace Ambermoon.Data.Legacy
 				/* next literal run length: read [x] bits and add [y] */
 				literalLength = y + ReadBits(x);
 
-				// TODO: REMOVE
-				static string ToBits(byte b)
-				{
-					string bits = "";
-
-					for (int i = 0; i < 8; ++i)
-					{
-						bits += ((b >> 7) & 1) != 0 ? "1" : "0";
-						b <<= 1;
-					}
-
-					return bits;
-				}
-
-				// TODO: REMOVE
-				Console.WriteLine($"Decoding match at index {compareDataIndex:x4}. Match length = {matchLength}, Bit buffer = {ToBits(bitBuffer)}, Literal length = {literalLength}, Next bit buffer = {ToBits(*(input - 1))}");
-
 				/* another Huffman tuple, for deciding the match distance: _base and
 				 * _extra are from the explosion table, as passed into the explode
 				 * function.
@@ -471,12 +461,14 @@ namespace Ambermoon.Data.Legacy
 					*--output = *--match;
 
 				// TODO: REMOVE
-				byte* test = match + matchLength + 1;
+				var test = output + matchLength + 1;
 				for (i = 0; i < matchLength + 1; ++i)
 				{
-					if (compareData[compareDataIndex++] != *(test - i - 1))
-						throw new Exception();
+					if (*(test - i - 1) != compareData[compareDataOffset++])
+						throw new Exception("ERROR");
 				}
+
+				debugOffset += matchLength + 1; // TODO: REMOVE
 			}
 
 			/* return true if we used up all input bytes (as we should) */
