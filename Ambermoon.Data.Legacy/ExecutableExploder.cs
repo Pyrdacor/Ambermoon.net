@@ -197,7 +197,7 @@ namespace Ambermoon.Data.Legacy
 			var table = new byte[8 * 2 + 12] // TODO
 			{
 				0, 0, 0, 0, 0, 32, 0, 32, 0, 64, 0, 64, 0, 128, 0, 128,
-				6, 7, 7, 10, 6, 7, 7, 10, 7, 8, 9, 10
+				6, 7, 7, 7, 6, 7, 7, 10, 7, 8, 9, 10
 			};
 
 			fixed (byte* ptr = &explodedData[0])
@@ -233,6 +233,9 @@ namespace Ambermoon.Data.Legacy
 		/// <returns></returns>
 		unsafe bool Explode(byte* buffer, byte[] table, uint implodedSize, uint explodedSize)
 		{
+			int compareDataIndex = 0x30;
+			byte[] compareData = System.IO.File.ReadAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\AM2_CPU_unc");
+
 			byte* input = buffer + implodedSize - 3; /* input pointer  */
 			byte* output = buffer + explodedSize;   /* output pointer */
 			byte* match;                      /* match pointer  */
@@ -241,9 +244,8 @@ namespace Ambermoon.Data.Legacy
 			uint matchLength;
 			uint selector, x, y;
 			uint[] matchBase = new uint[8];
-			int nbit = 0;
 
-			uint ReadBits(byte count)
+			uint ReadBits(uint count)
 			{
 				uint result = 0;
 
@@ -251,13 +253,6 @@ namespace Ambermoon.Data.Legacy
 				{
 					byte bit = (byte)(bitBuffer >> 7);
 					bitBuffer <<= 1;
-					/*++nbit;
-
-					if (nbit == 8)
-                    {
-						nbit = 0;
-						bitBuffer = *--input;
-					}*/
 
 					if (bitBuffer == 0)
 					{
@@ -267,12 +262,12 @@ namespace Ambermoon.Data.Legacy
 						bitBuffer <<= 1;
 						if (temp != 0)
 							++bitBuffer;
-						//bit = temp;
 					}
 
 					result <<= 1;
 					result |= bit;
 				}
+
 				return result;
 			}
 
@@ -296,7 +291,7 @@ namespace Ambermoon.Data.Legacy
 			}*/
 
 			literalLength = 0x3c;
-			bitBuffer = 0xa2;// 0xa0;
+			bitBuffer = 0xa2;
 			int i;
 
 			while (true)
@@ -307,6 +302,7 @@ namespace Ambermoon.Data.Legacy
 
 				for (i = 0; i < literalLength; ++i)
 					*--output = *--input;
+				compareDataIndex += (int)literalLength; // TODO:REMOVE
 
 				/* main exit point - after the literal copy */
 				if (output <= buffer)
@@ -394,14 +390,24 @@ namespace Ambermoon.Data.Legacy
 				x = explode_literal_extra_bits[x];
 
 				/* next literal run length: read [x] bits and add [y] */
-				literalLength = 0;
-				for (i = 0; i < x; ++i)
+				literalLength = y + ReadBits(x);
+
+				// TODO: REMOVE
+				static string ToBits(byte b)
 				{
-					literalLength <<= 1;
-					if (ReadBits(1) != 0)
-						literalLength++;
+					string bits = "";
+
+					for (int i = 0; i < 8; ++i)
+					{
+						bits += ((b >> 7) & 1) != 0 ? "1" : "0";
+						b <<= 1;
+					}
+
+					return bits;
 				}
-				literalLength += y;
+
+				// TODO: REMOVE
+				Console.WriteLine($"Decoding match at index {compareDataIndex:x4}. Match length = {matchLength}, Bit buffer = {ToBits(bitBuffer)}, Literal length = {literalLength}, Next bit buffer = {ToBits(*(input - 1))}");
 
 				/* another Huffman tuple, for deciding the match distance: _base and
 				 * _extra are from the explosion table, as passed into the explode
@@ -430,21 +436,22 @@ namespace Ambermoon.Data.Legacy
 
 				/* obtain the value of the next [x] extra bits and
 				 * add it to the match offset */
-				y = 0;
-				for (i = 0; i < x; ++i)
-				{
-					y <<= 1;
-					if (ReadBits(1) != 0)
-						y++;
-				}
-				match += y;
+				match += ReadBits(x);
+
 
 				/* copy match */
 				if ((output - buffer) < matchLength)
 					return false; /* enough space? */
 
+				// TODO: REMOVE
 				for (i = 0; i < matchLength + 1; ++i)
-					*--output = *--match;
+				{
+					if (compareData[compareDataIndex++] != *(match - i - 1))
+						throw new Exception();
+				}
+
+				for (i = 0; i < matchLength + 1; ++i)
+					*--output = *--match;				
 			}
 
 			/* return true if we used up all input bytes (as we should) */
