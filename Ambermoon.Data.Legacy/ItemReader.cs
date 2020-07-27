@@ -37,7 +37,7 @@
             item.Classes = (ClassFlag)dataReader.ReadWord();
             item.Price = dataReader.ReadWord();
             item.Weight = dataReader.ReadWord();
-            item.Name = dataReader.ReadString(19).TrimEnd();
+            item.Name = dataReader.ReadString(19).TrimEnd(' ', '\0');
 
             if (dataReader.ReadByte() != 0) // end of item
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
