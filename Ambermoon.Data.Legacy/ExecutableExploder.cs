@@ -74,7 +74,7 @@ namespace Ambermoon.Data.Legacy
 			for (int i = 0; i < numHunks; ++i)
             {
 				var hunkSize = dataReader.ReadDword();
-				var hunkMemFlags = hunkSize >> 29;
+				var hunkMemFlags = hunkSize >> 30;
 
 				if (hunkMemFlags == 3) // skip extended mem flags
 					dataReader.Position += 4;
@@ -87,19 +87,13 @@ namespace Ambermoon.Data.Legacy
 
 			for (int i = 0; i < numHunks; ++i)
 			{
-				var hunkHeader = dataReader.ReadDword();
-				var hunkMemFlags = hunkHeader >> 29;
-
-				if (hunkMemFlags == 3) // skip extended mem flags
-					dataReader.Position += 4;
-
-				var type = (HunkType)(hunkHeader & 0x3FFFFFFF);
+				var type = (HunkType)dataReader.ReadDword();
 
 				if (type != HunkType.RELOC32 && type != HunkType.END)
 				{
 					hunks[j] = new Hunk
 					{
-						Type = (HunkType)(hunkHeader & 0x3FFFFFFF)
+						Type = type
 					};
 				}
 
