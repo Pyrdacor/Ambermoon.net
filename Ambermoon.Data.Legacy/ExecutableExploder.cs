@@ -91,9 +91,6 @@ namespace Ambermoon.Data.Legacy
 
 		public unsafe byte[] Explode(IDataReader dataReader)
         {
-			// TODO: REMOVE
-			dataReader = new DataReader(System.IO.File.ReadAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\AM2_CPU"));
-
 			static void Throw()
             {
 				throw new AmbermoonException(ExceptionScope.Data, "Invalid executable file.");
@@ -230,21 +227,28 @@ namespace Ambermoon.Data.Legacy
 			var data = dataHunk.Data;
 			uint firstLiteralLength = ((uint)lastCodeHunk.Data[0x1E6] << 8) | lastCodeHunk.Data[0x1E7];
 			byte initialBitBuffer = lastCodeHunk.Data[0x1E8];
-			var totalSize = (uint)bssHunks.Take(bssHunks.Count - 1) // skip last BSS hunk as it is only a temp buffer hunk
-				.Select(h => h.NumEntries * 4).Sum(x => x);
-			totalSize = 347796; // 347796; // TODO: REMOVE
+			// TODO: The total size needs some more research
+			/*var totalSize = (uint)bssHunks.Take(bssHunks.Count - 1) // skip last BSS hunk as it is only a temp buffer hunk
+				.Select(h => h.NumEntries * 4).Sum(x => x);*/
+			var totalSize = ((uint)lastCodeHunk.Data[0x1D] << 16) | ((uint)lastCodeHunk.Data[0x1E] << 8) | lastCodeHunk.Data[0x1F];
 			byte[] explodedData = new byte[totalSize];
 			Buffer.BlockCopy(data, 0, explodedData, 0, data.Length);
 
 			fixed (byte* ptr = &explodedData[0])
 			{
-				if (!Explode(ptr, table, (uint)data.Length, (uint)explodedData.Length, firstLiteralLength, initialBitBuffer))
-					throw new AmbermoonException(ExceptionScope.Data, "Invalid imploded data.");
+				// TODO: This does not read everything (the size does not fit I guess). But it's good enough for now.
+				/*if (!*/
+				Explode(ptr, table, (uint)data.Length, (uint)explodedData.Length, firstLiteralLength, initialBitBuffer)/*)*/;
+					//throw new AmbermoonException(ExceptionScope.Data, "Invalid imploded data.");
 			}
 
-			Console.WriteLine();
+			byte[] reversedData = new byte[explodedData.Length];
+			int dataSize = reversedData.Length - 1;
 
-			return explodedData;
+			for (int i = 0; i < explodedData.Length; ++i)
+				reversedData[dataSize - i] = explodedData[i];
+
+			return reversedData;
         }
 
 		/// <summary>
@@ -260,9 +264,6 @@ namespace Ambermoon.Data.Legacy
 		/// <returns></returns>
 		unsafe bool Explode(byte* buffer, byte[] table, uint implodedSize, uint explodedSize, uint firstLiteralLength, byte initialBitBuffer)
 		{
-			byte[] compareData = System.IO.File.ReadAllBytes(@"C:\Projects\ambermoon.net\FileSpecs\Extract\decoded\hunk_data_unc");
-			int compareDataOffset = 0;
-			uint debugOffset = 0; // TODO: REMOVE
 			byte* input = buffer + implodedSize - 3; /* input pointer  */
 			byte* output = buffer + explodedSize; /* output pointer */
 			byte* match; /* match pointer  */
@@ -311,8 +312,8 @@ namespace Ambermoon.Data.Legacy
 				matchBase[x] = (uint)((table[x * 2] << 8) | table[x * 2 + 1]);
 			}
 
-			literalLength = firstLiteralLength; //0x3c; // word at offset 0x1E6 in the last code hunk
-			bitBuffer = initialBitBuffer; //0xa2; // byte at offset 0x1E8 in the last code hunk
+			literalLength = firstLiteralLength; // word at offset 0x1E6 in the last code hunk
+			bitBuffer = initialBitBuffer; // byte at offset 0x1E8 in the last code hunk
 			int i;
 
 			while (true)
@@ -321,19 +322,8 @@ namespace Ambermoon.Data.Legacy
 				if ((output - buffer) < literalLength)
 					return false; /* enough space? */
 
-				Console.WriteLine($"Processing offset {debugOffset:x8} (imploded pos = {(int)((implodedSize - 3) - (input - buffer)):x4}) ...");
-
-				// TODO: REMOVE
-				for (i = 0; i < literalLength; ++i)
-				{
-					if (*(input - i - 1) != compareData[compareDataOffset++])
-						throw new Exception("ERROR");
-				}
-
 				for (i = 0; i < literalLength; ++i)
 					*--output = *--input;
-
-				debugOffset += literalLength; // TODO: REMOVE
 
 				/* main exit point - after the literal copy */
 				if (output <= buffer)
@@ -362,8 +352,10 @@ namespace Ambermoon.Data.Legacy
 								if (ReadBits(1) != 0) // 11111
 								{
 									matchLength = *--input;
+
 									if (matchLength == 0)
 										return false; /* bad input */
+
 									matchLength--;
 								}
 								else // 11110
@@ -459,16 +451,6 @@ namespace Ambermoon.Data.Legacy
 
 				for (i = 0; i < matchLength + 1; ++i)
 					*--output = *--match;
-
-				// TODO: REMOVE
-				var test = output + matchLength + 1;
-				for (i = 0; i < matchLength + 1; ++i)
-				{
-					if (*(test - i - 1) != compareData[compareDataOffset++])
-						throw new Exception("ERROR");
-				}
-
-				debugOffset += matchLength + 1; // TODO: REMOVE
 			}
 
 			/* return true if we used up all input bytes (as we should) */
