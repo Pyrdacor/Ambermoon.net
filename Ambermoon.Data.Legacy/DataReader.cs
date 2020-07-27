@@ -159,7 +159,7 @@ namespace Ambermoon.Data.Legacy
                 }
 
                 if (j == sequence.Length)
-                    return offset;
+                    return i;
             }
 
             return -1;
