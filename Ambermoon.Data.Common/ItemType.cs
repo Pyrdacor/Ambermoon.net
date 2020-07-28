@@ -2,6 +2,7 @@
 {
     public enum ItemType : byte
     {
+        None,
         Armor,
         Headgear,
         Footgear,
@@ -22,6 +23,6 @@
         MagicalItem, // lantern, torch, etc
         SpecialItem, // clock, monster eye, compass, etc
         Transportation, // witch broom, flute, magical flying disc, etc
-        Ailment = 21
+        Ailment
     }
 }
