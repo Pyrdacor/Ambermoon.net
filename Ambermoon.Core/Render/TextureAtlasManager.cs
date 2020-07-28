@@ -149,6 +149,14 @@ namespace Ambermoon.Render
 
             #endregion
 
+            #region Items
+
+            var itemGraphics = graphicProvider.GetGraphics(GraphicType.Item);
+
+            for (int i = 0; i < itemGraphics.Count; ++i)
+                AddTexture(Layer.Items, (uint)i, itemGraphics[i]);
+
+            #endregion
         }
     }
 }
