@@ -16,10 +16,10 @@ namespace Ambermoon.Data.Legacy
             file = new DataReader(data);
 
             // First find the item offset (the lamed ailment is the first item)
-            long offset = file.FindString("LAMED", 0x40000);
+            long offset = file.FindString("LAMED", 0x30000);
 
             if (offset == -1)
-                offset = file.FindString("GELÄHMT", 0x40000);
+                offset = file.FindString("GELÄHMT", 0x30000);
 
             if (offset == -1)
                 throw new AmbermoonException(ExceptionScope.Data, "Could not find item data in AM2_CPU.");

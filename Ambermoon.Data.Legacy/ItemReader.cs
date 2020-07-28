@@ -29,12 +29,18 @@
             }
             item.Defense = (sbyte)dataReader.ReadByte();
             item.Damage = (sbyte)dataReader.ReadByte();
-            item.Unknown3 = dataReader.ReadBytes(15);
+            item.Unknown3 = dataReader.ReadBytes(6);
+            item.SpecialValue = dataReader.ReadByte();
+            item.Unknown4 = dataReader.ReadByte();
+            item.SpellType = (SpellType)dataReader.ReadByte();
+            item.SpellIndex = dataReader.ReadByte();
+            item.SpellUsageCount = dataReader.ReadByte();
+            item.Unknown5 = dataReader.ReadBytes(4);
             item.MagicArmorLevel = (sbyte)dataReader.ReadByte();
             item.MagicAttackLevel = (sbyte)dataReader.ReadByte();
             item.Flags = (ItemFlags)dataReader.ReadByte();
-            item.Unknown4 = dataReader.ReadByte();
-            item.Classes = (ClassFlag)dataReader.ReadWord();
+            item.Unknown6 = dataReader.ReadByte();
+            item.Classes = (ClassFlag)dataReader.ReadWord() & ClassFlag.All; // TODO: is this right?
             item.Price = dataReader.ReadWord();
             item.Weight = dataReader.ReadWord();
             item.Name = dataReader.ReadString(19).TrimEnd(' ', '\0');
