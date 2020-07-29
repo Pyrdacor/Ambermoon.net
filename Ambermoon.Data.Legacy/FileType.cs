@@ -2,6 +2,7 @@
 {
     internal enum FileType : uint
     {
+        None = 0,
         /// <summary>
         /// JH-encoded files (Jurie Horneman's encoder).
         /// </summary>

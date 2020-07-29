@@ -16,63 +16,13 @@ namespace Ambermoon.Data.Legacy
             if (textDataReader != null)
             {
                 int numMapTexts = textDataReader.ReadWord();
+                int[] mapTextLengths = new int[numMapTexts];
 
-                if (numMapTexts == 0)
-                {
-                    textDataReader.ReadWord(); // unknown
-                    numMapTexts = textDataReader.ReadWord();
+                for (int i = 0; i < numMapTexts; ++i)
+                    mapTextLengths[i] = textDataReader.ReadWord();
 
-                    var textLengths = new List<int>(numMapTexts);
-
-                    for (int i = 0; i < numMapTexts; ++i)
-                        textLengths.Add(textDataReader.ReadWord());
-
-                    string currentText = "";
-
-                    for (int i = 0; i < numMapTexts; ++i)
-                    {
-                        while (true)
-                        {
-                            var ch = textDataReader.ReadChar();
-
-                            if (ch == "\0" || (textDataReader.Position == textDataReader.Size && i == numMapTexts - 1))
-                            {
-                                if (currentText.Length + 2 != textLengths[i] && currentText.Length + 1 != textLengths[i]) // there is an additional null byte and optional an optional space
-                                    throw new AmbermoonException(ExceptionScope.Data, "Invalid map text format");
-
-                                map.Texts.Add(currentText.Trim());
-                                currentText = "";
-                                break;
-                            }
-
-                            currentText += ch;
-                        }
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < numMapTexts; ++i)
-                        textDataReader.ReadWord(); // unknown numMapTexts words
-
-                    string currentText = "";
-
-                    for (int i = 0; i < numMapTexts; ++i)
-                    {
-                        while (true)
-                        {
-                            var ch = textDataReader.ReadChar();
-
-                            if (ch == "\0" || (textDataReader.Position == textDataReader.Size && i == numMapTexts - 1))
-                            {
-                                map.Texts.Add(currentText.Trim());
-                                currentText = "";
-                                break;
-                            }
-
-                            currentText += ch;
-                        }
-                    }
-                }
+                for (int i = 0; i < numMapTexts; ++i)
+                    map.Texts.Add(textDataReader.ReadString(mapTextLengths[i]).Trim(' ', '\0'));
             }
         }
 

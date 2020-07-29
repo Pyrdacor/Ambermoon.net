@@ -130,12 +130,13 @@ namespace Ambermoon.Data.Legacy
                 // AMNP archives are always encoded
                 if (containerType == FileType.AMNP)
                 {
-                    return new DataReader(DecryptJHFile(reader, (ushort)fileNumber, 4));
+                    reader = new DataReader(DecryptJHFile(reader, (ushort)fileNumber, 4));
                 }
-                else
-                {
-                    return reader;
-                }
+
+                if (fileType == FileType.None)
+                    reader.Position += 4; // skip the header
+
+                return reader;
             }            
         }
 
