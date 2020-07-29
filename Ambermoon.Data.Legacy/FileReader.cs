@@ -131,10 +131,11 @@ namespace Ambermoon.Data.Legacy
                 if (containerType == FileType.AMNP)
                 {
                     reader = new DataReader(DecryptJHFile(reader, (ushort)fileNumber, 4));
-                }
 
-                if (fileType == FileType.None)
-                    reader.Position += 4; // skip the header
+                    // ensure and skip the header (should be FileType.None here)
+                    if (reader.ReadDword() != (uint)FileType.None)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid AMNP file data.");
+                }
 
                 return reader;
             }            
