@@ -17,6 +17,7 @@ namespace Ambermoon.Data
         Portrait,
         Item,
         Layout,
+        LabBackground,
         // TODO ...
     }
 

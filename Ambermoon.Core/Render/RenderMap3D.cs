@@ -40,6 +40,7 @@ namespace Ambermoon.Render
         readonly List<ISurface3D> walls = new List<ISurface3D>();
         readonly List<ISurface3D> objects = new List<ISurface3D>();
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
+        static Graphic[] labBackgroundGraphics = null;
         public Map Map { get; private set; } = null;
 
         public RenderMap3D(Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
@@ -47,6 +48,8 @@ namespace Ambermoon.Render
             camera = renderView.Camera3D;
             this.mapManager = mapManager;
             this.renderView = renderView;
+
+            EnsureLabBackgroundGraphics(renderView.GraphicProvider);
 
             SetMap(map, playerX, playerY, playerDirection);
         }
@@ -88,6 +91,27 @@ namespace Ambermoon.Render
             // TODO: objects
         }
 
+        void EnsureLabBackgroundGraphics(IGraphicProvider graphicProvider)
+        {
+            if (labBackgroundGraphics != null)
+                return;
+
+            // Note: Palette index 9 is used for the transparent parts (I don't know why) so
+            // we replace this index here with index 0.
+            labBackgroundGraphics = graphicProvider.GetGraphics(GraphicType.LabBackground).ToArray();
+
+            for (int i = 0; i < labBackgroundGraphics.Length; ++i)
+            {
+                var labBackgroundGraphic = labBackgroundGraphics[i];
+
+                for (int b = 0; b < labBackgroundGraphic.Width * labBackgroundGraphic.Height; ++b)
+                {
+                    if (labBackgroundGraphic.Data[b] == 9)
+                        labBackgroundGraphic.Data[b] = 0;
+                }
+            }
+        }
+
         void EnsureLabdataTextureAtlas()
         {
             if (!labdataTextures.ContainsKey(Map.TilesetOrLabdataIndex))
@@ -106,6 +130,9 @@ namespace Ambermoon.Render
                     graphics.Add((uint)i + 1000u, labdata.WallGraphics[i]);
                 graphics.Add(10000u, labdata.FloorGraphic ?? new Graphic(64, 64, 0)); // TODO
                 graphics.Add(10001u, labdata.CeilingGraphic ?? new Graphic(64, 64, 0)); // TODO
+
+                if (Map.Flags.HasFlag(MapFlags.Outdoor))
+                    graphics.Add(10002u, labBackgroundGraphics[(int)Map.World]);
 
                 labdataTextures.Add(Map.TilesetOrLabdataIndex, TextureAtlasManager.Instance.CreateFromGraphics(graphics, 1));
             }

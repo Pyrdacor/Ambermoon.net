@@ -65,7 +65,7 @@ namespace Ambermoon.Renderer
             $"    if (realTexCoord.y > textureEndCoord.y)",
             $"        realTexCoord.y -= int((textureSize.y - oneTexturePixel.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
-            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2(colorIndex / 32.0f, palIndex / 49.0f));",
+            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2(colorIndex / 32.0f, palIndex / 50.0f));",
             $"    ",
             $"    if (alphaEnabled > 0.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f))",
             $"        discard;",

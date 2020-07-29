@@ -97,6 +97,7 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.Portrait, new GraphicFile("Portraits.amb"));
             AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
             AddGraphicFiles(GraphicType.Layout, new GraphicFile("Layouts.amb"));
+            AddGraphicFiles(GraphicType.LabBackground, new GraphicFile("Lab_background.amb"));
         }
 
         public List<Graphic> GetGraphics(GraphicType type)
@@ -135,7 +136,6 @@ namespace Ambermoon.Data.Legacy
                     {
                         foreach (var file in containerFile.Files)
                         {
-                            // TODO: wall texture containers have the same files multiple times (e.g. 116). This might be on purpose but I'm not sure.
                             allFiles[graphicFile.FileIndexOffset + file.Key] = file.Value;
                         }
                     }
@@ -195,6 +195,13 @@ namespace Ambermoon.Data.Legacy
                     info.GraphicFormat = GraphicFormat.Palette3Bit;
                     info.PaletteOffset = 24;
                     info.Alpha = true;
+                    break;
+                case GraphicType.LabBackground:
+                    info.Width = 144;
+                    info.Height = 20;
+                    info.GraphicFormat = GraphicFormat.Palette4Bit;
+                    info.PaletteOffset = 0;
+                    info.Alpha = false;
                     break;
                 // TODO
             }

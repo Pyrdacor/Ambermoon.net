@@ -71,6 +71,7 @@ namespace Ambermoon.Renderer.OpenGL
         public ICamera3D Camera3D => camera3D;
 
         public IGameData GameData { get; }
+        public IGraphicProvider GraphicProvider { get; }
 
         #region Coordinate transformations
 
@@ -103,6 +104,7 @@ namespace Ambermoon.Renderer.OpenGL
             : base(new State(contextProvider))
         {
             GameData = gameData;
+            GraphicProvider = graphicProvider;
             VirtualScreen = new Rect(0, 0, screenWidth, screenHeight);
             virtualScreenDisplay = new Rect(VirtualScreen);
             this.sizingPolicy = sizingPolicy;

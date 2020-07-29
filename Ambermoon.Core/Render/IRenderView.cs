@@ -46,5 +46,6 @@ namespace Ambermoon.Render
         ICamera3D Camera3D { get; }
 
         IGameData GameData { get; }
+        IGraphicProvider GraphicProvider { get; }
     }
 }
