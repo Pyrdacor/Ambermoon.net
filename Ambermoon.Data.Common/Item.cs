@@ -4,7 +4,7 @@
     {
         public uint GraphicIndex { get; set; }
         public ItemType Type { get; set; }
-        public byte Unknown1 { get; set; }
+        public EquipmentSlot EquipmentSlot { get; set; }
         public byte Unknown2 { get; set; }
         public GenderFlag Genders { get; set; }
         public uint NumberOfHands { get; set; }
@@ -33,8 +33,18 @@
         public uint Weight { get; set; }
         public string Name { get; set; }
 
+        /// <summary>
+        /// Used only for special items.
+        /// </summary>
         public SpecialItemPurpose SpecialItemPurpose => (SpecialItemPurpose)SpecialValue;
+        /// <summary>
+        /// Used only for transportation items.
+        /// </summary>
         public Transportation Transportation => (Transportation)SpecialValue;
+        /// <summary>
+        /// Used only for text scrolls.
+        /// </summary>
+        public uint TextIndex => SpecialValue;
         public Spell Spell => SpellIndex == 0 ? Spell.None : (Spell)((int)SpellType * 30 + SpellIndex);
 
         float GetPriceFactor(PartyMember character) => 2.92f + character.Attributes[Data.Attribute.Charisma].TotalCurrentValue * 0.16f / 100.0f;

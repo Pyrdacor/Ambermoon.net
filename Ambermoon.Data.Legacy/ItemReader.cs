@@ -6,7 +6,7 @@
         {
             item.GraphicIndex = dataReader.ReadByte();
             item.Type = (ItemType)dataReader.ReadByte();
-            item.Unknown1 = dataReader.ReadByte();
+            item.EquipmentSlot = (EquipmentSlot)dataReader.ReadByte();
             item.Unknown2 = dataReader.ReadByte();
             item.Genders = (GenderFlag)dataReader.ReadByte();
             item.NumberOfHands = dataReader.ReadByte();

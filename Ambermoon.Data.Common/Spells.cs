@@ -127,8 +127,25 @@
         // Special spells
         Lockpicking = 181, // 6 * 30 + 1
         CallEagle = 182,
+        DecreaseAge = 183, // youth potion
         PlayElfHarp = 184,
-        MagicalMap = 191
+        SpellPointsI = 185,
+        SpellPointsII = 186,
+        SpellPointsIII = 187,
+        SpellPointsIV = 188,
+        SpellPointsV = 189,
+        AllHealing = 190, // all healing potion
+        MagicalMap = 191,
+        AddStrength = 192,
+        AddIntelligence = 193,
+        AddDexterity = 194,
+        AddSpeed = 195,
+        AddStamina = 196,
+        AddCharisma = 197,
+        // ? = 198
+        AddAntiMagic = 199,
+        Rope = 200, // levitation on a rope
+        StinkingMushroom = 201, // stinking mushroom?
 
         // TODO?
     }
