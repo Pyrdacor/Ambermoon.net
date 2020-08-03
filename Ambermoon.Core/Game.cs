@@ -36,42 +36,64 @@ namespace Ambermoon
             layout = new UI.Layout(renderView);
 
             // TODO: REMOVE
-            string html = "<html><head><title>Ambermoon Items</title></head><body>";
+            string html = "<html><head><title>Ambermoon Items</title><style>\r\n" +
+                "img {\r\n" +
+                "image-rendering: optimizeSpeed;\r\n" +
+                "image-rendering: -moz-crisp-edges;\r\n" +
+                "image-rendering: -o-crisp-edges;\r\n" +
+                "image-rendering: -webkit-optimize-contrast;\r\n" +
+                "image-rendering: pixelated;\r\n" +
+                "image-rendering: optimize-contrast;\r\n" +
+                "-ms-interpolation-mode: nearest-neighbor;\r\n" +
+                "}</style></head><body>";
 
             void addRow<T>(string key, T value)
             {
-                html += $"<tr><td>{Uri.EscapeDataString(key)}</td><td colspan=\"3\">{Uri.EscapeDataString(value.ToString())}</td></tr>";
+                html += $"<tr><td>{key}</td><td colspan=\"3\">{value}</td></tr>";
             }
 
             void addRow2<T, U>(string key1, T value1, string key2, U value2)
             {
-                html += $"<tr><td>{Uri.EscapeDataString(key1)}</td><td>{Uri.EscapeDataString(value1.ToString())}</td><td>{Uri.EscapeDataString(key2)}</td><td>{Uri.EscapeDataString(value2.ToString())}</td></tr>";
+                html += $"<tr><td>{key1}</td><td>{value1}</td><td>{key2}</td><td>{value2}</td></tr>";
             }
 
             for (uint i = 1; i <= 402; ++i)
             {
                 var item = itemManager.GetItem(i);
-                html += $"<table><th><td colspan=\"4\">{i:000}: {item.Name}</td></th>";
+                /*html += $"<table border=\"1\"><tr><td><img src=\"Graphics\\Items\\{item.GraphicIndex:000}.png\" width=\"32px\" height=\"32px\" /></td><td colspan=\"3\"><b>{i:000}: {item.Name}</b></td></tr>";
                 addRow2("Type", item.Type, "GfxId", item.GraphicIndex);
                 addRow2("Atk", item.Damage, "Def", item.Defense);
                 addRow2("M-B-W", item.MagicAttackLevel, "M-B-R", item.MagicArmorLevel);
                 addRow2("Attribute", item.Attribute == null ? "-" : $"{item.Attribute} {item.AttributeValue}", "Ability", item.Ability == null ? "-" : $"{item.Ability} {item.AbilityValue}");
+                if (item.Spell != Spell.None)
+                    addRow2("Spell", $"{item.Spell} ({item.SpellType})", "Use count", item.SpellUsageCount);
                 addRow2("Hands", item.NumberOfHands, "Fingers", item.NumberOfFingers);
-                addRow("Usable by", item.Classes.ToString().Replace(", ", "|") + (item.Genders == GenderFlag.Female ? " (female only)" : ""));
+                if (item.EquipmentSlot != EquipmentSlot.None)
+                    addRow("Equipment slot", item.EquipmentSlot);
+                addRow("Usable by", item.Classes.ToString() + (item.Genders == GenderFlag.Female ? " (female only)" : ""));
                 addRow2("Price", item.Price, "Weight", item.Weight);
-                addRow("Flags", item.Flags.ToString());
+                addRow("Flags", $"{item.Flags} ({(int)item.Flags:x2})");
+                if (item.Type == ItemType.Transportation)
+                    addRow("Transportation", item.Transportation);
+                else if (item.Type == ItemType.SpecialItem)
+                    addRow("Purpose", item.SpecialItemPurpose);
                 List<byte> unknown = new List<byte>(18);
-                unknown.Add(item.Unknown1);
                 unknown.Add(item.Unknown2);
                 unknown.AddRange(item.Unknown3);
                 unknown.Add(item.Unknown4);
+                unknown.AddRange(item.Unknown5);
+                unknown.Add(item.Unknown6);
                 addRow("Unknown bytes (hex)", string.Join(", ", unknown.Select(b => b.ToString("x2"))));
-                html += "</table>";
+                html += "</table><br />";*/
+
+                if (item.Unknown6 != 0)
+                    Console.WriteLine(item.Name + " " + item.Unknown6.ToString());
             }
 
             html += "</body></html>";
 
-            System.IO.File.WriteAllText(@"C:\Projects\ambermoon.net\Resources\items.html", html);
+            //System.IO.File.WriteAllText(@"C:\Projects\ambermoon.net\Resources\Items.html", html);
+            //System.IO.File.WriteAllText(@"C:\Projects\Ambermoon\Items.html", html);
         }
 
         public void Update(double deltaTime)
