@@ -127,19 +127,21 @@ namespace Ambermoon.Renderer
         Billboard3DShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
                   DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
-                  DefaultAtlasSizeName, DefaultPaletteName, DefaultCameraPositionName, DefaultCameraDirectionName,
-                  DefaultBillboardCenterName, DefaultScaleName, Texture3DFragmentShader(state), Texture3DVertexShader(state))
+                  DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultCameraPositionName,
+                  DefaultCameraDirectionName, DefaultBillboardCenterName, DefaultScaleName,
+                  Texture3DFragmentShader(state), Texture3DVertexShader(state))
         {
 
         }
 
         protected Billboard3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
             string positionName, string texCoordName, string texEndCoordName, string texSizeName,
-            string samplerName, string atlasSizeName, string paletteName, string cameraPositionName,
-            string cameraDirectionName, string billboardCenterName, string scaleName,
-            string[] fragmentShaderLines, string[] vertexShaderLines)
+            string samplerName, string atlasSizeName, string paletteName, string paletteIndexName,
+            string cameraPositionName, string cameraDirectionName, string billboardCenterName,
+            string scaleName, string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, positionName, texCoordName, texEndCoordName,
-                  texSizeName, samplerName, atlasSizeName, paletteName, null, fragmentShaderLines, vertexShaderLines)
+                  texSizeName, samplerName, atlasSizeName, paletteName, paletteIndexName, null, fragmentShaderLines,
+                  vertexShaderLines)
         {
             this.cameraPositionName = cameraPositionName;
             this.cameraDirectionName = cameraDirectionName;

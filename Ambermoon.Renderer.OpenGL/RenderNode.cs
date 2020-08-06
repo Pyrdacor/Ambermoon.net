@@ -33,7 +33,7 @@ namespace Ambermoon.Renderer
         bool visibleRequest = false;
         bool deleted = false;
         bool notOnScreen = true;
-        readonly Rect virtualScreen = null;
+        protected readonly Rect virtualScreen = null;
 
         protected RenderNode(int width, int height, Rect virtualScreen)
         {
@@ -112,8 +112,17 @@ namespace Ambermoon.Renderer
 
         public virtual void Resize(int width, int height)
         {
-            Width = width;
-            Height = height;
+            if (Width != width || Height != height)
+            {
+                Width = width;
+                Height = height;
+
+                if (!deleted)
+                {
+                    if (!CheckOnScreen())
+                        UpdatePosition();
+                }
+            }
         }
 
         protected abstract void AddToLayer();

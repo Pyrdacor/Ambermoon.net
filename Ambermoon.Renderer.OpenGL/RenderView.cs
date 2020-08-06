@@ -43,6 +43,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly SpriteFactory spriteFactory = null;
         readonly ColoredRectFactory coloredRectFactory = null;
         readonly Surface3DFactory surface3DFactory = null;
+        readonly RenderTextFactory renderTextFactory = null;
         readonly Camera3D camera3D = null;
         bool fullscreen = false;
 
@@ -67,6 +68,7 @@ namespace Ambermoon.Renderer.OpenGL
         public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
 
         public ISurface3DFactory Surface3DFactory => surface3DFactory;
+        public IRenderTextFactory RenderTextFactory => renderTextFactory;
 
         public ICamera3D Camera3D => camera3D;
 
@@ -99,7 +101,7 @@ namespace Ambermoon.Renderer.OpenGL
 
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
-            int screenWidth, int screenHeight, DeviceType deviceType = DeviceType.Desktop,
+            IFontProvider fontProvider, int screenWidth, int screenHeight, DeviceType deviceType = DeviceType.Desktop,
             SizingPolicy sizingPolicy = SizingPolicy.FitRatio, OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
@@ -121,13 +123,14 @@ namespace Ambermoon.Renderer.OpenGL
             spriteFactory = new SpriteFactory(visibleArea);
             coloredRectFactory = new ColoredRectFactory(visibleArea);
             surface3DFactory = new Surface3DFactory(visibleArea);
+            renderTextFactory = new RenderTextFactory(visibleArea);
 
             camera3D = new Camera3D(State);
 
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
             var textureAtlasManager = TextureAtlasManager.Instance;
-            textureAtlasManager.AddAll(gameData, graphicProvider);
+            textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider);
             var palette = textureAtlasManager.CreatePalette(graphicProvider);
 
             foreach (Layer layer in Enum.GetValues(typeof(Layer)))

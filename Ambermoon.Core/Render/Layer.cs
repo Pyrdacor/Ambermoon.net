@@ -31,6 +31,7 @@
         UIForeground, // including borders
         Items,
         Popup,
+        Text,
         Cursor
     }
 

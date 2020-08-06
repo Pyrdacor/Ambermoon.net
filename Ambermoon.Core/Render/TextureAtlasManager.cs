@@ -102,7 +102,7 @@ namespace Ambermoon.Render
             return paletteBuilder.CreateUnpacked(32, 4).Texture;
         }
 
-        public void AddAll(IGameData gameData, IGraphicProvider graphicProvider)
+        public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider)
         {
             if (gameData == null)
                 throw new ArgumentNullException(nameof(gameData));
@@ -146,6 +146,15 @@ namespace Ambermoon.Render
 
             for (int i = 0; i < layoutGraphics.Count; ++i)
                 AddTexture(Layer.UIForeground, (uint)i, layoutGraphics[i]);
+
+            #endregion
+
+            #region Text
+
+            var font = fontProvider.GetFont();
+
+            for (uint i = 0; i < 94; ++i) // TODO: no space glyphs etc
+                AddTexture(Layer.Text, i, font.GetGlyphGraphic(i));
 
             #endregion
 

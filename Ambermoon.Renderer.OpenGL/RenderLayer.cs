@@ -64,7 +64,7 @@ namespace Ambermoon.Renderer
         // The UI background has a range of 0.1f for UI layers.
         // The battle monster rows use range of 0.01f (more right monsters are drawn above their left neighbors).
         // The UI foreground (like controls and borders) has a range of 0.2f for UI layers.
-        // Items use basically the same layer (range 0.02f) as they won't overlap (but the dragged item will use 0.97f).
+        // Items use basically the same layer (range 0.01f) as they won't overlap (but the dragged item will use 0.965f).
         // Popup and cursor are single objects and has therefore a small range of 0.01f.
         private static readonly float[] LayerBaseZ = new float[]
         {
@@ -95,7 +95,8 @@ namespace Ambermoon.Renderer
             0.75f,  // BattleMonsterRowNearest
             0.76f,  // UIForeground
             0.96f,  // Items
-            0.98f,  // Popup
+            0.97f,  // Popup
+            0.98f,  // Text
             0.99f   // Cursor
         };
 
@@ -109,7 +110,8 @@ namespace Ambermoon.Renderer
             bool supportAnimations = layer >= Global.First2DLayer && layer <= Global.Last2DLayer; // TODO
             bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
 
-            RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D, masked, supportAnimations, layered, false, layer == Layer.Billboards3D);
+            RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
+                masked, supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text);
 
             if (Layer == Layer.UIBackground)
                 renderBufferColorRects = new RenderBuffer(state, false, supportAnimations, true, true);
@@ -177,6 +179,26 @@ namespace Ambermoon.Renderer
 
                     shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                 }
+                else if (Layer == Layer.Text)
+                {
+                    TextShader shader = RenderBuffer.TextShader;
+
+                    shader.UpdateMatrices(state);
+
+                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                    state.Gl.ActiveTexture(GLEnum.Texture0);
+                    texture.Bind();
+
+                    if (palette != null)
+                    {
+                        shader.SetPalette(1);
+                        state.Gl.ActiveTexture(GLEnum.Texture1);
+                        palette.Bind();
+                    }
+
+                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                    shader.SetZ(LayerBaseZ[(int)Layer]);
+                }
                 else
                 {
                     TextureShader shader = RenderBuffer.Masked ? RenderBuffer.MaskedTextureShader : RenderBuffer.TextureShader;
@@ -202,9 +224,10 @@ namespace Ambermoon.Renderer
             RenderBuffer.Render();
         }
 
-        public int GetDrawIndex(ISprite sprite, Position maskSpriteTextureAtlasOffset = null)
+        public int GetDrawIndex(ISprite sprite, Position maskSpriteTextureAtlasOffset = null, byte? textColorIndex = null)
         {
-            return RenderBuffer.GetDrawIndex(sprite, PositionTransformation, SizeTransformation, maskSpriteTextureAtlasOffset);
+            return RenderBuffer.GetDrawIndex(sprite, PositionTransformation, SizeTransformation,
+                maskSpriteTextureAtlasOffset, textColorIndex);
         }
 
         public int GetDrawIndex(ISurface3D surface)
@@ -245,6 +268,11 @@ namespace Ambermoon.Renderer
         public void UpdatePaletteIndex(int index, byte paletteIndex)
         {
             RenderBuffer.UpdatePaletteIndex(index, paletteIndex);
+        }
+
+        public void UpdateTextColorIndex(int index, byte textColorIndex)
+        {
+            RenderBuffer.UpdateTextColorIndex(index, textColorIndex);
         }
 
         public int GetColoredRectDrawIndex(ColoredRect coloredRect)

@@ -41,7 +41,7 @@ namespace Ambermoon.Renderer
         readonly string paletteIndexName;
         readonly string alphaName;
 
-        // The palette has a size of 32x49 pixels.
+        // The palette has a size of 32x51 pixels.
         // Each row represents one palette of 32 colors.
         // So the palette index determines the pixel row.
         // The column is the palette color index from 0 to 31.
@@ -65,7 +65,7 @@ namespace Ambermoon.Renderer
             $"    if (realTexCoord.y > textureEndCoord.y)",
             $"        realTexCoord.y -= int((textureSize.y - oneTexturePixel.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
-            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2(colorIndex / 32.0f, palIndex / 50.0f));",
+            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2(colorIndex / 32.0f, palIndex / 51.0f));",
             $"    ",
             $"    if (alphaEnabled > 0.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f))",
             $"        discard;",
@@ -109,7 +109,7 @@ namespace Ambermoon.Renderer
         Texture3DShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
                   DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
-                  DefaultAtlasSizeName, DefaultPaletteName, DefaultAlphaName,
+                  DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultAlphaName,
                   Texture3DFragmentShader(state), Texture3DVertexShader(state))
         {
 
@@ -117,7 +117,7 @@ namespace Ambermoon.Renderer
 
         protected Texture3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
             string positionName, string texCoordName, string texEndCoordName, string texSizeName,
-            string samplerName, string atlasSizeName, string paletteName, string alphaName,
+            string samplerName, string atlasSizeName, string paletteName, string paletteIndexName, string alphaName,
             string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, DefaultColorName, DefaultZName,
                   positionName, DefaultLayerName, fragmentShaderLines, vertexShaderLines)
@@ -128,6 +128,7 @@ namespace Ambermoon.Renderer
             this.samplerName = samplerName;
             this.atlasSizeName = atlasSizeName;
             this.paletteName = paletteName;
+            this.paletteIndexName = paletteIndexName;
             this.alphaName = alphaName;
         }
 

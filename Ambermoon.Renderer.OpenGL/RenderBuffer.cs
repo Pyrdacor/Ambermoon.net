@@ -42,6 +42,7 @@ namespace Ambermoon.Renderer
         readonly LayerBuffer layerBuffer = null;
         readonly IndexBuffer indexBuffer = null;
         readonly LayerBuffer paletteIndexBuffer = null;
+        readonly LayerBuffer textColorIndexBuffer = null;
         readonly PositionBuffer textureEndCoordBuffer = null;
         readonly PositionBuffer textureSizeBuffer = null;
         readonly VectorBuffer billboardCenterBuffer = null;
@@ -51,8 +52,10 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
         static readonly Dictionary<State, Texture3DShader> texture3DShaders = new Dictionary<State, Texture3DShader>();
         static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = new Dictionary<State, Billboard3DShader>();
+        static readonly Dictionary<State, TextShader> textShaders = new Dictionary<State, TextShader>();
 
-        public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered, bool noTexture = false, bool isBillboard = false)
+        public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered,
+            bool noTexture = false, bool isBillboard = false, bool isText = false)
         {
             this.state = state;
             Masked = masked;
@@ -74,6 +77,12 @@ namespace Ambermoon.Renderer
                 if (!maskedTextureShaders.ContainsKey(state))
                     maskedTextureShaders[state] = MaskedTextureShader.Create(state);
                 vertexArrayObject = new VertexArrayObject(state, maskedTextureShaders[state].ShaderProgram);
+            }
+            else if (isText)
+            {
+                if (!textShaders.ContainsKey(state))
+                    textShaders[state] = TextShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, textShaders[state].ShaderProgram);
             }
             else
             {
@@ -121,6 +130,13 @@ namespace Ambermoon.Renderer
             {
                 paletteIndexBuffer = new LayerBuffer(state, true);
                 textureAtlasOffsetBuffer = new PositionBuffer(state, !supportAnimations);
+
+                if (isText)
+                {
+                    textColorIndexBuffer = new LayerBuffer(state, true);
+
+                    vertexArrayObject.AddBuffer(TextShader.DefaultTextColorIndexName, textColorIndexBuffer);
+                }
 
                 if (layered)
                 {
@@ -179,6 +195,7 @@ namespace Ambermoon.Renderer
         internal TextureShader TextureShader => textureShaders[state];
         internal Texture3DShader Texture3DShader => texture3DShaders[state];
         internal Billboard3DShader Billboard3DShader => billboard3DShaders[state];
+        internal TextShader TextShader => textShaders[state];
 
         public int GetDrawIndex(Render.IColoredRect coloredRect,
             Render.PositionTransformation positionTransformation,
@@ -230,7 +247,8 @@ namespace Ambermoon.Renderer
         }
 
         public int GetDrawIndex(Render.ISprite sprite, Render.PositionTransformation positionTransformation,
-            Render.SizeTransformation sizeTransformation, Position maskSpriteTextureAtlasOffset = null)
+            Render.SizeTransformation sizeTransformation, Position maskSpriteTextureAtlasOffset = null,
+            byte? textColorIndex = null)
         {
             var position = new Position(sprite.X, sprite.Y);
             var size = new Size(sprite.Width, sprite.Height);
@@ -310,6 +328,21 @@ namespace Ambermoon.Renderer
                 layerBuffer.Add(layer, layerBufferIndex + 1);
                 layerBuffer.Add(layer, layerBufferIndex + 2);
                 layerBuffer.Add(layer, layerBufferIndex + 3);
+            }
+
+            if (textColorIndexBuffer != null)
+            {
+                if (textColorIndex == null)
+                    throw new AmbermoonException(ExceptionScope.Render, "No text color index given but text color index buffer is active.");
+
+                int textColorIndexBufferIndex = textColorIndexBuffer.Add(textColorIndex.Value);
+
+                if (textColorIndexBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 1);
+                textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 2);
+                textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 3);
             }
 
             return index;
@@ -649,6 +682,17 @@ namespace Ambermoon.Renderer
             }
         }
 
+        public void UpdateTextColorIndex(int index, byte textColorIndex)
+        {
+            if (textColorIndexBuffer != null)
+            {
+                textColorIndexBuffer.Update(index, textColorIndex);
+                textColorIndexBuffer.Update(index + 1, textColorIndex);
+                textColorIndexBuffer.Update(index + 2, textColorIndex);
+                textColorIndexBuffer.Update(index + 3, textColorIndex);
+            }
+        }
+
         public void FreeDrawIndex(int index)
         {
             /*int newSize = -1;
@@ -797,6 +841,7 @@ namespace Ambermoon.Renderer
                     vertexArrayObject?.Dispose();
                     positionBuffer?.Dispose();
                     paletteIndexBuffer?.Dispose();
+                    textColorIndexBuffer?.Dispose();
                     textureAtlasOffsetBuffer?.Dispose();
                     maskTextureAtlasOffsetBuffer?.Dispose();
                     baseLineBuffer?.Dispose();

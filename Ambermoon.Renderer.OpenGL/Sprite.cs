@@ -358,6 +358,27 @@ namespace Ambermoon.Renderer
         }
     }
 
+    internal class TextCharacterSprite : LayerSprite
+    {
+        public byte TextColorIndex { get; set; }
+
+        public TextCharacterSprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
+            : base(width, height, textureAtlasX, textureAtlasY, 0, virtualScreen)
+        {
+
+        }
+
+        protected override void AddToLayer()
+        {
+            drawIndex = (Layer as RenderLayer).GetDrawIndex(this, null, TextColorIndex);
+        }
+
+        public void UpdateTextColorIndex()
+        {
+            (Layer as RenderLayer).UpdateTextColorIndex(drawIndex, TextColorIndex);
+        }
+    }
+
     public class SpriteFactory : ISpriteFactory
     {
         readonly Rect virtualScreen = null;
