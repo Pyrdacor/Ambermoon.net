@@ -1,5 +1,18 @@
 # Ambermoon.net
 
+## Download
+
+Version | OS
+--- | ---
+[1.0.0](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.0/Ambermoon.net-Windows.zip) | Windows 64bit
+
+Other platforms will follow.
+
+[![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
+
+
+## Introduction
+
 Ambermoon.net should become a full C# rewrite of Ambermoon. For the first version the original game data will be used (but not provided). The loader will be able to load ADF disk files or the extracted files like Party_char.amb etc.
 
 Later maybe new data (enhanced textures, etc) may be provided or even the possibility to mod several things.
