@@ -15,12 +15,26 @@ namespace Ambermoon
         Configuration configuration;
         IRenderView renderView;
         IWindow window;
+        bool fullscreen = false;
 
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
         public int Width { get; private set; }
         public int Height { get; private set; }
         public Game Game { get; private set; }
+        public bool Fullscreen
+        {
+            get => fullscreen;
+            set
+            {
+                if (fullscreen == value)
+                    return;
+
+                fullscreen = value;
+
+                window.WindowState = fullscreen ? WindowState.Fullscreen : WindowState.Normal;
+            }
+        }
 
         public GameWindow(string id = "MainWindow")
         {
@@ -104,7 +118,12 @@ namespace Ambermoon
 
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Common.Key key, int value)
         {
-            Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
+            if (key == Silk.NET.Input.Common.Key.F11)
+                Fullscreen = !Fullscreen;
+            else if (key == Silk.NET.Input.Common.Key.Escape && Fullscreen)
+                Fullscreen = false;
+            else
+                Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
         }
 
         void Keyboard_KeyUp(IKeyboard keyboard, Silk.NET.Input.Common.Key key, int value)
@@ -135,6 +154,9 @@ namespace Ambermoon
         {
             window.MakeCurrent();
 
+            if (configuration.Fullscreen)
+                Fullscreen = true;
+
             // Load game data
             var gameData = new GameData();
             gameData.Load(configuration.DataPath);
@@ -153,8 +175,6 @@ namespace Ambermoon
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()),
                 new ItemManager(gameData, new ItemReader()));
             Game.StartNew(); // TODO: Remove later
-
-            Game.ShowMessage(new Rect(0, 75, 320, 50), "Hello ~LEAD~!^~RUN1~RUNES~NORM~ ~SEX1~ ~INK3~s~INK4~a~INK5~i~INK6~d.", TextColor.White, true, TextAlign.Center);
         }
 
         void Window_Render(double delta)

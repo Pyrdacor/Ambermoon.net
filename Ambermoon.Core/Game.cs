@@ -179,7 +179,8 @@ namespace Ambermoon
             // TODO: player direction is not neccessarily the one of the previous map
             renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
             renderMap2D = null;
-            camera3D.SetPosition(playerX * RenderMap3D.DistancePerTile, (map.Height - playerY) * RenderMap3D.DistancePerTile);
+            camera3D.SetPosition(playerX * RenderMap3D.DistancePerTile + 0.5f * RenderMap3D.DistancePerTile,
+                (map.Height - playerY) * RenderMap3D.DistancePerTile - 0.5f * RenderMap3D.DistancePerTile);
 
             player2D.Visible = false;
             player.Position.X = (int)playerX;
