@@ -153,7 +153,7 @@ namespace Ambermoon
                 new ItemManager(gameData, new ItemReader()));
             Game.StartNew(); // TODO: Remove later
 
-            Game.ShowMessage(new Rect(230, 60, 120, 120), "Hallo ~LEAD~! ~RUN1~RUNES~NORM~ he said.", TextColor.Yellow, true, TextAlign.Left);
+            Game.ShowMessage(new Rect(230, 60, 120, 120), "Hello ~LEAD~! ~RUN1~RUNES~NORM~ he said.", TextColor.Yellow, true, TextAlign.Left);
         }
 
         void Window_Render(double delta)

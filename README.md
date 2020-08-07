@@ -21,7 +21,7 @@ You may also checkout my already working Settlers I rewrite at [freeserf.net](ht
 
 No collision detection yet for 3D. You can freely walk through 2D and 3D maps. Map events only work in 2D so you won't be able to leave 3D maps yet. :)
 
-Text rendering also works now with text replacements like character names, shadows and different text colors.
+Text rendering also works now with text replacements like character names, shadows and different text colors. Rune texts work too.
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
