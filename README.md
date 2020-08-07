@@ -15,17 +15,20 @@ You may also checkout my already working Settlers I rewrite at [freeserf.net](ht
 
 ## Current state
 
-2D map rendering is working. Moreover the player can be moved on 2D maps and map changes are possible. World map scrolling is also working.
+2D map rendering is working. Moreover the player can be moved on 2D maps and map changes are possible. World map scrolling is also working. Collision detection, sitting and sleeping is also working.
 
-3D map rendering also works for the most part. But for now only walls, ceiling and floor. No objects, monsters, etc.
+3D map rendering also works for the most part. But for now only walls, ceiling and floor. Static objects work too but no monsters, etc.
 
-No collision detection yet for 2D nor 3D. You can freely walk through 2D and 3D maps. Map events only work in 2D so you won't be able to leave 3D maps yet. :)
+No collision detection yet for 3D. You can freely walk through 2D and 3D maps. Map events only work in 2D so you won't be able to leave 3D maps yet. :)
+
+Text rendering also works now with text replacements like character names, shadows and different text colors.
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
 ![3D map rendering 1](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D1.png "3D map rendering 1")
 ![3D map rendering 2](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D2.png "3D map rendering 2")
 ![Billboards](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Billboards1.png "Billboards")
+![Text rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/TextRendering.png "Text rendering")
 
 
 ## Support development

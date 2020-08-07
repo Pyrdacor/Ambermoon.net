@@ -143,16 +143,6 @@ namespace Ambermoon.Render
                 }
             }
 
-            // TODO: REMOVE
-            var t = Map[(uint)Position.X, (uint)Position.Y + 1];
-            var ts = mapManager.GetTilesetForMap(Map.Map);
-            //Console.WriteLine("Current map: " + Map.Map.Index + " (" + Map.Map.World + ")");
-            if (t.FrontTileIndex != 0)
-            {
-                var frontTile = ts.Tiles[t.FrontTileIndex - 1];
-                Console.WriteLine($"FT: Block={frontTile.BlockMovement}, Sit={frontTile.SitDirection}, Sleep={frontTile.Sleep}");
-            }
-
             return canMove;
         }
 

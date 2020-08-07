@@ -8,92 +8,74 @@ namespace Ambermoon
 {
     public class Game
     {
+        class NameProvider : ITextNameProvider
+        {
+            readonly Game game;
+
+            public NameProvider(Game game)
+            {
+                this.game = game;
+            }
+
+            /// <inheritdoc />
+            public string LeadName => game.party.First(p => p.Alive).Name;
+            /// <inheritdoc />
+            public string SelfName => game.CurrentPartyMember.Name;
+            /// <inheritdoc />
+            public string CastName => game.CurrentCaster?.Name;
+            /// <inheritdoc />
+            public string InvnName => game.CurrentInventory?.Name;
+            /// <inheritdoc />
+            public string SubjName => game.CurrentPartyMember?.Name; // TODO
+            /// <inheritdoc />
+            public string Sex1Name => game.CurrentPartyMember.Gender == Gender.Male ? "he" : "she"; // TODO
+            /// <inheritdoc />
+            public string Sex2Name => game.CurrentPartyMember.Gender == Gender.Male ? "his" : "her"; // TODO
+        }
+
         const uint TicksPerSecond = 60; // TODO
         uint currentTicks = 0;
         uint lastMapTicksReset = 0;
         uint lastKeyTicksReset = 0;
         bool ingame = false;
+        readonly NameProvider nameProvider;
         readonly UI.Layout layout;
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
         readonly IRenderView renderView;
         Player player;
+        readonly PartyMember[] party = new PartyMember[6];
+        PartyMember CurrentPartyMember { get; } = null;
+        PartyMember CurrentInventory { get; } = null;
+        PartyMember CurrentCaster { get; } = null;
         bool is3D = false;
         readonly bool[] keys = new bool[Enum.GetValues(typeof(Key)).Length];
+        /// <summary>
+        /// All words you have heard about in conversations.
+        /// </summary>
+        readonly List<string> dictionary = new List<string>();
 
         // Rendering
         RenderMap2D renderMap2D = null;
         Player2D player2D = null;
         RenderMap3D renderMap3D = null;
         readonly ICamera3D camera3D = null;
+        readonly IRenderText messageText = null;
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager)
         {
+            nameProvider = new NameProvider(this);
             this.renderView = renderView;
             this.mapManager = mapManager;
             this.itemManager = itemManager;
             camera3D = renderView.Camera3D;
+            messageText = renderView.RenderTextFactory.Create();
+            messageText.Layer = renderView.GetLayer(Layer.Text);
             layout = new UI.Layout(renderView);
 
-            // TODO: REMOVE
-            string html = "<html><head><title>Ambermoon Items</title><style>\r\n" +
-                "img {\r\n" +
-                "image-rendering: optimizeSpeed;\r\n" +
-                "image-rendering: -moz-crisp-edges;\r\n" +
-                "image-rendering: -o-crisp-edges;\r\n" +
-                "image-rendering: -webkit-optimize-contrast;\r\n" +
-                "image-rendering: pixelated;\r\n" +
-                "image-rendering: optimize-contrast;\r\n" +
-                "-ms-interpolation-mode: nearest-neighbor;\r\n" +
-                "}</style></head><body>";
-
-            void addRow<T>(string key, T value)
-            {
-                html += $"<tr><td>{key}</td><td colspan=\"3\">{value}</td></tr>";
-            }
-
-            void addRow2<T, U>(string key1, T value1, string key2, U value2)
-            {
-                html += $"<tr><td>{key1}</td><td>{value1}</td><td>{key2}</td><td>{value2}</td></tr>";
-            }
-
-            for (uint i = 1; i <= 402; ++i)
-            {
-                var item = itemManager.GetItem(i);
-                /*html += $"<table border=\"1\"><tr><td><img src=\"Graphics\\Items\\{item.GraphicIndex:000}.png\" width=\"32px\" height=\"32px\" /></td><td colspan=\"3\"><b>{i:000}: {item.Name}</b></td></tr>";
-                addRow2("Type", item.Type, "GfxId", item.GraphicIndex);
-                addRow2("Atk", item.Damage, "Def", item.Defense);
-                addRow2("M-B-W", item.MagicAttackLevel, "M-B-R", item.MagicArmorLevel);
-                addRow2("Attribute", item.Attribute == null ? "-" : $"{item.Attribute} {item.AttributeValue}", "Ability", item.Ability == null ? "-" : $"{item.Ability} {item.AbilityValue}");
-                if (item.Spell != Spell.None)
-                    addRow2("Spell", $"{item.Spell} ({item.SpellType})", "Use count", item.SpellUsageCount);
-                addRow2("Hands", item.NumberOfHands, "Fingers", item.NumberOfFingers);
-                if (item.EquipmentSlot != EquipmentSlot.None)
-                    addRow("Equipment slot", item.EquipmentSlot);
-                addRow("Usable by", item.Classes.ToString() + (item.Genders == GenderFlag.Female ? " (female only)" : ""));
-                addRow2("Price", item.Price, "Weight", item.Weight);
-                addRow("Flags", $"{item.Flags} ({(int)item.Flags:x2})");
-                if (item.Type == ItemType.Transportation)
-                    addRow("Transportation", item.Transportation);
-                else if (item.Type == ItemType.SpecialItem)
-                    addRow("Purpose", item.SpecialItemPurpose);
-                List<byte> unknown = new List<byte>(18);
-                unknown.Add(item.Unknown2);
-                unknown.AddRange(item.Unknown3);
-                unknown.Add(item.Unknown4);
-                unknown.AddRange(item.Unknown5);
-                unknown.Add(item.Unknown6);
-                addRow("Unknown bytes (hex)", string.Join(", ", unknown.Select(b => b.ToString("x2"))));
-                html += "</table><br />";*/
-
-                if (item.Unknown6 != 0)
-                    Console.WriteLine(item.Name + " " + item.Unknown6.ToString());
-            }
-
-            html += "</body></html>";
-
-            //System.IO.File.WriteAllText(@"C:\Projects\ambermoon.net\Resources\Items.html", html);
-            //System.IO.File.WriteAllText(@"C:\Projects\Ambermoon\Items.html", html);
+            // TODO: values should come from the character select menu
+            party[0] = PartyMember.Create("Thalion", 2, Gender.Male);
+            CurrentPartyMember = party[0];
         }
 
         public void Update(double deltaTime)
@@ -157,118 +139,8 @@ namespace Ambermoon
             }
         }
 
-        // TODO: REMOVE
-        void ShowMapInfo(Map map)
-        {
-            if (map.Texts.Count > 0)
-            {
-                Console.WriteLine();
-                Console.WriteLine(map.Texts[0] + " - " + map.Index);
-            }
-            Console.WriteLine();
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    if (map.Type == MapType.Map2D)
-                        Console.Write(Math.Max(1, ((int)map.Tiles[x, y].BackTileIndex - 1)).ToString("x2") + " ");
-                    else
-                    {
-                        var block = map.Blocks[x, y];
-
-                        if (block.MapBorder)
-                            Console.Write("## ");
-                        else if (block.WallIndex == 0)
-                            Console.Write("   ");
-                        else
-                            Console.Write(block.WallIndex.ToString("x2") + " ");
-                    }
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    if (map.Type == MapType.Map2D)
-                        Console.Write(map.Tiles[x, y].MapEventId.ToString("x2") + " ");
-                    else
-                        Console.Write(map.Blocks[x, y].MapEventId.ToString("x2") + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    if (map.Type == MapType.Map2D)
-                    {
-                        if ((int)map.Tiles[x, y].MapEventId == 0)
-                            Console.Write("00 ");
-                        else
-                            Console.Write(map.EventLists[(int)map.Tiles[x, y].MapEventId - 1].Index.ToString("x2") + " ");
-                    }
-                    else
-                    {
-                        if ((int)map.Blocks[x, y].MapEventId == 0)
-                            Console.Write("00 ");
-                        else
-                            Console.Write(map.EventLists[(int)map.Blocks[x, y].MapEventId - 1].Index.ToString("x2") + " ");
-                    }
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-            foreach (var e in map.Events)
-            {
-                Console.Write($"{e.Index:x2} -> {e} -> {(e.Next == null ? 255 : e.Next.Index):x2}");
-                if (e is TextEvent textEvent)
-                {
-                    var text = map.Texts[(int)textEvent.TextIndex];
-                    Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
-                }
-                else if (e is QuestionEvent questionEvent)
-                {
-                    var text = map.Texts[(int)questionEvent.TextIndex];
-                    Console.WriteLine(" -> " + text.Substring(0, Math.Min(24, text.Length)));
-                }
-                else if (e is RiddlemouthEvent riddlemouthEvent)
-                {
-                    var introText = map.Texts[(int)riddlemouthEvent.IntroTextIndex];
-                    var solutionText = map.Texts[(int)riddlemouthEvent.SolutionTextIndex];
-                    Console.WriteLine(" -> \r\n\t" + introText.Substring(0, Math.Min(24, introText.Length)) + "\r\n\t" + solutionText.Substring(0, Math.Min(24, solutionText.Length)));
-                }
-                else
-                    Console.WriteLine();
-            }
-            Console.WriteLine();
-            /*var eventTiles = new SortedDictionary<uint, List<Position>>();
-            for (int y = 0; y < map.Height; ++y)
-            {
-                for (int x = 0; x < map.Width; ++x)
-                {
-                    if ((int)map.Tiles[x, y].MapEventId != 0)
-                    {
-                        var index = map.EventLists[(int)map.Tiles[x, y].MapEventId - 1].Index;
-
-                        if (!eventTiles.ContainsKey(index))
-                            eventTiles.Add(index, new List<Position>());
-                        eventTiles[index].Add(new Position(x, y));
-                    }
-                }
-            }
-            foreach (var tile in eventTiles)
-                Console.WriteLine($"{tile.Key:x2} -> {string.Join(" | ", tile.Value.Select(p => $"{p.X},{p.Y}"))}");
-            Console.WriteLine();*/
-        }
-
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
-            // TODO: REMOVE
-            ShowMapInfo(map);
-
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
@@ -298,9 +170,6 @@ namespace Ambermoon
 
         internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
-            // TODO: REMOVE
-            ShowMapInfo(map);
-
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
@@ -337,10 +206,6 @@ namespace Ambermoon
             player2D.Visible = true;
             player.MovementAbility = PlayerMovementAbility.Walking;
             // TODO
-
-            // TODO: REMOVE
-            //ShowMapInfo(map);
-            //Start3D(mapManager.GetMap(/*277/*282*/259), 0, 0, CharacterDirection.Down);
         }
 
         public void LoadGame()
@@ -351,6 +216,20 @@ namespace Ambermoon
         public void Continue()
         {
             // TODO: load latest game
+        }
+
+        public void ShowMessage(Rect bounds, string text, TextColor color, bool shadow, TextAlign textAlign = TextAlign.Left)
+        {
+            messageText.Text = renderView.TextProcessor.ProcessText(text, nameProvider, dictionary);
+            messageText.TextColor = color;
+            messageText.Shadow = shadow;
+            messageText.Place(bounds, textAlign);
+            messageText.Visible = true;
+        }
+
+        public void HideMessage()
+        {
+            messageText.Visible = false;
         }
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)

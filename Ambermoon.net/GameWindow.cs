@@ -139,7 +139,8 @@ namespace Ambermoon
             gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
 
             // Create render view
-            renderView = new RenderView(this, gameData, new GraphicProvider(gameData), new FontProvider(), Width, Height);
+            renderView = new RenderView(this, gameData, new GraphicProvider(gameData), new FontProvider(),
+                new TextProcessor(), Width, Height);
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text);
             renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, 94).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));
 
@@ -152,13 +153,7 @@ namespace Ambermoon
                 new ItemManager(gameData, new ItemReader()));
             Game.StartNew(); // TODO: Remove later
 
-            var testText = renderView.RenderTextFactory.Create();
-            testText.Layer = renderView.GetLayer(Layer.Text);
-            testText.TextColor = TextColor.White;
-            testText.Text = new Text("Hallo");
-            testText.X = 10;
-            testText.Y = 10;
-            testText.Visible = true;
+            Game.ShowMessage(new Rect(230, 60, 120, 120), "Hallo ~LEAD~! ~RUN1~RUNES~NORM~ he said.", TextColor.Yellow, true, TextAlign.Left);
         }
 
         void Window_Render(double delta)

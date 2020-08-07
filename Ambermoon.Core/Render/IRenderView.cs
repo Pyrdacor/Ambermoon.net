@@ -44,6 +44,7 @@ namespace Ambermoon.Render
         IColoredRectFactory ColoredRectFactory { get; }
         ISurface3DFactory Surface3DFactory { get; }
         IRenderTextFactory RenderTextFactory { get; }
+        ITextProcessor TextProcessor { get; }
         ICamera3D Camera3D { get; }
 
         IGameData GameData { get; }

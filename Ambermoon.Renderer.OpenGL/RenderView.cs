@@ -74,6 +74,7 @@ namespace Ambermoon.Renderer.OpenGL
 
         public IGameData GameData { get; }
         public IGraphicProvider GraphicProvider { get; }
+        public ITextProcessor TextProcessor { get; }
 
         #region Coordinate transformations
 
@@ -101,12 +102,14 @@ namespace Ambermoon.Renderer.OpenGL
 
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
-            IFontProvider fontProvider, int screenWidth, int screenHeight, DeviceType deviceType = DeviceType.Desktop,
-            SizingPolicy sizingPolicy = SizingPolicy.FitRatio, OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
+            IFontProvider fontProvider, ITextProcessor textProcessor, int screenWidth, int screenHeight,
+            DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
+            OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
             GameData = gameData;
             GraphicProvider = graphicProvider;
+            TextProcessor = textProcessor;
             VirtualScreen = new Rect(0, 0, screenWidth, screenHeight);
             virtualScreenDisplay = new Rect(VirtualScreen);
             this.sizingPolicy = sizingPolicy;

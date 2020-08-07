@@ -242,7 +242,7 @@ namespace Ambermoon.Renderer
             if (!UpdateCharacterPositions())
                 return;
 
-            for (int i = 0; i < lastCharacterToRender; ++i)
+            for (int i = 0; i <= lastCharacterToRender; ++i)
             {
                 byte glyphIndex = text.GlyphIndices[i];
 

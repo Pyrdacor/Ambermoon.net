@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Legacy" Version="1.0.16" />
+    <PackageReference Include="Ambermoon.Data.Legacy" Version="1.0.18" />
     <PackageReference Include="Silk.NET.Input" Version="1.4.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="1.4.0" />
   </ItemGroup>
