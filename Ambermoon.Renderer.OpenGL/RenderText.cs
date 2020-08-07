@@ -112,6 +112,7 @@ namespace Ambermoon.Renderer
                     return;
 
                 text = value;
+
                 UpdateTextSprites();
             }
         }
@@ -133,6 +134,7 @@ namespace Ambermoon.Renderer
             int lastLineBreakIndex = -1;
             characterPositions = new Position[text.GlyphIndices.Length];
             lastCharacterToRender = -1;
+            int numEmptyCharacterInLine = 0; // e.g. color swaps
 
             bool NewLine()
             {
@@ -141,6 +143,7 @@ namespace Ambermoon.Renderer
 
                 x = X;
                 y += LineHeight;
+                numEmptyCharacterInLine = 0;
 
                 return y + CharacterHeight - 1 < bounds.Bottom;
             }
@@ -150,23 +153,32 @@ namespace Ambermoon.Renderer
                 if (textAlign == TextAlign.Left)
                     return;
 
-                int remainingWidth = bounds.Size.Width - (lineEndGlyphIndex - lastLineBreakIndex) * CharacterWidth;
+                int remainingWidth = bounds.Size.Width - (lineEndGlyphIndex - lastLineBreakIndex - numEmptyCharacterInLine) * CharacterWidth;
                 int adjustment = textAlign == TextAlign.Right
                     ? remainingWidth
                     : remainingWidth / 2; // center
 
                 for (int i = lastLineBreakIndex + 1; i <= lineEndGlyphIndex; ++i)
-                    characterPositions[i].X += adjustment;
+                {
+                    if (characterPositions[i] != null)
+                        characterPositions[i].X += adjustment;
+                }
             }
 
             for (int i = 0; i < text.GlyphIndices.Length; ++i)
             {
                 byte glyphIndex = text.GlyphIndices[i];
 
+                if (glyphIndex >= (byte)SpecialGlyph.FirstColor)
+                {
+                    ++numEmptyCharacterInLine;
+                    continue;
+                }
+
                 // Space is not rendered.
                 // $ is used for non-breaking (hard) space. Also not rendered.
                 // ^ is used as a line-break. Also not rendered.
-                if (glyphIndex == ' ' || glyphIndex == '$')
+                if (glyphIndex == (byte)SpecialGlyph.SoftSpace || glyphIndex == (byte)SpecialGlyph.HardSpace)
                 {
                     lastWhitespaceIndex = i;
                     x += CharacterWidth;
@@ -182,7 +194,7 @@ namespace Ambermoon.Renderer
 
                     continue;
                 }
-                if (glyphIndex == '^')
+                if (glyphIndex == (byte)SpecialGlyph.NewLine)
                 {
                     lastWhitespaceIndex = i;
                     AdjustLineAlign(i - 1);
@@ -229,6 +241,8 @@ namespace Ambermoon.Renderer
 
             lastCharacterToRender = characterPositions.Select((pos, index) => new { pos, index }).Last(p => p.pos != null).index;
 
+            AdjustLineAlign(lastCharacterToRender);
+
             return true;
         }
 
@@ -242,9 +256,14 @@ namespace Ambermoon.Renderer
             if (!UpdateCharacterPositions())
                 return;
 
+            byte colorIndex = (byte)TextColor;
+
             for (int i = 0; i <= lastCharacterToRender; ++i)
             {
                 byte glyphIndex = text.GlyphIndices[i];
+
+                if (glyphIndex >= (byte)SpecialGlyph.FirstColor)
+                    colorIndex = (byte)(glyphIndex - SpecialGlyph.FirstColor);
 
                 if (characterPositions[i] == null)
                     continue;
@@ -253,7 +272,7 @@ namespace Ambermoon.Renderer
                 var textureCoord = glyphTextureMapping[glyphIndex];
                 var sprite = new TextCharacterSprite(CharacterWidth, CharacterHeight, textureCoord.X, textureCoord.Y, virtualScreen)
                 {
-                    TextColorIndex = (byte)TextColor,
+                    TextColorIndex = colorIndex,
                     X = position.X,
                     Y = position.Y,
                     Layer = Layer,
