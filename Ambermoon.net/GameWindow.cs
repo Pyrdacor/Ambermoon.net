@@ -12,6 +12,7 @@ namespace Ambermoon
 {
     class GameWindow : IContextProvider
     {
+        Configuration configuration;
         IRenderView renderView;
         IWindow window;
 
@@ -136,7 +137,7 @@ namespace Ambermoon
 
             // Load game data
             var gameData = new GameData();
-            gameData.Load(@"C:\Projects\ambermoon.net\FileSpecs"); // TODO
+            gameData.Load(configuration.DataPath);
 
             // Create render view
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), new FontProvider(),
@@ -153,7 +154,7 @@ namespace Ambermoon
                 new ItemManager(gameData, new ItemReader()));
             Game.StartNew(); // TODO: Remove later
 
-            Game.ShowMessage(new Rect(0, 75, 320, 50), "Hello ~LEAD~! ~RUN1~RUNES~NORM~ ~SEX1~ ~INK3~s~INK4~a~INK5~i~INK6~d.", TextColor.White, true, TextAlign.Center);
+            Game.ShowMessage(new Rect(0, 75, 320, 50), "Hello ~LEAD~!^~RUN1~RUNES~NORM~ ~SEX1~ ~INK3~s~INK4~a~INK5~i~INK6~d.", TextColor.White, true, TextAlign.Center);
         }
 
         void Window_Render(double delta)
@@ -167,14 +168,15 @@ namespace Ambermoon
             Game.Update(delta);
         }
 
-        public void Run(int width, int height)
+        public void Run(Configuration configuration)
         {
-            Width = width;
-            Height = height;
+            this.configuration = configuration;
+            Width = configuration.Width;
+            Height = configuration.Height;
 
-            var videoMode = new VideoMode(new System.Drawing.Size(width, height), 60);
+            var videoMode = new VideoMode(new System.Drawing.Size(Width, Height), 60);
             var options = new WindowOptions(true, true, new System.Drawing.Point(100, 100),
-                new System.Drawing.Size(width, height), 60.0, 60.0, GraphicsAPI.Default,
+                new System.Drawing.Size(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
                 "Ambermoon.net", WindowState.Normal, WindowBorder.Fixed, VSyncMode.Off,
                 10, false, videoMode);
 
