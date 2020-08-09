@@ -146,6 +146,14 @@ namespace Ambermoon.Render
             }
         }
 
+        public void Destroy()
+        {
+            foreach (var tile in backgroundTileSprites)
+                tile.Visible = false;
+            foreach (var tile in foregroundTileSprites)
+                tile.Visible = false;
+        }
+
         void UpdateTiles()
         {
             var backLayer = renderView.GetLayer((Layer)((uint)Layer.MapBackground1 + tileset.Index - 1));

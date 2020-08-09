@@ -28,8 +28,6 @@ namespace Ambermoon.Render
     {
         public const int TextureWidth = 128;
         public const int TextureHeight = 80;
-        public const int DistancePerTile = 3; // TODO
-        public const int WallHeight = 2; // TODO
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
@@ -51,7 +49,13 @@ namespace Ambermoon.Render
 
             EnsureLabBackgroundGraphics(renderView.GraphicProvider);
 
-            SetMap(map, playerX, playerY, playerDirection);
+            if (map != null)
+                SetMap(map, playerX, playerY, playerDirection);
+        }
+
+        public void Destroy()
+        {
+            // TODO
         }
 
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)
@@ -59,7 +63,7 @@ namespace Ambermoon.Render
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Tried to load a 2D map into a 3D render map.");
 
-            camera.SetPosition(playerX * DistancePerTile, (map.Height - playerY) * DistancePerTile);
+            camera.SetPosition(playerX * Global.DistancePerTile, (map.Height - playerY) * Global.DistancePerTile);
             camera.TurnTowards((float)playerDirection * 90.0f);
 
             if (Map != map)
@@ -87,8 +91,6 @@ namespace Ambermoon.Render
 
             walls.Clear();
             objects.Clear();
-
-            // TODO: objects
         }
 
         void EnsureLabBackgroundGraphics(IGraphicProvider graphicProvider)
@@ -157,26 +159,26 @@ namespace Ambermoon.Render
 
         void AddObject(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, Labdata.Object obj)
         {
-            float baseX = mapX * DistancePerTile;
-            float baseY = (-Map.Height + mapY) * DistancePerTile;
+            float baseX = mapX * Global.DistancePerTile;
+            float baseY = (-Map.Height + mapY) * Global.DistancePerTile;
 
             // TODO: animations
 
             const float blockSize = 512.0f;
-            const float mappedWallHeight = WallHeight * blockSize / DistancePerTile;
+            const float mappedWallHeight = Global.WallHeight * blockSize / Global.DistancePerTile;
 
             foreach (var subObject in obj.SubObjects)
             {
                 var objectInfo = subObject.Object;
                 var mapObject = surfaceFactory.Create(SurfaceType.Billboard,
-                    (objectInfo.MappedTextureWidth / blockSize) * DistancePerTile,
-                    (objectInfo.MappedTextureHeight / mappedWallHeight) * WallHeight,
+                    (objectInfo.MappedTextureWidth / blockSize) * Global.DistancePerTile,
+                    (objectInfo.MappedTextureHeight / mappedWallHeight) * Global.WallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true);
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)Map.PaletteIndex;
-                mapObject.X = baseX + (subObject.X / blockSize) * DistancePerTile;
-                mapObject.Y = ((subObject.Z + objectInfo.MappedTextureHeight) / mappedWallHeight) * WallHeight; // TODO
-                mapObject.Z = baseY + DistancePerTile - (subObject.Y / blockSize) * DistancePerTile;
+                mapObject.X = baseX + (subObject.X / blockSize) * Global.DistancePerTile;
+                mapObject.Y = ((subObject.Z + objectInfo.MappedTextureHeight) / mappedWallHeight) * Global.WallHeight; // TODO
+                mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / blockSize) * Global.DistancePerTile;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
                 objects.Add(mapObject);
@@ -190,20 +192,20 @@ namespace Ambermoon.Render
 
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
-                var wall = surfaceFactory.Create(SurfaceType.Wall, DistancePerTile, WallHeight,
+                var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerTile, Global.WallHeight,
                     TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, wallOrientation);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)Map.PaletteIndex;
                 wall.X = x;
-                wall.Y = WallHeight;
+                wall.Y = Global.WallHeight;
                 wall.Z = z;
                 wall.TextureAtlasOffset = wallTextureOffset;
                 wall.Visible = true; // TODO: not all walls should be always visible
                 walls.Add(wall);
             }
 
-            float baseX = mapX * DistancePerTile;
-            float baseY = (-Map.Height + mapY) * DistancePerTile;
+            float baseX = mapX * Global.DistancePerTile;
+            float baseY = (-Map.Height + mapY) * Global.DistancePerTile;
 
             // TODO
 
@@ -213,15 +215,15 @@ namespace Ambermoon.Render
 
             // left face
             //if (mapX > 0 && Map.Blocks[mapX - 1, mapY].WallIndex == 0 && !Map.Blocks[mapX - 1, mapY].MapBorder)
-                AddSurface(WallOrientation.Rotated90, baseX + DistancePerTile, baseY);
+                AddSurface(WallOrientation.Rotated90, baseX + Global.DistancePerTile, baseY);
 
             // back face
             //if (mapY > 0 && Map.Blocks[mapX, mapY - 1].WallIndex == 0 && !Map.Blocks[mapX, mapY - 1].MapBorder)
-                AddSurface(WallOrientation.Rotated180, baseX + DistancePerTile, baseY + DistancePerTile);
+                AddSurface(WallOrientation.Rotated180, baseX + Global.DistancePerTile, baseY + Global.DistancePerTile);
 
             // right face
             //if (mapX < Map.Width - 1 && Map.Blocks[mapX + 1, mapY].WallIndex == 0 && !Map.Blocks[mapX + 1, mapY].MapBorder)
-                AddSurface(WallOrientation.Rotated270, baseX, baseY + DistancePerTile);
+                AddSurface(WallOrientation.Rotated270, baseX, baseY + Global.DistancePerTile);
         }
 
         void UpdateSurfaces()
@@ -236,19 +238,23 @@ namespace Ambermoon.Render
             var billboardLayer = renderView.GetLayer(Layer.Billboards3D);
 
             // Add floor and ceiling
-            floor = surfaceFactory.Create(SurfaceType.Floor, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
+            floor = surfaceFactory.Create(SurfaceType.Floor,
+                Map.Width * Global.DistancePerTile, Map.Height * Global.DistancePerTile,
+                64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
             floor.PaletteIndex = (byte)Map.PaletteIndex;
             floor.Layer = layer;
             floor.X = 0.0f;
             floor.Y = 0.0f;
-            floor.Z = -Map.Height * DistancePerTile;
+            floor.Z = -Map.Height * Global.DistancePerTile;
             floor.TextureAtlasOffset = FloorTextureOffset;
             floor.Visible = true;
-            ceiling = surfaceFactory.Create(SurfaceType.Ceiling, Map.Width * DistancePerTile, Map.Height * DistancePerTile, 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
+            ceiling = surfaceFactory.Create(SurfaceType.Ceiling,
+                Map.Width * Global.DistancePerTile, Map.Height * Global.DistancePerTile,
+                64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
             ceiling.PaletteIndex = (byte)Map.PaletteIndex;
             ceiling.Layer = layer;
             ceiling.X = 0.0f;
-            ceiling.Y = WallHeight;
+            ceiling.Y = Global.WallHeight;
             ceiling.Z = 0.0f;
             ceiling.TextureAtlasOffset = CeilingTextureOffset;
             ceiling.Visible = true;

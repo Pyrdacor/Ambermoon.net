@@ -59,6 +59,7 @@ namespace Ambermoon
         RenderMap2D renderMap2D = null;
         Player2D player2D = null;
         RenderMap3D renderMap3D = null;
+        Player3D player3D = null;
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
 
@@ -108,31 +109,31 @@ namespace Ambermoon
             {
                 if (keys[(int)Key.Left] && !keys[(int)Key.Right])
                 {
-                    if (renderMap2D != null)
+                    if (!is3D)
                         player2D.Move(-1, 0, currentTicks);
-                    else if (renderMap3D != null)
-                        camera3D.TurnLeft(10.0f); // TODO
+                    else
+                        player3D.TurnLeft(10.0f); // TODO
                 }
                 if (keys[(int)Key.Right] && !keys[(int)Key.Left])
                 {
-                    if (renderMap2D != null)
+                    if (!is3D)
                         player2D.Move(1, 0, currentTicks);
-                    else if (renderMap3D != null)
-                        camera3D.TurnRight(10.0f); // TODO
+                    else
+                        player3D.TurnRight(10.0f); // TODO
                 }
                 if (keys[(int)Key.Up] && !keys[(int)Key.Down])
                 {
-                    if (renderMap2D != null)
+                    if (!is3D)
                         player2D.Move(0, -1, currentTicks);
-                    else if (renderMap3D != null)
-                        camera3D.MoveForward(0.75f); // TODO
+                    else
+                        player3D.MoveForward(0.75f, currentTicks); // TODO
                 }
                 if (keys[(int)Key.Down] && !keys[(int)Key.Up])
                 {
-                    if (renderMap2D != null)
+                    if (!is3D)
                         player2D.Move(0, 1, currentTicks);
-                    else if (renderMap3D != null)
-                        camera3D.MoveBackward(0.75f); // TODO
+                    else
+                        player3D.MoveBackward(0.75f, currentTicks); // TODO
                 }
 
                 lastKeyTicksReset = currentTicks;
@@ -144,12 +145,24 @@ namespace Ambermoon
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
-            if (renderMap2D != null)
-                throw new AmbermoonException(ExceptionScope.Application, "Render map 2D should not be present.");
-
-            renderMap2D = new RenderMap2D(map, mapManager, renderView,
-                (uint)Util.Limit(0, (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                (uint)Util.Limit(0, (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
+            if (renderMap2D.Map != map)
+            {
+                renderMap2D.SetMap
+                (
+                    map,
+                    (uint)Util.Limit(0, (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
+                    (uint)Util.Limit(0, (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)
+                );
+            }
+            else
+            {
+                renderMap2D.ScrollTo
+                (
+                    (uint)Util.Limit(0, (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
+                    (uint)Util.Limit(0, (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y),
+                    true
+                );
+            }
 
             player2D.Visible = true;
             player2D.MoveTo(map, playerX, playerY, currentTicks, true, direction);
@@ -159,7 +172,7 @@ namespace Ambermoon
             player.Position.Y = mapOffset.Y + (int)playerY - (int)renderMap2D.ScrollY;
             player.Direction = direction;
 
-            renderMap3D = null;
+            renderMap3D.Destroy();
 
             is3D = false;
             renderView.GetLayer(Layer.Map3D).Visible = false;
@@ -173,15 +186,11 @@ namespace Ambermoon
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
-            if (renderMap3D != null)
-                throw new AmbermoonException(ExceptionScope.Application, "Render map 3D should not be present.");
-
             // TODO: player direction is not neccessarily the one of the previous map
             renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
-            renderMap2D = null;
-            camera3D.SetPosition(playerX * RenderMap3D.DistancePerTile + 0.5f * RenderMap3D.DistancePerTile,
-                (map.Height - playerY) * RenderMap3D.DistancePerTile - 0.5f * RenderMap3D.DistancePerTile);
-
+            renderMap2D.Destroy();
+            player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
+            player3D.SetPosition((int)playerX, (int)playerY, currentTicks);
             player2D.Visible = false;
             player.Position.X = (int)playerX;
             player.Position.Y = (int)playerY;
@@ -201,10 +210,11 @@ namespace Ambermoon
             player = new Player();
             var map = mapManager.GetMap(258u); // grandfather's house
             renderMap2D = new RenderMap2D(map, mapManager, renderView);
-            renderMap3D = null;
+            renderMap3D = new RenderMap3D(null, mapManager, renderView, 0, 0, CharacterDirection.Up);            
             player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
                 renderView.SpriteFactory, renderView.GameData, new Position(2, 2), mapManager);
             player2D.Visible = true;
+            player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
             player.MovementAbility = PlayerMovementAbility.Walking;
             // TODO
         }
@@ -239,31 +249,31 @@ namespace Ambermoon
 
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
             {
-                if (renderMap2D != null)
+                if (!is3D)
                     player2D.Move(-1, 0, currentTicks);
-                else if (renderMap3D != null)
-                    camera3D.TurnLeft(10.0f); // TODO
+                else
+                    player3D.TurnLeft(10.0f); // TODO
             }
             if (keys[(int)Key.Right] && !keys[(int)Key.Left])
             {
-                if (renderMap2D != null)
+                if (!is3D)
                     player2D.Move(1, 0, currentTicks);
-                else if (renderMap3D != null)
-                    camera3D.TurnRight(10.0f); // TODO
+                else
+                    player3D.TurnRight(10.0f); // TODO
             }
             if (keys[(int)Key.Up] && !keys[(int)Key.Down])
             {
-                if (renderMap2D != null)
+                if (!is3D)
                     player2D.Move(0, -1, currentTicks);
-                else if (renderMap3D != null)
-                    camera3D.MoveForward(0.2f); // TODO
+                else
+                    player3D.MoveForward(0.75f, currentTicks); // TODO
             }
             if (keys[(int)Key.Down] && !keys[(int)Key.Up])
             {
-                if (renderMap2D != null)
+                if (!is3D)
                     player2D.Move(0, 1, currentTicks);
-                else if (renderMap3D != null)
-                    camera3D.MoveBackward(0.2f); // TODO
+                else
+                    player3D.MoveBackward(0.75f, currentTicks); // TODO
             }
 
             lastKeyTicksReset = currentTicks;

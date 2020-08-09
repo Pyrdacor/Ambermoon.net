@@ -23,6 +23,8 @@ namespace Ambermoon.Render
 {
     public interface ICamera3D
     {
+        Position Position { get; }
+
         /// <summary>
         /// This will reset the view angle to up
         /// </summary>
