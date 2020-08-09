@@ -64,24 +64,45 @@ namespace Ambermoon.Render
             lastY = y;
         }
 
+        bool CheckPosition(Position position)
+        {
+            return !map.BlocksMovement(position.X, position.Y);
+        }
+
         public void MoveForward(float distance, uint ticks)
         {
-            // TODO: collision detection
-            Camera.MoveForward(distance);
+            var position = Camera.GetForwardPosition(distance * 2);
+            position.Y = map.Map.Height - position.Y;
 
-            var position = Camera.Position;
-            Position = new Position(position.X, map.Map.Height - position.Y);
-            map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            if (CheckPosition(position))
+            {
+                Camera.MoveForward(distance);
+                position = Camera.Position;
+                Position = new Position(position.X, map.Map.Height - position.Y);
+                map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            }
+            else
+            {
+                // TODO: OUCH
+            }
         }
 
         public void MoveBackward(float distance, uint ticks)
         {
-            // TODO: collision detection
-            Camera.MoveBackward(distance);
+            var position = Camera.GetBackwardPosition(distance * 2);
+            position.Y = map.Map.Height - position.Y;
 
-            var position = Camera.Position;
-            Position = new Position(position.X, map.Map.Height - position.Y);
-            map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            if (CheckPosition(position))
+            {
+                Camera.MoveBackward(distance);
+                position = Camera.Position;
+                Position = new Position(position.X, map.Map.Height - position.Y);
+                map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            }
+            else
+            {
+                // TODO: OUCH
+            }
         }
 
         public void TurnLeft(float angle) // in degrees

@@ -23,8 +23,29 @@ namespace Ambermoon.Renderer.OpenGL
             currentMatrix = new Matrix4(Matrix4.Identity);
         }
 
-        public Position Position => new Position(Misc.Round((-x - 0.5f * Global.DistancePerTile) / Global.DistancePerTile),
-            Misc.Round((z + 0.5f * Global.DistancePerTile) / Global.DistancePerTile));
+        static Position CoordinatesToPosition(float x, float z) =>
+            new Position(Misc.Round((-x - 0.5f * Global.DistancePerTile) / Global.DistancePerTile),
+                Misc.Round((z + 0.5f * Global.DistancePerTile) / Global.DistancePerTile));
+
+        public Position Position => CoordinatesToPosition(x, z);
+
+        public Position GetForwardPosition(float distance)
+        {
+            return CoordinatesToPosition
+            (
+                x - (float)currentAngleCos * distance,
+                z - (float)currentAngleSin * distance
+            );
+        }
+
+        public Position GetBackwardPosition(float distance)
+        {
+            return CoordinatesToPosition
+            (
+                x + (float)currentAngleCos * distance,
+                z + (float)currentAngleSin * distance
+            );
+        }
 
         public void Activate()
         {

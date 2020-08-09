@@ -36,5 +36,7 @@ namespace Ambermoon.Render
         void TurnTowards(float angle); // turn to attacking monster or stand on a spinner (in degrees)
         void LevitateUp(float distance); // used for climbing up ladders/ropes or use levitation spell (distance is in the range of 0 to 1 where 1 is full room height)
         void LevitateDown(float distance); // used for climbing down ladders/ropes (distance is in the range of 0 to 1 where 1 is full room height)
+        Position GetForwardPosition(float distance);
+        Position GetBackwardPosition(float distance);
     }
 }

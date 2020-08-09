@@ -21,6 +21,7 @@
 
 using Ambermoon.Data;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Render
 {
@@ -74,7 +75,6 @@ namespace Ambermoon.Render
                 labdata = mapManager.GetLabdataForMap(map);
                 EnsureLabdataTextureAtlas();
                 UpdateSurfaces();
-                // TODO: objects
             }
         }
 
@@ -142,6 +142,18 @@ namespace Ambermoon.Render
             textureAtlas = labdataTextures[Map.TilesetOrLabdataIndex];
             renderView.GetLayer(Layer.Map3D).Texture = textureAtlas.Texture;
             renderView.GetLayer(Layer.Billboards3D).Texture = textureAtlas.Texture;
+        }
+
+        public bool BlocksMovement(int x, int y)
+        {
+            var block = Map.Blocks[x, y];
+
+            if (block.WallIndex != 0)
+                return labdata.Walls[(int)block.WallIndex - 1].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
+            if (block.ObjectIndex != 0)
+                return labdata.Objects[(int)block.ObjectIndex - 1].SubObjects.Any(so => so.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement));
+
+            return false;
         }
 
         Position GetObjectTextureOffset(uint objectIndex)
