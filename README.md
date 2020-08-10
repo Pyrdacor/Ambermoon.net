@@ -4,6 +4,7 @@
 
 Version | OS
 --- | ---
+[1.0.1](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.1/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.0](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.0/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Other platforms will follow.
@@ -42,6 +43,12 @@ Text rendering also works now with text replacements like character names, shado
 ![3D map rendering 2](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D2.png "3D map rendering 2")
 ![Billboards](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Billboards1.png "Billboards")
 ![Text rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/TextRendering.png "Text rendering")
+
+
+## Change log
+
+- Version 1.0.1: Added 3D map events and collision detection
+- Version 1.0.0: First release (2D and 3D map movement, 2D map events and collision detection)
 
 
 ## Support development
