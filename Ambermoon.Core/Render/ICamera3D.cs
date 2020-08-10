@@ -19,24 +19,28 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Ambermoon.Geometry;
+
 namespace Ambermoon.Render
 {
     public interface ICamera3D
     {
-        Position Position { get; }
+        float X { get; }
+        float Y { get; }
+        float Z { get; }
 
         /// <summary>
         /// This will reset the view angle to up
         /// </summary>
         void SetPosition(float x, float z);
-        void MoveForward(float distance);
-        void MoveBackward(float distance);
+        void MoveForward(float distance, bool noX, bool noZ);
+        void MoveBackward(float distance, bool noX, bool noZ);
         void TurnLeft(float angle); // in degrees
         void TurnRight(float angle); // in degrees
         void TurnTowards(float angle); // turn to attacking monster or stand on a spinner (in degrees)
         void LevitateUp(float distance); // used for climbing up ladders/ropes or use levitation spell (distance is in the range of 0 to 1 where 1 is full room height)
         void LevitateDown(float distance); // used for climbing down ladders/ropes (distance is in the range of 0 to 1 where 1 is full room height)
-        Position GetForwardPosition(float distance);
-        Position GetBackwardPosition(float distance);
+        void GetForwardPosition(float distance, out float x, out float z, bool noX, bool noZ);
+        void GetBackwardPosition(float distance, out float x, out float z, bool noX, bool noZ);
     }
 }

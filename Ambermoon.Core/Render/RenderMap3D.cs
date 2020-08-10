@@ -20,6 +20,8 @@
  */
 
 using Ambermoon.Data;
+using Ambermoon.Geometry;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -36,6 +38,7 @@ namespace Ambermoon.Render
         ISurface3D floor = null;
         ISurface3D ceiling = null;
         Labdata labdata = null;
+        readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = new Dictionary<uint, List<ICollisionBody>>();
         readonly List<ISurface3D> walls = new List<ISurface3D>();
         readonly List<ISurface3D> objects = new List<ISurface3D>();
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
@@ -171,6 +174,8 @@ namespace Ambermoon.Render
 
         void AddObject(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, Labdata.Object obj)
         {
+            uint blockIndex = mapX + mapY * (uint)Map.Width;
+            blockCollisionBodies.Add(blockIndex, new List<ICollisionBody>(8));
             float baseX = mapX * Global.DistancePerTile;
             float baseY = (-Map.Height + mapY) * Global.DistancePerTile;
 
@@ -194,13 +199,26 @@ namespace Ambermoon.Render
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
                 objects.Add(mapObject);
+
+                if (subObject.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
+                {
+                    blockCollisionBodies[blockIndex].Add(new CollisionSphere3D
+                    {
+                        CenterX = mapObject.X,
+                        CenterZ = -mapObject.Z,
+                        Radius = 0.25f * (mapObject.Width + mapObject.Height)
+                    });
+                }
             }
         }
 
         void AddWall(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, uint wallIndex)
         {
+            uint blockIndex = mapX + mapY * (uint)Map.Width;
+            blockCollisionBodies.Add(blockIndex, new List<ICollisionBody>(4));
             var wallTextureOffset = GetWallTextureOffset(wallIndex);
             bool alpha = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.Transparency);
+            bool blocksMovement = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
 
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
@@ -214,6 +232,17 @@ namespace Ambermoon.Render
                 wall.TextureAtlasOffset = wallTextureOffset;
                 wall.Visible = true; // TODO: not all walls should be always visible
                 walls.Add(wall);
+
+                if (blocksMovement)
+                {
+                    blockCollisionBodies[blockIndex].Add(new CollisionLine3D
+                    {
+                        X = wallOrientation == WallOrientation.Rotated180 ? x - Global.DistancePerTile : x,
+                        Z = -(wallOrientation == WallOrientation.Rotated270 ? z - Global.DistancePerTile : z),
+                        Horizontal = wallOrientation == WallOrientation.Normal || wallOrientation == WallOrientation.Rotated180,
+                        Length = Global.DistancePerTile
+                    });
+                }
             }
 
             float baseX = mapX * Global.DistancePerTile;
@@ -244,6 +273,7 @@ namespace Ambermoon.Render
             floor?.Delete();
             ceiling?.Delete();
             walls.ForEach(s => s?.Delete());
+            blockCollisionBodies.Clear();
 
             var surfaceFactory = renderView.Surface3DFactory;
             var layer = renderView.GetLayer(Layer.Map3D);
@@ -284,6 +314,27 @@ namespace Ambermoon.Render
                         AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
                 }
             }
+        }
+
+        public CollisionDetectionInfo3D GetCollisionDetectionInfo(Position position)
+        {
+            var info = new CollisionDetectionInfo3D();
+
+            for (int y = Math.Max(0, position.Y - 1); y <= Math.Min(Map.Height - 1, position.Y + 1); ++y)
+            {
+                for (int x = Math.Max(0, position.X - 1); x <= Math.Min(Map.Width - 1, position.X + 1); ++x)
+                {
+                    uint blockIndex = (uint)(x + y * Map.Width);
+
+                    if (blockCollisionBodies.ContainsKey(blockIndex))
+                    {
+                        foreach (var collisionBody in blockCollisionBodies[blockIndex])
+                            info.CollisionBodies.Add(collisionBody);
+                    }
+                }
+            }
+
+            return info;
         }
     }
 }

@@ -21,9 +21,9 @@
 
 using System;
 
-namespace Ambermoon.Renderer
+namespace Ambermoon
 {
-    internal static class Misc
+    public static class Misc
     {
         public static bool FloatEqual(float f1, float f2)
         {

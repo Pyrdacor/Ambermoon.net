@@ -13,9 +13,6 @@ namespace Ambermoon.Renderer.OpenGL
         float currentAngle = 0.0f;
         double currentAngleCos = 0.0;
         double currentAngleSin = -1.0;
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
 
         public Camera3D(State state)
         {
@@ -23,28 +20,20 @@ namespace Ambermoon.Renderer.OpenGL
             currentMatrix = new Matrix4(Matrix4.Identity);
         }
 
-        static Position CoordinatesToPosition(float x, float z) =>
-            new Position(Misc.Round((-x - 0.5f * Global.DistancePerTile) / Global.DistancePerTile),
-                Misc.Round((z + 0.5f * Global.DistancePerTile) / Global.DistancePerTile));
+        public float X { get; private set; } = 0.0f;
+        public float Y { get; private set; } = 0.0f;
+        public float Z { get; private set; } = 0.0f;
 
-        public Position Position => CoordinatesToPosition(x, z);
-
-        public Position GetForwardPosition(float distance)
+        public void GetForwardPosition(float distance, out float x, out float z, bool noX, bool noZ)
         {
-            return CoordinatesToPosition
-            (
-                x - (float)currentAngleCos * distance,
-                z - (float)currentAngleSin * distance
-            );
+            x = noX ? X : X - (float)currentAngleCos * distance;
+            z = noZ ? Z : Z - (float)currentAngleSin * distance;
         }
 
-        public Position GetBackwardPosition(float distance)
+        public void GetBackwardPosition(float distance, out float x, out float z, bool noX, bool noZ)
         {
-            return CoordinatesToPosition
-            (
-                x + (float)currentAngleCos * distance,
-                z + (float)currentAngleSin * distance
-            );
+            x = noX ? X : X + (float)currentAngleCos * distance;
+            z = noZ ? Z : Z + (float)currentAngleSin * distance;
         }
 
         public void Activate()
@@ -55,7 +44,7 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void ActivateBillboards(Billboard3DShader shader)
         {
-            shader.SetCameraPosition(x, y, z);
+            shader.SetCameraPosition(X, Y, Z);
             shader.SetCameraDirection((float)currentAngleCos, 0.0f, (float)currentAngleSin);
         }
 
@@ -68,10 +57,10 @@ namespace Ambermoon.Renderer.OpenGL
 
         private void Move(float x, float y, float z)
         {
-            this.x += x;
-            this.y += y;
-            this.z += z;
-            translateMatrix = Matrix4.CreateTranslationMatrix(this.x, this.y, this.z);
+            X += x;
+            Y += y;
+            Z += z;
+            translateMatrix = Matrix4.CreateTranslationMatrix(X, Y, Z);
             UpdateMatrix();
         }
 
@@ -91,14 +80,14 @@ namespace Ambermoon.Renderer.OpenGL
             Move(0.0f, distance, 0.0f);
         }
 
-        public void MoveBackward(float distance)
+        public void MoveBackward(float distance, bool noX, bool noZ)
         {
-            Move((float)currentAngleCos * distance, 0.0f, (float)currentAngleSin * distance);
+            Move(noX ? 0.0f : (float)currentAngleCos * distance, 0.0f, noZ ? 0.0f : (float)currentAngleSin * distance);
         }
 
-        public void MoveForward(float distance)
+        public void MoveForward(float distance, bool noX, bool noZ)
         {
-            Move(-(float)currentAngleCos * distance, 0.0f, -(float)currentAngleSin * distance);
+            Move(noX ? 0.0f : -(float)currentAngleCos * distance, 0.0f, noZ ? 0.0f : -(float)currentAngleSin * distance);
         }
 
         /// <summary>
@@ -106,10 +95,10 @@ namespace Ambermoon.Renderer.OpenGL
         /// </summary>
         public void SetPosition(float x, float z)
         {
-            this.x = -x;
-            this.y = -1.0f;
-            this.z = z;
-            translateMatrix = Matrix4.CreateTranslationMatrix(this.x, this.y, this.z);
+            X = -x;
+            Y = -1.0f;
+            Z = z;
+            translateMatrix = Matrix4.CreateTranslationMatrix(X, Y, Z);
             UpdateMatrix();
         }
 

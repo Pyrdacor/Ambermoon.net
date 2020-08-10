@@ -1,7 +1,11 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Geometry;
+using System;
 
 namespace Ambermoon.Render
 {
+    using Geometry = Ambermoon.Geometry.Geometry;
+
     class Player3D : IRenderPlayer
     {
         readonly Game game = null;
@@ -23,8 +27,8 @@ namespace Ambermoon.Render
 
         void ResetCameraPosition()
         {
-            Camera.SetPosition(Position.X * Global.DistancePerTile + 0.5f * Global.DistancePerTile,
-                (map.Map.Height - Position.Y) * Global.DistancePerTile - 0.5f * Global.DistancePerTile);
+            Geometry.BlockToCameraPosition(map.Map, Position, out float x, out float z);
+            Camera.SetPosition(x, z);
         }
 
         public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
@@ -64,44 +68,97 @@ namespace Ambermoon.Render
             lastY = y;
         }
 
-        bool CheckPosition(Position position)
+        bool TestCollision(float x, float z, float lastMapX, float lastMapY)
         {
-            return !map.BlocksMovement(position.X, position.Y);
+            Geometry.CameraToWorldPosition(map.Map, x, z, out float mapX, out float mapY);
+
+            // This contains all collision bodies in a 3x3 area around the current position.
+            var collisionDetectionInfo = map.GetCollisionDetectionInfo(Position);
+
+            return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, 0.125f * Global.DistancePerTile);
         }
 
         public void MoveForward(float distance, uint ticks)
         {
-            var position = Camera.GetForwardPosition(distance * 2);
-            position.Y = map.Map.Height - position.Y;
-
-            if (CheckPosition(position))
+            void Move(bool noX, bool noZ)
             {
-                Camera.MoveForward(distance);
-                position = Camera.Position;
-                Position = new Position(position.X, map.Map.Height - position.Y);
+                Camera.MoveForward(distance, noX, noZ);
+                Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
                 map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            }
+
+            Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
+            Camera.GetForwardPosition(distance * 2f, out float newX, out float newY, false, false);
+
+            if (TestCollision(newX, newY, cameraMapX, cameraMapY))
+            {
+                // If collision is detected try to move only in x direction
+                Camera.GetForwardPosition(distance * 2f, out newX, out newY, false, true);
+
+                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in x direction
+                {
+                    Move(false, true);
+                    return;
+                }
+
+                // If collision is detected in x direction too, try to move only in z direction
+                Camera.GetForwardPosition(distance * 2f, out newX, out newY, true, false);
+
+                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in z direction
+                {
+                    Move(true, false);
+                    return;
+                }
+
+                // If we are here, we can't move at all
+                // TODO: Display OUCH
             }
             else
             {
-                // TODO: OUCH
+                // We can move freely
+                Move(false, false);
             }
         }
 
         public void MoveBackward(float distance, uint ticks)
         {
-            var position = Camera.GetBackwardPosition(distance * 2);
-            position.Y = map.Map.Height - position.Y;
-
-            if (CheckPosition(position))
+            void Move(bool noX, bool noZ)
             {
-                Camera.MoveBackward(distance);
-                position = Camera.Position;
-                Position = new Position(position.X, map.Map.Height - position.Y);
+                Camera.MoveBackward(distance, noX, noZ);
+                Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
                 map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            }
+
+            Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
+            Camera.GetBackwardPosition(distance * 2f, out float newX, out float newY, false, false);
+
+            if (TestCollision(newX, newY, cameraMapX, cameraMapY))
+            {
+                // If collision is detected try to move only in x direction
+                Camera.GetBackwardPosition(distance * 2f, out newX, out newY, false, true);
+
+                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in x direction
+                {
+                    Move(false, true);
+                    return;
+                }
+
+                // If collision is detected in x direction too, try to move only in z direction
+                Camera.GetBackwardPosition(distance * 2f, out newX, out newY, true, false);
+
+                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in z direction
+                {
+                    Move(true, false);
+                    return;
+                }
+
+                // If we are here, we can't move at all
+                // TODO: Display OUCH
             }
             else
             {
-                // TODO: OUCH
+                // We can move freely
+                Move(false, false);
             }
         }
 

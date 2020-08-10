@@ -112,14 +112,14 @@ namespace Ambermoon
                     if (!is3D)
                         player2D.Move(-1, 0, currentTicks);
                     else
-                        player3D.TurnLeft(10.0f); // TODO
+                        player3D.TurnLeft(15.0f); // TODO
                 }
                 if (keys[(int)Key.Right] && !keys[(int)Key.Left])
                 {
                     if (!is3D)
                         player2D.Move(1, 0, currentTicks);
                     else
-                        player3D.TurnRight(10.0f); // TODO
+                        player3D.TurnRight(15.0f); // TODO
                 }
                 if (keys[(int)Key.Up] && !keys[(int)Key.Down])
                 {
@@ -140,10 +140,21 @@ namespace Ambermoon
             }
         }
 
+        void ResetMoveKeys()
+        {
+            keys[(int)Key.Up] = false;
+            keys[(int)Key.Down] = false;
+            keys[(int)Key.Left] = false;
+            keys[(int)Key.Right] = false;
+            lastKeyTicksReset = currentTicks;
+        }
+
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
+
+            ResetMoveKeys();
 
             if (renderMap2D.Map != map)
             {
@@ -185,6 +196,8 @@ namespace Ambermoon
         {
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
+
+            ResetMoveKeys();
 
             // TODO: player direction is not neccessarily the one of the previous map
             renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
@@ -252,14 +265,14 @@ namespace Ambermoon
                 if (!is3D)
                     player2D.Move(-1, 0, currentTicks);
                 else
-                    player3D.TurnLeft(10.0f); // TODO
+                    player3D.TurnLeft(15.0f); // TODO
             }
             if (keys[(int)Key.Right] && !keys[(int)Key.Left])
             {
                 if (!is3D)
                     player2D.Move(1, 0, currentTicks);
                 else
-                    player3D.TurnRight(10.0f); // TODO
+                    player3D.TurnRight(15.0f); // TODO
             }
             if (keys[(int)Key.Up] && !keys[(int)Key.Down])
             {
