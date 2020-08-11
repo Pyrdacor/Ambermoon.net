@@ -19,16 +19,13 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Silk.NET.OpenGL;
-using System;
-
 namespace Ambermoon.Renderer
 {
-    internal class LayerBuffer : BufferObject<byte>
+    internal class ByteBuffer : BufferObject<byte>
     {
         public override int Dimension => 1;
 
-        public LayerBuffer(State state, bool staticData)
+        public ByteBuffer(State state, bool staticData)
             : base(state, staticData)
         {
 

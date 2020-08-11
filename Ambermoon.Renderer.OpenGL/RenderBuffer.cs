@@ -37,16 +37,16 @@ namespace Ambermoon.Renderer
         readonly PositionBuffer positionBuffer = null;
         readonly PositionBuffer textureAtlasOffsetBuffer = null;
         readonly PositionBuffer maskTextureAtlasOffsetBuffer = null; // is null for normal sprites
-        readonly BaseLineBuffer baseLineBuffer = null;
+        readonly WordBuffer baseLineBuffer = null;
         readonly ColorBuffer colorBuffer = null;
-        readonly LayerBuffer layerBuffer = null;
+        readonly ByteBuffer layerBuffer = null;
         readonly IndexBuffer indexBuffer = null;
-        readonly LayerBuffer paletteIndexBuffer = null;
-        readonly LayerBuffer textColorIndexBuffer = null;
+        readonly ByteBuffer paletteIndexBuffer = null;
+        readonly ByteBuffer textColorIndexBuffer = null;
         readonly PositionBuffer textureEndCoordBuffer = null;
         readonly PositionBuffer textureSizeBuffer = null;
         readonly VectorBuffer billboardCenterBuffer = null;
-        readonly LayerBuffer alphaBuffer = null;
+        readonly ByteBuffer alphaBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
@@ -112,7 +112,7 @@ namespace Ambermoon.Renderer
             if (is3D)
             {
                 vectorBuffer = new VectorBuffer(state, false);
-                alphaBuffer = new LayerBuffer(state, true);
+                alphaBuffer = new ByteBuffer(state, true);
             }
             else
                 positionBuffer = new PositionBuffer(state, false);
@@ -121,32 +121,32 @@ namespace Ambermoon.Renderer
             if (noTexture)
             {
                 colorBuffer = new ColorBuffer(state, true);
-                layerBuffer = new LayerBuffer(state, true);
+                layerBuffer = new ByteBuffer(state, true);
 
                 vertexArrayObject.AddBuffer(ColorShader.DefaultColorName, colorBuffer);
                 vertexArrayObject.AddBuffer(ColorShader.DefaultLayerName, layerBuffer);
             }
             else
             {
-                paletteIndexBuffer = new LayerBuffer(state, true);
+                paletteIndexBuffer = new ByteBuffer(state, true);
                 textureAtlasOffsetBuffer = new PositionBuffer(state, !supportAnimations);
 
                 if (isText)
                 {
-                    textColorIndexBuffer = new LayerBuffer(state, true);
+                    textColorIndexBuffer = new ByteBuffer(state, true);
 
                     vertexArrayObject.AddBuffer(TextShader.DefaultTextColorIndexName, textColorIndexBuffer);
                 }
 
                 if (layered)
                 {
-                    layerBuffer = new LayerBuffer(state, true);
+                    layerBuffer = new ByteBuffer(state, true);
 
                     vertexArrayObject.AddBuffer(ColorShader.DefaultLayerName, layerBuffer);
                 }
                 else if (!is3D)
                 {
-                    baseLineBuffer = new BaseLineBuffer(state, false);
+                    baseLineBuffer = new WordBuffer(state, false);
 
                     vertexArrayObject.AddBuffer(ColorShader.DefaultLayerName, baseLineBuffer);
                 }
@@ -304,7 +304,12 @@ namespace Ambermoon.Renderer
 
             if (baseLineBuffer != null)
             {
-                ushort baseLine = (ushort)(position.Y + size.Height + sprite.BaseLineOffset);
+                var baseLineOffsetSize = new Size(0, sprite.BaseLineOffset);
+
+                if (sizeTransformation != null)
+                    baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
+
+                ushort baseLine = (ushort)(position.Y + size.Height + baseLineOffsetSize.Height);
 
                 int baseLineBufferIndex = baseLineBuffer.Add(baseLine);
 
@@ -523,7 +528,12 @@ namespace Ambermoon.Renderer
 
             if (baseLineBuffer != null)
             {
-                ushort baseLine = (ushort)(position.Y + size.Height + baseLineOffset);
+                var baseLineOffsetSize = new Size(0, baseLineOffset);
+
+                if (sizeTransformation != null)
+                    baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
+
+                ushort baseLine = (ushort)(position.Y + size.Height + baseLineOffsetSize.Height);
 
                 baseLineBuffer.Update(index, baseLine);
                 baseLineBuffer.Update(index + 1, baseLine);
@@ -539,7 +549,6 @@ namespace Ambermoon.Renderer
                 float x = surface.X - surface.Width * 0.5f;
                 float z = surface.Z - surface.Height * 0.5f;
 
-                // TODO ?
                 vectorBuffer.Update(index, x, surface.Y, z);
                 vectorBuffer.Update(index + 1, x + surface.Width, surface.Y, z);
                 vectorBuffer.Update(index + 2, x + surface.Width, surface.Y, z - surface.Height);

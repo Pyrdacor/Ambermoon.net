@@ -62,7 +62,7 @@ namespace Ambermoon.Render
             Position = startPosition;
         }
 
-        public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
+        public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
             if (map != Map.Map)
             {
@@ -160,6 +160,8 @@ namespace Ambermoon.Render
         {
             sprite.CurrentFrame = frameIndex; // this will take care of modulo frame count
             CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
+            // TODO: REMOVE
+            Console.WriteLine($"Set player frame to {sprite.CurrentFrame}");
         }
     }
 }

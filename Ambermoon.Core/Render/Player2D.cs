@@ -18,11 +18,13 @@ namespace Ambermoon.Render
             this.mapManager = mapManager;
         }
 
-        public bool Move(int x, int y, uint ticks) // in tiles
+        public bool Move(int x, int y, uint ticks, CharacterDirection? prevDirection = null,
+            bool updateDirectionIfNotMoving = true) // x,y in tiles
         {
             if (player.MovementAbility == PlayerMovementAbility.NoMovement)
                 return false;
 
+            bool canMove = true;
             int newX = Position.X + x;
             int newY = Position.Y + y;
             var map = Map.Map;
@@ -31,7 +33,7 @@ namespace Ambermoon.Render
             {
                 // Each map should have a border of 1 (walls)
                 if (newX < 1 || newY < 1 || newX >= map.Width - 1 || newY >= map.Height - 1)
-                    return false;
+                    canMove = false;
             }
             else
             {
@@ -50,33 +52,43 @@ namespace Ambermoon.Render
             }
 
             var tile = Map[(uint)newX, (uint)newY + 1];
-            bool canMove;
 
-            switch (tile.Type)
+            if (canMove)
             {
-                case Data.Map.TileType.Free:
-                case Data.Map.TileType.ChairUp:
-                case Data.Map.TileType.ChairRight:
-                case Data.Map.TileType.ChairDown:
-                case Data.Map.TileType.ChairLeft:
-                case Data.Map.TileType.Bed:
-                    canMove = true; // no movement was checked above
-                    break;
-                case Data.Map.TileType.Obstacle:
-                    canMove = player.MovementAbility >= PlayerMovementAbility.WitchBroom;
-                    break;
-                case Data.Map.TileType.Water:
-                    canMove = player.MovementAbility >= PlayerMovementAbility.Swimming;
-                    break;
-                case Data.Map.TileType.Ocean:
-                    canMove = player.MovementAbility >= PlayerMovementAbility.Sailing;
-                    break;
-                case Data.Map.TileType.Mountain:
-                    canMove = player.MovementAbility >= PlayerMovementAbility.Eagle;
-                    break;
-                default:
-                    canMove = false;
-                    break;
+                // TODO: REMOVE
+                uint tileIndex = tile.FrontTileIndex == 0 ? tile.BackTileIndex : tile.FrontTileIndex;
+                var t = mapManager.GetTilesetForMap(Map.Map).Tiles[tileIndex - 1];
+                var bt = mapManager.GetTilesetForMap(Map.Map).Tiles[tile.BackTileIndex - 1];
+                Console.WriteLine($"Tile: {t.Flags:x8}");
+                Console.WriteLine($"BT Tile: {bt.Flags:x8}");
+
+                switch (tile.Type)
+                {
+                    case Data.Map.TileType.Free:
+                    case Data.Map.TileType.ChairUp:
+                    case Data.Map.TileType.ChairRight:
+                    case Data.Map.TileType.ChairDown:
+                    case Data.Map.TileType.ChairLeft:
+                    case Data.Map.TileType.Bed:
+                    case Data.Map.TileType.Invisible:
+                        canMove = true; // no movement was checked above
+                        break;
+                    case Data.Map.TileType.Obstacle:
+                        canMove = player.MovementAbility >= PlayerMovementAbility.WitchBroom;
+                        break;
+                    case Data.Map.TileType.Water:
+                        canMove = player.MovementAbility >= PlayerMovementAbility.Swimming;
+                        break;
+                    case Data.Map.TileType.Ocean:
+                        canMove = player.MovementAbility >= PlayerMovementAbility.Sailing;
+                        break;
+                    case Data.Map.TileType.Mountain:
+                        canMove = player.MovementAbility >= PlayerMovementAbility.Eagle;
+                        break;
+                    default:
+                        canMove = false;
+                        break;
+                }
             }
 
             // TODO: display OUCH if moving against obstacles
@@ -86,7 +98,7 @@ namespace Ambermoon.Render
                 var oldMap = map;
                 int scrollX = 0;
                 int scrollY = 0;
-                var prevDirection = Direction;
+                prevDirection ??= Direction;
                 var newDirection = CharacterDirection.Down;
 
                 if (x > 0 && (map.IsWorldMap || (newX >= 6 && newX <= map.Width - 6)))
@@ -119,12 +131,17 @@ namespace Ambermoon.Render
                     // We trigger with our lower half so add 1 to y
                     Map.TriggerEvents(this, MapEventTrigger.Move, (uint)newX, (uint)newY + 1, mapManager, ticks);
 
-                    if (!frameReset && CurrentState == prevState)
-                        SetCurrentFrame((CurrentFrame + 1) % NumFrames);
+                    if (oldMap == Map.Map) // might have changed by map change events
+                    {
+                        if (!frameReset && CurrentState == prevState)
+                            SetCurrentFrame((CurrentFrame + 1) % NumFrames);
 
-                    var mapOffset = oldMap.MapOffset;
-                    player.Position.X = mapOffset.X + Position.X - (int)Map.ScrollX;
-                    player.Position.Y = mapOffset.Y + Position.Y - (int)Map.ScrollY;
+                        var mapOffset = oldMap.MapOffset;
+                        player.Position.X = mapOffset.X + Position.X - (int)Map.ScrollX;
+                        player.Position.Y = mapOffset.Y + Position.Y - (int)Map.ScrollY;
+
+                        Visible = tile.Type != Data.Map.TileType.Invisible;
+                    }
                 }
                 else
                 {
@@ -142,8 +159,35 @@ namespace Ambermoon.Render
                     }
                 }
             }
+            else if (updateDirectionIfNotMoving)
+            {
+                // If not able to move, the direction should be adjusted
+                var newDirection = Direction;
+
+                if (y > 0)
+                    newDirection = CharacterDirection.Down;
+                else if (y < 0)
+                    newDirection = CharacterDirection.Up;
+                else if (x > 0)
+                    newDirection = CharacterDirection.Right;
+                else if (x < 0)
+                    newDirection = CharacterDirection.Left;
+
+                if (newDirection != Direction)
+                    MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, newDirection);
+            }
 
             return canMove;
+        }
+
+        public override void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
+        {
+            if (Map.Map != map)
+            {
+                Visible = true; // reset visibility before changing map
+            }
+
+            base.MoveTo(map, x, y, ticks, frameReset, newDirection);
         }
 
         public override void Update(uint ticks)

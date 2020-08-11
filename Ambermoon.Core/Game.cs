@@ -107,34 +107,7 @@ namespace Ambermoon
 
             if (keyTicks >= TicksPerSecond / 8)
             {
-                if (keys[(int)Key.Left] && !keys[(int)Key.Right])
-                {
-                    if (!is3D)
-                        player2D.Move(-1, 0, currentTicks);
-                    else
-                        player3D.TurnLeft(15.0f); // TODO
-                }
-                if (keys[(int)Key.Right] && !keys[(int)Key.Left])
-                {
-                    if (!is3D)
-                        player2D.Move(1, 0, currentTicks);
-                    else
-                        player3D.TurnRight(15.0f); // TODO
-                }
-                if (keys[(int)Key.Up] && !keys[(int)Key.Down])
-                {
-                    if (!is3D)
-                        player2D.Move(0, -1, currentTicks);
-                    else
-                        player3D.MoveForward(0.75f, currentTicks); // TODO
-                }
-                if (keys[(int)Key.Down] && !keys[(int)Key.Up])
-                {
-                    if (!is3D)
-                        player2D.Move(0, 1, currentTicks);
-                    else
-                        player3D.MoveBackward(0.75f, currentTicks); // TODO
-                }
+                Move();
 
                 lastKeyTicksReset = currentTicks;
             }
@@ -199,7 +172,6 @@ namespace Ambermoon
 
             ResetMoveKeys();
 
-            // TODO: player direction is not neccessarily the one of the previous map
             renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
             renderMap2D.Destroy();
             player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
@@ -256,38 +228,71 @@ namespace Ambermoon
             messageText.Visible = false;
         }
 
-        public void OnKeyDown(Key key, KeyModifiers modifiers)
+        void Move()
         {
-            keys[(int)key] = true;
-
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
             {
                 if (!is3D)
-                    player2D.Move(-1, 0, currentTicks);
+                {
+                    // diagonal movement is handled in up/down
+                    if (!keys[(int)Key.Up] && !keys[(int)Key.Down])
+                        player2D.Move(-1, 0, currentTicks);
+                }
                 else
                     player3D.TurnLeft(15.0f); // TODO
             }
             if (keys[(int)Key.Right] && !keys[(int)Key.Left])
             {
                 if (!is3D)
-                    player2D.Move(1, 0, currentTicks);
+                {
+                    // diagonal movement is handled in up/down
+                    if (!keys[(int)Key.Up] && !keys[(int)Key.Down])
+                        player2D.Move(1, 0, currentTicks);
+                }
                 else
                     player3D.TurnRight(15.0f); // TODO
             }
             if (keys[(int)Key.Up] && !keys[(int)Key.Down])
             {
                 if (!is3D)
-                    player2D.Move(0, -1, currentTicks);
+                {
+                    var prevDirection = player2D.Direction;
+                    int x = keys[(int)Key.Left] && !keys[(int)Key.Right] ? -1 :
+                        keys[(int)Key.Right] && !keys[(int)Key.Left] ? 1 : 0;
+
+                    if (!player2D.Move(x, -1, currentTicks) && x != 0)
+                    {
+                        if (!player2D.Move(0, -1, currentTicks, prevDirection))
+                            player2D.Move(x, 0, currentTicks, prevDirection);
+                    }
+                }
                 else
                     player3D.MoveForward(0.75f, currentTicks); // TODO
             }
             if (keys[(int)Key.Down] && !keys[(int)Key.Up])
             {
                 if (!is3D)
-                    player2D.Move(0, 1, currentTicks);
+                {
+                    var prevDirection = player2D.Direction;
+                    int x = keys[(int)Key.Left] && !keys[(int)Key.Right] ? -1 :
+                        keys[(int)Key.Right] && !keys[(int)Key.Left] ? 1 : 0;
+
+                    if (!player2D.Move(x, 1, currentTicks, null, false) && x != 0)
+                    {
+                        if (!player2D.Move(0, 1, currentTicks, prevDirection, false))
+                            player2D.Move(x, 0, currentTicks, prevDirection);
+                    }
+                }
                 else
                     player3D.MoveBackward(0.75f, currentTicks); // TODO
             }
+        }
+
+        public void OnKeyDown(Key key, KeyModifiers modifiers)
+        {
+            keys[(int)key] = true;
+
+            Move();
 
             lastKeyTicksReset = currentTicks;
         }

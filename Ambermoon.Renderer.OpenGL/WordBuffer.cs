@@ -21,11 +21,11 @@
 
 namespace Ambermoon.Renderer
 {
-    internal class BaseLineBuffer : BufferObject<ushort>
+    internal class WordBuffer : BufferObject<ushort>
     {
         public override int Dimension => 1;
 
-        public BaseLineBuffer(State state, bool staticData)
+        public WordBuffer(State state, bool staticData)
             : base(state, staticData)
         {
 

@@ -31,11 +31,11 @@ namespace Ambermoon.Renderer
     {
         uint index = 0;
         readonly Dictionary<string, PositionBuffer> positionBuffers = new Dictionary<string, PositionBuffer>(4);
-        readonly Dictionary<string, BaseLineBuffer> baseLineBuffers = new Dictionary<string, BaseLineBuffer>(1);
+        readonly Dictionary<string, WordBuffer> baseLineBuffers = new Dictionary<string, WordBuffer>(4);
         readonly Dictionary<string, ColorBuffer> colorBuffers = new Dictionary<string, ColorBuffer>(4);
-        readonly Dictionary<string, LayerBuffer> layerBuffers = new Dictionary<string, LayerBuffer>(1);
+        readonly Dictionary<string, ByteBuffer> layerBuffers = new Dictionary<string, ByteBuffer>(4);
         readonly Dictionary<string, IndexBuffer> indexBuffers = new Dictionary<string, IndexBuffer>(4);
-        readonly Dictionary<string, VectorBuffer> vectorBuffers = new Dictionary<string, VectorBuffer>(1);
+        readonly Dictionary<string, VectorBuffer> vectorBuffers = new Dictionary<string, VectorBuffer>(4);
         readonly Dictionary<string, int> bufferLocations = new Dictionary<string, int>();
         bool disposed = false;
         bool buffersAreBound = false;
@@ -78,7 +78,7 @@ namespace Ambermoon.Renderer
             vectorBuffers.Add(name, buffer);
         }
 
-        public void AddBuffer(string name, BaseLineBuffer buffer)
+        public void AddBuffer(string name, WordBuffer buffer)
         {
             baseLineBuffers.Add(name, buffer);
         }
@@ -88,7 +88,7 @@ namespace Ambermoon.Renderer
             colorBuffers.Add(name, buffer);
         }
 
-        public void AddBuffer(string name, LayerBuffer buffer)
+        public void AddBuffer(string name, ByteBuffer buffer)
         {
             layerBuffers.Add(name, buffer);
         }

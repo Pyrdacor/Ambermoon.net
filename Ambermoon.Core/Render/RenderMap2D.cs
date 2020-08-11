@@ -200,6 +200,7 @@ namespace Ambermoon.Render
                         foregroundTileSprites[index].NumFrames = (uint)frontTile.NumAnimationFrames;
                         foregroundTileSprites[index].CurrentFrame = 0;
                         foregroundTileSprites[index].Visible = true;
+                        foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? TILE_HEIGHT + 2 : frontTile.Background ? -1 : 0;
                     }
 
                     ++index;
