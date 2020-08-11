@@ -10,6 +10,7 @@ namespace Ambermoon
         public int Width { get; set; } = 1280;
         public int Height { get; set; } = 800;
         public bool Fullscreen { get; set; } = false;
+        public bool UseDataPath { get; set; } = false;
         public string DataPath { get; set; } = ExecutablePath;
 
         public static string ExecutablePath

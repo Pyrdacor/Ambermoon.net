@@ -159,7 +159,7 @@ namespace Ambermoon
 
             // Load game data
             var gameData = new GameData();
-            gameData.Load(configuration.DataPath);
+            gameData.Load(configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutablePath);
 
             // Create render view
             renderView = new RenderView(this, gameData, new GraphicProvider(gameData), new FontProvider(),

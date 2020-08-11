@@ -4,6 +4,7 @@
 
 Version | OS
 --- | ---
+[1.0.4](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.4/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.3](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.3/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.2](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.2/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.1](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.1/Ambermoon.net-Windows.zip) | Windows 64bit
@@ -47,8 +48,21 @@ Text rendering also works now with text replacements like character names, shado
 ![Text rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/TextRendering.png "Text rendering")
 
 
+## Controls
+
+Key | Description
+--- | ---
+Up | Move up (2D) or forward (3D)
+Down | Move down (2D) or backward (3D)
+Left | Move left (2D) or turn left (3D)
+Right | Move right (2D) or turn right (3D)
+F11 | Toggle fullscreen mode
+ESC | Leave fullscreen mode
+
+
 ## Change log
 
+- Version 1.0.4: Config now allows to specify if to use an external data path or the application folder (default)
 - Version 1.0.3: Fixed startup exceptions related to wrong data path
 - Version 1.0.2: Improved 2D movement and rendering
 - Version 1.0.1: Added 3D map events and collision detection
