@@ -160,8 +160,6 @@ namespace Ambermoon.Render
         {
             sprite.CurrentFrame = frameIndex; // this will take care of modulo frame count
             CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
-            // TODO: REMOVE
-            Console.WriteLine($"Set player frame to {sprite.CurrentFrame}");
         }
     }
 }
