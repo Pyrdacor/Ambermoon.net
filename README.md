@@ -4,6 +4,7 @@
 
 Version | OS
 --- | ---
+[1.0.5](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.5/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.4](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.4/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.3](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.3/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.2](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.2/Ambermoon.net-Windows.zip) | Windows 64bit
@@ -62,6 +63,7 @@ ESC | Leave fullscreen mode
 
 ## Change log
 
+- Version 1.0.5: All ADF files can now be used (OFS, FFS, INTL, DIRC)
 - Version 1.0.4: Config now allows to specify if to use an external data path or the application folder (default)
 - Version 1.0.3: Fixed startup exceptions related to wrong data path
 - Version 1.0.2: Improved 2D movement and rendering
