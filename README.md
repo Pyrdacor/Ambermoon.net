@@ -4,15 +4,10 @@
 
 Version | OS
 --- | ---
+[1.0.7](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.6/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.6](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.6/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.5](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.5/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.4](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.4/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.3](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.3/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.2](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.2/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.1](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.1/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.0](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.0/Ambermoon.net-Windows.zip) | Windows 64bit
 
-Other platforms will follow.
+Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
@@ -64,6 +59,7 @@ ESC | Leave fullscreen mode
 
 ## Change log
 
+- Version 1.0.7: Smoother 3D movement (thanks to Metibor), new flag "LegacyMode" in config to use lower 3D fps
 - Version 1.0.6: Now uses the updated executable loader for item loading
 - Version 1.0.5: All ADF files can now be used (OFS, FFS, INTL, DIRC)
 - Version 1.0.4: Config now allows to specify if to use an external data path or the application folder (default)
