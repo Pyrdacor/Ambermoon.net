@@ -12,6 +12,7 @@ namespace Ambermoon
         public bool Fullscreen { get; set; } = false;
         public bool UseDataPath { get; set; } = false;
         public string DataPath { get; set; } = ExecutablePath;
+        public bool LegacyMode { get; set; } = false;
 
         public static string ExecutablePath
         {

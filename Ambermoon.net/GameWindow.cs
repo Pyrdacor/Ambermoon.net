@@ -173,7 +173,8 @@ namespace Ambermoon
             // Create game
             Game = new Game(renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()),
-                new ItemManager(gameData, new ItemReader()));
+                new ItemManager(gameData, new ItemReader()),
+                configuration.LegacyMode);
             Game.StartNew(); // TODO: Remove later
         }
 

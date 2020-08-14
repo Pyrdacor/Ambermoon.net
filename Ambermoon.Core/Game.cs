@@ -33,7 +33,29 @@ namespace Ambermoon
             public string Sex2Name => game.CurrentPartyMember.Gender == Gender.Male ? "his" : "her"; // TODO
         }
 
-        const uint TicksPerSecond = 60; // TODO
+        class Movement
+        {
+            readonly uint[] tickDivider;
+
+            public uint TickDivider(bool is3D) => tickDivider[is3D ? 1 : 0];
+            public float MoveSpeed3D { get; }
+            public float TurnSpeed3D { get; }
+
+            public Movement(bool legacyMode)
+            {
+                tickDivider = new uint[] { 8u, GetTickDivider3D(legacyMode) };
+                MoveSpeed3D = GetMoveSpeed3D(legacyMode);
+                TurnSpeed3D = GetTurnSpeed3D(legacyMode);
+            }
+
+            static uint GetTickDivider3D(bool legacyMode) => legacyMode ? 8u : 60u;
+            static float GetMoveSpeed3D(bool legacyMode) => legacyMode ? 0.75f : 0.175f;
+            static float GetTurnSpeed3D(bool legacyMode) => legacyMode ? 15.0f : 3.00f;
+        }
+
+        const uint TicksPerSecond = 60;
+        readonly bool legacyMode = false;
+        readonly Movement movement;
         uint currentTicks = 0;
         uint lastMapTicksReset = 0;
         uint lastKeyTicksReset = 0;
@@ -54,7 +76,6 @@ namespace Ambermoon
         /// All words you have heard about in conversations.
         /// </summary>
         readonly List<string> dictionary = new List<string>();
-        uint speed = 8;
 
         // Rendering
         RenderMap2D renderMap2D = null;
@@ -64,8 +85,10 @@ namespace Ambermoon
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
 
-        public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager)
+        public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager, bool legacyMode)
         {
+            this.legacyMode = legacyMode;
+            movement = new Movement(legacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
             this.mapManager = mapManager;
@@ -106,7 +129,7 @@ namespace Ambermoon
 
             var keyTicks = currentTicks >= lastKeyTicksReset ? currentTicks - lastKeyTicksReset : (uint)((long)currentTicks + uint.MaxValue - lastKeyTicksReset);
 
-            if (keyTicks >= TicksPerSecond / speed)
+            if (keyTicks >= TicksPerSecond / movement.TickDivider(is3D))
             {
                 Move();
 
@@ -160,7 +183,6 @@ namespace Ambermoon
             renderMap3D.Destroy();
 
             is3D = false;
-            speed = 8;
             renderView.GetLayer(Layer.Map3D).Visible = false;
             renderView.GetLayer(Layer.Billboards3D).Visible = false;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
@@ -184,7 +206,6 @@ namespace Ambermoon
             player.Direction = direction;
 
             is3D = true;
-            speed = 60;
             renderView.GetLayer(Layer.Map3D).Visible = true;
             renderView.GetLayer(Layer.Billboards3D).Visible = true;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
@@ -242,7 +263,7 @@ namespace Ambermoon
                         player2D.Move(-1, 0, currentTicks);
                 }
                 else
-                    player3D.TurnLeft(180.0f / speed); // TODO
+                    player3D.TurnLeft(movement.TurnSpeed3D);
             }
             if (keys[(int)Key.Right] && !keys[(int)Key.Left])
             {
@@ -253,7 +274,7 @@ namespace Ambermoon
                         player2D.Move(1, 0, currentTicks);
                 }
                 else
-                    player3D.TurnRight(180.0f / speed); // TODO
+                    player3D.TurnRight(movement.TurnSpeed3D);
             }
             if (keys[(int)Key.Up] && !keys[(int)Key.Down])
             {
@@ -270,7 +291,7 @@ namespace Ambermoon
                     }
                 }
                 else
-                    player3D.MoveForward(10.0f / speed, currentTicks); // TODO
+                    player3D.MoveForward(movement.MoveSpeed3D, currentTicks);
             }
             if (keys[(int)Key.Down] && !keys[(int)Key.Up])
             {
@@ -287,7 +308,7 @@ namespace Ambermoon
                     }
                 }
                 else
-                    player3D.MoveBackward(10.0f / speed, currentTicks); // TODO
+                    player3D.MoveBackward(movement.MoveSpeed3D, currentTicks);
             }
         }
 
