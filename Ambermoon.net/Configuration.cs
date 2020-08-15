@@ -73,7 +73,12 @@ namespace Ambermoon
         public void Save(string filename)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(filename));
-            File.WriteAllText(filename, JsonConvert.SerializeObject(this));
+            File.WriteAllText(filename, JsonConvert.SerializeObject(this,
+                new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                })
+            );
         }
     }
 }

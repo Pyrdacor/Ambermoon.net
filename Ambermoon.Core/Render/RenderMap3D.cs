@@ -192,7 +192,7 @@ namespace Ambermoon.Render
                     (objectInfo.MappedTextureHeight / mappedWallHeight) * Global.WallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true);
                 mapObject.Layer = layer;
-                mapObject.PaletteIndex = (byte)Map.PaletteIndex;
+                mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 mapObject.X = baseX + (subObject.X / blockSize) * Global.DistancePerTile;
                 mapObject.Y = ((subObject.Z + objectInfo.MappedTextureHeight) / mappedWallHeight) * Global.WallHeight; // TODO
                 mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / blockSize) * Global.DistancePerTile;
@@ -225,7 +225,7 @@ namespace Ambermoon.Render
                 var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerTile, Global.WallHeight,
                     TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, wallOrientation);
                 wall.Layer = layer;
-                wall.PaletteIndex = (byte)Map.PaletteIndex;
+                wall.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 wall.X = x;
                 wall.Y = Global.WallHeight;
                 wall.Z = z;
@@ -283,7 +283,7 @@ namespace Ambermoon.Render
             floor = surfaceFactory.Create(SurfaceType.Floor,
                 Map.Width * Global.DistancePerTile, Map.Height * Global.DistancePerTile,
                 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
-            floor.PaletteIndex = (byte)Map.PaletteIndex;
+            floor.PaletteIndex = (byte)(Map.PaletteIndex - 1);
             floor.Layer = layer;
             floor.X = 0.0f;
             floor.Y = 0.0f;
@@ -293,7 +293,7 @@ namespace Ambermoon.Render
             ceiling = surfaceFactory.Create(SurfaceType.Ceiling,
                 Map.Width * Global.DistancePerTile, Map.Height * Global.DistancePerTile,
                 64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
-            ceiling.PaletteIndex = (byte)Map.PaletteIndex;
+            ceiling.PaletteIndex = (byte)(Map.PaletteIndex - 1);
             ceiling.Layer = layer;
             ceiling.X = 0.0f;
             ceiling.Y = Global.WallHeight;
