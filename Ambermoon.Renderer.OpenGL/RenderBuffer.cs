@@ -783,6 +783,46 @@ namespace Ambermoon.Renderer
                 layerBuffer.Remove(index + 3);
             }
 
+            if (textColorIndexBuffer != null)
+            {
+                textColorIndexBuffer.Remove(index);
+                textColorIndexBuffer.Remove(index + 1);
+                textColorIndexBuffer.Remove(index + 2);
+                textColorIndexBuffer.Remove(index + 3);
+            }
+
+            if (alphaBuffer != null)
+            {
+                alphaBuffer.Remove(index);
+                alphaBuffer.Remove(index + 1);
+                alphaBuffer.Remove(index + 2);
+                alphaBuffer.Remove(index + 3);
+            }
+
+            if (billboardCenterBuffer != null)
+            {
+                billboardCenterBuffer.Remove(index);
+                billboardCenterBuffer.Remove(index + 1);
+                billboardCenterBuffer.Remove(index + 2);
+                billboardCenterBuffer.Remove(index + 3);
+            }
+
+            if (textureSizeBuffer != null)
+            {
+                textureSizeBuffer.Remove(index);
+                textureSizeBuffer.Remove(index + 1);
+                textureSizeBuffer.Remove(index + 2);
+                textureSizeBuffer.Remove(index + 3);
+            }
+
+            if (textureEndCoordBuffer != null)
+            {
+                textureEndCoordBuffer.Remove(index);
+                textureEndCoordBuffer.Remove(index + 1);
+                textureEndCoordBuffer.Remove(index + 2);
+                textureEndCoordBuffer.Remove(index + 3);
+            }
+
             // TODO: this code causes problems. commented out for now
             /*if (newSize != -1)
             {
