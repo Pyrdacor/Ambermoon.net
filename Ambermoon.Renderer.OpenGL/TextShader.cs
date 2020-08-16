@@ -43,7 +43,7 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f * textColIndex;",
-            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2(colorIndex / 32.0f, palIndex / 51.0f));",
+            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / 51.0f));",
             $"    ",
             $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
             $"        discard;",
