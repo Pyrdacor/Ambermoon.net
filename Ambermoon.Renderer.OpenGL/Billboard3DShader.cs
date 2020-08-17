@@ -21,7 +21,6 @@
 
 namespace Ambermoon.Renderer
 {
-    // TODO: some billboards appear much too narrow (seems dependent on overall coordinate)
     internal class Billboard3DShader : Texture3DShader
     {
         internal static readonly string DefaultTexCoordName = Texture3DShader.DefaultTexCoordName;
@@ -31,10 +30,8 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultTexSizeName = Texture3DShader.DefaultTexSizeName;
         internal static readonly string DefaultPaletteName = Texture3DShader.DefaultPaletteName;
         internal static readonly string DefaultPaletteIndexName = Texture3DShader.DefaultPaletteIndexName;
-        internal static readonly string DefaultCameraPositionName = "camPos";
-        internal static readonly string DefaultCameraDirectionName = "camDir"; // TODO: not used anymore. delete later.
         internal static readonly string DefaultBillboardCenterName = "center";
-        internal static readonly string DefaultScaleName = "scale";
+        internal static readonly string DefaultBillboardOrientationName = "orientation";
 
         readonly string texCoordName;
         readonly string texEndCoordName;
@@ -43,10 +40,8 @@ namespace Ambermoon.Renderer
         readonly string atlasSizeName;
         readonly string paletteName;
         readonly string paletteIndexName;
-        readonly string cameraPositionName;
-        readonly string cameraDirectionName;
         readonly string billboardCenterName;
-        readonly string scaleName;
+        readonly string billboardOrientationName;
 
         static string[] Billboard3DFragmentShader(State state) => new string[]
         {
@@ -85,6 +80,7 @@ namespace Ambermoon.Renderer
             GetVertexShaderHeader(state),
             $"in vec3 {DefaultPositionName};",
             $"in vec3 {DefaultBillboardCenterName};",
+            $"in uint {DefaultBillboardOrientationName};",
             $"in ivec2 {DefaultTexCoordName};",
             $"in ivec2 {DefaultTexEndCoordName};",
             $"in ivec2 {DefaultTexSizeName};",
@@ -92,9 +88,6 @@ namespace Ambermoon.Renderer
             $"uniform uvec2 {DefaultAtlasSizeName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
-            $"uniform vec3 {DefaultCameraPositionName};",
-            $"uniform vec3 {DefaultCameraDirectionName};",
-            $"uniform float {DefaultScaleName};",
             $"out vec2 varTexCoord;",
             $"flat out float palIndex;",
             $"flat out vec2 textureEndCoord;",
@@ -104,16 +97,12 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    vec3 localUpVector = vec3(0, 1, 0);",
-            $"    vec3 camLook = {DefaultCameraPositionName} - {DefaultBillboardCenterName};",
-            $"    camLook.y = 0.0;",
-            $"    vec3 zaxis = normalize(camLook);",
-            $"    vec3 xaxis = normalize(cross(localUpVector, zaxis));",
-            $"    vec3 yaxis = cross(zaxis, xaxis);",
-            $"    mat3 lookAtMatrix = mat3(xaxis, yaxis, zaxis);",
-            $"    vec3 offset = lookAtMatrix * ({DefaultPositionName} - {DefaultBillboardCenterName});",
-            $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1) + scale * vec4(offset.xy, 0, 0);",
-            $"    ",
+            $"    vec3 offset = ({DefaultPositionName} - {DefaultBillboardCenterName});",
+            $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1);",
+            $"    if ({DefaultBillboardOrientationName} == 1u) // floor",
+            $"        localPos += vec4(offset.x, 0, offset.z, 0);",
+            $"    else // normal",
+            $"        localPos += vec4(offset.xy, 0, 0);",
             $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
@@ -129,9 +118,8 @@ namespace Ambermoon.Renderer
         Billboard3DShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
                   DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
-                  DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultCameraPositionName,
-                  DefaultCameraDirectionName, DefaultBillboardCenterName, DefaultScaleName,
-                  Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
+                  DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultBillboardCenterName,
+                  DefaultBillboardOrientationName, Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
         {
 
         }
@@ -139,31 +127,13 @@ namespace Ambermoon.Renderer
         protected Billboard3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
             string positionName, string texCoordName, string texEndCoordName, string texSizeName,
             string samplerName, string atlasSizeName, string paletteName, string paletteIndexName,
-            string cameraPositionName, string cameraDirectionName, string billboardCenterName,
-            string scaleName, string[] fragmentShaderLines, string[] vertexShaderLines)
+            string billboardCenterName, string billboardOrientationName, string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, positionName, texCoordName, texEndCoordName,
                   texSizeName, samplerName, atlasSizeName, paletteName, paletteIndexName, null, fragmentShaderLines,
                   vertexShaderLines)
         {
-            this.cameraPositionName = cameraPositionName;
-            this.cameraDirectionName = cameraDirectionName;
             this.billboardCenterName = billboardCenterName;
-            this.scaleName = scaleName;
-        }
-
-        public void SetCameraPosition(float x, float y, float z)
-        {
-            shaderProgram.SetInputVector3(cameraPositionName, x, y, z);
-        }
-
-        public void SetCameraDirection(float x, float y, float z)
-        {
-            shaderProgram.SetInputVector3(cameraDirectionName, x, y, z);
-        }
-
-        public void SetScale(float scale)
-        {
-            shaderProgram.SetInput(scaleName, scale);
+            this.billboardOrientationName = billboardOrientationName;
         }
 
         public new static Billboard3DShader Create(State state) => new Billboard3DShader(state);

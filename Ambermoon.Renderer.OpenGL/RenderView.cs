@@ -383,8 +383,6 @@ namespace Ambermoon.Renderer.OpenGL
                     }
                     else if (layer.Key == Layer.Billboards3D)
                     {
-                        camera3D.ActivateBillboards(layer.Value.RenderBuffer.Billboard3DShader);
-                        layer.Value.RenderBuffer.Billboard3DShader.SetScale(1.0f);
                         State.Gl.Disable(EnableCap.CullFace);
                     }
                     else if (layer.Key == Global.First2DLayer)

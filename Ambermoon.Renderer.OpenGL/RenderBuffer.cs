@@ -46,6 +46,7 @@ namespace Ambermoon.Renderer
         readonly PositionBuffer textureEndCoordBuffer = null;
         readonly PositionBuffer textureSizeBuffer = null;
         readonly VectorBuffer billboardCenterBuffer = null;
+        readonly ByteBuffer billboardOrientationBuffer = null;
         readonly ByteBuffer alphaBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
@@ -163,8 +164,10 @@ namespace Ambermoon.Renderer
             if (isBillboard)
             {
                 billboardCenterBuffer = new VectorBuffer(state, false);
+                billboardOrientationBuffer = new ByteBuffer(state, true);
 
                 vertexArrayObject.AddBuffer(Billboard3DShader.DefaultBillboardCenterName, billboardCenterBuffer);
+                vertexArrayObject.AddBuffer(Billboard3DShader.DefaultBillboardOrientationName, billboardOrientationBuffer);
             }
 
             if (masked && !noTexture)
@@ -405,9 +408,9 @@ namespace Ambermoon.Renderer
                     vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y - surface.Height, surface.Z);
                     break;
                 case Ambermoon.Render.SurfaceType.BillboardFloor:
-                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y, surface.Z - 0.5f * surface.Height);
                     vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y, surface.Z + 0.5f * surface.Height);
-                    vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y, surface.Z + 0.5f * surface.Height);
+                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y, surface.Z - 0.5f * surface.Height);
+                    vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y, surface.Z - 0.5f * surface.Height);
                     break;
             }
 
@@ -524,6 +527,19 @@ namespace Ambermoon.Renderer
                 billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, billboardCenterBufferIndex + 3);
             }
 
+            if (billboardOrientationBuffer != null)
+            {
+                byte floor = surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor ? (byte)1 : (byte)0;
+                int billboardOrientationBufferIndex = billboardOrientationBuffer.Add(floor);
+
+                if (billboardOrientationBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 1);
+                billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 2);
+                billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 3);
+            }
+
             return index;
         }
 
@@ -578,6 +594,14 @@ namespace Ambermoon.Renderer
                     billboardCenterBuffer.Update(index + 2, surface.X, surface.Y, surface.Z);
                     billboardCenterBuffer.Update(index + 3, surface.X, surface.Y, surface.Z);
                 }
+
+                if (billboardOrientationBuffer != null)
+                {
+                    billboardOrientationBuffer.Update(index, 0);
+                    billboardOrientationBuffer.Update(index + 1, 0);
+                    billboardOrientationBuffer.Update(index + 2, 0);
+                    billboardOrientationBuffer.Update(index + 3, 0);
+                }
             }
             else if (surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor)
             {
@@ -586,8 +610,8 @@ namespace Ambermoon.Renderer
 
                 vectorBuffer.Update(index, x, surface.Y, z);
                 vectorBuffer.Update(index + 1, x + surface.Width, surface.Y, z);
-                vectorBuffer.Update(index + 2, x + surface.Width, surface.Y, z + surface.Height);
-                vectorBuffer.Update(index + 3, x, surface.Y, z + surface.Height);
+                vectorBuffer.Update(index + 2, x + surface.Width, surface.Y, z - surface.Height);
+                vectorBuffer.Update(index + 3, x, surface.Y, z - surface.Height);
 
                 if (billboardCenterBuffer != null)
                 {
@@ -595,6 +619,14 @@ namespace Ambermoon.Renderer
                     billboardCenterBuffer.Update(index + 1, surface.X, surface.Y, surface.Z);
                     billboardCenterBuffer.Update(index + 2, surface.X, surface.Y, surface.Z);
                     billboardCenterBuffer.Update(index + 3, surface.X, surface.Y, surface.Z);
+                }
+
+                if (billboardOrientationBuffer != null)
+                {
+                    billboardOrientationBuffer.Update(index, 1);
+                    billboardOrientationBuffer.Update(index + 1, 1);
+                    billboardOrientationBuffer.Update(index + 2, 1);
+                    billboardOrientationBuffer.Update(index + 3, 1);
                 }
             }
             else
