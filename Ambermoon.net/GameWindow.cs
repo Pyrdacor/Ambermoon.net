@@ -202,7 +202,7 @@ namespace Ambermoon
                 new System.Drawing.Size(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
                 $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}",
                 WindowState.Normal, WindowBorder.Fixed, VSyncMode.Off,
-                10, false, videoMode);
+                10, false, videoMode, 24);
 
             try
             {
