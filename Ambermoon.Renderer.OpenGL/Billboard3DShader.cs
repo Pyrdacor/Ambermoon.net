@@ -21,6 +21,7 @@
 
 namespace Ambermoon.Renderer
 {
+    // TODO: some billboards appear much too narrow (seems dependent on overall coordinate)
     internal class Billboard3DShader : Texture3DShader
     {
         internal static readonly string DefaultTexCoordName = Texture3DShader.DefaultTexCoordName;
@@ -105,12 +106,13 @@ namespace Ambermoon.Renderer
             $"{{",
             $"    vec3 localUpVector = vec3(0, 1, 0);",
             $"    vec3 camLook = {DefaultCameraPositionName} - {DefaultBillboardCenterName};",
-            $"    camLook.y = 0.0f;",
+            $"    camLook.y = 0.0;",
             $"    vec3 zaxis = normalize(camLook);",
             $"    vec3 xaxis = normalize(cross(localUpVector, zaxis));",
             $"    vec3 yaxis = cross(zaxis, xaxis);",
             $"    mat3 lookAtMatrix = mat3(xaxis, yaxis, zaxis);",
-            $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1) + scale * vec4((lookAtMatrix * ({DefaultPositionName} - {DefaultBillboardCenterName})).xy, 0, 1);",
+            $"    vec3 offset = lookAtMatrix * ({DefaultPositionName} - {DefaultBillboardCenterName});",
+            $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1) + scale * vec4(offset.xy, 0, 0);",
             $"    ",
             $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",

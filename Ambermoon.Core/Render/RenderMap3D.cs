@@ -200,14 +200,21 @@ namespace Ambermoon.Render
             foreach (var subObject in obj.SubObjects)
             {
                 var objectInfo = subObject.Object;
-                var mapObject = surfaceFactory.Create(SurfaceType.Billboard,
-                    Global.DistancePerTile * objectInfo.MappedTextureWidth / BlockSize,
-                    wallHeight * objectInfo.MappedTextureHeight / labdata.WallHeight,
+                bool floorObject = objectInfo.Flags.HasFlag(Labdata.ObjectFlags.FloorObject);
+                var mapObject = floorObject
+                    ? surfaceFactory.Create(SurfaceType.BillboardFloor,
+                        Global.DistancePerTile * objectInfo.MappedTextureWidth / BlockSize,
+                        Global.DistancePerTile * objectInfo.MappedTextureHeight / BlockSize,
+                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true)
+                    : surfaceFactory.Create(SurfaceType.Billboard,
+                        Global.DistancePerTile * objectInfo.MappedTextureWidth / BlockSize,
+                        wallHeight * objectInfo.MappedTextureHeight / labdata.WallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true);
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 mapObject.X = baseX + (subObject.X / BlockSize) * Global.DistancePerTile;
-                mapObject.Y = wallHeight * (factor * subObject.Z + objectInfo.MappedTextureHeight) / labdata.WallHeight;
+                // TODO: 0.001f
+                mapObject.Y = floorObject ? 0.001f : wallHeight * (factor * subObject.Z + objectInfo.MappedTextureHeight) / labdata.WallHeight;
                 mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / BlockSize) * Global.DistancePerTile;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
@@ -215,6 +222,7 @@ namespace Ambermoon.Render
 
                 if (subObject.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
                 {
+                    // TODO: floor objects
                     blockCollisionBodies[blockIndex].Add(new CollisionSphere3D
                     {
                         CenterX = mapObject.X,

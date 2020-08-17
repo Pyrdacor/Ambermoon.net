@@ -26,7 +26,8 @@ namespace Ambermoon.Render
         Floor,
         Ceiling,
         Wall,
-        Billboard // monsters, NPCs, trees, etc
+        Billboard, // monsters, NPCs, trees, etc
+        BillboardFloor // holes, lava, etc
     }
 
     /// <summary>
