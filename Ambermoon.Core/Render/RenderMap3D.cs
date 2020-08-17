@@ -47,6 +47,10 @@ namespace Ambermoon.Render
         readonly List<ISurface3D> objects = new List<ISurface3D>();
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
         static Graphic[] labBackgroundGraphics = null;
+        /// <summary>
+        /// This contains all block indices that could be changed by map events for labdatas.
+        /// </summary>
+        static readonly Dictionary<uint, List<uint>> labdataChangeableBlocks = new Dictionary<uint, List<uint>>();
         public Map Map { get; private set; } = null;
         /// <summary>
         ///  This is the height for the renderer. It is expressed in relation
@@ -66,11 +70,6 @@ namespace Ambermoon.Render
                 SetMap(map, playerX, playerY, playerDirection);
         }
 
-        public void Destroy()
-        {
-            // TODO
-        }
-
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
             if (map.Type != MapType.Map3D)
@@ -83,6 +82,7 @@ namespace Ambermoon.Render
                 Map = map;
                 labdata = mapManager.GetLabdataForMap(map);
                 EnsureLabdataTextureAtlas();
+                EnsureChangeableBlocks();
                 UpdateSurfaces();
 
                 camera.GroundY = -0.5f * WallHeight; // TODO: Does labdata.Unknown1 contain an offset?
@@ -125,6 +125,30 @@ namespace Ambermoon.Render
                     if (labBackgroundGraphic.Data[b] == 9)
                         labBackgroundGraphic.Data[b] = 0;
                 }
+            }
+        }
+
+        void EnsureChangeableBlocks()
+        {
+            if (!labdataChangeableBlocks.ContainsKey(Map.TilesetOrLabdataIndex))
+            {
+               var blockIndices = new List<uint>();
+
+                foreach (var mapEvent in Map.Events)
+                {
+                    if (mapEvent.Type == MapEventType.ChangeTile)
+                    {
+                        if (!(mapEvent is ChangeTileEvent changeTileEvent))
+                            throw new AmbermoonException(ExceptionScope.Data, "Invalid map event.");
+
+                        uint index = Map.PositionToTileIndex(changeTileEvent.X - 1, changeTileEvent.Y - 1);
+
+                        if (!blockIndices.Contains(index))
+                            blockIndices.Add(index);
+                    }
+                }
+
+                labdataChangeableBlocks.Add(Map.TilesetOrLabdataIndex, blockIndices);
             }
         }
 
@@ -256,9 +280,9 @@ namespace Ambermoon.Render
 
                 var wall = labdata.Walls[(int)block.WallIndex - 1];
 
-                // TODO: Consider tile changing events here later too!
                 return wall.Flags.HasFlag(Labdata.WallFlags.Transparency) ||
-                    !wall.Flags.HasFlag(Labdata.WallFlags.BlockMovement);
+                    !wall.Flags.HasFlag(Labdata.WallFlags.BlockMovement) ||
+                    labdataChangeableBlocks[Map.TilesetOrLabdataIndex].Contains(Map.PositionToTileIndex(mapX, mapY));
             }
 
             void AddSurface(WallOrientation wallOrientation, float x, float z)

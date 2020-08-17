@@ -55,13 +55,6 @@ namespace Ambermoon.Render
 
             if (canMove)
             {
-                // TODO: REMOVE
-                uint tileIndex = tile.FrontTileIndex == 0 ? tile.BackTileIndex : tile.FrontTileIndex;
-                var t = mapManager.GetTilesetForMap(Map.Map).Tiles[tileIndex - 1];
-                var bt = mapManager.GetTilesetForMap(Map.Map).Tiles[tile.BackTileIndex - 1];
-                Console.WriteLine($"Tile: {t.Flags:x8}");
-                Console.WriteLine($"BT Tile: {bt.Flags:x8}");
-
                 switch (tile.Type)
                 {
                     case Data.Map.TileType.Free:

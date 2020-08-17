@@ -114,7 +114,6 @@ namespace Ambermoon.Renderer
 
         public static Matrix4 CreateYRotationMatrix(float angle)
         {
-            // TODO: maybe angle = -angle
             const float deg2rad = (float)(Math.PI / 180.0);
 
             var sin = (float)Math.Sin(angle * deg2rad);
@@ -131,7 +130,6 @@ namespace Ambermoon.Renderer
 
         public static Matrix4 CreateZRotationMatrix(float angle)
         {
-            // TODO: maybe angle = -angle
             const float deg2rad = (float)(Math.PI / 180.0);
 
             var sin = (float)Math.Sin(angle * deg2rad);

@@ -114,8 +114,6 @@ namespace Ambermoon
 
             if (ingame)
             {
-                // TODO ingame rendering
-
                 if (is3D)
                 {
                     // TODO
@@ -182,8 +180,6 @@ namespace Ambermoon
             player.Position.X = mapOffset.X + (int)playerX - (int)renderMap2D.ScrollX;
             player.Position.Y = mapOffset.Y + (int)playerY - (int)renderMap2D.ScrollY;
             player.Direction = direction;
-
-            renderMap3D.Destroy();
 
             is3D = false;
             renderView.GetLayer(Layer.Map3D).Visible = false;
