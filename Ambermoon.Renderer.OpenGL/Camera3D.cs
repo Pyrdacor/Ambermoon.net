@@ -23,6 +23,7 @@ namespace Ambermoon.Renderer.OpenGL
         public float X { get; private set; } = 0.0f;
         public float Y { get; private set; } = 0.0f;
         public float Z { get; private set; } = 0.0f;
+        public float GroundY { get; set; } = 0.0f;
 
         public void GetForwardPosition(float distance, out float x, out float z, bool noX, bool noZ)
         {
@@ -96,7 +97,7 @@ namespace Ambermoon.Renderer.OpenGL
         public void SetPosition(float x, float z)
         {
             X = -x;
-            Y = -1.0f;
+            Y = GroundY;
             Z = z;
             translateMatrix = Matrix4.CreateTranslationMatrix(X, Y, Z);
             UpdateMatrix();

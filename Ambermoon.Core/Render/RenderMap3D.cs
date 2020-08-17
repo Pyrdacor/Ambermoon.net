@@ -29,8 +29,12 @@ namespace Ambermoon.Render
 {
     internal class RenderMap3D : IRenderMap
     {
+        public const int FloorTextureWidth = 64;
+        public const int FloorTextureHeight = 64;
         public const int TextureWidth = 128;
         public const int TextureHeight = 80;
+        public const float BlockSize = 500.0f;
+        public const float ReferenceWallHeight = 400.0f;
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
@@ -44,6 +48,11 @@ namespace Ambermoon.Render
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
         static Graphic[] labBackgroundGraphics = null;
         public Map Map { get; private set; } = null;
+        /// <summary>
+        ///  This is the height for the renderer. It is expressed in relation
+        ///  to the block size (e.g. wall is 2/3 as height as a block is wide).
+        /// </summary>
+        float WallHeight => Global.DistancePerTile * labdata.WallHeight / BlockSize;
 
         public RenderMap3D(Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
@@ -67,9 +76,6 @@ namespace Ambermoon.Render
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Tried to load a 2D map into a 3D render map.");
 
-            camera.SetPosition(playerX * Global.DistancePerTile, (map.Height - playerY) * Global.DistancePerTile);
-            camera.TurnTowards((float)playerDirection * 90.0f);
-
             if (Map != map)
             {
                 CleanUp();
@@ -78,7 +84,12 @@ namespace Ambermoon.Render
                 labdata = mapManager.GetLabdataForMap(map);
                 EnsureLabdataTextureAtlas();
                 UpdateSurfaces();
+
+                camera.GroundY = -0.5f * WallHeight; // TODO: Does labdata.Unknown1 contain an offset?
             }
+
+            camera.SetPosition(playerX * Global.DistancePerTile, (map.Height - playerY) * Global.DistancePerTile);
+            camera.TurnTowards((float)playerDirection * 90.0f);
         }
 
         void CleanUp()
@@ -133,8 +144,8 @@ namespace Ambermoon.Render
                 }
                 for (int i = 0; i < labdata.WallGraphics.Count; ++i)
                     graphics.Add((uint)i + 1000u, labdata.WallGraphics[i]);
-                graphics.Add(10000u, labdata.FloorGraphic ?? new Graphic(64, 64, 0)); // TODO
-                graphics.Add(10001u, labdata.CeilingGraphic ?? new Graphic(64, 64, 0)); // TODO
+                graphics.Add(10000u, labdata.FloorGraphic ?? new Graphic(FloorTextureWidth, FloorTextureHeight, 0)); // TODO
+                graphics.Add(10001u, labdata.CeilingGraphic ?? new Graphic(FloorTextureWidth, FloorTextureHeight, 0)); // TODO
 
                 if (Map.Flags.HasFlag(MapFlags.Outdoor))
                     graphics.Add(10002u, labBackgroundGraphics[(int)Map.World]);
@@ -147,6 +158,7 @@ namespace Ambermoon.Render
             renderView.GetLayer(Layer.Billboards3D).Texture = textureAtlas.Texture;
         }
 
+        // TODO: More precise collision with map objects
         public bool BlocksMovement(int x, int y)
         {
             var block = Map.Blocks[x, y];
@@ -181,21 +193,22 @@ namespace Ambermoon.Render
 
             // TODO: animations
 
-            const float blockSize = 512.0f;
-            const float mappedWallHeight = Global.WallHeight * blockSize / Global.DistancePerTile;
+            float wallHeight = WallHeight;
+            float factor = labdata.WallHeight / ReferenceWallHeight;
+            // Note: Object y-offsets seem to be relative to this ReferenceWallHeight (seems to be 400).
 
             foreach (var subObject in obj.SubObjects)
             {
                 var objectInfo = subObject.Object;
                 var mapObject = surfaceFactory.Create(SurfaceType.Billboard,
-                    (objectInfo.MappedTextureWidth / blockSize) * Global.DistancePerTile,
-                    (objectInfo.MappedTextureHeight / mappedWallHeight) * Global.WallHeight,
+                    Global.DistancePerTile * objectInfo.MappedTextureWidth / BlockSize,
+                    wallHeight * objectInfo.MappedTextureHeight / labdata.WallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true);
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-                mapObject.X = baseX + (subObject.X / blockSize) * Global.DistancePerTile;
-                mapObject.Y = ((subObject.Z + objectInfo.MappedTextureHeight) / mappedWallHeight) * Global.WallHeight; // TODO
-                mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / blockSize) * Global.DistancePerTile;
+                mapObject.X = baseX + (subObject.X / BlockSize) * Global.DistancePerTile;
+                mapObject.Y = wallHeight * (factor * subObject.Z + objectInfo.MappedTextureHeight) / labdata.WallHeight;
+                mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / BlockSize) * Global.DistancePerTile;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
                 objects.Add(mapObject);
@@ -216,18 +229,19 @@ namespace Ambermoon.Render
         {
             uint blockIndex = mapX + mapY * (uint)Map.Width;
             blockCollisionBodies.Add(blockIndex, new List<ICollisionBody>(4));
+            float wallHeight = WallHeight;
             var wallTextureOffset = GetWallTextureOffset(wallIndex);
             bool alpha = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.Transparency);
             bool blocksMovement = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
 
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
-                var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerTile, Global.WallHeight,
+                var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerTile, wallHeight,
                     TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, wallOrientation);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 wall.X = x;
-                wall.Y = Global.WallHeight;
+                wall.Y = wallHeight;
                 wall.Z = z;
                 wall.TextureAtlasOffset = wallTextureOffset;
                 wall.Visible = true; // TODO: not all walls should be always visible
@@ -282,7 +296,8 @@ namespace Ambermoon.Render
             // Add floor and ceiling
             floor = surfaceFactory.Create(SurfaceType.Floor,
                 Map.Width * Global.DistancePerTile, Map.Height * Global.DistancePerTile,
-                64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
+                FloorTextureWidth, FloorTextureHeight,
+                (uint)Map.Width * FloorTextureWidth, (uint)Map.Height * FloorTextureHeight, false);
             floor.PaletteIndex = (byte)(Map.PaletteIndex - 1);
             floor.Layer = layer;
             floor.X = 0.0f;
@@ -292,11 +307,12 @@ namespace Ambermoon.Render
             floor.Visible = true;
             ceiling = surfaceFactory.Create(SurfaceType.Ceiling,
                 Map.Width * Global.DistancePerTile, Map.Height * Global.DistancePerTile,
-                64, 64, (uint)Map.Width * 64, (uint)Map.Height * 64, false);
+                FloorTextureWidth, FloorTextureHeight,
+                (uint)Map.Width * FloorTextureWidth, (uint)Map.Height * FloorTextureHeight, false);
             ceiling.PaletteIndex = (byte)(Map.PaletteIndex - 1);
             ceiling.Layer = layer;
             ceiling.X = 0.0f;
-            ceiling.Y = Global.WallHeight;
+            ceiling.Y = WallHeight;
             ceiling.Z = 0.0f;
             ceiling.TextureAtlasOffset = CeilingTextureOffset;
             ceiling.Visible = true;

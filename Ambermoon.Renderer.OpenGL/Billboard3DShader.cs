@@ -47,7 +47,7 @@ namespace Ambermoon.Renderer
         readonly string billboardCenterName;
         readonly string scaleName;
 
-        static string[] Texture3DFragmentShader(State state) => new string[]
+        static string[] Billboard3DFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
             $"uniform sampler2D {DefaultSamplerName};",
@@ -79,7 +79,7 @@ namespace Ambermoon.Renderer
         // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).
         // If the depth range is changed, this formula has to be adjusted accordingly!
 
-        static string[] Texture3DVertexShader(State state) => new string[]
+        static string[] Billboard3DVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
             $"in vec3 {DefaultPositionName};",
@@ -129,7 +129,7 @@ namespace Ambermoon.Renderer
                   DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
                   DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultCameraPositionName,
                   DefaultCameraDirectionName, DefaultBillboardCenterName, DefaultScaleName,
-                  Texture3DFragmentShader(state), Texture3DVertexShader(state))
+                  Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
         {
 
         }

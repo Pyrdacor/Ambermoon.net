@@ -7,6 +7,7 @@ using Silk.NET.Input.Common;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Common;
 using System.Linq;
+using System.Reflection;
 
 namespace Ambermoon
 {
@@ -195,10 +196,12 @@ namespace Ambermoon
             Width = configuration.Width;
             Height = configuration.Height;
 
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
             var videoMode = new VideoMode(new System.Drawing.Size(Width, Height), 60);
             var options = new WindowOptions(true, true, new System.Drawing.Point(100, 100),
                 new System.Drawing.Size(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
-                "Ambermoon.net", WindowState.Normal, WindowBorder.Fixed, VSyncMode.Off,
+                $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}",
+                WindowState.Normal, WindowBorder.Fixed, VSyncMode.Off,
                 10, false, videoMode);
 
             try

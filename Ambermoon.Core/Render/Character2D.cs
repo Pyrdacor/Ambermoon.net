@@ -54,8 +54,8 @@ namespace Ambermoon.Render
             sprite = spriteFactory.CreateAnimated(animationInfo.FrameWidth, animationInfo.FrameHeight,
                 textureOffset.X, textureOffset.Y, textureAtlas.Texture.Width, animationInfo.NumStandFrames);
             sprite.Layer = layer;
-            sprite.X = Global.MapViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH;
-            sprite.Y = Global.MapViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT;
+            sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH;
+            sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT;
             sprite.BaseLineOffset = 1;
             sprite.PaletteIndex = (byte)paletteIndex;
             Map = map;
@@ -145,8 +145,8 @@ namespace Ambermoon.Render
             lastFrameReset = ticks;
             Position.X = (int)x;
             Position.Y = (int)y;
-            sprite.X = Global.MapViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH;
-            sprite.Y = Global.MapViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT;
+            sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH;
+            sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT;
         }
 
         public virtual void Update(uint ticks)

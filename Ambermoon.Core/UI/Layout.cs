@@ -5,11 +5,11 @@ namespace Ambermoon.UI
     public enum LayoutType
     {
         None,
-        Map,
+        Map2D,
         Inventory,
         Items, // Chest, merchant, battle loot and other places like trainers etc
         Battle,
-        Unknown1,
+        Map3D,
         Unknown2,
         Event, // Game over, airship travel, grandfather intro, valdyn sequence
         Conversation,

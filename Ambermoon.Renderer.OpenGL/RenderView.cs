@@ -370,7 +370,7 @@ namespace Ambermoon.Renderer.OpenGL
                         // Setup 3D stuff
                         camera3D.Activate();
                         State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
-                        var mapViewArea = new Rect(Global.MapViewX, Global.MapViewY, Global.MapViewWidth, Global.MapViewHeight);
+                        var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth, Global.Map3DViewHeight);
                         mapViewArea.Position = PositionTransformation(mapViewArea.Position);
                         mapViewArea.Size = SizeTransformation(mapViewArea.Size);
                         State.Gl.Viewport

@@ -49,7 +49,7 @@ namespace Ambermoon
             }
 
             static uint GetTickDivider3D(bool legacyMode) => legacyMode ? 8u : 60u;
-            static float GetMoveSpeed3D(bool legacyMode) => legacyMode ? 0.75f : 0.175f;
+            static float GetMoveSpeed3D(bool legacyMode) => legacyMode ? 0.25f : 0.0625f;
             static float GetTurnSpeed3D(bool legacyMode) => legacyMode ? 15.0f : 3.00f;
         }
 
@@ -146,12 +146,15 @@ namespace Ambermoon
             lastKeyTicksReset = currentTicks;
         }
 
+        // TODO: When changing map, the screen should shortly black out (fading transition)
+
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
             ResetMoveKeys();
+            layout.SetLayout(UI.LayoutType.Map2D);
 
             if (renderMap2D.Map != map)
             {
@@ -195,6 +198,7 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
             ResetMoveKeys();
+            layout.SetLayout(UI.LayoutType.Map3D);
 
             renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
             renderMap2D.Destroy();
@@ -215,7 +219,7 @@ namespace Ambermoon
         public void StartNew()
         {
             ingame = true;
-            layout.SetLayout(UI.LayoutType.Map);
+            layout.SetLayout(UI.LayoutType.Map2D);
             player = new Player();
             var map = mapManager.GetMap(258u); // grandfather's house
             renderMap2D = new RenderMap2D(map, mapManager, renderView);
@@ -291,7 +295,7 @@ namespace Ambermoon
                     }
                 }
                 else
-                    player3D.MoveForward(movement.MoveSpeed3D, currentTicks);
+                    player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
             }
             if (keys[(int)Key.Down] && !keys[(int)Key.Up])
             {
@@ -308,7 +312,7 @@ namespace Ambermoon
                     }
                 }
                 else
-                    player3D.MoveBackward(movement.MoveSpeed3D, currentTicks);
+                    player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
             }
         }
 

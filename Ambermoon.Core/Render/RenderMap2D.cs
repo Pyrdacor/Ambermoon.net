@@ -62,11 +62,11 @@ namespace Ambermoon.Render
                     var foregroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 0, 0);
 
                     backgroundSprite.Visible = true;
-                    backgroundSprite.X = Global.MapViewX + column * TILE_WIDTH;
-                    backgroundSprite.Y = Global.MapViewY + row * TILE_HEIGHT;
+                    backgroundSprite.X = Global.Map2DViewX + column * TILE_WIDTH;
+                    backgroundSprite.Y = Global.Map2DViewY + row * TILE_HEIGHT;
                     foregroundSprite.Visible = false;
-                    foregroundSprite.X = Global.MapViewX + column * TILE_WIDTH;
-                    foregroundSprite.Y = Global.MapViewY + row * TILE_HEIGHT;
+                    foregroundSprite.X = Global.Map2DViewX + column * TILE_WIDTH;
+                    foregroundSprite.Y = Global.Map2DViewY + row * TILE_HEIGHT;
 
                     backgroundTileSprites.Add(backgroundSprite);
                     foregroundTileSprites.Add(foregroundSprite);

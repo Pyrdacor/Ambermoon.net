@@ -28,6 +28,7 @@ namespace Ambermoon.Render
         float X { get; }
         float Y { get; }
         float Z { get; }
+        float GroundY { get; set; }
 
         /// <summary>
         /// This will reset the view angle to up

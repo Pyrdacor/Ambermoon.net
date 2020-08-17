@@ -1,18 +1,14 @@
 ﻿using Ambermoon.Data;
-using Ambermoon.Geometry;
-using System;
 
 namespace Ambermoon.Render
 {
-    using Geometry = Ambermoon.Geometry.Geometry;
+    using Geometry = Geometry.Geometry;
 
     class Player3D : IRenderPlayer
     {
         readonly Game game = null;
         readonly IMapManager mapManager;
         readonly RenderMap3D map;
-        int lastX = 0;
-        int lastY = 0;
 
         public Position Position { get; private set; }
         public ICamera3D Camera { get; }
@@ -64,8 +60,6 @@ namespace Ambermoon.Render
             Position = new Position(x, y);
             ResetCameraPosition();
             map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
-            lastX = x;
-            lastY = y;
         }
 
         bool TestCollision(float x, float z, float lastMapX, float lastMapY)
@@ -75,7 +69,7 @@ namespace Ambermoon.Render
             // This contains all collision bodies in a 3x3 area around the current position.
             var collisionDetectionInfo = map.GetCollisionDetectionInfo(Position);
 
-            return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, 0.125f * Global.DistancePerTile);
+            return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, 0.15f * Global.DistancePerTile);
         }
 
         public void MoveForward(float distance, uint ticks)
