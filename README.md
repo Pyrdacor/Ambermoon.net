@@ -4,9 +4,8 @@
 
 Version | OS
 --- | ---
+[1.0.9](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.9/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.8](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.8/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.7](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.7/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.6](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.6/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -34,7 +33,7 @@ You may also checkout my already working Settlers I rewrite at [freeserf.net](ht
 
 3D map rendering also works for the most part. But for now only walls, ceiling and floor. Static objects work too but no monsters, etc.
 
-No collision detection yet for 3D. You can freely walk through 2D and 3D maps. Map events only work in 2D so you won't be able to leave 3D maps yet. :)
+You can freely walk through 2D and 3D maps. Collision detection and map change events now also work in 3D.
 
 Text rendering also works now with text replacements like character names, shadows and different text colors. Rune texts work too.
 
@@ -60,6 +59,7 @@ ESC | Leave fullscreen mode
 
 ## Change log
 
+- Version 1.0.9: Added floor billboards like holes/lava, fixed billboards
 - Version 1.0.8: A lot of 3D improvements (see [here](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.8)).
 - Version 1.0.7: Smoother 3D movement (thanks to Metibor), new flag "LegacyMode" in config to use lower 3D fps
 - Version 1.0.6: Now uses the updated executable loader for item loading
