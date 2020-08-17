@@ -890,6 +890,14 @@ namespace Ambermoon.Renderer
                 textureEndCoordBuffer.Remove(index + 3);
             }
 
+            if (billboardOrientationBuffer != null)
+            {
+                billboardOrientationBuffer.Remove(index);
+                billboardOrientationBuffer.Remove(index + 1);
+                billboardOrientationBuffer.Remove(index + 2);
+                billboardOrientationBuffer.Remove(index + 3);
+            }
+            
             // TODO: this code causes problems. commented out for now
             /*if (newSize != -1)
             {
