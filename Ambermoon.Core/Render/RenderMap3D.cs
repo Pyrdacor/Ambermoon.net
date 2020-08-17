@@ -242,6 +242,25 @@ namespace Ambermoon.Render
             bool alpha = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.Transparency);
             bool blocksMovement = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
 
+            // This is used to determine if surrounded tiles should add a wall.
+            // Free block means no wall, non-blocking wall or a transparent/removable wall.
+            bool IsFreeBlock(uint mapX, uint mapY)
+            {
+                var block = Map.Blocks[mapX, mapY];
+
+                if (block.MapBorder)
+                    return false;
+
+                if (block.WallIndex == 0)
+                    return true;
+
+                var wall = labdata.Walls[(int)block.WallIndex - 1];
+
+                // TODO: Consider tile changing events here later too!
+                return wall.Flags.HasFlag(Labdata.WallFlags.Transparency) ||
+                    !wall.Flags.HasFlag(Labdata.WallFlags.BlockMovement);
+            }
+
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
                 var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerTile, wallHeight,
@@ -270,22 +289,20 @@ namespace Ambermoon.Render
             float baseX = mapX * Global.DistancePerTile;
             float baseY = (-Map.Height + mapY) * Global.DistancePerTile;
 
-            // TODO
-
             // front face
-            //if (mapY < Map.Height - 1 && Map.Blocks[mapX, mapY + 1].WallIndex == 0 && !Map.Blocks[mapX, mapY + 1].MapBorder)
+            if (mapY > 0 && IsFreeBlock(mapX, mapY - 1))
                 AddSurface(WallOrientation.Normal, baseX, baseY);
 
             // left face
-            //if (mapX > 0 && Map.Blocks[mapX - 1, mapY].WallIndex == 0 && !Map.Blocks[mapX - 1, mapY].MapBorder)
+            if (mapX < Map.Width - 1 && IsFreeBlock(mapX + 1, mapY))
                 AddSurface(WallOrientation.Rotated90, baseX + Global.DistancePerTile, baseY);
 
             // back face
-            //if (mapY > 0 && Map.Blocks[mapX, mapY - 1].WallIndex == 0 && !Map.Blocks[mapX, mapY - 1].MapBorder)
+            if (mapY < Map.Height - 1 && IsFreeBlock(mapX, mapY + 1))
                 AddSurface(WallOrientation.Rotated180, baseX + Global.DistancePerTile, baseY + Global.DistancePerTile);
 
             // right face
-            //if (mapX < Map.Width - 1 && Map.Blocks[mapX + 1, mapY].WallIndex == 0 && !Map.Blocks[mapX + 1, mapY].MapBorder)
+            if (mapX > 0 && IsFreeBlock(mapX - 1, mapY))
                 AddSurface(WallOrientation.Rotated270, baseX, baseY + Global.DistancePerTile);
         }
 
