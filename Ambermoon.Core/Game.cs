@@ -200,8 +200,8 @@ namespace Ambermoon
             ResetMoveKeys();
             layout.SetLayout(UI.LayoutType.Map3D);
 
-            renderMap3D = new RenderMap3D(map, mapManager, renderView, playerX, playerY, direction);
             renderMap2D.Destroy();
+            renderMap3D.SetMap(map, playerX, playerY, direction);
             player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
             player3D.SetPosition((int)playerX, (int)playerY, currentTicks);
             player2D.Visible = false;
