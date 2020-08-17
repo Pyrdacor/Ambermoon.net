@@ -43,6 +43,7 @@ namespace Ambermoon.Renderer
             State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
             State.Gl.Enable(EnableCap.DepthTest);
+            State.Gl.DepthRange(0.0f, 1.0f);
             State.Gl.DepthFunc(DepthFunction.Lequal);
             State.Gl.Disable(EnableCap.CullFace);
 
@@ -56,7 +57,7 @@ namespace Ambermoon.Renderer
         public void Resize(int width, int height)
         {
             State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, width, 0, height, 0, 1);
-            State.ProjectionMatrix3D = Matrix4.CreatePerspective(170.0f, (float)Global.MapViewWidth / Global.MapViewHeight, 0.225f, 100.0f);
+            State.ProjectionMatrix3D = Matrix4.CreatePerspective(155.0f, (float)Global.MapViewWidth / Global.MapViewHeight, 0.5f, 50.0f);
 
             State.ClearMatrices();
             State.PushModelViewMatrix(Matrix4.Identity);
