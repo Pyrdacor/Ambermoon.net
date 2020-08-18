@@ -19,4 +19,7 @@
     <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
+  </ItemGroup>
 </Project>

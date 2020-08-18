@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
+    <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
   </ItemGroup>
 
 </Project>

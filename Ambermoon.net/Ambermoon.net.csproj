@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
+    <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
     <ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />
   </ItemGroup>
 

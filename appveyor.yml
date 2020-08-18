@@ -15,10 +15,16 @@ build:
 artifacts:
   - path: Ambermoon.net-Windows.zip
     name: Ambermoon.net-Windows
+  - path: nuget\*.nupkg
+    name: NugetPackages
 
 after_build:
   - dotnet publish -c Release "%APPVEYOR_BUILD_FOLDER%\Ambermoon.net\Ambermoon.net.csproj" -p:PublishSingleFile=true -r win-x64 --no-restore
   - 7z a Ambermoon.net-Windows.zip "%APPVEYOR_BUILD_FOLDER%\Ambermoon.net\bin\Any CPU\Release\netcoreapp3.1\win-x64\publish\Ambermoon.net.exe"
+  - mkdir "nuget"
+  - xcopy /Y /I "Ambermoon.Common\bin\Release\*.nupkg" "nuget\*"
+  - xcopy /Y /I "Ambermoon.Data.Legacy\bin\Release\*.nupkg" "nuget\*"
+  - xcopy /Y /I "Ambermoon.Data.Common\bin\Release\*.nupkg" "nuget\*"
 
 test: off
 
@@ -34,5 +40,12 @@ deploy:
     draft: true
     prerelease: false
     force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
+  - provider: NuGet
+    name: NugetPackages
+    api_key:
+      secure: UwVH6GHdh4zr7mDxC/HWXBQni/uzh36MV5lsXRmrgyyYEXJ67H63sI31QG4AByXY
+    skip_symbols: true
     on:
       APPVEYOR_REPO_TAG: true

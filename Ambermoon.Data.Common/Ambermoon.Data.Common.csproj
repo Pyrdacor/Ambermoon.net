@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>Ambermoon.Data</RootNamespace>
+    <Authors>Robert Schneckenhaus</Authors>
+    <Description>Library that provides basic interfaces for Ambermoon data. It is used by the Ambermoon.Data.Legacy package but can also be used by other abstractions to provide the data from different sources and data types.</Description>
+    <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon</PackageProjectUrl>
+    <RepositoryType>Github</RepositoryType>
+    <PackageTags>Ambermoon Amiga</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.22</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ambermoon.Common" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Common\Ambermoon.Common.csproj" />
+  </ItemGroup>
+
+</Project>

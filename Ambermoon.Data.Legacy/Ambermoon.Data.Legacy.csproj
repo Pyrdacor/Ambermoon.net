@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Authors>Robert Schneckenhaus</Authors>
+    <Description>Library to load and process legacy data from the Amiga game Ambermoon.</Description>
+    <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
+    <PackageTags>Ambermoon Legacy Amiga Game Data</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.38</Version>
+    <AssemblyVersion>1.0.38.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ambermoon.Data.Common" Version="1.0.20" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
+  </ItemGroup>
+
+</Project>
