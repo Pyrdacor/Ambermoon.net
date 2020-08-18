@@ -27,7 +27,7 @@ using System.Linq;
 
 namespace Ambermoon.Render
 {
-    internal class RenderMap3D : IRenderMap
+    internal class RenderMap3D
     {
         public const int FloorTextureWidth = 64;
         public const int FloorTextureHeight = 64;

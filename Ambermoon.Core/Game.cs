@@ -76,6 +76,15 @@ namespace Ambermoon
         /// All words you have heard about in conversations.
         /// </summary>
         readonly List<string> dictionary = new List<string>();
+        public GameVariablePool GlobalVariables { get; } = new GameVariablePool();
+        readonly Dictionary<uint, GameVariablePool> mapVariables = new Dictionary<uint, GameVariablePool>();
+        public GameVariablePool GetMapVariables(Map map)
+        {
+            if (!mapVariables.ContainsKey(map.Index))
+                return mapVariables[map.Index] = new GameVariablePool();
+
+            return mapVariables[map.Index];
+        }
 
         // Rendering
         RenderMap2D renderMap2D = null;
@@ -218,7 +227,7 @@ namespace Ambermoon
             layout.SetLayout(UI.LayoutType.Map2D);
             player = new Player();
             var map = mapManager.GetMap(258u); // grandfather's house
-            renderMap2D = new RenderMap2D(map, mapManager, renderView);
+            renderMap2D = new RenderMap2D(this, map, mapManager, renderView);
             renderMap3D = new RenderMap3D(null, mapManager, renderView, 0, 0, CharacterDirection.Up);
             player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
                 renderView.SpriteFactory, renderView.GameData, new Position(2, 2), mapManager);

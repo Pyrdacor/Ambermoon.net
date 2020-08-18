@@ -24,13 +24,14 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Render
 {
-    internal class RenderMap2D : IRenderMap
+    internal class RenderMap2D
     {
         public const int TILE_WIDTH = 16;
         public const int TILE_HEIGHT = 16;
         public const int NUM_VISIBLE_TILES_X = 11; // maps will always be at least 11x11 in size
         public const int NUM_VISIBLE_TILES_Y = 9; // maps will always be at least 11x11 in size
         const int NUM_TILES = NUM_VISIBLE_TILES_X * NUM_VISIBLE_TILES_Y;
+        readonly Game game;
         public Map Map { get; private set; } = null;
         Map[] adjacentMaps = null;
         Tileset tileset = null;
@@ -46,9 +47,10 @@ namespace Ambermoon.Render
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
 
-        public RenderMap2D(Map map, IMapManager mapManager, IRenderView renderView,
+        public RenderMap2D(Game game, Map map, IMapManager mapManager, IRenderView renderView,
             uint initialScrollX = 0, uint initialScrollY = 0)
         {
+            this.game = game;
             this.mapManager = mapManager;
             this.renderView = renderView;
 
@@ -105,17 +107,17 @@ namespace Ambermoon.Render
             if (x >= Map.Width)
             {
                 if (y >= Map.Height)
-                    adjacentMaps[2].TriggerEvents(player, trigger, x - (uint)Map.Width, y - (uint)Map.Height, mapManager, ticks);
+                    adjacentMaps[2].TriggerEvents(game, player, trigger, x - (uint)Map.Width, y - (uint)Map.Height, mapManager, ticks);
                 else
-                    adjacentMaps[0].TriggerEvents(player, trigger, x - (uint)Map.Width, y, mapManager, ticks);
+                    adjacentMaps[0].TriggerEvents(game, player, trigger, x - (uint)Map.Width, y, mapManager, ticks);
             }
             else if (y >= Map.Height)
             {
-                adjacentMaps[1].TriggerEvents(player, trigger, x, y - (uint)Map.Height, mapManager, ticks);
+                adjacentMaps[1].TriggerEvents(game, player, trigger, x, y - (uint)Map.Height, mapManager, ticks);
             }
             else
             {
-                Map.TriggerEvents(player, trigger, x, y, mapManager, ticks);
+                Map.TriggerEvents(game, player, trigger, x, y, mapManager, ticks);
             }
         }
 

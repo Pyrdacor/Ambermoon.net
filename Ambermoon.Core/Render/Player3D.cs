@@ -59,7 +59,7 @@ namespace Ambermoon.Render
         {
             Position = new Position(x, y);
             ResetCameraPosition();
-            map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
         }
 
         bool TestCollision(float x, float z, float lastMapX, float lastMapY)
@@ -78,7 +78,7 @@ namespace Ambermoon.Render
             {
                 Camera.MoveForward(distance, noX, noZ);
                 Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
-                map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+                map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
             }
 
             Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
@@ -120,7 +120,7 @@ namespace Ambermoon.Render
             {
                 Camera.MoveBackward(distance, noX, noZ);
                 Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
-                map.Map.TriggerEvents(this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+                map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
             }
 
             Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
