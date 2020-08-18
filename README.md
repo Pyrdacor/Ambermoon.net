@@ -4,6 +4,7 @@
 
 Version | OS
 --- | ---
+[1.0.10](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.10/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.9](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.9/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.8](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.8/Ambermoon.net-Windows.zip) | Windows 64bit
 
@@ -59,6 +60,7 @@ ESC | Leave fullscreen mode
 
 ## Change log
 
+- Version 1.0.10: Fixed 3D map crash, improved map event handling
 - Version 1.0.9: Added floor billboards like holes/lava, fixed billboards
 - Version 1.0.8: A lot of 3D improvements (see [here](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.8)).
 - Version 1.0.7: Smoother 3D movement (thanks to Metibor), new flag "LegacyMode" in config to use lower 3D fps
