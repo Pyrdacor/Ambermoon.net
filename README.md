@@ -82,3 +82,14 @@ You can also flattr.
 [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software)
 
 Thank you very much.
+
+
+## Contribution
+
+If you want to help use the issue tracker to report bugs or create pull requests.
+
+I appreciate any kind of help.
+
+Special thanks to:
+- Metibor
+- Thallyrion
