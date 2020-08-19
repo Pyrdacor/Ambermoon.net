@@ -32,7 +32,7 @@ namespace Ambermoon.Render
             if (!map.IsWorldMap)
             {
                 // Each map should have a border of 1 (walls)
-                if (newX < 1 || newY < 1 || newX >= map.Width - 1 || newY >= map.Height - 1)
+                if (newX < 0 || newY < -1 || newX >= map.Width || newY >= map.Height - 1)
                     canMove = false;
             }
             else
@@ -41,14 +41,6 @@ namespace Ambermoon.Render
                     newX += map.Width;
                 while (newY < 0)
                     newY += map.Height;
-
-                if (!Map.Map.IsWorldMap)
-                {
-                    while (newX >= map.Width)
-                        newX -= map.Width;
-                    while (newY >= map.Height)
-                        newY -= map.Height;
-                }
             }
 
             var tile = Map[(uint)newX, (uint)newY + 1];
