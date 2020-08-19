@@ -22,6 +22,9 @@ namespace Ambermoon.Render
         readonly ITextureAtlas textureAtlas;
         readonly IAnimatedSprite sprite;
         readonly Character2DAnimationInfo animationInfo;
+        readonly Character2DAnimationInfo worldAnimationInfo;
+        Character2DAnimationInfo CurrentAnimationInfo => Map.Map.IsWorldMap
+            ? worldAnimationInfo : animationInfo;
         public uint CurrentBaseFrameIndex { get; private set; }
         public uint CurrentFrameIndex { get; private set; }
         public uint CurrentFrame => sprite.CurrentFrame;
@@ -29,36 +32,40 @@ namespace Ambermoon.Render
         public CharacterDirection Direction { get; private set; } = CharacterDirection.Down;
         public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
         public Position Position { get; } // in Tiles
+        public Position Padding { get; } = new Position(0, 0); // left and top padding in pixels inside the tile
         public bool Visible
         {
             get => sprite.Visible;
             set => sprite.Visible = value;
         }
         public State CurrentState { get; private set; }
-        public uint NumFrames => CurrentState switch
+        public uint NumFrames => Math.Max(1, CurrentState switch
         {
-            State.Stand => animationInfo.NumStandFrames,
-            State.Sit => animationInfo.NumSitFrames,
-            State.Sleep => animationInfo.NumSleepFrames,
+            State.Stand => CurrentAnimationInfo.NumStandFrames,
+            State.Sit => CurrentAnimationInfo.NumSitFrames,
+            State.Sleep => CurrentAnimationInfo.NumSleepFrames,
             _ => throw new ArgumentOutOfRangeException("Invalid character state")
-        };
+        });
 
         public Character2D(Game game, IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
-            Character2DAnimationInfo animationInfo, RenderMap2D map, Position startPosition, uint paletteIndex)
+            Character2DAnimationInfo animationInfo, RenderMap2D map, Position startPosition, uint paletteIndex,
+            Character2DAnimationInfo? worldAnimationInfo = null)
         {
             this.game = game;
+            Map = map;
             this.textureAtlas = textureAtlas;
             this.animationInfo = animationInfo;
-            CurrentBaseFrameIndex = CurrentFrameIndex = animationInfo.StandFrameIndex;
+            this.worldAnimationInfo = worldAnimationInfo ?? animationInfo;
+            var currentAnimationInfo = CurrentAnimationInfo;
+            CurrentBaseFrameIndex = CurrentFrameIndex = currentAnimationInfo.StandFrameIndex;
             var textureOffset = textureAtlas.GetOffset(CurrentFrameIndex);
-            sprite = spriteFactory.CreateAnimated(animationInfo.FrameWidth, animationInfo.FrameHeight,
-                textureOffset.X, textureOffset.Y, textureAtlas.Texture.Width, animationInfo.NumStandFrames);
+            sprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, currentAnimationInfo.FrameHeight,
+                textureOffset.X, textureOffset.Y, textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
             sprite.Layer = layer;
-            sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH;
-            sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT;
-            sprite.BaseLineOffset = 1;
+            sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + Padding.X;
+            sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + Padding.Y;
+            sprite.BaseLineOffset = 1 - Padding.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - currentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
             sprite.PaletteIndex = (byte)paletteIndex;
-            Map = map;
             Position = startPosition;
         }
 
@@ -114,7 +121,9 @@ namespace Ambermoon.Render
                 Direction = newDirection.Value;
             }
 
+            var animationInfo = CurrentAnimationInfo;
             var tileType = Map[x, y + 1].Type;
+            sprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight);
             CurrentState = tileType switch
             {
                 Data.Map.TileType.ChairUp => State.Sit,
@@ -145,14 +154,15 @@ namespace Ambermoon.Render
             lastFrameReset = ticks;
             Position.X = (int)x;
             Position.Y = (int)y;
-            sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH;
-            sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT;
+            sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + Padding.X;
+            sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + Padding.Y;
+            sprite.BaseLineOffset = 1 - Padding.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT); ;
         }
 
         public virtual void Update(uint ticks)
         {
             uint elapsedTicks = ticks - lastFrameReset;
-            sprite.CurrentFrame = elapsedTicks / animationInfo.TicksPerFrame; // this will take care of modulo frame count
+            sprite.CurrentFrame = elapsedTicks / CurrentAnimationInfo.TicksPerFrame; // this will take care of modulo frame count
             CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
         }
 

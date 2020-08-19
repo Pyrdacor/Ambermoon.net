@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data;
-using System;
 
 namespace Ambermoon.Render
 {
@@ -8,11 +7,13 @@ namespace Ambermoon.Render
         readonly Player player;
         readonly IMapManager mapManager;
 
+        // TODO: gameData.PlayerAnimationInfo is only for Lyramion. Offsets need to be increased by World * 17 later.
         public Player2D(Game game, IRenderLayer layer, Player player, RenderMap2D map,
             ISpriteFactory spriteFactory, IGameData gameData, Position startPosition,
             IMapManager mapManager)
             : base(game, layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
-                  spriteFactory, gameData.PlayerAnimationInfo, map, startPosition, 7u)
+                  spriteFactory, gameData.PlayerAnimationInfo, map, startPosition, 7u,
+                  gameData.WorldPlayerAnimationInfo)
         {
             this.player = player;
             this.mapManager = mapManager;
@@ -28,12 +29,18 @@ namespace Ambermoon.Render
             int newX = Position.X + x;
             int newY = Position.Y + y;
             var map = Map.Map;
+            Map.Tile tile;
 
             if (!map.IsWorldMap)
             {
-                // Each map should have a border of 1 (walls)
+                // Don't leave the map.
+                // Note that the player is 2 tiles tall in non-world maps
+                // and the position is the upper tile so he is allowed to
+                // move up to y = -1 and only down to y = map.Height - 1.
                 if (newX < 0 || newY < -1 || newX >= map.Width || newY >= map.Height - 1)
                     canMove = false;
+
+                tile = Map[(uint)newX, (uint)newY + 1];
             }
             else
             {
@@ -41,9 +48,9 @@ namespace Ambermoon.Render
                     newX += map.Width;
                 while (newY < 0)
                     newY += map.Height;
-            }
 
-            var tile = Map[(uint)newX, (uint)newY + 1];
+                tile = Map[(uint)newX, (uint)newY];
+            }
 
             if (canMove)
             {
@@ -91,9 +98,9 @@ namespace Ambermoon.Render
                 else if (x < 0 && (map.IsWorldMap || (newX <= map.Width - 7 && newX >= 5)))
                     scrollX = -1;
 
-                if (y > 0 && (map.IsWorldMap || (newY >= 5 && newY <= map.Height - 5)))
+                if (y > 0 && (map.IsWorldMap || (newY >= 4 && newY <= map.Height - 5)))
                     scrollY = 1;
-                else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 6 && newY >= 4)))
+                else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 7 && newY >= 3)))
                     scrollY = -1;
 
                 if (y > 0)
@@ -113,8 +120,9 @@ namespace Ambermoon.Render
                     var prevState = CurrentState;
 
                     MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset, null);
-                    // We trigger with our lower half so add 1 to y
-                    Map.TriggerEvents(this, MapEventTrigger.Move, (uint)newX, (uint)newY + 1, mapManager, ticks);
+                    // We trigger with our lower half so add 1 to y in non-world maps.
+                    Map.TriggerEvents(this, MapEventTrigger.Move, (uint)newX,
+                        (uint)newY + (oldMap.IsWorldMap ? 0u : 1u), mapManager, ticks);
 
                     if (oldMap == Map.Map) // might have changed by map change events
                     {
@@ -170,6 +178,8 @@ namespace Ambermoon.Render
             if (Map.Map != map)
             {
                 Visible = true; // reset visibility before changing map
+
+                Padding.Y = map.IsWorldMap ? -4 : 0;
             }
 
             base.MoveTo(map, x, y, ticks, frameReset, newDirection);

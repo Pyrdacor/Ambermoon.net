@@ -194,5 +194,18 @@ namespace Ambermoon.Data.Legacy
             NumSleepFrames = 1,
             TicksPerFrame = 0
         };
+
+        public Character2DAnimationInfo WorldPlayerAnimationInfo => new Character2DAnimationInfo
+        {
+            FrameWidth = 12,
+            FrameHeight = 24,
+            StandFrameIndex = 3 * 17,
+            SitFrameIndex = 0,
+            SleepFrameIndex = 0,
+            NumStandFrames = 1,
+            NumSitFrames = 0,
+            NumSleepFrames = 0,
+            TicksPerFrame = 0
+        };
     }
 }

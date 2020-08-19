@@ -32,8 +32,10 @@ namespace Ambermoon
                     var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
 
                     // The position (x, y) is 1-based in the data so we subtract 1.
-                    // Moreover the players position is 1 tile below its drawing position in 2D so subtract another 1 from y.
-                    player.MoveTo(newMap, mapChangeEvent.X - 1, mapChangeEvent.Y - (newMap.Type == MapType.Map2D ? 2u : 1u),
+                    // Moreover the players position is 1 tile below its drawing position
+                    // in non-world 2D so subtract another 1 from y.
+                    player.MoveTo(newMap, mapChangeEvent.X - 1,
+                        mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
                         ticks, true, mapChangeEvent.Direction);
 
                     break;

@@ -9,5 +9,6 @@ namespace Ambermoon.Data
 
         void Load(string folderPath);
         Character2DAnimationInfo PlayerAnimationInfo { get; }
+        Character2DAnimationInfo WorldPlayerAnimationInfo { get; }
     }
 }
