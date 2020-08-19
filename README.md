@@ -4,9 +4,9 @@
 
 Version | OS
 --- | ---
+[1.0.11](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.11/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.10](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.10/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.9](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.9/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.8](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.8/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -60,6 +60,7 @@ ESC | Leave fullscreen mode
 
 ## Change log
 
+- Version 1.0.11: Fixed map changes, world map now uses a smaller sprite (not the correct yet)
 - Version 1.0.10: Fixed 3D map crash, improved map event handling
 - Version 1.0.9: Added floor billboards like holes/lava, fixed billboards
 - Version 1.0.8: A lot of 3D improvements (see [here](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.8)).
