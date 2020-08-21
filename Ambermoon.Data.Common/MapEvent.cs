@@ -12,7 +12,7 @@ namespace Ambermoon.Data
         Chest, // all kinds of lootable map objects
         PopupText, // events with text popup
         Spinner, // rotates the player to a random direction
-        Damage, // the burning fire places in grandfathers house have these
+        Trap, // the burning fire places in grandfathers house, chest/door traps etc
         Unknown7,
         Riddlemouth,
         Award,
@@ -54,6 +54,18 @@ namespace Ambermoon.Data
         }
     }
 
+    public class DoorEvent : MapEvent
+    {
+        public byte[] Unknown { get; set; }
+        public uint KeyIndex { get; set; }
+        public uint UnlockFailedEventIndex { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}: Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Unknown {string.Join(" ", Unknown.Select(b => b.ToString("x2")))}";
+        }
+    }
+
     public class ChestMapEvent : MapEvent
     {
         [Flags]
@@ -82,8 +94,8 @@ namespace Ambermoon.Data
             Lockpick = 0x01 // these also have a trap attached
         }
 
-        public ushort Unknown1 { get; set; }
         public LockFlags Lock { get; set; }
+        public ushort Unknown { get; set; }        
         /// <summary>
         /// Note: This is 0-based but the files might by 1-based.
         /// </summary>
@@ -94,7 +106,7 @@ namespace Ambermoon.Data
 
         public override string ToString()
         {
-            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Unknown1 {Unknown1:x4}";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Unknown1 {Unknown:x4}";
         }
     }
 
@@ -117,21 +129,45 @@ namespace Ambermoon.Data
     public class SpinnerEvent : MapEvent
     {
         public CharacterDirection Direction { get; set; }
-        public byte[] Unknown1 { get; set; }
+        public byte[] Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Direction {Direction}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Direction {Direction}, Unknown1 {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 
-    public class DamageEvent : MapEvent
+    public class TrapEvent : MapEvent
     {
-        public byte[] Unknown1 { get; set; }
+        public enum TrapType
+        {
+            Damage
+            // TODO ...
+            // 5 seems to be used for green slime, strinking stuff
+            // "Gauners Keller" has many traps with many values for this
+        }
+
+        public enum TrapTarget
+        {
+            ActivePlayer,
+            All
+            // TODO: RandomPlayer? Hero?
+        }
+
+        public TrapType TypeOfTrap { get; set; }
+        public TrapTarget Target { get; set; }
+        /// <summary>
+        /// Most of the times 3. Big water vortex has 150 and Value 0.
+        /// </summary>
+        public byte Unknown { get; set; }
+        /// <summary>
+        /// Value (e.g. damage). I guess it is in percentage of max health? Maybe for TrapType 0 only?
+        /// </summary>
+        public byte Value { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+            return $"{Type}: {Value} {TypeOfTrap} on {Target} Unknown {Unknown:x2}";
         }
     }
 
@@ -139,11 +175,11 @@ namespace Ambermoon.Data
     {
         public uint IntroTextIndex { get; set; }
         public uint SolutionTextIndex { get; set; }
-        public byte[] Unknown1 { get; set; }
+        public byte[] Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: IntroText {IntroTextIndex}, SolutionText {SolutionTextIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}";
+            return $"{Type}: IntroText {IntroTextIndex}, SolutionText {SolutionTextIndex}, Unknown1 {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -218,13 +254,16 @@ namespace Ambermoon.Data
     {
         public uint X { get; set; }
         public uint Y { get; set; }
-        public byte[] Unknown1 { get; set; }
+        public byte[] Unknown { get; set; }
         public uint FrontTileIndex { get; set; }
-        public byte[] Unknown2 { get; set; }
+        /// <summary>
+        /// 0 means same map
+        /// </summary>
+        public uint MapIndex { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: X {X}, Y {Y}, Front tile {FrontTileIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile {FrontTileIndex}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -237,6 +276,15 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}: Monster group {MonsterGroupIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+        }
+    }
+
+    public class EnterPlaceEvent : MapEvent
+    {
+        // TODO
+        public override string ToString()
+        {
+            return $"{Type}";
         }
     }
 
@@ -323,6 +371,42 @@ namespace Ambermoon.Data
         }
     }
 
+    public class Dice100RollEvent : MapEvent
+    {
+        // TODO
+        public override string ToString()
+        {
+            return $"{Type}";
+        }
+    }
+
+    public class ConversationActionEvent : MapEvent
+    {
+        // TODO
+        public override string ToString()
+        {
+            return $"{Type}";
+        }
+    }
+
+    public class PrintTextEvent : MapEvent
+    {
+        // TODO
+        public override string ToString()
+        {
+            return $"{Type}";
+        }
+    }
+
+    public class CreateEvent : MapEvent
+    {
+        // TODO
+        public override string ToString()
+        {
+            return $"{Type}";
+        }
+    }
+
     public class QuestionEvent : MapEvent
     {
         public uint TextIndex { get; set; }
@@ -358,6 +442,32 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return Type.ToString() + ": " + string.Join(" ", Data.Select(d => d.ToString("X2")));
+        }
+    }
+
+    public class ExitEvent : MapEvent
+    {
+        // TODO
+        public override string ToString()
+        {
+            return $"{Type}";
+        }
+    }
+
+    public class SpawnEvent : MapEvent
+    {
+        // TODO
+        public override string ToString()
+        {
+            return $"{Type}";
+        }
+    }
+
+    public class NopEvent : MapEvent
+    {
+        public override string ToString()
+        {
+            return $"{Type}";
         }
     }
 }
