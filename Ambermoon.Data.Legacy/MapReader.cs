@@ -245,7 +245,7 @@ namespace Ambermoon.Data.Legacy
                         };
                         break;
                     }
-                case MapEventType.TextEvent:
+                case MapEventType.PopupText:
                     {
                         // event image index (0xff = no image)
                         // 3 unknown bytes
@@ -255,7 +255,7 @@ namespace Ambermoon.Data.Legacy
                         var unknown1 = dataReader.ReadBytes(3);
                         var textIndex = dataReader.ReadByte();
                         var unknown2 = dataReader.ReadBytes(4);
-                        mapEvent = new TextEvent
+                        mapEvent = new PopupTextEvent
                         {
                             EventImageIndex = eventImageIndex,
                             TextIndex = textIndex,
@@ -297,19 +297,25 @@ namespace Ambermoon.Data.Legacy
                         };
                         break;
                     }
-                case MapEventType.ChangePlayerAttribute:
+                case MapEventType.Award:
                     {
-                        var unknown1 = dataReader.ReadBytes(6);
-                        var attribute = (Attribute)dataReader.ReadByte();
-                        var unknown2 = dataReader.ReadByte();
-                        var value = dataReader.ReadByte();
+                        var awardType = (AwardEvent.AwardType)dataReader.ReadByte();
+                        var awardOperation = (AwardEvent.AwardOperation)dataReader.ReadByte();
+                        var random = dataReader.ReadByte() != 0;
+                        var awardTarget = (AwardEvent.AwardTarget)dataReader.ReadByte();
+                        var unknown = dataReader.ReadByte();
+                        var awardTypeValue = dataReader.ReadWord();
+                        var value = dataReader.ReadWord();
 
-                        mapEvent = new ChangePlayerAttributeEvent
+                        mapEvent = new AwardEvent
                         {
-                            Attribute = attribute,
+                            TypeOfAward = awardType,
+                            Operation = awardOperation,
+                            Random = random,
+                            Target = awardTarget,
+                            AwardTypeValue = awardTypeValue,
                             Value = value,
-                            Unknown1 = unknown1,
-                            Unknown2 = unknown2
+                            Unknown = unknown
                         };
                         break;
                     }

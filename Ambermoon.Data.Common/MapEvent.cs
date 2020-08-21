@@ -7,15 +7,15 @@ namespace Ambermoon.Data
     public enum MapEventType
     {
         Unknown,
-        MapChange, // doors, etc
-        Unknown2,
+        MapChange, // open doors, exits, etc
+        Door, // locked doors
         Chest, // all kinds of lootable map objects
-        TextEvent, // events with text popup
+        PopupText, // events with text popup
         Spinner, // rotates the player to a random direction
         Damage, // the burning fire places in grandfathers house have these
         Unknown7,
         Riddlemouth,
-        ChangePlayerAttribute,
+        Award,
         ChangeTile,
         StartBattle,
         Unknown12,
@@ -97,7 +97,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class TextEvent : MapEvent
+    public class PopupTextEvent : MapEvent
     {
         public uint TextIndex { get; set; }
         /// <summary>
@@ -146,16 +146,70 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ChangePlayerAttributeEvent : MapEvent
+    public class AwardEvent : MapEvent
     {
-        public Attribute Attribute { get; set; }
+        public enum AwardType
+        {
+            Attribute = 0x00,
+            Ability = 0x01,
+            HitPoints = 0x02,
+            SpellPoints = 0x03,
+            SpellLearningPoints = 0x04,
+            TrainingPoints = 0x05,
+            Languages = 0x07,
+            Experience = 0x08
+            // TODO
+        }
+
+        public enum AwardOperation
+        {
+            Increase,
+            Fill = 4
+            // TODO: Decrease?, ... 
+        }
+
+        public enum AwardTarget
+        {
+            ActivePlayer,
+            All
+            // TODO: RandomPlayer? Hero?
+        }
+
+        public AwardType TypeOfAward { get; set; }
+        public AwardTarget Target { get; set; }
+        public AwardOperation Operation { get; set; }
+        /// <summary>
+        /// If set the real value is random in the range 0 to Value.
+        /// </summary>
+        public bool Random { get; set; }
+        public ushort AwardTypeValue { get; set; }
+        public Attribute? Attribute => TypeOfAward == AwardType.Attribute ? (Attribute)AwardTypeValue : (Attribute?)null;
+        public Ability? Ability => TypeOfAward == AwardType.Ability ? (Ability)AwardTypeValue : (Ability?)null;
+        public Language? Languages => TypeOfAward == AwardType.Languages ? (Language)AwardTypeValue : (Language?)null;
         public uint Value { get; set; }
-        public byte[] Unknown1 { get; set; }
-        public byte Unknown2 { get; set; }
+        public byte Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Attribute {Attribute}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {Unknown2:x2}";
+            string operationString = Operation switch
+            {
+                AwardOperation.Increase => Random ? $"+rand(0~{Value})" : $"+{Value}",
+                AwardOperation.Fill => "max",
+                _ => $"?op={(int)Operation}?"
+            };
+
+            return TypeOfAward switch
+            {
+                AwardType.Attribute => $"{Type}: {Attribute} on {Target} {operationString}, Unknown {Unknown:x2}",
+                AwardType.Ability => $"{Type}: {Ability} on {Target} {operationString}, Unknown {Unknown:x2}",
+                AwardType.HitPoints => $"{Type}: HP on {Target} {operationString}, Unknown {Unknown:x2}",
+                AwardType.SpellPoints => $"{Type}: SP on {Target} {operationString}, Unknown {Unknown:x2}",
+                AwardType.SpellLearningPoints => $"{Type}: SLP on {Target} {operationString}, Unknown {Unknown:x2}",
+                AwardType.TrainingPoints => $"{Type}: TP on {Target} {operationString}, Unknown {Unknown:x2}",
+                AwardType.Languages => $"{Type}: Add {Languages} on {Target}, Unknown {Unknown:x2}",
+                AwardType.Experience => $"{Type}: Exp on {Target} {operationString}, Unknown {Unknown:x2}",
+                _ => $"{Type}: Unknown ({(int)TypeOfAward}:{AwardTypeValue}) on {Target} {operationString}, Unknown {Unknown:x2}"
+            };
         }
     }
 
@@ -195,7 +249,7 @@ namespace Ambermoon.Data
             Success = 0x09, // treasure fully looted, battle won, etc
             Hand = 0x0e,
             // TODO
-        };
+        }
 
         public ConditionType TypeOfCondition { get; set; }
         public byte[] Unknown1 { get; set; }
@@ -242,7 +296,7 @@ namespace Ambermoon.Data
             SetMapVariable = 0x00,
             SetGlobalVariable = 0x01,
             // TODO
-        };
+        }
 
         public ActionType TypeOfAction { get; set; }
         public byte[] Unknown1 { get; set; }
