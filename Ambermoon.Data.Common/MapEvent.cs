@@ -18,17 +18,18 @@ namespace Ambermoon.Data
         Award,
         ChangeTile,
         StartBattle,
-        Unknown12,
+        EnterPlace, // merchant, healer, etc
         Condition,
         Action,
-        Unknown15,
-        Unknown16,
-        Unknown17,
-        Unknown18,
+        Dice100Roll,
+        ConversationAction,
+        PrintText,
+        Create,
         Question, // yes/no popup with text
         ChangeMusic,
-        // TODO ...
-        // Maybe: Message popup, activatable by hand/eye/mouth cursor, etc
+        Exit,
+        Spawn,
+        Nop // null / no operation
     }
 
     public class MapEvent
