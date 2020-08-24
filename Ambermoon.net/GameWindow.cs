@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Legacy;
+using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Render;
 using Ambermoon.Renderer.OpenGL;
 using Silk.NET.Core.Contexts;
@@ -161,9 +162,10 @@ namespace Ambermoon
             // Load game data
             var gameData = new GameData();
             gameData.Load(configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutablePath);
+            var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
 
             // Create render view
-            renderView = new RenderView(this, gameData, new GraphicProvider(gameData), new FontProvider(),
+            renderView = new RenderView(this, gameData, new GraphicProvider(gameData), new FontProvider(executableData),
                 new TextProcessor(), Width, Height);
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text);
             renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, 94).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));

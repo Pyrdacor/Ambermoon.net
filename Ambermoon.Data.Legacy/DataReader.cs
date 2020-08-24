@@ -185,5 +185,11 @@ namespace Ambermoon.Data.Legacy
             if (Position % 2 == 1)
                 ++Position;
         }
+
+        public void AlignToDword()
+        {
+            if (Position % 4 != 0)
+                Position += 4 - Position % 4;
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -24,9 +25,12 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal AutomapNames(IDataReader dataReader)
         {
-            foreach (var type in Enum.GetValues(typeof(AutomapType)))
+            Entries.Add(AutomapType.None, "");
+            Entries.Add(AutomapType.Wall, "");
+
+            foreach (var type in Enum.GetValues(typeof(AutomapType)).OfType<AutomapType>().Skip(2))
             {
-                Entries.Add((AutomapType)type, dataReader.ReadNullTerminatedString());
+                Entries.Add(type, dataReader.ReadNullTerminatedString());
             }
 
             dataReader.AlignToWord();

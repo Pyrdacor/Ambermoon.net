@@ -25,5 +25,6 @@ namespace Ambermoon.Data
         long FindByteSequence(byte[] sequence, long offset);
         long FindString(string str, long offset);
         void AlignToWord();
+        void AlignToDword();
     }
 }

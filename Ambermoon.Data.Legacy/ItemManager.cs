@@ -12,7 +12,7 @@ namespace Ambermoon.Data.Legacy
             var file = gameData.Files[$"AM2_CPU"].Files[1];
 
             file.Position = 0;
-            var data = AmigaExecutable.Read(file).Last(h => h.Type == AmigaExecutable.HunkType.Data).Data;
+            var data = ((AmigaExecutable.Hunk)AmigaExecutable.Read(file).Last(h => h.Type == AmigaExecutable.HunkType.Data)).Data;
             file = new DataReader(data);
 
             // First find the item offset (the lamed ailment is the first item)

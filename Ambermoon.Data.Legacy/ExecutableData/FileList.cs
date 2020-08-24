@@ -2,6 +2,7 @@
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
+    // German 1.05: 0x7d42
     /// <summary>
     /// There is the list of files like Palettes.amb inside the second data
     /// hunk in the executables.
@@ -11,7 +12,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// 
     /// Then there is another unknown word (seems to be 0).
     /// 
-    /// Then follow the offset of the file entries. These are absolute offsets
+    /// Then follows the offset of the file entries. These are absolute offsets
     /// in relation to the hunk data. An offset of 0 means, there is no entry.
     /// Maybe it was used to build an index list with empty entries.
     /// 

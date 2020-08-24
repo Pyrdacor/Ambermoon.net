@@ -31,11 +31,22 @@ namespace Ambermoon.Data.Legacy
 
     public static class AmigaExecutable
     {
-		public struct Hunk
+		public interface IHunk
+		{
+			HunkType Type { get; }
+		}
+
+		public struct Hunk : IHunk
         {
-			public HunkType Type;
+			public HunkType Type { get; internal set; }
 			public uint NumEntries;
 			public byte[] Data;
+        }
+
+		public struct Reloc32Hunk : IHunk
+        {
+			public HunkType Type { get; internal set; }
+			public Dictionary<uint, List<uint>> Entries;
         }
 
 		public enum HunkType
@@ -106,7 +117,7 @@ namespace Ambermoon.Data.Legacy
 		static readonly byte[] DeplodeLiteralBase = { 6, 10, 10, 18 };
 		static readonly byte[] DeplodeLiteralExtraBits = { 1, 1, 1, 1, 2, 3, 3, 4, 4, 5, 7, 14 };
 
-		public static List<Hunk> Read(IDataReader dataReader, bool deplodeIfNecessary = true)
+		public static List<IHunk> Read(IDataReader dataReader, bool deplodeIfNecessary = true)
         {
 			static void Throw()
 			{
@@ -139,67 +150,73 @@ namespace Ambermoon.Data.Legacy
 				hunkSizes[i] = hunkSize & 0x3FFFFFFF;
 			}
 
-			var hunks = new List<Hunk>((int)numHunks);
+			var hunks = new List<IHunk>((int)numHunks);
 
 			for (int i = 0; i < numHunks; ++i)
 			{
 				var type = (HunkType)dataReader.ReadDword();
-				var hunk = new Hunk
-				{
-					Type = type
-				};
+				IHunk hunk;
 
 				switch (type)
 				{
 					case HunkType.Code:
 					case HunkType.Data:
+					{
+						uint numEntries = dataReader.ReadDword();
+						hunk = new Hunk
 						{
-							uint numEntries = dataReader.ReadDword();
-							hunk.NumEntries = numEntries;
-							hunk.Data = dataReader.ReadBytes((int)numEntries * 4);
-						}
+							Type = type,
+							NumEntries = numEntries,
+							Data = dataReader.ReadBytes((int)numEntries * 4)
+						};
 						break;
+					}
 					case HunkType.BSS:
+					{
+						uint allocSize = dataReader.ReadDword();
+						hunk = new Hunk
 						{
-							uint allocSize = dataReader.ReadDword();
-							hunk.NumEntries = allocSize;
-						}
+							Type = type,
+							NumEntries = allocSize,
+							Data = null
+						};
 						break;
+					}
 					case HunkType.RELOC32:
+					{
+						var entries = new Dictionary<uint, List<uint>>();
+						uint numOffsets;
+
+						while ((numOffsets = dataReader.ReadDword()) != 0)
 						{
-							uint size = 4;
-							uint totalOffsets = 0;
-							uint numOffsets;
+							uint hunkNumber = dataReader.ReadDword();
+							entries.Add(hunkNumber, new List<uint>((int)numOffsets));
+							var list = entries[hunkNumber];
 
-							if (dataReader.PeekDword() == 0)
-							{
-								hunk.Data = dataReader.ReadBytes(4);
-							}
-							else
-							{
-								int offset = dataReader.Position;
-
-								while ((numOffsets = dataReader.ReadDword()) != 0)
-								{
-									size += 8 + numOffsets * 4;
-									totalOffsets += numOffsets;
-									dataReader.Position += 4 + (int)numOffsets * 4;
-								}
-
-								dataReader.Position = offset;
-								hunk.Data = dataReader.ReadBytes((int)size);
-							}
-
-							hunk.NumEntries = size / 4;
-
-							++numHunks;
+							for (int o = 0; o < numOffsets; ++o)
+								list.Add(dataReader.ReadDword());
 						}
+
+						hunk = new Reloc32Hunk
+						{
+							Type = type,
+							Entries = entries
+						};
+
+						++numHunks;
 						break;
+					}
 					case HunkType.END:
+					{
+						hunk = new Hunk
 						{
-							++numHunks;
-						}
+							Type = type,
+							NumEntries = 0,
+							Data = null
+						};
+						++numHunks;
 						break;
+					}
 					default:
 						throw new AmbermoonException(ExceptionScope.Data, $"Unsupported hunk type: {type}.");
 				}
@@ -214,7 +231,7 @@ namespace Ambermoon.Data.Legacy
 				if (hunks.Count != 0)
 				{
 					imploded = true;
-					var firstHunkData = hunks.First().Data;
+					var firstHunkData = ((Hunk)hunks.First()).Data;
 
 					for (int i = 0; i < ImplodeHunkHeader.Length; ++i)
 					{
@@ -237,10 +254,10 @@ namespace Ambermoon.Data.Legacy
 			0x48, 0xe7, 0xff, 0xff, 0x49, 0xfa, 0x00, 0x5e, 0x3c, 0x3c
 		};
 
-		static List<Hunk> ReadImploded(List<Hunk> imploderHunks)
+		static List<IHunk> ReadImploded(List<IHunk> imploderHunks)
         {
 			var deplodedData = Deplode(imploderHunks, out var hunkSizes);
-			var hunks = new List<Hunk>();
+			var hunks = new List<IHunk>();
 			var reader = new DataReader(deplodedData);
 			int hunkSizeIndex = 0;
 
@@ -303,32 +320,24 @@ namespace Ambermoon.Data.Legacy
 				}
 				else if (flags == 1) // RELOC32
                 {
-					uint size = 4;
-					uint totalOffsets = 0;
+					var entries = new Dictionary<uint, List<uint>>();
 					uint numOffsets;
-					var hunk = new Hunk { Type = HunkType.RELOC32 };
 
-					if (reader.PeekDword() == 0)
+					while ((numOffsets = reader.ReadDword()) != 0)
 					{
-						hunk.Data = reader.ReadBytes(4);
-					}
-					else
-					{
-						int offset = reader.Position;
+						uint hunkNumber = reader.ReadDword();
+						entries.Add(hunkNumber, new List<uint>((int)numOffsets));
+						var list = entries[hunkNumber];
 
-						while ((numOffsets = reader.ReadDword()) != 0)
-						{
-							size += 8 + numOffsets * 4;
-							totalOffsets += numOffsets;
-							reader.Position += 4 + (int)numOffsets * 4;
-						}
-
-						reader.Position = offset;
-						hunk.Data = reader.ReadBytes((int)size);
+						for (int o = 0; o < numOffsets; ++o)
+							list.Add(reader.ReadDword());
 					}
 
-					hunk.NumEntries = size / 4;
-					hunks.Add(hunk);
+					hunks.Add(new Reloc32Hunk
+					{
+						Type = HunkType.RELOC32,
+						Entries = entries
+					});
 				}
 
 				if (flags != 0 && flags != 3) // add END hunk if necessary
@@ -346,12 +355,12 @@ namespace Ambermoon.Data.Legacy
 			return Deplode(Read(dataReader, false), out deplodedHunkSizes);
 		}
 
-		static unsafe byte[] Deplode(List<Hunk> imploderHunks, out List<uint> deplodedHunkSizes)
+		static unsafe byte[] Deplode(List<IHunk> imploderHunks, out List<uint> deplodedHunkSizes)
         {
 			deplodedHunkSizes = null;
 
-			var lastCodeHunk = imploderHunks.LastOrDefault(h => h.Type == HunkType.Code);
-			var dataHunk = imploderHunks.LastOrDefault(h => h.Type == HunkType.Data);
+			var lastCodeHunk = (Hunk)imploderHunks.Last(h => h.Type == HunkType.Code);
+			var dataHunk = (Hunk)imploderHunks.Last(h => h.Type == HunkType.Data);
 
 			// Values are located at offset 0x188 in last code hunk.
 			// The bit length (last 12 bytes) can have a special encoding.
@@ -367,7 +376,7 @@ namespace Ambermoon.Data.Legacy
 			var table = new byte[8 * 2 + 12 * 1];
 			Buffer.BlockCopy(lastCodeHunk.Data, 0x188, table, 0, table.Length);
 			var bssHunks = imploderHunks.Where(h => h.Type == HunkType.BSS).ToList();
-			deplodedHunkSizes = bssHunks.Take(bssHunks.Count - 1).Select(h => h.NumEntries * 4).ToList();
+			deplodedHunkSizes = bssHunks.Take(bssHunks.Count - 1).Select(h => ((Hunk)h).NumEntries * 4).ToList();
 			var data = dataHunk.Data;
 			uint firstLiteralLength = ((uint)lastCodeHunk.Data[0x1E6] << 8) | lastCodeHunk.Data[0x1E7];
 			byte initialBitBuffer = lastCodeHunk.Data[0x1E8];

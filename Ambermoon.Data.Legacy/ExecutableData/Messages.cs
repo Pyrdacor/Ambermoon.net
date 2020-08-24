@@ -7,7 +7,13 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// 
     /// They follow after the <see cref="WorldNames"/>.
     /// 
-    /// They are stored as sections. A section can contain
+    /// There are two text chunks. The first one can
+    /// contain placeholders.
+    /// 
+    /// First chunk:
+    /// ============
+    /// 
+    /// The messages are stored as sections. A section can contain
     /// just null-terminated texts after each other or a
     /// offset section. These sections are used for split
     /// texts that are filled with values at runtime.
@@ -19,21 +25,28 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// Each offset entry contains 8 bytes. First 4 bytes are the absolute
     /// offset to the text string inside the data hunk. The last 4 bytes
     /// seem to be always 0. Maybe they can adjust the index of the value
-    /// to insert/replace? The resulting string is produces by reading the
+    /// to insert/replace? The resulting string is produced by reading the
     /// partial strings at all offsets and concatenate them. Between each
     /// of the partial strings there will be a value provide by the game
     /// at runtime. So you can add C# format placeholders like {0} there.
     /// 
     /// I am not sure yet if I understand this encoding correctly
     /// but it works for now to parse all messages.
+    /// 
+    /// Second chunk:
+    /// =============
+    /// 
+    /// The second chunk starts with the size of entries (should be 300)
+    /// as a dword. Then this amount of words follow which give the
+    /// lengths of each entry.
+    /// 
+    /// Then the entries follow which are plain texts. They are null-
+    /// terminated in most cases but not always so use the length to
+    /// read them and trim the terminating nulls.
     /// </summary>
     public class Messages
     {
         public List<string> Entries { get; } = new List<string>();
-        // Found 300 words in-between the messages. Maybe something with dictionary entries? Words to say?
-        public List<uint> UnknownIndices { get; }
-        const int NumFirstMessages = 42;
-        const int NumSecondMessages = 295;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -44,26 +57,44 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal Messages(IDataReader dataReader)
         {
-            while (Entries.Count < NumFirstMessages)
-                ReadText(dataReader);
+            while (ReadText(dataReader))
+                ;
 
             --dataReader.Position;
             dataReader.AlignToWord();
 
-            int numIndices = (int)dataReader.ReadDword();
-            UnknownIndices = new List<uint>(numIndices);
+            int numTextEntries = (int)dataReader.ReadDword();
+            var textEntryLengths = new List<uint>(numTextEntries);
 
-            for (int i = 0; i < numIndices; ++i)
-                UnknownIndices.Add(dataReader.ReadWord());
+            for (int i = 0; i < numTextEntries; ++i)
+                textEntryLengths.Add(dataReader.ReadWord());
 
-            while (Entries.Count < NumFirstMessages + NumSecondMessages)
-                ReadText(dataReader);
+            for (int i = 0; i < numTextEntries; ++i)
+                Entries.Add(dataReader.ReadString((int)textEntryLengths[i]).TrimEnd('\0'));
 
             dataReader.AlignToWord();
+
+            if (dataReader.PeekWord() == 0)
+                dataReader.Position += 2;
         }
 
-        void ReadText(IDataReader dataReader)
+        bool ReadText(IDataReader dataReader)
         {
+            // The next section starts with an amount of 300 as a dword.
+            // If we find it we stop reading by returning false. For safety
+            // we will check if the value is lower than 0x1000 as the offsets
+            // here will be over 0x8000.
+            var next = dataReader.PeekDword();
+            var nextWord = next >> 8;
+
+            if (nextWord > 0x100 && nextWord < 0x1000)
+                return false;
+
+            nextWord >>= 8;
+
+            if (nextWord > 0x100 && nextWord < 0x1000)
+                return false;
+
             if (dataReader.PeekWord() == 0) // offset section / split text with placeholders
             {
                 dataReader.AlignToWord();
@@ -74,14 +105,25 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 while (dataReader.PeekDword() == 0)
                     dataReader.Position += 4;
 
+                if (dataReader.PeekByte() != 0)
+                    dataReader.Position -= 2;
+
                 string text = "";
                 var offsets = new List<uint>();
                 int endOffset = dataReader.Position;
+                uint firstOffset = uint.MaxValue;
 
-                while (dataReader.PeekByte() == 0)
+                while (dataReader.PeekByte() == 0 && dataReader.Position < firstOffset)
                 {
-                    offsets.Add(dataReader.ReadDword());
-                    dataReader.ReadDword(); // TODO: always 0? Maybe some placeholder index reshifting?
+                    var offset = dataReader.ReadDword();
+
+                    if (offset != 0)
+                    {
+                        if (offset < firstOffset)
+                            firstOffset = offset;
+
+                        offsets.Add(offset);
+                    }
                 }
 
                 for (int i = 0; i < offsets.Count; ++i)
@@ -102,7 +144,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             else // just a text
             {
                 Entries.Add(dataReader.ReadNullTerminatedString());
-            }            
+            }
+
+            return true;
         }
     }
 }
