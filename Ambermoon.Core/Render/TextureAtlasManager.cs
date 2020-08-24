@@ -176,7 +176,16 @@ namespace Ambermoon.Render
             var layoutGraphics = graphicProvider.GetGraphics(GraphicType.Layout);
 
             for (int i = 0; i < layoutGraphics.Count; ++i)
-                AddTexture(Layer.UIForeground, (uint)i, layoutGraphics[i]);
+                AddTexture(Layer.UIForeground, UI.Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
+
+            #endregion
+
+            #region Pics 80x80
+
+            var pics80x80Graphics = graphicProvider.GetGraphics(GraphicType.Pics80x80);
+
+            for (int i = 0; i < pics80x80Graphics.Count; ++i)
+                AddTexture(Layer.UIForeground, UI.Graphics.Pics80x80Offset + (uint)i, pics80x80Graphics[i]);
 
             #endregion
 

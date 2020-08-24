@@ -18,7 +18,8 @@ namespace Ambermoon.Data
         Item,
         Layout,
         LabBackground,
-        Cursor
+        Cursor,
+        Pics80x80
         // TODO ...
     }
 

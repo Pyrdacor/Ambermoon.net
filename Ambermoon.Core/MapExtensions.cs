@@ -40,6 +40,14 @@ namespace Ambermoon
 
                     break;
                 }
+                case MapEventType.Chest:
+                {
+                    if (!(mapEvent is ChestMapEvent chestMapEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
+
+                    game.ShowChest(chestMapEvent);
+                    break;
+                }
                 // TODO ...
                 case MapEventType.Condition:
                 {

@@ -70,6 +70,7 @@ namespace Ambermoon
         PartyMember CurrentPartyMember { get; } = null;
         PartyMember CurrentInventory { get; } = null;
         PartyMember CurrentCaster { get; } = null;
+        public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         bool is3D = false;
         readonly bool[] keys = new bool[Enum.GetValues(typeof(Key)).Length];
         /// <summary>
@@ -94,6 +95,11 @@ namespace Ambermoon
         Player3D player3D = null;
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
+        Rect mapViewArea = map2DViewArea;
+        static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
+            Global.Map2DViewWidth, Global.Map2DViewHeight);
+        static readonly Rect map3DViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY,
+            Global.Map3DViewWidth, Global.Map3DViewHeight);
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
             Cursor cursor, bool legacyMode)
@@ -198,6 +204,8 @@ namespace Ambermoon
             renderView.GetLayer(Layer.Billboards3D).Visible = false;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                 renderView.GetLayer((Layer)i).Visible = true;
+
+            mapViewArea = map2DViewArea;
         }
 
         internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction)
@@ -222,6 +230,8 @@ namespace Ambermoon
             renderView.GetLayer(Layer.Billboards3D).Visible = true;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                 renderView.GetLayer((Layer)i).Visible = false;
+
+            mapViewArea = map3DViewArea;
         }
 
         public void StartNew()
@@ -332,6 +342,20 @@ namespace Ambermoon
 
             switch (key)
             {
+                case Key.Escape:
+                {
+                    if (ingame)
+                    {
+                        if (is3D)
+                            layout.SetLayout(UI.LayoutType.Map3D);
+                        else
+                            layout.SetLayout(UI.LayoutType.Map2D);
+                        layout.Reset();
+                        ShowMap(true);
+                    }
+
+                    break;
+                }
                 case Key.Num1:
                     break;
                 case Key.Num2:
@@ -373,12 +397,77 @@ namespace Ambermoon
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            if (ingame)
+            {
+                var relativePosition = renderView.ScreenToGame(position);
+
+                if (mapViewArea.Contains(relativePosition))
+                {
+                    // click into the map area
+
+                    relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
+
+                    if (cursor.Type == CursorType.Eye)
+                        TriggerMapEvents(MapEventTrigger.Eye, relativePosition);
+                    else if (cursor.Type == CursorType.Hand)
+                        TriggerMapEvents(MapEventTrigger.Hand, relativePosition);
+                    else if (cursor.Type == CursorType.Mouth)
+                        TriggerMapEvents(MapEventTrigger.Mouth, relativePosition);
+                }
+                else
+                {
+                    // TODO: check for other clicks
+                }
+            }
+
             cursor.Type = CursorType.Sword;
         }
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
             cursor.UpdatePosition(position);
+        }
+
+        /// <summary>
+        /// Triggers map events with the given trigger and position.
+        /// </summary>
+        /// <param name="trigger">Trigger</param>
+        /// <param name="position">Position inside the map view</param>
+        void TriggerMapEvents(MapEventTrigger trigger, Position position)
+        {
+            if (is3D)
+            {
+                // TODO
+                // renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager, currentTicks);
+            }
+            else // 2D
+            {
+                var tilePosition = renderMap2D.PositionToTile(position);
+                renderMap2D.TriggerEvents(player2D, trigger, (uint)tilePosition.X, (uint)tilePosition.Y, mapManager, currentTicks);
+            }
+        }
+
+        void ShowMap(bool show)
+        {
+            if (is3D)
+            {
+                renderView.GetLayer(Layer.Map3D).Visible = show;
+                renderView.GetLayer(Layer.Billboards3D).Visible = show;
+            }
+            else
+            {
+                for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
+                    renderView.GetLayer((Layer)i).Visible = show;
+            }
+        }
+
+        internal void ShowChest(ChestMapEvent chestMapEvent)
+        {
+            ShowMap(false);
+            layout.SetLayout(UI.LayoutType.Items);
+            layout.Set80x80Picture(10u);
+
+            // TODO ...
         }
     }
 }

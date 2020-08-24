@@ -148,6 +148,7 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
             AddGraphicFiles(GraphicType.Layout, new GraphicFile("Layouts.amb"));
             AddGraphicFiles(GraphicType.LabBackground, new GraphicFile("Lab_background.amb"));
+            AddGraphicFiles(GraphicType.Pics80x80, new GraphicFile("Pics_80x80.amb"));
         }
 
         public List<Graphic> GetGraphics(GraphicType type)
@@ -250,6 +251,13 @@ namespace Ambermoon.Data.Legacy
                     info.Width = 144;
                     info.Height = 20;
                     info.GraphicFormat = GraphicFormat.Palette4Bit;
+                    info.PaletteOffset = 0;
+                    info.Alpha = false;
+                    break;
+                case GraphicType.Pics80x80:
+                    info.Width = 80;
+                    info.Height = 80;
+                    info.GraphicFormat = GraphicFormat.Palette5Bit;
                     info.PaletteOffset = 0;
                     info.Alpha = false;
                     break;

@@ -121,6 +121,30 @@ namespace Ambermoon.Render
             }
         }
 
+        /// <summary>
+        /// Converts a map view position (pixels) to a tile position
+        /// (x gives the tile column index and y the tile row index).
+        /// 
+        /// Note that x and y can exceed map width or height for world
+        /// maps as there can be 2x2 world maps displayed at the same
+        /// time. The tile position will still be relative to the
+        /// first map though.
+        /// </summary>
+        /// <param name="position">Position inside the map view in pixels</param>
+        /// <returns>Null if not a valid map position or the transformed position otherwise</returns>
+        public Position PositionToTile(Position position)
+        {
+            if (position.X < 0 || position.Y < 0 ||
+                position.X >= Global.Map2DViewWidth || position.Y >= Global.Map2DViewHeight)
+                return null;
+
+            return new Position
+            (
+                (int)ScrollX + position.X / TILE_WIDTH,
+                (int)ScrollY + position.Y / TILE_HEIGHT
+            );
+        }
+
         public Position GetCenterPosition()
         {
             return new Position((int)ScrollX + NUM_VISIBLE_TILES_X / 2, (int)ScrollY + NUM_VISIBLE_TILES_Y / 2);
