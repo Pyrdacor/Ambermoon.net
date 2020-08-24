@@ -28,14 +28,17 @@ namespace Ambermoon.Data.Legacy
         };
 
         readonly GameData gameData;
+        readonly ExecutableData.ExecutableData executableData;
         public Dictionary<int, Graphic> Palettes { get; }
 
-        public GraphicProvider(GameData gameData)
+        public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData)
         {
             this.gameData = gameData;
+            this.executableData = executableData;
             var graphicReader = new GraphicReader();
             Palettes = gameData.Files[paletteFile].Files.ToDictionary(f => f.Key, f => ReadPalette(graphicReader, f.Value));
 
+            // TODO: maybe we can read the special palettes from executable data?
             // There is a special palette used for items and portraits.
             // Special thanks to Iceblizz who provided it to the Amberworld project.
             Palettes.Add(50, new Graphic
@@ -93,7 +96,17 @@ namespace Ambermoon.Data.Legacy
 
             foreach (GraphicType type in Enum.GetValues(typeof(GraphicType)))
             {
-                LoadGraphics(type);
+                if (type == GraphicType.Cursor)
+                {
+                    var cursorGraphics = graphics[GraphicType.Cursor] = new List<Graphic>();
+
+                    foreach (var cursor in executableData.Cursors.Entries)
+                        cursorGraphics.Add(cursor.Graphic);
+                }
+                else
+                {
+                    LoadGraphics(type);
+                }
             }
         }
 

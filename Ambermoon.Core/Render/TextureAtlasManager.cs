@@ -197,6 +197,15 @@ namespace Ambermoon.Render
                 AddTexture(Layer.Items, (uint)i, itemGraphics[i]);
 
             #endregion
+
+            #region Cursors
+
+            var cursorGraphics = graphicProvider.GetGraphics(GraphicType.Cursor);
+
+            for (int i = 0; i < cursorGraphics.Count; ++i)
+                AddTexture(Layer.Cursor, (uint)i, cursorGraphics[i]);
+
+            #endregion
         }
     }
 }

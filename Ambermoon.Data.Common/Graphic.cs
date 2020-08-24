@@ -75,5 +75,38 @@ namespace Ambermoon.Data
                 }
             }
         }
+
+        public byte[] ToPixelData(Graphic palette, byte alphaIndex = 0)
+        {
+            if (IndexedGraphic)
+            {
+                if (palette == null)
+                    throw new ArgumentNullException("Palette for indexed graphic was null.");
+
+                byte[] data = new byte[Width * Height * 4];
+
+                for (int i = 0; i < Width * Height; ++i)
+                {
+                    byte index = Data[i];
+
+                    if (index != alphaIndex)
+                    {
+                        for (int c = 0; c < 4; ++c)
+                            data[i * 4 + c] = palette.Data[index * 4 + c];
+                    }
+                    else
+                    {
+                        data[i * 4 + 1] = 80;
+                        data[i * 4 + 3] = 1;
+                    }
+                }
+
+                return data;
+            }
+            else
+            {
+                return Data;
+            }
+        }
     }
 }

@@ -87,6 +87,7 @@ namespace Ambermoon
         }
 
         // Rendering
+        readonly Cursor cursor = null;
         RenderMap2D renderMap2D = null;
         Player2D player2D = null;
         RenderMap3D renderMap3D = null;
@@ -94,8 +95,10 @@ namespace Ambermoon
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
 
-        public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager, bool legacyMode)
+        public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
+            Cursor cursor, bool legacyMode)
         {
+            this.cursor = cursor;
             this.legacyMode = legacyMode;
             movement = new Movement(legacyMode);
             nameProvider = new NameProvider(this);
@@ -327,6 +330,34 @@ namespace Ambermoon
 
             Move();
 
+            switch (key)
+            {
+                case Key.Num1:
+                    break;
+                case Key.Num2:
+                    break;
+                case Key.Num3:
+                    break;
+                case Key.Num4:
+                    break;
+                case Key.Num5:
+                    break;
+                case Key.Num6:
+                    break;
+                case Key.Num7:
+                    // TODO
+                    cursor.Type = CursorType.Eye;
+                    break;
+                case Key.Num8:
+                    // TODO
+                    cursor.Type = CursorType.Hand;
+                    break;
+                case Key.Num9:
+                    // TODO
+                    cursor.Type = CursorType.Mouth;
+                    break;
+            }
+
             lastKeyTicksReset = currentTicks;
         }
 
@@ -340,9 +371,14 @@ namespace Ambermoon
 
         }
 
-        public void OnMouseDown(MouseButtons buttons)
+        public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            cursor.Type = CursorType.Sword;
+        }
 
+        public void OnMouseMove(Position position, MouseButtons buttons)
+        {
+            cursor.UpdatePosition(position);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.ExecutableData;
+using Ambermoon.Geometry;
 using Ambermoon.Render;
 using Ambermoon.Renderer.OpenGL;
 using Silk.NET.Core.Contexts;
@@ -18,6 +19,7 @@ namespace Ambermoon
         IRenderView renderView;
         IWindow window;
         bool fullscreen = false;
+        ICursor cursor = null;
 
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -33,8 +35,10 @@ namespace Ambermoon
                     return;
 
                 fullscreen = value;
-
                 window.WindowState = fullscreen ? WindowState.Fullscreen : WindowState.Normal;
+
+                if (cursor != null)
+                    cursor.CursorMode = value ? CursorMode.Disabled : CursorMode.Hidden;
             }
         }
 
@@ -58,7 +62,10 @@ namespace Ambermoon
 
             if (mouse != null)
             {
+                cursor = mouse.Cursor;
+                cursor.CursorMode = Fullscreen ? CursorMode.Disabled : CursorMode.Hidden;
                 mouse.MouseDown += Mouse_MouseDown;
+                mouse.MouseMove += Mouse_MouseMove;
             }
         }
 
@@ -149,7 +156,12 @@ namespace Ambermoon
 
         void Mouse_MouseDown(IMouse mouse, MouseButton button)
         {
-            Game.OnMouseDown(GetMouseButtons(mouse));
+            Game.OnMouseDown(mouse.Position.Round(), GetMouseButtons(mouse));
+        }
+
+        void Mouse_MouseMove(IMouse mouse, System.Drawing.PointF position)
+        {
+            Game.OnMouseMove(position.Round(), GetMouseButtons(mouse));
         }
 
         void Window_Load()
@@ -163,9 +175,10 @@ namespace Ambermoon
             var gameData = new GameData();
             gameData.Load(configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutablePath);
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
+            var graphicProvider = new GraphicProvider(gameData, executableData);
 
             // Create render view
-            renderView = new RenderView(this, gameData, new GraphicProvider(gameData), new FontProvider(executableData),
+            renderView = new RenderView(this, gameData, graphicProvider, new FontProvider(executableData),
                 new TextProcessor(), Width, Height);
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text);
             renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, 94).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));
@@ -177,6 +190,7 @@ namespace Ambermoon
             Game = new Game(renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()),
                 new ItemManager(gameData, new ItemReader()),
+                new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
                 configuration.LegacyMode);
             Game.StartNew(); // TODO: Remove later
         }

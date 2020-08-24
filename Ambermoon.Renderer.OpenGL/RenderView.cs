@@ -49,8 +49,6 @@ namespace Ambermoon.Renderer.OpenGL
 
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
-        Position cursorPosition = new Position();
-        Position lastCursorPosition = new Position();
 
         public event EventHandler Closed;
         public event EventHandler Click;
@@ -399,17 +397,17 @@ namespace Ambermoon.Renderer.OpenGL
             }
         }
 
-        public void SetCursorPosition(int x, int y)
+        public Position ScreenToGame(Position position)
         {
-            cursorPosition.X = x;
-            cursorPosition.Y = y;
+            position = ScreenToView(position);
 
-            cursorPosition = ScreenToView(cursorPosition);
+            if (position == null)
+                return null;
 
-            if (cursorPosition == null)
-                cursorPosition = lastCursorPosition;
-            else
-                lastCursorPosition = cursorPosition;
+            float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
+            float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
+
+            return new Position(Misc.Round(position.X / factorX), Misc.Round(position.Y / factorY));
         }
 
         public Position ScreenToView(Position position)
