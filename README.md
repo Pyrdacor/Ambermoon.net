@@ -4,9 +4,9 @@
 
 Version | OS
 --- | ---
+[1.0.12](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.12/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.11](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.11/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.10](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.10/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.9](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.9/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -30,13 +30,16 @@ You may also checkout my already working Settlers I rewrite at [freeserf.net](ht
 
 ## Current state
 
-2D map rendering is working. Moreover the player can be moved on 2D maps and map changes are possible. World map scrolling is also working. Collision detection, sitting and sleeping is also working.
-
-3D map rendering also works for the most part. But for now only walls, ceiling and floor. Static objects work too but no monsters, etc.
-
-You can freely walk through 2D and 3D maps. Collision detection and map change events now also work in 3D.
-
-Text rendering also works now with text replacements like character names, shadows and different text colors. Rune texts work too.
+Working things:
+- 2D maps
+	- movement / auto scrolling / collision detection
+	- change map events / chest events (only display the window)
+	- walk animations, animated tiles, auto-sit, auto-sleep
+- 3D maps
+	- movement / static billboards / collision detection
+- window mode / fullscreen
+- cursors (only used sword, eye, hand and mouth at the moment)
+- text rendering including runes (but not used yet)
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
@@ -44,6 +47,7 @@ Text rendering also works now with text replacements like character names, shado
 ![3D map rendering 2](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D2.png "3D map rendering 2")
 ![Billboards](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Billboards1.png "Billboards")
 ![Text rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/TextRendering.png "Text rendering")
+![Chests](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png "Chests")
 
 
 ## Controls
@@ -55,11 +59,15 @@ Down | Move down (2D) or backward (3D)
 Left | Move left (2D) or turn left (3D)
 Right | Move right (2D) or turn right (3D)
 F11 | Toggle fullscreen mode
-ESC | Leave fullscreen mode
+ESC | Leave fullscreen mode, leave other ingame windows
+Num7 | Eye cursor
+Num8 | Hand cursor
+Num9 | Mouth cursor
 
 
 ## Change log
 
+- Version 1.0.12: Added cursors, added first version of chest map events
 - Version 1.0.11: Fixed map changes, world map now uses a smaller sprite (not the correct yet)
 - Version 1.0.10: Fixed 3D map crash, improved map event handling
 - Version 1.0.9: Added floor billboards like holes/lava, fixed billboards
