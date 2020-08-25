@@ -234,7 +234,7 @@ namespace Ambermoon.Data.Legacy
                     break;
                 case GraphicType.Portrait:
                     info.Width = 32;
-                    info.Height = 32;
+                    info.Height = 34;
                     break;
                 case GraphicType.Item:
                     info.Width = 16;

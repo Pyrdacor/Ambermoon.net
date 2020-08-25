@@ -270,6 +270,12 @@ namespace Ambermoon
                 Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection);
             else
                 Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection);
+
+            for (int i = 0; i < 6; ++i)
+            {
+                if (savegame.CurrentPartyMemberIndices[i] != null)
+                    layout.SetPortrait(i, savegame.GetPartyMember(i).PortraitIndex);
+            }
         }
 
         public void LoadGame()

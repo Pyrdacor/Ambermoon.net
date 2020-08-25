@@ -180,6 +180,15 @@ namespace Ambermoon.Render
 
             #endregion
 
+            #region Portraits
+
+            var portraits = graphicProvider.GetGraphics(GraphicType.Portrait);
+
+            for (int i = 0; i < portraits.Count; ++i)
+                AddTexture(Layer.UIForeground, UI.Graphics.PortraitOffset + (uint)i, portraits[i]);
+
+            #endregion
+
             #region Pics 80x80
 
             var pics80x80Graphics = graphicProvider.GetGraphics(GraphicType.Pics80x80);
