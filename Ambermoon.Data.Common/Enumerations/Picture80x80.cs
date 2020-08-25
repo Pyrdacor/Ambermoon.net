@@ -1,0 +1,29 @@
+﻿namespace Ambermoon.Data.Enumerations
+{
+    public enum Picture80x80
+    {
+        None,
+        ChestClosed,
+        Door,
+        ChestOpenEmpty,
+        Enchantress,
+        Enchanter,
+        Horse,
+        Innkeeper,
+        Magician1,
+        Magician2,
+        Merchant1,
+        ChestOpenFull,
+        Merchant2,
+        Captain,
+        Thief,
+        Treasure,
+        Knight,
+        Riddlemouth,
+        RestInn,
+        RestDungeon,
+        RestOutdoor,
+        MoragMerchant,
+        DwarfMerchant
+    }
+}
