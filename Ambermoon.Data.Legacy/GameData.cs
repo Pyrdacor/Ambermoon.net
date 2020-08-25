@@ -89,7 +89,8 @@ namespace Ambermoon.Data.Legacy
                     _log.AppendLine($" -> Unable to find file '{file}'.");
                 }
 
-                if (IsDictionary(file) || IsSavegame(file))
+                // We only need 1 dictionary, no savegames and only AM2_CPU but not AM2_BLIT.
+                if (IsDictionary(file) || IsSavegame(file) || file == "AM2_BLIT")
                     return;
 
                 if (_stopAtFirstError)
