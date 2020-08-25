@@ -64,6 +64,7 @@ namespace Ambermoon.Data.Legacy
         }
 
         static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.");
+        static bool IsSavegame(string file) => file.ToLower().StartsWith("initial/") || file.ToLower().StartsWith("save");
 
         public void Load(string folderPath)
         {
@@ -88,7 +89,7 @@ namespace Ambermoon.Data.Legacy
                     _log.AppendLine($" -> Unable to find file '{file}'.");
                 }
 
-                if (IsDictionary(file))
+                if (IsDictionary(file) || IsSavegame(file))
                     return;
 
                 if (_stopAtFirstError)
@@ -98,7 +99,7 @@ namespace Ambermoon.Data.Legacy
             foreach (var ambermoonFile in ambermoonFiles)
             {
                 var name = ambermoonFile.Key;
-                var path = Path.Combine(folderPath, name);
+                var path = Path.Combine(folderPath, name.Replace('/', Path.DirectorySeparatorChar));
 
                 if (_log != null)
                     _log.Append($"Trying to load file '{name}' ... ");

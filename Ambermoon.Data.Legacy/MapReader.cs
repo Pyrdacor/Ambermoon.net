@@ -3,10 +3,6 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy
 {
-    // TODO: Where is the information stored for:
-    // - tile blocking states [would make sense to find it in tileset tile data]
-    // - chair / bed [would make sense to find it in tileset tile data]
-    // - interaction type (move onto, hand, eye, mouth, etc)
     public class MapReader : IMapReader
     {
         static Map.TileType TileTypeFromTile(Map.Tile tile, Tileset tileset)
