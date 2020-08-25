@@ -43,8 +43,8 @@ namespace Ambermoon.Render
         ISurface3D ceiling = null;
         Labdata labdata = null;
         readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = new Dictionary<uint, List<ICollisionBody>>();
-        readonly List<ISurface3D> walls = new List<ISurface3D>();
-        readonly List<ISurface3D> objects = new List<ISurface3D>();
+        readonly Dictionary<uint, List<ISurface3D>> walls = new Dictionary<uint, List<ISurface3D>>();
+        readonly Dictionary<uint, List<ISurface3D>> objects = new Dictionary<uint, List<ISurface3D>>();
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
         static Graphic[] labBackgroundGraphics = null;
         /// <summary>
@@ -100,8 +100,8 @@ namespace Ambermoon.Render
             floor = null;
             ceiling = null;
 
-            walls.ForEach(wall => wall?.Delete());
-            objects.ForEach(obj => obj?.Delete());
+            walls.Values.ToList().ForEach(walls => walls.ForEach(wall => wall?.Delete()));
+            objects.Values.ToList().ForEach(objects => objects.ForEach(obj => obj?.Delete()));
 
             walls.Clear();
             objects.Clear();
@@ -242,7 +242,7 @@ namespace Ambermoon.Render
                 mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / BlockSize) * Global.DistancePerTile;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
-                objects.Add(mapObject);
+                objects.SafeAdd(blockIndex, mapObject);
 
                 if (subObject.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
                 {
@@ -296,7 +296,7 @@ namespace Ambermoon.Render
                 wall.Z = z;
                 wall.TextureAtlasOffset = wallTextureOffset;
                 wall.Visible = true; // TODO: not all walls should be always visible
-                walls.Add(wall);
+                walls.SafeAdd(blockIndex, wall);
 
                 if (blocksMovement)
                 {
@@ -330,13 +330,40 @@ namespace Ambermoon.Render
                 AddSurface(WallOrientation.Rotated270, baseX, baseY + Global.DistancePerTile);
         }
 
+        internal void UpdateBlock(uint x, uint y)
+        {
+            uint index = x + y * (uint)Map.Width;
+
+            if (walls.ContainsKey(index))
+            {
+                walls[index].ForEach(wall => wall?.Delete());
+                walls.Remove(index);
+            }
+
+            if (objects.ContainsKey(index))
+            {
+                objects[index].ForEach(obj => obj?.Delete());
+                objects.Remove(index);
+            }
+
+            if (blockCollisionBodies.ContainsKey(index))
+                blockCollisionBodies.Remove(index);
+
+            var surfaceFactory = renderView.Surface3DFactory;
+            var layer = renderView.GetLayer(Layer.Map3D);
+            var billboardLayer = renderView.GetLayer(Layer.Billboards3D);
+            var block = Map.Blocks[x, y];
+
+            if (block.WallIndex != 0)
+                AddWall(surfaceFactory, layer, x, y, block.WallIndex - 1);
+            else if (block.ObjectIndex != 0)
+                AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
+        }
+
         void UpdateSurfaces()
         {
             // Delete all surfaces
-            floor?.Delete();
-            ceiling?.Delete();
-            walls.ForEach(s => s?.Delete());
-            blockCollisionBodies.Clear();
+            CleanUp();
 
             var surfaceFactory = renderView.Surface3DFactory;
             var layer = renderView.GetLayer(Layer.Map3D);

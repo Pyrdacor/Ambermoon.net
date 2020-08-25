@@ -15,6 +15,10 @@ namespace Ambermoon
 
                 return variables[index];
             }
+            set
+            {
+                variables[index] = value;
+            }
         }
     }
 }

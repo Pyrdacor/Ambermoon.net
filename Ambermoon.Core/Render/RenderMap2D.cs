@@ -180,6 +180,30 @@ namespace Ambermoon.Render
                 tile.Visible = false;
         }
 
+        internal void UpdateTile(uint x, uint y)
+        {
+            if (x < ScrollX || y < ScrollY || x >= ScrollX + NUM_VISIBLE_TILES_X || y >= ScrollY + NUM_VISIBLE_TILES_Y)
+                return; // not visible
+
+            int spriteIndex = (int)(x - ScrollX + (y - ScrollY) * NUM_VISIBLE_TILES_X);
+            var tile = this[x, y];
+
+            if (tile.FrontTileIndex == 0)
+            {
+                foregroundTileSprites[spriteIndex].Visible = false;
+            }
+            else
+            {
+                var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+                var frontGraphicIndex = frontTile.GraphicIndex;
+                foregroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas.GetOffset(frontGraphicIndex - 1);
+                foregroundTileSprites[spriteIndex].NumFrames = (uint)frontTile.NumAnimationFrames;
+                foregroundTileSprites[spriteIndex].CurrentFrame = 0;
+                foregroundTileSprites[spriteIndex].Visible = true;
+                foregroundTileSprites[spriteIndex].BaseLineOffset = frontTile.BringToFront ? TILE_HEIGHT + 2 : frontTile.Background ? -1 : 0;
+            }
+        }
+
         void UpdateTiles()
         {
             var backLayer = renderView.GetLayer((Layer)((uint)Layer.MapBackground1 + tileset.Index - 1));

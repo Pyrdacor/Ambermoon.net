@@ -747,6 +747,30 @@ namespace Ambermoon
             // TODO
         }
 
+        internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
+        {
+            bool sameMap = changeTileEvent.MapIndex == 0;
+            var map = sameMap ? Map : mapManager.GetMap(changeTileEvent.MapIndex);
+            uint x = changeTileEvent.X - 1;
+            uint y = changeTileEvent.Y - 1;
+
+            if (is3D)
+            {
+                map.Blocks[x, y].ObjectIndex = changeTileEvent.FrontTileIndex <= 100 ? changeTileEvent.FrontTileIndex : 0;
+                map.Blocks[x, y].WallIndex = changeTileEvent.FrontTileIndex >= 101 && changeTileEvent.FrontTileIndex < 255 ? changeTileEvent.FrontTileIndex - 100 : 0;
+
+                if (sameMap)
+                    renderMap3D.UpdateBlock(x, y);
+            }
+            else // 2D
+            {
+                map.Tiles[x, y].FrontTileIndex = changeTileEvent.FrontTileIndex;
+
+                if (sameMap) // TODO: what if we change an adjacent world map which is visible instead? is there even a use case?
+                    renderMap2D.UpdateTile(x, y);
+            }
+        }
+
         internal void ShowChest(ChestMapEvent chestMapEvent)
         {
             ShowMap(false);

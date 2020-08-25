@@ -17,6 +17,9 @@ namespace Ambermoon
 
     public static class MapExtensions
     {
+        static uint? LastMapEventIndexMap = null; // TODO: do it better
+        static uint? LastMapEventIndex = null; // TODO: do it better
+
         public static uint PositionToTileIndex(this Map map, uint x, uint y) => x + y * (uint)map.Width;
 
         static MapEvent ExecuteEvent(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
@@ -46,6 +49,14 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
                     game.ShowChest(chestMapEvent);
+                    break;
+                }
+                case MapEventType.ChangeTile:
+                {
+                    if (!(mapEvent is ChangeTileEvent changeTileEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
+
+                    game.UpdateMapTile(changeTileEvent);
                     break;
                 }
                 // TODO ...
@@ -92,6 +103,24 @@ namespace Ambermoon
 
                     break;
                 }
+                case MapEventType.Action:
+                {
+                    if (!(mapEvent is ActionEvent actionEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid action event.");
+
+                    switch (actionEvent.TypeOfAction)
+                    {
+                        case ActionEvent.ActionType.SetMapVariable:
+                            game.GetMapVariables(map)[actionEvent.ObjectIndex] = (int)actionEvent.Value;
+                            break;
+                        case ActionEvent.ActionType.SetGlobalVariable:
+                            game.GlobalVariables[actionEvent.ObjectIndex] = (int)actionEvent.Value;
+                            break;
+                        // TODO ...
+                    }
+
+                    break;
+                }
                 // TODO ...
             }
 
@@ -108,6 +137,12 @@ namespace Ambermoon
             MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
+
+            if (LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
+                return;
+
+            LastMapEventIndexMap = map.Index;
+            LastMapEventIndex = mapEventId;
 
             if (mapEventId == 0)
                 return; // no map events at this position
