@@ -85,8 +85,8 @@ namespace Ambermoon.UI
             {
                 var sprite = _portraits[slot] ??= _renderView.SpriteFactory.Create(32, 34, 0, 0, false, true);
                 sprite.Layer = _renderView.GetLayer(Layer.UIForeground);
-                sprite.X = 16 + slot * 40; // TODO
-                sprite.Y = 1;
+                sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
+                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
                 sprite.TextureAtlasOffset = _textureAtlas.GetOffset(Graphics.PortraitOffset + portrait - 1);
                 sprite.PaletteIndex = 49;
                 sprite.Visible = true;

@@ -109,11 +109,17 @@ namespace Ambermoon
 
         public bool Contains(Position point)
         {
+            if (point == null)
+                return false;
+
             return Contains(point.X, point.Y);
         }
 
         public bool IntersectsWith(Rect rect)
         {
+            if (rect == null)
+                return false;
+
             if (rect.Right <= Left || Right <= rect.Left ||
                 rect.Bottom <= Top || Bottom <= rect.Top)
                 return false;

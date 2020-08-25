@@ -19,8 +19,6 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Ambermoon.Geometry;
-
 namespace Ambermoon.Render
 {
     public interface ICamera3D
@@ -36,6 +34,8 @@ namespace Ambermoon.Render
         void SetPosition(float x, float z);
         void MoveForward(float distance, bool noX, bool noZ);
         void MoveBackward(float distance, bool noX, bool noZ);
+        void MoveLeft(float distance, bool noX, bool noZ);
+        void MoveRight(float distance, bool noX, bool noZ);
         void TurnLeft(float angle); // in degrees
         void TurnRight(float angle); // in degrees
         void TurnTowards(float angle); // turn to attacking monster or stand on a spinner (in degrees)
@@ -43,5 +43,7 @@ namespace Ambermoon.Render
         void LevitateDown(float distance); // used for climbing down ladders/ropes (distance is in the range of 0 to 1 where 1 is full room height)
         void GetForwardPosition(float distance, out float x, out float z, bool noX, bool noZ);
         void GetBackwardPosition(float distance, out float x, out float z, bool noX, bool noZ);
+        void GetLeftPosition(float distance, out float x, out float z, bool noX, bool noZ);
+        void GetRightPosition(float distance, out float x, out float z, bool noX, bool noZ);
     }
 }

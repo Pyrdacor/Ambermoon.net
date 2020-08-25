@@ -66,6 +66,7 @@ namespace Ambermoon
                 cursor = mouse.Cursor;
                 cursor.CursorMode = Fullscreen ? CursorMode.Disabled : CursorMode.Hidden;
                 mouse.MouseDown += Mouse_MouseDown;
+                mouse.MouseUp += Mouse_MouseUp;
                 mouse.MouseMove += Mouse_MouseMove;
             }
         }
@@ -155,9 +156,25 @@ namespace Ambermoon
             return buttons;
         }
 
+        static MouseButtons ConvertMouseButtons(MouseButton mouseButton)
+        {
+            return mouseButton switch
+            {
+                MouseButton.Left => MouseButtons.Left,
+                MouseButton.Right => MouseButtons.Right,
+                MouseButton.Middle => MouseButtons.Middle,
+                _ => MouseButtons.None
+            };
+        }
+
         void Mouse_MouseDown(IMouse mouse, MouseButton button)
         {
             Game.OnMouseDown(mouse.Position.Round(), GetMouseButtons(mouse));
+        }
+
+        void Mouse_MouseUp(IMouse mouse, MouseButton button)
+        {
+            Game.OnMouseUp(mouse.Position.Round(), ConvertMouseButtons(button));
         }
 
         void Mouse_MouseMove(IMouse mouse, System.Drawing.PointF position)

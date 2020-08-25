@@ -401,9 +401,6 @@ namespace Ambermoon.Renderer.OpenGL
         {
             position = ScreenToView(position);
 
-            if (position == null)
-                return null;
-
             float factorX = (float)virtualScreenDisplay.Size.Width / Global.VirtualScreenWidth;
             float factorY = (float)virtualScreenDisplay.Size.Height / Global.VirtualScreenHeight;
 
@@ -412,9 +409,6 @@ namespace Ambermoon.Renderer.OpenGL
 
         public Position ScreenToView(Position position)
         {
-            if (!virtualScreenDisplay.Contains(position))
-                return null;
-
             int relX = position.X - virtualScreenDisplay.Left;
             int relY = position.Y - virtualScreenDisplay.Top;
             int rotatedX;

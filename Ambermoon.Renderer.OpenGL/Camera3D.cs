@@ -6,6 +6,7 @@ namespace Ambermoon.Renderer.OpenGL
     internal class Camera3D : ICamera3D
     {
         const double AngleFactor = Math.PI / 180.0;
+        const double QuarterTurnAngle = 0.5 * Math.PI;
         readonly State state;
         readonly Matrix4 currentMatrix;
         Matrix4 rotationMatrix = new Matrix4(Matrix4.Identity);
@@ -13,6 +14,9 @@ namespace Ambermoon.Renderer.OpenGL
         float currentAngle = 0.0f;
         double currentAngleCos = 0.0;
         double currentAngleSin = -1.0;
+        // The perpendicular value is -90° rotation (= turn left by a quarter)
+        double currentPerpendicularAngleCos = -1.0;
+        double currentPerpendicularAngleSin = 0.0;
 
         public Camera3D(State state)
         {
@@ -35,6 +39,18 @@ namespace Ambermoon.Renderer.OpenGL
         {
             x = noX ? X : X + (float)currentAngleCos * distance;
             z = noZ ? Z : Z + (float)currentAngleSin * distance;
+        }
+
+        public void GetLeftPosition(float distance, out float x, out float z, bool noX, bool noZ)
+        {
+            x = noX ? X : X - (float)currentPerpendicularAngleCos * distance;
+            z = noZ ? Z : Z - (float)currentPerpendicularAngleSin * distance;
+        }
+
+        public void GetRightPosition(float distance, out float x, out float z, bool noX, bool noZ)
+        {
+            x = noX ? X : X + (float)currentPerpendicularAngleCos * distance;
+            z = noZ ? Z : Z + (float)currentPerpendicularAngleSin * distance;
         }
 
         public void Activate()
@@ -85,6 +101,16 @@ namespace Ambermoon.Renderer.OpenGL
             Move(noX ? 0.0f : -(float)currentAngleCos * distance, 0.0f, noZ ? 0.0f : -(float)currentAngleSin * distance);
         }
 
+        public void MoveLeft(float distance, bool noX, bool noZ)
+        {
+            Move(noX ? 0.0f : -(float)currentPerpendicularAngleCos * distance, 0.0f, noZ ? 0.0f : -(float)currentPerpendicularAngleSin * distance);
+        }
+
+        public void MoveRight(float distance, bool noX, bool noZ)
+        {
+            Move(noX ? 0.0f : (float)currentPerpendicularAngleCos * distance, 0.0f, noZ ? 0.0f : (float)currentPerpendicularAngleSin * distance);
+        }
+
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
@@ -113,6 +139,8 @@ namespace Ambermoon.Renderer.OpenGL
             var radiant = AngleFactor * (currentAngle - 90.0f);
             currentAngleCos = Math.Cos(radiant);
             currentAngleSin = Math.Sin(radiant);
+            currentPerpendicularAngleCos = Math.Cos(radiant - QuarterTurnAngle);
+            currentPerpendicularAngleSin = Math.Sin(radiant - QuarterTurnAngle);
             Rotate(currentAngle);
         }
     }

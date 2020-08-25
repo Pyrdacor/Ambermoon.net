@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using System;
 
 namespace Ambermoon.Render
 {
@@ -72,22 +73,24 @@ namespace Ambermoon.Render
             return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, 0.15f * Global.DistancePerTile);
         }
 
-        public void MoveForward(float distance, uint ticks)
+        delegate void PositionProvider(float distance, out float newX, out float newY, bool noX, bool noZ);
+
+        void Move(float distance, uint ticks, PositionProvider positionProvider, Action<float, bool, bool> mover)
         {
             void Move(bool noX, bool noZ)
             {
-                Camera.MoveForward(distance, noX, noZ);
+                mover(distance, noX, noZ);
                 Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
                 map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
             }
 
             Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
-            Camera.GetForwardPosition(distance * 2f, out float newX, out float newY, false, false);
+            positionProvider(distance * 2f, out float newX, out float newY, false, false);
 
             if (TestCollision(newX, newY, cameraMapX, cameraMapY))
             {
                 // If collision is detected try to move only in x direction
-                Camera.GetForwardPosition(distance * 2f, out newX, out newY, false, true);
+                positionProvider(distance * 2f, out newX, out newY, false, true);
 
                 if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in x direction
                 {
@@ -96,7 +99,7 @@ namespace Ambermoon.Render
                 }
 
                 // If collision is detected in x direction too, try to move only in z direction
-                Camera.GetForwardPosition(distance * 2f, out newX, out newY, true, false);
+                positionProvider(distance * 2f, out newX, out newY, true, false);
 
                 if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in z direction
                 {
@@ -114,46 +117,24 @@ namespace Ambermoon.Render
             }
         }
 
+        public void MoveForward(float distance, uint ticks)
+        {
+            Move(distance, ticks, Camera.GetForwardPosition, Camera.MoveForward);
+        }
+
         public void MoveBackward(float distance, uint ticks)
         {
-            void Move(bool noX, bool noZ)
-            {
-                Camera.MoveBackward(distance, noX, noZ);
-                Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
-                map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
-            }
+            Move(distance, ticks, Camera.GetBackwardPosition, Camera.MoveBackward);
+        }
 
-            Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
-            Camera.GetBackwardPosition(distance * 2f, out float newX, out float newY, false, false);
+        public void MoveLeft(float distance, uint ticks)
+        {
+            Move(distance, ticks, Camera.GetLeftPosition, Camera.MoveLeft);
+        }
 
-            if (TestCollision(newX, newY, cameraMapX, cameraMapY))
-            {
-                // If collision is detected try to move only in x direction
-                Camera.GetBackwardPosition(distance * 2f, out newX, out newY, false, true);
-
-                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in x direction
-                {
-                    Move(false, true);
-                    return;
-                }
-
-                // If collision is detected in x direction too, try to move only in z direction
-                Camera.GetBackwardPosition(distance * 2f, out newX, out newY, true, false);
-
-                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in z direction
-                {
-                    Move(true, false);
-                    return;
-                }
-
-                // If we are here, we can't move at all
-                // TODO: Display OUCH
-            }
-            else
-            {
-                // We can move freely
-                Move(false, false);
-            }
+        public void MoveRight(float distance, uint ticks)
+        {
+            Move(distance, ticks, Camera.GetRightPosition, Camera.MoveRight);
         }
 
         public void TurnLeft(float angle) // in degrees

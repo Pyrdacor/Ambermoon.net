@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Render;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -14,5 +15,7 @@ namespace Ambermoon
         public const int Map3DViewY = 49;
         public const int Map3DViewWidth = 144;
         public const int Map3DViewHeight = 144;
+        public static readonly Rect[] PartyMemberPortraitAreas = Enumerable.Range(0, 6).Select(index =>
+            new Rect(16 + index * 40, 1, 32, 34)).ToArray(); // TODO
     }
 }

@@ -32,6 +32,7 @@ namespace Ambermoon.Render
         public CharacterDirection Direction { get; private set; } = CharacterDirection.Down;
         public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
         public Position Position { get; } // in Tiles
+        public Rect DisplayArea => new Rect(sprite.X, sprite.Y, sprite.Width, sprite.Height);
         public Position Padding { get; } = new Position(0, 0); // left and top padding in pixels inside the tile
         public bool Visible
         {
