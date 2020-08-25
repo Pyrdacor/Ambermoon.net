@@ -24,6 +24,22 @@ namespace Ambermoon.Data.Legacy
             public UInt32 Offset = UInt32.MaxValue;
             public UInt32 Length = 0u;
 
+            public uint[] GetHashTable(BinaryReader reader)
+            {
+                if (Type != SectorType.Directory)
+                    return null;
+
+                uint[] hashTable = new uint[72];
+                reader.BaseStream.Position = Offset + 24;
+
+                for (int i = 0; i < 72; ++i)
+                {
+                    hashTable[i] = reader.ReadUInt32BigEndian();
+                }
+
+                return hashTable;
+            }
+
             public byte[] GetData(BinaryReader reader, bool ffs, UInt32 fileSize = 0u)
             {
                 if (Type != SectorType.File)
@@ -202,11 +218,18 @@ namespace Ambermoon.Data.Legacy
             else
                 sector.Type = SectorType.Unknown;
 
+            if (sector.Type == SectorType.Directory)
+            {
+
+            }
+
             return sector;
         }
 
         public static Dictionary<string, byte[]> ReadADF(Stream stream)
         {
+            var directoryHashTables = new Dictionary<string, uint[]>();
+
             using (var reader = new BinaryReader(stream))
             {
                 // Reading bootblock (sectors 1 and 2 -> byte 0 - 1023)
@@ -285,10 +308,43 @@ namespace Ambermoon.Data.Legacy
 
                 foreach (var file in Files.AmigaFiles.Keys)
                 {
-                    var fileSector = GetSector(reader, hashTable, file, internationalMode);
+                    if (file.Contains('/'))
+                    {
+                        string directoryPath = "";
+                        var parts = file.Split('/');
+                        uint[] currentHashTable = hashTable;
 
-                    if (fileSector != null)
-                        loadedFiles.Add(file, fileSector.GetData(reader, ffs));
+                        for (int i = 0; i < parts.Length - 1; ++i)
+                        {
+                            if (i != 0)
+                                directoryPath += "/";
+                            directoryPath += parts[i];
+
+                            if (directoryHashTables.ContainsKey(directoryPath))
+                                currentHashTable = directoryHashTables[directoryPath];
+                            else
+                            {
+                                var sector = GetSector(reader, currentHashTable, parts[i], internationalMode);
+
+                                if (sector == null)
+                                    continue;
+
+                                currentHashTable = directoryHashTables[directoryPath] = sector.GetHashTable(reader);
+                            }
+                        }
+
+                        var fileSector = GetSector(reader, currentHashTable, parts[^1], internationalMode);
+
+                        if (fileSector != null)
+                            loadedFiles.Add(file, fileSector.GetData(reader, ffs));
+                    }
+                    else
+                    {
+                        var fileSector = GetSector(reader, hashTable, file, internationalMode);
+
+                        if (fileSector != null)
+                            loadedFiles.Add(file, fileSector.GetData(reader, ffs));
+                    }
                 }
 
                 return loadedFiles;
