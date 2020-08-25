@@ -25,6 +25,7 @@ namespace Ambermoon.UI
         readonly IRenderView _renderView;
         readonly ISprite _sprite;
         readonly ITextureAtlas _textureAtlas;
+        ISprite _sprite80x80Picture;
         readonly List<ISprite> _additionalSprites = new List<ISprite>();
 
         public Layout(IRenderView renderView)
@@ -57,24 +58,32 @@ namespace Ambermoon.UI
 
         public void Reset()
         {
+            _sprite80x80Picture?.Delete();
+            _sprite80x80Picture = null;
+
             foreach (var sprite in _additionalSprites)
                 sprite.Delete();
 
             _additionalSprites.Clear();
         }
 
-        public void Set80x80Picture(uint index)
+        public void Set80x80Picture(Data.Enumerations.Picture80x80 picture)
         {
-            var sprite = _renderView.SpriteFactory.Create(80, 80, 0, 0, false, true);
-
-            sprite.TextureAtlasOffset = _textureAtlas.GetOffset(Graphics.Pics80x80Offset + index);
-            sprite.X = Global.LayoutX + 16;
-            sprite.Y = Global.LayoutY + 6;
-            sprite.PaletteIndex = 49;
-            sprite.Layer = _renderView.GetLayer(Layer.UIForeground);
-            sprite.Visible = true;
-
-            _additionalSprites.Add(sprite);
+            if (picture == Data.Enumerations.Picture80x80.None)
+            {
+                if (_sprite80x80Picture != null)
+                    _sprite80x80Picture.Visible = false;
+            }
+            else
+            {
+                var sprite = _sprite80x80Picture ??= _renderView.SpriteFactory.Create(80, 80, 0, 0, false, true);
+                sprite.TextureAtlasOffset = _textureAtlas.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
+                sprite.X = Global.LayoutX + 16;
+                sprite.Y = Global.LayoutY + 6;
+                sprite.PaletteIndex = 49;
+                sprite.Layer = _renderView.GetLayer(Layer.UIForeground);
+                sprite.Visible = true;
+            }
         }
     }
 }

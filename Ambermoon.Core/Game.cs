@@ -55,23 +55,26 @@ namespace Ambermoon
 
         const uint TicksPerSecond = 60;
         readonly bool legacyMode = false;
+        bool ingame = false;
+        bool is3D = false;
+        bool windowActive = false;
         readonly Movement movement;
         uint currentTicks = 0;
         uint lastMapTicksReset = 0;
-        uint lastKeyTicksReset = 0;
-        bool ingame = false;
+        uint lastKeyTicksReset = 0;        
         readonly NameProvider nameProvider;
         readonly UI.Layout layout;
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
         readonly IRenderView renderView;
+        readonly ISavegameManager savegameManager;
+        readonly ISavegameSerializer savegameSerializer;
         Player player;
         readonly PartyMember[] party = new PartyMember[6];
         PartyMember CurrentPartyMember { get; } = null;
         PartyMember CurrentInventory { get; } = null;
         PartyMember CurrentCaster { get; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
-        bool is3D = false;
         readonly bool[] keys = new bool[Enum.GetValues(typeof(Key)).Length];
         /// <summary>
         /// All words you have heard about in conversations.
@@ -86,6 +89,7 @@ namespace Ambermoon
 
             return mapVariables[map.Index];
         }
+        Savegame currentSavegame;
 
         // Rendering
         readonly Cursor cursor = null;
@@ -102,6 +106,7 @@ namespace Ambermoon
             Global.Map3DViewWidth, Global.Map3DViewHeight);
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
+            ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
             Cursor cursor, bool legacyMode)
         {
             this.cursor = cursor;
@@ -111,6 +116,8 @@ namespace Ambermoon
             this.renderView = renderView;
             this.mapManager = mapManager;
             this.itemManager = itemManager;
+            this.savegameManager = savegameManager;
+            this.savegameSerializer = savegameSerializer;
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
@@ -119,6 +126,17 @@ namespace Ambermoon
             // TODO: values should come from the character select menu
             party[0] = PartyMember.Create("Thalion", 2, Gender.Male);
             CurrentPartyMember = party[0];
+        }
+
+        /// <summary>
+        /// This is called when the game starts.
+        /// This includes intro, main menu, etc.
+        /// </summary>
+        public void Run()
+        {
+            // TODO: For now we just start a new game.
+            var initialSavegame = savegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+            Start(initialSavegame);
         }
 
         public void Update(double deltaTime)
@@ -234,20 +252,24 @@ namespace Ambermoon
             mapViewArea = map3DViewArea;
         }
 
-        public void StartNew()
+        public void Start(Savegame savegame)
         {
             ingame = true;
-            layout.SetLayout(UI.LayoutType.Map2D);
+            currentSavegame = savegame;
             player = new Player();
-            var map = mapManager.GetMap(258u); // grandfather's house
-            renderMap2D = new RenderMap2D(this, map, mapManager, renderView);
-            renderMap3D = new RenderMap3D(null, mapManager, renderView, 0, 0, CharacterDirection.Up);
+            var map = mapManager.GetMap(savegame.CurrentMapIndex);
+            bool is3D = map.Type == MapType.Map3D;
+            renderMap2D = new RenderMap2D(this, !is3D ? map : null, mapManager, renderView);
+            renderMap3D = new RenderMap3D(is3D ? map : null, mapManager, renderView, 0, 0, CharacterDirection.Up);
             player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
-                renderView.SpriteFactory, renderView.GameData, new Position(2, 2), mapManager);
-            player2D.Visible = true;
+                renderView.SpriteFactory, renderView.GameData, new Position(0, 0), mapManager);
+            player2D.Visible = !is3D;
             player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
             player.MovementAbility = PlayerMovementAbility.Walking;
-            // TODO
+            if (is3D)
+                Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection);
+            else
+                Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection);
         }
 
         public void LoadGame()
@@ -255,7 +277,7 @@ namespace Ambermoon
             // TODO
         }
 
-        public void Continue()
+        public void ContinueGame()
         {
             // TODO: load latest game
         }
@@ -276,6 +298,9 @@ namespace Ambermoon
 
         void Move()
         {
+            if (windowActive)
+                return;
+
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
             {
                 if (!is3D)
@@ -428,6 +453,10 @@ namespace Ambermoon
             cursor.UpdatePosition(position);
         }
 
+        internal PartyMember GetPartyMember(int slot) => currentSavegame.GetPartyMember(slot);
+        internal Chest GetChest(uint index) => currentSavegame.Chests[(int)index];
+        internal Merchant GetMerchant(uint index) => currentSavegame.Merchants[(int)index];
+
         /// <summary>
         /// Triggers map events with the given trigger and position.
         /// </summary>
@@ -459,13 +488,33 @@ namespace Ambermoon
                 for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                     renderView.GetLayer((Layer)i).Visible = show;
             }
+
+            if (show)
+                windowActive = false;
         }
 
         internal void ShowChest(ChestMapEvent chestMapEvent)
         {
+            windowActive = true;
             ShowMap(false);
             layout.SetLayout(UI.LayoutType.Items);
-            layout.Set80x80Picture(10u);
+            var chest = GetChest(chestMapEvent.ChestIndex);
+
+            if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
+            {
+                layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestClosed);
+            }
+            else
+            {
+                if (chest.Empty)
+                {
+                    layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestOpenEmpty);
+                }
+                else
+                {
+                    layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestOpenFull);
+                }
+            }
 
             // TODO ...
         }

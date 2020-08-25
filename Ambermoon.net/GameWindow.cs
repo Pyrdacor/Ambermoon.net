@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Legacy;
+﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Geometry;
 using Ambermoon.Render;
@@ -189,10 +190,10 @@ namespace Ambermoon
             // Create game
             Game = new Game(renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()),
-                new ItemManager(gameData, new ItemReader()),
+                new ItemManager(gameData, new ItemReader()), new SavegameManager(), new SavegameSerializer(),
                 new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
                 configuration.LegacyMode);
-            Game.StartNew(); // TODO: Remove later
+            Game.Run();
         }
 
         void Window_Render(double delta)

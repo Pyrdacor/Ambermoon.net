@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data
+﻿using System.Linq;
+
+namespace Ambermoon.Data
 {
     public enum ChestType
     {        
@@ -12,6 +14,8 @@
         public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
         public uint Gold { get; set; }
         public uint Food { get; set; }
+
+        public bool Empty => Gold == 0 && Food == 0 && !Slots.Cast<ItemSlot>().Any(s => s.Amount != 0);
 
         public static Chest Load(IChestReader chestReader, IDataReader dataReader)
         {
