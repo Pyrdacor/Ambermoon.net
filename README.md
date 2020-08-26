@@ -1,12 +1,31 @@
 # Ambermoon.net
 
+Version 1.0.13 is out now. It has a bunch of new features like:
+- Smooth moving with the mouse (arrow cursors)
+- Fading effect for map transitions
+- Items for chests are shown (even with their amount if stackable)
+- The initial savegame is now used when starting the game
+- Portraits are displayed
+- With F1 to F6 the inventories can be shown (only the layout for now)
+- Tile change events were added so you can destroy some spider webs in the cellar, extinguish fire places and reburn them with candles ;)
+
+### How to run the game
+
+I got some questions of how to run the game:
+1. You need the original game data (either ADF files or extracted files like Party_char.amb etc).
+2. Put these files next to the downloaded executable file called Ambermoon.net.exe.
+3. If you have not yet, install the latest .NET framework for Windows.
+4. The game only runs on Windows as of now.
+5. If it still doesn't work try to start from Windows CMD and check for error printouts.
+6. If this still doesn't help please file an issue on the [https://github.com/Pyrdacor/Ambermoon.net/issues](Issue tracker).
+
 ## Download
 
 Version | OS
 --- | ---
+[1.0.13](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.13/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.12](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.12/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.11](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.11/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.10](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.10/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -38,8 +57,10 @@ Working things:
 - 3D maps
 	- movement / static billboards / collision detection
 - window mode / fullscreen
-- cursors (only used sword, eye, hand and mouth at the moment)
-- text rendering including runes (but not used yet)
+- cursors and mouse movement, trigger events with hand/eye cursor
+- text rendering including runes
+- open unlocked chests and view items
+- fading effect for map transitions etc
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
@@ -63,10 +84,12 @@ ESC | Leave fullscreen mode, leave other ingame windows
 Num7 | Eye cursor
 Num8 | Hand cursor
 Num9 | Mouth cursor
+F1-F6 | Open inventory of party member 1-6
 
 
 ## Change log
 
+- Version 1.0.13: Moving with mouse, map transition fading effect, chest items, change tile events, portraits, initial savegame used
 - Version 1.0.12: Added cursors, added first version of chest map events
 - Version 1.0.11: Fixed map changes, world map now uses a smaller sprite (not the correct yet)
 - Version 1.0.10: Fixed 3D map crash, improved map event handling
