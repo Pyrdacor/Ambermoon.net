@@ -609,7 +609,7 @@ namespace Ambermoon
 
                 var relativePosition = renderView.ScreenToGame(cursorPosition);
 
-                if (mapViewArea.Contains(relativePosition) || clickMoveActive)
+                if (!windowActive && (mapViewArea.Contains(relativePosition) || clickMoveActive))
                 {
                     // Change arrow cursors when hovering the map
                     if (ingame && cursor.Type >= CursorType.Sword && cursor.Type <= CursorType.Wait)
