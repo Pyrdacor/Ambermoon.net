@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
+using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -174,6 +175,8 @@ namespace Ambermoon
 
                 lastMoveTicksReset = currentTicks;
             }
+
+            layout.Update();
         }
 
         void ResetMoveKeys()
@@ -740,11 +743,29 @@ namespace Ambermoon
 
         void OpenPartyMember(int slot)
         {
+            if (currentSavegame.CurrentPartyMemberIndices[slot] == null)
+                return;
+
             ShowMap(false);
             windowActive = true;
             layout.SetLayout(UI.LayoutType.Inventory);
 
             // TODO
+        }
+
+        internal void Teleport(MapChangeEvent mapChangeEvent)
+        {
+            layout.AddFadeEffect(new Rect(0, 36, 320, 200 - 36), Color.Black, FadeEffectType.FadeInAndOut, 400);
+
+            var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
+            var player = is3D ? (IRenderPlayer)player3D: player2D;
+
+            // The position (x, y) is 1-based in the data so we subtract 1.
+            // Moreover the players position is 1 tile below its drawing position
+            // in non-world 2D so subtract another 1 from y.
+            player.MoveTo(newMap, mapChangeEvent.X - 1,
+                mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
+                currentTicks, true, mapChangeEvent.Direction);
         }
 
         internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
@@ -791,6 +812,23 @@ namespace Ambermoon
                 else
                 {
                     layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestOpenFull);
+                }
+            }
+
+            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+            itemSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
+            var itemGrid = new ItemGrid(renderView, itemManager, itemSlotPositions);
+            layout.AddItemGrid(itemGrid);
+
+            for (int y = 0; y < 2; ++y)
+            {
+                for (int x = 0; x < 6; ++x)
+                {
+                    var slot = chest.Slots[x, y];
+
+                    if (slot.Amount != 0)
+                        itemGrid.SetItem(x + y * 6, slot);
                 }
             }
 

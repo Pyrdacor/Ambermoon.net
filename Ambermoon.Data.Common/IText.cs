@@ -45,6 +45,7 @@ namespace Ambermoon.Data
     public interface ITextProcessor
     {
         IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary);
+        IText CreateText(string text);
     }
 
     public interface IText

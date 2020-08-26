@@ -32,15 +32,7 @@ namespace Ambermoon
                     if (!(mapEvent is MapChangeEvent mapChangeEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid map change event.");
 
-                    var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
-
-                    // The position (x, y) is 1-based in the data so we subtract 1.
-                    // Moreover the players position is 1 tile below its drawing position
-                    // in non-world 2D so subtract another 1 from y.
-                    player.MoveTo(newMap, mapChangeEvent.X - 1,
-                        mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
-                        ticks, true, mapChangeEvent.Direction);
-
+                    game.Teleport(mapChangeEvent);
                     break;
                 }
                 case MapEventType.Chest:
@@ -128,6 +120,9 @@ namespace Ambermoon
             // - battle won
             // - chest fully looted
             // ...
+            // TODO: to do so we have to memorize the current event chain and continue
+            // it after the player has done some actions (loot a chest, fight a battle, etc).
+            // maybe we need a state machine here instead of just a linked list and a loop.
             lastEventStatus = true;
 
             return mapEvent.Next;

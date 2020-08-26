@@ -61,10 +61,20 @@ namespace Ambermoon.Render
             A = (byte)Util.Round(a * 255.0f);
         }
 
+        public Color(Color other, byte a)
+        {
+            R = other.R;
+            G = other.G;
+            B = other.B;
+            A = a;
+        }
+
         public static readonly Color Transparent = new Color(0x00, 0x00, 0x00, 0x00);
         public static readonly Color Black = new Color(0x00, 0x00, 0x00);
         public static readonly Color Green = new Color(0x73, 0xb3, 0x43);
         public static readonly Color White = new Color(0xff, 0xff, 0xff);
+        public static readonly Color DarkGray = new Color(0x44, 0x44, 0x33);
+        public static readonly Color LightGray = new Color(0x66, 0x66, 0x55);
 
         public static bool operator ==(Color color1, Color color2)
         {

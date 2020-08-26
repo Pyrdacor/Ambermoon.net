@@ -113,8 +113,10 @@ namespace Ambermoon.Renderer
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
                 masked, supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text);
 
-            if (Layer == Layer.UIBackground)
-                renderBufferColorRects = new RenderBuffer(state, false, supportAnimations, true, true);
+            // UI Background uses color-filled areas.
+            // The popup layer is used to create effects like black fading map transitions.
+            if (layer == Layer.UIBackground || layer == Layer.Popup)
+                renderBufferColorRects = new RenderBuffer(state, false, false, false, true, true);
 
             Layer = layer;
             Texture = texture;

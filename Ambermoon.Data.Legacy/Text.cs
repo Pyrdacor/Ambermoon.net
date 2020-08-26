@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -110,6 +111,11 @@ namespace Ambermoon.Data.Legacy
                 return (byte)SpecialGlyph.NewLine;
             else
                 throw new AmbermoonException(ExceptionScope.Data, $"Unsupported text character '{ch}'.");
+        }
+
+        public IText CreateText(string text)
+        {
+            return new Text(text.Select(ch => CharToGlyph(ch, false)).ToArray());
         }
 
         public IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary)
