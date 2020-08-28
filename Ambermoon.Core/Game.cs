@@ -743,10 +743,19 @@ namespace Ambermoon
             windowActive = true;
             layout.SetLayout(LayoutType.Inventory);
             CurrentInventoryIndex = slot;
-            var itemGrid = new ItemGrid(renderView, itemManager, Enumerable.Range(0, Inventory.Width * Inventory.Height).Select
+            var equipmentSlotPositions = new List<Position>
+            {
+                new Position(20, 72),  new Position(52, 72),  new Position(84, 72),
+                new Position(84, 97),  new Position(20, 124), new Position(84, 124),
+                new Position(20, 176), new Position(52, 176), new Position(84, 176),
+            };
+            equipmentSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
+            var inventorySlotPositions = Enumerable.Range(0, Inventory.Width * Inventory.Height).Select
             (
                 slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
-            ).ToList(), true);
+            ).ToList();
+            inventorySlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
+            var itemGrid = new ItemGrid(renderView, itemManager, inventorySlotPositions, true);
             layout.AddItemGrid(itemGrid);
             var partyMember = GetPartyMember(slot);
             for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
@@ -800,7 +809,7 @@ namespace Ambermoon
         {
             ShowMap(false);
             windowActive = true;
-            layout.SetLayout(UI.LayoutType.Items);
+            layout.SetLayout(LayoutType.Items);
             var chest = GetChest(chestMapEvent.ChestIndex);
 
             if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
