@@ -1,5 +1,7 @@
 # Ambermoon.net
 
+Version 1.0.14 brings items and inventory to the game. Even drag&drop works. Missing is the ability to equip items or drag only a partial amount.
+
 Version 1.0.13 is out now. It has a bunch of new features like:
 - Smooth moving with the mouse (arrow cursors)
 - Fading effect for map transitions
@@ -23,9 +25,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.0.14](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.14/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.13](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.13/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.12](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.12/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.11](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.11/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -67,8 +69,9 @@ Working things:
 ![3D map rendering 1](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D1.png "3D map rendering 1")
 ![3D map rendering 2](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D2.png "3D map rendering 2")
 ![Billboards](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Billboards1.png "Billboards")
-![Text rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/TextRendering.png "Text rendering")
 ![Chests](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png "Chests")
+![Inventory](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png "Inventory")
+![Text rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/TextRendering.png "Text rendering")
 
 
 ## Controls
@@ -89,6 +92,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version 1.0.14: Added inventory and item drag&drop
 - Version 1.0.13: Moving with mouse, map transition fading effect, chest items, change tile events, portraits, initial savegame used
 - Version 1.0.12: Added cursors, added first version of chest map events
 - Version 1.0.11: Fixed map changes, world map now uses a smaller sprite (not the correct yet)
