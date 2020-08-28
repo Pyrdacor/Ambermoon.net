@@ -60,58 +60,58 @@ namespace Ambermoon.Data.Legacy
 
 		class BufferIterator
         {
-			readonly IncreaseBuffer _buffer;
-			int _offset;
+			readonly IncreaseBuffer buffer;
+			int offset;
 
 			public BufferIterator(IncreaseBuffer buffer, int offset)
             {
-				_buffer = buffer;
-				_offset = offset;
+				this.buffer = buffer;
+				this.offset = offset;
             }
 
 			public static BufferIterator operator+(BufferIterator iter, int amount)
             {
-				return new BufferIterator(iter._buffer, iter._offset + amount);
+				return new BufferIterator(iter.buffer, iter.offset + amount);
             }
 
 			public static BufferIterator operator -(BufferIterator iter, int amount)
 			{
-				return new BufferIterator(iter._buffer, iter._offset - amount);
+				return new BufferIterator(iter.buffer, iter.offset - amount);
 			}
 
-			public static implicit operator byte(BufferIterator iter) => iter._buffer.GetByte(iter._offset);
+			public static implicit operator byte(BufferIterator iter) => iter.buffer.GetByte(iter.offset);
 
-			public void Assign(byte value) => _buffer.SetByte(_offset, value);
+			public void Assign(byte value) => buffer.SetByte(offset, value);
 
-			public void AssignAndIncrease(byte value) => _buffer.SetByte(_offset++, value);
-			public byte GetAndIncrease() => _buffer.GetByte(_offset++);
+			public void AssignAndIncrease(byte value) => buffer.SetByte(offset++, value);
+			public byte GetAndIncrease() => buffer.GetByte(offset++);
 		}
 
 		class IncreaseBuffer
         {
-			readonly List<byte> _data;
+			readonly List<byte> data;
 
 			public IncreaseBuffer(int size)
 			{
-				_data = new List<byte>(size);
+				data = new List<byte>(size);
 
 				if (size != 0)
-					_data.AddRange(Enumerable.Repeat((byte)0, size));
+					data.AddRange(Enumerable.Repeat((byte)0, size));
 			}
 
 			public BufferIterator this[int index] => new BufferIterator(this, index);
-			public byte GetByte(int index) => _data[index];
+			public byte GetByte(int index) => data[index];
 			public void SetByte(int index, byte value)
 			{
-				if (index == _data.Count)
-					_data.Add(value);
-				else if (index > _data.Count)
+				if (index == data.Count)
+					data.Add(value);
+				else if (index > data.Count)
 					throw new IndexOutOfRangeException("Index was out of range.");
 				else
-					_data[index] = value;
+					data[index] = value;
 			}
-			public int Size => _data.Count;
-			public byte[] ToArray() => _data.ToArray();
+			public int Size => data.Count;
+			public byte[] ToArray() => data.ToArray();
 		}
 
 		static readonly byte[] DeplodeLiteralBase = { 6, 10, 10, 18 };

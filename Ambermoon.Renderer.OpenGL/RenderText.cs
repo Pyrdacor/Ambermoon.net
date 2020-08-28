@@ -33,6 +33,7 @@ namespace Ambermoon.Renderer
         const int LineHeight = 8;
         const byte ShadowColorIndex = 1;
         protected int drawIndex = -1;
+        byte displayLayer = 0;
         TextColor textColor;
         bool shadow;
         IText text;
@@ -52,26 +53,42 @@ namespace Ambermoon.Renderer
         }
 
         public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
-            IText text, TextColor textColor, bool shadow)
+            IRenderLayer layer, IText text, TextColor textColor, bool shadow)
             : base(text.MaxLineSize * CharacterWidth, text.LineCount * CharacterHeight - (LineHeight - CharacterHeight), virtualScreen)
         {
             this.glyphTextureMapping = glyphTextureMapping;
             bounds = virtualScreen;
+            Layer = layer;
             Text = text;
             TextColor = textColor;
             Shadow = shadow;
         }
 
         public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
-            IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign)
+            IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign)
             : base(text.MaxLineSize * CharacterWidth, text.LineCount * CharacterHeight - (LineHeight - CharacterHeight), virtualScreen)
         {
             this.glyphTextureMapping = glyphTextureMapping;
             this.bounds = bounds;
             this.textAlign = textAlign;
+            Layer = layer;
             Text = text;
             TextColor = textColor;
             Shadow = shadow;
+        }
+
+        public byte DisplayLayer
+        {
+            get => displayLayer;
+            set
+            {
+                if (displayLayer == value)
+                    return;
+
+                displayLayer = value;
+
+                UpdateDisplayLayer();
+            }
         }
 
         public TextColor TextColor
@@ -115,6 +132,14 @@ namespace Ambermoon.Renderer
 
                 UpdateTextSprites();
             }
+        }
+
+        void UpdateDisplayLayer()
+        {
+            byte textDisplayLayer = (byte)Util.Min(255, DisplayLayer + 2); // draw above shadow a bit
+
+            characterSprites.ForEach(s => s.DisplayLayer = textDisplayLayer);
+            characterShadowSprites.ForEach(s => s.DisplayLayer = DisplayLayer);
         }
 
         bool UpdateCharacterPositions()
@@ -278,7 +303,7 @@ namespace Ambermoon.Renderer
                     Layer = Layer,
                     PaletteIndex = 50,
                     Visible = Visible,
-                    DisplayLayer = 10 // ensure to draw it in front of the shadow
+                    DisplayLayer = (byte)Util.Min(255, DisplayLayer + 2) // ensure to draw it in front of the shadow
                 };
 
                 characterSprites.Add(sprite);
@@ -296,7 +321,8 @@ namespace Ambermoon.Renderer
                             Y = characterSprite.Y + 1,
                             Layer = Layer,
                             PaletteIndex = 50,
-                            Visible = Visible
+                            Visible = Visible,
+                            DisplayLayer = DisplayLayer
                         };
 
                         characterShadowSprites.Add(shadowSprite);
@@ -320,6 +346,17 @@ namespace Ambermoon.Renderer
                 this.textAlign = textAlign;
                 UpdateTextSprites();
             }
+        }
+
+        protected override void OnVisibilityChanged()
+        {
+            if (Visible)
+            {
+                UpdateTextSprites();
+                AddToLayer();
+            }
+            else
+                RemoveFromLayer();
         }
 
         protected override void AddToLayer()
@@ -365,14 +402,14 @@ namespace Ambermoon.Renderer
             return new RenderText(virtualScreen, GlyphTextureMapping);
         }
 
-        public IRenderText Create(IText text, TextColor textColor, bool shadow)
+        public IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow)
         {
-            return new RenderText(virtualScreen, GlyphTextureMapping, text, textColor, shadow);
+            return new RenderText(virtualScreen, GlyphTextureMapping, layer, text, textColor, shadow);
         }
 
-        public IRenderText Create(IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
+        public IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
         {
-            return new RenderText(virtualScreen, GlyphTextureMapping, text, textColor, shadow, bounds, textAlign);
+            return new RenderText(virtualScreen, GlyphTextureMapping, layer, text, textColor, shadow, bounds, textAlign);
         }
     }
 }

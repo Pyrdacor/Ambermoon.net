@@ -10,13 +10,14 @@ namespace Ambermoon.Render
         TextColor TextColor { get; set; }
         bool Shadow { get; set; }
         IText Text { get; set; }
+        byte DisplayLayer { get; set; }
     }
 
     public interface IRenderTextFactory
     {
         Dictionary<byte, Position> GlyphTextureMapping { get; set; }
         IRenderText Create();
-        IRenderText Create(IText text, TextColor textColor, bool shadow);
-        IRenderText Create(IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left);
+        IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow);
+        IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left);
     }
 }

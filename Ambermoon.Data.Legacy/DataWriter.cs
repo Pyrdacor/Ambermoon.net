@@ -11,9 +11,9 @@ namespace Ambermoon.Data.Legacy
     public class DataWriter
     {
         public static readonly Encoding Encoding = DataReader.Encoding;
-        protected readonly List<byte> _data = new List<byte>();
+        protected readonly List<byte> data = new List<byte>();
         public int Position { get; private set; } = 0;
-        public int Size => _data.Count;
+        public int Size => data.Count;
 
         public DataWriter()
         {
@@ -24,7 +24,7 @@ namespace Ambermoon.Data.Legacy
         {
             var tempData = new byte[length];
             Buffer.BlockCopy(data, offset, tempData, 0, length);
-            _data.AddRange(tempData);
+            this.data.AddRange(tempData);
         }
 
         public DataWriter(byte[] data, int offset)
@@ -40,36 +40,36 @@ namespace Ambermoon.Data.Legacy
         }
 
         public DataWriter(DataWriter writer, int offset, int size)
-            : this(writer._data.ToArray(), offset, size)
+            : this(writer.data.ToArray(), offset, size)
         {
 
         }
 
         public void Write(bool value)
         {
-            _data.Add((byte)(value ? 1 : 0));
+            data.Add((byte)(value ? 1 : 0));
             ++Position;
         }
 
         public void Write(byte value)
         {
-            _data.Add(value);
+            data.Add(value);
             ++Position;
         }
 
         public void Write(word value)
         {
-            _data.Add((byte)(value >> 8));
-            _data.Add((byte)value);
+            data.Add((byte)(value >> 8));
+            data.Add((byte)value);
             Position += 2;
         }
 
         public void Write(dword value)
         {
-            _data.Add((byte)(value >> 24));
-            _data.Add((byte)(value >> 16));
-            _data.Add((byte)(value >> 8));
-            _data.Add((byte)value);
+            data.Add((byte)(value >> 24));
+            data.Add((byte)(value >> 16));
+            data.Add((byte)(value >> 8));
+            data.Add((byte)value);
             Position += 4;
         }
 
@@ -104,7 +104,7 @@ namespace Ambermoon.Data.Legacy
 
         public void Write(byte[] bytes)
         {
-            _data.AddRange(bytes);
+            data.AddRange(bytes);
             Position += bytes.Length;
         }
 
@@ -113,17 +113,17 @@ namespace Ambermoon.Data.Legacy
             if (offset + 4 > Size)
                 throw new IndexOutOfRangeException("Index was outside the data writer size.");
 
-            _data[offset + 0] = (byte)(value >> 24);
-            _data[offset + 1] = (byte)(value >> 16);
-            _data[offset + 2] = (byte)(value >> 8);
-            _data[offset + 3] = (byte)value;
+            data[offset + 0] = (byte)(value >> 24);
+            data[offset + 1] = (byte)(value >> 16);
+            data[offset + 2] = (byte)(value >> 8);
+            data[offset + 3] = (byte)value;
         }
 
         public void CopyTo(Stream stream)
         {
-            stream.Write(_data.ToArray(), 0, _data.Count);
+            stream.Write(data.ToArray(), 0, data.Count);
         }
 
-        public byte[] ToArray() => _data.ToArray();
+        public byte[] ToArray() => data.ToArray();
     }
 }

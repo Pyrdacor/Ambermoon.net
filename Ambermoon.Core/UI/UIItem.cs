@@ -5,26 +5,65 @@ namespace Ambermoon.UI
 {
     public class UIItem
     {
-        readonly ItemSlot item;
-        ISprite sprite;
+        public ItemSlot Item { get; }
+        ILayerSprite sprite;
         IRenderText amountDisplay;
+        readonly IRenderView renderView;
+        readonly IItemManager itemManager;
+
+        public bool Dragged
+        {
+            get => sprite?.DisplayLayer == 100;
+            set
+            {
+                sprite.DisplayLayer = (byte)(value ? 100 : 0);
+
+                if (amountDisplay != null)
+                    amountDisplay.DisplayLayer = sprite.DisplayLayer;
+            }
+        }
 
         public UIItem(IRenderView renderView, IItemManager itemManager, ItemSlot item)
         {
-            this.item = item;
-            var itemInfo = itemManager.GetItem(item.ItemIndex);
-            sprite = renderView.SpriteFactory.Create(16, 16, 0, 0, false, true);
+            this.renderView = renderView;
+            this.itemManager = itemManager;
+            Item = item;
+            sprite = renderView.SpriteFactory.Create(16, 16, 0, 0, false, true) as ILayerSprite;
             sprite.Layer = renderView.GetLayer(Layer.Items);
             sprite.PaletteIndex = 49;
-            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(itemInfo.GraphicIndex);
 
-            if (itemInfo.Flags.HasFlag(ItemFlags.Stackable))
+            Update(true);
+        }
+
+        public void Update(bool itemTypeChanged)
+        {
+            var itemInfo = itemManager.GetItem(Item.ItemIndex);
+
+            if (itemTypeChanged)
             {
-                amountDisplay = renderView.RenderTextFactory.Create();
-                amountDisplay.Layer = renderView.GetLayer(Layer.Text);
-                amountDisplay.TextColor = TextColor.White;
-                amountDisplay.Shadow = true;
-                amountDisplay.Text = renderView.TextProcessor.CreateText(item.Amount > 99 ? "**" : item.Amount.ToString());
+                sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(itemInfo.GraphicIndex);
+                bool stackable = itemInfo.Flags.HasFlag(ItemFlags.Stackable);
+
+                if (amountDisplay == null && stackable)
+                {
+                    amountDisplay = renderView.RenderTextFactory.Create();
+                    amountDisplay.Layer = renderView.GetLayer(Layer.Text);
+                    amountDisplay.TextColor = TextColor.White;
+                    amountDisplay.Shadow = true;
+                    amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
+                    amountDisplay.Visible = true;
+                }
+                else if (amountDisplay != null && !stackable)
+                {
+                    amountDisplay.Delete();
+                    amountDisplay = null;
+                }
+            }
+            else if (amountDisplay != null)
+            {
+                if (Item.Stacked)
+                    amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
+                amountDisplay.Visible = Item.Stacked;
             }
         }
 
@@ -48,7 +87,7 @@ namespace Ambermoon.UI
                 sprite.Visible = value;
 
                 if (amountDisplay != null)
-                    amountDisplay.Visible = item.Amount > 1;
+                    amountDisplay.Visible = value && Item.Stacked;
             }
         }
 
@@ -65,7 +104,7 @@ namespace Ambermoon.UI
 
                 if (amountDisplay != null)
                 {
-                    amountDisplay.X = item.Amount < 10 ? sprite.X + 5 : sprite.X + 2;
+                    amountDisplay.X = Item.Amount < 10 ? sprite.X + 5 : sprite.X + 2;
                     amountDisplay.Y = sprite.Y + 17;
                 }
             }

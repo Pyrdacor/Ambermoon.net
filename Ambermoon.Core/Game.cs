@@ -19,7 +19,7 @@ namespace Ambermoon
             }
 
             /// <inheritdoc />
-            public string LeadName => game.party.First(p => p.Alive).Name;
+            public string LeadName => game.currentSavegame.PartyMembers.First(p => p.Alive).Name;
             /// <inheritdoc />
             public string SelfName => game.CurrentPartyMember.Name;
             /// <inheritdoc />
@@ -54,6 +54,7 @@ namespace Ambermoon
             static float GetTurnSpeed3D(bool legacyMode) => legacyMode ? 15.0f : 3.00f;
         }
 
+        public const int MaxPartyMembers = 6;
         const uint TicksPerSecond = 60;
         readonly bool legacyMode = false;
         bool ingame = false;
@@ -71,10 +72,9 @@ namespace Ambermoon
         readonly ISavegameManager savegameManager;
         readonly ISavegameSerializer savegameSerializer;
         Player player;
-        readonly PartyMember[] party = new PartyMember[6];
-        PartyMember CurrentPartyMember { get; } = null;
-        PartyMember CurrentInventory { get; } = null;
-        PartyMember CurrentCaster { get; } = null;
+        PartyMember CurrentPartyMember { get; set; } = null;
+        PartyMember CurrentInventory { get; set; } = null;
+        PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         readonly bool[] keys = new bool[Enum.GetValues(typeof(Key)).Length];
         bool leftMouseDown = false;
@@ -124,11 +124,7 @@ namespace Ambermoon
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
-            layout = new UI.Layout(renderView);
-
-            // TODO: values should come from the character select menu
-            party[0] = PartyMember.Create("Thalion", 2, Gender.Male);
-            CurrentPartyMember = party[0];
+            layout = new Layout(this, renderView);
         }
 
         /// <summary>
@@ -187,8 +183,6 @@ namespace Ambermoon
             keys[(int)Key.Right] = false;
             lastMoveTicksReset = currentTicks;
         }
-
-        // TODO: When changing map, the screen should shortly black out (fading transition)
 
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
@@ -279,11 +273,12 @@ namespace Ambermoon
             else
                 Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection);
 
-            for (int i = 0; i < 6; ++i)
+            for (int i = 0; i < MaxPartyMembers; ++i)
             {
                 if (savegame.CurrentPartyMemberIndices[i] != null)
                     layout.SetPortrait(i, savegame.GetPartyMember(i).PortraitIndex);
             }
+            CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
         }
 
         public void LoadGame()
@@ -553,7 +548,7 @@ namespace Ambermoon
             {
                 var relativePosition = renderView.ScreenToGame(position);
 
-                if (mapViewArea.Contains(relativePosition))
+                if (!windowActive && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
 
@@ -577,28 +572,18 @@ namespace Ambermoon
                 }
                 else
                 {
-                    for (int i = 0; i < 6; ++i)
-                    {
-                        if (currentSavegame.CurrentPartyMemberIndices[i] == null)
-                            continue;
-
-                        if (Global.PartyMemberPortraitAreas[i].Contains(relativePosition))
-                        {
-                            if (buttons == MouseButtons.Left)
-                                currentSavegame.ActivePartyMemberSlot = i;
-                            else if (buttons == MouseButtons.Right)
-                                OpenPartyMember(i);
-
-                            cursor.Type = CursorType.Sword;
-                            return;
-                        }
-                    }
+                    var cursorType = CursorType.Sword;
+                    layout.Click(relativePosition, buttons);
+                    layout.Hover(relativePosition, ref cursorType); // Update cursor
+                    cursor.Type = cursorType;
 
                     // TODO: check for other clicks
                 }
             }
-
-            cursor.Type = CursorType.Sword;
+            else
+            {
+                cursor.Type = CursorType.Sword;
+            }
         }
 
         void UpdateCursor(Position cursorPosition)
@@ -690,6 +675,12 @@ namespace Ambermoon
                         return;
                     }
                 }
+                else
+                {
+                    var cursorType = cursor.Type;
+                    layout.Hover(relativePosition, ref cursorType);
+                    cursor.Type = cursorType;
+                }
 
                 if (cursor.Type >= CursorType.ArrowUp && cursor.Type <= CursorType.Wait)
                     cursor.Type = CursorType.Sword;
@@ -741,7 +732,7 @@ namespace Ambermoon
                 windowActive = false;
         }
 
-        void OpenPartyMember(int slot)
+        internal void OpenPartyMember(int slot)
         {
             if (currentSavegame.CurrentPartyMemberIndices[slot] == null)
                 return;
@@ -755,7 +746,7 @@ namespace Ambermoon
 
         internal void Teleport(MapChangeEvent mapChangeEvent)
         {
-            layout.AddFadeEffect(new Rect(0, 36, 320, 200 - 36), Color.Black, FadeEffectType.FadeInAndOut, 400);
+            layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Color.Black, FadeEffectType.FadeInAndOut, 400);
 
             var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
             var player = is3D ? (IRenderPlayer)player3D: player2D;
@@ -815,10 +806,10 @@ namespace Ambermoon
                 }
             }
 
-            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
-            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+            var itemSlotPositions = Enumerable.Range(1, MaxPartyMembers).Select(index => new Position(index * 22, 139)).ToList();
+            itemSlotPositions.AddRange(Enumerable.Range(1, MaxPartyMembers).Select(index => new Position(index * 22, 168)));
             itemSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var itemGrid = new ItemGrid(renderView, itemManager, itemSlotPositions);
+            var itemGrid = new ItemGrid(renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty);
             layout.AddItemGrid(itemGrid);
 
             for (int y = 0; y < 2; ++y)
@@ -827,12 +818,69 @@ namespace Ambermoon
                 {
                     var slot = chest.Slots[x, y];
 
-                    if (slot.Amount != 0)
+                    if (!slot.Empty)
                         itemGrid.SetItem(x + y * 6, slot);
                 }
             }
 
             // TODO ...
+        }
+
+        internal void SetActivePartyMember(int index)
+        {
+            var partyMember = GetPartyMember(index);
+
+            if (partyMember != null)
+            {
+                currentSavegame.ActivePartyMemberSlot = index;
+                CurrentPartyMember = partyMember;
+            }
+        }
+
+        /// <summary>
+        /// Returns the remaining amount of items that could not
+        /// be dropped or 0 if all items were dropped successfully.
+        /// </summary>
+        /// <returns></returns>
+        internal int DropItem(int partyMemberIndex, int? slotIndex, ItemSlot item, bool allowItemExchange)
+        {
+            var partyMember = GetPartyMember(partyMemberIndex);
+
+            if (partyMember == null)
+                return item.Amount;
+
+            var slots = slotIndex == null
+                ? partyMember.Inventory.Slots.Where(s => s.ItemIndex == item.ItemIndex && s.Amount < 99).ToArray()
+                : new ItemSlot[1] { partyMember.Inventory.Slots[slotIndex.Value] };
+
+            if (slots.Length == 0) // no slot found -> try any empty slot
+            {
+                var emptySlot = partyMember.Inventory.Slots.FirstOrDefault(s => s.Empty);
+
+                if (emptySlot == null) // no free slot
+                    return item.Amount;
+
+                // This reduces item.Amount internally.
+                return emptySlot.Add(item);
+            }
+
+            // Special case: Exchange item at a single slot
+            if (allowItemExchange && slots.Length == 1 && slots[0].ItemIndex != item.ItemIndex)
+            {
+                slots[0].Exchange(item);
+                return item.Amount;
+            }
+
+            foreach (var slot in slots)
+            {
+                // This reduces item.Amount internally.
+                slot.Add(item);
+
+                if (item.Empty)
+                    return 0;
+            }
+
+            return item.Amount;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Ambermoon.Render;
+﻿using Ambermoon.Data;
+using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 
@@ -29,33 +30,33 @@ namespace Ambermoon.UI
 
     public class FilledArea
     {
-        readonly List<IColoredRect> _filledAreas;
-        readonly IColoredRect _area;
+        readonly List<IColoredRect> filledAreas;
+        readonly IColoredRect area;
         internal bool Destroyed { get; private set; } = false;
 
         internal FilledArea(List<IColoredRect> filledAreas, IColoredRect area)
         {
-            _filledAreas = filledAreas;
-            _area = area;
+            this.filledAreas = filledAreas;
+            this.area = area;
         }
 
         public Color Color
         {
-            get => Destroyed ? null : _area.Color;
+            get => Destroyed ? null : area.Color;
             set
             {
                 if (!Destroyed)
-                    _area.Color = value;
+                    area.Color = value;
             }
         }
 
         public bool Visible
         {
-            get => !Destroyed && _area.Visible;
+            get => !Destroyed && area.Visible;
             set
             {
                 if (!Destroyed)
-                    _area.Visible = value;
+                    area.Visible = value;
             }
         }
 
@@ -64,36 +65,36 @@ namespace Ambermoon.UI
             if (Destroyed)
                 return;
 
-            _area.Delete();
-            _filledAreas.Remove(_area);
+            area.Delete();
+            filledAreas.Remove(area);
             Destroyed = true;
         }
     }
 
     public class FadeEffect : FilledArea
     {
-        readonly Color _startColor;
-        readonly Color _endColor;
-        readonly int _duration;
-        readonly DateTime _startTime;
-        readonly bool _removeWhenFinished;
+        readonly Color startColor;
+        readonly Color endColor;
+        readonly int duration;
+        readonly DateTime startTime;
+        readonly bool removeWhenFinished;
 
         internal FadeEffect(List<IColoredRect> filledAreas, IColoredRect area, Color startColor,
             Color endColor, int durationInMilliseconds, DateTime startTime, bool removeWhenFinished)
             : base(filledAreas, area)
         {
-            _startColor = startColor;
-            _endColor = endColor;
-            _duration = durationInMilliseconds;
-            _startTime = startTime;
-            _removeWhenFinished = removeWhenFinished;
+            this.startColor = startColor;
+            this.endColor = endColor;
+            duration = durationInMilliseconds;
+            this.startTime = startTime;
+            this.removeWhenFinished = removeWhenFinished;
         }
 
         public void Update()
         {
             bool Finished()
             {
-                if (_removeWhenFinished)
+                if (removeWhenFinished)
                 {
                     Destroy();
                     return true;
@@ -104,7 +105,7 @@ namespace Ambermoon.UI
 
             float percentage;
 
-            if (_duration == 0)
+            if (duration == 0)
             {
                 percentage = 1.0f;
 
@@ -115,16 +116,16 @@ namespace Ambermoon.UI
             {
                 var now = DateTime.Now;
 
-                if (now <= _startTime)
+                if (now <= startTime)
                     percentage = 0.0f;
                 else
                 {
-                    var elapsed = (int)(now - _startTime).TotalMilliseconds;
+                    var elapsed = (int)(now - startTime).TotalMilliseconds;
 
-                    if (elapsed >= _duration && Finished())
+                    if (elapsed >= duration && Finished())
                         return;
 
-                    percentage = (float)elapsed / _duration;
+                    percentage = (float)elapsed / duration;
                 }
             }
 
@@ -138,38 +139,107 @@ namespace Ambermoon.UI
 
             Color = new Color
             (
-                CalculateColorComponent(_startColor.R, _endColor.R),
-                CalculateColorComponent(_startColor.G, _endColor.G),
-                CalculateColorComponent(_startColor.B, _endColor.B),
-                CalculateColorComponent(_startColor.A, _endColor.A)
+                CalculateColorComponent(startColor.R, endColor.R),
+                CalculateColorComponent(startColor.G, endColor.G),
+                CalculateColorComponent(startColor.B, endColor.B),
+                CalculateColorComponent(startColor.A, endColor.A)
             );
         }
     }
 
-    public class Layout
+    internal class Layout
     {
-        public LayoutType Type { get; private set; }
-        readonly IRenderView _renderView;
-        readonly ISprite _sprite;
-        readonly ITextureAtlas _textureAtlasBackground;
-        readonly ITextureAtlas _textureAtlasForeground;
-        readonly ISprite[] _portraits = new ISprite[6];
-        ISprite _sprite80x80Picture;
-        readonly List<ItemGrid> _itemGrids = new List<ItemGrid>();
-        readonly List<IColoredRect> _filledAreas = new List<IColoredRect>();
-        readonly List<FadeEffect> _fadeEffects = new List<FadeEffect>();
-        readonly List<ISprite> _additionalSprites = new List<ISprite>();
-
-        public Layout(IRenderView renderView)
+        // There are a few possibilities:
+        // 1. Move item from a player inventory directly to another player via his portrait.
+        // 2. Move item from a player inventory, opening a second players inventory with
+        //    right mouse and drop it there.
+        // 3. Move item from a chest (etc) directly to another player via his portrait.
+        internal class DraggedItem
         {
-            _renderView = renderView;
-            _textureAtlasBackground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground);
-            _textureAtlasForeground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIForeground);
-            _sprite = renderView.SpriteFactory.Create(320, 163, 0, 0, false, true);
-            _sprite.Layer = renderView.GetLayer(Layer.UIBackground);
-            _sprite.X = Global.LayoutX;
-            _sprite.Y = Global.LayoutY;
-            _sprite.PaletteIndex = 0;
+            public UIItem Item { get; set; }
+            public ItemGrid SourceGrid { get; set; }
+            public int? SourcePlayer { get; set; }
+            public int SourceSlot { get; set; }
+
+            /// <summary>
+            /// Drop back to source.
+            /// </summary>
+            public void Reset()
+            {
+                // Reset in case 1: Is only possible while in first player inventory.
+                // Reset in case 2: Is also possible while in second player inventory.
+                //                  First players inventory is opened in addition on reset.
+                // Reset in case 3: Is only possible while in chest screen.
+
+                if (SourceGrid != null)
+                    SourceGrid.SetItem(SourceSlot, Item.Item);
+                else if (SourcePlayer != null)
+                {
+                    // TODO
+                }
+
+                Item.Destroy();
+            }
+
+            private DraggedItem()
+            {
+
+            }
+
+            public static DraggedItem FromInventory(int partyMemberIndex, int slotIndex, UIItem item)
+            {
+                item.Dragged = true;
+
+                return new DraggedItem
+                {
+                    SourcePlayer = partyMemberIndex,
+                    SourceSlot = slotIndex,
+                    Item = item
+                };
+            }
+
+            /// <summary>
+            /// Chests, merchants, etc.
+            /// </summary>
+            /// <returns></returns>
+            public static DraggedItem FromExternal(ItemGrid itemGrid, int slotIndex, UIItem item)
+            {
+                item.Dragged = true;
+
+                return new DraggedItem
+                {
+                    SourceGrid = itemGrid,
+                    SourceSlot = slotIndex,
+                    Item = item
+                };
+            }
+        }
+
+        public LayoutType Type { get; private set; }
+        readonly Game game;
+        readonly IRenderView renderView;
+        readonly ISprite sprite;
+        readonly ITextureAtlas textureAtlasBackground;
+        readonly ITextureAtlas textureAtlasForeground;
+        readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
+        ISprite sprite80x80Picture;
+        readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
+        DraggedItem draggedItem = null;
+        readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
+        readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
+        readonly List<ISprite> additionalSprites = new List<ISprite>();
+
+        public Layout(Game game, IRenderView renderView)
+        {
+            this.game = game;
+            this.renderView = renderView;
+            textureAtlasBackground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground);
+            textureAtlasForeground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIForeground);
+            sprite = renderView.SpriteFactory.Create(320, 163, 0, 0, false, true);
+            sprite.Layer = renderView.GetLayer(Layer.UIBackground);
+            sprite.X = Global.LayoutX;
+            sprite.Y = Global.LayoutY;
+            sprite.PaletteIndex = 0;
 
             SetLayout(LayoutType.None);
         }
@@ -180,25 +250,25 @@ namespace Ambermoon.UI
 
             if (layoutType == LayoutType.None)
             {
-                _sprite.Visible = false;
+                sprite.Visible = false;
             }
             else
             {
-                _sprite.TextureAtlasOffset = _textureAtlasBackground.GetOffset(Graphics.LayoutOffset + (uint)(layoutType - 1));
-                _sprite.Visible = true;
+                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.LayoutOffset + (uint)(layoutType - 1));
+                sprite.Visible = true;
             }
         }
 
         public void Reset()
         {
-            _sprite80x80Picture?.Delete();
-            _sprite80x80Picture = null;
-            _additionalSprites.ForEach(sprite => sprite?.Delete());
-            _additionalSprites.Clear();
-            _itemGrids.ForEach(grid => grid.Destroy());
-            _itemGrids.Clear();
-            _filledAreas.ForEach(area => area?.Delete());
-            _filledAreas.Clear();
+            sprite80x80Picture?.Delete();
+            sprite80x80Picture = null;
+            additionalSprites.ForEach(sprite => sprite?.Delete());
+            additionalSprites.Clear();
+            itemGrids.ForEach(grid => grid.Destroy());
+            itemGrids.Clear();
+            filledAreas.ForEach(area => area?.Delete());
+            filledAreas.Clear();
         }
 
         /// <summary>
@@ -211,16 +281,16 @@ namespace Ambermoon.UI
                 // TODO: in original portrait removing is animated by moving down the
                 // gray masked picture infront of the portrait
 
-                _portraits[slot]?.Delete();
-                _portraits[slot] = null;
+                portraits[slot]?.Delete();
+                portraits[slot] = null;
             }
             else
             {
-                var sprite = _portraits[slot] ??= _renderView.SpriteFactory.Create(32, 34, 0, 0, false, true);
-                sprite.Layer = _renderView.GetLayer(Layer.UIForeground);
+                var sprite = portraits[slot] ??= renderView.SpriteFactory.Create(32, 34, 0, 0, false, true);
+                sprite.Layer = renderView.GetLayer(Layer.UIForeground);
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
-                sprite.TextureAtlasOffset = _textureAtlasForeground.GetOffset(Graphics.PortraitOffset + portrait - 1);
+                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + portrait - 1);
                 sprite.PaletteIndex = 49;
                 sprite.Visible = true;
             }
@@ -230,47 +300,52 @@ namespace Ambermoon.UI
         {
             if (picture == Data.Enumerations.Picture80x80.None)
             {
-                if (_sprite80x80Picture != null)
-                    _sprite80x80Picture.Visible = false;
+                if (sprite80x80Picture != null)
+                    sprite80x80Picture.Visible = false;
             }
             else
             {
-                var sprite = _sprite80x80Picture ??= _renderView.SpriteFactory.Create(80, 80, 0, 0, false, true);
-                sprite.TextureAtlasOffset = _textureAtlasForeground.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
+                var sprite = sprite80x80Picture ??= renderView.SpriteFactory.Create(80, 80, 0, 0, false, true);
+                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
                 sprite.X = Global.LayoutX + 16;
                 sprite.Y = Global.LayoutY + 6;
                 sprite.PaletteIndex = 49;
-                sprite.Layer = _renderView.GetLayer(Layer.UIForeground);
+                sprite.Layer = renderView.GetLayer(Layer.UIForeground);
                 sprite.Visible = true;
             }
         }
 
+        void DropItem()
+        {
+            draggedItem = null;
+        }
+
         public void AddItemGrid(ItemGrid itemGrid)
         {
-            _itemGrids.Add(itemGrid);
+            itemGrids.Add(itemGrid);
         }
 
         IColoredRect CreateArea(Rect rect, Color color, bool topMost)
         {
-            var coloredRect = _renderView.ColoredRectFactory.Create(rect.Size.Width, rect.Size.Height,
+            var coloredRect = renderView.ColoredRectFactory.Create(rect.Size.Width, rect.Size.Height,
                 color, (byte)(topMost ? 255 : 0));
-            coloredRect.Layer = _renderView.GetLayer(topMost ? Layer.Popup : Layer.UIBackground);
+            coloredRect.Layer = renderView.GetLayer(topMost ? Layer.Popup : Layer.UIBackground);
             coloredRect.X = rect.Left;
             coloredRect.Y = rect.Top;
             coloredRect.Visible = true;
-            _filledAreas.Add(coloredRect);
+            filledAreas.Add(coloredRect);
             return coloredRect;
         }
 
         public FilledArea FillArea(Rect rect, Color color, bool topMost)
         {
-            return new FilledArea(_filledAreas, CreateArea(rect, color, topMost));
+            return new FilledArea(filledAreas, CreateArea(rect, color, topMost));
         }
 
         public void AddColorFader(Rect rect, Color startColor, Color endColor,
             int durationInMilliseconds, bool removeWhenFinished, DateTime? startTime = null)
         {
-            _fadeEffects.Add(new FadeEffect(_filledAreas, CreateArea(rect, startColor, true), startColor,
+            fadeEffects.Add(new FadeEffect(filledAreas, CreateArea(rect, startColor, true), startColor,
                 endColor, durationInMilliseconds, startTime ?? DateTime.Now, removeWhenFinished));
         }
 
@@ -296,13 +371,113 @@ namespace Ambermoon.UI
 
         public void Update()
         {
-            for (int i = _fadeEffects.Count - 1; i >= 0; --i)
+            for (int i = fadeEffects.Count - 1; i >= 0; --i)
             {
-                _fadeEffects[i].Update();
+                fadeEffects[i].Update();
 
-                if (_fadeEffects[i].Destroyed)
-                    _fadeEffects.RemoveAt(i);
+                if (fadeEffects[i].Destroyed)
+                    fadeEffects.RemoveAt(i);
             }
+        }
+
+        public bool Click(Position position, MouseButtons buttons)
+        {
+            if (buttons == MouseButtons.Left)
+            {
+                foreach (var itemGrid in itemGrids)
+                {
+                    // TODO: If stacked it should ask for amount with left mouse
+                    if (itemGrid.Click(game, position, draggedItem, out DraggedItem pickedUpItem))
+                    {
+                        if (pickedUpItem != null)
+                        {
+                            draggedItem = pickedUpItem;
+                            draggedItem.Item.Position = position;
+                        }
+                        else
+                            DropItem();
+                        return true;
+                    }
+                }
+            }
+            else if (buttons == MouseButtons.Right)
+            {
+                if (draggedItem != null)
+                {
+                    draggedItem.Reset();
+                    draggedItem = null;
+                    return true;
+                }
+                else
+                {
+                    foreach (var itemGrid in itemGrids)
+                    {
+                        if (itemGrid.Click(game, position, null, out DraggedItem pickedUpItem))
+                        {
+                            if (pickedUpItem != null)
+                            {
+                                draggedItem = pickedUpItem;
+                                draggedItem.Item.Position = position;
+                            }
+
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            {
+                var partyMember = game.GetPartyMember(i);
+
+                if (partyMember == null)
+                    continue;
+
+                if (draggedItem != null && Global.ExtendedPartyMemberPortraitAreas[i].Contains(position))
+                {
+                    int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
+
+                    if (remaining == 0)
+                        DropItem();
+                    else
+                        draggedItem.Item.Update(false);
+
+                    return true;
+                }
+                else if (draggedItem == null && Global.PartyMemberPortraitAreas[i].Contains(position))
+                {
+                    if (buttons == MouseButtons.Left)
+                        game.SetActivePartyMember(i);
+                    else if (buttons == MouseButtons.Right)
+                        game.OpenPartyMember(i);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool Hover(Position position, ref CursorType cursorType)
+        {
+            if (draggedItem != null)
+            {
+                draggedItem.Item.Position = position;
+                cursorType = CursorType.SmallArrow;
+            }
+
+            bool consumed = false;
+
+            // Note: We must call Hover for all item grids
+            // so that the hovered item text can also be
+            // removed if not hovered!
+            foreach (var itemGrid in itemGrids)
+            {
+                if (itemGrid.Hover(position))
+                    consumed = true;
+            }
+
+            return consumed;
         }
     }
 }

@@ -30,6 +30,9 @@ namespace Ambermoon.Data.Legacy
                     ++currentLineSize;
                 }
             }
+
+            if (currentLineSize > MaxLineSize)
+                MaxLineSize = currentLineSize;
         }
 
         public byte[] GlyphIndices { get; }

@@ -56,8 +56,8 @@ namespace Ambermoon.Data.Legacy.Compression
             }
         }
 
-        readonly BranchNode _rootNode = new BranchNode();
-        readonly SortedDictionary<int, Node> _matchNodes = new SortedDictionary<int, Node>();
+        readonly BranchNode rootNode = new BranchNode();
+        readonly SortedDictionary<int, Node> matchNodes = new SortedDictionary<int, Node>();
         readonly int maxMatchOffset = (1 << 12) - 1;
 
         public MatchTrie()
@@ -79,7 +79,7 @@ namespace Ambermoon.Data.Legacy.Compression
         /// </summary>
         public void Add(byte[] sequence, int offset, int length)
         {
-            Node node = _rootNode;
+            Node node = rootNode;
 
             for (int i = 0; i < length; ++i)
             {
@@ -173,16 +173,16 @@ namespace Ambermoon.Data.Legacy.Compression
                 }
             }
 
-            _matchNodes.Add(offset, node);
+            matchNodes.Add(offset, node);
 
             // Remove nodes that are too far away
             int firstOffset = offset - maxMatchOffset + 1; // we check match before adding new sequences so add 1 to the first offset here
-            foreach (var matchNode in _matchNodes.ToList())
+            foreach (var matchNode in matchNodes.ToList())
             {
                 if (matchNode.Key < firstOffset)
                 {
                     Remove(matchNode.Value, firstOffset);
-                    _matchNodes.Remove(matchNode.Key);
+                    matchNodes.Remove(matchNode.Key);
                 }
                 else
                     break;
@@ -199,7 +199,7 @@ namespace Ambermoon.Data.Legacy.Compression
                     break;
 
                 node = node.Parent;
-            } while (node != _rootNode);
+            } while (node != rootNode);
         }
 
         /// <summary>
@@ -209,7 +209,7 @@ namespace Ambermoon.Data.Legacy.Compression
         /// </summary>
         public KeyValuePair<int, int> GetLongestMatch(byte[] sequence, int searchOffset, int maxLength)
         {
-            Node node = _rootNode;
+            Node node = rootNode;
             int i;
 
             for (i = 0; i < maxLength; ++i)
@@ -222,7 +222,7 @@ namespace Ambermoon.Data.Legacy.Compression
                 node = child;
             }
 
-            if (node == _rootNode)
+            if (node == rootNode)
                 return new KeyValuePair<int, int>(-1, 0);
 
             // node now contains the node with the longest match

@@ -139,7 +139,7 @@ namespace Ambermoon.Renderer
                     vertexArrayObject.AddBuffer(TextShader.DefaultTextColorIndexName, textColorIndexBuffer);
                 }
 
-                if (layered)
+                if (layered || isText)
                 {
                     layerBuffer = new ByteBuffer(state, true);
 

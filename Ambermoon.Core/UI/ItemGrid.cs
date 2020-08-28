@@ -1,26 +1,10 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ambermoon.UI
 {
-    /*{ 22,  37, 139, 162}, 0x0100, {
-    { 44,  59, 139, 162}, 0x0200, {
-    { 66,  81, 139, 162}, 0x0300, {
-    { 88, 103, 139, 162}, 0x0400, {
-    {110, 125, 139, 162}, 0x0500, {
-    {132, 147, 139, 162}, 0x0600, {
-    { 22,  37, 168, 191}, 0x0700, {
-    { 44,  59, 168, 191}, 0x0800, {
-    { 66,  81, 168, 191}, 0x0900, {
-    { 88, 103, 168, 191}, 0x0A00, {
-    {110, 125, 168, 191}, 0x0B00, {
-    {132, 147, 168, 191}, 0x0C00, {
-*/
-
-    public class ItemGrid
+    internal class ItemGrid
     {
         const int SlotWidth = 16;
         const int SlotHeight = 24;
@@ -29,12 +13,18 @@ namespace Ambermoon.UI
         readonly IItemManager itemManager;
         readonly List<Position> slotPositions;
         readonly UIItem[] items;
+        IRenderText hoveredItemName;
+        readonly bool allowExternalDrop;
 
-        public ItemGrid(IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
+        public int SlotCount => slotPositions.Count;
+
+        public ItemGrid(IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
+            bool allowExternalDrop)
         {
             this.renderView = renderView;
             this.itemManager = itemManager;
             this.slotPositions = slotPositions;
+            this.allowExternalDrop = allowExternalDrop;
             items = new UIItem[slotPositions.Count];
         }
 
@@ -58,7 +48,7 @@ namespace Ambermoon.UI
             }
         }
 
-        public int SlotFromPosition(Position position)
+        public int? SlotFromPosition(Position position)
         {
             int slot = 0;
 
@@ -70,7 +60,115 @@ namespace Ambermoon.UI
                 ++slot;
             }
 
-            return -1;
+            return null;
+        }
+
+        public int DropItem(int slot, UIItem item)
+        {
+            // TODO: reflect changes back to chest data, merchant data, etc
+
+            var itemSlot = items[slot];
+
+            if (itemSlot == null)
+            {
+                item.Dragged = false;
+                items[slot] = item;
+                items[slot].Position = slotPositions[slot];
+                return 0;
+            }
+            else if (itemSlot.Item.Empty || itemSlot.Item.ItemIndex == item.Item.ItemIndex)
+            {
+                int remaining = itemSlot.Item.Add(item.Item);
+                items[slot].Update(false);
+
+                if (remaining == 0)
+                    item.Destroy();
+                else
+                    item.Update(false);
+
+                return remaining;
+            }
+            else
+            {
+                itemSlot.Item.Exchange(item.Item);
+                items[slot].Update(true);
+                items[slot].Position = slotPositions[slot]; // Important to re-position amount display if added
+                item.Update(true);
+                return itemSlot.Item.Amount;
+            }
+        }
+
+        public bool Click(Game game, Position position, Layout.DraggedItem draggedItem, out Layout.DraggedItem pickedUpItem)
+        {
+            pickedUpItem = draggedItem;
+
+            var slot = SlotFromPosition(position);
+
+            if (slot == null)
+                return false;
+
+            if (draggedItem != null)
+            {
+                if (!allowExternalDrop && draggedItem.SourceGrid != this)
+                    return false;
+
+                if (DropItem(slot.Value, draggedItem.Item) == 0)
+                {
+                    // fully dropped
+                    pickedUpItem = null;
+                }
+
+                Hover(position); // This updates the tooltip
+            }
+            else
+            {
+                var itemSlot = items[slot.Value];
+
+                if (itemSlot != null && !itemSlot.Item.Empty)
+                {
+                    pickedUpItem = Layout.DraggedItem.FromExternal(this, slot.Value, itemSlot);
+                    items[slot.Value] = null;
+                    Hover(position); // This updates the tooltip
+                }
+            }
+
+            return true;
+        }
+
+        public bool Hover(Position position)
+        {
+            var slot = SlotFromPosition(position);
+
+            if (slot == null || items[slot.Value]?.Visible != true)
+            {
+                hoveredItemName?.Delete();
+                hoveredItemName = null;
+                return slot != null;
+            }
+            else
+            {
+                var item = itemManager.GetItem(items[slot.Value].Item.ItemIndex);
+                var itemNameText = renderView.TextProcessor.CreateText(item.Name);
+                int textWidth = itemNameText.MaxLineSize * Global.GlyphWidth;
+
+                if (hoveredItemName == null)
+                {
+                    hoveredItemName = renderView.RenderTextFactory.Create
+                    (
+                        renderView.GetLayer(Layer.Text),
+                        itemNameText,
+                        TextColor.White, true
+                    );
+                }
+                else
+                    hoveredItemName.Text = itemNameText;
+                hoveredItemName.DisplayLayer = 2;
+                hoveredItemName.X = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
+                hoveredItemName.Y = position.Y - Global.GlyphLineHeight - 2;
+                hoveredItemName.Visible = true;
+
+                return true;
+            }
         }
     }
 }

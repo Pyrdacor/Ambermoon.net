@@ -9,20 +9,20 @@ namespace Ambermoon.Data.Legacy
     public class DataReader : IDataReader
     {
         public static readonly Encoding Encoding;
-        protected readonly byte[] _data;
-        private int _position = 0;
+        protected readonly byte[] data;
+        private int position = 0;
         public int Position
         {
-            get => _position;
+            get => position;
             set
             {
                 if (value < 0 || value > Size)
                     throw new IndexOutOfRangeException("Data index out of range.");
 
-                _position = value;
+                position = value;
             }
         }
-        public int Size => _data == null ? 0 : _data.Length;
+        public int Size => data == null ? 0 : data.Length;
 
         static DataReader()
         {
@@ -32,8 +32,8 @@ namespace Ambermoon.Data.Legacy
 
         public DataReader(byte[] data, int offset, int length)
         {
-            _data = new byte[length];
-            Buffer.BlockCopy(data, offset, _data, 0, length);
+            this.data = new byte[length];
+            Buffer.BlockCopy(data, offset, this.data, 0, length);
         }
 
         public DataReader(byte[] data, int offset)
@@ -49,7 +49,7 @@ namespace Ambermoon.Data.Legacy
         }
 
         public DataReader(DataReader reader, int offset, int size)
-            : this(reader._data, offset, size)
+            : this(reader.data, offset, size)
         {
 
         }
@@ -57,25 +57,25 @@ namespace Ambermoon.Data.Legacy
         public bool ReadBool()
         {
             CheckOutOfRange(1);
-            return _data[Position++] != 0;
+            return data[Position++] != 0;
         }
 
         public byte ReadByte()
         {
             CheckOutOfRange(1);
-            return _data[Position++];
+            return data[Position++];
         }
 
         public word ReadWord()
         {
             CheckOutOfRange(2);
-            return (word)((_data[Position++] << 8) | _data[Position++]);
+            return (word)((data[Position++] << 8) | data[Position++]);
         }
 
         public dword ReadDword()
         {
             CheckOutOfRange(4);
-            return (dword)((_data[Position++] << 24) | (_data[Position++] << 16) | (_data[Position++] << 8) | _data[Position++]);
+            return (dword)((data[Position++] << 24) | (data[Position++] << 16) | (data[Position++] << 8) | data[Position++]);
         }
 
         public string ReadChar()
@@ -93,7 +93,7 @@ namespace Ambermoon.Data.Legacy
         public string ReadString(int length)
         {
             CheckOutOfRange(length);
-            var str = Encoding.GetString(_data, Position, length);
+            var str = Encoding.GetString(data, Position, length);
             Position += length;
             return str;
         }
@@ -114,19 +114,19 @@ namespace Ambermoon.Data.Legacy
         public byte PeekByte()
         {
             CheckOutOfRange(1);
-            return _data[Position];
+            return data[Position];
         }
 
         public word PeekWord()
         {
             CheckOutOfRange(2);
-            return (word)((_data[Position] << 8) | _data[Position + 1]);
+            return (word)((data[Position] << 8) | data[Position + 1]);
         }
 
         public dword PeekDword()
         {
             CheckOutOfRange(4);
-            return (dword)((_data[Position] << 24) | (_data[Position + 1] << 16) | (_data[Position + 2] << 8) | _data[Position + 3]);
+            return (dword)((data[Position] << 24) | (data[Position + 1] << 16) | (data[Position + 2] << 8) | data[Position + 3]);
         }
 
         public byte[] ReadToEnd()
@@ -137,26 +137,26 @@ namespace Ambermoon.Data.Legacy
         public byte[] ReadBytes(int amount)
         {
             var data = new byte[amount];
-            Buffer.BlockCopy(_data, Position, data, 0, data.Length);
+            Buffer.BlockCopy(this.data, Position, data, 0, data.Length);
             Position += amount;
             return data;
         }
 
         protected void CheckOutOfRange(int sizeToRead)
         {
-            if (Position + sizeToRead > _data.Length)
+            if (Position + sizeToRead > data.Length)
                 throw new IndexOutOfRangeException("Read beyond the data size.");
         }
 
         public long FindByteSequence(byte[] sequence, long offset)
         {
-            if (_data == null)
+            if (data == null)
                 return -1;
 
-            if (offset + sequence.Length > _data.Length)
+            if (offset + sequence.Length > data.Length)
                 return -1;
 
-            long lastIndex = _data.Length - sequence.Length;
+            long lastIndex = data.Length - sequence.Length;
 
             for (long i = offset; i <= lastIndex; ++i)
             {
@@ -164,7 +164,7 @@ namespace Ambermoon.Data.Legacy
 
                 for (; j < sequence.Length; ++j)
                 {
-                    if (_data[i + j] != sequence[j])
+                    if (data[i + j] != sequence[j])
                         break;
                 }
 

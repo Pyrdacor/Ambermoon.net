@@ -131,6 +131,14 @@ namespace Ambermoon.Renderer
 
         protected abstract void UpdatePosition();
 
+        protected virtual void OnVisibilityChanged()
+        {
+            if (Visible)
+                AddToLayer();
+            else
+                RemoveFromLayer();
+        }
+
         bool CheckOnScreen()
         {
             bool oldNotOnScreen = notOnScreen;
@@ -142,11 +150,7 @@ namespace Ambermoon.Renderer
             {
                 if (oldVisible != Visible)
                 {
-                    if (Visible)
-                        AddToLayer();
-                    else
-                        RemoveFromLayer();
-
+                    OnVisibilityChanged();
                     return true; // handled
                 }
             }

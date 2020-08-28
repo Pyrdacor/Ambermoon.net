@@ -64,8 +64,16 @@ namespace Ambermoon.Renderer
         // The UI background has a range of 0.1f for UI layers.
         // The battle monster rows use range of 0.01f (more right monsters are drawn above their left neighbors).
         // The UI foreground (like controls and borders) has a range of 0.2f for UI layers.
-        // Items use basically the same layer (range 0.01f) as they won't overlap (but the dragged item will use 0.965f).
-        // Popup and cursor are single objects and has therefore a small range of 0.01f.
+        // Items use basically the same layer (range 0.01f) as they won't overlap (except for the dragged one).
+        // Texts are used in UI (below dragged items or as item amount text, tool tips, popup texts, etc).
+        // Therefore items, texts and popups share the same base z-value and can use display layers within that
+        // range to handle overlapping correctly.
+        // The order for these 3 should be:
+        // - Normal items and texts (including item amount text).
+        // - Item tooltips
+        // - Dragged item + its amount text
+        // - Popup background
+        // - Popup UI elements and text
         private static readonly float[] LayerBaseZ = new float[]
         {
             0.00f,  // Map3D
@@ -95,8 +103,8 @@ namespace Ambermoon.Renderer
             0.75f,  // BattleMonsterRowNearest
             0.76f,  // UIForeground
             0.96f,  // Items
-            0.97f,  // Popup
-            0.98f,  // Text
+            0.96f,  // Popup
+            0.96f,  // Text
             0.99f   // Cursor
         };
 

@@ -21,16 +21,16 @@ namespace Ambermoon.Data.Legacy
         }
 
         public Dictionary<string, IFileContainer> Files { get; } = new Dictionary<string, IFileContainer>();
-        private readonly Dictionary<char, Dictionary<string, byte[]>> _loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
-        private readonly LoadPreference _loadPreference;
-        private readonly ILogger _log;
-        private readonly bool _stopAtFirstError;
+        private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
+        private readonly LoadPreference loadPreference;
+        private readonly ILogger log;
+        private readonly bool stopAtFirstError;
 
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true)
         {
-            _loadPreference = loadPreference;
-            _log = logger;
-            _stopAtFirstError = stopAtFirstError;
+            this.loadPreference = loadPreference;
+            log = logger;
+            this.stopAtFirstError = stopAtFirstError;
         }
 
         private static bool TryDiskFilename(string folderPath, string filename, out string fullPath)
@@ -74,8 +74,8 @@ namespace Ambermoon.Data.Legacy
 
             void HandleFileLoaded(string file)
             {
-                if (_log != null)
-                    _log.AppendLine("succeeded");
+                if (log != null)
+                    log.AppendLine("succeeded");
 
                 if (IsDictionary(file))
                     foundNoDictionary = false;
@@ -83,17 +83,17 @@ namespace Ambermoon.Data.Legacy
 
             void HandleFileNotFound(string file)
             {
-                if (_log != null)
+                if (log != null)
                 {
-                    _log.AppendLine("failed");
-                    _log.AppendLine($" -> Unable to find file '{file}'.");
+                    log.AppendLine("failed");
+                    log.AppendLine($" -> Unable to find file '{file}'.");
                 }
 
                 // We only need 1 dictionary, no savegames and only AM2_CPU but not AM2_BLIT.
                 if (IsDictionary(file) || IsSavegame(file) || file == "AM2_BLIT")
                     return;
 
-                if (_stopAtFirstError)
+                if (stopAtFirstError)
                     throw new FileNotFoundException($"Unable to find file '{file}'.");
             }
 
@@ -102,16 +102,16 @@ namespace Ambermoon.Data.Legacy
                 var name = ambermoonFile.Key;
                 var path = Path.Combine(folderPath, name.Replace('/', Path.DirectorySeparatorChar));
 
-                if (_log != null)
-                    _log.Append($"Trying to load file '{name}' ... ");
+                if (log != null)
+                    log.Append($"Trying to load file '{name}' ... ");
 
                 // prefer direct files but also allow loading ADF disks
-                if (_loadPreference == LoadPreference.PreferExtracted && File.Exists(path))
+                if (loadPreference == LoadPreference.PreferExtracted && File.Exists(path))
                 {
                     Files.Add(name, fileReader.ReadFile(name, File.OpenRead(path)));
                     HandleFileLoaded(name);
                 }
-                else if (_loadPreference == LoadPreference.ForceExtracted)
+                else if (loadPreference == LoadPreference.ForceExtracted)
                 {
                     if (File.Exists(path))
                     {
@@ -128,26 +128,26 @@ namespace Ambermoon.Data.Legacy
                     // load from disk
                     var disk = ambermoonFile.Value;
 
-                    if (!_loadedDisks.ContainsKey(disk))
+                    if (!loadedDisks.ContainsKey(disk))
                     {
                         string diskFile = FindDiskFile(folderPath, disk);
 
                         if (diskFile == null)
                         {
                             // file not found
-                            if (_loadPreference == LoadPreference.ForceAdf)
+                            if (loadPreference == LoadPreference.ForceAdf)
                             {
-                                if (_log != null)
+                                if (log != null)
                                 {
-                                    _log.AppendLine("failed");
-                                    _log.AppendLine($" -> Unabled to find ADF disk file with letter '{disk}'. Try to rename your ADF file to 'ambermoon_{disk}.adf'.");
+                                    log.AppendLine("failed");
+                                    log.AppendLine($" -> Unabled to find ADF disk file with letter '{disk}'. Try to rename your ADF file to 'ambermoon_{disk}.adf'.");
                                 }
 
-                                if (_stopAtFirstError)
+                                if (stopAtFirstError)
                                     throw new FileNotFoundException($"Unabled to find ADF disk file with letter '{disk}'. Try to rename your ADF file to 'ambermoon_{disk}.adf'.");
                             }
 
-                            if (_loadPreference == LoadPreference.PreferAdf)
+                            if (loadPreference == LoadPreference.PreferAdf)
                             {
                                 if (!File.Exists(path))
                                 {
@@ -164,14 +164,14 @@ namespace Ambermoon.Data.Legacy
                             continue;
                         }
 
-                        _loadedDisks.Add(disk, ADFReader.ReadADF(File.OpenRead(diskFile)));
+                        loadedDisks.Add(disk, ADFReader.ReadADF(File.OpenRead(diskFile)));
                     }
 
-                    if (!_loadedDisks[disk].ContainsKey(name))
+                    if (!loadedDisks[disk].ContainsKey(name))
                         HandleFileNotFound(name);
                     else
                     {
-                        Files.Add(name, fileReader.ReadFile(name, _loadedDisks[disk][name]));
+                        Files.Add(name, fileReader.ReadFile(name, loadedDisks[disk][name]));
                         HandleFileLoaded(name);
                     }
                 }
