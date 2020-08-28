@@ -74,6 +74,7 @@ namespace Ambermoon
         Player player;
         PartyMember CurrentPartyMember { get; set; } = null;
         PartyMember CurrentInventory { get; set; } = null;
+        internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         readonly bool[] keys = new bool[Enum.GetValues(typeof(Key)).Length];
@@ -737,10 +738,22 @@ namespace Ambermoon
             if (currentSavegame.CurrentPartyMemberIndices[slot] == null)
                 return;
 
+            layout.Reset();
             ShowMap(false);
             windowActive = true;
-            layout.SetLayout(UI.LayoutType.Inventory);
-
+            layout.SetLayout(LayoutType.Inventory);
+            CurrentInventoryIndex = slot;
+            var itemGrid = new ItemGrid(renderView, itemManager, Enumerable.Range(0, Inventory.Width * Inventory.Height).Select
+            (
+                slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
+            ).ToList(), true);
+            layout.AddItemGrid(itemGrid);
+            var partyMember = GetPartyMember(slot);
+            for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
+            {
+                if (!partyMember.Inventory.Slots[i].Empty)
+                    itemGrid.SetItem(i, partyMember.Inventory.Slots[i]);
+            }
             // TODO
         }
 

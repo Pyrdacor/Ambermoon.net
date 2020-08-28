@@ -164,7 +164,7 @@ namespace Ambermoon.UI
             /// <summary>
             /// Drop back to source.
             /// </summary>
-            public void Reset()
+            public void Reset(Game game)
             {
                 // Reset in case 1: Is only possible while in first player inventory.
                 // Reset in case 2: Is also possible while in second player inventory.
@@ -173,9 +173,11 @@ namespace Ambermoon.UI
 
                 if (SourceGrid != null)
                     SourceGrid.SetItem(SourceSlot, Item.Item);
-                else if (SourcePlayer != null)
+                if (SourcePlayer != null)
                 {
-                    // TODO
+                    // TODO: equip / equip grid
+                    var inventory = game.GetPartyMember(SourcePlayer.Value).Inventory;
+                    inventory.Slots[SourceSlot] = Item.Item;
                 }
 
                 Item.Destroy();
@@ -320,6 +322,8 @@ namespace Ambermoon.UI
             draggedItem = null;
         }
 
+        bool IsInventory => Type == LayoutType.Inventory;
+
         public void AddItemGrid(ItemGrid itemGrid)
         {
             itemGrids.Add(itemGrid);
@@ -380,6 +384,19 @@ namespace Ambermoon.UI
             }
         }
 
+        void SyncInventory(Position position, DraggedItem droppedItem, ItemGrid itemGrid, Game game)
+        {
+            var currentInventory = game.GetPartyMember(game.CurrentInventoryIndex.Value).Inventory;
+            var slot = itemGrid.SlotFromPosition(position).Value;
+            currentInventory.Slots[slot].Replace(itemGrid.GetItem(slot));
+
+            if (droppedItem.SourcePlayer != null)
+            {
+                var sourceInventory = game.GetPartyMember(droppedItem.SourcePlayer.Value).Inventory;
+                sourceInventory.Slots[droppedItem.SourceSlot]?.Clear(); // TODO: what if only parts have been dragged?
+            }
+        }
+
         public bool Click(Position position, MouseButtons buttons)
         {
             if (buttons == MouseButtons.Left)
@@ -389,13 +406,24 @@ namespace Ambermoon.UI
                     // TODO: If stacked it should ask for amount with left mouse
                     if (itemGrid.Click(game, position, draggedItem, out DraggedItem pickedUpItem))
                     {
+                        DraggedItem dropped = (draggedItem != null && (pickedUpItem == null || pickedUpItem != draggedItem ||
+                            pickedUpItem.Item.Item.Amount != draggedItem.Item.Item.Amount)) ? draggedItem : null;
+
                         if (pickedUpItem != null)
                         {
                             draggedItem = pickedUpItem;
                             draggedItem.Item.Position = position;
+                            draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
                         }
                         else
                             DropItem();
+
+                        if (dropped != null && IsInventory)
+                        {
+                            // sync grid with inventory
+                            SyncInventory(position, dropped, itemGrid, game);
+                        }
+
                         return true;
                     }
                 }
@@ -404,7 +432,7 @@ namespace Ambermoon.UI
             {
                 if (draggedItem != null)
                 {
-                    draggedItem.Reset();
+                    draggedItem.Reset(game);
                     draggedItem = null;
                     return true;
                 }
@@ -418,6 +446,7 @@ namespace Ambermoon.UI
                             {
                                 draggedItem = pickedUpItem;
                                 draggedItem.Item.Position = position;
+                                draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
                             }
 
                             return true;
@@ -435,12 +464,23 @@ namespace Ambermoon.UI
 
                 if (draggedItem != null && Global.ExtendedPartyMemberPortraitAreas[i].Contains(position))
                 {
-                    int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
-
-                    if (remaining == 0)
-                        DropItem();
+                    if (draggedItem.SourcePlayer == i)
+                    {
+                        draggedItem.Reset(game);
+                        draggedItem = null;
+                    }
                     else
-                        draggedItem.Item.Update(false);
+                    {
+                        int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
+
+                        if (remaining == 0)
+                        {
+                            draggedItem.Item.Destroy();
+                            DropItem();
+                        }
+                        else
+                            draggedItem.Item.Update(false);
+                    }
 
                     return true;
                 }

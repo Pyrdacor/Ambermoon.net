@@ -48,6 +48,8 @@ namespace Ambermoon.UI
             }
         }
 
+        public ItemSlot GetItem(int slot) => items[slot]?.Item;
+
         public int? SlotFromPosition(Position position)
         {
             int slot = 0;
@@ -65,8 +67,6 @@ namespace Ambermoon.UI
 
         public int DropItem(int slot, UIItem item)
         {
-            // TODO: reflect changes back to chest data, merchant data, etc
-
             var itemSlot = items[slot];
 
             if (itemSlot == null)
@@ -139,7 +139,7 @@ namespace Ambermoon.UI
         {
             var slot = SlotFromPosition(position);
 
-            if (slot == null || items[slot.Value]?.Visible != true)
+            if (slot == null || items[slot.Value]?.Visible != true || items[slot.Value]?.Item?.Empty == true)
             {
                 hoveredItemName?.Delete();
                 hoveredItemName = null;
