@@ -105,6 +105,8 @@ namespace Ambermoon.Render
 
             walls.Clear();
             objects.Clear();
+
+            blockCollisionBodies.Clear();
         }
 
         void EnsureLabBackgroundGraphics(IGraphicProvider graphicProvider)
