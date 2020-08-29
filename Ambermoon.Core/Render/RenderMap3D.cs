@@ -100,13 +100,13 @@ namespace Ambermoon.Render
             floor = null;
             ceiling = null;
 
-            blockCollisionBodies.Values.ToList().ForEach(bodies => bodies.ForEach(body => body = null));
             walls.Values.ToList().ForEach(walls => walls.ForEach(wall => wall?.Delete()));
             objects.Values.ToList().ForEach(objects => objects.ForEach(obj => obj?.Delete()));
 
-            blockCollisionBodies.Clear();
             walls.Clear();
             objects.Clear();
+
+            blockCollisionBodies.Clear();
         }
 
         void EnsureLabBackgroundGraphics(IGraphicProvider graphicProvider)
