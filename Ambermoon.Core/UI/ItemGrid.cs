@@ -32,6 +32,9 @@ namespace Ambermoon.UI
         {
             for (int i = 0; i < items.Length; ++i)
                 SetItem(i, null);
+
+            hoveredItemName?.Delete();
+            hoveredItemName = null;
         }
 
         public void SetItem(int slot, ItemSlot item)
