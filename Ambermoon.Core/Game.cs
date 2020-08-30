@@ -117,6 +117,7 @@ namespace Ambermoon
         Player3D player3D = null;
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
+        IRenderText mapName = null;
         Rect mapViewArea = map2DViewArea;
         static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
@@ -301,6 +302,8 @@ namespace Ambermoon
                 Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection);
             else
                 Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection);
+
+            ShowMap(true);
 
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
@@ -764,6 +767,39 @@ namespace Ambermoon
 
         void ShowMap(bool show)
         {
+            if (show)
+            {
+                string mapTitle;
+
+                if (Map.IsLyramionWorldMap)
+                {
+                    mapTitle = dataNameProvider.GetWorldName(World.Lyramion);
+                }
+                else if (Map.IsForestMoonWorldMap)
+                {
+                    mapTitle = dataNameProvider.GetWorldName(World.ForestMoon);
+                }
+                else if (Map.IsMoragWorldMap)
+                {
+                    mapTitle = dataNameProvider.GetWorldName(World.Morag);
+                }
+                else
+                {
+                    mapTitle = Map.Name;
+                }
+                if (mapName == null)
+                {
+                    mapName = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
+                        renderView.TextProcessor.CreateText(mapTitle), TextColor.White, true,
+                        new Rect(16, 40, 175, 10), TextAlign.Center);
+                }
+                else
+                {
+                    mapName.Text = renderView.TextProcessor.CreateText(mapTitle);
+                }
+            }
+            mapName.Visible = show;
+
             if (is3D)
             {
                 if (show)
@@ -884,6 +920,7 @@ namespace Ambermoon
                 player.MoveTo(newMap, mapChangeEvent.X - 1,
                     mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
                     currentTicks, true, mapChangeEvent.Direction);
+                ShowMap(true);
             });
         }
 

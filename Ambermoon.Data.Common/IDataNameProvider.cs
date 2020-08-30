@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Ambermoon.Data
+﻿namespace Ambermoon.Data
 {
     public interface IDataNameProvider
     {
@@ -18,6 +14,8 @@ namespace Ambermoon.Data
         string CharacterInfoExperiencePointsString { get; }
         string CharacterInfoGoldAndFoodString { get; }
         string CharacterInfoAgeString { get; }
+        string GetWorldName(World world);
+
         // TODO
     }
 }

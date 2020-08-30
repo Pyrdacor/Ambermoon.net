@@ -43,5 +43,7 @@
         public string GetLanguageName(Language language) => executableData.LanguageNames.Entries[language];
 
         public string GetRaceName(Race race) => executableData.RaceNames.Entries[race];
+
+        public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
     }
 }
