@@ -307,26 +307,26 @@ namespace Ambermoon.Renderer
                 };
 
                 characterSprites.Add(sprite);
+            }
 
-                if (Shadow)
+            if (Shadow)
+            {
+                foreach (var characterSprite in characterSprites)
                 {
-                    foreach (var characterSprite in characterSprites)
+                    var shadowSprite = new TextCharacterSprite(CharacterWidth, CharacterHeight,
+                        characterSprite.TextureAtlasOffset.X, characterSprite.TextureAtlasOffset.Y,
+                        virtualScreen)
                     {
-                        var shadowSprite = new TextCharacterSprite(CharacterWidth, CharacterHeight,
-                            characterSprite.TextureAtlasOffset.X, characterSprite.TextureAtlasOffset.Y,
-                            virtualScreen)
-                        {
-                            TextColorIndex = ShadowColorIndex,
-                            X = characterSprite.X + 1,
-                            Y = characterSprite.Y + 1,
-                            Layer = Layer,
-                            PaletteIndex = 50,
-                            Visible = Visible,
-                            DisplayLayer = DisplayLayer
-                        };
+                        TextColorIndex = ShadowColorIndex,
+                        X = characterSprite.X + 1,
+                        Y = characterSprite.Y + 1,
+                        Layer = Layer,
+                        PaletteIndex = 50,
+                        Visible = Visible,
+                        DisplayLayer = DisplayLayer
+                    };
 
-                        characterShadowSprites.Add(shadowSprite);
-                    }
+                    characterShadowSprites.Add(shadowSprite);
                 }
             }
         }
