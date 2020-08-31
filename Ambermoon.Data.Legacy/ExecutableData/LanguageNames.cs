@@ -22,7 +22,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             Entries.Add(Language.None, "");
 
-            foreach (Language type in Enum.GetValues(typeof(Language)))
+            foreach (var type in Enum.GetValues<Language>())
             {
                 if (type != Language.None)
                     Entries.Add(type, dataReader.ReadNullTerminatedString());

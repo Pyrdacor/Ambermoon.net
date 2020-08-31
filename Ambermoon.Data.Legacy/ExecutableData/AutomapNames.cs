@@ -28,7 +28,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             Entries.Add(AutomapType.None, "");
             Entries.Add(AutomapType.Wall, "");
 
-            foreach (var type in Enum.GetValues(typeof(AutomapType)).OfType<AutomapType>().Skip(2))
+            foreach (var type in Enum.GetValues<AutomapType>().Skip(2))
             {
                 Entries.Add(type, dataReader.ReadNullTerminatedString());
             }

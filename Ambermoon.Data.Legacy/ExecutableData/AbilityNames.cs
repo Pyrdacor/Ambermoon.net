@@ -21,7 +21,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal AbilityNames(IDataReader dataReader)
         {
-            foreach (Ability type in Enum.GetValues(typeof(Ability)))
+            foreach (var type in Enum.GetValues<Ability>())
             {
                 Entries.Add(type, dataReader.ReadNullTerminatedString());
             }
@@ -29,7 +29,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         internal void AddShortNames(IDataReader dataReader)
         {
-            foreach (Ability type in Enum.GetValues(typeof(Ability)))
+            foreach (var type in Enum.GetValues<Ability>())
             {
                 ShortNames.Add(type, dataReader.ReadNullTerminatedString());
             }

@@ -74,7 +74,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.Name = dataReader.ReadString(16).Replace('\0', ' ').TrimEnd();
 
             // Equipment
-            foreach (EquipmentSlot equipmentSlot in Enum.GetValues(typeof(EquipmentSlot)))
+            foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>())
             {
                 if (equipmentSlot != EquipmentSlot.None)
                     ItemSlotReader.ReadItemSlot(character.Equipment.Slots[equipmentSlot], dataReader);

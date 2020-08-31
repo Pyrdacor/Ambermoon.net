@@ -94,7 +94,7 @@ namespace Ambermoon.Data.Legacy
              * 0F C0 0F 90 0C 60 08 12 0C 43 0E 63 0A A4 05 73 04 9D 02 59 02 10 04 31 06 53 08 75 0A 97 0C B9
              */
 
-            foreach (GraphicType type in Enum.GetValues(typeof(GraphicType)))
+            foreach (var type in Enum.GetValues<GraphicType>())
             {
                 if (type == GraphicType.Cursor)
                 {

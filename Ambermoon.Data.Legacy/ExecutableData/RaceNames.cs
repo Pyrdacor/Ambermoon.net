@@ -20,7 +20,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal RaceNames(IDataReader dataReader)
         {
-            foreach (Race type in Enum.GetValues(typeof(Race)))
+            foreach (var type in Enum.GetValues<Race>())
             {
                 Entries.Add(type, dataReader.ReadNullTerminatedString());
             }

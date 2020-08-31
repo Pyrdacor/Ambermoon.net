@@ -177,7 +177,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal UITexts(IDataReader dataReader)
         {
-            foreach (UITextIndex type in Enum.GetValues(typeof(UITextIndex)))
+            foreach (var type in Enum.GetValues<UITextIndex>())
             {
                 Entries.Add(type, dataReader.ReadNullTerminatedString());
             }

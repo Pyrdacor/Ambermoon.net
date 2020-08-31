@@ -20,7 +20,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal ClassNames(IDataReader dataReader)
         {
-            foreach (Class type in Enum.GetValues(typeof(Class)))
+            foreach (var type in Enum.GetValues<Class>())
             {
                 Entries.Add(type, dataReader.ReadNullTerminatedString());
             }

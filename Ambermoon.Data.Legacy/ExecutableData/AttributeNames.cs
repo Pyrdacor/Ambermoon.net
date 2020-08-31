@@ -21,7 +21,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal AttributeNames(IDataReader dataReader)
         {
-            foreach (Attribute type in Enum.GetValues(typeof(Attribute)))
+            foreach (var type in Enum.GetValues<Attribute>())
             {
                 if (type != Attribute.Unknown)
                     Entries.Add(type, dataReader.ReadNullTerminatedString());
@@ -32,7 +32,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         internal void AddShortNames(IDataReader dataReader)
         {
-            foreach (Attribute type in Enum.GetValues(typeof(Attribute)))
+            foreach (var type in Enum.GetValues<Attribute>())
             {
                 if (type != Attribute.Age && type != Attribute.Unknown)
                     ShortNames.Add(type, dataReader.ReadNullTerminatedString());

@@ -13,7 +13,7 @@ namespace Ambermoon.Data
         public uint TotalCurrentValue => CurrentValue + BonusValue;
     }
 
-    public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : Enum
+    public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : System.Enum
     {
         readonly CharacterValue[] values = null;
 

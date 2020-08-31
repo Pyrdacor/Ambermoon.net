@@ -134,7 +134,7 @@ namespace Ambermoon.Renderer.OpenGL
             textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider);
             var palette = textureAtlasManager.CreatePalette(graphicProvider);
 
-            foreach (Layer layer in Enum.GetValues(typeof(Layer)))
+            foreach (var layer in Enum.GetValues<Layer>())
             {
                 if (layer == Layer.None)
                     continue;

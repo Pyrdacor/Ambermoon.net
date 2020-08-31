@@ -23,7 +23,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal SpellTypeNames(IDataReader dataReader)
         {
-            foreach (SpellType type in Enum.GetValues(typeof(SpellType)))
+            foreach (var type in Enum.GetValues<SpellType>())
             {
                 Entries.Add(type, dataReader.ReadNullTerminatedString());
             }

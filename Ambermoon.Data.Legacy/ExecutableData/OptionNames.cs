@@ -29,7 +29,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal OptionNames(IDataReader dataReader)
         {
-            foreach (Option type in Enum.GetValues(typeof(Option)))
+            foreach (var type in Enum.GetValues<Option>())
             {
                 Entries.Add(type, dataReader.ReadNullTerminatedString());
             }

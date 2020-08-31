@@ -360,7 +360,7 @@ namespace Ambermoon.Renderer
 
             return layer switch
             {
-                Layer.None => throw new AmbermoonException(ExceptionScope.Render, $"Cannot create render layer for layer {Enum.GetName(typeof(Layer), layer)}"),
+                Layer.None => throw new AmbermoonException(ExceptionScope.Render, $"Cannot create render layer for layer {Enum.GetName(layer)}"),
                 _ => new RenderLayer(State, layer, texture as Texture, palette as Texture),
             };
         }

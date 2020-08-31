@@ -77,7 +77,7 @@ namespace Ambermoon
         internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
-        readonly bool[] keys = new bool[Enum.GetValues(typeof(Key)).Length];
+        readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool leftMouseDown = false;
         bool clickMoveActive = false;
         /// <summary>
@@ -759,13 +759,20 @@ namespace Ambermoon
                 slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
             ).ToList();
             inventorySlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var itemGrid = new ItemGrid(renderView, itemManager, inventorySlotPositions, true);
-            layout.AddItemGrid(itemGrid);
+            var inventoryGrid = new ItemGrid(renderView, itemManager, inventorySlotPositions, true);
+            layout.AddItemGrid(inventoryGrid);
             var partyMember = GetPartyMember(slot);
             for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
             {
                 if (!partyMember.Inventory.Slots[i].Empty)
-                    itemGrid.SetItem(i, partyMember.Inventory.Slots[i]);
+                    inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
+            }
+            var equipmentGrid = new ItemGrid(renderView, itemManager, equipmentSlotPositions, true);
+            layout.AddItemGrid(equipmentGrid);
+            foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
+            {
+                if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
+                    equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
             }
             // TODO
         }

@@ -24,7 +24,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             Entries.Add(ItemType.None, "");
 
-            foreach (ItemType type in Enum.GetValues(typeof(ItemType)))
+            foreach (var type in Enum.GetValues<ItemType>())
             {
                 if (type != ItemType.None)
                     Entries.Add(type, dataReader.ReadNullTerminatedString());
