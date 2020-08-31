@@ -759,7 +759,7 @@ namespace Ambermoon
                 slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
             ).ToList();
             inventorySlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var inventoryGrid = new ItemGrid(renderView, itemManager, inventorySlotPositions, true);
+            var inventoryGrid = ItemGrid.CreateInventory(slot, renderView, itemManager, inventorySlotPositions);
             layout.AddItemGrid(inventoryGrid);
             var partyMember = GetPartyMember(slot);
             for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
@@ -767,7 +767,7 @@ namespace Ambermoon
                 if (!partyMember.Inventory.Slots[i].Empty)
                     inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
             }
-            var equipmentGrid = new ItemGrid(renderView, itemManager, equipmentSlotPositions, true);
+            var equipmentGrid = ItemGrid.CreateEquipment(slot, renderView, itemManager, equipmentSlotPositions);
             layout.AddItemGrid(equipmentGrid);
             foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
             {
@@ -842,7 +842,7 @@ namespace Ambermoon
             var itemSlotPositions = Enumerable.Range(1, MaxPartyMembers).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, MaxPartyMembers).Select(index => new Position(index * 22, 168)));
             itemSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var itemGrid = new ItemGrid(renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty);
+            var itemGrid = ItemGrid.Create(renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty);
             layout.AddItemGrid(itemGrid);
 
             for (int y = 0; y < 2; ++y)

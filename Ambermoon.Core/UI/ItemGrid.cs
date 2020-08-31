@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.UI
@@ -15,17 +16,37 @@ namespace Ambermoon.UI
         readonly UIItem[] items;
         IRenderText hoveredItemName;
         readonly bool allowExternalDrop;
+        readonly Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction;
 
         public int SlotCount => slotPositions.Count;
 
-        public ItemGrid(IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
-            bool allowExternalDrop)
+        private ItemGrid(IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
+            bool allowExternalDrop, Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction)
         {
             this.renderView = renderView;
             this.itemManager = itemManager;
             this.slotPositions = slotPositions;
             this.allowExternalDrop = allowExternalDrop;
+            this.pickupAction = pickupAction;
             items = new UIItem[slotPositions.Count];
+        }
+
+        public static ItemGrid CreateInventory(int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
+        {
+            return new ItemGrid(renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
+                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false));
+        }
+
+        public static ItemGrid CreateEquipment(int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
+        {
+            return new ItemGrid(renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
+                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true));
+        }
+
+        public static ItemGrid Create(IRenderView renderView, IItemManager itemManager, List<Position> slotPositions, bool allowExternalDrop)
+        {
+            return new ItemGrid(renderView, itemManager, slotPositions, allowExternalDrop, (ItemGrid itemGrid, int slot, UIItem item) =>
+                Layout.DraggedItem.FromExternal(itemGrid, slot, item));
         }
 
         public void Destroy()
@@ -129,7 +150,7 @@ namespace Ambermoon.UI
 
                 if (itemSlot != null && !itemSlot.Item.Empty)
                 {
-                    pickedUpItem = Layout.DraggedItem.FromExternal(this, slot.Value, itemSlot);
+                    pickedUpItem = pickupAction(this, slot.Value, itemSlot);
                     items[slot.Value] = null;
                     Hover(position); // This updates the tooltip
                 }

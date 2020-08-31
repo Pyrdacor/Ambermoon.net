@@ -159,6 +159,7 @@ namespace Ambermoon.UI
             public UIItem Item { get; set; }
             public ItemGrid SourceGrid { get; set; }
             public int? SourcePlayer { get; set; }
+            public bool? Equipped { get; set; }
             public int SourceSlot { get; set; }
 
             /// <summary>
@@ -170,15 +171,27 @@ namespace Ambermoon.UI
                 // Reset in case 2: Is also possible while in second player inventory.
                 //                  First players inventory is opened in addition on reset.
                 // Reset in case 3: Is only possible while in chest screen.
+                bool updateGrid = true;
 
-                if (SourceGrid != null)
-                    SourceGrid.SetItem(SourceSlot, Item.Item);
                 if (SourcePlayer != null)
                 {
-                    // TODO: equip / equip grid
-                    var inventory = game.GetPartyMember(SourcePlayer.Value).Inventory;
-                    inventory.Slots[SourceSlot] = Item.Item;
+                    if (Equipped == true)
+                    {
+                        var equipment = game.GetPartyMember(SourcePlayer.Value).Equipment;
+                        equipment.Slots[(EquipmentSlot)(SourceSlot + 1)] = Item.Item;
+                    }
+                    else
+                    {
+                        var inventory = game.GetPartyMember(SourcePlayer.Value).Inventory;
+                        inventory.Slots[SourceSlot] = Item.Item;
+                    }
+
+                    if (game.CurrentInventoryIndex != SourcePlayer)
+                        updateGrid = false;
                 }
+
+                if (updateGrid && SourceGrid != null)
+                    SourceGrid.SetItem(SourceSlot, Item.Item);
 
                 Item.Destroy();
             }
@@ -188,13 +201,15 @@ namespace Ambermoon.UI
 
             }
 
-            public static DraggedItem FromInventory(int partyMemberIndex, int slotIndex, UIItem item)
+            public static DraggedItem FromInventory(ItemGrid itemGrid, int partyMemberIndex, int slotIndex, UIItem item, bool equipped)
             {
                 item.Dragged = true;
 
                 return new DraggedItem
                 {
+                    SourceGrid = itemGrid,
                     SourcePlayer = partyMemberIndex,
+                    Equipped = equipped,
                     SourceSlot = slotIndex,
                     Item = item
                 };
@@ -430,13 +445,7 @@ namespace Ambermoon.UI
             }
             else if (buttons == MouseButtons.Right)
             {
-                if (draggedItem != null)
-                {
-                    draggedItem.Reset(game);
-                    draggedItem = null;
-                    return true;
-                }
-                else
+                if (draggedItem == null)
                 {
                     foreach (var itemGrid in itemGrids)
                     {
@@ -464,22 +473,29 @@ namespace Ambermoon.UI
 
                 if (draggedItem != null && Global.ExtendedPartyMemberPortraitAreas[i].Contains(position))
                 {
-                    if (draggedItem.SourcePlayer == i)
+                    if (buttons == MouseButtons.Left)
                     {
-                        draggedItem.Reset(game);
-                        draggedItem = null;
-                    }
-                    else
-                    {
-                        int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
-
-                        if (remaining == 0)
+                        if (draggedItem.SourcePlayer == i)
                         {
-                            draggedItem.Item.Destroy();
-                            DropItem();
+                            draggedItem.Reset(game);
+                            draggedItem = null;
                         }
                         else
-                            draggedItem.Item.Update(false);
+                        {
+                            int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
+
+                            if (remaining == 0)
+                            {
+                                draggedItem.Item.Destroy();
+                                DropItem();
+                            }
+                            else
+                                draggedItem.Item.Update(false);
+                        }
+                    }
+                    else if (buttons == MouseButtons.Right)
+                    {
+                        game.OpenPartyMember(i);
                     }
 
                     return true;
@@ -493,6 +509,13 @@ namespace Ambermoon.UI
 
                     return true;
                 }
+            }
+
+            if (buttons == MouseButtons.Right && draggedItem != null)
+            {
+                draggedItem.Reset(game);
+                draggedItem = null;
+                return true;
             }
 
             return false;
