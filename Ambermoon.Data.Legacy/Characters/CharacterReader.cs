@@ -72,6 +72,18 @@ namespace Ambermoon.Data.Legacy.Characters
             dataReader.Position += 12; // Unknown
             character.TotalWeight = dataReader.ReadDword();
             character.Name = dataReader.ReadString(16).Replace('\0', ' ').TrimEnd();
+
+            // Equipment
+            foreach (EquipmentSlot equipmentSlot in Enum.GetValues(typeof(EquipmentSlot)))
+            {
+                if (equipmentSlot != EquipmentSlot.None)
+                    ItemSlotReader.ReadItemSlot(character.Equipment.Slots[equipmentSlot], dataReader);
+            }
+
+            // Inventory
+            for (int i = 0; i < Inventory.Width * Inventory.Height; ++i)
+                ItemSlotReader.ReadItemSlot(character.Inventory.Slots[i], dataReader);
+
             // TODO: ignore the rest for now
         }
 

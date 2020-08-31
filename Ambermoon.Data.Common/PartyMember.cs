@@ -2,8 +2,6 @@
 {
     public class PartyMember : Character
     {
-        public Inventory Inventory { get; } = new Inventory();
-
         private PartyMember()
             : base(CharacterType.PartyMember)
         {

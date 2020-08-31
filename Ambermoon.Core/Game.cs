@@ -212,6 +212,12 @@ namespace Ambermoon
                 );
             }
 
+            if (player2D == null)
+            {
+                player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
+                    renderView.SpriteFactory, renderView.GameData, new Position(0, 0), mapManager);
+            }
+
             player2D.Visible = true;
             player2D.MoveTo(map, playerX, playerY, currentTicks, true, direction);
 
@@ -241,7 +247,8 @@ namespace Ambermoon
             renderMap3D.SetMap(map, playerX, playerY, direction);
             player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
             player3D.SetPosition((int)playerX, (int)playerY, currentTicks);
-            player2D.Visible = false;
+            if (player2D != null)
+                player2D.Visible = false;
             player.Position.X = (int)playerX;
             player.Position.Y = (int)playerY;
             player.Direction = direction;
@@ -264,9 +271,6 @@ namespace Ambermoon
             bool is3D = map.Type == MapType.Map3D;
             renderMap2D = new RenderMap2D(this, !is3D ? map : null, mapManager, renderView);
             renderMap3D = new RenderMap3D(is3D ? map : null, mapManager, renderView, 0, 0, CharacterDirection.Up);
-            player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
-                renderView.SpriteFactory, renderView.GameData, new Position(0, 0), mapManager);
-            player2D.Visible = !is3D;
             player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
             player.MovementAbility = PlayerMovementAbility.Walking;
             if (is3D)
@@ -276,7 +280,7 @@ namespace Ambermoon
 
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
-                if (savegame.CurrentPartyMemberIndices[i] != null)
+                if (savegame.CurrentPartyMemberIndices[i] != 0)
                     layout.SetPortrait(i, savegame.GetPartyMember(i).PortraitIndex);
             }
             CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
@@ -735,7 +739,7 @@ namespace Ambermoon
 
         internal void OpenPartyMember(int slot)
         {
-            if (currentSavegame.CurrentPartyMemberIndices[slot] == null)
+            if (currentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
 
             layout.Reset();

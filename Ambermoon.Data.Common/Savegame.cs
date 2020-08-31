@@ -21,7 +21,7 @@ namespace Ambermoon.Data
         #region Party members
 
         public List<PartyMember> PartyMembers { get; } = new List<PartyMember>();
-        public int?[] CurrentPartyMemberIndices { get; } = new int?[6];
+        public int[] CurrentPartyMemberIndices { get; } = new int[6];
         public int ActivePartyMemberSlot = 0; // 0 - 5
 
         #endregion
@@ -37,7 +37,7 @@ namespace Ambermoon.Data
         // TODO: automap
         // TODO: time, ...
 
-        public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == null ? null : PartyMembers[CurrentPartyMemberIndices[slot].Value];
+        public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot] - 1];
 
         public static Savegame Load(ISavegameSerializer savegameSerializer, SavegameFiles savegameFiles)
         {

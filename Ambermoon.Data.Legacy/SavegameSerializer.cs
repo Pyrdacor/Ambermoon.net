@@ -12,6 +12,14 @@ namespace Ambermoon.Data.Legacy
             savegame.CurrentMapY = dataReader.ReadWord();
             savegame.CharacterDirection = (CharacterDirection)dataReader.ReadWord();
 
+            dataReader.Position = 42;
+
+            dataReader.ReadWord(); // Number of party members. We don't really need it.
+            savegame.ActivePartyMemberSlot = dataReader.ReadWord() - 1; // it is stored 1-based
+
+            for (int i = 0; i < 6; ++i)
+                savegame.CurrentPartyMemberIndices[i] = dataReader.ReadWord();
+
             // TODO: load other data from Party_data.sav
         }
 
@@ -36,15 +44,6 @@ namespace Ambermoon.Data.Legacy
             // TODO automaps
 
             ReadSaveData(savegame, files.SaveDataReader);
-
-            // TODO: REMOVE later
-            savegame.CurrentPartyMemberIndices[0] = 0;
-            savegame.CurrentPartyMemberIndices[1] = null;
-            savegame.CurrentPartyMemberIndices[2] = null;
-            savegame.CurrentPartyMemberIndices[3] = null;
-            savegame.CurrentPartyMemberIndices[4] = null;
-            savegame.CurrentPartyMemberIndices[5] = null;
-            savegame.ActivePartyMemberSlot = 0;
         }
 
         public void Write(Savegame savegame, SavegameFiles files)

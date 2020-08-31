@@ -8,17 +8,9 @@
             {
                 for (int x = 0; x < 6; ++x)
                 {
-                    int amount = dataReader.ReadByte();
-                    dataReader.ReadBytes(2); // Unknown
-                    ItemSlotFlags flags = (ItemSlotFlags)dataReader.ReadByte();
-                    uint itemIndex = dataReader.ReadWord();
-
-                    merchant.Slots[x, y] = new ItemSlot
-                    {
-                        ItemIndex = itemIndex,
-                        Amount = amount,
-                        Flags = flags
-                    };
+                    var itemSlot = new ItemSlot();
+                    ItemSlotReader.ReadItemSlot(itemSlot, dataReader);
+                    merchant.Slots[x, y] = itemSlot;
                 }
             }
         }

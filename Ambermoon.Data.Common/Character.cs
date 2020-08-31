@@ -41,6 +41,9 @@
             !Ailments.HasFlag(Ailment.DeadAshes) &&
             !Ailments.HasFlag(Ailment.DeadDust);
 
+        public Inventory Inventory { get; } = new Inventory();
+        public Equipment Equipment { get; } = new Equipment();
+
         protected Character(CharacterType type)
         {
             Type = type;
