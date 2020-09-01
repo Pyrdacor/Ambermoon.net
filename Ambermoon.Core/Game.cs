@@ -798,7 +798,8 @@ namespace Ambermoon
             #endregion
             #region Character info
             layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49);
+            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitBackgroundOffset, 50, 1);
+            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
             #endregion
             // TODO
         }

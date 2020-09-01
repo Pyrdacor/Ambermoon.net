@@ -246,6 +246,17 @@ namespace Ambermoon.Data.Legacy
                     {
                         var graphic = new Graphic();
                         reader.ReadGraphic(graphic, graphicDataReader, info);
+                        if (type == GraphicType.Portrait)
+                        {
+                            // These need special care. It appears that they use color index
+                            // 25 for "transparent" areas but this is magenta in the palettes
+                            // I've seen. Black parts (like for the eyes) use color index 0
+                            // which is treated as transparent in all other images.
+                            // But there is a really dark gray at color index 26 so we replace
+                            // color 0 with color 26 and then 25 with color 0.
+                            graphic.ReplaceColor(0, 26);
+                            graphic.ReplaceColor(25, 0);
+                        }
                         graphicList.Add(graphic);
                     }
                 }

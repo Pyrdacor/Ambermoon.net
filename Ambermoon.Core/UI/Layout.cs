@@ -257,7 +257,6 @@ namespace Ambermoon.UI
 
         public LayoutType Type { get; private set; }
         readonly Game game;
-        readonly IRenderView renderView;
         readonly ILayerSprite sprite;
         readonly ITextureAtlas textureAtlasBackground;
         readonly ITextureAtlas textureAtlasForeground;
@@ -269,12 +268,12 @@ namespace Ambermoon.UI
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
         readonly List<ISprite> additionalSprites = new List<ISprite>();
-        internal IRenderView RenderView => renderView;
+        internal IRenderView RenderView { get; }
 
         public Layout(Game game, IRenderView renderView)
         {
             this.game = game;
-            this.renderView = renderView;
+            this.RenderView = renderView;
             textureAtlasBackground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground);
             textureAtlasForeground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIForeground);
             sprite = renderView.SpriteFactory.Create(320, 163, 0, 0, false, true) as ILayerSprite;
@@ -331,16 +330,16 @@ namespace Ambermoon.UI
             }
             else
             {
-                var sprite = portraitBackgrounds[slot] ??= renderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 0);
-                sprite.Layer = renderView.GetLayer(Layer.UIForeground);
+                var sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 0);
+                sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
                 sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitBackgroundOffset);
                 sprite.PaletteIndex = 50;
                 sprite.Visible = true;
 
-                sprite = portraits[slot] ??= renderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 1);
-                sprite.Layer = renderView.GetLayer(Layer.UIForeground);
+                sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 1);
+                sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
                 sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + portrait - 1);
@@ -349,14 +348,15 @@ namespace Ambermoon.UI
             }
         }
 
-        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex)
+        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 0)
         {
-            var sprite = renderView.SpriteFactory.Create(rect.Size.Width, rect.Size.Height, 0, 0, false, true);
+            var sprite = RenderView.SpriteFactory.Create(rect.Size.Width, rect.Size.Height, 0, 0, false, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(textureIndex);
+            sprite.DisplayLayer = displayLayer;
             sprite.X = rect.Left;
             sprite.Y = rect.Top;
             sprite.PaletteIndex = paletteIndex;
-            sprite.Layer = renderView.GetLayer(Layer.UIForeground);
+            sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
             sprite.Visible = true;
             additionalSprites.Add(sprite);
         }
@@ -370,12 +370,12 @@ namespace Ambermoon.UI
             }
             else
             {
-                var sprite = sprite80x80Picture ??= renderView.SpriteFactory.Create(80, 80, 0, 0, false, true);
+                var sprite = sprite80x80Picture ??= RenderView.SpriteFactory.Create(80, 80, 0, 0, false, true);
                 sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
                 sprite.X = Global.LayoutX + 16;
                 sprite.Y = Global.LayoutY + 6;
                 sprite.PaletteIndex = 49;
-                sprite.Layer = renderView.GetLayer(Layer.UIForeground);
+                sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
                 sprite.Visible = true;
             }
         }
@@ -394,9 +394,9 @@ namespace Ambermoon.UI
 
         IColoredRect CreateArea(Rect rect, Color color, bool topMost)
         {
-            var coloredRect = renderView.ColoredRectFactory.Create(rect.Size.Width, rect.Size.Height,
+            var coloredRect = RenderView.ColoredRectFactory.Create(rect.Size.Width, rect.Size.Height,
                 color, (byte)(topMost ? 255 : 0));
-            coloredRect.Layer = renderView.GetLayer(topMost ? Layer.Popup : Layer.UIBackground);
+            coloredRect.Layer = RenderView.GetLayer(topMost ? Layer.Popup : Layer.UIBackground);
             coloredRect.X = rect.Left;
             coloredRect.Y = rect.Top;
             coloredRect.Visible = true;
@@ -447,19 +447,6 @@ namespace Ambermoon.UI
             }
         }
 
-        void SyncInventory(Position position, DraggedItem droppedItem, ItemGrid itemGrid, Game game)
-        {
-            var currentInventory = game.GetPartyMember(game.CurrentInventoryIndex.Value).Inventory;
-            var slot = itemGrid.SlotFromPosition(position).Value;
-            currentInventory.Slots[slot].Replace(itemGrid.GetItem(slot));
-
-            if (droppedItem.SourcePlayer != null)
-            {
-                var sourceInventory = game.GetPartyMember(droppedItem.SourcePlayer.Value).Inventory;
-                sourceInventory.Slots[droppedItem.SourceSlot]?.Clear(); // TODO: what if only parts have been dragged?
-            }
-        }
-
         public void KeyDown(Key key, KeyModifiers keyModifiers)
         {
             switch (key)
@@ -504,11 +491,8 @@ namespace Ambermoon.UI
                 foreach (var itemGrid in itemGrids)
                 {
                     // TODO: If stacked it should ask for amount with left mouse
-                    if (itemGrid.Click(game, position, draggedItem, out DraggedItem pickedUpItem, true, ref cursorType))
+                    if (itemGrid.Click(position, draggedItem, out DraggedItem pickedUpItem, true, ref cursorType))
                     {
-                        DraggedItem dropped = (draggedItem != null && (pickedUpItem == null || pickedUpItem != draggedItem ||
-                            pickedUpItem.Item.Item.Amount != draggedItem.Item.Item.Amount)) ? draggedItem : null;
-
                         if (pickedUpItem != null)
                         {
                             draggedItem = pickedUpItem;
@@ -517,12 +501,6 @@ namespace Ambermoon.UI
                         }
                         else
                             DropItem();
-
-                        if (dropped != null && IsInventory)
-                        {
-                            // sync grid with inventory
-                            SyncInventory(position, dropped, itemGrid, game);
-                        }
 
                         return true;
                     }
@@ -534,7 +512,7 @@ namespace Ambermoon.UI
                 {
                     foreach (var itemGrid in itemGrids)
                     {
-                        if (itemGrid.Click(game, position, null, out DraggedItem pickedUpItem, false, ref cursorType))
+                        if (itemGrid.Click(position, null, out DraggedItem pickedUpItem, false, ref cursorType))
                         {
                             if (pickedUpItem != null)
                             {

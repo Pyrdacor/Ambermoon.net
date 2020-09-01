@@ -1,5 +1,13 @@
 # Ambermoon.net
 
+Version 1.0.15 brings a lot of cool new stuff:
+- Equipment (for now you can equip everything though)
+- Inventory and equipment is loaded from savegame
+- You can put items into chests or exchange them between party members
+- Scrollbars
+- Portrait backgrounds and portrait in inventory
+- A lot of bugfixes and minor improvements
+
 Version 1.0.14 brings items and inventory to the game. Even drag&drop works. Missing is the ability to equip items or drag only a partial amount.
 
 Version 1.0.13 is out now. It has a bunch of new features like:
@@ -25,9 +33,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.0.15](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.15/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.14](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.14/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.13](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.13/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.12](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.12/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -92,6 +100,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version 1.0.15: Added equipment, scrollbars, improved item dragging, many bugfixes
 - Version 1.0.14: Added inventory and item drag&drop
 - Version 1.0.13: Moving with mouse, map transition fading effect, chest items, change tile events, portraits, initial savegame used
 - Version 1.0.12: Added cursors, added first version of chest map events

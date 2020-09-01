@@ -8,6 +8,9 @@ namespace Ambermoon.UI
 {
     // TODO: disabled state
     // TODO: memorize scrollbar positions for inventories
+    // Note: The items are automatically updated in inventories,
+    // chests, etc as the UIItems use the same ItemSlot instances
+    // and modify them directly.
     internal class ItemGrid
     {
         const int SlotWidth = 16;
@@ -127,13 +130,13 @@ namespace Ambermoon.UI
             {
                 item.Dragged = false;
                 items[slot] = item;
-                items[slot].Position = slotPositions[slot];
+                item.Position = slotPositions[slot - ScrollOffset];
                 return 0;
             }
             else if (itemSlot.Item.Empty || itemSlot.Item.ItemIndex == item.Item.ItemIndex)
             {
                 int remaining = itemSlot.Item.Add(item.Item);
-                items[slot].Update(false);
+                itemSlot.Update(false);
 
                 if (remaining == 0)
                     item.Destroy();
@@ -145,8 +148,8 @@ namespace Ambermoon.UI
             else
             {
                 itemSlot.Item.Exchange(item.Item);
-                items[slot].Update(true);
-                items[slot].Position = slotPositions[slot]; // Important to re-position amount display if added
+                itemSlot.Update(true);
+                itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
                 item.Update(true);
                 return itemSlot.Item.Amount;
             }
@@ -253,7 +256,7 @@ namespace Ambermoon.UI
             scrollbar?.LeftMouseUp();
         }
 
-        public bool Click(Game game, Position position, Layout.DraggedItem draggedItem,
+        public bool Click(Position position, Layout.DraggedItem draggedItem,
             out Layout.DraggedItem pickedUpItem, bool leftMouseButton, ref CursorType cursorType)
         {
             pickedUpItem = draggedItem;

@@ -57,6 +57,15 @@ namespace Ambermoon.Data
             Array.Fill(Data, colorIndex);
         }
 
+        public void ReplaceColor(byte oldColorIndex, byte newColorIndex)
+        {
+            for (int i = 0; i < Data.Length; ++i)
+            {
+                if (Data[i] == oldColorIndex)
+                    Data[i] = newColorIndex;
+            }
+        }
+
         public void AddOverlay(uint x, uint y, Graphic overlay)
         {
             if (!overlay.IndexedGraphic || !IndexedGraphic)
