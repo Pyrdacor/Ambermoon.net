@@ -44,6 +44,7 @@ namespace Ambermoon.Renderer
         readonly Dictionary<byte, Position> glyphTextureMapping;
         Position[] characterPositions = null;
         int lastCharacterToRender = -1;
+        bool updatingPositions = false;
 
         public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping)
             : base(0, 0, virtualScreen)
@@ -144,11 +145,17 @@ namespace Ambermoon.Renderer
 
         bool UpdateCharacterPositions()
         {
+            if (updatingPositions)
+                return false;
+
+            updatingPositions = true;
+
             if (X == short.MaxValue || Y == short.MaxValue) // not on screen
             {
                 lastCharacterToRender = -1;
                 characterPositions = null;
                 Resize(0, 0);
+                updatingPositions = false;
                 return false;
             }
 
@@ -264,9 +271,11 @@ namespace Ambermoon.Renderer
 
             Resize(width, y + CharacterHeight - Y);
 
-            lastCharacterToRender = characterPositions.Select((pos, index) => new { pos, index }).Last(p => p.pos != null).index;
+            lastCharacterToRender = characterPositions.Select((pos, index) => new { pos, index }).LastOrDefault(p => p.pos != null)?.index ?? -1;
 
             AdjustLineAlign(lastCharacterToRender);
+
+            updatingPositions = false;
 
             return true;
         }
