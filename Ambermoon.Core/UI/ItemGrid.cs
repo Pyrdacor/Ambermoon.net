@@ -254,7 +254,7 @@ namespace Ambermoon.UI
         }
 
         public bool Click(Game game, Position position, Layout.DraggedItem draggedItem,
-            out Layout.DraggedItem pickedUpItem, bool leftMouseButton)
+            out Layout.DraggedItem pickedUpItem, bool leftMouseButton, ref CursorType cursorType)
         {
             pickedUpItem = draggedItem;
 
@@ -265,6 +265,8 @@ namespace Ambermoon.UI
                     dragScrollItem = draggedItem;
                     draggedItem.Item.Visible = false;
                 }
+
+                cursorType = CursorType.None;
 
                 return true;
             }

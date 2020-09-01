@@ -497,14 +497,14 @@ namespace Ambermoon.UI
                 itemGrid.LeftMouseUp(position);
         }
 
-        public bool Click(Position position, MouseButtons buttons)
+        public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType)
         {
             if (buttons == MouseButtons.Left)
             {
                 foreach (var itemGrid in itemGrids)
                 {
                     // TODO: If stacked it should ask for amount with left mouse
-                    if (itemGrid.Click(game, position, draggedItem, out DraggedItem pickedUpItem, true))
+                    if (itemGrid.Click(game, position, draggedItem, out DraggedItem pickedUpItem, true, ref cursorType))
                     {
                         DraggedItem dropped = (draggedItem != null && (pickedUpItem == null || pickedUpItem != draggedItem ||
                             pickedUpItem.Item.Item.Amount != draggedItem.Item.Item.Amount)) ? draggedItem : null;
@@ -534,7 +534,7 @@ namespace Ambermoon.UI
                 {
                     foreach (var itemGrid in itemGrids)
                     {
-                        if (itemGrid.Click(game, position, null, out DraggedItem pickedUpItem, false))
+                        if (itemGrid.Click(game, position, null, out DraggedItem pickedUpItem, false, ref cursorType))
                         {
                             if (pickedUpItem != null)
                             {

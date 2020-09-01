@@ -584,9 +584,11 @@ namespace Ambermoon
                 else
                 {
                     var cursorType = CursorType.Sword;
-                    layout.Click(relativePosition, buttons);
-                    layout.Hover(relativePosition, ref cursorType); // Update cursor
+                    layout.Click(relativePosition, buttons, ref cursorType);
                     cursor.Type = cursorType;
+                    layout.Hover(relativePosition, ref cursorType); // Update cursor
+                    if (cursor.Type != CursorType.None)
+                        cursor.Type = cursorType;
 
                     // TODO: check for other clicks
                 }
