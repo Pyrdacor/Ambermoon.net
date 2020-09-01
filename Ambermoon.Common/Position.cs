@@ -36,6 +36,11 @@ namespace Ambermoon
             Offset(position.X, position.Y);
         }
 
+        public static Position operator +(Position position1, Position position2)
+        {
+            return new Position(position1.X + position2.X, position1.Y + position2.Y);
+        }
+
         public static bool operator ==(Position position1, Position position2)
         {
             if (ReferenceEquals(position1, position2))
@@ -71,15 +76,7 @@ namespace Ambermoon
 
         public override int GetHashCode()
         {
-            unchecked // overflow is fine, just wrap
-            {
-                int hash = 17;
-
-                hash = hash * 23 + X.GetHashCode();
-                hash = hash * 23 + Y.GetHashCode();
-
-                return hash;
-            }
+            return HashCode.Combine(X, Y);
         }
 
         public bool Equals(Position other)

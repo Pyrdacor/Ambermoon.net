@@ -62,15 +62,7 @@ namespace Ambermoon
 
         public override int GetHashCode()
         {
-            unchecked // overflow is fine, just wrap
-            {
-                int hash = 23;
-
-                hash = hash * 17 + Width.GetHashCode();
-                hash = hash * 17 + Height.GetHashCode();
-
-                return hash;
-            }
+            return HashCode.Combine(Width, Height);
         }
 
         public bool Equals(Size other)

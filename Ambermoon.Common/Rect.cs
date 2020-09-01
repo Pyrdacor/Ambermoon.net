@@ -90,6 +90,26 @@ namespace Ambermoon
             Clip(rect.Left, rect.Top, rect.Right, rect.Bottom);
         }
 
+        public Rect SetWidth(int newWidth)
+        {
+            return new Rect(Position, new Size(newWidth, Size.Height));
+        }
+
+        public Rect SetHeight(int newHeight)
+        {
+            return new Rect(Position, new Size(Size.Width, newHeight));
+        }
+
+        public Rect CreateModified(int offsetX, int offsetY, int widthChange, int heightChange)
+        {
+            return new Rect(position.X + offsetX, position.Y + offsetY, Math.Max(0, Size.Width + widthChange), Math.Max(0, Size.Height + heightChange));
+        }
+
+        public Rect CreateOffset(int offsetX, int offsetY)
+        {
+            return new Rect(position.X + offsetX, position.Y + offsetY, Size.Width, Size.Height);
+        }
+
         public Rect CreateShrinked(int shrinkAmount)
         {
             if (size.Width <= 2 * shrinkAmount ||
@@ -162,15 +182,7 @@ namespace Ambermoon
 
         public override int GetHashCode()
         {
-            unchecked // overflow is fine, just wrap
-            {
-                int hash = 29;
-
-                hash = (position == null) ? hash : hash * 23 + position.GetHashCode();
-                hash = (size == null) ? hash : hash * 23 + size.GetHashCode();
-
-                return hash;
-            }
+            return HashCode.Combine(position, size);
         }
 
         public bool Equals(Rect other)

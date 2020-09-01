@@ -792,9 +792,6 @@ namespace Ambermoon
                 if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
                     equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
             }
-            layout.FillArea(new Rect(109 + 3 * 22 + 1, 76 + 1, 7, 111), Color.DarkGray, false);
-            layout.FillArea(new Rect(109 + 3 * 22, 76 + 1, 1, 111), Color.DarkShadow, false);
-            layout.FillArea(new Rect(109 + 3 * 22, 76, 8, 1), Color.DarkShadow, false);
             #endregion
             #region Character info
             layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);

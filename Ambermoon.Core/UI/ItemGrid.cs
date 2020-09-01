@@ -48,7 +48,12 @@ namespace Ambermoon.UI
                 new Scrollbar(layout, scrollbarType ?? ScrollbarType.SmallVertical, scrollbarArea,
                 scrollbarSize.Width, scrollbarSize.Height, (numTotalSlots - slotsPerPage) / slotsPerScroll);
             if (scrollbar != null)
+            {
+                layout.FillArea(scrollbarArea.CreateModified(1, 1, -1, -1), Color.DarkGray, false);
+                layout.FillArea(scrollbarArea.CreateModified(0, 1, 0, -1).SetWidth(1), Color.DarkShadow, false);
+                layout.FillArea(new Rect(scrollbarArea.Position, new Size(scrollbarArea.Size.Width, 1)), Color.DarkShadow, false);
                 scrollbar.Scrolled += Scrollbar_Scrolled;
+            }
         }
 
         public static ItemGrid CreateInventory(Layout layout, int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
