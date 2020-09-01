@@ -36,7 +36,15 @@ namespace Ambermoon.Render
 
                 type = value;
 
-                UpdateCursor();
+                if (Type == CursorType.None)
+                {
+                    sprite.Visible = false;
+                }
+                else
+                {
+                    UpdateCursor();
+                    sprite.Visible = true;
+                }
             }
         }
 
@@ -64,7 +72,7 @@ namespace Ambermoon.Render
                 {
                     sprite.X = viewPosition.X - hotspot.X;
                     sprite.Y = viewPosition.Y - hotspot.Y;
-                    sprite.Visible = true;
+                    sprite.Visible = Type != CursorType.None;
                 }
             }
         }

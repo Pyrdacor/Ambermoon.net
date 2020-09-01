@@ -44,6 +44,8 @@ namespace Ambermoon.UI
             scrollbar = slotsPerScroll == 0 ? null :
                 new Scrollbar(layout, scrollbarType ?? ScrollbarType.SmallVertical, scrollbarArea,
                 scrollbarSize.Width, scrollbarSize.Height, (numTotalSlots - slotsPerPage) / slotsPerScroll);
+            if (scrollbar != null)
+                scrollbar.Scrolled += Scrollbar_Scrolled;
         }
 
         public static ItemGrid CreateInventory(Layout layout, int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
@@ -201,7 +203,13 @@ namespace Ambermoon.UI
             }
 
             ScrollOffset = offset;
+            PostScrollUpdate();
 
+            scrollbar?.SetScrollPosition(ScrollOffset / slotsPerScroll);
+        }
+
+        void PostScrollUpdate()
+        {
             for (int i = 0; i < items.Length; ++i)
             {
                 if (items[i] == null)
@@ -217,8 +225,12 @@ namespace Ambermoon.UI
                     items[i].Visible = false;
                 }
             }
+        }
 
-            scrollbar?.SetScrollPosition(ScrollOffset / slotsPerScroll);
+        void Scrollbar_Scrolled(int newPosition)
+        {
+            ScrollOffset = newPosition * slotsPerScroll;
+            PostScrollUpdate();
         }
 
         public bool Drag(Position position)

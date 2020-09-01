@@ -45,8 +45,8 @@ namespace Ambermoon.UI
 
             this.position = position;
 
-            sprite.X = position.X;
-            sprite.Y = position.Y;
+            sprite.X = vertical ? position.X : Util.Limit(scrollArea.Left, position.X, scrollArea.Right - barSize);
+            sprite.Y = vertical ? Util.Limit(scrollArea.Top, position.Y, scrollArea.Bottom - barSize) : position.Y;
         }
 
         public void SetScrollPosition(int position)
@@ -73,24 +73,28 @@ namespace Ambermoon.UI
             if (!Scrolling)
                 return false;
 
-            if (!scrollArea.Contains(position))
-                return false;
-
             if (vertical)
             {
-                if (position.Y <= scrollArea.Top)
+                if (position.Y <= scrollArea.Top + barSize / 2)
                     SetScrollPosition(0);
-                else if (position.Y >= scrollArea.Bottom)
+                else if (position.Y >= scrollArea.Bottom - barSize / 2)
                     SetScrollPosition(scrollRange);
                 else
                 {
                     // There are (n + 1) areas where n is the scroll range.
+                    // But they start at half bar size from both ends.
                     // The bar's center will jump to the center of an area
                     // if the cursor is closest to this center.
                     // The correct area can be calculated by dividing the
                     // cursor position by the area size.
-                    int areaSize = scrollArea.Size.Height / (scrollRange + 1);
-                    SetScrollPosition(Math.Min(scrollRange, (position.Y - scrollArea.Top) / areaSize));
+                    int areaSize = (scrollArea.Size.Height - barSize) / (scrollRange + 1);
+                    int newPosition = Math.Min(scrollRange, (position.Y - (scrollArea.Top + barSize / 2)) / areaSize);
+                    if (newPosition != ScrollOffset)
+                    {
+                        ScrollOffset = newPosition;
+                        Scrolled?.Invoke(newPosition);
+                    }
+                    SetBarPosition(new Position(this.position.X, position.Y - barSize / 2));
                 }
             }
             else // horizontal
@@ -101,8 +105,14 @@ namespace Ambermoon.UI
                     SetScrollPosition(scrollRange);
                 else
                 {
-                    int areaSize = scrollArea.Size.Width / (scrollRange + 1);
-                    SetScrollPosition(Math.Min(scrollRange, (position.X - scrollArea.Left) / areaSize));
+                    int areaSize = (scrollArea.Size.Width - barSize) / (scrollRange + 1);
+                    int newPosition = Math.Min(scrollRange, (position.X - (scrollArea.Left + +barSize / 2)) / areaSize);
+                    if (newPosition != ScrollOffset)
+                    {
+                        ScrollOffset = newPosition;
+                        Scrolled?.Invoke(newPosition);
+                    }
+                    SetBarPosition(new Position(position.X - barSize / 2, this.position.Y));
                 }
             }
 

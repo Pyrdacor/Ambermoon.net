@@ -611,7 +611,10 @@ namespace Ambermoon.UI
             foreach (var itemGrid in itemGrids)
             {
                 if (itemGrid.Drag(position))
+                {
+                    cursorType = CursorType.None;
                     break;
+                }
             }
         }
 

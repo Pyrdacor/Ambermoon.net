@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy
@@ -131,27 +130,27 @@ namespace Ambermoon.Data.Legacy
                     // 3: Highlighted  large vertical scrollbar (inventory, etc)
                     var scrollbarGraphics = graphics[GraphicType.Scrollbars] = new List<Graphic>();
 
-                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 29)
+                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 28)
                         .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                         .AddColoredArea(new Rect(1, 0, 4, 1), 30)
                         .AddColoredArea(new Rect(5, 0, 1, 1), 28)
-                        .AddColoredArea(new Rect(0, 1, 1, 26), 30)
-                        .AddColoredArea(new Rect(1, 1, 4, 26), 29)
-                        .AddColoredArea(new Rect(5, 1, 1, 26), 27)
-                        .AddColoredArea(new Rect(0, 27, 1, 1), 28)
-                        .AddColoredArea(new Rect(1, 27, 5, 1), 27)
-                        .AddColoredArea(new Rect(0, 28, 6, 1), 26)
+                        .AddColoredArea(new Rect(0, 1, 1, 25), 30)
+                        .AddColoredArea(new Rect(1, 1, 4, 25), 29)
+                        .AddColoredArea(new Rect(5, 1, 1, 25), 27)
+                        .AddColoredArea(new Rect(0, 26, 1, 1), 28)
+                        .AddColoredArea(new Rect(1, 26, 5, 1), 27)
+                        .AddColoredArea(new Rect(0, 27, 6, 1), 26)
                         .Build());
 
-                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 29)
+                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 28)
                         .AddColoredArea(new Rect(0, 0, 5, 1), 31)
                         .AddColoredArea(new Rect(5, 0, 1, 1), 29)
-                        .AddColoredArea(new Rect(0, 1, 1, 26), 31)
-                        .AddColoredArea(new Rect(1, 1, 4, 26), 30)
-                        .AddColoredArea(new Rect(5, 1, 1, 26), 28)
-                        .AddColoredArea(new Rect(0, 27, 1, 1), 29)
-                        .AddColoredArea(new Rect(1, 27, 5, 1), 28)
-                        .AddColoredArea(new Rect(0, 28, 6, 1), 26)
+                        .AddColoredArea(new Rect(0, 1, 1, 25), 31)
+                        .AddColoredArea(new Rect(1, 1, 4, 25), 30)
+                        .AddColoredArea(new Rect(5, 1, 1, 25), 28)
+                        .AddColoredArea(new Rect(0, 26, 1, 1), 29)
+                        .AddColoredArea(new Rect(1, 26, 5, 1), 28)
+                        .AddColoredArea(new Rect(0, 27, 6, 1), 26)
                         .Build());
 
                     scrollbarGraphics.Add(GraphicBuilder.Create(6, 57)

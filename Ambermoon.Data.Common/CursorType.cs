@@ -2,6 +2,7 @@
 {
     public enum CursorType
     {
+        None = -1,
         Sword,
         ArrowUp,
         ArrowDown,

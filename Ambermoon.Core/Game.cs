@@ -544,9 +544,9 @@ namespace Ambermoon
             {
                 leftMouseDown = false;
                 clickMoveActive = false;
-                UpdateCursor(position, buttons);
 
                 layout.LeftMouseUp(renderView.ScreenToGame(position));
+                UpdateCursor(position, MouseButtons.None);
             }
         }
 
@@ -850,6 +850,8 @@ namespace Ambermoon
             if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
             {
                 layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestClosed);
+
+                // TODO: disabled item grid areas
             }
             else
             {
@@ -861,27 +863,27 @@ namespace Ambermoon
                 {
                     layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestOpenFull);
                 }
-            }
 
-            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
-            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-            itemSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
-                12, 6, 24, new Rect(7 * 22, 139, 6, 58), new Size(6, 29), Data.Enumerations.ScrollbarType.SmallVertical);
-            layout.AddItemGrid(itemGrid);
+                var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+                itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+                itemSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
+                var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
+                    12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), Data.Enumerations.ScrollbarType.SmallVertical);
+                layout.AddItemGrid(itemGrid);
 
-            for (int y = 0; y < 2; ++y)
-            {
-                for (int x = 0; x < 6; ++x)
+                for (int y = 0; y < 2; ++y)
                 {
-                    var slot = chest.Slots[x, y];
+                    for (int x = 0; x < 6; ++x)
+                    {
+                        var slot = chest.Slots[x, y];
 
-                    if (!slot.Empty)
-                        itemGrid.SetItem(x + y * 6, slot);
+                        if (!slot.Empty)
+                            itemGrid.SetItem(x + y * 6, slot);
+                    }
                 }
-            }
 
-            // TODO ...
+                // TODO: gold and food
+            }
         }
 
         internal void SetActivePartyMember(int index)
