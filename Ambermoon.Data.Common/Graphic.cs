@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
@@ -76,6 +77,37 @@ namespace Ambermoon.Data
             }
         }
 
+        public static Graphic FromIndexedData(int width, int height, byte[] data)
+        {
+            if (data == null)
+                throw new ArgumentNullException("Graphic data was null.");
+
+            if (data.Length != width * height)
+                throw new ArgumentOutOfRangeException("Invalid graphic data size.");
+
+            return new Graphic
+            {
+                Width = width,
+                Height = height,
+                Data = data
+            };
+        }
+
+        public static Graphic CreateGradient(int width, int height, int startY, int rowsPerIncrease, byte colorIndex, byte endColorIndex)
+        {
+            Graphic graphic = new Graphic(width, height, colorIndex);
+
+            for (int y = startY; y < height; ++y)
+            {
+                if (colorIndex < endColorIndex && (y - startY) % rowsPerIncrease == 0)
+                    ++colorIndex;
+
+                Array.Fill(graphic.Data, colorIndex, y * width, width);
+            }
+
+            return graphic;
+        }
+
         public byte[] ToPixelData(Graphic palette, byte alphaIndex = 0)
         {
             if (IndexedGraphic)
@@ -107,6 +139,53 @@ namespace Ambermoon.Data
             {
                 return Data;
             }
+        }
+    }
+
+    public class GraphicBuilder
+    {
+        readonly int width;
+        readonly int height;
+        readonly List<KeyValuePair<Rect, byte>> coloredAreas = new List<KeyValuePair<Rect, byte>>();
+
+        private GraphicBuilder(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
+
+        public static GraphicBuilder Create(int width, int height)
+        {
+            return new GraphicBuilder(width, height);
+        }
+
+        public GraphicBuilder AddColoredArea(Rect area, byte colorIndex)
+        {
+            coloredAreas.Add(new KeyValuePair<Rect, byte>(area, colorIndex));
+            return this;
+        }
+
+        public Graphic Build()
+        {
+            var graphic = new Graphic(width, height, 0);
+
+            foreach (var coloredArea in coloredAreas)
+            {
+                int areaX = coloredArea.Key.Left;
+                int areaY = coloredArea.Key.Top;
+                int areaWidth = coloredArea.Key.Size.Width;
+                int areaHeight = coloredArea.Key.Size.Height;
+
+                for (int y = 0; y < areaHeight; ++y)
+                {
+                    for (int x = 0; x < areaWidth; ++x)
+                    {
+                        graphic.Data[areaX + x + (areaY + y) * width] = coloredArea.Value;
+                    }
+                }
+            }
+
+            return graphic;
         }
     }
 }

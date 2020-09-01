@@ -73,8 +73,12 @@ namespace Ambermoon.Render
         public static readonly Color Black = new Color(0x00, 0x00, 0x00);
         public static readonly Color Green = new Color(0x73, 0xb3, 0x43);
         public static readonly Color White = new Color(0xff, 0xff, 0xff);
+        public static readonly Color DarkShadow = new Color(0x22, 0x22, 0x11);
         public static readonly Color DarkGray = new Color(0x44, 0x44, 0x33);
         public static readonly Color LightGray = new Color(0x66, 0x66, 0x55);
+        public static readonly Color BrightGray = new Color(0x77, 0x77, 0x66);
+        public static readonly Color BrightAccent = new Color(0x88, 0x88, 0x77);
+        public static readonly Color DarkAccent = new Color(0x55, 0x55, 0x44);
 
         public static bool operator ==(Color color1, Color color2)
         {

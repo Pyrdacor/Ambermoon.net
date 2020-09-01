@@ -50,6 +50,16 @@ namespace Ambermoon.UI
             }
         }
 
+        public byte DisplayLayer
+        {
+            get => Destroyed ? (byte)0 : area.DisplayLayer;
+            set
+            {
+                if (!Destroyed)
+                    area.DisplayLayer = value;
+            }
+        }
+
         public bool Visible
         {
             get => !Destroyed && area.Visible;
@@ -57,6 +67,19 @@ namespace Ambermoon.UI
             {
                 if (!Destroyed)
                     area.Visible = value;
+            }
+        }
+
+        public Position Position
+        {
+            get => Destroyed ? null : new Position(area.X, area.Y);
+            set
+            {
+                if (!Destroyed)
+                {
+                    area.X = value.X;
+                    area.Y = value.Y;
+                }
             }
         }
 
@@ -235,9 +258,10 @@ namespace Ambermoon.UI
         public LayoutType Type { get; private set; }
         readonly Game game;
         readonly IRenderView renderView;
-        readonly ISprite sprite;
+        readonly ILayerSprite sprite;
         readonly ITextureAtlas textureAtlasBackground;
         readonly ITextureAtlas textureAtlasForeground;
+        readonly ISprite[] portraitBackgrounds = new ISprite[Game.MaxPartyMembers];
         readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
         ISprite sprite80x80Picture;
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
@@ -245,6 +269,7 @@ namespace Ambermoon.UI
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
         readonly List<ISprite> additionalSprites = new List<ISprite>();
+        internal IRenderView RenderView => renderView;
 
         public Layout(Game game, IRenderView renderView)
         {
@@ -252,10 +277,11 @@ namespace Ambermoon.UI
             this.renderView = renderView;
             textureAtlasBackground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground);
             textureAtlasForeground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIForeground);
-            sprite = renderView.SpriteFactory.Create(320, 163, 0, 0, false, true);
+            sprite = renderView.SpriteFactory.Create(320, 163, 0, 0, false, true) as ILayerSprite;
             sprite.Layer = renderView.GetLayer(Layer.UIBackground);
             sprite.X = Global.LayoutX;
             sprite.Y = Global.LayoutY;
+            sprite.DisplayLayer = 1;
             sprite.PaletteIndex = 0;
 
             SetLayout(LayoutType.None);
@@ -298,12 +324,22 @@ namespace Ambermoon.UI
                 // TODO: in original portrait removing is animated by moving down the
                 // gray masked picture infront of the portrait
 
+                portraitBackgrounds[slot]?.Delete();
+                portraitBackgrounds[slot] = null;
                 portraits[slot]?.Delete();
                 portraits[slot] = null;
             }
             else
             {
-                var sprite = portraits[slot] ??= renderView.SpriteFactory.Create(32, 34, 0, 0, false, true);
+                var sprite = portraitBackgrounds[slot] ??= renderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 0);
+                sprite.Layer = renderView.GetLayer(Layer.UIForeground);
+                sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
+                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
+                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitBackgroundOffset);
+                sprite.PaletteIndex = 50;
+                sprite.Visible = true;
+
+                sprite = portraits[slot] ??= renderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 1);
                 sprite.Layer = renderView.GetLayer(Layer.UIForeground);
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
@@ -311,6 +347,18 @@ namespace Ambermoon.UI
                 sprite.PaletteIndex = 49;
                 sprite.Visible = true;
             }
+        }
+
+        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex)
+        {
+            var sprite = renderView.SpriteFactory.Create(rect.Size.Width, rect.Size.Height, 0, 0, false, true);
+            sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(textureIndex);
+            sprite.X = rect.Left;
+            sprite.Y = rect.Top;
+            sprite.PaletteIndex = paletteIndex;
+            sprite.Layer = renderView.GetLayer(Layer.UIForeground);
+            sprite.Visible = true;
+            additionalSprites.Add(sprite);
         }
 
         public void Set80x80Picture(Data.Enumerations.Picture80x80 picture)
@@ -412,6 +460,43 @@ namespace Ambermoon.UI
             }
         }
 
+        public void KeyDown(Key key, KeyModifiers keyModifiers)
+        {
+            switch (key)
+            {
+                case Key.Up:
+                    if (IsInventory)
+                        itemGrids[0].ScrollUp();
+                    break;
+                case Key.Down:
+                    if (IsInventory)
+                        itemGrids[0].ScrollDown();
+                    break;
+                case Key.PageUp:
+                    if (IsInventory)
+                        itemGrids[0].ScrollPageUp();
+                    break;
+                case Key.PageDown:
+                    if (IsInventory)
+                        itemGrids[0].ScrollPageDown();
+                    break;
+                case Key.Home:
+                    if (IsInventory)
+                        itemGrids[0].ScrollToBegin();
+                    break;
+                case Key.End:
+                    if (IsInventory)
+                        itemGrids[0].ScrollToEnd();
+                    break;
+            }
+        }
+
+        public void LeftMouseUp(Position position)
+        {
+            foreach (var itemGrid in itemGrids)
+                itemGrid.LeftMouseUp(position);
+        }
+
         public bool Click(Position position, MouseButtons buttons)
         {
             if (buttons == MouseButtons.Left)
@@ -419,7 +504,7 @@ namespace Ambermoon.UI
                 foreach (var itemGrid in itemGrids)
                 {
                     // TODO: If stacked it should ask for amount with left mouse
-                    if (itemGrid.Click(game, position, draggedItem, out DraggedItem pickedUpItem))
+                    if (itemGrid.Click(game, position, draggedItem, out DraggedItem pickedUpItem, true))
                     {
                         DraggedItem dropped = (draggedItem != null && (pickedUpItem == null || pickedUpItem != draggedItem ||
                             pickedUpItem.Item.Item.Amount != draggedItem.Item.Item.Amount)) ? draggedItem : null;
@@ -449,7 +534,7 @@ namespace Ambermoon.UI
                 {
                     foreach (var itemGrid in itemGrids)
                     {
-                        if (itemGrid.Click(game, position, null, out DraggedItem pickedUpItem))
+                        if (itemGrid.Click(game, position, null, out DraggedItem pickedUpItem, false))
                         {
                             if (pickedUpItem != null)
                             {
@@ -521,12 +606,25 @@ namespace Ambermoon.UI
             return false;
         }
 
+        public void Drag(Position position, ref CursorType cursorType)
+        {
+            foreach (var itemGrid in itemGrids)
+            {
+                if (itemGrid.Drag(position))
+                    break;
+            }
+        }
+
         public bool Hover(Position position, ref CursorType cursorType)
         {
             if (draggedItem != null)
             {
                 draggedItem.Item.Position = position;
                 cursorType = CursorType.SmallArrow;
+            }
+            else
+            {
+                cursorType = CursorType.Sword;
             }
 
             bool consumed = false;

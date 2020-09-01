@@ -1,10 +1,13 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.UI
 {
+    // TODO: disabled state
+    // TODO: memorize scrollbar positions for inventories
     internal class ItemGrid
     {
         const int SlotWidth = 16;
@@ -17,36 +20,52 @@ namespace Ambermoon.UI
         IRenderText hoveredItemName;
         readonly bool allowExternalDrop;
         readonly Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction;
+        readonly int slotsPerPage;
+        readonly int slotsPerScroll;
+        Scrollbar scrollbar;
+        Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
 
-        public int SlotCount => slotPositions.Count;
+        public int SlotCount => items.Length;
+        public int ScrollOffset { get; private set; } = 0;
 
-        private ItemGrid(IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
-            bool allowExternalDrop, Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction)
+        private ItemGrid(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
+            bool allowExternalDrop, Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction,
+            int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect scrollbarArea = null, Size scrollbarSize = null,
+            ScrollbarType? scrollbarType = null)
         {
             this.renderView = renderView;
             this.itemManager = itemManager;
             this.slotPositions = slotPositions;
             this.allowExternalDrop = allowExternalDrop;
             this.pickupAction = pickupAction;
-            items = new UIItem[slotPositions.Count];
+            this.slotsPerPage = slotsPerPage;
+            this.slotsPerScroll = slotsPerScroll;
+            items = new UIItem[numTotalSlots];
+            scrollbar = slotsPerScroll == 0 ? null :
+                new Scrollbar(layout, scrollbarType ?? ScrollbarType.SmallVertical, scrollbarArea,
+                scrollbarSize.Width, scrollbarSize.Height, (numTotalSlots - slotsPerPage) / slotsPerScroll);
         }
 
-        public static ItemGrid CreateInventory(int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
+        public static ItemGrid CreateInventory(Layout layout, int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
         {
-            return new ItemGrid(renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
-                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false));
+            return new ItemGrid(layout, renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
+                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false), 12, 3, 24,
+                new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
         }
 
-        public static ItemGrid CreateEquipment(int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
+        public static ItemGrid CreateEquipment(Layout layout, int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
         {
-            return new ItemGrid(renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
-                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true));
+            return new ItemGrid(layout, renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
+                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true), 9, 0, 9);
         }
 
-        public static ItemGrid Create(IRenderView renderView, IItemManager itemManager, List<Position> slotPositions, bool allowExternalDrop)
+        public static ItemGrid Create(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
+            bool allowExternalDrop, int slotsPerPage, int slotsPerScroll, int numTotalSlots,
+            Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType)
         {
-            return new ItemGrid(renderView, itemManager, slotPositions, allowExternalDrop, (ItemGrid itemGrid, int slot, UIItem item) =>
-                Layout.DraggedItem.FromExternal(itemGrid, slot, item));
+            return new ItemGrid(layout, renderView, itemManager, slotPositions, allowExternalDrop, (ItemGrid itemGrid, int slot, UIItem item) =>
+                Layout.DraggedItem.FromExternal(itemGrid, slot, item), slotsPerPage, slotsPerScroll, numTotalSlots,
+                scrollbarArea, scrollbarSize, scrollbarType);
         }
 
         public void Destroy()
@@ -56,6 +75,11 @@ namespace Ambermoon.UI
 
             hoveredItemName?.Delete();
             hoveredItemName = null;
+
+            scrollbar?.Destroy();
+            scrollbar = null;
+
+            dragScrollItem = null;
         }
 
         public void SetItem(int slot, ItemSlot item)
@@ -67,10 +91,14 @@ namespace Ambermoon.UI
             else
             {
                 var newItem = items[slot] = new UIItem(renderView, itemManager, item);
-                newItem.Position = slotPositions[slot];
-                newItem.Visible = true;
+                bool visible = SlotVisible(slot);
+                newItem.Visible = visible;
+                if (visible)
+                    newItem.Position = slotPositions[slot - ScrollOffset];
             }
         }
+
+        public bool SlotVisible(int slot) => slot >= ScrollOffset && slot < ScrollOffset + slotsPerPage;
 
         public ItemSlot GetItem(int slot) => items[slot]?.Item;
 
@@ -81,7 +109,7 @@ namespace Ambermoon.UI
             foreach (var slotPosition in slotPositions)
             {
                 if (new Rect(slotPosition, SlotSize).Contains(position))
-                    return slot;
+                    return ScrollOffset + slot;
 
                 ++slot;
             }
@@ -122,9 +150,112 @@ namespace Ambermoon.UI
             }
         }
 
-        public bool Click(Game game, Position position, Layout.DraggedItem draggedItem, out Layout.DraggedItem pickedUpItem)
+        public void ScrollUp()
+        {
+            if (ScrollOffset > 0)
+                ScrollTo(ScrollOffset - slotsPerScroll);
+        }
+
+        public void ScrollDown()
+        {
+            if (ScrollOffset < items.Length - slotsPerPage)
+                ScrollTo(ScrollOffset + slotsPerScroll);
+        }
+
+        public void ScrollPageUp()
+        {
+            if (ScrollOffset > 0)
+                ScrollTo(ScrollOffset - slotsPerPage);
+        }
+
+        public void ScrollPageDown()
+        {
+            if (ScrollOffset < items.Length - slotsPerPage)
+                ScrollTo(ScrollOffset + slotsPerPage);
+        }
+
+        public void ScrollToBegin()
+        {
+            ScrollTo(0);
+        }
+
+        public void ScrollToEnd()
+        {
+            ScrollTo(items.Length - slotsPerPage);
+        }
+
+        public void ScrollTo(int offset)
+        {
+            if (slotsPerScroll == 0) // not scrollable
+                return;
+
+            offset = Math.Max(0, Math.Min(offset, SlotCount - slotsPerPage));
+
+            if (ScrollOffset == offset) // already there
+                return;
+
+            if (offset % slotsPerScroll != 0)
+            {
+                throw new AmbermoonException(ExceptionScope.Application,
+                    $"Can not scroll the item grid to offset {offset} as a scroll must be a multiple of {slotsPerScroll} slots.");
+            }
+
+            ScrollOffset = offset;
+
+            for (int i = 0; i < items.Length; ++i)
+            {
+                if (items[i] == null)
+                    continue;
+
+                if (SlotVisible(i))
+                {
+                    items[i].Position = slotPositions[i - ScrollOffset];
+                    items[i].Visible = true;
+                }
+                else
+                {
+                    items[i].Visible = false;
+                }
+            }
+
+            scrollbar?.SetScrollPosition(ScrollOffset / slotsPerScroll);
+        }
+
+        public bool Drag(Position position)
+        {
+            if (scrollbar?.Drag(position) == true)
+                return true;
+
+            return false;
+        }
+
+        public void LeftMouseUp(Position position)
+        {
+            if (dragScrollItem?.Item != null)
+            {
+                dragScrollItem.Item.Position = position;
+                dragScrollItem.Item.Visible = true;
+                dragScrollItem = null;
+            }
+
+            scrollbar?.LeftMouseUp();
+        }
+
+        public bool Click(Game game, Position position, Layout.DraggedItem draggedItem,
+            out Layout.DraggedItem pickedUpItem, bool leftMouseButton)
         {
             pickedUpItem = draggedItem;
+
+            if (leftMouseButton && scrollbar?.LeftClick(position) == true)
+            {
+                if (draggedItem != null)
+                {
+                    dragScrollItem = draggedItem;
+                    draggedItem.Item.Visible = false;
+                }
+
+                return true;
+            }
 
             var slot = SlotFromPosition(position);
 

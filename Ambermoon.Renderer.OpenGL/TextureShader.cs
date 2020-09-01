@@ -59,7 +59,7 @@ namespace Ambermoon.Renderer
             $"}}"
         };
 
-        static string[] TextureVertexShader(State state) => new string[]
+        protected static string[] TextureVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),
             $"in ivec2 {DefaultPositionName};",

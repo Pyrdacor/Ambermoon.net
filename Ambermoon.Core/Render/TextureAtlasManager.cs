@@ -141,7 +141,7 @@ namespace Ambermoon.Render
             // TODO: On world maps another smaller image (12x24?) is used. It isn't part of some file
             // so I guess it is inside the AM2_CPU somewhere. For now we use a shrinked version of the indoor graphic.
             // On world map only 4 sprites are used (one for each direction).
-            Graphic Shrink(Graphic graphic)
+            static Graphic Shrink(Graphic graphic)
             {
                 var shrinked = new Graphic
                 {
@@ -178,12 +178,18 @@ namespace Ambermoon.Render
             for (int i = 0; i < layoutGraphics.Count; ++i)
                 AddTexture(Layer.UIBackground, UI.Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
 
+            var scrollbarGraphics = graphicProvider.GetGraphics(GraphicType.Scrollbars);
+
+            for (int i = 0; i < scrollbarGraphics.Count; ++i)
+                AddTexture(Layer.UIBackground, UI.Graphics.ScrollbarOffset + (uint)i, scrollbarGraphics[i]);
+
             #endregion
 
             #region Portraits
 
             var portraits = graphicProvider.GetGraphics(GraphicType.Portrait);
 
+            AddTexture(Layer.UIForeground, UI.Graphics.PortraitBackgroundOffset, Graphic.CreateGradient(32, 34, 4, 2, 16, 31));
             for (int i = 0; i < portraits.Count; ++i)
                 AddTexture(Layer.UIForeground, UI.Graphics.PortraitOffset + (uint)i, portraits[i]);
 

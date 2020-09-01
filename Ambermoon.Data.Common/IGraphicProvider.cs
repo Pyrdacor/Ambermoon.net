@@ -19,7 +19,8 @@ namespace Ambermoon.Data
         Layout,
         LabBackground,
         Cursor,
-        Pics80x80
+        Pics80x80,
+        Scrollbars
         // TODO ...
     }
 

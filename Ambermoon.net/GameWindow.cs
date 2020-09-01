@@ -119,6 +119,10 @@ namespace Ambermoon
             Silk.NET.Input.Common.Key.Keypad7 => Key.Num7,
             Silk.NET.Input.Common.Key.Keypad8 => Key.Num8,
             Silk.NET.Input.Common.Key.Keypad9 => Key.Num9,
+            Silk.NET.Input.Common.Key.PageUp => Key.PageUp,
+            Silk.NET.Input.Common.Key.PageDown => Key.PageDown,
+            Silk.NET.Input.Common.Key.Home => Key.Home,
+            Silk.NET.Input.Common.Key.End => Key.End,
             _ => Key.Invalid,
         };
 

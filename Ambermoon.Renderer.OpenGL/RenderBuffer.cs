@@ -29,6 +29,7 @@ namespace Ambermoon.Renderer
     public class RenderBuffer : IDisposable
     {
         public bool Masked { get; } = false;
+        public bool Opaque { get; } = false;
         bool disposed = false;
         readonly State state;
 
@@ -51,15 +52,17 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
+        static readonly Dictionary<State, OpaqueTextureShader> opaqueTextureShaders = new Dictionary<State, OpaqueTextureShader>();
         static readonly Dictionary<State, Texture3DShader> texture3DShaders = new Dictionary<State, Texture3DShader>();
         static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = new Dictionary<State, Billboard3DShader>();
         static readonly Dictionary<State, TextShader> textShaders = new Dictionary<State, TextShader>();
 
         public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered,
-            bool noTexture = false, bool isBillboard = false, bool isText = false)
+            bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false)
         {
             this.state = state;
             Masked = masked;
+            Opaque = opaque;
 
             if (is3D)
             {
@@ -104,9 +107,18 @@ namespace Ambermoon.Renderer
                 }
                 else
                 {
-                    if (!textureShaders.ContainsKey(state))
-                        textureShaders[state] = TextureShader.Create(state);
-                    vertexArrayObject = new VertexArrayObject(state, textureShaders[state].ShaderProgram);
+                    if (opaque)
+                    {
+                        if (!opaqueTextureShaders.ContainsKey(state))
+                            opaqueTextureShaders[state] = OpaqueTextureShader.Create(state);
+                        vertexArrayObject = new VertexArrayObject(state, opaqueTextureShaders[state].ShaderProgram);
+                    }
+                    else
+                    {
+                        if (!textureShaders.ContainsKey(state))
+                            textureShaders[state] = TextureShader.Create(state);
+                        vertexArrayObject = new VertexArrayObject(state, textureShaders[state].ShaderProgram);
+                    }
                 }
             }
 
@@ -196,6 +208,7 @@ namespace Ambermoon.Renderer
         internal ColorShader ColorShader => colorShaders[state];
         internal MaskedTextureShader MaskedTextureShader => maskedTextureShaders[state];
         internal TextureShader TextureShader => textureShaders[state];
+        internal OpaqueTextureShader OpaqueTextureShader => opaqueTextureShaders[state];
         internal Texture3DShader Texture3DShader => texture3DShaders[state];
         internal Billboard3DShader Billboard3DShader => billboard3DShaders[state];
         internal TextShader TextShader => textShaders[state];

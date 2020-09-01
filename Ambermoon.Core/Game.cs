@@ -1,7 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
 using Ambermoon.UI;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -469,7 +468,8 @@ namespace Ambermoon
         {
             keys[(int)key] = true;
 
-            Move();
+            if (!windowActive)
+                Move();
 
             switch (key)
             {
@@ -519,6 +519,10 @@ namespace Ambermoon
                     // TODO
                     cursor.Type = CursorType.Mouth;
                     break;
+                default:
+                    if (windowActive)
+                        layout.KeyDown(key, modifiers);
+                    break;
             }
 
             lastMoveTicksReset = currentTicks;
@@ -540,7 +544,9 @@ namespace Ambermoon
             {
                 leftMouseDown = false;
                 clickMoveActive = false;
-                UpdateCursor(position);
+                UpdateCursor(position, buttons);
+
+                layout.LeftMouseUp(renderView.ScreenToGame(position));
             }
         }
 
@@ -591,7 +597,7 @@ namespace Ambermoon
             }
         }
 
-        void UpdateCursor(Position cursorPosition)
+        void UpdateCursor(Position cursorPosition, MouseButtons buttons)
         {
             lock (cursor)
             {
@@ -682,9 +688,18 @@ namespace Ambermoon
                 }
                 else
                 {
-                    var cursorType = cursor.Type;
-                    layout.Hover(relativePosition, ref cursorType);
-                    cursor.Type = cursorType;
+                    if (buttons == MouseButtons.None)
+                    {
+                        var cursorType = cursor.Type;
+                        layout.Hover(relativePosition, ref cursorType);
+                        cursor.Type = cursorType;
+                    }
+                    else if (buttons == MouseButtons.Left)
+                    {
+                        var cursorType = cursor.Type;
+                        layout.Drag(relativePosition, ref cursorType);
+                        cursor.Type = cursorType;
+                    }
                 }
 
                 if (cursor.Type >= CursorType.ArrowUp && cursor.Type <= CursorType.Wait)
@@ -694,7 +709,7 @@ namespace Ambermoon
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
-            UpdateCursor(position);
+            UpdateCursor(position, buttons);
         }
 
         internal PartyMember GetPartyMember(int slot) => currentSavegame.GetPartyMember(slot);
@@ -747,6 +762,8 @@ namespace Ambermoon
             windowActive = true;
             layout.SetLayout(LayoutType.Inventory);
             CurrentInventoryIndex = slot;
+            var partyMember = GetPartyMember(slot);
+            #region Equipment and Inventory
             var equipmentSlotPositions = new List<Position>
             {
                 new Position(20, 72),  new Position(52, 72),  new Position(84, 72),
@@ -754,26 +771,33 @@ namespace Ambermoon
                 new Position(20, 176), new Position(52, 176), new Position(84, 176),
             };
             equipmentSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var inventorySlotPositions = Enumerable.Range(0, Inventory.Width * Inventory.Height).Select
+            var inventorySlotPositions = Enumerable.Range(0, Inventory.VisibleWidth * Inventory.VisibleHeight).Select
             (
                 slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
             ).ToList();
             inventorySlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var inventoryGrid = ItemGrid.CreateInventory(slot, renderView, itemManager, inventorySlotPositions);
+            var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager, inventorySlotPositions);
             layout.AddItemGrid(inventoryGrid);
-            var partyMember = GetPartyMember(slot);
             for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
             {
                 if (!partyMember.Inventory.Slots[i].Empty)
                     inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
             }
-            var equipmentGrid = ItemGrid.CreateEquipment(slot, renderView, itemManager, equipmentSlotPositions);
+            var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, itemManager, equipmentSlotPositions);
             layout.AddItemGrid(equipmentGrid);
             foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
             {
                 if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
                     equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
             }
+            layout.FillArea(new Rect(109 + 3 * 22 + 1, 76 + 1, 7, 111), Color.DarkGray, false);
+            layout.FillArea(new Rect(109 + 3 * 22, 76 + 1, 1, 111), Color.DarkShadow, false);
+            layout.FillArea(new Rect(109 + 3 * 22, 76, 8, 1), Color.DarkShadow, false);
+            #endregion
+            #region Character info
+            layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
+            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49);
+            #endregion
             // TODO
         }
 
@@ -839,10 +863,11 @@ namespace Ambermoon
                 }
             }
 
-            var itemSlotPositions = Enumerable.Range(1, MaxPartyMembers).Select(index => new Position(index * 22, 139)).ToList();
-            itemSlotPositions.AddRange(Enumerable.Range(1, MaxPartyMembers).Select(index => new Position(index * 22, 168)));
+            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
             itemSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-            var itemGrid = ItemGrid.Create(renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty);
+            var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
+                12, 6, 24, new Rect(7 * 22, 139, 6, 58), new Size(6, 29), Data.Enumerations.ScrollbarType.SmallVertical);
             layout.AddItemGrid(itemGrid);
 
             for (int y = 0; y < 2; ++y)
