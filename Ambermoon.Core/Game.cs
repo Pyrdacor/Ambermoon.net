@@ -2,6 +2,7 @@
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using Ambermoon.UI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -54,6 +55,13 @@ namespace Ambermoon
             static float GetTurnSpeed3D(bool legacyMode) => legacyMode ? 15.0f : 3.00f;
         }
 
+        class TimedGameEvent
+        {
+            public DateTime ExecutionTime;
+            public Action Action;
+        }
+
+        // TODO: cleanup members
         public const int MaxPartyMembers = 6;
         const uint TicksPerSecond = 60;
         readonly bool legacyMode = false;
@@ -63,12 +71,14 @@ namespace Ambermoon
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
         WindowInfo lastWindow = DefaultWindow;
+        // Note: These are not meant for ingame stuff but for fade effects etc that use real time.
+        readonly List<TimedGameEvent> timedEvents = new List<TimedGameEvent>();
         readonly Movement movement;
         uint currentTicks = 0;
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly NameProvider nameProvider;
-        readonly UI.Layout layout;
+        readonly Layout layout;
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
         readonly IRenderView renderView;
@@ -144,6 +154,15 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
+            for (int i = timedEvents.Count - 1; i >= 0; --i)
+            {
+                if (DateTime.Now >= timedEvents[i].ExecutionTime)
+                {
+                    timedEvents[i].Action?.Invoke();
+                    timedEvents.RemoveAt(i);
+                }
+            }
+
             uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
 
             if (currentTicks <= uint.MaxValue - add)
@@ -763,59 +782,83 @@ namespace Ambermoon
             if (currentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
 
-            layout.Reset();
-            ShowMap(false);
-            SetWindow(Window.Inventory, slot);
-            layout.SetLayout(LayoutType.Inventory);
-            CurrentInventoryIndex = slot;
-            var partyMember = GetPartyMember(slot);
-            #region Equipment and Inventory
-            var equipmentSlotPositions = new List<Position>
+            Action openAction = () =>
             {
-                new Position(20, 72),  new Position(52, 72),  new Position(84, 72),
-                new Position(84, 97),  new Position(20, 124), new Position(84, 124),
-                new Position(20, 176), new Position(52, 176), new Position(84, 176),
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Inventory, slot);
+                layout.SetLayout(LayoutType.Inventory);
+                CurrentInventoryIndex = slot;
+                var partyMember = GetPartyMember(slot);
+                #region Equipment and Inventory
+                var equipmentSlotPositions = new List<Position>
+                {
+                    new Position(20, 72),  new Position(52, 72),  new Position(84, 72),
+                    new Position(84, 97),  new Position(20, 124), new Position(84, 124),
+                    new Position(20, 176), new Position(52, 176), new Position(84, 176),
+                };
+                var inventorySlotPositions = Enumerable.Range(0, Inventory.VisibleWidth * Inventory.VisibleHeight).Select
+                (
+                    slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
+                ).ToList();
+                var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager, inventorySlotPositions);
+                layout.AddItemGrid(inventoryGrid);
+                for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
+                {
+                    if (!partyMember.Inventory.Slots[i].Empty)
+                        inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
+                }
+                var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, itemManager, equipmentSlotPositions);
+                layout.AddItemGrid(equipmentGrid);
+                foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
+                {
+                    if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
+                        equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
+                }
+                #endregion
+                #region Character info
+                layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
+                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UIElementOffset + (uint)UIElementGraphic.PortraitBackground, 50, true, 1);
+                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, false, 2);
+                #endregion
+                // TODO
             };
-            var inventorySlotPositions = Enumerable.Range(0, Inventory.VisibleWidth * Inventory.VisibleHeight).Select
-            (
-                slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
-            ).ToList();
-            var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager, inventorySlotPositions);
-            layout.AddItemGrid(inventoryGrid);
-            for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
+
+            if (currentWindow.Window == Window.Inventory)
+                openAction();
+            else
+                Fade(openAction);
+        }
+
+        void AddTimedEvent(TimeSpan delay, Action action)
+        {
+            timedEvents.Add(new TimedGameEvent
             {
-                if (!partyMember.Inventory.Slots[i].Empty)
-                    inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
-            }
-            var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, itemManager, equipmentSlotPositions);
-            layout.AddItemGrid(equipmentGrid);
-            foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
-            {
-                if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
-                    equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
-            }
-            #endregion
-            #region Character info
-            layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UIElementOffset + (uint)UIElementGraphic.PortraitBackground, 50, true, 1);
-            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, false, 2);
-            #endregion
-            // TODO
+                ExecutionTime = DateTime.Now + delay,
+                Action = action
+            });
+        }
+
+        void Fade(Action midFadeAction)
+        {
+            layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Color.Black, FadeEffectType.FadeInAndOut, 400);
+            AddTimedEvent(TimeSpan.FromMilliseconds(200), midFadeAction);
         }
 
         internal void Teleport(MapChangeEvent mapChangeEvent)
         {
-            layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Color.Black, FadeEffectType.FadeInAndOut, 400);
+            Fade(() =>
+            {
+                var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
+                var player = is3D ? (IRenderPlayer)player3D : player2D;
 
-            var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
-            var player = is3D ? (IRenderPlayer)player3D: player2D;
-
-            // The position (x, y) is 1-based in the data so we subtract 1.
-            // Moreover the players position is 1 tile below its drawing position
-            // in non-world 2D so subtract another 1 from y.
-            player.MoveTo(newMap, mapChangeEvent.X - 1,
-                mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
-                currentTicks, true, mapChangeEvent.Direction);
+                // The position (x, y) is 1-based in the data so we subtract 1.
+                // Moreover the players position is 1 tile below its drawing position
+                // in non-world 2D so subtract another 1 from y.
+                player.MoveTo(newMap, mapChangeEvent.X - 1,
+                    mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
+                    currentTicks, true, mapChangeEvent.Direction);
+            });
         }
 
         internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
@@ -844,46 +887,49 @@ namespace Ambermoon
 
         internal void ShowChest(ChestMapEvent chestMapEvent)
         {
-            layout.Reset();
-            ShowMap(false);
-            SetWindow(Window.Chest, chestMapEvent);
-            layout.SetLayout(LayoutType.Items);
-            var chest = GetChest(chestMapEvent.ChestIndex);
-            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
-            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-            var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
-                12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
-            layout.AddItemGrid(itemGrid);
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Chest, chestMapEvent);
+                layout.SetLayout(LayoutType.Items);
+                var chest = GetChest(chestMapEvent.ChestIndex);
+                var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+                itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+                var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
+                    12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+                layout.AddItemGrid(itemGrid);
 
-            if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
-            {
-                layout.Set80x80Picture(Picture80x80.ChestClosed);
-                itemGrid.Disabled = true;
-            }
-            else
-            {
-                if (chest.Empty)
+                if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
                 {
-                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+                    layout.Set80x80Picture(Picture80x80.ChestClosed);
+                    itemGrid.Disabled = true;
                 }
                 else
                 {
-                    layout.Set80x80Picture(Picture80x80.ChestOpenFull);
-                }
-
-                for (int y = 0; y < 2; ++y)
-                {
-                    for (int x = 0; x < 6; ++x)
+                    if (chest.Empty)
                     {
-                        var slot = chest.Slots[x, y];
-
-                        if (!slot.Empty)
-                            itemGrid.SetItem(x + y * 6, slot);
+                        layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
                     }
-                }
+                    else
+                    {
+                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                    }
 
-                // TODO: gold and food
-            }
+                    for (int y = 0; y < 2; ++y)
+                    {
+                        for (int x = 0; x < 6; ++x)
+                        {
+                            var slot = chest.Slots[x, y];
+
+                            if (!slot.Empty)
+                                itemGrid.SetItem(x + y * 6, slot);
+                        }
+                    }
+
+                    // TODO: gold and food
+                }
+            });
         }
 
         internal void SetActivePartyMember(int index)
@@ -959,7 +1005,7 @@ namespace Ambermoon
             switch (currentWindow.Window)
             {
                 case Window.MapView:
-                    ShowMap(true);
+                    Fade(() => ShowMap(true));
                     break;
                 case Window.Inventory:
                 {

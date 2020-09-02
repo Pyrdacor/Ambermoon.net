@@ -267,6 +267,7 @@ namespace Ambermoon.UI
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
+        readonly List<IColoredRect> fadeEffectAreas = new List<IColoredRect>();
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
         readonly List<ISprite> additionalSprites = new List<ISprite>();
         internal IRenderView RenderView { get; }
@@ -312,6 +313,8 @@ namespace Ambermoon.UI
             itemGrids.Clear();
             filledAreas.ForEach(area => area?.Delete());
             filledAreas.Clear();
+
+            // Note: Don't remove fadeEffects here.
         }
 
         /// <summary>
@@ -393,7 +396,7 @@ namespace Ambermoon.UI
             itemGrids.Add(itemGrid);
         }
 
-        IColoredRect CreateArea(Rect rect, Color color, bool topMost)
+        IColoredRect CreateArea(Rect rect, Color color, bool topMost, bool fadeEffect = false)
         {
             var coloredRect = RenderView.ColoredRectFactory.Create(rect.Width, rect.Height,
                 color, (byte)(topMost ? 255 : 0));
@@ -401,7 +404,10 @@ namespace Ambermoon.UI
             coloredRect.X = rect.Left;
             coloredRect.Y = rect.Top;
             coloredRect.Visible = true;
-            filledAreas.Add(coloredRect);
+            if (fadeEffect)
+                fadeEffectAreas.Add(coloredRect);
+            else
+                filledAreas.Add(coloredRect);
             return coloredRect;
         }
 
@@ -413,7 +419,7 @@ namespace Ambermoon.UI
         public void AddColorFader(Rect rect, Color startColor, Color endColor,
             int durationInMilliseconds, bool removeWhenFinished, DateTime? startTime = null)
         {
-            fadeEffects.Add(new FadeEffect(filledAreas, CreateArea(rect, startColor, true), startColor,
+            fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, startColor, true, true), startColor,
                 endColor, durationInMilliseconds, startTime ?? DateTime.Now, removeWhenFinished));
         }
 
