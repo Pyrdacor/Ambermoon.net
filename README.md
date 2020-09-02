@@ -74,7 +74,7 @@ Down | Move down (2D) or backward (3D)
 Left | Move left (2D) or turn left (3D)
 Right | Move right (2D) or turn right (3D)
 F11 | Toggle fullscreen mode
-ESC | Leave fullscreen mode, leave other ingame windows
+ESC | Leave other ingame windows
 Num7 | Eye cursor
 Num8 | Hand cursor
 Num9 | Mouth cursor
