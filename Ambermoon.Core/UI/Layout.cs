@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
@@ -331,10 +332,10 @@ namespace Ambermoon.UI
             else
             {
                 var sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 0);
-                sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
+                sprite.Layer = RenderView.GetLayer(Layer.UIBackground);
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
-                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitBackgroundOffset);
+                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.UIElementOffset + (uint)UIElementGraphic.PortraitBackground);
                 sprite.PaletteIndex = 50;
                 sprite.Visible = true;
 
@@ -348,15 +349,15 @@ namespace Ambermoon.UI
             }
         }
 
-        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 0)
+        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, bool background, byte displayLayer = 0)
         {
-            var sprite = RenderView.SpriteFactory.Create(rect.Size.Width, rect.Size.Height, 0, 0, false, true) as ILayerSprite;
-            sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(textureIndex);
+            var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, 0, 0, false, true) as ILayerSprite;
+            sprite.TextureAtlasOffset = (background ? textureAtlasBackground : textureAtlasForeground).GetOffset(textureIndex);
             sprite.DisplayLayer = displayLayer;
             sprite.X = rect.Left;
             sprite.Y = rect.Top;
             sprite.PaletteIndex = paletteIndex;
-            sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
+            sprite.Layer = RenderView.GetLayer(background ? Layer.UIBackground : Layer.UIForeground);
             sprite.Visible = true;
             additionalSprites.Add(sprite);
         }
@@ -394,7 +395,7 @@ namespace Ambermoon.UI
 
         IColoredRect CreateArea(Rect rect, Color color, bool topMost)
         {
-            var coloredRect = RenderView.ColoredRectFactory.Create(rect.Size.Width, rect.Size.Height,
+            var coloredRect = RenderView.ColoredRectFactory.Create(rect.Width, rect.Height,
                 color, (byte)(topMost ? 255 : 0));
             coloredRect.Layer = RenderView.GetLayer(topMost ? Layer.Popup : Layer.UIBackground);
             coloredRect.X = rect.Left;

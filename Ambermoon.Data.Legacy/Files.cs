@@ -2,11 +2,6 @@
 
 namespace Ambermoon.Data.Legacy
 {
-    // TODO: Check all disks in WinUAE to ensure we have all we need
-    // TODO: The initial save game is on disk A in the folder "Initial":
-    //       Automap.amb, Chest_data.amb, Merchant_data.amb,
-    //       Party_char.amb, Party_data.sav
-
     internal static class Files
     {
         public static readonly string[] RawFiles = new string[]

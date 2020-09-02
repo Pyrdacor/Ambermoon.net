@@ -133,7 +133,7 @@ namespace Ambermoon
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
-            if (LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
+            if (trigger == MapEventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
                 return;
 
             LastMapEventIndexMap = map.Index;

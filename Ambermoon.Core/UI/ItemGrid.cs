@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 namespace Ambermoon.UI
 {
-    // TODO: disabled state
     // TODO: memorize scrollbar positions for inventories
     // Note: The items are automatically updated in inventories,
     // chests, etc as the UIItems use the same ItemSlot instances
@@ -20,6 +19,7 @@ namespace Ambermoon.UI
         readonly IItemManager itemManager;
         readonly List<Position> slotPositions;
         readonly UIItem[] items;
+        readonly ILayerSprite[] slotBackgrounds;
         IRenderText hoveredItemName;
         readonly bool allowExternalDrop;
         readonly Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction;
@@ -27,9 +27,36 @@ namespace Ambermoon.UI
         readonly int slotsPerScroll;
         Scrollbar scrollbar;
         Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
+        bool disabled;
 
         public int SlotCount => items.Length;
         public int ScrollOffset { get; private set; } = 0;
+        public bool Disabled
+        {
+            get => disabled;
+            set
+            {
+                if (disabled == value)
+                    return;
+
+                disabled = value;
+
+                if (scrollbar != null)
+                    scrollbar.Disabled = disabled;
+
+                if (disabled)
+                {
+                    foreach (var item in items)
+                        item?.Destroy();
+                }
+
+                var slotTexCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset +
+                    (disabled ? (uint)UIElementGraphic.ItemSlotDisabled : (uint)UIElementGraphic.ItemSlotBackground));
+                foreach (var background in slotBackgrounds)
+                    background.TextureAtlasOffset = slotTexCoords;
+            }
+        }
+
 
         private ItemGrid(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
             bool allowExternalDrop, Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction,
@@ -43,16 +70,30 @@ namespace Ambermoon.UI
             this.pickupAction = pickupAction;
             this.slotsPerPage = slotsPerPage;
             this.slotsPerScroll = slotsPerScroll;
+            slotBackgrounds = new ILayerSprite[slotPositions.Count];
+            CreateSlotBackgrounds();
             items = new UIItem[numTotalSlots];
             scrollbar = slotsPerScroll == 0 ? null :
                 new Scrollbar(layout, scrollbarType ?? ScrollbarType.SmallVertical, scrollbarArea,
                 scrollbarSize.Width, scrollbarSize.Height, (numTotalSlots - slotsPerPage) / slotsPerScroll);
             if (scrollbar != null)
-            {
-                layout.FillArea(scrollbarArea.CreateModified(1, 1, -1, -1), Color.DarkGray, false);
-                layout.FillArea(scrollbarArea.CreateModified(0, 1, 0, -1).SetWidth(1), Color.DarkShadow, false);
-                layout.FillArea(new Rect(scrollbarArea.Position, new Size(scrollbarArea.Size.Width, 1)), Color.DarkShadow, false);
                 scrollbar.Scrolled += Scrollbar_Scrolled;
+        }
+
+        void CreateSlotBackgrounds()
+        {
+            var layer = renderView.GetLayer(Layer.UIBackground);
+            var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + (uint)UIElementGraphic.ItemSlotBackground);
+
+            for (int i = 0; i < slotBackgrounds.Length; ++i)
+            {
+                var background = slotBackgrounds[i] = renderView.SpriteFactory.Create(16, 24, 0, 0, false, true) as ILayerSprite;
+                background.Layer = layer;
+                background.PaletteIndex = 49;
+                background.TextureAtlasOffset = texCoords;
+                background.X = slotPositions[i].X;
+                background.Y = slotPositions[i].Y;
+                background.Visible = true;
             }
         }
 
@@ -82,6 +123,9 @@ namespace Ambermoon.UI
         {
             for (int i = 0; i < items.Length; ++i)
                 SetItem(i, null);
+
+            foreach (var background in slotBackgrounds)
+                background?.Delete();
 
             hoveredItemName?.Delete();
             hoveredItemName = null;
@@ -237,12 +281,18 @@ namespace Ambermoon.UI
 
         void Scrollbar_Scrolled(int newPosition)
         {
+            if (disabled)
+                return;
+
             ScrollOffset = newPosition * slotsPerScroll;
             PostScrollUpdate();
         }
 
         public bool Drag(Position position)
         {
+            if (disabled)
+                return false;
+
             if (scrollbar?.Drag(position) == true)
                 return true;
 
@@ -251,6 +301,9 @@ namespace Ambermoon.UI
 
         public void LeftMouseUp(Position position)
         {
+            if (disabled)
+                return;
+
             if (dragScrollItem?.Item != null)
             {
                 dragScrollItem.Item.Position = position;
@@ -265,6 +318,9 @@ namespace Ambermoon.UI
             out Layout.DraggedItem pickedUpItem, bool leftMouseButton, ref CursorType cursorType)
         {
             pickedUpItem = draggedItem;
+
+            if (disabled)
+                return false;
 
             if (leftMouseButton && scrollbar?.LeftClick(position) == true)
             {
@@ -316,7 +372,7 @@ namespace Ambermoon.UI
         {
             var slot = SlotFromPosition(position);
 
-            if (slot == null || items[slot.Value]?.Visible != true || items[slot.Value]?.Item?.Empty == true)
+            if (disabled || slot == null || items[slot.Value]?.Visible != true || items[slot.Value]?.Item?.Empty == true)
             {
                 hoveredItemName?.Delete();
                 hoveredItemName = null;

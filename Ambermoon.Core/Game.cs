@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using Ambermoon.UI;
 using System.Collections.Generic;
@@ -58,7 +59,10 @@ namespace Ambermoon
         readonly bool legacyMode = false;
         bool ingame = false;
         bool is3D = false;
-        bool windowActive = false;
+        bool WindowActive => currentWindow.Window != Window.MapView;
+        static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
+        WindowInfo currentWindow = DefaultWindow;
+        WindowInfo lastWindow = DefaultWindow;
         readonly Movement movement;
         uint currentTicks = 0;
         uint lastMapTicksReset = 0;
@@ -311,7 +315,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (windowActive || !clickMoveActive)
+            if (WindowActive || !clickMoveActive)
             {
                 clickMoveActive = false;
                 return;
@@ -415,7 +419,7 @@ namespace Ambermoon
 
         void Move()
         {
-            if (windowActive)
+            if (WindowActive)
                 return;
 
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
@@ -468,7 +472,7 @@ namespace Ambermoon
         {
             keys[(int)key] = true;
 
-            if (!windowActive)
+            if (!WindowActive)
                 Move();
 
             switch (key)
@@ -476,14 +480,7 @@ namespace Ambermoon
                 case Key.Escape:
                 {
                     if (ingame)
-                    {
-                        if (is3D)
-                            layout.SetLayout(UI.LayoutType.Map3D);
-                        else
-                            layout.SetLayout(UI.LayoutType.Map2D);
-                        layout.Reset();
-                        ShowMap(true);
-                    }
+                        CloseWindow();
 
                     break;
                 }
@@ -520,7 +517,7 @@ namespace Ambermoon
                     cursor.Type = CursorType.Mouth;
                     break;
                 default:
-                    if (windowActive)
+                    if (WindowActive)
                         layout.KeyDown(key, modifiers);
                     break;
             }
@@ -559,7 +556,7 @@ namespace Ambermoon
             {
                 var relativePosition = renderView.ScreenToGame(position);
 
-                if (!windowActive && mapViewArea.Contains(relativePosition))
+                if (!WindowActive && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
 
@@ -607,7 +604,7 @@ namespace Ambermoon
 
                 var relativePosition = renderView.ScreenToGame(cursorPosition);
 
-                if (!windowActive && (mapViewArea.Contains(relativePosition) || clickMoveActive))
+                if (!WindowActive && (mapViewArea.Contains(relativePosition) || clickMoveActive))
                 {
                     // Change arrow cursors when hovering the map
                     if (ingame && cursor.Type >= CursorType.Sword && cursor.Type <= CursorType.Wait)
@@ -653,8 +650,8 @@ namespace Ambermoon
                         {
                             relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
 
-                            int horizontal = relativePosition.X / (mapViewArea.Size.Width / 3);
-                            int vertical = relativePosition.Y / (mapViewArea.Size.Height / 3);
+                            int horizontal = relativePosition.X / (mapViewArea.Width / 3);
+                            int vertical = relativePosition.Y / (mapViewArea.Height / 3);
 
                             if (vertical <= 0) // up
                             {
@@ -741,17 +738,24 @@ namespace Ambermoon
         {
             if (is3D)
             {
+                if (show)
+                    layout.SetLayout(LayoutType.Map3D);
                 renderView.GetLayer(Layer.Map3D).Visible = show;
                 renderView.GetLayer(Layer.Billboards3D).Visible = show;
             }
             else
             {
+                if (show)
+                    layout.SetLayout(LayoutType.Map2D);
                 for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                     renderView.GetLayer((Layer)i).Visible = show;
             }
 
             if (show)
-                windowActive = false;
+            {
+                layout.Reset();
+                SetWindow(Window.MapView);
+            }
         }
 
         internal void OpenPartyMember(int slot)
@@ -761,7 +765,7 @@ namespace Ambermoon
 
             layout.Reset();
             ShowMap(false);
-            windowActive = true;
+            SetWindow(Window.Inventory, slot);
             layout.SetLayout(LayoutType.Inventory);
             CurrentInventoryIndex = slot;
             var partyMember = GetPartyMember(slot);
@@ -772,12 +776,10 @@ namespace Ambermoon
                 new Position(84, 97),  new Position(20, 124), new Position(84, 124),
                 new Position(20, 176), new Position(52, 176), new Position(84, 176),
             };
-            equipmentSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
             var inventorySlotPositions = Enumerable.Range(0, Inventory.VisibleWidth * Inventory.VisibleHeight).Select
             (
                 slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
             ).ToList();
-            inventorySlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
             var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager, inventorySlotPositions);
             layout.AddItemGrid(inventoryGrid);
             for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
@@ -795,8 +797,8 @@ namespace Ambermoon
             #endregion
             #region Character info
             layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitBackgroundOffset, 50, 1);
-            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
+            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UIElementOffset + (uint)UIElementGraphic.PortraitBackground, 50, true, 1);
+            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, false, 2);
             #endregion
             // TODO
         }
@@ -842,34 +844,32 @@ namespace Ambermoon
 
         internal void ShowChest(ChestMapEvent chestMapEvent)
         {
+            layout.Reset();
             ShowMap(false);
-            windowActive = true;
+            SetWindow(Window.Chest, chestMapEvent);
             layout.SetLayout(LayoutType.Items);
             var chest = GetChest(chestMapEvent.ChestIndex);
+            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+            var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
+                12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+            layout.AddItemGrid(itemGrid);
 
             if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
             {
-                layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestClosed);
-
-                // TODO: disabled item grid areas
+                layout.Set80x80Picture(Picture80x80.ChestClosed);
+                itemGrid.Disabled = true;
             }
             else
             {
                 if (chest.Empty)
                 {
-                    layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestOpenEmpty);
+                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
                 }
                 else
                 {
-                    layout.Set80x80Picture(Data.Enumerations.Picture80x80.ChestOpenFull);
+                    layout.Set80x80Picture(Picture80x80.ChestOpenFull);
                 }
-
-                var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
-                itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-                itemSlotPositions.ForEach(position => layout.FillArea(new Rect(position, ItemGrid.SlotSize), Color.DarkGray, false));
-                var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
-                    12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), Data.Enumerations.ScrollbarType.SmallVertical);
-                layout.AddItemGrid(itemGrid);
 
                 for (int y = 0; y < 2; ++y)
                 {
@@ -941,6 +941,53 @@ namespace Ambermoon
             }
 
             return item.Amount;
+        }
+
+        void SetWindow(Window window, object param = null)
+        {
+            lastWindow = currentWindow;
+            currentWindow = new WindowInfo { Window = window, WindowParameter = param };
+        }
+
+        void CloseWindow()
+        {
+            if (!WindowActive)
+                return;
+
+            currentWindow = lastWindow;
+            
+            switch (currentWindow.Window)
+            {
+                case Window.MapView:
+                    ShowMap(true);
+                    break;
+                case Window.Inventory:
+                {
+                    int partyMemberIndex = (int)currentWindow.WindowParameter;
+                    currentWindow = DefaultWindow;
+                    OpenPartyMember(partyMemberIndex);
+                    break;
+                }
+                case Window.Stats:
+                {
+                    // TODO
+                    break;
+                }
+                case Window.Chest:
+                {
+                    var chestEvent = (ChestMapEvent)currentWindow.WindowParameter;
+                    currentWindow = DefaultWindow;
+                    ShowChest(chestEvent);
+                    break;
+                }
+                case Window.Merchant:
+                {
+                    // TODO
+                    break;
+                }
+                default:
+                    break;
+            }
         }
     }
 }

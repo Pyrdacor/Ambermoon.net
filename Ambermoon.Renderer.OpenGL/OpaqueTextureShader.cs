@@ -43,7 +43,7 @@ namespace Ambermoon.Renderer
         OpaqueTextureShader(State state)
             : base(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultZName, DefaultPositionName,
                   DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultLayerName, DefaultPaletteName,
-                  DefaultPaletteIndexName, OpaqueTextureFragmentShader(state), TextureVertexShader(state))
+                  DefaultPaletteIndexName, DefaultColorKeyName, OpaqueTextureFragmentShader(state), TextureVertexShader(state))
         {
 
         }

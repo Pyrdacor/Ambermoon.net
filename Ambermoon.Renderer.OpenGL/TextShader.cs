@@ -92,7 +92,8 @@ namespace Ambermoon.Renderer
             string paletteName, string paletteIndexName, string textColorIndexName, string[] fragmentShaderLines,
             string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, zName, positionName, texCoordName,
-                  samplerName, atlasSizeName, layerName, paletteName, paletteIndexName, fragmentShaderLines, vertexShaderLines)
+                  samplerName, atlasSizeName, layerName, paletteName, paletteIndexName, DefaultColorKeyName,
+                  fragmentShaderLines, vertexShaderLines)
         {
             this.textColorIndexName = textColorIndexName;
         }

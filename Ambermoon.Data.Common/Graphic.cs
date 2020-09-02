@@ -182,8 +182,8 @@ namespace Ambermoon.Data
             {
                 int areaX = coloredArea.Key.Left;
                 int areaY = coloredArea.Key.Top;
-                int areaWidth = coloredArea.Key.Size.Width;
-                int areaHeight = coloredArea.Key.Size.Height;
+                int areaWidth = coloredArea.Key.Width;
+                int areaHeight = coloredArea.Key.Height;
 
                 for (int y = 0; y < areaHeight; ++y)
                 {

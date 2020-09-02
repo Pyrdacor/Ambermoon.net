@@ -231,6 +231,7 @@ namespace Ambermoon.Renderer
 
                     shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                     shader.SetZ(LayerBaseZ[(int)Layer]);
+                    shader.SetColorKey((byte)(Layer == Layer.UIForeground ? 25 : 0));
                 }
             }
 

@@ -28,12 +28,14 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultAtlasSizeName = "atlasSize";
         internal static readonly string DefaultPaletteName = "palette";
         internal static readonly string DefaultPaletteIndexName = "paletteIndex";
+        internal static readonly string DefaultColorKeyName = "colorKeyIndex";
 
         readonly string texCoordName;
         readonly string samplerName;
         readonly string atlasSizeName;
         readonly string paletteName;
         readonly string paletteIndexName;
+        readonly string colorKeyName;
 
         // The palette has a size of 32x51 pixels.
         // Each row represents one palette of 32 colors.
@@ -44,6 +46,7 @@ namespace Ambermoon.Renderer
             GetFragmentShaderHeader(state),
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
+            $"uniform float {DefaultColorKeyName};",
             $"in vec2 varTexCoord;",
             $"flat in float palIndex;",
             $"",
@@ -52,7 +55,7 @@ namespace Ambermoon.Renderer
             $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
             $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / 51.0f));",
             $"    ",
-            $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
+            $"    if (abs(colorIndex - {DefaultColorKeyName}) < 0.5f || pixelColor.a < 0.5f)",
             $"        discard;",
             $"    else",
             $"        {DefaultFragmentOutColorName} = pixelColor;",
@@ -86,14 +89,14 @@ namespace Ambermoon.Renderer
         TextureShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultZName, DefaultPositionName,
                   DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultLayerName, DefaultPaletteName,
-                  DefaultPaletteIndexName, TextureFragmentShader(state), TextureVertexShader(state))
+                  DefaultPaletteIndexName, DefaultColorKeyName, TextureFragmentShader(state), TextureVertexShader(state))
         {
 
         }
 
         protected TextureShader(State state, string modelViewMatrixName, string projectionMatrixName, string zName,
             string positionName, string texCoordName, string samplerName, string atlasSizeName, string layerName,
-            string paletteName, string paletteIndexName, string[] fragmentShaderLines, string[] vertexShaderLines)
+            string paletteName, string paletteIndexName, string colorKeyName, string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, DefaultColorName, zName, positionName, layerName,
                   fragmentShaderLines, vertexShaderLines)
         {
@@ -102,6 +105,7 @@ namespace Ambermoon.Renderer
             this.atlasSizeName = atlasSizeName;
             this.paletteName = paletteName;
             this.paletteIndexName = paletteIndexName;
+            this.colorKeyName = colorKeyName;
         }
 
         public void SetSampler(int textureUnit = 0)
@@ -117,6 +121,14 @@ namespace Ambermoon.Renderer
         public void SetAtlasSize(uint width, uint height)
         {
             shaderProgram.SetInputVector2(atlasSizeName, width, height);
+        }
+
+        public void SetColorKey(byte colorIndex)
+        {
+            if (colorIndex > 31)
+                throw new AmbermoonException(ExceptionScope.Render, "Color index must be in the range 0 to 31.");
+
+            shaderProgram.SetInput(colorKeyName, (float)colorIndex);
         }
 
         public new static TextureShader Create(State state) => new TextureShader(state);

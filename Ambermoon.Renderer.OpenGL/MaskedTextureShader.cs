@@ -81,16 +81,16 @@ namespace Ambermoon.Renderer
         MaskedTextureShader(State state)
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultZName, DefaultPositionName,
                   DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultMaskTexCoordName, DefaultLayerName,
-                  DefaultPaletteName, DefaultPaletteIndexName, MaskedTextureFragmentShader(state), MaskedTextureVertexShader(state))
+                  DefaultPaletteName, DefaultPaletteIndexName, DefaultColorKeyName, MaskedTextureFragmentShader(state), MaskedTextureVertexShader(state))
         {
 
         }
 
         MaskedTextureShader(State state, string modelViewMatrixName, string projectionMatrixName, string zName,
             string positionName, string texCoordName, string samplerName, string atlasSizeName, string maskTexCoordName,
-            string layerName, string paletteName, string paletteIndexName, string[] fragmentShaderLines, string[] vertexShaderLines)
+            string layerName, string paletteName, string paletteIndexName, string colorKeyName, string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, zName, positionName, texCoordName, samplerName,
-                  atlasSizeName, layerName, paletteName, paletteIndexName, fragmentShaderLines, vertexShaderLines)
+                  atlasSizeName, layerName, paletteName, paletteIndexName, colorKeyName, fragmentShaderLines, vertexShaderLines)
         {
             this.maskTexCoordName = maskTexCoordName;
         }

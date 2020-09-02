@@ -185,7 +185,7 @@ namespace Ambermoon.Renderer
                 if (textAlign == TextAlign.Left)
                     return;
 
-                int remainingWidth = bounds.Size.Width - (lineEndGlyphIndex - lastLineBreakIndex - numEmptyCharacterInLine) * CharacterWidth;
+                int remainingWidth = bounds.Width - (lineEndGlyphIndex - lastLineBreakIndex - numEmptyCharacterInLine) * CharacterWidth;
                 int adjustment = textAlign == TextAlign.Right
                     ? remainingWidth
                     : remainingWidth / 2; // center

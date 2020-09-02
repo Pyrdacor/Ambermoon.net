@@ -20,6 +20,11 @@ namespace Ambermoon
             set => size = new Size(value);
         }
 
+        public int X => Position.X;
+        public int Y => Position.Y;
+        public int Width => Size.Width;
+        public int Height => Size.Height;
+
         public int Left => Position.X;
         public int Right => Position.X + Size.Width;
         public int Top => Position.Y;
@@ -50,10 +55,10 @@ namespace Ambermoon
 
         public Rect(Rect rect)
         {
-            position.X = rect.Position.X;
-            position.Y = rect.Position.Y;
-            size.Width = rect.Size.Width;
-            size.Height = rect.Size.Height;
+            position.X = rect.X;
+            position.Y = rect.Y;
+            size.Width = rect.Width;
+            size.Height = rect.Height;
         }
 
         public static Rect CreateFromBoundaries(int left, int top, int right, int bottom)
@@ -221,6 +226,10 @@ namespace Ambermoon
             set => size = new FloatSize(value);
         }
 
+        public float X => Position.X;
+        public float Y => Position.Y;
+        public float Width => Size.Width;
+        public float Height => Size.Height;
         public float Left => Position.X;
         public float Right => Position.X + Size.Width;
         public float Top => Position.Y;
@@ -259,18 +268,18 @@ namespace Ambermoon
 
         public FloatRect(FloatRect rect)
         {
-            position.X = rect.Position.X;
-            position.Y = rect.Position.Y;
-            size.Width = rect.Size.Width;
-            size.Height = rect.Size.Height;
+            position.X = rect.X;
+            position.Y = rect.Y;
+            size.Width = rect.Width;
+            size.Height = rect.Height;
         }
 
         public FloatRect(Rect rect)
         {
-            position.X = rect.Position.X;
-            position.Y = rect.Position.Y;
-            size.Width = rect.Size.Width;
-            size.Height = rect.Size.Height;
+            position.X = rect.X;
+            position.Y = rect.Y;
+            size.Width = rect.Width;
+            size.Height = rect.Height;
         }
 
         public static FloatRect CreateFromBoundaries(float left, float top, float right, float bottom)
@@ -427,15 +436,15 @@ namespace Ambermoon
     {
         public static Rect ConvertToRect(this FloatRect rect)
         {
-            return new Rect(Util.Round(rect.Position.X),
-                Util.Round(rect.Position.Y),
-                Util.Round(rect.Size.Width),
-                Util.Round(rect.Size.Height));
+            return new Rect(Util.Round(rect.X),
+                Util.Round(rect.Y),
+                Util.Round(rect.Width),
+                Util.Round(rect.Height));
         }
 
         public static FloatRect ConvertToFloatRect(this Rect rect)
         {
-            return new FloatRect(rect.Position.X, rect.Position.Y, rect.Size.Width, rect.Size.Height);
+            return new FloatRect(rect.X, rect.Y, rect.Width, rect.Height);
         }
     }
 }

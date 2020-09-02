@@ -79,18 +79,20 @@ namespace Ambermoon.Data.Legacy
                 IndexedGraphic = false,
                 Data = new byte[]
                 {
+                    // NOTE: Color 25 (0-based) is treated as the color key (tansparent color) index so don't use it
+                    // as a normal color!
                     // transparent, black (shadow), white, gray
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xee, 0xff, 0xbb, 0xbb, 0xaa, 0xff,
                     // red (character), yellow (active character), orange (battle text), blueish gray (dead character)
                     0xcc, 0x44, 0x33, 0xff, 0xff, 0xcc, 0x00, 0xff, 0xdd, 0x66, 0x33, 0xff, 0x99, 0xaa, 0xaa, 0xff,
-                    // rest unused (TODO: character with ailment?)
-                    0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff,
-                    0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff,
                     // 16 colors for the blue background gradient of portraits
                     0x00, 0x11, 0x00, 0xff, 0x00, 0x11, 0x11, 0xff, 0x00, 0x11, 0x22, 0xff, 0x00, 0x11, 0x33, 0xff,
                     0x00, 0x11, 0x44, 0xff, 0x00, 0x11, 0x55, 0xff, 0x00, 0x11, 0x66, 0xff, 0x00, 0x11, 0x77, 0xff,
                     0x00, 0x11, 0x88, 0xff, 0x00, 0x11, 0x99, 0xff, 0x00, 0x11, 0xaa, 0xff, 0x00, 0x11, 0xbb, 0xff,
                     0x00, 0x11, 0xcc, 0xff, 0x00, 0x11, 0xdd, 0xff, 0x00, 0x11, 0xee, 0xff, 0x00, 0x11, 0xff, 0xff,
+                    // rest unused (TODO: character with ailment?)
+                    0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff,
+                    0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff
                 }
             });
 
@@ -122,59 +124,9 @@ namespace Ambermoon.Data.Legacy
                     foreach (var cursor in executableData.Cursors.Entries)
                         cursorGraphics.Add(cursor.Graphic);
                 }
-                else if (type == GraphicType.Scrollbars)
+                else if (type == GraphicType.UIElements)
                 {
-                    // 0: Small vertical scrollbar (chests, etc)
-                    // 1: Highlighted small vertical scrollbar (chests, etc)
-                    // 2: Large vertical scrollbar (inventory, etc)
-                    // 3: Highlighted  large vertical scrollbar (inventory, etc)
-                    var scrollbarGraphics = graphics[GraphicType.Scrollbars] = new List<Graphic>();
-
-                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 28)
-                        .AddColoredArea(new Rect(0, 0, 1, 1), 31)
-                        .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                        .AddColoredArea(new Rect(5, 0, 1, 1), 28)
-                        .AddColoredArea(new Rect(0, 1, 1, 25), 30)
-                        .AddColoredArea(new Rect(1, 1, 4, 25), 29)
-                        .AddColoredArea(new Rect(5, 1, 1, 25), 27)
-                        .AddColoredArea(new Rect(0, 26, 1, 1), 28)
-                        .AddColoredArea(new Rect(1, 26, 5, 1), 27)
-                        .AddColoredArea(new Rect(0, 27, 6, 1), 26)
-                        .Build());
-
-                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 28)
-                        .AddColoredArea(new Rect(0, 0, 5, 1), 31)
-                        .AddColoredArea(new Rect(5, 0, 1, 1), 29)
-                        .AddColoredArea(new Rect(0, 1, 1, 25), 31)
-                        .AddColoredArea(new Rect(1, 1, 4, 25), 30)
-                        .AddColoredArea(new Rect(5, 1, 1, 25), 28)
-                        .AddColoredArea(new Rect(0, 26, 1, 1), 29)
-                        .AddColoredArea(new Rect(1, 26, 5, 1), 28)
-                        .AddColoredArea(new Rect(0, 27, 6, 1), 26)
-                        .Build());
-
-                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 57)
-                        .AddColoredArea(new Rect(0, 0, 1, 1), 31)
-                        .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                        .AddColoredArea(new Rect(5, 0, 1, 1), 28)
-                        .AddColoredArea(new Rect(0, 1, 1, 54), 30)
-                        .AddColoredArea(new Rect(1, 1, 4, 54), 29)
-                        .AddColoredArea(new Rect(5, 1, 1, 54), 27)
-                        .AddColoredArea(new Rect(0, 55, 1, 1), 28)
-                        .AddColoredArea(new Rect(1, 55, 5, 1), 27)
-                        .AddColoredArea(new Rect(0, 56, 6, 1), 26)
-                        .Build());
-
-                    scrollbarGraphics.Add(GraphicBuilder.Create(6, 57)
-                        .AddColoredArea(new Rect(0, 0, 5, 1), 31)
-                        .AddColoredArea(new Rect(5, 0, 1, 1), 29)
-                        .AddColoredArea(new Rect(0, 1, 1, 54), 31)
-                        .AddColoredArea(new Rect(1, 1, 4, 54), 30)
-                        .AddColoredArea(new Rect(5, 1, 1, 54), 28)
-                        .AddColoredArea(new Rect(0, 55, 1, 1), 29)
-                        .AddColoredArea(new Rect(1, 55, 5, 1), 28)
-                        .AddColoredArea(new Rect(0, 56, 6, 1), 26)
-                        .Build());
+                    graphics[GraphicType.UIElements] = UIElementProvider.Create();
                 }
                 else
                 {
@@ -246,17 +198,6 @@ namespace Ambermoon.Data.Legacy
                     {
                         var graphic = new Graphic();
                         reader.ReadGraphic(graphic, graphicDataReader, info);
-                        if (type == GraphicType.Portrait)
-                        {
-                            // These need special care. It appears that they use color index
-                            // 25 for "transparent" areas but this is magenta in the palettes
-                            // I've seen. Black parts (like for the eyes) use color index 0
-                            // which is treated as transparent in all other images.
-                            // But there is a really dark gray at color index 26 so we replace
-                            // color 0 with color 26 and then 25 with color 0.
-                            graphic.ReplaceColor(0, 26);
-                            graphic.ReplaceColor(25, 0);
-                        }
                         graphicList.Add(graphic);
                     }
                 }

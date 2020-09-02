@@ -178,10 +178,10 @@ namespace Ambermoon.Render
             for (int i = 0; i < layoutGraphics.Count; ++i)
                 AddTexture(Layer.UIBackground, UI.Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
 
-            var scrollbarGraphics = graphicProvider.GetGraphics(GraphicType.Scrollbars);
+            var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
 
-            for (int i = 0; i < scrollbarGraphics.Count; ++i)
-                AddTexture(Layer.UIBackground, UI.Graphics.ScrollbarOffset + (uint)i, scrollbarGraphics[i]);
+            for (int i = 0; i < uiElementGraphics.Count; ++i)
+                AddTexture(Layer.UIBackground, UI.Graphics.UIElementOffset + (uint)i, uiElementGraphics[i]);
 
             #endregion
 
@@ -189,7 +189,6 @@ namespace Ambermoon.Render
 
             var portraits = graphicProvider.GetGraphics(GraphicType.Portrait);
 
-            AddTexture(Layer.UIForeground, UI.Graphics.PortraitBackgroundOffset, Graphic.CreateGradient(32, 34, 4, 2, 16, 31));
             for (int i = 0; i < portraits.Count; ++i)
                 AddTexture(Layer.UIForeground, UI.Graphics.PortraitOffset + (uint)i, portraits[i]);
 
