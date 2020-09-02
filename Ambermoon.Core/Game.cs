@@ -305,9 +305,13 @@ namespace Ambermoon
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
                 if (savegame.CurrentPartyMemberIndices[i] != 0)
-                    layout.SetPortrait(i, savegame.GetPartyMember(i).PortraitIndex);
+                {
+                    var partyMember = savegame.GetPartyMember(i);
+                    layout.SetPortrait(i, partyMember.PortraitIndex, partyMember.Name);
+                }
             }
             CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
+            SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
         }
 
         public void LoadGame()
@@ -553,7 +557,10 @@ namespace Ambermoon
 
         public void OnKeyChar(char keyChar)
         {
-
+            if (keyChar >= '1' && keyChar <= '6')
+            {
+                SetActivePartyMember(keyChar - '1');
+            }
         }
 
         public void OnMouseUp(Position position, MouseButtons buttons)
@@ -959,6 +966,7 @@ namespace Ambermoon
             {
                 currentSavegame.ActivePartyMemberSlot = index;
                 CurrentPartyMember = partyMember;
+                layout.SetActivePortrait(index);
             }
         }
 

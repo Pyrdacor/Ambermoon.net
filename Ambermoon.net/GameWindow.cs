@@ -135,8 +135,6 @@ namespace Ambermoon
         {
             if (key == Silk.NET.Input.Common.Key.F11)
                 Fullscreen = !Fullscreen;
-            else if (key == Silk.NET.Input.Common.Key.Escape && Fullscreen)
-                Fullscreen = false;
             else
                 Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
         }

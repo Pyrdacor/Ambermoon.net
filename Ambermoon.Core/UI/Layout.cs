@@ -263,6 +263,7 @@ namespace Ambermoon.UI
         readonly ITextureAtlas textureAtlasForeground;
         readonly ISprite[] portraitBackgrounds = new ISprite[Game.MaxPartyMembers];
         readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
+        readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
         ISprite sprite80x80Picture;
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
@@ -320,10 +321,21 @@ namespace Ambermoon.UI
             // Note: Don't remove fadeEffects here.
         }
 
+        public void SetActivePortrait(int slot)
+        {
+            for (int i = 0; i < portraitNames.Length; ++i)
+            {
+                if (portraitNames[i] != null)
+                {
+                    portraitNames[i].TextColor = i == slot ? TextColor.Yellow : TextColor.Red;
+                }
+            }
+        }
+
         /// <summary>
         /// Set portait to 0 to remove the portrait.
         /// </summary>
-        public void SetPortrait(int slot, uint portrait)
+        public void SetPortrait(int slot, uint portrait, string name)
         {
             if (portrait == 0)
             {
@@ -334,6 +346,8 @@ namespace Ambermoon.UI
                 portraitBackgrounds[slot] = null;
                 portraits[slot]?.Delete();
                 portraits[slot] = null;
+                portraitNames[slot]?.Delete();
+                portraitNames[slot] = null;
             }
             else
             {
@@ -352,6 +366,12 @@ namespace Ambermoon.UI
                 sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + portrait - 1);
                 sprite.PaletteIndex = 49;
                 sprite.Visible = true;
+
+                var text = portraitNames[slot] ??= RenderView.RenderTextFactory.Create(RenderView.GetLayer(Layer.Text),
+                    RenderView.TextProcessor.CreateText(name.Substring(0, Math.Min(5, name.Length))), TextColor.Red, true,
+                    new Rect(Global.PartyMemberPortraitAreas[slot].Left + 1, Global.PartyMemberPortraitAreas[slot].Top + 30, 32, 6), TextAlign.Center);
+                text.DisplayLayer = 1;
+                text.Visible = true;
             }
         }
 
