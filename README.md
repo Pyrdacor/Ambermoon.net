@@ -43,7 +43,7 @@ You may also checkout my already working Settlers I rewrite at [freeserf.net](ht
 Working things:
 - 2D maps
 	- movement / auto scrolling / collision detection
-	- change map events / chest events (only display the window)
+	- change map events / chest events / some conditions and actions
 	- walk animations, animated tiles, auto-sit, auto-sleep
 - 3D maps
 	- movement / static billboards / collision detection
@@ -53,6 +53,8 @@ Working things:
 - fading effect for map transitions etc
 - item drag&drop, inventory and equip
 - view chests and loot items
+- character info, portraits and names
+- savegame loading
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
