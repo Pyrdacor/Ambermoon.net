@@ -29,7 +29,7 @@ namespace Ambermoon.Render
             int newX = Position.X + x;
             int newY = Position.Y + y;
             var map = Map.Map;
-            Map.Tile tile;
+            Map.Tile tile = null;
 
             if (!map.IsWorldMap)
             {
@@ -39,8 +39,8 @@ namespace Ambermoon.Render
                 // move up to y = -1 and only down to y = map.Height - 1.
                 if (newX < 0 || newY < -1 || newX >= map.Width || newY >= map.Height - 1)
                     canMove = false;
-
-                tile = Map[(uint)newX, (uint)newY + 1];
+                else
+                    tile = Map[(uint)newX, (uint)newY + 1];
             }
             else
             {
