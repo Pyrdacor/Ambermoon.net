@@ -61,7 +61,6 @@ Working things:
 ![Billboards](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Billboards1.png "Billboards")
 ![Chests](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png "Chests")
 ![Inventory](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png "Inventory")
-![Text rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/TextRendering.png "Text rendering")
 
 
 ## Controls
