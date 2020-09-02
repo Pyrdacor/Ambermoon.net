@@ -955,7 +955,7 @@ namespace Ambermoon
                 return;
 
             currentWindow = lastWindow;
-            
+
             switch (currentWindow.Window)
             {
                 case Window.MapView:
