@@ -76,6 +76,8 @@ namespace Ambermoon.Renderer
             Text = text;
             TextColor = textColor;
             Shadow = shadow;
+            X = bounds.Left;
+            Y = bounds.Top;
         }
 
         public byte DisplayLayer

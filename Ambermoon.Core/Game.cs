@@ -78,6 +78,7 @@ namespace Ambermoon
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly NameProvider nameProvider;
+        readonly IDataNameProvider dataNameProvider;
         readonly Layout layout;
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
@@ -124,7 +125,7 @@ namespace Ambermoon
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
             ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
-            Cursor cursor, bool legacyMode)
+            IDataNameProvider dataNameProvider, Cursor cursor, bool legacyMode)
         {
             this.cursor = cursor;
             this.legacyMode = legacyMode;
@@ -135,6 +136,7 @@ namespace Ambermoon
             this.itemManager = itemManager;
             this.savegameManager = savegameManager;
             this.savegameSerializer = savegameSerializer;
+            this.dataNameProvider = dataNameProvider;
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
@@ -794,7 +796,7 @@ namespace Ambermoon
                 var equipmentSlotPositions = new List<Position>
                 {
                     new Position(20, 72),  new Position(52, 72),  new Position(84, 72),
-                    new Position(84, 97),  new Position(20, 124), new Position(84, 124),
+                    new Position(20, 124), new Position(84, 97), new Position(84, 124),
                     new Position(20, 176), new Position(52, 176), new Position(84, 176),
                 };
                 var inventorySlotPositions = Enumerable.Range(0, Inventory.VisibleWidth * Inventory.VisibleHeight).Select
@@ -820,6 +822,23 @@ namespace Ambermoon
                 layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
                 layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UIElementOffset + (uint)UIElementGraphic.PortraitBackground, 50, true, 1);
                 layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, false, 2);
+                layout.AddText(new Rect(242, 49, 62, 7), dataNameProvider.GetRaceName(partyMember.Race));
+                layout.AddText(new Rect(242, 56, 62, 7), dataNameProvider.GetGenderName(partyMember.Gender));
+                layout.AddText(new Rect(242, 63, 62, 7), string.Format(dataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
+                    partyMember.Attributes[Data.Attribute.Age].CurrentValue));
+                layout.AddText(new Rect(242, 70, 62, 7), $"{dataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
+                layout.AddText(new Rect(242, 77, 62, 7), string.Format(dataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                    partyMember.ExperiencePoints));
+                layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
+                layout.AddText(new Rect(208, 91, 96, 7), string.Format(dataNameProvider.CharacterInfoHitPointsString,
+                    partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue), TextColor.White, TextAlign.Center);
+                layout.AddText(new Rect(208, 98, 96, 7), string.Format(dataNameProvider.CharacterInfoSpellPointsString,
+                    partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue), TextColor.White, TextAlign.Center);
+                layout.AddText(new Rect(208, 105, 96, 7),
+                    string.Format(dataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
+                    string.Format(dataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center);
+                layout.AddText(new Rect(208, 112, 96, 7), string.Format(dataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
+                    TextColor.White, TextAlign.Center);
                 #endregion
                 // TODO
             };

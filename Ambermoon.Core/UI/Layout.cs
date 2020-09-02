@@ -270,6 +270,7 @@ namespace Ambermoon.UI
         readonly List<IColoredRect> fadeEffectAreas = new List<IColoredRect>();
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
         readonly List<ISprite> additionalSprites = new List<ISprite>();
+        readonly List<IRenderText> texts = new List<IRenderText>();
         internal IRenderView RenderView { get; }
 
         public Layout(Game game, IRenderView renderView)
@@ -313,6 +314,8 @@ namespace Ambermoon.UI
             itemGrids.Clear();
             filledAreas.ForEach(area => area?.Delete());
             filledAreas.Clear();
+            texts.ForEach(text => text?.Delete());
+            texts.Clear();
 
             // Note: Don't remove fadeEffects here.
         }
@@ -363,6 +366,19 @@ namespace Ambermoon.UI
             sprite.Layer = RenderView.GetLayer(background ? Layer.UIBackground : Layer.UIForeground);
             sprite.Visible = true;
             additionalSprites.Add(sprite);
+        }
+
+        public void AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 1)
+        {
+            var renderText = RenderView.RenderTextFactory.Create
+            (
+                RenderView.GetLayer(Layer.Text),
+                RenderView.TextProcessor.CreateText(text),
+                color, true, rect, textAlign
+            );
+            renderText.DisplayLayer = displayLayer;
+            renderText.Visible = true;
+            texts.Add(renderText);
         }
 
         public void Set80x80Picture(Data.Enumerations.Picture80x80 picture)

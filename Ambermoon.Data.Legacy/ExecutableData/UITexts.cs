@@ -179,7 +179,37 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             foreach (var type in Enum.GetValues<UITextIndex>())
             {
-                Entries.Add(type, dataReader.ReadNullTerminatedString());
+                var text = dataReader.ReadNullTerminatedString();
+                text = text.Replace("0123456789", "{1:1111111111}");
+                text = text.Replace("012345678", "{1:111111111}");
+                text = text.Replace("01234567", "{1:11111111}");
+                text = text.Replace("0123456", "{1:1111111}");
+                text = text.Replace("012345", "{1:111111}");
+                text = text.Replace("01234", "{1:11111}");
+                text = text.Replace("0123", "{1:1111}");
+                text = text.Replace("012", "{1:111}");
+                text = text.Replace("01", "{1:11}");
+                text = text.Replace("0", "{1:1}");
+                text = text.Replace('1', '0');
+                int offset = 0;
+                int n = 0;
+                while (offset < text.Length)
+                {
+                    int index = text.IndexOf("0:", offset);
+
+                    if (index == -1)
+                        break;
+
+                    if (n == 0)
+                        ++n;
+                    else
+                    {
+                        text = text.Remove(index, 1);
+                        text = text.Insert(index, (n++).ToString());
+                    }
+                    offset = index + 3;
+                }
+                Entries.Add(type, text);
             }
         }
     }
