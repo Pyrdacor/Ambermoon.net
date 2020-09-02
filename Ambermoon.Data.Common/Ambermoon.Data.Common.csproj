@@ -10,11 +10,11 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Amiga</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.27</Version>
+    <Version>1.0.28</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Common" Version="1.0.1" />
+    <PackageReference Include="Ambermoon.Common" Version="1.0.3" />
   </ItemGroup>
 
   <ItemGroup>
