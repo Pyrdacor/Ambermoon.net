@@ -117,7 +117,7 @@ namespace Ambermoon
         Player3D player3D = null;
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
-        IRenderText mapName = null;
+        readonly IRenderText mapName = null;
         Rect mapViewArea = map2DViewArea;
         static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
@@ -141,6 +141,9 @@ namespace Ambermoon
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
+            mapName = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
+                renderView.TextProcessor.CreateText(""), TextColor.White, true,
+                new Rect(16, 40, 175, 10), TextAlign.Center);
             layout = new Layout(this, renderView);
         }
 
@@ -769,35 +772,12 @@ namespace Ambermoon
         {
             if (show)
             {
-                string mapTitle;
-
-                if (Map.IsLyramionWorldMap)
-                {
-                    mapTitle = dataNameProvider.GetWorldName(World.Lyramion);
-                }
-                else if (Map.IsForestMoonWorldMap)
-                {
-                    mapTitle = dataNameProvider.GetWorldName(World.ForestMoon);
-                }
-                else if (Map.IsMoragWorldMap)
-                {
-                    mapTitle = dataNameProvider.GetWorldName(World.Morag);
-                }
-                else
-                {
-                    mapTitle = Map.Name;
-                }
-                if (mapName == null)
-                {
-                    mapName = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
-                        renderView.TextProcessor.CreateText(mapTitle), TextColor.White, true,
-                        new Rect(16, 40, 175, 10), TextAlign.Center);
-                }
-                else
-                {
-                    mapName.Text = renderView.TextProcessor.CreateText(mapTitle);
-                }
+                string mapTitle = Map.IsWorldMap
+                    ? dataNameProvider.GetWorldName(Map.World)
+                    : Map.Name;
+                mapName.Text = renderView.TextProcessor.CreateText(mapTitle);
             }
+
             mapName.Visible = show;
 
             if (is3D)
