@@ -318,12 +318,10 @@ namespace Ambermoon.Renderer
                 };
 
                 characterSprites.Add(sprite);
-                // Console.WriteLine($"C:{i}:{Convert.ToChar(glyphIndex + 65)}:{position.X}:{position.Y}");
             }
 
             if (Shadow)
             {
-                // int index = 0;
                 foreach (var characterSprite in characterSprites)
                 {
                     var shadowSprite = new TextCharacterSprite(CharacterWidth, CharacterHeight,
@@ -340,10 +338,8 @@ namespace Ambermoon.Renderer
                     };
 
                     characterShadowSprites.Add(shadowSprite);
-                    // Console.WriteLine($"S:{index++}:.:{shadowSprite.X}:{shadowSprite.Y}");
                 }
             }
-            // Console.WriteLine($"----");
         }
 
         public void Place(int x, int y)
