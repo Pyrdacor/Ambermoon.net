@@ -8,7 +8,7 @@ I got some questions of how to run the game:
 3. If you have not yet, install the latest .NET framework for Windows.
 4. The game only runs on Windows as of now.
 5. If it still doesn't work try to start from Windows CMD and check for error printouts.
-6. If this still doesn't help please file an issue on the [https://github.com/Pyrdacor/Ambermoon.net/issues](Issue tracker).
+6. If this still doesn't help please file an issue on the [Issue tracker](https://github.com/Pyrdacor/Ambermoon.net/issues).
 
 ## Download
 
