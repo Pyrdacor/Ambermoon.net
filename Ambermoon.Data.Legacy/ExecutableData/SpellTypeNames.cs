@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -12,7 +11,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class SpellTypeNames
     {
-        public Dictionary<SpellType, string> Entries { get; } = new Dictionary<SpellType, string>();
+        readonly Dictionary<SpellType, string> entries = new Dictionary<SpellType, string>();
+        public IReadOnlyDictionary<SpellType, string> Entries => entries;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -25,7 +25,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             foreach (var type in Enum.GetValues<SpellType>())
             {
-                Entries.Add(type, dataReader.ReadNullTerminatedString());
+                entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
         }
     }

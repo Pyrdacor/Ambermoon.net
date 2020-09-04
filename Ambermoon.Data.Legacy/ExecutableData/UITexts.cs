@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -166,7 +165,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class UITexts
     {
-        public Dictionary<UITextIndex, string> Entries { get; } = new Dictionary<UITextIndex, string>();
+        readonly Dictionary<UITextIndex, string> entries = new Dictionary<UITextIndex, string>();
+        public IReadOnlyDictionary<UITextIndex, string> Entries => entries;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -179,7 +179,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             foreach (var type in Enum.GetValues<UITextIndex>())
             {
-                var text = dataReader.ReadNullTerminatedString();
+                // TODO: This needs improvement!
+                var text = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
                 text = text.Replace("0123456789", "{1:1111111111}");
                 text = text.Replace("012345678", "{1:111111111}");
                 text = text.Replace("01234567", "{1:11111111}");
@@ -209,7 +210,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                     }
                     offset = index + 3;
                 }
-                Entries.Add(type, text);
+                entries.Add(type, text);
             }
         }
     }

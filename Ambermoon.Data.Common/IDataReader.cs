@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Ambermoon.Data
 {
@@ -13,8 +14,11 @@ namespace Ambermoon.Data
         dword ReadDword();
         string ReadChar();
         string ReadString();
+        string ReadString(Encoding encoding);
         string ReadString(int length);
+        string ReadString(int length, Encoding encoding);
         string ReadNullTerminatedString();
+        string ReadNullTerminatedString(Encoding encoding);
         byte PeekByte();
         word PeekWord();
         dword PeekDword();

@@ -9,7 +9,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class SongNames
     {
-        public List<string> Entries { get; } = new List<string>();
+        readonly List<string> entries = new List<string>();
+        public IReadOnlyList<string> Entries => entries.AsReadOnly();
 
         const int NumSongs = 32;
 
@@ -24,7 +25,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             for (int i = 0; i < NumSongs; ++i)
             {
-                Entries.Add(dataReader.ReadNullTerminatedString());
+                entries.Add(dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
             dataReader.AlignToWord();

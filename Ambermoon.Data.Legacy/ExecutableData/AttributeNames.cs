@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -9,8 +8,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class AttributeNames
     {
-        public Dictionary<Attribute, string> Entries { get; } = new Dictionary<Attribute, string>();
-        public Dictionary<Attribute, string> ShortNames { get; } = new Dictionary<Attribute, string>();
+        readonly Dictionary<Attribute, string> entries = new Dictionary<Attribute, string>();
+        readonly Dictionary<Attribute, string> shortNames = new Dictionary<Attribute, string>();
+        public IReadOnlyDictionary<Attribute, string> Entries => entries;
+        public IReadOnlyDictionary<Attribute, string> ShortNames => shortNames;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -24,10 +25,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             foreach (var type in Enum.GetValues<Attribute>())
             {
                 if (type != Attribute.Unknown)
-                    Entries.Add(type, dataReader.ReadNullTerminatedString());
+                    entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
-            Entries.Add(Attribute.Unknown, "");
+            entries.Add(Attribute.Unknown, "");
         }
 
         internal void AddShortNames(IDataReader dataReader)
@@ -35,11 +36,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             foreach (var type in Enum.GetValues<Attribute>())
             {
                 if (type != Attribute.Age && type != Attribute.Unknown)
-                    ShortNames.Add(type, dataReader.ReadNullTerminatedString());
+                    shortNames.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
-            ShortNames.Add(Attribute.Age, "");
-            ShortNames.Add(Attribute.Unknown, "");
+            shortNames.Add(Attribute.Age, "");
+            shortNames.Add(Attribute.Unknown, "");
         }
     }
 }

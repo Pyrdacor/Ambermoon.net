@@ -47,17 +47,20 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class FileList
     {
+        readonly Dictionary<string, char> entries = new Dictionary<string, char>();
+        readonly List<string[]> indexedEntries = new List<string[]>();
+
         /// <summary>
         /// Key: Filename
         /// Value: Disk letter (A to J)
         /// </summary>
-        public Dictionary<string, char> Entries { get; } = new Dictionary<string, char>();
+        public IReadOnlyDictionary<string, char> Entries => entries;
         /// <summary>
         /// This contains the file list entries in the order it
         /// was stored inside the file. There might be empty entries.
         /// Each entry can contain 0 - 4 filenames.
         /// </summary>
-        public List<string[]> IndexedEntries { get; } = new List<string[]>();
+        public IReadOnlyList<string[]> IndexedEntries => indexedEntries.AsReadOnly();
 
         /// <summary>
         /// The position of the data reader should be at
@@ -79,7 +82,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             {
                 if (offsets[i] == 0)
                 {
-                    IndexedEntries.Add(new string[0]);
+                    indexedEntries.Add(new string[0]);
                     continue;
                 }
 
@@ -92,15 +95,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                     if (diskNumber == 0)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid disk number 0.");
 
-                    string filename = dataReader.ReadNullTerminatedString();
-                    Entries[filename] = (char)('A' + diskNumber - 1);
-                    IndexedEntries.Add(new string[1] { filename });
+                    string filename = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                    entries[filename] = (char)('A' + diskNumber - 1);
+                    indexedEntries.Add(new string[1] { filename });
                 }
                 else
                 {
                     --dataReader.Position;
                     var diskNumbers = dataReader.ReadBytes(4);
-                    var baseFileName = dataReader.ReadNullTerminatedString();
+                    var baseFileName = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
                     string[] filenames = new string[4];
 
                     for (int d = 0; d < 4; ++d)
@@ -108,12 +111,12 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                         if (diskNumbers[d] != 0)
                         {
                             string filename = baseFileName.Replace('0', (char)('1' + d));
-                            Entries[filename] = (char)('A' + diskNumbers[d] - 1);
+                            entries[filename] = (char)('A' + diskNumbers[d] - 1);
                             filenames[d] = filename;
                         }
                     }
 
-                    IndexedEntries.Add(filenames);
+                    indexedEntries.Add(filenames);
                 }
 
                 if (dataReader.Position > endOffset)

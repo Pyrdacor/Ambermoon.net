@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -9,8 +8,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class AbilityNames
     {
-        public Dictionary<Ability, string> Entries { get; } = new Dictionary<Ability, string>();
-        public Dictionary<Ability, string> ShortNames { get; } = new Dictionary<Ability, string>();
+        readonly Dictionary<Ability, string> entries = new Dictionary<Ability, string>();
+        readonly Dictionary<Ability, string> shortNames = new Dictionary<Ability, string>();
+        public IReadOnlyDictionary<Ability, string> Entries => entries;
+        public IReadOnlyDictionary<Ability, string> ShortNames => shortNames;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -23,7 +24,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             foreach (var type in Enum.GetValues<Ability>())
             {
-                Entries.Add(type, dataReader.ReadNullTerminatedString());
+                entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
         }
 
@@ -31,7 +32,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             foreach (var type in Enum.GetValues<Ability>())
             {
-                ShortNames.Add(type, dataReader.ReadNullTerminatedString());
+                shortNames.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
         }
     }

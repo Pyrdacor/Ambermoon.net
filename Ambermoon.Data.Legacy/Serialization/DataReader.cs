@@ -85,27 +85,42 @@ namespace Ambermoon.Data.Legacy
 
         public string ReadString()
         {
+            return ReadString(Encoding);
+        }
+
+        public string ReadString(Encoding encoding)
+        {
             CheckOutOfRange(1);
             int length = ReadByte();
-            return ReadString(length);
+            return ReadString(length, encoding);
         }
 
         public string ReadString(int length)
         {
+            return ReadString(length, Encoding);
+        }
+
+        public string ReadString(int length, Encoding encoding)
+        {
             CheckOutOfRange(length);
-            var str = Encoding.GetString(data, Position, length);
+            var str = encoding.GetString(data, Position, length);
             Position += length;
             return str;
         }
 
         public string ReadNullTerminatedString()
         {
+            return ReadNullTerminatedString(Encoding);
+        }
+
+        public string ReadNullTerminatedString(Encoding encoding)
+        {
             string result = "";
             byte[] buffer = new byte[1];
 
             while (Position < Size && (buffer[0] = ReadByte()) != 0)
             {
-                result += Encoding.GetString(buffer);
+                result += encoding.GetString(buffer);
             }
 
             return result;

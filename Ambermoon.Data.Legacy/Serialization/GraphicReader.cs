@@ -4,9 +4,9 @@ namespace Ambermoon.Data.Legacy
 {
     public class GraphicReader : IGraphicReader
     {
-        static int ToNextWordBoundary(int size)
+        static int ToNextBoundary(int size)
         {
-            return size % 2 == 0 ? size : size + 1;
+            return size % 8 == 0 ? size : size + (8 - size % 8);
         }
 
         void ReadPaletteGraphic(Graphic graphic, IDataReader dataReader, int planes, GraphicInfo graphicInfo, int? pixelsPerPlane = null)
@@ -15,9 +15,9 @@ namespace Ambermoon.Data.Legacy
             graphic.Height = graphicInfo.Height;
 
             int ppp = pixelsPerPlane ?? graphicInfo.Width;
-            int calcWidth = ToNextWordBoundary(ppp);
+            int calcWidth = ToNextBoundary(ppp);
             int planeSize = (calcWidth + 7) / 8;
-            int sizeToRead = (graphic.Width * planes * graphic.Height + 7) / 8;
+            int sizeToRead = (ToNextBoundary(graphic.Width) * planes * graphic.Height + 7) / 8;
             var data = dataReader.ReadBytes(sizeToRead);
             int bitIndex = 0;
             int byteIndex = 0;

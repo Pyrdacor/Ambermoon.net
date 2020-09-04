@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -31,6 +32,11 @@ namespace Ambermoon.Data.Legacy
 
     public static class AmigaExecutable
     {
+		// Note: Amiga executables store strings in encoding "Amiga Commodore".
+		// It is very similar to iso-8859-1 except for 4 modifications which
+		// shouldn't matter for language texts. So we just use iso-8859-1.
+		public static readonly Encoding Encoding = Encoding.GetEncoding("iso-8859-1");
+
 		public interface IHunk
 		{
 			HunkType Type { get; }

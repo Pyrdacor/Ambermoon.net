@@ -142,8 +142,8 @@ namespace Ambermoon
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
             mapName = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
-                renderView.TextProcessor.CreateText(""), TextColor.White, true,
-                new Rect(16, 40, 175, 10), TextAlign.Center);
+                renderView.TextProcessor.CreateText(""), TextColor.Gray, true,
+                new Rect(8, 40, 192, 10), TextAlign.Center);
             layout = new Layout(this, renderView);
         }
 

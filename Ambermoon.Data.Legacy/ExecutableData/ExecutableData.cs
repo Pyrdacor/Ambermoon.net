@@ -39,6 +39,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class ExecutableData
     {
+        public UIGraphics UIGraphics { get; }
         public Glyphs Glyphs { get; }
         public Cursors Cursors { get; }
         public FileList FileList { get; }
@@ -98,6 +99,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             uint textOffset = codepageOffset + relocOffsets.Skip(12).Take(2).Aggregate((a, b) => a + b) + 4;
             uint glyphOffset = codepageOffset + relocOffsets.Skip(12).Aggregate((a, b) => a + b) + 262;
             glyphOffset += 4 - glyphOffset % 4;
+
+            dataHunkIndex = 0;
+
+            UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
 
             dataHunkReaders[1].Position = (int)glyphOffset;
             dataHunkIndex = 1;

@@ -12,7 +12,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class WorldNames
     {
-        public Dictionary<World, string> Entries { get; } = new Dictionary<World, string>(3);
+        readonly Dictionary<World, string> entries = new Dictionary<World, string>(3);
+        public IReadOnlyDictionary<World, string> Entries => entries;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -32,7 +33,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             for (int i = 0; i < 3; ++i)
             {
                 dataReader.Position = (int)offsets[i];
-                Entries.Add((World)i, dataReader.ReadNullTerminatedString());
+                entries.Add((World)i, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
 
                 if (dataReader.Position > endOffset)
                     endOffset = dataReader.Position;

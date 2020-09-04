@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data.Enumerations;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,7 +13,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class AutomapNames
     {
-        public Dictionary<AutomapType, string> Entries { get; } = new Dictionary<AutomapType, string>();
+        readonly Dictionary<AutomapType, string> entries = new Dictionary<AutomapType, string>();
+        public IReadOnlyDictionary<AutomapType, string> Entries => entries;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -25,12 +25,12 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal AutomapNames(IDataReader dataReader)
         {
-            Entries.Add(AutomapType.None, "");
-            Entries.Add(AutomapType.Wall, "");
+            entries.Add(AutomapType.None, "");
+            entries.Add(AutomapType.Wall, "");
 
             foreach (var type in Enum.GetValues<AutomapType>().Skip(2))
             {
-                Entries.Add(type, dataReader.ReadNullTerminatedString());
+                entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
             dataReader.AlignToWord();

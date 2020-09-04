@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -14,8 +13,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class SpellNames
     {
-        public Dictionary<Spell, string> Entries { get; } = new Dictionary<Spell, string>();
-        public Dictionary<SpellType, List<string>> EntriesPerType { get; } = new Dictionary<SpellType, List<string>>();
+        readonly Dictionary<Spell, string> entries = new Dictionary<Spell, string>();
+        readonly Dictionary<SpellType, List<string>> entriesPerType = new Dictionary<SpellType, List<string>>();
+        public IReadOnlyDictionary<Spell, string> Entries => entries;
+        public IReadOnlyDictionary<SpellType, List<string>> EntriesPerType => entriesPerType;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -26,18 +27,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal SpellNames(IDataReader dataReader)
         {
-            Entries.Add(Spell.None, "");
+            entries.Add(Spell.None, "");
             int spellIndex = 1; // we skip Spell.None as it has no text entry
 
             foreach (var type in Enum.GetValues<SpellType>())
             {
-                EntriesPerType.Add(type, new List<string>(30));
+                entriesPerType.Add(type, new List<string>(30));
 
                 for (int i = 0; i < 30; ++i)
                 {
-                    var name = dataReader.ReadNullTerminatedString();
-                    Entries.Add((Spell)spellIndex++, name);
-                    EntriesPerType[type].Add(name);
+                    var name = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                    entries.Add((Spell)spellIndex++, name);
+                    entriesPerType[type].Add(name);
                 }
             }
         }

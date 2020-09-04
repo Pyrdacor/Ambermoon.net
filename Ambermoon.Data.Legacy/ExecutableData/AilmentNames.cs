@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -15,7 +14,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class AilmentNames
     {
-        public Dictionary<Ailment, string> Entries { get; } = new Dictionary<Ailment, string>();
+        readonly Dictionary<Ailment, string> entries = new Dictionary<Ailment, string>();
+        public IReadOnlyDictionary<Ailment, string> Entries => entries;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -26,18 +26,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal AilmentNames(IDataReader dataReader)
         {
-            Entries.Add(Ailment.None, "");
+            entries.Add(Ailment.None, "");
 
             foreach (var type in Enum.GetValues<Ailment>())
             {
                 if (type != Ailment.None)
-                    Entries.Add(type, dataReader.ReadNullTerminatedString());
+                    entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
-            if (string.IsNullOrWhiteSpace(Entries[Ailment.DeadAshes]))
-                Entries[Ailment.DeadAshes] = Entries[Ailment.DeadCorpse];
-            if (string.IsNullOrWhiteSpace(Entries[Ailment.DeadDust]))
-                Entries[Ailment.DeadDust] = Entries[Ailment.DeadCorpse];
+            if (string.IsNullOrWhiteSpace(entries[Ailment.DeadAshes]))
+                entries[Ailment.DeadAshes] = entries[Ailment.DeadCorpse];
+            if (string.IsNullOrWhiteSpace(entries[Ailment.DeadDust]))
+                entries[Ailment.DeadDust] = entries[Ailment.DeadCorpse];
         }
     }
 }

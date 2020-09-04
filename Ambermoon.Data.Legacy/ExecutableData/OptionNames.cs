@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -18,7 +17,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class OptionNames
     {
-        public Dictionary<Option, string> Entries { get; } = new Dictionary<Option, string>();
+        readonly Dictionary<Option, string> entries = new Dictionary<Option, string>();
+        public IReadOnlyDictionary<Option, string> Entries => entries;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -31,7 +31,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         {
             foreach (var type in Enum.GetValues<Option>())
             {
-                Entries.Add(type, dataReader.ReadNullTerminatedString());
+                entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
             dataReader.AlignToWord();

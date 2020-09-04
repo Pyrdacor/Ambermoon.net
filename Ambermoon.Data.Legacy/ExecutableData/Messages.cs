@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -46,7 +47,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class Messages
     {
-        public List<string> Entries { get; } = new List<string>();
+        readonly List<string> entries = new List<string>();
+        public IReadOnlyList<string> Entries => entries.AsReadOnly();
 
         /// <summary>
         /// The position of the data reader should be at
@@ -70,7 +72,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 textEntryLengths.Add(dataReader.ReadWord());
 
             for (int i = 0; i < numTextEntries; ++i)
-                Entries.Add(dataReader.ReadString((int)textEntryLengths[i]).TrimEnd('\0'));
+                entries.Add(dataReader.ReadString((int)textEntryLengths[i], AmigaExecutable.Encoding).TrimEnd('\0'));
 
             dataReader.AlignToWord();
 
@@ -129,7 +131,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 for (int i = 0; i < offsets.Count; ++i)
                 {
                     dataReader.Position = (int)offsets[i];
-                    text += dataReader.ReadNullTerminatedString();
+                    text += dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
 
                     if (i != offsets.Count - 1) // Insert placeholder
                         text += "{" + i + "}";
@@ -138,12 +140,12 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                         endOffset = dataReader.Position;
                 }
 
-                Entries.Add(text);
+                entries.Add(text);
                 dataReader.Position = endOffset;
             }
             else // just a text
             {
-                Entries.Add(dataReader.ReadNullTerminatedString());
+                entries.Add(dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }
 
             return true;
