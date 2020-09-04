@@ -209,7 +209,7 @@ namespace Ambermoon
             // Create game
             Game = new Game(renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()),
-                new ItemManager(gameData, new ItemReader()), new SavegameManager(), new SavegameSerializer(),
+                executableData.ItemManager, new SavegameManager(), new SavegameSerializer(),
                 new DataNameProvider(executableData),
                 new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
                 configuration.LegacyMode);

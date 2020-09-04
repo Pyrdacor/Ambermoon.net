@@ -16,7 +16,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             {
                 Width = 16,
                 Height = 6,
-                Alpha = false,
+                Alpha = true,
                 GraphicFormat = GraphicFormat.Palette3Bit,
                 PaletteOffset = 24
             };
@@ -43,13 +43,23 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.FrameRight, ReadGraphic(dataReader));
             entries.Add(UIGraphic.FrameLowerRight, ReadGraphic(dataReader));
 
+            // Palette 50 (same as items)
+            dataReader.Position = 960;
+            graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
+            graphicInfo.PaletteOffset = 0;
+            for (int i = (int)UIGraphic.StatusDead; i <= (int)UIGraphic.StatusRangeAttack; ++i)
+                entries.Add((UIGraphic)i, ReadGraphic(dataReader));
+
             graphicInfo.Width = 32;
-            dataReader.Position = 0x1228; // start at eagle
-            graphicInfo.Height = 47;
-            entries.Add(UIGraphic.Eagle, ReadGraphic(dataReader));
-            graphicInfo.Height = 44;
-            entries.Add(UIGraphic.Explosion, ReadGraphic(dataReader));
-            graphicInfo.Height = 24;
+            graphicInfo.Height = 29;
+            graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
+            graphicInfo.PaletteOffset = 0;
+            entries.Add(UIGraphic.Eagle, ReadGraphic(dataReader)); // Palette of the map (e.g. 1)
+            graphicInfo.Height = 26;
+            entries.Add(UIGraphic.Explosion, ReadGraphic(dataReader)); // Palette 50 (items)
+            graphicInfo.Height = 23;
+            graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
+            graphicInfo.PaletteOffset = 24;
             entries.Add(UIGraphic.Ouch, ReadGraphic(dataReader));
 
             dataReader.Position = 0x1EAC; // start at wind chain

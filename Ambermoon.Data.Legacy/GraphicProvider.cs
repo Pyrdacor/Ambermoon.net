@@ -102,7 +102,7 @@ namespace Ambermoon.Data.Legacy
             // Last 2 rows have B=0xff.
 
             // TODO: The following bytes were extracted from AM2_CPU (behind cursors).
-            // It really looks like 3 palettes.
+            // These are 3 palettes.
 
             // The first one is the one for portraits and items. One of the others might be for texts.
             /* 00 00 0E DC 0F FE 0B BC 08 9A 05 78 02 56 00 34 0F C9 0E A7 0C 85 0A 63 08 42 05 21 0B 80 0D A0

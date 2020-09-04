@@ -1,20 +1,24 @@
 ﻿namespace Ambermoon.Data.Enumerations
 {
-    /// <summary>
-    /// Buttons use Empty or EmptyPressed as background.
-    /// Then there is an optional icon starting at Yes.
-    /// The icon should be drawn over the background with
-    /// alpha test active.
-    /// If the button is disabled the DisableOverlay is
-    /// drawn on top with alpha test active.
-    /// </summary>
     public enum ButtonType
     {
-        Empty,
-        EmptyPressed,
-        DisableOverlay,
-        Yes,
-        No,
+        // 78 with 32 pixel wide and 13 pixel high
+        TurnLeft,
+        MoveForward,
+        TurnRight,
+        StrafeLeft,
+        StrafeRight,
+        RotateLeft,
+        MoveBackward,
+        RotateRight,
+        MoveUpLeft,
+        MoveUp,
+        MoveUpRight,
+        MoveLeft,
+        MoveRight,
+        MoveDownLeft,
+        MoveDown,
+        MoveDownRight,
         Eye,
         Hand,
         Mouth,
@@ -24,47 +28,58 @@
         Map,
         BattlePositions,
         Options,
-        Wait,
-        MoveUpLeft,
-        MoveUp,
-        MoveUpRight,
-        MoveLeft,
-        MoveRight,
-        MoveDownLeft,
-        MoveDown,
-        MoveDownRight,
-        TurnLeft,
-        MoveForward,
-        TurnRight,
-        StrafeLeft,
-        StrafeRight,
-        RotateLeft,
-        MoveBackward,
-        RotateRight,
-        Quit,
+        Empty,
+        Yes,
+        No,
+        Ok,
         Exit,
-        Opt,
-        Save,
-        Load,
-        ReadMagic,
-        Sleep,
-        ShowItem, // also look at item
+        BuyHorse,
+        BuyRaft,
+        BuyBoat,
+        BuyItem,
+        BuyFood,
+        SellItem,
+        RepairItem,
+        RechargeItem,
+        HealAilment,
+        HealPerson,
+        RemoveCurse,
+        Train,
+        Grid, // TODO (3x3 blocks, not sure were it was used)
         GiveItem,
+        GiveFood,
+        GiveGold,
         AskToJoin,
         AskToLeave,
-        GiveGold,
-        GiveFood,
-        DistributeGold,
-        DistributeFood,
-        LootGold, // to single player
-        LootFood, // to single player
-        Lockpick,
+        Attack,
+        Defend,
+        Flee,
+        Stats,
+        Inventory,
         UseItem,
+        ViewItem, // also show item
+        GoldToPlayer,
+        FoodToPlayer,
+        DropItem,
+        DropGold,
+        DropFood,
+        StoreItem,
+        StoreGold,
+        StoreFood,
+        Lockpick,
         FindTrap,
         DisarmTrap,
-        Ear, // hear riddle
-        Buy,
-        Sell
-        // TODO ... sage, healer, trainer, etc
+        DistributeFood,
+        DistributeGold,
+        Sleep,
+        Ear, // re-hear riddle
+        ReadScroll,
+        Wait, // hourglass
+        Save,
+        Load,
+        Quit,
+        Opt,
+        Male, // symbol
+        Female // symbol
     }
 }

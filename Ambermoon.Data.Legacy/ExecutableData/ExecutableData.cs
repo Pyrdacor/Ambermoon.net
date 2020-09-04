@@ -35,7 +35,12 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// are at the glyph data section. But if this address is not
     /// dword-aligned we have to do so (offset += (4 - offset % 4)).
     /// 
-    /// TODO: This is work in progress!
+    /// =====================
+    /// The first data hunk contains some UI graphics.
+    /// 
+    /// The second data hunk contains palettes, texts,
+    /// cursors, glyphs and their mappings,
+    /// button graphics and items.
     /// </summary>
     public class ExecutableData
     {
@@ -58,6 +63,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public ItemTypeNames ItemTypeNames { get; }
         public AilmentNames AilmentNames { get; }
         public UITexts UITexts { get; }
+        public Buttons Buttons { get; }
+        public ItemManager ItemManager { get; }
 
         static T Read<T>(IDataReader[] dataReaders, ref int readerIndex)
         {
@@ -75,11 +82,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
          * 
          * Offsets are for German 1.05.
          * 
-         * 0x070e (4): Offset to text for male
-         * 0x0712 (4): Offset to text for female
-         * 0x0716 (4): Offset to text for both
-         * 0x7AA0: Palette indices for event pix (only 8 of 9)
-         * 
+         * 0x7AA0: Palette indices for event pix (only 8 of 9)         * 
          * 0x8085: Name of the dictionary file. From here on the relative
          *         text offsets will differ between german and english version!
          */
@@ -135,13 +138,19 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ItemTypeNames = Read<ItemTypeNames>(dataHunkReaders, ref dataHunkIndex);
             AilmentNames = Read<AilmentNames>(dataHunkReaders, ref dataHunkIndex);
             UITexts = Read<UITexts>(dataHunkReaders, ref dataHunkIndex);
+            Buttons = Read<Buttons>(dataHunkReaders, ref dataHunkIndex);
 
-            // TODO: There is a bunch of binary data (gfx maybe?)
+            int itemCount = dataHunkReaders[dataHunkIndex].ReadWord();
+            if (dataHunkReaders[dataHunkIndex].ReadWord() != itemCount || itemCount != 402)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
 
-            // TODO: Then finally the item data comes ...
-            // They start with these 6 bytes: 01 92 01 92 82 15
+            var itemReader = new ItemReader();
+            var items = new Dictionary<uint, Item>();
 
-            // TODO ...
+            for (uint i = 1; i <= 402; ++i) // there are 402 items
+                items.Add(i, Item.Load(itemReader, dataHunkReaders[dataHunkIndex]));
+
+            ItemManager = new ItemManager(items);
         }
     }
 }

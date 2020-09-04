@@ -5,21 +5,23 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 {
     // Note: The cursors (like eye, hand, etc) don't use the same images
     // as the buttons! This is also true for arrows etc.
+    // There are 78 buttons, 32x13 pixels each. They have transparent areas
+    // left and right and they only contain the inner
+    // graphic. The button frame is drawn separately.
     public class Buttons
     {
         readonly Dictionary<ButtonType, Graphic> entries = new Dictionary<ButtonType, Graphic>();
 
         public IReadOnlyDictionary<ButtonType, Graphic> Entries => entries;
 
-        internal Buttons(IDataReader dataReaderFirstHunk, IDataReader dataReaderSecondHunk)
+        // Second data hunk, right behind UITexts.
+        internal Buttons(IDataReader dataReader)
         {
-            dataReaderFirstHunk.Position = 0x2860; // base button shape
-
             var graphicInfo = new GraphicInfo
             {
                 Width = 32,
-                Height = 17,
-                Alpha = false,
+                Height = 13,
+                Alpha = true,
                 GraphicFormat = GraphicFormat.Palette3Bit,
                 PaletteOffset = 24
             };
@@ -34,17 +36,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 return graphic;
             }
 
-            var baseShape = ReadGraphic(dataReaderFirstHunk);
-            var pressedShape = ReadGraphic(dataReaderFirstHunk);
-
-            baseShape.ReplaceColor(0, 28);
-            pressedShape.ReplaceColor(0, 28);
-
-            graphicInfo.Alpha = true;
-
-            //Graphic CreateButtonGraphic()
-
-            // TODO ...
+            foreach (var buttonType in Enum.GetValues<ButtonType>())
+                entries.Add(buttonType, ReadGraphic(dataReader));
         }
     }
 }
