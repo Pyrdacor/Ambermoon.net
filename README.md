@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.0.18](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.18/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.17](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.17/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.16](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.16/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.15](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.15/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -84,6 +84,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version 1.0.18: Map names, empty portrait slots, dead character portrait, bugfixes
 - Version 1.0.17: Character info, names at portraits, active member logic, fade effects
 - Version 1.0.16: Better window handling, disabled scrollbars and item slots, bugfixes
 - Version 1.0.15: Added equipment, scrollbars, improved item dragging, many bugfixes
