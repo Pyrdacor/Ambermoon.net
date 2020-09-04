@@ -34,8 +34,8 @@ namespace Ambermoon.UI
                 {
                     backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + baseType switch
                     {
-                        ScrollbarType.SmallVertical => (uint)UIElementGraphic.ScrollbarSmallVerticalDisabled,
-                        ScrollbarType.LargeVertical => (uint)UIElementGraphic.ScrollbarLargeVerticalDisabled,
+                        ScrollbarType.SmallVertical => (uint)UICustomGraphic.ScrollbarSmallVerticalDisabled,
+                        ScrollbarType.LargeVertical => (uint)UICustomGraphic.ScrollbarLargeVerticalDisabled,
                         _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid scrollbar type.")
                     });
                 }
@@ -43,8 +43,8 @@ namespace Ambermoon.UI
                 {
                     backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + baseType switch
                     {
-                        ScrollbarType.SmallVertical => (uint)UIElementGraphic.ScrollbarBackgroundSmallVertical,
-                        ScrollbarType.LargeVertical => (uint)UIElementGraphic.ScrollbarBackgroundLargeVertical,
+                        ScrollbarType.SmallVertical => (uint)UICustomGraphic.ScrollbarBackgroundSmallVertical,
+                        ScrollbarType.LargeVertical => (uint)UICustomGraphic.ScrollbarBackgroundLargeVertical,
                         _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid scrollbar type.")
                     });
                 }
@@ -66,8 +66,8 @@ namespace Ambermoon.UI
             backgroundSprite.Layer = layout.RenderView.GetLayer(Layer.UIBackground);
             backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + type switch
             {
-                ScrollbarType.SmallVertical => (uint)UIElementGraphic.ScrollbarBackgroundSmallVertical,
-                ScrollbarType.LargeVertical => (uint)UIElementGraphic.ScrollbarBackgroundLargeVertical,
+                ScrollbarType.SmallVertical => (uint)UICustomGraphic.ScrollbarBackgroundSmallVertical,
+                ScrollbarType.LargeVertical => (uint)UICustomGraphic.ScrollbarBackgroundLargeVertical,
                 _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid scrollbar type.")
             });
             backgroundSprite.DisplayLayer = 1;

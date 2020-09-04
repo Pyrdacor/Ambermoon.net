@@ -127,6 +127,8 @@ namespace Ambermoon.Data.Legacy
                 else if (type == GraphicType.UIElements)
                 {
                     graphics[GraphicType.UIElements] = UIElementProvider.Create();
+                    graphics[GraphicType.UIElements].AddRange(executableData.UIGraphics.Entries.Values);
+                    graphics[GraphicType.UIElements].AddRange(executableData.Buttons.Entries.Values);
                 }
                 else
                 {

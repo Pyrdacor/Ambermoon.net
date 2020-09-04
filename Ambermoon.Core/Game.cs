@@ -313,7 +313,11 @@ namespace Ambermoon
                 if (savegame.CurrentPartyMemberIndices[i] != 0)
                 {
                     var partyMember = savegame.GetPartyMember(i);
-                    layout.SetPortrait(i, partyMember.PortraitIndex, partyMember.Name);
+                    layout.SetPortrait(i, partyMember.PortraitIndex, partyMember.Name, !partyMember.Alive);
+                }
+                else
+                {
+                    layout.SetPortrait(i, 0, null, false);
                 }
             }
             CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
@@ -843,7 +847,7 @@ namespace Ambermoon
                 #endregion
                 #region Character info
                 layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UIElementOffset + (uint)UIElementGraphic.PortraitBackground, 50, true, 1);
+                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UIElementOffset + (uint)UICustomGraphic.PortraitBackground, 50, true, 1);
                 layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, false, 2);
                 layout.AddText(new Rect(242, 49, 62, 7), dataNameProvider.GetRaceName(partyMember.Race));
                 layout.AddText(new Rect(242, 56, 62, 7), dataNameProvider.GetGenderName(partyMember.Gender));
@@ -983,7 +987,7 @@ namespace Ambermoon
             {
                 currentSavegame.ActivePartyMemberSlot = index;
                 CurrentPartyMember = partyMember;
-                layout.SetActivePortrait(index);
+                layout.SetActivePortrait(index, currentSavegame.PartyMembers);
             }
         }
 

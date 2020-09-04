@@ -375,7 +375,8 @@ namespace Ambermoon.Renderer
 
         public void UpdateTextColorIndex()
         {
-            (Layer as RenderLayer).UpdateTextColorIndex(drawIndex, TextColorIndex);
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdateTextColorIndex(drawIndex, TextColorIndex);
         }
     }
 

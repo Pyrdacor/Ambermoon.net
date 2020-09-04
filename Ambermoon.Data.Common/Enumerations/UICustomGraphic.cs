@@ -6,7 +6,7 @@
     /// executable data) like scrollbars, free portrait slots
     /// and so on.
     /// </summary>
-    public enum UIElementGraphic
+    public enum UICustomGraphic
     {
         ScrollbarSmallVertical, // chests, merchants, etc
         ScrollbarSmallVerticalHighlighted,

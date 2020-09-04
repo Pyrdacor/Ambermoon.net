@@ -64,10 +64,7 @@ namespace Ambermoon.Renderer
 
                 visible = value;
 
-                if (Visible)
-                    AddToLayer();
-                else if (!visible)
-                    RemoveFromLayer();
+                OnVisibilityChanged();
             }
         }
 

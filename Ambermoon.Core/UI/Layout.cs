@@ -321,13 +321,13 @@ namespace Ambermoon.UI
             // Note: Don't remove fadeEffects here.
         }
 
-        public void SetActivePortrait(int slot)
+        public void SetActivePortrait(int slot, List<PartyMember> partyMembers)
         {
             for (int i = 0; i < portraitNames.Length; ++i)
             {
                 if (portraitNames[i] != null)
                 {
-                    portraitNames[i].TextColor = i == slot ? TextColor.Yellow : TextColor.Red;
+                    portraitNames[i].TextColor = i == slot ? TextColor.Yellow : partyMembers[i].Alive ? TextColor.Red : TextColor.PaleGray;
                 }
             }
         }
@@ -335,42 +335,47 @@ namespace Ambermoon.UI
         /// <summary>
         /// Set portait to 0 to remove the portrait.
         /// </summary>
-        public void SetPortrait(int slot, uint portrait, string name)
+        public void SetPortrait(int slot, uint portrait, string name, bool dead)
         {
+            var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 1);
+            sprite.Layer = RenderView.GetLayer(portrait == 0 || dead ? Layer.UIBackground : Layer.UIForeground);
+            sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
+            sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
+            if (portrait == 0)
+                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot));
+            else if (dead)
+                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Skull));
+            else
+                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + portrait - 1);
+            sprite.PaletteIndex = 49;
+            sprite.Visible = true;
+
             if (portrait == 0)
             {
                 // TODO: in original portrait removing is animated by moving down the
-                // gray masked picture infront of the portrait
+                // gray masked picture infront of the portrait. But this method is
+                // also used on game loading where this effect should not be used.
 
                 portraitBackgrounds[slot]?.Delete();
                 portraitBackgrounds[slot] = null;
-                portraits[slot]?.Delete();
-                portraits[slot] = null;
                 portraitNames[slot]?.Delete();
                 portraitNames[slot] = null;
             }
             else
             {
-                var sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 0);
+                sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 0);
                 sprite.Layer = RenderView.GetLayer(Layer.UIBackground);
-                sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
-                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
-                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.UIElementOffset + (uint)UIElementGraphic.PortraitBackground);
+                sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
+                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
+                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.UIElementOffset + (uint)UICustomGraphic.PortraitBackground);
                 sprite.PaletteIndex = 50;
-                sprite.Visible = true;
-
-                sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 1);
-                sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
-                sprite.X = Global.PartyMemberPortraitAreas[slot].Left;
-                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top;
-                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + portrait - 1);
-                sprite.PaletteIndex = 49;
                 sprite.Visible = true;
 
                 var text = portraitNames[slot] ??= RenderView.RenderTextFactory.Create(RenderView.GetLayer(Layer.Text),
                     RenderView.TextProcessor.CreateText(name.Substring(0, Math.Min(5, name.Length))), TextColor.Red, true,
-                    new Rect(Global.PartyMemberPortraitAreas[slot].Left + 1, Global.PartyMemberPortraitAreas[slot].Top + 30, 32, 6), TextAlign.Center);
+                    new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6), TextAlign.Center);
                 text.DisplayLayer = 1;
+                text.TextColor = dead ? TextColor.PaleGray : TextColor.Red;
                 text.Visible = true;
             }
         }
