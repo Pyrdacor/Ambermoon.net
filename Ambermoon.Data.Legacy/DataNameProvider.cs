@@ -45,5 +45,6 @@
         public string GetRaceName(Race race) => executableData.RaceNames.Entries[race];
 
         public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
+        public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
     }
 }

@@ -117,7 +117,7 @@ namespace Ambermoon
         Player3D player3D = null;
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
-        readonly IRenderText mapName = null;
+        readonly IRenderText windowTitle = null;
         Rect mapViewArea = map2DViewArea;
         static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
@@ -141,7 +141,7 @@ namespace Ambermoon
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
-            mapName = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
+            windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.Gray, true,
                 new Rect(8, 40, 192, 10), TextAlign.Center);
             layout = new Layout(this, renderView);
@@ -776,13 +776,14 @@ namespace Ambermoon
         {
             if (show)
             {
-                string mapTitle = Map.IsWorldMap
+                string mapName = Map.IsWorldMap
                     ? dataNameProvider.GetWorldName(Map.World)
                     : Map.Name;
-                mapName.Text = renderView.TextProcessor.CreateText(mapTitle);
+                windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
+                windowTitle.TextColor = TextColor.Gray;
             }
 
-            mapName.Visible = show;
+            windowTitle.Visible = show;
 
             if (is3D)
             {
@@ -817,6 +818,11 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Inventory, slot);
                 layout.SetLayout(LayoutType.Inventory);
+
+                windowTitle.Text = renderView.TextProcessor.CreateText(dataNameProvider.InventoryTitleString);
+                windowTitle.TextColor = TextColor.White;
+                windowTitle.Visible = true;
+
                 CurrentInventoryIndex = slot;
                 var partyMember = GetPartyMember(slot);
                 #region Equipment and Inventory
@@ -867,6 +873,7 @@ namespace Ambermoon
                 layout.AddText(new Rect(208, 112, 96, 7), string.Format(dataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
                     TextColor.White, TextAlign.Center);
                 #endregion
+
                 // TODO
             };
 
