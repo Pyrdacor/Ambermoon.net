@@ -69,6 +69,18 @@ namespace Ambermoon.Data.Legacy
             if (fileInfo.SingleFile)
             {
                 fileContainer.Files.Add(1, DecodeFile(reader, fileInfo.FileType, 1));
+
+                // There is a special case where AMBR can be inside JH.
+                if (fileInfo.FileType == FileType.JH && fileContainer.Files[1].PeekDword() == (uint)FileType.AMBR)
+                {
+                    fileContainer.Files[1].Position += 4;
+                    return ProcessFileInfo(name, new FileInfo
+                    {
+                        FileType = FileType.AMBR,
+                        NumFiles = fileContainer.Files[1].ReadWord(),
+                        SingleFile = false
+                    }, fileContainer.Files[1] as DataReader);
+                }
             }
             else
             {
