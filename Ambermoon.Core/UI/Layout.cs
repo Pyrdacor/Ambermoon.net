@@ -452,30 +452,75 @@ namespace Ambermoon.UI
                     if (buttonGridPage == 0)
                     {
                         var moveDelay = ticksPerMovement.Value;
-                        buttonGrid.SetButton(0, ButtonType.MoveUpLeft, () => game.Move(CursorType.ArrowUpLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(1, ButtonType.MoveUp, () => game.Move(CursorType.ArrowUp), true, null, moveDelay);
-                        buttonGrid.SetButton(2, ButtonType.MoveUpRight, () => game.Move(CursorType.ArrowUpRight), true, null, moveDelay);
-                        buttonGrid.SetButton(3, ButtonType.MoveLeft, () => game.Move(CursorType.ArrowLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(4, ButtonType.Wait, null, true); // TODO: wait
-                        buttonGrid.SetButton(5, ButtonType.MoveRight, () => game.Move(CursorType.ArrowRight), true, null, moveDelay);
-                        buttonGrid.SetButton(6, ButtonType.MoveDownLeft, () => game.Move(CursorType.ArrowDownLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(7, ButtonType.MoveDown, () => game.Move(CursorType.ArrowDown), true, null, moveDelay);
-                        buttonGrid.SetButton(8, ButtonType.MoveDownRight, () => game.Move(CursorType.ArrowDownRight), true, null, moveDelay);
+                        buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => game.Move(CursorType.ArrowUpLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => game.Move(CursorType.ArrowUp), true, null, moveDelay);
+                        buttonGrid.SetButton(2, ButtonType.MoveUpRight, false, () => game.Move(CursorType.ArrowUpRight), true, null, moveDelay);
+                        buttonGrid.SetButton(3, ButtonType.MoveLeft, false, () => game.Move(CursorType.ArrowLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(4, ButtonType.Wait, true, null, true); // TODO: wait
+                        buttonGrid.SetButton(5, ButtonType.MoveRight, false, () => game.Move(CursorType.ArrowRight), true, null, moveDelay);
+                        buttonGrid.SetButton(6, ButtonType.MoveDownLeft, false, () => game.Move(CursorType.ArrowDownLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(7, ButtonType.MoveDown, false, () => game.Move(CursorType.ArrowDown), true, null, moveDelay);
+                        buttonGrid.SetButton(8, ButtonType.MoveDownRight, false, () => game.Move(CursorType.ArrowDownRight), true, null, moveDelay);
                     }
                     else
                     {
-                        buttonGrid.SetButton(0, ButtonType.Eye, null, false, () => CursorType.Eye);
-                        buttonGrid.SetButton(1, ButtonType.Hand, null, false, () => CursorType.Hand);
-                        buttonGrid.SetButton(2, ButtonType.Mouth, null, false, () => CursorType.Mouth);
-                        buttonGrid.SetButton(3, ButtonType.Transport, () => game.Move(CursorType.ArrowLeft), true);
-                        buttonGrid.SetButton(4, ButtonType.Spells, null, false); // TODO: spells
-                        buttonGrid.SetButton(5, ButtonType.Camp, null, false); // TODO: camp
-                        buttonGrid.SetButton(6, ButtonType.Map, null, false); // TODO: map
-                        buttonGrid.SetButton(7, ButtonType.BattlePositions, null, false); // TODO: battle positions
-                        buttonGrid.SetButton(8, ButtonType.Options, null, false); // TODO: options
+                        buttonGrid.SetButton(0, ButtonType.Eye, false, null, false, () => CursorType.Eye);
+                        buttonGrid.SetButton(1, ButtonType.Hand, false, null, false, () => CursorType.Hand);
+                        buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, () => CursorType.Mouth);
+                        buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // TODO: transport
+                        buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
+                        buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
+                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, true, null, false); // TODO: battle positions
+                        buttonGrid.SetButton(8, ButtonType.Options, true, null, false); // TODO: options
                     }
                     break;
                 case LayoutType.Map3D:
+                    if (buttonGridPage == 0)
+                    {
+                        var moveDelay = ticksPerMovement.Value;
+                        buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => game.Move(CursorType.ArrowTurnLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => game.Move(CursorType.ArrowForward), true, null, moveDelay);
+                        buttonGrid.SetButton(2, ButtonType.TurnRight, false, () => game.Move(CursorType.ArrowTurnRight), true, null, moveDelay);
+                        buttonGrid.SetButton(3, ButtonType.StrafeLeft, false, () => game.Move(CursorType.ArrowStrafeLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(4, ButtonType.Wait, true, null, true); // TODO: wait
+                        buttonGrid.SetButton(5, ButtonType.StrafeRight, false, () => game.Move(CursorType.ArrowStrafeRight), true, null, moveDelay);
+                        buttonGrid.SetButton(6, ButtonType.RotateLeft, false, () => game.Move(CursorType.ArrowRotateLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(7, ButtonType.MoveBackward, false, () => game.Move(CursorType.ArrowBackward), true, null, moveDelay);
+                        buttonGrid.SetButton(8, ButtonType.RotateRight, false, () => game.Move(CursorType.ArrowRotateRight), true, null, moveDelay);
+                    }
+                    else
+                    {
+                        buttonGrid.SetButton(0, ButtonType.Eye, true, null, true); // TODO: eye
+                        buttonGrid.SetButton(1, ButtonType.Hand, true, null, true); // TODO: hand
+                        buttonGrid.SetButton(2, ButtonType.Mouth, true, null, true); // TODO: mouth
+                        buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // TODO: transport
+                        buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
+                        buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
+                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, true, null, false); // TODO: battle positions
+                        buttonGrid.SetButton(8, ButtonType.Options, true, null, false); // TODO: options
+                    }
+                    break;
+                case LayoutType.Inventory:
+                    buttonGrid.SetButton(0, ButtonType.Stats, true, null, true); // TODO: stats
+                    buttonGrid.SetButton(1, ButtonType.UseItem, true, null, true); // TODO: use item
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    if (game.StorageOpen)
+                    {
+                        buttonGrid.SetButton(3, ButtonType.DropItem, true, null, false); // TODO: drop item
+                        buttonGrid.SetButton(4, ButtonType.DropGold, true, null, false); // TODO: drop gold
+                        buttonGrid.SetButton(5, ButtonType.DropFood, true, null, false); // TODO: drop food
+                    }
+                    else
+                    {
+                        buttonGrid.SetButton(3, ButtonType.StoreItem, true, null, false); // TODO: store item
+                        buttonGrid.SetButton(4, ButtonType.StoreGold, true, null, false); // TODO: store gold
+                        buttonGrid.SetButton(5, ButtonType.StoreFood, true, null, false); // TODO: store food
+                    }
+                    buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
+                    buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO: give gold
+                    buttonGrid.SetButton(8, ButtonType.GiveFood, true, null, false); // TODO: give food
                     break;
                 // TODO
             }
@@ -892,6 +937,16 @@ namespace Ambermoon.UI
             }
 
             return consumed;
+        }
+
+        public CursorType? PressButton(int index, uint currentTicks)
+        {
+            return buttonGrid.PressButton(index, currentTicks);
+        }
+
+        public void ReleaseButton(int index)
+        {
+            buttonGrid.ReleaseButton(index);
         }
     }
 }

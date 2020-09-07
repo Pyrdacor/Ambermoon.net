@@ -124,7 +124,7 @@ namespace Ambermoon.Data.Legacy
                 }),
 
                 // Disabled button overlay
-                Graphic.FromIndexedData(28, 13, Enumerable.Range(0, 28 * 13).Select(i => (byte)(i % 2 == 0 ? 0 : 28)).ToArray())
+                Graphic.FromIndexedData(24, 11, Enumerable.Range(0, 24 * 11).Select(i => (byte)((i + i / 24) % 2 == 0 ? 0 : 26)).ToArray())
             };
         }
     }

@@ -13,7 +13,6 @@ namespace Ambermoon.UI
         readonly Rect area;
         ButtonType buttonType;
         readonly ILayerSprite frameSprite; // 32x17
-        IColoredRect buttonFill;
         readonly ILayerSprite disableOverlay;
         readonly ILayerSprite iconSprite; // 32x13
         readonly ITextureAtlas textureAtlas;
@@ -27,13 +26,11 @@ namespace Ambermoon.UI
             area = new Rect(position, new Size(Width, Height));
 
             frameSprite = renderView.SpriteFactory.Create(Width, Height, false, true, 3) as ILayerSprite;
-            buttonFill = renderView.ColoredRectFactory.Create(Button.Width - 4, Button.Height - 4, Color.LightGray, 1);
-            disableOverlay = renderView.SpriteFactory.Create(Width - 4, Height - 4, false, true, 4) as ILayerSprite;
+            disableOverlay = renderView.SpriteFactory.Create(Width - 8, Height - 6, false, true, 4) as ILayerSprite;
             iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, false, true, 2) as ILayerSprite;
 
             var layer = renderView.GetLayer(Layer.UIBackground);
             frameSprite.Layer = layer;
-            buttonFill.Layer = layer;
             disableOverlay.Layer = layer;
             iconSprite.Layer = layer;
 
@@ -43,18 +40,17 @@ namespace Ambermoon.UI
             iconSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetButtonGraphicIndex(ButtonType.Empty));
 
             frameSprite.PaletteIndex = 50;
-            disableOverlay.PaletteIndex = 49;
+            disableOverlay.PaletteIndex = 50;
             iconSprite.PaletteIndex = 49;
 
             frameSprite.X = position.X;
             frameSprite.Y = position.Y;
-            disableOverlay.X = position.X + 2;
-            disableOverlay.Y = position.Y + 2;
+            disableOverlay.X = position.X + 4;
+            disableOverlay.Y = position.Y + 3;
             iconSprite.X = position.X;
             iconSprite.Y = position.Y + 2;
 
             frameSprite.Visible = true;
-            buttonFill.Visible = true;
             disableOverlay.Visible = false;
             iconSprite.Visible = true;
         }
@@ -128,8 +124,17 @@ namespace Ambermoon.UI
             }
         }
 
+        public bool Disabled
+        {
+            get => disableOverlay.Visible;
+            set => disableOverlay.Visible = value;
+        }
+
         public void LeftMouseUp(Position position, ref CursorType? cursorType, uint currentTicks)
         {
+            if (Disabled)
+                return;
+
             if (Pressed && area.Contains(position))
             {
                 released = true;
@@ -141,6 +146,9 @@ namespace Ambermoon.UI
 
         public bool LeftMouseDown(Position position, ref CursorType? cursorType, uint currentTicks)
         {
+            if (Disabled)
+                return false;
+
             if (area.Contains(position))
             {
                 pressedTime = DateTime.Now;
@@ -165,6 +173,31 @@ namespace Ambermoon.UI
             lastActionTimeInTicks = currentTicks;
             Action?.Invoke();
             return CursorChangeAction?.Invoke();
+        }
+
+        internal CursorType? Press(uint currentTicks)
+        {
+            if (Disabled)
+                return null;
+
+            pressedTime = DateTime.Now;
+            Pressed = true;
+            released = false;
+
+            if (InstantAction)
+            {
+                if (ContinuousActionDelayInTicks == null)
+                    released = true;
+            }
+            else
+                released = true;
+
+            return ExecuteActions(currentTicks);
+        }
+
+        internal void Release()
+        {
+            released = true;
         }
 
         public void Update(uint currentTicks)

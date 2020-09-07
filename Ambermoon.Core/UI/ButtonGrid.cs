@@ -29,7 +29,18 @@ namespace Ambermoon.UI
             }
         }
 
-        public void SetButton(int slot, ButtonType buttonType, Action action,
+        public CursorType? PressButton(int index, uint currentTicks)
+        {
+            return buttons[index].Disabled ? null : buttons[index].Press(currentTicks);
+        }
+
+        public void ReleaseButton(int index)
+        {
+            if (!buttons[index].Disabled)
+                buttons[index].Release();
+        }
+
+        public void SetButton(int slot, ButtonType buttonType, bool disabled, Action action,
             bool instantAction, Func<CursorType> cursorChangeAction = null,
             uint? continuousActionDelayInTicks = null)
         {
@@ -38,6 +49,7 @@ namespace Ambermoon.UI
             buttons[slot].InstantAction = instantAction;
             buttons[slot].CursorChangeAction = cursorChangeAction;
             buttons[slot].ContinuousActionDelayInTicks = continuousActionDelayInTicks;
+            buttons[slot].Disabled = disabled;
         }
 
         public void MouseUp(Position position, MouseButtons mouseButtons, out CursorType? newCursorType, uint currentTicks)

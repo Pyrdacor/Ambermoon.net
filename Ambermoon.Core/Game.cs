@@ -124,6 +124,10 @@ namespace Ambermoon
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
         readonly IRenderText windowTitle = null;
+        /// <summary>
+        /// Open chest which can be used to store items.
+        /// </summary>
+        internal bool StorageOpen { get; private set; }
         Rect mapViewArea = map2DViewArea;
         static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
@@ -598,29 +602,25 @@ namespace Ambermoon
                     OpenPartyMember(key - Key.F1);
                     break;
                 case Key.Num1:
-                    break;
                 case Key.Num2:
-                    break;
                 case Key.Num3:
-                    break;
                 case Key.Num4:
-                    break;
                 case Key.Num5:
-                    break;
                 case Key.Num6:
-                    break;
                 case Key.Num7:
-                    // TODO
-                    CursorType = CursorType.Eye;
-                    break;
                 case Key.Num8:
-                    // TODO
-                    CursorType = CursorType.Hand;
-                    break;
                 case Key.Num9:
-                    // TODO
-                    CursorType = CursorType.Mouth;
+                {
+                    int index = key - Key.Num1;
+                    int column = index % 3;
+                    int row = 2 - index / 3;
+                    var newCursorType = layout.PressButton(column + row * 3, currentTicks);
+
+                    if (newCursorType != null)
+                        CursorType = newCursorType.Value;
+
                     break;
+                }
                 default:
                     if (WindowActive)
                         layout.KeyDown(key, modifiers);
@@ -633,6 +633,27 @@ namespace Ambermoon
         public void OnKeyUp(Key key, KeyModifiers modifiers)
         {
             keys[(int)key] = false;
+
+            switch (key)
+            {
+                case Key.Num1:
+                case Key.Num2:
+                case Key.Num3:
+                case Key.Num4:
+                case Key.Num5:
+                case Key.Num6:
+                case Key.Num7:
+                case Key.Num8:
+                case Key.Num9:
+                {
+                    int index = key - Key.Num1;
+                    int column = index % 3;
+                    int row = 2 - index / 3;
+                    layout.ReleaseButton(column + row * 3);
+
+                    break;
+                }
+            }
         }
 
         public void OnKeyChar(char keyChar)
@@ -894,6 +915,7 @@ namespace Ambermoon
         {
             if (show)
             {
+                StorageOpen = false;
                 string mapName = Map.IsWorldMap
                     ? dataNameProvider.GetWorldName(Map.World)
                     : Map.Name;
@@ -1072,6 +1094,9 @@ namespace Ambermoon
                     12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
                 layout.AddItemGrid(itemGrid);
 
+                if (!chestMapEvent.RemoveWhenEmpty)
+                    StorageOpen = true;
+
                 if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
                 {
                     layout.Set80x80Picture(Picture80x80.ChestClosed);
@@ -1168,7 +1193,7 @@ namespace Ambermoon
             currentWindow = new WindowInfo { Window = window, WindowParameter = param };
         }
 
-        void CloseWindow()
+        internal void CloseWindow()
         {
             if (!WindowActive)
                 return;
