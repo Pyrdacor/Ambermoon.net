@@ -212,6 +212,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 }
                 entries.Add(type, text);
             }
+
+            dataReader.AlignToWord();
         }
     }
 }

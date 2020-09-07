@@ -41,6 +41,11 @@ namespace Ambermoon
             return new Position(position1.X + position2.X, position1.Y + position2.Y);
         }
 
+        public static Position operator -(Position position1, Position position2)
+        {
+            return new Position(position1.X - position2.X, position1.Y - position2.Y);
+        }
+
         public static bool operator ==(Position position1, Position position2)
         {
             if (ReferenceEquals(position1, position2))

@@ -1,0 +1,89 @@
+﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
+using Ambermoon.Render;
+using System;
+
+namespace Ambermoon.UI
+{
+    /// <summary>
+    /// The 3x3 button grid at the lower right.
+    /// </summary>
+    internal class ButtonGrid
+    {
+        readonly Button[] buttons = new Button[9];
+        public event Action RightMouseClicked;
+        bool rightMouseDown = false;
+        readonly Rect area;
+
+        public ButtonGrid(IRenderView renderView)
+        {
+            area = new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height);
+
+            for (int i = 0; i < 9; ++i)
+            {
+                buttons[i] = new Button
+                (
+                    renderView,
+                    new Position(Global.ButtonGridX + (i % 3) * Button.Width, Global.ButtonGridY + (i / 3) * Button.Height)
+                );
+            }
+        }
+
+        public void SetButton(int slot, ButtonType buttonType, Action action,
+            bool instantAction, Func<CursorType> cursorChangeAction = null,
+            uint? continuousActionDelayInTicks = null)
+        {
+            buttons[slot].ButtonType = buttonType;
+            buttons[slot].Action = action;
+            buttons[slot].InstantAction = instantAction;
+            buttons[slot].CursorChangeAction = cursorChangeAction;
+            buttons[slot].ContinuousActionDelayInTicks = continuousActionDelayInTicks;
+        }
+
+        public void MouseUp(Position position, MouseButtons mouseButtons, out CursorType? newCursorType, uint currentTicks)
+        {
+            newCursorType = null;
+
+            if (mouseButtons.HasFlag(MouseButtons.Right))
+            {
+                if (rightMouseDown)
+                {
+                    rightMouseDown = false;
+                    RightMouseClicked?.Invoke();
+                }
+                return;
+            }
+
+            for (int i = 0; i < 9; ++i)
+                buttons[i].LeftMouseUp(position, ref newCursorType, currentTicks);
+        }
+
+        public bool MouseDown(Position position, MouseButtons mouseButtons,
+            out CursorType? newCursorType, uint currentTicks)
+        {
+            newCursorType = null;
+
+            if (mouseButtons == MouseButtons.Left)
+            {
+                for (int i = 0; i < 9; ++i)
+                {
+                    if (buttons[i].LeftMouseDown(position, ref newCursorType, currentTicks))
+                        return true;
+                }
+            }
+            else if (mouseButtons == MouseButtons.Right)
+            {
+                if (area.Contains(position))
+                    rightMouseDown = true;
+            }
+
+            return false;
+        }
+
+        public void Update(uint currentTicks)
+        {
+            foreach (var button in buttons)
+                button.Update(currentTicks);
+        }
+    }
+}

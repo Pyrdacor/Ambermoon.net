@@ -19,6 +19,7 @@
         ItemSlotBackground,
         ItemSlotDisabled, // locked chests
         PortraitBackground, // black to blue gradient
-        PortraitBorder // thin 1-pixel border for top and bottom of portraits
+        PortraitBorder, // thin 1-pixel border for top and bottom of portraits
+        ButtonDisableOverlay // 28x13 pixel gray dotted overlay
     }
 }

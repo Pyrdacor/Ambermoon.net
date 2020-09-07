@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -120,7 +121,10 @@ namespace Ambermoon.Data.Legacy
                 {
                     28, 28, 28, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28,
                     28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 28, 28, 28
-                })
+                }),
+
+                // Disabled button overlay
+                Graphic.FromIndexedData(28, 13, Enumerable.Range(0, 28 * 13).Select(i => (byte)(i % 2 == 0 ? 0 : 28)).ToArray())
             };
         }
     }

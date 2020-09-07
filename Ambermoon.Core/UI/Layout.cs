@@ -314,6 +314,9 @@ namespace Ambermoon.UI
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
         readonly List<ISprite> additionalSprites = new List<ISprite>();
         readonly List<IRenderText> texts = new List<IRenderText>();
+        readonly ButtonGrid buttonGrid;
+        int buttonGridPage = 0;
+        uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
 
         public Layout(Game game, IRenderView renderView)
@@ -332,7 +335,23 @@ namespace Ambermoon.UI
 
             AddStaticSprites();
 
+            buttonGrid = new ButtonGrid(renderView);
+            buttonGrid.RightMouseClicked += ButtonGrid_RightMouseClicked;
+
             SetLayout(LayoutType.None);
+        }
+
+        void ButtonGrid_RightMouseClicked()
+        {
+            if (Type == LayoutType.Map2D ||
+                Type == LayoutType.Map3D)
+            {
+                if (game.CursorType == CursorType.Sword)
+                {
+                    buttonGridPage = 1 - buttonGridPage;
+                    SetLayout(Type, ticksPerMovement);
+                }
+            }
         }
 
         void AddStaticSprites()
@@ -407,8 +426,9 @@ namespace Ambermoon.UI
             }
         }
 
-        public void SetLayout(LayoutType layoutType)
+        public void SetLayout(LayoutType layoutType, uint? ticksPerMovement = null)
         {
+            this.ticksPerMovement = ticksPerMovement;
             Type = layoutType;
 
             if (layoutType == LayoutType.None)
@@ -419,6 +439,45 @@ namespace Ambermoon.UI
             {
                 sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.LayoutOffset + (uint)(layoutType - 1));
                 sprite.Visible = true;
+            }
+
+            UpdateLayoutButtons(ticksPerMovement);
+        }
+
+        void UpdateLayoutButtons(uint? ticksPerMovement = null)
+        {
+            switch (Type)
+            {
+                case LayoutType.Map2D:
+                    if (buttonGridPage == 0)
+                    {
+                        var moveDelay = ticksPerMovement.Value;
+                        buttonGrid.SetButton(0, ButtonType.MoveUpLeft, () => game.Move(CursorType.ArrowUpLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(1, ButtonType.MoveUp, () => game.Move(CursorType.ArrowUp), true, null, moveDelay);
+                        buttonGrid.SetButton(2, ButtonType.MoveUpRight, () => game.Move(CursorType.ArrowUpRight), true, null, moveDelay);
+                        buttonGrid.SetButton(3, ButtonType.MoveLeft, () => game.Move(CursorType.ArrowLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(4, ButtonType.Wait, null, true); // TODO: wait
+                        buttonGrid.SetButton(5, ButtonType.MoveRight, () => game.Move(CursorType.ArrowRight), true, null, moveDelay);
+                        buttonGrid.SetButton(6, ButtonType.MoveDownLeft, () => game.Move(CursorType.ArrowDownLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(7, ButtonType.MoveDown, () => game.Move(CursorType.ArrowDown), true, null, moveDelay);
+                        buttonGrid.SetButton(8, ButtonType.MoveDownRight, () => game.Move(CursorType.ArrowDownRight), true, null, moveDelay);
+                    }
+                    else
+                    {
+                        buttonGrid.SetButton(0, ButtonType.Eye, null, false, () => CursorType.Eye);
+                        buttonGrid.SetButton(1, ButtonType.Hand, null, false, () => CursorType.Hand);
+                        buttonGrid.SetButton(2, ButtonType.Mouth, null, false, () => CursorType.Mouth);
+                        buttonGrid.SetButton(3, ButtonType.Transport, () => game.Move(CursorType.ArrowLeft), true);
+                        buttonGrid.SetButton(4, ButtonType.Spells, null, false); // TODO: spells
+                        buttonGrid.SetButton(5, ButtonType.Camp, null, false); // TODO: camp
+                        buttonGrid.SetButton(6, ButtonType.Map, null, false); // TODO: map
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, null, false); // TODO: battle positions
+                        buttonGrid.SetButton(8, ButtonType.Options, null, false); // TODO: options
+                    }
+                    break;
+                case LayoutType.Map3D:
+                    break;
+                // TODO
             }
         }
 
@@ -622,8 +681,10 @@ namespace Ambermoon.UI
             }
         }
 
-        public void Update()
+        public void Update(uint currentTicks)
         {
+            buttonGrid.Update(currentTicks);
+
             for (int i = fadeEffects.Count - 1; i >= 0; --i)
             {
                 fadeEffects[i].Update();
@@ -664,14 +725,37 @@ namespace Ambermoon.UI
             }
         }
 
-        public void LeftMouseUp(Position position)
+        public void LeftMouseUp(Position position, out CursorType? newCursorType, uint currentTicks)
         {
+            newCursorType = null;
+
+            buttonGrid.MouseUp(position, MouseButtons.Left, out CursorType? cursorType, currentTicks);
+
+            if (cursorType != null)
+            {
+                newCursorType = cursorType;
+                return;
+            }
+
             foreach (var itemGrid in itemGrids)
                 itemGrid.LeftMouseUp(position);
         }
 
-        public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType)
+        public void RightMouseUp(Position position, out CursorType? newCursorType, uint currentTicks)
         {
+            buttonGrid.MouseUp(position, MouseButtons.Right, out newCursorType, currentTicks);
+        }
+
+        public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
+            uint currentTicks)
+        {
+            if (buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
+            {
+                if (newCursorType != null)
+                    cursorType = newCursorType.Value;
+                return true;
+            }
+
             if (buttons == MouseButtons.Left)
             {
                 foreach (var itemGrid in itemGrids)
@@ -696,6 +780,8 @@ namespace Ambermoon.UI
             {
                 if (draggedItem == null)
                 {
+                    cursorType = CursorType.Sword;
+
                     foreach (var itemGrid in itemGrids)
                     {
                         if (itemGrid.Click(position, null, out DraggedItem pickedUpItem, false, ref cursorType))
@@ -789,7 +875,7 @@ namespace Ambermoon.UI
                 draggedItem.Item.Position = position;
                 cursorType = CursorType.SmallArrow;
             }
-            else
+            else if (cursorType >= CursorType.ArrowUp && cursorType <= CursorType.Wait)
             {
                 cursorType = CursorType.Sword;
             }

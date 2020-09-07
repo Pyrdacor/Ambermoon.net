@@ -397,6 +397,95 @@ namespace Ambermoon.Renderer.OpenGL
             }
         }
 
+        public Position GameToScreen(Position position)
+        {
+            float factorX = (float)virtualScreenDisplay.Width / Global.VirtualScreenWidth;
+            float factorY = (float)virtualScreenDisplay.Height / Global.VirtualScreenHeight;
+
+            return ViewToScreen(new Position(Misc.Round(position.X * factorX), Misc.Round(position.Y * factorY)));
+        }
+
+        public Position ViewToScreen(Position position)
+        {
+            int rotatedX = Misc.Round(position.X / sizeFactorX);
+            int rotatedY = Misc.Round(position.Y / sizeFactorY);
+            int relX;
+            int relY;
+
+            switch (rotation)
+            {
+                case Rotation.None:
+                default:
+                    relX = rotatedX;
+                    relY = rotatedY;
+                    break;
+                case Rotation.Deg90:
+                    relX = virtualScreenDisplay.Width - rotatedY;
+                    relY = rotatedX;
+                     break;
+                case Rotation.Deg180:
+                    relX = virtualScreenDisplay.Width - rotatedX;
+                    relY = virtualScreenDisplay.Height - rotatedY;
+                    break;
+                case Rotation.Deg270:
+                    relX = rotatedY;
+                    relY = virtualScreenDisplay.Height - rotatedX;
+                    break;
+            }
+
+            return new Position(virtualScreenDisplay.X + relX, virtualScreenDisplay.Y + relY);
+        }
+
+        public Size ViewToScreen(Size size)
+        {
+            bool swapDimensions = rotation == Rotation.Deg90 || rotation == Rotation.Deg270;
+
+            int width = (swapDimensions) ? size.Height : size.Width;
+            int height = (swapDimensions) ? size.Width : size.Height;
+
+            return new Size(Misc.Round(width / sizeFactorX), Misc.Round(height / sizeFactorY));
+        }
+
+        public Size GameToScreen(Size size)
+        {
+            float factorX = (float)virtualScreenDisplay.Width / Global.VirtualScreenWidth;
+            float factorY = (float)virtualScreenDisplay.Height / Global.VirtualScreenHeight;
+            bool swapDimensions = rotation == Rotation.Deg90 || rotation == Rotation.Deg270;
+
+            int width = (swapDimensions) ? size.Height : size.Width;
+            int height = (swapDimensions) ? size.Width : size.Height;
+
+            return new Size(Misc.Round(width * factorX / sizeFactorX), Misc.Round(height * factorY / sizeFactorY));
+        }
+
+        public Rect GameToScreen(Rect rect)
+        {
+            var position = GameToScreen(rect.Position);
+            var size = GameToScreen(rect.Size);
+            rect = new Rect(position, size);
+
+            rect.Clip(virtualScreenDisplay);
+
+            if (rect.Empty)
+                return null;
+
+            return rect;
+        }
+
+        public Rect ViewToScreen(Rect rect)
+        {
+            var position = ViewToScreen(rect.Position);
+            var size = ViewToScreen(rect.Size);
+            rect = new Rect(position, size);
+
+            rect.Clip(virtualScreenDisplay);
+
+            if (rect.Empty)
+                return null;
+
+            return rect;
+        }
+
         public Position ScreenToGame(Position position)
         {
             position = ScreenToView(position);

@@ -31,6 +31,11 @@ namespace Ambermoon.Render
         void Resize(int width, int height);
         void Close();
 
+        Position GameToScreen(Position position);
+        Position ViewToScreen(Position position);
+        Size ViewToScreen(Size size);
+        Rect GameToScreen(Rect rect);
+        Rect ViewToScreen(Rect rect);
         Position ScreenToGame(Position position);
         Position ScreenToView(Position position);
         Size ScreenToView(Size size);

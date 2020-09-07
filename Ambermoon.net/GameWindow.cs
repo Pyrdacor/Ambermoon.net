@@ -212,6 +212,7 @@ namespace Ambermoon
                 new SavegameManager(), new SavegameSerializer(), new DataNameProvider(executableData),
                 new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
                 configuration.LegacyMode);
+            Game.MouseTrappedChanged += (bool trapped) => cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
             Game.Run();
         }
 

@@ -40,6 +40,7 @@ namespace Ambermoon
             readonly uint[] tickDivider;
 
             public uint TickDivider(bool is3D) => tickDivider[is3D ? 1 : 0];
+            public uint MovementTicks(bool is3D) => TicksPerSecond / TickDivider(is3D);
             public float MoveSpeed3D { get; }
             public float TurnSpeed3D { get; }
 
@@ -94,6 +95,11 @@ namespace Ambermoon
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool leftMouseDown = false;
         bool clickMoveActive = false;
+        Rect trapMouseArea = null;
+        Position lastMousePosition = new Position();
+        readonly Position trappedMousePositionOffset = new Position();
+        bool trapped => trapMouseArea != null;
+        public event Action<bool> MouseTrappedChanged;
         /// <summary>
         /// All words you have heard about in conversations.
         /// </summary>
@@ -123,6 +129,33 @@ namespace Ambermoon
             Global.Map2DViewWidth, Global.Map2DViewHeight);
         static readonly Rect map3DViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY,
             Global.Map3DViewWidth, Global.Map3DViewHeight);
+        internal CursorType CursorType
+        {
+            get => cursor.Type;
+            set
+            {
+                if (cursor.Type == value)
+                    return;
+
+                cursor.Type = value;
+
+                if (!is3D && !WindowActive &&
+                    (cursor.Type == CursorType.Eye ||
+                    cursor.Type == CursorType.Hand))
+                {
+                    TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9, 33, 49));
+                }
+                else if (!is3D && !WindowActive &&
+                    cursor.Type == CursorType.Mouth)
+                {
+                    TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25, 65, 65));
+                }
+                else
+                {
+                    UntrapMouse();
+                }
+            }
+        }
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
             ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
@@ -191,7 +224,7 @@ namespace Ambermoon
 
             var moveTicks = currentTicks >= lastMoveTicksReset ? currentTicks - lastMoveTicksReset : (uint)((long)currentTicks + uint.MaxValue - lastMoveTicksReset);
 
-            if (moveTicks >= TicksPerSecond / movement.TickDivider(is3D))
+            if (moveTicks >= movement.MovementTicks(is3D))
             {
                 if (clickMoveActive)
                     HandleClickMovement();
@@ -201,7 +234,30 @@ namespace Ambermoon
                 lastMoveTicksReset = currentTicks;
             }
 
-            layout.Update();
+            layout.Update(currentTicks);
+        }
+
+        Position GetMousePosition(Position position)
+        {
+            if (trapMouseArea != null)
+                position += trappedMousePositionOffset;
+
+            return position;
+        }
+
+        void TrapMouse(Rect area)
+        {
+            trapMouseArea = renderView.GameToScreen(area);
+            trappedMousePositionOffset.X = trapMouseArea.Left - lastMousePosition.X;
+            trappedMousePositionOffset.Y = trapMouseArea.Top - lastMousePosition.Y;
+            UpdateCursor(trapMouseArea.Position, MouseButtons.None);
+            MouseTrappedChanged?.Invoke(true);
+        }
+
+        void UntrapMouse()
+        {
+            trapMouseArea = null;
+            MouseTrappedChanged?.Invoke(false);
         }
 
         void ResetMoveKeys()
@@ -231,7 +287,7 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
             ResetMoveKeys();
-            layout.SetLayout(LayoutType.Map2D);
+            layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false));
 
             if (renderMap2D.Map != map)
             {
@@ -281,7 +337,7 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
             ResetMoveKeys();
-            layout.SetLayout(UI.LayoutType.Map3D);
+            layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true));
 
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction);
@@ -368,80 +424,82 @@ namespace Ambermoon
                 return;
             }
 
+            lock (cursor)
+            {
+                Move(cursor.Type);
+            }
+        }
+
+        internal void Move(CursorType cursorType)
+        {
             if (is3D)
             {
-                lock (cursor)
+                switch (cursorType)
                 {
-                    switch (cursor.Type)
-                    {
-                        case CursorType.ArrowForward:
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
-                            break;
-                        case CursorType.ArrowBackward:
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
-                            break;
-                        case CursorType.ArrowStrafeLeft:
-                            player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
-                            break;
-                        case CursorType.ArrowStrafeRight:
-                            player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
-                            break;
-                        case CursorType.ArrowTurnLeft:
-                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
-                            break;
-                        case CursorType.ArrowTurnRight:
-                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
-                            break;
-                        case CursorType.ArrowRotateLeft:
-                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
-                            break;
-                        case CursorType.ArrowRotateRight:
-                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
-                            break;
-                        default:
-                            clickMoveActive = false;
-                            break;
-                    }
+                    case CursorType.ArrowForward:
+                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
+                        break;
+                    case CursorType.ArrowBackward:
+                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
+                        break;
+                    case CursorType.ArrowStrafeLeft:
+                        player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
+                        break;
+                    case CursorType.ArrowStrafeRight:
+                        player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerTile, currentTicks);
+                        break;
+                    case CursorType.ArrowTurnLeft:
+                        player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
+                        break;
+                    case CursorType.ArrowTurnRight:
+                        player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
+                        break;
+                    case CursorType.ArrowRotateLeft:
+                        player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
+                        break;
+                    case CursorType.ArrowRotateRight:
+                        player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, currentTicks);
+                        break;
+                    default:
+                        clickMoveActive = false;
+                        break;
                 }
             }
             else
             {
-                lock (cursor)
+                switch (cursorType)
                 {
-                    switch (cursor.Type)
-                    {
-                        case CursorType.ArrowUpLeft:
-                            Move2D(-1, -1);
-                            break;
-                        case CursorType.ArrowUp:
-                            Move2D(0, -1);
-                            break;
-                        case CursorType.ArrowUpRight:
-                            Move2D(1, -1);
-                            break;
-                        case CursorType.ArrowLeft:
-                            Move2D(-1, 0);
-                            break;
-                        case CursorType.ArrowRight:
-                            Move2D(1, 0);
-                            break;
-                        case CursorType.ArrowDownLeft:
-                            Move2D(-1, 1);
-                            break;
-                        case CursorType.ArrowDown:
-                            Move2D(0, 1);
-                            break;
-                        case CursorType.ArrowDownRight:
-                            Move2D(1, 1);
-                            break;
-                        default:
-                            clickMoveActive = false;
-                            break;
-                    }
+                    case CursorType.ArrowUpLeft:
+                        Move2D(-1, -1);
+                        break;
+                    case CursorType.ArrowUp:
+                        Move2D(0, -1);
+                        break;
+                    case CursorType.ArrowUpRight:
+                        Move2D(1, -1);
+                        break;
+                    case CursorType.ArrowLeft:
+                        Move2D(-1, 0);
+                        break;
+                    case CursorType.ArrowRight:
+                        Move2D(1, 0);
+                        break;
+                    case CursorType.ArrowDownLeft:
+                        Move2D(-1, 1);
+                        break;
+                    case CursorType.ArrowDown:
+                        Move2D(0, 1);
+                        break;
+                    case CursorType.ArrowDownRight:
+                        Move2D(1, 1);
+                        break;
+                    default:
+                        clickMoveActive = false;
+                        break;
                 }
             }
         }
@@ -553,15 +611,15 @@ namespace Ambermoon
                     break;
                 case Key.Num7:
                     // TODO
-                    cursor.Type = CursorType.Eye;
+                    CursorType = CursorType.Eye;
                     break;
                 case Key.Num8:
                     // TODO
-                    cursor.Type = CursorType.Hand;
+                    CursorType = CursorType.Hand;
                     break;
                 case Key.Num9:
                     // TODO
-                    cursor.Type = CursorType.Mouth;
+                    CursorType = CursorType.Mouth;
                     break;
                 default:
                     if (WindowActive)
@@ -587,18 +645,33 @@ namespace Ambermoon
 
         public void OnMouseUp(Position position, MouseButtons buttons)
         {
+            position = GetMousePosition(position);
+
+            if (buttons.HasFlag(MouseButtons.Right))
+            {
+                layout.RightMouseUp(renderView.ScreenToGame(position), out CursorType? cursorType, currentTicks);
+
+                if (cursorType != null)
+                    CursorType = cursorType.Value;
+            }
             if (buttons.HasFlag(MouseButtons.Left))
             {
                 leftMouseDown = false;
                 clickMoveActive = false;
 
-                layout.LeftMouseUp(renderView.ScreenToGame(position));
-                UpdateCursor(position, MouseButtons.None);
+                layout.LeftMouseUp(renderView.ScreenToGame(position), out CursorType? cursorType, currentTicks);
+
+                if (cursorType != null)
+                    CursorType = cursorType.Value;
+                else
+                    UpdateCursor(position, MouseButtons.None);
             }
         }
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            position = GetMousePosition(position);
+
             if (buttons.HasFlag(MouseButtons.Left))
                 leftMouseDown = true;
 
@@ -609,6 +682,10 @@ namespace Ambermoon
                 if (!WindowActive && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
+                    if (buttons == MouseButtons.Right)
+                        CursorType = CursorType.Sword;
+                    if (!buttons.HasFlag(MouseButtons.Left))
+                        return;
 
                     relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
 
@@ -625,24 +702,24 @@ namespace Ambermoon
                     }
 
                     if (cursor.Type > CursorType.Wait)
-                        cursor.Type = CursorType.Sword;
+                        CursorType = CursorType.Sword;
                     return;
                 }
                 else
                 {
                     var cursorType = CursorType.Sword;
-                    layout.Click(relativePosition, buttons, ref cursorType);
-                    cursor.Type = cursorType;
+                    layout.Click(relativePosition, buttons, ref cursorType, currentTicks);
+                    CursorType = cursorType;
                     layout.Hover(relativePosition, ref cursorType); // Update cursor
                     if (cursor.Type != CursorType.None)
-                        cursor.Type = cursorType;
+                        CursorType = cursorType;
 
                     // TODO: check for other clicks
                 }
             }
             else
             {
-                cursor.Type = CursorType.Sword;
+                CursorType = CursorType.Sword;
             }
         }
 
@@ -671,29 +748,29 @@ namespace Ambermoon
                             if (up)
                             {
                                 if (left)
-                                    cursor.Type = CursorType.ArrowUpLeft;
+                                    CursorType = CursorType.ArrowUpLeft;
                                 else if (right)
-                                    cursor.Type = CursorType.ArrowUpRight;
+                                    CursorType = CursorType.ArrowUpRight;
                                 else
-                                    cursor.Type = CursorType.ArrowUp;
+                                    CursorType = CursorType.ArrowUp;
                             }
                             else if (down)
                             {
                                 if (left)
-                                    cursor.Type = CursorType.ArrowDownLeft;
+                                    CursorType = CursorType.ArrowDownLeft;
                                 else if (right)
-                                    cursor.Type = CursorType.ArrowDownRight;
+                                    CursorType = CursorType.ArrowDownRight;
                                 else
-                                    cursor.Type = CursorType.ArrowDown;
+                                    CursorType = CursorType.ArrowDown;
                             }
                             else
                             {
                                 if (left)
-                                    cursor.Type = CursorType.ArrowLeft;
+                                    CursorType = CursorType.ArrowLeft;
                                 else if (right)
-                                    cursor.Type = CursorType.ArrowRight;
+                                    CursorType = CursorType.ArrowRight;
                                 else
-                                    cursor.Type = CursorType.Wait;
+                                    CursorType = CursorType.Wait;
                             }
                         }
                         else
@@ -706,29 +783,29 @@ namespace Ambermoon
                             if (vertical <= 0) // up
                             {
                                 if (horizontal <= 0) // left
-                                    cursor.Type = CursorType.ArrowTurnLeft;
+                                    CursorType = CursorType.ArrowTurnLeft;
                                 else if (horizontal >= 2) // right
-                                    cursor.Type = CursorType.ArrowTurnRight;
+                                    CursorType = CursorType.ArrowTurnRight;
                                 else
-                                    cursor.Type = CursorType.ArrowForward;
+                                    CursorType = CursorType.ArrowForward;
                             }
                             else if (vertical >= 2) // down
                             {
                                 if (horizontal <= 0) // left
-                                    cursor.Type = CursorType.ArrowRotateLeft;
+                                    CursorType = CursorType.ArrowRotateLeft;
                                 else if (horizontal >= 2) // right
-                                    cursor.Type = CursorType.ArrowRotateRight;
+                                    CursorType = CursorType.ArrowRotateRight;
                                 else
-                                    cursor.Type = CursorType.ArrowBackward;
+                                    CursorType = CursorType.ArrowBackward;
                             }
                             else
                             {
                                 if (horizontal <= 0) // left
-                                    cursor.Type = CursorType.ArrowStrafeLeft;
+                                    CursorType = CursorType.ArrowStrafeLeft;
                                 else if (horizontal >= 2) // right
-                                    cursor.Type = CursorType.ArrowStrafeRight;
+                                    CursorType = CursorType.ArrowStrafeRight;
                                 else
-                                    cursor.Type = CursorType.Wait;
+                                    CursorType = CursorType.Wait;
                             }
                         }
 
@@ -741,23 +818,52 @@ namespace Ambermoon
                     {
                         var cursorType = cursor.Type;
                         layout.Hover(relativePosition, ref cursorType);
-                        cursor.Type = cursorType;
+                        CursorType = cursorType;
                     }
                     else if (buttons == MouseButtons.Left)
                     {
                         var cursorType = cursor.Type;
                         layout.Drag(relativePosition, ref cursorType);
-                        cursor.Type = cursorType;
+                        CursorType = cursorType;
                     }
                 }
 
                 if (cursor.Type >= CursorType.ArrowUp && cursor.Type <= CursorType.Wait)
-                    cursor.Type = CursorType.Sword;
+                    CursorType = CursorType.Sword;
             }
         }
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
+            if (trapped)
+            {
+                var trappedPosition = position + trappedMousePositionOffset;
+
+                if (trappedPosition.X < trapMouseArea.Left)
+                {
+                    if (position.X < lastMousePosition.X)
+                        trappedMousePositionOffset.X += lastMousePosition.X - position.X;
+                }                    
+                else if (trappedPosition.X >= trapMouseArea.Right)
+                {
+                    if (position.X > lastMousePosition.X)
+                        trappedMousePositionOffset.X -= position.X - lastMousePosition.X;
+                }
+
+                if (trappedPosition.Y < trapMouseArea.Top)
+                {
+                    if (position.Y < lastMousePosition.Y)
+                        trappedMousePositionOffset.Y += lastMousePosition.Y - position.Y;
+                }
+                else if (trappedPosition.Y >= trapMouseArea.Bottom)
+                {
+                    if (position.Y > lastMousePosition.Y)
+                        trappedMousePositionOffset.Y -= position.Y - lastMousePosition.Y;
+                }
+            }
+
+            lastMousePosition = new Position(position);
+            position = GetMousePosition(position);
             UpdateCursor(position, buttons);
         }
 
@@ -800,14 +906,14 @@ namespace Ambermoon
             if (is3D)
             {
                 if (show)
-                    layout.SetLayout(LayoutType.Map3D);
+                    layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true));
                 renderView.GetLayer(Layer.Map3D).Visible = show;
                 renderView.GetLayer(Layer.Billboards3D).Visible = show;
             }
             else
             {
                 if (show)
-                    layout.SetLayout(LayoutType.Map2D);
+                    layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false));
                 for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                     renderView.GetLayer((Layer)i).Visible = show;
             }

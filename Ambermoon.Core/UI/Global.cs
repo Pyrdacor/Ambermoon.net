@@ -15,6 +15,8 @@ namespace Ambermoon
         public const int Map3DViewY = 49;
         public const int Map3DViewWidth = 144;
         public const int Map3DViewHeight = 144;
+        public const int ButtonGridX = 208;
+        public const int ButtonGridY = 143;
         /// <summary>
         /// This includes a 1-pixel border around the portrait.
         /// </summary>

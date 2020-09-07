@@ -95,6 +95,12 @@ namespace Ambermoon
             Clip(rect.Left, rect.Top, rect.Right, rect.Bottom);
         }
 
+        public void Trap(Position position)
+        {
+            position.X = Util.Limit(Left, position.X, Right);
+            position.Y = Util.Limit(Top, position.Y, Bottom);
+        }
+
         public Rect SetWidth(int newWidth)
         {
             return new Rect(Position, new Size(newWidth, Size.Height));
