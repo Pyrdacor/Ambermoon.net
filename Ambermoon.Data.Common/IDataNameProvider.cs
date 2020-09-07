@@ -15,7 +15,7 @@
         string CharacterInfoGoldAndFoodString { get; }
         string CharacterInfoAgeString { get; }
         string GetWorldName(World world);
-        public string InventoryTitleString { get; }
+        string InventoryTitleString { get; }
 
         // TODO
     }

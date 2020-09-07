@@ -29,10 +29,17 @@ namespace Ambermoon.UI
         FadeInAndOut
     }
 
+    enum FilledAreaType
+    {
+        CharacterBar,
+        FadeEffect,
+        Custom
+    }
+
     public class FilledArea
     {
         readonly List<IColoredRect> filledAreas;
-        readonly IColoredRect area;
+        protected readonly IColoredRect area;
         internal bool Destroyed { get; private set; } = false;
 
         internal FilledArea(List<IColoredRect> filledAreas, IColoredRect area)
@@ -92,6 +99,37 @@ namespace Ambermoon.UI
             area.Delete();
             filledAreas.Remove(area);
             Destroyed = true;
+        }
+    }
+
+    public class Bar : FilledArea
+    {
+        readonly Rect barArea;
+
+        internal Bar(List<IColoredRect> filledAreas, IColoredRect area)
+            : base(filledAreas, area)
+        {
+            barArea = new Rect(area.X, area.Y, area.Width, area.Height);
+        }
+
+        /// <summary>
+        /// Fills the bar dependent on the given value.
+        /// </summary>
+        /// <param name="percentage">Value in the range 0 to 1 (0 to 100%).</param>
+        public void Fill(float percentage)
+        {
+            // 100% = 16 pixels
+            int pixels = Util.Round(16.0f * percentage);
+
+            if (pixels == 0)
+                area.Visible = false;
+            else
+            {
+                area.X = barArea.Left;
+                area.Y = barArea.Bottom - pixels;
+                area.Resize(barArea.Width, pixels);
+                area.Visible = true;
+            }
         }
     }
 
@@ -266,9 +304,11 @@ namespace Ambermoon.UI
         readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
         readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
         readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
+        readonly Bar[] characterBars = new Bar[Game.MaxPartyMembers * 4]; // 2 bars and each has fill and shadow color
         ISprite sprite80x80Picture;
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
+        readonly List<IColoredRect> barAreas = new List<IColoredRect>();
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
         readonly List<IColoredRect> fadeEffectAreas = new List<IColoredRect>();
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
@@ -351,6 +391,19 @@ namespace Ambermoon.UI
                 sprite.Y = 35;
                 sprite.Visible = true;
                 portraitBorders.Add(sprite);
+
+                // LP shadow
+                characterBars[i * 4 + 0] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 2, 19, 1, 16),
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBarShadow), false, FilledAreaType.CharacterBar));
+                // LP fill
+                characterBars[i * 4 + 1] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 3, 19, 3, 16),
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBar), false, FilledAreaType.CharacterBar));
+                // SP shadow
+                characterBars[i * 4 + 2] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 10, 19, 1, 16),
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBarShadow), false, FilledAreaType.CharacterBar));
+                // SP fill
+                characterBars[i * 4 + 3] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 11, 19, 3, 16),
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBar), false, FilledAreaType.CharacterBar));
             }
         }
 
@@ -385,7 +438,7 @@ namespace Ambermoon.UI
             // Note: Don't remove fadeEffects here.
         }
 
-        public void SetActivePortrait(int slot, List<PartyMember> partyMembers)
+        public void SetActiveCharacter(int slot, List<PartyMember> partyMembers)
         {
             for (int i = 0; i < portraitNames.Length; ++i)
             {
@@ -399,22 +452,22 @@ namespace Ambermoon.UI
         /// <summary>
         /// Set portait to 0 to remove the portrait.
         /// </summary>
-        public void SetPortrait(int slot, uint portrait, string name, bool dead)
+        public void SetCharacter(int slot, PartyMember partyMember)
         {
             var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, false, true, 1);
-            sprite.Layer = RenderView.GetLayer(portrait == 0 || dead ? Layer.UIBackground : Layer.UIForeground);
+            sprite.Layer = RenderView.GetLayer(partyMember == null || !partyMember.Alive ? Layer.UIBackground : Layer.UIForeground);
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
-            if (portrait == 0)
+            if (partyMember == null)
                 sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot));
-            else if (dead)
+            else if (!partyMember.Alive)
                 sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Skull));
             else
-                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + portrait - 1);
+                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + partyMember.PortraitIndex - 1);
             sprite.PaletteIndex = 49;
             sprite.Visible = true;
 
-            if (portrait == 0)
+            if (partyMember == null)
             {
                 // TODO: in original portrait removing is animated by moving down the
                 // gray masked picture infront of the portrait. But this method is
@@ -436,12 +489,25 @@ namespace Ambermoon.UI
                 sprite.Visible = true;
 
                 var text = portraitNames[slot] ??= RenderView.RenderTextFactory.Create(RenderView.GetLayer(Layer.Text),
-                    RenderView.TextProcessor.CreateText(name.Substring(0, Math.Min(5, name.Length))), TextColor.Red, true,
+                    RenderView.TextProcessor.CreateText(partyMember.Name.Substring(0, Math.Min(5, partyMember.Name.Length))), TextColor.Red, true,
                     new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6), TextAlign.Center);
                 text.DisplayLayer = 1;
-                text.TextColor = dead ? TextColor.PaleGray : TextColor.Red;
+                text.TextColor = partyMember.Alive ? TextColor.Red : TextColor.PaleGray;
                 text.Visible = true;
             }
+
+            FillCharacterBars(slot, partyMember);
+        }
+
+        void FillCharacterBars(int slot, PartyMember partyMember)
+        {
+            float lpPercentage = partyMember == null ? 0.0f : (float)partyMember.HitPoints.TotalCurrentValue / partyMember.HitPoints.MaxValue;
+            float spPercentage = partyMember == null ? 0.0f : (float)partyMember.SpellPoints.TotalCurrentValue / partyMember.SpellPoints.MaxValue;
+
+            characterBars[slot * 4 + 0].Fill(lpPercentage);
+            characterBars[slot * 4 + 1].Fill(lpPercentage);
+            characterBars[slot * 4 + 2].Fill(spPercentage);
+            characterBars[slot * 4 + 3].Fill(spPercentage);
         }
 
         public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, bool background, byte displayLayer = 0)
@@ -501,18 +567,26 @@ namespace Ambermoon.UI
             itemGrids.Add(itemGrid);
         }
 
-        IColoredRect CreateArea(Rect rect, Color color, bool topMost, bool fadeEffect = false)
+        IColoredRect CreateArea(Rect rect, Color color, bool topMost, FilledAreaType type = FilledAreaType.Custom)
         {
             var coloredRect = RenderView.ColoredRectFactory.Create(rect.Width, rect.Height,
-                color, (byte)(topMost ? 255 : 0));
+                color, (byte)(topMost ? 255 : type == FilledAreaType.CharacterBar ? 1 : 0));
             coloredRect.Layer = RenderView.GetLayer(topMost ? Layer.Popup : Layer.UIBackground);
             coloredRect.X = rect.Left;
             coloredRect.Y = rect.Top;
             coloredRect.Visible = true;
-            if (fadeEffect)
-                fadeEffectAreas.Add(coloredRect);
-            else
-                filledAreas.Add(coloredRect);
+            switch (type)
+            {
+                case FilledAreaType.CharacterBar:
+                    barAreas.Add(coloredRect);
+                    break;
+                case FilledAreaType.FadeEffect:
+                    fadeEffectAreas.Add(coloredRect);
+                    break;
+                default:
+                    filledAreas.Add(coloredRect);
+                    break;
+            }               
             return coloredRect;
         }
 
@@ -524,7 +598,7 @@ namespace Ambermoon.UI
         public void AddColorFader(Rect rect, Color startColor, Color endColor,
             int durationInMilliseconds, bool removeWhenFinished, DateTime? startTime = null)
         {
-            fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, startColor, true, true), startColor,
+            fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, startColor, true, FilledAreaType.FadeEffect), startColor,
                 endColor, durationInMilliseconds, startTime ?? DateTime.Now, removeWhenFinished));
         }
 

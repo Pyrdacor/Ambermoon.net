@@ -213,13 +213,25 @@ namespace Ambermoon
             lastMoveTicksReset = currentTicks;
         }
 
+        public Color GetPaletteColor(int paletteIndex, int colorIndex)
+        {
+            var paletteData = renderView.GraphicProvider.Palettes[paletteIndex].Data;
+            return new Color
+            (
+                paletteData[colorIndex * 4 + 0],
+                paletteData[colorIndex * 4 + 1],
+                paletteData[colorIndex * 4 + 2],
+                paletteData[colorIndex * 4 + 3]
+            );
+        }
+
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
             ResetMoveKeys();
-            layout.SetLayout(UI.LayoutType.Map2D);
+            layout.SetLayout(LayoutType.Map2D);
 
             if (renderMap2D.Map != map)
             {
@@ -313,11 +325,11 @@ namespace Ambermoon
                 if (savegame.CurrentPartyMemberIndices[i] != 0)
                 {
                     var partyMember = savegame.GetPartyMember(i);
-                    layout.SetPortrait(i, partyMember.PortraitIndex, partyMember.Name, !partyMember.Alive);
+                    layout.SetCharacter(i, partyMember);
                 }
                 else
                 {
-                    layout.SetPortrait(i, 0, null, false);
+                    layout.SetCharacter(i, null);
                 }
             }
             CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
@@ -994,7 +1006,7 @@ namespace Ambermoon
             {
                 currentSavegame.ActivePartyMemberSlot = index;
                 CurrentPartyMember = partyMember;
-                layout.SetActivePortrait(index, currentSavegame.PartyMembers);
+                layout.SetActiveCharacter(index, currentSavegame.PartyMembers);
             }
         }
 
