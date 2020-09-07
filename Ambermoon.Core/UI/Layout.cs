@@ -261,7 +261,9 @@ namespace Ambermoon.UI
         readonly ILayerSprite sprite;
         readonly ITextureAtlas textureAtlasBackground;
         readonly ITextureAtlas textureAtlasForeground;
+        readonly List<ISprite> portraitBorders = new List<ISprite>();
         readonly ISprite[] portraitBackgrounds = new ISprite[Game.MaxPartyMembers];
+        readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
         readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
         readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
         ISprite sprite80x80Picture;
@@ -277,17 +279,79 @@ namespace Ambermoon.UI
         public Layout(Game game, IRenderView renderView)
         {
             this.game = game;
-            this.RenderView = renderView;
+            RenderView = renderView;
             textureAtlasBackground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground);
             textureAtlasForeground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIForeground);
-            sprite = renderView.SpriteFactory.Create(320, 163, 0, 0, false, true) as ILayerSprite;
-            sprite.Layer = renderView.GetLayer(Layer.UIBackground);
+
+            sprite = RenderView.SpriteFactory.Create(320, 163, false, true) as ILayerSprite;
+            sprite.Layer = RenderView.GetLayer(Layer.UIBackground);
             sprite.X = Global.LayoutX;
             sprite.Y = Global.LayoutY;
             sprite.DisplayLayer = 1;
             sprite.PaletteIndex = 0;
 
+            AddStaticSprites();
+
             SetLayout(LayoutType.None);
+        }
+
+        void AddStaticSprites()
+        {
+            var backgroundLayer = RenderView.GetLayer(Layer.UIBackground);
+
+            var barBackgroundTexCoords = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.CharacterValueBarFrames));
+            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            {
+                var barBackgroundSprite = portraitBarBackgrounds[i] = RenderView.SpriteFactory.Create(16, 36, false, true) as ILayerSprite;
+                barBackgroundSprite.Layer = backgroundLayer;
+                barBackgroundSprite.PaletteIndex = 49;
+                barBackgroundSprite.TextureAtlasOffset = barBackgroundTexCoords;
+                barBackgroundSprite.X = Global.PartyMemberPortraitAreas[i].Left + 33;
+                barBackgroundSprite.Y = Global.PartyMemberPortraitAreas[i].Top;
+                barBackgroundSprite.Visible = true;
+            }
+
+            // Left portrait border
+            var sprite = RenderView.SpriteFactory.Create(16, 36, false, true);
+            sprite.Layer = backgroundLayer;
+            sprite.PaletteIndex = 49;
+            sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.LeftPortraitBorder));
+            sprite.X = 0;
+            sprite.Y = 0;
+            sprite.Visible = true;
+            portraitBorders.Add(sprite);
+
+            // Right portrait border
+            sprite = RenderView.SpriteFactory.Create(16, 36, false, true);
+            sprite.Layer = backgroundLayer;
+            sprite.PaletteIndex = 49;
+            sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.RightPortraitBorder));
+            sprite.X = Global.VirtualScreenWidth - 16;
+            sprite.Y = 0;
+            sprite.Visible = true;
+            portraitBorders.Add(sprite);
+
+            // Thin portrait borders
+            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            {
+                sprite = RenderView.SpriteFactory.Create(32, 1, false, true);
+                sprite.Layer = backgroundLayer;
+                sprite.PaletteIndex = 49;
+                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
+                sprite.X = 16 + i * 48;
+                sprite.Y = 0;
+                sprite.Visible = true;
+                portraitBorders.Add(sprite);
+
+                sprite = RenderView.SpriteFactory.Create(32, 1, false, true);
+                sprite.Layer = backgroundLayer;
+                sprite.PaletteIndex = 49;
+                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
+                sprite.X = 16 + i * 48;
+                sprite.Y = 35;
+                sprite.Visible = true;
+                portraitBorders.Add(sprite);
+            }
         }
 
         public void SetLayout(LayoutType layoutType)
@@ -337,7 +401,7 @@ namespace Ambermoon.UI
         /// </summary>
         public void SetPortrait(int slot, uint portrait, string name, bool dead)
         {
-            var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 1);
+            var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, false, true, 1);
             sprite.Layer = RenderView.GetLayer(portrait == 0 || dead ? Layer.UIBackground : Layer.UIForeground);
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
@@ -363,7 +427,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, 0, 0, false, true, 0);
+                sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, false, true, 0);
                 sprite.Layer = RenderView.GetLayer(Layer.UIBackground);
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
@@ -382,7 +446,7 @@ namespace Ambermoon.UI
 
         public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, bool background, byte displayLayer = 0)
         {
-            var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, 0, 0, false, true) as ILayerSprite;
+            var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, false, true) as ILayerSprite;
             sprite.TextureAtlasOffset = (background ? textureAtlasBackground : textureAtlasForeground).GetOffset(textureIndex);
             sprite.DisplayLayer = displayLayer;
             sprite.X = rect.Left;
@@ -406,16 +470,16 @@ namespace Ambermoon.UI
             texts.Add(renderText);
         }
 
-        public void Set80x80Picture(Data.Enumerations.Picture80x80 picture)
+        public void Set80x80Picture(Picture80x80 picture)
         {
-            if (picture == Data.Enumerations.Picture80x80.None)
+            if (picture == Picture80x80.None)
             {
                 if (sprite80x80Picture != null)
                     sprite80x80Picture.Visible = false;
             }
             else
             {
-                var sprite = sprite80x80Picture ??= RenderView.SpriteFactory.Create(80, 80, 0, 0, false, true);
+                var sprite = sprite80x80Picture ??= RenderView.SpriteFactory.Create(80, 80, false, true);
                 sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
                 sprite.X = Global.LayoutX + 16;
                 sprite.Y = Global.LayoutY + 6;

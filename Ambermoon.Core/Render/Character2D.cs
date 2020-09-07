@@ -61,7 +61,8 @@ namespace Ambermoon.Render
             CurrentBaseFrameIndex = CurrentFrameIndex = currentAnimationInfo.StandFrameIndex;
             var textureOffset = textureAtlas.GetOffset(CurrentFrameIndex);
             sprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, currentAnimationInfo.FrameHeight,
-                textureOffset.X, textureOffset.Y, textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
+                textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
+            sprite.TextureAtlasOffset = textureOffset;
             sprite.Layer = layer;
             sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + Padding.X;
             sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + Padding.Y;

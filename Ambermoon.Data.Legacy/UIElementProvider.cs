@@ -113,7 +113,14 @@ namespace Ambermoon.Data.Legacy
                 .Build(),
 
                 // Portrait background
-                Graphic.CreateGradient(32, 34, 4, 2, 8, 23)
+                Graphic.CreateGradient(32, 34, 4, 2, 8, 23),
+
+                // Thin portrait border
+                Graphic.FromIndexedData(32, 1, new byte[32]
+                {
+                    28, 28, 28, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28,
+                    28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 28, 28, 28
+                })
             };
         }
     }

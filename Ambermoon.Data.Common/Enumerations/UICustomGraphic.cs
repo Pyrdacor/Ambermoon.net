@@ -18,6 +18,7 @@
         ScrollbarLargeVerticalDisabled,
         ItemSlotBackground,
         ItemSlotDisabled, // locked chests
-        PortraitBackground // black to blue gradient
+        PortraitBackground, // black to blue gradient
+        PortraitBorder // thin 1-pixel border for top and bottom of portraits
     }
 }

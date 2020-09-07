@@ -389,27 +389,27 @@ namespace Ambermoon.Renderer
             this.virtualScreen = virtualScreen;
         }
 
-        public ISprite Create(int width, int height, int textureAtlasX, int textureAtlasY, bool masked, bool layered, byte displayLayer = 0)
+        public ISprite Create(int width, int height, bool masked, bool layered, byte displayLayer = 0)
         {
             if (masked)
             {
                 if (layered)
-                    return new MaskedLayerSprite(width, height, textureAtlasX, textureAtlasY, displayLayer, virtualScreen);
+                    return new MaskedLayerSprite(width, height, 0, 0, displayLayer, virtualScreen);
                 else
-                    return new MaskedSprite(width, height, textureAtlasX, textureAtlasY, virtualScreen);
+                    return new MaskedSprite(width, height, 0, 0, virtualScreen);
             }
             else
             {
                 if (layered)
-                    return new LayerSprite(width, height, textureAtlasX, textureAtlasY, displayLayer, virtualScreen);
+                    return new LayerSprite(width, height, 0, 0, displayLayer, virtualScreen);
                 else
-                    return new Sprite(width, height, textureAtlasX, textureAtlasY, virtualScreen);
+                    return new Sprite(width, height, 0, 0, virtualScreen);
             }
         }
 
-        public IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasX, int textureAtlasY, int textureAtlasWidth, uint numFrames = 1)
+        public IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames = 1)
         {
-            return new AnimatedSprite(width, height, textureAtlasX, textureAtlasY, virtualScreen, numFrames, textureAtlasWidth);
+            return new AnimatedSprite(width, height, 0, 0, virtualScreen, numFrames, textureAtlasWidth);
         }
     }
 }

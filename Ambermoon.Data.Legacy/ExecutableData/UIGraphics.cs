@@ -62,7 +62,23 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.PaletteOffset = 24;
             entries.Add(UIGraphic.Ouch, ReadGraphic(dataReader));
 
-            dataReader.Position = 0x1EAC; // start at wind chain
+            graphicInfo.Width = 16;
+            graphicInfo.Height = 60;
+            entries.Add(UIGraphic.StarBlinkAnimation, ReadGraphic(dataReader));
+            graphicInfo.Height = 40;
+            entries.Add(UIGraphic.PlusBlinkAnimation, ReadGraphic(dataReader));
+            graphicInfo.Height = 36;
+            entries.Add(UIGraphic.LeftPortraitBorder, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.CharacterValueBarFrames, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.RightPortraitBorder, ReadGraphic(dataReader));
+            graphicInfo.Height = 1;
+            entries.Add(UIGraphic.SmallBorder1, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.SmallBorder2, ReadGraphic(dataReader));
+            graphicInfo.Height = 16;
+            for (int i = (int)UIGraphic.Candle; i <= (int)UIGraphic.Scroll; ++i)
+                entries.Add((UIGraphic)i, ReadGraphic(dataReader));
+
+            graphicInfo.Width = 32;
             graphicInfo.Height = 15;
             entries.Add(UIGraphic.Windchain, ReadGraphic(dataReader));
             graphicInfo.Height = 32;
