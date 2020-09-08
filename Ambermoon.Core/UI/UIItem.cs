@@ -37,26 +37,35 @@ namespace Ambermoon.UI
 
         public void Update(bool itemTypeChanged)
         {
-            var itemInfo = itemManager.GetItem(Item.ItemIndex);
-
             if (itemTypeChanged)
             {
-                sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(itemInfo.GraphicIndex);
-                bool stackable = itemInfo.Flags.HasFlag(ItemFlags.Stackable);
-
-                if (amountDisplay == null && stackable)
+                if (Item.ItemIndex == 0 && Item.Amount != 0) // second hand slot
                 {
-                    amountDisplay = renderView.RenderTextFactory.Create();
-                    amountDisplay.Layer = renderView.GetLayer(Layer.Text);
-                    amountDisplay.TextColor = TextColor.White;
-                    amountDisplay.Shadow = true;
-                    amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
-                    amountDisplay.Visible = true;
-                }
-                else if (amountDisplay != null && !stackable)
-                {
-                    amountDisplay.Delete();
+                    sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(0);
+                    amountDisplay?.Delete();
                     amountDisplay = null;
+                }
+                else
+                {
+                    var itemInfo = itemManager.GetItem(Item.ItemIndex);
+
+                    sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(itemInfo.GraphicIndex);
+                    bool stackable = itemInfo.Flags.HasFlag(ItemFlags.Stackable);
+
+                    if (amountDisplay == null && stackable)
+                    {
+                        amountDisplay = renderView.RenderTextFactory.Create();
+                        amountDisplay.Layer = renderView.GetLayer(Layer.Text);
+                        amountDisplay.TextColor = TextColor.White;
+                        amountDisplay.Shadow = true;
+                        amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
+                        amountDisplay.Visible = true;
+                    }
+                    else if (amountDisplay != null && !stackable)
+                    {
+                        amountDisplay.Delete();
+                        amountDisplay = null;
+                    }
                 }
             }
             else if (amountDisplay != null)

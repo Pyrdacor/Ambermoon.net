@@ -29,6 +29,8 @@ namespace Ambermoon.UI
         Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
         bool disabled;
 
+        public event Action<int, Item> ItemDragged;
+        public event Action<int, Item> ItemDropped;
         public int SlotCount => items.Length;
         public int ScrollOffset { get; private set; } = 0;
         public bool Disabled
@@ -140,7 +142,7 @@ namespace Ambermoon.UI
         {
             items[slot]?.Destroy();
 
-            if (item == null)
+            if (item == null || item.Empty)
                 items[slot] = null;
             else
             {
@@ -180,6 +182,7 @@ namespace Ambermoon.UI
                 item.Dragged = false;
                 items[slot] = item;
                 item.Position = slotPositions[slot - ScrollOffset];
+                ItemDropped?.Invoke(slot, itemManager.GetItem(item.Item.ItemIndex));
                 return 0;
             }
             else if (itemSlot.Item.Empty || itemSlot.Item.ItemIndex == item.Item.ItemIndex)
@@ -192,14 +195,21 @@ namespace Ambermoon.UI
                 else
                     item.Update(false);
 
+                ItemDropped?.Invoke(slot, itemManager.GetItem(itemSlot.Item.ItemIndex));
+
                 return remaining;
             }
             else
             {
+                if (!itemSlot.Item.Draggable)
+                    return item.Item.Amount;
+
                 itemSlot.Item.Exchange(item.Item);
                 itemSlot.Update(true);
                 itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
                 item.Update(true);
+                ItemDragged?.Invoke(slot, itemManager.GetItem(item.Item.ItemIndex));
+                ItemDropped?.Invoke(slot, itemManager.GetItem(itemSlot.Item.ItemIndex));
                 return itemSlot.Item.Amount;
             }
         }
@@ -357,9 +367,10 @@ namespace Ambermoon.UI
             {
                 var itemSlot = items[slot.Value];
 
-                if (itemSlot != null && !itemSlot.Item.Empty)
+                if (itemSlot != null && itemSlot.Item.Draggable)
                 {
                     pickedUpItem = pickupAction(this, slot.Value, itemSlot);
+                    ItemDragged?.Invoke(slot.Value, itemManager.GetItem(pickedUpItem.Item.Item.ItemIndex));
                     items[slot.Value] = null;
                     Hover(position); // This updates the tooltip
                 }
@@ -372,7 +383,8 @@ namespace Ambermoon.UI
         {
             var slot = SlotFromPosition(position);
 
-            if (disabled || slot == null || items[slot.Value]?.Visible != true || items[slot.Value]?.Item?.Empty == true)
+            if (disabled || slot == null || items[slot.Value]?.Visible != true ||
+                items[slot.Value]?.Item?.Empty == true || items[slot.Value]?.Item.ItemIndex == 0)
             {
                 hoveredItemName?.Delete();
                 hoveredItemName = null;

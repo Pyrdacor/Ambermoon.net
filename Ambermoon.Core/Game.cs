@@ -990,6 +990,20 @@ namespace Ambermoon
                     if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
                         equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
                 }
+                equipmentGrid.ItemDragged += (int slot, Item item) =>
+                {
+                    if (item.NumberOfHands == 2 && slot == (int)EquipmentSlot.RightHand - 1)
+                        equipmentGrid.SetItem(slot + 2, null);
+
+                    // TODO: rings/fingers
+                };
+                equipmentGrid.ItemDropped += (int slot, Item item) =>
+                {
+                    if (item.NumberOfHands == 2 && slot == (int)EquipmentSlot.RightHand - 1)
+                        equipmentGrid.SetItem((int)EquipmentSlot.LeftHand - 1, new ItemSlot { ItemIndex = 0, Amount = 1 });
+
+                    // TODO: rings/fingers
+                };
                 #endregion
                 #region Character info
                 layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);

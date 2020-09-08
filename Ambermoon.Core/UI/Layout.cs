@@ -539,7 +539,7 @@ namespace Ambermoon.UI
             texts.ForEach(text => text?.Delete());
             texts.Clear();
 
-            // Note: Don't remove fadeEffects here.
+            // Note: Don't remove fadeEffects or bars here.
         }
 
         public void SetActiveCharacter(int slot, List<PartyMember> partyMembers)

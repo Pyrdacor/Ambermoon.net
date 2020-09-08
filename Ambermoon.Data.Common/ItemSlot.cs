@@ -10,6 +10,7 @@
         public bool Empty => Amount == 0;
         public bool Unlimited => Amount == 255;
         public bool Stacked => Amount > 1;
+        public bool Draggable => ItemIndex != 0 && Amount != 0; // TODO: cursed?
 
         public int Add(ItemSlot item)
         {
