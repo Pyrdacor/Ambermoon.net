@@ -65,6 +65,8 @@ namespace Ambermoon.UI
             fill.Visible = true;
         }
 
+        public bool CloseOnClick { get; set; } = true;
+
         public void Destroy()
         {
             borders.ForEach(border => border?.Delete());

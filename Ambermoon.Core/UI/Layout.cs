@@ -480,9 +480,12 @@ namespace Ambermoon.UI
             game.InputEnable = true;
         }
 
-        void OpenPopup(Position position, int columns, int rows)
+        void OpenPopup(Position position, int columns, int rows, bool closeOnClick = true)
         {
-            activePopup = new Popup(game, RenderView, position, columns, rows);
+            activePopup = new Popup(game, RenderView, position, columns, rows)
+            {
+                CloseOnClick = closeOnClick
+            };
         }
 
         internal void ClosePopup()
@@ -494,7 +497,7 @@ namespace Ambermoon.UI
         void OpenLoadMenu()
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData);
-            OpenPopup(new Position(16, 62), 18, 7);
+            OpenPopup(new Position(16, 62), 18, 7, false);
             activePopup.AddText(new Rect(24, 78, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
             activePopup.AddSunkenBox(new Rect(32, 85, 256, 73));
 
@@ -868,8 +871,15 @@ namespace Ambermoon.UI
         {
             if (PopupActive)
             {
-                ClosePopup();
-                return true;
+                if (activePopup.CloseOnClick || buttons == MouseButtons.Right)
+                {
+                    ClosePopup();
+                    return true;
+                }
+                else
+                {
+                    // TODO: click in popup
+                }
             }
 
             if (buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
