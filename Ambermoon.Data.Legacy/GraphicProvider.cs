@@ -37,9 +37,7 @@ namespace Ambermoon.Data.Legacy
             var graphicReader = new GraphicReader();
             Palettes = gameData.Files[paletteFile].Files.ToDictionary(f => f.Key, f => ReadPalette(graphicReader, f.Value));
 
-            // TODO: maybe we can read the special palettes from executable data?
             // There is a special palette used for items and portraits.
-            // Special thanks to Iceblizz who provided it to the Amberworld project.
             Palettes.Add(50, new Graphic
             {
                 Width = 32,
@@ -82,7 +80,7 @@ namespace Ambermoon.Data.Legacy
                     // NOTE: Color 25 (0-based) is treated as the color key (tansparent color) index so don't use it
                     // as a normal color!
                     // transparent, black (shadow), white, gray
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xee, 0xff, 0xbb, 0xbb, 0xaa, 0xff,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xee, 0xff, 0xcc, 0xcc, 0xbb, 0xff,
                     // red (character), yellow (active character), orange (battle text), blueish gray (dead character)
                     0xcc, 0x44, 0x33, 0xff, 0xff, 0xcc, 0x00, 0xff, 0xdd, 0x66, 0x33, 0xff, 0x99, 0xaa, 0xaa, 0xff,
                     // 16 colors for the blue background gradient of portraits
@@ -176,6 +174,7 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.Layout, new GraphicFile("Layouts.amb"));
             AddGraphicFiles(GraphicType.LabBackground, new GraphicFile("Lab_background.amb"));
             AddGraphicFiles(GraphicType.Pics80x80, new GraphicFile("Pics_80x80.amb"));
+            AddGraphicFiles(GraphicType.EventPictures, new GraphicFile("Event_pix.amb"));
         }
 
         public List<Graphic> GetGraphics(GraphicType type)
@@ -286,6 +285,13 @@ namespace Ambermoon.Data.Legacy
                 case GraphicType.Pics80x80:
                     info.Width = 80;
                     info.Height = 80;
+                    info.GraphicFormat = GraphicFormat.Palette5Bit;
+                    info.PaletteOffset = 0;
+                    info.Alpha = false;
+                    break;
+                case GraphicType.EventPictures:
+                    info.Width = 320;
+                    info.Height = 92;
                     info.GraphicFormat = GraphicFormat.Palette5Bit;
                     info.PaletteOffset = 0;
                     info.Alpha = false;

@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
 
@@ -183,6 +184,10 @@ namespace Ambermoon.Render
             for (int i = 0; i < uiElementGraphics.Count; ++i)
                 AddTexture(Layer.UIBackground, UI.Graphics.UIElementOffset + (uint)i, uiElementGraphics[i]);
 
+            int offset = Enum.NameCount<UICustomGraphic>(); // the UIGraphics follow the UICustomGraphics.
+            for (int i = 0; i <= (int)UIGraphic.FrameLowerRight; ++i)
+                AddTexture(Layer.Popup, (uint)i, uiElementGraphics[offset + i]);
+
             #endregion
 
             #region Portraits
@@ -200,6 +205,15 @@ namespace Ambermoon.Render
 
             for (int i = 0; i < pics80x80Graphics.Count; ++i)
                 AddTexture(Layer.UIForeground, UI.Graphics.Pics80x80Offset + (uint)i, pics80x80Graphics[i]);
+
+            #endregion
+
+            #region Event pix
+
+            var eventGraphics = graphicProvider.GetGraphics(GraphicType.EventPictures);
+
+            for (int i = 0; i < eventGraphics.Count; ++i)
+                AddTexture(Layer.Popup, UI.Graphics.EventPictureOffset + (uint)i, eventGraphics[i]);
 
             #endregion
 

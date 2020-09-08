@@ -2,7 +2,7 @@
 
 namespace Ambermoon.UI
 {
-    public static class Graphics
+    internal static class Graphics
     {
         // Background layer
         public const uint LayoutOffset = 0u;
@@ -10,6 +10,8 @@ namespace Ambermoon.UI
         // Foreground layer
         public const uint PortraitOffset = 0u;
         public const uint Pics80x80Offset = 120u;
+        // Popup layer
+        public const uint EventPictureOffset = 20u;
 
         // We load 3 things into the same layer -> GraphicType.UIElements
         // 1. Our own UI elements like scrollbars, etc (see UICustomGraphic)
@@ -22,5 +24,6 @@ namespace Ambermoon.UI
         public static uint GetCustomUIGraphicIndex(UICustomGraphic customGraphic) => UIElementOffset + (uint)customGraphic;
         public static uint GetUIGraphicIndex(UIGraphic graphic) => UIGraphicOffset + (uint)graphic;
         public static uint GetButtonGraphicIndex(ButtonType buttonType) => ButtonOffset + (uint)buttonType;
+        public static uint GetPopupFrameGraphicIndex(PopupFrame frame) => (uint)frame;
     }
 }

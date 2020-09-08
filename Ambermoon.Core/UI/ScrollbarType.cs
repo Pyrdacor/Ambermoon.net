@@ -1,9 +1,9 @@
 ﻿namespace Ambermoon.UI
 {
     /// <summary>
-    /// This should always match the associated indices in <see cref="UIElementGraphic"/>!
+    /// This should always match the associated indices in <see cref="UICustomGraphic"/>!
     /// </summary>
-    public enum ScrollbarType
+    internal enum ScrollbarType
     {
         SmallVertical,
         SmallVerticalHighlighted,

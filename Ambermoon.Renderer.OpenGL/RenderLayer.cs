@@ -117,7 +117,7 @@ namespace Ambermoon.Renderer
             bool masked = false; // TODO: do we need this for some layer?
             bool supportAnimations = layer >= Global.First2DLayer && layer <= Global.Last2DLayer; // TODO
             bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
-            bool opaque = layer == Layer.Popup || (layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8);
+            bool opaque = layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
                 masked, supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,

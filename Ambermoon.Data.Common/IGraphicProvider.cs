@@ -20,7 +20,8 @@ namespace Ambermoon.Data
         LabBackground,
         Cursor,
         Pics80x80,
-        UIElements
+        UIElements,
+        EventPictures
         // TODO ...
     }
 

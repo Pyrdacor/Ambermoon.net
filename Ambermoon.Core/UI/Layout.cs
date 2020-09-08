@@ -315,6 +315,7 @@ namespace Ambermoon.UI
         readonly List<ISprite> additionalSprites = new List<ISprite>();
         readonly List<IRenderText> texts = new List<IRenderText>();
         readonly ButtonGrid buttonGrid;
+        Popup activePopup = null;
         int buttonGridPage = 0;
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
@@ -467,7 +468,7 @@ namespace Ambermoon.UI
             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(6, ButtonType.Save, true, null, false); // TODO: save
-            buttonGrid.SetButton(7, ButtonType.Load, true, null, false); // TODO: load
+            buttonGrid.SetButton(7, ButtonType.Load, false, OpenLoadMenu, false);
             buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
         }
 
@@ -476,6 +477,24 @@ namespace Ambermoon.UI
             Reset();
             UpdateLayoutButtons(ticksPerMovement);
             game.InputEnable = true;
+        }
+
+        void OpenPopup(Position position, int columns, int rows)
+        {
+            activePopup = new Popup(game, RenderView, position, columns, rows);
+        }
+
+        void ClosePopup()
+        {
+            activePopup?.Destroy();
+            activePopup = null;
+        }
+
+        void OpenLoadMenu()
+        {
+            OpenPopup(new Position(16, 64), 18, 7);
+            activePopup.AddText(new Rect(24, 80, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
+            activePopup.AddSunkenBox(new Rect(32, 88, 256, 64));
         }
 
         void UpdateLayoutButtons(uint? ticksPerMovement = null)
@@ -572,6 +591,8 @@ namespace Ambermoon.UI
             filledAreas.Clear();
             texts.ForEach(text => text?.Delete());
             texts.Clear();
+            activePopup?.Destroy();
+            activePopup = null;
 
             // Note: Don't remove fadeEffects or bars here.
         }
