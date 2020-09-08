@@ -123,8 +123,35 @@ namespace Ambermoon.Data.Legacy
                     28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 28, 28, 28
                 }),
 
-                // Disabled button overlay
-                Graphic.FromIndexedData(24, 11, Enumerable.Range(0, 24 * 11).Select(i => (byte)((i + i / 24) % 2 == 0 ? 0 : 26)).ToArray())
+                // Disabled button overlay (palette 51 -> 0 = transparent, 26 = dark gray)
+                Graphic.FromIndexedData(24, 11, Enumerable.Range(0, 24 * 11).Select(i => (byte)((i + i / 24) % 2 == 0 ? 0 : 26)).ToArray()),
+
+                // Map disable overlay (palette 50 -> 0 = black, 25 = transparent)
+                Graphic.FromIndexedData(176, 144, Enumerable.Range(0, 176 * 144).Select(i => (byte)((i + i / 176) % 2 == 0 ? 25 : 0)).ToArray()),
+
+                // Ambermoon info box (shown over the map when opening option menu)
+                GraphicBuilder.Create(128, 19)
+                .AddColoredArea(new Rect(0, 0, 1, 1), 31)
+                .AddColoredArea(new Rect(1, 0, 126, 1), 30)
+                .AddColoredArea(new Rect(127, 0, 1, 1), 28)
+                .AddColoredArea(new Rect(0, 1, 1, 17), 30)
+                .AddColoredArea(new Rect(1, 1, 126, 17), 29)
+                .AddColoredArea(new Rect(127, 1, 1, 17), 27)
+                .AddColoredArea(new Rect(0, 18, 1, 1), 28)
+                .AddColoredArea(new Rect(1, 18, 127, 1), 27)
+                .Build(),
+
+                // Bigger info box
+                GraphicBuilder.Create(144, 26)
+                .AddColoredArea(new Rect(0, 0, 1, 1), 31)
+                .AddColoredArea(new Rect(1, 0, 142, 1), 30)
+                .AddColoredArea(new Rect(143, 0, 1, 1), 28)
+                .AddColoredArea(new Rect(0, 1, 1, 24), 30)
+                .AddColoredArea(new Rect(1, 1, 142, 24), 29)
+                .AddColoredArea(new Rect(143, 1, 1, 24), 27)
+                .AddColoredArea(new Rect(0, 25, 1, 1), 28)
+                .AddColoredArea(new Rect(1, 25, 143, 1), 27)
+                .Build()
             };
         }
     }

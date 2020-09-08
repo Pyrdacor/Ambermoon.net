@@ -2,6 +2,8 @@
 {
     public interface IDataNameProvider
     {
+        string DataVersionString { get; }
+        string DataInfoString { get; }
         string GetClassName(Class @class);
         string GetRaceName(Race race);
         string GetGenderName(Gender gender);

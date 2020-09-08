@@ -444,6 +444,40 @@ namespace Ambermoon.UI
             UpdateLayoutButtons(ticksPerMovement);
         }
 
+        public void OpenOptionMenu()
+        {
+            game.InputEnable = false;
+            var area = Type switch
+            {
+                LayoutType.Map2D => new Rect(Global.Map2DViewX, Global.Map2DViewY, Global.Map2DViewWidth, Global.Map2DViewHeight),
+                LayoutType.Map3D => new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth, Global.Map3DViewHeight),
+                _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from another open window is not supported.")
+            };
+            AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), 49, true, 1);
+            AddSprite(new Rect(32, 82, 144, 26), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), 49, true, 2);
+            var version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
+            AddText(new Rect(32, 84, 144, 26),
+                $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}",
+                TextColor.White, TextAlign.Center, 3);
+
+            buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false); // TODO: ask to really quit etc
+            buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+            buttonGrid.SetButton(2, ButtonType.Exit, false, CloseOptionMenu, false);
+            buttonGrid.SetButton(3, ButtonType.Opt, true, null, false); // TODO: options
+            buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+            buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+            buttonGrid.SetButton(6, ButtonType.Save, true, null, false); // TODO: save
+            buttonGrid.SetButton(7, ButtonType.Load, true, null, false); // TODO: load
+            buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+        }
+
+        void CloseOptionMenu()
+        {
+            Reset();
+            UpdateLayoutButtons(ticksPerMovement);
+            game.InputEnable = true;
+        }
+
         void UpdateLayoutButtons(uint? ticksPerMovement = null)
         {
             switch (Type)
@@ -472,7 +506,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, true, null, false); // TODO: battle positions
-                        buttonGrid.SetButton(8, ButtonType.Options, true, null, false); // TODO: options
+                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
                     }
                     break;
                 case LayoutType.Map3D:
@@ -499,7 +533,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, true, null, false); // TODO: battle positions
-                        buttonGrid.SetButton(8, ButtonType.Options, true, null, false); // TODO: options
+                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
                     }
                     break;
                 case LayoutType.Inventory:
@@ -741,6 +775,9 @@ namespace Ambermoon.UI
 
         public void KeyDown(Key key, KeyModifiers keyModifiers)
         {
+            if (!game.InputEnable)
+                return;
+
             switch (key)
             {
                 case Key.Up:
@@ -782,6 +819,9 @@ namespace Ambermoon.UI
                 return;
             }
 
+            if (!game.InputEnable)
+                return;
+
             foreach (var itemGrid in itemGrids)
                 itemGrid.LeftMouseUp(position);
         }
@@ -789,6 +829,9 @@ namespace Ambermoon.UI
         public void RightMouseUp(Position position, out CursorType? newCursorType, uint currentTicks)
         {
             buttonGrid.MouseUp(position, MouseButtons.Right, out newCursorType, currentTicks);
+
+            if (!game.InputEnable)
+                return;
         }
 
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
@@ -800,6 +843,9 @@ namespace Ambermoon.UI
                     cursorType = newCursorType.Value;
                 return true;
             }
+
+            if (!game.InputEnable)
+                return false;
 
             if (buttons == MouseButtons.Left)
             {

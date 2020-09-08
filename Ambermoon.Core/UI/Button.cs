@@ -126,7 +126,7 @@ namespace Ambermoon.UI
 
         public bool Disabled
         {
-            get => disableOverlay.Visible;
+            get => disableOverlay.Visible || buttonType == ButtonType.Empty;
             set => disableOverlay.Visible = value;
         }
 
@@ -171,8 +171,9 @@ namespace Ambermoon.UI
         CursorType? ExecuteActions(uint currentTicks)
         {
             lastActionTimeInTicks = currentTicks;
+            var cursorChangeAction = CursorChangeAction; // The action invoke might change this by swapping buttons!
             Action?.Invoke();
-            return CursorChangeAction?.Invoke();
+            return cursorChangeAction?.Invoke();
         }
 
         internal CursorType? Press(uint currentTicks)

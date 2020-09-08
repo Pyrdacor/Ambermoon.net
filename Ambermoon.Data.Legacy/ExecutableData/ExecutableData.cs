@@ -44,6 +44,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class ExecutableData
     {
+        public string DataVersionString { get; }
+        public string DataInfoString { get; }
         public UIGraphics UIGraphics { get; }
         public Glyphs Glyphs { get; }
         public Cursors Cursors { get; }
@@ -89,6 +91,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         public ExecutableData(List<AmigaExecutable.IHunk> hunks)
         {
+            var firstCodeHunk = hunks.FirstOrDefault(h => h.Type == AmigaExecutable.HunkType.Code);
+
+            if (firstCodeHunk == null)
+                DataInfoString = "Unknown data version";
+            else
+            {
+                var infoReader = new DataReader((firstCodeHunk as AmigaExecutable.Hunk?)?.Data);
+                infoReader.Position = 6;
+                DataVersionString = infoReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                DataInfoString = infoReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+            }
+
             var reloc32Hunk = (AmigaExecutable.Reloc32Hunk?)hunks.LastOrDefault(h => h.Type == AmigaExecutable.HunkType.RELOC32);
             var dataHunkReaders = hunks.Where(h => h.Type == AmigaExecutable.HunkType.Data)
                 .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data)).ToArray();

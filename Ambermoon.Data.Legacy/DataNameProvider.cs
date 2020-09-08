@@ -11,6 +11,10 @@
             this.executableData = executableData;
         }
 
+        public string DataVersionString => executableData.DataVersionString;
+        public string DataInfoString => executableData.DataInfoString;
+
+
         public string CharacterInfoAgeString => executableData.UITexts.Entries[UITextIndex.AgeDisplay];
         public string CharacterInfoExperiencePointsString => executableData.UITexts.Entries[UITextIndex.EPDisplay];
         public string CharacterInfoGoldAndFoodString => executableData.UITexts.Entries[UITextIndex.GoldAndFoodDisplay];

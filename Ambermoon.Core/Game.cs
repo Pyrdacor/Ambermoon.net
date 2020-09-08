@@ -66,9 +66,10 @@ namespace Ambermoon
         public const int MaxPartyMembers = 6;
         const uint TicksPerSecond = 60;
         readonly bool legacyMode = false;
+        public event Action QuitRequested;
         bool ingame = false;
         bool is3D = false;
-        bool WindowActive => currentWindow.Window != Window.MapView;
+        internal bool WindowActive => currentWindow.Window != Window.MapView;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
         WindowInfo lastWindow = DefaultWindow;
@@ -79,7 +80,7 @@ namespace Ambermoon
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly NameProvider nameProvider;
-        readonly IDataNameProvider dataNameProvider;
+        internal IDataNameProvider DataNameProvider { get; }
         readonly Layout layout;
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
@@ -93,6 +94,10 @@ namespace Ambermoon
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
+        /// <summary>
+        /// The 3x3 buttons will always be enabled!
+        /// </summary>
+        public bool InputEnable { get; set; } = true;
         bool leftMouseDown = false;
         bool clickMoveActive = false;
         Rect trapMouseArea = null;
@@ -174,7 +179,7 @@ namespace Ambermoon
             this.itemManager = itemManager;
             this.savegameManager = savegameManager;
             this.savegameSerializer = savegameSerializer;
-            this.dataNameProvider = dataNameProvider;
+            this.DataNameProvider = dataNameProvider;
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
@@ -193,6 +198,11 @@ namespace Ambermoon
             // TODO: For now we just start a new game.
             var initialSavegame = savegameManager.LoadInitial(renderView.GameData, savegameSerializer);
             Start(initialSavegame);
+        }
+
+        public void Quit()
+        {
+            QuitRequested?.Invoke();
         }
 
         public void Update(double deltaTime)
@@ -422,7 +432,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (WindowActive || !clickMoveActive)
+            if (WindowActive || !InputEnable || !clickMoveActive)
             {
                 clickMoveActive = false;
                 return;
@@ -528,7 +538,7 @@ namespace Ambermoon
 
         void Move()
         {
-            if (WindowActive)
+            if (WindowActive || !InputEnable)
                 return;
 
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
@@ -579,6 +589,12 @@ namespace Ambermoon
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
+            if (!InputEnable)
+            {
+                if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
+                    return;
+            }
+
             keys[(int)key] = true;
 
             if (!WindowActive)
@@ -632,6 +648,12 @@ namespace Ambermoon
 
         public void OnKeyUp(Key key, KeyModifiers modifiers)
         {
+            if (!InputEnable)
+            {
+                if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
+                    return;
+            }
+
             keys[(int)key] = false;
 
             switch (key)
@@ -658,6 +680,9 @@ namespace Ambermoon
 
         public void OnKeyChar(char keyChar)
         {
+            if (!InputEnable)
+                return;
+
             if (keyChar >= '1' && keyChar <= '6')
             {
                 SetActivePartyMember(keyChar - '1');
@@ -700,7 +725,7 @@ namespace Ambermoon
             {
                 var relativePosition = renderView.ScreenToGame(position);
 
-                if (!WindowActive && mapViewArea.Contains(relativePosition))
+                if (!WindowActive && InputEnable && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
                     if (buttons == MouseButtons.Right)
@@ -731,9 +756,13 @@ namespace Ambermoon
                     var cursorType = CursorType.Sword;
                     layout.Click(relativePosition, buttons, ref cursorType, currentTicks);
                     CursorType = cursorType;
-                    layout.Hover(relativePosition, ref cursorType); // Update cursor
-                    if (cursor.Type != CursorType.None)
-                        CursorType = cursorType;
+
+                    if (InputEnable)
+                    {
+                        layout.Hover(relativePosition, ref cursorType); // Update cursor
+                        if (cursor.Type != CursorType.None)
+                            CursorType = cursorType;
+                    }
 
                     // TODO: check for other clicks
                 }
@@ -749,6 +778,12 @@ namespace Ambermoon
             lock (cursor)
             {
                 cursor.UpdatePosition(cursorPosition);
+
+                if (!InputEnable)
+                {
+                    CursorType = CursorType.Sword;
+                    return;
+                }
 
                 var relativePosition = renderView.ScreenToGame(cursorPosition);
 
@@ -856,6 +891,9 @@ namespace Ambermoon
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
+            if (!InputEnable)
+                UntrapMouse();
+
             if (trapped)
             {
                 var trappedPosition = position + trappedMousePositionOffset;
@@ -917,7 +955,7 @@ namespace Ambermoon
             {
                 StorageOpen = false;
                 string mapName = Map.IsWorldMap
-                    ? dataNameProvider.GetWorldName(Map.World)
+                    ? DataNameProvider.GetWorldName(Map.World)
                     : Map.Name;
                 windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
                 windowTitle.TextColor = TextColor.Gray;
@@ -959,7 +997,7 @@ namespace Ambermoon
                 SetWindow(Window.Inventory, slot);
                 layout.SetLayout(LayoutType.Inventory);
 
-                windowTitle.Text = renderView.TextProcessor.CreateText(dataNameProvider.InventoryTitleString);
+                windowTitle.Text = renderView.TextProcessor.CreateText(DataNameProvider.InventoryTitleString);
                 windowTitle.TextColor = TextColor.White;
                 windowTitle.Visible = true;
 
@@ -1009,22 +1047,22 @@ namespace Ambermoon
                 layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
                 layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UIElementOffset + (uint)UICustomGraphic.PortraitBackground, 50, true, 1);
                 layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, false, 2);
-                layout.AddText(new Rect(242, 49, 62, 7), dataNameProvider.GetRaceName(partyMember.Race));
-                layout.AddText(new Rect(242, 56, 62, 7), dataNameProvider.GetGenderName(partyMember.Gender));
-                layout.AddText(new Rect(242, 63, 62, 7), string.Format(dataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
+                layout.AddText(new Rect(242, 49, 62, 7), DataNameProvider.GetRaceName(partyMember.Race));
+                layout.AddText(new Rect(242, 56, 62, 7), DataNameProvider.GetGenderName(partyMember.Gender));
+                layout.AddText(new Rect(242, 63, 62, 7), string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                     partyMember.Attributes[Data.Attribute.Age].CurrentValue));
-                layout.AddText(new Rect(242, 70, 62, 7), $"{dataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
-                layout.AddText(new Rect(242, 77, 62, 7), string.Format(dataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                layout.AddText(new Rect(242, 70, 62, 7), $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
+                layout.AddText(new Rect(242, 77, 62, 7), string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                     partyMember.ExperiencePoints));
                 layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
-                layout.AddText(new Rect(208, 91, 96, 7), string.Format(dataNameProvider.CharacterInfoHitPointsString,
+                layout.AddText(new Rect(208, 91, 96, 7), string.Format(DataNameProvider.CharacterInfoHitPointsString,
                     partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 98, 96, 7), string.Format(dataNameProvider.CharacterInfoSpellPointsString,
+                layout.AddText(new Rect(208, 98, 96, 7), string.Format(DataNameProvider.CharacterInfoSpellPointsString,
                     partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue), TextColor.White, TextAlign.Center);
                 layout.AddText(new Rect(208, 105, 96, 7),
-                    string.Format(dataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
-                    string.Format(dataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 112, 96, 7), string.Format(dataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
+                    string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
+                    string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center);
+                layout.AddText(new Rect(208, 112, 96, 7), string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
                     TextColor.White, TextAlign.Center);
                 #endregion
 
