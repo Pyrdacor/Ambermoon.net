@@ -2,6 +2,28 @@
 {
     public class SavegameManager : ISavegameManager
     {
+        string[] savegameNames = null;
+
+        public string[] GetSavegameNames(IGameData gameData)
+        {
+            if (savegameNames != null)
+                return savegameNames;
+
+            var file = gameData.Files["Saves"].Files[1];
+            int amount = file.ReadWord();
+            savegameNames = new string[amount];
+            int position = file.Position;
+
+            for (int i = 0; i < amount; ++i)
+            {
+                savegameNames[i] = file.ReadNullTerminatedString();
+                position += 39;
+                file.Position = position;
+            }
+
+            return savegameNames;
+        }
+
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
         {
             var savegame = new Savegame();

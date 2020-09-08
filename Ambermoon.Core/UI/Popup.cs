@@ -116,7 +116,6 @@ namespace Ambermoon.UI
 
         public void AddSunkenBox(Rect area, byte displayLayer = 1)
         {
-            displayLayer = (byte)(BaseDisplayLayer + displayLayer);
             // TODO: use named palette colors
             var darkBorderColor = game.GetPaletteColor(50, 26);
             var brightBorderColor = game.GetPaletteColor(50, 31);

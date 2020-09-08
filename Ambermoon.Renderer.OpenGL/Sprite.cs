@@ -362,8 +362,8 @@ namespace Ambermoon.Renderer
     {
         public byte TextColorIndex { get; set; }
 
-        public TextCharacterSprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
-            : base(width, height, textureAtlasX, textureAtlasY, 0, virtualScreen)
+        public TextCharacterSprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen, byte displayLayer)
+            : base(width, height, textureAtlasX, textureAtlasY, displayLayer, virtualScreen)
         {
 
         }

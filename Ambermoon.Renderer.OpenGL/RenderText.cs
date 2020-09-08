@@ -306,15 +306,15 @@ namespace Ambermoon.Renderer
 
                 var position = characterPositions[i];
                 var textureCoord = glyphTextureMapping[glyphIndex];
-                var sprite = new TextCharacterSprite(CharacterWidth, CharacterHeight, textureCoord.X, textureCoord.Y, virtualScreen)
+                var sprite = new TextCharacterSprite(CharacterWidth, CharacterHeight, textureCoord.X, textureCoord.Y, virtualScreen,
+                    (byte)Util.Min(255, DisplayLayer + 2)) // ensure to draw it in front of the shadow
                 {
                     TextColorIndex = colorIndex,
                     X = position.X,
                     Y = position.Y,
                     Layer = Layer,
                     PaletteIndex = 50,
-                    Visible = Visible,
-                    DisplayLayer = (byte)Util.Min(255, DisplayLayer + 2) // ensure to draw it in front of the shadow
+                    Visible = Visible                    
                 };
 
                 characterSprites.Add(sprite);
@@ -326,15 +326,14 @@ namespace Ambermoon.Renderer
                 {
                     var shadowSprite = new TextCharacterSprite(CharacterWidth, CharacterHeight,
                         characterSprite.TextureAtlasOffset.X, characterSprite.TextureAtlasOffset.Y,
-                        virtualScreen)
+                        virtualScreen, DisplayLayer)
                     {
                         TextColorIndex = ShadowColorIndex,
                         X = characterSprite.X + 1,
                         Y = characterSprite.Y + 1,
                         Layer = Layer,
-                        PaletteIndex = 50,
-                        Visible = Visible,
-                        DisplayLayer = DisplayLayer
+                        PaletteIndex = 50,                        
+                        Visible = Visible
                     };
 
                     characterShadowSprites.Add(shadowSprite);
@@ -362,10 +361,7 @@ namespace Ambermoon.Renderer
         protected override void OnVisibilityChanged()
         {
             if (Visible)
-            {
-                UpdateTextSprites();
-                AddToLayer();
-            }
+                UpdateTextSprites(); // this automatically set sprite.Visible to true
             else
                 RemoveFromLayer();
         }

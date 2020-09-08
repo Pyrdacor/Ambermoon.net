@@ -316,6 +316,7 @@ namespace Ambermoon.UI
         readonly List<IRenderText> texts = new List<IRenderText>();
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
+        public bool PopupActive => activePopup != null;
         int buttonGridPage = 0;
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
@@ -484,7 +485,7 @@ namespace Ambermoon.UI
             activePopup = new Popup(game, RenderView, position, columns, rows);
         }
 
-        void ClosePopup()
+        internal void ClosePopup()
         {
             activePopup?.Destroy();
             activePopup = null;
@@ -492,9 +493,16 @@ namespace Ambermoon.UI
 
         void OpenLoadMenu()
         {
-            OpenPopup(new Position(16, 64), 18, 7);
-            activePopup.AddText(new Rect(24, 80, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
-            activePopup.AddSunkenBox(new Rect(32, 88, 256, 64));
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData);
+            OpenPopup(new Position(16, 62), 18, 7);
+            activePopup.AddText(new Rect(24, 78, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
+            activePopup.AddSunkenBox(new Rect(32, 85, 256, 73));
+
+            for (int i = 0; i < Util.Min(savegameNames.Length, 10); ++i)
+            {
+                activePopup.AddText(new Position(33, 87 + i * 7), $"{i+1,2}", TextColor.Gray, true, 3);
+                activePopup.AddText(new Position(50, 87 + i * 7), savegameNames[i], TextColor.Gray, true, 3);
+            }
         }
 
         void UpdateLayoutButtons(uint? ticksPerMovement = null)
@@ -858,6 +866,12 @@ namespace Ambermoon.UI
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
             uint currentTicks)
         {
+            if (PopupActive)
+            {
+                ClosePopup();
+                return true;
+            }
+
             if (buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
             {
                 if (newCursorType != null)
@@ -1008,6 +1022,9 @@ namespace Ambermoon.UI
 
         public CursorType? PressButton(int index, uint currentTicks)
         {
+            if (PopupActive)
+                return null;
+
             return buttonGrid.PressButton(index, currentTicks);
         }
 

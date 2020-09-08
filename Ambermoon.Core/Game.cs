@@ -85,7 +85,7 @@ namespace Ambermoon
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
         readonly IRenderView renderView;
-        readonly ISavegameManager savegameManager;
+        internal ISavegameManager SavegameManager { get; }
         readonly ISavegameSerializer savegameSerializer;
         Player player;
         PartyMember CurrentPartyMember { get; set; } = null;
@@ -177,7 +177,7 @@ namespace Ambermoon
             this.renderView = renderView;
             this.mapManager = mapManager;
             this.itemManager = itemManager;
-            this.savegameManager = savegameManager;
+            this.SavegameManager = savegameManager;
             this.savegameSerializer = savegameSerializer;
             this.DataNameProvider = dataNameProvider;
             camera3D = renderView.Camera3D;
@@ -196,7 +196,7 @@ namespace Ambermoon
         public void Run()
         {
             // TODO: For now we just start a new game.
-            var initialSavegame = savegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+            var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
             Start(initialSavegame);
         }
 
@@ -605,7 +605,12 @@ namespace Ambermoon
                 case Key.Escape:
                 {
                     if (ingame)
-                        CloseWindow();
+                    {
+                        if (layout.PopupActive)
+                            layout.ClosePopup();
+                        else
+                            CloseWindow();
+                    }
 
                     break;
                 }
@@ -615,7 +620,8 @@ namespace Ambermoon
                 case Key.F4:
                 case Key.F5:
                 case Key.F6:
-                    OpenPartyMember(key - Key.F1);
+                    if (!layout.PopupActive)
+                        OpenPartyMember(key - Key.F1);
                     break;
                 case Key.Num1:
                 case Key.Num2:
@@ -627,6 +633,9 @@ namespace Ambermoon
                 case Key.Num8:
                 case Key.Num9:
                 {
+                    if (layout.PopupActive)
+                        break;
+
                     int index = key - Key.Num1;
                     int column = index % 3;
                     int row = 2 - index / 3;

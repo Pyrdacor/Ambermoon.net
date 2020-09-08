@@ -339,7 +339,7 @@ namespace Ambermoon.Renderer
 
             if (layerBuffer != null)
             {
-                byte layer = (sprite is Render.ILayerSprite) ? (sprite as Render.ILayerSprite).DisplayLayer : (byte)0;
+                byte layer = sprite is Render.ILayerSprite layerSprite ? layerSprite.DisplayLayer : (byte)0;
 
                 int layerBufferIndex = layerBuffer.Add(layer);
 
