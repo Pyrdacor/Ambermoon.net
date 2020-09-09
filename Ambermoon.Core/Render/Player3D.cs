@@ -10,13 +10,15 @@ namespace Ambermoon.Render
         readonly Game game = null;
         readonly IMapManager mapManager;
         readonly RenderMap3D map;
+        readonly Player player;
 
         public Position Position { get; private set; }
         public ICamera3D Camera { get; }
 
-        public Player3D(Game game, IMapManager mapManager, ICamera3D camera, RenderMap3D map, int x, int y)
+        public Player3D(Game game, Player player, IMapManager mapManager, ICamera3D camera, RenderMap3D map, int x, int y)
         {
             this.game = game;
+            this.player = player;
             this.mapManager = mapManager;
             this.map = map;
             Camera = camera;
@@ -51,6 +53,9 @@ namespace Ambermoon.Render
             {
                 SetPosition((int)x, (int)y, ticks);
             }
+
+            player.Position.X = Position.X;
+            player.Position.Y = Position.Y;
         }
 
         /// <summary>
@@ -81,6 +86,8 @@ namespace Ambermoon.Render
             {
                 mover(distance, noX, noZ);
                 Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
+                player.Position.X = Position.X;
+                player.Position.Y = Position.Y;
                 map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
             }
 

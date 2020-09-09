@@ -360,7 +360,6 @@ namespace Ambermoon
             is3D = true;
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction);
-            player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
             player3D.SetPosition((int)playerX, (int)playerY, currentTicks);
             if (player2D != null)
                 player2D.Visible = false;
@@ -417,9 +416,9 @@ namespace Ambermoon
             player = new Player();
             var map = mapManager.GetMap(savegame.CurrentMapIndex);
             bool is3D = map.Type == MapType.Map3D;
-            renderMap2D = new RenderMap2D(this, !is3D ? map : null, mapManager, renderView);
-            renderMap3D = new RenderMap3D(is3D ? map : null, mapManager, renderView, 0, 0, CharacterDirection.Up);
-            player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
+            renderMap2D = new RenderMap2D(this, null, mapManager, renderView);
+            renderMap3D = new RenderMap3D(null, mapManager, renderView, 0, 0, CharacterDirection.Up);
+            player3D = new Player3D(this, player, mapManager, camera3D, renderMap3D, 0, 0);
             player.MovementAbility = PlayerMovementAbility.Walking;
             renderMap2D.MapChanged += RenderMap2D_MapChanged;
             renderMap3D.MapChanged += RenderMap3D_MapChanged;
@@ -1191,7 +1190,7 @@ namespace Ambermoon
 
         internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
         {
-            bool sameMap = changeTileEvent.MapIndex == 0;
+            bool sameMap = changeTileEvent.MapIndex == 0 || changeTileEvent.MapIndex == Map.Index;
             var map = sameMap ? Map : mapManager.GetMap(changeTileEvent.MapIndex);
             uint x = changeTileEvent.X - 1;
             uint y = changeTileEvent.Y - 1;
