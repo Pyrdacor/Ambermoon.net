@@ -306,6 +306,7 @@ namespace Ambermoon
 
             ResetMoveKeys();
             layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false));
+            is3D = false;
 
             if (renderMap2D.Map != map)
             {
@@ -339,8 +340,7 @@ namespace Ambermoon
             player.Position.X = mapOffset.X + (int)playerX - (int)renderMap2D.ScrollX;
             player.Position.Y = mapOffset.Y + (int)playerY - (int)renderMap2D.ScrollY;
             player.Direction = direction;
-
-            is3D = false;
+            
             renderView.GetLayer(Layer.Map3D).Visible = false;
             renderView.GetLayer(Layer.Billboards3D).Visible = false;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
@@ -357,6 +357,7 @@ namespace Ambermoon
             ResetMoveKeys();
             layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true));
 
+            is3D = true;
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction);
             player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
@@ -366,8 +367,7 @@ namespace Ambermoon
             player.Position.X = (int)playerX;
             player.Position.Y = (int)playerY;
             player.Direction = direction;
-
-            is3D = true;
+            
             renderView.GetLayer(Layer.Map3D).Visible = true;
             renderView.GetLayer(Layer.Billboards3D).Visible = true;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
@@ -1207,7 +1207,7 @@ namespace Ambermoon
                 if (!chestMapEvent.RemoveWhenEmpty)
                     StorageOpen = true;
 
-                if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open)
+                if (currentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
                 {
                     layout.Set80x80Picture(Picture80x80.ChestClosed);
                     itemGrid.Disabled = true;

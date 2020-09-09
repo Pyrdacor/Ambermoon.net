@@ -71,6 +71,11 @@ namespace Ambermoon.Data
         [Flags]
         public enum LockFlags
         {
+            // This only gives the initial state. The savegame has
+            // it's one bits to decide if a chest is locker or not.
+            // It is used to say if a chest is initial open, locked
+            // with a lockpick or with a key.
+            //
             // Seen these hex values only:
             // 01, 05, 0A, 0F, 14, 19, 1E, 32, 37, 4B, 55, 63, 64
             // In binary:
@@ -91,7 +96,8 @@ namespace Ambermoon.Data
             // 0x01 is a locked chest that can be opened with a lockpick.
             // 0x64 could be a locked chest that needs a special key.
             Open = 0,
-            Lockpick = 0x01 // these also have a trap attached
+            Lockpick = 0x01, // these also have a trap attached
+            KeyLocked = 0x64 // locked with a special key
         }
 
         public LockFlags Lock { get; set; }

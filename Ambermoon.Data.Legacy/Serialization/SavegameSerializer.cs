@@ -20,6 +20,9 @@ namespace Ambermoon.Data.Legacy
             for (int i = 0; i < 6; ++i)
                 savegame.CurrentPartyMemberIndices[i] = dataReader.ReadWord();
 
+            dataReader.Position = 0x35a4;
+            savegame.ChestUnlockStates = dataReader.ReadBytes(33); // 33 * 8 bits = 264 bits (1 for each chest, possible chest indices 0 to 263)
+
             // TODO: load other data from Party_data.sav
         }
 
