@@ -57,6 +57,7 @@ namespace Ambermoon.Render
         ///  to the block size (e.g. wall is 2/3 as height as a block is wide).
         /// </summary>
         float WallHeight => Global.DistancePerTile * labdata.WallHeight / BlockSize;
+        public event Action<Map> MapChanged;
 
         public RenderMap3D(Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
@@ -86,6 +87,8 @@ namespace Ambermoon.Render
                 UpdateSurfaces();
 
                 camera.GroundY = -0.5f * WallHeight; // TODO: Does labdata.Unknown1 contain an offset?
+
+                MapChanged?.Invoke(map);
             }
 
             camera.SetPosition(playerX * Global.DistancePerTile, (map.Height - playerY) * Global.DistancePerTile);

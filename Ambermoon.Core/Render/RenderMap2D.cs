@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Render
@@ -43,6 +44,8 @@ namespace Ambermoon.Render
         uint ticksPerFrame = 0;
         bool worldMap = false;
         uint lastFrame = 0;
+
+        public event Action<Map[]> MapChanged;
 
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
@@ -289,6 +292,16 @@ namespace Ambermoon.Render
             }
 
             ScrollTo(initialScrollX, initialScrollY, true); // also updates tiles etc
+
+            if (map.IsWorldMap)
+                InvokeMapChangedHandler(map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
+            else
+                InvokeMapChangedHandler(map);
+        }
+
+        void InvokeMapChangedHandler(params Map[] maps)
+        {
+            MapChanged?.Invoke(maps);
         }
 
         public bool Scroll(int x, int y)

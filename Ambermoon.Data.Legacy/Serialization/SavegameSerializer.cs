@@ -24,7 +24,33 @@ namespace Ambermoon.Data.Legacy
             // TODO: maybe all 64 bytes are available for chests (chest 0-511)
             savegame.ChestUnlockStates = dataReader.ReadBytes(33); // 33 * 8 bits = 264 bits (1 for each chest, possible chest indices 0 to 263)
 
-            // TODO: after chest lock states there are map events that should be triggered (like changed tiles)
+            dataReader.Position = 0x35e4;
+            savegame.TileChangeEvents.Clear();
+
+            while (dataReader.Position < dataReader.Size)
+            {
+                var mapIndex = dataReader.ReadWord();
+
+                if (mapIndex == 0) // end
+                    break;
+
+                var x = dataReader.ReadByte();
+                var y = dataReader.ReadByte();
+                var tileIndex = dataReader.ReadWord();
+
+                if (mapIndex < 0x0300 && tileIndex < (1 << 11)) // should be a real map and a valid front tile index (11 bit value)
+                {
+                    savegame.TileChangeEvents.SafeAdd(mapIndex, new ChangeTileEvent
+                    {
+                        Type = MapEventType.ChangeTile,
+                        Index = uint.MaxValue,
+                        MapIndex = mapIndex,
+                        X = x,
+                        Y = y,
+                        FrontTileIndex = tileIndex
+                    });
+                }
+            }
 
             // TODO: load other data from Party_data.sav
         }

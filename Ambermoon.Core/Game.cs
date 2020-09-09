@@ -421,6 +421,8 @@ namespace Ambermoon
             renderMap3D = new RenderMap3D(is3D ? map : null, mapManager, renderView, 0, 0, CharacterDirection.Up);
             player3D = new Player3D(this, mapManager, camera3D, renderMap3D, 0, 0);
             player.MovementAbility = PlayerMovementAbility.Walking;
+            renderMap2D.MapChanged += RenderMap2D_MapChanged;
+            renderMap3D.MapChanged += RenderMap3D_MapChanged;
             if (is3D)
                 Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection);
             else
@@ -444,6 +446,28 @@ namespace Ambermoon
             SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
 
             InputEnable = true;
+        }
+
+        void RunSavegameTileChangeEvents(uint mapIndex)
+        {
+            if (currentSavegame.TileChangeEvents.ContainsKey(mapIndex))
+            {
+                var tileChangeEvents = currentSavegame.TileChangeEvents[mapIndex];
+
+                foreach (var tileChangeEvent in tileChangeEvents)
+                    UpdateMapTile(tileChangeEvent);
+            }
+        }
+
+        void RenderMap3D_MapChanged(Map map)
+        {
+            RunSavegameTileChangeEvents(map.Index);
+        }
+
+        void RenderMap2D_MapChanged(Map[] maps)
+        {
+            foreach (var map in maps)
+                RunSavegameTileChangeEvents(map.Index);
         }
 
         public void LoadGame(int slot)
