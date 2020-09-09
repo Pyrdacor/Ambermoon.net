@@ -284,14 +284,14 @@ namespace Ambermoon.Renderer
 
             if (paletteIndexBuffer != null)
             {
-                int paletteIndexBufferIndex = paletteIndexBuffer.Add((byte)sprite.PaletteIndex);
+                int paletteIndexBufferIndex = paletteIndexBuffer.Add(sprite.PaletteIndex);
 
                 if (paletteIndexBufferIndex != index)
                     throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
 
-                paletteIndexBuffer.Add((byte)sprite.PaletteIndex, paletteIndexBufferIndex + 1);
-                paletteIndexBuffer.Add((byte)sprite.PaletteIndex, paletteIndexBufferIndex + 2);
-                paletteIndexBuffer.Add((byte)sprite.PaletteIndex, paletteIndexBufferIndex + 3);
+                paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 1);
+                paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 2);
+                paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 3);
             }
 
             if (textureAtlasOffsetBuffer != null)

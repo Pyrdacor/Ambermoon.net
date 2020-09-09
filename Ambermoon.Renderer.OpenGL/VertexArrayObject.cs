@@ -31,9 +31,9 @@ namespace Ambermoon.Renderer
     {
         uint index = 0;
         readonly Dictionary<string, PositionBuffer> positionBuffers = new Dictionary<string, PositionBuffer>(4);
-        readonly Dictionary<string, WordBuffer> baseLineBuffers = new Dictionary<string, WordBuffer>(4);
+        readonly Dictionary<string, WordBuffer> wordBuffers = new Dictionary<string, WordBuffer>(4);
         readonly Dictionary<string, ColorBuffer> colorBuffers = new Dictionary<string, ColorBuffer>(4);
-        readonly Dictionary<string, ByteBuffer> layerBuffers = new Dictionary<string, ByteBuffer>(4);
+        readonly Dictionary<string, ByteBuffer> byteBuffers = new Dictionary<string, ByteBuffer>(4);
         readonly Dictionary<string, IndexBuffer> indexBuffers = new Dictionary<string, IndexBuffer>(4);
         readonly Dictionary<string, VectorBuffer> vectorBuffers = new Dictionary<string, VectorBuffer>(4);
         readonly Dictionary<string, int> bufferLocations = new Dictionary<string, int>();
@@ -80,7 +80,7 @@ namespace Ambermoon.Renderer
 
         public void AddBuffer(string name, WordBuffer buffer)
         {
-            baseLineBuffers.Add(name, buffer);
+            wordBuffers.Add(name, buffer);
         }
 
         public void AddBuffer(string name, ColorBuffer buffer)
@@ -90,7 +90,7 @@ namespace Ambermoon.Renderer
 
         public void AddBuffer(string name, ByteBuffer buffer)
         {
-            layerBuffers.Add(name, buffer);
+            byteBuffers.Add(name, buffer);
         }
 
         public void AddBuffer(string name, IndexBuffer buffer)
@@ -118,7 +118,7 @@ namespace Ambermoon.Renderer
                     bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
                 }
 
-                foreach (var buffer in baseLineBuffers)
+                foreach (var buffer in wordBuffers)
                 {
                     bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
                 }
@@ -128,7 +128,7 @@ namespace Ambermoon.Renderer
                     bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
                 }
 
-                foreach (var buffer in layerBuffers)
+                foreach (var buffer in byteBuffers)
                 {
                     bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
                 }
@@ -164,7 +164,7 @@ namespace Ambermoon.Renderer
                     bufferLocations[buffer.Key] = -1;
                 }
 
-                foreach (var buffer in baseLineBuffers)
+                foreach (var buffer in wordBuffers)
                 {
                     program.UnbindInputBuffer((uint)bufferLocations[buffer.Key]);
                     bufferLocations[buffer.Key] = -1;
@@ -176,7 +176,7 @@ namespace Ambermoon.Renderer
                     bufferLocations[buffer.Key] = -1;
                 }
 
-                foreach (var buffer in layerBuffers)
+                foreach (var buffer in byteBuffers)
                 {
                     program.UnbindInputBuffer((uint)bufferLocations[buffer.Key]);
                     bufferLocations[buffer.Key] = -1;
@@ -223,7 +223,7 @@ namespace Ambermoon.Renderer
                             buffersChanged = true;
                     }
 
-                    foreach (var buffer in baseLineBuffers)
+                    foreach (var buffer in wordBuffers)
                     {
                         if (buffer.Value.RecreateUnbound())
                             buffersChanged = true;
@@ -235,7 +235,7 @@ namespace Ambermoon.Renderer
                             buffersChanged = true;
                     }
 
-                    foreach (var buffer in layerBuffers)
+                    foreach (var buffer in byteBuffers)
                     {
                         if (buffer.Value.RecreateUnbound())
                             buffersChanged = true;
