@@ -20,8 +20,12 @@
             for (int i = 0; i < 10; ++i)
             {
                 savegameNames[i] = file.ReadNullTerminatedString();
-                position += 39;
-                file.Position = position;
+
+                if (i < 9)
+                {
+                    position += 39;
+                    file.Position = position;
+                }
             }
 
             return savegameNames;
