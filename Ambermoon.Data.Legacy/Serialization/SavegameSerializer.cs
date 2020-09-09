@@ -36,13 +36,23 @@ namespace Ambermoon.Data.Legacy
             // TODO automaps
 
             foreach (var partyMemberDataReader in files.PartyMemberDataReaders.Files)
+            {
+                partyMemberDataReader.Value.Position = 0;
                 savegame.PartyMembers.Add(PartyMember.Load(partyMemberReader, partyMemberDataReader.Value));
+            }
             foreach (var chestDataReader in files.ChestDataReaders.Files)
+            {
+                chestDataReader.Value.Position = 0;
                 savegame.Chests.Add(Chest.Load(chestReader, chestDataReader.Value));
+            }
             foreach (var merchantDataReader in files.MerchantDataReaders.Files)
+            {
+                merchantDataReader.Value.Position = 0;
                 savegame.Merchants.Add(Merchant.Load(merchantReader, merchantDataReader.Value));
+            }
             // TODO automaps
 
+            files.SaveDataReader.Position = 0;
             ReadSaveData(savegame, files.SaveDataReader);
         }
 
