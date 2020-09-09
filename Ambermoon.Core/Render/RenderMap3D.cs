@@ -77,7 +77,7 @@ namespace Ambermoon.Render
 
             if (Map != map)
             {
-                CleanUp();
+                Destroy();
 
                 Map = map;
                 labdata = mapManager.GetLabdataForMap(map);
@@ -92,7 +92,7 @@ namespace Ambermoon.Render
             camera.TurnTowards((float)playerDirection * 90.0f);
         }
 
-        void CleanUp()
+        public void Destroy()
         {
             floor?.Delete();
             ceiling?.Delete();
@@ -365,7 +365,7 @@ namespace Ambermoon.Render
         void UpdateSurfaces()
         {
             // Delete all surfaces
-            CleanUp();
+            Destroy();
 
             var surfaceFactory = renderView.Surface3DFactory;
             var layer = renderView.GetLayer(Layer.Map3D);

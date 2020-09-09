@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Render;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.UI
@@ -14,6 +15,7 @@ namespace Ambermoon.UI
         readonly List<IRenderText> texts = new List<IRenderText>();
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
         readonly List<ILayerSprite> sprites = new List<ILayerSprite>();
+        ListBox listBox = null;
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows)
         {
@@ -66,6 +68,7 @@ namespace Ambermoon.UI
         }
 
         public bool CloseOnClick { get; set; } = true;
+        public bool DisableButtons { get; set; } = false;
 
         public void Destroy()
         {
@@ -84,7 +87,7 @@ namespace Ambermoon.UI
             sprites.Clear();
         }
 
-        public void AddText(Position position, string text, TextColor textColor, bool shadow = true, byte displayLayer = 1)
+        public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true, byte displayLayer = 1)
         {
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text), textColor, shadow);
@@ -93,9 +96,10 @@ namespace Ambermoon.UI
             renderText.Y = position.Y;
             renderText.Visible = true;
             texts.Add(renderText);
+            return renderText;
         }
 
-        public void AddText(Rect bounds, string text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
+        public IRenderText AddText(Rect bounds, string text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
             bool shadow = true, byte displayLayer = 1)
         {
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
@@ -103,9 +107,10 @@ namespace Ambermoon.UI
             renderText.DisplayLayer = (byte)Util.Min(255, BaseDisplayLayer + displayLayer);
             renderText.Visible = true;
             texts.Add(renderText);
+            return renderText;
         }
 
-        public void FillArea(Rect area, Color color, byte displayLayer = 1)
+        public IColoredRect FillArea(Rect area, Color color, byte displayLayer = 1)
         {
             var filledArea = renderView.ColoredRectFactory.Create(area.Width, area.Height, color,
                 (byte)Util.Min(255, BaseDisplayLayer + displayLayer));
@@ -114,6 +119,7 @@ namespace Ambermoon.UI
             filledArea.Y = area.Top;
             filledArea.Visible = true;
             filledAreas.Add(filledArea);
+            return filledArea;
         }
 
         public void AddSunkenBox(Rect area, byte displayLayer = 1)
@@ -158,6 +164,27 @@ namespace Ambermoon.UI
             sprite.Y = 38;
             sprite.Visible = true;
             sprites.Add(sprite);
+        }
+
+        public bool Click(Position position)
+        {
+            if (listBox != null)
+                return listBox.Click(position);
+
+            return false;
+        }
+
+        public void Hover(Position position)
+        {
+            listBox?.Hover(position);
+        }
+
+        public void AddListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        {
+            if (listBox != null)
+                throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
+
+            listBox = new ListBox(game, this, items);
         }
     }
 }

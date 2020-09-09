@@ -108,9 +108,9 @@ namespace Ambermoon
         /// <summary>
         /// All words you have heard about in conversations.
         /// </summary>
-        readonly List<string> dictionary = new List<string>();
-        public GameVariablePool GlobalVariables { get; } = new GameVariablePool();
-        readonly Dictionary<uint, GameVariablePool> mapVariables = new Dictionary<uint, GameVariablePool>();
+        readonly List<string> dictionary = new List<string>(); // TODO: read from savegame?
+        public GameVariablePool GlobalVariables { get; } = new GameVariablePool(); // TODO: read from savegame?
+        readonly Dictionary<uint, GameVariablePool> mapVariables = new Dictionary<uint, GameVariablePool>(); // TODO: read from savegame?
         public GameVariablePool GetMapVariables(Map map)
         {
             if (!mapVariables.ContainsKey(map.Index))
@@ -283,6 +283,10 @@ namespace Ambermoon
             lastMoveTicksReset = currentTicks;
         }
 
+        public Color GetTextColor(TextColor textColor) => GetPaletteColor(51, (int)textColor);
+
+        public Color GetNamedPaletteColor(NamedPaletteColors namedPaletteColor) => GetPaletteColor(50, (int)namedPaletteColor);
+
         public Color GetPaletteColor(int paletteIndex, int colorIndex)
         {
             var paletteData = renderView.GraphicProvider.Palettes[paletteIndex].Data;
@@ -372,8 +376,42 @@ namespace Ambermoon
             mapViewArea = map3DViewArea;
         }
 
+        void Cleanup()
+        {
+            layout.Reset();
+            renderMap2D?.Destroy();
+            renderMap2D = null;
+            renderMap3D?.Destroy();
+            renderMap3D = null;
+            player2D?.Destroy();
+            player2D = null;
+            player3D = null;
+            messageText.Visible = false;
+
+            player = null;
+            CurrentPartyMember = null;
+            CurrentInventory = null;
+            CurrentInventoryIndex = null;
+            CurrentCaster = null;
+            StorageOpen = false;
+            dictionary.Clear();
+            GlobalVariables.Clear();
+            mapVariables.Clear();
+
+            for (int i = 0; i < keys.Length; ++i)
+                keys[i] = false;
+            leftMouseDown = false;
+            clickMoveActive = false;
+            trapMouseArea = null;
+            trappedMousePositionOffset.X = 0;
+            trappedMousePositionOffset.Y = 0;
+            InputEnable = false;
+        }
+
         public void Start(Savegame savegame)
         {
+            Cleanup();
+
             ingame = true;
             currentSavegame = savegame;
             player = new Player();
@@ -404,16 +442,19 @@ namespace Ambermoon
             }
             CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
             SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
+
+            InputEnable = true;
         }
 
-        public void LoadGame()
+        public void LoadGame(int slot)
         {
-            // TODO
+            var savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot);
+            Start(savegame);
         }
 
         public void ContinueGame()
         {
-            // TODO: load latest game
+            LoadGame(0);
         }
 
         public void ShowMessage(Rect bounds, string text, TextColor color, bool shadow, TextAlign textAlign = TextAlign.Left)
@@ -633,7 +674,7 @@ namespace Ambermoon
                 case Key.Num8:
                 case Key.Num9:
                 {
-                    if (layout.PopupActive)
+                    if (layout.PopupDisableButtons)
                         break;
 
                     int index = key - Key.Num1;
@@ -790,7 +831,15 @@ namespace Ambermoon
 
                 if (!InputEnable)
                 {
-                    CursorType = CursorType.Sword;
+                    if (layout.PopupActive)
+                    {
+                        var cursorType = CursorType.Sword;
+                        layout.Hover(renderView.ScreenToGame(cursorPosition), ref cursorType);
+                        CursorType = cursorType;
+                    }
+                    else
+                        CursorType = CursorType.Sword;
+
                     return;
                 }
 

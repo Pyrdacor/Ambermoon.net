@@ -3,6 +3,7 @@ using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.UI
 {
@@ -317,6 +318,7 @@ namespace Ambermoon.UI
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
+        public bool PopupDisableButtons => activePopup?.DisableButtons == true;
         int buttonGridPage = 0;
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
@@ -480,10 +482,11 @@ namespace Ambermoon.UI
             game.InputEnable = true;
         }
 
-        void OpenPopup(Position position, int columns, int rows, bool closeOnClick = true)
+        void OpenPopup(Position position, int columns, int rows, bool disableButtons = false, bool closeOnClick = true)
         {
             activePopup = new Popup(game, RenderView, position, columns, rows)
             {
+                DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
             };
         }
@@ -497,15 +500,11 @@ namespace Ambermoon.UI
         void OpenLoadMenu()
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData);
-            OpenPopup(new Position(16, 62), 18, 7, false);
+            OpenPopup(new Position(16, 62), 18, 7, true, false);
             activePopup.AddText(new Rect(24, 78, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
-            activePopup.AddSunkenBox(new Rect(32, 85, 256, 73));
-
-            for (int i = 0; i < Util.Min(savegameNames.Length, 10); ++i)
-            {
-                activePopup.AddText(new Position(33, 87 + i * 7), $"{i+1,2}", TextColor.Gray, true, 3);
-                activePopup.AddText(new Position(50, 87 + i * 7), savegameNames[i], TextColor.Gray, true, 3);
-            }
+            activePopup.AddListBox(savegameNames.Select(name =>
+                new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => game.LoadGame(slot + 1))
+            ).ToList());
         }
 
         void UpdateLayoutButtons(uint? ticksPerMovement = null)
@@ -878,8 +877,12 @@ namespace Ambermoon.UI
                 }
                 else
                 {
-                    // TODO: click in popup
+                    if (activePopup.Click(position))
+                        return true;
                 }
+
+                if (activePopup.DisableButtons)
+                    return false;
             }
 
             if (buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
@@ -889,7 +892,7 @@ namespace Ambermoon.UI
                 return true;
             }
 
-            if (!game.InputEnable)
+            if (!game.InputEnable || PopupActive)
                 return false;
 
             if (buttons == MouseButtons.Left)
@@ -1006,6 +1009,12 @@ namespace Ambermoon.UI
 
         public bool Hover(Position position, ref CursorType cursorType)
         {
+            if (PopupActive)
+            {
+                activePopup.Hover(position);
+                return true;
+            }
+
             if (draggedItem != null)
             {
                 draggedItem.Item.Position = position;

@@ -6,6 +6,11 @@ namespace Ambermoon
     {
         readonly Dictionary<uint, int> variables = new Dictionary<uint, int>();
 
+        public void Clear()
+        {
+            variables.Clear();
+        }
+
         public int this[uint index]
         {
             get

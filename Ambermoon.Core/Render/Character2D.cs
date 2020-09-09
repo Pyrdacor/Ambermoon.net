@@ -71,6 +71,11 @@ namespace Ambermoon.Render
             Position = startPosition;
         }
 
+        public virtual void Destroy()
+        {
+            sprite?.Delete();
+        }
+
         public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
             if (map != Map.Map)
