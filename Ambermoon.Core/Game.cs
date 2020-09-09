@@ -757,7 +757,7 @@ namespace Ambermoon
 
                 layout.LeftMouseUp(renderView.ScreenToGame(position), out CursorType? cursorType, currentTicks);
 
-                if (cursorType != null)
+                if (cursorType != null && cursorType != CursorType.None)
                     CursorType = cursorType.Value;
                 else
                     UpdateCursor(position, MouseButtons.None);

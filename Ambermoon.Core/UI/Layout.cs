@@ -1032,7 +1032,7 @@ namespace Ambermoon.UI
                 draggedItem.Item.Position = position;
                 cursorType = CursorType.SmallArrow;
             }
-            else if (cursorType >= CursorType.ArrowUp && cursorType <= CursorType.Wait)
+            else if (cursorType == CursorType.None || cursorType >= CursorType.ArrowUp && cursorType <= CursorType.Wait)
             {
                 cursorType = CursorType.Sword;
             }
