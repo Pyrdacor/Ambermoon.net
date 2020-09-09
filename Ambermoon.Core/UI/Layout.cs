@@ -585,6 +585,18 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO: give gold
                     buttonGrid.SetButton(8, ButtonType.GiveFood, true, null, false); // TODO: give food
                     break;
+                case LayoutType.Items:
+                    // TODO: this is only for open chests now
+                    buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(4, ButtonType.DistributeGold, true, null, false); // TODO: distribute gold
+                    buttonGrid.SetButton(5, ButtonType.DistributeFood, true, null, false); // TODO: distribute food
+                    buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
+                    buttonGrid.SetButton(7, ButtonType.GoldToPlayer, true, null, false); // TODO: gold to player
+                    buttonGrid.SetButton(8, ButtonType.FoodToPlayer, true, null, false); // TODO: food to player
+                    break;
                 // TODO
             }
         }

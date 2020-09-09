@@ -1,5 +1,7 @@
 # Ambermoon.net
 
+Version 1.1.0 finally brings the load game menu to live. So you can now load your original savegames from within the game and play them! :)
+
 ### How to run the game
 
 I got some questions of how to run the game:
@@ -14,9 +16,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.0](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.0/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.19](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.19/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.0.18](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.18/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.0.17](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.0.17/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -64,6 +66,7 @@ Working things:
 ![Billboards](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Billboards1.png "Billboards")
 ![Chests](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png "Chests")
 ![Inventory](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png "Inventory")
+![Load game](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/LoadWindow.png "Load game")
 
 
 ## Controls
@@ -85,6 +88,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version 1.1.0: Added option and load game menu, added savegame loading, fixed 3D textures, bugfixing
 - Version 1.0.19: Added portrait borders and character bars, added buttons for 2D/3D maps and inventory
 - Version 1.0.18: Map names, empty portrait slots, dead character portrait, bugfixes
 - Version 1.0.17: Character info, names at portraits, active member logic, fade effects
