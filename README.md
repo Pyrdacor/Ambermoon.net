@@ -16,6 +16,7 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.2](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.2/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.1](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.1/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.0](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.0/Ambermoon.net-Windows.zip) | Windows 64bit
 
@@ -87,6 +88,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version 1.1.2: Bugfixing
 - Version 1.1.1: Game will now use chest locked states and map changes from savegames, bugfixing
 - Version 1.1.0: Added option and load game menu, added savegame loading, fixed 3D textures, bugfixing
 - Version 1.0.19: Added portrait borders and character bars, added buttons for 2D/3D maps and inventory
