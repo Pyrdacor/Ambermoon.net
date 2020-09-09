@@ -3,18 +3,21 @@
     public class SavegameManager : ISavegameManager
     {
         string[] savegameNames = null;
+        int current = 0;
 
-        public string[] GetSavegameNames(IGameData gameData)
+        public string[] GetSavegameNames(IGameData gameData, out int current)
         {
+            current = this.current;
+
             if (savegameNames != null)
                 return savegameNames;
 
             var file = gameData.Files["Saves"].Files[1];
-            int amount = file.ReadWord();
-            savegameNames = new string[amount];
+            this.current = current = file.ReadWord();
+            savegameNames = new string[10];
             int position = file.Position;
 
-            for (int i = 0; i < amount; ++i)
+            for (int i = 0; i < 10; ++i)
             {
                 savegameNames[i] = file.ReadNullTerminatedString();
                 position += 39;

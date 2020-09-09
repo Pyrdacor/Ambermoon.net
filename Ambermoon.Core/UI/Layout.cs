@@ -499,7 +499,7 @@ namespace Ambermoon.UI
 
         void OpenLoadMenu()
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData);
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out int current);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
             activePopup.AddText(new Rect(24, 78, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
             activePopup.AddListBox(savegameNames.Select(name =>
