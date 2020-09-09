@@ -17,7 +17,7 @@ namespace Ambermoon.UI
             this.items = items;
 
             popup.AddSunkenBox(new Rect(32, 85, 256, 73));
-            hoverBox = popup.FillArea(new Rect(50, 86, 205, 7), game.GetTextColor(TextColor.Gray), 3);
+            hoverBox = popup.FillArea(new Rect(49, 86, 237, 7), game.GetTextColor(TextColor.Gray), 3);
             hoverBox.Visible = false;
 
             for (int i = 0; i < Util.Min(10, items.Count); ++i)
