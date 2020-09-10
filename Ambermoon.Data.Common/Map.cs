@@ -244,11 +244,12 @@ namespace Ambermoon.Data
             return Map.TileType.Free;
         }
 
-        public void UpdateTile(uint x, uint y, uint newFrontTileIndex, Tileset tileset)
+        public void UpdateTile(uint x, uint y, uint newBackTileIndex, uint newFrontTileIndex, Tileset tileset)
         {
             if (Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiles can only be updated for 2D maps.");
 
+            Tiles[x, y].BackTileIndex = newBackTileIndex;
             Tiles[x, y].FrontTileIndex = newFrontTileIndex;
             Tiles[x, y].Type = TileTypeFromTile(Tiles[x, y], tileset);
         }

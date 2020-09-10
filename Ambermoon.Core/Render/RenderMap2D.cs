@@ -191,6 +191,20 @@ namespace Ambermoon.Render
             int spriteIndex = (int)(x - ScrollX + (y - ScrollY) * NUM_VISIBLE_TILES_X);
             var tile = this[x, y];
 
+            if (tile.BackTileIndex == 0)
+            {
+                backgroundTileSprites[spriteIndex].Visible = false;
+            }
+            else
+            {
+                var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
+                var backGraphicIndex = backTile.GraphicIndex;
+                backgroundTileSprites[spriteIndex].TextureAtlasOffset = textureAtlas.GetOffset(backGraphicIndex - 1);
+                backgroundTileSprites[spriteIndex].NumFrames = (uint)backTile.NumAnimationFrames;
+                backgroundTileSprites[spriteIndex].CurrentFrame = 0;
+                backgroundTileSprites[spriteIndex].Visible = true;
+            }
+
             if (tile.FrontTileIndex == 0)
             {
                 foregroundTileSprites[spriteIndex].Visible = false;

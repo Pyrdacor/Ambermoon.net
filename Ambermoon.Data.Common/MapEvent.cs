@@ -260,7 +260,8 @@ namespace Ambermoon.Data
     {
         public uint X { get; set; }
         public uint Y { get; set; }
-        public byte[] Unknown { get; set; }
+        public byte Unknown { get; set; }
+        public uint BackTileIndex { get; set; }
         public uint FrontTileIndex { get; set; }
         /// <summary>
         /// 0 means same map
@@ -269,7 +270,7 @@ namespace Ambermoon.Data
 
         public override string ToString()
         {
-            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile {FrontTileIndex}, Unknown {(Unknown == null ? "null" : string.Join(" ", Unknown.Select(u => u.ToString("x2"))))}";
+            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Back tile {BackTileIndex}, Front tile {FrontTileIndex}, Unknown {Unknown}";
         }
     }
 

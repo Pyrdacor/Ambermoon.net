@@ -326,14 +326,15 @@ namespace Ambermoon.Data.Legacy
                 {
                     var x = dataReader.ReadByte();
                     var y = dataReader.ReadByte();
-                    var unknown = dataReader.ReadBytes(3);
-                    var frontTileIndex = dataReader.ReadWord();
+                    var unknown = dataReader.ReadByte();
+                    var tileData = dataReader.ReadBytes(4);
                     var mapIndex = dataReader.ReadWord();
                     mapEvent = new ChangeTileEvent
                     {
                         X = x,
                         Y = y,
-                        FrontTileIndex = frontTileIndex,
+                        BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
+                        FrontTileIndex = ((uint)(tileData[2] & 0x07) << 8) | tileData[3],
                         MapIndex = mapIndex,
                         Unknown = unknown
                     };
