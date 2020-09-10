@@ -1205,7 +1205,7 @@ namespace Ambermoon
             }
             else // 2D
             {
-                map.Tiles[x, y].FrontTileIndex = changeTileEvent.FrontTileIndex;
+                map.UpdateTile(x, y, changeTileEvent.FrontTileIndex, mapManager.GetTilesetForMap(map));
 
                 if (sameMap) // TODO: what if we change an adjacent world map which is visible instead? is there even a use case?
                     renderMap2D.UpdateTile(x, y);

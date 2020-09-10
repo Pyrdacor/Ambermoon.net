@@ -5,27 +5,6 @@ namespace Ambermoon.Data.Legacy
 {
     public class MapReader : IMapReader
     {
-        static Map.TileType TileTypeFromTile(Map.Tile tile, Tileset tileset)
-        {
-            var tilesetTile = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1] : tileset.Tiles[tile.FrontTileIndex - 1];
-            bool obstacle = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1].BlockMovement
-                : /*tileset.Tiles[tile.BackTileIndex - 1].BlockMovement || */tileset.Tiles[tile.FrontTileIndex - 1].BlockMovement;
-            // TODO: Some tiles work with the above comment and some without. Needs more research.
-
-            if (tilesetTile.Sleep)
-                return Map.TileType.Bed;
-            if (tilesetTile.SitDirection != null)
-                return Map.TileType.ChairUp + (int)tilesetTile.SitDirection.Value;
-            if (tilesetTile.Invisible)
-                return Map.TileType.Invisible;
-            if (obstacle)
-                return Map.TileType.Obstacle;
-
-            // TODO
-
-            return Map.TileType.Free;
-        }
-
         public List<string> ReadMapTexts(IDataReader textDataReader)
         {
             var texts = new List<string>();
@@ -90,6 +69,7 @@ namespace Ambermoon.Data.Legacy
             {
                 map.Tiles = new Map.Tile[map.Width, map.Height];
                 map.Blocks = null;
+                var tileset = tilesets[map.TilesetOrLabdataIndex];
 
                 for (int y = 0; y < map.Height; ++y)
                 {
@@ -103,7 +83,7 @@ namespace Ambermoon.Data.Legacy
                             MapEventId = tileData[1] & 0x1fu,
                             Unused = (tileData[2] & 0xf8u) >> 3
                         };
-                        map.Tiles[x, y].Type = TileTypeFromTile(map.Tiles[x, y], tilesets[map.TilesetOrLabdataIndex]);
+                        map.Tiles[x, y].Type = Map.TileTypeFromTile(map.Tiles[x, y], tileset);
                     }
                 }
             }

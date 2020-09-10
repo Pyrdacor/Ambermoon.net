@@ -222,5 +222,35 @@ namespace Ambermoon.Data
 
             return map;
         }
+
+        public static Map.TileType TileTypeFromTile(Map.Tile tile, Tileset tileset)
+        {
+            var tilesetTile = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1] : tileset.Tiles[tile.FrontTileIndex - 1];
+            bool obstacle = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1].BlockMovement
+                : /*tileset.Tiles[tile.BackTileIndex - 1].BlockMovement || */tileset.Tiles[tile.FrontTileIndex - 1].BlockMovement;
+            // TODO: Some tiles work with the above comment and some without. Needs more research.
+
+            if (tilesetTile.Sleep)
+                return Map.TileType.Bed;
+            if (tilesetTile.SitDirection != null)
+                return Map.TileType.ChairUp + (int)tilesetTile.SitDirection.Value;
+            if (tilesetTile.Invisible)
+                return Map.TileType.Invisible;
+            if (obstacle)
+                return Map.TileType.Obstacle;
+
+            // TODO
+
+            return Map.TileType.Free;
+        }
+
+        public void UpdateTile(uint x, uint y, uint newFrontTileIndex, Tileset tileset)
+        {
+            if (Type != MapType.Map2D)
+                throw new AmbermoonException(ExceptionScope.Data, "Tiles can only be updated for 2D maps.");
+
+            Tiles[x, y].FrontTileIndex = newFrontTileIndex;
+            Tiles[x, y].Type = TileTypeFromTile(Tiles[x, y], tileset);
+        }
     }
 }
