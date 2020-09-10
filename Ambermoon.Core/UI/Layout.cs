@@ -319,6 +319,7 @@ namespace Ambermoon.UI
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
         public bool PopupDisableButtons => activePopup?.DisableButtons == true;
+        public bool PopupClickToClose => activePopup?.CloseOnClick == true;
         int buttonGridPage = 0;
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
@@ -482,17 +483,45 @@ namespace Ambermoon.UI
             game.InputEnable = true;
         }
 
-        void OpenPopup(Position position, int columns, int rows, bool disableButtons = false, bool closeOnClick = true)
+        internal Popup OpenPopup(Position position, int columns, int rows, bool disableButtons = false, bool closeOnClick = true)
         {
             activePopup = new Popup(game, RenderView, position, columns, rows)
             {
                 DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
             };
+            return activePopup;
+        }
+
+        internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false, bool closeOnClick = true)
+        {
+            // min text position = 32, 68
+            // max text size = 256, 112
+            // max 16 text rows
+            const int maxTextWidth = 256;
+            const int maxTextHeight = 112;
+            var processedText = RenderView.TextProcessor.WrapText(text,
+                new Rect((Global.VirtualScreenWidth - maxTextWidth) / 2, 0, maxTextWidth, int.MaxValue),
+                new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            var textBounds = new Rect(32, 69, maxTextWidth, Math.Min(processedText.LineCount * Global.GlyphLineHeight, maxTextHeight));
+            var renderText = RenderView.RenderTextFactory.Create(RenderView.GetLayer(Layer.Text),
+                processedText, TextColor.Gray, true, textBounds);
+            int popupColumns = 2 + (textBounds.Width + 15) / 16;
+            int popupRows = 2 + (textBounds.Height + 15) / 16;
+            var popupArea = Rect.Create(textBounds.Center, new Size(popupColumns * 16, popupRows * 16));
+            activePopup = new Popup(game, RenderView, popupArea.Position, popupColumns, popupRows)
+            {
+                DisableButtons = disableButtons,
+                CloseOnClick = closeOnClick
+            };
+            activePopup.AddText(renderText);
+            activePopup.Closed += closeAction;
+            return activePopup;
         }
 
         internal void ClosePopup()
         {
+            activePopup?.OnClosed();
             activePopup?.Destroy();
             activePopup = null;
         }

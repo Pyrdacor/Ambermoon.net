@@ -46,6 +46,14 @@ namespace Ambermoon.Data
     {
         IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary);
         IText CreateText(string text);
+        /// <summary>
+        /// Wraps a given text so it fits into the given bounds.
+        /// 
+        /// Note that the height still can exceed the bound height.
+        /// In this case the text must be scrolled to view all of it.
+        /// This only wraps text lines to keep them inside the bound width.
+        /// </summary>
+        IText WrapText(IText text, Rect bounds, Size glyphSize);
     }
 
     public interface IText

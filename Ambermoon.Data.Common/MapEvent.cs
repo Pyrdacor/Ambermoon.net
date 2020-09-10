@@ -123,12 +123,14 @@ namespace Ambermoon.Data
         /// From event_pix (0-based). 0xff -> no image.
         /// </summary>
         public uint EventImageIndex { get; set; }
-        public byte[] Unknown1 { get; set; }
+        public bool HasImage => EventImageIndex != 0xff;
+        public byte Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
+        public byte[] Unknown3 { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Unknown1 {Unknown1}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}, Unknown3 {string.Join(" ", Unknown3.Select(u => u.ToString("x2")))}";
         }
     }
 

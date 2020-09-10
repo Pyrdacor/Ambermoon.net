@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
-    public class Text : IText
+    internal class Text : IText
     {
         public Text(byte[] glyphIndices)
         {
@@ -33,6 +33,13 @@ namespace Ambermoon.Data.Legacy
 
             if (currentLineSize > MaxLineSize)
                 MaxLineSize = currentLineSize;
+        }
+
+        public Text(byte[] glyphIndices, int lineCount, int maxLineSize)
+        {
+            GlyphIndices = glyphIndices;
+            LineCount = lineCount;
+            MaxLineSize = maxLineSize;
         }
 
         public byte[] GlyphIndices { get; }
@@ -119,6 +126,76 @@ namespace Ambermoon.Data.Legacy
         public IText CreateText(string text)
         {
             return new Text(text.Select(ch => CharToGlyph(ch, false)).ToArray());
+        }
+
+        public IText WrapText(IText text, Rect bounds, Size glyphSize)
+        {
+            int x = bounds.Left;
+            int y = bounds.Top;
+            int lastSpaceIndex = -1;
+            int maxLineWidth = 0;
+            int height = 0;
+            var wrappedGlyphs = new List<byte>(text.GlyphIndices.Length);
+
+            void NewLine(int newX = 0)
+            {
+                if (x > maxLineWidth)
+                    maxLineWidth = x;
+
+                lastSpaceIndex = -1;
+                x = bounds.Left + newX;
+                y += glyphSize.Height;
+                height = y;
+            }
+
+            foreach (var glyph in text.GlyphIndices)
+            {
+                switch (glyph)
+                {
+                    case (byte)SpecialGlyph.SoftSpace:
+                        if (wrappedGlyphs.Last() == (byte)SpecialGlyph.NewLine)
+                            continue;
+                        x += glyphSize.Width;
+                        if (x > bounds.Right)
+                        {
+                            wrappedGlyphs.Add((byte)SpecialGlyph.NewLine);
+                            NewLine();
+                        }
+                        else
+                        {
+                            lastSpaceIndex = wrappedGlyphs.Count;
+                            wrappedGlyphs.Add(glyph);
+                        }
+                        break;
+                    case (byte)SpecialGlyph.NewLine:
+                        wrappedGlyphs.Add(glyph);
+                        NewLine();
+                        break;
+                    case (byte)SpecialGlyph.FirstColor:
+                        wrappedGlyphs.Add(glyph);
+                        break;
+                    default:
+                    {
+                        wrappedGlyphs.Add(glyph);
+                        x += glyphSize.Width;
+                        if (x > bounds.Right)
+                        {
+                            if (lastSpaceIndex == -1)
+                                throw new AmbermoonException(ExceptionScope.Data, "Text can not be wrapped inside the given bounds.");
+
+                            wrappedGlyphs[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
+                            NewLine((wrappedGlyphs.Count - lastSpaceIndex - 1) * glyphSize.Width);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (wrappedGlyphs.Last() == (byte)SpecialGlyph.NewLine)
+                wrappedGlyphs.RemoveAt(wrappedGlyphs.Count - 1);
+
+            // Note: The added 1 is used as after the last new line character there are always other characters.
+            return new Text(wrappedGlyphs.ToArray(), 1 + height / glyphSize.Height, maxLineWidth / glyphSize.Width);
         }
 
         public IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary)

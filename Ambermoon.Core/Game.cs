@@ -94,10 +94,26 @@ namespace Ambermoon
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
+        bool inputEnable = true;
         /// <summary>
         /// The 3x3 buttons will always be enabled!
         /// </summary>
-        public bool InputEnable { get; set; } = true;
+        public bool InputEnable
+        {
+            get => inputEnable;
+            set
+            {
+                if (inputEnable == value)
+                    return;
+
+                inputEnable = value;
+                clickMoveActive = false;
+                UntrapMouse();
+
+                if (!inputEnable)
+                    ResetMoveKeys();
+            }
+        }
         bool leftMouseDown = false;
         bool clickMoveActive = false;
         Rect trapMouseArea = null;
@@ -856,7 +872,7 @@ namespace Ambermoon
                 {
                     if (layout.PopupActive)
                     {
-                        var cursorType = CursorType.Sword;
+                        var cursorType = layout.PopupClickToClose ? CursorType.Click : CursorType.Sword;
                         layout.Hover(renderView.ScreenToGame(cursorPosition), ref cursorType);
                         CursorType = cursorType;
                     }
@@ -1260,6 +1276,25 @@ namespace Ambermoon
                     // TODO: gold and food
                 }
             });
+        }
+
+        internal void ShowTextPopup(PopupTextEvent popupTextEvent)
+        {
+            if (popupTextEvent.HasImage)
+            {
+                // Those always use a custom layout
+            }
+            else
+            {
+                // Simple text popup
+                /*var popup = layout.OpenPopup(mapViewArea.Position, (mapViewArea.Width - 32) / 7, 10, true, true); // TODO: sizes and position
+                popup.AddText(new Rect(mapViewArea.Position + new Position(16, 16), new Size(mapViewArea.Width - 32, 10 * 7)),
+                    Map.Texts[(int)popupTextEvent.TextIndex], TextColor.Gray);*/
+                var text = renderView.TextProcessor.ProcessText(Map.Texts[(int)popupTextEvent.TextIndex], nameProvider, dictionary);
+                layout.OpenTextPopup(text, () => InputEnable = true, true, true);
+                InputEnable = false;
+                CursorType = CursorType.Click;
+            }
         }
 
         internal void SetActivePartyMember(int index)

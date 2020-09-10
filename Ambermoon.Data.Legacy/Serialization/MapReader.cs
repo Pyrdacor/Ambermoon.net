@@ -248,15 +248,17 @@ namespace Ambermoon.Data.Legacy
                     // 5. byte is the map text index
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
-                    var unknown1 = dataReader.ReadBytes(3);
+                    var unknown1 = dataReader.ReadByte(); // TODO: seen 1 and 3 so far
+                    var unknown2 = dataReader.ReadBytes(2);
                     var textIndex = dataReader.ReadByte();
-                    var unknown2 = dataReader.ReadBytes(4);
+                    var unknown3 = dataReader.ReadBytes(4);
                     mapEvent = new PopupTextEvent
                     {
                         EventImageIndex = eventImageIndex,
-                        TextIndex = textIndex,
                         Unknown1 = unknown1,
-                        Unknown2 = unknown2
+                        TextIndex = textIndex,
+                        Unknown2 = unknown2,
+                        Unknown3 = unknown3
                     };
                     break;
                 }

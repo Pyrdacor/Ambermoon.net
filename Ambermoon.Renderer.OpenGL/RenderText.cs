@@ -30,7 +30,7 @@ namespace Ambermoon.Renderer
     {
         const int CharacterWidth = 6;
         const int CharacterHeight = 6;
-        const int LineHeight = 8;
+        const int LineHeight = 7;
         const byte ShadowColorIndex = 1;
         protected int drawIndex = -1;
         byte displayLayer = 0;
@@ -179,7 +179,7 @@ namespace Ambermoon.Renderer
                 y += LineHeight;
                 numEmptyCharacterInLine = 0;
 
-                return y + CharacterHeight - 1 < bounds.Bottom;
+                return y + CharacterHeight - 1 <= bounds.Bottom;
             }
 
             void AdjustLineAlign(int lineEndGlyphIndex)

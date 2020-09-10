@@ -409,7 +409,7 @@ namespace Ambermoon.UI
                     hoveredItemName.Text = itemNameText;
                 hoveredItemName.DisplayLayer = 2;
                 hoveredItemName.X = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
-                hoveredItemName.Y = position.Y - Global.GlyphLineHeight - 2;
+                hoveredItemName.Y = position.Y - Global.GlyphLineHeight - 1;
                 hoveredItemName.Visible = true;
 
                 return true;

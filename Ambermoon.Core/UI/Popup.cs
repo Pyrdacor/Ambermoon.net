@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Ambermoon.UI
 {
-    class Popup
+    internal class Popup
     {
         const byte BaseDisplayLayer = 20;
         readonly Game game;
@@ -69,6 +69,12 @@ namespace Ambermoon.UI
 
         public bool CloseOnClick { get; set; } = true;
         public bool DisableButtons { get; set; } = false;
+        public event Action Closed;
+
+        public void OnClosed()
+        {
+            Closed?.Invoke();
+        }
 
         public void Destroy()
         {
@@ -104,6 +110,14 @@ namespace Ambermoon.UI
         {
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text), textColor, shadow, bounds, textAlign);
+            renderText.DisplayLayer = (byte)Util.Min(255, BaseDisplayLayer + displayLayer);
+            renderText.Visible = true;
+            texts.Add(renderText);
+            return renderText;
+        }
+
+        public IRenderText AddText(IRenderText renderText, byte displayLayer = 1)
+        {
             renderText.DisplayLayer = (byte)Util.Min(255, BaseDisplayLayer + displayLayer);
             renderText.Visible = true;
             texts.Add(renderText);

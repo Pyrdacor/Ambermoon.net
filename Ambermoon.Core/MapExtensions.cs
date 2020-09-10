@@ -43,6 +43,14 @@ namespace Ambermoon
                     game.ShowChest(chestMapEvent);
                     break;
                 }
+                case MapEventType.PopupText:
+                {
+                    if (!(mapEvent is PopupTextEvent popupTextEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");
+
+                    game.ShowTextPopup(popupTextEvent);
+                    break;
+                }
                 case MapEventType.ChangeTile:
                 {
                     if (!(mapEvent is ChangeTileEvent changeTileEvent))

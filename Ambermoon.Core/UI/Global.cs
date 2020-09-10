@@ -29,6 +29,6 @@ namespace Ambermoon
         public static readonly Rect[] ExtendedPartyMemberPortraitAreas = Enumerable.Range(0, 6).Select(index =>
             new Rect(15 + index * 48, 0, 48, 36)).ToArray();
         public const int GlyphWidth = 6;
-        public const int GlyphLineHeight = 6;
+        public const int GlyphLineHeight = 7;
     }
 }

@@ -71,6 +71,11 @@ namespace Ambermoon
             return new Rect(center.X - size.Width / 2, center.Y - size.Height / 2, size.Width, size.Height);
         }
 
+        public static Rect GetCentered(Rect rect, Rect outerRect)
+        {
+            return Create(outerRect.Center, rect.Size);
+        }
+
         public void Clip(int left, int top, int right, int bottom)
         {
             if (Left < left)
