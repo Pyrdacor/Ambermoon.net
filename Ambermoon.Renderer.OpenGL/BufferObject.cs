@@ -97,7 +97,10 @@ namespace Ambermoon.Renderer
                 buffer = EnsureBufferSize(buffer, (index + 1) * Dimension, out bool changed);
 
                 if (!reused)
+                { 
                     Size += Dimension;
+                    changed = true;
+                }
 
                 int bufferIndex = index * Dimension;
                 
