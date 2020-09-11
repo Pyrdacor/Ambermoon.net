@@ -5,43 +5,24 @@ namespace Ambermoon.Data.Legacy
 {
     internal class Text : IText
     {
-        public Text(byte[] glyphIndices)
+        // Key = glyphs, Value = visible length (so without color or newline glyphs)
+        readonly List<KeyValuePair<byte[], int>> lines = new List<KeyValuePair<byte[], int>>();
+
+        public Text(List<KeyValuePair<byte[], int>> glyphLines)
+            : this(glyphLines.SelectMany(line => line.Key).ToArray(), glyphLines.Count, glyphLines.Max(line => line.Value))
         {
-            GlyphIndices = glyphIndices;
-            int currentLineSize = 0;
-            LineCount = 1;
-
-            for (int i = 0; i < glyphIndices.Length; ++i)
-            {
-                if (glyphIndices[i] == (byte)SpecialGlyph.NewLine)
-                {
-                    if (currentLineSize > MaxLineSize)
-                        MaxLineSize = currentLineSize;
-
-                    ++LineCount;
-                    currentLineSize = 0;
-                }
-                else if (glyphIndices[i] >= (byte)SpecialGlyph.FirstColor)
-                {
-                    continue;
-                }
-                else
-                {
-                    ++currentLineSize;
-                }
-            }
-
-            if (currentLineSize > MaxLineSize)
-                MaxLineSize = currentLineSize;
+            lines = glyphLines;
         }
 
-        public Text(byte[] glyphIndices, int lineCount, int maxLineSize)
+        Text(byte[] glyphIndices, int lineCount, int maxLineSize)
         {
             GlyphIndices = glyphIndices;
             LineCount = lineCount;
             MaxLineSize = maxLineSize;
         }
 
+        internal IEnumerable<KeyValuePair<byte[], int>> InternalLines => lines;
+        public IReadOnlyList<byte[]> Lines => lines.Select(line => line.Key).ToList().AsReadOnly();
         public byte[] GlyphIndices { get; }
         public int LineCount { get; }
         public int MaxLineSize { get; }
@@ -125,7 +106,43 @@ namespace Ambermoon.Data.Legacy
 
         public IText CreateText(string text)
         {
-            return new Text(text.Select(ch => CharToGlyph(ch, false)).ToArray());
+            return FinalizeText(text.Select(ch => CharToGlyph(ch, false)));
+        }
+
+        public IText FinalizeText(IEnumerable<byte> glyphs)
+        {
+            List<KeyValuePair<byte[], int>> glyphLines = new List<KeyValuePair<byte[], int>>();
+            int currentLineSize = 0;
+            int numLines = 0;
+            List<byte> line = new List<byte>();
+
+            void NewLine()
+            {
+                glyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
+                currentLineSize = 0;
+                line.Clear();
+                ++numLines;
+            }
+
+            foreach (var glyph in glyphs)
+            {
+                line.Add(glyph);
+
+                if (glyph == (byte)SpecialGlyph.NewLine)
+                    NewLine();
+            }
+
+            if (line.LastOrDefault() != (byte)SpecialGlyph.NewLine)
+                NewLine();
+
+            return new Text(glyphLines);
+        }
+
+        public IText GetLines(IText text, int lineOffset, int numLines)
+        {
+            var lines = (text as Text).InternalLines.Skip(lineOffset);
+            lines = lines.Take(Util.Min(numLines, lines.Count()));
+            return new Text(lines.ToList());
         }
 
         public IText WrapText(IText text, Rect bounds, Size glyphSize)
@@ -133,9 +150,11 @@ namespace Ambermoon.Data.Legacy
             int x = bounds.Left;
             int y = bounds.Top;
             int lastSpaceIndex = -1;
+            int currentLineSize = 0;
             int maxLineWidth = 0;
             int height = 0;
-            var wrappedGlyphs = new List<byte>(text.GlyphIndices.Length);
+            var wrappedGlyphLines = new List<KeyValuePair<byte[], int>>();
+            var line = new List<byte>();
 
             void NewLine(int newX = 0)
             {
@@ -146,56 +165,67 @@ namespace Ambermoon.Data.Legacy
                 x = bounds.Left + newX;
                 y += glyphSize.Height;
                 height = y;
+                wrappedGlyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
+                line.Clear();
+                currentLineSize = 0;
             }
+
+            byte? LastGlyph() => line.Count == 0 ? wrappedGlyphLines.Count == 0 ? (byte?)null :
+                wrappedGlyphLines.Last().Key.LastOrDefault() : line.LastOrDefault();
 
             foreach (var glyph in text.GlyphIndices)
             {
                 switch (glyph)
                 {
                     case (byte)SpecialGlyph.SoftSpace:
-                        if (wrappedGlyphs.Last() == (byte)SpecialGlyph.NewLine)
+                        if (LastGlyph() == (byte)SpecialGlyph.NewLine)
                             continue;
                         x += glyphSize.Width;
                         if (x > bounds.Right)
                         {
-                            wrappedGlyphs.Add((byte)SpecialGlyph.NewLine);
+                            line.Add((byte)SpecialGlyph.NewLine);
                             NewLine();
                         }
                         else
                         {
-                            lastSpaceIndex = wrappedGlyphs.Count;
-                            wrappedGlyphs.Add(glyph);
+                            lastSpaceIndex = line.Count;
+                            line.Add(glyph);
+                            ++currentLineSize;
                         }
                         break;
                     case (byte)SpecialGlyph.NewLine:
-                        wrappedGlyphs.Add(glyph);
+                        line.Add(glyph);
                         NewLine();
                         break;
                     case (byte)SpecialGlyph.FirstColor:
-                        wrappedGlyphs.Add(glyph);
+                        line.Add(glyph);
                         break;
                     default:
                     {
-                        wrappedGlyphs.Add(glyph);
+                        line.Add(glyph);
+                        ++currentLineSize;
                         x += glyphSize.Width;
                         if (x > bounds.Right)
                         {
                             if (lastSpaceIndex == -1)
                                 throw new AmbermoonException(ExceptionScope.Data, "Text can not be wrapped inside the given bounds.");
 
-                            wrappedGlyphs[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
-                            NewLine((wrappedGlyphs.Count - lastSpaceIndex - 1) * glyphSize.Width);
+                            line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
+                            NewLine((currentLineSize - lastSpaceIndex - 1) * glyphSize.Width);
                         }
                         break;
                     }
                 }
             }
 
-            if (wrappedGlyphs.Last() == (byte)SpecialGlyph.NewLine)
-                wrappedGlyphs.RemoveAt(wrappedGlyphs.Count - 1);
+            if (LastGlyph() == (byte)SpecialGlyph.NewLine)
+                wrappedGlyphLines[^1].Key[^1] = (byte)SpecialGlyph.SoftSpace;
+
+            if (line.Count > 0)
+                wrappedGlyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
 
             // Note: The added 1 is used as after the last new line character there are always other characters.
-            return new Text(wrappedGlyphs.ToArray(), 1 + height / glyphSize.Height, maxLineWidth / glyphSize.Width);
+            return new Text(wrappedGlyphLines);
         }
 
         public IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary)
@@ -276,7 +306,7 @@ namespace Ambermoon.Data.Legacy
             if (dictRefStart != -1)
                 throw new AmbermoonException(ExceptionScope.Data, $"Not closed dictionary reference at position {dictRefStart - 1}.");
 
-            return new Text(glyphIndices.ToArray());
+            return FinalizeText(glyphIndices);
         }
     }
 }

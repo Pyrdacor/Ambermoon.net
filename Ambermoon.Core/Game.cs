@@ -1072,9 +1072,7 @@ namespace Ambermoon
             if (show)
             {
                 layout.CancelDrag();
-                if (CursorType == CursorType.SmallArrow)
-                    CursorType = CursorType.Sword;
-                UpdateCursor(lastMousePosition, MouseButtons.None);
+                ResetCursor();
                 StorageOpen = false;
                 string mapName = Map.IsWorldMap
                     ? DataNameProvider.GetWorldName(Map.World)
@@ -1325,9 +1323,13 @@ namespace Ambermoon
 
                     // Position = 18,139, max 40 chars per line and 7 lines.
                     var textArea = new Rect(18, 139, 285, 49);
-                    var wrappedText = renderView.TextProcessor.WrapText(text, textArea, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-                    layout.AddText(textArea, wrappedText, TextColor.Gray);
-
+                    //var wrappedText = renderView.TextProcessor.WrapText(text, textArea, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                    var scrollableText = layout.AddScrollableText(textArea, text, TextColor.Gray);
+                    scrollableText.Clicked += scrolledToEnd =>
+                    {
+                        if (scrolledToEnd)
+                            CloseWindow();
+                    };
                     CursorType = CursorType.Click;
                     InputEnable = false;
 
@@ -1340,8 +1342,7 @@ namespace Ambermoon
                 layout.OpenTextPopup(text, () =>
                 {
                     InputEnable = true;
-                    CursorType = CursorType.Sword;
-                    UpdateCursor(lastMousePosition, MouseButtons.None);
+                    ResetCursor();
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
                 }, true, true);
                 InputEnable = false;
@@ -1441,10 +1442,27 @@ namespace Ambermoon
             currentWindow = new WindowInfo { Window = window, WindowParameter = param };
         }
 
+        void ResetCursor()
+        {
+            if (CursorType == CursorType.Click ||
+                CursorType == CursorType.SmallArrow ||
+                CursorType == CursorType.None)
+            {
+                CursorType = CursorType.Sword;
+            }
+            UpdateCursor(lastMousePosition, MouseButtons.None);
+        }
+
         internal void CloseWindow()
         {
             if (!WindowActive)
                 return;
+
+            if (currentWindow.Window == Window.Event)
+            {
+                InputEnable = true;
+                ResetCursor();
+            }
 
             if (currentWindow.Window == lastWindow.Window)
                 currentWindow = DefaultWindow;

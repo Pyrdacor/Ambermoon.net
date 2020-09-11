@@ -54,10 +54,12 @@ namespace Ambermoon.Data
         /// This only wraps text lines to keep them inside the bound width.
         /// </summary>
         IText WrapText(IText text, Rect bounds, Size glyphSize);
+        IText GetLines(IText text, int lineOffset, int numLines);
     }
 
     public interface IText
     {
+        public IReadOnlyList<byte[]> Lines { get; }
         public byte[] GlyphIndices { get; }
         public int LineCount { get; }
         public int MaxLineSize { get; }

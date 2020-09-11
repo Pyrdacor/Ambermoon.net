@@ -316,7 +316,7 @@ namespace Ambermoon.UI
         readonly List<IColoredRect> fadeEffectAreas = new List<IColoredRect>();
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
         readonly List<ISprite> additionalSprites = new List<ISprite>();
-        readonly List<IRenderText> texts = new List<IRenderText>();
+        readonly List<UIText> texts = new List<UIText>();
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
@@ -681,7 +681,7 @@ namespace Ambermoon.UI
             itemGrids.Clear();
             filledAreas.ForEach(area => area?.Delete());
             filledAreas.Clear();
-            texts.ForEach(text => text?.Delete());
+            texts.ForEach(text => text?.Destroy());
             texts.Clear();
             activePopup?.Destroy();
             activePopup = null;
@@ -776,27 +776,19 @@ namespace Ambermoon.UI
 
         public void AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            var renderText = RenderView.RenderTextFactory.Create
-            (
-                textLayer,
-                RenderView.TextProcessor.CreateText(text),
-                color, true, rect, textAlign
-            );
-            renderText.DisplayLayer = displayLayer;
-            renderText.Visible = true;
-            texts.Add(renderText);
+            AddText(rect, RenderView.TextProcessor.CreateText(text), color, textAlign, displayLayer);
         }
 
         public void AddText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            var renderText = RenderView.RenderTextFactory.Create
-            (
-                textLayer, text,
-                color, true, rect, textAlign
-            );
-            renderText.DisplayLayer = displayLayer;
-            renderText.Visible = true;
-            texts.Add(renderText);
+            texts.Add(new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, false));
+        }
+
+        public UIText AddScrollableText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        {
+            var scrollableText = new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, true);
+            texts.Add(scrollableText);
+            return scrollableText;
         }
 
         public void Set80x80Picture(Picture80x80 picture)
@@ -1007,7 +999,7 @@ namespace Ambermoon.UI
                     game.CloseWindow();
                 else if (buttons == MouseButtons.Left)
                 {
-                    // TODO: just scroll or end when fully scrolled
+                    texts[0].Click(position);
                     cursorType = CursorType.Click;
                 }
                 return true;
