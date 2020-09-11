@@ -298,8 +298,9 @@ namespace Ambermoon.UI
         public LayoutType Type { get; private set; }
         readonly Game game;
         readonly ILayerSprite sprite;
-        readonly ITextureAtlas textureAtlasBackground;
-        readonly ITextureAtlas textureAtlasForeground;
+        readonly ITextureAtlas textureAtlas;
+        readonly IRenderLayer renderLayer;
+        readonly IRenderLayer textLayer;
         readonly List<ISprite> portraitBorders = new List<ISprite>();
         readonly ISprite[] portraitBackgrounds = new ISprite[Game.MaxPartyMembers];
         readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
@@ -328,11 +329,12 @@ namespace Ambermoon.UI
         {
             this.game = game;
             RenderView = renderView;
-            textureAtlasBackground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground);
-            textureAtlasForeground = TextureAtlasManager.Instance.GetOrCreate(Layer.UIForeground);
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            renderLayer = renderView.GetLayer(Layer.UI);
+            textLayer = renderView.GetLayer(Layer.Text);
 
             sprite = RenderView.SpriteFactory.Create(320, 163, false, true) as ILayerSprite;
-            sprite.Layer = RenderView.GetLayer(Layer.UIBackground);
+            sprite.Layer = renderLayer;
             sprite.X = Global.LayoutX;
             sprite.Y = Global.LayoutY;
             sprite.DisplayLayer = 1;
@@ -361,13 +363,11 @@ namespace Ambermoon.UI
 
         void AddStaticSprites()
         {
-            var backgroundLayer = RenderView.GetLayer(Layer.UIBackground);
-
-            var barBackgroundTexCoords = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.CharacterValueBarFrames));
+            var barBackgroundTexCoords = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.CharacterValueBarFrames));
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
                 var barBackgroundSprite = portraitBarBackgrounds[i] = RenderView.SpriteFactory.Create(16, 36, false, true) as ILayerSprite;
-                barBackgroundSprite.Layer = backgroundLayer;
+                barBackgroundSprite.Layer = renderLayer;
                 barBackgroundSprite.PaletteIndex = 49;
                 barBackgroundSprite.TextureAtlasOffset = barBackgroundTexCoords;
                 barBackgroundSprite.X = Global.PartyMemberPortraitAreas[i].Left + 33;
@@ -377,9 +377,9 @@ namespace Ambermoon.UI
 
             // Left portrait border
             var sprite = RenderView.SpriteFactory.Create(16, 36, false, true);
-            sprite.Layer = backgroundLayer;
+            sprite.Layer = renderLayer;
             sprite.PaletteIndex = 49;
-            sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.LeftPortraitBorder));
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.LeftPortraitBorder));
             sprite.X = 0;
             sprite.Y = 0;
             sprite.Visible = true;
@@ -387,9 +387,9 @@ namespace Ambermoon.UI
 
             // Right portrait border
             sprite = RenderView.SpriteFactory.Create(16, 36, false, true);
-            sprite.Layer = backgroundLayer;
+            sprite.Layer = renderLayer;
             sprite.PaletteIndex = 49;
-            sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.RightPortraitBorder));
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.RightPortraitBorder));
             sprite.X = Global.VirtualScreenWidth - 16;
             sprite.Y = 0;
             sprite.Visible = true;
@@ -399,18 +399,18 @@ namespace Ambermoon.UI
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
                 sprite = RenderView.SpriteFactory.Create(32, 1, false, true);
-                sprite.Layer = backgroundLayer;
+                sprite.Layer = renderLayer;
                 sprite.PaletteIndex = 49;
-                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
                 sprite.X = 16 + i * 48;
                 sprite.Y = 0;
                 sprite.Visible = true;
                 portraitBorders.Add(sprite);
 
                 sprite = RenderView.SpriteFactory.Create(32, 1, false, true);
-                sprite.Layer = backgroundLayer;
+                sprite.Layer = renderLayer;
                 sprite.PaletteIndex = 49;
-                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
                 sprite.X = 16 + i * 48;
                 sprite.Y = 35;
                 sprite.Visible = true;
@@ -418,16 +418,16 @@ namespace Ambermoon.UI
 
                 // LP shadow
                 characterBars[i * 4 + 0] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 2, 19, 1, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBarShadow), false, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBarShadow), 1, FilledAreaType.CharacterBar));
                 // LP fill
                 characterBars[i * 4 + 1] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 3, 19, 3, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBar), false, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBar), 1, FilledAreaType.CharacterBar));
                 // SP shadow
                 characterBars[i * 4 + 2] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 10, 19, 1, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBarShadow), false, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBarShadow), 1, FilledAreaType.CharacterBar));
                 // SP fill
                 characterBars[i * 4 + 3] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 11, 19, 3, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBar), false, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBar), 1, FilledAreaType.CharacterBar));
             }
         }
 
@@ -442,7 +442,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.LayoutOffset + (uint)(layoutType - 1));
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.LayoutOffset + (uint)(layoutType - 1));
                 sprite.Visible = true;
             }
 
@@ -458,8 +458,8 @@ namespace Ambermoon.UI
                 LayoutType.Map3D => new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth, Global.Map3DViewHeight),
                 _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from another open window is not supported.")
             };
-            AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), 49, true, 1);
-            AddSprite(new Rect(32, 82, 144, 26), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), 49, true, 2);
+            AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), 49, 1);
+            AddSprite(new Rect(32, 82, 144, 26), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), 49, 2);
             var version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
             AddText(new Rect(32, 84, 144, 26),
                 $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}",
@@ -493,35 +493,71 @@ namespace Ambermoon.UI
             return activePopup;
         }
 
-        internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false, bool closeOnClick = true)
+        Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
+            bool disableButtons = false, bool closeOnClick = true)
         {
-            // min text position = 32, 68
-            // max text size = 256, 112
-            // max 16 text rows
-            const int maxTextWidth = 256;
-            const int maxTextHeight = 112;
             var processedText = RenderView.TextProcessor.WrapText(text,
-                new Rect((Global.VirtualScreenWidth - maxTextWidth) / 2, 0, maxTextWidth, int.MaxValue),
+                new Rect(0, 0, maxWidth, int.MaxValue),
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-            var textBounds = new Rect(32, 69, maxTextWidth, Math.Min(processedText.LineCount * Global.GlyphLineHeight, maxTextHeight));
-            var renderText = RenderView.RenderTextFactory.Create(RenderView.GetLayer(Layer.Text),
+            var textBounds = new Rect(position.X + 16, position.Y + 16, maxWidth,
+                Math.Min(processedText.LineCount * Global.GlyphLineHeight, maxTextHeight));
+            int popupRows = Math.Max(4, 2 + (textBounds.Height + 15) / 16); // at least 4 rows
+            textBounds.Position.Y += ((popupRows - 2) * 16 - textBounds.Height) / 2;
+            var renderText = RenderView.RenderTextFactory.Create(textLayer,
                 processedText, TextColor.Gray, true, textBounds);
-            int popupColumns = 2 + (textBounds.Width + 15) / 16;
-            int popupRows = 2 + (textBounds.Height + 15) / 16;
-            var popupArea = Rect.Create(textBounds.Center, new Size(popupColumns * 16, popupRows * 16));
-            activePopup = new Popup(game, RenderView, popupArea.Position, popupColumns, popupRows)
+            activePopup = new Popup(game, RenderView, position, 18, popupRows)
             {
                 DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
             };
             activePopup.AddText(renderText);
-            activePopup.Closed += closeAction;
             return activePopup;
         }
 
-        internal void ClosePopup()
+        internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false, bool closeOnClick = true)
         {
-            activePopup?.OnClosed();
+            const int maxTextWidth = 256;
+            const int maxTextHeight = 112;
+            var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons, closeOnClick);
+            popup.Closed += closeAction;
+            return popup;
+        }
+
+        internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction, Action closeAction)
+        {
+            const int maxTextWidth = 192;
+            var processedText = RenderView.TextProcessor.WrapText(text,
+                new Rect(48, 0, maxTextWidth, int.MaxValue),
+                new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            var renderText = RenderView.RenderTextFactory.Create(textLayer,
+                processedText, TextColor.Gray, true, new Rect(48, 95, maxTextWidth, 28));
+            activePopup = new Popup(game, RenderView, new Position(32, 74), 14, 5)
+            {
+                DisableButtons = true,
+                CloseOnClick = false
+            };
+            activePopup.AddText(renderText);
+            activePopup.Closed += closeAction;
+
+            var yesButton = activePopup.AddButton(new Position(111, 121));
+            var noButton = activePopup.AddButton(new Position(143, 121));
+
+            yesButton.DisplayLayer = 245;
+            noButton.DisplayLayer = 250;
+
+            yesButton.ButtonType = ButtonType.Yes;
+            noButton.ButtonType = ButtonType.No;
+
+            yesButton.Action = yesAction;
+            noButton.Action = noAction;
+
+            return activePopup;
+        }
+
+        internal void ClosePopup(bool raiseEvent = true)
+        {
+            if (raiseEvent)
+                activePopup?.OnClosed();
             activePopup?.Destroy();
             activePopup = null;
         }
@@ -665,15 +701,15 @@ namespace Ambermoon.UI
         public void SetCharacter(int slot, PartyMember partyMember)
         {
             var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, false, true, 1);
-            sprite.Layer = RenderView.GetLayer(partyMember == null || !partyMember.Alive ? Layer.UIBackground : Layer.UIForeground);
+            sprite.Layer = renderLayer;
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
             if (partyMember == null)
-                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot));
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot));
             else if (!partyMember.Alive)
-                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Skull));
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Skull));
             else
-                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.PortraitOffset + partyMember.PortraitIndex - 1);
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.PortraitOffset + partyMember.PortraitIndex - 1);
             sprite.PaletteIndex = 49;
             sprite.Visible = true;
 
@@ -691,14 +727,14 @@ namespace Ambermoon.UI
             else
             {
                 sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, false, true, 0);
-                sprite.Layer = RenderView.GetLayer(Layer.UIBackground);
+                sprite.Layer = renderLayer;
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
-                sprite.TextureAtlasOffset = textureAtlasBackground.GetOffset(Graphics.UIElementOffset + (uint)UICustomGraphic.PortraitBackground);
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
                 sprite.PaletteIndex = 50;
                 sprite.Visible = true;
 
-                var text = portraitNames[slot] ??= RenderView.RenderTextFactory.Create(RenderView.GetLayer(Layer.Text),
+                var text = portraitNames[slot] ??= RenderView.RenderTextFactory.Create(textLayer,
                     RenderView.TextProcessor.CreateText(partyMember.Name.Substring(0, Math.Min(5, partyMember.Name.Length))), TextColor.Red, true,
                     new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6), TextAlign.Center);
                 text.DisplayLayer = 1;
@@ -720,24 +756,24 @@ namespace Ambermoon.UI
             characterBars[slot * 4 + 3].Fill(spPercentage);
         }
 
-        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, bool background, byte displayLayer = 0)
+        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2)
         {
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, false, true) as ILayerSprite;
-            sprite.TextureAtlasOffset = (background ? textureAtlasBackground : textureAtlasForeground).GetOffset(textureIndex);
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
             sprite.DisplayLayer = displayLayer;
             sprite.X = rect.Left;
             sprite.Y = rect.Top;
             sprite.PaletteIndex = paletteIndex;
-            sprite.Layer = RenderView.GetLayer(background ? Layer.UIBackground : Layer.UIForeground);
+            sprite.Layer = renderLayer;
             sprite.Visible = true;
             additionalSprites.Add(sprite);
         }
 
-        public void AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 1)
+        public void AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
             var renderText = RenderView.RenderTextFactory.Create
             (
-                RenderView.GetLayer(Layer.Text),
+                textLayer,
                 RenderView.TextProcessor.CreateText(text),
                 color, true, rect, textAlign
             );
@@ -756,11 +792,11 @@ namespace Ambermoon.UI
             else
             {
                 var sprite = sprite80x80Picture ??= RenderView.SpriteFactory.Create(80, 80, false, true);
-                sprite.TextureAtlasOffset = textureAtlasForeground.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
                 sprite.X = Global.LayoutX + 16;
                 sprite.Y = Global.LayoutY + 6;
                 sprite.PaletteIndex = 49;
-                sprite.Layer = RenderView.GetLayer(Layer.UIForeground);
+                sprite.Layer = renderLayer;
                 sprite.Visible = true;
             }
         }
@@ -777,11 +813,11 @@ namespace Ambermoon.UI
             itemGrids.Add(itemGrid);
         }
 
-        IColoredRect CreateArea(Rect rect, Color color, bool topMost, FilledAreaType type = FilledAreaType.Custom)
+        IColoredRect CreateArea(Rect rect, Color color, byte displayLayer = 0, FilledAreaType type = FilledAreaType.Custom)
         {
             var coloredRect = RenderView.ColoredRectFactory.Create(rect.Width, rect.Height,
-                color, (byte)(topMost ? 255 : type == FilledAreaType.CharacterBar ? 1 : 0));
-            coloredRect.Layer = RenderView.GetLayer(topMost ? Layer.Popup : Layer.UIBackground);
+                color, displayLayer);
+            coloredRect.Layer = type == FilledAreaType.FadeEffect ? RenderView.GetLayer(Layer.Effects) : renderLayer;
             coloredRect.X = rect.Left;
             coloredRect.Y = rect.Top;
             coloredRect.Visible = true;
@@ -802,13 +838,13 @@ namespace Ambermoon.UI
 
         public FilledArea FillArea(Rect rect, Color color, bool topMost)
         {
-            return new FilledArea(filledAreas, CreateArea(rect, color, topMost));
+            return new FilledArea(filledAreas, CreateArea(rect, color, (byte)(topMost ? 245 : 0)));
         }
 
         public void AddColorFader(Rect rect, Color startColor, Color endColor,
             int durationInMilliseconds, bool removeWhenFinished, DateTime? startTime = null)
         {
-            fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, startColor, true, FilledAreaType.FadeEffect), startColor,
+            fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, startColor, 255, FilledAreaType.FadeEffect), startColor,
                 endColor, durationInMilliseconds, startTime ?? DateTime.Now, removeWhenFinished));
         }
 
@@ -835,6 +871,7 @@ namespace Ambermoon.UI
         public void Update(uint currentTicks)
         {
             buttonGrid.Update(currentTicks);
+            activePopup?.Update(currentTicks);
 
             for (int i = fadeEffects.Count - 1; i >= 0; --i)
             {
@@ -882,6 +919,12 @@ namespace Ambermoon.UI
         public void LeftMouseUp(Position position, out CursorType? newCursorType, uint currentTicks)
         {
             newCursorType = null;
+
+            if (PopupActive)
+            {
+                activePopup.LeftMouseUp(position);
+                return;
+            }
 
             buttonGrid.MouseUp(position, MouseButtons.Left, out CursorType? cursorType, currentTicks);
 

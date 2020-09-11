@@ -5,6 +5,7 @@ namespace Ambermoon
 {
     public enum MapEventTrigger
     {
+        Always,
         Move,
         Hand,
         Eye,
@@ -48,8 +49,35 @@ namespace Ambermoon
                     if (!(mapEvent is PopupTextEvent popupTextEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");
 
-                    game.ShowTextPopup(popupTextEvent);
-                    break;
+                    game.ShowTextPopup(popupTextEvent, _ =>
+                    {
+                        TriggerEventChain(map, game, player, MapEventTrigger.Always, x, y, mapManager,
+                            game.CurrentTicks, mapEvent.Next);
+                    });
+                    return null; // next event is only executed after popup response
+                }
+                case MapEventType.Decision:
+                {
+                    if (!(mapEvent is DecisionEvent decisionEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid decision event.");
+
+                    game.ShowDecisionPopup(decisionEvent, response =>
+                    {
+                        if (response == PopupTextEvent.Response.Yes)
+                        {
+                            TriggerEventChain(map, game, player, MapEventTrigger.Always, x, y, mapManager,
+                                game.CurrentTicks, mapEvent.Next);
+                        }
+                        else // Close and No have the same meaning here
+                        {
+                            if (decisionEvent.NoEventIndex != 0xffff)
+                            {
+                                TriggerEventChain(map, game, player, MapEventTrigger.Always, x, y, mapManager,
+                                    game.CurrentTicks, map.Events[(int)decisionEvent.NoEventIndex]);
+                            }
+                        }
+                    });
+                    return null; // next event is only executed after popup response
                 }
                 case MapEventType.ChangeTile:
                 {
@@ -136,6 +164,18 @@ namespace Ambermoon
             return mapEvent.Next;
         }
 
+        static void TriggerEventChain(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
+            IMapManager mapManager, uint ticks, MapEvent firstMapEvent)
+        {
+            bool lastEventStatus = false;
+            var mapEvent = firstMapEvent;
+
+            while (mapEvent != null)
+            {
+                mapEvent = ExecuteEvent(map, game, player, trigger, x, y, mapManager, ticks, mapEvent, ref lastEventStatus);
+            }
+        }
+
         public static void TriggerEvents(this Map map, Game game, IRenderPlayer player,
             MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
         {
@@ -150,14 +190,7 @@ namespace Ambermoon
             if (mapEventId == 0)
                 return; // no map events at this position
 
-            bool lastEventStatus = false;
-            var mapEvent = map.EventLists[(int)mapEventId - 1];
-
-            while (mapEvent != null)
-            {
-                mapEvent = ExecuteEvent(map, game, player, trigger, x, y, mapManager, ticks, mapEvent, ref lastEventStatus);
-            }
+            TriggerEventChain(map, game, player, trigger, x, y, mapManager, ticks, map.EventLists[(int)mapEventId - 1]);
         }
-
     }
 }

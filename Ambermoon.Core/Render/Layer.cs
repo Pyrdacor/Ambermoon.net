@@ -22,16 +22,16 @@
         MapForeground6,
         MapForeground7,
         MapForeground8,
-        UIBackground,
+        CombatBackground,
         BattleMonsterRowFarthest,
         BattleMonsterRowFar,
         BattleMonsterRowCenter,
         BattleMonsterRowNear,
         BattleMonsterRowNearest,
-        UIForeground, // including borders
+        UI,
         Items,
-        Popup,
         Text,
+        Effects,
         Cursor
     }
 

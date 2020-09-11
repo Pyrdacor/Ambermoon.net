@@ -60,20 +60,6 @@ namespace Ambermoon.Renderer
         readonly Texture palette = null;
         bool disposed = false;
 
-        // The back map layers and the front layers plus characters have a range of 0.3f for object y-ordering).
-        // The UI background has a range of 0.1f for UI layers.
-        // The battle monster rows use range of 0.01f (more right monsters are drawn above their left neighbors).
-        // The UI foreground (like controls and borders) has a range of 0.2f for UI layers.
-        // Items use basically the same layer (range 0.01f) as they won't overlap (except for the dragged one).
-        // Texts are used in UI (below dragged items or as item amount text, tool tips, popup texts, etc).
-        // Therefore items, texts and popups share the same base z-value and can use display layers within that
-        // range to handle overlapping correctly.
-        // The order for these 3 should be:
-        // - Normal items and texts (including item amount text).
-        // - Item tooltips
-        // - Dragged item + its amount text
-        // - Popup background
-        // - Popup UI elements and text
         private static readonly float[] LayerBaseZ = new float[]
         {
             0.00f,  // Map3D
@@ -95,16 +81,16 @@ namespace Ambermoon.Renderer
             0.31f,  // MapForeground6
             0.31f,  // MapForeground7
             0.31f,  // MapForeground8
-            0.61f,  // UIBackground
-            0.71f,  // BattleMonsterRowFarthest
-            0.72f,  // BattleMonsterRowFar
-            0.73f,  // BattleMonsterRowCenter
-            0.74f,  // BattleMonsterRowNear
-            0.75f,  // BattleMonsterRowNearest
-            0.76f,  // UIForeground
-            0.96f,  // Items
-            0.96f,  // Popup
-            0.96f,  // Text
+            0.61f,  // CombatBackground
+            0.62f,  // BattleMonsterRowFarthest
+            0.63f,  // BattleMonsterRowFar
+            0.64f,  // BattleMonsterRowCenter
+            0.65f,  // BattleMonsterRowNear
+            0.66f,  // BattleMonsterRowNearest
+            0.70f,  // UI
+            0.70f,  // Items
+            0.70f,  // Text
+            0.98f,  // Effects
             0.99f   // Cursor
         };
 
@@ -117,15 +103,14 @@ namespace Ambermoon.Renderer
             bool masked = false; // TODO: do we need this for some layer?
             bool supportAnimations = layer >= Global.First2DLayer && layer <= Global.Last2DLayer; // TODO
             bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
-            bool opaque = layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
+            bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
                 masked, supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
                 opaque);
 
-            // UI Background uses color-filled areas.
-            // The popup layer is used to create effects like black fading map transitions.
-            if (layer == Layer.UIBackground || layer == Layer.Popup)
+            // UI uses color-filled areas and creates effects like black fading map transitions.
+            if (layer == Layer.UI || layer == Layer.Effects)
                 renderBufferColorRects = new RenderBuffer(state, false, false, false, true, true);
 
             Layer = layer;
@@ -232,7 +217,7 @@ namespace Ambermoon.Renderer
                     shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                     shader.SetZ(LayerBaseZ[(int)Layer]);
                     // Portraits and some UI graphics use color keys.
-                    shader.SetColorKey((byte)(Layer == Layer.UIForeground || Layer == Layer.UIBackground ? 25 : 0));
+                    shader.SetColorKey((byte)(Layer == Layer.UI ? 25 : 0));
                 }
             }
 

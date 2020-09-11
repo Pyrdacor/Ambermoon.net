@@ -52,7 +52,7 @@ namespace Ambermoon.UI
                         item?.Destroy();
                 }
 
-                var slotTexCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset +
+                var slotTexCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset +
                     (disabled ? (uint)UICustomGraphic.ItemSlotDisabled : (uint)UICustomGraphic.ItemSlotBackground));
                 foreach (var background in slotBackgrounds)
                     background.TextureAtlasOffset = slotTexCoords;
@@ -84,8 +84,8 @@ namespace Ambermoon.UI
 
         void CreateSlotBackgrounds()
         {
-            var layer = renderView.GetLayer(Layer.UIBackground);
-            var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + (uint)UICustomGraphic.ItemSlotBackground);
+            var layer = renderView.GetLayer(Layer.UI);
+            var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.ItemSlotBackground);
 
             for (int i = 0; i < slotBackgrounds.Length; ++i)
             {

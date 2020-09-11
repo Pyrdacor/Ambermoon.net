@@ -177,16 +177,12 @@ namespace Ambermoon.Render
             var layoutGraphics = graphicProvider.GetGraphics(GraphicType.Layout);
 
             for (int i = 0; i < layoutGraphics.Count; ++i)
-                AddTexture(Layer.UIBackground, UI.Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
+                AddTexture(Layer.UI, UI.Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
 
             var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
 
             for (int i = 0; i < uiElementGraphics.Count; ++i)
-                AddTexture(Layer.UIBackground, UI.Graphics.UIElementOffset + (uint)i, uiElementGraphics[i]);
-
-            int offset = Enum.NameCount<UICustomGraphic>(); // the UIGraphics follow the UICustomGraphics.
-            for (int i = 0; i <= (int)UIGraphic.FrameLowerRight; ++i)
-                AddTexture(Layer.Popup, (uint)i, uiElementGraphics[offset + i]);
+                AddTexture(Layer.UI, UI.Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
 
             #endregion
 
@@ -195,7 +191,7 @@ namespace Ambermoon.Render
             var portraits = graphicProvider.GetGraphics(GraphicType.Portrait);
 
             for (int i = 0; i < portraits.Count; ++i)
-                AddTexture(Layer.UIForeground, UI.Graphics.PortraitOffset + (uint)i, portraits[i]);
+                AddTexture(Layer.UI, UI.Graphics.PortraitOffset + (uint)i, portraits[i]);
 
             #endregion
 
@@ -204,7 +200,7 @@ namespace Ambermoon.Render
             var pics80x80Graphics = graphicProvider.GetGraphics(GraphicType.Pics80x80);
 
             for (int i = 0; i < pics80x80Graphics.Count; ++i)
-                AddTexture(Layer.UIForeground, UI.Graphics.Pics80x80Offset + (uint)i, pics80x80Graphics[i]);
+                AddTexture(Layer.UI, UI.Graphics.Pics80x80Offset + (uint)i, pics80x80Graphics[i]);
 
             #endregion
 
@@ -213,7 +209,7 @@ namespace Ambermoon.Render
             var eventGraphics = graphicProvider.GetGraphics(GraphicType.EventPictures);
 
             for (int i = 0; i < eventGraphics.Count; ++i)
-                AddTexture(Layer.Popup, UI.Graphics.EventPictureOffset + (uint)i, eventGraphics[i]);
+                AddTexture(Layer.UI, UI.Graphics.EventPictureOffset + (uint)i, eventGraphics[i]);
 
             #endregion
 

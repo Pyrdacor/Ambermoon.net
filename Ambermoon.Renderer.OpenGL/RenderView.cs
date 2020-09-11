@@ -393,6 +393,11 @@ namespace Ambermoon.Renderer.OpenGL
                     }
                 }
 
+                if (layer.Key == Layer.Effects)
+                    State.Gl.Enable(EnableCap.Blend);
+                else if (layer.Key == Layer.Cursor)
+                    State.Gl.Disable(EnableCap.Blend);
+
                 layer.Value.Render();
             }
         }

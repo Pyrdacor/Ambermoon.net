@@ -15,6 +15,7 @@ namespace Ambermoon.UI
         readonly List<IRenderText> texts = new List<IRenderText>();
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
         readonly List<ILayerSprite> sprites = new List<ILayerSprite>();
+        readonly List<Button> buttons = new List<Button>();
         ListBox listBox = null;
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows)
@@ -24,14 +25,14 @@ namespace Ambermoon.UI
 
             this.game = game;
             this.renderView = renderView;
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Popup);
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
 
             void AddBorder(PopupFrame frame, int column, int row)
             {
                 var sprite = renderView.SpriteFactory.Create(16, 16, false, true, BaseDisplayLayer) as ILayerSprite;
-                sprite.Layer = renderView.GetLayer(Layer.Popup);
+                sprite.Layer = renderView.GetLayer(Layer.UI);
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
-                sprite.PaletteIndex = 49;
+                sprite.PaletteIndex = 0;
                 sprite.X = position.X + column * 16;
                 sprite.Y = position.Y + row * 16;
                 sprite.Visible = true;
@@ -61,7 +62,7 @@ namespace Ambermoon.UI
             // fill
             // TODO: use named palette color
             fill = renderView.ColoredRectFactory.Create((columns - 2) * 16, (rows - 2) * 16, game.GetPaletteColor(50, 28), BaseDisplayLayer);
-            fill.Layer = renderView.GetLayer(Layer.Popup);
+            fill.Layer = renderView.GetLayer(Layer.UI);
             fill.X = position.X + 16;
             fill.Y = position.Y + 16;
             fill.Visible = true;
@@ -91,6 +92,9 @@ namespace Ambermoon.UI
 
             sprites.ForEach(sprite => sprite?.Delete());
             sprites.Clear();
+
+            buttons.ForEach(button => button?.Destroy());
+            buttons.Clear();
         }
 
         public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true, byte displayLayer = 1)
@@ -128,7 +132,7 @@ namespace Ambermoon.UI
         {
             var filledArea = renderView.ColoredRectFactory.Create(area.Width, area.Height, color,
                 (byte)Util.Min(255, BaseDisplayLayer + displayLayer));
-            filledArea.Layer = renderView.GetLayer(Layer.Popup);
+            filledArea.Layer = renderView.GetLayer(Layer.UI);
             filledArea.X = area.Left;
             filledArea.Y = area.Top;
             filledArea.Visible = true;
@@ -172,7 +176,7 @@ namespace Ambermoon.UI
                 8 => 38,
                 _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 8.")
             };
-            sprite.Layer = renderView.GetLayer(Layer.Popup);
+            sprite.Layer = renderView.GetLayer(Layer.UI);
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.EventPictureOffset + index);
             sprite.X = 0;
             sprite.Y = 38;
@@ -180,12 +184,41 @@ namespace Ambermoon.UI
             sprites.Add(sprite);
         }
 
+        public Button AddButton(Position position)
+        {
+            var button = new Button(renderView, position);
+            buttons.Add(button);
+            return button;
+        }
+
         public bool Click(Position position)
         {
-            if (listBox != null)
-                return listBox.Click(position);
+            if (listBox?.Click(position) == true)
+                return true;
+
+            // Note: LeftMouseDown may remove buttons or close the popup.
+            for (int i = buttons.Count - 1; i >= 0; --i)
+            {
+                if (i >= buttons.Count)
+                    continue;
+
+                if (buttons[i]?.LeftMouseDown(position, game.CurrentTicks) == true)
+                    return true;
+            }
 
             return false;
+        }
+
+        public void LeftMouseUp(Position position)
+        {
+            // Note: LeftMouseUp may remove buttons or close the popup.
+            for (int i = buttons.Count - 1; i >= 0; --i)
+            {
+                if (i >= buttons.Count)
+                    continue;
+
+                buttons[i]?.LeftMouseUp(position, game.CurrentTicks);
+            }
         }
 
         public void Hover(Position position)
@@ -199,6 +232,12 @@ namespace Ambermoon.UI
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
 
             listBox = new ListBox(game, this, items);
+        }
+
+        public void Update(uint currentTicks)
+        {
+            foreach (var button in buttons)
+                button?.Update(currentTicks);
         }
     }
 }

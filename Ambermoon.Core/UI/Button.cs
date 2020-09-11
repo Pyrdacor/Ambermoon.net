@@ -10,8 +10,8 @@ namespace Ambermoon.UI
         public const int ButtonReleaseTime = 250;
         public const int Width = 32;
         public const int Height = 17;
-        readonly Rect area;
-        ButtonType buttonType;
+        public Rect Area { get; }
+        ButtonType buttonType = ButtonType.Empty;
         readonly ILayerSprite frameSprite; // 32x17
         readonly ILayerSprite disableOverlay;
         readonly ILayerSprite iconSprite; // 32x13
@@ -23,25 +23,25 @@ namespace Ambermoon.UI
 
         public Button(IRenderView renderView, Position position)
         {
-            area = new Rect(position, new Size(Width, Height));
+            Area = new Rect(position, new Size(Width, Height));
 
             frameSprite = renderView.SpriteFactory.Create(Width, Height, false, true, 3) as ILayerSprite;
-            disableOverlay = renderView.SpriteFactory.Create(Width - 8, Height - 6, false, true, 4) as ILayerSprite;
-            iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, false, true, 2) as ILayerSprite;
+            disableOverlay = renderView.SpriteFactory.Create(Width - 8, Height - 6, false, true, 5) as ILayerSprite;
+            iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, false, true, 4) as ILayerSprite;
 
-            var layer = renderView.GetLayer(Layer.UIBackground);
+            var layer = renderView.GetLayer(Layer.UI);
             frameSprite.Layer = layer;
             disableOverlay.Layer = layer;
             iconSprite.Layer = layer;
 
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground);
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
             frameSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.ButtonFrame));
             disableOverlay.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ButtonDisableOverlay));
             iconSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetButtonGraphicIndex(ButtonType.Empty));
 
             frameSprite.PaletteIndex = 50;
             disableOverlay.PaletteIndex = 50;
-            iconSprite.PaletteIndex = 49;
+            iconSprite.PaletteIndex = 0;
 
             frameSprite.X = position.X;
             frameSprite.Y = position.Y;
@@ -53,6 +53,24 @@ namespace Ambermoon.UI
             frameSprite.Visible = true;
             disableOverlay.Visible = false;
             iconSprite.Visible = true;
+        }
+
+        public byte DisplayLayer
+        {
+            get => (byte)(frameSprite.DisplayLayer - 3);
+            set
+            {
+                frameSprite.DisplayLayer = (byte)(value + 3);
+                iconSprite.DisplayLayer = (byte)(value + 4);
+                disableOverlay.DisplayLayer = (byte)(value + 5);
+            }
+        }
+
+        public void Destroy()
+        {
+            frameSprite?.Delete();
+            disableOverlay?.Delete();
+            iconSprite?.Delete();
         }
 
         public ButtonType ButtonType
@@ -130,12 +148,18 @@ namespace Ambermoon.UI
             set => disableOverlay.Visible = value;
         }
 
+        public void LeftMouseUp(Position position, uint currentTicks)
+        {
+            CursorType? cursorType = null;
+            LeftMouseUp(position, ref cursorType, currentTicks);
+        }
+
         public void LeftMouseUp(Position position, ref CursorType? cursorType, uint currentTicks)
         {
             if (Disabled)
                 return;
 
-            if (Pressed && area.Contains(position))
+            if (Pressed && Area.Contains(position))
             {
                 released = true;
                 cursorType = ExecuteActions(currentTicks);
@@ -144,12 +168,18 @@ namespace Ambermoon.UI
             Pressed = false;
         }
 
+        public bool LeftMouseDown(Position position, uint currentTicks)
+        {
+            CursorType? cursorType = null;
+            return LeftMouseDown(position, ref cursorType, currentTicks);
+        }
+
         public bool LeftMouseDown(Position position, ref CursorType? cursorType, uint currentTicks)
         {
             if (Disabled)
                 return false;
 
-            if (area.Contains(position))
+            if (Area.Contains(position))
             {
                 pressedTime = DateTime.Now;
                 Pressed = true;

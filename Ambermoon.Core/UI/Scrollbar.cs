@@ -32,7 +32,7 @@ namespace Ambermoon.UI
 
                 if (disabled)
                 {
-                    backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + baseType switch
+                    backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + baseType switch
                     {
                         ScrollbarType.SmallVertical => (uint)UICustomGraphic.ScrollbarSmallVerticalDisabled,
                         ScrollbarType.LargeVertical => (uint)UICustomGraphic.ScrollbarLargeVerticalDisabled,
@@ -41,7 +41,7 @@ namespace Ambermoon.UI
                 }
                 else
                 {
-                    backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + baseType switch
+                    backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + baseType switch
                     {
                         ScrollbarType.SmallVertical => (uint)UICustomGraphic.ScrollbarBackgroundSmallVertical,
                         ScrollbarType.LargeVertical => (uint)UICustomGraphic.ScrollbarBackgroundLargeVertical,
@@ -63,8 +63,8 @@ namespace Ambermoon.UI
             baseType = type;
 
             backgroundSprite = layout.RenderView.SpriteFactory.Create(scrollArea.Width, scrollArea.Height, false, true) as ILayerSprite;
-            backgroundSprite.Layer = layout.RenderView.GetLayer(Layer.UIBackground);
-            backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + type switch
+            backgroundSprite.Layer = layout.RenderView.GetLayer(Layer.UI);
+            backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + type switch
             {
                 ScrollbarType.SmallVertical => (uint)UICustomGraphic.ScrollbarBackgroundSmallVertical,
                 ScrollbarType.LargeVertical => (uint)UICustomGraphic.ScrollbarBackgroundLargeVertical,
@@ -78,8 +78,8 @@ namespace Ambermoon.UI
 
             // We add 1 to height because there is 1 pixel row for a shadow.
             sprite = layout.RenderView.SpriteFactory.Create(width, height + 1, false, true) as ILayerSprite;
-            sprite.Layer = layout.RenderView.GetLayer(Layer.UIBackground);
-            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + (uint)type);
+            sprite.Layer = layout.RenderView.GetLayer(Layer.UI);
+            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)type);
             sprite.DisplayLayer = 2;
             sprite.PaletteIndex = 49;
             sprite.X = position.X;
@@ -173,7 +173,7 @@ namespace Ambermoon.UI
         {
             if (Scrolling)
             {
-                sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + (uint)baseType);
+                sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)baseType);
                 Scrolling = false;
 
                 if (scrollStartPosition != ScrollOffset)
@@ -190,7 +190,7 @@ namespace Ambermoon.UI
 
             Scrolling = true;
             scrollStartPosition = ScrollOffset;
-            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UIBackground).GetOffset(Graphics.UIElementOffset + (uint)baseType + 1u);
+            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)baseType + 1u);
 
             return true;
         }

@@ -25,7 +25,7 @@ namespace Ambermoon.Data
         ConversationAction,
         PrintText,
         Create,
-        Question, // yes/no popup with text
+        Decision, // yes/no popup with text
         ChangeMusic,
         Exit,
         Spawn,
@@ -118,19 +118,26 @@ namespace Ambermoon.Data
 
     public class PopupTextEvent : MapEvent
     {
+        public enum Response
+        {
+            Close,
+            Yes,
+            No
+        }
+
         public uint TextIndex { get; set; }
         /// <summary>
         /// From event_pix (0-based). 0xff -> no image.
         /// </summary>
         public uint EventImageIndex { get; set; }
         public bool HasImage => EventImageIndex != 0xff;
-        public byte Unknown1 { get; set; }
+        public byte Unknown { get; set; } // TODO: seen 1 and 3
+        public byte[] Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
-        public byte[] Unknown3 { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Unknown1 {Unknown1}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}, Unknown3 {string.Join(" ", Unknown3.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Unknown {Unknown}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -416,7 +423,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class QuestionEvent : MapEvent
+    public class DecisionEvent : MapEvent
     {
         public uint TextIndex { get; set; }
         public byte[] Unknown1 { get; set; }
