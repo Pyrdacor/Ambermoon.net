@@ -878,7 +878,7 @@ namespace Ambermoon
                 {
                     if (layout.PopupActive)
                     {
-                        var cursorType = layout.PopupClickToClose ? CursorType.Click : CursorType.Sword;
+                        var cursorType = layout.PopupClickCursor ? CursorType.Click : CursorType.Sword;
                         layout.Hover(renderView.ScreenToGame(cursorPosition), ref cursorType);
                         CursorType = cursorType;
                     }

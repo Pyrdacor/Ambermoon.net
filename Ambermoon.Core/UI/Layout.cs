@@ -321,7 +321,7 @@ namespace Ambermoon.UI
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
         public bool PopupDisableButtons => activePopup?.DisableButtons == true;
-        public bool PopupClickToClose => activePopup?.CloseOnClick == true;
+        public bool PopupClickCursor => activePopup?.ClickCursor == true;
         int buttonGridPage = 0;
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
@@ -506,14 +506,16 @@ namespace Ambermoon.UI
                 Math.Min(processedText.LineCount * Global.GlyphLineHeight, maxTextHeight));
             int popupRows = Math.Max(4, 2 + (textBounds.Height + 15) / 16); // at least 4 rows
             textBounds.Position.Y += ((popupRows - 2) * 16 - textBounds.Height) / 2;
-            var renderText = RenderView.RenderTextFactory.Create(textLayer,
-                processedText, TextColor.Gray, true, textBounds);
+            /*var renderText = RenderView.RenderTextFactory.Create(textLayer,
+                processedText, TextColor.Gray, true, textBounds);*/
             activePopup = new Popup(game, RenderView, position, 18, popupRows)
             {
                 DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
             };
-            activePopup.AddText(renderText);
+            bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
+            activePopup.AddText(textBounds, text, TextColor.Gray, TextAlign.Left, true, 1, scrolling);
+            //activePopup.AddText(renderText);
             return activePopup;
         }
 

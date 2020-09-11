@@ -13,6 +13,7 @@ namespace Ambermoon.UI
         bool allowScrolling;
         int lineOffset = 0;
         readonly int numVisibleLines;
+        public bool WithScrolling { get; private set; }
 
         /// <summary>
         /// The boolean gives information if the
@@ -20,6 +21,17 @@ namespace Ambermoon.UI
         /// true for non-scrollable texts.
         /// </summary>
         public event Action<bool> Clicked;
+        /// <summary>
+        /// The boolean gives information if the
+        /// text was just scrolled to the end.
+        /// </summary>
+        public event Action<bool> Scrolled;
+
+        public UIText(IRenderText renderText)
+        {
+            allowScrolling = false;
+            this.renderText = renderText;
+        }
 
         public UIText(IRenderView renderView, IText text, Rect bounds, byte displayLayer = 1,
             TextColor textColor = TextColor.Gray, bool shadow = true, TextAlign textAlign = TextAlign.Left, bool allowScrolling = false)
@@ -32,6 +44,7 @@ namespace Ambermoon.UI
             renderText.DisplayLayer = displayLayer;
             renderText.Visible = true;
             numVisibleLines = bounds.Height / Global.GlyphLineHeight;
+            WithScrolling = allowScrolling;
         }
 
         public void Destroy()
@@ -55,8 +68,13 @@ namespace Ambermoon.UI
                 UpdateText(lineOffset);
 
                 if (lineOffset == text.LineCount - numVisibleLines)
+                {
                     allowScrolling = false;
-                    
+                    Scrolled?.Invoke(true);
+                }
+                else
+                    Scrolled?.Invoke(false);
+
                 Clicked?.Invoke(false);
 
                 return true;

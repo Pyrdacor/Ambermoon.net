@@ -1,6 +1,8 @@
-﻿using Ambermoon.Render;
+﻿using Ambermoon.Data;
+using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.UI
 {
@@ -12,7 +14,7 @@ namespace Ambermoon.UI
         readonly ITextureAtlas textureAtlas;
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
         readonly IColoredRect fill;
-        readonly List<IRenderText> texts = new List<IRenderText>();
+        readonly List<UIText> texts = new List<UIText>();
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
         readonly List<ILayerSprite> sprites = new List<ILayerSprite>();
         readonly List<Button> buttons = new List<Button>();
@@ -70,6 +72,7 @@ namespace Ambermoon.UI
 
         public bool CloseOnClick { get; set; } = true;
         public bool DisableButtons { get; set; } = false;
+        public bool ClickCursor => CloseOnClick || texts.Any(text => text.WithScrolling);
         public event Action Closed;
 
         public void OnClosed()
@@ -84,7 +87,7 @@ namespace Ambermoon.UI
 
             fill?.Delete();
 
-            texts.ForEach(text => text?.Delete());
+            texts.ForEach(text => text?.Destroy());
             texts.Clear();
 
             filledAreas.ForEach(filledArea => filledArea?.Delete());
@@ -105,27 +108,38 @@ namespace Ambermoon.UI
             renderText.X = position.X;
             renderText.Y = position.Y;
             renderText.Visible = true;
-            texts.Add(renderText);
+            texts.Add(new UIText(renderText));
             return renderText;
         }
 
-        public IRenderText AddText(Rect bounds, string text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
-            bool shadow = true, byte displayLayer = 1)
+        public UIText AddText(Rect bounds, string text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
+            bool shadow = true, byte displayLayer = 1, bool scrolling = false)
         {
-            var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
-                renderView.TextProcessor.CreateText(text), textColor, shadow, bounds, textAlign);
-            renderText.DisplayLayer = (byte)Util.Min(255, BaseDisplayLayer + displayLayer);
-            renderText.Visible = true;
-            texts.Add(renderText);
-            return renderText;
+            return AddText(bounds, renderView.TextProcessor.CreateText(text), textColor, textAlign,
+                shadow, (byte)Util.Min(255, BaseDisplayLayer + displayLayer), scrolling);
         }
 
-        public IRenderText AddText(IRenderText renderText, byte displayLayer = 1)
+        public UIText AddText(Rect bounds, IText text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
+            bool shadow = true, byte displayLayer = 1, bool scrolling = false)
+        {
+            var uiText = new UIText(renderView, text, bounds, (byte)Util.Min(255, BaseDisplayLayer + displayLayer),
+                textColor, shadow, textAlign, scrolling);
+            texts.Add(uiText);
+            if (scrolling)
+            {
+                CloseOnClick = false;
+                uiText.Scrolled += scrolledToEnd => CloseOnClick = scrolledToEnd;
+            }
+            return uiText;
+        }
+
+        public UIText AddText(IRenderText renderText, byte displayLayer = 1)
         {
             renderText.DisplayLayer = (byte)Util.Min(255, BaseDisplayLayer + displayLayer);
             renderText.Visible = true;
-            texts.Add(renderText);
-            return renderText;
+            var uiText = new UIText(renderText);
+            texts.Add(uiText);
+            return uiText;
         }
 
         public IColoredRect FillArea(Rect area, Color color, byte displayLayer = 1)
@@ -178,6 +192,16 @@ namespace Ambermoon.UI
                     continue;
 
                 if (buttons[i]?.LeftMouseDown(position, game.CurrentTicks) == true)
+                    return true;
+            }
+
+            // Note: Click may remove texts or close the popup.
+            for (int i = texts.Count - 1; i >= 0; --i)
+            {
+                if (i >= texts.Count)
+                    continue;
+
+                if (texts[i].Click(position))
                     return true;
             }
 
