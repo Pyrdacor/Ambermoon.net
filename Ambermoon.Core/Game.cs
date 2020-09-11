@@ -882,6 +882,8 @@ namespace Ambermoon
                         layout.Hover(renderView.ScreenToGame(cursorPosition), ref cursorType);
                         CursorType = cursorType;
                     }
+                    else if (layout.Type == LayoutType.Event)
+                        CursorType = CursorType.Click;
                     else
                         CursorType = CursorType.Sword;
 
@@ -1307,6 +1309,8 @@ namespace Ambermoon
 
         internal void ShowTextPopup(PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
         {
+            var text = renderView.TextProcessor.ProcessText(Map.Texts[(int)popupTextEvent.TextIndex], nameProvider, dictionary);
+
             if (popupTextEvent.HasImage)
             {
                 // Those always use a custom layout
@@ -1317,6 +1321,15 @@ namespace Ambermoon
                     ShowMap(false);
                     layout.Reset();
                     layout.AddEventPicture(popupTextEvent.EventImageIndex);
+                    layout.FillArea(new Rect(16, 138, 288, 55), GetPaletteColor(50, 28), false);
+
+                    // Position = 18,139, max 40 chars per line and 7 lines.
+                    var textArea = new Rect(18, 139, 285, 49);
+                    var wrappedText = renderView.TextProcessor.WrapText(text, textArea, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                    layout.AddText(textArea, wrappedText, TextColor.Gray);
+
+                    CursorType = CursorType.Click;
+                    InputEnable = false;
 
                     // TODO ...
                 });
@@ -1324,7 +1337,6 @@ namespace Ambermoon
             else
             {
                 // Simple text popup
-                var text = renderView.TextProcessor.ProcessText(Map.Texts[(int)popupTextEvent.TextIndex], nameProvider, dictionary);
                 layout.OpenTextPopup(text, () =>
                 {
                     InputEnable = true;

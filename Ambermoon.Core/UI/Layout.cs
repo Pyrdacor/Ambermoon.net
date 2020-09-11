@@ -787,6 +787,18 @@ namespace Ambermoon.UI
             texts.Add(renderText);
         }
 
+        public void AddText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        {
+            var renderText = RenderView.RenderTextFactory.Create
+            (
+                textLayer, text,
+                color, true, rect, textAlign
+            );
+            renderText.DisplayLayer = displayLayer;
+            renderText.Visible = true;
+            texts.Add(renderText);
+        }
+
         public void Set80x80Picture(Picture80x80 picture)
         {
             if (picture == Picture80x80.None)
@@ -989,6 +1001,18 @@ namespace Ambermoon.UI
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
             uint currentTicks)
         {
+            if (Type == LayoutType.Event)
+            {
+                if (buttons == MouseButtons.Right)
+                    game.CloseWindow();
+                else if (buttons == MouseButtons.Left)
+                {
+                    // TODO: just scroll or end when fully scrolled
+                    cursorType = CursorType.Click;
+                }
+                return true;
+            }
+
             if (PopupActive)
             {
                 if (activePopup.CloseOnClick || buttons == MouseButtons.Right)
