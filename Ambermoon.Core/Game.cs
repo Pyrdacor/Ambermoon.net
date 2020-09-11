@@ -442,6 +442,8 @@ namespace Ambermoon
                 Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection);
             else
                 Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection);
+            player.Position.X = (int)savegame.CurrentMapX - 1;
+            player.Position.Y = (int)savegame.CurrentMapY - 1;
 
             ShowMap(true);
 
@@ -461,6 +463,10 @@ namespace Ambermoon
             SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
 
             InputEnable = true;
+
+            // Trigger events after game load
+            TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
+                (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
@@ -1042,7 +1048,20 @@ namespace Ambermoon
             else // 2D
             {
                 var tilePosition = renderMap2D.PositionToTile(position);
-                renderMap2D.TriggerEvents(player2D, trigger, (uint)tilePosition.X, (uint)tilePosition.Y, mapManager, CurrentTicks);
+                TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
+            }
+        }
+
+        void TriggerMapEvents(MapEventTrigger trigger, uint x, uint y)
+        {
+            if (is3D)
+            {
+                // TODO
+                // renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager, currentTicks);
+            }
+            else // 2D
+            {
+                renderMap2D.TriggerEvents(player2D, trigger, x, y, mapManager, CurrentTicks);
             }
         }
 
@@ -1050,6 +1069,10 @@ namespace Ambermoon
         {
             if (show)
             {
+                layout.CancelDrag();
+                if (CursorType == CursorType.SmallArrow)
+                    CursorType = CursorType.Sword;
+                UpdateCursor(lastMousePosition, MouseButtons.None);
                 StorageOpen = false;
                 string mapName = Map.IsWorldMap
                     ? DataNameProvider.GetWorldName(Map.World)
@@ -1201,6 +1224,10 @@ namespace Ambermoon
                     mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
                     CurrentTicks, true, mapChangeEvent.Direction);
                 ShowMap(true);
+
+                // Trigger events after map transition
+                TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
+                    (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
             });
         }
 
@@ -1283,9 +1310,16 @@ namespace Ambermoon
             if (popupTextEvent.HasImage)
             {
                 // Those always use a custom layout
-                layout.SetLayout(LayoutType.Event);
+                Fade(() =>
+                {
+                    SetWindow(Window.Event);
+                    layout.SetLayout(LayoutType.Event);
+                    ShowMap(false);
+                    layout.Reset();
+                    layout.AddEventPicture(popupTextEvent.EventImageIndex);
 
-                // TODO ...
+                    // TODO ...
+                });
             }
             else
             {
@@ -1294,6 +1328,8 @@ namespace Ambermoon
                 layout.OpenTextPopup(text, () =>
                 {
                     InputEnable = true;
+                    CursorType = CursorType.Sword;
+                    UpdateCursor(lastMousePosition, MouseButtons.None);
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
                 }, true, true);
                 InputEnable = false;

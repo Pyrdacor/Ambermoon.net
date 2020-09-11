@@ -159,31 +159,6 @@ namespace Ambermoon.UI
             FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, displayLayer);
         }
 
-        public void AddEventPicture(uint index, byte displayLayer = 1)
-        {
-            var sprite = renderView.SpriteFactory.Create(320, 92, false, true,
-                (byte)Util.Min(255, BaseDisplayLayer + displayLayer)) as ILayerSprite;
-            sprite.PaletteIndex = index switch
-            {
-                0 => 27,
-                1 => 32,
-                2 => 33,
-                3 => 33,
-                4 => 33,
-                5 => 33,
-                6 => 33,
-                7 => 33,
-                8 => 38,
-                _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 8.")
-            };
-            sprite.Layer = renderView.GetLayer(Layer.UI);
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.EventPictureOffset + index);
-            sprite.X = 0;
-            sprite.Y = 38;
-            sprite.Visible = true;
-            sprites.Add(sprite);
-        }
-
         public Button AddButton(Position position)
         {
             var button = new Button(renderView, position);

@@ -6,7 +6,8 @@
         Inventory,
         Stats,
         Chest,
-        Merchant
+        Merchant,
+        Event
         // TODO ...
     }
 

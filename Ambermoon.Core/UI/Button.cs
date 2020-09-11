@@ -18,6 +18,8 @@ namespace Ambermoon.UI
         readonly ITextureAtlas textureAtlas;
         bool pressed = false;
         bool released = true;
+        bool disabled = false;
+        bool visible = true;
         DateTime pressedTime = DateTime.MinValue;
         uint lastActionTimeInTicks = 0;
 
@@ -144,8 +146,28 @@ namespace Ambermoon.UI
 
         public bool Disabled
         {
-            get => disableOverlay.Visible || buttonType == ButtonType.Empty;
-            set => disableOverlay.Visible = value;
+            get => disabled || buttonType == ButtonType.Empty || !Visible;
+            set
+            {
+                disabled = value;
+                disableOverlay.Visible = Visible && disabled;
+            }
+        }
+
+        public bool Visible
+        {
+            get => visible;
+            set
+            {
+                if (visible == value)
+                    return;
+
+                visible = value;
+
+                frameSprite.Visible = visible;
+                iconSprite.Visible = visible;
+                disableOverlay.Visible = visible && disabled;
+            }
         }
 
         public void LeftMouseUp(Position position, uint currentTicks)

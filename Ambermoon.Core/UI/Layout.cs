@@ -308,6 +308,7 @@ namespace Ambermoon.UI
         readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
         readonly Bar[] characterBars = new Bar[Game.MaxPartyMembers * 4]; // 2 bars and each has fill and shadow color
         ISprite sprite80x80Picture;
+        ISprite eventPicture;
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
         readonly List<IColoredRect> barAreas = new List<IColoredRect>();
@@ -445,6 +446,8 @@ namespace Ambermoon.UI
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.LayoutOffset + (uint)(layoutType - 1));
                 sprite.Visible = true;
             }
+
+            buttonGrid.Visible = layoutType != LayoutType.None && layoutType != LayoutType.Event;
 
             UpdateLayoutButtons(ticksPerMovement);
         }
@@ -670,6 +673,8 @@ namespace Ambermoon.UI
         {
             sprite80x80Picture?.Delete();
             sprite80x80Picture = null;
+            eventPicture?.Delete();
+            eventPicture = null;
             additionalSprites.ForEach(sprite => sprite?.Delete());
             additionalSprites.Clear();
             itemGrids.ForEach(grid => grid.Destroy());
@@ -798,6 +803,38 @@ namespace Ambermoon.UI
                 sprite.PaletteIndex = 49;
                 sprite.Layer = renderLayer;
                 sprite.Visible = true;
+            }
+        }
+
+        public void AddEventPicture(uint index)
+        {
+            var sprite = eventPicture ??= RenderView.SpriteFactory.Create(320, 92, false, true, 10) as ILayerSprite;
+            sprite.PaletteIndex = index switch
+            {
+                0 => 26,
+                1 => 31,
+                2 => 32,
+                3 => 32,
+                4 => 32,
+                5 => 32,
+                6 => 32,
+                7 => 32,
+                8 => 37,
+                _ => throw new AmbermoonException(ExceptionScope.Data, $"Invalid event picture index: {index}. Valid indices are 0 to 8.")
+            };
+            sprite.Layer = renderLayer;
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.EventPictureOffset + index);
+            sprite.X = 0;
+            sprite.Y = 38;
+            sprite.Visible = true;
+        }
+
+        public void CancelDrag()
+        {
+            if (draggedItem != null)
+            {
+                draggedItem.Reset(game);
+                draggedItem = null;
             }
         }
 

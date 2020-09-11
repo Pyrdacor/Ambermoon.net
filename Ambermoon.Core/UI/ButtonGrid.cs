@@ -14,6 +14,7 @@ namespace Ambermoon.UI
         public event Action RightMouseClicked;
         bool rightMouseDown = false;
         readonly Rect area;
+        bool visible = true;
 
         public ButtonGrid(IRenderView renderView)
         {
@@ -96,6 +97,21 @@ namespace Ambermoon.UI
         {
             foreach (var button in buttons)
                 button.Update(currentTicks);
+        }
+
+        public bool Visible
+        {
+            get => visible;
+            set
+            {
+                if (visible == value)
+                    return;
+
+                visible = value;
+
+                foreach (var button in buttons)
+                    button.Visible = visible;
+            }
         }
     }
 }
