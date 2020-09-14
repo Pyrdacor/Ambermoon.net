@@ -184,9 +184,6 @@ namespace Ambermoon.Render
             }
 
             base.MoveTo(map, x, y, ticks, frameReset, newDirection);
-
-            player.Position.X = Position.X;
-            player.Position.Y = Position.Y;
         }
 
         public override void Update(uint ticks)

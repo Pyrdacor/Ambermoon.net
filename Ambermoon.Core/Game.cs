@@ -1077,27 +1077,14 @@ namespace Ambermoon
                 // In 3D we might trigger adjacent tile events.
                 if (!consumed && trigger != MapEventTrigger.Move)
                 {
-                    switch (camera3D.LookDirection)
+                    camera3D.GetForwardPosition(Global.DistancePerTile, out float x, out float z, false, false);
+                    var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
+
+                    if (position != player.Position &&
+                        position.X >= 0 && position.X < Map.Width &&
+                        position.Y >= 0 && position.Y < Map.Height)
                     {
-                        case Direction.Up:
-                            if (player.Position.Y > 0)
-                                TriggerMapEvents(trigger, (uint)player.Position.X, (uint)(player.Position.Y - 1));
-                            break;
-                        case Direction.Right:
-                            if (player.Position.X < Map.Width - 1)
-                                TriggerMapEvents(trigger, (uint)(player.Position.X + 1), (uint)player.Position.Y);
-                            break;
-                        case Direction.Down:
-                            if (player.Position.Y < Map.Height - 1)
-                                TriggerMapEvents(trigger, (uint)player.Position.X, (uint)(player.Position.Y + 1));
-                            break;
-                        case Direction.Left:
-                            if (player.Position.X > 0)
-                                TriggerMapEvents(trigger, (uint)(player.Position.X - 1), (uint)player.Position.Y);
-                            break;
-                        default:
-                            // don't trigger nearby events if turned into a diagonal direction
-                            break;
+                        TriggerMapEvents(trigger, (uint)position.X, (uint)position.Y);
                     }
                 }
             }
@@ -1252,6 +1239,7 @@ namespace Ambermoon
             {
                 var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
                 var player = is3D ? (IRenderPlayer)player3D : player2D;
+                bool mapTypeChanged = Map.Type != newMap.Type;
 
                 ShowMap(true);
 
@@ -1261,10 +1249,15 @@ namespace Ambermoon
                 player.MoveTo(newMap, mapChangeEvent.X - 1,
                     mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
                     CurrentTicks, true, mapChangeEvent.Direction);
+                this.player.Position.X = player.Position.X;
+                this.player.Position.Y = player.Position.Y;
 
-                // Trigger events after map transition
-                TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
-                    (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
+                if (!mapTypeChanged)
+                {
+                    // Trigger events after map transition
+                    TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
+                        (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
+                }
             });
         }
 

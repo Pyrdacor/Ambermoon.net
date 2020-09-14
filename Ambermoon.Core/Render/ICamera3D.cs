@@ -45,6 +45,5 @@ namespace Ambermoon.Render
         void GetBackwardPosition(float distance, out float x, out float z, bool noX, bool noZ);
         void GetLeftPosition(float distance, out float x, out float z, bool noX, bool noZ);
         void GetRightPosition(float distance, out float x, out float z, bool noX, bool noZ);
-        Direction LookDirection { get; }
     }
 }
