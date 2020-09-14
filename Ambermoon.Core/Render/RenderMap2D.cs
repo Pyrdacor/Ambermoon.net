@@ -153,6 +153,25 @@ namespace Ambermoon.Render
             return new Position((int)ScrollX + NUM_VISIBLE_TILES_X / 2, (int)ScrollY + NUM_VISIBLE_TILES_Y / 2);
         }
 
+        public Map GetMapFromTile(uint x, uint y)
+        {
+            if (x >= Map.Width)
+            {
+                if (y >= Map.Height)
+                    return adjacentMaps[2];
+                else
+                    return adjacentMaps[0];
+            }
+            else if (y >= Map.Height)
+            {
+                return adjacentMaps[1];
+            }
+            else
+            {
+                return Map;
+            }
+        }
+
         public Map.Tile this[uint x, uint y]
         {
             get

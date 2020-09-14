@@ -49,7 +49,7 @@ namespace Ambermoon
                     if (!(mapEvent is PopupTextEvent popupTextEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");
 
-                    game.ShowTextPopup(popupTextEvent, _ =>
+                    game.ShowTextPopup(map, popupTextEvent, _ =>
                     {
                         TriggerEventChain(map, game, player, MapEventTrigger.Always, x, y, mapManager,
                             game.CurrentTicks, mapEvent.Next);
@@ -61,7 +61,7 @@ namespace Ambermoon
                     if (!(mapEvent is DecisionEvent decisionEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid decision event.");
 
-                    game.ShowDecisionPopup(decisionEvent, response =>
+                    game.ShowDecisionPopup(map, decisionEvent, response =>
                     {
                         if (response == PopupTextEvent.Response.Yes)
                         {

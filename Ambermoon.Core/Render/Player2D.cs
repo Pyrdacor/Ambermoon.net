@@ -26,9 +26,9 @@ namespace Ambermoon.Render
                 return false;
 
             bool canMove = true;
+            var map = Map.Map;
             int newX = Position.X + x;
             int newY = Position.Y + y;
-            var map = Map.Map;
             Map.Tile tile = null;
 
             if (!map.IsWorldMap)
@@ -129,9 +129,8 @@ namespace Ambermoon.Render
                         if (!frameReset && CurrentState == prevState)
                             SetCurrentFrame((CurrentFrame + 1) % NumFrames);
 
-                        var mapOffset = oldMap.MapOffset;
-                        player.Position.X = mapOffset.X + Position.X - (int)Map.ScrollX;
-                        player.Position.Y = mapOffset.Y + Position.Y - (int)Map.ScrollY;
+                        player.Position.X = Position.X - (int)Map.ScrollX;
+                        player.Position.Y = Position.Y - (int)Map.ScrollY;
 
                         Visible = tile.Type != Data.Map.TileType.Invisible;
                     }
@@ -140,13 +139,15 @@ namespace Ambermoon.Render
                 {
                     // adjust player position on map transition
                     var position = Map.GetCenterPosition();
+
                     MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, Direction);
-                    
+                    Map.TriggerEvents(this, MapEventTrigger.Move, (uint)position.X,
+                        (uint)position.Y + (Map.Map.IsWorldMap ? 0u : 1u), mapManager, ticks);
+
                     if (Map.Map.Type == MapType.Map2D)
                     {
-                        var mapOffset = oldMap.MapOffset;
-                        player.Position.X = mapOffset.X + Position.X - (int)Map.ScrollX;
-                        player.Position.Y = mapOffset.Y + Position.Y - (int)Map.ScrollY;
+                        player.Position.X = Position.X - (int)Map.ScrollX;
+                        player.Position.Y = Position.Y - (int)Map.ScrollY;
 
                         // Note: For 3D maps the game/3D map will handle player position updating.
                     }

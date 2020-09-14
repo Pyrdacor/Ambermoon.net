@@ -93,6 +93,7 @@ namespace Ambermoon
         internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
+        public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool inputEnable = true;
         /// <summary>
@@ -352,9 +353,8 @@ namespace Ambermoon
             player2D.Visible = true;
             player2D.MoveTo(map, playerX, playerY, CurrentTicks, true, direction);
 
-            var mapOffset = map.MapOffset;
-            player.Position.X = mapOffset.X + (int)playerX - (int)renderMap2D.ScrollX;
-            player.Position.Y = mapOffset.Y + (int)playerY - (int)renderMap2D.ScrollY;
+            player.Position.X = (int)playerX - (int)renderMap2D.ScrollX;
+            player.Position.Y = (int)playerY - (int)renderMap2D.ScrollY;
             player.Direction = direction;
             
             renderView.GetLayer(Layer.Map3D).Visible = false;
@@ -1305,9 +1305,9 @@ namespace Ambermoon
             });
         }
 
-        internal void ShowTextPopup(PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
+        internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
         {
-            var text = renderView.TextProcessor.ProcessText(Map.Texts[(int)popupTextEvent.TextIndex], nameProvider, dictionary);
+            var text = renderView.TextProcessor.ProcessText(map.Texts[(int)popupTextEvent.TextIndex], nameProvider, dictionary);
 
             if (popupTextEvent.HasImage)
             {
@@ -1350,9 +1350,9 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowDecisionPopup(DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
+        internal void ShowDecisionPopup(Map map, DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
         {
-            var text = renderView.TextProcessor.ProcessText(Map.Texts[(int)decisionEvent.TextIndex], nameProvider, dictionary);
+            var text = renderView.TextProcessor.ProcessText(map.Texts[(int)decisionEvent.TextIndex], nameProvider, dictionary);
             layout.OpenYesNoPopup
             (
                 text,
