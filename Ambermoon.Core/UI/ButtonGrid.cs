@@ -41,6 +41,11 @@ namespace Ambermoon.UI
                 buttons[index].Release();
         }
 
+        public void SetButtonAction(int slot, Action action)
+        {
+            buttons[slot].Action = action;
+        }
+
         public void SetButton(int slot, ButtonType buttonType, bool disabled, Action action,
             bool instantAction, Func<CursorType> cursorChangeAction = null,
             uint? continuousActionDelayInTicks = null)

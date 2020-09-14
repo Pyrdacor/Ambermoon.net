@@ -296,7 +296,7 @@ namespace Ambermoon.Data.Legacy
                     var unknown = dataReader.ReadBytes(7);
                     mapEvent = new RiddlemouthEvent
                     {
-                        IntroTextIndex = introTextIndex,
+                        RiddleTextIndex = introTextIndex,
                         SolutionTextIndex = solutionTextIndex,
                         Unknown = unknown
                     };

@@ -211,7 +211,14 @@ namespace Ambermoon.Data.Legacy
                                 throw new AmbermoonException(ExceptionScope.Data, "Text can not be wrapped inside the given bounds.");
 
                             line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
-                            NewLine((currentLineSize - lastSpaceIndex - 1) * glyphSize.Width);
+                            int nextLineSize = (currentLineSize - lastSpaceIndex - 1) * glyphSize.Width;
+                            var tempLine = line.Skip(lastSpaceIndex + 1);
+                            line = line.Take(lastSpaceIndex + 1).ToList();
+                            currentLineSize = lastSpaceIndex;
+                            x = currentLineSize * glyphSize.Width;
+                            NewLine(nextLineSize);
+                            line = tempLine.ToList();
+                            currentLineSize = line.Count;
                         }
                         break;
                     }

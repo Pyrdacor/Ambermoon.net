@@ -488,7 +488,7 @@ namespace Ambermoon.UI
 
         internal Popup OpenPopup(Position position, int columns, int rows, bool disableButtons = true, bool closeOnClick = true)
         {
-            activePopup = new Popup(game, RenderView, position, columns, rows)
+            activePopup = new Popup(game, RenderView, position, columns, rows, false)
             {
                 DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
@@ -496,35 +496,35 @@ namespace Ambermoon.UI
             return activePopup;
         }
 
-        Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
-            bool disableButtons = true, bool closeOnClick = true)
+        internal Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
+            bool disableButtons = true, bool closeOnClick = true, bool transparent = false,
+            TextColor textColor = TextColor.Gray)
         {
+            ClosePopup(false);
             var processedText = RenderView.TextProcessor.WrapText(text,
                 new Rect(0, 0, maxWidth, int.MaxValue),
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-            var textBounds = new Rect(position.X + 16, position.Y + 16, maxWidth,
-                Math.Min(processedText.LineCount * Global.GlyphLineHeight, maxTextHeight));
-            int popupRows = Math.Max(4, 2 + (textBounds.Height + 15) / 16); // at least 4 rows
-            textBounds.Position.Y += ((popupRows - 2) * 16 - textBounds.Height) / 2;
-            /*var renderText = RenderView.RenderTextFactory.Create(textLayer,
-                processedText, TextColor.Gray, true, textBounds);*/
-            activePopup = new Popup(game, RenderView, position, 18, popupRows)
+            var textBounds = new Rect(position.X + (transparent ? 0 : 16), position.Y + (transparent ? 0 : 16),
+                maxWidth, Math.Min(processedText.LineCount * Global.GlyphLineHeight, maxTextHeight));
+            int popupRows = Math.Max(4, transparent ? maxTextHeight / Global.GlyphLineHeight : 2 + (textBounds.Height + 15) / 16);
+            if (!transparent)
+                textBounds.Position.Y += ((popupRows - 2) * 16 - textBounds.Height) / 2;
+            activePopup = new Popup(game, RenderView, position, transparent ? maxWidth / Global.GlyphWidth : 18, popupRows, transparent)
             {
                 DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
             };
             bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
-            activePopup.AddText(textBounds, text, TextColor.Gray, TextAlign.Left, true, 1, scrolling);
-            //activePopup.AddText(renderText);
+            activePopup.AddText(textBounds, text, textColor, TextAlign.Left, true, 1, scrolling);
             return activePopup;
         }
 
-        internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false, bool closeOnClick = true)
+        internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false, bool closeOnClick = true,
+            bool transparent = false)
         {
-            ClosePopup(false);
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
-            var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons, closeOnClick);
+            var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons, closeOnClick, transparent);
             popup.Closed += closeAction;
             return popup;
         }
@@ -538,7 +538,7 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
                 processedText, TextColor.Gray, true, new Rect(48, 95, maxTextWidth, 28));
-            activePopup = new Popup(game, RenderView, new Position(32, 74), 14, 5)
+            activePopup = new Popup(game, RenderView, new Position(32, 74), 14, 5, false)
             {
                 DisableButtons = true,
                 CloseOnClick = false
@@ -586,6 +586,11 @@ namespace Ambermoon.UI
             activePopup.AddListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => game.LoadGame(slot + 1))
             ).ToList());
+        }
+
+        public void AttachEventToButton(int index, Action action)
+        {
+            buttonGrid.SetButtonAction(index, action);
         }
 
         void UpdateLayoutButtons(uint? ticksPerMovement = null)
@@ -677,6 +682,17 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
                     buttonGrid.SetButton(7, ButtonType.GoldToPlayer, true, null, false); // TODO: gold to player
                     buttonGrid.SetButton(8, ButtonType.FoodToPlayer, true, null, false); // TODO: food to player
+                    break;
+                case LayoutType.Riddlemouth:
+                    buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(6, ButtonType.Mouth, true, null, false); // TODO: enter text
+                    buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(8, ButtonType.Ear, false, null, false); // this is set later manually
                     break;
                 // TODO
             }

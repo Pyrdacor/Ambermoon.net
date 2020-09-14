@@ -188,13 +188,13 @@ namespace Ambermoon.Data
 
     public class RiddlemouthEvent : MapEvent
     {
-        public uint IntroTextIndex { get; set; }
+        public uint RiddleTextIndex { get; set; }
         public uint SolutionTextIndex { get; set; }
         public byte[] Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: IntroText {IntroTextIndex}, SolutionText {SolutionTextIndex}, Unknown1 {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            return $"{Type}: IntroText {RiddleTextIndex}, SolutionText {SolutionTextIndex}, Unknown1 {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 

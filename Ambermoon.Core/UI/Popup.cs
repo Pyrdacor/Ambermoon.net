@@ -20,7 +20,7 @@ namespace Ambermoon.UI
         readonly List<Button> buttons = new List<Button>();
         ListBox listBox = null;
 
-        public Popup(Game game, IRenderView renderView, Position position, int columns, int rows)
+        public Popup(Game game, IRenderView renderView, Position position, int columns, int rows, bool transparent)
         {
             if (columns < 3 || rows < 3)
                 throw new AmbermoonException(ExceptionScope.Application, "Popups must at least have 3 columns and 3 rows.");
@@ -41,33 +41,36 @@ namespace Ambermoon.UI
                 borders.Add(sprite);
             }
 
-            // 4 corners
-            AddBorder(PopupFrame.FrameUpperLeft, 0, 0);
-            AddBorder(PopupFrame.FrameUpperRight, columns - 1, 0);
-            AddBorder(PopupFrame.FrameLowerLeft, 0, rows - 1);
-            AddBorder(PopupFrame.FrameLowerRight, columns - 1, rows - 1);
-
-            // top and bottom border
-            for (int i = 0; i < columns - 2; ++i)
+            if (!transparent)
             {
-                AddBorder(PopupFrame.FrameTop, i + 1, 0);
-                AddBorder(PopupFrame.FrameBottom, i + 1, rows - 1);
-            }
+                // 4 corners
+                AddBorder(PopupFrame.FrameUpperLeft, 0, 0);
+                AddBorder(PopupFrame.FrameUpperRight, columns - 1, 0);
+                AddBorder(PopupFrame.FrameLowerLeft, 0, rows - 1);
+                AddBorder(PopupFrame.FrameLowerRight, columns - 1, rows - 1);
 
-            // left and right border
-            for (int i = 0; i < rows - 2; ++i)
-            {
-                AddBorder(PopupFrame.FrameLeft, 0, i + 1);
-                AddBorder(PopupFrame.FrameRight, columns - 1, i + 1);
-            }
+                // top and bottom border
+                for (int i = 0; i < columns - 2; ++i)
+                {
+                    AddBorder(PopupFrame.FrameTop, i + 1, 0);
+                    AddBorder(PopupFrame.FrameBottom, i + 1, rows - 1);
+                }
 
-            // fill
-            // TODO: use named palette color
-            fill = renderView.ColoredRectFactory.Create((columns - 2) * 16, (rows - 2) * 16, game.GetPaletteColor(50, 28), BaseDisplayLayer);
-            fill.Layer = renderView.GetLayer(Layer.UI);
-            fill.X = position.X + 16;
-            fill.Y = position.Y + 16;
-            fill.Visible = true;
+                // left and right border
+                for (int i = 0; i < rows - 2; ++i)
+                {
+                    AddBorder(PopupFrame.FrameLeft, 0, i + 1);
+                    AddBorder(PopupFrame.FrameRight, columns - 1, i + 1);
+                }
+
+                // fill
+                // TODO: use named palette color
+                fill = renderView.ColoredRectFactory.Create((columns - 2) * 16, (rows - 2) * 16, game.GetPaletteColor(50, 28), BaseDisplayLayer);
+                fill.Layer = renderView.GetLayer(Layer.UI);
+                fill.X = position.X + 16;
+                fill.Y = position.Y + 16;
+                fill.Visible = true;
+            }
         }
 
         public bool CloseOnClick { get; set; } = true;

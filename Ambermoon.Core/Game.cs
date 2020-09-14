@@ -1343,7 +1343,20 @@ namespace Ambermoon
                 layout.SetLayout(LayoutType.Riddlemouth);
                 ShowMap(false);
                 layout.Reset();
-                layout.FillArea(new Rect(16, 50, 176, 144), GetPaletteColor(50, 28), false);
+                InputEnable = false;
+                var riddleArea = new Rect(16, 50, 176, 144);
+                layout.FillArea(riddleArea, GetPaletteColor(50, 28), false);
+                var riddleText = renderView.TextProcessor.ProcessText(map.Texts[(int)riddlemouthEvent.RiddleTextIndex],
+                    nameProvider, dictionary);
+                var solutionResponseText = renderView.TextProcessor.ProcessText(map.Texts[(int)riddlemouthEvent.SolutionTextIndex],
+                    nameProvider, dictionary);
+                void ShowRiddle()
+                {
+                    layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White);
+                }
+                ShowRiddle();
+                CursorType = CursorType.Click;
+                layout.AttachEventToButton(8, ShowRiddle);
                 // TODO
             });
         }
