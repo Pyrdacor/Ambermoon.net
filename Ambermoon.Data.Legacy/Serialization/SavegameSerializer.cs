@@ -47,7 +47,8 @@ namespace Ambermoon.Data.Legacy
                         MapIndex = mapIndex,
                         X = x,
                         Y = y,
-                        FrontTileIndex = tileIndex
+                        FrontTileIndex = tileIndex,
+                        BackTileIndex = 0
                     });
                 }
             }

@@ -169,12 +169,14 @@ namespace Ambermoon
                     (cursor.Type == CursorType.Eye ||
                     cursor.Type == CursorType.Hand))
                 {
-                    TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9, 33, 49));
+                    int yOffset = Map.IsWorldMap ? 16 : 0;
+                    TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9 - yOffset, 33, 49));
                 }
                 else if (!is3D && !WindowActive &&
                     cursor.Type == CursorType.Mouth)
                 {
-                    TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25, 65, 65));
+                    int yOffset = Map.IsWorldMap ? 16 : 0;
+                    TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25 - yOffset, 65, 65));
                 }
                 else
                 {
@@ -1323,7 +1325,6 @@ namespace Ambermoon
 
                     // Position = 18,139, max 40 chars per line and 7 lines.
                     var textArea = new Rect(18, 139, 285, 49);
-                    //var wrappedText = renderView.TextProcessor.WrapText(text, textArea, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
                     var scrollableText = layout.AddScrollableText(textArea, text, TextColor.Gray);
                     scrollableText.Clicked += scrolledToEnd =>
                     {
@@ -1332,8 +1333,6 @@ namespace Ambermoon
                     };
                     CursorType = CursorType.Click;
                     InputEnable = false;
-
-                    // TODO ...
                 });
             }
             else

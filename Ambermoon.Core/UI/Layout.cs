@@ -521,6 +521,7 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false, bool closeOnClick = true)
         {
+            ClosePopup(false);
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
             var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons, closeOnClick);
@@ -530,6 +531,7 @@ namespace Ambermoon.UI
 
         internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction, Action closeAction)
         {
+            ClosePopup(false);
             const int maxTextWidth = 192;
             var processedText = RenderView.TextProcessor.WrapText(text,
                 new Rect(48, 0, maxTextWidth, int.MaxValue),
@@ -562,7 +564,16 @@ namespace Ambermoon.UI
         internal void ClosePopup(bool raiseEvent = true)
         {
             if (raiseEvent)
+            {
+                // The close event may close the popup itself.
+                // In that case we must not destroy it here as
+                // it might be a completely new popup.
+                var oldPopup = activePopup;
                 activePopup?.OnClosed();
+
+                if (oldPopup != activePopup)
+                    return;
+            }
             activePopup?.Destroy();
             activePopup = null;
         }
