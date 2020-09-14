@@ -135,6 +135,11 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void TurnTowards(float angle)
         {
+            while (angle < 0.0f)
+                angle += 360.0f;
+            while (angle >= 360.0f)
+                angle -= 360.0f;
+
             currentAngle = angle;
             var radiant = AngleFactor * (currentAngle - 90.0f);
             currentAngleCos = Math.Cos(radiant);
@@ -142,6 +147,16 @@ namespace Ambermoon.Renderer.OpenGL
             currentPerpendicularAngleCos = Math.Cos(radiant - QuarterTurnAngle);
             currentPerpendicularAngleSin = Math.Sin(radiant - QuarterTurnAngle);
             Rotate(currentAngle);
+        }
+
+        public Direction LookDirection
+        {
+            get
+            {
+                // angle = 0 -> look up
+                // each direction has 45°
+                return (Direction)Util.Min(8, Util.Round((currentAngle + 22.5f) / 45.0f));
+            }
         }
     }
 }

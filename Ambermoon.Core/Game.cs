@@ -108,6 +108,7 @@ namespace Ambermoon
                     return;
 
                 inputEnable = value;
+                layout.ReleaseButtons();
                 clickMoveActive = false;
                 UntrapMouse();
 
@@ -1046,8 +1047,7 @@ namespace Ambermoon
         {
             if (is3D)
             {
-                // TODO
-                // renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager, currentTicks);
+                throw new AmbermoonException(ExceptionScope.Application, "Triggering map events by map view position is not supported for 3D maps.");
             }
             else // 2D
             {
@@ -1056,16 +1056,50 @@ namespace Ambermoon
             }
         }
 
-        void TriggerMapEvents(MapEventTrigger trigger, uint x, uint y)
+        bool TriggerMapEvents(MapEventTrigger trigger, uint x, uint y)
         {
             if (is3D)
             {
-                // TODO
-                // renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager, currentTicks);
+                return renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager, CurrentTicks);
             }
             else // 2D
             {
-                renderMap2D.TriggerEvents(player2D, trigger, x, y, mapManager, CurrentTicks);
+                return renderMap2D.TriggerEvents(player2D, trigger, x, y, mapManager, CurrentTicks);
+            }
+        }
+
+        internal void TriggerMapEvents(MapEventTrigger trigger)
+        {
+            bool consumed = TriggerMapEvents(trigger, (uint)player.Position.X, (uint)player.Position.Y);
+
+            if (is3D)
+            {
+                // In 3D we might trigger adjacent tile events.
+                if (!consumed && trigger != MapEventTrigger.Move)
+                {
+                    switch (camera3D.LookDirection)
+                    {
+                        case Direction.Up:
+                            if (player.Position.Y > 0)
+                                TriggerMapEvents(trigger, (uint)player.Position.X, (uint)(player.Position.Y - 1));
+                            break;
+                        case Direction.Right:
+                            if (player.Position.X < Map.Width - 1)
+                                TriggerMapEvents(trigger, (uint)(player.Position.X + 1), (uint)player.Position.Y);
+                            break;
+                        case Direction.Down:
+                            if (player.Position.Y < Map.Height - 1)
+                                TriggerMapEvents(trigger, (uint)player.Position.X, (uint)(player.Position.Y + 1));
+                            break;
+                        case Direction.Left:
+                            if (player.Position.X > 0)
+                                TriggerMapEvents(trigger, (uint)(player.Position.X - 1), (uint)player.Position.Y);
+                            break;
+                        default:
+                            // don't trigger nearby events if turned into a diagonal direction
+                            break;
+                    }
+                }
             }
         }
 
@@ -1219,13 +1253,14 @@ namespace Ambermoon
                 var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
                 var player = is3D ? (IRenderPlayer)player3D : player2D;
 
+                ShowMap(true);
+
                 // The position (x, y) is 1-based in the data so we subtract 1.
                 // Moreover the players position is 1 tile below its drawing position
                 // in non-world 2D so subtract another 1 from y.
                 player.MoveTo(newMap, mapChangeEvent.X - 1,
                     mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
                     CurrentTicks, true, mapChangeEvent.Direction);
-                ShowMap(true);
 
                 // Trigger events after map transition
                 TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
@@ -1307,6 +1342,19 @@ namespace Ambermoon
             });
         }
 
+        internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler)
+        {
+            Fade(() =>
+            {
+                SetWindow(Window.Riddlemouth);
+                layout.SetLayout(LayoutType.Riddlemouth);
+                ShowMap(false);
+                layout.Reset();
+                layout.FillArea(new Rect(16, 50, 176, 144), GetPaletteColor(50, 28), false);
+                // TODO
+            });
+        }
+
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
         {
             var text = renderView.TextProcessor.ProcessText(map.Texts[(int)popupTextEvent.TextIndex], nameProvider, dictionary);
@@ -1337,6 +1385,7 @@ namespace Ambermoon
             }
             else
             {
+                InputEnable = false;
                 // Simple text popup
                 layout.OpenTextPopup(text, () =>
                 {
@@ -1344,7 +1393,6 @@ namespace Ambermoon
                     ResetCursor();
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
                 }, true, true);
-                InputEnable = false;
                 CursorType = CursorType.Click;
             }
         }

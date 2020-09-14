@@ -486,7 +486,7 @@ namespace Ambermoon.UI
             game.InputEnable = true;
         }
 
-        internal Popup OpenPopup(Position position, int columns, int rows, bool disableButtons = false, bool closeOnClick = true)
+        internal Popup OpenPopup(Position position, int columns, int rows, bool disableButtons = true, bool closeOnClick = true)
         {
             activePopup = new Popup(game, RenderView, position, columns, rows)
             {
@@ -497,7 +497,7 @@ namespace Ambermoon.UI
         }
 
         Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
-            bool disableButtons = false, bool closeOnClick = true)
+            bool disableButtons = true, bool closeOnClick = true)
         {
             var processedText = RenderView.TextProcessor.WrapText(text,
                 new Rect(0, 0, maxWidth, int.MaxValue),
@@ -635,9 +635,9 @@ namespace Ambermoon.UI
                     }
                     else
                     {
-                        buttonGrid.SetButton(0, ButtonType.Eye, true, null, true); // TODO: eye
-                        buttonGrid.SetButton(1, ButtonType.Hand, true, null, true); // TODO: hand
-                        buttonGrid.SetButton(2, ButtonType.Mouth, true, null, true); // TODO: mouth
+                        buttonGrid.SetButton(0, ButtonType.Eye, false, () => game.TriggerMapEvents(MapEventTrigger.Eye), true);
+                        buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(MapEventTrigger.Hand), true);
+                        buttonGrid.SetButton(2, ButtonType.Mouth, false, () => game.TriggerMapEvents(MapEventTrigger.Mouth), true);
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // TODO: transport
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
@@ -1200,6 +1200,12 @@ namespace Ambermoon.UI
         public void ReleaseButton(int index)
         {
             buttonGrid.ReleaseButton(index);
+        }
+
+        public void ReleaseButtons()
+        {
+            for (int i = 0; i < 9; ++i)
+                ReleaseButton(i);
         }
     }
 }

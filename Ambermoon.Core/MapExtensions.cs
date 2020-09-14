@@ -56,6 +56,18 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
+                case MapEventType.Riddlemouth:
+                {
+                    if (!(mapEvent is RiddlemouthEvent riddleMouthEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid riddle mouth event.");
+
+                    game.ShowRiddlemouth(map, riddleMouthEvent, () =>
+                    {
+                        TriggerEventChain(map, game, player, MapEventTrigger.Always, x, y, mapManager,
+                            game.CurrentTicks, mapEvent.Next);
+                    });
+                    return null; // next event is only executed after popup response
+                }
                 case MapEventType.Decision:
                 {
                     if (!(mapEvent is DecisionEvent decisionEvent))
@@ -176,21 +188,23 @@ namespace Ambermoon
             }
         }
 
-        public static void TriggerEvents(this Map map, Game game, IRenderPlayer player,
+        public static bool TriggerEvents(this Map map, Game game, IRenderPlayer player,
             MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
             if (trigger == MapEventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
-                return;
+                return true;
 
             LastMapEventIndexMap = map.Index;
             LastMapEventIndex = mapEventId;
 
             if (mapEventId == 0)
-                return; // no map events at this position
+                return false; // no map events at this position
 
             TriggerEventChain(map, game, player, trigger, x, y, mapManager, ticks, map.EventLists[(int)mapEventId - 1]);
+
+            return true;
         }
     }
 }

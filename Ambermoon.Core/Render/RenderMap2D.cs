@@ -105,22 +105,22 @@ namespace Ambermoon.Render
             }
         }
 
-        public void TriggerEvents(IRenderPlayer player, MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
+        public bool TriggerEvents(IRenderPlayer player, MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
         {
             if (x >= Map.Width)
             {
                 if (y >= Map.Height)
-                    adjacentMaps[2].TriggerEvents(game, player, trigger, x - (uint)Map.Width, y - (uint)Map.Height, mapManager, ticks);
+                    return adjacentMaps[2].TriggerEvents(game, player, trigger, x - (uint)Map.Width, y - (uint)Map.Height, mapManager, ticks);
                 else
-                    adjacentMaps[0].TriggerEvents(game, player, trigger, x - (uint)Map.Width, y, mapManager, ticks);
+                    return adjacentMaps[0].TriggerEvents(game, player, trigger, x - (uint)Map.Width, y, mapManager, ticks);
             }
             else if (y >= Map.Height)
             {
-                adjacentMaps[1].TriggerEvents(game, player, trigger, x, y - (uint)Map.Height, mapManager, ticks);
+                return adjacentMaps[1].TriggerEvents(game, player, trigger, x, y - (uint)Map.Height, mapManager, ticks);
             }
             else
             {
-                Map.TriggerEvents(game, player, trigger, x, y, mapManager, ticks);
+                return Map.TriggerEvents(game, player, trigger, x, y, mapManager, ticks);
             }
         }
 

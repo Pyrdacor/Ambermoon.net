@@ -7,7 +7,8 @@
         Stats,
         Chest,
         Merchant,
-        Event
+        Event,
+        Riddlemouth
         // TODO ...
     }
 
