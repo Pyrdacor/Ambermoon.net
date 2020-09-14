@@ -169,13 +169,13 @@ namespace Ambermoon
                     (cursor.Type == CursorType.Eye ||
                     cursor.Type == CursorType.Hand))
                 {
-                    int yOffset = Map.IsWorldMap ? 16 : 0;
+                    int yOffset = Map.IsWorldMap ? 12 : 0;
                     TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9 - yOffset, 33, 49));
                 }
                 else if (!is3D && !WindowActive &&
                     cursor.Type == CursorType.Mouth)
                 {
-                    int yOffset = Map.IsWorldMap ? 16 : 0;
+                    int yOffset = Map.IsWorldMap ? 12 : 0;
                     TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25 - yOffset, 65, 65));
                 }
                 else
