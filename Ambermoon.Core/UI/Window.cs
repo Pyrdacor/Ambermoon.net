@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.UI
+﻿using System;
+
+namespace Ambermoon.UI
 {
     public enum Window
     {
@@ -16,5 +18,6 @@
     {
         public Window Window;
         public object WindowParameter; // party member index, chest event, etc
+        public Action WindowEvent; // some optional event like riddlemouth solved event
     }
 }

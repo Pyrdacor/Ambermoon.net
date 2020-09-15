@@ -1341,15 +1341,14 @@ namespace Ambermoon
             });
         }
 
-        internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler)
+        internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler, bool showRiddle = true)
         {
             Fade(() =>
             {
-                SetWindow(Window.Riddlemouth);
+                SetWindow(Window.Riddlemouth, riddlemouthEvent, solvedHandler);
                 layout.SetLayout(LayoutType.Riddlemouth);
                 ShowMap(false);
                 layout.Reset();
-                InputEnable = false;
                 var riddleArea = new Rect(16, 50, 176, 144);
                 layout.FillArea(riddleArea, GetPaletteColor(50, 28), false);
                 var riddleText = renderView.TextProcessor.ProcessText(map.Texts[(int)riddlemouthEvent.RiddleTextIndex],
@@ -1358,15 +1357,19 @@ namespace Ambermoon
                     nameProvider, dictionary);
                 void ShowRiddle()
                 {
-                    layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White);
+                    InputEnable = false;
+                    layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
+                    {
+                        InputEnable = true;
+                    };
                 }
                 void TestSolution(string solution)
                 {
                     if (string.Compare(textDictionary.Entries[(int)riddlemouthEvent.CorrectAnswerDictionaryIndex], solution, true) == 0)
                     {
+                        InputEnable = false;
                         layout.OpenTextPopup(solutionResponseText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White, () =>
                         {
-                            InputEnable = false;
                             Fade(() =>
                             {
                                 CloseWindow();
@@ -1379,11 +1382,15 @@ namespace Ambermoon
                     {
                         var failedText = renderView.TextProcessor.ProcessText(solution + DataNameProvider.WrongRiddlemouthSolutionText,
                             nameProvider, dictionary);
-                        layout.OpenTextPopup(failedText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White);
+                        InputEnable = false;
+                        layout.OpenTextPopup(failedText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
+                        {
+                            InputEnable = true;
+                        };
                     }
                 }
-                ShowRiddle();
-                CursorType = CursorType.Click;
+                if (showRiddle)
+                    ShowRiddle();
                 layout.AttachEventToButton(6, () => OpenDictionary(TestSolution));
                 layout.AttachEventToButton(8, ShowRiddle);
                 // TODO
@@ -1413,6 +1420,7 @@ namespace Ambermoon
                     choiceHandler?.Invoke(text);
                 }
             )).ToList());
+            popup.Closed += UntrapMouse;
         }
 
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
@@ -1543,10 +1551,10 @@ namespace Ambermoon
             return item.Amount;
         }
 
-        void SetWindow(Window window, object param = null)
+        void SetWindow(Window window, object param = null, Action ev = null)
         {
             lastWindow = currentWindow;
-            currentWindow = new WindowInfo { Window = window, WindowParameter = param };
+            currentWindow = new WindowInfo { Window = window, WindowParameter = param, WindowEvent = ev };
         }
 
         void ResetCursor()
@@ -1603,6 +1611,14 @@ namespace Ambermoon
                 case Window.Merchant:
                 {
                     // TODO
+                    break;
+                }
+                case Window.Riddlemouth:
+                {
+                    var riddlemouthEvent = (RiddlemouthEvent)currentWindow.WindowParameter;
+                    var solvedEvent = currentWindow.WindowEvent;
+                    currentWindow = DefaultWindow;
+                    ShowRiddlemouth(Map, riddlemouthEvent, solvedEvent, false);
                     break;
                 }
                 default:
