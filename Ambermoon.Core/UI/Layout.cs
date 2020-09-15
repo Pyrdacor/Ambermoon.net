@@ -549,8 +549,8 @@ namespace Ambermoon.UI
             var yesButton = activePopup.AddButton(new Position(111, 121));
             var noButton = activePopup.AddButton(new Position(143, 121));
 
-            yesButton.DisplayLayer = 245;
-            noButton.DisplayLayer = 250;
+            yesButton.DisplayLayer = 200;
+            noButton.DisplayLayer = 210;
 
             yesButton.ButtonType = ButtonType.Yes;
             noButton.ButtonType = ButtonType.No;
@@ -583,7 +583,7 @@ namespace Ambermoon.UI
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out int current);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
             activePopup.AddText(new Rect(24, 78, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
-            activePopup.AddListBox(savegameNames.Select(name =>
+            activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => game.LoadGame(slot + 1))
             ).ToList());
         }
@@ -690,7 +690,7 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(6, ButtonType.Mouth, true, null, false); // TODO: enter text
+                    buttonGrid.SetButton(6, ButtonType.Mouth, false, null, false); // this is set later manually
                     buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(8, ButtonType.Ear, false, null, false); // this is set later manually
                     break;

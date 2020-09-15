@@ -80,6 +80,7 @@ namespace Ambermoon
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly NameProvider nameProvider;
+        readonly TextDictionary textDictionary;
         internal IDataNameProvider DataNameProvider { get; }
         readonly Layout layout;
         readonly IMapManager mapManager;
@@ -188,7 +189,7 @@ namespace Ambermoon
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
             ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
-            IDataNameProvider dataNameProvider, Cursor cursor, bool legacyMode)
+            IDataNameProvider dataNameProvider, TextDictionary textDictionary, Cursor cursor, bool legacyMode)
         {
             this.cursor = cursor;
             this.legacyMode = legacyMode;
@@ -197,9 +198,10 @@ namespace Ambermoon
             this.renderView = renderView;
             this.mapManager = mapManager;
             this.itemManager = itemManager;
-            this.SavegameManager = savegameManager;
+            SavegameManager = savegameManager;
             this.savegameSerializer = savegameSerializer;
-            this.DataNameProvider = dataNameProvider;
+            DataNameProvider = dataNameProvider;
+            this.textDictionary = textDictionary;
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
@@ -470,6 +472,9 @@ namespace Ambermoon
             // Trigger events after game load
             TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
                 (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
+
+            // This is the word "Hello" which is already present on game start.
+            dictionary.Add(textDictionary.Entries[0]);
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
@@ -1354,11 +1359,37 @@ namespace Ambermoon
                 {
                     layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White);
                 }
+                void TestSolution(string solution)
+                {
+                    Console.WriteLine(solution);
+                }
                 ShowRiddle();
                 CursorType = CursorType.Click;
+                layout.AttachEventToButton(6, () => OpenDictionary(TestSolution));
                 layout.AttachEventToButton(8, ShowRiddle);
                 // TODO
             });
+        }
+
+        void OpenDictionary(Action<string> choiceHandler)
+        {
+            const int columns = 11;
+            const int rows = 10;
+            var popupArea = new Rect(32, 34, columns * 16, rows * 16);
+            TrapMouse(new Rect(popupArea.Left + 16, popupArea.Top + 16, popupArea.Width - 32, popupArea.Height - 32));
+            var popup = layout.OpenPopup(popupArea.Position, columns, rows, true, false);
+            var mouthButton = popup.AddButton(new Position(popupArea.Left + 16, popupArea.Bottom - 30));
+            var exitButton = popup.AddButton(new Position(popupArea.Right - 32 - Button.Width, popupArea.Bottom - 30));
+            mouthButton.ButtonType = ButtonType.Mouth;
+            exitButton.ButtonType = ButtonType.Exit;
+            mouthButton.DisplayLayer = 200;
+            exitButton.DisplayLayer = 200;
+            //mouthButton.Action =  // TODO
+            exitButton.Action = () => layout.ClosePopup();
+            popup.AddDictionaryListBox(dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
+            (
+                entry, (int _, string text) => choiceHandler?.Invoke(text)
+            )).ToList());
         }
 
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)

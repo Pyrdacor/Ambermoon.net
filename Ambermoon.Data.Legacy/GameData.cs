@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Render;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -21,6 +22,7 @@ namespace Ambermoon.Data.Legacy
         }
 
         public Dictionary<string, IFileContainer> Files { get; } = new Dictionary<string, IFileContainer>();
+        public Dictionary<string, IDataReader> Dictionaries { get; } = new Dictionary<string, IDataReader>();
         private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
         private readonly LoadPreference loadPreference;
         private readonly ILogger log;
@@ -78,7 +80,10 @@ namespace Ambermoon.Data.Legacy
                     log.AppendLine("succeeded");
 
                 if (IsDictionary(file))
+                {
+                    Dictionaries.Add(file.Split('.').Last(), Files[file].Files[1]);
                     foundNoDictionary = false;
+                }
             }
 
             void HandleFileNotFound(string file)
@@ -156,10 +161,9 @@ namespace Ambermoon.Data.Legacy
                                 else
                                 {
                                     Files.Add(name, fileReader.ReadFile(name, File.OpenRead(path)));
+                                    HandleFileLoaded(name);
                                 }
                             }
-
-                            HandleFileLoaded(name);
 
                             continue;
                         }

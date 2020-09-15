@@ -196,6 +196,7 @@ namespace Ambermoon
             gameData.Load(configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutablePath);
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData);
+            var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
 
             // Create render view
             renderView = new RenderView(this, gameData, graphicProvider, new FontProvider(executableData),
@@ -209,7 +210,7 @@ namespace Ambermoon
             // Create game
             Game = new Game(renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()), executableData.ItemManager,
-                new SavegameManager(), new SavegameSerializer(), new DataNameProvider(executableData),
+                new SavegameManager(), new SavegameSerializer(), new DataNameProvider(executableData), textDictionary,
                 new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
                 configuration.LegacyMode);
             Game.QuitRequested += window.Close;

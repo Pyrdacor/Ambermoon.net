@@ -178,7 +178,14 @@ namespace Ambermoon.UI
 
         public Button AddButton(Position position)
         {
+            // TODO: use named palette colors
+            var brightBorderColor = game.GetPaletteColor(50, 31);
+            var darkBorderColor = game.GetPaletteColor(50, 26);            
+
+            FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, 1);
+            FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);            
             var button = new Button(renderView, position);
+            button.DisplayLayer = 3;
             buttons.Add(button);
             return button;
         }
@@ -228,12 +235,20 @@ namespace Ambermoon.UI
             listBox?.Hover(position);
         }
 
-        public void AddListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        public void AddSavegameListBox(List<KeyValuePair<string, Action<int, string>>> items)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
 
-            listBox = new ListBox(game, this, items);
+            listBox = ListBox.CreateSavegameListbox(renderView, game, this, items);
+        }
+
+        public void AddDictionaryListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        {
+            if (listBox != null)
+                throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
+
+            listBox = ListBox.CreateDictionaryListbox(renderView, game, this, items);
         }
 
         public void Update(uint currentTicks)

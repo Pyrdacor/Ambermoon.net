@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Legacy" Version="1.0.49" />
+    <PackageReference Include="Ambermoon.Data.Legacy" Version="1.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Silk.NET.Input" Version="1.6.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="1.6.0" />
