@@ -1,4 +1,5 @@
-﻿using Ambermoon.Render;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Render;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,10 +24,20 @@ namespace Ambermoon.Data.Legacy
 
         public Dictionary<string, IFileContainer> Files { get; } = new Dictionary<string, IFileContainer>();
         public Dictionary<string, IDataReader> Dictionaries { get; } = new Dictionary<string, IDataReader>();
+        public Dictionary<StationaryImage, GraphicInfo> StationaryImageInfos { get; } = new Dictionary<StationaryImage, GraphicInfo>
+        {
+            { StationaryImage.Horse, new GraphicInfo { Width = 32, Height = 22, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { StationaryImage.Raft, new GraphicInfo { Width = 32, Height = 11, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { StationaryImage.Boat, new GraphicInfo { Width = 48, Height = 34, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { StationaryImage.SandLizard, new GraphicInfo { Width = 48, Height = 21, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { StationaryImage.SandShip, new GraphicInfo { Width = 48, Height = 39, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } }
+        };
         private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
         private readonly LoadPreference loadPreference;
         private readonly ILogger log;
         private readonly bool stopAtFirstError;
+        private readonly List<TravelGraphicInfo> travelGraphicInfos = new List<TravelGraphicInfo>(44);
+        internal List<Graphic> TravelGraphics { get; } = new List<Graphic>(44);
 
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true)
         {
@@ -186,6 +197,59 @@ namespace Ambermoon.Data.Legacy
             {
                 throw new FileNotFoundException($"Unable to find any dictionary file.");
             }
+
+            LoadTravelGraphics();
+        }
+
+        void LoadTravelGraphics()
+        {
+            // Travel gfx stores graphics with a header:
+            // uword NumberOfHorizontalSprites (a sprite has a width of 16 pixels)
+            // uword Height (in pixels)
+            // uword XOffset (in pixels relative to drawing position)
+            // uword YOffset (in pixels relative to drawing position)
+            var container = Files["Travel_gfx.amb"];
+            var graphicReader = new GraphicReader();
+            var graphicInfo = new GraphicInfo
+            {
+                GraphicFormat = GraphicFormat.Palette5Bit,
+                Alpha = true
+            };
+            foreach (var file in container.Files)
+            {
+                var reader = file.Value;
+                reader.Position = 0;
+
+                Graphic LoadGraphic()
+                {
+                    var graphic = new Graphic();
+                    graphicReader.ReadGraphic(graphic, reader, graphicInfo);
+                    return graphic;
+                }
+
+                for (int direction = 0; direction < 4; ++direction)
+                {
+                    int numSprites = reader.ReadWord();
+                    graphicInfo.Height = reader.ReadWord();
+                    graphicInfo.Width = numSprites * 16;
+                    uint xOffset = reader.ReadWord();
+                    uint yOffset = reader.ReadWord();
+
+                    travelGraphicInfos.Add(new TravelGraphicInfo
+                    {
+                        Width = (uint)graphicInfo.Width,
+                        Height = (uint)graphicInfo.Height,
+                        OffsetX = xOffset,
+                        OffsetY = yOffset
+                    });
+                    TravelGraphics.Add(LoadGraphic());
+                }
+            }
+        }
+
+        public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction)
+        {
+            return travelGraphicInfos[(int)type * 4 + (int)direction];
         }
 
         public Character2DAnimationInfo PlayerAnimationInfo => new Character2DAnimationInfo
@@ -198,19 +262,6 @@ namespace Ambermoon.Data.Legacy
             NumStandFrames = 3,
             NumSitFrames = 1,
             NumSleepFrames = 1,
-            TicksPerFrame = 0
-        };
-
-        public Character2DAnimationInfo WorldPlayerAnimationInfo => new Character2DAnimationInfo
-        {
-            FrameWidth = 12,
-            FrameHeight = 24,
-            StandFrameIndex = 3 * 17,
-            SitFrameIndex = 0,
-            SleepFrameIndex = 0,
-            NumStandFrames = 1,
-            NumSitFrames = 0,
-            NumSleepFrames = 0,
             TicksPerFrame = 0
         };
     }

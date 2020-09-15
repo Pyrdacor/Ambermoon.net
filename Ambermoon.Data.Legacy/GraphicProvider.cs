@@ -128,6 +128,10 @@ namespace Ambermoon.Data.Legacy
                     graphics[GraphicType.UIElements].AddRange(executableData.UIGraphics.Entries.Values);
                     graphics[GraphicType.UIElements].AddRange(executableData.Buttons.Entries.Values);
                 }
+                else if (type == GraphicType.TravelGfx)
+                {
+                    graphics[GraphicType.TravelGfx] = gameData.TravelGraphics;
+                }
                 else
                 {
                     LoadGraphics(type);

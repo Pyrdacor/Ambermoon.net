@@ -139,36 +139,15 @@ namespace Ambermoon.Render
             for (int i = 0; i < playerGraphics.Count; ++i)
                 AddTexture(Layer.Characters, (uint)i, playerGraphics[i]);
 
-            // TODO: On world maps another smaller image (12x24?) is used. It isn't part of some file
-            // so I guess it is inside the AM2_CPU somewhere. For now we use a shrinked version of the indoor graphic.
-            // On world map only 4 sprites are used (one for each direction).
-            static Graphic Shrink(Graphic graphic)
-            {
-                var shrinked = new Graphic
-                {
-                    Width = 12,
-                    Height = 24,
-                    IndexedGraphic = graphic.IndexedGraphic
-                };
+            // On world maps the travel graphics are used.
+            // Only 4 sprites are used (one for each direction).
+            var travelGraphics = graphicProvider.GetGraphics(GraphicType.TravelGfx);
 
-                shrinked.Data = new byte[shrinked.Width * shrinked.Height];
+            if (travelGraphics.Count != 11 * 4)
+                throw new AmbermoonException(ExceptionScope.Data, "Wrong number of travel graphics.");
 
-                for (int y = 0; y < shrinked.Height; ++y)
-                {
-                    for (int x = 0; x < shrinked.Width; ++x)
-                    {
-                        int index = x + y * shrinked.Width;
-                        int sourceIndex = Math.Min(15, Math.Max(0, x * 3 / 2 - 1)) + Math.Min(31, Math.Max(0, y * 3 / 2 - 1)) * graphic.Width;
-                        shrinked.Data[index] = graphic.Data[sourceIndex];
-                    }
-                }
-
-                return shrinked;
-            }
-            AddTexture(Layer.Characters, (uint)(playerGraphics.Count + 0), Shrink(playerGraphics[1]));
-            AddTexture(Layer.Characters, (uint)(playerGraphics.Count + 1), Shrink(playerGraphics[4]));
-            AddTexture(Layer.Characters, (uint)(playerGraphics.Count + 2), Shrink(playerGraphics[7]));
-            AddTexture(Layer.Characters, (uint)(playerGraphics.Count + 3), Shrink(playerGraphics[11]));
+            for (int i = 0; i < travelGraphics.Count; ++i)
+                AddTexture(Layer.Characters, 3 * 17 + (uint)i, travelGraphics[i]);
 
             #endregion
 

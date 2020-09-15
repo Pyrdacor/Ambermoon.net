@@ -1397,6 +1397,54 @@ namespace Ambermoon
             });
         }
 
+        internal uint GetPlayerPaletteIndex() => Map.PaletteIndex;
+
+        internal Position GetPlayerDrawOffset()
+        {
+            if (Map.IsWorldMap)
+            {
+                // TODO: travel with horse, boat, etc
+                var travelType = TravelType.Walk;
+                var travelInfo = renderView.GameData.GetTravelGraphicInfo(travelType, player.Direction);
+                return new Position((int)travelInfo.OffsetX - 16, (int)travelInfo.OffsetY - 16);
+            }
+            else
+            {
+                return new Position();
+            }
+        }
+
+        internal Character2DAnimationInfo GetPlayerAnimationInfo()
+        {
+            if (Map.IsWorldMap)
+            {
+                // TODO: travel with horse, boat, etc
+                var travelType = TravelType.Walk;
+                var travelInfo = renderView.GameData.GetTravelGraphicInfo(travelType, player.Direction);
+                return new Character2DAnimationInfo
+                {
+                    FrameWidth = (int)travelInfo.Width,
+                    FrameHeight = (int)travelInfo.Height,
+                    StandFrameIndex = 3 * 17 + (uint)travelType * 4,
+                    SitFrameIndex = 0,
+                    SleepFrameIndex = 0,
+                    NumStandFrames = 1,
+                    NumSitFrames = 0,
+                    NumSleepFrames = 0,
+                    TicksPerFrame = 0
+                };
+            }
+            else
+            {
+                var animationInfo = renderView.GameData.PlayerAnimationInfo;
+                uint offset = (uint)Map.World * 17;
+                animationInfo.StandFrameIndex += offset;
+                animationInfo.SitFrameIndex += offset;
+                animationInfo.SleepFrameIndex += offset;
+                return animationInfo;
+            }
+        }
+
         void OpenDictionary(Action<string> choiceHandler)
         {
             const int columns = 11;

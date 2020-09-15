@@ -12,8 +12,8 @@ namespace Ambermoon.Render
             ISpriteFactory spriteFactory, IGameData gameData, Position startPosition,
             IMapManager mapManager)
             : base(game, layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
-                  spriteFactory, gameData.PlayerAnimationInfo, map, startPosition, 7u,
-                  gameData.WorldPlayerAnimationInfo)
+                  spriteFactory, game.GetPlayerAnimationInfo, map, startPosition,
+                  game.GetPlayerPaletteIndex, game.GetPlayerDrawOffset)
         {
             this.player = player;
             this.mapManager = mapManager;
@@ -177,11 +177,7 @@ namespace Ambermoon.Render
         public override void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
             if (Map.Map != map)
-            {
                 Visible = true; // reset visibility before changing map
-
-                Padding.Y = map.IsWorldMap ? -4 : 0;
-            }
 
             base.MoveTo(map, x, y, ticks, frameReset, newDirection);
         }

@@ -21,19 +21,18 @@ namespace Ambermoon.Render
         readonly Game game;
         readonly ITextureAtlas textureAtlas;
         readonly IAnimatedSprite sprite;
-        readonly Character2DAnimationInfo animationInfo;
-        readonly Character2DAnimationInfo worldAnimationInfo;
-        Character2DAnimationInfo CurrentAnimationInfo => Map.Map.IsWorldMap
-            ? worldAnimationInfo : animationInfo;
+        readonly Func<Character2DAnimationInfo> animationInfoProvider;
+        readonly Func<uint> paletteIndexProvider;
+        readonly Func<Position> drawOffsetProvider;
+        Character2DAnimationInfo CurrentAnimationInfo => animationInfoProvider();
         public uint CurrentBaseFrameIndex { get; private set; }
         public uint CurrentFrameIndex { get; private set; }
         public uint CurrentFrame => sprite.CurrentFrame;
         uint lastFrameReset = 0u;
         public CharacterDirection Direction { get; private set; } = CharacterDirection.Down;
-        public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (exception is the player)
-        public Position Position { get; } // in Tiles
+        public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (only exception is the player)
+        public Position Position { get; } // in tiles
         public Rect DisplayArea => new Rect(sprite.X, sprite.Y, sprite.Width, sprite.Height);
-        public Position Padding { get; } = new Position(0, 0); // left and top padding in pixels inside the tile
         public bool Visible
         {
             get => sprite.Visible;
@@ -49,14 +48,15 @@ namespace Ambermoon.Render
         });
 
         public Character2D(Game game, IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
-            Character2DAnimationInfo animationInfo, RenderMap2D map, Position startPosition, uint paletteIndex,
-            Character2DAnimationInfo? worldAnimationInfo = null)
+            Func<Character2DAnimationInfo> animationInfoProvider, RenderMap2D map, Position startPosition,
+            Func<uint> paletteIndexProvider, Func<Position> drawOffsetProvider)
         {
             this.game = game;
             Map = map;
             this.textureAtlas = textureAtlas;
-            this.animationInfo = animationInfo;
-            this.worldAnimationInfo = worldAnimationInfo ?? animationInfo;
+            this.animationInfoProvider = animationInfoProvider;
+            this.paletteIndexProvider = paletteIndexProvider;
+            this.drawOffsetProvider = drawOffsetProvider;
             var currentAnimationInfo = CurrentAnimationInfo;
             CurrentBaseFrameIndex = CurrentFrameIndex = currentAnimationInfo.StandFrameIndex;
             var textureOffset = textureAtlas.GetOffset(CurrentFrameIndex);
@@ -64,10 +64,11 @@ namespace Ambermoon.Render
                 textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
             sprite.TextureAtlasOffset = textureOffset;
             sprite.Layer = layer;
-            sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + Padding.X;
-            sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + Padding.Y;
-            sprite.BaseLineOffset = 1 - Padding.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - currentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
-            sprite.PaletteIndex = (byte)paletteIndex;
+            var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+            sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+            sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+            sprite.BaseLineOffset = 1 - drawOffset.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - currentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
+            sprite.PaletteIndex = (byte)paletteIndexProvider();
             Position = startPosition;
         }
 
@@ -161,9 +162,11 @@ namespace Ambermoon.Render
             lastFrameReset = ticks;
             Position.X = (int)x;
             Position.Y = (int)y;
-            sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + Padding.X;
-            sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + Padding.Y;
-            sprite.BaseLineOffset = 1 - Padding.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT); ;
+            var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+            sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+            sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+            sprite.BaseLineOffset = 1 - drawOffset.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
+            sprite.PaletteIndex = (byte)paletteIndexProvider();
         }
 
         public virtual void Update(uint ticks)
