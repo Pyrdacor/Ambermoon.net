@@ -1388,7 +1388,11 @@ namespace Ambermoon
             exitButton.Action = () => layout.ClosePopup();
             popup.AddDictionaryListBox(dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
             (
-                entry, (int _, string text) => choiceHandler?.Invoke(text)
+                entry, (int _, string text) =>
+                {
+                    layout.ClosePopup(false);
+                    choiceHandler?.Invoke(text);
+                }
             )).ToList());
         }
 
