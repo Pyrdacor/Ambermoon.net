@@ -1368,6 +1368,7 @@ namespace Ambermoon
                             InputEnable = false;
                             Fade(() =>
                             {
+                                CloseWindow();
                                 InputEnable = true;
                                 solvedHandler?.Invoke();
                             });
@@ -1563,7 +1564,7 @@ namespace Ambermoon
             if (!WindowActive)
                 return;
 
-            if (currentWindow.Window == Window.Event)
+            if (currentWindow.Window == Window.Event || currentWindow.Window == Window.Riddlemouth)
             {
                 InputEnable = true;
                 ResetCursor();
