@@ -584,7 +584,7 @@ namespace Ambermoon.UI
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out int current);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), "Load which saved game?", TextColor.Gray, TextAlign.Center);
+            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegameString, TextColor.Gray, TextAlign.Center);
             activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => game.LoadGame(slot + 1))
             ).ToList());

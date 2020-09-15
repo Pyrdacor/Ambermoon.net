@@ -51,6 +51,7 @@
         public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
 
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
+        public string LoadWhichSavegameString => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
 
         public string WrongRiddlemouthSolutionText => executableData.Messages.GetEntry(Messages.Index.IsNotTheRightAnswer);
     }
