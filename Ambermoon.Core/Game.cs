@@ -1129,6 +1129,7 @@ namespace Ambermoon
             if (show)
             {
                 layout.Reset();
+                layout.FillArea(new Rect(208, 49, 96, 80), GetPaletteColor(50, 28), false);
                 SetWindow(Window.MapView);
             }
         }
