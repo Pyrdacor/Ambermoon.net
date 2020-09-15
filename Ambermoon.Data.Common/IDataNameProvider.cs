@@ -18,6 +18,7 @@
         string CharacterInfoAgeString { get; }
         string GetWorldName(World world);
         string InventoryTitleString { get; }
+        string WrongRiddlemouthSolutionText { get; }
 
         // TODO
     }

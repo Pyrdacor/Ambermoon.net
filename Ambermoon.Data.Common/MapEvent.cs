@@ -190,6 +190,7 @@ namespace Ambermoon.Data
     {
         public uint RiddleTextIndex { get; set; }
         public uint SolutionTextIndex { get; set; }
+        public uint CorrectAnswerDictionaryIndex { get; set; }
         public byte[] Unknown { get; set; }
 
         public override string ToString()

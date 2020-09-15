@@ -293,11 +293,13 @@ namespace Ambermoon.Data.Legacy
                 {
                     var introTextIndex = dataReader.ReadByte();
                     var solutionTextIndex = dataReader.ReadByte();
-                    var unknown = dataReader.ReadBytes(7);
+                    var unknown = dataReader.ReadBytes(5);
+                    var correctAnswerTextIndex = dataReader.ReadWord();
                     mapEvent = new RiddlemouthEvent
                     {
                         RiddleTextIndex = introTextIndex,
                         SolutionTextIndex = solutionTextIndex,
+                        CorrectAnswerDictionaryIndex = correctAnswerTextIndex,
                         Unknown = unknown
                     };
                     break;

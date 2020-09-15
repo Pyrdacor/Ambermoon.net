@@ -1361,7 +1361,24 @@ namespace Ambermoon
                 }
                 void TestSolution(string solution)
                 {
-                    Console.WriteLine(solution);
+                    if (string.Compare(textDictionary.Entries[(int)riddlemouthEvent.CorrectAnswerDictionaryIndex], solution, true) == 0)
+                    {
+                        layout.OpenTextPopup(solutionResponseText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White, () =>
+                        {
+                            InputEnable = false;
+                            Fade(() =>
+                            {
+                                InputEnable = true;
+                                solvedHandler?.Invoke();
+                            });
+                        });
+                    }
+                    else
+                    {
+                        var failedText = renderView.TextProcessor.ProcessText(solution + DataNameProvider.WrongRiddlemouthSolutionText,
+                            nameProvider, dictionary);
+                        layout.OpenTextPopup(failedText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White);
+                    }
                 }
                 ShowRiddle();
                 CursorType = CursorType.Click;
