@@ -322,9 +322,10 @@ namespace Ambermoon.UI
         public bool PopupActive => activePopup != null;
         public bool PopupDisableButtons => activePopup?.DisableButtons == true;
         public bool PopupClickCursor => activePopup?.ClickCursor == true;
-        int buttonGridPage = 0;
+        public int ButtonGridPage { get; private set; } = 0;
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
+        public bool TransportEnabled { get; set; } = false;
 
         public Layout(Game game, IRenderView renderView)
         {
@@ -356,7 +357,7 @@ namespace Ambermoon.UI
             {
                 if (game.CursorType == CursorType.Sword)
                 {
-                    buttonGridPage = 1 - buttonGridPage;
+                    ButtonGridPage = 1 - ButtonGridPage;
                     SetLayout(Type, ticksPerMovement);
                 }
             }
@@ -486,6 +487,11 @@ namespace Ambermoon.UI
             game.InputEnable = true;
         }
 
+        public void EnableButton(int index, bool enable)
+        {
+            buttonGrid.EnableButton(index, enable);
+        }
+
         internal Popup OpenPopup(Position position, int columns, int rows, bool disableButtons = true, bool closeOnClick = true)
         {
             activePopup = new Popup(game, RenderView, position, columns, rows, false)
@@ -600,7 +606,7 @@ namespace Ambermoon.UI
             switch (Type)
             {
                 case LayoutType.Map2D:
-                    if (buttonGridPage == 0)
+                    if (ButtonGridPage == 0)
                     {
                         var moveDelay = ticksPerMovement.Value;
                         buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => game.Move(CursorType.ArrowUpLeft), true, null, moveDelay);
@@ -618,7 +624,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(0, ButtonType.Eye, false, null, false, () => CursorType.Eye);
                         buttonGrid.SetButton(1, ButtonType.Hand, false, null, false, () => CursorType.Hand);
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, () => CursorType.Mouth);
-                        buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // TODO: transport
+                        buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false);
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
@@ -627,7 +633,7 @@ namespace Ambermoon.UI
                     }
                     break;
                 case LayoutType.Map3D:
-                    if (buttonGridPage == 0)
+                    if (ButtonGridPage == 0)
                     {
                         var moveDelay = ticksPerMovement.Value;
                         buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => game.Move(CursorType.ArrowTurnLeft), true, null, moveDelay);
@@ -645,7 +651,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(0, ButtonType.Eye, false, () => game.TriggerMapEvents(MapEventTrigger.Eye), true);
                         buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(MapEventTrigger.Hand), true);
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, () => game.TriggerMapEvents(MapEventTrigger.Mouth), true);
-                        buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // TODO: transport
+                        buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map

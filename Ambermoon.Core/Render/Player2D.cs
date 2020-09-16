@@ -4,6 +4,7 @@ namespace Ambermoon.Render
 {
     internal class Player2D : Character2D, IRenderPlayer
     {
+        readonly Game game;
         readonly Player player;
         readonly IMapManager mapManager;
 
@@ -15,6 +16,7 @@ namespace Ambermoon.Render
                   spriteFactory, game.GetPlayerAnimationInfo, map, startPosition,
                   game.GetPlayerPaletteIndex, game.GetPlayerDrawOffset)
         {
+            this.game = game;
             this.player = player;
             this.mapManager = mapManager;
         }
@@ -112,6 +114,8 @@ namespace Ambermoon.Render
                 else if (x < 0)
                     newDirection = CharacterDirection.Left;
 
+                player.Direction = newDirection;
+
                 Map.Scroll(scrollX, scrollY);
 
                 if (oldMap == Map.Map)
@@ -129,10 +133,12 @@ namespace Ambermoon.Render
                         if (!frameReset && CurrentState == prevState)
                             SetCurrentFrame((CurrentFrame + 1) % NumFrames);
 
-                        player.Position.X = Position.X - (int)Map.ScrollX;
-                        player.Position.Y = Position.Y - (int)Map.ScrollY;
+                        player.Position.X = Position.X;
+                        player.Position.Y = Position.Y;
 
                         Visible = tile.Type != Data.Map.TileType.Invisible;
+
+                        game.PlayerMoved(false);
                     }
                 }
                 else
@@ -146,10 +152,12 @@ namespace Ambermoon.Render
 
                     if (Map.Map.Type == MapType.Map2D)
                     {
-                        player.Position.X = Position.X - (int)Map.ScrollX;
-                        player.Position.Y = Position.Y - (int)Map.ScrollY;
+                        player.Position.X = Position.X;
+                        player.Position.Y = Position.Y;
 
                         // Note: For 3D maps the game/3D map will handle player position updating.
+
+                        game.PlayerMoved(true);
                     }
                 }
             }
@@ -172,6 +180,11 @@ namespace Ambermoon.Render
             }
 
             return canMove;
+        }
+
+        public void UpdateAppearance(uint ticks)
+        {
+            MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, null);
         }
 
         public override void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)

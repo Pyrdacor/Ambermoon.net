@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ambermoon.Data.Enumerations;
+using System;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -19,6 +20,34 @@ namespace Ambermoon.Data.Legacy
 
             for (int i = 0; i < 6; ++i)
                 savegame.CurrentPartyMemberIndices[i] = dataReader.ReadWord();
+
+            dataReader.Position = 68;
+
+            // up to 32 transport positions
+            for (int i = 0; i < 32; ++i)
+            {
+                var type = dataReader.ReadByte();
+
+                if (type == 0)
+                {
+                    savegame.TransportLocations[i] = null;
+                    dataReader.Position += 5;
+                }
+                else
+                {
+                    var x = dataReader.ReadByte();
+                    var y = dataReader.ReadByte();
+                    dataReader.Position += 1; // unknown byte
+                    var mapIndex = dataReader.ReadWord();
+
+                    savegame.TransportLocations[i] = new TransportLocation
+                    {
+                        TravelType = (TravelType)type,
+                        MapIndex = mapIndex,
+                        Position = new Position(x, y)
+                    };
+                }
+            }
 
             dataReader.Position = 0x35a4;
             // TODO: maybe all 64 bytes are available for chests (chest 0-511)

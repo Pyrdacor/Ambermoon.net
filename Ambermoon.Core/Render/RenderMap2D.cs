@@ -20,8 +20,10 @@
  */
 
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Render
 {
@@ -41,6 +43,7 @@ namespace Ambermoon.Render
         ITextureAtlas textureAtlas = null;
         readonly List<IAnimatedSprite> backgroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
         readonly List<IAnimatedSprite> foregroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
+        readonly Dictionary<Position, KeyValuePair<ISprite, Position>> transportSprites = new Dictionary<Position, KeyValuePair<ISprite, Position>>();
         uint ticksPerFrame = 0;
         bool worldMap = false;
         uint lastFrame = 0;
@@ -200,6 +203,127 @@ namespace Ambermoon.Render
                 tile.Visible = false;
             foreach (var tile in foregroundTileSprites)
                 tile.Visible = false;
+            ClearTransports();
+        }
+
+        public void ClearTransports()
+        {
+            transportSprites.ToList().ForEach(sprite => sprite.Value.Key?.Delete());
+            transportSprites.Clear();
+        }
+
+        void RepositionTransports(Map lastMap)
+        {
+            if (lastMap == null || !lastMap.IsWorldMap || !Map.IsWorldMap)
+                return;
+
+            var offset = Map.MapOffset - lastMap.MapOffset;
+
+            if (Math.Abs(offset.X) >= 2 * Map.Width || Math.Abs(offset.Y) >= 2 * Map.Height)
+            {
+                ClearTransports();
+                return;
+            }
+
+            foreach (var transportSprite in transportSprites.ToList())
+            {
+                var lastMapIndex = lastMap.Index;
+
+                if (transportSprite.Key.X >= lastMap.Width)
+                {
+                    if (transportSprite.Key.Y >= lastMap.Height)
+                        lastMapIndex = lastMap.DownRightMapIndex.Value;
+                    else
+                        lastMapIndex = lastMap.RightMapIndex.Value;
+                }
+                else if (transportSprite.Key.Y >= lastMap.Height)
+                    lastMapIndex = lastMap.RightMapIndex.Value;
+
+                if (lastMapIndex != Map.Index &&
+                    lastMapIndex != Map.RightMapIndex &&
+                    lastMapIndex != Map.DownMapIndex &&
+                    lastMapIndex != Map.DownRightMapIndex)
+                {
+                    transportSprite.Value.Key.Delete();
+                    transportSprites.Remove(transportSprite.Key);
+                }
+                else
+                {
+                    transportSprite.Key.X += offset.X * TILE_WIDTH;
+                    transportSprite.Key.Y += offset.Y * TILE_HEIGHT;
+                }
+            }
+        }
+
+        void UpdateTransports()
+        {
+            foreach (var transportSprite in transportSprites)
+            {
+                transportSprite.Value.Key.X = Global.Map2DViewX + (int)(transportSprite.Key.X - ScrollX) * TILE_WIDTH + transportSprite.Value.Value.X;
+                transportSprite.Value.Key.Y = Global.Map2DViewY + (int)(transportSprite.Key.Y - ScrollY) * TILE_HEIGHT + transportSprite.Value.Value.Y;
+            }
+        }
+
+        public void RemoveTransportAt(uint mapIndex, uint x, uint y)
+        {
+            var position = new Position((int)x, (int)y);
+
+            if (mapIndex != Map.Index)
+            {
+                if (mapIndex != adjacentMaps[0].Index &&
+                    mapIndex != adjacentMaps[1].Index &&
+                    mapIndex != adjacentMaps[2].Index)
+                    return;
+
+                if (mapIndex == adjacentMaps[0].Index || mapIndex == adjacentMaps[2].Index)
+                    position.X += Map.Width;
+                if (mapIndex == adjacentMaps[1].Index || mapIndex == adjacentMaps[2].Index)
+                    position.Y += Map.Height;
+            }
+
+            if (transportSprites.ContainsKey(position))
+            {
+                transportSprites[position].Key?.Delete();
+                transportSprites.Remove(position);
+            }
+        }
+
+        public void PlaceTransport(uint mapIndex, uint x, uint y, TravelType travelType)
+        {
+            var position = new Position((int)x, (int)y);
+
+            if (mapIndex != Map.Index)
+            {
+                if (mapIndex != adjacentMaps[0].Index &&
+                    mapIndex != adjacentMaps[1].Index &&
+                    mapIndex != adjacentMaps[2].Index)
+                    return;
+
+                if (mapIndex == adjacentMaps[0].Index || mapIndex == adjacentMaps[2].Index)
+                    position.X += Map.Width;
+                if (mapIndex == adjacentMaps[1].Index || mapIndex == adjacentMaps[2].Index)
+                    position.Y += Map.Height;
+            }
+
+            if (!transportSprites.ContainsKey(position))
+            {
+                var stationaryImage = travelType.ToStationaryImage();
+                var info = renderView.GameData.StationaryImageInfos[stationaryImage];
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters);
+                var sprite = renderView.SpriteFactory.Create
+                (
+                    info.Width, info.Height, false, false
+                );
+                var offset = new Position(-(48 - info.Width) / 2, -(32 - info.Height) / 2);
+                sprite.Layer = renderView.GetLayer(Layer.Characters);
+                sprite.BaseLineOffset = 4;
+                sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + (uint)stationaryImage);
+                sprite.X = Global.Map2DViewX + (int)(x - ScrollX) * TILE_WIDTH + offset.X;
+                sprite.Y = Global.Map2DViewY + (int)(y - ScrollY) * TILE_HEIGHT + offset.Y;
+                sprite.Visible = true;
+                transportSprites.Add(position, new KeyValuePair<ISprite, Position>(sprite, offset));
+            }
         }
 
         internal void UpdateTile(uint x, uint y)
@@ -296,6 +420,20 @@ namespace Ambermoon.Render
             UpdateAnimations(0);
         }
 
+        public bool IsMapVisible(uint index)
+        {
+            if (Map.Index == index)
+                return true;
+
+            if (!Map.IsWorldMap)
+                return false;
+
+            return
+                index == Map.RightMapIndex ||
+                index == Map.DownMapIndex ||
+                index == Map.DownRightMapIndex;
+        }
+
         public void SetMap(Map map, uint initialScrollX = 0, uint initialScrollY = 0)
         {
             if (Map == map)
@@ -304,6 +442,7 @@ namespace Ambermoon.Render
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Tried to load a 3D map into a 2D render map.");
 
+            var lastMap = Map;
             Map = map;
             tileset = mapManager.GetTilesetForMap(map);
             ticksPerFrame = map.TicksPerAnimationFrame;
@@ -317,6 +456,7 @@ namespace Ambermoon.Render
                     mapManager.GetMap(map.DownMapIndex.Value),
                     mapManager.GetMap(map.DownRightMapIndex.Value)
                 };
+                RepositionTransports(lastMap);
             }
             else
             {
@@ -397,6 +537,7 @@ namespace Ambermoon.Render
             }
 
             UpdateTiles();
+            UpdateTransports();
         }
     }
 }

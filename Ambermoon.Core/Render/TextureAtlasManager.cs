@@ -20,7 +20,6 @@
  */
 
 using Ambermoon.Data;
-using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
 
@@ -148,6 +147,14 @@ namespace Ambermoon.Render
 
             for (int i = 0; i < travelGraphics.Count; ++i)
                 AddTexture(Layer.Characters, 3 * 17 + (uint)i, travelGraphics[i]);
+
+            var transportGraphics = graphicProvider.GetGraphics(GraphicType.Transports);
+
+            if (transportGraphics.Count != 5)
+                throw new AmbermoonException(ExceptionScope.Data, "Wrong number of transport graphics.");
+
+            for (int i = 0; i < transportGraphics.Count; ++i)
+                AddTexture(Layer.Characters, 3 * 17 + 11 * 4 + (uint)i, transportGraphics[i]);
 
             #endregion
 

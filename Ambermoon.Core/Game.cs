@@ -39,14 +39,29 @@ namespace Ambermoon
         {
             readonly uint[] tickDivider;
 
-            public uint TickDivider(bool is3D) => tickDivider[is3D ? 1 : 0];
-            public uint MovementTicks(bool is3D) => TicksPerSecond / TickDivider(is3D);
+            public uint TickDivider(bool is3D, TravelType travelType) => tickDivider[is3D ? 0 : 1 + (int)travelType];
+            public uint MovementTicks(bool is3D, TravelType travelType) => TicksPerSecond / TickDivider(is3D, travelType);
             public float MoveSpeed3D { get; }
             public float TurnSpeed3D { get; }
 
             public Movement(bool legacyMode)
             {
-                tickDivider = new uint[] { 8u, GetTickDivider3D(legacyMode) };
+                tickDivider = new uint[]
+                {
+                    GetTickDivider3D(legacyMode), // 3D movement
+                    // TODO: these have to be corrected
+                    // 2D movement
+                    8, // Walk
+                    6, // Horse
+                    8, // Raft
+                    4, // Ship
+                    8, // Magical disc
+                    2, // Eagle
+                    8, // Fly
+                    4, // Witch broom
+                    6, // Sand lizard
+                    4  // Sand ship
+                };
                 MoveSpeed3D = GetMoveSpeed3D(legacyMode);
                 TurnSpeed3D = GetTurnSpeed3D(legacyMode);
             }
@@ -79,6 +94,7 @@ namespace Ambermoon
         internal uint CurrentTicks { get; private set; } = 0;
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
+        TravelType travelType = TravelType.Walk;
         readonly NameProvider nameProvider;
         readonly TextDictionary textDictionary;
         internal IDataNameProvider DataNameProvider { get; }
@@ -260,7 +276,7 @@ namespace Ambermoon
 
             var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-            if (moveTicks >= movement.MovementTicks(is3D))
+            if (moveTicks >= movement.MovementTicks(is3D, travelType))
             {
                 if (clickMoveActive)
                     HandleClickMovement();
@@ -327,7 +343,7 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
             ResetMoveKeys();
-            layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false));
+            layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false, travelType));
             is3D = false;
 
             if (renderMap2D.Map != map)
@@ -358,8 +374,8 @@ namespace Ambermoon
             player2D.Visible = true;
             player2D.MoveTo(map, playerX, playerY, CurrentTicks, true, direction);
 
-            player.Position.X = (int)playerX - (int)renderMap2D.ScrollX;
-            player.Position.Y = (int)playerY - (int)renderMap2D.ScrollY;
+            player.Position.X = (int)playerX;
+            player.Position.Y = (int)playerY;
             player.Direction = direction;
             
             renderView.GetLayer(Layer.Map3D).Visible = false;
@@ -368,6 +384,8 @@ namespace Ambermoon
                 renderView.GetLayer((Layer)i).Visible = true;
 
             mapViewArea = map2DViewArea;
+
+            PlayerMoved(true);
         }
 
         internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction)
@@ -376,9 +394,10 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
             ResetMoveKeys();
-            layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true));
+            layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, travelType));
 
             is3D = true;
+            travelType = TravelType.Walk;
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction);
             player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks);
@@ -394,6 +413,8 @@ namespace Ambermoon
                 renderView.GetLayer((Layer)i).Visible = false;
 
             mapViewArea = map3DViewArea;
+
+            PlayerMoved(true);
         }
 
         void Cleanup()
@@ -467,14 +488,14 @@ namespace Ambermoon
             CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
             SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
 
+            // This is the word "Hello" which is already present on game start.
+            dictionary.Add(textDictionary.Entries[0]);
+
             InputEnable = true;
 
             // Trigger events after game load
             TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
                 (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
-
-            // This is the word "Hello" which is already present on game start.
-            dictionary.Add(textDictionary.Entries[0]);
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
@@ -576,6 +597,8 @@ namespace Ambermoon
                         clickMoveActive = false;
                         break;
                 }
+
+                player.Direction = player3D.Direction;
             }
             else
             {
@@ -609,6 +632,8 @@ namespace Ambermoon
                         clickMoveActive = false;
                         break;
                 }
+
+                player.Direction = player2D.Direction;
             }
         }
 
@@ -1114,14 +1139,14 @@ namespace Ambermoon
             if (is3D)
             {
                 if (show)
-                    layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true));
+                    layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, travelType));
                 renderView.GetLayer(Layer.Map3D).Visible = show;
                 renderView.GetLayer(Layer.Billboards3D).Visible = show;
             }
             else
             {
                 if (show)
-                    layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false));
+                    layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, travelType));
                 for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                     renderView.GetLayer((Layer)i).Visible = show;
             }
@@ -1244,6 +1269,7 @@ namespace Ambermoon
             Fade(() =>
             {
                 var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
+                bool mapChange = newMap.Index != Map.Index;
                 var player = is3D ? (IRenderPlayer)player3D : player2D;
                 bool mapTypeChanged = Map.Type != newMap.Type;
 
@@ -1263,8 +1289,154 @@ namespace Ambermoon
                     // Trigger events after map transition
                     TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
                         (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
+
+                    PlayerMoved(mapChange);
                 }
             });
+        }
+
+        internal void ToggleTransport()
+        {
+            uint x = (uint)player.Position.X;
+            uint y = (uint)player.Position.Y;
+            var mapIndex = renderMap2D.GetMapFromTile(x, y).Index;
+            var transport = GetTransportAtPlayerLocation(out int? index);
+
+            if (transport == null && travelType.UsesMapObject())
+            {
+                for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
+                {
+                    if (currentSavegame.TransportLocations[i] == null)
+                    {
+                        currentSavegame.TransportLocations[i] = new TransportLocation
+                        {
+                            MapIndex = mapIndex,
+                            Position = new Position((int)x + 1, (int)y + 1),
+                            TravelType = travelType
+                        };
+                        break;
+                    }
+                }
+
+                renderMap2D.PlaceTransport(mapIndex, x, y, travelType);
+                travelType = TravelType.Walk;
+                player2D.UpdateAppearance(CurrentTicks);
+            }
+            else if (transport != null && travelType == TravelType.Walk)
+            {
+                currentSavegame.TransportLocations[index.Value] = null;
+                renderMap2D.RemoveTransportAt(mapIndex, x, y);
+                travelType = transport.TravelType;
+                player2D.UpdateAppearance(CurrentTicks);
+            }
+        }
+
+        TransportLocation GetTransportAtPlayerLocation(out int? index)
+        {
+            index = null;
+            var mapIndex = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
+            // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
+            var position = new Position(player.Position.X + 1, player.Position.Y + 1);
+
+            for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
+            {
+                var transport = currentSavegame.TransportLocations[i];
+
+                if (transport != null)
+                {
+                    if (transport.MapIndex == mapIndex && transport.Position == position)
+                    {
+                        index = i;
+                        return transport;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        List<TransportLocation> GetTransportsInVisibleArea(out int? transportAtPlayerIndex)
+        {
+            transportAtPlayerIndex = null;
+            var transports = new List<TransportLocation>();
+
+            if (!Map.IsWorldMap)
+                return transports;
+
+            var mapIndex = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
+            // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
+            var position = new Position(player.Position.X + 1, player.Position.Y + 1);
+
+            for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
+            {
+                var transport = currentSavegame.TransportLocations[i];
+
+                if (transport != null && renderMap2D.IsMapVisible(transport.MapIndex))
+                {
+                    transports.Add(transport);
+
+                    if (transport.MapIndex == mapIndex && transport.Position == position)
+                        transportAtPlayerIndex = i;
+                }
+            }
+
+            return transports;
+        }
+
+        internal void PlayerMoved(bool mapChange)
+        {
+            // Enable/disable transport button and show transports
+            if (!WindowActive)
+            {
+                if (layout.ButtonGridPage == 1)
+                    layout.EnableButton(3, false);
+
+                if (mapChange && Map.Type == MapType.Map2D)
+                    renderMap2D.ClearTransports();
+
+                if (!WindowActive && Map.IsWorldMap)
+                {
+                    var transports = GetTransportsInVisibleArea(out int? transportAtPlayerIndex);
+
+                    foreach (var transport in transports)
+                    {
+                        renderMap2D.PlaceTransport(transport.MapIndex,
+                            (uint)transport.Position.X - 1, (uint)transport.Position.Y - 1, transport.TravelType);
+                    }
+
+                    void EnableTransport()
+                    {
+                        layout.TransportEnabled = true;
+                        if (layout.ButtonGridPage == 1)
+                            layout.EnableButton(3, true);
+                    }
+
+                    if (transportAtPlayerIndex != null && travelType == TravelType.Walk)
+                    {
+                        EnableTransport();
+                    }
+                    else if (travelType.IsStoppable())
+                    {
+                        var tile = renderMap2D[(uint)player.Position.X, (uint)player.Position.Y];
+
+                        switch (tile.Type)
+                        {
+                            case Map.TileType.Free:
+                                EnableTransport();
+                                break;
+                            case Map.TileType.Water:
+                            case Map.TileType.Ocean:
+                                if (travelType == TravelType.MagicalDisc ||
+                                    travelType == TravelType.Raft ||
+                                    travelType == TravelType.Ship)
+                                    EnableTransport();
+                                break;
+                        }
+                    }
+                }
+            }
+
+            // TODO
         }
 
         internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
@@ -1403,8 +1575,6 @@ namespace Ambermoon
         {
             if (Map.IsWorldMap)
             {
-                // TODO: travel with horse, boat, etc
-                var travelType = TravelType.Walk;
                 var travelInfo = renderView.GameData.GetTravelGraphicInfo(travelType, player.Direction);
                 return new Position((int)travelInfo.OffsetX - 16, (int)travelInfo.OffsetY - 16);
             }
@@ -1418,8 +1588,6 @@ namespace Ambermoon
         {
             if (Map.IsWorldMap)
             {
-                // TODO: travel with horse, boat, etc
-                var travelType = TravelType.Walk;
                 var travelInfo = renderView.GameData.GetTravelGraphicInfo(travelType, player.Direction);
                 return new Character2DAnimationInfo
                 {

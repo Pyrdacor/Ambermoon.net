@@ -22,7 +22,8 @@ namespace Ambermoon.Data
         Pics80x80,
         UIElements,
         EventPictures,
-        TravelGfx
+        TravelGfx,
+        Transports
         // TODO ...
     }
 

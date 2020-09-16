@@ -124,13 +124,23 @@ namespace Ambermoon.Data.Legacy
                 }
                 else if (type == GraphicType.UIElements)
                 {
-                    graphics[GraphicType.UIElements] = UIElementProvider.Create();
-                    graphics[GraphicType.UIElements].AddRange(executableData.UIGraphics.Entries.Values);
-                    graphics[GraphicType.UIElements].AddRange(executableData.Buttons.Entries.Values);
+                    graphics[type] = UIElementProvider.Create();
+                    graphics[type].AddRange(executableData.UIGraphics.Entries.Values);
+                    graphics[type].AddRange(executableData.Buttons.Entries.Values);
                 }
                 else if (type == GraphicType.TravelGfx)
                 {
-                    graphics[GraphicType.TravelGfx] = gameData.TravelGraphics;
+                    graphics[type] = gameData.TravelGraphics;
+                }
+                else if (type == GraphicType.Transports)
+                {
+                    var reader = gameData.Files["Stationary"].Files[1];
+                    graphics[type] = gameData.StationaryImageInfos.Select(info =>
+                    {
+                        var graphic = new Graphic();
+                        graphicReader.ReadGraphic(graphic, reader, info.Value);
+                        return graphic;
+                    }).ToList();
                 }
                 else
                 {

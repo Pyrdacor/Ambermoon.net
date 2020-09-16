@@ -12,8 +12,10 @@ namespace Ambermoon.Render
         readonly RenderMap3D map;
         readonly Player player;
 
+        Position lastPosition;
         public Position Position { get; private set; }
         public ICamera3D Camera { get; }
+        public float angle = 0.0f;
 
         public Player3D(Game game, Player player, IMapManager mapManager, ICamera3D camera, RenderMap3D map, int x, int y)
         {
@@ -26,12 +28,15 @@ namespace Ambermoon.Render
 
         void ResetCameraPosition()
         {
+            angle = 0.0f;
+            lastPosition = new Position(Position);
             Geometry.BlockToCameraPosition(map.Map, Position, out float x, out float z);
             Camera.SetPosition(x, z);
         }
 
         public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
+            lastPosition = new Position(Position);
             Position = new Position((int)x, (int)y);
 
             if (this.map.Map != map)
@@ -46,12 +51,25 @@ namespace Ambermoon.Render
                 else
                 {
                     this.map.SetMap(map, x, y, newDirection.Value);
+                    var oldMapIndex = map.Index;
                     SetPosition((int)x, (int)y, ticks);
+                    game.PlayerMoved(oldMapIndex != game.Map.Index);
+
+                    if (newDirection != null)
+                        angle = (float)newDirection.Value * 90.0f;
                 }
             }
             else
             {
+                var oldMapIndex = map.Index;
                 SetPosition((int)x, (int)y, ticks);
+                game.PlayerMoved(oldMapIndex != game.Map.Index);
+
+                if (newDirection != null)
+                {
+                    angle = (float)newDirection.Value * 90.0f;
+                    Camera.TurnTowards(angle);
+                }
             }
 
             player.Position.X = Position.X;
@@ -86,9 +104,16 @@ namespace Ambermoon.Render
             {
                 mover(distance, noX, noZ);
                 Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
-                player.Position.X = Position.X;
-                player.Position.Y = Position.Y;
-                map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+
+                if (Position != lastPosition)
+                {
+                    player.Position.X = Position.X;
+                    player.Position.Y = Position.Y;
+                    lastPosition = new Position(Position);
+                    var oldMapIndex = map.Map.Index;
+                    map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+                    game.PlayerMoved(oldMapIndex != game.Map.Index);
+                }
             }
 
             Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
@@ -146,16 +171,19 @@ namespace Ambermoon.Render
 
         public void TurnLeft(float angle) // in degrees
         {
+            this.angle -= angle;
             Camera.TurnLeft(angle);
         }
 
         public void TurnRight(float angle) // in degrees
         {
+            this.angle += angle;
             Camera.TurnRight(angle);
         }
 
         public void TurnTowards(float angle) // turn to attacking monster or stand on a spinner (in degrees)
         {
+            this.angle = angle;
             Camera.TurnTowards(angle);
         }
 
@@ -169,6 +197,25 @@ namespace Ambermoon.Render
         {
             // TODO
             Camera.LevitateDown(distance);
+        }
+
+        public CharacterDirection Direction
+        {
+            get
+            {
+                while (angle > 315.0f)
+                    angle -= 360.0f;
+                while (angle < -45.0f)
+                    angle += 360.0f;
+
+                if (angle < 45.0f)
+                    return CharacterDirection.Up;
+                if (angle < 135.0f)
+                    return CharacterDirection.Right;
+                if (angle < 225.0f)
+                    return CharacterDirection.Down;
+                return CharacterDirection.Left;
+            }
         }
     }
 }

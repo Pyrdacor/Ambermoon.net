@@ -46,6 +46,11 @@ namespace Ambermoon.UI
             buttons[slot].Action = action;
         }
 
+        public void EnableButton(int slot, bool enable)
+        {
+            buttons[slot].Disabled = !enable;
+        }
+
         public void SetButton(int slot, ButtonType buttonType, bool disabled, Action action,
             bool instantAction, Func<CursorType> cursorChangeAction = null,
             uint? continuousActionDelayInTicks = null)

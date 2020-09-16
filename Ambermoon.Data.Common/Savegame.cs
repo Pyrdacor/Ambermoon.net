@@ -1,7 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using Ambermoon.Data.Enumerations;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
+    /// <summary>
+    /// Location of a horse, raft, ship, etc.
+    /// </summary>
+    public class TransportLocation
+    {
+        public TravelType TravelType;
+        public uint MapIndex;
+        public Position Position;
+    }
+
     public class Savegame
     {
         #region Map
@@ -15,6 +26,7 @@ namespace Ambermoon.Data
         /// look in another direction after loading in original game.
         /// </summary>
         public CharacterDirection CharacterDirection { get; set; }
+        public TransportLocation[] TransportLocations { get; } = new TransportLocation[32];
 
         #endregion
 
