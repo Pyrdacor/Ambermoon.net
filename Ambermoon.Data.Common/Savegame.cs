@@ -26,6 +26,7 @@ namespace Ambermoon.Data
         /// look in another direction after loading in original game.
         /// </summary>
         public CharacterDirection CharacterDirection { get; set; }
+        public TravelType TravelType { get; set; }
         public TransportLocation[] TransportLocations { get; } = new TransportLocation[32];
 
         #endregion
@@ -81,6 +82,13 @@ namespace Ambermoon.Data
         // which should be executed when entering the map or loading a game which
         // starts on that map).
         public Dictionary<uint, List<ChangeTileEvent>> TileChangeEvents { get; } = new Dictionary<uint, List<ChangeTileEvent>>();
+
+        #endregion
+
+        #region Misc
+
+        public uint Hour { get; set; }
+        public uint Minute { get; set; } // a multiple of 5
 
         #endregion
 

@@ -7,7 +7,9 @@ namespace Ambermoon.Data.Legacy
     {
         void ReadSaveData(Savegame savegame, IDataReader dataReader)
         {
-            dataReader.Position += 10;
+            dataReader.Position = 6;
+            savegame.Hour = dataReader.ReadWord();
+            savegame.Minute = dataReader.ReadWord();
             savegame.CurrentMapIndex = dataReader.ReadWord();
             savegame.CurrentMapX = dataReader.ReadWord();
             savegame.CurrentMapY = dataReader.ReadWord();
@@ -20,6 +22,9 @@ namespace Ambermoon.Data.Legacy
 
             for (int i = 0; i < 6; ++i)
                 savegame.CurrentPartyMemberIndices[i] = dataReader.ReadWord();
+
+            dataReader.Position = 61;
+            savegame.TravelType = (TravelType)dataReader.ReadByte();
 
             dataReader.Position = 68;
 
