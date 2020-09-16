@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.5](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.5/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.4](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.4/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.3](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.3/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.1.2](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.2/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -91,6 +91,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version 1.1.5: Added text inputs (e.g. for riddlemouth), improved transport handling
 - Version 1.1.4: Added 3D map interaction, riddlemouths and transports, bugfixing
 - Version 1.1.3: Added text, decision and event popups, bugfixing
 - Version 1.1.2: Bugfixing
