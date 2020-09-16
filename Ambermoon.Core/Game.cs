@@ -482,13 +482,14 @@ namespace Ambermoon
             player.MovementAbility = PlayerMovementAbility.Walking;
             renderMap2D.MapChanged += RenderMap2D_MapChanged;
             renderMap3D.MapChanged += RenderMap3D_MapChanged;
+            TravelType = savegame.TravelType;
             if (is3D)
                 Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection);
             else
                 Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection);
             player.Position.X = (int)savegame.CurrentMapX - 1;
             player.Position.Y = (int)savegame.CurrentMapY - 1;
-            TravelType = savegame.TravelType;
+            TravelType = savegame.TravelType; // Yes this is necessary twice.
 
             ShowMap(true);
 
@@ -1324,23 +1325,33 @@ namespace Ambermoon
             var mapIndex = renderMap2D.GetMapFromTile(x, y).Index;
             var transport = GetTransportAtPlayerLocation(out int? index);
 
-            if (transport == null && TravelType.UsesMapObject())
+            if (transport == null)
             {
-                for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
+                if (TravelType.UsesMapObject())
                 {
-                    if (currentSavegame.TransportLocations[i] == null)
+                    for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
                     {
-                        currentSavegame.TransportLocations[i] = new TransportLocation
+                        if (currentSavegame.TransportLocations[i] == null)
                         {
-                            MapIndex = mapIndex,
-                            Position = new Position((int)x + 1, (int)y + 1),
-                            TravelType = TravelType
-                        };
-                        break;
+                            currentSavegame.TransportLocations[i] = new TransportLocation
+                            {
+                                MapIndex = mapIndex,
+                                Position = new Position((int)x + 1, (int)y + 1),
+                                TravelType = TravelType
+                            };
+                            break;
+                        }
                     }
+
+                    renderMap2D.PlaceTransport(mapIndex, x, y, TravelType);
+                }
+                else
+                {
+                    layout.TransportEnabled = false;
+                    if (layout.ButtonGridPage == 1)
+                        layout.EnableButton(3, false);
                 }
 
-                renderMap2D.PlaceTransport(mapIndex, x, y, TravelType);
                 TravelType = TravelType.Walk;
                 player2D.UpdateAppearance(CurrentTicks);
             }
