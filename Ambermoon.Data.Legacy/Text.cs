@@ -9,7 +9,7 @@ namespace Ambermoon.Data.Legacy
         readonly List<KeyValuePair<byte[], int>> lines = new List<KeyValuePair<byte[], int>>();
 
         public Text(List<KeyValuePair<byte[], int>> glyphLines)
-            : this(glyphLines.SelectMany(line => line.Key).ToArray(), glyphLines.Count, glyphLines.Max(line => line.Value))
+            : this(glyphLines.SelectMany(line => line.Key).ToArray(), glyphLines.Count, glyphLines.Count == 0 ? 0 : glyphLines.Max(line => line.Value))
         {
             lines = glyphLines;
         }
@@ -102,6 +102,19 @@ namespace Ambermoon.Data.Legacy
                 return (byte)SpecialGlyph.NewLine;
             else
                 throw new AmbermoonException(ExceptionScope.Data, $"Unsupported text character '{ch}'.");
+        }
+
+        public bool IsValidCharacter(char ch)
+        {
+            try
+            {
+                CharToGlyph(ch, false);
+                return true;
+            }
+            catch (AmbermoonException)
+            {
+                return false;
+            }
         }
 
         public IText CreateText(string text)

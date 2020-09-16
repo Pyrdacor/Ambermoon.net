@@ -492,9 +492,10 @@ namespace Ambermoon.UI
             buttonGrid.EnableButton(index, enable);
         }
 
-        internal Popup OpenPopup(Position position, int columns, int rows, bool disableButtons = true, bool closeOnClick = true)
+        internal Popup OpenPopup(Position position, int columns, int rows,
+            bool disableButtons = true, bool closeOnClick = true, byte displayLayerOffset = 0)
         {
-            activePopup = new Popup(game, RenderView, position, columns, rows, false)
+            activePopup = new Popup(game, RenderView, position, columns, rows, false, displayLayerOffset)
             {
                 DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
@@ -537,6 +538,28 @@ namespace Ambermoon.UI
             return popup;
         }
 
+        internal Popup OpenInputPopup(Position position, int inputLength, Action<string> inputHandler)
+        {
+            var openPopup = activePopup;
+            var popup = OpenPopup(position, 2 + ((inputLength + 1) * Global.GlyphWidth + 14) / 16, 3, true, false, 21);
+            var input = popup.AddTextInput(position + new Position(16, 18), inputLength,
+                TextInput.ClickAction.Submit, TextInput.ClickAction.Abort);
+            input.SetFocus();
+            input.ReactToGlobalClicks = true;
+            void Close()
+            {
+                ClosePopup();
+                activePopup = openPopup;
+            }
+            input.InputSubmitted += (string input) =>
+            {
+                Close();
+                inputHandler?.Invoke(input);
+            };
+            input.Aborted += Close;
+            return popup;
+        }
+
         internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction, Action closeAction)
         {
             ClosePopup(false);
@@ -569,20 +592,25 @@ namespace Ambermoon.UI
             return activePopup;
         }
 
-        internal void ClosePopup(bool raiseEvent = true)
+        void ClosePopup(Popup popup, bool raiseEvent = true)
         {
             if (raiseEvent)
             {
                 // The close event may close the popup itself.
                 // In that case we must not destroy it here as
                 // it might be a completely new popup.
-                var oldPopup = activePopup;
-                activePopup?.OnClosed();
+                var oldPopup = popup;
+                popup?.OnClosed();
 
-                if (oldPopup != activePopup)
+                if (oldPopup != popup)
                     return;
             }
-            activePopup?.Destroy();
+            popup?.Destroy();
+        }
+
+        internal void ClosePopup(bool raiseEvent = true)
+        {
+            ClosePopup(activePopup, raiseEvent);
             activePopup = null;
         }
 
@@ -960,9 +988,23 @@ namespace Ambermoon.UI
             }
         }
 
+        public bool KeyChar(char ch)
+        {
+            if (!game.InputEnable)
+                return false;
+
+            if (PopupActive && activePopup.KeyChar(ch))
+                return true;
+
+            return false;
+        }
+
         public void KeyDown(Key key, KeyModifiers keyModifiers)
         {
             if (!game.InputEnable)
+                return;
+
+            if (PopupActive && activePopup.KeyDown(key))
                 return;
 
             switch (key)
@@ -1044,14 +1086,15 @@ namespace Ambermoon.UI
 
             if (PopupActive)
             {
-                if (activePopup.CloseOnClick || buttons == MouseButtons.Right)
+                if (activePopup.CloseOnClick || (buttons == MouseButtons.Right &&
+                    (!activePopup.HasTextInput() || TextInput.FocusedInput == null)))
                 {
                     ClosePopup();
                     return true;
                 }
                 else
                 {
-                    if (activePopup.Click(position))
+                    if (activePopup.Click(position, buttons))
                         return true;
                 }
 

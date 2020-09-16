@@ -59,6 +59,11 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
         }
 
+        public void SetText(IText text)
+        {
+            renderText.Text = text;
+        }
+
         public bool Click(Position position)
         {
             if (allowScrolling)

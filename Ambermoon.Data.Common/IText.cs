@@ -55,6 +55,7 @@ namespace Ambermoon.Data
         /// </summary>
         IText WrapText(IText text, Rect bounds, Size glyphSize);
         IText GetLines(IText text, int lineOffset, int numLines);
+        bool IsValidCharacter(char ch);
     }
 
     public interface IText

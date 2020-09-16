@@ -811,6 +811,9 @@ namespace Ambermoon
             if (!InputEnable)
                 return;
 
+            if (layout.KeyChar(keyChar))
+                return;
+
             if (keyChar >= '1' && keyChar <= '6')
             {
                 SetActivePartyMember(keyChar - '1');
@@ -1626,7 +1629,8 @@ namespace Ambermoon
             exitButton.ButtonType = ButtonType.Exit;
             mouthButton.DisplayLayer = 200;
             exitButton.DisplayLayer = 200;
-            //mouthButton.Action =  // TODO
+            mouthButton.Action = () =>
+                layout.OpenInputPopup(new Position(51, 87), 20, (string solution) => choiceHandler?.Invoke(solution));
             exitButton.Action = () => layout.ClosePopup();
             popup.AddDictionaryListBox(dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
             (
