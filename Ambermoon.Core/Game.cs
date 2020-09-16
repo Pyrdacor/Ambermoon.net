@@ -1555,6 +1555,8 @@ namespace Ambermoon
                     }
                     else
                     {
+                        if (!textDictionary.Entries.Any(entry => string.Compare(entry, solution, true) == 0))
+                            solution = DataNameProvider.That;
                         var failedText = renderView.TextProcessor.ProcessText(solution + DataNameProvider.WrongRiddlemouthSolutionText,
                             nameProvider, dictionary);
                         InputEnable = false;

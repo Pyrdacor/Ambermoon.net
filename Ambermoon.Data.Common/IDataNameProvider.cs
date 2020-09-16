@@ -20,6 +20,7 @@
         string InventoryTitleString { get; }
         string LoadWhichSavegameString { get; }
         string WrongRiddlemouthSolutionText { get; }
+        string That { get; }
 
         // TODO
     }

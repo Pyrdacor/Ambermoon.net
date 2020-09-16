@@ -51,8 +51,14 @@
         public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
 
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
+
         public string LoadWhichSavegameString => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
 
         public string WrongRiddlemouthSolutionText => executableData.Messages.GetEntry(Messages.Index.IsNotTheRightAnswer);
+
+        /// <summary>
+        /// This is used if the entered word is not part of the dictionary.
+        /// </summary>
+        public string That => executableData.Messages.GetEntry(Messages.Index.That);
     }
 }

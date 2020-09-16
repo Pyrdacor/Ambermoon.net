@@ -60,6 +60,14 @@ namespace Ambermoon.UI
             lastBlinkTime = DateTime.Now;
         }
 
+        void Submit()
+        {
+            if (string.IsNullOrEmpty(currentInput))
+                Aborted?.Invoke();
+            else
+                InputSubmitted?.Invoke(currentInput);
+        }
+
         public void SetFocus()
         {
             var prevFocusedInput = FocusedInput;
@@ -127,7 +135,7 @@ namespace Ambermoon.UI
             switch (action.Value)
             {
                 case ClickAction.Submit:
-                    InputSubmitted?.Invoke(currentInput);
+                    Submit();
                     break;
                 case ClickAction.Focus:
                     SetFocus();
@@ -172,7 +180,7 @@ namespace Ambermoon.UI
                     }
                     break;
                 case Key.Return:
-                    InputSubmitted?.Invoke(currentInput);
+                    Submit();
                     break;
                 case Key.Escape:
                     Aborted?.Invoke();
