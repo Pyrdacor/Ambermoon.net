@@ -141,7 +141,14 @@ namespace Ambermoon
                 travelType = value;
                 player.MovementAbility = travelType.ToPlayerMovementAbility();
                 if (Map?.IsWorldMap == true)
+                {
                     player2D?.UpdateAppearance(CurrentTicks);
+                    player2D.BaselineOffset = player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
+                }
+                else if (!is3D && player2D != null)
+                {
+                    player2D.BaselineOffset = 0;
+                }
             }
         }
         bool leftMouseDown = false;
@@ -1407,7 +1414,12 @@ namespace Ambermoon
                     layout.EnableButton(3, false);
 
                 if (mapChange && Map.Type == MapType.Map2D)
+                {
                     renderMap2D.ClearTransports();
+
+                    if (player.MovementAbility <= PlayerMovementAbility.Walking)
+                        player2D.BaselineOffset = 0;
+                }
 
                 if (!WindowActive && Map.IsWorldMap)
                 {

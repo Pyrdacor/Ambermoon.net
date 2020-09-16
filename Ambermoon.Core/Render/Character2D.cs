@@ -29,6 +29,19 @@ namespace Ambermoon.Render
         public uint CurrentFrameIndex { get; private set; }
         public uint CurrentFrame => sprite.CurrentFrame;
         uint lastFrameReset = 0u;
+        int baselineOffset = 0;
+        public int BaselineOffset
+        {
+            get => baselineOffset;
+            set
+            {
+                if (baselineOffset == value)
+                    return;
+
+                baselineOffset = value;
+                UpdateBaseline();
+            }
+        }
         public CharacterDirection Direction { get; private set; } = CharacterDirection.Down;
         public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (only exception is the player)
         public Position Position { get; } // in tiles
@@ -67,14 +80,21 @@ namespace Ambermoon.Render
             var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
             sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
             sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
-            sprite.BaseLineOffset = 1 - drawOffset.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - currentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
             sprite.PaletteIndex = (byte)paletteIndexProvider();
+            UpdateBaseline();
             Position = startPosition;
         }
 
         public virtual void Destroy()
         {
             sprite?.Delete();
+        }
+
+        void UpdateBaseline()
+        {
+            var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+            sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y +
+                Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
         }
 
         public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
@@ -165,8 +185,8 @@ namespace Ambermoon.Render
             var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
             sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
             sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
-            sprite.BaseLineOffset = 1 - drawOffset.Y + Math.Max(0, RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
             sprite.PaletteIndex = (byte)paletteIndexProvider();
+            UpdateBaseline();
         }
 
         public virtual void Update(uint ticks)
