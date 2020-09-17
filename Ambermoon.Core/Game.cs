@@ -113,6 +113,7 @@ namespace Ambermoon
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
+        bool allInputDisabled = false;
         bool inputEnable = true;
         /// <summary>
         /// The 3x3 buttons will always be enabled!
@@ -573,7 +574,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (WindowActive || !InputEnable || !clickMoveActive)
+            if (WindowActive || !InputEnable || !clickMoveActive || allInputDisabled)
             {
                 clickMoveActive = false;
                 return;
@@ -585,7 +586,30 @@ namespace Ambermoon
             }
         }
 
-        internal void Move(CursorType cursorType)
+        void StartSequence()
+        {
+            layout.ReleaseButtons();
+            allInputDisabled = true;
+            clickMoveActive = false;
+        }
+
+        void EndSequence()
+        {
+            allInputDisabled = false;
+        }
+
+        void PlayTimedSequence(int steps, Action stepAction, int stepTimeInMs)
+        {
+            if (steps == 0)
+                return;
+
+            StartSequence();
+            for (int i = 0; i < steps - 1; ++i)
+                AddTimedEvent(TimeSpan.FromMilliseconds(i * stepTimeInMs), stepAction);
+            AddTimedEvent(TimeSpan.FromMilliseconds((steps - 1) * stepTimeInMs), () => { stepAction?.Invoke(); EndSequence(); });
+        }
+
+        internal void Move(CursorType cursorType, bool fromNumpadButton = false)
         {
             if (is3D)
             {
@@ -605,19 +629,35 @@ namespace Ambermoon
                         break;
                     case CursorType.ArrowTurnLeft:
                         player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                        if (!fromNumpadButton)
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
                         break;
                     case CursorType.ArrowTurnRight:
                         player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                        if (!fromNumpadButton)
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
                         break;
                     case CursorType.ArrowRotateLeft:
-                        player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                        if (fromNumpadButton)
+                        {
+                            PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 75);
+                        }
+                        else
+                        {
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                        }
                         break;
                     case CursorType.ArrowRotateRight:
-                        player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                        if (fromNumpadButton)
+                        {
+                            PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 75);
+                        }
+                        else
+                        {
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                        }
                         break;
                     default:
                         clickMoveActive = false;
@@ -683,7 +723,7 @@ namespace Ambermoon
 
         void Move()
         {
-            if (WindowActive || !InputEnable)
+            if (WindowActive || !InputEnable || allInputDisabled)
                 return;
 
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
@@ -734,6 +774,9 @@ namespace Ambermoon
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
+            if (allInputDisabled)
+                return;
+
             if (!InputEnable)
             {
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
@@ -802,6 +845,9 @@ namespace Ambermoon
 
         public void OnKeyUp(Key key, KeyModifiers modifiers)
         {
+            if (allInputDisabled)
+                return;
+
             if (!InputEnable)
             {
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
@@ -834,7 +880,7 @@ namespace Ambermoon
 
         public void OnKeyChar(char keyChar)
         {
-            if (!InputEnable)
+            if (!InputEnable || allInputDisabled)
                 return;
 
             if (layout.KeyChar(keyChar))
@@ -848,6 +894,9 @@ namespace Ambermoon
 
         public void OnMouseUp(Position position, MouseButtons buttons)
         {
+            if (allInputDisabled)
+                return;
+
             position = GetMousePosition(position);
 
             if (buttons.HasFlag(MouseButtons.Right))
@@ -873,6 +922,9 @@ namespace Ambermoon
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            if (allInputDisabled)
+                return;
+
             position = GetMousePosition(position);
 
             if (buttons.HasFlag(MouseButtons.Left))
