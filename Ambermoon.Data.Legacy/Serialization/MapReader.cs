@@ -248,14 +248,14 @@ namespace Ambermoon.Data.Legacy
                     // 5. byte is the map text index
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
-                    var unknown = dataReader.ReadByte();
+                    var popupTrigger = (PopupTextEvent.Trigger)dataReader.ReadByte();
                     var unknown1 = dataReader.ReadBytes(2);
                     var textIndex = dataReader.ReadByte();
                     var unknown2 = dataReader.ReadBytes(4);
                     mapEvent = new PopupTextEvent
                     {
                         EventImageIndex = eventImageIndex,
-                        Unknown = unknown,
+                        PopupTrigger = popupTrigger,
                         TextIndex = textIndex,
                         Unknown1 = unknown1,
                         Unknown2 = unknown2
@@ -388,6 +388,19 @@ namespace Ambermoon.Data.Legacy
                         Value = value,
                         Unknown1 = unknown1,
                         Unknown2 = unknown2
+                    };
+                    break;
+                }
+                case MapEventType.Dice100Roll:
+                {
+                    var chance = dataReader.ReadByte();
+                    var unused = dataReader.ReadBytes(6);
+                    var jumpToIfNotFulfilled = dataReader.ReadWord();
+                    mapEvent = new Dice100RollEvent
+                    {
+                        Chance = chance,
+                        Unused = unused,
+                        ContinueIfFalseWithMapEventIndex = jumpToIfNotFulfilled
                     };
                     break;
                 }

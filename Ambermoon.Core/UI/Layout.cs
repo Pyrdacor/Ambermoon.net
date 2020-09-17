@@ -610,8 +610,12 @@ namespace Ambermoon.UI
 
         internal void ClosePopup(bool raiseEvent = true)
         {
-            ClosePopup(activePopup, raiseEvent);
+            // Note: As ClosePopup may trigger popup?.OnClosed
+            // and this event might open a new popup we have
+            // to set activePopup to null BEFORE we call it!
+            var popup = activePopup;
             activePopup = null;
+            ClosePopup(popup, raiseEvent);
         }
 
         void OpenLoadMenu()

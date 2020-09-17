@@ -125,19 +125,30 @@ namespace Ambermoon.Data
             No
         }
 
+        [Flags]
+        public enum Trigger
+        {
+            None = 0,
+            Move = 0x01,
+            Cursor = 0x02, // Hand or Eye
+            Always = Move | Cursor
+        }
+
         public uint TextIndex { get; set; }
         /// <summary>
         /// From event_pix (0-based). 0xff -> no image.
         /// </summary>
         public uint EventImageIndex { get; set; }
         public bool HasImage => EventImageIndex != 0xff;
-        public byte Unknown { get; set; } // TODO: seen 1 and 3
+        public Trigger PopupTrigger { get; set; }
+        public bool CanTriggerByMoving => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.Move);
+        public bool CanTriggerByCursor => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.Cursor);
         public byte[] Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Unknown {Unknown}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -390,10 +401,24 @@ namespace Ambermoon.Data
 
     public class Dice100RollEvent : MapEvent
     {
-        // TODO
+        /// <summary>
+        /// Chance in percent: 0 ~ 100
+        /// </summary>
+        public uint Chance { get; set; }
+        /// <summary>
+        /// Next map event to continue with if the condition was met.
+        /// 0xffff means continue with next map event from the list.
+        /// </summary>
+        public uint ContinueIfFalseWithMapEventIndex { get; set; }
+        public byte[] Unused { get; set; }
+
         public override string ToString()
         {
-            return $"{Type}";
+            string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff
+                ? "Stop here if false"
+                : $"Jump to event {ContinueIfFalseWithMapEventIndex + 1:x2} if false";
+
+            return $"{Type}: Chance {Chance}%, {falseHandling}, Unused {string.Join(" ", Unused.Select(u => u.ToString("x2")))}";
         }
     }
 

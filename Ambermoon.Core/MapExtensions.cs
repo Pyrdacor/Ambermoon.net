@@ -24,8 +24,17 @@ namespace Ambermoon
         public static uint PositionToTileIndex(this Map map, uint x, uint y) => x + y * (uint)map.Width;
 
         static MapEvent ExecuteEvent(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
-            IMapManager mapManager, uint ticks, MapEvent mapEvent, ref bool lastEventStatus)
+            IMapManager mapManager, uint ticks, MapEvent mapEvent, ref bool lastEventStatus, out bool aborted)
         {
+            // Note: Aborted means that an event is not even executed. It does not mean that a decision
+            // box is answered with No for example. It is used when:
+            // - A condition of a condition event is not met and there is no event that is triggered in that case.
+            // - A text popup does not accept the given trigger.
+            // This is important in 3D when there might be an event on the current block and on the next one.
+            // For example buttons use 2 events (one for Eye interaction and one for Hand interaction).
+
+            aborted = false;
+
             switch (mapEvent.Type)
             {
                 case MapEventType.MapChange:
@@ -52,6 +61,28 @@ namespace Ambermoon
                 {
                     if (!(mapEvent is PopupTextEvent popupTextEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");
+
+                    switch (trigger)
+                    {
+                        case MapEventTrigger.Move:
+                            if (!popupTextEvent.CanTriggerByMoving)
+                            {
+                                aborted = true;
+                                return null;
+                            }
+                            break;
+                        case MapEventTrigger.Eye:
+                        case MapEventTrigger.Hand:
+                            if (!popupTextEvent.CanTriggerByCursor)
+                            {
+                                aborted = true;
+                                return null;
+                            }
+                            break;
+                        default:
+                            aborted = true;
+                            return null;
+                    }
 
                     bool eventStatus = lastEventStatus;
 
@@ -117,37 +148,62 @@ namespace Ambermoon
                     if (!(mapEvent is ConditionEvent conditionEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid condition event.");
 
+                    var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
+                        ? null : map.Events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex]; // TODO: is this right or +/- 1?
+
                     switch (conditionEvent.TypeOfCondition)
                     {
                         case ConditionEvent.ConditionType.MapVariable:
                             if (game.GetMapVariables(map)[conditionEvent.ObjectIndex] != conditionEvent.Value)
-                                return null; // no further event execution
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
                             break;
                         case ConditionEvent.ConditionType.GlobalVariable:
                             if (game.GlobalVariables[conditionEvent.ObjectIndex] != conditionEvent.Value)
-                                return null; // no further event execution
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
                             break;
                         case ConditionEvent.ConditionType.Hand:
                             if (trigger != MapEventTrigger.Hand)
-                                return null; // no further event execution
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
                             break;
                         case ConditionEvent.ConditionType.Success:
                             if (!lastEventStatus)
-                                return null; // no further event execution
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
                             break;
                         case ConditionEvent.ConditionType.UseItem:
                         {
-                            var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
-                                ? null : map.Events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex]; // TODO: is this right or +/- 1?
-
                             if (trigger < MapEventTrigger.Item0)
-                                return mapEventIfFalse; // no item used
+                            {
+                                // no item used
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
 
                             uint itemIndex = (uint)(trigger - MapEventTrigger.Item0);
 
                             if (itemIndex != conditionEvent.ObjectIndex)
-                                return mapEventIfFalse; // wrong item used
-
+                            {
+                                // wrong item used
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
                             break;
                         }
                         // TODO ...
@@ -173,6 +229,16 @@ namespace Ambermoon
 
                     break;
                 }
+                case MapEventType.Dice100Roll:
+                {
+                    if (!(mapEvent is Dice100RollEvent diceEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid dice 100 event.");
+
+                    var mapEventIfFalse = diceEvent.ContinueIfFalseWithMapEventIndex == 0xffff
+                        ? null : map.Events[(int)diceEvent.ContinueIfFalseWithMapEventIndex]; // TODO: is this right or +/- 1?
+                    lastEventStatus = game.RollDice100() < diceEvent.Chance;
+                    return lastEventStatus ? diceEvent.Next : mapEventIfFalse;
+                }
                 // TODO ...
             }
 
@@ -188,15 +254,20 @@ namespace Ambermoon
             return mapEvent.Next;
         }
 
-        static void TriggerEventChain(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
+        static bool TriggerEventChain(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
             IMapManager mapManager, uint ticks, MapEvent firstMapEvent, bool lastEventStatus = false)
         {
             var mapEvent = firstMapEvent;
 
             while (mapEvent != null)
             {
-                mapEvent = ExecuteEvent(map, game, player, trigger, x, y, mapManager, ticks, mapEvent, ref lastEventStatus);
+                mapEvent = ExecuteEvent(map, game, player, trigger, x, y, mapManager, ticks, mapEvent, ref lastEventStatus, out bool aborted);
+
+                if (aborted)
+                    return false;
             }
+
+            return true;
         }
 
         public static bool TriggerEvents(this Map map, Game game, IRenderPlayer player,
@@ -205,7 +276,7 @@ namespace Ambermoon
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
             if (trigger == MapEventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
-                return true;
+                return false;
 
             LastMapEventIndexMap = map.Index;
             LastMapEventIndex = mapEventId;
@@ -213,9 +284,7 @@ namespace Ambermoon
             if (mapEventId == 0)
                 return false; // no map events at this position
 
-            TriggerEventChain(map, game, player, trigger, x, y, mapManager, ticks, map.EventLists[(int)mapEventId - 1]);
-
-            return true;
+            return TriggerEventChain(map, game, player, trigger, x, y, mapManager, ticks, map.EventLists[(int)mapEventId - 1]);
         }
     }
 }

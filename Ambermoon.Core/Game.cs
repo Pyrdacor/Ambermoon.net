@@ -78,6 +78,7 @@ namespace Ambermoon
         }
 
         // TODO: cleanup members
+        readonly Random random = new Random();
         public const int MaxPartyMembers = 6;
         const uint TicksPerSecond = 60;
         readonly bool legacyMode = false;
@@ -305,6 +306,11 @@ namespace Ambermoon
             }
 
             layout.Update(CurrentTicks);
+        }
+
+        internal uint RollDice100()
+        {
+            return (uint)random.Next(0, 100);
         }
 
         Position GetMousePosition(Position position)
@@ -1096,7 +1102,7 @@ namespace Ambermoon
         /// </summary>
         /// <param name="trigger">Trigger</param>
         /// <param name="position">Position inside the map view</param>
-        void TriggerMapEvents(MapEventTrigger trigger, Position position)
+        bool TriggerMapEvents(MapEventTrigger trigger, Position position)
         {
             if (is3D)
             {
@@ -1105,7 +1111,7 @@ namespace Ambermoon
             else // 2D
             {
                 var tilePosition = renderMap2D.PositionToTile(position);
-                TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
+                return TriggerMapEvents(trigger, (uint)tilePosition.X, (uint)tilePosition.Y);
             }
         }
 
