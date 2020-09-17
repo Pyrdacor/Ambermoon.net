@@ -175,6 +175,8 @@ namespace Ambermoon.Render
             }
         }
 
+        public Map.Tile this[Position position] => this[(uint)position.X, (uint)position.Y];
+
         public Map.Tile this[uint x, uint y]
         {
             get

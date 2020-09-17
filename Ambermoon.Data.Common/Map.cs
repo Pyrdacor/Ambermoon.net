@@ -1,4 +1,5 @@
-﻿using Ambermoon.Render;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 
@@ -26,19 +27,14 @@ namespace Ambermoon.Data
     {
         public enum TileType
         {
-            Free,
+            Normal,
             ChairUp,
             ChairRight,
             ChairDown,
             ChairLeft,
             Bed,
-            Invisible, // player is invisible while passing (standing on it)
-            Obstacle, // can be passed by witch broom and eagle (this is also used for obstacles in water!)
-            Water, // can swim in it, flying disc can fly over
-            Ocean, // can not swim in it, flying disc can not fly over
-            Mountain, // only pass with eagle
-            Unpassable // even by eagle
-            // TODO: is this enough?
+            Invisible,
+            Water
         }
 
         public class Tile
@@ -54,6 +50,16 @@ namespace Ambermoon.Data
             public uint MapEventId { get; set; }
             public uint Unused { get; set; } // always 0
             public TileType Type { get; set; }
+            public bool AllowMovement(Tileset tileset, TravelType travelType)
+            {
+                if (Type != TileType.Normal)
+                    return true;
+
+                bool allowBack = BackTileIndex == 0 || tileset.Tiles[BackTileIndex - 1].AllowMovement(travelType);
+                bool allowFront = FrontTileIndex == 0 || tileset.Tiles[FrontTileIndex - 1].AllowMovement(travelType);
+
+                return allowBack && allowFront;
+            }
         }
 
         public class Block
@@ -223,25 +229,19 @@ namespace Ambermoon.Data
             return map;
         }
 
-        public static Map.TileType TileTypeFromTile(Map.Tile tile, Tileset tileset)
+        public static TileType TileTypeFromTile(Map.Tile tile, Tileset tileset)
         {
             var tilesetTile = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1] : tileset.Tiles[tile.FrontTileIndex - 1];
-            bool obstacle = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1].BlockMovement
-                : /*tileset.Tiles[tile.BackTileIndex - 1].BlockMovement || */tileset.Tiles[tile.FrontTileIndex - 1].BlockMovement;
-            // TODO: Some tiles work with the above comment and some without. Needs more research.
 
             if (tilesetTile.Sleep)
-                return Map.TileType.Bed;
+                return TileType.Bed;
             if (tilesetTile.SitDirection != null)
-                return Map.TileType.ChairUp + (int)tilesetTile.SitDirection.Value;
+                return TileType.ChairUp + (int)tilesetTile.SitDirection.Value;
             if (tilesetTile.Invisible)
-                return Map.TileType.Invisible;
-            if (obstacle)
-                return Map.TileType.Obstacle;
-
-            // TODO
-
-            return Map.TileType.Free;
+                return TileType.Invisible;
+            if (tile.AllowMovement(tileset, TravelType.Swim))
+                return TileType.Water;
+            return TileType.Normal;
         }
 
         public void UpdateTile(uint x, uint y, uint newBackTileIndex, uint newFrontTileIndex, Tileset tileset)

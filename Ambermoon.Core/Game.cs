@@ -474,6 +474,49 @@ namespace Ambermoon
             InputEnable = false;
         }
 
+        void PartyMemberDied(Character partyMember)
+        {
+            if (!(partyMember is PartyMember member))
+                throw new AmbermoonException(ExceptionScope.Application, "PartyMemberDied with a character which is not a party member.");
+
+            int? slot = SlotFromPartyMember(member);
+
+            if (slot != null)
+                layout.SetCharacter(slot.Value, member);
+        }
+
+        void PartyMemberRevived(Character partyMember)
+        {
+            // TODO
+        }
+
+        void AddPartyMember(int slot, PartyMember partyMember)
+        {
+            partyMember.Died += PartyMemberDied;
+            layout.SetCharacter(slot, partyMember);
+        }
+
+        void RemovePartyMember(int slot)
+        {
+            var partyMember = GetPartyMember(slot);
+            
+            if (partyMember != null)
+                partyMember.Died -= PartyMemberDied;
+
+            layout.SetCharacter(slot, null);
+        }
+
+        int? SlotFromPartyMember(PartyMember partyMember)
+        {
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                if (GetPartyMember(i) == partyMember)
+                    return i;
+            }
+
+            return null;
+        }
+
         public void Start(Savegame savegame)
         {
             Cleanup();
@@ -505,11 +548,11 @@ namespace Ambermoon
                 if (savegame.CurrentPartyMemberIndices[i] != 0)
                 {
                     var partyMember = savegame.GetPartyMember(i);
-                    layout.SetCharacter(i, partyMember);
+                    AddPartyMember(i, partyMember);
                 }
                 else
                 {
-                    layout.SetCharacter(i, null);
+                    RemovePartyMember(i);
                 }
             }
             CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
@@ -707,15 +750,15 @@ namespace Ambermoon
         {
             bool diagonal = x != 0 && y != 0;
 
-            if (!player2D.Move(x, y, CurrentTicks))
+            if (!player2D.Move(x, y, CurrentTicks, TravelType))
             {
                 if (!diagonal)
                     return false;
 
                 var prevDirection = player2D.Direction;
 
-                if (!player2D.Move(0, y, CurrentTicks, prevDirection))
-                    return player2D.Move(x, 0, CurrentTicks, prevDirection);
+                if (!player2D.Move(0, y, CurrentTicks, TravelType, prevDirection))
+                    return player2D.Move(x, 0, CurrentTicks, TravelType, prevDirection);
             }
 
             return true;
@@ -1410,15 +1453,18 @@ namespace Ambermoon
                         layout.EnableButton(3, false);
                 }
 
-                TravelType = TravelType.Walk;
-                player2D.UpdateAppearance(CurrentTicks);
+                var tile = renderMap2D[player.Position];
+
+                if (tile.Type == Map.TileType.Water)
+                    StartSwimming();
+                else
+                    TravelType = TravelType.Walk;
             }
             else if (transport != null && TravelType == TravelType.Walk)
             {
                 currentSavegame.TransportLocations[index.Value] = null;
                 renderMap2D.RemoveTransportAt(mapIndex, x, y);
                 TravelType = transport.TravelType;
-                player2D.UpdateAppearance(CurrentTicks);
             }
         }
 
@@ -1474,6 +1520,51 @@ namespace Ambermoon
             return transports;
         }
 
+        void StartSwimming()
+        {
+            TravelType = TravelType.Swim;
+            DoSwimDamage();
+        }
+
+        void DoSwimDamage()
+        {
+            // TODO
+            // This is now called on each movement in water.
+            // But it also has to be called each 5 minutes (but not twice if also moving).
+            
+            // TODO: Not sure about the damage formula
+            static uint CalculateDamage(PartyMember partyMember)
+            {
+                var swimAbility = partyMember.Abilities[Ability.Swim].TotalCurrentValue;
+
+                if (swimAbility >= 99)
+                    return 0;
+
+                uint baseValue = partyMember.HitPoints.CurrentValue / 2;
+                float factor = 0.99f - partyMember.Abilities[Ability.Swim].TotalCurrentValue / 100.0f;
+                return (uint)Math.Max(2, Util.Round(factor * baseValue)) - 1;
+            }
+
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                var partyMember = GetPartyMember(i);
+
+                if (partyMember != null)
+                {
+                    var damage = CalculateDamage(partyMember);
+
+                    if (damage != 0)
+                    {
+                        // TODO: show damage splash
+                        partyMember.Damage(damage);
+
+                        if (partyMember.Alive) // update HP etc if not died already
+                            layout.SetCharacter(i, partyMember);
+                    }
+                }
+            }
+        }
+
         internal void PlayerMoved(bool mapChange)
         {
             // Enable/disable transport button and show transports
@@ -1492,6 +1583,18 @@ namespace Ambermoon
 
                 if (!WindowActive && Map.IsWorldMap)
                 {
+                    var tile = renderMap2D[player.Position];
+
+                    if (tile.Type == Map.TileType.Water)
+                    {
+                        if (TravelType == TravelType.Walk)
+                            StartSwimming();
+                        else if (TravelType == TravelType.Swim)
+                            DoSwimDamage();
+                    }
+                    else if (tile.Type != Map.TileType.Water && TravelType == TravelType.Swim)
+                        TravelType = TravelType.Walk;
+
                     var transports = GetTransportsInVisibleArea(out int? transportAtPlayerIndex);
 
                     foreach (var transport in transports)
@@ -1513,20 +1616,22 @@ namespace Ambermoon
                     }
                     else if (TravelType.IsStoppable())
                     {
-                        var tile = renderMap2D[(uint)player.Position.X, (uint)player.Position.Y];
-
-                        switch (tile.Type)
+                        if (TravelType == TravelType.MagicalDisc ||
+                            TravelType == TravelType.Raft ||
+                            TravelType == TravelType.Ship ||
+                            TravelType == TravelType.SandShip)
                         {
-                            case Map.TileType.Free:
+                            // We can always leave them as we would stay on them.
+                            EnableTransport();
+                        }
+                        else
+                        {
+                            // Only allow if we could stand or swim there.
+                            var tileset = mapManager.GetTilesetForMap(renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y));
+
+                            if (tile.AllowMovement(tileset, TravelType.Walk) ||
+                                tile.AllowMovement(tileset, TravelType.Swim))
                                 EnableTransport();
-                                break;
-                            case Map.TileType.Water:
-                            case Map.TileType.Ocean:
-                                if (TravelType == TravelType.MagicalDisc ||
-                                    TravelType == TravelType.Raft ||
-                                    TravelType == TravelType.Ship)
-                                    EnableTransport();
-                                break;
                         }
                     }
                 }

@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data
+﻿using Ambermoon.Data.Enumerations;
+
+namespace Ambermoon.Data
 {
     public class Tileset
     {
@@ -6,7 +8,6 @@
         {
             public uint GraphicIndex { get; set; }
             public int NumAnimationFrames { get; set; }
-            public bool BlockMovement { get; set; }
             public CharacterDirection? SitDirection { get; set; }
             public bool Sleep { get; set; }
             public bool Invisible { get; set; } // player is invisible while standing on that tile
@@ -14,6 +15,9 @@
             public bool BringToFront { get; set; } // overrides Background and will appear above the player (e.g. tree tops)
             public byte Unknown2 { get; set; } // TODO: What is this? Remove if unused later.
             public ulong Flags { get; set; } // TODO: REMOVE later
+            public ushort AllowedTravelTypes { get; set; }
+
+            public bool AllowMovement(TravelType travelType) => (AllowedTravelTypes & (1 << (int)travelType)) != 0;
         }
 
         public uint Index { get; set; }

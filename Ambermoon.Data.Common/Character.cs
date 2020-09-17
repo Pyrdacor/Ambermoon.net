@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data
+﻿using System;
+
+namespace Ambermoon.Data
 {
     public abstract class Character
     {
@@ -40,6 +42,22 @@
             !Ailments.HasFlag(Ailment.DeadCorpse) &&
             !Ailments.HasFlag(Ailment.DeadAshes) &&
             !Ailments.HasFlag(Ailment.DeadDust);
+
+        public Action<Character> Died;
+
+        public void Die(Ailment deadAilment = Ailment.DeadCorpse)
+        {
+            Ailments |= deadAilment;
+            Died?.Invoke(this);
+        }
+
+        public void Damage(uint damage, Ailment deadAilment = Ailment.DeadCorpse)
+        {
+            HitPoints.CurrentValue = HitPoints.CurrentValue <= damage ? 0 : HitPoints.CurrentValue - damage;
+
+            if (HitPoints.CurrentValue == 0)
+                Die(deadAilment);
+        }
 
         public Inventory Inventory { get; } = new Inventory();
         public Equipment Equipment { get; } = new Equipment();
