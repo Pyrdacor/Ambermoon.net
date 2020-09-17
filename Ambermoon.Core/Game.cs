@@ -499,7 +499,7 @@ namespace Ambermoon
         void RemovePartyMember(int slot)
         {
             var partyMember = GetPartyMember(slot);
-            
+
             if (partyMember != null)
                 partyMember.Died -= PartyMemberDied;
 
@@ -1531,7 +1531,7 @@ namespace Ambermoon
             // TODO
             // This is now called on each movement in water.
             // But it also has to be called each 5 minutes (but not twice if also moving).
-            
+
             // TODO: Not sure about the damage formula
             static uint CalculateDamage(PartyMember partyMember)
             {
