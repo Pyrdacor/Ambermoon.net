@@ -32,6 +32,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultPaletteIndexName = Texture3DShader.DefaultPaletteIndexName;
         internal static readonly string DefaultBillboardCenterName = "center";
         internal static readonly string DefaultBillboardOrientationName = "orientation";
+        internal static readonly string DefaultExtrudeName = "extrude";
 
         readonly string texCoordName;
         readonly string texEndCoordName;
@@ -42,6 +43,7 @@ namespace Ambermoon.Renderer
         readonly string paletteIndexName;
         readonly string billboardCenterName;
         readonly string billboardOrientationName;
+        readonly string extrudeName;
 
         static string[] Billboard3DFragmentShader(State state) => new string[]
         {
@@ -84,6 +86,7 @@ namespace Ambermoon.Renderer
             $"in ivec2 {DefaultTexEndCoordName};",
             $"in ivec2 {DefaultTexSizeName};",
             $"in uint {DefaultPaletteIndexName};",
+            $"in uint {DefaultExtrudeName};",
             $"uniform uvec2 {DefaultAtlasSizeName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
@@ -98,7 +101,7 @@ namespace Ambermoon.Renderer
             $"    vec3 offset = ({DefaultPositionName} - {DefaultBillboardCenterName});",
             $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1);",
             $"    if ({DefaultBillboardOrientationName} == 1u) // floor",
-            $"        localPos += vec4(offset.x, 0, offset.z, 0);",
+            $"        localPos += vec4(offset.x, {DefaultExtrudeName} / 10.0f, offset.z, 0);",
             $"    else // normal",
             $"        localPos += vec4(offset.xy, 0, 0);",
             $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
@@ -108,7 +111,7 @@ namespace Ambermoon.Renderer
             $"    textureSize = atlasFactor * vec2({DefaultTexSizeName}.x, {DefaultTexSizeName}.y);",
             $"    gl_Position = {DefaultProjectionMatrixName} * localPos;",
             $"    vec4 realPos = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1);",
-            $"    depth = realPos.z / realPos.w;",
+            $"    depth = (realPos.z - {DefaultExtrudeName} / 1000.0f) / realPos.w;",
             $"}}"
         };
 
@@ -116,7 +119,8 @@ namespace Ambermoon.Renderer
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
                   DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
                   DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultBillboardCenterName,
-                  DefaultBillboardOrientationName, Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
+                  DefaultBillboardOrientationName, DefaultExtrudeName,
+                  Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
         {
 
         }
@@ -124,13 +128,15 @@ namespace Ambermoon.Renderer
         protected Billboard3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
             string positionName, string texCoordName, string texEndCoordName, string texSizeName,
             string samplerName, string atlasSizeName, string paletteName, string paletteIndexName,
-            string billboardCenterName, string billboardOrientationName, string[] fragmentShaderLines, string[] vertexShaderLines)
+            string billboardCenterName, string billboardOrientationName, string extrudeName,
+            string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, positionName, texCoordName, texEndCoordName,
                   texSizeName, samplerName, atlasSizeName, paletteName, paletteIndexName, null, fragmentShaderLines,
                   vertexShaderLines)
         {
             this.billboardCenterName = billboardCenterName;
             this.billboardOrientationName = billboardOrientationName;
+            this.extrudeName = extrudeName;
         }
 
         public new static Billboard3DShader Create(State state) => new Billboard3DShader(state);

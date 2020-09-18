@@ -31,18 +31,18 @@ namespace Ambermoon.Render
     {
         class MapObject
         {
+            readonly RenderMap3D map;
             readonly ISurface3D surface;
-            readonly ITextureAtlas textureAtlas;
-            readonly uint baseTextureIndex;
+            readonly uint objectIndex;
             readonly uint numFrames;
             readonly uint ticksPerFrame;
 
-            public MapObject(ISurface3D surface, ITextureAtlas textureAtlas,
-                uint baseTextureIndex, uint numFrames, float fps = 1.0f)
+            public MapObject(RenderMap3D map, ISurface3D surface,
+                uint objectIndex, uint numFrames, float fps = 1.0f)
             {
                 this.surface = surface;
-                this.textureAtlas = textureAtlas;
-                this.baseTextureIndex = baseTextureIndex;
+                this.map = map;
+                this.objectIndex = objectIndex;
                 this.numFrames = numFrames;
                 ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
             }
@@ -57,8 +57,9 @@ namespace Ambermoon.Render
                 if (numFrames <= 1 || !surface.Visible)
                     return;
 
-                uint frameTextureIndex = baseTextureIndex + (ticks / ticksPerFrame) % numFrames;
-                surface.TextureAtlasOffset = textureAtlas.GetOffset(frameTextureIndex);
+                uint frame = (ticks / ticksPerFrame) % numFrames;
+                surface.TextureAtlasOffset = map.GetObjectTextureOffset(objectIndex) +
+                    new Position((int)(frame * surface.TextureWidth), 0);
             }
         }
 
@@ -200,11 +201,8 @@ namespace Ambermoon.Render
                 {
                     foreach (var subObj in obj.SubObjects)
                     {
-                        for (uint i = 0; i < Math.Max(1, subObj.Object.NumAnimationFrames); ++i)
-                        {
-                            if (!graphics.ContainsKey(subObj.Object.TextureIndex + i))
-                                graphics.Add(subObj.Object.TextureIndex + i, labdata.ObjectGraphics[labdata.ObjectInfos.IndexOf(subObj.Object)]);
-                        }
+                        if (!graphics.ContainsKey(subObj.Object.TextureIndex))
+                            graphics.Add(subObj.Object.TextureIndex, labdata.ObjectGraphics[labdata.ObjectInfos.IndexOf(subObj.Object)]);
                     }
                 }
                 for (int i = 0; i < labdata.WallGraphics.Count; ++i)
@@ -221,19 +219,6 @@ namespace Ambermoon.Render
             textureAtlas = labdataTextures[Map.TilesetOrLabdataIndex];
             renderView.GetLayer(Layer.Map3D).Texture = textureAtlas.Texture;
             renderView.GetLayer(Layer.Billboards3D).Texture = textureAtlas.Texture;
-        }
-
-        // TODO: More precise collision with map objects
-        public bool BlocksMovement(int x, int y)
-        {
-            var block = Map.Blocks[x, y];
-
-            if (block.WallIndex != 0)
-                return labdata.Walls[(int)block.WallIndex - 1].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
-            if (block.ObjectIndex != 0)
-                return labdata.Objects[(int)block.ObjectIndex - 1].SubObjects.Any(so => so.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement));
-
-            return false;
         }
 
         Position GetObjectTextureOffset(uint objectIndex)
@@ -270,29 +255,32 @@ namespace Ambermoon.Render
                     ? surfaceFactory.Create(SurfaceType.BillboardFloor,
                         Global.DistancePerTile * objectInfo.MappedTextureWidth / BlockSize,
                         Global.DistancePerTile * objectInfo.MappedTextureHeight / BlockSize,
-                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true)
+                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
+                        objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
+                        (ushort)(objectInfo.ExtrudeOffset * 1000 / labdata.WallHeight))
                     : surfaceFactory.Create(SurfaceType.Billboard,
                         Global.DistancePerTile * objectInfo.MappedTextureWidth / BlockSize,
                         wallHeight * objectInfo.MappedTextureHeight / labdata.WallHeight,
-                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth, objectInfo.TextureHeight, true);
+                        objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
+                        objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
+                        (ushort)(objectInfo.ExtrudeOffset * 1000 / labdata.WallHeight));
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 mapObject.X = baseX + (subObject.X / BlockSize) * Global.DistancePerTile;
-                // TODO: 0.001f
-                mapObject.Y = floorObject ? 0.001f : wallHeight * (factor * subObject.Z + objectInfo.MappedTextureHeight) / labdata.WallHeight;
+                mapObject.Y = floorObject ? (float)objectInfo.ExtrudeOffset / labdata.WallHeight : wallHeight * (factor * subObject.Z + objectInfo.MappedTextureHeight) / labdata.WallHeight;
                 mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / BlockSize) * Global.DistancePerTile;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
-                objects.SafeAdd(blockIndex, new MapObject(mapObject, textureAtlas, objectInfo.TextureIndex, objectInfo.NumAnimationFrames, 1.0f)); // TODO: fps?
+                objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex, objectInfo.NumAnimationFrames, 4.0f)); // TODO: fps?
 
-                if (subObject.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
+                if (objectInfo.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
                 {
                     // TODO: floor objects
                     blockCollisionBodies[blockIndex].Add(new CollisionSphere3D
                     {
                         CenterX = mapObject.X,
                         CenterZ = -mapObject.Z,
-                        Radius = 0.25f * (mapObject.Width + mapObject.Height)
+                        Radius = objectInfo.CollisionRadius / BlockSize
                     });
                 }
             }
@@ -329,7 +317,7 @@ namespace Ambermoon.Render
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
                 var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerTile, wallHeight,
-                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, wallOrientation);
+                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, 1, 0, wallOrientation);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 wall.X = x;

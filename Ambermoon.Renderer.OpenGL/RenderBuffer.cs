@@ -49,6 +49,7 @@ namespace Ambermoon.Renderer
         readonly VectorBuffer billboardCenterBuffer = null;
         readonly ByteBuffer billboardOrientationBuffer = null;
         readonly ByteBuffer alphaBuffer = null;
+        readonly WordBuffer extrudeBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
@@ -177,9 +178,11 @@ namespace Ambermoon.Renderer
             {
                 billboardCenterBuffer = new VectorBuffer(state, false);
                 billboardOrientationBuffer = new ByteBuffer(state, true);
+                extrudeBuffer = new WordBuffer(state, true);
 
                 vertexArrayObject.AddBuffer(Billboard3DShader.DefaultBillboardCenterName, billboardCenterBuffer);
                 vertexArrayObject.AddBuffer(Billboard3DShader.DefaultBillboardOrientationName, billboardOrientationBuffer);
+                vertexArrayObject.AddBuffer(Billboard3DShader.DefaultExtrudeName, extrudeBuffer);
             }
 
             if (masked && !noTexture)
@@ -504,7 +507,7 @@ namespace Ambermoon.Renderer
 
             if (textureEndCoordBuffer != null)
             {
-                short endX = (short)(surface.TextureAtlasOffset.X + surface.TextureWidth);
+                short endX = (short)(surface.TextureAtlasOffset.X + surface.FrameCount * surface.TextureWidth);
                 short endY = (short)(surface.TextureAtlasOffset.Y + surface.TextureHeight);
                 int textureEndCoordBufferIndex = textureEndCoordBuffer.Add(endX, endY);
 
@@ -551,6 +554,18 @@ namespace Ambermoon.Renderer
                 billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 1);
                 billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 2);
                 billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 3);
+            }
+
+            if (extrudeBuffer != null)
+            {
+                int extrudeBufferIndex = extrudeBuffer.Add(surface.Extrude);
+
+                if (extrudeBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                extrudeBuffer.Add(surface.Extrude, extrudeBufferIndex + 1);
+                extrudeBuffer.Add(surface.Extrude, extrudeBufferIndex + 2);
+                extrudeBuffer.Add(surface.Extrude, extrudeBufferIndex + 3);
             }
 
             return index;
@@ -909,6 +924,14 @@ namespace Ambermoon.Renderer
                 billboardOrientationBuffer.Remove(index + 1);
                 billboardOrientationBuffer.Remove(index + 2);
                 billboardOrientationBuffer.Remove(index + 3);
+            }
+
+            if (extrudeBuffer != null)
+            {
+                extrudeBuffer.Remove(index);
+                extrudeBuffer.Remove(index + 1);
+                extrudeBuffer.Remove(index + 2);
+                extrudeBuffer.Remove(index + 3);
             }
             
             // TODO: this code causes problems. commented out for now

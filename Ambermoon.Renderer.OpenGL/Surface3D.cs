@@ -43,9 +43,15 @@ namespace Ambermoon.Renderer.OpenGL
         public uint MappedTextureWidth { get; } = 0;
         public uint MappedTextureHeight { get; } = 0;
         public bool Alpha { get; } = false;
+        public int FrameCount { get; } = 1;
+        /// <summary>
+        /// <inheritdoc />
+        /// </summary>
+        public ushort Extrude { get; }
 
         public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, uint textureWidth, uint textureHeight,
-            uint mappedTextureWidth, uint mappedTextureHeight, Rect virtualScreen, WallOrientation wallOrientation, bool alpha)
+            uint mappedTextureWidth, uint mappedTextureHeight, Rect virtualScreen, WallOrientation wallOrientation, bool alpha, int frameCount,
+            ushort extrude)
         {
             Type = type;
             Width = width;
@@ -58,6 +64,8 @@ namespace Ambermoon.Renderer.OpenGL
             MappedTextureWidth = mappedTextureWidth;
             MappedTextureHeight = mappedTextureHeight;
             Alpha = alpha;
+            FrameCount = frameCount;
+            Extrude = extrude;
         }
 
         public bool Visible
@@ -290,11 +298,11 @@ namespace Ambermoon.Renderer.OpenGL
         }
 
         public ISurface3D Create(SurfaceType type, float width, float height, uint textureWidth, uint textureHeight,
-            uint mappedTextureWidth, uint mappedTextureHeight, bool alpha, 
+            uint mappedTextureWidth, uint mappedTextureHeight, bool alpha, int frameCount = 1, ushort extrude = 0,
             WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0)
         {
             return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, textureWidth, textureHeight,
-                mappedTextureWidth, mappedTextureHeight, virtualScreen, wallOrientation, alpha);
+                mappedTextureWidth, mappedTextureHeight, virtualScreen, wallOrientation, alpha, frameCount, extrude);
         }
     }
 }

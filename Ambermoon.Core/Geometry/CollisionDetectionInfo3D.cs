@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Geometry
 {
@@ -51,13 +52,16 @@ namespace Ambermoon.Geometry
 
         public bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius)
         {
-            float xDist = Math.Abs(x - CenterX);
-            float zDist = Math.Abs(z - CenterZ);
+            float xDist = Math.Abs(x - CenterX) - bodyRadius;
+            float zDist = Math.Abs(z - CenterZ) - bodyRadius;
             float safeDist = Radius;
 
             if (xDist >= safeDist ||
                 zDist >= safeDist)
                 return false;
+
+            if (xDist <= 0.0f || zDist <= 0.0f)
+                return true;
 
             return Math.Sqrt(xDist * xDist + zDist * zDist) < safeDist;
         }

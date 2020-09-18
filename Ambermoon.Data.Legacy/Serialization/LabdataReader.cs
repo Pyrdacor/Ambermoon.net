@@ -46,7 +46,9 @@ namespace Ambermoon.Data.Legacy
             {
                 var objectInfo = new Labdata.ObjectInfo
                 {
-                    Unknown1 = dataReader.ReadBytes(3), // TODO: Collision info for all 3 axes?
+                    CollisionRadius = dataReader.ReadByte(),
+                    Unknown1 = dataReader.ReadByte(),
+                    ExtrudeOffset = dataReader.ReadByte(),
                     Flags = (Labdata.ObjectFlags)dataReader.ReadByte(),
                     TextureIndex = dataReader.ReadWord(),
                     NumAnimationFrames = dataReader.ReadByte(),
@@ -124,16 +126,34 @@ namespace Ambermoon.Data.Legacy
             // Load labyrinth graphics
             var graphicReader = new GraphicReader();
             if (floorTextureIndex != 0)
-                labdata.FloorGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)floorTextureIndex], 64, 64, false, false);
+                labdata.FloorGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)floorTextureIndex], 64, 64, false, false, true);
             if (ceilingTextureIndex != 0)
-                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)ceilingTextureIndex], 64, 64, false, false); // TODO
+                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)ceilingTextureIndex], 64, 64, false, false, true); // TODO
             var objectTextureFiles = gameData.Files[$"2Object3D.amb"].Files;
             gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f => objectTextureFiles[f.Key] = f.Value);
             labdata.ObjectGraphics.Clear();
             foreach (var objectInfo in labdata.ObjectInfos)
             {
-                labdata.ObjectGraphics.Add(ReadGraphic(graphicReader, objectTextureFiles[(int)objectInfo.TextureIndex],
-                    (int)objectInfo.TextureWidth, (int)objectInfo.TextureHeight, true, true));
+                if (objectInfo.NumAnimationFrames == 1)
+                {
+                    labdata.ObjectGraphics.Add(ReadGraphic(graphicReader, objectTextureFiles[(int)objectInfo.TextureIndex],
+                        (int)objectInfo.TextureWidth, (int)objectInfo.TextureHeight, true, true, true));
+                }
+                else
+                {
+                    var compoundGraphic = new Graphic((int)objectInfo.NumAnimationFrames * (int)objectInfo.TextureWidth,
+                        (int)objectInfo.TextureHeight, 0);
+
+                    for (uint i = 0; i < objectInfo.NumAnimationFrames; ++i)
+                    {
+                        var partialGraphic = ReadGraphic(graphicReader, objectTextureFiles[(int)objectInfo.TextureIndex],
+                            (int)objectInfo.TextureWidth, (int)objectInfo.TextureHeight, true, true, i == 0);
+
+                        compoundGraphic.AddOverlay(i * objectInfo.TextureWidth, 0u, partialGraphic);
+                    }
+
+                    labdata.ObjectGraphics.Add(compoundGraphic);
+                }
             }
             var wallTextureFiles = gameData.Files[$"2Wall3D.amb"].Files;
             var overlayTextureFiles = gameData.Files[$"2Overlay3D.amb"].Files;
@@ -144,7 +164,7 @@ namespace Ambermoon.Data.Legacy
             foreach (var wall in labdata.Walls)
             {
                 var wallGraphic = ReadGraphic(graphicReader, wallTextureFiles[(int)wall.TextureIndex],
-                    128, 80, wall.Flags.HasFlag(Labdata.WallFlags.Transparency), true);
+                    128, 80, wall.Flags.HasFlag(Labdata.WallFlags.Transparency), true, true);
 
                 labdata.WallGraphics.Add(wallGraphic);
 
@@ -153,7 +173,7 @@ namespace Ambermoon.Data.Legacy
                     foreach (var overlay in wall.Overlays)
                     {
                         wallGraphic.AddOverlay(overlay.PositionX, overlay.PositionY, ReadGraphic(graphicReader,
-                            overlayTextureFiles[(int)overlay.TextureIndex], (int)overlay.TextureWidth, (int)overlay.TextureHeight, true, true));
+                            overlayTextureFiles[(int)overlay.TextureIndex], (int)overlay.TextureWidth, (int)overlay.TextureHeight, true, true, true));
                     }
                 }
 
@@ -161,7 +181,7 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        static Graphic ReadGraphic(GraphicReader graphicReader, IDataReader file, int width, int height, bool alpha, bool texture)
+        static Graphic ReadGraphic(GraphicReader graphicReader, IDataReader file, int width, int height, bool alpha, bool texture, bool reset)
         {
             var graphic = new Graphic
             {
@@ -170,7 +190,8 @@ namespace Ambermoon.Data.Legacy
                 IndexedGraphic = true
             };
 
-            file.Position = 0; // TODO: or 4? sometimes the file is 4 bytes bigger than expected
+            if (reset)
+                file.Position = 0;
 
             graphicReader.ReadGraphic(graphic, file, new GraphicInfo
             {

@@ -16,7 +16,9 @@ namespace Ambermoon.Data
 
         public struct ObjectInfo
         {
-            public byte[] Unknown1;
+            public uint CollisionRadius; // in x/z direction 
+            public byte Unknown1;
+            public uint ExtrudeOffset; // Move this amount to viewer (or up if floor object)
             public ObjectFlags Flags;
             public uint TextureIndex;
             public uint NumAnimationFrames;
