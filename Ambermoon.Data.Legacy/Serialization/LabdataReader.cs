@@ -58,8 +58,6 @@ namespace Ambermoon.Data.Legacy
                 };
 
                 labdata.ObjectInfos.Add(objectInfo);
-
-                //Console.WriteLine($"Type: {objectInfo.Type}, Texture: {objectInfo.TextureIndex},{objectInfo.TextureWidth}x{objectInfo.TextureHeight} -> {objectInfo.MappedTextureWidth}x{objectInfo.MappedTextureHeight}, Frames: {objectInfo.NumAnimationFrames}");
             }
 
             foreach (var obj in objects)

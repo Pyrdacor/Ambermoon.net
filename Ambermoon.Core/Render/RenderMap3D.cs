@@ -29,6 +29,39 @@ namespace Ambermoon.Render
 {
     internal class RenderMap3D
     {
+        class MapObject
+        {
+            readonly ISurface3D surface;
+            readonly ITextureAtlas textureAtlas;
+            readonly uint baseTextureIndex;
+            readonly uint numFrames;
+            readonly uint ticksPerFrame;
+
+            public MapObject(ISurface3D surface, ITextureAtlas textureAtlas,
+                uint baseTextureIndex, uint numFrames, float fps = 1.0f)
+            {
+                this.surface = surface;
+                this.textureAtlas = textureAtlas;
+                this.baseTextureIndex = baseTextureIndex;
+                this.numFrames = numFrames;
+                ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
+            }
+
+            public void Destroy()
+            {
+                surface?.Delete();
+            }
+
+            public void Update(uint ticks)
+            {
+                if (numFrames <= 1 || !surface.Visible)
+                    return;
+
+                uint frameTextureIndex = baseTextureIndex + (ticks / ticksPerFrame) % numFrames;
+                surface.TextureAtlasOffset = textureAtlas.GetOffset(frameTextureIndex);
+            }
+        }
+
         public const int FloorTextureWidth = 64;
         public const int FloorTextureHeight = 64;
         public const int TextureWidth = 128;
@@ -44,7 +77,7 @@ namespace Ambermoon.Render
         Labdata labdata = null;
         readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = new Dictionary<uint, List<ICollisionBody>>();
         readonly Dictionary<uint, List<ISurface3D>> walls = new Dictionary<uint, List<ISurface3D>>();
-        readonly Dictionary<uint, List<ISurface3D>> objects = new Dictionary<uint, List<ISurface3D>>();
+        readonly Dictionary<uint, List<MapObject>> objects = new Dictionary<uint, List<MapObject>>();
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
         static Graphic[] labBackgroundGraphics = null;
         /// <summary>
@@ -104,7 +137,7 @@ namespace Ambermoon.Render
             ceiling = null;
 
             walls.Values.ToList().ForEach(walls => walls.ForEach(wall => wall?.Delete()));
-            objects.Values.ToList().ForEach(objects => objects.ForEach(obj => obj?.Delete()));
+            objects.Values.ToList().ForEach(objects => objects.ForEach(obj => obj?.Destroy()));
 
             walls.Clear();
             objects.Clear();
@@ -167,8 +200,11 @@ namespace Ambermoon.Render
                 {
                     foreach (var subObj in obj.SubObjects)
                     {
-                        if (!graphics.ContainsKey(subObj.Object.TextureIndex))
-                            graphics.Add(subObj.Object.TextureIndex, labdata.ObjectGraphics[labdata.ObjectInfos.IndexOf(subObj.Object)]);
+                        for (uint i = 0; i < Math.Max(1, subObj.Object.NumAnimationFrames); ++i)
+                        {
+                            if (!graphics.ContainsKey(subObj.Object.TextureIndex + i))
+                                graphics.Add(subObj.Object.TextureIndex + i, labdata.ObjectGraphics[labdata.ObjectInfos.IndexOf(subObj.Object)]);
+                        }
                     }
                 }
                 for (int i = 0; i < labdata.WallGraphics.Count; ++i)
@@ -247,7 +283,7 @@ namespace Ambermoon.Render
                 mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / BlockSize) * Global.DistancePerTile;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
-                objects.SafeAdd(blockIndex, mapObject);
+                objects.SafeAdd(blockIndex, new MapObject(mapObject, textureAtlas, objectInfo.TextureIndex, objectInfo.NumAnimationFrames, 1.0f)); // TODO: fps?
 
                 if (subObject.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
                 {
@@ -347,7 +383,7 @@ namespace Ambermoon.Render
 
             if (objects.ContainsKey(index))
             {
-                objects[index].ForEach(obj => obj?.Delete());
+                objects[index].ForEach(obj => obj?.Destroy());
                 objects.Remove(index);
             }
 
@@ -411,6 +447,12 @@ namespace Ambermoon.Render
                         AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
                 }
             }
+        }
+
+        public void Update(uint ticks)
+        {
+            foreach (var mapObject in objects)
+                mapObject.Value.ForEach(obj => obj.Update(ticks));
         }
 
         public CollisionDetectionInfo3D GetCollisionDetectionInfo(Position position)

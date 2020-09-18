@@ -82,7 +82,7 @@ namespace Ambermoon
         // TODO: cleanup members
         readonly Random random = new Random();
         public const int MaxPartyMembers = 6;
-        const uint TicksPerSecond = 60;
+        internal const uint TicksPerSecond = 60;
         readonly bool legacyMode = false;
         public event Action QuitRequested;
         bool ingame = false;
@@ -293,13 +293,14 @@ namespace Ambermoon
 
             if (ingame)
             {
+                var animationTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
+
                 if (is3D)
                 {
-                    // TODO
+                    renderMap3D.Update(animationTicks);
                 }
                 else // 2D
                 {
-                    var animationTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
                     renderMap2D.UpdateAnimations(animationTicks);
                 }
             }
