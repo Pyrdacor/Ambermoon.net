@@ -140,7 +140,7 @@ namespace Ambermoon.Render
                 }
 
                 // If we are here, we can't move at all
-                // TODO: Display OUCH
+                game.DisplayOuch();
             }
             else
             {

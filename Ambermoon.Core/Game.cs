@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
+using Ambermoon.Geometry;
 using Ambermoon.Render;
 using Ambermoon.UI;
 using System;
@@ -39,8 +40,8 @@ namespace Ambermoon
         {
             readonly uint[] tickDivider;
 
-            public uint TickDivider(bool is3D, TravelType travelType) => tickDivider[is3D ? 0 : 1 + (int)travelType];
-            public uint MovementTicks(bool is3D, TravelType travelType) => TicksPerSecond / TickDivider(is3D, travelType);
+            public uint TickDivider(bool is3D, bool worldMap, TravelType travelType) => tickDivider[is3D ? 0 : !worldMap ? 1 : 2 + (int)travelType];
+            public uint MovementTicks(bool is3D, bool worldMap, TravelType travelType) => TicksPerSecond / TickDivider(is3D, worldMap, travelType);
             public float MoveSpeed3D { get; }
             public float TurnSpeed3D { get; }
 
@@ -49,18 +50,19 @@ namespace Ambermoon
                 tickDivider = new uint[]
                 {
                     GetTickDivider3D(legacyMode), // 3D movement
-                    // TODO: these have to be corrected
+                    // TODO: these have to be corrected later after testing them
                     // 2D movement
-                    8, // Walk
-                    6, // Horse
-                    8, // Raft
-                    4, // Ship
-                    8, // Magical disc
-                    2, // Eagle
+                    6, // Indoor
+                    4, // Outdoor walk
+                    8, // Horse
+                    4, // Raft
+                    8, // Ship
+                    4, // Magical disc
+                    16, // Eagle
                     8, // Fly
-                    4, // Witch broom
-                    6, // Sand lizard
-                    4  // Sand ship
+                    10, // Witch broom
+                    8, // Sand lizard
+                    8  // Sand ship
                 };
                 MoveSpeed3D = GetMoveSpeed3D(legacyMode);
                 TurnSpeed3D = GetTurnSpeed3D(legacyMode);
@@ -95,6 +97,7 @@ namespace Ambermoon
         internal uint CurrentTicks { get; private set; } = 0;
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
+        readonly TimedGameEvent ouchEvent = new TimedGameEvent();
         TravelType travelType = TravelType.Walk;
         readonly NameProvider nameProvider;
         readonly TextDictionary textDictionary;
@@ -112,6 +115,7 @@ namespace Ambermoon
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
+        readonly ILayerSprite ouchSprite;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputDisabled = false;
         bool inputEnable = true;
@@ -245,6 +249,12 @@ namespace Ambermoon
                 renderView.TextProcessor.CreateText(""), TextColor.Gray, true,
                 new Rect(8, 40, 192, 10), TextAlign.Center);
             layout = new Layout(this, renderView);
+            ouchSprite = renderView.SpriteFactory.Create(32, 23, false, true) as ILayerSprite;
+            ouchSprite.Layer = renderView.GetLayer(Layer.UI);
+            ouchSprite.PaletteIndex = 0;
+            ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
+            ouchSprite.Visible = false;
+            ouchEvent.Action = () => ouchSprite.Visible = false;
         }
 
         /// <summary>
@@ -296,7 +306,7 @@ namespace Ambermoon
 
             var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-            if (moveTicks >= movement.MovementTicks(is3D, TravelType))
+            if (moveTicks >= movement.MovementTicks(is3D, Map.IsWorldMap, TravelType))
             {
                 if (clickMoveActive)
                     HandleClickMovement();
@@ -368,7 +378,7 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
             ResetMoveKeys();
-            layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false, TravelType.Walk));
+            layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
             is3D = false;
 
             if (renderMap2D.Map != map)
@@ -419,7 +429,7 @@ namespace Ambermoon
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
             ResetMoveKeys();
-            layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, TravelType.Walk));
+            layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, false, TravelType.Walk));
 
             is3D = true;
             TravelType = TravelType.Walk;
@@ -615,6 +625,24 @@ namespace Ambermoon
             messageText.Visible = false;
         }
 
+        internal void DisplayOuch()
+        {
+            if (is3D)
+            {
+
+            }
+            else
+            {
+                var playerArea = player2D.DisplayArea;
+                ouchSprite.X = playerArea.X + 16;
+                ouchSprite.Y = playerArea.Y - 24;
+            }
+
+            ouchSprite.Visible = true;
+
+            RenewTimedEvent(ouchEvent, TimeSpan.FromMilliseconds(200));
+        }
+
         void HandleClickMovement()
         {
             if (WindowActive || !InputEnable || !clickMoveActive || allInputDisabled)
@@ -750,15 +778,15 @@ namespace Ambermoon
         {
             bool diagonal = x != 0 && y != 0;
 
-            if (!player2D.Move(x, y, CurrentTicks, TravelType))
+            if (!player2D.Move(x, y, CurrentTicks, TravelType, !diagonal))
             {
                 if (!diagonal)
                     return false;
 
                 var prevDirection = player2D.Direction;
 
-                if (!player2D.Move(0, y, CurrentTicks, TravelType, prevDirection))
-                    return player2D.Move(x, 0, CurrentTicks, TravelType, prevDirection);
+                if (!player2D.Move(0, y, CurrentTicks, TravelType, false, prevDirection))
+                    return player2D.Move(x, 0, CurrentTicks, TravelType, true, prevDirection);
             }
 
             return true;
@@ -1263,14 +1291,14 @@ namespace Ambermoon
             if (is3D)
             {
                 if (show)
-                    layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, TravelType.Walk));
+                    layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, false, TravelType.Walk));
                 renderView.GetLayer(Layer.Map3D).Visible = show;
                 renderView.GetLayer(Layer.Billboards3D).Visible = show;
             }
             else
             {
                 if (show)
-                    layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, TravelType));
+                    layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map.IsWorldMap, TravelType));
                 for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                     renderView.GetLayer((Layer)i).Visible = show;
             }
@@ -1371,6 +1399,14 @@ namespace Ambermoon
                 openAction();
             else
                 Fade(openAction);
+        }
+
+        void RenewTimedEvent(TimedGameEvent timedGameEvent, TimeSpan delay)
+        {
+            timedGameEvent.ExecutionTime = DateTime.Now + delay;
+
+            if (!timedEvents.Contains(timedGameEvent))
+                timedEvents.Add(timedGameEvent);
         }
 
         void AddTimedEvent(TimeSpan delay, Action action)

@@ -23,7 +23,8 @@ namespace Ambermoon.Render
         }
 
         public bool Move(int x, int y, uint ticks, TravelType travelType,
-            CharacterDirection? prevDirection = null, bool updateDirectionIfNotMoving = true) // x,y in tiles
+            bool displayOuchIfBlocked = true, CharacterDirection? prevDirection = null,
+            bool updateDirectionIfNotMoving = true) // x,y in tiles
         {
             if (player.MovementAbility == PlayerMovementAbility.NoMovement)
                 return false;
@@ -140,7 +141,8 @@ namespace Ambermoon.Render
             }
             else
             {
-                // TODO: display OUCH if moving against obstacles
+                if (displayOuchIfBlocked)
+                    game.DisplayOuch();
 
                 if (updateDirectionIfNotMoving)
                 {
@@ -157,7 +159,11 @@ namespace Ambermoon.Render
                         newDirection = CharacterDirection.Left;
 
                     if (newDirection != Direction)
+                    {
                         MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, newDirection);
+                        player.Direction = newDirection;
+                        UpdateAppearance(game.CurrentTicks);
+                    }
                 }
             }
 
