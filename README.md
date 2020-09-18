@@ -91,34 +91,34 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
-- Version 1.1.7: Added swimming, fixed tile blocking (also with transports)
-- Version 1.1.6: Added dice100 event, added trigger condition for text popups, numpad arrows in 3D now work as in original game
-- Version 1.1.5: Added text inputs (e.g. for riddlemouth), improved transport handling
-- Version 1.1.4: Added 3D map interaction, riddlemouths and transports, bugfixing
-- Version 1.1.3: Added text, decision and event popups, bugfixing
-- Version 1.1.2: Bugfixing
-- Version 1.1.1: Game will now use chest locked states and map changes from savegames, bugfixing
-- Version 1.1.0: Added option and load game menu, added savegame loading, fixed 3D textures, bugfixing
-- Version 1.0.19: Added portrait borders and character bars, added buttons for 2D/3D maps and inventory
-- Version 1.0.18: Map names, empty portrait slots, dead character portrait, bugfixes
-- Version 1.0.17: Character info, names at portraits, active member logic, fade effects
-- Version 1.0.16: Better window handling, disabled scrollbars and item slots, bugfixes
-- Version 1.0.15: Added equipment, scrollbars, improved item dragging, many bugfixes
-- Version 1.0.14: Added inventory and item drag&drop
-- Version 1.0.13: Moving with mouse, map transition fading effect, chest items, change tile events, portraits, initial savegame used
-- Version 1.0.12: Added cursors, added first version of chest map events
-- Version 1.0.11: Fixed map changes, world map now uses a smaller sprite (not the correct yet)
-- Version 1.0.10: Fixed 3D map crash, improved map event handling
-- Version 1.0.9: Added floor billboards like holes/lava, fixed billboards
-- Version 1.0.8: A lot of 3D improvements (see [here](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.8)).
-- Version 1.0.7: Smoother 3D movement (thanks to Metibor), new flag "LegacyMode" in config to use lower 3D fps
-- Version 1.0.6: Now uses the updated executable loader for item loading
-- Version 1.0.5: All ADF files can now be used (OFS, FFS, INTL, DIRC)
-- Version 1.0.4: Config now allows to specify if to use an external data path or the application folder (default)
-- Version 1.0.3: Fixed startup exceptions related to wrong data path
-- Version 1.0.2: Improved 2D movement and rendering
-- Version 1.0.1: Added 3D map events and collision detection
-- Version 1.0.0: First release (2D and 3D map movement, 2D map events and collision detection)
+- Version [1.1.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.7): Added swimming, fixed tile blocking (also with transports)
+- Version [1.1.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.6): Added dice100 event, added trigger condition for text popups, numpad arrows in 3D now work as in original game
+- Version [1.1.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.5): Added text inputs (e.g. for riddlemouth), improved transport handling
+- Version [1.1.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.4): Added 3D map interaction, riddlemouths and transports, bugfixing
+- Version [1.1.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.3): Added text, decision and event popups, bugfixing
+- Version [1.1.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.2): Bugfixing
+- Version [1.1.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.1): Game will now use chest locked states and map changes from savegames, bugfixing
+- Version [1.1.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.0): Added option and load game menu, added savegame loading, fixed 3D textures, bugfixing
+- Version [1.0.19](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.19): Added portrait borders and character bars, added buttons for 2D/3D maps and inventory
+- Version [1.0.18](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.18): Map names, empty portrait slots, dead character portrait, bugfixes
+- Version [1.0.17](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.17): Character info, names at portraits, active member logic, fade effects
+- Version [1.0.16](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.16): Better window handling, disabled scrollbars and item slots, bugfixes
+- Version [1.0.15](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.15): Added equipment, scrollbars, improved item dragging, many bugfixes
+- Version [1.0.14](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.14): Added inventory and item drag&drop
+- Version [1.0.13](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.13): Moving with mouse, map transition fading effect, chest items, change tile events, portraits, initial savegame used
+- Version [1.0.12](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.12): Added cursors, added first version of chest map events
+- Version [1.0.11](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.11): Fixed map changes, world map now uses a smaller sprite (not the correct yet)
+- Version [1.0.10](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.10): Fixed 3D map crash, improved map event handling
+- Version [1.0.9](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.9): Added floor billboards like holes/lava, fixed billboards
+- Version [1.0.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.8): Lots of 3D improvements.
+- Version [1.0.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.7): Smoother 3D movement (thanks to Metibor), new flag "LegacyMode" in config to use lower 3D fps
+- Version [1.0.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.6): Now uses the updated executable loader for item loading
+- Version [1.0.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.5): All ADF files can now be used (OFS, FFS, INTL, DIRC)
+- Version [1.0.4](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.4): Config now allows to specify if to use an external data path or the application folder (default)
+- Version [1.0.3](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.3): Fixed startup exceptions related to wrong data path
+- Version [1.0.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.2): Improved 2D movement and rendering
+- Version [1.0.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.1): Added 3D map events and collision detection
+- Version [1.0.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.0): First release (2D and 3D map movement, 2D map events and collision detection)
 
 
 ## Support development
