@@ -73,14 +73,14 @@ namespace Ambermoon.Render
                 prevDirection ??= Direction;
                 var newDirection = CharacterDirection.Down;
 
-                if (x > 0 && (map.IsWorldMap || (newX >= 6 && newX <= map.Width - 6)))
+                if (x > 0 && (map.IsWorldMap || (newX >= 6 && Map.ScrollX < Map.Map.Width - RenderMap2D.NUM_VISIBLE_TILES_X)))
                     scrollX = 1;
-                else if (x < 0 && (map.IsWorldMap || (newX <= map.Width - 7 && newX >= 5)))
+                else if (x < 0 && (map.IsWorldMap || (newX <= map.Width - 7 && Map.ScrollX > 0)))
                     scrollX = -1;
 
-                if (y > 0 && (map.IsWorldMap || (newY >= 4 && newY <= map.Height - 5)))
+                if (y > 0 && (map.IsWorldMap || (newY >= 4 && Map.ScrollY < Map.Map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)))
                     scrollY = 1;
-                else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 7 && newY >= 3)))
+                else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 7 && Map.ScrollY > 0)))
                     scrollY = -1;
 
                 if (y > 0)

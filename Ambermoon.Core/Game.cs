@@ -308,12 +308,12 @@ namespace Ambermoon
 
             if (moveTicks >= movement.MovementTicks(is3D, Map.IsWorldMap, TravelType))
             {
+                lastMoveTicksReset = CurrentTicks;
+
                 if (clickMoveActive)
                     HandleClickMovement();
                 else
                     Move();
-
-                lastMoveTicksReset = CurrentTicks;
             }
 
             layout.Update(CurrentTicks);
