@@ -780,14 +780,14 @@ namespace Ambermoon
         {
             bool diagonal = x != 0 && y != 0;
 
-            if (!player2D.Move(x, y, CurrentTicks, TravelType, !diagonal))
+            if (!player2D.Move(x, y, CurrentTicks, TravelType, !diagonal, null, !diagonal))
             {
                 if (!diagonal)
                     return false;
 
                 var prevDirection = player2D.Direction;
 
-                if (!player2D.Move(0, y, CurrentTicks, TravelType, false, prevDirection))
+                if (!player2D.Move(0, y, CurrentTicks, TravelType, false, prevDirection, false))
                     return player2D.Move(x, 0, CurrentTicks, TravelType, true, prevDirection);
             }
 
