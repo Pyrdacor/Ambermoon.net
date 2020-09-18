@@ -636,6 +636,8 @@ namespace Ambermoon
                 var playerArea = player2D.DisplayArea;
                 ouchSprite.X = playerArea.X + 16;
                 ouchSprite.Y = playerArea.Y - 24;
+                ouchSprite.Resize(Math.Min(32, map2DViewArea.Right - ouchSprite.X),
+                    Math.Min(23, map2DViewArea.Bottom - ouchSprite.Y));
             }
 
             ouchSprite.Visible = true;
