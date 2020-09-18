@@ -9,7 +9,6 @@ namespace Ambermoon.Render
         readonly Player player;
         readonly IMapManager mapManager;
 
-        // TODO: gameData.PlayerAnimationInfo is only for Lyramion. Offsets need to be increased by World * 17 later.
         public Player2D(Game game, IRenderLayer layer, Player player, RenderMap2D map,
             ISpriteFactory spriteFactory, IGameData gameData, Position startPosition,
             IMapManager mapManager)

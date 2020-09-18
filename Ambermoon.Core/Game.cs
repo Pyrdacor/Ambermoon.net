@@ -629,7 +629,9 @@ namespace Ambermoon
         {
             if (is3D)
             {
-
+                ouchSprite.X = 88;
+                ouchSprite.Y = 65;
+                ouchSprite.Resize(32, 23);
             }
             else
             {
