@@ -644,7 +644,7 @@ namespace Ambermoon
 
             ouchSprite.Visible = true;
 
-            RenewTimedEvent(ouchEvent, TimeSpan.FromMilliseconds(200));
+            RenewTimedEvent(ouchEvent, TimeSpan.FromMilliseconds(150));
         }
 
         void HandleClickMovement()
