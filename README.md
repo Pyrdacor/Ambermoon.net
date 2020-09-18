@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.8](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.8/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.7](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.7/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.6](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.6/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.1.5](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.5/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -82,15 +82,14 @@ Left | Move left (2D) or turn left (3D)
 Right | Move right (2D) or turn right (3D)
 F11 | Toggle fullscreen mode
 ESC | Close ingame windows
-Num7 | Eye cursor
-Num8 | Hand cursor
-Num9 | Mouth cursor
+Num1-Num9 | Buttons 1-9
 1-6 | Set party member 1-6 as active
 F1-F6 | Open inventory of party member 1-6
 
 
 ## Change log
 
+- Version [1.1.8](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.8): Added display of OUCH when movement is blocked, bugfixes
 - Version [1.1.7](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.7): Added swimming, fixed tile blocking (also with transports)
 - Version [1.1.6](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.6): Added dice100 event, added trigger condition for text popups, numpad arrows in 3D now work as in original game
 - Version [1.1.5](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.5): Added text inputs (e.g. for riddlemouth), improved transport handling

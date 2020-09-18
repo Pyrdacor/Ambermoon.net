@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>Ambermoon</RootNamespace>
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
-    <Version>1.1.7</Version>
+    <Version>1.1.8</Version>
     <Copyright>Copyright (c) 2020 by Robert Schneckenhaus</Copyright>
     <Company>Robert Schneckenhaus</Company>
     <Authors>Robert Schneckenhaus</Authors>
