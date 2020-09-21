@@ -44,14 +44,11 @@ namespace Ambermoon.Renderer.OpenGL
         public uint MappedTextureHeight { get; } = 0;
         public bool Alpha { get; } = false;
         public int FrameCount { get; } = 1;
-        /// <summary>
-        /// <inheritdoc />
-        /// </summary>
-        public ushort Extrude { get; }
+        public float Extrude { get; }
 
         public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, uint textureWidth, uint textureHeight,
             uint mappedTextureWidth, uint mappedTextureHeight, Rect virtualScreen, WallOrientation wallOrientation, bool alpha, int frameCount,
-            ushort extrude)
+            float extrude)
         {
             Type = type;
             Width = width;
@@ -298,7 +295,7 @@ namespace Ambermoon.Renderer.OpenGL
         }
 
         public ISurface3D Create(SurfaceType type, float width, float height, uint textureWidth, uint textureHeight,
-            uint mappedTextureWidth, uint mappedTextureHeight, bool alpha, int frameCount = 1, ushort extrude = 0,
+            uint mappedTextureWidth, uint mappedTextureHeight, bool alpha, int frameCount = 1, float extrude = 0.0f,
             WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0)
         {
             return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, textureWidth, textureHeight,

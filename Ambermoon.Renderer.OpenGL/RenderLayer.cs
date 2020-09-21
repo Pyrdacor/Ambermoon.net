@@ -300,15 +300,6 @@ namespace Ambermoon.Renderer
             renderBufferColorRects.UpdateDisplayLayer(index, displayLayer);
         }
 
-        public void TestNode(IRenderNode node)
-        {
-            if (!(node is RenderNode))
-                throw new AmbermoonException(ExceptionScope.Render, "The given render node is not valid for this renderer.");
-
-            if (node is ColoredRect && renderBufferColorRects == null)
-                throw new AmbermoonException(ExceptionScope.Render, "This layer does not support colored rects.");
-        }
-
         public void Dispose()
         {
             Dispose(true);

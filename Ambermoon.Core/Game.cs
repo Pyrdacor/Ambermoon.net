@@ -534,6 +534,22 @@ namespace Ambermoon
 
             ingame = true;
             currentSavegame = savegame;
+
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                if (savegame.CurrentPartyMemberIndices[i] != 0)
+                {
+                    var partyMember = savegame.GetPartyMember(i);
+                    AddPartyMember(i, partyMember);
+                }
+                else
+                {
+                    RemovePartyMember(i);
+                }
+            }
+            CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
+            SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
+
             player = new Player();
             var map = mapManager.GetMap(savegame.CurrentMapIndex);
             bool is3D = map.Type == MapType.Map3D;
@@ -553,21 +569,6 @@ namespace Ambermoon
             TravelType = savegame.TravelType; // Yes this is necessary twice.
 
             ShowMap(true);
-
-            for (int i = 0; i < MaxPartyMembers; ++i)
-            {
-                if (savegame.CurrentPartyMemberIndices[i] != 0)
-                {
-                    var partyMember = savegame.GetPartyMember(i);
-                    AddPartyMember(i, partyMember);
-                }
-                else
-                {
-                    RemovePartyMember(i);
-                }
-            }
-            CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
-            SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
 
             // This is the word "Hello" which is already present on game start.
             dictionary.Add(textDictionary.Entries[0]);

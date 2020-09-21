@@ -36,6 +36,7 @@ namespace Ambermoon.Renderer
         readonly Dictionary<string, ByteBuffer> byteBuffers = new Dictionary<string, ByteBuffer>(4);
         readonly Dictionary<string, IndexBuffer> indexBuffers = new Dictionary<string, IndexBuffer>(4);
         readonly Dictionary<string, VectorBuffer> vectorBuffers = new Dictionary<string, VectorBuffer>(4);
+        readonly Dictionary<string, FloatBuffer> floatBuffers = new Dictionary<string, FloatBuffer>(4);
         readonly Dictionary<string, int> bufferLocations = new Dictionary<string, int>();
         bool disposed = false;
         bool buffersAreBound = false;
@@ -98,6 +99,11 @@ namespace Ambermoon.Renderer
             indexBuffers.Add(name, buffer);
         }
 
+        public void AddBuffer(string name, FloatBuffer buffer)
+        {
+            floatBuffers.Add(name, buffer);
+        }
+
         public void BindBuffers()
         {
             if (buffersAreBound)
@@ -129,6 +135,11 @@ namespace Ambermoon.Renderer
                 }
 
                 foreach (var buffer in byteBuffers)
+                {
+                    bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
+                }
+
+                foreach (var buffer in floatBuffers)
                 {
                     bufferLocations[buffer.Key] = (int)program.BindInputBuffer(buffer.Key, buffer.Value);
                 }
@@ -177,6 +188,12 @@ namespace Ambermoon.Renderer
                 }
 
                 foreach (var buffer in byteBuffers)
+                {
+                    program.UnbindInputBuffer((uint)bufferLocations[buffer.Key]);
+                    bufferLocations[buffer.Key] = -1;
+                }
+
+                foreach (var buffer in floatBuffers)
                 {
                     program.UnbindInputBuffer((uint)bufferLocations[buffer.Key]);
                     bufferLocations[buffer.Key] = -1;
@@ -236,6 +253,12 @@ namespace Ambermoon.Renderer
                     }
 
                     foreach (var buffer in byteBuffers)
+                    {
+                        if (buffer.Value.RecreateUnbound())
+                            buffersChanged = true;
+                    }
+
+                    foreach (var buffer in floatBuffers)
                     {
                         if (buffer.Value.RecreateUnbound())
                             buffersChanged = true;

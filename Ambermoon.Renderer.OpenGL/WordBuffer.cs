@@ -1,5 +1,5 @@
 ﻿/*
- * BaseLineBuffer.cs - Buffer for shader baseline data
+ * WordBuffer.cs - Buffer for shader word data
  *
  * Copyright (C) 2020  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *

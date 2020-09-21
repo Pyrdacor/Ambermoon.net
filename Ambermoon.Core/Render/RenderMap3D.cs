@@ -23,6 +23,7 @@ using Ambermoon.Data;
 using Ambermoon.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Ambermoon.Render
@@ -68,7 +69,7 @@ namespace Ambermoon.Render
         public const int TextureWidth = 128;
         public const int TextureHeight = 80;
         public const float BlockSize = 500.0f;
-        public const float ReferenceWallHeight = 400.0f;
+        public const float ReferenceWallHeight = 320.0f;
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
@@ -90,7 +91,8 @@ namespace Ambermoon.Render
         ///  This is the height for the renderer. It is expressed in relation
         ///  to the block size (e.g. wall is 2/3 as height as a block is wide).
         /// </summary>
-        float WallHeight => Global.DistancePerTile * labdata.WallHeight / BlockSize;
+        float WallHeight => FullWallHeight * labdata.WallHeight / ReferenceWallHeight;
+        float FullWallHeight => (ReferenceWallHeight / BlockSize) * 0.75f * Global.DistancePerTile;
         public event Action<Map> MapChanged;
 
         public RenderMap3D(Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
@@ -120,7 +122,7 @@ namespace Ambermoon.Render
                 EnsureChangeableBlocks();
                 UpdateSurfaces();
 
-                camera.GroundY = -0.5f * WallHeight; // TODO: Does labdata.Unknown1 contain an offset?
+                camera.GroundY = -0.5f * FullWallHeight; // TODO: Does labdata.Unknown1 contain an offset?
 
                 MapChanged?.Invoke(map);
             }
@@ -244,8 +246,6 @@ namespace Ambermoon.Render
             // TODO: animations
 
             float wallHeight = WallHeight;
-            float factor = labdata.WallHeight / ReferenceWallHeight;
-            // Note: Object y-offsets seem to be relative to this ReferenceWallHeight (seems to be 400).
 
             foreach (var subObject in obj.SubObjects)
             {
@@ -257,17 +257,17 @@ namespace Ambermoon.Render
                         Global.DistancePerTile * objectInfo.MappedTextureHeight / BlockSize,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
                         objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
-                        (ushort)(objectInfo.ExtrudeOffset * 1000 / labdata.WallHeight))
+                        0.7075f * Global.DistancePerTile) // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
                     : surfaceFactory.Create(SurfaceType.Billboard,
                         Global.DistancePerTile * objectInfo.MappedTextureWidth / BlockSize,
-                        wallHeight * objectInfo.MappedTextureHeight / labdata.WallHeight,
+                        wallHeight * objectInfo.MappedTextureHeight / ReferenceWallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
                         objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
-                        (ushort)(objectInfo.ExtrudeOffset * 1000 / labdata.WallHeight));
+                        objectInfo.ExtrudeOffset / BlockSize);
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 mapObject.X = baseX + (subObject.X / BlockSize) * Global.DistancePerTile;
-                mapObject.Y = floorObject ? (float)objectInfo.ExtrudeOffset / labdata.WallHeight : wallHeight * (factor * subObject.Z + objectInfo.MappedTextureHeight) / labdata.WallHeight;
+                mapObject.Y = floorObject ? (float)objectInfo.ExtrudeOffset / labdata.WallHeight : wallHeight * (subObject.Z / 400.0f + objectInfo.MappedTextureHeight / ReferenceWallHeight);
                 mapObject.Z = baseY + Global.DistancePerTile - (subObject.Y / BlockSize) * Global.DistancePerTile;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
@@ -317,7 +317,7 @@ namespace Ambermoon.Render
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
                 var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerTile, wallHeight,
-                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, 1, 0, wallOrientation);
+                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, 1, 0.0f, wallOrientation);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 wall.X = x;

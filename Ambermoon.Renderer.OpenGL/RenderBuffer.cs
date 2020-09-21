@@ -49,7 +49,7 @@ namespace Ambermoon.Renderer
         readonly VectorBuffer billboardCenterBuffer = null;
         readonly ByteBuffer billboardOrientationBuffer = null;
         readonly ByteBuffer alphaBuffer = null;
-        readonly WordBuffer extrudeBuffer = null;
+        readonly FloatBuffer extrudeBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
@@ -178,7 +178,7 @@ namespace Ambermoon.Renderer
             {
                 billboardCenterBuffer = new VectorBuffer(state, false);
                 billboardOrientationBuffer = new ByteBuffer(state, true);
-                extrudeBuffer = new WordBuffer(state, true);
+                extrudeBuffer = new FloatBuffer(state, true);
 
                 vertexArrayObject.AddBuffer(Billboard3DShader.DefaultBillboardCenterName, billboardCenterBuffer);
                 vertexArrayObject.AddBuffer(Billboard3DShader.DefaultBillboardOrientationName, billboardOrientationBuffer);

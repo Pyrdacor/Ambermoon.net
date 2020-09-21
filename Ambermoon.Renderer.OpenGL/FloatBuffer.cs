@@ -1,5 +1,5 @@
 ﻿/*
- * ByteBuffer.cs - Buffer for shader byte data
+ * FloatBuffer.cs - Buffer for shader float data
  *
  * Copyright (C) 2020  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
@@ -21,11 +21,11 @@
 
 namespace Ambermoon.Renderer
 {
-    internal class ByteBuffer : BufferObject<byte>
+    internal class FloatBuffer : BufferObject<float>
     {
         public override int Dimension => 1;
 
-        public ByteBuffer(State state, bool staticData)
+        public FloatBuffer(State state, bool staticData)
             : base(state, staticData)
         {
 
