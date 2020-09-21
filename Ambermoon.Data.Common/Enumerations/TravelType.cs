@@ -41,5 +41,20 @@ namespace Ambermoon.Data.Enumerations
             TravelType.Fly => false,
             _ => true
         };
+
+        public static bool BlockedByWater(this TravelType travelType) => travelType switch
+        {
+            TravelType.Horse => true,
+            TravelType.SandLizard => true,
+            _ => false
+        };
+
+        public static bool BlockedByTeleport(this TravelType travelType) => travelType switch
+        {
+            TravelType.Horse => true,
+            TravelType.MagicalDisc => true,
+            TravelType.SandLizard => true,
+            _ => false
+        };
     }
 }

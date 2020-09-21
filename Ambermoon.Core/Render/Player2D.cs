@@ -62,6 +62,29 @@ namespace Ambermoon.Render
 
                 if (!canMove && travelType == TravelType.Swim && tile.AllowMovement(tileset, TravelType.Walk))
                     canMove = true; // go on land
+                else if (canMove && tile.Type == Data.Map.TileType.Water && travelType.BlockedByWater())
+                    canMove = false;
+                else if (travelType.BlockedByTeleport())
+                {
+                    // check if there is a teleport at the new position
+                    var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
+
+                    if (mapEventId > 0)
+                    {
+                        bool HasTeleportEvent(MapEvent ev)
+                        {
+                            if (ev.Type == MapEventType.MapChange)
+                                return true;
+
+                            return ev.Next != null && HasTeleportEvent(ev.Next);
+                        }
+
+                        var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
+
+                        if (HasTeleportEvent(mapAtNewPosition.EventLists[(int)mapEventId.Value - 1]))
+                            canMove = false;
+                    }
+                }
             }
 
             if (canMove)
