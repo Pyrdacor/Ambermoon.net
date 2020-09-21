@@ -123,7 +123,7 @@ namespace Ambermoon.Render
                     // adjust player position on map transition
                     var position = Map.GetCenterPosition();
 
-                    MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, Direction);
+                    MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, player.Direction);
                     Map.TriggerEvents(this, MapEventTrigger.Move, (uint)position.X,
                         (uint)position.Y + (Map.Map.IsWorldMap ? 0u : 1u), mapManager, ticks);
 
