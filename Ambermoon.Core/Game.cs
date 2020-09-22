@@ -1501,6 +1501,8 @@ namespace Ambermoon
                     StartSwimming();
                 else
                     TravelType = TravelType.Walk;
+
+                Map.TriggerEvents(this, player2D, MapEventTrigger.Move, x, y, mapManager, CurrentTicks);
             }
             else if (transport != null && TravelType == TravelType.Walk)
             {
