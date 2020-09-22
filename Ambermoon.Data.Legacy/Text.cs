@@ -143,6 +143,8 @@ namespace Ambermoon.Data.Legacy
 
                 if (glyph == (byte)SpecialGlyph.NewLine)
                     NewLine();
+                else if (glyph < (byte)SpecialGlyph.FirstColor)
+                    ++currentLineSize;
             }
 
             if (line.LastOrDefault() != (byte)SpecialGlyph.NewLine)
