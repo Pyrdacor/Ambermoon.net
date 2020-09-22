@@ -31,6 +31,12 @@ namespace Ambermoon.UI
 
         public event Action<int, Item> ItemDragged;
         public event Action<int, Item> ItemDropped;
+        /// <summary>
+        /// Called when starting dropping. Should return
+        /// the slot index to drop or -1 if dropping is
+        /// denied.
+        /// </summary>
+        public event Func<int, Item, int> Dropping;
         public int SlotCount => items.Length;
         public int ScrollOffset { get; private set; } = 0;
         public bool Disabled
@@ -175,6 +181,14 @@ namespace Ambermoon.UI
 
         public int DropItem(int slot, UIItem item)
         {
+            int? newSlot = Dropping?.Invoke(slot, itemManager.GetItem(item.Item.ItemIndex));
+
+            if (newSlot != null)
+                slot = newSlot.Value;
+
+            if (slot == -1)
+                return item.Item.Amount;
+
             var itemSlot = items[slot];
 
             if (itemSlot == null)

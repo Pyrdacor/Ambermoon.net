@@ -1360,6 +1360,62 @@ namespace Ambermoon
                     if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
                         equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
                 }
+                equipmentGrid.Dropping += (int slot, Item item) =>
+                {
+                    var equipmentSlot = (EquipmentSlot)(slot + 1);
+
+                    if (item.Type == ItemType.Ring)
+                    {
+                        if (equipmentSlot == EquipmentSlot.RightFinger ||
+                            equipmentSlot == EquipmentSlot.LeftFinger)
+                        {
+                            // place on first free finger starting at right one
+                            int rightFingerSlot = (int)(EquipmentSlot.RightFinger - 1);
+
+                            if (equipmentGrid.GetItem(rightFingerSlot) == null)
+                                return rightFingerSlot;
+                            else
+                                return rightFingerSlot + 2; // left finger
+                        }
+                        else
+                        {
+                            return -1;
+                        }
+                    }
+                    else if (item.Type == ItemType.Amulet ||
+                        item.Type == ItemType.Brooch)
+                    {
+                        if (equipmentSlot == EquipmentSlot.Neck ||
+                            equipmentSlot == EquipmentSlot.Chest)
+                        {
+                            return (int)item.Type.ToEquipmentSlot() - 1;
+                        }
+                        else
+                        {
+                            return -1;
+                        }
+                    }
+                    else if (item.Type == ItemType.CloseRangeWeapon ||
+                        item.Type == ItemType.LongRangeWeapon)
+                    {
+                        if (equipmentSlot == EquipmentSlot.RightHand ||
+                            equipmentSlot == EquipmentSlot.LeftHand)
+                        {
+                            return (int)item.Type.ToEquipmentSlot() - 1;
+                        }
+                        else
+                        {
+                            return -1;
+                        }
+                    }
+
+                    var itemEquipmentSlot = item.Type.ToEquipmentSlot();
+
+                    if (equipmentSlot == itemEquipmentSlot)
+                        return slot;
+
+                    return -1;
+                };
                 equipmentGrid.ItemDragged += (int slot, Item item) =>
                 {
                     if (item.NumberOfHands == 2 && slot == (int)EquipmentSlot.RightHand - 1)
