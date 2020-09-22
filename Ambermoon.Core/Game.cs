@@ -1336,6 +1336,14 @@ namespace Ambermoon
                 CurrentInventoryIndex = slot;
                 var partyMember = GetPartyMember(slot);
                 #region Equipment and Inventory
+                // Weight display
+                var weightArea = new Rect(27, 152, 68, 15);
+                layout.AddPanel(weightArea, 2);
+                layout.AddText(weightArea.CreateModified(0, 1, 0, 0), DataNameProvider.CharacterInfoWeightHeaderString,
+                    TextColor.White, TextAlign.Center, 5);
+                layout.AddText(weightArea.CreateModified(0, 8, 0, 0), string.Format(DataNameProvider.CharacterInfoWeightString,
+                    Util.Round(partyMember.TotalWeight / 1000.0f), partyMember.Attributes[Data.Attribute.Strength].TotalCurrentValue),
+                    TextColor.White, TextAlign.Center, 5);
                 var equipmentSlotPositions = new List<Position>
                 {
                     new Position(20, 72),  new Position(52, 72),  new Position(84, 72),

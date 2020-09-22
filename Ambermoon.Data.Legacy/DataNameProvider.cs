@@ -26,6 +26,8 @@
         public string CharacterInfoSpellLearningPointsString => executableData.UITexts.Entries[UITextIndex.SLPDisplay];
 
         public string CharacterInfoTrainingPointsString => executableData.UITexts.Entries[UITextIndex.TPDisplay];
+        public string CharacterInfoWeightHeaderString => executableData.UITexts.Entries[UITextIndex.Weight];
+        public string CharacterInfoWeightString => executableData.UITexts.Entries[UITextIndex.WeightKilogramDisplay];
 
         public string GetClassName(Class @class) => executableData.ClassNames.Entries[@class];
 

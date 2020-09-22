@@ -16,6 +16,8 @@
         string CharacterInfoExperiencePointsString { get; }
         string CharacterInfoGoldAndFoodString { get; }
         string CharacterInfoAgeString { get; }
+        string CharacterInfoWeightHeaderString { get; }
+        string CharacterInfoWeightString { get; }
         string GetWorldName(World world);
         string InventoryTitleString { get; }
         string LoadWhichSavegameString { get; }

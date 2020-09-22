@@ -953,6 +953,19 @@ namespace Ambermoon.UI
             return new FilledArea(filledAreas, CreateArea(rect, color, (byte)(topMost ? 245 : 0)));
         }
 
+        /// <summary>
+        /// A panel is just a small gray area with a 3D border.
+        /// </summary>
+        public void AddPanel(Rect rect, byte displayLayer)
+        {
+            // right and bottom border
+            new FilledArea(filledAreas, CreateArea(rect.CreateModified(0, 0, 1, 1), game.GetPaletteColor(50, 26), displayLayer));
+            // left and top border
+            new FilledArea(filledAreas, CreateArea(rect.CreateModified(-1, -1, 1, 1), game.GetPaletteColor(50, 31), (byte)(displayLayer + 1)));
+            // fill area
+            new FilledArea(filledAreas, CreateArea(rect, game.GetPaletteColor(50, 28), (byte)(displayLayer + 2)));
+        }
+
         public void AddColorFader(Rect rect, Color startColor, Color endColor,
             int durationInMilliseconds, bool removeWhenFinished, DateTime? startTime = null)
         {
