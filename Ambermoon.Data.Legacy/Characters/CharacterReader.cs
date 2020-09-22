@@ -31,7 +31,11 @@ namespace Ambermoon.Data.Legacy.Characters
             dataReader.Position += 2; // Unknown
             character.Ailments = (Ailment)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
-            dataReader.Position += 8; // Unknown
+            dataReader.Position += 2; // Unknown
+            // mark of return location is stored here: word x, word y, word mapIndex
+            ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnX = value);
+            ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnY = value);
+            ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnMapIndex = value);
             foreach (var attribute in character.Attributes) // Note: this includes Age and the 10th unused attribute
             {
                 attribute.CurrentValue = dataReader.ReadWord();
@@ -99,6 +103,14 @@ namespace Ambermoon.Data.Legacy.Characters
         {
             if (character is Monster monster)
                 processor(monster, reader.ReadWord());
+            else
+                reader.Position += 2;
+        }
+
+        void ProcessIfPartyMember(IDataReader reader, Character character, Action<PartyMember, ushort> processor)
+        {
+            if (character is PartyMember partyMember)
+                processor(partyMember, reader.ReadWord());
             else
                 reader.Position += 2;
         }

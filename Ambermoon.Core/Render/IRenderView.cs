@@ -50,6 +50,7 @@ namespace Ambermoon.Render
         IRenderTextFactory RenderTextFactory { get; }
         ITextProcessor TextProcessor { get; }
         ICamera3D Camera3D { get; }
+        void SetLight(float light);
 
         IGameData GameData { get; }
         IGraphicProvider GraphicProvider { get; }

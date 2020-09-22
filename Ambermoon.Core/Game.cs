@@ -373,6 +373,21 @@ namespace Ambermoon
             );
         }
 
+        float GetLight3D()
+        {
+            if (Map.Flags.HasFlag(MapFlags.Outdoor))
+            {
+                // Light is based on daytime and own light sources
+                float daytimeFactor = 1.0f - (Math.Abs((int)currentSavegame.Hour * 60 + currentSavegame.Minute - 12 * 60)) / (24.0f * 60.0f);
+                return daytimeFactor; // TODO: light sources
+            }
+            else
+            {
+                // Light is based on own light sources
+                return 1.0f; // TODO: light sources
+            }
+        }
+
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
         {
             if (map.Type != MapType.Map2D)
@@ -432,6 +447,7 @@ namespace Ambermoon
             ResetMoveKeys();
             layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, false, TravelType.Walk));
 
+            renderView.SetLight(GetLight3D());
             is3D = true;
             TravelType = TravelType.Walk;
             renderMap2D.Destroy();

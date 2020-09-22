@@ -652,5 +652,11 @@ namespace Ambermoon.Renderer.OpenGL
                 }
             }
         }
+
+        public void SetLight(float light)
+        {
+            (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetLight(light);
+            (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetLight(light);
+        }
     }
 }

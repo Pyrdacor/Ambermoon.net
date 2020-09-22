@@ -50,6 +50,7 @@ namespace Ambermoon.Renderer
             GetFragmentShaderHeader(state),
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
+            $"uniform float {DefaultLightName};",
             $"in vec2 varTexCoord;",
             $"flat in float palIndex;",
             $"flat in vec2 textureEndCoord;",
@@ -69,7 +70,7 @@ namespace Ambermoon.Renderer
             $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
             $"        discard;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = pixelColor;",
+            $"        {DefaultFragmentOutColorName} = vec4({DefaultLightName} * pixelColor.rgb, pixelColor.a);",
             $"     gl_FragDepth = 0.5 * depth + 0.5;",
             $"}}"
         };
@@ -125,7 +126,7 @@ namespace Ambermoon.Renderer
             : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
                   DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
                   DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultBillboardCenterName,
-                  DefaultBillboardOrientationName, DefaultExtrudeName,
+                  DefaultBillboardOrientationName, DefaultExtrudeName, DefaultLightName,
                   Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
         {
 
@@ -134,11 +135,11 @@ namespace Ambermoon.Renderer
         protected Billboard3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
             string positionName, string texCoordName, string texEndCoordName, string texSizeName,
             string samplerName, string atlasSizeName, string paletteName, string paletteIndexName,
-            string billboardCenterName, string billboardOrientationName, string extrudeName,
+            string billboardCenterName, string billboardOrientationName, string extrudeName, string lightName,
             string[] fragmentShaderLines, string[] vertexShaderLines)
             : base(state, modelViewMatrixName, projectionMatrixName, positionName, texCoordName, texEndCoordName,
-                  texSizeName, samplerName, atlasSizeName, paletteName, paletteIndexName, null, fragmentShaderLines,
-                  vertexShaderLines)
+                  texSizeName, samplerName, atlasSizeName, paletteName, paletteIndexName, null, lightName,
+                  fragmentShaderLines, vertexShaderLines)
         {
             this.billboardCenterName = billboardCenterName;
             this.billboardOrientationName = billboardOrientationName;

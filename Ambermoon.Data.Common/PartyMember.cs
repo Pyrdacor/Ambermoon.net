@@ -2,6 +2,10 @@
 {
     public class PartyMember : Character
     {
+        public ushort MarkOfReturnMapIndex { get; set; }
+        public ushort MarkOfReturnX { get; set; }
+        public ushort MarkOfReturnY { get; set; }
+
         private PartyMember()
             : base(CharacterType.PartyMember)
         {

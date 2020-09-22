@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Enumerations;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Data
@@ -11,6 +12,13 @@ namespace Ambermoon.Data
         public TravelType TravelType;
         public uint MapIndex;
         public Position Position;
+    }
+
+    public class ActiveSpell
+    {
+        public ActiveSpellType Type;
+        public uint Duration; // in 5 minute chunks
+        public uint Level;
     }
 
     public class Savegame
@@ -31,11 +39,57 @@ namespace Ambermoon.Data
 
         #endregion
 
-        #region Party members
+        #region Party
 
         public List<PartyMember> PartyMembers { get; } = new List<PartyMember>();
         public int[] CurrentPartyMemberIndices { get; } = new int[6];
         public int ActivePartyMemberSlot = 0; // 0 - 5
+        public ActiveSpell[] ActiveSpells { get; } = new ActiveSpell[6];
+        /// <summary>
+        /// Activates a spell.
+        /// </summary>
+        /// <param name="type">Active spell type</param>
+        /// <param name="duration">Duration in 5 minute chunks (e.g. 120 for 10 ingame hours).</param>
+        /// <param name="level">Level of the spell or 0 if not used.</param>
+        public void ActivateSpell(ActiveSpellType type, uint duration, uint level)
+        {
+            if (ActiveSpells[(int)type] == null)
+            {
+                ActiveSpells[(int)type] = new ActiveSpell
+                {
+                    Type = type,
+                    Duration = duration,
+                    Level = level
+                };
+            }
+            else
+            {
+                var activeSpell = ActiveSpells[(int)type];
+
+                if (activeSpell.Level < level)
+                    activeSpell.Level = level;
+                activeSpell.Duration = Math.Min(200u, activeSpell.Duration + duration);
+            }
+        }
+        /// <summary>
+        /// Updates all active spells and end them if they run out.
+        /// </summary>
+        /// <param name="elapsedSinceLastUpdate">Time elapsed since last update in 5 minute chunks.</param>
+        public void UpdateActiveSpells(uint elapsedSinceLastUpdate)
+        {
+            foreach (var type in Enum.GetValues<ActiveSpellType>())
+            {
+                var activeSpell = ActiveSpells[(int)type];
+
+                if (activeSpell != null)
+                {
+                    if (activeSpell.Duration <= elapsedSinceLastUpdate)
+                        ActiveSpells[(int)type] = null;
+                    else
+                        activeSpell.Duration -= elapsedSinceLastUpdate;
+                }
+            }
+        }
 
         #endregion
 
@@ -89,6 +143,7 @@ namespace Ambermoon.Data
 
         public uint Hour { get; set; }
         public uint Minute { get; set; } // a multiple of 5
+        public uint HoursWithoutSleep { get; set; }
 
         #endregion
 

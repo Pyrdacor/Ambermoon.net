@@ -15,6 +15,27 @@ namespace Ambermoon.Data.Legacy
             savegame.CurrentMapY = dataReader.ReadWord();
             savegame.CharacterDirection = (CharacterDirection)dataReader.ReadWord();
 
+            // Active spells (2 words each)
+            // First word: duration in 5 minute chunks. So 120 means 120 * 5 minutes = 600 minutes = 10h
+            // Second word: level (e.g. for light: 1 = magic torch, 2 = magic lantern, 3 = magic sun)
+            // An active light spell replaces an existing one.
+            // The active spells are in fixed spots:
+            // - 0: Light (candle)
+            // - 1: Magic barrier (shield)
+            // - 2: Magic attack (sword)
+            // - 3: Anti-magic barrier (star)
+            // - 4: Clairvoyance (eye)
+            // - 5: Magic map (map)
+            foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
+            {
+                var duration = dataReader.ReadWord();
+
+                if (duration == 0)
+                    savegame.ActiveSpells[(int)activeSpellType] = null;
+                else
+                    savegame.ActivateSpell(activeSpellType, duration, dataReader.ReadWord());
+            }
+
             dataReader.Position = 42;
 
             dataReader.ReadWord(); // Number of party members. We don't really need it.
@@ -26,7 +47,9 @@ namespace Ambermoon.Data.Legacy
             dataReader.Position = 61;
             savegame.TravelType = (TravelType)dataReader.ReadByte();
 
-            dataReader.Position = 68;
+            dataReader.Position = 67;
+
+            savegame.HoursWithoutSleep = dataReader.ReadByte();
 
             // up to 32 transport positions
             for (int i = 0; i < 32; ++i)
