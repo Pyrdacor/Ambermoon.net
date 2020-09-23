@@ -314,7 +314,7 @@ namespace Ambermoon.Renderer
                     Y = position.Y,
                     Layer = Layer,
                     PaletteIndex = 50,
-                    Visible = Visible                    
+                    Visible = Visible
                 };
 
                 characterSprites.Add(sprite);

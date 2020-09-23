@@ -41,8 +41,8 @@ namespace Ambermoon.UI
             disableOverlay.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ButtonDisableOverlay));
             iconSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetButtonGraphicIndex(ButtonType.Empty));
 
-            frameSprite.PaletteIndex = 50;
-            disableOverlay.PaletteIndex = 50;
+            frameSprite.PaletteIndex = 51;
+            disableOverlay.PaletteIndex = 51;
             iconSprite.PaletteIndex = 0;
 
             frameSprite.X = position.X;

@@ -9,6 +9,7 @@
         Red,
         Yellow,
         Orange,
-        PaleGray
+        PaleGray,
+        Green
     }
 }

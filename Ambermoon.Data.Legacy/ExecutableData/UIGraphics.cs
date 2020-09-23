@@ -48,7 +48,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
             graphicInfo.PaletteOffset = 0;
             for (int i = (int)UIGraphic.StatusDead; i <= (int)UIGraphic.StatusRangeAttack; ++i)
-                entries.Add((UIGraphic)i, ReadGraphic(dataReader));
+            {
+                var graphic = ReadGraphic(dataReader);
+                graphic.ReplaceColor(0, 25);
+                entries.Add((UIGraphic)i, graphic);
+            }
 
             graphicInfo.Width = 32;
             graphicInfo.Height = 29;

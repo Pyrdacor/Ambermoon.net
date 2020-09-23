@@ -10,7 +10,7 @@ namespace Ambermoon.Data
         public uint MaxValue { get; set; }
         public uint BonusValue { get; set; }
         public uint Unknown { get; set; }
-        public uint TotalCurrentValue => Math.Min(MaxValue, CurrentValue + BonusValue);
+        public uint TotalCurrentValue => CurrentValue + BonusValue;
     }
 
     public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : System.Enum

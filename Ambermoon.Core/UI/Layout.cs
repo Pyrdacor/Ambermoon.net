@@ -214,6 +214,13 @@ namespace Ambermoon.UI
         }
     }
 
+    public class Tooltip
+    {
+        public Rect Area;
+        public string Text;
+        public TextColor TextColor;
+    }
+
     internal class Layout
     {
         // There are a few possibilities:
@@ -321,6 +328,8 @@ namespace Ambermoon.UI
         readonly List<FadeEffect> fadeEffects = new List<FadeEffect>();
         readonly List<ISprite> additionalSprites = new List<ISprite>();
         readonly List<UIText> texts = new List<UIText>();
+        readonly List<Tooltip> tooltips = new List<Tooltip>();
+        IRenderText activeTooltip = null;
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
@@ -771,6 +780,9 @@ namespace Ambermoon.UI
             texts.Clear();
             activePopup?.Destroy();
             activePopup = null;
+            activeTooltip?.Delete();
+            activeTooltip = null;
+            tooltips.Clear();
 
             // Note: Don't remove fadeEffects or bars here.
         }
@@ -822,7 +834,7 @@ namespace Ambermoon.UI
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-                sprite.PaletteIndex = 50;
+                sprite.PaletteIndex = 51;
                 sprite.Visible = true;
 
                 var text = portraitNames[slot] ??= RenderView.RenderTextFactory.Create(textLayer,
@@ -838,8 +850,8 @@ namespace Ambermoon.UI
 
         void FillCharacterBars(int slot, PartyMember partyMember)
         {
-            float lpPercentage = partyMember == null ? 0.0f : (float)partyMember.HitPoints.TotalCurrentValue / partyMember.HitPoints.MaxValue;
-            float spPercentage = partyMember == null ? 0.0f : (float)partyMember.SpellPoints.TotalCurrentValue / partyMember.SpellPoints.MaxValue;
+            float lpPercentage = partyMember == null ? 0.0f : Math.Min(1.0f, (float)partyMember.HitPoints.TotalCurrentValue / partyMember.HitPoints.MaxValue);
+            float spPercentage = partyMember == null ? 0.0f : Math.Min(1.0f, (float)partyMember.SpellPoints.TotalCurrentValue / partyMember.SpellPoints.MaxValue);
 
             characterBars[slot * 4 + 0].Fill(lpPercentage);
             characterBars[slot * 4 + 1].Fill(lpPercentage);
@@ -847,7 +859,8 @@ namespace Ambermoon.UI
             characterBars[slot * 4 + 3].Fill(spPercentage);
         }
 
-        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2)
+        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
+            string tooltip = null, TextColor? tooltipTextColor = null)
         {
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, false, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
@@ -858,6 +871,50 @@ namespace Ambermoon.UI
             sprite.Layer = renderLayer;
             sprite.Visible = true;
             additionalSprites.Add(sprite);
+
+            if (tooltip != null)
+                AddTooltip(rect, tooltip, tooltipTextColor ?? TextColor.White);
+        }
+
+        void AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
+        {
+            tooltips.Add(new Tooltip
+            {
+                Area = rect,
+                Text = tooltip,
+                TextColor = tooltipTextColor
+            });
+        }
+
+        void SetActiveTooltip(Position cursorPosition, Tooltip tooltip)
+        {
+            if (tooltip == null) // remove
+            {
+                if (activeTooltip != null)
+                {
+                    activeTooltip?.Delete();
+                    activeTooltip = null;
+                }
+            }
+            else
+            {
+                if (activeTooltip == null)
+                {
+                    activeTooltip = RenderView.RenderTextFactory.Create();
+                    activeTooltip.Shadow = true;
+                    activeTooltip.DisplayLayer = 250;
+                    activeTooltip.Layer = RenderView.GetLayer(Layer.Text);
+                    activeTooltip.Visible = true;
+                }
+
+                var text = RenderView.TextProcessor.CreateText(tooltip.Text);
+                int textWidth = text.MaxLineSize * Global.GlyphWidth;
+
+                activeTooltip.Text = text;
+                activeTooltip.TextColor = tooltip.TextColor;
+                activeTooltip.X = Util.Limit(0, cursorPosition.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
+                activeTooltip.Y = cursorPosition.Y - Global.GlyphLineHeight - 1;
+            }
         }
 
         public void AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
@@ -1227,7 +1284,7 @@ namespace Ambermoon.UI
                     }
                     else if (buttons == MouseButtons.Right)
                     {
-                        game.OpenPartyMember(i);
+                        game.OpenPartyMember(i, Type != LayoutType.Stats);
                     }
 
                     return true;
@@ -1237,7 +1294,7 @@ namespace Ambermoon.UI
                     if (buttons == MouseButtons.Left)
                         game.SetActivePartyMember(i);
                     else if (buttons == MouseButtons.Right)
-                        game.OpenPartyMember(i);
+                        game.OpenPartyMember(i, Type != LayoutType.Stats);
 
                     return true;
                 }
@@ -1292,6 +1349,22 @@ namespace Ambermoon.UI
             {
                 if (itemGrid.Hover(position))
                     consumed = true;
+            }
+
+            if (!consumed)
+            {
+                foreach (var tooltip in tooltips)
+                {
+                    if (tooltip.Area.Contains(position))
+                    {
+                        SetActiveTooltip(position, tooltip);
+                        consumed = true;
+                        break;
+                    }
+                }
+
+                if (!consumed)
+                    SetActiveTooltip(position, null);
             }
 
             return consumed;

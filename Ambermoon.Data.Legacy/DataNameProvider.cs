@@ -29,6 +29,8 @@
         public string CharacterInfoWeightHeaderString => executableData.UITexts.Entries[UITextIndex.Weight];
         public string CharacterInfoWeightString => executableData.UITexts.Entries[UITextIndex.WeightKilogramDisplay];
 
+        public string GetAilmentName(Ailment ailment) => executableData.AilmentNames.Entries[ailment];
+
         public string GetClassName(Class @class) => executableData.ClassNames.Entries[@class];
 
         public string GetGenderName(Gender gender) => gender switch
@@ -53,6 +55,18 @@
         public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
 
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
+
+        public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
+
+        public string AbilitiesHeaderString => executableData.UITexts.Entries[UITextIndex.Abilities];
+
+        public string LanguagesHeaderString => executableData.UITexts.Entries[UITextIndex.Languages];
+
+        public string AilmentsHeaderString => executableData.UITexts.Entries[UITextIndex.Ailments];
+
+        public string GetAttributeUIName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
+
+        public string GetAbilityUIName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
 
         public string LoadWhichSavegameString => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
 

@@ -903,7 +903,7 @@ namespace Ambermoon
                 case Key.F5:
                 case Key.F6:
                     if (!layout.PopupActive)
-                        OpenPartyMember(key - Key.F1);
+                        OpenPartyMember(key - Key.F1, currentWindow.Window != Window.Stats);
                     break;
                 case Key.Num1:
                 case Key.Num2:
@@ -1334,7 +1334,7 @@ namespace Ambermoon
             }
         }
 
-        internal void OpenPartyMember(int slot, bool inventory = true)
+        internal void OpenPartyMember(int slot, bool inventory)
         {
             if (currentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
@@ -1342,7 +1342,7 @@ namespace Ambermoon
             void DisplayCharacterInfo(PartyMember partyMember)
             {
                 layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 50, 1);
+                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 51, 1);
                 layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
                 layout.AddText(new Rect(242, 49, 62, 7), DataNameProvider.GetRaceName(partyMember.Race));
                 layout.AddText(new Rect(242, 56, 62, 7), DataNameProvider.GetGenderName(partyMember.Gender));
@@ -1493,14 +1493,95 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Stats, slot);
                 layout.SetLayout(LayoutType.Stats);
+                layout.FillArea(new Rect(16, 49, 176, 145), Color.LightGray, false);
 
                 windowTitle.Visible = false;
 
                 CurrentInventoryIndex = slot;
                 var partyMember = GetPartyMember(slot);
+                int index;
 
                 #region Character info
                 DisplayCharacterInfo(partyMember);
+                #endregion
+                #region Attributes
+                layout.AddText(new Rect(22, 50, 72, Global.GlyphLineHeight), DataNameProvider.AttributesHeaderString, TextColor.Green, TextAlign.Center);
+                index = 0;
+                foreach (var attribute in Enum.GetValues<Data.Attribute>())
+                {
+                    if (attribute == Data.Attribute.Age)
+                        break;
+
+                    int y = 57 + index++ * Global.GlyphLineHeight;
+                    var attributeValues = partyMember.Attributes[attribute];
+                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAttributeUIName(attribute));
+                    layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
+                        (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
+                }
+                #endregion
+                #region Abilities
+                layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.AbilitiesHeaderString, TextColor.Green, TextAlign.Center);
+                index = 0;
+                foreach (var ability in Enum.GetValues<Ability>())
+                {
+                    int y = 122 + index++ * Global.GlyphLineHeight;
+                    var abilityValues = partyMember.Abilities[ability];
+                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityUIName(ability));
+                    layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
+                        (abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%");
+                }
+                #endregion
+                #region Languages
+                layout.AddText(new Rect(106, 50, 72, Global.GlyphLineHeight), DataNameProvider.LanguagesHeaderString, TextColor.Green, TextAlign.Center);
+                index = 0;
+                foreach (var language in Enum.GetValues<Language>().Skip(1)) // skip Language.None
+                {
+                    int y = 57 + index++ * Global.GlyphLineHeight;
+                    bool learned = partyMember.SpokenLanguages.HasFlag(language);
+                    if (learned)
+                        layout.AddText(new Rect(106, y, 72, Global.GlyphLineHeight), DataNameProvider.GetLanguageName(language));
+                }
+                #endregion
+                #region Abilities
+                layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.AbilitiesHeaderString, TextColor.Green, TextAlign.Center);
+                index = 0;
+                foreach (var ability in Enum.GetValues<Ability>())
+                {
+                    int y = 122 + index++ * Global.GlyphLineHeight;
+                    var abilityValues = partyMember.Abilities[ability];
+                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityUIName(ability));
+                    layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
+                        (abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%");
+                }
+                #endregion
+                #region Ailments
+                layout.AddText(new Rect(106, 115, 72, Global.GlyphLineHeight), DataNameProvider.AilmentsHeaderString, TextColor.Green, TextAlign.Center);
+                index = 0;
+                // Total space is 80 pixels wide. Each ailment icon is 16 pixels wide. So there is space for 5 ailment icons per line.
+                const int ailmentsPerRow = 5;
+                if (!partyMember.Alive)
+                {
+                    // When dead, only show the dead condition.
+                    layout.AddSprite(new Rect(96, 124, 16, 16), Graphics.GetAilmentGraphicIndex(Ailment.DeadCorpse), 49,
+                        2, DataNameProvider.GetAilmentName(Ailment.DeadCorpse), TextColor.Yellow);
+                }
+                else
+                {
+                    foreach (var ailment in Enum.GetValues<Ailment>().Skip(1)) // skip Ailment.None
+                    {
+                        if (!partyMember.Ailments.HasFlag(ailment))
+                            continue;
+
+                        int column = index % ailmentsPerRow;
+                        int row = index / ailmentsPerRow;
+                        ++index;
+
+                        int x = 96 + column * 16;
+                        int y = 124 + row * 17;
+                        layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), 49,
+                            2, DataNameProvider.GetAilmentName(ailment), TextColor.Yellow);
+                    }
+                }
                 #endregion
             }
 
@@ -2167,12 +2248,14 @@ namespace Ambermoon
                 {
                     int partyMemberIndex = (int)currentWindow.WindowParameter;
                     currentWindow = DefaultWindow;
-                    OpenPartyMember(partyMemberIndex);
+                    OpenPartyMember(partyMemberIndex, true);
                     break;
                 }
                 case Window.Stats:
                 {
-                    // TODO
+                    int partyMemberIndex = (int)currentWindow.WindowParameter;
+                    currentWindow = DefaultWindow;
+                    OpenPartyMember(partyMemberIndex, false);
                     break;
                 }
                 case Window.Chest:
