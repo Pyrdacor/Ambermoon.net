@@ -70,7 +70,7 @@ namespace Ambermoon.Renderer
             $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
             $"        discard;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = vec4({DefaultLightName} * pixelColor.rgb, pixelColor.a);",
+            $"        {DefaultFragmentOutColorName} = vec4({DefaultLightName} * pixelColor.rg, min(1.0f, 0.25f + {DefaultLightName}) * pixelColor.b, pixelColor.a);",
             $"     gl_FragDepth = 0.5 * depth + 0.5;",
             $"}}"
         };

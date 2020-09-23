@@ -380,7 +380,7 @@ namespace Ambermoon
             {
                 // Light is based on daytime and own light sources
                 float daytimeFactor = 1.0f - (Math.Abs((int)currentSavegame.Hour * 60 + currentSavegame.Minute - 12 * 60)) / (24.0f * 60.0f);
-                return daytimeFactor; // TODO: light sources
+                return daytimeFactor * daytimeFactor * daytimeFactor; // TODO: light sources
             }
             else
             {
@@ -448,11 +448,11 @@ namespace Ambermoon
             ResetMoveKeys();
             layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, false, TravelType.Walk));
 
-            renderView.SetLight(GetLight3D());
             is3D = true;
             TravelType = TravelType.Walk;
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction);
+            renderView.SetLight(GetLight3D());
             player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks);
             if (player2D != null)
                 player2D.Visible = false;
