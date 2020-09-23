@@ -81,6 +81,7 @@ namespace Ambermoon
 
         // TODO: cleanup members
         readonly Random random = new Random();
+        const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         internal const uint TicksPerSecond = 60;
         readonly bool legacyMode = false;
@@ -1333,12 +1334,37 @@ namespace Ambermoon
             }
         }
 
-        internal void OpenPartyMember(int slot)
+        internal void OpenPartyMember(int slot, bool inventory = true)
         {
             if (currentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
 
-            Action openAction = () =>
+            void DisplayCharacterInfo(PartyMember partyMember)
+            {
+                layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
+                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 50, 1);
+                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
+                layout.AddText(new Rect(242, 49, 62, 7), DataNameProvider.GetRaceName(partyMember.Race));
+                layout.AddText(new Rect(242, 56, 62, 7), DataNameProvider.GetGenderName(partyMember.Gender));
+                layout.AddText(new Rect(242, 63, 62, 7), string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
+                    partyMember.Attributes[Data.Attribute.Age].CurrentValue));
+                layout.AddText(new Rect(242, 70, 62, 7), $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
+                layout.AddText(new Rect(242, 77, 62, 7), string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                    partyMember.ExperiencePoints));
+                layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
+                layout.AddText(new Rect(208, 91, 96, 7), string.Format(DataNameProvider.CharacterInfoHitPointsString,
+                    partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue), TextColor.White, TextAlign.Center);
+                layout.AddText(new Rect(208, 98, 96, 7), string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                    partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue), TextColor.White, TextAlign.Center);
+                layout.AddText(new Rect(208, 105, 96, 7),
+                    string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
+                    string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center);
+                layout.AddText(new Rect(208, 112, 96, 7), string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
+                    TextColor.White, TextAlign.Center);
+                // TODO: attack, defense
+            }
+
+            void OpenInventory()
             {
                 layout.Reset();
                 ShowMap(false);
@@ -1351,6 +1377,7 @@ namespace Ambermoon
 
                 CurrentInventoryIndex = slot;
                 var partyMember = GetPartyMember(slot);
+
                 #region Equipment and Inventory
                 // Weight display
                 var weightArea = new Rect(27, 152, 68, 15);
@@ -1456,32 +1483,31 @@ namespace Ambermoon
                 };
                 #endregion
                 #region Character info
-                layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 50, 1);
-                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
-                layout.AddText(new Rect(242, 49, 62, 7), DataNameProvider.GetRaceName(partyMember.Race));
-                layout.AddText(new Rect(242, 56, 62, 7), DataNameProvider.GetGenderName(partyMember.Gender));
-                layout.AddText(new Rect(242, 63, 62, 7), string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
-                    partyMember.Attributes[Data.Attribute.Age].CurrentValue));
-                layout.AddText(new Rect(242, 70, 62, 7), $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
-                layout.AddText(new Rect(242, 77, 62, 7), string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
-                    partyMember.ExperiencePoints));
-                layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
-                layout.AddText(new Rect(208, 91, 96, 7), string.Format(DataNameProvider.CharacterInfoHitPointsString,
-                    partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 98, 96, 7), string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                    partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 105, 96, 7),
-                    string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
-                    string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 112, 96, 7), string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
-                    TextColor.White, TextAlign.Center);
+                DisplayCharacterInfo(partyMember);
                 #endregion
+            }
 
-                // TODO
-            };
+            void OpenCharacterStats()
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Stats, slot);
+                layout.SetLayout(LayoutType.Stats);
 
-            if (currentWindow.Window == Window.Inventory)
+                windowTitle.Visible = false;
+
+                CurrentInventoryIndex = slot;
+                var partyMember = GetPartyMember(slot);
+
+                #region Character info
+                DisplayCharacterInfo(partyMember);
+                #endregion
+            }
+
+            Action openAction = inventory ? (Action)OpenInventory: OpenCharacterStats;
+
+            if ((currentWindow.Window == Window.Inventory && inventory) ||
+                (currentWindow.Window == Window.Stats && !inventory))
                 openAction();
             else
                 Fade(openAction);
@@ -1506,8 +1532,10 @@ namespace Ambermoon
 
         void Fade(Action midFadeAction)
         {
-            layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Color.Black, FadeEffectType.FadeInAndOut, 400);
-            AddTimedEvent(TimeSpan.FromMilliseconds(200), midFadeAction);
+            allInputDisabled = true;
+            layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
+            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), midFadeAction);
+            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
         internal void Teleport(MapChangeEvent mapChangeEvent)
@@ -2097,7 +2125,9 @@ namespace Ambermoon
 
         void SetWindow(Window window, object param = null, Action ev = null)
         {
-            lastWindow = currentWindow;
+            if ((window != Window.Inventory && window != Window.Stats) ||
+                (currentWindow.Window != Window.Inventory && currentWindow.Window != Window.Stats))
+                lastWindow = currentWindow;
             currentWindow = new WindowInfo { Window = window, WindowParameter = param, WindowEvent = ev };
         }
 

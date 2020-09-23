@@ -15,7 +15,7 @@ namespace Ambermoon.UI
         Items, // Chest, merchant, battle loot and other places like trainers etc
         Battle,
         Map3D,
-        Unknown2,
+        Stats,
         Event, // Game over, airship travel, grandfather intro, valdyn sequence
         Conversation,
         Riddlemouth,
@@ -180,7 +180,11 @@ namespace Ambermoon.UI
                 var now = DateTime.Now;
 
                 if (now <= startTime)
-                    percentage = 0.0f;
+                {
+                    // Don't draw anything before started.
+                    Color = Color.Transparent;
+                    return;
+                }
                 else
                 {
                     var elapsed = (int)(now - startTime).TotalMilliseconds;
@@ -188,7 +192,7 @@ namespace Ambermoon.UI
                     if (elapsed >= duration && Finished())
                         return;
 
-                    percentage = (float)elapsed / duration;
+                    percentage = Math.Min(1.0f, (float)elapsed / duration);
                 }
             }
 
@@ -694,7 +698,7 @@ namespace Ambermoon.UI
                     }
                     break;
                 case LayoutType.Inventory:
-                    buttonGrid.SetButton(0, ButtonType.Stats, true, null, true); // TODO: stats
+                    buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false);
                     buttonGrid.SetButton(1, ButtonType.UseItem, true, null, true); // TODO: use item
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
                     if (game.StorageOpen)
@@ -712,6 +716,17 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
                     buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO: give gold
                     buttonGrid.SetButton(8, ButtonType.GiveFood, true, null, false); // TODO: give food
+                    break;
+                case LayoutType.Stats:
+                    buttonGrid.SetButton(0, ButtonType.Inventory, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, true), false);
+                    buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                     break;
                 case LayoutType.Items:
                     // TODO: this is only for open chests now
@@ -969,8 +984,12 @@ namespace Ambermoon.UI
         public void AddColorFader(Rect rect, Color startColor, Color endColor,
             int durationInMilliseconds, bool removeWhenFinished, DateTime? startTime = null)
         {
-            fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, startColor, 255, FilledAreaType.FadeEffect), startColor,
-                endColor, durationInMilliseconds, startTime ?? DateTime.Now, removeWhenFinished));
+            var now = DateTime.Now;
+            var startingTime = startTime ?? now;
+            var initialColor = startingTime > now ? Color.Transparent : startColor;
+
+            fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, initialColor, 255, FilledAreaType.FadeEffect), startColor,
+                endColor, durationInMilliseconds, startingTime, removeWhenFinished));
         }
 
         public void AddFadeEffect(Rect rect, Color color, FadeEffectType fadeEffectType,
@@ -985,8 +1004,11 @@ namespace Ambermoon.UI
                     AddColorFader(rect, color, new Color(color, 0), durationInMilliseconds, true);
                     break;
                 case FadeEffectType.FadeInAndOut:
-                    var halfDuration = durationInMilliseconds / 2;
-                    AddColorFader(rect, new Color(color, 0), color, halfDuration, true);
+                    var quarterDuration = durationInMilliseconds / 4;
+                    var halfDuration = quarterDuration * 2;
+                    AddColorFader(rect, new Color(color, 0), color, quarterDuration, true);
+                    AddColorFader(rect, color, color, quarterDuration, true,
+                        DateTime.Now + TimeSpan.FromMilliseconds(quarterDuration));
                     AddColorFader(rect, color, new Color(color, 0), halfDuration, true,
                         DateTime.Now + TimeSpan.FromMilliseconds(halfDuration));
                     break;
