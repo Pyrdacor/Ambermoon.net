@@ -596,9 +596,12 @@ namespace Ambermoon
 
             InputEnable = true;
 
-            // Trigger events after game load
-            TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
-                (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
+            // Trigger events after game load (3D is handled above in Start3D)
+            if (!is3D)
+            {
+                TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
+                    (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
+            }
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
