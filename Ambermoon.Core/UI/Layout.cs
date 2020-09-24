@@ -712,13 +712,13 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
                     if (game.StorageOpen)
                     {
-                        buttonGrid.SetButton(3, ButtonType.DropItem, true, null, false); // TODO: drop item
+                        buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem, false), false);
                         buttonGrid.SetButton(4, ButtonType.DropGold, true, null, false); // TODO: drop gold
                         buttonGrid.SetButton(5, ButtonType.DropFood, true, null, false); // TODO: drop food
                     }
                     else
                     {
-                        buttonGrid.SetButton(3, ButtonType.StoreItem, true, null, false); // TODO: store item
+                        buttonGrid.SetButton(3, ButtonType.StoreItem, false, () => PickInventoryItemForAction(StoreItem, false), false);
                         buttonGrid.SetButton(4, ButtonType.StoreGold, true, null, false); // TODO: store gold
                         buttonGrid.SetButton(5, ButtonType.StoreFood, true, null, false); // TODO: store food
                     }
@@ -762,6 +762,42 @@ namespace Ambermoon.UI
                     break;
                 // TODO
             }
+        }
+
+        void UseItem(ItemSlot itemSlot)
+        {
+
+        }
+
+        void DropItem(ItemSlot itemSlot)
+        {
+
+        }
+
+        void StoreItem(ItemSlot itemSlot)
+        {
+
+        }
+
+        void PickInventoryItemForAction(Action<ItemSlot> itemAction, bool includeEquipment)
+        {
+            // Note: itemGrids[0] is the inventory and itemGrids[1] is the equipment.
+            game.TrapMouse(includeEquipment ? Global.InventoryAndEquipTrapArea : Global.InventoryTrapArea);
+
+            void ItemChosen(int slot, ItemSlot itemSlot)
+            {
+                itemGrids[0].DisableDrag = false;
+                itemGrids[1].DisableDrag = false;
+                itemGrids[0].ItemClicked -= ItemChosen;
+                itemGrids[1].ItemClicked -= ItemChosen;
+                game.UntrapMouse();
+                itemAction?.Invoke(itemSlot);
+            }
+
+            itemGrids[0].DisableDrag = true;
+            itemGrids[1].DisableDrag = true;
+            itemGrids[0].ItemClicked += ItemChosen;
+            itemGrids[1].ItemClicked += ItemChosen;
         }
 
         public void Reset()
@@ -1200,7 +1236,7 @@ namespace Ambermoon.UI
                     return false;
             }
 
-            if (buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
+            if (draggedItem == null && buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
             {
                 if (newCursorType != null)
                     cursorType = newCursorType.Value;

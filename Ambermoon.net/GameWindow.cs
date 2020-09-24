@@ -20,6 +20,7 @@ namespace Ambermoon
         IRenderView renderView;
         IWindow window;
         bool fullscreen = false;
+        IMouse mouse = null;
         ICursor cursor = null;
 
         public string Identifier { get; }
@@ -59,7 +60,7 @@ namespace Ambermoon
                 keyboard.KeyChar += Keyboard_KeyChar;
             }
 
-            var mouse = inputContext.Mice.FirstOrDefault(m => m.IsConnected);
+            mouse = inputContext.Mice.FirstOrDefault(m => m.IsConnected);
 
             if (mouse != null)
             {
@@ -214,7 +215,13 @@ namespace Ambermoon
                 new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
                 configuration.LegacyMode);
             Game.QuitRequested += window.Close;
-            Game.MouseTrappedChanged += (bool trapped) => cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+            Game.MouseTrappedChanged += (bool trapped, Position position) =>
+            {
+                cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+
+                if (!trapped) // Let the mouse stay at the current position when untrapping.
+                    mouse.Position = new System.Drawing.PointF(position.X, position.Y);
+            };
             Game.Run();
         }
 

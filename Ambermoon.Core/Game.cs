@@ -5,6 +5,7 @@ using Ambermoon.Render;
 using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Ambermoon
@@ -164,7 +165,7 @@ namespace Ambermoon
         Position lastMousePosition = new Position();
         readonly Position trappedMousePositionOffset = new Position();
         bool trapped => trapMouseArea != null;
-        public event Action<bool> MouseTrappedChanged;
+        public event Action<bool, Position> MouseTrappedChanged;
         /// <summary>
         /// All words you have heard about in conversations.
         /// </summary>
@@ -334,19 +335,24 @@ namespace Ambermoon
             return position;
         }
 
-        void TrapMouse(Rect area)
+        internal void TrapMouse(Rect area)
         {
             trapMouseArea = renderView.GameToScreen(area);
-            trappedMousePositionOffset.X = trapMouseArea.Left - lastMousePosition.X;
-            trappedMousePositionOffset.Y = trapMouseArea.Top - lastMousePosition.Y;
+            trappedMousePositionOffset.X = trapMouseArea.X - lastMousePosition.X;
+            trappedMousePositionOffset.Y = trapMouseArea.Y - lastMousePosition.Y;
             UpdateCursor(trapMouseArea.Position, MouseButtons.None);
-            MouseTrappedChanged?.Invoke(true);
+            MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
         }
 
-        void UntrapMouse()
+        internal void UntrapMouse()
         {
+            if (trapMouseArea == null)
+                return;
+
+            MouseTrappedChanged?.Invoke(false, GetMousePosition(lastMousePosition));
             trapMouseArea = null;
-            MouseTrappedChanged?.Invoke(false);
+            trappedMousePositionOffset.X = 0;
+            trappedMousePositionOffset.Y = 0;
         }
 
         void ResetMoveKeys()
@@ -496,9 +502,7 @@ namespace Ambermoon
                 keys[i] = false;
             leftMouseDown = false;
             clickMoveActive = false;
-            trapMouseArea = null;
-            trappedMousePositionOffset.X = 0;
-            trappedMousePositionOffset.Y = 0;
+            UntrapMouse();
             InputEnable = false;
         }
 
@@ -986,12 +990,12 @@ namespace Ambermoon
             }
         }
 
-        public void OnMouseUp(Position position, MouseButtons buttons)
+        public void OnMouseUp(Position cursorPosition, MouseButtons buttons)
         {
             if (allInputDisabled)
                 return;
 
-            position = GetMousePosition(position);
+            var position = GetMousePosition(cursorPosition);
 
             if (buttons.HasFlag(MouseButtons.Right))
             {
@@ -1010,7 +1014,7 @@ namespace Ambermoon
                 if (cursorType != null && cursorType != CursorType.None)
                     CursorType = cursorType.Value;
                 else
-                    UpdateCursor(position, MouseButtons.None);
+                    UpdateCursor(GetMousePosition(cursorPosition), MouseButtons.None);
             }
         }
 
@@ -1400,7 +1404,8 @@ namespace Ambermoon
                 };
                 var inventorySlotPositions = Enumerable.Range(0, Inventory.VisibleWidth * Inventory.VisibleHeight).Select
                 (
-                    slot => new Position(109 + (slot % Inventory.Width) * 22, 76 + (slot / Inventory.Width) * 29)
+                    slot => new Position(Global.InventoryX + (slot % Inventory.Width) * Global.InventorySlotWidth,
+                        Global.InventoryY + (slot / Inventory.Width) * Global.InventorySlotHeight)
                 ).ToList();
                 var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager, inventorySlotPositions);
                 layout.AddItemGrid(inventoryGrid);
@@ -1478,6 +1483,7 @@ namespace Ambermoon
                         equipmentGrid.SetItem(slot + 2, null);
 
                     // TODO: rings/fingers
+                    // TODO: update weight, def, atk, lp, sp, etc
                 };
                 equipmentGrid.ItemDropped += (int slot, Item item) =>
                 {
@@ -1485,6 +1491,7 @@ namespace Ambermoon
                         equipmentGrid.SetItem((int)EquipmentSlot.LeftHand - 1, new ItemSlot { ItemIndex = 0, Amount = 1 });
 
                     // TODO: rings/fingers
+                    // TODO: update weight, def, atk, lp, sp, etc
                 };
                 #endregion
                 #region Character info

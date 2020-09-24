@@ -1,4 +1,5 @@
-﻿using Ambermoon.Render;
+﻿using Ambermoon.Data;
+using Ambermoon.Render;
 using System.Linq;
 
 namespace Ambermoon
@@ -17,6 +18,14 @@ namespace Ambermoon
         public const int Map3DViewHeight = 144;
         public const int ButtonGridX = 208;
         public const int ButtonGridY = 143;
+        public const int InventoryX = 109;
+        public const int InventoryY = 76;
+        public const int InventorySlotWidth = 22;
+        public const int InventorySlotHeight = 29;
+        public const int InventoryWidth = Inventory.VisibleWidth * InventorySlotWidth;
+        public const int InventoryHeight = Inventory.VisibleHeight * InventorySlotHeight;
+        public static readonly Rect InventoryTrapArea = Rect.CreateFromBoundaries(108, 75, 179, 185);
+        public static readonly Rect InventoryAndEquipTrapArea = Rect.CreateFromBoundaries(19, 71, 179, 185);
         /// <summary>
         /// This includes a 1-pixel border around the portrait.
         /// </summary>

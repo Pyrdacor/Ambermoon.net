@@ -31,6 +31,7 @@ namespace Ambermoon.UI
 
         public event Action<int, Item> ItemDragged;
         public event Action<int, Item> ItemDropped;
+        public event Action<int, ItemSlot> ItemClicked;
         /// <summary>
         /// Called when starting dropping. Should return
         /// the slot index to drop or -1 if dropping is
@@ -64,6 +65,7 @@ namespace Ambermoon.UI
                     background.TextureAtlasOffset = slotTexCoords;
             }
         }
+        public bool DisableDrag { get; set; } = false;
 
 
         private ItemGrid(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
@@ -181,6 +183,9 @@ namespace Ambermoon.UI
 
         public int DropItem(int slot, UIItem item)
         {
+            if (DisableDrag)
+                return item.Item.Amount;
+
             int? newSlot = Dropping?.Invoke(slot, itemManager.GetItem(item.Item.ItemIndex));
 
             if (newSlot != null)
@@ -314,7 +319,7 @@ namespace Ambermoon.UI
 
         public bool Drag(Position position)
         {
-            if (disabled)
+            if (disabled || DisableDrag)
                 return false;
 
             if (scrollbar?.Drag(position) == true)
@@ -381,12 +386,23 @@ namespace Ambermoon.UI
             {
                 var itemSlot = items[slot.Value];
 
-                if (itemSlot != null && itemSlot.Item.Draggable)
+                if (itemSlot != null)
                 {
-                    pickedUpItem = pickupAction(this, slot.Value, itemSlot);
-                    ItemDragged?.Invoke(slot.Value, itemManager.GetItem(pickedUpItem.Item.Item.ItemIndex));
-                    items[slot.Value] = null;
-                    Hover(position); // This updates the tooltip
+                    // Note: ItemClicked handler may re-enable dragging
+                    //       but we don't want to drag immediately here
+                    //       so remember drag disable state for this
+                    //       click execution.
+                    bool dragDisabled = DisableDrag;
+
+                    ItemClicked?.Invoke(slot.Value, itemSlot.Item);
+
+                    if (!dragDisabled && itemSlot.Item.Draggable)
+                    {
+                        pickedUpItem = pickupAction(this, slot.Value, itemSlot);
+                        ItemDragged?.Invoke(slot.Value, itemManager.GetItem(pickedUpItem.Item.Item.ItemIndex));
+                        items[slot.Value] = null;
+                        Hover(position); // This updates the tooltip
+                    }
                 }
             }
 
