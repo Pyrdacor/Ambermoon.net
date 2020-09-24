@@ -47,9 +47,9 @@
         Candle, // light
         Shield, // magic protection buff
         Sword, // magic attack buff
-        Star, // magic buff
+        Star, // anti-magic buff
         Eye, // magic sight
-        Scroll, // magic map?
+        Map, // mystic map
         Windchain,
         MonsterEyeInactive,
         MonsterEyeActive,
@@ -59,10 +59,15 @@
         Dawn,
         ButtonFrame,
         ButtonFramePressed,
-        DisabledOverlay32x4,
+        ButtonDisabledOverlay, // 30x4
         Compass,
-        Unknown,
+        Attack, // 16x9
+        Defense, // 16x9
         Skull,
-        EmptyCharacterSlot
+        EmptyCharacterSlot,
+        OpeningPortal, // or smoke?, 11 frames with 16x16 pixels
+        Talisman, // golden symbol / talisman
+        Diagonals, // 4 diagonals? 64x9 (each is 16x9 inside it)
+        BorderWithTriangles, // 8x85 border-like image with triangles
     }
 }

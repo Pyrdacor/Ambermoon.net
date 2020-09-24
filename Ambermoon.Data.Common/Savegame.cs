@@ -149,7 +149,7 @@ namespace Ambermoon.Data
 
 
         // TODO: automap
-        // TODO: time, ...
+        // TODO: ...
 
         public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot] - 1];
 

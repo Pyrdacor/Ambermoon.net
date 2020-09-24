@@ -19,6 +19,8 @@
         string CharacterInfoAgeString { get; }
         string CharacterInfoWeightHeaderString { get; }
         string CharacterInfoWeightString { get; }
+        string CharacterInfoDamageString { get; }
+        string CharacterInfoDefenseString { get; }
         string GetWorldName(World world);
         string InventoryTitleString { get; }
         string AttributesHeaderString { get; }

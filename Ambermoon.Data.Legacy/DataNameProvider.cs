@@ -18,16 +18,14 @@
         public string CharacterInfoAgeString => executableData.UITexts.Entries[UITextIndex.AgeDisplay];
         public string CharacterInfoExperiencePointsString => executableData.UITexts.Entries[UITextIndex.EPDisplay];
         public string CharacterInfoGoldAndFoodString => executableData.UITexts.Entries[UITextIndex.GoldAndFoodDisplay];
-
         public string CharacterInfoHitPointsString => executableData.UITexts.Entries[UITextIndex.LPDisplay];
-
         public string CharacterInfoSpellPointsString => executableData.UITexts.Entries[UITextIndex.SPDisplay];
-
         public string CharacterInfoSpellLearningPointsString => executableData.UITexts.Entries[UITextIndex.SLPDisplay];
-
         public string CharacterInfoTrainingPointsString => executableData.UITexts.Entries[UITextIndex.TPDisplay];
         public string CharacterInfoWeightHeaderString => executableData.UITexts.Entries[UITextIndex.Weight];
         public string CharacterInfoWeightString => executableData.UITexts.Entries[UITextIndex.WeightKilogramDisplay];
+        public string CharacterInfoDamageString => executableData.UITexts.Entries[UITextIndex.LabeledValueDisplay];
+        public string CharacterInfoDefenseString => executableData.UITexts.Entries[UITextIndex.LabeledValueDisplay];
 
         public string GetAilmentName(Ailment ailment) => executableData.AilmentNames.Entries[ailment];
 

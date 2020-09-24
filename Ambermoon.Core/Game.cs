@@ -1352,16 +1352,21 @@ namespace Ambermoon
                 layout.AddText(new Rect(242, 77, 62, 7), string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                     partyMember.ExperiencePoints));
                 layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
-                layout.AddText(new Rect(208, 91, 96, 7), string.Format(DataNameProvider.CharacterInfoHitPointsString,
+                layout.AddText(new Rect(208, 92, 96, 7), string.Format(DataNameProvider.CharacterInfoHitPointsString,
                     partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 98, 96, 7), string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                layout.AddText(new Rect(208, 99, 96, 7), string.Format(DataNameProvider.CharacterInfoSpellPointsString,
                     partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 105, 96, 7),
+                layout.AddText(new Rect(208, 106, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
                     string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 112, 96, 7), string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
+                layout.AddText(new Rect(208, 113, 96, 7), string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
                     TextColor.White, TextAlign.Center);
-                // TODO: attack, defense
+                layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
+                layout.AddText(new Rect(220, 122, 30, 7), string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', '+'), partyMember.Attack),
+                    TextColor.White, TextAlign.Left);
+                layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
+                layout.AddText(new Rect(268, 122, 30, 7), string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', '+'), partyMember.Defense),
+                    TextColor.White, TextAlign.Left);
             }
 
             void OpenInventory()

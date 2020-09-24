@@ -44,7 +44,6 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.FrameLowerRight, ReadGraphic(dataReader));
 
             // Palette 50 (same as items)
-            dataReader.Position = 960;
             graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
             graphicInfo.PaletteOffset = 0;
             for (int i = (int)UIGraphic.StatusDead; i <= (int)UIGraphic.StatusRangeAttack; ++i)
@@ -79,7 +78,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.SmallBorder1, ReadGraphic(dataReader));
             entries.Add(UIGraphic.SmallBorder2, ReadGraphic(dataReader));
             graphicInfo.Height = 16;
-            for (int i = (int)UIGraphic.Candle; i <= (int)UIGraphic.Scroll; ++i)
+            for (int i = (int)UIGraphic.Candle; i <= (int)UIGraphic.Map; ++i)
                 entries.Add((UIGraphic)i, ReadGraphic(dataReader));
 
             graphicInfo.Width = 32;
@@ -98,15 +97,42 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.Height = 17;
             entries.Add(UIGraphic.ButtonFrame, ReadGraphic(dataReader));
             entries.Add(UIGraphic.ButtonFramePressed, ReadGraphic(dataReader));
+            graphicInfo.Width = 30;
             graphicInfo.Height = 4;
-            entries.Add(UIGraphic.DisabledOverlay32x4, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.ButtonDisabledOverlay, ReadGraphic(dataReader));
+            graphicInfo.Width = 32;
             graphicInfo.Height = 32;
             entries.Add(UIGraphic.Compass, ReadGraphic(dataReader));
+            graphicInfo.Width = 16;
             graphicInfo.Height = 9;
-            entries.Add(UIGraphic.Unknown, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.Attack, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.Defense, ReadGraphic(dataReader));
+            graphicInfo.Width = 32;
             graphicInfo.Height = 34;
             entries.Add(UIGraphic.Skull, ReadGraphic(dataReader));
             entries.Add(UIGraphic.EmptyCharacterSlot, ReadGraphic(dataReader));
+            graphicInfo.Width = 16;
+            graphicInfo.Height = 16;
+            graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
+            graphicInfo.PaletteOffset = 24;
+            var compoundGraphic = new Graphic(176, 16, 0);
+            for (uint i = 0; i < 11; ++i)
+                compoundGraphic.AddOverlay(i * 16u, 0u, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.OpeningPortal, compoundGraphic);
+            graphicInfo.Width = 32;
+            graphicInfo.Height = 29;
+            graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
+            graphicInfo.PaletteOffset = 0;
+            entries.Add(UIGraphic.Talisman, ReadGraphic(dataReader));
+            dataReader.Position += 64; // Unknown 64 bytes
+            graphicInfo.Width = 64;
+            graphicInfo.Height = 9;
+            graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
+            graphicInfo.PaletteOffset = 24;
+            entries.Add(UIGraphic.Diagonals, ReadGraphic(dataReader));
+            graphicInfo.Width = 8;
+            graphicInfo.Height = 85;
+            entries.Add(UIGraphic.BorderWithTriangles, ReadGraphic(dataReader));
         }
     }
 }

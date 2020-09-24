@@ -31,12 +31,13 @@ namespace Ambermoon.Data.Legacy
                 var duration = dataReader.ReadWord();
 
                 if (duration == 0)
+                {
                     savegame.ActiveSpells[(int)activeSpellType] = null;
+                    dataReader.Position += 2;
+                }
                 else
                     savegame.ActivateSpell(activeSpellType, duration, dataReader.ReadWord());
             }
-
-            dataReader.Position = 42;
 
             dataReader.ReadWord(); // Number of party members. We don't really need it.
             savegame.ActivePartyMemberSlot = dataReader.ReadWord() - 1; // it is stored 1-based
