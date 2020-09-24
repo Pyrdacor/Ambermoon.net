@@ -330,6 +330,7 @@ namespace Ambermoon.UI
         readonly List<UIText> texts = new List<UIText>();
         readonly List<Tooltip> tooltips = new List<Tooltip>();
         IRenderText activeTooltip = null;
+        UIText inventoryMessage = null;
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
@@ -573,17 +574,17 @@ namespace Ambermoon.UI
             return popup;
         }
 
-        internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction, Action closeAction)
+        internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction, Action closeAction, int minLines = 3)
         {
             ClosePopup(false);
             const int maxTextWidth = 192;
             var processedText = RenderView.TextProcessor.WrapText(text,
                 new Rect(48, 0, maxTextWidth, int.MaxValue),
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-            var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(4, processedText.LineCount) * Global.GlyphLineHeight);
+            var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
                 processedText, TextColor.Gray, true, textBounds);
-            int popupRows = Math.Max(5, 2 + (textBounds.Height + 31) / 16);
+            int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 31) / 16);
             activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false)
             {
                 DisableButtons = true,
@@ -710,17 +711,19 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false);
                     buttonGrid.SetButton(1, ButtonType.UseItem, true, null, true); // TODO: use item
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
-                    if (game.StorageOpen)
+                    if (game.OpenStorage != null)
                     {
-                        buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem, false), false);
-                        buttonGrid.SetButton(4, ButtonType.DropGold, true, null, false); // TODO: drop gold
-                        buttonGrid.SetButton(5, ButtonType.DropFood, true, null, false); // TODO: drop food
+                        buttonGrid.SetButton(3, ButtonType.StoreItem, false, () => PickInventoryItemForAction(StoreItem,
+                            false, game.DataNameProvider.WhichItemToStoreMessage), false);
+                        buttonGrid.SetButton(4, ButtonType.StoreGold, true, null, false); // TODO: store gold
+                        buttonGrid.SetButton(5, ButtonType.StoreFood, true, null, false); // TODO: store food
                     }
                     else
                     {
-                        buttonGrid.SetButton(3, ButtonType.StoreItem, false, () => PickInventoryItemForAction(StoreItem, false), false);
-                        buttonGrid.SetButton(4, ButtonType.StoreGold, true, null, false); // TODO: store gold
-                        buttonGrid.SetButton(5, ButtonType.StoreFood, true, null, false); // TODO: store food
+                        buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem,
+                            false, game.DataNameProvider.WhichItemToDropMessage), false);
+                        buttonGrid.SetButton(4, ButtonType.DropGold, true, null, false); // TODO: drop gold
+                        buttonGrid.SetButton(5, ButtonType.DropFood, true, null, false); // TODO: drop food
                     }
                     buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
                     buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO: give gold
@@ -764,40 +767,114 @@ namespace Ambermoon.UI
             }
         }
 
-        void UseItem(ItemSlot itemSlot)
+        void Ask(string question, Action yesAction)
+        {
+            var text = RenderView.TextProcessor.CreateText(question);
+            OpenYesNoPopup
+            (
+                text,
+                () =>
+                {
+                    ClosePopup(false);
+                    game.InputEnable = true;
+                    yesAction?.Invoke();
+                },
+                () =>
+                {
+                    ClosePopup(false);
+                    game.InputEnable = true;
+                },
+                () =>
+                {
+                    game.InputEnable = true;
+                }, 1
+            );
+            game.InputEnable = false;
+            game.CursorType = CursorType.Sword;
+        }
+
+        void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
 
         }
 
-        void DropItem(ItemSlot itemSlot)
+        void DropItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
+            // TODO: amount for stacked items
 
+            void DropIt()
+            {
+                // TODO: animation where the item falls down the screen
+                itemSlot.Clear();
+                itemGrid.SetItem(slot, itemSlot); // update appearance
+            }
+
+            Ask(game.DataNameProvider.DropItemQuestion, DropIt);
         }
 
-        void StoreItem(ItemSlot itemSlot)
+        void StoreItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
+            // TODO: amount for stacked items
 
+            // TODO: animation where the item flies to the right of the screen
+            if (game.StoreItem(itemSlot))
+            {
+                itemSlot.Clear();
+                itemGrid.SetItem(slot, itemSlot); // update appearance
+            }
         }
 
-        void PickInventoryItemForAction(Action<ItemSlot> itemAction, bool includeEquipment)
+        void SetInventoryMessage(string message)
         {
+            if (message == null)
+            {
+                inventoryMessage?.Destroy();
+                inventoryMessage = null;
+            }
+            else if (inventoryMessage == null)
+            {
+                inventoryMessage = AddScrollableText(new Rect(21, 50, 162, 21), RenderView.TextProcessor.CreateText(message));
+            }
+            else
+            {
+                inventoryMessage.SetText(RenderView.TextProcessor.CreateText(message));
+            }
+        }
+
+        void PickInventoryItemForAction(Action<ItemGrid, int, ItemSlot> itemAction, bool includeEquipment, string message)
+        {
+            SetInventoryMessage(message);
+
             // Note: itemGrids[0] is the inventory and itemGrids[1] is the equipment.
             game.TrapMouse(includeEquipment ? Global.InventoryAndEquipTrapArea : Global.InventoryTrapArea);
 
-            void ItemChosen(int slot, ItemSlot itemSlot)
+            void ItemChosen(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
             {
+                SetInventoryMessage(null);
                 itemGrids[0].DisableDrag = false;
                 itemGrids[1].DisableDrag = false;
                 itemGrids[0].ItemClicked -= ItemChosen;
                 itemGrids[1].ItemClicked -= ItemChosen;
+                itemGrids[0].RightClicked -= Aborted;
+                itemGrids[1].RightClicked -= Aborted;
                 game.UntrapMouse();
-                itemAction?.Invoke(itemSlot);
+
+                if (itemGrid != null && itemSlot != null)
+                    itemAction?.Invoke(itemGrid, slot, itemSlot);
+            }
+
+            bool Aborted()
+            {
+                ItemChosen(null, 0, null);
+                return true;
             }
 
             itemGrids[0].DisableDrag = true;
             itemGrids[1].DisableDrag = true;
             itemGrids[0].ItemClicked += ItemChosen;
             itemGrids[1].ItemClicked += ItemChosen;
+            itemGrids[0].RightClicked += Aborted;
+            itemGrids[1].RightClicked += Aborted;
         }
 
         public void Reset()
@@ -819,6 +896,8 @@ namespace Ambermoon.UI
             activeTooltip?.Delete();
             activeTooltip = null;
             tooltips.Clear();
+            inventoryMessage?.Destroy();
+            inventoryMessage = null;
 
             // Note: Don't remove fadeEffects or bars here.
         }
@@ -1251,7 +1330,7 @@ namespace Ambermoon.UI
                 foreach (var itemGrid in itemGrids)
                 {
                     // TODO: If stacked it should ask for amount with left mouse
-                    if (itemGrid.Click(position, draggedItem, out DraggedItem pickedUpItem, true, ref cursorType))
+                    if (itemGrid.Click(position, draggedItem, out DraggedItem pickedUpItem, buttons, ref cursorType))
                     {
                         if (pickedUpItem != null)
                         {
@@ -1274,7 +1353,7 @@ namespace Ambermoon.UI
 
                     foreach (var itemGrid in itemGrids)
                     {
-                        if (itemGrid.Click(position, null, out DraggedItem pickedUpItem, false, ref cursorType))
+                        if (itemGrid.Click(position, null, out DraggedItem pickedUpItem, buttons, ref cursorType))
                         {
                             if (pickedUpItem != null)
                             {

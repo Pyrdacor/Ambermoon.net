@@ -31,7 +31,8 @@ namespace Ambermoon.UI
 
         public event Action<int, Item> ItemDragged;
         public event Action<int, Item> ItemDropped;
-        public event Action<int, ItemSlot> ItemClicked;
+        public event Action<ItemGrid, int, ItemSlot> ItemClicked;
+        public event Func<bool> RightClicked;
         /// <summary>
         /// Called when starting dropping. Should return
         /// the slot index to drop or -1 if dropping is
@@ -344,14 +345,14 @@ namespace Ambermoon.UI
         }
 
         public bool Click(Position position, Layout.DraggedItem draggedItem,
-            out Layout.DraggedItem pickedUpItem, bool leftMouseButton, ref CursorType cursorType)
+            out Layout.DraggedItem pickedUpItem, MouseButtons mouseButtons, ref CursorType cursorType)
         {
             pickedUpItem = draggedItem;
 
             if (disabled)
                 return false;
 
-            if (leftMouseButton && scrollbar?.LeftClick(position) == true)
+            if (mouseButtons == MouseButtons.Left && scrollbar?.LeftClick(position) == true)
             {
                 if (draggedItem != null)
                 {
@@ -362,6 +363,12 @@ namespace Ambermoon.UI
                 cursorType = CursorType.None;
 
                 return true;
+            }
+
+            if (mouseButtons == MouseButtons.Right)
+            {
+                if (RightClicked?.Invoke() == true)
+                    return true;
             }
 
             var slot = SlotFromPosition(position);
@@ -394,7 +401,8 @@ namespace Ambermoon.UI
                     //       click execution.
                     bool dragDisabled = DisableDrag;
 
-                    ItemClicked?.Invoke(slot.Value, itemSlot.Item);
+                    if (mouseButtons == MouseButtons.Left)
+                        ItemClicked?.Invoke(this, slot.Value, itemSlot.Item);
 
                     if (!dragDisabled && itemSlot.Item.Draggable)
                     {

@@ -191,7 +191,7 @@ namespace Ambermoon
         /// <summary>
         /// Open chest which can be used to store items.
         /// </summary>
-        internal bool StorageOpen { get; private set; }
+        internal Chest OpenStorage { get; private set; }
         Rect mapViewArea = map2DViewArea;
         static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
@@ -393,7 +393,7 @@ namespace Ambermoon
             }
         }
 
-        internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction)
+        internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial)
         {
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
@@ -444,7 +444,7 @@ namespace Ambermoon
             PlayerMoved(true);
         }
 
-        internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction)
+        internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial)
         {
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
@@ -457,7 +457,7 @@ namespace Ambermoon
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction);
             renderView.SetLight(GetLight3D());
-            player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks);
+            player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
             if (player2D != null)
                 player2D.Visible = false;
             player.Position.X = (int)playerX;
@@ -491,7 +491,7 @@ namespace Ambermoon
             CurrentInventory = null;
             CurrentInventoryIndex = null;
             CurrentCaster = null;
-            StorageOpen = false;
+            OpenStorage = null;
             dictionary.Clear();
             GlobalVariables.Clear();
             mapVariables.Clear();
@@ -580,9 +580,9 @@ namespace Ambermoon
             renderMap3D.MapChanged += RenderMap3D_MapChanged;
             TravelType = savegame.TravelType;
             if (is3D)
-                Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection);
+                Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection, true);
             else
-                Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection);
+                Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection, true);
             player.Position.X = (int)savegame.CurrentMapX - 1;
             player.Position.Y = (int)savegame.CurrentMapY - 1;
             TravelType = savegame.TravelType; // Yes this is necessary twice.
@@ -594,12 +594,9 @@ namespace Ambermoon
 
             InputEnable = true;
 
-            // Trigger events after game load (3D is handled above in Start3D)
-            if (!is3D)
-            {
-                TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
-                    (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
-            }
+            // Trigger events after game load
+            TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
+                (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
@@ -1309,7 +1306,7 @@ namespace Ambermoon
             {
                 layout.CancelDrag();
                 ResetCursor();
-                StorageOpen = false;
+                OpenStorage = null;
                 string mapName = Map.IsWorldMap
                     ? DataNameProvider.GetWorldName(Map.World)
                     : Map.Name;
@@ -1929,7 +1926,7 @@ namespace Ambermoon
                 layout.AddItemGrid(itemGrid);
 
                 if (!chestMapEvent.RemoveWhenEmpty)
-                    StorageOpen = true;
+                    OpenStorage = chest;
 
                 if (currentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
                 {
@@ -2175,10 +2172,34 @@ namespace Ambermoon
         }
 
         /// <summary>
+        /// Tries to store the item inside the opened storage.
+        /// </summary>
+        /// <param name="itemSlot">Item to store. Don't change the itemSlot itself!</param>
+        /// <returns>Status of dropping</returns>
+        internal bool StoreItem(ItemSlot itemSlot)
+        {
+            // TODO: For now we not support partial storing.
+            if (OpenStorage == null)
+                return false; // should not happen
+
+            // TODO: later check if there are stackable slots with same item
+
+            foreach (var slot in OpenStorage.Slots)
+            {
+                if (slot.Empty)
+                {
+                    slot.Add(itemSlot);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Returns the remaining amount of items that could not
         /// be dropped or 0 if all items were dropped successfully.
         /// </summary>
-        /// <returns></returns>
         internal int DropItem(int partyMemberIndex, int? slotIndex, ItemSlot item, bool allowItemExchange)
         {
             var partyMember = GetPartyMember(partyMemberIndex);

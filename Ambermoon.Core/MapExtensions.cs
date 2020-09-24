@@ -270,21 +270,37 @@ namespace Ambermoon
             return true;
         }
 
-        public static bool TriggerEvents(this Map map, Game game, IRenderPlayer player,
-            MapEventTrigger trigger, uint x, uint y, IMapManager mapManager, uint ticks)
+        public static bool TriggerEvents(this Map map, Game game, IRenderPlayer player, MapEventTrigger trigger,
+            uint x, uint y, IMapManager mapManager, uint ticks)
+        {
+            return TriggerEvents(map, game, player, trigger, x, y, mapManager, ticks, out bool _, false);
+        }
+
+        public static bool TriggerEvents(this Map map, Game game, IRenderPlayer player, MapEventTrigger trigger,
+            uint x, uint y, IMapManager mapManager, uint ticks, out bool hasMapEvent, bool noIndexReset = false)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
+            hasMapEvent = mapEventId != 0;
 
             if (trigger == MapEventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
                 return false;
 
-            LastMapEventIndexMap = map.Index;
-            LastMapEventIndex = mapEventId;
+            if (!noIndexReset || mapEventId != 0)
+            {
+                LastMapEventIndexMap = map.Index;
+                LastMapEventIndex = mapEventId;
+            }
 
             if (mapEventId == 0)
                 return false; // no map events at this position
 
             return TriggerEventChain(map, game, player, trigger, x, y, mapManager, ticks, map.EventLists[(int)mapEventId - 1]);
+        }
+
+        public static void ClearLastEvent(this Map map)
+        {
+            LastMapEventIndexMap = map.Index;
+            LastMapEventIndex = 0;
         }
     }
 }

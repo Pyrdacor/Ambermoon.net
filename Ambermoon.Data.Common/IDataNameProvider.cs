@@ -32,6 +32,9 @@
         string LoadWhichSavegameString { get; }
         string WrongRiddlemouthSolutionText { get; }
         string That { get; }
+        string DropItemQuestion { get; }
+        string WhichItemToDropMessage { get; }
+        string WhichItemToStoreMessage { get; }
 
         // TODO
     }

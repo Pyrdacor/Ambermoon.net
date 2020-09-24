@@ -113,7 +113,7 @@ namespace Ambermoon.Render
                 }
                 else
                 {
-                    game.Start3D(map, x, y, newDirection.Value);
+                    game.Start3D(map, x, y, newDirection.Value, false);
                     return;
                 }
             }

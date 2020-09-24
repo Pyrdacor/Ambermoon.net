@@ -46,13 +46,13 @@ namespace Ambermoon.Render
 
                 if (map.Type == MapType.Map2D)
                 {
-                    game.Start2D(map, x, y, newDirection.Value);
+                    game.Start2D(map, x, y, newDirection.Value, false);
                 }
                 else
                 {
                     this.map.SetMap(map, x, y, newDirection.Value);
                     var oldMapIndex = map.Index;
-                    SetPosition((int)x, (int)y, ticks);
+                    SetPosition((int)x, (int)y, ticks, false);
                     game.PlayerMoved(oldMapIndex != game.Map.Index);
 
                     if (newDirection != null)
@@ -62,7 +62,7 @@ namespace Ambermoon.Render
             else
             {
                 var oldMapIndex = map.Index;
-                SetPosition((int)x, (int)y, ticks);
+                SetPosition((int)x, (int)y, ticks, false);
                 game.PlayerMoved(oldMapIndex != game.Map.Index);
 
                 if (newDirection != null)
@@ -79,11 +79,12 @@ namespace Ambermoon.Render
         /// <summary>
         /// This will reset the view angle to up
         /// </summary>
-        public void SetPosition(int x, int y, uint ticks)
+        public void SetPosition(int x, int y, uint ticks, bool triggerEvents)
         {
             Position = new Position(x, y);
             ResetCameraPosition();
-            map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            if (triggerEvents)
+                map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
         }
 
         bool TestCollision(float x, float z, float lastMapX, float lastMapY)
@@ -113,10 +114,14 @@ namespace Ambermoon.Render
                     lastPosition = new Position(Position);
                 }
 
+                bool anyEventTriggered = false;
+
                 foreach (var touchedPosition in touchedPositions)
                 {
                     var oldMapIndex = map.Map.Index;
-                    map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y, mapManager, ticks);
+                    map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y,
+                        mapManager, ticks, out bool hasEvent, true);
+                    anyEventTriggered = anyEventTriggered || hasEvent;
 
                     if (oldMapIndex != game.Map.Index)
                     {
@@ -125,6 +130,9 @@ namespace Ambermoon.Render
                         break; // map changed
                     }
                 }
+
+                if (!anyEventTriggered)
+                    map.Map.ClearLastEvent();
             }
 
             Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
