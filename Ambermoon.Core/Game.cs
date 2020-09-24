@@ -1,11 +1,9 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
-using Ambermoon.Geometry;
 using Ambermoon.Render;
 using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Ambermoon
@@ -1286,8 +1284,11 @@ namespace Ambermoon
 
             if (is3D)
             {
+                if (consumed)
+                    return;
+
                 // In 3D we might trigger adjacent tile events.
-                if (!consumed && trigger != MapEventTrigger.Move)
+                if (trigger != MapEventTrigger.Move)
                 {
                     camera3D.GetForwardPosition(Global.DistancePerTile, out float x, out float z, false, false);
                     var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
@@ -1658,7 +1659,7 @@ namespace Ambermoon
                 {
                     // Trigger events after map transition
                     TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
-                        (uint)player.Position.Y + (Map.IsWorldMap ? 0u : 1u));
+                        (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
 
                     PlayerMoved(mapChange);
                 }

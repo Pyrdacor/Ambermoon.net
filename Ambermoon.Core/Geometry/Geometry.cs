@@ -1,4 +1,6 @@
 ﻿using Ambermoon.Data;
+using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.Geometry
 {
@@ -20,6 +22,31 @@ namespace Ambermoon.Geometry
         {
             return new Position(Misc.Round((-x - 0.5f * Global.DistancePerTile) / Global.DistancePerTile),
                 map.Height - Misc.Round((z + 0.5f * Global.DistancePerTile) / Global.DistancePerTile));
+        }
+
+        public static List<Position> CameraToTouchedBlockPositions(Map map, float x, float z, float touchRadius)
+        {
+            List<Position> positions = new List<Position>(4);
+
+            float tileX = (-x - 0.5f * Global.DistancePerTile) / Global.DistancePerTile;
+            float tileY = (z + 0.5f * Global.DistancePerTile) / Global.DistancePerTile;
+            var mainTilePosition = new Position(Misc.Round(tileX), map.Height - Misc.Round(tileY));
+            positions.Add(mainTilePosition);
+
+            for (int ty = Math.Max(0, mainTilePosition.Y - 1); ty <= Math.Min(map.Height - 1, mainTilePosition.Y + 1); ++ty)
+            {
+                for (int tx = Math.Max(0, mainTilePosition.X - 1); tx <= Math.Min(map.Width - 1, mainTilePosition.X + 1); ++tx)
+                {
+                    if (tx == mainTilePosition.X && ty == mainTilePosition.Y)
+                        continue;
+
+                    if (Math.Abs(tx - tileX) * Global.DistancePerTile < touchRadius &&
+                        Math.Abs(map.Height - ty - tileY) * Global.DistancePerTile < touchRadius)
+                        positions.Add(new Position(tx, ty));
+                }
+            }
+
+            return positions;
         }
 
         /// <summary>

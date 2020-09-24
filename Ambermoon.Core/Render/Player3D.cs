@@ -103,16 +103,27 @@ namespace Ambermoon.Render
             void Move(bool noX, bool noZ)
             {
                 mover(distance, noX, noZ);
-                Position = Geometry.CameraToBlockPosition(map.Map, Camera.X, Camera.Z);
+                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 1.0f * Global.DistancePerTile);
+                Position = touchedPositions[0];
 
                 if (Position != lastPosition)
                 {
                     player.Position.X = Position.X;
                     player.Position.Y = Position.Y;
                     lastPosition = new Position(Position);
+                }
+
+                foreach (var touchedPosition in touchedPositions)
+                {
                     var oldMapIndex = map.Map.Index;
-                    map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
-                    game.PlayerMoved(oldMapIndex != game.Map.Index);
+                    map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y, mapManager, ticks);
+
+                    if (oldMapIndex != game.Map.Index)
+                    {
+                        // TODO: There are also teleports to same map
+                        game.PlayerMoved(true);
+                        break; // map changed
+                    }
                 }
             }
 
