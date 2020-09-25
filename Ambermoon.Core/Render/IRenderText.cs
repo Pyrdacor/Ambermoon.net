@@ -8,6 +8,7 @@ namespace Ambermoon.Render
         void Place(int x, int y);
         void Place(Rect rect, TextAlign textAlign = TextAlign.Left);
         TextColor TextColor { get; set; }
+        TextAlign TextAlign { get; set; }
         bool Shadow { get; set; }
         IText Text { get; set; }
         byte DisplayLayer { get; set; }

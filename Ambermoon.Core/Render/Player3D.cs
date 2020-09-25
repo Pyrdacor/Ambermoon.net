@@ -104,7 +104,7 @@ namespace Ambermoon.Render
             void Move(bool noX, bool noZ)
             {
                 mover(distance, noX, noZ);
-                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 1.0f * Global.DistancePerTile);
+                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 0.75f * Global.DistancePerTile);
                 Position = touchedPositions[0];
 
                 if (Position != lastPosition)

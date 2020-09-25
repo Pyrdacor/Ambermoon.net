@@ -248,7 +248,7 @@ namespace Ambermoon
             windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.Gray, true,
                 new Rect(8, 40, 192, 10), TextAlign.Center);
-            layout = new Layout(this, renderView);
+            layout = new Layout(this, renderView, itemManager);
             ouchSprite = renderView.SpriteFactory.Create(32, 23, false, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
             ouchSprite.PaletteIndex = 0;
@@ -891,7 +891,12 @@ namespace Ambermoon
                     if (ingame)
                     {
                         if (layout.PopupActive)
-                            layout.ClosePopup();
+                        {
+                            if (TextInput.FocusedInput != null)
+                                TextInput.FocusedInput.KeyDown(key);
+                            else
+                                layout.ClosePopup();
+                        }
                         else
                             CloseWindow();
                     }
@@ -1002,6 +1007,7 @@ namespace Ambermoon
                 if (cursorType != null)
                     CursorType = cursorType.Value;
             }
+
             if (buttons.HasFlag(MouseButtons.Left))
             {
                 leftMouseDown = false;
@@ -1014,6 +1020,9 @@ namespace Ambermoon
                 else
                     UpdateCursor(GetMousePosition(cursorPosition), MouseButtons.None);
             }
+
+            if (TextInput.FocusedInput != null)
+                CursorType = CursorType.None;
         }
 
         public void OnMouseDown(Position position, MouseButtons buttons)
@@ -1076,6 +1085,9 @@ namespace Ambermoon
             {
                 CursorType = CursorType.Sword;
             }
+
+            if (TextInput.FocusedInput != null)
+                CursorType = CursorType.None;
         }
 
         void UpdateCursor(Position cursorPosition, MouseButtons buttons)
@@ -2176,19 +2188,30 @@ namespace Ambermoon
         /// </summary>
         /// <param name="itemSlot">Item to store. Don't change the itemSlot itself!</param>
         /// <returns>Status of dropping</returns>
-        internal bool StoreItem(ItemSlot itemSlot)
+        internal bool StoreItem(ItemSlot itemSlot, uint maxAmount)
         {
-            // TODO: For now we not support partial storing.
             if (OpenStorage == null)
                 return false; // should not happen
 
-            // TODO: later check if there are stackable slots with same item
+            if (itemManager.GetItem(itemSlot.ItemIndex).Flags.HasFlag(ItemFlags.Stackable))
+            {
+                foreach (var slot in OpenStorage.Slots)
+                {
+                    if (!slot.Empty && slot.ItemIndex == itemSlot.ItemIndex)
+                    {
+                        // This will update itemSlot
+                        slot.Add(itemSlot, (int)maxAmount);
+                        return true;
+                    }
+                }
+            }
 
             foreach (var slot in OpenStorage.Slots)
             {
                 if (slot.Empty)
                 {
-                    slot.Add(itemSlot);
+                    // This will update itemSlot
+                    slot.Add(itemSlot, (int)maxAmount);
                     return true;
                 }
             }

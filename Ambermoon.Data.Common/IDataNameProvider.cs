@@ -35,6 +35,14 @@
         string DropItemQuestion { get; }
         string WhichItemToDropMessage { get; }
         string WhichItemToStoreMessage { get; }
+        string GoldName { get; }
+        string FoodName { get; }
+        string DropHowMuchItemsMessage { get; }
+        string DropHowMuchGoldMessage { get; }
+        string DropHowMuchFoodMessage { get; }
+        string StoreHowMuchItemsMessage { get; }
+        string StoreHowMuchGoldMessage { get; }
+        string StoreHowMuchFoodMessage { get; }
 
         // TODO
     }

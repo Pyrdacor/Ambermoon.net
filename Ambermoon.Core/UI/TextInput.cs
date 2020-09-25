@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Render;
 using System;
+using System.Linq;
 
 namespace Ambermoon.UI
 {
@@ -14,6 +15,7 @@ namespace Ambermoon.UI
         {
             Submit,
             Focus,
+            FocusOrSubmit,
             Abort,
             LoseFocus
         }
@@ -25,8 +27,10 @@ namespace Ambermoon.UI
         readonly IColoredRect blinkingCursor;
         readonly Rect area;
         readonly int inputLength;
+        readonly TextAlign textAlign;
         DateTime lastBlinkTime;
         string currentInput = "";
+        string currentText = "";
 
         public event Action<string> InputSubmitted;
         public event Action Aborted;
@@ -37,26 +41,60 @@ namespace Ambermoon.UI
             set;
         } = false;
 
+        public bool DigitsOnly
+        {
+            get;
+            set;
+        } = false;
+
+        public uint? MaxIntegerValue
+        {
+            get;
+            set;
+        } = null;
+
+        public string Text
+        {
+            get => currentText;
+            set
+            {
+                if (currentText == value)
+                    return;
+
+                currentText = value;
+                UpdateText();
+            }
+        }
+
+        public uint Value => Text.Length == 0 ? 0 : uint.Parse(Text);
+
+        public bool ClearOnNewInput
+        {
+            get;
+            set;
+        } = false;
+
         public static TextInput FocusedInput { get; private set; } = null;
 
         public TextInput(IRenderView renderView, Position position, int inputLength, byte displayLayer,
-            ClickAction leftClickAction, ClickAction rightClickAction)
+            ClickAction leftClickAction, ClickAction rightClickAction, TextAlign textAlign)
         {
             this.leftClickAction = leftClickAction;
             this.rightClickAction = rightClickAction;
             this.renderView = renderView;
             this.inputLength = inputLength;
+            this.textAlign = textAlign;
 
             // Note: There is always 1 char-slot more as the input length.
             area = new Rect(position.X, position.Y, (inputLength + 1) * Global.GlyphWidth - 2, Global.GlyphLineHeight);
-            text = new UIText(renderView, renderView.TextProcessor.CreateText(""), area.CreateModified(0, 0, -(Global.GlyphWidth - 2), 0),
-                displayLayer, TextColor.Gray);
+            text = new UIText(renderView, renderView.TextProcessor.CreateText(""), area,
+                displayLayer, TextColor.Gray, true, textAlign);
 
             blinkingCursor = renderView.ColoredRectFactory.Create(5, 5, Color.DarkAccent, displayLayer); // TODO: named palette color?
             blinkingCursor.Layer = renderView.GetLayer(Layer.UI);
             blinkingCursor.X = position.X;
             blinkingCursor.Y = position.Y;
-            blinkingCursor.Visible = true;
+            blinkingCursor.Visible = false;
             lastBlinkTime = DateTime.Now;
         }
 
@@ -65,7 +103,44 @@ namespace Ambermoon.UI
             if (string.IsNullOrEmpty(currentInput))
                 Aborted?.Invoke();
             else
-                InputSubmitted?.Invoke(currentInput);
+            {
+                if (DigitsOnly)
+                {
+                    var digits = currentInput.TakeWhile(ch => ch >= '0' && ch <= '9').ToArray();
+
+                    if (digits.Length == 0)
+                    {
+                        Text = "0";
+                    }
+                    else
+                    {
+                        var digitString = new string(digits).TrimStart('0');
+
+                        if (digitString.Length == 0)
+                        {
+                            Text = "0";
+                        }
+                        else
+                        {
+                            uint value = uint.Parse(digitString);
+
+                            if (MaxIntegerValue != null && value > MaxIntegerValue)
+                                value = MaxIntegerValue.Value;
+
+                            Text = value.ToString();
+                        }
+                    }
+                }
+                else
+                {
+                    Text = currentInput;
+                }
+
+                currentInput = Text;
+                LoseFocus();
+                UpdateText();
+                InputSubmitted?.Invoke(Text);
+            }
         }
 
         public void SetFocus()
@@ -77,16 +152,23 @@ namespace Ambermoon.UI
                 prevFocusedInput.blinkingCursor.Visible = false;
 
             blinkingCursor.Visible = true;
+            text.SetTextAlign(TextAlign.Left); // always left if writing
             lastBlinkTime = DateTime.Now;
 
+            if (ClearOnNewInput)
+            {
+                currentInput = "";
+                UpdateText();
+            }
         }
 
-        void LoseFocus()
+        public void LoseFocus()
         {
             if (FocusedInput == this)
             {
                 FocusedInput = null;
                 blinkingCursor.Visible = false;
+                text.SetTextAlign(textAlign);
             }
 
         }
@@ -107,13 +189,14 @@ namespace Ambermoon.UI
 
         public void Destroy()
         {
+            LoseFocus();
             text?.Destroy();
             blinkingCursor?.Delete();
         }
 
         void UpdateText()
         {
-            text.SetText(renderView.TextProcessor.CreateText(currentInput));
+            text.SetText(renderView.TextProcessor.CreateText(FocusedInput == this ? currentInput : Text));
             blinkingCursor.X = area.X + currentInput.Length * Global.GlyphWidth;
         }
 
@@ -140,15 +223,31 @@ namespace Ambermoon.UI
                 case ClickAction.Focus:
                     SetFocus();
                     break;
+                case ClickAction.FocusOrSubmit:
+                    if (FocusedInput == this)
+                        Submit();
+                    else
+                        SetFocus();
+                    break;
                 case ClickAction.Abort:
-                    Aborted?.Invoke();
+                    Abort();
                     break;
                 case ClickAction.LoseFocus:
+                    Text = currentInput;
                     LoseFocus();
+                    UpdateText();
                     break;
             }
 
             return true;
+        }
+
+        public void Abort()
+        {
+            currentInput = Text;
+            LoseFocus();
+            UpdateText();
+            Aborted?.Invoke();
         }
 
         public bool KeyChar(char ch)
@@ -183,7 +282,7 @@ namespace Ambermoon.UI
                     Submit();
                     break;
                 case Key.Escape:
-                    Aborted?.Invoke();
+                    Abort();
                     break;
             }
 

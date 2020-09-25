@@ -165,6 +165,24 @@ namespace Ambermoon.UI
             return filledArea;
         }
 
+        public void AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer = 1)
+        {
+            var sprite = renderView.SpriteFactory.Create(area.Width, area.Height, false, true,
+                (byte)Util.Min(255, this.displayLayer + displayLayer)) as ILayerSprite;
+            sprite.Layer = renderView.GetLayer(layer);
+            sprite.PaletteIndex = 49;
+            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(layer).GetOffset(imageIndex);
+            sprite.X = area.X;
+            sprite.Y = area.Y;
+            sprite.Visible = true;
+            sprites.Add(sprite);
+        }
+
+        public void AddItemImage(Rect area, uint imageIndex, byte displayLayer = 1)
+        {
+            AddImage(area, imageIndex, Layer.Items, displayLayer);
+        }
+
         public void AddSunkenBox(Rect area, byte displayLayer = 1)
         {
             // TODO: use named palette colors
@@ -230,7 +248,7 @@ namespace Ambermoon.UI
 
         public bool Click(Position position, MouseButtons mouseButtons)
         {
-            if (mouseButtons == MouseButtons.Left)
+            if (mouseButtons == MouseButtons.Left && TextInput.FocusedInput == null)
             {
                 if (listBox?.Click(position) == true)
                     return true;
@@ -271,6 +289,9 @@ namespace Ambermoon.UI
 
         public void LeftMouseUp(Position position)
         {
+            if (TextInput.FocusedInput != null)
+                return;
+
             // Note: LeftMouseUp may remove buttons or close the popup.
             for (int i = buttons.Count - 1; i >= 0; --i)
             {
@@ -304,12 +325,12 @@ namespace Ambermoon.UI
 
         public bool HasTextInput() => inputs.Count != 0;
 
-        public TextInput AddTextInput(Position position, int inputLength,
+        public TextInput AddTextInput(Position position, int inputLength, TextAlign textAlign,
             TextInput.ClickAction leftClickAction, TextInput.ClickAction rightClickAction)
         {
             AddSunkenBox(new Rect(position, new Size((inputLength + 1) * Global.GlyphWidth + 3, 10)), 1);
             var input = new TextInput(renderView, position + new Position(2, 2), inputLength, (byte)Math.Min(255, displayLayer + 2),
-                leftClickAction, rightClickAction);
+                leftClickAction, rightClickAction, textAlign);
             inputs.Add(input);
             return input;
         }

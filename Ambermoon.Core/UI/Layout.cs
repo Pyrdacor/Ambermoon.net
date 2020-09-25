@@ -312,6 +312,7 @@ namespace Ambermoon.UI
         readonly ITextureAtlas textureAtlas;
         readonly IRenderLayer renderLayer;
         readonly IRenderLayer textLayer;
+        readonly IItemManager itemManager;
         readonly List<ISprite> portraitBorders = new List<ISprite>();
         readonly ISprite[] portraitBackgrounds = new ISprite[Game.MaxPartyMembers];
         readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
@@ -341,13 +342,14 @@ namespace Ambermoon.UI
         internal IRenderView RenderView { get; }
         public bool TransportEnabled { get; set; } = false;
 
-        public Layout(Game game, IRenderView renderView)
+        public Layout(Game game, IRenderView renderView, IItemManager itemManager)
         {
             this.game = game;
             RenderView = renderView;
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
             renderLayer = renderView.GetLayer(Layer.UI);
             textLayer = renderView.GetLayer(Layer.Text);
+            this.itemManager = itemManager;
 
             sprite = RenderView.SpriteFactory.Create(320, 163, false, true) as ILayerSprite;
             sprite.Layer = renderLayer;
@@ -556,12 +558,14 @@ namespace Ambermoon.UI
         {
             var openPopup = activePopup;
             var popup = OpenPopup(position, 2 + ((inputLength + 1) * Global.GlyphWidth + 14) / 16, 3, true, false, 21);
-            var input = popup.AddTextInput(position + new Position(16, 18), inputLength,
+            var input = popup.AddTextInput(position + new Position(16, 18), inputLength, TextAlign.Left,
                 TextInput.ClickAction.Submit, TextInput.ClickAction.Abort);
             input.SetFocus();
             input.ReactToGlobalClicks = true;
             void Close()
             {
+                input?.LoseFocus();
+                game.CursorType = CursorType.Sword;
                 ClosePopup();
                 activePopup = openPopup;
             }
@@ -767,6 +771,67 @@ namespace Ambermoon.UI
             }
         }
 
+        Popup OpenAmountInputBox(string message, uint imageIndex, string name, uint maxAmount,
+            Action<uint> submitAction)
+        {
+            ClosePopup(false);
+            activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
+            {
+                DisableButtons = true,
+                CloseOnClick = false
+            };
+            // Item display (also gold or food)
+            var itemArea = new Rect(79, 79, 18, 18);
+            activePopup.AddSunkenBox(itemArea);
+            activePopup.AddItemImage(itemArea.CreateModified(1, 1, -2, -2), imageIndex);
+            // Item name display (also gold or food)
+            var itemNameArea = new Rect(99, 82, 124, 10);
+            activePopup.AddSunkenBox(itemNameArea);
+            activePopup.AddText(itemNameArea.CreateModified(1, 2, -2, -3), name, TextColor.Red, TextAlign.Center);
+            // Message display
+            var messageArea = new Rect(79, 98, 144, 10);
+            activePopup.AddSunkenBox(messageArea);
+            activePopup.AddText(messageArea.CreateModified(1, 2, -2, -3), message, TextColor.Orange, TextAlign.Center);
+            // Amount input
+            var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
+                TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort);
+            input.DigitsOnly = true;
+            input.MaxIntegerValue = maxAmount;
+            input.ReactToGlobalClicks = true;
+            input.ClearOnNewInput = true;
+            input.Text = "0";
+            input.Aborted += () => game.CursorType = CursorType.Sword;
+            input.InputSubmitted += _ => game.CursorType = CursorType.Sword;
+            // Increase and decrease buttons
+            var increaseButton = activePopup.AddButton(new Position(80, 110));
+            var decreaseButton = activePopup.AddButton(new Position(80, 127));
+            increaseButton.ButtonType = ButtonType.MoveUp;
+            decreaseButton.ButtonType = ButtonType.MoveDown;
+            increaseButton.DisplayLayer = 200;
+            decreaseButton.DisplayLayer = 200;
+            increaseButton.Action = () => ChangeInputValue(1);
+            decreaseButton.Action = () => ChangeInputValue(-1);
+            // OK button
+            var okButton = activePopup.AddButton(new Position(192, 127));
+            okButton.ButtonType = ButtonType.Ok;
+            okButton.DisplayLayer = 200;
+            okButton.Action = () => submitAction?.Invoke(input.Value);
+
+            void ChangeInputValue(int changeAmount)
+            {
+                if (changeAmount < 0)
+                {
+                    input.Text = Math.Max(0, (int)input.Value + changeAmount).ToString();
+                }
+                else if (changeAmount > 0)
+                {
+                    input.Text = Math.Min(maxAmount, input.Value + (uint)changeAmount).ToString();
+                }
+            }
+
+            return activePopup;
+        }
+
         void Ask(string question, Action yesAction)
         {
             var text = RenderView.TextProcessor.CreateText(question);
@@ -800,27 +865,55 @@ namespace Ambermoon.UI
 
         void DropItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
-            // TODO: amount for stacked items
-
-            void DropIt()
+            if (itemSlot.Amount > 1)
             {
-                // TODO: animation where the item falls down the screen
-                itemSlot.Clear();
-                itemGrid.SetItem(slot, itemSlot); // update appearance
+                var item = itemManager.GetItem(itemSlot.ItemIndex);
+                OpenAmountInputBox(game.DataNameProvider.DropHowMuchItemsMessage,
+                    item.GraphicIndex, item.Name, (uint)itemSlot.Amount, DropAmount);
+            }
+            else
+            {
+                DropAmount(1);
             }
 
-            Ask(game.DataNameProvider.DropItemQuestion, DropIt);
+            void DropAmount(uint amount)
+            {
+                void DropIt()
+                {
+                    // TODO: animation where the item falls down the screen
+                    if (amount >= itemSlot.Amount)
+                        itemSlot.Clear();
+                    else
+                        itemSlot.Amount -= (int)amount;
+                    itemGrid.SetItem(slot, itemSlot); // update appearance
+                }
+
+                Ask(game.DataNameProvider.DropItemQuestion, DropIt);
+            }
         }
 
         void StoreItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
-            // TODO: amount for stacked items
-
-            // TODO: animation where the item flies to the right of the screen
-            if (game.StoreItem(itemSlot))
+            if (itemSlot.Amount > 1)
             {
-                itemSlot.Clear();
-                itemGrid.SetItem(slot, itemSlot); // update appearance
+                var item = itemManager.GetItem(itemSlot.ItemIndex);
+                OpenAmountInputBox(game.DataNameProvider.StoreHowMuchItemsMessage,
+                    item.GraphicIndex, item.Name, (uint)itemSlot.Amount, StoreAmount);
+            }
+            else
+            {
+                StoreAmount(1);
+            }
+
+            void StoreAmount(uint amount)
+            {
+                ClosePopup(false);
+
+                // TODO: animation where the item flies to the right of the screen
+                if (game.StoreItem(itemSlot, amount))
+                {
+                    itemGrid.SetItem(slot, itemSlot); // update appearance
+                }
             }
         }
 
@@ -1276,6 +1369,12 @@ namespace Ambermoon.UI
 
         public void RightMouseUp(Position position, out CursorType? newCursorType, uint currentTicks)
         {
+            if (TextInput.FocusedInput != null)
+            {
+                newCursorType = CursorType.None;
+                return;
+            }
+
             buttonGrid.MouseUp(position, MouseButtons.Right, out newCursorType, currentTicks);
 
             if (!game.InputEnable)
@@ -1311,7 +1410,7 @@ namespace Ambermoon.UI
                         return true;
                 }
 
-                if (activePopup.DisableButtons)
+                if (activePopup.DisableButtons || TextInput.FocusedInput != null)
                     return false;
             }
 

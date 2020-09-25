@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data
+﻿using System;
+
+namespace Ambermoon.Data
 {
     public class ItemSlot
     {
@@ -12,20 +14,23 @@
         public bool Stacked => Amount > 1;
         public bool Draggable => ItemIndex != 0 && Amount != 0; // TODO: cursed?
 
-        public int Add(ItemSlot item)
+        public int Add(ItemSlot item, int maxAmount = 99)
         {
+            int amountToAdd = Math.Min(item.Amount, maxAmount);
+
             if (item.ItemIndex == ItemIndex)
             {
-                if (Amount + item.Amount > 99)
+                if (Amount + amountToAdd > 99)
                 {
-                    item.Amount = Amount + item.Amount - 99;
+                    item.Amount = Amount + amountToAdd - 99;
                     Amount = 99;
                     return item.Amount;
                 }
                 else
                 {
-                    Amount += item.Amount;
-                    return item.Amount = 0;
+                    Amount += amountToAdd;
+                    item.Amount -= amountToAdd;
+                    return item.Amount;
                 }
             }
             else if (!Empty)
@@ -35,9 +40,10 @@
             else
             {
                 ItemIndex = item.ItemIndex;
-                Amount = item.Amount;
+                Amount = amountToAdd;
                 Flags = item.Flags;
-                return item.Amount = 0;
+                item.Amount -= amountToAdd;
+                return item.Amount;
             }
         }
 

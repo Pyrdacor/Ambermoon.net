@@ -111,6 +111,21 @@ namespace Ambermoon.Renderer
                 }
             }
         }
+
+        public TextAlign TextAlign
+        {
+            get => textAlign;
+            set
+            {
+                if (textAlign == value)
+                    return;
+
+                textAlign = value;
+
+                UpdateTextSprites();
+            }
+        }
+
         public bool Shadow
         {
             get => shadow;
@@ -123,6 +138,7 @@ namespace Ambermoon.Renderer
                 UpdateTextSprites();
             }
         }
+
         public IText Text
         {
             get => text;

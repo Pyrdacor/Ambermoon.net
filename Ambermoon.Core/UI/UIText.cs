@@ -69,6 +69,11 @@ namespace Ambermoon.UI
             renderText.TextColor = textColor;
         }
 
+        public void SetTextAlign(TextAlign textAlign)
+        {
+            renderText.TextAlign = textAlign;
+        }
+
         public void SetBounds(Rect bounds)
         {
             if (renderText.Width != bounds.Width || renderText.Height != bounds.Height)
