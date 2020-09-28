@@ -1595,7 +1595,7 @@ namespace Ambermoon.UI
             }
         }
 
-        internal void DragItems(UIItem uiItem, Action<DraggedItem, int> dragAction,
+        internal void DragItems(UIItem uiItem, bool takeAll, Action<DraggedItem, int> dragAction,
             Func<DraggedItem> dragger)
         {
             void DragItem(uint amount)
@@ -1606,7 +1606,7 @@ namespace Ambermoon.UI
                     dragAction?.Invoke(dragger?.Invoke(), (int)amount);
             }
 
-            if (uiItem.Item.Amount == 1)
+            if (takeAll || uiItem.Item.Amount == 1)
             {
                 DragItem((uint)uiItem.Item.Amount);
             }

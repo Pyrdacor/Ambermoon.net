@@ -23,7 +23,7 @@ namespace Ambermoon.UI
         readonly ILayerSprite[] slotBackgrounds;
         IRenderText hoveredItemName;
         readonly bool allowExternalDrop;
-        readonly Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>> pickupAction;
+        readonly Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction;
         readonly int slotsPerPage;
         readonly int slotsPerScroll;
         Scrollbar scrollbar;
@@ -80,7 +80,7 @@ namespace Ambermoon.UI
 
 
         private ItemGrid(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
-            List<ItemSlot> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>> pickupAction,
+            List<ItemSlot> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction,
             int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect scrollbarArea = null, Size scrollbarSize = null,
             ScrollbarType? scrollbarType = null)
         {
@@ -123,8 +123,8 @@ namespace Ambermoon.UI
             IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
         {
             return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, true,
-                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction) =>
-                    layout.DragItems(item, dragAction,
+                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
+                    layout.DragItems(item, takeAll, dragAction,
                     () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false)),
                 12, 3, 24, new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
         }
@@ -133,8 +133,8 @@ namespace Ambermoon.UI
             IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
         {
             return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, true,
-                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction) =>
-                    layout.DragItems(item, dragAction,
+                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
+                    layout.DragItems(item, takeAll, dragAction,
                     () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true)), 9, 0, 9);
         }
 
@@ -143,8 +143,8 @@ namespace Ambermoon.UI
             int slotsPerScroll, int numTotalSlots, Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType)
         {
             return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, allowExternalDrop,
-                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction) =>
-                    layout.DragItems(item, dragAction, () => Layout.DraggedItem.FromExternal(itemGrid, slot, item)),
+                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
+                    layout.DragItems(item, takeAll, dragAction, () => Layout.DraggedItem.FromExternal(itemGrid, slot, item)),
                     slotsPerPage, slotsPerScroll, numTotalSlots, scrollbarArea, scrollbarSize, scrollbarType);
         }
 
@@ -448,7 +448,7 @@ namespace Ambermoon.UI
                             Hover(position); // This updates the tooltip
                             //item.Item.Item.Replace(dragged);
                             dragHandler?.Invoke(item);
-                        });
+                        }, mouseButtons == MouseButtons.Right);
                     }
                 }
             }
