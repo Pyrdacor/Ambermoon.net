@@ -251,13 +251,13 @@ namespace Ambermoon.UI
                 {
                     if (Equipped == true)
                     {
-                        var equipment = game.GetPartyMember(SourcePlayer.Value).Equipment;
-                        equipment.Slots[(EquipmentSlot)(SourceSlot + 1)] = Item.Item;
+                        game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount);
+                        game.UpdateCharacterInfo();
                     }
                     else
                     {
-                        var inventory = game.GetPartyMember(SourcePlayer.Value).Inventory;
-                        inventory.Slots[SourceSlot] = Item.Item;
+                        game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount);
+                        game.UpdateCharacterInfo();
                     }
 
                     if (game.CurrentInventoryIndex != SourcePlayer)
@@ -277,7 +277,9 @@ namespace Ambermoon.UI
 
             public static DraggedItem FromInventory(ItemGrid itemGrid, int partyMemberIndex, int slotIndex, UIItem item, bool equipped)
             {
-                item.Dragged = true;
+                var clone = item.Clone();
+                clone.Dragged = true;
+                clone.Visible = true;
 
                 return new DraggedItem
                 {
@@ -285,7 +287,7 @@ namespace Ambermoon.UI
                     SourcePlayer = partyMemberIndex,
                     Equipped = equipped,
                     SourceSlot = slotIndex,
-                    Item = item
+                    Item = clone
                 };
             }
 
@@ -295,13 +297,15 @@ namespace Ambermoon.UI
             /// <returns></returns>
             public static DraggedItem FromExternal(ItemGrid itemGrid, int slotIndex, UIItem item)
             {
-                item.Dragged = true;
+                var clone = item.Clone();
+                clone.Dragged = true;
+                clone.Visible = true;
 
                 return new DraggedItem
                 {
                     SourceGrid = itemGrid,
                     SourceSlot = slotIndex,
-                    Item = item
+                    Item = clone
                 };
             }
         }
@@ -719,15 +723,15 @@ namespace Ambermoon.UI
                     {
                         buttonGrid.SetButton(3, ButtonType.StoreItem, false, () => PickInventoryItemForAction(StoreItem,
                             false, game.DataNameProvider.WhichItemToStoreMessage), false);
-                        buttonGrid.SetButton(4, ButtonType.StoreGold, true, null, false); // TODO: store gold
-                        buttonGrid.SetButton(5, ButtonType.StoreFood, true, null, false); // TODO: store food
+                        buttonGrid.SetButton(4, ButtonType.StoreGold, game.CurrentInventory?.Gold == 0, StoreGold, false);
+                        buttonGrid.SetButton(5, ButtonType.StoreFood, game.CurrentInventory?.Food == 0, StoreFood, false);
                     }
                     else
                     {
                         buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem,
                             false, game.DataNameProvider.WhichItemToDropMessage), false);
-                        buttonGrid.SetButton(4, ButtonType.DropGold, true, null, false); // TODO: drop gold
-                        buttonGrid.SetButton(5, ButtonType.DropFood, true, null, false); // TODO: drop food
+                        buttonGrid.SetButton(4, ButtonType.DropGold, game.CurrentInventory?.Gold == 0, DropGold, false);
+                        buttonGrid.SetButton(5, ButtonType.DropFood, game.CurrentInventory?.Food == 0, DropFood, false);
                     }
                     buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
                     buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO: give gold
@@ -863,6 +867,32 @@ namespace Ambermoon.UI
 
         }
 
+        void DropGold()
+        {
+            // Note: 96 is the object icon index for coins (gold).
+            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
+                96, game.DataNameProvider.GoldName, game.CurrentInventory.Gold,
+                DropAmount);
+
+            void DropAmount(uint amount)
+            {
+                Ask(game.DataNameProvider.DropGoldQuestion, () => game.DropGold(amount));
+            }
+        }
+
+        void DropFood()
+        {
+            // Note: 109 is the object icon index for food.
+            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
+                109, game.DataNameProvider.FoodName, game.CurrentInventory.Food,
+                DropAmount);
+
+            void DropAmount(uint amount)
+            {
+                Ask(game.DataNameProvider.DropFoodQuestion, () => game.DropFood(amount));
+            }
+        }
+
         void DropItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
             if (itemSlot.Amount > 1)
@@ -881,15 +911,33 @@ namespace Ambermoon.UI
                 void DropIt()
                 {
                     // TODO: animation where the item falls down the screen
+                    game.InventoryItemRemoved(itemSlot.ItemIndex, (int)amount);
                     if (amount >= itemSlot.Amount)
                         itemSlot.Clear();
                     else
                         itemSlot.Amount -= (int)amount;
                     itemGrid.SetItem(slot, itemSlot); // update appearance
+                    game.UpdateCharacterInfo();
                 }
 
                 Ask(game.DataNameProvider.DropItemQuestion, DropIt);
             }
+        }
+
+        void StoreGold()
+        {
+            // Note: 96 is the object icon index for coins (gold).
+            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
+                96, game.DataNameProvider.GoldName, game.CurrentInventory.Gold,
+                amount => game.StoreGold(amount));
+        }
+
+        void StoreFood()
+        {
+            // Note: 109 is the object icon index for food.
+            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
+                109, game.DataNameProvider.FoodName, game.CurrentInventory.Food,
+                amount => game.StoreFood(amount));
         }
 
         void StoreItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
@@ -912,7 +960,9 @@ namespace Ambermoon.UI
                 // TODO: animation where the item flies to the right of the screen
                 if (game.StoreItem(itemSlot, amount))
                 {
+                    game.InventoryItemRemoved(itemSlot.ItemIndex, (int)amount);
                     itemGrid.SetItem(slot, itemSlot); // update appearance
+                    game.UpdateCharacterInfo();
                 }
             }
         }
@@ -1125,14 +1175,16 @@ namespace Ambermoon.UI
             }
         }
 
-        public void AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            AddText(rect, RenderView.TextProcessor.CreateText(text), color, textAlign, displayLayer);
+            return AddText(rect, RenderView.TextProcessor.CreateText(text), color, textAlign, displayLayer);
         }
 
-        public void AddText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            texts.Add(new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, false));
+            var uiText = new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, false);
+            texts.Add(uiText);
+            return uiText;
         }
 
         public UIText AddScrollableText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
@@ -1428,16 +1480,19 @@ namespace Ambermoon.UI
             {
                 foreach (var itemGrid in itemGrids)
                 {
-                    // TODO: If stacked it should ask for amount with left mouse
-                    if (itemGrid.Click(position, draggedItem, out DraggedItem pickedUpItem, buttons, ref cursorType))
+                    if
+                    (
+                        itemGrid.Click(position, draggedItem, out ItemGrid.ItemAction itemAction,
+                            buttons, ref cursorType, item =>
+                            {
+                                draggedItem = item;
+                                draggedItem.Item.Position = position;
+                                draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
+                            }
+                        )
+                    )
                     {
-                        if (pickedUpItem != null)
-                        {
-                            draggedItem = pickedUpItem;
-                            draggedItem.Item.Position = position;
-                            draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
-                        }
-                        else
+                        if (itemAction == ItemGrid.ItemAction.Drop)
                             DropItem();
 
                         return true;
@@ -1452,15 +1507,15 @@ namespace Ambermoon.UI
 
                     foreach (var itemGrid in itemGrids)
                     {
-                        if (itemGrid.Click(position, null, out DraggedItem pickedUpItem, buttons, ref cursorType))
-                        {
-                            if (pickedUpItem != null)
+                        if (itemGrid.Click(position, null, out var _, buttons, ref cursorType,
+                            item =>
                             {
-                                draggedItem = pickedUpItem;
+                                draggedItem = item;
                                 draggedItem.Item.Position = position;
                                 draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
                             }
-
+                        ))
+                        {
                             return true;
                         }
                     }
@@ -1474,43 +1529,47 @@ namespace Ambermoon.UI
                 if (partyMember == null)
                     continue;
 
-                if (draggedItem != null && Global.ExtendedPartyMemberPortraitAreas[i].Contains(position))
+                if (Global.ExtendedPartyMemberPortraitAreas[i].Contains(position))
                 {
-                    if (buttons == MouseButtons.Left)
+                    if (draggedItem != null)
                     {
-                        if (draggedItem.SourcePlayer == i)
+                        if (buttons == MouseButtons.Left)
                         {
-                            draggedItem.Reset(game);
-                            draggedItem = null;
-                        }
-                        else
-                        {
-                            int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
-
-                            if (remaining == 0)
+                            if (draggedItem.SourcePlayer == i)
                             {
-                                draggedItem.Item.Destroy();
-                                DropItem();
+                                draggedItem.Reset(game);
+                                draggedItem = null;
                             }
                             else
-                                draggedItem.Item.Update(false);
+                            {
+                                int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
+
+                                if (remaining == 0)
+                                {
+                                    draggedItem.Item.Destroy();
+                                    DropItem();
+                                }
+                                else
+                                    draggedItem.Item.Update(false);
+                            }
                         }
+                        else if (buttons == MouseButtons.Right)
+                        {
+                            if (i != game.CurrentInventoryIndex)
+                                game.OpenPartyMember(i, Type != LayoutType.Stats);
+                        }
+
+                        return true;
                     }
-                    else if (buttons == MouseButtons.Right)
+                    else
                     {
-                        game.OpenPartyMember(i, Type != LayoutType.Stats);
+                        if (buttons == MouseButtons.Left)
+                            game.SetActivePartyMember(i);
+                        else if (buttons == MouseButtons.Right)
+                            game.OpenPartyMember(i, Type != LayoutType.Stats);
+
+                        return true;
                     }
-
-                    return true;
-                }
-                else if (draggedItem == null && Global.PartyMemberPortraitAreas[i].Contains(position))
-                {
-                    if (buttons == MouseButtons.Left)
-                        game.SetActivePartyMember(i);
-                    else if (buttons == MouseButtons.Right)
-                        game.OpenPartyMember(i, Type != LayoutType.Stats);
-
-                    return true;
                 }
             }
 
@@ -1533,6 +1592,29 @@ namespace Ambermoon.UI
                     cursorType = CursorType.None;
                     break;
                 }
+            }
+        }
+
+        internal void DragItems(UIItem uiItem, Action<DraggedItem, int> dragAction,
+            Func<DraggedItem> dragger)
+        {
+            void DragItem(uint amount)
+            {
+                ClosePopup(false);
+
+                if (amount > 0)
+                    dragAction?.Invoke(dragger?.Invoke(), (int)amount);
+            }
+
+            if (uiItem.Item.Amount == 1)
+            {
+                DragItem((uint)uiItem.Item.Amount);
+            }
+            else
+            {
+                var item = itemManager.GetItem(uiItem.Item.ItemIndex);
+                OpenAmountInputBox(game.DataNameProvider.TakeHowManyMessage, item.GraphicIndex, item.Name,
+                    (uint)uiItem.Item.Amount, DragItem);
             }
         }
 

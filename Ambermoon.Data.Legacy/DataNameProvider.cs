@@ -56,6 +56,8 @@
         /// </summary>
         public string That => executableData.Messages.GetEntry(Messages.Index.That);
         public string DropItemQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropIt);
+        public string DropGoldQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropGold);
+        public string DropFoodQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropFood);
         public string WhichItemToDropMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToDrop);
         public string WhichItemToStoreMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToPutInChest);
         public string GoldName => executableData.UITexts.Entries[UITextIndex.Gold];
@@ -66,5 +68,6 @@
         public string StoreHowMuchItemsMessage => executableData.Messages.GetEntry(Messages.Index.StoreHowMany);
         public string StoreHowMuchGoldMessage => executableData.Messages.GetEntry(Messages.Index.StoreHowMuchGold);
         public string StoreHowMuchFoodMessage => executableData.Messages.GetEntry(Messages.Index.StoreHowMuchFood);
+        public string TakeHowManyMessage => executableData.Messages.GetEntry(Messages.Index.TakeHowMany);
     }
 }

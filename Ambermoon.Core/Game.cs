@@ -78,6 +78,24 @@ namespace Ambermoon
             public Action Action;
         }
 
+        /// <summary>
+        /// Character info texts that may change while
+        /// in Inventory/Stats window.
+        /// </summary>
+        enum CharacterInfo
+        {
+            Age,
+            Level,
+            EP,
+            LP,
+            SP,
+            SLPAndTP,
+            GoldAndFood,
+            Attack,
+            Defense,
+            Weight
+        }
+
         // TODO: cleanup members
         readonly Random random = new Random();
         const int FadeTime = 1000;
@@ -103,6 +121,7 @@ namespace Ambermoon
         readonly TextDictionary textDictionary;
         internal IDataNameProvider DataNameProvider { get; }
         readonly Layout layout;
+        readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
         readonly IRenderView renderView;
@@ -110,7 +129,7 @@ namespace Ambermoon
         readonly ISavegameSerializer savegameSerializer;
         Player player;
         PartyMember CurrentPartyMember { get; set; } = null;
-        PartyMember CurrentInventory { get; set; } = null;
+        internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
@@ -488,7 +507,6 @@ namespace Ambermoon
 
             player = null;
             CurrentPartyMember = null;
-            CurrentInventory = null;
             CurrentInventoryIndex = null;
             CurrentCaster = null;
             OpenStorage = null;
@@ -1324,6 +1342,7 @@ namespace Ambermoon
                     : Map.Name;
                 windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
                 windowTitle.TextColor = TextColor.Gray;
+                CurrentInventoryIndex = null;
             }
 
             windowTitle.Visible = show;
@@ -1356,38 +1375,11 @@ namespace Ambermoon
             if (currentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
 
-            void DisplayCharacterInfo(PartyMember partyMember)
-            {
-                layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 51, 1);
-                layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
-                layout.AddText(new Rect(242, 49, 62, 7), DataNameProvider.GetRaceName(partyMember.Race));
-                layout.AddText(new Rect(242, 56, 62, 7), DataNameProvider.GetGenderName(partyMember.Gender));
-                layout.AddText(new Rect(242, 63, 62, 7), string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
-                    partyMember.Attributes[Data.Attribute.Age].CurrentValue));
-                layout.AddText(new Rect(242, 70, 62, 7), $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
-                layout.AddText(new Rect(242, 77, 62, 7), string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
-                    partyMember.ExperiencePoints));
-                layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
-                layout.AddText(new Rect(208, 92, 96, 7), string.Format(DataNameProvider.CharacterInfoHitPointsString,
-                    partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 99, 96, 7), string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                    partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 106, 96, 7),
-                    string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
-                    string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center);
-                layout.AddText(new Rect(208, 113, 96, 7), string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
-                    TextColor.White, TextAlign.Center);
-                layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
-                layout.AddText(new Rect(220, 122, 30, 7), string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', '+'), partyMember.Attack),
-                    TextColor.White, TextAlign.Left);
-                layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
-                layout.AddText(new Rect(268, 122, 30, 7), string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', '+'), partyMember.Defense),
-                    TextColor.White, TextAlign.Left);
-            }
-
             void OpenInventory()
             {
+                CurrentInventoryIndex = slot;
+                var partyMember = GetPartyMember(slot);
+
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Inventory, slot);
@@ -1397,18 +1389,7 @@ namespace Ambermoon
                 windowTitle.TextColor = TextColor.White;
                 windowTitle.Visible = true;
 
-                CurrentInventoryIndex = slot;
-                var partyMember = GetPartyMember(slot);
-
                 #region Equipment and Inventory
-                // Weight display
-                var weightArea = new Rect(27, 152, 68, 15);
-                layout.AddPanel(weightArea, 2);
-                layout.AddText(weightArea.CreateModified(0, 1, 0, 0), DataNameProvider.CharacterInfoWeightHeaderString,
-                    TextColor.White, TextAlign.Center, 5);
-                layout.AddText(weightArea.CreateModified(0, 8, 0, 0), string.Format(DataNameProvider.CharacterInfoWeightString,
-                    Util.Round(partyMember.TotalWeight / 1000.0f), partyMember.Attributes[Data.Attribute.Strength].TotalCurrentValue),
-                    TextColor.White, TextAlign.Center, 5);
                 var equipmentSlotPositions = new List<Position>
                 {
                     new Position(20, 72),  new Position(52, 72),  new Position(84, 72),
@@ -1420,23 +1401,25 @@ namespace Ambermoon
                     slot => new Position(Global.InventoryX + (slot % Inventory.Width) * Global.InventorySlotWidth,
                         Global.InventoryY + (slot / Inventory.Width) * Global.InventorySlotHeight)
                 ).ToList();
-                var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager, inventorySlotPositions);
+                var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager,
+                    inventorySlotPositions, partyMember.Inventory.Slots.ToList());
                 layout.AddItemGrid(inventoryGrid);
                 for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
                 {
                     if (!partyMember.Inventory.Slots[i].Empty)
                         inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
                 }
-                var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, itemManager, equipmentSlotPositions);
+                var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, itemManager,
+                    equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList());
                 layout.AddItemGrid(equipmentGrid);
                 foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
                 {
                     if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
                         equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
                 }
-                equipmentGrid.Dropping += (int slot, Item item) =>
+                equipmentGrid.Dropping += (int slotIndex, Item item) =>
                 {
-                    var equipmentSlot = (EquipmentSlot)(slot + 1);
+                    var equipmentSlot = (EquipmentSlot)(slotIndex + 1);
 
                     if (item.Type == ItemType.Ring)
                     {
@@ -1486,29 +1469,88 @@ namespace Ambermoon
                     var itemEquipmentSlot = item.Type.ToEquipmentSlot();
 
                     if (equipmentSlot == itemEquipmentSlot)
-                        return slot;
+                        return slotIndex;
 
                     return -1;
                 };
-                equipmentGrid.ItemDragged += (int slot, Item item) =>
+                void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {
-                    if (item.NumberOfHands == 2 && slot == (int)EquipmentSlot.RightHand - 1)
-                        equipmentGrid.SetItem(slot + 2, null);
+                    var item = itemManager.GetItem(itemSlot.ItemIndex);
+                    EquipmentRemoved(item, amount);
+
+                    if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
+                    {
+                        equipmentGrid.SetItem(slotIndex + 2, null);
+                        partyMember.Equipment.Slots[EquipmentSlot.LeftHand].Clear();
+                    }
 
                     // TODO: rings/fingers
-                    // TODO: update weight, def, atk, lp, sp, etc
+                    UpdateCharacterInfo();
+                }
+                void AddEquipment(int slotIndex, ItemSlot itemSlot)
+                {
+                    var item = itemManager.GetItem(itemSlot.ItemIndex);
+                    EquipmentAdded(item, itemSlot.Amount);
+
+                    if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
+                    {
+                        var secondHandItemSlot = new ItemSlot { ItemIndex = 0, Amount = 1 };
+                        equipmentGrid.SetItem((int)EquipmentSlot.LeftHand - 1, secondHandItemSlot);
+                        partyMember.Equipment.Slots[EquipmentSlot.LeftHand].Replace(secondHandItemSlot);
+                    }
+
+                    // TODO: rings/fingers
+                    UpdateCharacterInfo();
+                }
+                void RemoveInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
+                {
+                    InventoryItemRemoved(itemManager.GetItem(itemSlot.ItemIndex), amount);
+                    UpdateCharacterInfo();
+                }
+                void AddInventoryItem(int slotIndex, ItemSlot itemSlot)
+                {
+                    InventoryItemAdded(itemManager.GetItem(itemSlot.ItemIndex), itemSlot.Amount);
+                    UpdateCharacterInfo();
+                }
+                equipmentGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
+                {
+                    RemoveEquipment(slotIndex, draggedItem, draggedAmount);
+                    AddEquipment(slotIndex, droppedItem);
                 };
-                equipmentGrid.ItemDropped += (int slot, Item item) =>
+                equipmentGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
                 {
-                    if (item.NumberOfHands == 2 && slot == (int)EquipmentSlot.RightHand - 1)
-                        equipmentGrid.SetItem((int)EquipmentSlot.LeftHand - 1, new ItemSlot { ItemIndex = 0, Amount = 1 });
-
-                    // TODO: rings/fingers
-                    // TODO: update weight, def, atk, lp, sp, etc
+                    RemoveEquipment(slotIndex, itemSlot, amount);
+                    partyMember.Equipment.Slots[(EquipmentSlot)(slotIndex + 1)].Remove(amount);
+                };
+                equipmentGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+                {
+                    AddEquipment(slotIndex, itemSlot);
+                };
+                inventoryGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
+                {
+                    RemoveInventoryItem(slotIndex, draggedItem, draggedAmount);
+                    AddInventoryItem(slotIndex, droppedItem);
+                };
+                inventoryGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+                {
+                    RemoveInventoryItem(slotIndex, itemSlot, amount);
+                    partyMember.Inventory.Slots[slotIndex].Remove(amount);
+                };
+                inventoryGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+                {
+                    AddInventoryItem(slotIndex, itemSlot);
                 };
                 #endregion
                 #region Character info
                 DisplayCharacterInfo(partyMember);
+                // Weight display
+                var weightArea = new Rect(27, 152, 68, 15);
+                layout.AddPanel(weightArea, 2);
+                layout.AddText(weightArea.CreateModified(0, 1, 0, 0), DataNameProvider.CharacterInfoWeightHeaderString,
+                    TextColor.White, TextAlign.Center, 5);
+                characterInfoTexts.Add(CharacterInfo.Weight, layout.AddText(weightArea.CreateModified(0, 8, 0, 0),
+                    string.Format(DataNameProvider.CharacterInfoWeightString, Util.Round(partyMember.TotalWeight / 1000.0f),
+                    partyMember.Attributes[Data.Attribute.Strength].TotalCurrentValue), TextColor.White, TextAlign.Center, 5));
                 #endregion
             }
 
@@ -1617,6 +1659,146 @@ namespace Ambermoon
                 openAction();
             else
                 Fade(openAction);
+        }
+
+        void DisplayCharacterInfo(PartyMember partyMember)
+        {
+            characterInfoTexts.Clear();
+            layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
+            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 51, 1);
+            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
+            layout.AddText(new Rect(242, 49, 62, 7), DataNameProvider.GetRaceName(partyMember.Race));
+            layout.AddText(new Rect(242, 56, 62, 7), DataNameProvider.GetGenderName(partyMember.Gender));
+            characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, 63, 62, 7),
+                string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
+                partyMember.Attributes[Data.Attribute.Age].CurrentValue)));
+            characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, 70, 62, 7),
+                $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}"));
+            characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
+                string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                partyMember.ExperiencePoints)));
+            layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
+            characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
+                string.Format(DataNameProvider.CharacterInfoHitPointsString,
+                partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue),
+                TextColor.White, TextAlign.Center));
+            characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
+                string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue),
+                TextColor.White, TextAlign.Center));
+            characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
+                string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
+                string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center));
+            characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
+                string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
+                TextColor.White, TextAlign.Center));
+            layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
+            characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', partyMember.Attack < 0 ? '-' : '+'), Math.Abs(partyMember.Attack)),
+                TextColor.White, TextAlign.Left));
+            layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
+            characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7),
+                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', partyMember.Defense < 0 ? '-' : '+'), Math.Abs(partyMember.Defense)),
+                TextColor.White, TextAlign.Left));
+        }
+
+        internal void UpdateCharacterInfo()
+        {
+            if ((currentWindow.Window != Window.Inventory &&
+                currentWindow.Window != Window.Stats) ||
+                CurrentInventoryIndex == null)
+                return;
+
+            void UpdateText(CharacterInfo characterInfo, string text)
+            {
+                characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text));
+            }
+
+            var partyMember = CurrentInventory;
+
+            UpdateText(CharacterInfo.Age, string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
+                partyMember.Attributes[Data.Attribute.Age].CurrentValue));
+            UpdateText(CharacterInfo.Level, $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
+            UpdateText(CharacterInfo.EP, string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                partyMember.ExperiencePoints));
+            UpdateText(CharacterInfo.LP, string.Format(DataNameProvider.CharacterInfoHitPointsString,
+                partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue));
+            UpdateText(CharacterInfo.SP, string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue));
+            UpdateText(CharacterInfo.SLPAndTP,
+                string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
+                string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints));
+            UpdateText(CharacterInfo.GoldAndFood,
+                string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food));
+            UpdateText(CharacterInfo.Attack,
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', partyMember.Attack < 0 ? '-' : '+'), Math.Abs(partyMember.Attack)));
+            UpdateText(CharacterInfo.Defense,
+                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', partyMember.Defense < 0 ? '-' : '+'), Math.Abs(partyMember.Defense)));
+            if (characterInfoTexts.ContainsKey(CharacterInfo.Weight))
+            {
+                UpdateText(CharacterInfo.Weight, string.Format(DataNameProvider.CharacterInfoWeightString,
+                    Util.Round(partyMember.TotalWeight / 1000.0f), partyMember.Attributes[Data.Attribute.Strength].TotalCurrentValue));
+            }
+        }
+
+        void InventoryItemAdded(Item item, int amount)
+        {
+            var partyMember = CurrentInventory;
+
+            partyMember.TotalWeight += (uint)amount * item.Weight;
+            // TODO ...
+        }
+
+        internal void InventoryItemAdded(uint itemIndex, int amount)
+        {
+            InventoryItemAdded(itemManager.GetItem(itemIndex), amount);
+        }
+
+        void InventoryItemRemoved(Item item, int amount)
+        {
+            var partyMember = CurrentInventory;
+
+            partyMember.TotalWeight -= (uint)amount * item.Weight;
+            // TODO ...
+        }
+
+        internal void InventoryItemRemoved(uint itemIndex, int amount)
+        {
+            InventoryItemRemoved(itemManager.GetItem(itemIndex), amount);
+        }
+
+        void EquipmentAdded(Item item, int amount)
+        {
+            var partyMember = CurrentInventory;
+
+            // Note: amount is only used for ammunition. The weight is
+            // influenced by the amount but not the damage/defense etc.
+            partyMember.Attack = (short)(partyMember.Attack + item.Damage);
+            partyMember.Defense = (short)(partyMember.Defense + item.Defense);
+            partyMember.TotalWeight += (uint)amount * item.Weight;
+            // TODO ...
+        }
+
+        internal void EquipmentAdded(uint itemIndex, int amount)
+        {
+            EquipmentAdded(itemManager.GetItem(itemIndex), amount);
+        }
+
+        void EquipmentRemoved(Item item, int amount)
+        {
+            var partyMember = CurrentInventory;
+
+            // Note: amount is only used for ammunition. The weight is
+            // influenced by the amount but not the damage/defense etc.
+            partyMember.Attack = (short)(partyMember.Attack - item.Damage);
+            partyMember.Defense = (short)(partyMember.Defense - item.Defense);
+            partyMember.TotalWeight -= (uint)amount * item.Weight;
+            // TODO ...
+        }
+
+        internal void EquipmentRemoved(uint itemIndex, int amount)
+        {
+            EquipmentRemoved(itemManager.GetItem(itemIndex), amount);
         }
 
         void RenewTimedEvent(TimedGameEvent timedGameEvent, TimeSpan delay)
@@ -1933,8 +2115,8 @@ namespace Ambermoon
                 var chest = GetChest(chestMapEvent.ChestIndex);
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
                 itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-                var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, !chestMapEvent.RemoveWhenEmpty,
-                    12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+                var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, chest.Slots.ToList(),
+                    !chestMapEvent.RemoveWhenEmpty, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
                 layout.AddItemGrid(itemGrid);
 
                 if (!chestMapEvent.RemoveWhenEmpty)
@@ -2183,6 +2365,36 @@ namespace Ambermoon
             }
         }
 
+        internal void DropGold(uint amount)
+        {
+            CurrentInventory.Gold = (ushort)Math.Max(0, CurrentInventory.Gold - (int)amount);
+            UpdateCharacterInfo();
+        }
+
+        internal void DropFood(uint amount)
+        {
+            CurrentInventory.Food = (ushort)Math.Max(0, CurrentInventory.Food - (int)amount);
+            UpdateCharacterInfo();
+        }
+
+        internal void StoreGold(uint amount)
+        {
+            const uint MaxGoldPerChest = 50000; // TODO
+            amount = Math.Min(amount, MaxGoldPerChest - OpenStorage.Gold);
+            CurrentInventory.Gold = (ushort)Math.Max(0, CurrentInventory.Gold - (int)amount);
+            OpenStorage.Gold += amount;
+            UpdateCharacterInfo();
+        }
+
+        internal void StoreFood(uint amount)
+        {
+            const uint MaxFoodPerChest = 5000; // TODO
+            amount = Math.Min(amount, MaxFoodPerChest - OpenStorage.Food);
+            CurrentInventory.Food = (ushort)Math.Max(0, CurrentInventory.Food - (int)amount);
+            OpenStorage.Food += amount;
+            UpdateCharacterInfo();
+        }
+
         /// <summary>
         /// Tries to store the item inside the opened storage.
         /// </summary>
@@ -2220,6 +2432,7 @@ namespace Ambermoon
         }
 
         /// <summary>
+        /// Drops the item in the inventory of the given player.
         /// Returns the remaining amount of items that could not
         /// be dropped or 0 if all items were dropped successfully.
         /// </summary>

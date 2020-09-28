@@ -18,19 +18,29 @@ namespace Ambermoon.UI
         readonly IRenderView renderView;
         readonly IItemManager itemManager;
         readonly List<Position> slotPositions;
+        readonly List<ItemSlot> slots;
         readonly UIItem[] items;
         readonly ILayerSprite[] slotBackgrounds;
         IRenderText hoveredItemName;
         readonly bool allowExternalDrop;
-        readonly Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction;
+        readonly Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>> pickupAction;
         readonly int slotsPerPage;
         readonly int slotsPerScroll;
         Scrollbar scrollbar;
         Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
         bool disabled;
 
-        public event Action<int, Item> ItemDragged;
-        public event Action<int, Item> ItemDropped;
+        internal enum ItemAction
+        {
+            None,
+            Drag,
+            Drop,
+            Exchange
+        }
+
+        public event Action<int, ItemSlot, int> ItemDragged;
+        public event Action<int, ItemSlot> ItemDropped;
+        public event Action<int, ItemSlot, int, ItemSlot> ItemExchanged;
         public event Action<ItemGrid, int, ItemSlot> ItemClicked;
         public event Func<bool> RightClicked;
         /// <summary>
@@ -70,13 +80,14 @@ namespace Ambermoon.UI
 
 
         private ItemGrid(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
-            bool allowExternalDrop, Func<ItemGrid, int, UIItem, Layout.DraggedItem> pickupAction,
+            List<ItemSlot> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>> pickupAction,
             int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect scrollbarArea = null, Size scrollbarSize = null,
             ScrollbarType? scrollbarType = null)
         {
             this.renderView = renderView;
             this.itemManager = itemManager;
             this.slotPositions = slotPositions;
+            this.slots = slots;
             this.allowExternalDrop = allowExternalDrop;
             this.pickupAction = pickupAction;
             this.slotsPerPage = slotsPerPage;
@@ -108,26 +119,33 @@ namespace Ambermoon.UI
             }
         }
 
-        public static ItemGrid CreateInventory(Layout layout, int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
+        public static ItemGrid CreateInventory(Layout layout, int partyMemberIndex, IRenderView renderView,
+            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
         {
-            return new ItemGrid(layout, renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
-                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false), 12, 3, 24,
-                new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
+            return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, true,
+                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction) =>
+                    layout.DragItems(item, dragAction,
+                    () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false)),
+                12, 3, 24, new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
         }
 
-        public static ItemGrid CreateEquipment(Layout layout, int partyMemberIndex, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions)
+        public static ItemGrid CreateEquipment(Layout layout, int partyMemberIndex, IRenderView renderView,
+            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
         {
-            return new ItemGrid(layout, renderView, itemManager, slotPositions, true, (ItemGrid itemGrid, int slot, UIItem item) =>
-                Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true), 9, 0, 9);
+            return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, true,
+                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction) =>
+                    layout.DragItems(item, dragAction,
+                    () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true)), 9, 0, 9);
         }
 
-        public static ItemGrid Create(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
-            bool allowExternalDrop, int slotsPerPage, int slotsPerScroll, int numTotalSlots,
-            Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType)
+        public static ItemGrid Create(Layout layout, IRenderView renderView, IItemManager itemManager,
+            List<Position> slotPositions, List<ItemSlot> slots, bool allowExternalDrop, int slotsPerPage,
+            int slotsPerScroll, int numTotalSlots, Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType)
         {
-            return new ItemGrid(layout, renderView, itemManager, slotPositions, allowExternalDrop, (ItemGrid itemGrid, int slot, UIItem item) =>
-                Layout.DraggedItem.FromExternal(itemGrid, slot, item), slotsPerPage, slotsPerScroll, numTotalSlots,
-                scrollbarArea, scrollbarSize, scrollbarType);
+            return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, allowExternalDrop,
+                (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction) =>
+                    layout.DragItems(item, dragAction, () => Layout.DraggedItem.FromExternal(itemGrid, slot, item)),
+                    slotsPerPage, slotsPerScroll, numTotalSlots, scrollbarArea, scrollbarSize, scrollbarType);
         }
 
         public void Destroy()
@@ -155,7 +173,8 @@ namespace Ambermoon.UI
                 items[slot] = null;
             else
             {
-                var newItem = items[slot] = new UIItem(renderView, itemManager, item);
+                slots[slot].Replace(item);
+                var newItem = items[slot] = new UIItem(renderView, itemManager, slots[slot]);
                 bool visible = SlotVisible(slot);
                 newItem.Visible = visible;
                 if (visible)
@@ -165,7 +184,7 @@ namespace Ambermoon.UI
 
         public bool SlotVisible(int slot) => slot >= ScrollOffset && slot < ScrollOffset + slotsPerPage;
 
-        public ItemSlot GetItem(int slot) => items[slot]?.Item;
+        public ItemSlot GetItem(int slot) => slots[slot];
 
         public int? SlotFromPosition(Position position)
         {
@@ -182,54 +201,55 @@ namespace Ambermoon.UI
             return null;
         }
 
-        public int DropItem(int slot, UIItem item)
+        public int DropItem(int slot, Layout.DraggedItem item)
         {
             if (DisableDrag)
-                return item.Item.Amount;
+                return item.Item.Item.Amount;
 
-            int? newSlot = Dropping?.Invoke(slot, itemManager.GetItem(item.Item.ItemIndex));
+            int? newSlot = Dropping?.Invoke(slot, itemManager.GetItem(item.Item.Item.ItemIndex));
 
             if (newSlot != null)
                 slot = newSlot.Value;
 
             if (slot == -1)
-                return item.Item.Amount;
+                return item.Item.Item.Amount;
 
             var itemSlot = items[slot];
 
             if (itemSlot == null)
             {
-                item.Dragged = false;
-                items[slot] = item;
-                item.Position = slotPositions[slot - ScrollOffset];
-                ItemDropped?.Invoke(slot, itemManager.GetItem(item.Item.ItemIndex));
+                item.Item.Dragged = false;
+                slots[slot].Replace(item.Item.Item);
+                item.Item.SetItem(slots[slot]);
+                item.Item.Position = slotPositions[slot - ScrollOffset];
+                items[slot] = item.Item;
+                ItemDropped?.Invoke(slot, item.Item.Item);
                 return 0;
             }
-            else if (itemSlot.Item.Empty || itemSlot.Item.ItemIndex == item.Item.ItemIndex)
+            else if (itemSlot.Item.Empty || itemSlot.Item.ItemIndex == item.Item.Item.ItemIndex)
             {
-                int remaining = itemSlot.Item.Add(item.Item);
+                int remaining = itemSlot.Item.Add(item.Item.Item);
                 itemSlot.Update(false);
 
                 if (remaining == 0)
-                    item.Destroy();
+                    item.Item.Destroy();
                 else
-                    item.Update(false);
+                    item.Item.Update(false);
 
-                ItemDropped?.Invoke(slot, itemManager.GetItem(itemSlot.Item.ItemIndex));
+                ItemDropped?.Invoke(slot, itemSlot.Item);
 
                 return remaining;
             }
             else
             {
                 if (!itemSlot.Item.Draggable)
-                    return item.Item.Amount;
+                    return item.Item.Item.Amount;
 
-                itemSlot.Item.Exchange(item.Item);
+                itemSlot.Item.Exchange(item.Item.Item);
                 itemSlot.Update(true);
                 itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
-                item.Update(true);
-                ItemDragged?.Invoke(slot, itemManager.GetItem(item.Item.ItemIndex));
-                ItemDropped?.Invoke(slot, itemManager.GetItem(itemSlot.Item.ItemIndex));
+                item.Item.Update(true);
+                ItemExchanged?.Invoke(slot, item.Item.Item, item.Item.Item.Amount, itemSlot.Item);
                 return itemSlot.Item.Amount;
             }
         }
@@ -345,9 +365,10 @@ namespace Ambermoon.UI
         }
 
         public bool Click(Position position, Layout.DraggedItem draggedItem,
-            out Layout.DraggedItem pickedUpItem, MouseButtons mouseButtons, ref CursorType cursorType)
+            out ItemAction itemAction, MouseButtons mouseButtons, ref CursorType cursorType,
+            Action<Layout.DraggedItem> dragHandler)
         {
-            pickedUpItem = draggedItem;
+            itemAction = ItemAction.None;
 
             if (disabled)
                 return false;
@@ -381,10 +402,15 @@ namespace Ambermoon.UI
                 if (!allowExternalDrop && draggedItem.SourceGrid != this)
                     return false;
 
-                if (DropItem(slot.Value, draggedItem.Item) == 0)
+                if (DropItem(slot.Value, draggedItem) == 0)
                 {
                     // fully dropped
-                    pickedUpItem = null;
+                    itemAction = ItemAction.Drop;
+                }
+                else
+                {
+                    itemAction = ItemAction.Exchange;
+                    dragHandler?.Invoke(draggedItem);
                 }
 
                 Hover(position); // This updates the tooltip
@@ -406,10 +432,23 @@ namespace Ambermoon.UI
 
                     if (!dragDisabled && itemSlot.Item.Draggable)
                     {
-                        pickedUpItem = pickupAction(this, slot.Value, itemSlot);
-                        ItemDragged?.Invoke(slot.Value, itemManager.GetItem(pickedUpItem.Item.Item.ItemIndex));
-                        items[slot.Value] = null;
-                        Hover(position); // This updates the tooltip
+                        itemAction = ItemAction.Drag;
+                        pickupAction(this, slot.Value, itemSlot, (Layout.DraggedItem item, int amount) =>
+                        {
+                            item.Item.Item.Amount = amount;
+                            item.Item.Update(false);
+                            ItemDragged?.Invoke(slot.Value, item.Item.Item, amount);
+                            if (items[slot.Value].Item.Empty)
+                            {
+                                items[slot.Value].Destroy();
+                                items[slot.Value] = null;
+                            }
+                            else
+                                items[slot.Value].Update(false);
+                            Hover(position); // This updates the tooltip
+                            //item.Item.Item.Replace(dragged);
+                            dragHandler?.Invoke(item);
+                        });
                     }
                 }
             }

@@ -162,7 +162,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             var items = new Dictionary<uint, Item>();
 
             for (uint i = 1; i <= 402; ++i) // there are 402 items
-                items.Add(i, Item.Load(itemReader, dataHunkReaders[dataHunkIndex]));
+                items.Add(i, Item.Load(i, itemReader, dataHunkReaders[dataHunkIndex]));
 
             ItemManager = new ItemManager(items);
         }

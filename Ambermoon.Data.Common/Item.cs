@@ -2,6 +2,7 @@
 {
     public class Item
     {
+        public uint Index { get; set; }
         public uint GraphicIndex { get; set; }
         public ItemType Type { get; set; }
         public EquipmentSlot EquipmentSlot { get; set; }
@@ -51,9 +52,9 @@
         public uint GetBuyPrice(PartyMember buyer) => (uint)Util.Round(Price / GetPriceFactor(buyer));
         public uint GetSellPrice(PartyMember seller) => (uint)Util.Round(0.5f * Price * GetPriceFactor(seller));
 
-        public static Item Load(IItemReader itemReader, IDataReader dataReader)
+        public static Item Load(uint index, IItemReader itemReader, IDataReader dataReader)
         {
-            var item = new Item();
+            var item = new Item { Index = index };
 
             itemReader.ReadItem(item, dataReader);
 

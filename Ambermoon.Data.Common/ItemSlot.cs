@@ -47,6 +47,19 @@ namespace Ambermoon.Data
             }
         }
 
+        public void Remove(int amount)
+        {
+            if (amount < 0)
+                throw new AmbermoonException(ExceptionScope.Application, "Remove should not be called with negative amount.");
+            if (amount > Amount)
+                throw new AmbermoonException(ExceptionScope.Application, "Tried to remove more items than existed.");
+
+            if (amount == Amount)
+                Clear();
+            else
+                Amount -= amount;
+        }
+
         public void Clear()
         {
             ItemIndex = 0;
@@ -74,6 +87,16 @@ namespace Ambermoon.Data
             ItemIndex = item.ItemIndex;
             Amount = item.Amount;
             Flags = item.Flags;
+        }
+
+        public ItemSlot Copy()
+        {
+            return new ItemSlot
+            {
+                ItemIndex = ItemIndex,
+                Amount = Amount,
+                Flags = Flags
+            };
         }
     }
 }

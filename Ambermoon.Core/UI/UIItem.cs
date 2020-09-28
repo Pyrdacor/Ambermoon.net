@@ -3,9 +3,9 @@ using Ambermoon.Render;
 
 namespace Ambermoon.UI
 {
-    public class UIItem
+    internal class UIItem
     {
-        public ItemSlot Item { get; }
+        public ItemSlot Item { get; private set; }
         ILayerSprite sprite;
         IRenderText amountDisplay;
         readonly IRenderView renderView;
@@ -33,6 +33,18 @@ namespace Ambermoon.UI
             sprite.PaletteIndex = 49;
 
             Update(true);
+        }
+
+        public UIItem Clone()
+        {
+            return new UIItem(renderView, itemManager, Item.Copy());
+        }
+
+        public void SetItem(ItemSlot item)
+        {
+            bool itemTypeChanged = Item.ItemIndex != item.ItemIndex;
+            Item = item;
+            Update(itemTypeChanged);
         }
 
         public void Update(bool itemTypeChanged)

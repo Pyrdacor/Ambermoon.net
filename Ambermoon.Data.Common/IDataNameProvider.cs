@@ -33,6 +33,8 @@
         string WrongRiddlemouthSolutionText { get; }
         string That { get; }
         string DropItemQuestion { get; }
+        string DropGoldQuestion { get; }
+        string DropFoodQuestion { get; }
         string WhichItemToDropMessage { get; }
         string WhichItemToStoreMessage { get; }
         string GoldName { get; }
@@ -43,6 +45,7 @@
         string StoreHowMuchItemsMessage { get; }
         string StoreHowMuchGoldMessage { get; }
         string StoreHowMuchFoodMessage { get; }
+        string TakeHowManyMessage { get; }
 
         // TODO
     }
