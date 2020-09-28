@@ -1742,15 +1742,15 @@ namespace Ambermoon
             }
         }
 
-        void InventoryItemAdded(Item item, int amount)
+        void InventoryItemAdded(Item item, int amount, PartyMember partyMember = null)
         {
-            var partyMember = CurrentInventory;
+            partyMember ??= CurrentInventory;
 
             partyMember.TotalWeight += (uint)amount * item.Weight;
             // TODO ...
         }
 
-        internal void InventoryItemAdded(uint itemIndex, int amount)
+        internal void InventoryItemAdded(uint itemIndex, int amount, PartyMember partyMember)
         {
             InventoryItemAdded(itemManager.GetItem(itemIndex), amount);
         }
@@ -1768,9 +1768,9 @@ namespace Ambermoon
             InventoryItemRemoved(itemManager.GetItem(itemIndex), amount);
         }
 
-        void EquipmentAdded(Item item, int amount)
+        void EquipmentAdded(Item item, int amount, PartyMember partyMember = null)
         {
-            var partyMember = CurrentInventory;
+            partyMember ??= CurrentInventory;
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
@@ -1780,9 +1780,9 @@ namespace Ambermoon
             // TODO ...
         }
 
-        internal void EquipmentAdded(uint itemIndex, int amount)
+        internal void EquipmentAdded(uint itemIndex, int amount, PartyMember partyMember)
         {
-            EquipmentAdded(itemManager.GetItem(itemIndex), amount);
+            EquipmentAdded(itemManager.GetItem(itemIndex), amount, partyMember);
         }
 
         void EquipmentRemoved(Item item, int amount)

@@ -249,15 +249,19 @@ namespace Ambermoon.UI
 
                 if (SourcePlayer != null)
                 {
+                    var partyMember = game.GetPartyMember(SourcePlayer.Value);
+
                     if (Equipped == true)
                     {
-                        game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount);
+                        game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                         game.UpdateCharacterInfo();
+                        partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Replace(Item.Item);
                     }
                     else
                     {
-                        game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount);
+                        game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                         game.UpdateCharacterInfo();
+                        partyMember.Inventory.Slots[SourceSlot].Replace(Item.Item);
                     }
 
                     if (game.CurrentInventoryIndex != SourcePlayer)
