@@ -101,7 +101,9 @@ namespace Ambermoon.UI
         void Submit()
         {
             if (string.IsNullOrEmpty(currentInput))
-                Aborted?.Invoke();
+            {
+                Abort();
+            }
             else
             {
                 if (DigitsOnly)
@@ -205,6 +207,8 @@ namespace Ambermoon.UI
             if (!ReactToGlobalClicks && !area.Contains(position))
                 return false;
 
+            bool clickedInArea = area.Contains(position);
+
             ClickAction? action = mouseButtons switch
             {
                 MouseButtons.Left => leftClickAction,
@@ -221,12 +225,13 @@ namespace Ambermoon.UI
                     Submit();
                     break;
                 case ClickAction.Focus:
-                    SetFocus();
+                    if (clickedInArea)
+                        SetFocus();
                     break;
                 case ClickAction.FocusOrSubmit:
                     if (FocusedInput == this)
                         Submit();
-                    else
+                    else if (clickedInArea)
                         SetFocus();
                     break;
                 case ClickAction.Abort:
