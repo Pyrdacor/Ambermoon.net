@@ -44,6 +44,7 @@ namespace Ambermoon.Data
         public List<PartyMember> PartyMembers { get; } = new List<PartyMember>();
         public int[] CurrentPartyMemberIndices { get; } = new int[6];
         public int ActivePartyMemberSlot = 0; // 0 - 5
+        public byte[] BattlePositions { get; } = new byte[6];
         public ActiveSpell[] ActiveSpells { get; } = new ActiveSpell[6];
         /// <summary>
         /// Activates a spell.
@@ -141,9 +142,39 @@ namespace Ambermoon.Data
 
         #region Misc
 
+        public uint Year { get; set; }
+        public uint Month { get; set; }
+        public uint DayOfMonth { get; set; }
         public uint Hour { get; set; }
         public uint Minute { get; set; } // a multiple of 5
         public uint HoursWithoutSleep { get; set; }
+        public ushort SpecialItemsActive { get; set; }
+        public ushort GameOptions { get; set; }
+
+        public bool IsSpecialItemActive(SpecialItemPurpose specialItemPurpose)
+        {
+            return (SpecialItemsActive & (1 << (int)specialItemPurpose)) != 0;
+        }
+
+        public void ActivateSpecialItem(SpecialItemPurpose specialItemPurpose)
+        {
+            SpecialItemsActive |= (ushort)(1 << (int)specialItemPurpose);
+        }
+
+        public bool IsGameOptionActive(Option option)
+        {
+            return (GameOptions & (1 << (int)option)) != 0;
+        }
+
+        public void SetGameOption(Option option, bool active)
+        {
+            ushort bit = (ushort)(1 << (int)option);
+
+            if (active)
+                GameOptions |= bit;
+            else
+                GameOptions &= (ushort)~bit;
+        }
 
         #endregion
 

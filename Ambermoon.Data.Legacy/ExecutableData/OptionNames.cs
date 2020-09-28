@@ -1,16 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Ambermoon.Data.Enumerations;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
-    public enum Option
-    {
-        Music,
-        FastBattleMode,
-        TextJustification,
-        FloorTexture3D,
-        CeilingTexture3D
-    }
-
     /// <summary>
     /// After the <see cref="AutomapNames"/> there are the
     /// original option names like "Music", "Fast battle mode", etc.

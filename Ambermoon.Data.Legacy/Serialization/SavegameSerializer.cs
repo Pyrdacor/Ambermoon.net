@@ -7,7 +7,9 @@ namespace Ambermoon.Data.Legacy
     {
         void ReadSaveData(Savegame savegame, IDataReader dataReader)
         {
-            dataReader.Position = 6;
+            savegame.Year = dataReader.ReadWord();
+            savegame.Month = dataReader.ReadWord();
+            savegame.DayOfMonth = dataReader.ReadWord();
             savegame.Hour = dataReader.ReadWord();
             savegame.Minute = dataReader.ReadWord();
             savegame.CurrentMapIndex = dataReader.ReadWord();
@@ -45,8 +47,11 @@ namespace Ambermoon.Data.Legacy
             for (int i = 0; i < 6; ++i)
                 savegame.CurrentPartyMemberIndices[i] = dataReader.ReadWord();
 
-            dataReader.Position = 61;
-            savegame.TravelType = (TravelType)dataReader.ReadByte();
+            // TODO: Unknown word
+            dataReader.ReadWord();
+            savegame.TravelType = (TravelType)dataReader.ReadWord();
+            savegame.SpecialItemsActive = dataReader.ReadWord();
+            savegame.GameOptions = dataReader.ReadWord();
 
             dataReader.Position = 67;
 
@@ -79,10 +84,11 @@ namespace Ambermoon.Data.Legacy
             }
 
             dataReader.Position = 0x35a4;
-            // TODO: maybe all 64 bytes are available for chests (chest 0-511)
-            savegame.ChestUnlockStates = dataReader.ReadBytes(33); // 33 * 8 bits = 264 bits (1 for each chest, possible chest indices 0 to 263)
+            savegame.ChestUnlockStates = dataReader.ReadBytes(64); // 64 * 8 bits = 512 bits (1 for each chest, possible chest indices 0 to 511)
 
             dataReader.Position = 0x35e4;
+            Buffer.BlockCopy(dataReader.ReadBytes(6), 0, savegame.BattlePositions, 0, 6);
+
             savegame.TileChangeEvents.Clear();
 
             while (dataReader.Position < dataReader.Size)
