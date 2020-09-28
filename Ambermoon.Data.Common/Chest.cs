@@ -8,10 +8,13 @@ namespace Ambermoon.Data
         Chest // will stay there and new items can be added by the player
     }
 
-    public class Chest
+    public class Chest : IItemStorage
     {
+        public const int SlotsPerRow = 6;
+        public const int SlotRows = 4;
+
         public ChestType Type { get; set; }
-        public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
+        public ItemSlot[,] Slots { get; } = new ItemSlot[SlotsPerRow, SlotRows];
         public uint Gold { get; set; }
         public uint Food { get; set; }
 
@@ -24,6 +27,15 @@ namespace Ambermoon.Data
             chestReader.ReadChest(chest, dataReader);
 
             return chest;
+        }
+
+        public void ResetItem(int slot, ItemSlot item)
+        {
+            int column = slot % SlotsPerRow;
+            int row = slot / SlotsPerRow;
+
+            if (Slots[column, row].Add(item) != 0)
+                throw new AmbermoonException(ExceptionScope.Application, "Unable to reset chest item.");
         }
     }
 }

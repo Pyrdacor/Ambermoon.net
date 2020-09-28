@@ -16,10 +16,16 @@ namespace Ambermoon
 
         public static List<T> ToList<T>(this T[,] array)
         {
-            var list = new List<T>(array.GetLength(0) * array.GetLength(1));
+            int width = array.GetLength(0);
+            int height = array.GetLength(1);
 
-            foreach (var elem in array)
-                list.Add(elem);
+            var list = new List<T>(width * height);
+
+            for (int y = 0; y < height; ++y)
+            {
+                for (int x = 0; x < width; ++x)
+                    list.Add(array[x, y]);
+            }
 
             return list;
         }

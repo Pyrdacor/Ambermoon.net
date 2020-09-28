@@ -210,7 +210,7 @@ namespace Ambermoon
         /// <summary>
         /// Open chest which can be used to store items.
         /// </summary>
-        internal Chest OpenStorage { get; private set; }
+        internal IItemStorage OpenStorage { get; private set; }
         Rect mapViewArea = map2DViewArea;
         static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
@@ -1343,7 +1343,6 @@ namespace Ambermoon
                     : Map.Name;
                 windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
                 windowTitle.TextColor = TextColor.Gray;
-                CurrentInventoryIndex = null;
             }
 
             windowTitle.Visible = show;
@@ -2105,6 +2104,14 @@ namespace Ambermoon
             }
         }
 
+        internal void ResetStorageItem(int slotIndex, ItemSlot item)
+        {
+            if (OpenStorage == null)
+                throw new AmbermoonException(ExceptionScope.Application, "Reset storage item while no storage is open.");
+
+            OpenStorage.ResetItem(slotIndex, item);
+        }
+
         internal void ShowChest(ChestMapEvent chestMapEvent)
         {
             Fade(() =>
@@ -2149,6 +2156,13 @@ namespace Ambermoon
                                 itemGrid.SetItem(x + y * 6, slot);
                         }
                     }
+
+                    itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+                    {
+                        int column = slotIndex % Chest.SlotsPerRow;
+                        int row = slotIndex / Chest.SlotsPerRow;
+                        chest.Slots[column, row].Remove(amount);
+                    };
 
                     // TODO: gold and food
                 }
@@ -2437,7 +2451,7 @@ namespace Ambermoon
         /// Returns the remaining amount of items that could not
         /// be dropped or 0 if all items were dropped successfully.
         /// </summary>
-        internal int DropItem(int partyMemberIndex, int? slotIndex, ItemSlot item, bool allowItemExchange)
+        internal int DropItem(int partyMemberIndex, int? slotIndex, ItemSlot item)
         {
             var partyMember = GetPartyMember(partyMemberIndex);
 
@@ -2447,6 +2461,7 @@ namespace Ambermoon
             var slots = slotIndex == null
                 ? partyMember.Inventory.Slots.Where(s => s.ItemIndex == item.ItemIndex && s.Amount < 99).ToArray()
                 : new ItemSlot[1] { partyMember.Inventory.Slots[slotIndex.Value] };
+            int amountToAdd = item.Amount;
 
             if (slots.Length == 0) // no slot found -> try any empty slot
             {
@@ -2456,15 +2471,15 @@ namespace Ambermoon
                     return item.Amount;
 
                 // This reduces item.Amount internally.
-                return emptySlot.Add(item);
+                int remaining = emptySlot.Add(item);
+                int added = amountToAdd - remaining;
+
+                InventoryItemAdded(itemManager.GetItem(emptySlot.ItemIndex), added, partyMember);
+
+                return remaining;
             }
 
-            // Special case: Exchange item at a single slot
-            if (allowItemExchange && slots.Length == 1 && slots[0].ItemIndex != item.ItemIndex)
-            {
-                slots[0].Exchange(item);
-                return item.Amount;
-            }
+            var itemToAdd = itemManager.GetItem(item.ItemIndex);
 
             foreach (var slot in slots)
             {
@@ -2472,8 +2487,11 @@ namespace Ambermoon
                 slot.Add(item);
 
                 if (item.Empty)
-                    return 0;
+                    break;
             }
+
+            int addedAmount = amountToAdd - item.Amount;
+            InventoryItemAdded(itemToAdd, addedAmount, partyMember);
 
             return item.Amount;
         }
@@ -2501,6 +2519,8 @@ namespace Ambermoon
         {
             if (!WindowActive)
                 return;
+
+            CurrentInventoryIndex = null;
 
             if (currentWindow.Window == Window.Event || currentWindow.Window == Window.Riddlemouth)
             {

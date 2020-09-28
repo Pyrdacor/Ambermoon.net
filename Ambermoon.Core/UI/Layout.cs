@@ -267,6 +267,10 @@ namespace Ambermoon.UI
                     if (game.CurrentInventoryIndex != SourcePlayer)
                         updateGrid = false;
                 }
+                else if (game.OpenStorage != null)
+                {
+                    game.ResetStorageItem(SourceSlot, Item.Item);
+                }
 
                 if (updateGrid && SourceGrid != null)
                     SourceGrid.SetItem(SourceSlot, Item.Item);
@@ -1546,7 +1550,7 @@ namespace Ambermoon.UI
                             }
                             else
                             {
-                                int remaining = game.DropItem(i, null, draggedItem.Item.Item, false);
+                                int remaining = game.DropItem(i, null, draggedItem.Item.Item);
 
                                 if (remaining == 0)
                                 {

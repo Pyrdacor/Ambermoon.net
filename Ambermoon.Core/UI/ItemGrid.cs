@@ -446,7 +446,6 @@ namespace Ambermoon.UI
                             else
                                 items[slot.Value].Update(false);
                             Hover(position); // This updates the tooltip
-                            //item.Item.Item.Replace(dragged);
                             dragHandler?.Invoke(item);
                         }, mouseButtons == MouseButtons.Right);
                     }
