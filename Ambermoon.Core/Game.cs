@@ -267,6 +267,7 @@ namespace Ambermoon
             windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.Gray, true,
                 new Rect(8, 40, 192, 10), TextAlign.Center);
+            windowTitle.DisplayLayer = 2;
             layout = new Layout(this, renderView, itemManager);
             ouchSprite = renderView.SpriteFactory.Create(32, 23, false, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
