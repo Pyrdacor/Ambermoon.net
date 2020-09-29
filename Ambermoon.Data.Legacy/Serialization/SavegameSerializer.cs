@@ -52,10 +52,7 @@ namespace Ambermoon.Data.Legacy
             savegame.TravelType = (TravelType)dataReader.ReadWord();
             savegame.SpecialItemsActive = dataReader.ReadWord();
             savegame.GameOptions = dataReader.ReadWord();
-
-            dataReader.Position = 67;
-
-            savegame.HoursWithoutSleep = dataReader.ReadByte();
+            savegame.HoursWithoutSleep = dataReader.ReadWord();
 
             // up to 32 transport positions
             for (int i = 0; i < 32; ++i)
@@ -81,6 +78,16 @@ namespace Ambermoon.Data.Legacy
                         Position = new Position(x, y)
                     };
                 }
+            }
+
+            dataReader.Position = 0x0112; // 16 bits for wind gates (1 = active, 0 = broken)
+            savegame.WindGatesActive = dataReader.ReadWord();
+
+            dataReader.Position = 0x04FC; // 8 bytes (64 bits) for every map starting at theoretical index 0
+            // each bit stands for a map variable. order is 76543210 FECDBA98 ...
+            for (int i = 0; i < 529; ++i)
+            {
+                savegame.MapEventBits[i] = dataReader.ReadQword();
             }
 
             dataReader.Position = 0x35a4;

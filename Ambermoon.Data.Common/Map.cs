@@ -58,6 +58,9 @@ namespace Ambermoon.Data
                 bool allowBack = BackTileIndex == 0 || tileset.Tiles[BackTileIndex - 1].AllowMovement(travelType);
                 bool allowFront = FrontTileIndex == 0 || tileset.Tiles[FrontTileIndex - 1].AllowMovement(travelType);
 
+                if (FrontTileIndex != 0 && !tileset.Tiles[FrontTileIndex - 1].BringToFront)
+                    allowBack = allowFront;
+
                 return allowBack && allowFront;
             }
         }

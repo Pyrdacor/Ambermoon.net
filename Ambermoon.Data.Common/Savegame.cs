@@ -36,6 +36,31 @@ namespace Ambermoon.Data
         public CharacterDirection CharacterDirection { get; set; }
         public TravelType TravelType { get; set; }
         public TransportLocation[] TransportLocations { get; } = new TransportLocation[32];
+        public ushort WindGatesActive { get; set; }
+        /// <summary>
+        /// 64 events bits per map.
+        /// Each bit activates (0) or deactivates (1) an event.
+        /// The bit index corresponds to the event list index (0 to 63).
+        /// </summary>
+        public ulong[] MapEventBits { get; } = new ulong[529]; // 0 to 528
+        public bool GetEventBit(uint mapIndex, uint eventIndex)
+        {
+            int byteIndex = (int)eventIndex / 8;
+            byte bits = (byte)(MapEventBits[mapIndex] >> (7 - byteIndex) * 8);
+            int bitIndex = (int)eventIndex % 8;
+            return (bits & (1 << bitIndex)) != 0;
+        }
+        public void SetEventBit(uint mapIndex, uint eventIndex, bool bit)
+        {
+            int byteIndex = (int)eventIndex / 8;
+            int bitIndex = (int)eventIndex % 8;
+            ulong bitValue = 1ul << ((7 - byteIndex) * 8 + bitIndex);
+
+            if (bit)
+                MapEventBits[mapIndex] |= bitValue;
+            else
+                MapEventBits[mapIndex] &= ~bitValue;
+        }
 
         #endregion
 

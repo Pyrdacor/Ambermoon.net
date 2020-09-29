@@ -20,7 +20,7 @@ namespace Ambermoon
             }
 
             /// <inheritdoc />
-            public string LeadName => game.currentSavegame.PartyMembers.First(p => p.Alive).Name;
+            public string LeadName => game.CurrentSavegame.PartyMembers.First(p => p.Alive).Name;
             /// <inheritdoc />
             public string SelfName => game.CurrentPartyMember.Name;
             /// <inheritdoc />
@@ -196,7 +196,7 @@ namespace Ambermoon
 
             return mapVariables[map.Index];
         }
-        Savegame currentSavegame;
+        internal Savegame CurrentSavegame { get; private set; }
 
         // Rendering
         readonly Cursor cursor = null;
@@ -403,7 +403,7 @@ namespace Ambermoon
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
                 // Light is based on daytime and own light sources
-                float daytimeFactor = 1.0f - (Math.Abs((int)currentSavegame.Hour * 60 + currentSavegame.Minute - 12 * 60)) / (24.0f * 60.0f);
+                float daytimeFactor = 1.0f - (Math.Abs((int)CurrentSavegame.Hour * 60 + CurrentSavegame.Minute - 12 * 60)) / (24.0f * 60.0f);
                 return daytimeFactor * daytimeFactor * daytimeFactor; // TODO: light sources
             }
             else
@@ -571,7 +571,7 @@ namespace Ambermoon
             Cleanup();
 
             ingame = true;
-            currentSavegame = savegame;
+            CurrentSavegame = savegame;
 
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
@@ -585,8 +585,8 @@ namespace Ambermoon
                     RemovePartyMember(i);
                 }
             }
-            CurrentPartyMember = GetPartyMember(currentSavegame.ActivePartyMemberSlot);
-            SetActivePartyMember(currentSavegame.ActivePartyMemberSlot);
+            CurrentPartyMember = GetPartyMember(CurrentSavegame.ActivePartyMemberSlot);
+            SetActivePartyMember(CurrentSavegame.ActivePartyMemberSlot);
 
             player = new Player();
             var map = mapManager.GetMap(savegame.CurrentMapIndex);
@@ -620,9 +620,9 @@ namespace Ambermoon
 
         void RunSavegameTileChangeEvents(uint mapIndex)
         {
-            if (currentSavegame.TileChangeEvents.ContainsKey(mapIndex))
+            if (CurrentSavegame.TileChangeEvents.ContainsKey(mapIndex))
             {
-                var tileChangeEvents = currentSavegame.TileChangeEvents[mapIndex];
+                var tileChangeEvents = CurrentSavegame.TileChangeEvents[mapIndex];
 
                 foreach (var tileChangeEvent in tileChangeEvents)
                     UpdateMapTile(tileChangeEvent);
@@ -1272,9 +1272,9 @@ namespace Ambermoon
             UpdateCursor(position, buttons);
         }
 
-        internal PartyMember GetPartyMember(int slot) => currentSavegame.GetPartyMember(slot);
-        internal Chest GetChest(uint index) => currentSavegame.Chests[(int)index];
-        internal Merchant GetMerchant(uint index) => currentSavegame.Merchants[(int)index];
+        internal PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
+        internal Chest GetChest(uint index) => CurrentSavegame.Chests[(int)index];
+        internal Merchant GetMerchant(uint index) => CurrentSavegame.Merchants[(int)index];
 
         /// <summary>
         /// Triggers map events with the given trigger and position.
@@ -1298,11 +1298,13 @@ namespace Ambermoon
         {
             if (is3D)
             {
-                return renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager, CurrentTicks);
+                return renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager,
+                    CurrentTicks, CurrentSavegame);
             }
             else // 2D
             {
-                return renderMap2D.TriggerEvents(player2D, trigger, x, y, mapManager, CurrentTicks);
+                return renderMap2D.TriggerEvents(player2D, trigger, x, y, mapManager,
+                    CurrentTicks, CurrentSavegame);
             }
         }
 
@@ -1372,7 +1374,7 @@ namespace Ambermoon
 
         internal void OpenPartyMember(int slot, bool inventory)
         {
-            if (currentSavegame.CurrentPartyMemberIndices[slot] == 0)
+            if (CurrentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
 
             void OpenInventory()
@@ -1868,11 +1870,11 @@ namespace Ambermoon
             {
                 if (TravelType.UsesMapObject())
                 {
-                    for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
+                    for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
                     {
-                        if (currentSavegame.TransportLocations[i] == null)
+                        if (CurrentSavegame.TransportLocations[i] == null)
                         {
-                            currentSavegame.TransportLocations[i] = new TransportLocation
+                            CurrentSavegame.TransportLocations[i] = new TransportLocation
                             {
                                 MapIndex = mapIndex,
                                 Position = new Position((int)x + 1, (int)y + 1),
@@ -1898,11 +1900,12 @@ namespace Ambermoon
                 else
                     TravelType = TravelType.Walk;
 
-                Map.TriggerEvents(this, player2D, MapEventTrigger.Move, x, y, mapManager, CurrentTicks);
+                Map.TriggerEvents(this, player2D, MapEventTrigger.Move, x, y, mapManager,
+                    CurrentTicks, CurrentSavegame);
             }
             else if (transport != null && TravelType == TravelType.Walk)
             {
-                currentSavegame.TransportLocations[index.Value] = null;
+                CurrentSavegame.TransportLocations[index.Value] = null;
                 renderMap2D.RemoveTransportAt(mapIndex, x, y);
                 TravelType = transport.TravelType;
             }
@@ -1915,9 +1918,9 @@ namespace Ambermoon
             // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
             var position = new Position(player.Position.X + 1, player.Position.Y + 1);
 
-            for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
+            for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
             {
-                var transport = currentSavegame.TransportLocations[i];
+                var transport = CurrentSavegame.TransportLocations[i];
 
                 if (transport != null)
                 {
@@ -1944,9 +1947,9 @@ namespace Ambermoon
             // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
             var position = new Position(player.Position.X + 1, player.Position.Y + 1);
 
-            for (int i = 0; i < currentSavegame.TransportLocations.Length; ++i)
+            for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
             {
-                var transport = currentSavegame.TransportLocations[i];
+                var transport = CurrentSavegame.TransportLocations[i];
 
                 if (transport != null && renderMap2D.IsMapVisible(transport.MapIndex))
                 {
@@ -2104,6 +2107,11 @@ namespace Ambermoon
             }
         }
 
+        internal void SetMapEventBit(uint mapIndex, uint eventListIndex, bool bit)
+        {
+            CurrentSavegame.SetEventBit(mapIndex, eventListIndex, bit);
+        }
+
         internal void ResetStorageItem(int slotIndex, ItemSlot item)
         {
             if (OpenStorage == null)
@@ -2130,7 +2138,7 @@ namespace Ambermoon
                 if (!chestMapEvent.RemoveWhenEmpty)
                     OpenStorage = chest;
 
-                if (currentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
+                if (CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
                 {
                     layout.Set80x80Picture(Picture80x80.ChestClosed);
                     itemGrid.Disabled = true;
@@ -2374,9 +2382,9 @@ namespace Ambermoon
 
             if (partyMember != null)
             {
-                currentSavegame.ActivePartyMemberSlot = index;
+                CurrentSavegame.ActivePartyMemberSlot = index;
                 CurrentPartyMember = partyMember;
-                layout.SetActiveCharacter(index, currentSavegame.PartyMembers);
+                layout.SetActiveCharacter(index, CurrentSavegame.PartyMembers);
             }
         }
 

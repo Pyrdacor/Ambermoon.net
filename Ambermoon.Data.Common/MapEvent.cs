@@ -143,12 +143,12 @@ namespace Ambermoon.Data
         public Trigger PopupTrigger { get; set; }
         public bool CanTriggerByMoving => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.Move);
         public bool CanTriggerByCursor => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.Cursor);
-        public byte[] Unknown1 { get; set; }
+        public byte Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, Unknown1 {Unknown1}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -320,8 +320,11 @@ namespace Ambermoon.Data
     {
         public enum ConditionType
         {
-            MapVariable = 0x00,
-            GlobalVariable = 0x01,
+            GlobalVariable = 0x00,
+            EventBit = 0x01,
+            MapVariable = 0x04,
+            PartyMember = 0x05,
+            ItemOwned = 0x06,
             UseItem = 0x07,
             Success = 0x09, // treasure fully looted, battle won, etc
             Hand = 0x0e,
@@ -350,12 +353,18 @@ namespace Ambermoon.Data
 
             switch (TypeOfCondition)
             {
-                case ConditionType.MapVariable:
-                    return $"{Type}: Map variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.GlobalVariable:
                     return $"{Type}: Global variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
+                case ConditionType.EventBit:
+                    return $"{Type}: Event bit {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
+                case ConditionType.MapVariable:
+                    return $"{Type}: Map variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
+                case ConditionType.PartyMember:
+                    return $"{Type}: Has party member {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
+                case ConditionType.ItemOwned:
+                    return $"{Type}: Own item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.UseItem:
-                    return $"{Type}: Item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
+                    return $"{Type}: Use item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.Success:
                     return $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.Hand:
@@ -370,8 +379,26 @@ namespace Ambermoon.Data
     {
         public enum ActionType
         {
-            SetMapVariable = 0x00,
-            SetGlobalVariable = 0x01,
+            SetGlobalVariable = 0x00,
+            /// <summary>
+            /// Sets an event (event list entry) to active or inactive.
+            /// </summary>
+            SetEvent = 0x01,
+            /// <summary>
+            /// As event status can be set by SetEvent I guess
+            /// this is used for more complex non-boolean values
+            /// like amount of stones in the pond etc.
+            /// </summary>
+            SetMapVariable = 0x04,
+            /// <summary>
+            /// Adds or remove some item?
+            /// </summary>
+            Inventory = 0x06,
+            /// <summary>
+            /// Adds a new dictionary entry?
+            /// </summary>
+            Keyword = 0x08,
+
             // TODO
         }
 
@@ -389,10 +416,16 @@ namespace Ambermoon.Data
         {
             switch (TypeOfAction)
             {
-                case ActionType.SetMapVariable:
-                    return $"{Type}: Set map variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
                 case ActionType.SetGlobalVariable:
                     return $"{Type}: Set global variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ActionType.SetEvent: // TODO
+                    return $"{Type}: Set event bit {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ActionType.SetMapVariable:
+                    return $"{Type}: Set map variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ActionType.Inventory: // TODO
+                    return $"{Type}: Set item, ObjectIndex={ObjectIndex}, Value={Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ActionType.Keyword: // TODO
+                    return $"{Type}: Keyword, ObjectIndex={ObjectIndex}, Value={Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
                 default:
                     return $"{Type}: Unknown ({TypeOfAction}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
             }

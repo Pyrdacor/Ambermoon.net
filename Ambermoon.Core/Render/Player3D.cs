@@ -83,8 +83,12 @@ namespace Ambermoon.Render
         {
             Position = new Position(x, y);
             ResetCameraPosition();
+
             if (triggerEvents)
-                map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y, mapManager, ticks);
+            {
+                map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)Position.X, (uint)Position.Y,
+                    mapManager, ticks, game.CurrentSavegame);
+            }
         }
 
         bool TestCollision(float x, float z, float lastMapX, float lastMapY)
@@ -120,7 +124,7 @@ namespace Ambermoon.Render
                 {
                     var oldMapIndex = map.Map.Index;
                     map.Map.TriggerEvents(game, this, MapEventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y,
-                        mapManager, ticks, out bool hasEvent, true);
+                        mapManager, ticks, game.CurrentSavegame, out bool hasEvent, true);
                     anyEventTriggered = anyEventTriggered || hasEvent;
 
                     if (oldMapIndex != game.Map.Index)

@@ -244,13 +244,14 @@ namespace Ambermoon.Data.Legacy
                 case MapEventType.PopupText:
                 {
                     // event image index (0xff = no image)
-                    // 3 unknown bytes
-                    // 5. byte is the map text index
+                    // trigger (1 = move, 2 = cursor, 3 = both)
+                    // 2 unknown bytes
+                    // 4-5. byte is the map text index
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
                     var popupTrigger = (PopupTextEvent.Trigger)dataReader.ReadByte();
-                    var unknown1 = dataReader.ReadBytes(2);
-                    var textIndex = dataReader.ReadByte();
+                    var unknown1 = dataReader.ReadByte();
+                    var textIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(4);
                     mapEvent = new PopupTextEvent
                     {
@@ -376,7 +377,7 @@ namespace Ambermoon.Data.Legacy
                 }
                 case MapEventType.Action:
                 {
-                    var actionType = (ActionEvent.ActionType)dataReader.ReadByte(); // TODO: this needs more research
+                    var actionType = (ActionEvent.ActionType)dataReader.ReadByte();
                     var value = dataReader.ReadByte();
                     var unknown1 = dataReader.ReadBytes(4);
                     var objectIndex = dataReader.ReadByte();

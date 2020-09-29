@@ -5,6 +5,7 @@ namespace Ambermoon.Data.Legacy
 {
     using word = UInt16;
     using dword = UInt32;
+    using qword = UInt64;
 
     public class DataReader : IDataReader
     {
@@ -76,6 +77,14 @@ namespace Ambermoon.Data.Legacy
         {
             CheckOutOfRange(4);
             return (dword)((data[Position++] << 24) | (data[Position++] << 16) | (data[Position++] << 8) | data[Position++]);
+        }
+
+        public qword ReadQword()
+        {
+            CheckOutOfRange(8);
+            return (qword)(((qword)data[Position++] << 56) | ((qword)data[Position++] << 48) | ((qword)data[Position++] << 40) |
+                ((qword)data[Position++] << 32) | ((qword)data[Position++] << 24) | ((qword)data[Position++] << 16) |
+                ((qword)data[Position++] << 8) | data[Position++]);
         }
 
         public string ReadChar()

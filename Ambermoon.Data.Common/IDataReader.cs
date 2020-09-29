@@ -5,6 +5,7 @@ namespace Ambermoon.Data
 {
     using word = UInt16;
     using dword = UInt32;
+    using qword = UInt64;
 
     public interface IDataReader
     {
@@ -12,6 +13,7 @@ namespace Ambermoon.Data
         byte ReadByte();
         word ReadWord();
         dword ReadDword();
+        qword ReadQword();
         string ReadChar();
         string ReadString();
         string ReadString(Encoding encoding);

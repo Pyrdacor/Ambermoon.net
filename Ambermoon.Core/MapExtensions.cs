@@ -224,6 +224,9 @@ namespace Ambermoon
                         case ActionEvent.ActionType.SetGlobalVariable:
                             game.GlobalVariables[actionEvent.ObjectIndex] = (int)actionEvent.Value;
                             break;
+                        case ActionEvent.ActionType.SetEvent:
+                            game.SetMapEventBit(map.Index, actionEvent.ObjectIndex & 0x3fu, actionEvent.Value != 0);
+                            break;
                         // TODO ...
                     }
 
@@ -271,16 +274,22 @@ namespace Ambermoon
         }
 
         public static bool TriggerEvents(this Map map, Game game, IRenderPlayer player, MapEventTrigger trigger,
-            uint x, uint y, IMapManager mapManager, uint ticks)
+            uint x, uint y, IMapManager mapManager, uint ticks, Savegame savegame)
         {
-            return TriggerEvents(map, game, player, trigger, x, y, mapManager, ticks, out bool _, false);
+            return TriggerEvents(map, game, player, trigger, x, y, mapManager, ticks, savegame,
+                out bool _, false);
         }
 
         public static bool TriggerEvents(this Map map, Game game, IRenderPlayer player, MapEventTrigger trigger,
-            uint x, uint y, IMapManager mapManager, uint ticks, out bool hasMapEvent, bool noIndexReset = false)
+            uint x, uint y, IMapManager mapManager, uint ticks, Savegame savegame,
+            out bool hasMapEvent, bool noIndexReset = false)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
-            hasMapEvent = mapEventId != 0;
+
+            hasMapEvent = mapEventId != 0 && !savegame.GetEventBit(map.Index, mapEventId - 1);
+
+            if (!hasMapEvent)
+                return false;
 
             if (trigger == MapEventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
                 return false;
