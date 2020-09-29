@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.13](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.13/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.12](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.12/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.11](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.11/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.1.10](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.10/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -89,6 +89,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [1.1.13](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.13): One-time events now working, UI improvements, bugfixing
 - Version [1.1.12](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.12): Added many inventory features, bugfixing
 - Version [1.1.11](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.11): Added player stat window, improved fading
 - Version [1.1.10](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.10): Travel improvements, equipment window additions, bugfixes
