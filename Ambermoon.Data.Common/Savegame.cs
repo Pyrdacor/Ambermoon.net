@@ -116,6 +116,12 @@ namespace Ambermoon.Data
                 }
             }
         }
+        /// <summary>
+        /// 14 * 8 bits + 3 bits = 115 bits.
+        /// One bit for each available dictionary word.
+        /// If the bit is set the word is available in conversations.
+        /// </summary>
+        public byte[] DictionaryWords { get; } = new byte[15];
 
         #endregion
 

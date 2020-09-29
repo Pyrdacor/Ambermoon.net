@@ -90,6 +90,9 @@ namespace Ambermoon.Data.Legacy
                 savegame.MapEventBits[i] = dataReader.ReadQword();
             }
 
+            dataReader.Position = 0x3504;
+            Buffer.BlockCopy(dataReader.ReadBytes(15), 0, savegame.DictionaryWords, 0, 15);
+
             dataReader.Position = 0x35a4;
             savegame.ChestUnlockStates = dataReader.ReadBytes(64); // 64 * 8 bits = 512 bits (1 for each chest, possible chest indices 0 to 511)
 
