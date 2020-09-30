@@ -54,7 +54,7 @@ namespace Ambermoon.Render
             if (usesTileset)
             {
                 var tileset = mapManager.GetTilesetForMap(map);
-                var tile = tileset.Tiles[characterReference.GraphicIndex];
+                var tile = tileset.Tiles[characterReference.GraphicIndex - 1];
 
                 return new Character2DAnimationInfo
                 {
@@ -67,7 +67,8 @@ namespace Ambermoon.Render
                     NumSitFrames = 0,
                     NumSleepFrames = 0,
                     TicksPerFrame = map.TicksPerAnimationFrame,
-                    NoDirections = true
+                    NoDirections = true,
+                    IgnoreTileType = true
                 };
             }
             else
@@ -84,14 +85,14 @@ namespace Ambermoon.Render
                     NumSitFrames = playerAnimationInfo.NumSitFrames,
                     NumSleepFrames = playerAnimationInfo.NumSleepFrames,
                     TicksPerFrame = map.TicksPerAnimationFrame,
-                    NoDirections = true
+                    NoDirections = true,
+                    IgnoreTileType = false
                 };
             }
         }
 
         static uint GetPaletteIndex(Game game, Map map, Map.CharacterReference characterReference)
         {
-            // TODO
             return characterReference.CharacterFlags.HasFlag(Flags.UseTileset)
                 ? map.PaletteIndex : game.GetPlayerPaletteIndex();
         }
@@ -167,7 +168,8 @@ namespace Ambermoon.Render
                 else
                 {
                     // Walk a given path every day time slot
-                    newPosition = characterReference.Positions[(int)gameTime.TimeSlot];
+                    newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
+                    newPosition.Offset(-1, -1); // positions are 1-based
                 }
             }
 

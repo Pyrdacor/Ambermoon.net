@@ -152,7 +152,7 @@ namespace Ambermoon.Render
             var animationInfo = CurrentAnimationInfo;
             var tileType = Map[x, y + 1].Type;
             sprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight);
-            CurrentState = tileType switch
+            CurrentState = animationInfo.IgnoreTileType ? State.Stand : tileType switch
             {
                 Data.Map.TileType.ChairUp => State.Sit,
                 Data.Map.TileType.ChairRight => State.Sit,
@@ -162,7 +162,7 @@ namespace Ambermoon.Render
                 _ => State.Stand
             };
             sprite.NumFrames = NumFrames;
-            CurrentBaseFrameIndex = tileType switch
+            CurrentBaseFrameIndex = animationInfo.IgnoreTileType ? animationInfo.StandFrameIndex : tileType switch
             {
                 Data.Map.TileType.ChairUp => animationInfo.SitFrameIndex,
                 Data.Map.TileType.ChairRight => animationInfo.SitFrameIndex + 1,

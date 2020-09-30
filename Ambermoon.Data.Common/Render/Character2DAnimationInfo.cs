@@ -12,5 +12,6 @@
         public uint NumSleepFrames;
         public uint TicksPerFrame;
         public bool NoDirections;
+        public bool IgnoreTileType;
     }
 }

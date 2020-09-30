@@ -2286,7 +2286,8 @@ namespace Ambermoon
                     NumSitFrames = 0,
                     NumSleepFrames = 0,
                     TicksPerFrame = 0,
-                    NoDirections = false
+                    NoDirections = false,
+                    IgnoreTileType = false
                 };
             }
             else
