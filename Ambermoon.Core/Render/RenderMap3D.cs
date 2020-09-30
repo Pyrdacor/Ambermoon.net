@@ -437,7 +437,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public void Update(uint ticks)
+        public void Update(uint ticks, Time gameTime)
         {
             foreach (var mapObject in objects)
                 mapObject.Value.ForEach(obj => obj.Update(ticks));

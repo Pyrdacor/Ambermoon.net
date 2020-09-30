@@ -78,10 +78,29 @@ namespace Ambermoon.Data
 
         public class CharacterReference
         {
-            public int Type { get; set; } // 0 = None, 4 = party member, 5 = npc, 6 = monster, 21 = text npc (Index = map text index)
+            [Flags]
+            public enum Flags
+            {
+                None = 0,
+                RandomMovement = 0x01,
+                UseTileset = 0x02,
+                TextPopup = 0x04
+            }
+
+            public CharacterType Type { get; set; }
+            public Flags CharacterFlags { get; set; }
             public byte Unknown1 { get; set; }
             public uint Index { get; set; } // of party member, npc, monster or map text
             public byte[] Unknown2 { get; set; }
+            public uint EventIndex { get; set; }
+            /// <summary>
+            /// This is:
+            /// - an object index inside the labdata for 3D maps
+            /// - a tile index inside the tileset for 2D maps if flag UseTileset is set
+            /// - an NPC graphic index for 2D maps if flag UseTileset is not set and it's an NPC
+            /// </summary>
+            public uint GraphicIndex { get; set; }
+            public List<Position> Positions { get; } = new List<Position>(288);
         }
 
         public uint Index { get; private set; }

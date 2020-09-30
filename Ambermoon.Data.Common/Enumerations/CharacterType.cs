@@ -4,6 +4,7 @@
     {
         PartyMember,
         NPC,
-        Monster
+        Monster,
+        MapObject // e.g. moving spider on ceiling
     }
 }

@@ -47,6 +47,7 @@ namespace Ambermoon.Render
         uint ticksPerFrame = 0;
         bool worldMap = false;
         uint lastFrame = 0;
+        readonly List<MapCharacter2D> mapCharacters = new List<MapCharacter2D>();
 
         public event Action<Map[]> MapChanged;
 
@@ -84,7 +85,7 @@ namespace Ambermoon.Render
             SetMap(map, initialScrollX, initialScrollY);
         }
 
-        public void UpdateAnimations(uint ticks)
+        public void Update(uint ticks, Time gameTime)
         {
             uint frame = ticks / ticksPerFrame;
 
@@ -106,11 +107,34 @@ namespace Ambermoon.Render
 
                 lastFrame = frame;
             }
+
+            foreach (var mapCharacter in mapCharacters)
+                mapCharacter.Update(ticks, gameTime);
+        }
+
+        bool TestCharacterInteraction(MapCharacter2D mapCharacter, bool cursor, Position position)
+        {
+            if (position == mapCharacter.Position)
+                return true;
+
+            return cursor && mapCharacter.IsNPC && position == new Position(mapCharacter.Position.X, mapCharacter.Position.Y + 1);
         }
 
         public bool TriggerEvents(IRenderPlayer player, MapEventTrigger trigger,
             uint x, uint y, IMapManager mapManager, uint ticks, Savegame savegame)
         {
+            if (trigger != MapEventTrigger.Always)
+            {
+                // First check character interaction
+                var position = new Position((int)x, trigger == MapEventTrigger.Move && !Map.IsWorldMap ? (int)y - 1 : (int)y);
+                foreach (var mapCharacter in mapCharacters)
+                {
+                    if (TestCharacterInteraction(mapCharacter, trigger != MapEventTrigger.Move, position) &&
+                        mapCharacter.Interact(trigger))
+                        return true;
+                }
+            }
+
             if (x >= Map.Width)
             {
                 if (y >= Map.Height)
@@ -210,6 +234,13 @@ namespace Ambermoon.Render
             foreach (var tile in foregroundTileSprites)
                 tile.Visible = false;
             ClearTransports();
+            ClearCharacters();
+        }
+
+        void ClearCharacters()
+        {
+            mapCharacters.ForEach(character => character.Destroy());
+            mapCharacters.Clear();
         }
 
         public void ClearTransports()
@@ -423,7 +454,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            UpdateAnimations(0);
+            Update(0, game.GameTime);
         }
 
         public bool IsMapVisible(uint index)
@@ -468,6 +499,18 @@ namespace Ambermoon.Render
             {
                 worldMap = false;
                 adjacentMaps = null;
+            }
+
+            ClearCharacters();
+
+            foreach (var characterReference in map.CharacterReferences)
+            {
+                if (characterReference == null)
+                    break;
+
+                var mapCharacter = MapCharacter2D.Create(game, renderView, mapManager, this, characterReference);
+                mapCharacter.Visible = true;
+                mapCharacters.Add(mapCharacter);
             }
 
             ScrollTo(initialScrollX, initialScrollY, true); // also updates tiles etc

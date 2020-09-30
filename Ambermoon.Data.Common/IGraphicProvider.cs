@@ -23,7 +23,8 @@ namespace Ambermoon.Data
         UIElements,
         EventPictures,
         TravelGfx,
-        Transports
+        Transports,
+        NPC
         // TODO ...
     }
 

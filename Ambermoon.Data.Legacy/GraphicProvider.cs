@@ -161,6 +161,40 @@ namespace Ambermoon.Data.Legacy
                         return graphic;
                     }).ToList();
                 }
+                else if (type == GraphicType.NPC)
+                {
+                    var npcGraphics = new List<Graphic>(34);
+                    var graphicInfo = new GraphicInfo
+                    {
+                        Width = 16,
+                        Height = 32,
+                        GraphicFormat = GraphicFormat.Palette5Bit,
+                        Alpha = true,
+                        PaletteOffset = 0
+                    };
+                    Graphic graphic = new Graphic();
+                    foreach (var file in gameData.Files["NPC_gfx.amb"].Files)
+                    {
+                        var reader = file.Value;
+
+                        while (reader.Position <= reader.Size - graphicInfo.DataSize)
+                        {
+                            int numFrames = reader.ReadByte();
+                            reader.AlignToWord();
+                            var compoundGraphic = new Graphic(16 * numFrames, 32, 0);
+
+                            for (int i = 0; i < numFrames; ++i)
+                            {
+                                graphicReader.ReadGraphic(graphic, reader, graphicInfo);
+                                compoundGraphic.AddOverlay((uint)i * 16, 0, graphic);
+                            }
+
+                            npcGraphics.Add(compoundGraphic);
+                        }
+                    }
+
+                    graphics[type] = npcGraphics;
+                }
                 else
                 {
                     LoadGraphics(type);

@@ -262,7 +262,8 @@ namespace Ambermoon.Data.Legacy
             NumStandFrames = 3,
             NumSitFrames = 1,
             NumSleepFrames = 1,
-            TicksPerFrame = 0
+            TicksPerFrame = 0,
+            NoDirections = false
         };
     }
 }

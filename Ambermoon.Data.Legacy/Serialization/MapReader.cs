@@ -54,15 +54,25 @@ namespace Ambermoon.Data.Legacy
                 var index = dataReader.ReadByte();
                 var unknown1 = dataReader.ReadByte();
                 var type = dataReader.ReadByte();
-                var unknown2 = dataReader.ReadBytes(7);
+                var eventIndex = dataReader.ReadByte();
+                var gfxIndex = dataReader.ReadWord();
+                var unknown2 = dataReader.ReadBytes(4);
 
                 map.CharacterReferences[i] = type == 0 ? null : new Map.CharacterReference
                 {
                     Index = index,
                     Unknown1 = unknown1,
-                    Type = type,
+                    Type = (CharacterType)(type & 0x03),
+                    CharacterFlags = (Map.CharacterReference.Flags)(type >> 2),
+                    EventIndex = eventIndex,
+                    GraphicIndex = gfxIndex,
                     Unknown2 = unknown2
                 };
+
+                // Note: Map 258 has 3 characters but one seems to be not used anymore.
+                // It is not directly following the other 2 and has no movement data
+                // hence it is not marked as random moving. I guess this is a relict.
+                // This character is marked as party member but there is none on this map.
             }
 
             if (map.Type == MapType.Map2D)
@@ -154,6 +164,31 @@ namespace Ambermoon.Data.Legacy
 
                 foreach (var mapEventOffset in mapEventOffsets)
                     map.EventLists.Add(mapEvents[(int)mapEventOffset].Item1);
+            }
+
+            // For each character reference the positions or movement paths are stored here.
+            // For random movement there are 2 bytes (x and y). Otherwise there are 288 positions
+            // each has 2 bytes (x and y). Each position is for one 5 minute chunk of the day.
+            // There are 24 hours * 60 minutes = 1440 minutes per day. Divided by 5 you get 288.
+            foreach (var characterReference in map.CharacterReferences)
+            {
+                if (characterReference == null)
+                    continue;
+
+                if (dataReader.PeekWord() == 0) // no more position data
+                    break;
+
+                if (characterReference.Type == CharacterType.Monster ||
+                    characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement))
+                {
+                    // For random movement only the start position is given.
+                    characterReference.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
+                }
+                else
+                {
+                    for (int i = 0; i < 288; ++i)
+                        characterReference.Positions.Add(new Position(dataReader.ReadByte(), dataReader.ReadByte()));
+                }
             }
 
             // TODO

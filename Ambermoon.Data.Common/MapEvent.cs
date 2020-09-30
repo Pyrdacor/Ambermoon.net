@@ -169,7 +169,7 @@ namespace Ambermoon.Data
         {
             Damage
             // TODO ...
-            // 5 seems to be used for green slime, strinking stuff
+            // 5 seems to be used for green slime, stinking stuff
             // "Gauners Keller" has many traps with many values for this
         }
 

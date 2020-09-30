@@ -171,15 +171,17 @@ namespace Ambermoon.Render
                 Data.Map.TileType.Bed => animationInfo.SleepFrameIndex,
                 _ => animationInfo.StandFrameIndex
             };
-            if (CurrentBaseFrameIndex == animationInfo.StandFrameIndex )
+            if (!animationInfo.NoDirections && CurrentBaseFrameIndex == animationInfo.StandFrameIndex)
                 CurrentBaseFrameIndex += (uint)Direction * sprite.NumFrames;
             CurrentFrameIndex = CurrentBaseFrameIndex;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
             if (frameReset)
+            {
                 sprite.CurrentFrame = 0;
+                lastFrameReset = ticks;
+            }
             else
                 sprite.CurrentFrame = sprite.CurrentFrame; // this may correct the value if NumFrames has changed
-            lastFrameReset = ticks;
             Position.X = (int)x;
             Position.Y = (int)y;
             var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
@@ -189,7 +191,7 @@ namespace Ambermoon.Render
             UpdateBaseline();
         }
 
-        public virtual void Update(uint ticks)
+        public virtual void Update(uint ticks, Time gameTime)
         {
             uint elapsedTicks = ticks - lastFrameReset;
             sprite.CurrentFrame = elapsedTicks / CurrentAnimationInfo.TicksPerFrame; // this will take care of modulo frame count

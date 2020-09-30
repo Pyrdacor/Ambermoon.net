@@ -98,6 +98,7 @@ namespace Ambermoon
 
         // TODO: cleanup members
         readonly Random random = new Random();
+        internal Time GameTime { get; private set; } = null;
         const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         internal const uint TicksPerSecond = 60;
@@ -295,6 +296,8 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
+            GameTime?.Update();
+
             for (int i = timedEvents.Count - 1; i >= 0; --i)
             {
                 if (DateTime.Now >= timedEvents[i].ExecutionTime)
@@ -317,11 +320,11 @@ namespace Ambermoon
 
                 if (is3D)
                 {
-                    renderMap3D.Update(animationTicks);
+                    renderMap3D.Update(animationTicks, GameTime);
                 }
                 else // 2D
                 {
-                    renderMap2D.UpdateAnimations(animationTicks);
+                    renderMap2D.Update(animationTicks, GameTime);
                 }
             }
 
@@ -340,9 +343,15 @@ namespace Ambermoon
             layout.Update(CurrentTicks);
         }
 
-        internal uint RollDice100()
+        internal int RollDice100()
         {
-            return (uint)random.Next(0, 100);
+            return RandomInt(0, 99);
+        }
+
+        internal int RandomInt(int min, int max)
+        {
+            uint range = (uint)(max + 1 - min);
+            return min + (int)(random.Next() % range);
         }
 
         Position GetMousePosition(Position position)
@@ -572,6 +581,7 @@ namespace Ambermoon
 
             ingame = true;
             CurrentSavegame = savegame;
+            GameTime = new Time(savegame);
 
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
@@ -820,20 +830,30 @@ namespace Ambermoon
 
         bool Move2D(int x, int y)
         {
-            bool diagonal = x != 0 && y != 0;
-
-            if (!player2D.Move(x, y, CurrentTicks, TravelType, !diagonal, null, !diagonal))
+            bool Move()
             {
-                if (!diagonal)
-                    return false;
+                bool diagonal = x != 0 && y != 0;
 
-                var prevDirection = player2D.Direction;
+                if (!player2D.Move(x, y, CurrentTicks, TravelType, !diagonal, null, !diagonal))
+                {
+                    if (!diagonal)
+                        return false;
 
-                if (!player2D.Move(0, y, CurrentTicks, TravelType, false, prevDirection, false))
-                    return player2D.Move(x, 0, CurrentTicks, TravelType, true, prevDirection);
+                    var prevDirection = player2D.Direction;
+
+                    if (!player2D.Move(0, y, CurrentTicks, TravelType, false, prevDirection, false))
+                        return player2D.Move(x, 0, CurrentTicks, TravelType, true, prevDirection);
+                }
+
+                return true;
             }
 
-            return true;
+            bool result = Move();
+
+            if (result)
+                GameTime.MoveTick(Map, travelType);
+
+            return result;
         }
 
         void Move()
@@ -2265,7 +2285,8 @@ namespace Ambermoon
                     NumStandFrames = 1,
                     NumSitFrames = 0,
                     NumSleepFrames = 0,
-                    TicksPerFrame = 0
+                    TicksPerFrame = 0,
+                    NoDirections = false
                 };
             }
             else
