@@ -2,6 +2,6 @@
 {
     public interface INPCReader
     {
-        void ReadNPC(NPC npc, IDataReader dataReader);
+        void ReadNPC(NPC npc, IDataReader dataReader, IDataReader npcTextReader);
     }
 }

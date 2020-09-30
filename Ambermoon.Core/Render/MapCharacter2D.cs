@@ -42,7 +42,9 @@ namespace Ambermoon.Render
 
         static Position GetStartPosition(Map.CharacterReference characterReference)
         {
-            var position = characterReference.Positions?[0] ?? new Position();
+            // TODO: characterReference.Positions.Count == 0 should not happen but does in Spannenberg tavern
+            var position = characterReference.Positions[0];
+
             // The positions are stored 1-based.
             return new Position(position.X - 1, position.Y - 1);
         }
@@ -179,8 +181,71 @@ namespace Ambermoon.Render
 
         public bool Interact(MapEventTrigger trigger)
         {
+            switch (trigger)
+            {
+                case MapEventTrigger.Eye:
+                    if (characterReference.Type == CharacterType.Monster)
+                        return false;
+                    View();
+                    return true;
+                case MapEventTrigger.Mouth:
+                    if (characterReference.Type == CharacterType.Monster)
+                        return false;
+                    Talk();
+                    return true;
+                case MapEventTrigger.Move:
+                    if (characterReference.Type != CharacterType.Monster)
+                        return false;
+                    Attack();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        void ShowPopup(string text)
+        {
+            game.ShowTextPopup(game.ProcessText(text), null);
+        }
+
+        void Talk()
+        {
+            if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
+            {
+                ShowPopup(map.Texts[(int)characterReference.Index]);
+            }
+            else // NPC
+            {
+                var npc = game.CharacterManager.GetNPC(characterReference.Index);
+
+                if (npc == null)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC index.");
+
+                // TODO: open conversation
+            }
+        }
+
+        void View()
+        {
+            if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
+            {
+                // TODO
+            }
+            else // NPC
+            {
+                var npc = game.CharacterManager.GetNPC(characterReference.Index);
+
+                if (npc == null)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC index.");
+
+                // Text 0 is always the "view" text index
+                ShowPopup(npc.Texts[0]);
+            }
+        }
+
+        void Attack()
+        {
             // TODO
-            return false;
         }
     }
 }

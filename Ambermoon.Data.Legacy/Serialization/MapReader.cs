@@ -1,33 +1,15 @@
-﻿using System;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy
 {
     public class MapReader : IMapReader
     {
-        public List<string> ReadMapTexts(IDataReader textDataReader)
-        {
-            var texts = new List<string>();
-
-            if (textDataReader != null)
-            {
-                int numMapTexts = textDataReader.ReadWord();
-                int[] mapTextLengths = new int[numMapTexts];
-
-                for (int i = 0; i < numMapTexts; ++i)
-                    mapTextLengths[i] = textDataReader.ReadWord();
-
-                for (int i = 0; i < numMapTexts; ++i)
-                    texts.Add(textDataReader.ReadString(mapTextLengths[i]).Trim(' ', '\0'));
-            }
-
-            return texts;
-        }
-
         public void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader, Dictionary<uint, Tileset> tilesets)
         {
             // Load map texts
-            map.Texts = ReadMapTexts(textDataReader);
+            map.Texts = TextReader.ReadTexts(textDataReader);
 
             map.Flags = (MapFlags)dataReader.ReadWord();
             map.Type = (MapType)dataReader.ReadByte();
@@ -175,6 +157,7 @@ namespace Ambermoon.Data.Legacy
                 if (characterReference == null)
                     continue;
 
+                // TODO: I guess 0,0 is allowed too. Maybe the character is invisible then? Gauners tavern -> some NPCs go to cellar?
                 if (dataReader.PeekWord() == 0) // no more position data
                     break;
 

@@ -125,6 +125,7 @@ namespace Ambermoon
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
+        internal ICharacterManager CharacterManager { get; }
         readonly IRenderView renderView;
         internal ISavegameManager SavegameManager { get; }
         readonly ISavegameSerializer savegameSerializer;
@@ -248,7 +249,7 @@ namespace Ambermoon
         }
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
-            ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
+            ICharacterManager characterManager, ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
             IDataNameProvider dataNameProvider, TextDictionary textDictionary, Cursor cursor, bool legacyMode)
         {
             this.cursor = cursor;
@@ -258,6 +259,7 @@ namespace Ambermoon
             this.renderView = renderView;
             this.mapManager = mapManager;
             this.itemManager = itemManager;
+            CharacterManager = characterManager;
             SavegameManager = savegameManager;
             this.savegameSerializer = savegameSerializer;
             DataNameProvider = dataNameProvider;
@@ -661,9 +663,14 @@ namespace Ambermoon
             LoadGame(0);
         }
 
+        public IText ProcessText(string text)
+        {
+            return renderView.TextProcessor.ProcessText(text, nameProvider, dictionary);
+        }
+
         public void ShowMessage(Rect bounds, string text, TextColor color, bool shadow, TextAlign textAlign = TextAlign.Left)
         {
-            messageText.Text = renderView.TextProcessor.ProcessText(text, nameProvider, dictionary);
+            messageText.Text = ProcessText(text);
             messageText.TextColor = color;
             messageText.Shadow = shadow;
             messageText.Place(bounds, textAlign);
@@ -2207,10 +2214,8 @@ namespace Ambermoon
                 layout.Reset();
                 var riddleArea = new Rect(16, 50, 176, 144);
                 layout.FillArea(riddleArea, GetPaletteColor(50, 28), false);
-                var riddleText = renderView.TextProcessor.ProcessText(map.Texts[(int)riddlemouthEvent.RiddleTextIndex],
-                    nameProvider, dictionary);
-                var solutionResponseText = renderView.TextProcessor.ProcessText(map.Texts[(int)riddlemouthEvent.SolutionTextIndex],
-                    nameProvider, dictionary);
+                var riddleText = ProcessText(map.Texts[(int)riddlemouthEvent.RiddleTextIndex]);
+                var solutionResponseText = ProcessText(map.Texts[(int)riddlemouthEvent.SolutionTextIndex]);
                 void ShowRiddle()
                 {
                     InputEnable = false;
@@ -2238,8 +2243,7 @@ namespace Ambermoon
                     {
                         if (!textDictionary.Entries.Any(entry => string.Compare(entry, solution, true) == 0))
                             solution = DataNameProvider.That;
-                        var failedText = renderView.TextProcessor.ProcessText(solution + DataNameProvider.WrongRiddlemouthSolutionText,
-                            nameProvider, dictionary);
+                        var failedText = ProcessText(solution + DataNameProvider.WrongRiddlemouthSolutionText);
                         InputEnable = false;
                         layout.OpenTextPopup(failedText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
                         {
@@ -2328,9 +2332,22 @@ namespace Ambermoon
             popup.Closed += UntrapMouse;
         }
 
+        internal void ShowTextPopup(IText text, Action<PopupTextEvent.Response> responseHandler)
+        {
+            InputEnable = false;
+            // Simple text popup
+            layout.OpenTextPopup(text, () =>
+            {
+                InputEnable = true;
+                ResetCursor();
+                responseHandler?.Invoke(PopupTextEvent.Response.Close);
+            }, true, true);
+            CursorType = CursorType.Click;
+        }
+
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
         {
-            var text = renderView.TextProcessor.ProcessText(map.Texts[(int)popupTextEvent.TextIndex], nameProvider, dictionary);
+            var text = ProcessText(map.Texts[(int)popupTextEvent.TextIndex]);
 
             if (popupTextEvent.HasImage)
             {
@@ -2358,21 +2375,13 @@ namespace Ambermoon
             }
             else
             {
-                InputEnable = false;
-                // Simple text popup
-                layout.OpenTextPopup(text, () =>
-                {
-                    InputEnable = true;
-                    ResetCursor();
-                    responseHandler?.Invoke(PopupTextEvent.Response.Close);
-                }, true, true);
-                CursorType = CursorType.Click;
+                ShowTextPopup(text, responseHandler);
             }
         }
 
         internal void ShowDecisionPopup(Map map, DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
         {
-            var text = renderView.TextProcessor.ProcessText(map.Texts[(int)decisionEvent.TextIndex], nameProvider, dictionary);
+            var text = ProcessText(map.Texts[(int)decisionEvent.TextIndex]);
             layout.OpenYesNoPopup
             (
                 text,
