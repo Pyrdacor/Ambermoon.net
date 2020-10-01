@@ -10,7 +10,8 @@ namespace Ambermoon.UI
         Chest,
         Merchant,
         Event,
-        Riddlemouth
+        Riddlemouth,
+        Conversation
         // TODO ...
     }
 

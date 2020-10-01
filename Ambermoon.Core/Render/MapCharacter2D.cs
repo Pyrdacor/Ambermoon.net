@@ -172,7 +172,7 @@ namespace Ambermoon.Render
                     newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
                     newPosition.Offset(-1, -1); // positions are 1-based
 
-                    if (newPosition.Y != uint.MaxValue && IsNPC)
+                    if (newPosition.Y != -1 && IsNPC)
                         --newPosition.Y;
                 }
             }
@@ -223,7 +223,7 @@ namespace Ambermoon.Render
                 if (npc == null)
                     throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC index.");
 
-                // TODO: open conversation
+                game.ShowConversation(npc);
             }
         }
 

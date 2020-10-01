@@ -46,9 +46,9 @@
         RemoveCurse,
         Train,
         Grid, // TODO (3x3 blocks, not sure were it was used)
-        ItemToPlayer,
-        FoodToPlayer,
-        GoldToPlayer,
+        GiveItem,
+        GiveFood,
+        GiveGold,
         AskToJoin,
         AskToLeave,
         Attack,
@@ -58,8 +58,8 @@
         Inventory,
         UseItem,
         ViewItem, // also show item
-        GiveGold,
-        GiveFood,
+        GoldToPlayer,
+        FoodToPlayer,
         DropItem,
         DropGold,
         DropFood,

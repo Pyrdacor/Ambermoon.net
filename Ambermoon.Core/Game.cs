@@ -2168,7 +2168,7 @@ namespace Ambermoon
                 if (!chestMapEvent.RemoveWhenEmpty)
                     OpenStorage = chest;
 
-                if (CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
+                if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
                 {
                     layout.Set80x80Picture(Picture80x80.ChestClosed);
                     itemGrid.Disabled = true;
@@ -2204,6 +2204,31 @@ namespace Ambermoon
 
                     // TODO: gold and food
                 }
+            });
+        }
+
+        internal void ShowConversation(NPC npc)
+        {
+            void SayWord(string word)
+            {
+                UntrapMouse();
+                // TODO
+            }
+
+            Fade(() =>
+            {
+                SetWindow(Window.Conversation, npc);
+                layout.SetLayout(LayoutType.Conversation);
+                ShowMap(false);
+                layout.Reset();
+
+                layout.FillArea(new Rect(15, 43, 177, 80), GetPaletteColor(50, 28), false);
+                layout.FillArea(new Rect(208, 43, 96, 80), GetPaletteColor(50, 28), false);
+                layout.FillArea(new Rect(15, 136, 152, 57), GetPaletteColor(50, 28), false);
+
+                layout.AttachEventToButton(0, () => OpenDictionary(SayWord));
+
+                // TODO
             });
         }
 
@@ -2308,7 +2333,7 @@ namespace Ambermoon
             }
         }
 
-        void OpenDictionary(Action<string> choiceHandler)
+        internal void OpenDictionary(Action<string> choiceHandler)
         {
             const int columns = 11;
             const int rows = 10;
@@ -2612,6 +2637,13 @@ namespace Ambermoon
                     var solvedEvent = currentWindow.WindowEvent;
                     currentWindow = DefaultWindow;
                     ShowRiddlemouth(Map, riddlemouthEvent, solvedEvent, false);
+                    break;
+                }
+                case Window.Conversation:
+                {
+                    var npc = currentWindow.WindowParameter as NPC;
+                    currentWindow = DefaultWindow;
+                    ShowConversation(npc);
                     break;
                 }
                 default:

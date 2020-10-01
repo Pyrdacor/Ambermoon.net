@@ -130,15 +130,15 @@ namespace Ambermoon.Data
         public byte[] ChestUnlockStates { get; set; }
         public bool IsChestLocked(uint chestIndex)
         {
-            if (chestIndex == 0 || chestIndex > 256)
-                throw new System.IndexOutOfRangeException($"Chest index must be 1-256 but was {chestIndex}.");
+            if (chestIndex > 511)
+                throw new IndexOutOfRangeException($"Chest index must be 0-511 but was {chestIndex}.");
 
             return (ChestUnlockStates[chestIndex / 8] & (1 << ((int)chestIndex % 8))) == 0;
         }
         public void UnlockChest(uint chestIndex)
         {
-            if (chestIndex == 0 || chestIndex > 256)
-                throw new System.IndexOutOfRangeException($"Chest index must be 1-256 but was {chestIndex}.");
+            if (chestIndex > 511)
+                throw new IndexOutOfRangeException($"Chest index must be 0-511 but was {chestIndex}.");
 
             ChestUnlockStates[chestIndex / 8] |= (byte)(1 << ((int)chestIndex % 8));
         }
