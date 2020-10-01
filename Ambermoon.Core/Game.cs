@@ -93,7 +93,15 @@ namespace Ambermoon
             GoldAndFood,
             Attack,
             Defense,
-            Weight
+            Weight,
+            /// <summary>
+            /// Gold of the conversating party member.
+            /// </summary>
+            ConversationGold,
+            /// <summary>
+            /// Food of the conversating party member.
+            /// </summary>
+            ConversationFood
         }
 
         // TODO: cleanup members
@@ -123,6 +131,7 @@ namespace Ambermoon
         internal IDataNameProvider DataNameProvider { get; }
         readonly Layout layout;
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
+        readonly Dictionary<CharacterInfo, Panel> characterInfoPanels = new Dictionary<CharacterInfo, Panel>();
         readonly IMapManager mapManager;
         readonly IItemManager itemManager;
         internal ICharacterManager CharacterManager { get; }
@@ -1574,7 +1583,7 @@ namespace Ambermoon
                 };
                 #endregion
                 #region Character info
-                DisplayCharacterInfo(partyMember);
+                DisplayCharacterInfo(partyMember, false);
                 // Weight display
                 var weightArea = new Rect(27, 152, 68, 15);
                 layout.AddPanel(weightArea, 2);
@@ -1601,7 +1610,7 @@ namespace Ambermoon
                 int index;
 
                 #region Character info
-                DisplayCharacterInfo(partyMember);
+                DisplayCharacterInfo(partyMember, false);
                 #endregion
                 #region Attributes
                 layout.AddText(new Rect(22, 50, 72, Global.GlyphLineHeight), DataNameProvider.AttributesHeaderString, TextColor.Green, TextAlign.Center);
@@ -1693,83 +1702,151 @@ namespace Ambermoon
                 Fade(openAction);
         }
 
-        void DisplayCharacterInfo(PartyMember partyMember)
+        void DisplayCharacterInfo(Character character, bool conversation)
         {
+            int offsetY = conversation ? -6 : 0;
+
             characterInfoTexts.Clear();
-            layout.FillArea(new Rect(208, 49, 96, 80), Color.LightGray, false);
-            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 51, 1);
-            layout.AddSprite(new Rect(208, 49, 32, 34), Graphics.PortraitOffset + partyMember.PortraitIndex - 1, 49, 2);
-            layout.AddText(new Rect(242, 49, 62, 7), DataNameProvider.GetRaceName(partyMember.Race));
-            layout.AddText(new Rect(242, 56, 62, 7), DataNameProvider.GetGenderName(partyMember.Gender));
-            characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, 63, 62, 7),
+            characterInfoPanels.Clear();
+            layout.FillArea(new Rect(208, offsetY + 49, 96, 80), Color.LightGray, false);
+            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 51, 1);
+            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.PortraitOffset + character.PortraitIndex - 1, 49, 2);
+            layout.AddText(new Rect(242, offsetY + 49, 62, 7), DataNameProvider.GetRaceName(character.Race));
+            layout.AddText(new Rect(242, offsetY + 56, 62, 7), DataNameProvider.GetGenderName(character.Gender));
+            characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
                 string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
-                partyMember.Attributes[Data.Attribute.Age].CurrentValue)));
-            characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, 70, 62, 7),
-                $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}"));
-            characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
-                string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
-                partyMember.ExperiencePoints)));
-            layout.AddText(new Rect(208, 84, 96, 7), partyMember.Name, TextColor.Yellow, TextAlign.Center);
-            characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
-                string.Format(DataNameProvider.CharacterInfoHitPointsString,
-                partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue),
-                TextColor.White, TextAlign.Center));
-            characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
-                string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue),
-                TextColor.White, TextAlign.Center));
-            characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
-                string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
-                string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints), TextColor.White, TextAlign.Center));
-            characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
-                string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food),
-                TextColor.White, TextAlign.Center));
-            layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
-            characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', partyMember.Attack < 0 ? '-' : '+'), Math.Abs(partyMember.Attack)),
-                TextColor.White, TextAlign.Left));
-            layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
-            characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7),
-                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', partyMember.Defense < 0 ? '-' : '+'), Math.Abs(partyMember.Defense)),
-                TextColor.White, TextAlign.Left));
+                character.Attributes[Data.Attribute.Age].CurrentValue)));
+            characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
+                $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
+            layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.Red : TextColor.Yellow, TextAlign.Center);
+            if (!conversation)
+            {
+                characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
+                    string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                    character.ExperiencePoints)));
+                characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
+                    string.Format(DataNameProvider.CharacterInfoHitPointsString,
+                    character.HitPoints.CurrentValue, character.HitPoints.MaxValue),
+                    TextColor.White, TextAlign.Center));
+                characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
+                    string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                    character.SpellPoints.CurrentValue, character.SpellPoints.MaxValue),
+                    TextColor.White, TextAlign.Center));
+                characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
+                    string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
+                    string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), TextColor.White, TextAlign.Center));
+                characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
+                    string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food),
+                    TextColor.White, TextAlign.Center));
+                layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
+                characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.Attack < 0 ? '-' : '+'), Math.Abs(character.Attack)),
+                    TextColor.White, TextAlign.Left));
+                layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
+                characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7),
+                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.Defense < 0 ? '-' : '+'), Math.Abs(character.Defense)),
+                    TextColor.White, TextAlign.Left));
+            }
+            else
+            {
+                layout.AddText(new Rect(208, 99, 96, 7), CurrentPartyMember.Name, TextColor.Yellow, TextAlign.Center);
+                if (CurrentPartyMember.Gold > 0)
+                {
+                    var goldArea = new Rect(209, 107, 43, 15);
+                    characterInfoPanels.Add(CharacterInfo.ConversationGold, layout.AddPanel(goldArea, 2));
+                    characterInfoTexts.Add(CharacterInfo.ConversationGold, layout.AddText(goldArea.CreateOffset(0, 1),
+                        $"{DataNameProvider.GoldName}^{CurrentPartyMember.Gold}", TextColor.White, TextAlign.Center, 4));
+                }
+                if (CurrentPartyMember.Food > 0)
+                {
+                    var foodArea = new Rect(257, 107, 43, 15);
+                    characterInfoPanels.Add(CharacterInfo.ConversationFood, layout.AddPanel(foodArea, 2));
+                    characterInfoTexts.Add(CharacterInfo.ConversationFood, layout.AddText(foodArea.CreateOffset(0, 1),
+                        $"{DataNameProvider.FoodName}^{CurrentPartyMember.Food}", TextColor.White, TextAlign.Center, 4));
+                }
+            }
         }
 
-        internal void UpdateCharacterInfo()
+        internal void UpdateCharacterInfo(NPC npc = null)
         {
-            if ((currentWindow.Window != Window.Inventory &&
-                currentWindow.Window != Window.Stats) ||
-                CurrentInventoryIndex == null)
+            if (currentWindow.Window != Window.Inventory &&
+                currentWindow.Window != Window.Stats &&
+                currentWindow.Window != Window.Conversation)
                 return;
 
-            void UpdateText(CharacterInfo characterInfo, string text)
+            if (currentWindow.Window == Window.Conversation)
             {
-                characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text));
+                if (npc == null || CurrentPartyMember == null)
+                    return;
+            }
+            else if (CurrentInventory == null)
+            {
+                return;
             }
 
-            var partyMember = CurrentInventory;
-
-            UpdateText(CharacterInfo.Age, string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
-                partyMember.Attributes[Data.Attribute.Age].CurrentValue));
-            UpdateText(CharacterInfo.Level, $"{DataNameProvider.GetClassName(partyMember.Class)} {partyMember.Level}");
-            UpdateText(CharacterInfo.EP, string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
-                partyMember.ExperiencePoints));
-            UpdateText(CharacterInfo.LP, string.Format(DataNameProvider.CharacterInfoHitPointsString,
-                partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue));
-            UpdateText(CharacterInfo.SP, string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue));
-            UpdateText(CharacterInfo.SLPAndTP,
-                string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, partyMember.SpellLearningPoints) + " " +
-                string.Format(DataNameProvider.CharacterInfoTrainingPointsString, partyMember.TrainingPoints));
-            UpdateText(CharacterInfo.GoldAndFood,
-                string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, partyMember.Gold, partyMember.Food));
-            UpdateText(CharacterInfo.Attack,
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', partyMember.Attack < 0 ? '-' : '+'), Math.Abs(partyMember.Attack)));
-            UpdateText(CharacterInfo.Defense,
-                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', partyMember.Defense < 0 ? '-' : '+'), Math.Abs(partyMember.Defense)));
-            if (characterInfoTexts.ContainsKey(CharacterInfo.Weight))
+            void UpdateText(CharacterInfo characterInfo, Func<string> text)
             {
-                UpdateText(CharacterInfo.Weight, string.Format(DataNameProvider.CharacterInfoWeightString,
-                    Util.Round(partyMember.TotalWeight / 1000.0f), partyMember.Attributes[Data.Attribute.Strength].TotalCurrentValue));
+                if (characterInfoTexts.ContainsKey(characterInfo))
+                    characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text()));
+            }
+
+            var character = (Character)npc ?? CurrentInventory;
+
+            UpdateText(CharacterInfo.Age, () => string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
+                character.Attributes[Data.Attribute.Age].CurrentValue));
+            UpdateText(CharacterInfo.Level, () => $"{DataNameProvider.GetClassName(character.Class)} {character.Level}");
+            UpdateText(CharacterInfo.EP, () => string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
+                character.ExperiencePoints));
+            UpdateText(CharacterInfo.LP, () => string.Format(DataNameProvider.CharacterInfoHitPointsString,
+                character.HitPoints.CurrentValue, character.HitPoints.MaxValue));
+            UpdateText(CharacterInfo.SP, () => string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                character.SpellPoints.CurrentValue, character.SpellPoints.MaxValue));
+            UpdateText(CharacterInfo.SLPAndTP, () =>
+                string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
+                string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints));
+            UpdateText(CharacterInfo.GoldAndFood, () =>
+                string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
+            UpdateText(CharacterInfo.Attack, () =>
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.Attack < 0 ? '-' : '+'), Math.Abs(character.Attack)));
+            UpdateText(CharacterInfo.Defense, () =>
+                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.Defense < 0 ? '-' : '+'), Math.Abs(character.Defense)));
+            UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
+                Util.Round(character.TotalWeight / 1000.0f), character.Attributes[Data.Attribute.Strength].TotalCurrentValue));
+            if (npc != null)
+            {
+                void ShowTextPanel(CharacterInfo characterInfo, bool show, string text, Rect area)
+                {
+                    if (show)
+                    {
+                        if (!characterInfoPanels.ContainsKey(characterInfo))
+                            characterInfoPanels[characterInfo] = layout.AddPanel(area, 2);
+                        if (!characterInfoTexts.ContainsKey(characterInfo))
+                        {
+                            characterInfoTexts[characterInfo] = layout.AddText(area.CreateOffset(0, 1),
+                                text, TextColor.White, TextAlign.Center, 4);
+                        }
+                        else
+                            characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text));
+                    }
+                    else
+                    {
+                        if (characterInfoPanels.ContainsKey(characterInfo))
+                        {
+                            characterInfoPanels[characterInfo].Destroy();
+                            characterInfoPanels.Remove(characterInfo);
+                        }
+                        if (characterInfoTexts.ContainsKey(characterInfo))
+                        {
+                            characterInfoTexts[characterInfo].Destroy();
+                            characterInfoTexts.Remove(characterInfo);
+                        }
+                    }
+                }
+
+                ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
+                    $"{DataNameProvider.GoldName}^{CurrentPartyMember.Gold}", new Rect(209, 107, 43, 15));
+                ShowTextPanel(CharacterInfo.ConversationFood, CurrentPartyMember.Food > 0,
+                    $"{DataNameProvider.FoodName}^{CurrentPartyMember.Food}", new Rect(257, 107, 43, 15));
             }
         }
 
@@ -2223,8 +2300,9 @@ namespace Ambermoon
                 layout.Reset();
 
                 layout.FillArea(new Rect(15, 43, 177, 80), GetPaletteColor(50, 28), false);
-                layout.FillArea(new Rect(208, 43, 96, 80), GetPaletteColor(50, 28), false);
                 layout.FillArea(new Rect(15, 136, 152, 57), GetPaletteColor(50, 28), false);
+
+                DisplayCharacterInfo(npc, true);
 
                 layout.AttachEventToButton(0, () => OpenDictionary(SayWord));
 

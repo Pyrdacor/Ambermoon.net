@@ -75,7 +75,14 @@ namespace Ambermoon.Data.Legacy.Characters
             character.LearnedDestructionSpells = dataReader.ReadDword();
             dataReader.Position += 12; // Unknown
             character.TotalWeight = dataReader.ReadDword();
-            character.Name = dataReader.ReadString(16).Replace('\0', ' ').TrimEnd();
+            character.Name = dataReader.ReadString(16);
+
+            int terminatingNullIndex = character.Name.IndexOf('\0');
+
+            if (terminatingNullIndex != 0)
+                character.Name = character.Name.Substring(0, terminatingNullIndex);
+            else
+                character.Name = character.Name.TrimEnd();
 
             if (character.Type != CharacterType.NPC)
             {

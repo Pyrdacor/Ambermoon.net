@@ -44,6 +44,7 @@
 
         void ParseTileFlags(Tileset.Tile tile, ulong flags)
         {
+            // Bit 1: Draw partial in background? Bottom of a wall in the back?
             // Bit 2: Draw in background
             // Bit 6: Draw above player (not sure as it is in combination with bit 2 often, but it seems to work if this overrides bit 2)
             // Bit 8-18: Travel type allowed flags (1 means allowed, 0 means not allowed/blocking).
