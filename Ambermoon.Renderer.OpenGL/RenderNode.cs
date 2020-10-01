@@ -34,6 +34,7 @@ namespace Ambermoon.Renderer
         bool deleted = false;
         bool notOnScreen = true;
         protected readonly Rect virtualScreen = null;
+        Rect clipArea = null;
 
         protected RenderNode(int width, int height, Rect virtualScreen)
         {
@@ -103,6 +104,20 @@ namespace Ambermoon.Renderer
             }
         }
 
+        public Rect ClipArea
+        {
+            get => clipArea;
+            set
+            {
+                if (clipArea == value)
+                    return;
+
+                clipArea = value;
+                bool handled = CheckOnScreen();
+                OnClipAreaChanged(!notOnScreen, !handled);
+            }
+        }
+
         public int Width { get; private set; }
 
         public int Height { get; private set; }
@@ -136,12 +151,15 @@ namespace Ambermoon.Renderer
                 RemoveFromLayer();
         }
 
+        protected abstract void OnClipAreaChanged(bool onScreen, bool needUpdate);
+
         bool CheckOnScreen()
         {
             bool oldNotOnScreen = notOnScreen;
             bool oldVisible = Visible;
+            var area = clipArea ?? virtualScreen;
 
-            notOnScreen = !virtualScreen.IntersectsWith(new Rect(X, Y, Width, Height));
+            notOnScreen = !area.IntersectsWith(new Rect(X, Y, Width, Height));
 
             if (oldNotOnScreen != notOnScreen)
             {
@@ -200,6 +218,14 @@ namespace Ambermoon.Renderer
                         UpdatePosition();
                 }
             }
+        }
+
+        public bool InsideClipArea(Rect area)
+        {
+            if (area == null)
+                return true;
+
+            return area.IntersectsWith(X, Y, Width, Height);
         }
     }
 }

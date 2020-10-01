@@ -105,6 +105,14 @@ namespace Ambermoon.Renderer
 
             UpdatePosition();
         }
+
+        protected override void OnClipAreaChanged(bool onScreen, bool needUpdate)
+        {
+            if (onScreen && needUpdate)
+            {
+                UpdatePosition();
+            }
+        }
     }
 
     public class ColoredRectFactory : IColoredRectFactory

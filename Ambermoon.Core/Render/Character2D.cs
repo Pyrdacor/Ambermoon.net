@@ -81,6 +81,7 @@ namespace Ambermoon.Render
             sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
             sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
             sprite.PaletteIndex = (byte)paletteIndexProvider();
+            sprite.ClipArea = Game.Map2DViewArea;
             UpdateBaseline();
             Position = startPosition;
         }
@@ -149,46 +150,56 @@ namespace Ambermoon.Render
                 Direction = newDirection.Value;
             }
 
-            var animationInfo = CurrentAnimationInfo;
-            var tileType = Map[x, y + 1].Type;
-            sprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight);
-            CurrentState = animationInfo.IgnoreTileType ? State.Stand : tileType switch
+            if (x == uint.MaxValue || y == uint.MaxValue)
             {
-                Data.Map.TileType.ChairUp => State.Sit,
-                Data.Map.TileType.ChairRight => State.Sit,
-                Data.Map.TileType.ChairDown => State.Sit,
-                Data.Map.TileType.ChairLeft => State.Sit,
-                Data.Map.TileType.Bed => State.Sleep,
-                _ => State.Stand
-            };
-            sprite.NumFrames = NumFrames;
-            CurrentBaseFrameIndex = animationInfo.IgnoreTileType ? animationInfo.StandFrameIndex : tileType switch
-            {
-                Data.Map.TileType.ChairUp => animationInfo.SitFrameIndex,
-                Data.Map.TileType.ChairRight => animationInfo.SitFrameIndex + 1,
-                Data.Map.TileType.ChairDown => animationInfo.SitFrameIndex + 2,
-                Data.Map.TileType.ChairLeft => animationInfo.SitFrameIndex + 3,
-                Data.Map.TileType.Bed => animationInfo.SleepFrameIndex,
-                _ => animationInfo.StandFrameIndex
-            };
-            if (!animationInfo.NoDirections && CurrentBaseFrameIndex == animationInfo.StandFrameIndex)
-                CurrentBaseFrameIndex += (uint)Direction * sprite.NumFrames;
-            CurrentFrameIndex = CurrentBaseFrameIndex;
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
-            if (frameReset)
-            {
-                sprite.CurrentFrame = 0;
-                lastFrameReset = ticks;
+                Position.X = (int)x;
+                Position.Y = (int)y;
+                sprite.Visible = false;
             }
             else
-                sprite.CurrentFrame = sprite.CurrentFrame; // this may correct the value if NumFrames has changed
-            Position.X = (int)x;
-            Position.Y = (int)y;
-            var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
-            sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
-            sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
-            sprite.PaletteIndex = (byte)paletteIndexProvider();
-            UpdateBaseline();
+            {
+                var animationInfo = CurrentAnimationInfo;
+                var tileType = Map[x, y + 1].Type;
+                sprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight);
+                CurrentState = animationInfo.IgnoreTileType ? State.Stand : tileType switch
+                {
+                    Data.Map.TileType.ChairUp => State.Sit,
+                    Data.Map.TileType.ChairRight => State.Sit,
+                    Data.Map.TileType.ChairDown => State.Sit,
+                    Data.Map.TileType.ChairLeft => State.Sit,
+                    Data.Map.TileType.Bed => State.Sleep,
+                    _ => State.Stand
+                };
+                sprite.NumFrames = NumFrames;
+                CurrentBaseFrameIndex = animationInfo.IgnoreTileType ? animationInfo.StandFrameIndex : tileType switch
+                {
+                    Data.Map.TileType.ChairUp => animationInfo.SitFrameIndex,
+                    Data.Map.TileType.ChairRight => animationInfo.SitFrameIndex + 1,
+                    Data.Map.TileType.ChairDown => animationInfo.SitFrameIndex + 2,
+                    Data.Map.TileType.ChairLeft => animationInfo.SitFrameIndex + 3,
+                    Data.Map.TileType.Bed => animationInfo.SleepFrameIndex,
+                    _ => animationInfo.StandFrameIndex
+                };
+                if (!animationInfo.NoDirections && CurrentBaseFrameIndex == animationInfo.StandFrameIndex)
+                    CurrentBaseFrameIndex += (uint)Direction * sprite.NumFrames;
+                CurrentFrameIndex = CurrentBaseFrameIndex;
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
+                if (frameReset)
+                {
+                    sprite.CurrentFrame = 0;
+                    lastFrameReset = ticks;
+                }
+                else
+                    sprite.CurrentFrame = sprite.CurrentFrame; // this may correct the value if NumFrames has changed
+                Position.X = (int)x;
+                Position.Y = (int)y;
+                var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+                sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+                sprite.PaletteIndex = (byte)paletteIndexProvider();
+                sprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
+                UpdateBaseline();
+            }
         }
 
         public virtual void Update(uint ticks, Time gameTime)

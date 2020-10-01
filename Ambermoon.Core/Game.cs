@@ -213,10 +213,10 @@ namespace Ambermoon
         /// Open chest which can be used to store items.
         /// </summary>
         internal IItemStorage OpenStorage { get; private set; }
-        Rect mapViewArea = map2DViewArea;
-        static readonly Rect map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
+        Rect mapViewArea = Map2DViewArea;
+        internal static readonly Rect Map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
-        static readonly Rect map3DViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY,
+        internal static readonly Rect Map3DViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY,
             Global.Map3DViewWidth, Global.Map3DViewHeight);
         internal CursorType CursorType
         {
@@ -470,7 +470,7 @@ namespace Ambermoon
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                 renderView.GetLayer((Layer)i).Visible = true;
 
-            mapViewArea = map2DViewArea;
+            mapViewArea = Map2DViewArea;
 
             PlayerMoved(true);
         }
@@ -500,7 +500,7 @@ namespace Ambermoon
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                 renderView.GetLayer((Layer)i).Visible = false;
 
-            mapViewArea = map3DViewArea;
+            mapViewArea = Map3DViewArea;
 
             PlayerMoved(true);
         }
@@ -695,8 +695,8 @@ namespace Ambermoon
                 var playerArea = player2D.DisplayArea;
                 ouchSprite.X = playerArea.X + 16;
                 ouchSprite.Y = playerArea.Y - 24;
-                ouchSprite.Resize(Math.Min(32, map2DViewArea.Right - ouchSprite.X),
-                    Math.Min(23, map2DViewArea.Bottom - ouchSprite.Y));
+                ouchSprite.Resize(Math.Min(32, Map2DViewArea.Right - ouchSprite.X),
+                    Math.Min(23, Map2DViewArea.Bottom - ouchSprite.Y));
             }
 
             ouchSprite.Visible = true;

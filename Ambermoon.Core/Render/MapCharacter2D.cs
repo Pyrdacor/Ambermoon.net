@@ -42,7 +42,6 @@ namespace Ambermoon.Render
 
         static Position GetStartPosition(Map.CharacterReference characterReference)
         {
-            // TODO: characterReference.Positions.Count == 0 should not happen but does in Spannenberg tavern
             var position = characterReference.Positions[0];
 
             // The positions are stored 1-based.
@@ -172,6 +171,9 @@ namespace Ambermoon.Render
                     // Walk a given path every day time slot
                     newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
                     newPosition.Offset(-1, -1); // positions are 1-based
+
+                    if (newPosition.Y != uint.MaxValue && IsNPC)
+                        --newPosition.Y;
                 }
             }
 

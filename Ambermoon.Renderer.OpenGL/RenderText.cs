@@ -403,9 +403,17 @@ namespace Ambermoon.Renderer
             UpdateTextSprites();
 
             foreach (var sprite in characterShadowSprites)
-                sprite.Visible = Visible;
+                sprite.Visible = Visible && sprite.InsideClipArea(ClipArea);
             foreach (var sprite in characterSprites)
-                sprite.Visible = Visible;
+                sprite.Visible = Visible && sprite.InsideClipArea(ClipArea);
+        }
+
+        protected override void OnClipAreaChanged(bool onScreen, bool needUpdate)
+        {
+            if (onScreen && needUpdate)
+            {
+                UpdateTextSprites();
+            }
         }
     }
 

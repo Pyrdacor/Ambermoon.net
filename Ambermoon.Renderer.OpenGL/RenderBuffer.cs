@@ -270,7 +270,26 @@ namespace Ambermoon.Renderer
             byte? textColorIndex = null)
         {
             var position = new Position(sprite.X, sprite.Y);
-            var size = new Size(sprite.Width, sprite.Height);
+            var spriteSize = new Size(sprite.Width, sprite.Height);
+            var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
+            var maskedTextureAtlasOffset = maskSpriteTextureAtlasOffset == null ? null : new Position(maskSpriteTextureAtlasOffset);
+
+            if (sprite.ClipArea != null)
+            {
+                int oldX = position.X;
+                int oldY = position.Y;
+                sprite.ClipArea.ClipRect(position, spriteSize);
+                textureAtlasOffset.X += position.X - oldX;
+                textureAtlasOffset.Y += position.Y - oldY;
+
+                if (maskedTextureAtlasOffset != null)
+                {
+                    maskedTextureAtlasOffset.X += position.X - oldX;
+                    maskedTextureAtlasOffset.Y += position.Y - oldY;
+                }
+            }
+
+            var size = new Size(spriteSize);
 
             if (positionTransformation != null)
                 position = positionTransformation(position);
@@ -299,26 +318,26 @@ namespace Ambermoon.Renderer
 
             if (textureAtlasOffsetBuffer != null)
             {
-                int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)sprite.TextureAtlasOffset.X, (short)sprite.TextureAtlasOffset.Y);
+                int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
 
                 if (textureAtlasOffsetBufferIndex != index)
                     throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
 
-                textureAtlasOffsetBuffer.Add((short)(sprite.TextureAtlasOffset.X + sprite.Width), (short)sprite.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                textureAtlasOffsetBuffer.Add((short)(sprite.TextureAtlasOffset.X + sprite.Width), (short)(sprite.TextureAtlasOffset.Y + sprite.Height), textureAtlasOffsetBufferIndex + 2);
-                textureAtlasOffsetBuffer.Add((short)sprite.TextureAtlasOffset.X, (short)(sprite.TextureAtlasOffset.Y + sprite.Height), textureAtlasOffsetBufferIndex + 3);
+                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + spriteSize.Width), (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
+                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + spriteSize.Width), (short)(textureAtlasOffset.Y + spriteSize.Height), textureAtlasOffsetBufferIndex + 2);
+                textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + spriteSize.Height), textureAtlasOffsetBufferIndex + 3);
             }
 
-            if (Masked && maskSpriteTextureAtlasOffset != null)
+            if (Masked && maskedTextureAtlasOffset != null)
             {
-                int maskTextureAtlasOffsetBufferIndex = maskTextureAtlasOffsetBuffer.Add((short)maskSpriteTextureAtlasOffset.X, (short)maskSpriteTextureAtlasOffset.Y);
+                int maskTextureAtlasOffsetBufferIndex = maskTextureAtlasOffsetBuffer.Add((short)maskedTextureAtlasOffset.X, (short)maskedTextureAtlasOffset.Y);
 
                 if (maskTextureAtlasOffsetBufferIndex != index)
                     throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
 
-                maskTextureAtlasOffsetBuffer.Add((short)(maskSpriteTextureAtlasOffset.X + sprite.Width), (short)maskSpriteTextureAtlasOffset.Y, maskTextureAtlasOffsetBufferIndex + 1);
-                maskTextureAtlasOffsetBuffer.Add((short)(maskSpriteTextureAtlasOffset.X + sprite.Width), (short)(maskSpriteTextureAtlasOffset.Y + sprite.Height), maskTextureAtlasOffsetBufferIndex + 2);
-                maskTextureAtlasOffsetBuffer.Add((short)maskSpriteTextureAtlasOffset.X, (short)(maskSpriteTextureAtlasOffset.Y + sprite.Height), maskTextureAtlasOffsetBufferIndex + 3);
+                maskTextureAtlasOffsetBuffer.Add((short)(maskedTextureAtlasOffset.X + spriteSize.Width), (short)maskedTextureAtlasOffset.Y, maskTextureAtlasOffsetBufferIndex + 1);
+                maskTextureAtlasOffsetBuffer.Add((short)(maskedTextureAtlasOffset.X + spriteSize.Width), (short)(maskedTextureAtlasOffset.Y + spriteSize.Height), maskTextureAtlasOffsetBufferIndex + 2);
+                maskTextureAtlasOffsetBuffer.Add((short)maskedTextureAtlasOffset.X, (short)(maskedTextureAtlasOffset.Y + spriteSize.Height), maskTextureAtlasOffsetBufferIndex + 3);
             }
 
             if (baseLineBuffer != null)
@@ -577,6 +596,9 @@ namespace Ambermoon.Renderer
             var position = new Position(renderNode.X, renderNode.Y);
             var size = new Size(renderNode.Width, renderNode.Height);
 
+            if (renderNode.ClipArea != null)
+                renderNode.ClipArea.ClipRect(position, size);
+
             if (positionTransformation != null)
                 position = positionTransformation(position);
 
@@ -711,17 +733,37 @@ namespace Ambermoon.Renderer
             if (textureAtlasOffsetBuffer == null)
                 return;
 
-            textureAtlasOffsetBuffer.Update(index, (short)sprite.TextureAtlasOffset.X, (short)sprite.TextureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 1, (short)(sprite.TextureAtlasOffset.X + sprite.Width), (short)sprite.TextureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 2, (short)(sprite.TextureAtlasOffset.X + sprite.Width), (short)(sprite.TextureAtlasOffset.Y + sprite.Height));
-            textureAtlasOffsetBuffer.Update(index + 3, (short)sprite.TextureAtlasOffset.X, (short)(sprite.TextureAtlasOffset.Y + sprite.Height));
+            var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
+            var maskedTextureAtlasOffset = maskSpriteTextureAtlasOffset == null ? null : new Position(maskSpriteTextureAtlasOffset);
+            var size = new Size(sprite.Width, sprite.Height);
 
-            if (Masked && maskSpriteTextureAtlasOffset != null)
+            if (sprite.ClipArea != null)
             {
-                maskTextureAtlasOffsetBuffer.Update(index, (short)maskSpriteTextureAtlasOffset.X, (short)maskSpriteTextureAtlasOffset.Y);
-                maskTextureAtlasOffsetBuffer.Update(index + 1, (short)(maskSpriteTextureAtlasOffset.X + sprite.Width), (short)maskSpriteTextureAtlasOffset.Y);
-                maskTextureAtlasOffsetBuffer.Update(index + 2, (short)(maskSpriteTextureAtlasOffset.X + sprite.Width), (short)(maskSpriteTextureAtlasOffset.Y + sprite.Height));
-                maskTextureAtlasOffsetBuffer.Update(index + 3, (short)maskSpriteTextureAtlasOffset.X, (short)(maskSpriteTextureAtlasOffset.Y + sprite.Height));
+                var position = new Position(sprite.X, sprite.Y);
+                int oldX = position.X;
+                int oldY = position.Y;
+                sprite.ClipArea.ClipRect(position, size);
+                textureAtlasOffset.X += position.X - oldX;
+                textureAtlasOffset.Y += position.Y - oldY;
+
+                if (maskedTextureAtlasOffset != null)
+                {
+                    maskedTextureAtlasOffset.X += position.X - oldX;
+                    maskedTextureAtlasOffset.Y += position.Y - oldY;
+                }
+            }
+
+            textureAtlasOffsetBuffer.Update(index, (short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
+            textureAtlasOffsetBuffer.Update(index + 1, (short)(textureAtlasOffset.X + size.Width), (short)textureAtlasOffset.Y);
+            textureAtlasOffsetBuffer.Update(index + 2, (short)(textureAtlasOffset.X + size.Width), (short)(textureAtlasOffset.Y + size.Height));
+            textureAtlasOffsetBuffer.Update(index + 3, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + size.Height));
+
+            if (Masked && maskedTextureAtlasOffset != null)
+            {
+                maskTextureAtlasOffsetBuffer.Update(index, (short)maskedTextureAtlasOffset.X, (short)maskedTextureAtlasOffset.Y);
+                maskTextureAtlasOffsetBuffer.Update(index + 1, (short)(maskedTextureAtlasOffset.X + size.Width), (short)maskedTextureAtlasOffset.Y);
+                maskTextureAtlasOffsetBuffer.Update(index + 2, (short)(maskedTextureAtlasOffset.X + size.Width), (short)(maskedTextureAtlasOffset.Y + size.Height));
+                maskTextureAtlasOffsetBuffer.Update(index + 3, (short)maskedTextureAtlasOffset.X, (short)(maskedTextureAtlasOffset.Y + size.Height));
             }
         }
 

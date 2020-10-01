@@ -486,8 +486,8 @@ namespace Ambermoon.UI
             game.InputEnable = false;
             var area = Type switch
             {
-                LayoutType.Map2D => new Rect(Global.Map2DViewX, Global.Map2DViewY, Global.Map2DViewWidth, Global.Map2DViewHeight),
-                LayoutType.Map3D => new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth, Global.Map3DViewHeight),
+                LayoutType.Map2D => Game.Map2DViewArea,
+                LayoutType.Map3D => Game.Map3DViewArea,
                 _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from another open window is not supported.")
             };
             AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), 49, 1);

@@ -96,10 +96,23 @@ namespace Ambermoon.Renderer
             }
         }
 
+        protected override void OnClipAreaChanged(bool onScreen, bool needUpdate)
+        {
+            if (onScreen && needUpdate)
+            {
+                UpdatePosition();
+            }
+        }
+
         protected override void UpdatePosition()
         {
             if (drawIndex != -1) // -1 means not attached to a layer
+            {
                 (Layer as RenderLayer).UpdatePosition(drawIndex, this);
+
+                if (ClipArea != null) // We need to adjust tex coords if clipped
+                    UpdateTextureAtlasOffset();
+            }
         }
 
         protected virtual void UpdateTextureAtlasOffset()
@@ -122,7 +135,9 @@ namespace Ambermoon.Renderer
             base.Resize(width, height);
 
             UpdatePosition();
-            UpdateTextureAtlasOffset();
+
+            if (ClipArea == null)
+                UpdateTextureAtlasOffset();
         }
     }
 
@@ -205,7 +220,9 @@ namespace Ambermoon.Renderer
             base.Resize(width, height);
 
             UpdatePosition();
-            UpdateTextureAtlasOffset();
+
+            if (ClipArea == null)
+                UpdateTextureAtlasOffset();
         }
 
         protected override void AddToLayer()
@@ -222,10 +239,23 @@ namespace Ambermoon.Renderer
             }
         }
 
+        protected override void OnClipAreaChanged(bool onScreen, bool needUpdate)
+        {
+            if (onScreen && needUpdate)
+            {
+                UpdatePosition();
+            }
+        }
+
         protected override void UpdatePosition()
         {
             if (drawIndex != -1) // -1 means not attached to a layer
+            {
                 (Layer as RenderLayer).UpdatePosition(drawIndex, this);
+
+                if (ClipArea != null) // We need to adjust tex coords if clipped
+                    UpdateTextureAtlasOffset();
+            }
         }
 
         protected virtual void UpdateTextureAtlasOffset()

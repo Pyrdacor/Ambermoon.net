@@ -29,6 +29,7 @@ namespace Ambermoon.Render
         int Height { get; }
         bool Visible { get; set; }
         IRenderLayer Layer { get; set; }
+        Rect ClipArea { get; set; }
 
         void Delete();
         void Resize(int width, int height);

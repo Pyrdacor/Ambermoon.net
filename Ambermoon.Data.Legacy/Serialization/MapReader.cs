@@ -40,7 +40,7 @@ namespace Ambermoon.Data.Legacy
                 var gfxIndex = dataReader.ReadWord();
                 var unknown2 = dataReader.ReadBytes(4);
 
-                map.CharacterReferences[i] = type == 0 ? null : new Map.CharacterReference
+                map.CharacterReferences[i] = index == 0 || type == 0 ? null : new Map.CharacterReference
                 {
                     Index = index,
                     Unknown1 = unknown1,
@@ -55,6 +55,18 @@ namespace Ambermoon.Data.Legacy
                 // It is not directly following the other 2 and has no movement data
                 // hence it is not marked as random moving. I guess this is a relict.
                 // This character is marked as party member but there is none on this map.
+                // To avoid problems we null all further character references if we found
+                // the first empty one.
+                if (map.CharacterReferences[i] == null)
+                {
+                    for (int j = i + 1; j < 32; ++j)
+                    {
+                        map.CharacterReferences[j] = null;
+                        dataReader.Position += 10;
+                    }
+
+                    break;
+                }
             }
 
             if (map.Type == MapType.Map2D)
@@ -152,14 +164,11 @@ namespace Ambermoon.Data.Legacy
             // For random movement there are 2 bytes (x and y). Otherwise there are 288 positions
             // each has 2 bytes (x and y). Each position is for one 5 minute chunk of the day.
             // There are 24 hours * 60 minutes = 1440 minutes per day. Divided by 5 you get 288.
+            // A position of 0,0 is possible. It means "not visible on the map".
             foreach (var characterReference in map.CharacterReferences)
             {
                 if (characterReference == null)
                     continue;
-
-                // TODO: I guess 0,0 is allowed too. Maybe the character is invisible then? Gauners tavern -> some NPCs go to cellar?
-                if (dataReader.PeekWord() == 0) // no more position data
-                    break;
 
                 if (characterReference.Type == CharacterType.Monster ||
                     characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement))
