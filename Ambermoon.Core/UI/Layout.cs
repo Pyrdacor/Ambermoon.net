@@ -1103,9 +1103,18 @@ namespace Ambermoon.UI
                 sprite.PaletteIndex = 51;
                 sprite.Visible = true;
 
-                var text = portraitNames[slot] ??= RenderView.RenderTextFactory.Create(textLayer,
-                    RenderView.TextProcessor.CreateText(partyMember.Name.Substring(0, Math.Min(5, partyMember.Name.Length))), TextColor.Red, true,
-                    new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6), TextAlign.Center);
+                var text = portraitNames[slot];
+                var name = RenderView.TextProcessor.CreateText(partyMember.Name.Substring(0, Math.Min(5, partyMember.Name.Length)));
+
+                if (text == null)
+                {
+                    text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer,  name, TextColor.Red, true,
+                        new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6), TextAlign.Center);
+                }
+                else
+                {
+                    text.Text = name;
+                }
                 text.DisplayLayer = 1;
                 text.TextColor = partyMember.Alive ? TextColor.Red : TextColor.PaleGray;
                 text.Visible = true;

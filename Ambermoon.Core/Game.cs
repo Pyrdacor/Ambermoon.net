@@ -566,6 +566,12 @@ namespace Ambermoon
             layout.SetCharacter(slot, null);
         }
 
+        void ClearPartyMembers()
+        {
+            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+                RemovePartyMember(i);
+        }
+
         int? SlotFromPartyMember(PartyMember partyMember)
         {
             for (int i = 0; i < MaxPartyMembers; ++i)
@@ -585,16 +591,13 @@ namespace Ambermoon
             CurrentSavegame = savegame;
             GameTime = new Time(savegame);
 
+            ClearPartyMembers();
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
                 if (savegame.CurrentPartyMemberIndices[i] != 0)
                 {
                     var partyMember = savegame.GetPartyMember(i);
                     AddPartyMember(i, partyMember);
-                }
-                else
-                {
-                    RemovePartyMember(i);
                 }
             }
             CurrentPartyMember = GetPartyMember(CurrentSavegame.ActivePartyMemberSlot);
