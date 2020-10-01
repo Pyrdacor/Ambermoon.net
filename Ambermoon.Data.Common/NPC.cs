@@ -5,6 +5,8 @@ namespace Ambermoon.Data
     public class NPC : Character
     {
         public List<string> Texts { get; set; }
+        public List<Event> Events { get; } = new List<Event>();
+        public List<Event> EventList { get; } = new List<Event>();
 
         private NPC()
             : base(CharacterType.NPC)

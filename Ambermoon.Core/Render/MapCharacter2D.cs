@@ -67,7 +67,7 @@ namespace Ambermoon.Render
                     NumStandFrames = (uint)tile.NumAnimationFrames,
                     NumSitFrames = 0,
                     NumSleepFrames = 0,
-                    TicksPerFrame = map.TicksPerAnimationFrame,
+                    TicksPerFrame = map.TicksPerAnimationFrame * 2,
                     NoDirections = true,
                     IgnoreTileType = true
                 };
@@ -85,7 +85,7 @@ namespace Ambermoon.Render
                     NumStandFrames = NumNPCFrames[characterReference.GraphicIndex],
                     NumSitFrames = playerAnimationInfo.NumSitFrames,
                     NumSleepFrames = playerAnimationInfo.NumSleepFrames,
-                    TicksPerFrame = map.TicksPerAnimationFrame,
+                    TicksPerFrame = map.TicksPerAnimationFrame * 2,
                     NoDirections = true,
                     IgnoreTileType = false
                 };

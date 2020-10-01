@@ -137,8 +137,8 @@ namespace Ambermoon.Data
         public World World { get; set; }
         public Tile[,] Tiles { get; set; }
         public Block[,] Blocks { get; set; }
-        public List<MapEvent> Events { get; } = new List<MapEvent>();
-        public List<MapEvent> EventLists { get; } = new List<MapEvent>();
+        public List<Event> Events { get; } = new List<Event>();
+        public List<Event> EventList { get; } = new List<Event>();
         public List<string> Texts { get; set; } = new List<string>();
         public CharacterReference[] CharacterReferences { get; } = new CharacterReference[32];
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;

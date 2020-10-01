@@ -73,9 +73,9 @@ namespace Ambermoon.Render
 
                         if (mapEventId > 0)
                         {
-                            static bool HasTeleportEvent(MapEvent ev)
+                            static bool HasTeleportEvent(Event ev)
                             {
-                                if (ev.Type == MapEventType.MapChange)
+                                if (ev.Type == EventType.MapChange)
                                     return true;
 
                                 return ev.Next != null && HasTeleportEvent(ev.Next);
@@ -83,7 +83,7 @@ namespace Ambermoon.Render
 
                             var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
 
-                            if (HasTeleportEvent(mapAtNewPosition.EventLists[(int)mapEventId.Value - 1]))
+                            if (HasTeleportEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
                                 canMove = false;
                         }
                     }

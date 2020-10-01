@@ -177,7 +177,7 @@ namespace Ambermoon.Render
 
                 foreach (var mapEvent in Map.Events)
                 {
-                    if (mapEvent.Type == MapEventType.ChangeTile)
+                    if (mapEvent.Type == EventType.ChangeTile)
                     {
                         if (!(mapEvent is ChangeTileEvent changeTileEvent))
                             throw new AmbermoonException(ExceptionScope.Data, "Invalid map event.");

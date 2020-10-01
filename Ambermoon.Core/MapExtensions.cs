@@ -23,8 +23,8 @@ namespace Ambermoon
 
         public static uint PositionToTileIndex(this Map map, uint x, uint y) => x + y * (uint)map.Width;
 
-        static MapEvent ExecuteEvent(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
-            IMapManager mapManager, uint ticks, MapEvent mapEvent, ref bool lastEventStatus, out bool aborted)
+        static Event ExecuteEvent(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
+            IMapManager mapManager, uint ticks, Event mapEvent, ref bool lastEventStatus, out bool aborted)
         {
             // Note: Aborted means that an event is not even executed. It does not mean that a decision
             // box is answered with No for example. It is used when:
@@ -37,7 +37,7 @@ namespace Ambermoon
 
             switch (mapEvent.Type)
             {
-                case MapEventType.MapChange:
+                case EventType.MapChange:
                 {
                     if (trigger != MapEventTrigger.Move &&
                         trigger != MapEventTrigger.Always)
@@ -49,7 +49,7 @@ namespace Ambermoon
                     game.Teleport(mapChangeEvent);
                     break;
                 }
-                case MapEventType.Chest:
+                case EventType.Chest:
                 {
                     if (!(mapEvent is ChestMapEvent chestMapEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
@@ -57,7 +57,7 @@ namespace Ambermoon
                     game.ShowChest(chestMapEvent);
                     break;
                 }
-                case MapEventType.PopupText:
+                case EventType.PopupText:
                 {
                     if (!(mapEvent is PopupTextEvent popupTextEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid text popup event.");
@@ -93,7 +93,7 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
-                case MapEventType.Riddlemouth:
+                case EventType.Riddlemouth:
                 {
                     if (trigger != MapEventTrigger.Always &&
                         trigger != MapEventTrigger.Eye &&
@@ -111,7 +111,7 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
-                case MapEventType.Decision:
+                case EventType.Decision:
                 {
                     if (!(mapEvent is DecisionEvent decisionEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid decision event.");
@@ -134,7 +134,7 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
-                case MapEventType.ChangeTile:
+                case EventType.ChangeTile:
                 {
                     if (!(mapEvent is ChangeTileEvent changeTileEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
@@ -143,7 +143,7 @@ namespace Ambermoon
                     break;
                 }
                 // TODO ...
-                case MapEventType.Condition:
+                case EventType.Condition:
                 {
                     if (!(mapEvent is ConditionEvent conditionEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid condition event.");
@@ -211,7 +211,7 @@ namespace Ambermoon
 
                     break;
                 }
-                case MapEventType.Action:
+                case EventType.Action:
                 {
                     if (!(mapEvent is ActionEvent actionEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid action event.");
@@ -232,7 +232,7 @@ namespace Ambermoon
 
                     break;
                 }
-                case MapEventType.Dice100Roll:
+                case EventType.Dice100Roll:
                 {
                     if (!(mapEvent is Dice100RollEvent diceEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid dice 100 event.");
@@ -258,7 +258,7 @@ namespace Ambermoon
         }
 
         static bool TriggerEventChain(Map map, Game game, IRenderPlayer player, MapEventTrigger trigger, uint x, uint y,
-            IMapManager mapManager, uint ticks, MapEvent firstMapEvent, bool lastEventStatus = false)
+            IMapManager mapManager, uint ticks, Event firstMapEvent, bool lastEventStatus = false)
         {
             var mapEvent = firstMapEvent;
 
@@ -303,7 +303,7 @@ namespace Ambermoon
             if (mapEventId == 0)
                 return false; // no map events at this position
 
-            return TriggerEventChain(map, game, player, trigger, x, y, mapManager, ticks, map.EventLists[(int)mapEventId - 1]);
+            return TriggerEventChain(map, game, player, trigger, x, y, mapManager, ticks, map.EventList[(int)mapEventId - 1]);
         }
 
         public static void ClearLastEvent(this Map map)

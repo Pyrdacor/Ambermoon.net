@@ -116,7 +116,7 @@ namespace Ambermoon.Data.Legacy
                 {
                     savegame.TileChangeEvents.SafeAdd(mapIndex, new ChangeTileEvent
                     {
-                        Type = MapEventType.ChangeTile,
+                        Type = EventType.ChangeTile,
                         Index = uint.MaxValue,
                         MapIndex = mapIndex,
                         X = x,

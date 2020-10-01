@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Ambermoon.Data
 {
-    public enum MapEventType
+    public enum EventType
     {
         Unknown,
         MapChange, // open doors, exits, etc
@@ -32,14 +32,14 @@ namespace Ambermoon.Data
         Nop // null / no operation
     }
 
-    public class MapEvent
+    public class Event
     {
         public uint Index { get; set; }
-        public MapEventType Type { get; set; }
-        public MapEvent Next { get; set; }
+        public EventType Type { get; set; }
+        public Event Next { get; set; }
     }
 
-    public class MapChangeEvent : MapEvent
+    public class MapChangeEvent : Event
     {
         public uint MapIndex { get; set; }
         public uint X { get; set; }
@@ -54,7 +54,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class DoorEvent : MapEvent
+    public class DoorEvent : Event
     {
         public byte[] Unknown { get; set; }
         public uint KeyIndex { get; set; }
@@ -66,7 +66,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ChestMapEvent : MapEvent
+    public class ChestMapEvent : Event
     {
         [Flags]
         public enum LockFlags
@@ -116,7 +116,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class PopupTextEvent : MapEvent
+    public class PopupTextEvent : Event
     {
         public enum Response
         {
@@ -152,7 +152,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class SpinnerEvent : MapEvent
+    public class SpinnerEvent : Event
     {
         public CharacterDirection Direction { get; set; }
         public byte[] Unknown { get; set; }
@@ -163,7 +163,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class TrapEvent : MapEvent
+    public class TrapEvent : Event
     {
         public enum TrapType
         {
@@ -197,7 +197,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class RiddlemouthEvent : MapEvent
+    public class RiddlemouthEvent : Event
     {
         public uint RiddleTextIndex { get; set; }
         public uint SolutionTextIndex { get; set; }
@@ -210,7 +210,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class AwardEvent : MapEvent
+    public class AwardEvent : Event
     {
         public enum AwardType
         {
@@ -277,7 +277,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ChangeTileEvent : MapEvent
+    public class ChangeTileEvent : Event
     {
         public uint X { get; set; }
         public uint Y { get; set; }
@@ -295,7 +295,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class StartBattleEvent : MapEvent
+    public class StartBattleEvent : Event
     {
         public uint MonsterGroupIndex { get; set; }
         public byte[] Unknown1 { get; set; }
@@ -307,7 +307,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class EnterPlaceEvent : MapEvent
+    public class EnterPlaceEvent : Event
     {
         // TODO
         public override string ToString()
@@ -316,7 +316,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ConditionEvent : MapEvent
+    public class ConditionEvent : Event
     {
         public enum ConditionType
         {
@@ -375,7 +375,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ActionEvent : MapEvent
+    public class ActionEvent : Event
     {
         public enum ActionType
         {
@@ -432,7 +432,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class Dice100RollEvent : MapEvent
+    public class Dice100RollEvent : Event
     {
         /// <summary>
         /// Chance in percent: 0 ~ 100
@@ -455,7 +455,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ConversationActionEvent : MapEvent
+    public class ConversationActionEvent : Event
     {
         // TODO
         public override string ToString()
@@ -464,7 +464,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class PrintTextEvent : MapEvent
+    public class PrintTextEvent : Event
     {
         // TODO
         public override string ToString()
@@ -473,7 +473,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class CreateEvent : MapEvent
+    public class CreateEvent : Event
     {
         // TODO
         public override string ToString()
@@ -482,7 +482,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class DecisionEvent : MapEvent
+    public class DecisionEvent : Event
     {
         public uint TextIndex { get; set; }
         public byte[] Unknown1 { get; set; }
@@ -498,7 +498,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ChangeMusicEvent : MapEvent
+    public class ChangeMusicEvent : Event
     {
         public uint MusicIndex { get; set; }
         public byte Volume { get; set; }
@@ -510,7 +510,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class DebugMapEvent : MapEvent
+    public class DebugMapEvent : Event
     {
         public byte[] Data { get; set; }
 
@@ -520,7 +520,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ExitEvent : MapEvent
+    public class ExitEvent : Event
     {
         // TODO
         public override string ToString()
@@ -529,7 +529,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class SpawnEvent : MapEvent
+    public class SpawnEvent : Event
     {
         // TODO
         public override string ToString()
@@ -538,7 +538,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class NopEvent : MapEvent
+    public class NopEvent : Event
     {
         public override string ToString()
         {
