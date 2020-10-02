@@ -131,7 +131,7 @@ namespace Ambermoon.Render
                     if (travelType == TravelType.Walk)
                     {
                         // We trigger with our lower half so add 1 to y in non-world maps.
-                        Map.TriggerEvents(this, MapEventTrigger.Move, (uint)newX,
+                        Map.TriggerEvents(this, EventTrigger.Move, (uint)newX,
                             (uint)newY + (oldMap.IsWorldMap ? 0u : 1u), mapManager, ticks,
                             game.CurrentSavegame);
                     }
@@ -159,7 +159,7 @@ namespace Ambermoon.Render
 
                     if (travelType == TravelType.Walk)
                     {
-                        Map.TriggerEvents(this, MapEventTrigger.Move, (uint)position.X,
+                        Map.TriggerEvents(this, EventTrigger.Move, (uint)position.X,
                             (uint)position.Y + (Map.Map.IsWorldMap ? 0u : 1u), mapManager, ticks,
                             game.CurrentSavegame);
                     }

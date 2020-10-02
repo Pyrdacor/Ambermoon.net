@@ -215,11 +215,11 @@ namespace Ambermoon.Data
 
         public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot] - 1];
 
-        public static Savegame Load(ISavegameSerializer savegameSerializer, SavegameFiles savegameFiles)
+        public static Savegame Load(ISavegameSerializer savegameSerializer, SavegameFiles savegameFiles, IFileContainer partyTextsContainer)
         {
             var savegame = new Savegame();
 
-            savegameSerializer.Read(savegame, savegameFiles);
+            savegameSerializer.Read(savegame, savegameFiles, partyTextsContainer);
 
             return savegame;
         }

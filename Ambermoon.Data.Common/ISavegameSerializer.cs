@@ -26,7 +26,7 @@
 
     public interface ISavegameSerializer
     {
-        void Read(Savegame savegame, SavegameFiles files);
+        void Read(Savegame savegame, SavegameFiles files, IFileContainer partyTextsContainer);
         void Write(Savegame savegame, SavegameFiles files);
     }
 }

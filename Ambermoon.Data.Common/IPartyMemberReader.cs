@@ -2,6 +2,6 @@
 {
     public interface IPartyMemberReader
     {
-        void ReadPartyMember(PartyMember partyMember, IDataReader dataReader);
+        void ReadPartyMember(PartyMember partyMember, IDataReader dataReader, IDataReader partyTextReader);
     }
 }

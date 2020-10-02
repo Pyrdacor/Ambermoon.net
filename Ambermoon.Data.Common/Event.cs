@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 
@@ -22,7 +23,7 @@ namespace Ambermoon.Data
         Condition,
         Action,
         Dice100Roll,
-        ConversationAction,
+        Conversation,
         PrintText,
         Create,
         Decision, // yes/no popup with text
@@ -455,21 +456,37 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ConversationActionEvent : Event
+    public class ConversationEvent : Event
     {
-        // TODO
+        public enum InteractionType
+        {
+            Keyword = 0,
+            Unknown1 = 1, // TODO: Time dependent, non sleeping?
+            Unknown2 = 2, // TODO: Time dependent, non sleeping?
+            Talk = 7,
+            Look = 8
+            // TODO: are there others like Touch?
+        }
+
+        public InteractionType Interaction { get; set; }
+        public ushort Value { get; set; }
+        public uint KeywordIndex => Value;
+
         public override string ToString()
         {
-            return $"{Type}";
+            string argument = Interaction == InteractionType.Keyword ? $", KeywordIndex {KeywordIndex}" : "";
+
+            return $"{Type}: On interaction {Interaction}" + argument;
         }
     }
 
     public class PrintTextEvent : Event
     {
-        // TODO
+        public uint NPCTextIndex { get; set; }
+
         public override string ToString()
         {
-            return $"{Type}";
+            return $"{Type}: NPCTextIndex {NPCTextIndex}";
         }
     }
 

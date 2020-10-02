@@ -181,73 +181,61 @@ namespace Ambermoon.Render
             base.Update(ticks, gameTime);
         }
 
-        public bool Interact(MapEventTrigger trigger)
+        public bool Interact(EventTrigger trigger)
         {
             switch (trigger)
             {
-                case MapEventTrigger.Eye:
+                case EventTrigger.Eye:
+                case EventTrigger.Mouth:
+                case EventTrigger.Hand:
                     if (characterReference.Type == CharacterType.Monster)
                         return false;
-                    View();
-                    return true;
-                case MapEventTrigger.Mouth:
-                    if (characterReference.Type == CharacterType.Monster)
-                        return false;
-                    Talk();
-                    return true;
-                case MapEventTrigger.Move:
+                    break;
+                case EventTrigger.Move:
                     if (characterReference.Type != CharacterType.Monster)
                         return false;
-                    Attack();
-                    return true;
+                    break;
                 default:
                     return false;
             }
+
+            if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
+            {
+                if (trigger == EventTrigger.Eye)
+                {
+                    // TODO
+                }
+                else if (trigger == EventTrigger.Mouth)
+                {
+                    ShowPopup(map.Texts[(int)characterReference.Index]);
+                }
+            }
+
+            switch (characterReference.Type)
+            {
+                case CharacterType.PartyMember:
+                    // TODO
+                    break;
+                case CharacterType.NPC:
+                    var npc = game.CharacterManager.GetNPC(characterReference.Index);
+                    if (npc == null)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC index.");
+                    npc.ExecuteEvents(game, trigger);
+                    break;
+                case CharacterType.Monster:
+                    // TODO
+                    break;
+                case CharacterType.MapObject:
+                    // TODO
+                    break;
+            }
+
+            return true;
         }
 
         void ShowPopup(string text)
         {
             game.ShowTextPopup(game.ProcessText(text), null);
-        }
-
-        void Talk()
-        {
-            if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
-            {
-                ShowPopup(map.Texts[(int)characterReference.Index]);
-            }
-            else // NPC
-            {
-                var npc = game.CharacterManager.GetNPC(characterReference.Index);
-
-                if (npc == null)
-                    throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC index.");
-
-                game.ShowConversation(npc);
-            }
-        }
-
-        void View()
-        {
-            if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
-            {
-                // TODO
-            }
-            else // NPC
-            {
-                var npc = game.CharacterManager.GetNPC(characterReference.Index);
-
-                if (npc == null)
-                    throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC index.");
-
-                // Text 0 is always the "view" text index
-                ShowPopup(npc.Texts[0]);
-            }
-        }
-
-        void Attack()
-        {
-            // TODO
         }
     }
 }

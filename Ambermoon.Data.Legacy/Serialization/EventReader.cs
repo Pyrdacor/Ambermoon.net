@@ -299,6 +299,29 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.Conversation:
+                {
+                    var interaction = (ConversationEvent.InteractionType)dataReader.ReadByte();
+                    dataReader.Position += 4; // unused
+                    var value = dataReader.ReadWord();
+                    dataReader.Position += 2; // unused
+                    mapEvent = new ConversationEvent
+                    {
+                        Interaction = interaction,
+                        Value = value
+                    };
+                    break;
+                }
+                case EventType.PrintText:
+                {
+                    var npcTextIndex = dataReader.ReadByte();
+                    dataReader.Position += 8; // unused
+                    mapEvent = new PrintTextEvent
+                    {
+                        NPCTextIndex = npcTextIndex
+                    };
+                    break;
+                }
                 case EventType.Decision:
                 {
                     var textIndex = dataReader.ReadByte();

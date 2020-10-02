@@ -43,7 +43,7 @@
                 AutomapDataReaders = gameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
             };
 
-            savegameSerializer.Read(savegame, savegameFiles);
+            savegameSerializer.Read(savegame, savegameFiles, gameData.Files[$"Save.{saveSlot:00}/Party_texts.amb"]);
 
             return savegame;
         }
@@ -52,6 +52,7 @@
         {
             var savegame = new Savegame();
             SavegameFiles savegameFiles;
+            IFileContainer partyTextContainer;
 
             try
             {
@@ -63,6 +64,7 @@
                     MerchantDataReaders = gameData.Files["Initial/Merchant_data.amb"],
                     AutomapDataReaders = gameData.Files["Initial/Automap.amb"]
                 };
+                partyTextContainer = gameData.Files["Initial/Party_texts.amb"];
             }
             catch
             {
@@ -74,9 +76,10 @@
                     MerchantDataReaders = gameData.Files["Merchant_data.amb"],
                     AutomapDataReaders = gameData.Files["Automap.amb"]
                 };
+                partyTextContainer = gameData.Files["Party_texts.amb"];
             }
 
-            savegameSerializer.Read(savegame, savegameFiles);
+            savegameSerializer.Read(savegame, savegameFiles, partyTextContainer);
             return savegame;
         }
     }

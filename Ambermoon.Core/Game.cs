@@ -139,6 +139,7 @@ namespace Ambermoon
         internal ISavegameManager SavegameManager { get; }
         readonly ISavegameSerializer savegameSerializer;
         Player player;
+        internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
         PartyMember CurrentPartyMember { get; set; } = null;
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
@@ -638,7 +639,7 @@ namespace Ambermoon
             InputEnable = true;
 
             // Trigger events after game load
-            TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
+            TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
                 (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
         }
 
@@ -1108,11 +1109,11 @@ namespace Ambermoon
                     relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
 
                     if (cursor.Type == CursorType.Eye)
-                        TriggerMapEvents(MapEventTrigger.Eye, relativePosition);
+                        TriggerMapEvents(EventTrigger.Eye, relativePosition);
                     else if (cursor.Type == CursorType.Hand)
-                        TriggerMapEvents(MapEventTrigger.Hand, relativePosition);
+                        TriggerMapEvents(EventTrigger.Hand, relativePosition);
                     else if (cursor.Type == CursorType.Mouth)
-                        TriggerMapEvents(MapEventTrigger.Mouth, relativePosition);
+                        TriggerMapEvents(EventTrigger.Mouth, relativePosition);
                     else if (cursor.Type > CursorType.Sword && cursor.Type < CursorType.Wait)
                     {
                         clickMoveActive = true;
@@ -1320,7 +1321,7 @@ namespace Ambermoon
         /// </summary>
         /// <param name="trigger">Trigger</param>
         /// <param name="position">Position inside the map view</param>
-        bool TriggerMapEvents(MapEventTrigger trigger, Position position)
+        bool TriggerMapEvents(EventTrigger trigger, Position position)
         {
             if (is3D)
             {
@@ -1333,12 +1334,11 @@ namespace Ambermoon
             }
         }
 
-        bool TriggerMapEvents(MapEventTrigger trigger, uint x, uint y)
+        bool TriggerMapEvents(EventTrigger trigger, uint x, uint y)
         {
             if (is3D)
             {
-                return renderMap3D.Map.TriggerEvents(this, player3D, trigger, x, y, mapManager,
-                    CurrentTicks, CurrentSavegame);
+                return renderMap3D.Map.TriggerEvents(this, trigger, x, y, CurrentTicks, CurrentSavegame);
             }
             else // 2D
             {
@@ -1347,7 +1347,7 @@ namespace Ambermoon
             }
         }
 
-        internal void TriggerMapEvents(MapEventTrigger trigger)
+        internal void TriggerMapEvents(EventTrigger trigger)
         {
             bool consumed = TriggerMapEvents(trigger, (uint)player.Position.X, (uint)player.Position.Y);
 
@@ -1357,7 +1357,7 @@ namespace Ambermoon
                     return;
 
                 // In 3D we might trigger adjacent tile events.
-                if (trigger != MapEventTrigger.Move)
+                if (trigger != EventTrigger.Move)
                 {
                     camera3D.GetForwardPosition(Global.DistancePerTile, out float x, out float z, false, false);
                     var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
@@ -1958,7 +1958,7 @@ namespace Ambermoon
                 if (!mapTypeChanged)
                 {
                     // Trigger events after map transition
-                    TriggerMapEvents(MapEventTrigger.Move, (uint)player.Position.X,
+                    TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
                         (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
 
                     PlayerMoved(mapChange);
@@ -2007,8 +2007,7 @@ namespace Ambermoon
                 else
                     TravelType = TravelType.Walk;
 
-                Map.TriggerEvents(this, player2D, MapEventTrigger.Move, x, y, mapManager,
-                    CurrentTicks, CurrentSavegame);
+                Map.TriggerEvents(this, EventTrigger.Move, x, y, CurrentTicks, CurrentSavegame);
             }
             else if (transport != null && TravelType == TravelType.Walk)
             {
@@ -2284,7 +2283,16 @@ namespace Ambermoon
             });
         }
 
-        internal void ShowConversation(NPC npc)
+        /// <summary>
+        /// A conversation is started with a Conversation event but the
+        /// displayed text depends on the following events. Mostly
+        /// Condition and PrintText events. The argument conversationEvent
+        /// is the first event after the initial event and should be used
+        /// to determine the text to print etc.
+        /// 
+        /// The event chain may also contain rewards, new keywords, etc.
+        /// </summary>
+        internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent)
         {
             void SayWord(string word)
             {
@@ -2292,19 +2300,45 @@ namespace Ambermoon
                 // TODO
             }
 
+            bool lastEventStatus = false;
+            bool aborted = false;
+            var textArea = new Rect(15, 43, 177, 80);
+
+            void HandleNextEvent()
+            {
+                if (conversationEvent is PrintTextEvent printTextEvent)
+                {
+                    var text = conversationPartner.Texts[(int)printTextEvent.NPCTextIndex];
+                    layout.AddScrollableText(textArea, ProcessText(text));
+                    // TODO: it is added as scrollable but it isn't scrollable yet
+                    // TODO: clear old text
+                }
+
+                // TODO: handle Create events as we need to take the items before progressing!
+
+                conversationEvent = conversationEvent.ExecuteEvent(Map, this, EventTrigger.Always, 0, 0, // TODO: do we care about x and y here?
+                    CurrentTicks, ref lastEventStatus, out aborted, conversationPartner);
+                SetWindow(Window.Conversation, conversationPartner, conversationEvent);
+            }
+
             Fade(() =>
             {
-                SetWindow(Window.Conversation, npc);
+                SetWindow(Window.Conversation, conversationPartner, conversationEvent);
                 layout.SetLayout(LayoutType.Conversation);
                 ShowMap(false);
                 layout.Reset();
 
-                layout.FillArea(new Rect(15, 43, 177, 80), GetPaletteColor(50, 28), false);
+                layout.FillArea(textArea, GetPaletteColor(50, 28), false);
                 layout.FillArea(new Rect(15, 136, 152, 57), GetPaletteColor(50, 28), false);
 
-                DisplayCharacterInfo(npc, true);
+                if (!(conversationPartner is Character character))
+                    throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
+                DisplayCharacterInfo(character, true);
 
                 layout.AttachEventToButton(0, () => OpenDictionary(SayWord));
+
+                while (conversationEvent != null && !aborted)
+                    HandleNextEvent();
 
                 // TODO
             });
@@ -2641,12 +2675,15 @@ namespace Ambermoon
             return item.Amount;
         }
 
-        void SetWindow(Window window, object param = null, Action ev = null)
+        void SetWindow(Window window, params object[] parameters)
         {
             if ((window != Window.Inventory && window != Window.Stats) ||
                 (currentWindow.Window != Window.Inventory && currentWindow.Window != Window.Stats))
                 lastWindow = currentWindow;
-            currentWindow = new WindowInfo { Window = window, WindowParameter = param, WindowEvent = ev };
+            if (currentWindow.Window == window)
+                currentWindow.WindowParameters = parameters;
+            else
+                currentWindow = new WindowInfo { Window = window, WindowParameters = parameters };
         }
 
         void ResetCursor()
@@ -2685,21 +2722,21 @@ namespace Ambermoon
                     break;
                 case Window.Inventory:
                 {
-                    int partyMemberIndex = (int)currentWindow.WindowParameter;
+                    int partyMemberIndex = (int)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
                     OpenPartyMember(partyMemberIndex, true);
                     break;
                 }
                 case Window.Stats:
                 {
-                    int partyMemberIndex = (int)currentWindow.WindowParameter;
+                    int partyMemberIndex = (int)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
                     OpenPartyMember(partyMemberIndex, false);
                     break;
                 }
                 case Window.Chest:
                 {
-                    var chestEvent = (ChestMapEvent)currentWindow.WindowParameter;
+                    var chestEvent = (ChestMapEvent)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
                     ShowChest(chestEvent);
                     break;
@@ -2711,17 +2748,18 @@ namespace Ambermoon
                 }
                 case Window.Riddlemouth:
                 {
-                    var riddlemouthEvent = (RiddlemouthEvent)currentWindow.WindowParameter;
-                    var solvedEvent = currentWindow.WindowEvent;
+                    var riddlemouthEvent = (RiddlemouthEvent)currentWindow.WindowParameters[0];
+                    var solvedEvent = currentWindow.WindowParameters[1] as Action;
                     currentWindow = DefaultWindow;
                     ShowRiddlemouth(Map, riddlemouthEvent, solvedEvent, false);
                     break;
                 }
                 case Window.Conversation:
                 {
-                    var npc = currentWindow.WindowParameter as NPC;
+                    var conversationPartner = currentWindow.WindowParameters[0] as IConversationPartner;
+                    var conversationEvent = currentWindow.WindowParameters[1] as Event;
                     currentWindow = DefaultWindow;
-                    ShowConversation(npc);
+                    ShowConversation(conversationPartner, conversationEvent);
                     break;
                 }
                 default:

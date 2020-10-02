@@ -2,7 +2,7 @@
 
 namespace Ambermoon.Data
 {
-    public class NPC : Character
+    public class NPC : Character, IConversationPartner
     {
         public List<string> Texts { get; set; }
         public List<Event> Events { get; } = new List<Event>();

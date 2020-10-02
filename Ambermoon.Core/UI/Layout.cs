@@ -712,9 +712,9 @@ namespace Ambermoon.UI
                     }
                     else
                     {
-                        buttonGrid.SetButton(0, ButtonType.Eye, false, () => game.TriggerMapEvents(MapEventTrigger.Eye), true);
-                        buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(MapEventTrigger.Hand), true);
-                        buttonGrid.SetButton(2, ButtonType.Mouth, false, () => game.TriggerMapEvents(MapEventTrigger.Mouth), true);
+                        buttonGrid.SetButton(0, ButtonType.Eye, false, () => game.TriggerMapEvents(EventTrigger.Eye), true);
+                        buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(EventTrigger.Hand), true);
+                        buttonGrid.SetButton(2, ButtonType.Mouth, false, () => game.TriggerMapEvents(EventTrigger.Mouth), true);
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp

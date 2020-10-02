@@ -120,16 +120,16 @@ namespace Ambermoon.Render
             return cursor && mapCharacter.IsNPC && position == new Position(mapCharacter.Position.X, mapCharacter.Position.Y + 1);
         }
 
-        public bool TriggerEvents(IRenderPlayer player, MapEventTrigger trigger,
+        public bool TriggerEvents(IRenderPlayer player, EventTrigger trigger,
             uint x, uint y, IMapManager mapManager, uint ticks, Savegame savegame)
         {
-            if (trigger != MapEventTrigger.Always)
+            if (trigger != EventTrigger.Always)
             {
                 // First check character interaction
-                var position = new Position((int)x, trigger == MapEventTrigger.Move && !Map.IsWorldMap ? (int)y - 1 : (int)y);
+                var position = new Position((int)x, trigger == EventTrigger.Move && !Map.IsWorldMap ? (int)y - 1 : (int)y);
                 foreach (var mapCharacter in mapCharacters)
                 {
-                    if (TestCharacterInteraction(mapCharacter, trigger != MapEventTrigger.Move, position) &&
+                    if (TestCharacterInteraction(mapCharacter, trigger != EventTrigger.Move, position) &&
                         mapCharacter.Interact(trigger))
                         return true;
                 }
@@ -138,20 +138,20 @@ namespace Ambermoon.Render
             if (x >= Map.Width)
             {
                 if (y >= Map.Height)
-                    return adjacentMaps[2].TriggerEvents(game, player, trigger, x - (uint)Map.Width,
-                        y - (uint)Map.Height, mapManager, ticks, savegame);
+                    return adjacentMaps[2].TriggerEvents(game, trigger, x - (uint)Map.Width,
+                        y - (uint)Map.Height, ticks, savegame);
                 else
-                    return adjacentMaps[0].TriggerEvents(game, player, trigger, x - (uint)Map.Width,
-                        y, mapManager, ticks, savegame);
+                    return adjacentMaps[0].TriggerEvents(game, trigger, x - (uint)Map.Width,
+                        y, ticks, savegame);
             }
             else if (y >= Map.Height)
             {
-                return adjacentMaps[1].TriggerEvents(game, player, trigger, x, y - (uint)Map.Height,
-                    mapManager, ticks, savegame);
+                return adjacentMaps[1].TriggerEvents(game, trigger, x, y - (uint)Map.Height,
+                    ticks, savegame);
             }
             else
             {
-                return Map.TriggerEvents(game, player, trigger, x, y, mapManager, ticks, savegame);
+                return Map.TriggerEvents(game, trigger, x, y, ticks, savegame);
             }
         }
 

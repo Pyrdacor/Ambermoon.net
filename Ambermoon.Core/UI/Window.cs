@@ -18,7 +18,6 @@ namespace Ambermoon.UI
     public struct WindowInfo
     {
         public Window Window;
-        public object WindowParameter; // party member index, chest event, etc
-        public Action WindowEvent; // some optional event like riddlemouth solved event
+        public object[] WindowParameters; // party member index, chest event, etc
     }
 }
