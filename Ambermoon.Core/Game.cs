@@ -1092,6 +1092,7 @@ namespace Ambermoon
                         return;
 
                     relativePosition.Offset(-mapViewArea.Left, -mapViewArea.Top);
+                    var previousCursor = cursor.Type;
 
                     if (cursor.Type == CursorType.Eye)
                         TriggerMapEvents(EventTrigger.Eye, relativePosition);
@@ -1106,7 +1107,10 @@ namespace Ambermoon
                     }
 
                     if (cursor.Type > CursorType.Wait)
-                        CursorType = CursorType.Sword;
+                    {
+                        if (cursor.Type != CursorType.Click || previousCursor == CursorType.Click)
+                            CursorType = CursorType.Sword;
+                    }
                     return;
                 }
                 else
@@ -1262,7 +1266,7 @@ namespace Ambermoon
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
-            if (!InputEnable)
+            if (!InputEnable && !layout.PopupActive)
                 UntrapMouse();
 
             if (trapped)
@@ -2206,6 +2210,19 @@ namespace Ambermoon
         internal void SetMapCharacterBit(uint mapIndex, uint characterIndex, bool bit)
         {
             CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, bit);
+
+            // TODO: what if we change an adjacent world map which is visible instead? is there even a use case?
+            if (Map.Index == mapIndex)
+            {
+                if (is3D)
+                {
+                    renderMap3D.UpdateCharacterVisibility(characterIndex);
+                }
+                else
+                {
+                    renderMap2D.UpdateCharacterVisibility(characterIndex);
+                }
+            }
         }
 
         internal void ResetStorageItem(int slotIndex, ItemSlot item)
@@ -2460,6 +2477,19 @@ namespace Ambermoon
                 }
             )).ToList());
             popup.Closed += UntrapMouse;
+        }
+
+        internal void ShowMessagePopup(string text)
+        {
+            InputEnable = false;
+            // Simple text popup
+            var popup = layout.OpenTextPopup(ProcessText(text), () =>
+            {
+                InputEnable = true;
+                ResetCursor();
+            }, true, true, false, TextAlign.Center);
+            CursorType = CursorType.Click;
+            TrapMouse(popup.ContentArea);
         }
 
         internal void ShowTextPopup(IText text, Action<PopupTextEvent.Response> responseHandler)

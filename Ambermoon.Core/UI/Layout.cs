@@ -533,7 +533,7 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
             bool disableButtons = true, bool closeOnClick = true, bool transparent = false,
-            TextColor textColor = TextColor.Gray, Action closeAction = null)
+            TextColor textColor = TextColor.Gray, Action closeAction = null, TextAlign textAlign = TextAlign.Left)
         {
             ClosePopup(false);
             var processedText = RenderView.TextProcessor.WrapText(text,
@@ -550,19 +550,19 @@ namespace Ambermoon.UI
                 CloseOnClick = closeOnClick
             };
             bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
-            activePopup.AddText(textBounds, text, textColor, TextAlign.Left, true, 1, scrolling);
+            activePopup.AddText(textBounds, text, textColor, textAlign, true, 1, scrolling);
             if (closeAction != null)
                 activePopup.Closed += closeAction;
             return activePopup;
         }
 
         internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false,
-            bool closeOnClick = true, bool transparent = false)
+            bool closeOnClick = true, bool transparent = false, TextAlign textAlign = TextAlign.Left)
         {
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
             var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons,
-                closeOnClick, transparent, TextColor.Gray, closeAction);
+                closeOnClick, transparent, TextColor.Gray, closeAction, textAlign);
             return popup;
         }
 

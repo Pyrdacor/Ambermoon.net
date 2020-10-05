@@ -47,7 +47,7 @@ namespace Ambermoon.Render
         uint ticksPerFrame = 0;
         bool worldMap = false;
         uint lastFrame = 0;
-        readonly List<MapCharacter2D> mapCharacters = new List<MapCharacter2D>();
+        readonly Dictionary<uint, MapCharacter2D> mapCharacters = new Dictionary<uint, MapCharacter2D>();
 
         public event Action<Map[]> MapChanged;
 
@@ -109,11 +109,14 @@ namespace Ambermoon.Render
             }
 
             foreach (var mapCharacter in mapCharacters)
-                mapCharacter.Update(ticks, gameTime);
+                mapCharacter.Value.Update(ticks, gameTime);
         }
 
         bool TestCharacterInteraction(MapCharacter2D mapCharacter, bool cursor, Position position)
         {
+            if (!mapCharacter.Visible || !mapCharacter.Active)
+                return false;
+
             if (position == mapCharacter.Position)
                 return true;
 
@@ -127,10 +130,11 @@ namespace Ambermoon.Render
             {
                 // First check character interaction
                 var position = new Position((int)x, trigger == EventTrigger.Move && !Map.IsWorldMap ? (int)y - 1 : (int)y);
-                foreach (var mapCharacter in mapCharacters)
+                foreach (var mapCharacter in mapCharacters.ToList())
                 {
-                    if (TestCharacterInteraction(mapCharacter, trigger != EventTrigger.Move, position) &&
-                        mapCharacter.Interact(trigger))
+                    if (TestCharacterInteraction(mapCharacter.Value, trigger != EventTrigger.Move, position) &&
+                        mapCharacter.Value.Interact(trigger, this[(uint)mapCharacter.Value.Position.X,
+                            (uint)mapCharacter.Value.Position.Y + (mapCharacter.Value.IsNPC ? 1u : 0u)].Type == Map.TileType.Bed))
                         return true;
                 }
             }
@@ -239,7 +243,7 @@ namespace Ambermoon.Render
 
         void ClearCharacters()
         {
-            mapCharacters.ForEach(character => character.Destroy());
+            mapCharacters.Values.ToList().ForEach(character => character.Destroy());
             mapCharacters.Clear();
         }
 
@@ -503,16 +507,16 @@ namespace Ambermoon.Render
 
             ClearCharacters();
 
-            uint characterIndex = 0;
-
-            foreach (var characterReference in map.CharacterReferences)
+            for (uint characterIndex = 0; characterIndex < map.CharacterReferences.Length; ++characterIndex)
             {
-                if (characterReference == null || game.CurrentSavegame.GetCharacterBit(map.Index, characterIndex++))
+                var characterReference = map.CharacterReferences[characterIndex];
+
+                if (characterReference == null)
                     break;
 
                 var mapCharacter = MapCharacter2D.Create(game, renderView, mapManager, this, characterReference);
-                mapCharacter.Visible = true;
-                mapCharacters.Add(mapCharacter);
+                mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(map.Index, characterIndex);
+                mapCharacters.Add(characterIndex, mapCharacter);
             }
 
             ScrollTo(initialScrollX, initialScrollY, true); // also updates tiles etc
@@ -521,6 +525,14 @@ namespace Ambermoon.Render
                 InvokeMapChangedHandler(map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
             else
                 InvokeMapChangedHandler(map);
+        }
+
+        public void UpdateCharacterVisibility(uint characterIndex)
+        {
+            if (Map.CharacterReferences[characterIndex] == null)
+                throw new AmbermoonException(ExceptionScope.Application, "Null map character");
+
+            mapCharacters[characterIndex].Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
         }
 
         void InvokeMapChangedHandler(params Map[] maps)

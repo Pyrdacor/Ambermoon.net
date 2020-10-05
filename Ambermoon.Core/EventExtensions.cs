@@ -241,6 +241,18 @@ namespace Ambermoon
 
                     switch (conversationEvent.Interaction)
                     {
+                        case ConversationEvent.InteractionType.Keyword:
+                            // TODO: this has to be handled by the conversation window
+                            aborted = true;
+                            return null;
+                        case ConversationEvent.InteractionType.ShowItem:
+                            // TODO: this has to be handled by the conversation window
+                            aborted = true;
+                            return null;
+                        case ConversationEvent.InteractionType.GiveItem:
+                            // TODO: this has to be handled by the conversation window
+                            aborted = true;
+                            return null;
                         case ConversationEvent.InteractionType.Talk:
                             if (trigger != EventTrigger.Mouth)
                             {
@@ -248,14 +260,7 @@ namespace Ambermoon
                                 return null;
                             }
                             break;
-                        case ConversationEvent.InteractionType.Look:
-                            if (trigger != EventTrigger.Eye)
-                            {
-                                aborted = true;
-                                return null;
-                            }
-                            break;
-                        case ConversationEvent.InteractionType.Keyword:
+                        case ConversationEvent.InteractionType.Leave:
                             // TODO: this has to be handled by the conversation window
                             aborted = true;
                             return null;

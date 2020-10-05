@@ -465,8 +465,7 @@ namespace Ambermoon.Data
             GiveItem = 2,
             // TODO: ask to join, ask to leave, give gold, give food
             Talk = 7,
-            Look = 8
-            // TODO: are there others like Touch?
+            Leave = 8
         }
 
         public InteractionType Interaction { get; set; }

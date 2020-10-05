@@ -115,6 +115,9 @@ namespace Ambermoon.Render
 
         public override void Update(uint ticks, Time gameTime)
         {
+            if (!Active)
+                return;
+
             Position newPosition = Position;
 
             void MoveRandom()
@@ -181,7 +184,7 @@ namespace Ambermoon.Render
             base.Update(ticks, gameTime);
         }
 
-        public bool Interact(EventTrigger trigger)
+        public bool Interact(EventTrigger trigger, bool bed)
         {
             switch (trigger)
             {
@@ -199,29 +202,54 @@ namespace Ambermoon.Render
                     return false;
             }
 
+            if (trigger == EventTrigger.Mouth && bed &&
+                !characterReference.CharacterFlags.HasFlag(Flags.UseTileset))
+            {
+                game.ShowMessagePopup(game.DataNameProvider.PersonAsleepMessage);
+                return true;
+            }
+
             if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
             {
                 if (trigger == EventTrigger.Eye)
                 {
-                    // TODO
+                    // Popup NPCs can't be looked at but only talked to.
+                    return false;
                 }
                 else if (trigger == EventTrigger.Mouth)
                 {
                     ShowPopup(map.Texts[(int)characterReference.Index]);
+                    return true;
+                }
+            }
+
+            bool HandleConversation(IConversationPartner conversationPartner)
+            {
+                if (trigger == EventTrigger.Eye)
+                {
+                    game.ShowTextPopup(game.ProcessText(conversationPartner.Texts[0]), null);
+                    return true;
+                }
+                else if (trigger == EventTrigger.Mouth)
+                {
+                    if (conversationPartner == null)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC or party member index.");
+
+                    conversationPartner.ExecuteEvents(game, trigger);
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
 
             switch (characterReference.Type)
             {
                 case CharacterType.PartyMember:
-                    // TODO
-                    break;
+                    return HandleConversation(game.CurrentSavegame.PartyMembers[(int)characterReference.Index]);
                 case CharacterType.NPC:
-                    var npc = game.CharacterManager.GetNPC(characterReference.Index);
-                    if (npc == null)
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC index.");
-                    npc.ExecuteEvents(game, trigger);
-                    break;
+                    return HandleConversation(game.CharacterManager.GetNPC(characterReference.Index));
                 case CharacterType.Monster:
                     // TODO
                     break;

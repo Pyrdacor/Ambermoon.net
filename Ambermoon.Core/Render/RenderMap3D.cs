@@ -23,7 +23,6 @@ using Ambermoon.Data;
 using Ambermoon.Geometry;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
 namespace Ambermoon.Render
@@ -441,6 +440,14 @@ namespace Ambermoon.Render
         {
             foreach (var mapObject in objects)
                 mapObject.Value.ForEach(obj => obj.Update(ticks));
+        }
+
+        public void UpdateCharacterVisibility(uint characterIndex)
+        {
+            if (Map.CharacterReferences[characterIndex] == null)
+                throw new AmbermoonException(ExceptionScope.Application, "Null map character");
+
+            // TODO
         }
 
         public CollisionDetectionInfo3D GetCollisionDetectionInfo(Position position)

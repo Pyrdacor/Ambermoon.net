@@ -24,6 +24,8 @@ namespace Ambermoon.Render
         readonly Func<Character2DAnimationInfo> animationInfoProvider;
         readonly Func<uint> paletteIndexProvider;
         readonly Func<Position> drawOffsetProvider;
+        bool active = true;
+        bool visible = true;
         Character2DAnimationInfo CurrentAnimationInfo => animationInfoProvider();
         public uint CurrentBaseFrameIndex { get; private set; }
         public uint CurrentFrameIndex { get; private set; }
@@ -48,8 +50,23 @@ namespace Ambermoon.Render
         public Rect DisplayArea => new Rect(sprite.X, sprite.Y, sprite.Width, sprite.Height);
         public bool Visible
         {
-            get => sprite.Visible;
-            set => sprite.Visible = value;
+            get => visible;
+            set
+            {
+                visible = value;
+
+                sprite.Visible = visible && active;
+            }
+        }
+        public bool Active
+        {
+            get => active;
+            set
+            {
+                active = value;
+
+                sprite.Visible = visible && active;
+            }
         }
         public State CurrentState { get; private set; }
         public uint NumFrames => Math.Max(1, CurrentState switch

@@ -21,6 +21,7 @@ namespace Ambermoon.UI
         readonly List<Button> buttons = new List<Button>();
         readonly List<TextInput> inputs = new List<TextInput>();
         ListBox listBox = null;
+        public Rect ContentArea { get; }
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows, bool transparent,
             byte displayLayerOffset = 0)
@@ -75,6 +76,8 @@ namespace Ambermoon.UI
                 fill.X = position.X + 16;
                 fill.Y = position.Y + 16;
                 fill.Visible = true;
+
+                ContentArea = new Rect(fill.X, fill.Y, fill.Width, fill.Height);
             }
         }
 
