@@ -461,8 +461,9 @@ namespace Ambermoon.Data
         public enum InteractionType
         {
             Keyword = 0,
-            Unknown1 = 1, // TODO: Time dependent, non sleeping?
-            Unknown2 = 2, // TODO: Time dependent, non sleeping?
+            ShowItem = 1,
+            GiveItem = 2,
+            // TODO: ask to join, ask to leave, give gold, give food
             Talk = 7,
             Look = 8
             // TODO: are there others like Touch?
@@ -471,10 +472,17 @@ namespace Ambermoon.Data
         public InteractionType Interaction { get; set; }
         public ushort Value { get; set; }
         public uint KeywordIndex => Value;
+        public uint ItemIndex => Value;
 
         public override string ToString()
         {
-            string argument = Interaction == InteractionType.Keyword ? $", KeywordIndex {KeywordIndex}" : "";
+            string argument = Interaction switch
+            {
+                InteractionType.Keyword => $", KeywordIndex {KeywordIndex}",
+                InteractionType.ShowItem => $", Item {ItemIndex}",
+                InteractionType.GiveItem => $", Item {ItemIndex}",
+                _ => ""
+            };
 
             return $"{Type}: On interaction {Interaction}" + argument;
         }
