@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Data
 {
@@ -36,30 +37,98 @@ namespace Ambermoon.Data
         public CharacterDirection CharacterDirection { get; set; }
         public TravelType TravelType { get; set; }
         public TransportLocation[] TransportLocations { get; } = new TransportLocation[32];
-        public ushort WindGatesActive { get; set; }
+        public byte[] GlobalVariables { get; } = new byte[1024];
+        public bool GetGlobalVariable(uint index)
+        {
+            if (index > 8192)
+                throw new IndexOutOfRangeException("Variable index must be between 0 and 8192");
+
+            uint byteIndex = index / 8;
+            uint bitIndex = index % 8;
+
+            return (GlobalVariables[byteIndex] & (1 << (int)bitIndex)) != 0;
+        }
+        public void SetGlobalVariable(uint index, bool value)
+        {
+            if (index > 8192)
+                throw new IndexOutOfRangeException("Variable index must be between 0 and 8192");
+
+            uint byteIndex = index / 8;
+            uint bitIndex = index % 8;
+            uint mask = 1u << (int)bitIndex;
+
+            if (value)
+                GlobalVariables[byteIndex] |= (byte)mask;
+            else
+                GlobalVariables[byteIndex] &= (byte)~mask;
+        }
         /// <summary>
         /// 64 events bits per map.
         /// Each bit activates (0) or deactivates (1) an event.
         /// The bit index corresponds to the event list index (0 to 63).
         /// </summary>
-        public ulong[] MapEventBits { get; } = new ulong[529]; // 0 to 528
+        public ulong[] MapEventBits { get; } = new ulong[1024]; // valid maps are 1 to 528, but these bits allow for maps 1 to 1024
         public bool GetEventBit(uint mapIndex, uint eventIndex)
         {
+            if (mapIndex < 1 || mapIndex > 1024)
+                throw new IndexOutOfRangeException("Map index must be between 1 and 1024");
+            if (eventIndex > 63)
+                throw new IndexOutOfRangeException("Event index must be between 0 and 63");
+
             int byteIndex = (int)eventIndex / 8;
-            byte bits = (byte)(MapEventBits[mapIndex] >> (7 - byteIndex) * 8);
+            byte bits = (byte)(MapEventBits[mapIndex - 1] >> (7 - byteIndex) * 8);
             int bitIndex = (int)eventIndex % 8;
             return (bits & (1 << bitIndex)) != 0;
         }
         public void SetEventBit(uint mapIndex, uint eventIndex, bool bit)
         {
+            if (mapIndex < 1 || mapIndex > 1024)
+                throw new IndexOutOfRangeException("Map index must be between 1 and 1024");
+            if (eventIndex > 63)
+                throw new IndexOutOfRangeException("Event index must be between 0 and 63");
+
             int byteIndex = (int)eventIndex / 8;
             int bitIndex = (int)eventIndex % 8;
             ulong bitValue = 1ul << ((7 - byteIndex) * 8 + bitIndex);
 
             if (bit)
-                MapEventBits[mapIndex] |= bitValue;
+                MapEventBits[mapIndex - 1] |= bitValue;
             else
-                MapEventBits[mapIndex] &= ~bitValue;
+                MapEventBits[mapIndex - 1] &= ~bitValue;
+        }
+        /// <summary>
+        /// 32 events bits per map.
+        /// Each bit disables (1) or enables (0) a character on the map.
+        /// The bit index corresponds to the character index (0 to 31).
+        /// </summary>
+        public uint[] CharacterBits { get; } = new uint[1024]; // valid maps are 1 to 528, but these bits allow for maps 1 to 1024
+        public bool GetCharacterBit(uint mapIndex, uint characterIndex)
+        {
+            if (mapIndex < 1 || mapIndex > 1024)
+                throw new IndexOutOfRangeException("Map index must be between 1 and 1024");
+            if (characterIndex > 31)
+                throw new IndexOutOfRangeException("Character index must be between 0 and 31");
+
+            int byteIndex = (int)characterIndex / 8;
+            byte bits = (byte)(CharacterBits[mapIndex - 1] >> (3 - byteIndex) * 8);
+            int bitIndex = (int)characterIndex % 8;
+            return (bits & (1 << bitIndex)) != 0;
+        }
+        public void SetCharacterBit(uint mapIndex, uint characterIndex, bool bit)
+        {
+            if (mapIndex < 1 || mapIndex > 1024)
+                throw new IndexOutOfRangeException("Map index must be between 1 and 1024");
+            if (characterIndex > 31)
+                throw new IndexOutOfRangeException("Character index must be between 0 and 31");
+
+            int byteIndex = (int)characterIndex / 8;
+            int bitIndex = (int)characterIndex % 8;
+            uint bitValue = 1u << ((3 - byteIndex) * 8 + bitIndex);
+
+            if (bit)
+                CharacterBits[mapIndex - 1] |= bitValue;
+            else
+                CharacterBits[mapIndex - 1] &= ~bitValue;
         }
 
         #endregion
@@ -122,6 +191,14 @@ namespace Ambermoon.Data
         /// If the bit is set the word is available in conversations.
         /// </summary>
         public byte[] DictionaryWords { get; } = new byte[15];
+        public bool IsDictionaryWordKnown(uint index)
+        {
+            return (DictionaryWords[index / 8] & (1u << (int)(index % 8))) != 0;
+        }
+        public void AddDictionaryWord(uint index)
+        {
+            DictionaryWords[index / 8] |= (byte)(1u << (int)(index % 8));
+        }
 
         #endregion
 

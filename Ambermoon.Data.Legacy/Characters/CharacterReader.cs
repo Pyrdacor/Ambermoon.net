@@ -80,7 +80,7 @@ namespace Ambermoon.Data.Legacy.Characters
             int terminatingNullIndex = character.Name.IndexOf('\0');
 
             if (terminatingNullIndex != 0)
-                character.Name = character.Name.Substring(0, terminatingNullIndex);
+                character.Name = character.Name.Substring(0, terminatingNullIndex).TrimEnd();
             else
                 character.Name = character.Name.TrimEnd();
 

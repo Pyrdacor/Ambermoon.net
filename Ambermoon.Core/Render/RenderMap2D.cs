@@ -503,9 +503,11 @@ namespace Ambermoon.Render
 
             ClearCharacters();
 
+            uint characterIndex = 0;
+
             foreach (var characterReference in map.CharacterReferences)
             {
-                if (characterReference == null)
+                if (characterReference == null || game.CurrentSavegame.GetCharacterBit(map.Index, characterIndex++))
                     break;
 
                 var mapCharacter = MapCharacter2D.Create(game, renderView, mapManager, this, characterReference);

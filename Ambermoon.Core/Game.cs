@@ -195,19 +195,6 @@ namespace Ambermoon
         readonly Position trappedMousePositionOffset = new Position();
         bool trapped => trapMouseArea != null;
         public event Action<bool, Position> MouseTrappedChanged;
-        /// <summary>
-        /// All words you have heard about in conversations.
-        /// </summary>
-        readonly List<string> dictionary = new List<string>(); // TODO: read from savegame?
-        public GameVariablePool GlobalVariables { get; } = new GameVariablePool(); // TODO: read from savegame?
-        readonly Dictionary<uint, GameVariablePool> mapVariables = new Dictionary<uint, GameVariablePool>(); // TODO: read from savegame?
-        public GameVariablePool GetMapVariables(Map map)
-        {
-            if (!mapVariables.ContainsKey(map.Index))
-                return mapVariables[map.Index] = new GameVariablePool();
-
-            return mapVariables[map.Index];
-        }
         internal Savegame CurrentSavegame { get; private set; }
 
         // Rendering
@@ -532,9 +519,6 @@ namespace Ambermoon
             CurrentInventoryIndex = null;
             CurrentCaster = null;
             OpenStorage = null;
-            dictionary.Clear();
-            GlobalVariables.Clear();
-            mapVariables.Clear();
 
             for (int i = 0; i < keys.Length; ++i)
                 keys[i] = false;
@@ -633,9 +617,6 @@ namespace Ambermoon
 
             ShowMap(true);
 
-            // This is the word "Hello" which is already present on game start.
-            dictionary.Add(textDictionary.Entries[0]);
-
             InputEnable = true;
 
             // Trigger events after game load
@@ -676,9 +657,13 @@ namespace Ambermoon
             LoadGame(0);
         }
 
+        // TODO: Optimize to not query this every time
+        public List<string> Dictionary => textDictionary.Entries.Where((word, index) =>
+            CurrentSavegame.IsDictionaryWordKnown((uint)index)).ToList();
+
         public IText ProcessText(string text)
         {
-            return renderView.TextProcessor.ProcessText(text, nameProvider, dictionary);
+            return renderView.TextProcessor.ProcessText(text, nameProvider, Dictionary);
         }
 
         public void ShowMessage(Rect bounds, string text, TextColor color, bool shadow, TextAlign textAlign = TextAlign.Left)
@@ -2218,6 +2203,11 @@ namespace Ambermoon
             CurrentSavegame.SetEventBit(mapIndex, eventListIndex, bit);
         }
 
+        internal void SetMapCharacterBit(uint mapIndex, uint characterIndex, bool bit)
+        {
+            CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, bit);
+        }
+
         internal void ResetStorageItem(int slotIndex, ItemSlot item)
         {
             if (OpenStorage == null)
@@ -2461,7 +2451,7 @@ namespace Ambermoon
             mouthButton.Action = () =>
                 layout.OpenInputPopup(new Position(51, 87), 20, (string solution) => choiceHandler?.Invoke(solution));
             exitButton.Action = () => layout.ClosePopup();
-            popup.AddDictionaryListBox(dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
+            popup.AddDictionaryListBox(Dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
             (
                 entry, (int _, string text) =>
                 {

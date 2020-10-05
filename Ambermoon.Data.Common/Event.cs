@@ -323,7 +323,7 @@ namespace Ambermoon.Data
         {
             GlobalVariable = 0x00,
             EventBit = 0x01,
-            MapVariable = 0x04,
+            CharacterBit = 0x04,
             PartyMember = 0x05,
             ItemOwned = 0x06,
             UseItem = 0x07,
@@ -358,8 +358,8 @@ namespace Ambermoon.Data
                     return $"{Type}: Global variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.EventBit:
                     return $"{Type}: Event bit {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
-                case ConditionType.MapVariable:
-                    return $"{Type}: Map variable {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
+                case ConditionType.CharacterBit:
+                    return $"{Type}: Character bit {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.PartyMember:
                     return $"{Type}: Has party member {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}";
                 case ConditionType.ItemOwned:
@@ -384,13 +384,13 @@ namespace Ambermoon.Data
             /// <summary>
             /// Sets an event (event list entry) to active or inactive.
             /// </summary>
-            SetEvent = 0x01,
+            SetEventBit = 0x01,
             /// <summary>
             /// As event status can be set by SetEvent I guess
             /// this is used for more complex non-boolean values
             /// like amount of stones in the pond etc.
             /// </summary>
-            SetMapVariable = 0x04,
+            SetCharacterBit = 0x04,
             /// <summary>
             /// Adds or remove some item?
             /// </summary>
@@ -419,10 +419,10 @@ namespace Ambermoon.Data
             {
                 case ActionType.SetGlobalVariable:
                     return $"{Type}: Set global variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
-                case ActionType.SetEvent: // TODO
-                    return $"{Type}: Set event bit {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
-                case ActionType.SetMapVariable:
-                    return $"{Type}: Set map variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ActionType.SetEventBit: // TODO
+                    return $"{Type}: Set event bit {ObjectIndex} to {(Value != 0 ? "inactive" : "active")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+                case ActionType.SetCharacterBit:
+                    return $"{Type}: Set character bit {ObjectIndex} to {(Value != 0 ? "hidden" : "show")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
                 case ActionType.Inventory: // TODO
                     return $"{Type}: Set item, ObjectIndex={ObjectIndex}, Value={Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
                 case ActionType.Keyword: // TODO
@@ -547,7 +547,8 @@ namespace Ambermoon.Data
 
     public class ExitEvent : Event
     {
-        // TODO
+        public byte[] Unused { get; set; }
+
         public override string ToString()
         {
             return $"{Type}";

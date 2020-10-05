@@ -80,17 +80,19 @@ namespace Ambermoon.Data.Legacy
                 }
             }
 
-            dataReader.Position = 0x0112; // 16 bits for wind gates (1 = active, 0 = broken)
-            savegame.WindGatesActive = dataReader.ReadWord();
 
-            dataReader.Position = 0x04FC; // 8 bytes (64 bits) for every map starting at theoretical index 0
-            // each bit stands for a map variable. order is 76543210 FECDBA98 ...
-            for (int i = 0; i < 529; ++i)
-            {
+            // global variables (at offset 0x0104, 1024 bytes = 8192 bits = 8192 variables)
+            // note that wind gate repair status is also handled by global variables (at offset 0x0112)
+            Buffer.BlockCopy(dataReader.ReadBytes(1024), 0, savegame.GlobalVariables, 0, 1024);
+
+            // map event bits. each bit stands for a event. order is 76543210 FECDBA98 ...
+            for (int i = 0; i < 1024; ++i)
                 savegame.MapEventBits[i] = dataReader.ReadQword();
-            }
 
-            dataReader.Position = 0x3504;
+            // character event bits. each bit stands for a character. order is 76543210 FECDBA98 ...
+            for (int i = 0; i < 1024; ++i)
+                savegame.CharacterBits[i] = dataReader.ReadDword();
+
             Buffer.BlockCopy(dataReader.ReadBytes(15), 0, savegame.DictionaryWords, 0, 15);
 
             dataReader.Position = 0x35a4;

@@ -348,6 +348,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.Exit:
+                {
+                    mapEvent = new ExitEvent
+                    {
+                        Unused = dataReader.ReadBytes(9)
+                    };
+                    break;
+                }
                 default:
                 {
                     mapEvent = new DebugMapEvent

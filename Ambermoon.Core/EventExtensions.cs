@@ -137,16 +137,24 @@ namespace Ambermoon
 
                     switch (conditionEvent.TypeOfCondition)
                     {
-                        case ConditionEvent.ConditionType.MapVariable:
-                            if (game.GetMapVariables(map)[conditionEvent.ObjectIndex] != conditionEvent.Value)
+                        case ConditionEvent.ConditionType.GlobalVariable:
+                            if (game.CurrentSavegame.GetGlobalVariable(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
                                 return mapEventIfFalse;
                             }
                             break;
-                        case ConditionEvent.ConditionType.GlobalVariable:
-                            if (game.GlobalVariables[conditionEvent.ObjectIndex] != conditionEvent.Value)
+                        case ConditionEvent.ConditionType.EventBit:
+                            if (game.CurrentSavegame.GetEventBit(map.Index, conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.CharacterBit:
+                            if (game.CurrentSavegame.GetCharacterBit(map.Index, conditionEvent.ObjectIndex & 0x1f) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -202,14 +210,14 @@ namespace Ambermoon
 
                     switch (actionEvent.TypeOfAction)
                     {
-                        case ActionEvent.ActionType.SetMapVariable:
-                            game.GetMapVariables(map)[actionEvent.ObjectIndex] = (int)actionEvent.Value;
-                            break;
                         case ActionEvent.ActionType.SetGlobalVariable:
-                            game.GlobalVariables[actionEvent.ObjectIndex] = (int)actionEvent.Value;
+                            game.CurrentSavegame.SetGlobalVariable(actionEvent.ObjectIndex, actionEvent.Value != 0);
                             break;
-                        case ActionEvent.ActionType.SetEvent:
+                        case ActionEvent.ActionType.SetEventBit:
                             game.SetMapEventBit(map.Index, actionEvent.ObjectIndex & 0x3fu, actionEvent.Value != 0);
+                            break;
+                        case ActionEvent.ActionType.SetCharacterBit:
+                            game.SetMapCharacterBit(map.Index, actionEvent.ObjectIndex & 0x1f, actionEvent.Value != 0);
                             break;
                             // TODO ...
                     }
