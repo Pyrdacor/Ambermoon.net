@@ -79,7 +79,8 @@ namespace Ambermoon.Render
             readonly uint textureIndex;
             readonly Labdata.ObjectPosition objectPosition;
             Position position = new Position();
-            Position targetPosition = new Position();
+            FloatPosition exactPosition = new FloatPosition();
+            FloatPosition targetPosition = new FloatPosition();
             uint nextMoveTimeSlot = uint.MaxValue;
             uint lastMoveTicks = 0;
             bool moving = false;
@@ -87,6 +88,9 @@ namespace Ambermoon.Render
             float movedX = 0.0f;
             float movedY = 0.0f;
             uint movedTicks = 0;
+            bool blockedMovement = false;
+            bool centeredOnBlock = true;
+            uint ticksPerMovement = TicksPerMovement;
 
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
@@ -132,20 +136,21 @@ namespace Ambermoon.Render
                         return;
 
                     position = new Position(value);
+                    exactPosition = new FloatPosition(value.X * Global.DistancePerBlock, value.Y * Global.DistancePerBlock);
                     UpdatePosition();
                 }
             }
 
             public void ResetPosition(ITime gameTime)
             {
-                position = new Position(characterReference.Positions[0]);
+                Position = characterReference.Positions[0];
                 StopMoving();
                 nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
             }
 
             void StopMoving()
             {
-                targetPosition = new Position(position);
+                targetPosition = new FloatPosition(exactPosition);
                 moving = false;
                 movedX = 0.0f;
                 movedY = 0.0f;
@@ -168,23 +173,28 @@ namespace Ambermoon.Render
 
             void UpdateCurrentMovement(uint ticks)
             {
-                if (Position == targetPosition)
+                if (exactPosition == targetPosition)
                     return;
 
-                if (movedTicks >= TicksPerMovement)
+                if (movedTicks >= ticksPerMovement)
                 {
                     moving = false;
-                    if (Position != targetPosition)
+                    if (exactPosition != targetPosition)
                     {
-                        Position = new Position(targetPosition);
-                        UpdatePosition();
+                        centeredOnBlock = !blockedMovement;
+                        ticksPerMovement = centeredOnBlock ? TicksPerMovement : 3 * TicksPerMovement / 2;
+                        exactPosition = new FloatPosition(targetPosition);
+                        position = new Position(Util.Round(exactPosition.X / Global.DistancePerBlock),
+                            Util.Round(exactPosition.Y / Global.DistancePerBlock));
+                        UpdatePosition(exactPosition.X - position.X * Global.DistancePerBlock, exactPosition.Y - position.Y * Global.DistancePerBlock);
                     }
                     return;
                 }
 
-                uint moveTicks = Math.Min(ticks - lastMoveTicks, TicksPerMovement - movedTicks);
-                var diff = targetPosition - Position;
-                float stepSize = Global.DistancePerBlock * moveTicks / TicksPerMovement;
+                centeredOnBlock = false;
+                uint moveTicks = Math.Min(ticks - lastMoveTicks, ticksPerMovement - movedTicks);
+                var diff = targetPosition - exactPosition;
+                float stepSize = (float)moveTicks / ticksPerMovement;
 
                 movedX += diff.X * stepSize;
                 movedY += diff.Y * stepSize;
@@ -197,7 +207,7 @@ namespace Ambermoon.Render
                 if (numFrames <= 1 || !surface.Visible)
                     return;
 
-                uint frame = targetPosition == Position ? numFrames / 2 : (ticks / ticksPerFrame) % numFrames; // TODO
+                uint frame = targetPosition == exactPosition ? numFrames / 2 : (ticks / ticksPerFrame) % numFrames; // TODO
                 surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
                     new Position((int)(frame * surface.TextureWidth), 0);
             }
@@ -266,19 +276,40 @@ namespace Ambermoon.Render
 
                         game.MonsterSeesPlayer = true;
                         nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12; // recheck for normal movement in 5 minutes
-
-                        // if blocked don't move and stay there
                         uint blockIndex = (uint)(approachPosition.X + approachPosition.Y * map.Map.Width);
-                        if (!map.characterBlockingBlocks.Contains(blockIndex))
+
+                        if (map.characterBlockingBlocks.Contains(blockIndex))
+                        {
+                            if (!blockedMovement)
+                            {
+                                // if blocked don't move and stay there but when approaching we can move half a tile further
+                                var direction = approachPosition - position;
+                                direction.Normalize();
+                                targetPosition = new FloatPosition(exactPosition.X + direction.X * 0.5f * Global.DistancePerBlock,
+                                    exactPosition.Y + direction.Y * 0.5f * Global.DistancePerBlock);
+                                movedX = 0.0f;
+                                movedY = 0.0f;
+                                movedTicks = 0;
+                                moving = true;
+                                blockedMovement = true;
+                                ticksPerMovement /= 2;
+                            }
+                            UpdateCurrentMovement(ticks);
+                        }
+                        else
                         {
                             // otherwise start moving
-                            targetPosition = approachPosition;
+                            targetPosition = new FloatPosition(approachPosition.X * Global.DistancePerBlock,
+                                approachPosition.Y * Global.DistancePerBlock);
                             movedX = 0.0f;
                             movedY = 0.0f;
                             movedTicks = 0;
                             moving = true;
+                            blockedMovement = false;
                             UpdateCurrentMovement(ticks);
                         }
+
+                        return;
                     }
                 }
 
@@ -341,11 +372,13 @@ namespace Ambermoon.Render
                 }
 
                 nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
-                targetPosition = new Position(newPosition);
+                targetPosition = new FloatPosition(newPosition.X * Global.DistancePerBlock,
+                    newPosition.Y * Global.DistancePerBlock);
                 movedX = 0.0f;
                 movedY = 0.0f;
                 movedTicks = 0;
                 moving = true;
+                blockedMovement = false;
                 UpdateCurrentMovement(ticks);
             }
         }

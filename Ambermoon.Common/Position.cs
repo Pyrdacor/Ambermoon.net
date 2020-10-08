@@ -25,6 +25,19 @@ namespace Ambermoon
             Y = position.Y;
         }
 
+        public void Normalize()
+        {
+            if (X < 0)
+                X = -1;
+            else if (X > 0)
+                X = 1;
+
+            if (Y < 0)
+                Y = -1;
+            else if (Y > 0)
+                Y = 1;
+        }
+
         public void Offset(int x, int y)
         {
             X += x;
@@ -131,6 +144,19 @@ namespace Ambermoon
             Y = position.Y;
         }
 
+        public void Normalize()
+        {
+            if (X < 0)
+                X = -1.0f;
+            else if (X > 0)
+                X = 1.0f;
+
+            if (Y < 0)
+                Y = -1.0f;
+            else if (Y > 0)
+                Y = 1.0f;
+        }
+
         public void Offset(float x, float y)
         {
             X += x;
@@ -145,6 +171,16 @@ namespace Ambermoon
         public void Offset(Position position)
         {
             Offset(position.X, position.Y);
+        }
+
+        public static FloatPosition operator +(FloatPosition position1, FloatPosition position2)
+        {
+            return new FloatPosition(position1.X + position2.X, position1.Y + position2.Y);
+        }
+
+        public static FloatPosition operator -(FloatPosition position1, FloatPosition position2)
+        {
+            return new FloatPosition(position1.X - position2.X, position1.Y - position2.Y);
         }
 
         public static bool operator ==(FloatPosition position1, FloatPosition position2)
