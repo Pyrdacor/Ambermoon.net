@@ -52,7 +52,7 @@ namespace Ambermoon.Geometry
         /// <summary>
         /// Converts a camera position to a map position.
         /// 
-        /// Map positions start at the upper-left tile with and use a specific size per tile.
+        /// Map positions start at the upper-left tile and use a specific size per tile.
         /// </summary>
         public static void CameraToMapPosition(Map map, float x, float z, out float mapX, out float mapY)
         {

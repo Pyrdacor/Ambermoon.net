@@ -113,6 +113,7 @@ namespace Ambermoon.Data.Legacy
         {
             CheckOutOfRange(length);
             var str = encoding.GetString(data, Position, length);
+            str = str.Replace(encoding.GetString(new byte[] { 0xb4 }), "'");
             Position += length;
             return str;
         }
@@ -129,7 +130,10 @@ namespace Ambermoon.Data.Legacy
 
             while (Position < Size && (buffer[0] = ReadByte()) != 0)
             {
-                result += encoding.GetString(buffer);
+                if (buffer[0] == 0xb4)
+                    result += "'";
+                else
+                    result += encoding.GetString(buffer);
             }
 
             return result;

@@ -171,6 +171,13 @@ namespace Ambermoon.Render
             {
                 // TODO
 
+                if (characterReference.Type == CharacterType.Monster)
+                {
+                    // Turn the player towards the monster.
+                    //var player3D = game.RenderPlayer as Player3D;
+                    //player3D.TurnTowards(exactPosition + new FloatPosition(0.5f * Global.DistancePerBlock, 0.5f * Global.DistancePerBlock));
+                }
+
                 // TODO: after battle and monster survival, set: nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
                 // TODO: after battle if monster group was defeated -> set active to false here and maybe in savegame
                 return false;

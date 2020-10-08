@@ -212,6 +212,27 @@ namespace Ambermoon.Render
             Camera.TurnTowards(angle);
         }
 
+        public void TurnTowards(FloatPosition position)
+        {
+            Geometry.CameraToMapPosition(map.Map, Camera.X, Camera.Z, out float mapX, out float mapY);
+            double diffX = position.X - mapX;
+            double diffY = position.Y - mapY;
+            double max = Math.Max(Math.Abs(diffX), Math.Abs(diffY));
+
+            if (max < 0.0001)
+                return;
+
+            diffX /= max;
+            diffY /= max;
+            double length = Math.Sqrt(diffX * diffX + diffY * diffY);
+
+            if (Math.Abs(length) > 0.0001)
+            {
+                var x = diffX / length;
+                TurnTowards(90.0f + (float)(180.0 * Math.Acos(x) / Math.PI));
+            }
+        }
+
         public void LevitateUp(float distance) // used for climbing up ladders/ropes or use levitation spell (distance is in the range of 0 to 1 where 1 is full room height)
         {
             // TODO
