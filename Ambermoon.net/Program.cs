@@ -17,8 +17,9 @@ namespace Ambermoon
             {
                 gameWindow.Run(configuration);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 // TODO: ignored for now
             }
 
