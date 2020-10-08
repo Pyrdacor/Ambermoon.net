@@ -67,6 +67,16 @@ namespace Ambermoon.Render
 
         class MapCharacter : IMapCharacter
         {
+            // TODO: monsters should see the player if the player can see them
+            // TODO: moving is mostly block-based but when approaching monsters should
+            // be able to move closer to obstacles. this works partially but isn't
+            // perfect yet and when the monster can walk again, it jumps.
+            // maybe monsters should be allowed to move freely and use collision
+            // detection when not moving randomly.
+            // TODO: When monster has reached player and the player is at the block's
+            // center, he can't see the monster billboard. Moreover the player should
+            // be turned towards the monster.
+
             const uint TimePerMovement = 2000; // in ms
             const uint TicksPerMovement = TimePerMovement * Game.TicksPerSecond / 1000;
             readonly Game game;
