@@ -157,6 +157,7 @@ namespace Ambermoon.Render
                 // TODO
 
                 // TODO: after battle and monster survival, set: nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
+                // TODO: after battle if monster group was defeated -> set active to false here and maybe in savegame
                 return false;
             }
 
@@ -224,7 +225,7 @@ namespace Ambermoon.Render
 
                     uint blockIndex = (uint)(testPosition.X + testPosition.Y * map.Map.Width);
 
-                    if (map.monsterBlockingBlocks.Contains(blockIndex))
+                    if (map.monsterBlockSightBlocks.Contains(blockIndex))
                         return false;
                 }
             }
@@ -251,26 +252,27 @@ namespace Ambermoon.Render
                     if (!moving && CanSee(game.RenderPlayer.Position))
                     {
                         // Monster can see player -> move towards player
-                        targetPosition = new Position(Position);
+                        var approachPosition = new Position(Position);
 
                         if (distanceToPlayer.X < 0)
-                            --targetPosition.X;
+                            --approachPosition.X;
                         else if (distanceToPlayer.X > 0)
-                            ++targetPosition.X;
+                            ++approachPosition.X;
 
                         if (distanceToPlayer.Y < 0)
-                            --targetPosition.Y;
+                            --approachPosition.Y;
                         else if (distanceToPlayer.Y > 0)
-                            ++targetPosition.Y;
+                            ++approachPosition.Y;
 
                         game.MonsterSeesPlayer = true;
                         nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12; // recheck for normal movement in 5 minutes
 
                         // if blocked don't move and stay there
-                        uint blockIndex = (uint)(targetPosition.X + targetPosition.Y * map.Map.Width);
-                        if (!map.monsterBlockingBlocks.Contains(blockIndex))
+                        uint blockIndex = (uint)(approachPosition.X + approachPosition.Y * map.Map.Width);
+                        if (!map.characterBlockingBlocks.Contains(blockIndex))
                         {
                             // otherwise start moving
+                            targetPosition = approachPosition;
                             movedX = 0.0f;
                             movedY = 0.0f;
                             movedTicks = 0;
@@ -280,7 +282,7 @@ namespace Ambermoon.Render
                     }
                 }
 
-                if (gameTime.TimeSlot != nextMoveTimeSlot)
+                if (moving || gameTime.TimeSlot != nextMoveTimeSlot)
                 {
                     UpdateCurrentMovement(ticks);
                     return;
@@ -307,7 +309,7 @@ namespace Ambermoon.Render
                         {
                             uint blockIndex = (uint)(newPosition.X + newPosition.Y * map.Map.Width);
 
-                            if (!map.monsterBlockingBlocks.Contains(blockIndex))
+                            if (!map.characterBlockingBlocks.Contains(blockIndex))
                                 break;
                         }
                     }
@@ -362,7 +364,8 @@ namespace Ambermoon.Render
         ISurface3D floor = null;
         ISurface3D ceiling = null;
         Labdata labdata = null;
-        readonly List<uint> monsterBlockingBlocks = new List<uint>();
+        readonly List<uint> characterBlockingBlocks = new List<uint>();
+        readonly List<uint> monsterBlockSightBlocks = new List<uint>();
         readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = new Dictionary<uint, List<ICollisionBody>>();
         readonly Dictionary<uint, List<ISurface3D>> walls = new Dictionary<uint, List<ISurface3D>>();
         readonly Dictionary<uint, List<MapObject>> objects = new Dictionary<uint, List<MapObject>>();
@@ -437,7 +440,8 @@ namespace Ambermoon.Render
             mapCharacters.Clear();
 
             blockCollisionBodies.Clear();
-            monsterBlockingBlocks.Clear();
+            characterBlockingBlocks.Clear();
+            monsterBlockSightBlocks.Clear();
         }
 
         void EnsureLabBackgroundGraphics(IGraphicProvider graphicProvider)
@@ -626,8 +630,8 @@ namespace Ambermoon.Render
                         CenterZ = -mapObject.Z,
                         Radius = objectInfo.CollisionRadius / BlockSize
                     });
-                    if (!monsterBlockingBlocks.Contains(blockIndex))
-                        monsterBlockingBlocks.Add(blockIndex);
+                    if (!characterBlockingBlocks.Contains(blockIndex))
+                        characterBlockingBlocks.Add(blockIndex);
                 }
             }
         }
@@ -641,11 +645,12 @@ namespace Ambermoon.Render
             bool alpha = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.Transparency);
             bool blocksMovement = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
 
-            if (!monsterBlockingBlocks.Contains(blockIndex) &&
+            if (!characterBlockingBlocks.Contains(blockIndex) &&
                 (blocksMovement || labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.BlockSight)))
             {
-                // Note: Doors will also block monsters
-                monsterBlockingBlocks.Add(blockIndex);
+                // Note: Doors will also block characters
+                characterBlockingBlocks.Add(blockIndex);
+                monsterBlockSightBlocks.Add(blockIndex);
             }
 
             // This is used to determine if surrounded tiles should add a wall.
@@ -730,8 +735,10 @@ namespace Ambermoon.Render
 
             if (blockCollisionBodies.ContainsKey(index))
                 blockCollisionBodies.Remove(index);
-            if (monsterBlockingBlocks.Contains(index))
-                monsterBlockingBlocks.Remove(index);
+            if (characterBlockingBlocks.Contains(index))
+                characterBlockingBlocks.Remove(index);
+            if (monsterBlockSightBlocks.Contains(index))
+                monsterBlockSightBlocks.Remove(index);
 
             var surfaceFactory = renderView.Surface3DFactory;
             var layer = renderView.GetLayer(Layer.Map3D);
