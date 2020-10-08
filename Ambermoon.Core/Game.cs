@@ -2563,12 +2563,11 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowDecisionPopup(Map map, DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
+        internal void ShowDecisionPopup(string text, Action<PopupTextEvent.Response> responseHandler, int minLines = 3)
         {
-            var text = ProcessText(map.Texts[(int)decisionEvent.TextIndex]);
             layout.OpenYesNoPopup
             (
-                text,
+                ProcessText(text),
                 () =>
                 {
                     layout.ClosePopup(false);
@@ -2585,10 +2584,15 @@ namespace Ambermoon
                 {
                     InputEnable = true;
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
-                }
+                }, minLines
             );
             InputEnable = false;
             CursorType = CursorType.Sword;
+        }
+
+        internal void ShowDecisionPopup(Map map, DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
+        {
+            ShowDecisionPopup(map.Texts[(int)decisionEvent.TextIndex], responseHandler);
         }
 
         internal void SetActivePartyMember(int index)

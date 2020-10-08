@@ -70,5 +70,6 @@
         public string StoreHowMuchFoodMessage => executableData.Messages.GetEntry(Messages.Index.StoreHowMuchFood);
         public string TakeHowManyMessage => executableData.Messages.GetEntry(Messages.Index.TakeHowMany);
         public string PersonAsleepMessage => executableData.Messages.GetEntry(Messages.Index.ThisPersonIsAsleep);
+        public string WantToFightMessage => executableData.Messages.GetEntry(Messages.Index.AttackWantToFight);
     }
 }

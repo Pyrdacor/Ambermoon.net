@@ -101,6 +101,7 @@ namespace Ambermoon.Render
             bool blockedMovement = false;
             bool centeredOnBlock = true;
             uint ticksPerMovement = TicksPerMovement;
+            DateTime lastInteractionTime = DateTime.MinValue;
 
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
@@ -169,17 +170,45 @@ namespace Ambermoon.Render
 
             public bool Interact(EventTrigger trigger, bool bed)
             {
-                // TODO
-
                 if (characterReference.Type == CharacterType.Monster)
                 {
+                    if (DateTime.Now - lastInteractionTime < TimeSpan.FromSeconds(2)) // TODO: Is this based on real time or ingame time?
+                        return false;
+
+                    // First set this to max so we won't trigger this again while we are interacting.
+                    lastInteractionTime = DateTime.MaxValue;
+
                     // Turn the player towards the monster.
                     //var player3D = game.RenderPlayer as Player3D;
                     //player3D.TurnTowards(exactPosition + new FloatPosition(0.5f * Global.DistancePerBlock, 0.5f * Global.DistancePerBlock));
+
+                    game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
+                    {
+                        if (response == PopupTextEvent.Response.Yes)
+                        {
+                            // TODO
+                            // game.StartBattle(characterReference.EventIndex);
+                            // set lastInteractionTime = DateTime.Now; after fight
+                        }
+                        else
+                        {
+                            // TODO: Test for successful flee
+                            // set lastInteractionTime = DateTime.Now; after fight or when fleed successfully
+                        }
+
+                        // TODO: after battle and monster survival, set: nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
+                        // TODO: after battle if monster group was defeated -> set active to false here and maybe in savegame
+
+                        // TODO: Remove later
+                        lastInteractionTime = DateTime.Now;
+                    }, 2);
+                }
+                else
+                {
+                    // TODO: NPC interaction
                 }
 
-                // TODO: after battle and monster survival, set: nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
-                // TODO: after battle if monster group was defeated -> set active to false here and maybe in savegame
+                
                 return false;
             }
 

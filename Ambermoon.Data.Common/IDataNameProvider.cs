@@ -47,6 +47,7 @@
         string StoreHowMuchFoodMessage { get; }
         string TakeHowManyMessage { get; }
         string PersonAsleepMessage { get; }
+        string WantToFightMessage { get; }
 
         // TODO
     }
