@@ -114,10 +114,11 @@ namespace Ambermoon.UI
             inputs.Clear();
         }
 
-        public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true, byte displayLayer = 1)
+        public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
+            byte displayLayer = 1, char? fallbackChar = null)
         {
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
-                renderView.TextProcessor.CreateText(text), textColor, shadow);
+                renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = (byte)Util.Min(255, this.displayLayer + displayLayer);
             renderText.X = position.X;
             renderText.Y = position.Y;

@@ -44,8 +44,8 @@ namespace Ambermoon.Data
 
     public interface ITextProcessor
     {
-        IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary);
-        IText CreateText(string text);
+        IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary, char? fallbackChar = null);
+        IText CreateText(string text, char? fallbackChar = null);
         /// <summary>
         /// Wraps a given text so it fits into the given bounds.
         /// 

@@ -19,7 +19,7 @@ namespace Ambermoon.UI
 
         ListBox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items,
             Rect area, Position itemBasePosition, int itemHeight, int hoverBoxWidth, Position relativeHoverBoxOffset,
-            bool withIndex, int maxItems)
+            bool withIndex, int maxItems, char? fallbackChar = null)
         {
             this.renderView = renderView;
             this.items = items;
@@ -36,12 +36,12 @@ namespace Ambermoon.UI
                 {
                     int y = itemBasePosition.Y + i * itemHeight;
                     itemIndices.Add(popup.AddText(new Position(itemBasePosition.X, y), $"{i + 1,2}", TextColor.Gray, true, 4));
-                    itemTexts.Add(popup.AddText(new Position(itemBasePosition.X + 17, y), items[i].Key, TextColor.Gray, true, 4));
+                    itemTexts.Add(popup.AddText(new Position(itemBasePosition.X + 17, y), items[i].Key, TextColor.Gray, true, 4, fallbackChar));
                 }
                 else
                 {
                     itemTexts.Add(popup.AddText(new Position(itemBasePosition.X, itemBasePosition.Y + i * itemHeight),
-                        items[i].Key, TextColor.Gray, true, 4));
+                        items[i].Key, TextColor.Gray, true, 4, fallbackChar));
                 }
                 itemAreas.Add(new Rect(itemBasePosition.X, itemBasePosition.Y + i * itemHeight, area.Width - 34, itemHeight));
             }
@@ -49,7 +49,7 @@ namespace Ambermoon.UI
 
         public static ListBox CreateSavegameListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items)
         {
-            return new ListBox(renderView, game, popup, items, new Rect(32, 85, 256, 73), new Position(33, 87), 7, 237, new Position(16, -1), true, 10);
+            return new ListBox(renderView, game, popup, items, new Rect(32, 85, 256, 73), new Position(33, 87), 7, 237, new Position(16, -1), true, 10, '?');
         }
 
         public static ListBox CreateDictionaryListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items)

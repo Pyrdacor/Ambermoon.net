@@ -30,7 +30,7 @@ namespace Ambermoon.Data.Legacy
 
     public class TextProcessor : ITextProcessor
     {
-        static byte CharToGlyph(char ch, bool rune)
+        static byte CharToGlyph(char ch, bool rune, char? fallbackChar = null)
         {
             if (ch >= 'a' && ch <= 'z')
                 return (byte)(ch - 'a' + (rune ? 64 : 0));
@@ -100,6 +100,8 @@ namespace Ambermoon.Data.Legacy
                 return (byte)SpecialGlyph.HardSpace;
             else if (ch == '^')
                 return (byte)SpecialGlyph.NewLine;
+            else if (fallbackChar != null)
+                return CharToGlyph(fallbackChar.Value, rune);
             else
                 throw new AmbermoonException(ExceptionScope.Data, $"Unsupported text character '{ch}'.");
         }
@@ -117,9 +119,9 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        public IText CreateText(string text)
+        public IText CreateText(string text, char? fallbackChar = null)
         {
-            return FinalizeText(text.Select(ch => CharToGlyph(ch, false)));
+            return FinalizeText(text.Select(ch => CharToGlyph(ch, false, fallbackChar)));
         }
 
         public IText FinalizeText(IEnumerable<byte> glyphs)
@@ -250,7 +252,7 @@ namespace Ambermoon.Data.Legacy
             return new Text(wrappedGlyphLines);
         }
 
-        public IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary)
+        public IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary, char? fallbackChar = null)
         {
             List<byte> glyphIndices = new List<byte>();
 
@@ -319,7 +321,7 @@ namespace Ambermoon.Data.Legacy
                 }
                 else
                 {
-                    glyphIndices.Add(CharToGlyph(text[i], rune));
+                    glyphIndices.Add(CharToGlyph(text[i], rune, fallbackChar));
                 }
             }
 
