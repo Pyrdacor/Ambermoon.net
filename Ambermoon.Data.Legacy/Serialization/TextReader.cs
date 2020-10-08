@@ -10,6 +10,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             if (textDataReader != null)
             {
+                textDataReader.Position = 0;
                 int numMapTexts = textDataReader.ReadWord();
                 int[] mapTextLengths = new int[numMapTexts];
 

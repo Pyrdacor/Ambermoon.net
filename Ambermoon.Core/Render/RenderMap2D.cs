@@ -85,7 +85,7 @@ namespace Ambermoon.Render
             SetMap(map, initialScrollX, initialScrollY);
         }
 
-        public void Update(uint ticks, Time gameTime)
+        public void Update(uint ticks, ITime gameTime)
         {
             uint frame = ticks / ticksPerFrame;
 

@@ -219,7 +219,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public virtual void Update(uint ticks, Time gameTime)
+        public virtual void Update(uint ticks, ITime gameTime)
         {
             uint elapsedTicks = ticks - lastFrameReset;
             sprite.CurrentFrame = elapsedTicks / CurrentAnimationInfo.TicksPerFrame; // this will take care of modulo frame count

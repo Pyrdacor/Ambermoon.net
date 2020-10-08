@@ -106,7 +106,7 @@ namespace Ambermoon
 
         // TODO: cleanup members
         readonly Random random = new Random();
-        internal Time GameTime { get; private set; } = null;
+        internal SavegameTime GameTime { get; private set; } = null;
         const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         internal const uint TicksPerSecond = 60;
@@ -146,10 +146,12 @@ namespace Ambermoon
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
+        internal bool MonsterSeesPlayer { get; set; } = false;
         readonly ILayerSprite ouchSprite;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputDisabled = false;
         bool inputEnable = true;
+        bool paused = false;
         /// <summary>
         /// The 3x3 buttons will always be enabled!
         /// </summary>
@@ -293,10 +295,18 @@ namespace Ambermoon
             QuitRequested?.Invoke();
         }
 
+        public void Pause()
+        {
+            paused = true;
+        }
+
+        public void Resume()
+        {
+            paused = false;
+        }
+
         public void Update(double deltaTime)
         {
-            GameTime?.Update();
-
             for (int i = timedEvents.Count - 1; i >= 0; --i)
             {
                 if (DateTime.Now >= timedEvents[i].ExecutionTime)
@@ -306,15 +316,18 @@ namespace Ambermoon
                 }
             }
 
-            uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
-
-            if (CurrentTicks <= uint.MaxValue - add)
-                CurrentTicks += add;
-            else
-                CurrentTicks = (uint)(((long)CurrentTicks + add) % uint.MaxValue);
-
-            if (ingame)
+            if (!paused && ingame)
             {
+                GameTime?.Update();
+                MonsterSeesPlayer = false; // Will be set by the monsters Update methods eventually
+
+                uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
+
+                if (CurrentTicks <= uint.MaxValue - add)
+                    CurrentTicks += add;
+                else
+                    CurrentTicks = (uint)(((long)CurrentTicks + add) % uint.MaxValue);
+
                 var animationTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
 
                 if (is3D)
@@ -325,18 +338,18 @@ namespace Ambermoon
                 {
                     renderMap2D.Update(animationTicks, GameTime);
                 }
-            }
 
-            var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
+                var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-            if (moveTicks >= movement.MovementTicks(is3D, Map.IsWorldMap, TravelType))
-            {
-                lastMoveTicksReset = CurrentTicks;
+                if (moveTicks >= movement.MovementTicks(is3D, Map.IsWorldMap, TravelType))
+                {
+                    lastMoveTicksReset = CurrentTicks;
 
-                if (clickMoveActive)
-                    HandleClickMovement();
-                else
-                    Move();
+                    if (clickMoveActive)
+                        HandleClickMovement();
+                    else
+                        Move();
+                }
             }
 
             layout.Update(CurrentTicks);
@@ -526,6 +539,7 @@ namespace Ambermoon
             clickMoveActive = false;
             UntrapMouse();
             InputEnable = false;
+            paused = false;
         }
 
         void PartyMemberDied(Character partyMember)
@@ -583,7 +597,7 @@ namespace Ambermoon
 
             ingame = true;
             CurrentSavegame = savegame;
-            GameTime = new Time(savegame);
+            GameTime = new SavegameTime(savegame);
 
             ClearPartyMembers();
             for (int i = 0; i < MaxPartyMembers; ++i)
@@ -601,7 +615,7 @@ namespace Ambermoon
             var map = mapManager.GetMap(savegame.CurrentMapIndex);
             bool is3D = map.Type == MapType.Map3D;
             renderMap2D = new RenderMap2D(this, null, mapManager, renderView);
-            renderMap3D = new RenderMap3D(null, mapManager, renderView, 0, 0, CharacterDirection.Up);
+            renderMap3D = new RenderMap3D(this, null, mapManager, renderView, 0, 0, CharacterDirection.Up);
             player3D = new Player3D(this, player, mapManager, camera3D, renderMap3D, 0, 0);
             player.MovementAbility = PlayerMovementAbility.Walking;
             renderMap2D.MapChanged += RenderMap2D_MapChanged;
@@ -618,6 +632,7 @@ namespace Ambermoon
             ShowMap(true);
 
             InputEnable = true;
+            paused = false;
 
             // Trigger events after game load
             TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
@@ -704,7 +719,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (WindowActive || !InputEnable || !clickMoveActive || allInputDisabled)
+            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled)
             {
                 clickMoveActive = false;
                 return;
@@ -746,26 +761,26 @@ namespace Ambermoon
                 switch (cursorType)
                 {
                     case CursorType.ArrowForward:
-                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile, CurrentTicks);
+                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowBackward:
-                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile, CurrentTicks);
+                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowStrafeLeft:
-                        player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerTile, CurrentTicks);
+                        player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowStrafeRight:
-                        player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerTile, CurrentTicks);
+                        player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowTurnLeft:
                         player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
                         if (!fromNumpadButton)
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
                         break;
                     case CursorType.ArrowTurnRight:
                         player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
                         if (!fromNumpadButton)
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
                         break;
                     case CursorType.ArrowRotateLeft:
                         if (fromNumpadButton)
@@ -775,7 +790,7 @@ namespace Ambermoon
                         else
                         {
                             player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
                         }
                         break;
                     case CursorType.ArrowRotateRight:
@@ -786,7 +801,7 @@ namespace Ambermoon
                         else
                         {
                             player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile * 0.75f, CurrentTicks);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
                         }
                         break;
                     default:
@@ -863,7 +878,7 @@ namespace Ambermoon
 
         void Move()
         {
-            if (WindowActive || !InputEnable || allInputDisabled)
+            if (paused || WindowActive || !InputEnable || allInputDisabled)
                 return;
 
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
@@ -897,7 +912,7 @@ namespace Ambermoon
                     Move2D(x, -1);
                 }
                 else
-                    player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerTile, CurrentTicks);
+                    player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
             }
             if (keys[(int)Key.Down] && !keys[(int)Key.Up])
             {
@@ -908,7 +923,7 @@ namespace Ambermoon
                     Move2D(x, 1);
                 }
                 else
-                    player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerTile, CurrentTicks);
+                    player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
             }
         }
 
@@ -1348,7 +1363,7 @@ namespace Ambermoon
                 // In 3D we might trigger adjacent tile events.
                 if (trigger != EventTrigger.Move)
                 {
-                    camera3D.GetForwardPosition(Global.DistancePerTile, out float x, out float z, false, false);
+                    camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
                     var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
 
                     if (position != player.Position &&
@@ -1373,6 +1388,11 @@ namespace Ambermoon
                     : Map.Name;
                 windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
                 windowTitle.TextColor = TextColor.Gray;
+                Resume();
+            }
+            else
+            {
+                Pause();
             }
 
             windowTitle.Visible = show;
@@ -2481,11 +2501,13 @@ namespace Ambermoon
 
         internal void ShowMessagePopup(string text)
         {
+            Pause();
             InputEnable = false;
             // Simple text popup
             var popup = layout.OpenTextPopup(ProcessText(text), () =>
             {
                 InputEnable = true;
+                Resume();
                 ResetCursor();
             }, true, true, false, TextAlign.Center);
             CursorType = CursorType.Click;
@@ -2494,11 +2516,13 @@ namespace Ambermoon
 
         internal void ShowTextPopup(IText text, Action<PopupTextEvent.Response> responseHandler)
         {
+            Pause();
             InputEnable = false;
             // Simple text popup
             layout.OpenTextPopup(text, () =>
             {
                 InputEnable = true;
+                Resume();
                 ResetCursor();
                 responseHandler?.Invoke(PopupTextEvent.Response.Close);
             }, true, true);

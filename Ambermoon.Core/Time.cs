@@ -4,7 +4,117 @@ using System;
 
 namespace Ambermoon
 {
-    internal class Time
+    internal interface ITime
+    {
+        uint Year { get; }
+        uint Month { get; }
+        uint DayOfMonth { get; }
+        uint Hour { get; }
+        uint Minute { get; }
+        uint TimeSlot { get; }
+
+        public static Time operator +(ITime time, uint minutes)
+        {
+            var newTime = new Time(time);
+            newTime.AddMinutes(minutes);
+            return newTime;
+        }
+    }
+
+    internal class Time : ITime
+    {
+        public uint Year { get; private set; }
+        public uint Month { get; private set; }
+        public uint DayOfMonth { get; private set; }
+        public uint Hour { get; private set; }
+        public uint Minute { get; private set; }
+        public uint TimeSlot => Minute / 5;
+
+        public Time()
+        {
+
+        }
+
+        public Time(ITime time)
+        {
+            Year = time.Year;
+            Month = time.Month;
+            DayOfMonth = time.DayOfMonth;
+            Hour = time.Hour;
+            Minute = time.Minute;
+        }
+
+        public int GetDifferenceInHours(ITime other)
+        {
+            int years = (int)Year - (int)other.Year;
+            int month = (int)Month - (int)other.Month;
+            int days = (int)DayOfMonth - (int)other.DayOfMonth;
+            int hours = (int)Hour - (int)other.Hour;
+
+            return years * 12 * 31 * 24 + month * 31 * 24 + days * 24 + hours;
+        }
+
+        public void AddHours(uint hours)
+        {
+            if (hours > 24)
+                throw new AmbermoonException(ExceptionScope.Application, "Max 24 hours can be added at once.");
+
+            Hour += hours;
+
+            if (Hour >= 24)
+            {
+                Hour -= 24;
+
+                if (++DayOfMonth == 31)
+                {
+                    DayOfMonth = 0;
+
+                    if (Month == 13)
+                    {
+                        Month = 0;
+                        ++Year;
+                    }
+                }
+            }
+        }
+
+        public void AddMinutes(uint minutes)
+        {
+            if (minutes % 5 != 0)
+                throw new AmbermoonException(ExceptionScope.Application, "Only 5-minute intervals can be used.");
+
+            if (minutes >= 60)
+            {
+                AddHours(minutes / 60);
+                minutes %= 60;
+            }
+
+            Minute += minutes;
+
+            if (Minute >= 60)
+            {
+                Minute -= 60;
+
+                if (++Hour == 24)
+                {
+                    Hour = 0;
+
+                    if (++DayOfMonth == 31)
+                    {
+                        DayOfMonth = 0;
+
+                        if (Month == 13)
+                        {
+                            Month = 0;
+                            ++Year;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    internal class SavegameTime : ITime
     {
         readonly Savegame savegame;
         DateTime lastTickTime = DateTime.Now;
@@ -17,7 +127,7 @@ namespace Ambermoon
         public uint Minute => savegame.Minute;
         public uint TimeSlot => savegame.Minute / 5;
 
-        public Time(Savegame savegame)
+        public SavegameTime(Savegame savegame)
         {
             this.savegame = savegame;
         }
@@ -90,16 +200,6 @@ namespace Ambermoon
             savegame.Hour += hours;
             PostIncreaseUpdate();
             ResetTickTimer();
-        }
-
-        public int GetDifferenceInHours(Time other)
-        {
-            int years = (int)Year - (int)other.Year;
-            int month = (int)Month - (int)other.Month;
-            int days = (int)DayOfMonth - (int)other.DayOfMonth;
-            int hours = (int)Hour - (int)other.Hour;
-
-            return years * 12 * 31 * 24 + month * 31 * 24 + days * 24 + hours;
         }
 
         void PostIncreaseUpdate()

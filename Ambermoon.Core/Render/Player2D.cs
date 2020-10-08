@@ -222,7 +222,7 @@ namespace Ambermoon.Render
             base.MoveTo(map, x, y, ticks, frameReset, newDirection);
         }
 
-        public override void Update(uint ticks, Time gameTime)
+        public override void Update(uint ticks, ITime gameTime)
         {
             // do not animate so don't call base.Update here
         }

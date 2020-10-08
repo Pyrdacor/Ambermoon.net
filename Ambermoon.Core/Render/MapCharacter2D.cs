@@ -5,6 +5,8 @@ namespace Ambermoon.Render
 {
     using Flags = Map.CharacterReference.Flags;
 
+    // TODO: set game.MonsterSeesPlayer = true; if a monster can see the player
+
     internal class MapCharacter2D : Character2D, IMapCharacter
     {
         static readonly Position NullOffset = new Position(0, 0);
@@ -14,7 +16,7 @@ namespace Ambermoon.Render
         readonly Map.CharacterReference characterReference;
         uint lastTimeSlot = 0;
 
-        public bool IsNPC { get; private set; }
+        public bool IsNPC { get; }
 
         // TODO: This is stored in NPC_gfx.amb.
         static readonly uint[] NumNPCFrames = new uint[]
@@ -106,14 +108,7 @@ namespace Ambermoon.Render
             return new MapCharacter2D(game, renderView, layer, mapManager, map, characterReference);
         }
 
-        public void Move(int x, int y, uint ticks)
-        {
-            uint newX = (uint)(Position.X + x);
-            uint newY = (uint)(Position.Y + y);
-            base.MoveTo(map, newX, newY, ticks, false, null);
-        }
-
-        public override void Update(uint ticks, Time gameTime)
+        public override void Update(uint ticks, ITime gameTime)
         {
             if (!Active)
                 return;

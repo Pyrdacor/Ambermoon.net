@@ -11,8 +11,8 @@ namespace Ambermoon.Geometry
         /// </summary>
         public static void BlockToCameraPosition(Map map, Position blockPosition, out float x, out float z)
         {
-            x = blockPosition.X * Global.DistancePerTile + 0.5f * Global.DistancePerTile;
-            z = (map.Height - blockPosition.Y) * Global.DistancePerTile - 0.5f * Global.DistancePerTile;
+            x = blockPosition.X * Global.DistancePerBlock + 0.5f * Global.DistancePerBlock;
+            z = (map.Height - blockPosition.Y) * Global.DistancePerBlock - 0.5f * Global.DistancePerBlock;
         }
 
         /// <summary>
@@ -20,16 +20,16 @@ namespace Ambermoon.Geometry
         /// </summary>
         public static Position CameraToBlockPosition(Map map, float x, float z)
         {
-            return new Position(Misc.Round((-x - 0.5f * Global.DistancePerTile) / Global.DistancePerTile),
-                map.Height - Misc.Round((z + 0.5f * Global.DistancePerTile) / Global.DistancePerTile));
+            return new Position(Misc.Round((-x - 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock),
+                map.Height - Misc.Round((z + 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock));
         }
 
         public static List<Position> CameraToTouchedBlockPositions(Map map, float x, float z, float touchRadius)
         {
             List<Position> positions = new List<Position>(4);
 
-            float tileX = (-x - 0.5f * Global.DistancePerTile) / Global.DistancePerTile;
-            float tileY = (z + 0.5f * Global.DistancePerTile) / Global.DistancePerTile;
+            float tileX = (-x - 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
+            float tileY = (z + 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
             var mainTilePosition = new Position(Misc.Round(tileX), map.Height - Misc.Round(tileY));
             positions.Add(mainTilePosition);
 
@@ -40,8 +40,8 @@ namespace Ambermoon.Geometry
                     if (tx == mainTilePosition.X && ty == mainTilePosition.Y)
                         continue;
 
-                    if (Math.Abs(tx - tileX) * Global.DistancePerTile < touchRadius &&
-                        Math.Abs(map.Height - ty - tileY) * Global.DistancePerTile < touchRadius)
+                    if (Math.Abs(tx - tileX) * Global.DistancePerBlock < touchRadius &&
+                        Math.Abs(map.Height - ty - tileY) * Global.DistancePerBlock < touchRadius)
                         positions.Add(new Position(tx, ty));
                 }
             }
@@ -57,7 +57,7 @@ namespace Ambermoon.Geometry
         public static void CameraToMapPosition(Map map, float x, float z, out float mapX, out float mapY)
         {
             mapX = -x;
-            mapY = map.Height * Global.DistancePerTile - z;
+            mapY = map.Height * Global.DistancePerBlock - z;
         }
 
         /// <summary>

@@ -5,6 +5,6 @@
         public const int VirtualScreenWidth = 320;
         public const int VirtualScreenHeight = 200;
         public const float VirtualAspectRatio = VirtualScreenWidth / (float)VirtualScreenHeight;
-        public const float DistancePerTile = 4.0f; // TODO
+        public const float DistancePerBlock = 4.0f; // TODO
     }
 }

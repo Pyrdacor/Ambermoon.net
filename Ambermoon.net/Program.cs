@@ -13,7 +13,14 @@ namespace Ambermoon
             var configuration = Configuration.Load(configurationPath);
             var gameWindow = new GameWindow();
 
-            gameWindow.Run(configuration);
+            try
+            {
+                gameWindow.Run(configuration);
+            }
+            catch
+            {
+                // TODO: ignored for now
+            }
 
             configuration.Save(configurationPath);
         }
