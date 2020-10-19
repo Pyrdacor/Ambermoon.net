@@ -71,7 +71,7 @@ namespace Ambermoon.Render
         int FrameCount { get; }
         IRenderLayer Layer { get; set; }
         WallOrientation WallOrientation { get; }
-        float Extrude { get; }
+        float Extrude { get; set; }
 
         void Delete();
 

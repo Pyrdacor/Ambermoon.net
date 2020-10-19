@@ -817,6 +817,17 @@ namespace Ambermoon.Renderer
             }
         }
 
+        public void UpdateExtrude(int index, float extrude)
+        {
+            if (extrudeBuffer != null)
+            {
+                extrudeBuffer.Update(index, extrude);
+                extrudeBuffer.Update(index + 1, extrude);
+                extrudeBuffer.Update(index + 2, extrude);
+                extrudeBuffer.Update(index + 3, extrude);
+            }
+        }
+
         public void UpdatePaletteIndex(int index, byte paletteIndex)
         {
             if (paletteIndexBuffer != null)

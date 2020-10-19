@@ -265,6 +265,11 @@ namespace Ambermoon.Renderer
             RenderBuffer.UpdateDisplayLayer(index, displayLayer);
         }
 
+        public void UpdateExtrude(int index, float extrude)
+        {
+            RenderBuffer.UpdateExtrude(index, extrude);
+        }
+
         public void UpdatePaletteIndex(int index, byte paletteIndex)
         {
             RenderBuffer.UpdatePaletteIndex(index, paletteIndex);

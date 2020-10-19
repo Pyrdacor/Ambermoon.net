@@ -185,7 +185,6 @@ namespace Ambermoon.Render
             {
                 case EventTrigger.Eye:
                 case EventTrigger.Mouth:
-                case EventTrigger.Hand:
                     if (characterReference.Type == CharacterType.Monster)
                         return false;
                     break;

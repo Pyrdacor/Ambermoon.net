@@ -37,6 +37,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly Rect virtualScreen = null;
         Position textureAtlasOffset = null;
         byte paletteIndex = 0;
+        float extrude = 0.0f;
         public WallOrientation WallOrientation { get; } = WallOrientation.Normal;
         public uint TextureWidth { get; } = 0;
         public uint TextureHeight { get; } = 0;
@@ -44,7 +45,6 @@ namespace Ambermoon.Renderer.OpenGL
         public uint MappedTextureHeight { get; } = 0;
         public bool Alpha { get; } = false;
         public int FrameCount { get; } = 1;
-        public float Extrude { get; }
 
         public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, uint textureWidth, uint textureHeight,
             uint mappedTextureWidth, uint mappedTextureHeight, Rect virtualScreen, WallOrientation wallOrientation, bool alpha, int frameCount,
@@ -62,7 +62,7 @@ namespace Ambermoon.Renderer.OpenGL
             MappedTextureHeight = mappedTextureHeight;
             Alpha = alpha;
             FrameCount = frameCount;
-            Extrude = extrude;
+            this.extrude = extrude;
         }
 
         public bool Visible
@@ -132,6 +132,20 @@ namespace Ambermoon.Renderer.OpenGL
         public float Width { get; private set; }
 
         public float Height { get; private set; }
+
+        public float Extrude
+        {
+            get => extrude;
+            set
+            {
+                if (extrude == value)
+                    return;
+
+                extrude = value;
+
+                UpdateExtrude();
+            }
+        }
 
         public byte PaletteIndex
         {
@@ -282,6 +296,12 @@ namespace Ambermoon.Renderer.OpenGL
         {
             if (drawIndex != -1) // -1 means not attached to a layer
                 (Layer as RenderLayer).UpdatePaletteIndex(drawIndex, PaletteIndex);
+        }
+
+        protected virtual void UpdateExtrude()
+        {
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdateExtrude(drawIndex, Extrude);
         }
     }
 

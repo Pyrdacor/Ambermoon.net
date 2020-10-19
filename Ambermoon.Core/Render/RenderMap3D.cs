@@ -74,8 +74,7 @@ namespace Ambermoon.Render
             // maybe monsters should be allowed to move freely and use collision
             // detection when not moving randomly.
             // TODO: When monster has reached player and the player is at the block's
-            // center, he can't see the monster billboard. Moreover the player should
-            // be turned towards the monster.
+            // center, he can't see the monster billboard.
 
             const uint TimePerMovement = 2000; // in ms
             const uint TicksPerMovement = TimePerMovement * Game.TicksPerSecond / 1000;
@@ -102,6 +101,7 @@ namespace Ambermoon.Render
             bool centeredOnBlock = true;
             uint ticksPerMovement = TicksPerMovement;
             DateTime lastInteractionTime = DateTime.MinValue;
+            bool interacting = false;
 
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
@@ -157,6 +157,14 @@ namespace Ambermoon.Render
                 Position = characterReference.Positions[0];
                 StopMoving();
                 nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
+                ResetFrame();
+            }
+
+            void ResetFrame()
+            {
+                uint frame = numFrames / 2;
+                surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
+                    new Position((int)(frame * surface.TextureWidth), 0);
             }
 
             void StopMoving()
@@ -179,8 +187,11 @@ namespace Ambermoon.Render
                     lastInteractionTime = DateTime.MaxValue;
 
                     // Turn the player towards the monster.
-                    //var player3D = game.RenderPlayer as Player3D;
-                    //player3D.TurnTowards(exactPosition + new FloatPosition(0.5f * Global.DistancePerBlock, 0.5f * Global.DistancePerBlock));
+                    interacting = true;
+                    var player3D = game.RenderPlayer as Player3D;
+                    player3D.TurnTowards(exactPosition + new FloatPosition(0.5f * Global.DistancePerBlock, 0.5f * Global.DistancePerBlock));
+                    surface.Extrude = 1.0f;// objectPosition.Object.ExtrudeOffset / BlockSize;
+                    // TODO: stop moving
 
                     game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
                     {
@@ -202,14 +213,67 @@ namespace Ambermoon.Render
                         // TODO: Remove later
                         lastInteractionTime = DateTime.Now;
                     }, 2);
+
+                    return true;
                 }
                 else
                 {
-                    // TODO: NPC interaction
-                }
+                    if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
+                    {
+                        if (trigger == EventTrigger.Eye)
+                        {
+                            // Popup NPCs can't be looked at but only talked to.
+                            return false;
+                        }
+                        else if (trigger == EventTrigger.Mouth)
+                        {
+                            ShowPopup(map.Map.Texts[(int)characterReference.Index]);
+                            return true;
+                        }
+                    }
 
-                
-                return false;
+                    bool HandleConversation(IConversationPartner conversationPartner)
+                    {
+                        if (trigger == EventTrigger.Eye)
+                        {
+                            game.ShowTextPopup(game.ProcessText(conversationPartner.Texts[0]), null);
+                            return true;
+                        }
+                        else if (trigger == EventTrigger.Mouth)
+                        {
+                            if (conversationPartner == null)
+                                throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC or party member index.");
+
+                            conversationPartner.ExecuteEvents(game, trigger);
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+
+                    switch (characterReference.Type)
+                    {
+                    case CharacterType.PartyMember:
+                        return HandleConversation(game.CurrentSavegame.PartyMembers[(int)characterReference.Index]);
+                    case CharacterType.NPC:
+                        return HandleConversation(game.CharacterManager.GetNPC(characterReference.Index));
+                    case CharacterType.Monster:
+                        // TODO
+                        break;
+                    case CharacterType.MapObject:
+                        // TODO
+                        break;
+                    }
+
+                    return true;
+                }
+            }
+
+            void ShowPopup(string text)
+            {
+                game.ShowTextPopup(game.ProcessText(text), null);
             }
 
             void UpdatePosition(float xOffset = 0.0f, float yOffset = 0.0f)
@@ -233,6 +297,7 @@ namespace Ambermoon.Render
                         position = new Position(Util.Round(exactPosition.X / Global.DistancePerBlock),
                             Util.Round(exactPosition.Y / Global.DistancePerBlock));
                         UpdatePosition(exactPosition.X - position.X * Global.DistancePerBlock, exactPosition.Y - position.Y * Global.DistancePerBlock);
+                        ResetFrame();
                     }
                     return;
                 }
@@ -914,6 +979,26 @@ namespace Ambermoon.Render
             }
 
             return info;
+        }
+
+        public bool TriggerEvents(Game game, EventTrigger trigger,
+            uint x, uint y, uint ticks, Savegame savegame)
+        {
+            // first check for NPC interaction
+            if (trigger == EventTrigger.Eye || trigger == EventTrigger.Mouth)
+            {
+                foreach (var mapCharacter in mapCharacters)
+                {
+                    if (mapCharacter.Value.Position.X == x && mapCharacter.Value.Position.Y == y)
+                    {
+                        if (mapCharacter.Value.Interact(trigger, false))
+                            return true;
+                    }
+                }
+            }
+
+            return Map.TriggerEvents(game, trigger, x, y, ticks, savegame,
+                out bool _, false);
         }
     }
 }

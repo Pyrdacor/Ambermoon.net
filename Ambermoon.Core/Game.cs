@@ -1342,7 +1342,7 @@ namespace Ambermoon
         {
             if (is3D)
             {
-                return renderMap3D.Map.TriggerEvents(this, trigger, x, y, CurrentTicks, CurrentSavegame);
+                return renderMap3D.TriggerEvents(this, trigger, x, y, CurrentTicks, CurrentSavegame);
             }
             else // 2D
             {
