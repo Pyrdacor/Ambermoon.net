@@ -484,6 +484,7 @@ namespace Ambermoon.UI
         public void OpenOptionMenu()
         {
             game.InputEnable = false;
+            game.Pause();
             var area = Type switch
             {
                 LayoutType.Map2D => Game.Map2DViewArea,
@@ -512,6 +513,7 @@ namespace Ambermoon.UI
         {
             Reset();
             UpdateLayoutButtons(ticksPerMovement);
+            game.Resume();
             game.InputEnable = true;
         }
 

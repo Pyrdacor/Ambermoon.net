@@ -297,12 +297,28 @@ namespace Ambermoon
 
         public void Pause()
         {
+            if (paused)
+                return;
+
             paused = true;
+
+            if (is3D)
+                renderMap3D.Pause();
+            else
+                renderMap2D.Pause();
         }
 
         public void Resume()
         {
+            if (!paused)
+                return;
+
             paused = false;
+
+            if (is3D)
+                renderMap3D.Resume();
+            else
+                renderMap2D.Resume();
         }
 
         public void Update(double deltaTime)

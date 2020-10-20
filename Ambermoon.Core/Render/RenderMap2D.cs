@@ -112,6 +112,18 @@ namespace Ambermoon.Render
                 mapCharacter.Value.Update(ticks, gameTime);
         }
 
+        public void Pause()
+        {
+            foreach (var character in mapCharacters)
+                character.Value.Paused = true;
+        }
+
+        public void Resume()
+        {
+            foreach (var character in mapCharacters)
+                character.Value.Paused = false;
+        }
+
         bool TestCharacterInteraction(MapCharacter2D mapCharacter, bool cursor, Position position)
         {
             if (!mapCharacter.Visible || !mapCharacter.Active)

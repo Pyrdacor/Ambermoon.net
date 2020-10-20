@@ -119,6 +119,9 @@ namespace Ambermoon.Render
                 }
             }
 
+            public void Pause() => character3D.Paused = true;
+            public void Resume() => character3D.Paused = false;
+
             public Position Position
             {
                 get => character3D.Position;
@@ -348,7 +351,7 @@ namespace Ambermoon.Render
 
             public void Update(uint ticks, ITime gameTime)
             {
-                if (!Active)
+                if (!Active || character3D.Paused)
                     return;
 
                 var camera = (game.RenderPlayer as Player3D).Camera;
@@ -583,6 +586,18 @@ namespace Ambermoon.Render
 
                 AddMapCharacter(renderView.Surface3DFactory, renderView.GetLayer(Layer.Billboards3D), characterIndex, characterReference);
             }
+        }
+
+        public void Pause()
+        {
+            foreach (var character in mapCharacters)
+                character.Value.Pause();
+        }
+
+        public void Resume()
+        {
+            foreach (var character in mapCharacters)
+                character.Value.Resume();
         }
 
         void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition)

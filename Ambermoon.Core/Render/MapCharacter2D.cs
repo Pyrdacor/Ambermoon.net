@@ -17,6 +17,7 @@ namespace Ambermoon.Render
         uint lastTimeSlot = 0;
 
         public bool IsNPC { get; }
+        public bool Paused { get; set; } = false;
 
         // TODO: This is stored in NPC_gfx.amb.
         static readonly uint[] NumNPCFrames = new uint[]
@@ -110,7 +111,7 @@ namespace Ambermoon.Render
 
         public override void Update(uint ticks, ITime gameTime)
         {
-            if (!Active)
+            if (!Active || Paused)
                 return;
 
             Position newPosition = Position;
