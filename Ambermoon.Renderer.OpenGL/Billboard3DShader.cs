@@ -118,7 +118,9 @@ namespace Ambermoon.Renderer
             $"        depth = adjustedFloorPos.z / adjustedFloorPos.w;",
             $"    }}",
             $"    else // normal",
+            $"    {{",
             $"        depth = gl_Position.z / gl_Position.w;",
+            $"    }}",
             $"}}"
         };
 

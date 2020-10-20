@@ -121,6 +121,9 @@ namespace Ambermoon.Render
                 {
                     newPosition = new Position(Position.X + game.RandomInt(-1, 1), Position.Y + game.RandomInt(-1, 1));
 
+                    if (newPosition == Position)
+                        continue;
+
                     var collisionPosition = new Position(newPosition.X, newPosition.Y + (IsNPC ? 1 : 0));
 
                     if (collisionPosition.X < 0 || collisionPosition.X >= map.Width)
@@ -132,7 +135,7 @@ namespace Ambermoon.Render
                     if (collisionPosition.Y >= map.Height - (IsNPC ? 1 : 0))
                         continue;
 
-                    if (newPosition != Position && Map[collisionPosition].AllowMovement(tileset, TravelType.Walk))
+                    if (Map[collisionPosition].AllowMovement(tileset, TravelType.Walk))
                         break;
                 }
             }

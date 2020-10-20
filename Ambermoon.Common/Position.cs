@@ -5,6 +5,8 @@ namespace Ambermoon
 {
     public class Position : IEquatable<Position>, IEqualityComparer<Position>
     {
+        public static readonly Position Zero = new Position(0, 0);
+
         public int X { get; set; } = 0;
         public int Y { get; set; } = 0;
 
@@ -27,6 +29,9 @@ namespace Ambermoon
 
         public void Normalize()
         {
+            int xAbs = Math.Abs(X);
+            int yAbs = Math.Abs(Y);
+
             if (X < 0)
                 X = -1;
             else if (X > 0)
@@ -36,6 +41,12 @@ namespace Ambermoon
                 Y = -1;
             else if (Y > 0)
                 Y = 1;
+
+            if (xAbs > 0 && yAbs > 0)
+            {
+                X *= xAbs < yAbs / 2 ? 0 : 1;
+                Y *= yAbs < xAbs / 2 ? 0 : 1;
+            }
         }
 
         public void Offset(int x, int y)
@@ -57,6 +68,16 @@ namespace Ambermoon
         public static Position operator -(Position position1, Position position2)
         {
             return new Position(position1.X - position2.X, position1.Y - position2.Y);
+        }
+
+        public static FloatPosition operator *(Position position, float factor)
+        {
+            return new FloatPosition(position.X * factor, position.Y * factor);
+        }
+
+        public static FloatPosition operator *(float factor, Position position)
+        {
+            return position * factor;
         }
 
         public static bool operator ==(Position position1, Position position2)
@@ -118,6 +139,8 @@ namespace Ambermoon
 
     public class FloatPosition : IEquatable<FloatPosition>, IEqualityComparer<FloatPosition>
     {
+        public static readonly FloatPosition Zero = new FloatPosition(0.0f, 0.0f);
+
         public float X { get; set; } = 0.0f;
         public float Y { get; set; } = 0.0f;
 
@@ -146,15 +169,24 @@ namespace Ambermoon
 
         public void Normalize()
         {
-            if (X < 0)
+            float xAbs = Math.Abs(X);
+            float yAbs = Math.Abs(Y);
+
+            if (X < -0.0001f)
                 X = -1.0f;
-            else if (X > 0)
+            else if (X > 0.0001f)
                 X = 1.0f;
 
-            if (Y < 0)
+            if (Y < -0.0001f)
                 Y = -1.0f;
-            else if (Y > 0)
+            else if (Y > 0.0001f)
                 Y = 1.0f;
+
+            if (xAbs >= 0.00001f && yAbs >= 0.00001f)
+            {
+                X *= xAbs < yAbs ? xAbs / yAbs : 1.0f;
+                Y *= yAbs < xAbs ? yAbs / xAbs : 1.0f;
+            }
         }
 
         public void Offset(float x, float y)
@@ -173,6 +205,16 @@ namespace Ambermoon
             Offset(position.X, position.Y);
         }
 
+        public Position Round()
+        {
+            return new Position(Util.Round(X), Util.Round(Y));
+        }
+
+        public Position Round(float factor)
+        {
+            return new Position(Util.Round(factor * X), Util.Round(factor * Y));
+        }
+
         public static FloatPosition operator +(FloatPosition position1, FloatPosition position2)
         {
             return new FloatPosition(position1.X + position2.X, position1.Y + position2.Y);
@@ -181,6 +223,16 @@ namespace Ambermoon
         public static FloatPosition operator -(FloatPosition position1, FloatPosition position2)
         {
             return new FloatPosition(position1.X - position2.X, position1.Y - position2.Y);
+        }
+
+        public static FloatPosition operator *(FloatPosition position, float factor)
+        {
+            return new FloatPosition(position.X * factor, position.Y * factor);
+        }
+
+        public static FloatPosition operator *(float factor, FloatPosition position)
+        {
+            return position * factor;
         }
 
         public static bool operator ==(FloatPosition position1, FloatPosition position2)

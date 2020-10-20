@@ -215,8 +215,9 @@ namespace Ambermoon.Render
         public void TurnTowards(FloatPosition position)
         {
             Geometry.CameraToMapPosition(map.Map, Camera.X, Camera.Z, out float mapX, out float mapY);
-            double diffX = position.X - mapX;
-            double diffY = position.Y - mapY;
+            var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
+            double diffX = position.X - playerPosition.X;
+            double diffY = position.Y - playerPosition.Y;
             double max = Math.Max(Math.Abs(diffX), Math.Abs(diffY));
 
             if (max < 0.0001)
@@ -229,7 +230,9 @@ namespace Ambermoon.Render
             if (Math.Abs(length) > 0.0001)
             {
                 var x = diffX / length;
-                TurnTowards(90.0f + (float)(180.0 * Math.Acos(x) / Math.PI));
+                var y = diffY / length;
+                var angle = Math.Atan2(y, x);
+                TurnTowards(90.0f + (float)(180.0 * angle / Math.PI));
             }
         }
 

@@ -67,17 +67,6 @@ namespace Ambermoon.Render
 
         class MapCharacter : IMapCharacter
         {
-            // TODO: monsters should see the player if the player can see them
-            // TODO: moving is mostly block-based but when approaching monsters should
-            // be able to move closer to obstacles. this works partially but isn't
-            // perfect yet and when the monster can walk again, it jumps.
-            // maybe monsters should be allowed to move freely and use collision
-            // detection when not moving randomly.
-            // TODO: When monster has reached player and the player is at the block's
-            // center, he can't see the monster billboard.
-
-            const uint TimePerMovement = 2000; // in ms
-            const uint TicksPerMovement = TimePerMovement * Game.TicksPerSecond / 1000;
             readonly Game game;
             readonly RenderMap3D map;
             readonly ISurface3D surface;
@@ -87,21 +76,10 @@ namespace Ambermoon.Render
             readonly Map.CharacterReference characterReference;
             readonly uint textureIndex;
             readonly Labdata.ObjectPosition objectPosition;
-            Position position = new Position();
-            FloatPosition exactPosition = new FloatPosition();
-            FloatPosition targetPosition = new FloatPosition();
-            uint nextMoveTimeSlot = uint.MaxValue;
-            uint lastMoveTicks = 0;
-            bool moving = false;
             bool active = true;
-            float movedX = 0.0f;
-            float movedY = 0.0f;
-            uint movedTicks = 0;
-            bool blockedMovement = false;
-            bool centeredOnBlock = true;
-            uint ticksPerMovement = TicksPerMovement;
             DateTime lastInteractionTime = DateTime.MinValue;
             bool interacting = false;
+            readonly Character3D character3D;
 
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
@@ -117,6 +95,9 @@ namespace Ambermoon.Render
                 this.characterReference = characterReference;
                 this.textureIndex = textureIndex;
                 this.objectPosition = objectPosition;
+                character3D = new Character3D(game);
+                character3D.RandomMovementRequested += MoveRandom;
+                character3D.MoveRequested += TestPossibleMovement;
                 ResetPosition(game.GameTime);
             }
 
@@ -140,14 +121,10 @@ namespace Ambermoon.Render
 
             public Position Position
             {
-                get => position;
+                get => character3D.Position;
                 set
                 {
-                    if (position == value)
-                        return;
-
-                    position = new Position(value);
-                    exactPosition = new FloatPosition(value.X * Global.DistancePerBlock, value.Y * Global.DistancePerBlock);
+                    character3D.Place((uint)value.X, (uint)value.Y, false);
                     UpdatePosition();
                 }
             }
@@ -155,8 +132,6 @@ namespace Ambermoon.Render
             public void ResetPosition(ITime gameTime)
             {
                 Position = characterReference.Positions[0];
-                StopMoving();
-                nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
                 ResetFrame();
             }
 
@@ -165,15 +140,6 @@ namespace Ambermoon.Render
                 uint frame = numFrames / 2;
                 surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
                     new Position((int)(frame * surface.TextureWidth), 0);
-            }
-
-            void StopMoving()
-            {
-                targetPosition = new FloatPosition(exactPosition);
-                moving = false;
-                movedX = 0.0f;
-                movedY = 0.0f;
-                movedTicks = 0;
             }
 
             public bool Interact(EventTrigger trigger, bool bed)
@@ -189,12 +155,13 @@ namespace Ambermoon.Render
                     // Turn the player towards the monster.
                     interacting = true;
                     var player3D = game.RenderPlayer as Player3D;
-                    player3D.TurnTowards(exactPosition + new FloatPosition(0.5f * Global.DistancePerBlock, 0.5f * Global.DistancePerBlock));
-                    surface.Extrude = 1.0f;// objectPosition.Object.ExtrudeOffset / BlockSize;
-                    // TODO: stop moving
+                    player3D.TurnTowards(character3D.RealPosition);
+                    surface.Extrude = -1.0f;
 
                     game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
                     {
+                        surface.Extrude = 0.0f;
+
                         if (response == PopupTextEvent.Response.Yes)
                         {
                             // TODO
@@ -276,85 +243,117 @@ namespace Ambermoon.Render
                 game.ShowTextPopup(game.ProcessText(text), null);
             }
 
-            void UpdatePosition(float xOffset = 0.0f, float yOffset = 0.0f)
+            void UpdatePosition()
             {
-                map.UpdateCharacterSurfaceCoordinates(Position, surface, objectPosition, xOffset, yOffset);
+                map.UpdateCharacterSurfaceCoordinates(character3D.RealPosition, surface, objectPosition);
             }
 
             void UpdateCurrentMovement(uint ticks)
             {
-                if (exactPosition == targetPosition)
-                    return;
-
-                if (movedTicks >= ticksPerMovement)
+                if (!character3D.Moving)
+                    ResetFrame();
+                else
                 {
-                    moving = false;
-                    if (exactPosition != targetPosition)
-                    {
-                        centeredOnBlock = !blockedMovement;
-                        ticksPerMovement = centeredOnBlock ? TicksPerMovement : 3 * TicksPerMovement / 2;
-                        exactPosition = new FloatPosition(targetPosition);
-                        position = new Position(Util.Round(exactPosition.X / Global.DistancePerBlock),
-                            Util.Round(exactPosition.Y / Global.DistancePerBlock));
-                        UpdatePosition(exactPosition.X - position.X * Global.DistancePerBlock, exactPosition.Y - position.Y * Global.DistancePerBlock);
-                        ResetFrame();
-                    }
-                    return;
+                    if (numFrames <= 1 || !surface.Visible)
+                        return;
+
+                    uint frame = (ticks / ticksPerFrame) % numFrames; // TODO
+                    surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
+                        new Position((int)(frame * surface.TextureWidth), 0);
                 }
 
-                centeredOnBlock = false;
-                uint moveTicks = Math.Min(ticks - lastMoveTicks, ticksPerMovement - movedTicks);
-                var diff = targetPosition - exactPosition;
-                float stepSize = (float)moveTicks / ticksPerMovement;
-
-                movedX += diff.X * stepSize;
-                movedY += diff.Y * stepSize;
-                movedTicks += moveTicks;
-
-                UpdatePosition(movedX, movedY);
-
-                lastMoveTicks = ticks;
-
-                if (numFrames <= 1 || !surface.Visible)
-                    return;
-
-                uint frame = targetPosition == exactPosition ? numFrames / 2 : (ticks / ticksPerFrame) % numFrames; // TODO
-                surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
-                    new Position((int)(frame * surface.TextureWidth), 0);
+                UpdatePosition();
             }
 
-            bool CanSee(Position position)
+            bool TestPathCollision(FloatPosition position, List<uint> blockingTiles)
             {
-                var testPosition = new Position(Position);
+                var testPosition = Position * Global.DistancePerBlock;
 
                 while (true)
                 {
+                    if (testPosition.GetMaxDistance(position) < Global.DistancePerBlock / 4)
+                        return false;
+
                     var distance = position - testPosition;
 
-                    if (distance.X < 0)
-                        --testPosition.X;
-                    else if (distance.X > 0)
-                        ++testPosition.X;
+                    if (distance.X < -Global.DistancePerBlock / 8)
+                        testPosition.X -= Global.DistancePerBlock / 4;
+                    else if (distance.X > Global.DistancePerBlock / 8)
+                        testPosition.X += Global.DistancePerBlock / 4;
 
-                    if (distance.Y < 0)
-                        --testPosition.Y;
-                    else if (distance.Y > 0)
-                        ++testPosition.Y;
+                    if (distance.Y < -Global.DistancePerBlock / 8)
+                        testPosition.Y -= Global.DistancePerBlock / 4;
+                    else if (distance.Y > Global.DistancePerBlock / 8)
+                        testPosition.Y += Global.DistancePerBlock / 4;
 
-                    if (testPosition == position)
+                    var roundedTestPosition = testPosition.Round(1.0f / Global.DistancePerBlock);
+                    uint blockIndex = (uint)(roundedTestPosition.X + roundedTestPosition.Y * map.Map.Width);
+
+                    if (blockingTiles.Contains(blockIndex))
                         return true;
-
-                    uint blockIndex = (uint)(testPosition.X + testPosition.Y * map.Map.Width);
-
-                    if (map.monsterBlockSightBlocks.Contains(blockIndex))
-                        return false;
                 }
+            }
+
+            bool CanSee(FloatPosition position)
+            {
+                return !TestPathCollision(position, map.monsterBlockSightBlocks);
+            }
+
+            bool TestPossibleMovement(FloatPosition position)
+            {
+                //if (!TestPathCollision(position, map.characterBlockingBlocks))
+                //    return true;
+
+                var collisionInfo = map.GetCollisionDetectionInfoFromPositions
+                (
+                    Position,
+                    position.Round(1.0f / Global.DistancePerBlock)
+                );
+
+                var lastX = character3D.RealPosition.X;
+                var lastY = map.Map.Height * Global.DistancePerBlock - character3D.RealPosition.Y;
+                var newX = position.X;
+                var newY = map.Map.Height * Global.DistancePerBlock - position.Y;
+
+                return !collisionInfo.TestCollision(lastX, lastY, newX, newY, 0.5f * Global.DistancePerBlock);
+            }
+
+            void MoveRandom()
+            {
+                Position newPosition;
+
+                while (true)
+                {
+                    newPosition = new Position(Position.X + game.RandomInt(-1, 1), Position.Y + game.RandomInt(-1, 1));
+
+                    if (newPosition == Position)
+                        continue;
+
+                    var collisionPosition = new Position(newPosition.X, newPosition.Y);
+
+                    if (collisionPosition.X < 0 || collisionPosition.X >= map.Map.Width)
+                        continue;
+
+                    if (collisionPosition.Y < 0 || collisionPosition.Y >= map.Map.Height)
+                        continue;
+
+                    uint blockIndex = (uint)(newPosition.X + newPosition.Y * map.Map.Width);
+
+                    if (!map.characterBlockingBlocks.Contains(blockIndex))
+                        break;
+                }
+
+                character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y);
             }
 
             public void Update(uint ticks, ITime gameTime)
             {
                 if (!Active)
                     return;
+
+                var camera = (game.RenderPlayer as Player3D).Camera;
+                Geometry.Geometry.CameraToMapPosition(map.Map, camera.X, camera.Z, out float mapX, out float mapY);
+                var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
 
                 if (characterReference.Type == CharacterType.Monster)
                 {
@@ -364,132 +363,29 @@ namespace Ambermoon.Render
                     {
                         // Monster has reached player -> interact/fight
                         game.MonsterSeesPlayer = true;
+                        character3D.Stop(true);
                         Interact(EventTrigger.Move, false);
-                        StopMoving();
-                        nextMoveTimeSlot = uint.MaxValue;
-                        return;
-                    }
-
-                    if (!moving && CanSee(game.RenderPlayer.Position))
-                    {
-                        // Monster can see player -> move towards player
-                        var approachPosition = new Position(Position);
-
-                        if (distanceToPlayer.X < 0)
-                            --approachPosition.X;
-                        else if (distanceToPlayer.X > 0)
-                            ++approachPosition.X;
-
-                        if (distanceToPlayer.Y < 0)
-                            --approachPosition.Y;
-                        else if (distanceToPlayer.Y > 0)
-                            ++approachPosition.Y;
-
-                        game.MonsterSeesPlayer = true;
-                        nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12; // recheck for normal movement in 5 minutes
-                        uint blockIndex = (uint)(approachPosition.X + approachPosition.Y * map.Map.Width);
-
-                        if (map.characterBlockingBlocks.Contains(blockIndex))
-                        {
-                            if (!blockedMovement)
-                            {
-                                // if blocked don't move and stay there but when approaching we can move half a tile further
-                                var direction = approachPosition - position;
-                                direction.Normalize();
-                                targetPosition = new FloatPosition(exactPosition.X + direction.X * 0.5f * Global.DistancePerBlock,
-                                    exactPosition.Y + direction.Y * 0.5f * Global.DistancePerBlock);
-                                movedX = 0.0f;
-                                movedY = 0.0f;
-                                movedTicks = 0;
-                                moving = true;
-                                blockedMovement = true;
-                                ticksPerMovement /= 2;
-                            }
-                            UpdateCurrentMovement(ticks);
-                        }
-                        else
-                        {
-                            // otherwise start moving
-                            targetPosition = new FloatPosition(approachPosition.X * Global.DistancePerBlock,
-                                approachPosition.Y * Global.DistancePerBlock);
-                            movedX = 0.0f;
-                            movedY = 0.0f;
-                            movedTicks = 0;
-                            moving = true;
-                            blockedMovement = false;
-                            UpdateCurrentMovement(ticks);
-                        }
-
                         return;
                     }
                 }
 
-                if (moving || gameTime.TimeSlot != nextMoveTimeSlot)
+                bool randomMovement = characterReference.CharacterFlags.HasFlag(Flags.RandomMovement);
+
+                if (!randomMovement && characterReference.Type != CharacterType.Monster)
                 {
-                    UpdateCurrentMovement(ticks);
-                    return;
+                    // Walk a given path every day time slot
+                    var newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
+                    newPosition.Offset(-1, -1); // positions are 1-based
+                    character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y);
                 }
 
-                lastMoveTicks = ticks;
-                var newPosition = Position;
+                bool canSeePlayer = characterReference.Type == CharacterType.Monster && CanSee(playerPosition);
 
-                void MoveRandom()
-                {
-                    while (true)
-                    {
-                        newPosition = new Position(Position.X + game.RandomInt(-1, 1), Position.Y + game.RandomInt(-1, 1));
+                if (canSeePlayer)
+                    game.MonsterSeesPlayer = true;
 
-                        var collisionPosition = new Position(newPosition.X, newPosition.Y);
+                character3D.Update(ticks, playerPosition, randomMovement, canSeePlayer);
 
-                        if (collisionPosition.X < 0 || collisionPosition.X >= map.Map.Width)
-                            continue;
-
-                        if (collisionPosition.Y < 0 || collisionPosition.Y >= map.Map.Height)
-                            continue;
-
-                        if (newPosition != Position)
-                        {
-                            uint blockIndex = (uint)(newPosition.X + newPosition.Y * map.Map.Width);
-
-                            if (!map.characterBlockingBlocks.Contains(blockIndex))
-                                break;
-                        }
-                    }
-                }
-
-                if (characterReference.Type == CharacterType.Monster)
-                {
-                    if (characterReference.CharacterFlags.HasFlag(Flags.RandomMovement))
-                    {
-                        MoveRandom();
-                    }
-                    else
-                    {
-                        // Just stay
-                    }
-                }
-                else
-                {
-                    if (characterReference.CharacterFlags.HasFlag(Flags.RandomMovement))
-                    {
-                        MoveRandom();
-                    }
-                    else
-                    {
-                        // Walk a given path every day time slot
-                        newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
-                        newPosition.Offset(-1, -1); // positions are 1-based
-                    }
-                }
-
-                nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
-                targetPosition = new FloatPosition(newPosition.X * Global.DistancePerBlock,
-                    newPosition.Y * Global.DistancePerBlock);
-                movedX = 0.0f;
-                movedY = 0.0f;
-                movedTicks = 0;
-                moving = true;
-                blockedMovement = false;
                 UpdateCurrentMovement(ticks);
             }
         }
@@ -687,6 +583,15 @@ namespace Ambermoon.Render
 
                 AddMapCharacter(renderView.Surface3DFactory, renderView.GetLayer(Layer.Billboards3D), characterIndex, characterReference);
             }
+        }
+
+        void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition)
+        {
+            float baseX = position.X;
+            float baseY = -Map.Height * Global.DistancePerBlock + position.Y;
+            surface.X = baseX + (objectPosition.X / BlockSize) * Global.DistancePerBlock;
+            surface.Y = WallHeight * (objectPosition.Z / 400.0f + objectPosition.Object.MappedTextureHeight / ReferenceWallHeight);
+            surface.Z = baseY + Global.DistancePerBlock - (objectPosition.Y / BlockSize) * Global.DistancePerBlock;
         }
 
         void UpdateCharacterSurfaceCoordinates(Position position, ISurface3D surface, Labdata.ObjectPosition objectPosition,
@@ -975,6 +880,24 @@ namespace Ambermoon.Render
                         foreach (var collisionBody in blockCollisionBodies[blockIndex])
                             info.CollisionBodies.Add(collisionBody);
                     }
+                }
+            }
+
+            return info;
+        }
+
+        public CollisionDetectionInfo3D GetCollisionDetectionInfoFromPositions(params Position[] positions)
+        {
+            var info = new CollisionDetectionInfo3D();
+
+            foreach (var position in positions)
+            {
+                uint blockIndex = (uint)(position.X + position.Y * Map.Width);
+
+                if (blockCollisionBodies.ContainsKey(blockIndex))
+                {
+                    foreach (var collisionBody in blockCollisionBodies[blockIndex])
+                        info.CollisionBodies.Add(collisionBody);
                 }
             }
 
