@@ -321,6 +321,8 @@ namespace Ambermoon.Render
                 return !collisionInfo.TestCollision(lastX, lastY, newX, newY, 0.5f * Global.DistancePerBlock);
             }
 
+            // TODO: Sometimes a monster is in a spot where it shouldn't be and the MoveRandom will never find a
+            // valid spot and lead to an infinite loop. Happened in lowest level of Luminor's tower for example.
             void MoveRandom()
             {
                 Position newPosition;
@@ -784,11 +786,13 @@ namespace Ambermoon.Render
         internal void UpdateBlock(uint x, uint y)
         {
             uint index = x + y * (uint)Map.Width;
+            bool wallRemoved = false;
 
             if (walls.ContainsKey(index))
             {
                 walls[index].ForEach(wall => wall?.Delete());
                 walls.Remove(index);
+                wallRemoved = true;
             }
 
             if (objects.ContainsKey(index))
@@ -813,6 +817,43 @@ namespace Ambermoon.Render
                 AddWall(surfaceFactory, layer, x, y, block.WallIndex - 1);
             else if (block.ObjectIndex != 0)
                 AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
+
+            if (wallRemoved && block.WallIndex == 0)
+            {
+                // Totally removed a wall -> check if adjacent walls need some surfaces.
+                for (int testY = -1; testY <= 1; ++testY)
+                {
+                    int blockY = (int)y + testY;
+
+                    if (blockY < 0 || blockY >= Map.Height)
+                        continue;
+
+                    for (int testX = -1; testX <= 1; ++testX)
+                    {
+                        int blockX = (int)x + testX;
+
+                        if (blockX < 0 || blockX >= Map.Width)
+                            continue;
+
+                        var adjacentBlock = Map.Blocks[(uint)blockX, (uint)blockY];
+
+                        if (adjacentBlock.WallIndex != 0)
+                        {
+                            // Recreate the adjacent wall
+                            uint adjacentIndex = (uint)(blockX + blockY * Map.Width);
+                            walls[adjacentIndex]?.ForEach(wall => wall?.Delete());
+                            walls.Remove(adjacentIndex);
+                            if (blockCollisionBodies.ContainsKey(adjacentIndex))
+                                blockCollisionBodies.Remove(adjacentIndex);
+                            if (characterBlockingBlocks.Contains(adjacentIndex))
+                                characterBlockingBlocks.Remove(adjacentIndex);
+                            if (monsterBlockSightBlocks.Contains(adjacentIndex))
+                                monsterBlockSightBlocks.Remove(adjacentIndex);
+                            AddWall(surfaceFactory, layer, (uint)blockX, (uint)blockY, adjacentBlock.WallIndex - 1);
+                        }
+                    }
+                }
+            }
         }
 
         void UpdateSurfaces()
