@@ -51,6 +51,7 @@ Working things:
 	- movement / static billboards / collision detection
 	- change map events / chest events / text events / riddlemouth
 	- interaction with eye, hand and mouth
+	- NPCs and monsters
 - window mode / fullscreen
 - cursors and mouse movement, trigger events with hand/eye cursor
 - text rendering including runes
