@@ -12,11 +12,23 @@ namespace Ambermoon.Render
         readonly IMapManager mapManager;
         readonly RenderMap3D map;
         readonly Player player;
+        float angle = 0.0f;
 
         Position lastPosition;
         public Position Position { get; private set; }
         public ICamera3D Camera { get; }
-        public float angle = 0.0f;
+        public float Angle
+        {
+            get => angle;
+            private set
+            {
+                angle = value;
+                while (angle <= -360.0f)
+                    angle += 360.0f;
+                while (angle >= 360.0f)
+                    angle -= 360.0f;
+            }
+        }
 
         public Player3D(Game game, Player player, IMapManager mapManager, ICamera3D camera, RenderMap3D map, int x, int y)
         {
@@ -29,7 +41,7 @@ namespace Ambermoon.Render
 
         void ResetCameraPosition()
         {
-            angle = 0.0f;
+            Angle = 0.0f;
             lastPosition = new Position(Position);
             Geometry.BlockToCameraPosition(map.Map, Position, out float x, out float z);
             Camera.SetPosition(x, z);
@@ -57,7 +69,7 @@ namespace Ambermoon.Render
                     game.PlayerMoved(oldMapIndex != game.Map.Index);
 
                     if (newDirection != null)
-                        angle = (float)newDirection.Value * 90.0f;
+                        Angle = (float)newDirection.Value * 90.0f;
                 }
             }
             else
@@ -68,8 +80,8 @@ namespace Ambermoon.Render
 
                 if (newDirection != null)
                 {
-                    angle = (float)newDirection.Value * 90.0f;
-                    Camera.TurnTowards(angle);
+                    Angle = (float)newDirection.Value * 90.0f;
+                    Camera.TurnTowards(Angle);
                 }
             }
 
@@ -196,19 +208,19 @@ namespace Ambermoon.Render
 
         public void TurnLeft(float angle) // in degrees
         {
-            this.angle -= angle;
+            Angle -= angle;
             Camera.TurnLeft(angle);
         }
 
         public void TurnRight(float angle) // in degrees
         {
-            this.angle += angle;
+            Angle += angle;
             Camera.TurnRight(angle);
         }
 
         public void TurnTowards(float angle) // turn to attacking monster or stand on a spinner (in degrees)
         {
-            this.angle = angle;
+            Angle = angle;
             Camera.TurnTowards(angle);
         }
 
@@ -252,18 +264,49 @@ namespace Ambermoon.Render
         {
             get
             {
-                while (angle > 315.0f)
-                    angle -= 360.0f;
-                while (angle < -45.0f)
-                    angle += 360.0f;
+                float directionAngle = Angle;
 
-                if (angle < 45.0f)
+                if (directionAngle > 315.0f)
+                    directionAngle -= 360.0f;
+                if (directionAngle < -45.0f)
+                    directionAngle += 360.0f;
+
+                if (directionAngle < 45.0f)
                     return CharacterDirection.Up;
-                if (angle < 135.0f)
+                if (directionAngle < 135.0f)
                     return CharacterDirection.Right;
-                if (angle < 225.0f)
+                if (directionAngle < 225.0f)
                     return CharacterDirection.Down;
                 return CharacterDirection.Left;
+            }
+        }
+
+        public Direction PreciseDirection
+        {
+            get
+            {
+                float directionAngle = Angle;
+
+                if (directionAngle > 337.5f)
+                    directionAngle -= 360.0f;
+                if (directionAngle < -22.5f)
+                    directionAngle += 360.0f;
+
+                if (directionAngle < 22.5f)
+                    return Ambermoon.Direction.Up;
+                if (directionAngle < 67.5f)
+                    return Ambermoon.Direction.UpRight;
+                if (directionAngle < 112.5f)
+                    return Ambermoon.Direction.Right;
+                if (directionAngle < 157.5f)
+                    return Ambermoon.Direction.DownRight;
+                if (directionAngle < 202.5f)
+                    return Ambermoon.Direction.Down;
+                if (directionAngle < 247.5f)
+                    return Ambermoon.Direction.DownLeft;
+                if (directionAngle < 292.5f)
+                    return Ambermoon.Direction.Left;
+                return Ambermoon.Direction.UpLeft;
             }
         }
     }

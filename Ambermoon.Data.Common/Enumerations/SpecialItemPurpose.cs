@@ -4,7 +4,7 @@
     {
         Compass,
         MonsterEye,
-        DayNight, // magic picture
+        DayTime, // magic picture
         WindChain,
         MapLocation,
         Clock

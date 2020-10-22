@@ -4,6 +4,14 @@ using System;
 
 namespace Ambermoon
 {
+    public enum DayTime
+    {
+        Night,
+        Dusk,
+        Day,
+        Dawn
+    }
+
     internal interface ITime
     {
         uint Year { get; }
@@ -156,6 +164,7 @@ namespace Ambermoon
 
             currentMoveTicks = 0;
             ResetTickTimer();
+            HandleTimePassed(0, 5);
         }
 
         public void MoveTick(Map map, TravelType travelType)
@@ -200,6 +209,7 @@ namespace Ambermoon
             savegame.Hour += hours;
             PostIncreaseUpdate();
             ResetTickTimer();
+            HandleTimePassed(hours, 0);
         }
 
         void PostIncreaseUpdate()
@@ -224,6 +234,44 @@ namespace Ambermoon
                     }
                 }
             }
+        }
+
+        void HandleTimePassed(uint passedHours, uint passedMinutes)
+        {
+            uint passed5MinuteChunks = passedHours / 12 + passedMinutes / 5;
+
+            foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
+            {
+                var activeSpell = savegame.ActiveSpells[(int)activeSpellType];
+
+                if (activeSpell != null)
+                {
+                    if (activeSpell.Duration <= passed5MinuteChunks)
+                        savegame.ActiveSpells[(int)activeSpellType] = null;
+                    else
+                        activeSpell.Duration -= passed5MinuteChunks;
+                }
+            }
+        }
+    }
+
+    internal static class TimeExtensions
+    {
+        public static DayTime GetDayTime(this ITime time)
+        {
+            // 6-8 -> Dusk
+            // 8-18 -> Day
+            // 18-20 -> Dawn
+            // 20-6 -> Night
+
+            if (time.Hour < 6 || time.Hour >= 20)
+                return DayTime.Night;
+            else if (time.Hour < 8)
+                return DayTime.Dusk;
+            else if (time.Hour < 18)
+                return DayTime.Day;
+            else
+                return DayTime.Dawn;
         }
     }
 }

@@ -217,6 +217,7 @@ namespace Ambermoon
             Global.Map2DViewWidth, Global.Map2DViewHeight);
         internal static readonly Rect Map3DViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY,
             Global.Map3DViewWidth, Global.Map3DViewHeight);
+        internal int PlayerAngle => is3D ? Util.Round(player3D.Angle) : (int)player2D.Direction.ToAngle();
         internal CursorType CursorType
         {
             get => cursor.Type;
@@ -455,7 +456,6 @@ namespace Ambermoon
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
-            ResetMoveKeys();
             layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
             is3D = false;
 
@@ -506,7 +506,6 @@ namespace Ambermoon
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 3D.");
 
-            ResetMoveKeys();
             layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, false, TravelType.Walk));
 
             is3D = true;
@@ -668,11 +667,14 @@ namespace Ambermoon
 
         void RenderMap3D_MapChanged(Map map)
         {
+            ResetMoveKeys();
             RunSavegameTileChangeEvents(map.Index);
         }
 
         void RenderMap2D_MapChanged(Map[] maps)
         {
+            ResetMoveKeys();
+
             foreach (var map in maps)
                 RunSavegameTileChangeEvents(map.Index);
         }
@@ -1433,6 +1435,18 @@ namespace Ambermoon
                 layout.Reset();
                 layout.FillArea(new Rect(208, 49, 96, 80), GetPaletteColor(50, 28), false);
                 SetWindow(Window.MapView);
+
+                foreach (var specialItem in Enum.GetValues<SpecialItemPurpose>())
+                {
+                    if (CurrentSavegame.IsSpecialItemActive(specialItem))
+                        layout.AddSpecialItem(specialItem);
+                }
+
+                foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+                {
+                    if (CurrentSavegame.ActiveSpells[(int)activeSpell] != null)
+                        layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell]);
+                }
             }
         }
 
@@ -1977,8 +1991,8 @@ namespace Ambermoon
                 player.MoveTo(newMap, mapChangeEvent.X - 1,
                     mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
                     CurrentTicks, true, mapChangeEvent.Direction);
-                this.player.Position.X = player.Position.X;
-                this.player.Position.Y = player.Position.Y;
+                this.player.Position.X = RenderPlayer.Position.X;
+                this.player.Position.Y = RenderPlayer.Position.Y;
 
                 if (!mapTypeChanged)
                 {

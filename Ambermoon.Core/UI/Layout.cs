@@ -106,11 +106,15 @@ namespace Ambermoon.UI
     public class Bar : FilledArea
     {
         readonly Rect barArea;
+        readonly int size;
+        readonly bool horizontal;
 
-        internal Bar(List<IColoredRect> filledAreas, IColoredRect area)
+        internal Bar(List<IColoredRect> filledAreas, IColoredRect area, int size, bool horizontal)
             : base(filledAreas, area)
         {
             barArea = new Rect(area.X, area.Y, area.Width, area.Height);
+            this.size = size;
+            this.horizontal = horizontal;
         }
 
         /// <summary>
@@ -119,11 +123,17 @@ namespace Ambermoon.UI
         /// <param name="percentage">Value in the range 0 to 1 (0 to 100%).</param>
         public void Fill(float percentage)
         {
-            // 100% = 16 pixels
-            int pixels = Util.Round(16.0f * percentage);
+            int pixels = Util.Round(size * percentage);
 
             if (pixels == 0)
                 area.Visible = false;
+            else if (horizontal)
+            {
+                area.X = barArea.Left;
+                area.Y = barArea.Top;
+                area.Resize(pixels, barArea.Height);
+                area.Visible = true;
+            }
             else
             {
                 area.X = barArea.Left;
@@ -333,6 +343,11 @@ namespace Ambermoon.UI
         readonly Bar[] characterBars = new Bar[Game.MaxPartyMembers * 4]; // 2 bars and each has fill and shadow color
         ISprite sprite80x80Picture;
         ISprite eventPicture;
+        readonly Dictionary<SpecialItemPurpose, ILayerSprite> specialItemSprites = new Dictionary<SpecialItemPurpose, ILayerSprite>();
+        readonly Dictionary<SpecialItemPurpose, UIText> specialItemTexts = new Dictionary<SpecialItemPurpose, UIText>();
+        readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new Dictionary<ActiveSpellType, ILayerSprite>();
+        readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new Dictionary<ActiveSpellType, IColoredRect>();
+        readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
         readonly List<IColoredRect> barAreas = new List<IColoredRect>();
@@ -448,16 +463,16 @@ namespace Ambermoon.UI
 
                 // LP shadow
                 characterBars[i * 4 + 0] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 2, 19, 1, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBarShadow), 1, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBarShadow), 1, FilledAreaType.CharacterBar), 16, false);
                 // LP fill
                 characterBars[i * 4 + 1] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 3, 19, 3, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBar), 1, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBar), 1, FilledAreaType.CharacterBar), 16, false);
                 // SP shadow
                 characterBars[i * 4 + 2] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 10, 19, 1, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBarShadow), 1, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBarShadow), 1, FilledAreaType.CharacterBar), 16, false);
                 // SP fill
                 characterBars[i * 4 + 3] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 11, 19, 3, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBar), 1, FilledAreaType.CharacterBar));
+                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBar), 1, FilledAreaType.CharacterBar), 16, false);
             }
         }
 
@@ -1062,6 +1077,12 @@ namespace Ambermoon.UI
             tooltips.Clear();
             inventoryMessage?.Destroy();
             inventoryMessage = null;
+            activeSpellSprites.Clear(); // sprites are destroyed above
+            activeSpellDurationBackgrounds.Values.ToList().ForEach(b => b?.Delete());
+            activeSpellDurationBackgrounds.Clear();
+            activeSpellDurationBars.Clear(); // areas are destroyed above
+            specialItemSprites.Clear(); // sprites are destroyed above
+            specialItemTexts.Clear(); // texts are destroyed above
 
             // Note: Don't remove fadeEffects or bars here.
         }
@@ -1147,7 +1168,154 @@ namespace Ambermoon.UI
             characterBars[slot * 4 + 3].Fill(spPercentage);
         }
 
-        public void AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
+        public void AddActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell)
+        {
+            int index = (int)activeSpellType;
+            uint graphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.Candle + index);
+            activeSpellSprites.Add(activeSpellType, AddSprite(new Rect(208 + index * 16, 106, 16, 16), graphicIndex, 49));
+
+            activeSpellDurationBackgrounds.Add(activeSpellType, CreateArea(new Rect(209 + index * 16, 123, 14, 4), game.GetPaletteColor(50, 26), 2));
+            var durationBar = new Bar(filledAreas,
+                CreateArea(new Rect(210 + index * 16, 124, 12, 2), game.GetPaletteColor(50, 31), 2), 12, true);
+            activeSpellDurationBars.Add(activeSpellType, durationBar);
+            durationBar.Fill((float)activeSpell.Duration / 200.0f);
+        }
+
+        void UpdateActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell)
+        {
+            if (activeSpell == null)
+            {
+                if (activeSpellSprites.ContainsKey(activeSpellType))
+                {
+                    activeSpellSprites[activeSpellType]?.Delete();
+                    activeSpellSprites.Remove(activeSpellType);
+                    activeSpellDurationBackgrounds[activeSpellType]?.Delete();
+                    activeSpellDurationBackgrounds.Remove(activeSpellType);
+                    activeSpellDurationBars[activeSpellType]?.Destroy();
+                    activeSpellDurationBars.Remove(activeSpellType);
+                }
+            }
+            else
+            {
+                if (!activeSpellSprites.ContainsKey(activeSpellType))
+                {
+                    AddActiveSpell(activeSpellType, activeSpell);
+                }
+                else // update duration display
+                {
+                    activeSpellDurationBars[activeSpellType].Fill((float)activeSpell.Duration / 200.0f);
+                }
+            }
+        }
+
+        string GetCompassString()
+        {
+            /// This contains all of theidrection starting with W (West) and going
+            /// clock-wise until W again and then additional N-W and N again.
+            /// It is used for the compass which can scroll and display
+            /// 3 directions partially at once.
+            /// English example: "W  N-W  N  N-E  E  S-E  S  S-W  W  N-W  N  "
+            /// There are always 2 spaces between each direction. I think 1 space
+            /// as a divider and 1 space to the right/left of the 1-character
+            /// directions.
+            string baseString = game.DataNameProvider.CompassDirections;
+            int playerAngle = game.PlayerAngle;
+
+            if (playerAngle < 0)
+                playerAngle += 360;
+            if (playerAngle >= 360)
+                playerAngle -= 360;
+
+            // The display is 32 pixels wide so when displaying for example the W
+            // in the center (direction is exactle west), there are two spaces to
+            // each size and a 1 pixel line of the S-W and N-W.
+            // To accomplish that we display not 5 but 7 characters and clip the
+            // text accordingly.
+
+            // There are 32 possible text rotations. The first (0) is 1 left of N-W.
+            // The last (31) is a bit left of N-W. Increasing rotates right.
+            // Rotating by 45° (e.g. from N to N-E) needs 4 text index increases (1 step ~ 11°).
+            // Rotating by 90° (e.g. from N to E) needs 8 text index increases (1 step ~ 11°).
+            // There is 1° difference per 45° and therefore 8° for a full rotation of 360°.
+            // The exact angle range for one text index is 360°/32 = 11.25°.
+
+            // As the first index is for left of N-W and this is -56.25°, we use it as a base angle
+            // by adding 45 to the real player angle.
+            int index = Util.Round((playerAngle + 56.25f) / 11.25f);
+
+            if (index >= 32)
+                index -= 32;
+
+            return baseString.Substring(index, 7);
+        }
+
+        public void AddSpecialItem(SpecialItemPurpose specialItem)
+        {
+            switch (specialItem)
+            {
+            case SpecialItemPurpose.Compass:
+                {
+                    specialItemSprites.Add(specialItem, AddSprite(new Rect(208, 73, 32, 32),
+                        Graphics.GetUIGraphicIndex(UIGraphic.Compass), 49, 3)); // Note: The display layer must be greater than the windchain layer
+                    var text = AddText(new Rect(203, 86, 42, 7),
+                        GetCompassString(), TextColor.Gray);
+                    specialItemTexts.Add(SpecialItemPurpose.Compass, text);
+                    text.Clip(new Rect(208, 86, 32, 7));
+                    break;
+                }
+            case SpecialItemPurpose.MonsterEye:
+                specialItemSprites.Add(specialItem, AddSprite(new Rect(240, 49, 32, 32),
+                    Graphics.GetUIGraphicIndex(game.MonsterSeesPlayer ? UIGraphic.MonsterEyeActive : UIGraphic.MonsterEyeInactive), 49));
+                break;
+            case SpecialItemPurpose.DayTime:
+                specialItemSprites.Add(specialItem, AddSprite(new Rect(272, 73, 32, 32),
+                    Graphics.GetUIGraphicIndex(UIGraphic.Night + (int)game.GameTime.GetDayTime()), 49));
+                break;
+            case SpecialItemPurpose.WindChain:
+                specialItemSprites.Add(specialItem, AddSprite(new Rect(240, 89, 32, 15),
+                    Graphics.GetUIGraphicIndex(UIGraphic.Windchain), 49));
+                break;
+            case SpecialItemPurpose.MapLocation:
+                specialItemTexts.Add(SpecialItemPurpose.MapLocation, AddText(new Rect(210, 50, 30, 14),
+                    $"X:{game.PartyPosition.X + 1,3}^Y:{game.PartyPosition.Y + 1,3}", TextColor.Gray));
+                break;
+            case SpecialItemPurpose.Clock:
+                specialItemTexts.Add(SpecialItemPurpose.Clock, AddText(new Rect(273, 50, 34, 14),
+                    $"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}", TextColor.Gray));
+                break;
+            default:
+                throw new AmbermoonException(ExceptionScope.Application, $"Invalid special item: {specialItem}");
+            };
+        }
+
+        void UpdateSpecialItems()
+        {
+            // Update compass
+            if (specialItemTexts.ContainsKey(SpecialItemPurpose.Compass))
+                specialItemTexts[SpecialItemPurpose.Compass].SetText(game.ProcessText(GetCompassString()));
+
+            // Update monster eye
+            if (specialItemSprites.ContainsKey(SpecialItemPurpose.MonsterEye))
+                specialItemSprites[SpecialItemPurpose.MonsterEye].TextureAtlasOffset =
+                    textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(game.MonsterSeesPlayer ? UIGraphic.MonsterEyeActive : UIGraphic.MonsterEyeInactive));
+
+            // Update daytime display
+            if (specialItemSprites.ContainsKey(SpecialItemPurpose.DayTime))
+                specialItemSprites[SpecialItemPurpose.DayTime].TextureAtlasOffset =
+                    textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Night + (int)game.GameTime.GetDayTime()));
+
+            // Update map location
+            if (specialItemTexts.ContainsKey(SpecialItemPurpose.MapLocation))
+                specialItemTexts[SpecialItemPurpose.MapLocation].SetText(
+                    game.ProcessText($"X:{game.PartyPosition.X + 1,3}^Y:{game.PartyPosition.Y + 1,3}"));
+
+            // Update clock
+            if (specialItemTexts.ContainsKey(SpecialItemPurpose.Clock))
+                specialItemTexts[SpecialItemPurpose.Clock].SetText(
+                    game.ProcessText($"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}"));
+        }
+
+        public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
             string tooltip = null, TextColor? tooltipTextColor = null)
         {
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, false, true) as ILayerSprite;
@@ -1162,6 +1330,8 @@ namespace Ambermoon.UI
 
             if (tooltip != null)
                 AddTooltip(rect, tooltip, tooltipTextColor ?? TextColor.White);
+
+            return sprite;
         }
 
         void AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
@@ -1365,6 +1535,16 @@ namespace Ambermoon.UI
 
                 if (fadeEffects[i].Destroyed)
                     fadeEffects.RemoveAt(i);
+            }
+
+            if (Type == LayoutType.Map2D || Type == LayoutType.Map3D)
+            {
+                foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+                {
+                    UpdateActiveSpell(activeSpell, game.CurrentSavegame.ActiveSpells[(int)activeSpell]);
+                }
+
+                UpdateSpecialItems();
             }
         }
 

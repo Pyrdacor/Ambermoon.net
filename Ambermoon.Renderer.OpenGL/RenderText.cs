@@ -332,6 +332,7 @@ namespace Ambermoon.Renderer
                     PaletteIndex = 50,
                     Visible = Visible
                 };
+                sprite.ClipArea = ClipArea;
 
                 characterSprites.Add(sprite);
             }
@@ -351,6 +352,7 @@ namespace Ambermoon.Renderer
                         PaletteIndex = 50,                        
                         Visible = Visible
                     };
+                    shadowSprite.ClipArea = ClipArea;
 
                     characterShadowSprites.Add(shadowSprite);
                 }

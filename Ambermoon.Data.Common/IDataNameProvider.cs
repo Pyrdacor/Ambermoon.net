@@ -48,6 +48,7 @@
         string TakeHowManyMessage { get; }
         string PersonAsleepMessage { get; }
         string WantToFightMessage { get; }
+        string CompassDirections { get; }
 
         // TODO
     }

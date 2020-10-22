@@ -114,5 +114,10 @@ namespace Ambermoon.UI
 
             return false;
         }
+
+        public void Clip(Rect area)
+        {
+            renderText.ClipArea = area;
+        }
     }
 }
