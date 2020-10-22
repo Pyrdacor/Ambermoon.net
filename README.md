@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.16](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.16/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.15](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.15/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.14](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.14/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.1.13](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.13/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -60,6 +60,7 @@ Working things:
 - character info, portraits and names
 - savegame loading
 - many buttons and UI stuff
+- active special items and buffs (only display for the latter)
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
@@ -73,6 +74,7 @@ Working things:
 ![Monsters](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Monsters3D.png "Monsters")
 ![Events](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/EventBox.png "Events")
 ![Text box](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/DecisionBox.png "Text box")
+![Active items](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/SpecialItems.png "Active items")
 
 
 ## Controls
@@ -92,6 +94,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [1.1.16](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.16): Added 3D NPCs interaction, turn toward monsters, active spells and items, bugfixing
 - Version [1.1.15](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.15): Added 3D NPCs/monsters with movement (still WIP), bugfixing
 - Version [1.1.14](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.14): Added 2D NPCs and rudimentary conversation window, bugfixing
 - Version [1.1.13](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.13): One-time events now working, UI improvements, bugfixing
