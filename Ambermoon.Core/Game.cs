@@ -1983,8 +1983,6 @@ namespace Ambermoon
                 var player = is3D ? (IRenderPlayer)player3D : player2D;
                 bool mapTypeChanged = Map.Type != newMap.Type;
 
-                ShowMap(true);
-
                 // The position (x, y) is 1-based in the data so we subtract 1.
                 // Moreover the players position is 1 tile below its drawing position
                 // in non-world 2D so subtract another 1 from y.
@@ -2002,6 +2000,8 @@ namespace Ambermoon
 
                     PlayerMoved(mapChange);
                 }
+
+                ShowMap(true);
             });
         }
 
