@@ -1280,7 +1280,7 @@ namespace Ambermoon.UI
                     $"X:{game.PartyPosition.X + 1,3}^Y:{game.PartyPosition.Y + 1,3}", TextColor.Gray));
                 break;
             case SpecialItemPurpose.Clock:
-                specialItemTexts.Add(SpecialItemPurpose.Clock, AddText(new Rect(273, 50, 34, 14),
+                specialItemTexts.Add(SpecialItemPurpose.Clock, AddText(new Rect(273, 54, 30, 7),
                     $"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}", TextColor.Gray));
                 break;
             default:
