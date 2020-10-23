@@ -42,7 +42,7 @@ namespace Ambermoon.Geometry
         public Character3D(Game game)
         {
             this.game = game;
-            NextMoveTimeSlot = (game.GameTime.TimeSlot + 1) % 12;
+            ResetMovementTimer();
             lastMoveTicks = game.CurrentTicks;
         }
 
@@ -130,6 +130,11 @@ namespace Ambermoon.Geometry
             movedTicks = 0;
         }
 
+        public void ResetMovementTimer()
+        {
+            NextMoveTimeSlot = (game.GameTime.TimeSlot + 1) % 12;
+        }
+
         public void Update(uint ticks, FloatPosition playerPosition, bool moveRandom, bool canSeePlayer)
         {
             if (Paused)
@@ -145,7 +150,7 @@ namespace Ambermoon.Geometry
                 }
                 else if (moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
                 {
-                    NextMoveTimeSlot = (NextMoveTimeSlot + 1) % 12;
+                    ResetMovementTimer();
                     RandomMovementRequested?.Invoke();
                 }
                 break;
@@ -157,7 +162,7 @@ namespace Ambermoon.Geometry
                 }
                 else if (game.GameTime.TimeSlot == NextMoveTimeSlot)
                 {
-                    NextMoveTimeSlot = (NextMoveTimeSlot + 1) % 12;
+                    ResetMovementTimer();
                     MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);
                 }
                 break;

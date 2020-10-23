@@ -78,6 +78,31 @@ namespace Ambermoon
             public Action Action;
         }
 
+        internal class BattleEndInfo
+        {
+            /// <summary>
+            /// If true all monsters were defeated or did flee.
+            /// If false all party members fled.
+            /// If all party members died the game is just over
+            /// and this event is not used anymore.
+            /// </summary>
+            public bool MonstersDefeated;
+            /// <summary>
+            /// If all monsters were defeated this list contains
+            /// the indices of monsters inside the monster group
+            /// who fled instead of dying.
+            /// </summary>
+            public List<uint> FledMonsterIndices;
+        }
+
+        class BattleInfo
+        {
+            public uint MonsterGroupIndex;
+            public event Action<BattleEndInfo> BattleEnded;
+
+            internal void EndBattle(BattleEndInfo battleEndInfo) => BattleEnded?.Invoke(battleEndInfo);
+        }
+
         /// <summary>
         /// Character info texts that may change while
         /// in Inventory/Stats window.
@@ -147,6 +172,7 @@ namespace Ambermoon
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         internal bool MonsterSeesPlayer { get; set; } = false;
+        BattleInfo currentBattle = null;
         readonly ILayerSprite ouchSprite;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputDisabled = false;
@@ -975,7 +1001,10 @@ namespace Ambermoon
                                 layout.ClosePopup();
                         }
                         else
-                            CloseWindow();
+                        {
+                            if (currentWindow.Closable)
+                                layout.PressButton(2, CurrentTicks);
+                        }
                     }
 
                     break;
@@ -2401,6 +2430,108 @@ namespace Ambermoon
             });
         }
 
+        /// <summary>
+        /// Starts a battle with the given monster group index.
+        /// It is used for monsters that are present on the map.
+        /// </summary>
+        /// <param name="monsterGroupIndex">Monster group index</param>
+        internal void StartBattle(uint monsterGroupIndex, bool failedEscape, Action<BattleEndInfo> battleEndHandler)
+        {
+            currentBattle = new BattleInfo
+            {
+                MonsterGroupIndex = monsterGroupIndex
+            };
+            currentBattle.BattleEnded += battleEndHandler;
+            ShowBattleWindow(null, failedEscape);
+        }
+
+        void ShowBattleWindow(Event nextEvent, bool surpriseAttack)
+        {
+            Fade(() =>
+            {
+                SetWindow(Window.Battle);
+                layout.SetLayout(LayoutType.Battle);
+                ShowMap(false);
+                layout.Reset();
+
+                // TODO: where is the combat background index for 2D maps?
+                uint combatBackgroundIndex = is3D ? renderMap3D.CombatBackgroundIndex : Map.World switch
+                {
+                    World.Lyramion => 0u,
+                    World.ForestMoon => 6u,
+                    World.Morag => 4u,
+                    _ => 0u
+                };
+                var combatBackground = is3D
+                    ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex)
+                    : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex);
+                layout.AddSprite(new Rect(0, 38, 320, 95), Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
+                    (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1);
+                layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), false);
+
+                // TODO: REMOVE. This is only for testing.
+                layout.AttachEventToButton(2, () =>
+                {
+                    var battleEndInfo = new BattleEndInfo
+                    {
+                        MonstersDefeated = true,
+                        FledMonsterIndices = new List<uint>()
+                    };
+                    void EndBattle(BattleEndInfo battleEndInfo)
+                    {
+                        currentBattle.EndBattle(battleEndInfo);
+                        if (nextEvent != null)
+                        {
+                            // TODO
+                            bool lastStatus = true;
+                            nextEvent.ExecuteEvent(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
+                                (uint)RenderPlayer.Position.Y, CurrentTicks, ref lastStatus, out bool aborted);
+                        }
+                    }
+                    if (battleEndInfo.MonstersDefeated)
+                    {
+                        ShowBattleLoot(battleEndInfo, () =>
+                        {
+                            EndBattle(battleEndInfo);
+                        });
+                    }
+                    else
+                    {
+                        CloseWindow();
+                        EndBattle(battleEndInfo);
+                    }
+                });
+                // TODO: REMOVE. This is only for testing.
+                layout.AttachEventToButton(0, () =>
+                {
+                    CloseWindow();
+                    currentBattle.EndBattle(new BattleEndInfo
+                    {
+                        MonstersDefeated = false,
+                        FledMonsterIndices = new List<uint>()
+                    });
+                });
+
+                // TODO
+            });
+        }
+
+        internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent)
+        {
+            currentBattle = new BattleInfo
+            {
+                MonsterGroupIndex = battleEvent.MonsterGroupIndex
+            };
+            ShowBattleWindow(nextEvent, true);
+        }
+
+        internal void ShowBattleLoot(BattleEndInfo battleEndInfo, Action closeAction)
+        {
+            // TODO
+            CloseWindow();
+            closeAction?.Invoke();
+        }
+
         internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler, bool showRiddle = true)
         {
             Fade(() =>
@@ -2529,7 +2660,7 @@ namespace Ambermoon
             popup.Closed += UntrapMouse;
         }
 
-        internal void ShowMessagePopup(string text)
+        internal void ShowMessagePopup(string text, Action closeAction = null)
         {
             Pause();
             InputEnable = false;
@@ -2539,6 +2670,7 @@ namespace Ambermoon
                 InputEnable = true;
                 Resume();
                 ResetCursor();
+                closeAction?.Invoke();
             }, true, true, false, TextAlign.Center);
             CursorType = CursorType.Click;
             TrapMouse(popup.ContentArea);

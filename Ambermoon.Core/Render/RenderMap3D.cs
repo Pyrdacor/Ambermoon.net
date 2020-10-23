@@ -161,27 +161,44 @@ namespace Ambermoon.Render
                     player3D.TurnTowards(character3D.RealPosition);
                     surface.Extrude = -1.0f;
 
+                    void StartBattle(bool failedEscape)
+                    {
+                        game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
+                        {
+                            lastInteractionTime = DateTime.Now;
+
+                            if (battleEndInfo.MonstersDefeated)
+                            {
+                                Active = false;
+                                game.CurrentSavegame.SetCharacterBit(map.Map.Index, characterIndex, true);
+                            }
+                            else
+                                character3D.ResetMovementTimer();
+                            // TODO
+                        });
+                    }
+
                     game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
                     {
                         surface.Extrude = 0.0f;
 
                         if (response == PopupTextEvent.Response.Yes)
                         {
-                            // TODO
-                            // game.StartBattle(characterReference.EventIndex);
-                            // set lastInteractionTime = DateTime.Now; after fight
+                            StartBattle(false);
                         }
                         else
                         {
-                            // TODO: Test for successful flee
-                            // set lastInteractionTime = DateTime.Now; after fight or when fleed successfully
+                            // TODO: chance
+                            if (game.RollDice100() < 50)
+                            {
+                                game.ShowMessagePopup(game.DataNameProvider.AttackEscapeFailedMessage, () => StartBattle(true));
+                            }
+                            else
+                            {
+                                // successfully fled
+                                lastInteractionTime = DateTime.Now;
+                            }
                         }
-
-                        // TODO: after battle and monster survival, set: nextMoveTimeSlot = (gameTime.TimeSlot + 1) % 12;
-                        // TODO: after battle if monster group was defeated -> set active to false here and maybe in savegame
-
-                        // TODO: Remove later
-                        lastInteractionTime = DateTime.Now;
                     }, 2);
 
                     return true;
@@ -417,6 +434,7 @@ namespace Ambermoon.Render
         readonly Dictionary<uint, MapCharacter> mapCharacters = new Dictionary<uint, MapCharacter>();
         static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
         static Graphic[] labBackgroundGraphics = null;
+        public uint CombatBackgroundIndex => labdata.CombatBackground;
         /// <summary>
         /// This contains all block indices that could be changed by map events for labdatas.
         /// </summary>

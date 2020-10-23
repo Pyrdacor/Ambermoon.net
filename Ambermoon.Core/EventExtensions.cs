@@ -234,6 +234,14 @@ namespace Ambermoon
                     lastEventStatus = game.RollDice100() < diceEvent.Chance;
                     return lastEventStatus ? diceEvent.Next : mapEventIfFalse;
                 }
+                case EventType.StartBattle:
+                {
+                    if (!(@event is StartBattleEvent battleEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid battle event.");
+
+                    game.StartBattle(battleEvent, battleEvent.Next);
+                    return null;
+                }
                 case EventType.Conversation:
                 {
                     if (!(@event is ConversationEvent conversationEvent))

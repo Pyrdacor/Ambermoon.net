@@ -49,6 +49,7 @@
         string PersonAsleepMessage { get; }
         string WantToFightMessage { get; }
         string CompassDirections { get; }
+        string AttackEscapeFailedMessage { get; }
 
         // TODO
     }

@@ -24,7 +24,8 @@ namespace Ambermoon.Data
         EventPictures,
         TravelGfx,
         Transports,
-        NPC
+        NPC,
+        CombatBackground
         // TODO ...
     }
 
@@ -32,5 +33,7 @@ namespace Ambermoon.Data
     {
         Dictionary<int, Graphic> Palettes { get; }
         List<Graphic> GetGraphics(GraphicType type);
+        CombatBackgroundInfo Get2DCombatBackground(uint index);
+        CombatBackgroundInfo Get3DCombatBackground(uint index);
     }
 }

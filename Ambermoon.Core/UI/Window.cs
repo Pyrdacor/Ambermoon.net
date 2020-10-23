@@ -11,7 +11,9 @@ namespace Ambermoon.UI
         Merchant,
         Event,
         Riddlemouth,
-        Conversation
+        Conversation,
+        Battle,
+        BattleLoot
         // TODO ...
     }
 
@@ -19,5 +21,6 @@ namespace Ambermoon.UI
     {
         public Window Window;
         public object[] WindowParameters; // party member index, chest event, etc
+        public bool Closable => Window != Window.Battle; // TODO: add more (windows without exit button)
     }
 }

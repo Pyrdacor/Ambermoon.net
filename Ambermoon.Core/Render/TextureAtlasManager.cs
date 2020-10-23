@@ -233,6 +233,15 @@ namespace Ambermoon.Render
                 AddTexture(Layer.Cursor, (uint)i, cursorGraphics[i]);
 
             #endregion
+
+            #region Combat backgrounds
+
+            var combatBackgrounds = graphicProvider.GetGraphics(GraphicType.CombatBackground);
+
+            for (int i = 0; i < combatBackgrounds.Count; ++i)
+                AddTexture(Layer.UI, Graphics.CombatBackgroundOffset + (uint)i, combatBackgrounds[i]);
+
+            #endregion
         }
     }
 }

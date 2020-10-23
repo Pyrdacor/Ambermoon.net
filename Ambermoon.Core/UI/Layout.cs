@@ -807,7 +807,18 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO
                     buttonGrid.SetButton(8, ButtonType.GiveFood, true, null, false); // TODO
                     break;
-                    // TODO
+            case LayoutType.Battle:
+                buttonGrid.SetButton(0, ButtonType.Flee, false, null, false); // this is set later manually
+                buttonGrid.SetButton(1, ButtonType.Load, false, OpenLoadMenu, false);
+                buttonGrid.SetButton(2, ButtonType.Ok, false, null, false); // this is set later manually
+                buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false); // this is set later manually
+                buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false); // this is set later manually
+                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                buttonGrid.SetButton(6, ButtonType.Attack, true, null, false); // this is set later manually
+                buttonGrid.SetButton(7, ButtonType.Defend, true, null, false); // this is set later manually
+                buttonGrid.SetButton(8, ButtonType.Spells, true, null, false); // this is set later manually
+                break;
+                // TODO
             }
         }
 

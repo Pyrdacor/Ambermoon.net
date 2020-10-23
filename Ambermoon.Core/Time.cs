@@ -273,5 +273,17 @@ namespace Ambermoon
             else
                 return DayTime.Dawn;
         }
+
+        public static int CombatBackgroundPaletteIndex(this ITime time)
+        {
+            /// 3 palettes for daylight (07:00-18:59),
+            /// twilight (05:00-06:59, 19:00-20:59)
+            /// and night (21:00-04:59) in that order.
+            if (time.Hour >= 7 && time.Hour < 19)
+                return 0;
+            if (time.Hour >= 21 || time.Hour < 5)
+                return 2;
+            return 1;
+        }
     }
 }

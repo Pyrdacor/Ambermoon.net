@@ -242,6 +242,7 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.LabBackground, new GraphicFile("Lab_background.amb"));
             AddGraphicFiles(GraphicType.Pics80x80, new GraphicFile("Pics_80x80.amb"));
             AddGraphicFiles(GraphicType.EventPictures, new GraphicFile("Event_pix.amb"));
+            AddGraphicFiles(GraphicType.CombatBackground, new GraphicFile("Combat_background.amb"));
         }
 
         public List<Graphic> GetGraphics(GraphicType type)
@@ -363,10 +364,20 @@ namespace Ambermoon.Data.Legacy
                     info.PaletteOffset = 0;
                     info.Alpha = false;
                     break;
-                    // TODO
+                case GraphicType.CombatBackground:
+                    info.Width = 320;
+                    info.Height = 95;
+                    info.GraphicFormat = GraphicFormat.Palette5Bit;
+                    info.PaletteOffset = 0;
+                    info.Alpha = false;
+                    break;
+                // TODO
             }
 
             return info;
         }
+
+        public CombatBackgroundInfo Get2DCombatBackground(uint index) => CombatBackgrounds.Info2D[index];
+        public CombatBackgroundInfo Get3DCombatBackground(uint index) => CombatBackgrounds.Info3D[index];
     }
 }
