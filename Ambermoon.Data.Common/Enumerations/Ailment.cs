@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 
 namespace Ambermoon.Data
 {
@@ -22,5 +23,58 @@ namespace Ambermoon.Data
         DeadCorpse = 0x2000,
         DeadAshes = 0x4000,
         DeadDust = 0x8000
+    }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static class AilmentExtensions
+    {
+        public static bool CanMove(this Ailment ailment)
+        {
+            return
+                !ailment.HasFlag(Ailment.Sleep) &&
+                !ailment.HasFlag(Ailment.Exhausted) &&
+                !ailment.HasFlag(Ailment.Lamed) &&
+                !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.DeadCorpse) &&
+                !ailment.HasFlag(Ailment.DeadAshes) &&
+                !ailment.HasFlag(Ailment.DeadDust);
+        }
+
+        public static bool CanFlee(this Ailment ailment)
+        {
+            return
+                !ailment.HasFlag(Ailment.Sleep) &&
+                !ailment.HasFlag(Ailment.Exhausted) &&
+                !ailment.HasFlag(Ailment.Lamed) &&
+                !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.DeadCorpse) &&
+                !ailment.HasFlag(Ailment.DeadAshes) &&
+                !ailment.HasFlag(Ailment.DeadDust);
+        }
+
+        public static bool CanAttack(this Ailment ailment)
+        {
+            return
+                !ailment.HasFlag(Ailment.Sleep) &&
+                !ailment.HasFlag(Ailment.Panic) &&
+                !ailment.HasFlag(Ailment.Lamed) && // TODO: not sure
+                !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.DeadCorpse) &&
+                !ailment.HasFlag(Ailment.DeadAshes) &&
+                !ailment.HasFlag(Ailment.DeadDust);
+        }
+
+        public static bool CanCastSpell(this Ailment ailment)
+        {
+            return
+                !ailment.HasFlag(Ailment.Irritated) &&
+                !ailment.HasFlag(Ailment.Sleep) &&
+                !ailment.HasFlag(Ailment.Panic) &&
+                !ailment.HasFlag(Ailment.Lamed) && // TODO: not sure
+                !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.DeadCorpse) &&
+                !ailment.HasFlag(Ailment.DeadAshes) &&
+                !ailment.HasFlag(Ailment.DeadDust);
+        }
     }
 }

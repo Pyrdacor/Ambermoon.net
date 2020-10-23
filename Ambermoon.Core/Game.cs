@@ -172,7 +172,8 @@ namespace Ambermoon
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         internal bool MonsterSeesPlayer { get; set; } = false;
-        BattleInfo currentBattle = null;
+        BattleInfo currentBattleInfo = null;
+        Battle currentBattle = null;
         readonly ILayerSprite ouchSprite;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputDisabled = false;
@@ -2437,11 +2438,11 @@ namespace Ambermoon
         /// <param name="monsterGroupIndex">Monster group index</param>
         internal void StartBattle(uint monsterGroupIndex, bool failedEscape, Action<BattleEndInfo> battleEndHandler)
         {
-            currentBattle = new BattleInfo
+            currentBattleInfo = new BattleInfo
             {
                 MonsterGroupIndex = monsterGroupIndex
             };
-            currentBattle.BattleEnded += battleEndHandler;
+            currentBattleInfo.BattleEnded += battleEndHandler;
             ShowBattleWindow(null, failedEscape);
         }
 
@@ -2468,10 +2469,20 @@ namespace Ambermoon
                 layout.AddSprite(new Rect(0, 38, 320, 95), Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                     (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1);
                 layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), false);
+                currentBattle = new Battle(this, Enumerable.Range(0, Game.MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
+                    CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex));
+                currentBattle.RoundFinished += () =>
+                {
+                    InputEnable = true;
+                    CursorType = CursorType.Sword;
+                };
 
                 // TODO: REMOVE. This is only for testing.
                 layout.AttachEventToButton(2, () =>
                 {
+                    //InputEnable = false;
+                    //CursorType = CursorType.Click;
+                    // TODO: call currentBattle.StartRound here with player actions
                     var battleEndInfo = new BattleEndInfo
                     {
                         MonstersDefeated = true,
@@ -2479,7 +2490,7 @@ namespace Ambermoon
                     };
                     void EndBattle(BattleEndInfo battleEndInfo)
                     {
-                        currentBattle.EndBattle(battleEndInfo);
+                        currentBattleInfo.EndBattle(battleEndInfo);
                         if (nextEvent != null)
                         {
                             // TODO
@@ -2505,12 +2516,23 @@ namespace Ambermoon
                 layout.AttachEventToButton(0, () =>
                 {
                     CloseWindow();
-                    currentBattle.EndBattle(new BattleEndInfo
+                    currentBattleInfo.EndBattle(new BattleEndInfo
                     {
                         MonstersDefeated = false,
                         FledMonsterIndices = new List<uint>()
                     });
                 });
+
+                if (surpriseAttack)
+                {
+                    InputEnable = false;
+                    CursorType = CursorType.Click;
+                    currentBattle.StartRound
+                    (
+                        Enumerable.Repeat(Battle.BattleAction.None, 6).ToArray(),
+                        Enumerable.Repeat(0u, 6).ToArray()
+                    );
+                }
 
                 // TODO
             });
@@ -2518,7 +2540,7 @@ namespace Ambermoon
 
         internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent)
         {
-            currentBattle = new BattleInfo
+            currentBattleInfo = new BattleInfo
             {
                 MonsterGroupIndex = battleEvent.MonsterGroupIndex
             };

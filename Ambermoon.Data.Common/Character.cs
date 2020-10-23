@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data
 {
@@ -42,6 +44,51 @@ namespace Ambermoon.Data
             !Ailments.HasFlag(Ailment.DeadCorpse) &&
             !Ailments.HasFlag(Ailment.DeadAshes) &&
             !Ailments.HasFlag(Ailment.DeadDust);
+        public bool HasAnySpell() =>
+            LearnedHealingSpells != 0 ||
+            LearnedAlchemisticSpells != 0 ||
+            LearnedMysticSpells != 0 ||
+            LearnedDestructionSpells != 0;
+        public List<Spell> LearnedSpells
+        {
+            get
+            {
+                var learnedSpells = new List<Spell>();
+                if (LearnedHealingSpells != 0)
+                {
+                    for (int i = 0; i < 30; ++i)
+                    {
+                        if ((LearnedHealingSpells & (1 << i)) != 0)
+                            learnedSpells.Add((Spell)(i + 1));
+                    }
+                }
+                if (LearnedAlchemisticSpells != 0)
+                {
+                    for (int i = 0; i < 30; ++i)
+                    {
+                        if ((LearnedAlchemisticSpells & (1 << i)) != 0)
+                            learnedSpells.Add((Spell)(i + 31));
+                    }
+                }
+                if (LearnedMysticSpells != 0)
+                {
+                    for (int i = 0; i < 30; ++i)
+                    {
+                        if ((LearnedMysticSpells & (1 << i)) != 0)
+                            learnedSpells.Add((Spell)(i + 61));
+                    }
+                }
+                if (LearnedDestructionSpells != 0)
+                {
+                    for (int i = 0; i < 30; ++i)
+                    {
+                        if ((LearnedDestructionSpells & (1 << i)) != 0)
+                            learnedSpells.Add((Spell)(i + 91));
+                    }
+                }
+                return learnedSpells;
+            }
+        }
 
         public Action<Character> Died;
 
