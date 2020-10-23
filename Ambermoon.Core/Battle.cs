@@ -50,6 +50,17 @@ namespace Ambermoon
             }
         }
 
+        /// <summary>
+        /// Called while updating the battle. Each call will
+        /// perform the next action which can be a movement,
+        /// attack, spell cast, flight or group forward move.
+        /// 
+        /// <see cref="StartRound"/> will automatically call
+        /// this method.
+        /// 
+        /// Each action may trigger some text messages,
+        /// animations or other changes.
+        /// </summary>
         public void NextAction()
         {
             void RunActor()
@@ -250,7 +261,8 @@ namespace Ambermoon
 
         bool MoveSpotAvailable(int characterPosition, Monster monster)
         {
-            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY))
+            // TODO: monsters like spiders can move more than 1 field at once. where is this info stored?
+            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, 1))
                 return false;
 
             for (int y = minY; y <= maxY; ++y)
@@ -267,7 +279,9 @@ namespace Ambermoon
 
         bool AttackSpotAvailable(int characterPosition, Monster monster)
         {
-            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY))
+            int range = 1; // TODO: long-ranged attacks
+
+            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range))
                 return false;
 
             for (int y = minY; y <= maxY; ++y)
@@ -282,16 +296,14 @@ namespace Ambermoon
             return false;
         }
 
-        bool GetRangeMinMaxValues(int characterPosition, Monster monster, out int minX, out int maxX, out int minY, out int maxY)
+        bool GetRangeMinMaxValues(int characterPosition, Monster monster, out int minX, out int maxX, out int minY, out int maxY, int range)
         {
-            // TODO: monsters like spiders can move more than 1 field at once. where is this info stored?
-            int moveRange = 1;
             int characterX = characterPosition % 6;
             int characterY = characterPosition / 6;
-            minX = Math.Max(0, characterX - moveRange);
-            maxX = Math.Min(5, characterX + moveRange);
-            minY = Math.Max(0, characterY - moveRange);
-            maxY = Math.Min(4, characterY + moveRange);
+            minX = Math.Max(0, characterX - range);
+            maxX = Math.Min(5, characterX + range);
+            minY = Math.Max(0, characterY - range);
+            maxY = Math.Min(4, characterY + range);
 
             if (wantsToFlee)
             {
@@ -314,7 +326,8 @@ namespace Ambermoon
 
         uint GetBestMoveSpot(int characterPosition, Monster monster)
         {
-            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY);
+            // TODO: monsters like spiders can move more than 1 field at once. where is this info stored?
+            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, 1);
             var possiblePositions = new List<int>();
 
             for (int y = minY; y <= maxY; ++y)
@@ -344,9 +357,9 @@ namespace Ambermoon
             int minY = Math.Max(0, position - 1);
             int maxY = Math.Min(4, position + 1);
 
-            for (int y = minY; y <= minY; ++y)
+            for (int y = minY; y <= maxY; ++y)
             {
-                for (int x = minX; x <= minX; ++x)
+                for (int x = minX; x <= maxX; ++x)
                 {
                     if (battleField[x + y * 6]?.Type == CharacterType.PartyMember)
                         return true;
@@ -366,7 +379,8 @@ namespace Ambermoon
 
         uint GetBestAttackSpot(int characterPosition, Monster monster)
         {
-            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY);
+            int range = 1; // TODO: long-ranged attacks
+            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range);
             var possiblePositions = new List<int>();
 
             for (int y = minY; y <= maxY; ++y)
@@ -394,7 +408,7 @@ namespace Ambermoon
                     var ammoIndex = monster.Equipment.Slots[EquipmentSlot.LeftHand].ItemIndex;
                     if (ammoIndex == weaponIndex) // two-handed weapon?
                         ammoIndex = 0;
-                    return CreateAttackParameter(GetBestMoveSpot(GetCharacterPosition(monster), monster), weaponIndex, ammoIndex);
+                    return CreateAttackParameter(GetBestAttackSpot(GetCharacterPosition(monster), monster), weaponIndex, ammoIndex);
                 }
             case BattleAction.CastSpell:
                 // TODO: return CreateCastSpellParameter ...
