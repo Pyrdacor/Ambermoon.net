@@ -27,7 +27,7 @@ namespace Ambermoon
         Character currentActor;
         uint currentActorAction = 0;
         uint currentActorActionCount = 0;
-        Character[] battleField = new Character[6 * 5];
+        readonly Character[] battleField = new Character[6 * 5];
         bool wantsToFlee = false;
 
         public Battle(Game game, PartyMember[] partyMembers, MonsterGroup monsterGroup)

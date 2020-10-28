@@ -15,8 +15,17 @@ namespace Ambermoon.Data
         Mage,
         Animal, // only Necros the cat NPC on Nera's isle
         Monster // monsters who use none of the above classes
+        // Note: Don't add the unknown class types here which were mentioned below.
+        //       Data loading will break otherwise!
     }
 
+    /// <summary>
+    /// Items store this flags to determine which class can
+    /// use or equip the item. This is also done for monsters.
+    /// And there is a value of 0x7fff used for "usable by all
+    /// classes" so there seem to be 4 more possible but unused
+    /// classes beside the known 11.
+    /// </summary>
     [Flags]
     public enum ClassFlag : ushort
     {
@@ -30,6 +39,13 @@ namespace Ambermoon.Data
         Alchemist = 0x0040,
         Mystic = 0x0080,
         Mage = 0x0100,
-        All = 0x01ff
+        Animal = 0x0200,
+        Monster = 0x0400,
+        Unknown1 = 0x0800,
+        Unknown2 = 0x1000,
+        Unknown3 = 0x2000,
+        Unknown4 = 0x4000,
+        AllWithUnused = 0x7fff,
+        All = 0x03ff
     }
 }

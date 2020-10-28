@@ -6,7 +6,7 @@
         public uint GraphicIndex { get; set; }
         public ItemType Type { get; set; }
         public EquipmentSlot EquipmentSlot { get; set; }
-        public byte Unknown2 { get; set; }
+        public byte BreakChance { get; set; }
         public GenderFlag Genders { get; set; }
         public uint NumberOfHands { get; set; }
         public uint NumberOfFingers { get; set; }
@@ -18,17 +18,25 @@
         public int AbilityValue { get; set; }
         public int Defense { get; set; }
         public int Damage { get; set; }
-        public byte[] Unknown3 { get; set; } // 6
+        /// <summary>
+        /// Used if this is a ammunition.
+        /// </summary>
+        public AmmunitionType AmmunitionType { get; set; }
+        /// <summary>
+        /// Used if this is a long-ranged weapon with ammunition.
+        /// </summary>
+        public AmmunitionType UsedAmmunitionType { get; set; }
+        public byte[] UnknownBytes17To20 { get; set; } // 4
         public byte SpecialValue { get; set; } // special item purpose, transportation, etc
-        public byte Unknown4 { get; set; }
+        public byte TextSubIndex { get; set; }
         public SpellType SpellType { get; set; }
         public byte SpellIndex { get; set; }
         public byte SpellUsageCount { get; set; } // 255 = infinite
-        public byte[] Unknown5 { get; set; } // 4
+        public byte[] UnknownBytes26To29 { get; set; } // 4
         public int MagicArmorLevel { get; set; } // M-B-R
         public int MagicAttackLevel { get; set; } // M-B-W
         public ItemFlags Flags { get; set; }
-        public byte Unknown6 { get; set; }
+        public ItemSlotFlags DefaultSlotFlags { get; set; }
         public ClassFlag Classes { get; set; }
         public uint Price { get; set; }
         public uint Weight { get; set; }

@@ -14,10 +14,11 @@ namespace Ambermoon.Data.Legacy.Characters
             character.Class = (Class)dataReader.ReadByte();
             character.SpellMastery = (SpellTypeMastery)dataReader.ReadByte();
             character.Level = dataReader.ReadByte();
-            dataReader.Position += 2; // Unknown
+            character.NumberOfFreeHands = dataReader.ReadByte();
+            character.NumberOfFreeFingers = dataReader.ReadByte();
             character.SpokenLanguages = (Language)dataReader.ReadByte();
             character.PortraitIndex = dataReader.ReadWord();
-            ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.Unknown1 = value);
+            ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = value);
             dataReader.Position += 2; // Unknown
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.HitChance = value);
             dataReader.Position += 1; // Unknown
@@ -31,6 +32,8 @@ namespace Ambermoon.Data.Legacy.Characters
             dataReader.Position += 2; // Unknown
             character.Ailments = (Ailment)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
+            if (dataReader.PeekWord() != 0)
+                Console.WriteLine($"Foo: {dataReader.PeekWord()}");
             dataReader.Position += 2; // Unknown
             // mark of return location is stored here: word x, word y, word mapIndex
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnX = value);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Ambermoon.Data
 {
@@ -12,6 +11,8 @@ namespace Ambermoon.Data
         public Class Class { get; set; }
         public SpellTypeMastery SpellMastery { get; set; }
         public byte Level { get; set; }
+        public uint NumberOfFreeHands { get; set; }
+        public uint NumberOfFreeFingers { get; set; }
         public Language SpokenLanguages { get; set; }
         public byte AttacksPerRound { get; set; }
         public ushort SpellLearningPoints { get; set; }

@@ -7,7 +7,6 @@ namespace Ambermoon.Data
     {
         None = 0,
         Identified = 0x01, // only used for magic items
-        Broken = 0x02,
-        // TODO: curse?, identified?, etc
+        Broken = 0x02
     }
 }
