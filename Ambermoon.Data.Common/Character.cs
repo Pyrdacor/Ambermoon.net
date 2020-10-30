@@ -19,6 +19,7 @@ namespace Ambermoon.Data
         public ushort TrainingPoints { get; set; }
         public ushort Gold { get; set; }
         public ushort Food { get; set; }
+        public ushort Unknown { get; set; }
         public Ailment Ailments { get; set; }
         public CharacterValueCollection<Attribute> Attributes { get; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
         public CharacterValueCollection<Ability> Abilities { get; } = new CharacterValueCollection<Ability>(10);
