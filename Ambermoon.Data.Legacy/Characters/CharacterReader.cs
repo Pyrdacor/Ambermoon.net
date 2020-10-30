@@ -32,8 +32,6 @@ namespace Ambermoon.Data.Legacy.Characters
             character.Unknown = dataReader.ReadWord(); // Unknown
             character.Ailments = (Ailment)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
-            if (dataReader.PeekWord() != 0)
-                Console.WriteLine($"Foo: {dataReader.PeekWord()}");
             dataReader.Position += 2; // Unknown
             // mark of return location is stored here: word x, word y, word mapIndex
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnX = value);

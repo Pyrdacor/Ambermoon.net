@@ -261,7 +261,14 @@ namespace Ambermoon
             }
             finally
             {
-                window?.Dispose();
+                try
+                {
+                    window?.Dispose();
+                }
+                catch
+                {
+                    // ignore
+                }
             }
         }
     }
