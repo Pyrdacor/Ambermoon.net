@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -48,43 +49,57 @@ namespace Ambermoon.Data.Legacy
                 case FileType.AMNP:
                 case FileType.AMBR:
                 case FileType.AMPC:
+                {
+                    if (filesData.Count >= 0xffff) // -1 cause JH uses the 1-based index as a word
+                        throw new AmbermoonException(ExceptionScope.Data, $"In a container file there can only be {0xffff-1} files at max.");
+
+                    int fileIndex = 1;
+                    var writerWithoutHeader = new DataWriter();
+                    List<int> fileSizes = new List<int>();
+
+                    foreach (var fileData in filesData)
                     {
-                        if (filesData.Count >= 0xffff) // -1 cause JH uses the 1-based index as a word
-                            throw new AmbermoonException(ExceptionScope.Data, $"In a container file there can only be {0xffff-1} files at max.");
+                        int prevOffset = writerWithoutHeader.Position;
 
-                        writer.Write((uint)fileType);
-                        writer.Write((ushort)filesData.Count);
-
-                        int fileIndex = 1;
-
-                        foreach (var fileData in filesData)
+                        /*
+                         * AMNC | Multiple file container (data uses [JH](JH.md) encoding). The C stands for "crypted". | 0x414d4e43 ('AMNC')
+                           AMNP | Multiple file container (data uses [JH](JH.md) encoding and the files are often [LOB](LOB.md) encoded in addition). The P stands for "packed". | 0x414d4e50 ('AMNP')
+                           AMBR | Multiple file container (no encryption). The R stands for "raw". | 0x414d4252 ('AMNR')
+                           AMPC | Another multiple file container (only compressed, not JH encrypted) | 0x414d5043 ('AMPC')
+                         */
+                        if (fileType == FileType.AMNC)
+                            WriteJH(writerWithoutHeader, fileData, (ushort)fileIndex++, false);
+                        else if (fileType == FileType.AMBR)
                         {
-                            /*
-                             * AMNC | Multiple file container (data uses [JH](JH.md) encoding). The C stands for "crypted". | 0x414d4e43 ('AMNC')
-                               AMNP | Multiple file container (data uses [JH](JH.md) encoding and the files are often [LOB](LOB.md) encoded in addition). The P stands for "packed". | 0x414d4e50 ('AMNP')
-                               AMBR | Multiple file container (no encryption). The R stands for "raw". | 0x414d4252 ('AMNR')
-                               AMPC | Another multiple file container (only compressed, not JH encrypted) | 0x414d5043 ('AMPC')
-                             */
-                            if (fileType == FileType.AMNC)
-                                WriteJH(writer, fileData, (ushort)fileIndex++, false);
-                            else if (fileType == FileType.AMBR)
-                                writer.Write(fileData);
-                            else if (fileType == FileType.AMPC)
-                                WriteLob(writer, fileData);
-                            else // AMNP
-                            {
-                                // this is always JH encoded and may be LOB compress if size is better
-                                var lobWriter = new DataWriter();
-                                WriteLob(lobWriter, fileData, (uint)FileType.LOB);
-                                var compressedData = lobWriter.ToArray();
-                                var data = compressedData.Length - 4 < fileData.Length ? compressedData : fileData;
-                                WriteJH(writer, data, (ushort)fileIndex++, false);
-                            }
+                            writerWithoutHeader.Write(fileData);
+                            ++fileIndex;
                         }
+                        else if (fileType == FileType.AMPC)
+                        {
+                            WriteLob(writerWithoutHeader, fileData);
+                            ++fileIndex;
+                        }
+                        else // AMNP
+                        {
+                            // this is always JH encoded and may be LOB compress if size is better
+                            var lobWriter = new DataWriter();
+                            WriteLob(lobWriter, fileData, (uint)FileType.LOB);
+                            var compressedData = lobWriter.ToArray();
+                            var data = compressedData.Length - 4 < fileData.Length ? compressedData : fileData;
+                            WriteJH(writerWithoutHeader, data, (ushort)fileIndex++, false);
+                        }
+
+                        fileSizes.Add(writerWithoutHeader.Position - prevOffset);
                     }
-                    break;
-                default:
-                    throw new AmbermoonException(ExceptionScope.Data, $"File type '{fileType}' is no container format.");
+
+                    writer.Write((uint)fileType);
+                    writer.Write((ushort)filesData.Count);
+                    fileSizes.ForEach(fileSize => writer.Write((uint)fileSize));
+                    writer.Write(writerWithoutHeader.ToArray());
+                }
+                break;
+            default:
+                throw new AmbermoonException(ExceptionScope.Data, $"File type '{fileType}' is no container format.");
             }
         }
     }
