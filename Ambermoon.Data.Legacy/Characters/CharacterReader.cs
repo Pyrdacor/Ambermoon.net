@@ -21,7 +21,7 @@ namespace Ambermoon.Data.Legacy.Characters
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = value);
             dataReader.Position += 2; // Unknown
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.HitChance = value);
-            dataReader.Position += 1; // Unknown
+            character.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
             character.AttacksPerRound = dataReader.ReadByte();
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.MonsterFlags = (MonsterFlags)value);
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.Element = (MonsterElement)value);

@@ -23,4 +23,17 @@ namespace Ambermoon.Data
         Destruction = 0x08,
         Mastered = 0x80
     }
+
+    [Flags]
+    public enum SpellTypeImmunity
+    {
+        Healing,
+        Alchemistic,
+        Mystic,
+        Destruction,
+        Unknown1,
+        Unknown2,
+        Function,
+        Unused
+    }
 }

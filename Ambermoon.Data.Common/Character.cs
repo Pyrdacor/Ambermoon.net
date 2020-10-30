@@ -14,6 +14,7 @@ namespace Ambermoon.Data
         public uint NumberOfFreeHands { get; set; }
         public uint NumberOfFreeFingers { get; set; }
         public Language SpokenLanguages { get; set; }
+        public SpellTypeImmunity SpellTypeImmunity { get; set; }
         public byte AttacksPerRound { get; set; }
         public ushort SpellLearningPoints { get; set; }
         public ushort TrainingPoints { get; set; }
