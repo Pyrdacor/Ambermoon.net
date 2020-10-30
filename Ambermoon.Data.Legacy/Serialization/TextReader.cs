@@ -2,7 +2,7 @@
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    internal class TextReader
+    public class TextReader
     {
         public static List<string> ReadTexts(IDataReader textDataReader)
         {
