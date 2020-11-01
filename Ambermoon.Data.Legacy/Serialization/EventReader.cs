@@ -307,7 +307,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var interaction = (ConversationEvent.InteractionType)dataReader.ReadByte();
                     var unused1 = dataReader.ReadBytes(4); // unused
                     var value = dataReader.ReadWord();
-                    var unused2 = dataReader.ReadBytes(4); // unused
+                    var unused2 = dataReader.ReadBytes(2); // unused
                     @event = new ConversationEvent
                     {
                         Interaction = interaction,

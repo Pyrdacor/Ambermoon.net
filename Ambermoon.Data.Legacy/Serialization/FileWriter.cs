@@ -41,7 +41,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             writer.Write(compressedData);
         }
 
-        public static void WriteContainer(DataWriter writer, List<byte[]> filesData, FileType fileType)
+        public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType)
         {
             switch (fileType)
             {
@@ -55,10 +55,12 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     int fileIndex = 1;
                     var writerWithoutHeader = new DataWriter();
-                    List<int> fileSizes = new List<int>();
+                    int totalFileNumber = (int)filesData.Keys.Max();
+                    List<int> fileSizes = Enumerable.Repeat(0, totalFileNumber).ToList();
 
-                    foreach (var fileData in filesData)
+                    foreach (var file in filesData)
                     {
+                        var fileData = file.Value;
                         int prevOffset = writerWithoutHeader.Position;
 
                         /*
@@ -89,11 +91,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                             WriteJH(writerWithoutHeader, data, (ushort)fileIndex++, false);
                         }
 
-                        fileSizes.Add(writerWithoutHeader.Position - prevOffset);
+                        fileSizes[(int)file.Key - 1] = writerWithoutHeader.Position - prevOffset;
                     }
 
                     writer.Write((uint)fileType);
-                    writer.Write((ushort)filesData.Count);
+                    writer.Write((ushort)totalFileNumber);
                     fileSizes.ForEach(fileSize => writer.Write((uint)fileSize));
                     writer.Write(writerWithoutHeader.ToArray());
                 }
