@@ -836,13 +836,13 @@ namespace Ambermoon.UI
             activePopup.AddSunkenBox(itemArea);
             activePopup.AddItemImage(itemArea.CreateModified(1, 1, -2, -2), imageIndex);
             // Item name display (also gold or food)
-            var itemNameArea = new Rect(99, 82, 124, 10);
+            var itemNameArea = new Rect(99, 82, 125, 10);
             activePopup.AddSunkenBox(itemNameArea);
-            activePopup.AddText(itemNameArea.CreateModified(1, 2, -2, -3), name, TextColor.Red, TextAlign.Center);
+            activePopup.AddText(itemNameArea.CreateModified(1, 2, -1, -3), name, TextColor.Red, TextAlign.Center);
             // Message display
-            var messageArea = new Rect(79, 98, 144, 10);
+            var messageArea = new Rect(79, 98, 145, 10);
             activePopup.AddSunkenBox(messageArea);
-            activePopup.AddText(messageArea.CreateModified(1, 2, -2, -3), message, TextColor.Orange, TextAlign.Center);
+            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), message, TextColor.Orange, TextAlign.Center);
             // Amount input
             var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
                 TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort);
@@ -917,7 +917,7 @@ namespace Ambermoon.UI
         void DropGold()
         {
             // Note: 96 is the object icon index for coins (gold).
-            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
+            OpenAmountInputBox(game.DataNameProvider.DropHowMuchGoldMessage,
                 96, game.DataNameProvider.GoldName, game.CurrentInventory.Gold,
                 DropAmount);
 
@@ -930,7 +930,7 @@ namespace Ambermoon.UI
         void DropFood()
         {
             // Note: 109 is the object icon index for food.
-            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
+            OpenAmountInputBox(game.DataNameProvider.DropHowMuchFoodMessage,
                 109, game.DataNameProvider.FoodName, game.CurrentInventory.Food,
                 DropAmount);
 
@@ -982,7 +982,7 @@ namespace Ambermoon.UI
         void StoreFood()
         {
             // Note: 109 is the object icon index for food.
-            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
+            OpenAmountInputBox(game.DataNameProvider.StoreHowMuchFoodMessage,
                 109, game.DataNameProvider.FoodName, game.CurrentInventory.Food,
                 amount => game.StoreFood(amount));
         }

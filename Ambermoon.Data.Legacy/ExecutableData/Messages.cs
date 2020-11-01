@@ -50,7 +50,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     {
         public enum Index
         {
-            DontForgetItems = 24,
+            DontForgetItems = 18,
             Comma,
             FullStop,
             HasNoMoreFood,
@@ -71,7 +71,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             IsNotTheRightAnswer,
             That,
             NothingToRespond,
-            EnterBattlePositions = 62,
+            EnterBattlePositions = 56,
             WhichScrollToRead,
             ThatsNotASpellScroll,
             CantLearnSpellsOfType,
@@ -191,7 +191,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             WhichItemToSell,
             SellHowMany,
             WayBackTooDangerous,
-            CannotCarryAllGold = 183,
+            CannotCarryAllGold = 177,
             ForThisIllGiveYou,
             ReallyWantToGoThere,
             Flees,
@@ -365,9 +365,6 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             while (ReadText(dataReader))
                 ;
 
-            --dataReader.Position;
-            dataReader.AlignToWord();
-
             int numTextEntries = (int)dataReader.ReadDword();
             var textEntryLengths = new List<uint>(numTextEntries);
 
@@ -393,12 +390,26 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             var nextWord = next >> 8;
 
             if (nextWord > 0x100 && nextWord < 0x1000)
+            {
+                --dataReader.Position;
                 return false;
+            }
 
             nextWord >>= 8;
 
             if (nextWord > 0x100 && nextWord < 0x1000)
+            {
+                dataReader.Position -= 2;
                 return false;
+            }
+
+            nextWord >>= 8;
+
+            if (nextWord > 0x100 && nextWord < 0x1000)
+            {
+                dataReader.Position -= 3;
+                return false;
+            }
 
             if (dataReader.PeekWord() == 0) // offset section / split text with placeholders
             {
@@ -449,6 +460,21 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             else // just a text
             {
                 entries.Add(dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
+
+                bool sectionFollows = dataReader.PeekDword() == 0;
+
+                while (dataReader.PeekByte() == 0 || dataReader.PeekByte() == 0xff)
+                {
+                    if (sectionFollows)
+                    {
+                        if ((dataReader.PeekDword() & 0x0000ffff) > 0xff)
+                            break;
+                    }
+                    else
+                        sectionFollows = dataReader.PeekDword() == 0;
+
+                    ++dataReader.Position;
+                }
             }
 
             return true;
