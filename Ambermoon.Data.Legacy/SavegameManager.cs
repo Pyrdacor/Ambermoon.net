@@ -36,7 +36,7 @@ namespace Ambermoon.Data.Legacy
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
         {
             var savegame = new Savegame();
-            var savegameFiles = new SavegameFiles
+            var savegameFiles = new SavegameInputFiles
             {
                 SaveDataReader = gameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
                 PartyMemberDataReaders = gameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
@@ -53,12 +53,12 @@ namespace Ambermoon.Data.Legacy
         public Savegame LoadInitial(IGameData gameData, ISavegameSerializer savegameSerializer)
         {
             var savegame = new Savegame();
-            SavegameFiles savegameFiles;
+            SavegameInputFiles savegameFiles;
             IFileContainer partyTextContainer;
 
             try
             {
-                savegameFiles = new SavegameFiles
+                savegameFiles = new SavegameInputFiles
                 {
                     SaveDataReader = gameData.Files["Initial/Party_data.sav"].Files[1],
                     PartyMemberDataReaders = gameData.Files["Initial/Party_char.amb"],
@@ -70,7 +70,7 @@ namespace Ambermoon.Data.Legacy
             }
             catch
             {
-                savegameFiles = new SavegameFiles
+                savegameFiles = new SavegameInputFiles
                 {
                     SaveDataReader = gameData.Files["Party_data.sav"].Files[1],
                     PartyMemberDataReaders = gameData.Files["Party_char.amb"],

@@ -1,6 +1,8 @@
-﻿namespace Ambermoon.Data.Serialization
+﻿using System.Collections.Generic;
+
+namespace Ambermoon.Data.Serialization
 {
-    public struct SavegameFiles
+    public struct SavegameInputFiles
     {
         /// <summary>
         /// Party_data.sav
@@ -24,9 +26,33 @@
         public IFileContainer AutomapDataReaders;
     }
 
+    public struct SavegameOutputFiles
+    {
+        /// <summary>
+        /// Party_data.sav
+        /// </summary>
+        public IDataWriter SaveDataWriter;
+        /// <summary>
+        /// Party_char.amb
+        /// </summary>
+        public Dictionary<int, IDataWriter> PartyMemberDataWriters;
+        /// <summary>
+        /// Chest_data.amb
+        /// </summary>
+        public Dictionary<int, IDataWriter> ChestDataWriters;
+        /// <summary>
+        /// Merchant_data.amb
+        /// </summary>
+        public Dictionary<int, IDataWriter> MerchantDataWriters;
+        /// <summary>
+        /// Automap.amb
+        /// </summary>
+        public Dictionary<int, IDataWriter> AutomapDataWriters;
+    }
+
     public interface ISavegameSerializer
     {
-        void Read(Savegame savegame, SavegameFiles files, IFileContainer partyTextsContainer);
-        void Write(Savegame savegame, SavegameFiles files);
+        void Read(Savegame savegame, SavegameInputFiles files, IFileContainer partyTextsContainer);
+        void Write(Savegame savegame, SavegameOutputFiles files);
     }
 }

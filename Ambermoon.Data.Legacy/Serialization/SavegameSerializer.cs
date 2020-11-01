@@ -133,7 +133,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             // TODO: load other data from Party_data.sav
         }
 
-        public void Read(Savegame savegame, SavegameFiles files, IFileContainer partyTextsContainer)
+        public void Read(Savegame savegame, SavegameInputFiles files, IFileContainer partyTextsContainer)
         {
             var partyMemberReader = new Characters.PartyMemberReader();
             var chestReader = new ChestReader();
@@ -168,7 +168,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             ReadSaveData(savegame, files.SaveDataReader);
         }
 
-        public void Write(Savegame savegame, SavegameFiles files)
+        public void Write(Savegame savegame, SavegameOutputFiles files)
         {
             // TODO
             throw new NotImplementedException();
