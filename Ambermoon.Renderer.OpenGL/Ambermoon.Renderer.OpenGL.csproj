@@ -10,11 +10,11 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>1.1.4</Version>
+    <Version>1.1.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="1.1.8" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="2.0.0" />
     <PackageReference Include="Silk.NET.OpenGL" Version="1.7.0" />
   </ItemGroup>
 

@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data
+﻿using Ambermoon.Data.Serialization;
+
+namespace Ambermoon.Data
 {
     public class Merchant
     {

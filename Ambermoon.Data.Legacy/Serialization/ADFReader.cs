@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
     internal static class ADFReader
     {

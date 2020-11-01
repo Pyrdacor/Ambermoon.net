@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data.Legacy.Characters
+﻿using Ambermoon.Data.Serialization;
+
+namespace Ambermoon.Data.Legacy.Characters
 {
     public class MonsterReader : CharacterReader, IMonsterReader
     {

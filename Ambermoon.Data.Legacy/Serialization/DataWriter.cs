@@ -3,7 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
     using word = UInt16;
     using dword = UInt32;

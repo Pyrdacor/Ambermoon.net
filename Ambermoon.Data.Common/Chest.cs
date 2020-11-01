@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using Ambermoon.Data.Serialization;
+using System.Linq;
 
 namespace Ambermoon.Data
 {

@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

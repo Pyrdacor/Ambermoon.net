@@ -1,4 +1,4 @@
-﻿namespace Ambermoon.Data
+﻿namespace Ambermoon.Data.Serialization
 {
     public interface ITextDictionaryReader
     {

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Serialization;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {

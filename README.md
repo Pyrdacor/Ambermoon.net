@@ -156,3 +156,5 @@ I appreciate any kind of help.
 Special thanks to:
 - Metibor
 - Thallyrion
+- a1exh
+- Karol-13

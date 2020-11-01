@@ -2,6 +2,7 @@
 using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.ExecutableData;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Geometry;
 using Ambermoon.Render;
 using Ambermoon.Renderer.OpenGL;

@@ -1,8 +1,8 @@
-﻿using Ambermoon.Data.Legacy.Serialization;
+﻿using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
     public class MapReader : IMapReader
     {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.Compression

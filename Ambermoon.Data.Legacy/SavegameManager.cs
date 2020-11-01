@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data.Legacy
+﻿using Ambermoon.Data.Serialization;
+
+namespace Ambermoon.Data.Legacy
 {
     public class SavegameManager : ISavegameManager
     {

@@ -1,9 +1,10 @@
 ﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
     public class LabdataReader : ILabdataReader
     {

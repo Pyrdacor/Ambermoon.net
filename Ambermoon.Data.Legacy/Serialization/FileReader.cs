@@ -1,8 +1,9 @@
 ﻿using Ambermoon.Data.Legacy.Compression;
+using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
     public class FileReader : IFileReader
     {

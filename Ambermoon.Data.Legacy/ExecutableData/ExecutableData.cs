@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;

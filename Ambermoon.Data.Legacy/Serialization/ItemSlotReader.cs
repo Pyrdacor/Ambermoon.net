@@ -1,5 +1,6 @@
-﻿using System;
-namespace Ambermoon.Data.Legacy
+﻿using Ambermoon.Data.Serialization;
+
+namespace Ambermoon.Data.Legacy.Serialization
 {
     internal static class ItemSlotReader
     {

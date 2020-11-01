@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Serialization;
+using System;
 
 namespace Ambermoon.Data.Legacy.Characters
 {

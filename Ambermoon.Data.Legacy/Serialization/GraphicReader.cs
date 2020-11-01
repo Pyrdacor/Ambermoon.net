@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Ambermoon.Data.Serialization;
+using System;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
     public class GraphicReader : IGraphicReader
     {

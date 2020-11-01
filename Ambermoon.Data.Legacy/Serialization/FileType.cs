@@ -1,4 +1,4 @@
-﻿namespace Ambermoon.Data.Legacy
+﻿namespace Ambermoon.Data.Legacy.Serialization
 {
     public enum FileType : uint
     {

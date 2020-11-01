@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Ambermoon.Data.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
 	/**
 	 * The imploder creates

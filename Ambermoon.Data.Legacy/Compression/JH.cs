@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data.Legacy.Compression
+﻿using Ambermoon.Data.Legacy.Serialization;
+
+namespace Ambermoon.Data.Legacy.Compression
 {
     public static class JH
     {

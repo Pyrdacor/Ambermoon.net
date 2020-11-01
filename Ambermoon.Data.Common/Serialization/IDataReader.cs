@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Ambermoon.Data
+namespace Ambermoon.Data.Serialization
 {
     using word = UInt16;
     using dword = UInt32;

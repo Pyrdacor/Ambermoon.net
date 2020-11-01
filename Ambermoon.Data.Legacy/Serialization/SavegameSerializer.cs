@@ -1,7 +1,8 @@
 ﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System;
 
-namespace Ambermoon.Data.Legacy
+namespace Ambermoon.Data.Legacy.Serialization
 {
     public class SavegameSerializer : ISavegameSerializer
     {
