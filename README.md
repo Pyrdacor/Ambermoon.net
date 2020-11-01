@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.17](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.17/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.16](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.16/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.15](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.15/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.1.14](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.14/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -95,6 +95,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [1.1.17](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.17): Bugfixing
 - Version [1.1.16](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.16): Added 3D NPCs interaction, turn toward monsters, active spells and items, bugfixing
 - Version [1.1.15](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.15): Added 3D NPCs/monsters with movement (still WIP), bugfixing
 - Version [1.1.14](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.14): Added 2D NPCs and rudimentary conversation window, bugfixing
