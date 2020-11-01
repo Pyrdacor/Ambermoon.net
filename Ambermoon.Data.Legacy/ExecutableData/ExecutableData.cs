@@ -117,7 +117,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             uint codepageOffset = relocOffsets.Take(12).Aggregate((a, b) => a + b);
             uint textOffset = codepageOffset + relocOffsets.Skip(12).Take(2).Aggregate((a, b) => a + b) + 4;
             uint glyphOffset = codepageOffset + relocOffsets.Skip(12).Aggregate((a, b) => a + b) + 262;
-            glyphOffset += 4 - glyphOffset % 4;
+            if (glyphOffset % 4 != 0)
+                glyphOffset += 4 - glyphOffset % 4;
 
             dataHunkIndex = 0;
 
