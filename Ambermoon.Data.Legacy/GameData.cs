@@ -48,38 +48,23 @@ namespace Ambermoon.Data.Legacy
             this.stopAtFirstError = stopAtFirstError;
         }
 
-        private static bool TryDiskFilename(string folderPath, string filename, out string fullPath)
-        {
-            fullPath = Path.Combine(folderPath, filename + ".adf");
-
-            return File.Exists(fullPath);
-        }
-
-        // TODO: Maybe use a better approach later
         private static string FindDiskFile(string folderPath, char disk)
         {
-            string diskFile;
+            disk = char.ToLower(disk);
+            var adfFiles = Directory.GetFiles(folderPath, "*.adf");
 
-            if (TryDiskFilename(folderPath, $"amber_{disk}", out diskFile))
-                return diskFile;
-            if (TryDiskFilename(folderPath, $"ambermoon_{disk}", out diskFile))
-                return diskFile;
-            if (TryDiskFilename(folderPath, $"ambermoong_{disk}", out diskFile))
-                return diskFile;
-            if (TryDiskFilename(folderPath, $"ambermoone_{disk}", out diskFile))
-                return diskFile;
-            if (TryDiskFilename(folderPath, $"amb_{disk}", out diskFile))
-                return diskFile;
-            if (TryDiskFilename(folderPath, $"ambmoo_{disk}", out diskFile))
-                return diskFile;
-            if (TryDiskFilename(folderPath, $"ambmoon_{disk}", out diskFile))
-                return diskFile;
+            foreach (var adfFile in adfFiles)
+            {
+                string filename = Path.GetFileNameWithoutExtension(adfFile).ToLower();
+
+                if (filename.Contains("amb") && (filename.EndsWith(disk) || filename.EndsWith($"({disk})") || filename.EndsWith($"[{disk}]")))
+                    return adfFile;
+            }
 
             return null;
         }
 
         static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.");
-        static bool IsSavegame(string file) => file.ToLower().StartsWith("initial/") || file.ToLower().StartsWith("save");
 
         public void Load(string folderPath)
         {
@@ -99,7 +84,7 @@ namespace Ambermoon.Data.Legacy
                 }
             }
 
-            void HandleFileNotFound(string file)
+            void HandleFileNotFound(string file, char disk)
             {
                 if (log != null)
                 {
@@ -108,7 +93,7 @@ namespace Ambermoon.Data.Legacy
                 }
 
                 // We only need 1 dictionary, no savegames and only AM2_CPU but not AM2_BLIT.
-                if (IsDictionary(file) || IsSavegame(file) || file == "AM2_BLIT")
+                if (IsDictionary(file) || disk == 'J' || file == "AM2_BLIT")
                     return;
 
                 if (stopAtFirstError)
@@ -138,7 +123,7 @@ namespace Ambermoon.Data.Legacy
                     }
                     else
                     {
-                        HandleFileNotFound(name);
+                        HandleFileNotFound(name, ambermoonFile.Value);
                     }                        
                 }
                 else
@@ -169,7 +154,7 @@ namespace Ambermoon.Data.Legacy
                             {
                                 if (!File.Exists(path))
                                 {
-                                    HandleFileNotFound(name);
+                                    HandleFileNotFound(name, disk);
                                 }
                                 else
                                 {
@@ -185,14 +170,15 @@ namespace Ambermoon.Data.Legacy
                     }
 
                     if (!loadedDisks[disk].ContainsKey(name))
-                        HandleFileNotFound(name);
+                    {
+                        HandleFileNotFound(name, disk);
+                    }
                     else
                     {
                         Files.Add(name, fileReader.ReadFile(name, loadedDisks[disk][name]));
                         HandleFileLoaded(name);
                     }
                 }
-
             }
 
             if (foundNoDictionary)
