@@ -2,13 +2,15 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
     using word = UInt16;
     using dword = UInt32;
+    using qword = UInt64;
 
-    public class DataWriter
+    public class DataWriter : IDataWriter
     {
         public static readonly Encoding Encoding = DataReader.Encoding;
         protected readonly List<byte> data = new List<byte>();
@@ -73,6 +75,19 @@ namespace Ambermoon.Data.Legacy.Serialization
             Position += 4;
         }
 
+        public void Write(qword value)
+        {
+            data.Add((byte)(value >> 56));
+            data.Add((byte)(value >> 48));
+            data.Add((byte)(value >> 40));
+            data.Add((byte)(value >> 32));
+            data.Add((byte)(value >> 24));
+            data.Add((byte)(value >> 16));
+            data.Add((byte)(value >> 8));
+            data.Add((byte)value);
+            Position += 8;
+        }
+
         public void Write(char value)
         {
             Write(value.ToString());
@@ -80,26 +95,38 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public void Write(string value)
         {
-            if (value.Length > 255)
-                throw new AmbermoonException(ExceptionScope.Data, "Strings must not exceed 255 characters.");
-
-            Write((byte)value.Length);
-
-            if (value.Length != 0)
-                Write(Encoding.GetBytes(value));
+            Write(value, Encoding);
         }
 
-        public void Write(string value, int length)
+        public void Write(string value, int length, char fillChar = ' ')
+        {
+            Write(value, Encoding, length, fillChar);
+        }
+
+        public void Write(string value, Encoding encoding)
+        {
+            var bytes = encoding.GetBytes(value);
+
+            if (bytes.Length > 255)
+                throw new AmbermoonException(ExceptionScope.Data, "Strings must not exceed 255 characters.");
+
+            Write((byte)bytes.Length);
+
+            if (bytes.Length != 0)
+                Write(bytes);
+        }
+
+        public void Write(string value, Encoding encoding, int length, char fillChar = ' ')
         {
             if (length > 255)
                 throw new AmbermoonException(ExceptionScope.Data, "Strings must not exceed 255 characters.");
 
             if (length > value.Length)
-                value += new string(' ', length - value.Length);
+                value += new string(fillChar, length - value.Length);
             else
                 value = value.Substring(0, length);
 
-            Write(value);
+            Write(value, encoding);
         }
 
         public void Write(byte[] bytes)
