@@ -707,10 +707,20 @@ namespace Ambermoon
                 RunSavegameTileChangeEvents(map.Index);
         }
 
-        public void LoadGame(int slot)
+        public bool LoadGame(int slot)
         {
             var savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot);
+
+            if (savegame == null)
+                return false;
+
             Start(savegame);
+            return true;
+        }
+
+        public bool HasContinueGame()
+        {
+            return SavegameManager.Load(renderView.GameData, savegameSerializer, 0) != null;
         }
 
         public void ContinueGame()

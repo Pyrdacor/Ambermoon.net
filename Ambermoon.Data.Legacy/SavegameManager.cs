@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Serialization;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -36,14 +37,22 @@ namespace Ambermoon.Data.Legacy
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
         {
             var savegame = new Savegame();
-            var savegameFiles = new SavegameInputFiles
+            SavegameInputFiles savegameFiles;
+            try
             {
-                SaveDataReader = gameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
-                PartyMemberDataReaders = gameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
-                ChestDataReaders = gameData.Files[$"Save.{saveSlot:00}/Chest_data.amb"],
-                MerchantDataReaders = gameData.Files[$"Save.{saveSlot:00}/Merchant_data.amb"],
-                AutomapDataReaders = gameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
-            };
+                savegameFiles = new SavegameInputFiles
+                {
+                    SaveDataReader = gameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
+                    PartyMemberDataReaders = gameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
+                    ChestDataReaders = gameData.Files[$"Save.{saveSlot:00}/Chest_data.amb"],
+                    MerchantDataReaders = gameData.Files[$"Save.{saveSlot:00}/Merchant_data.amb"],
+                    AutomapDataReaders = gameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
+                };
+            }
+            catch (KeyNotFoundException)
+            {
+                return null;
+            }
 
             savegameSerializer.Read(savegame, savegameFiles, gameData.Files["Party_texts.amb"]);
 
