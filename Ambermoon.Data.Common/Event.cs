@@ -67,7 +67,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class ChestMapEvent : Event
+    public class ChestEvent : Event
     {
         [Flags]
         public enum LockFlags
@@ -191,6 +191,7 @@ namespace Ambermoon.Data
         /// Value (e.g. damage). I guess it is in percentage of max health? Maybe for TrapType 0 only?
         /// </summary>
         public byte Value { get; set; }
+        public byte[] Unused { get; set; } // 5 bytes
 
         public override string ToString()
         {
@@ -472,6 +473,8 @@ namespace Ambermoon.Data
         public ushort Value { get; set; }
         public uint KeywordIndex => Value;
         public uint ItemIndex => Value;
+        public byte[] Unused1 { get; set; } // 4
+        public byte[] Unused2 { get; set; } // 2
 
         public override string ToString()
         {
@@ -490,6 +493,7 @@ namespace Ambermoon.Data
     public class PrintTextEvent : Event
     {
         public uint NPCTextIndex { get; set; }
+        public byte[] Unused { get; set; } // 8
 
         public override string ToString()
         {
@@ -534,7 +538,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class DebugMapEvent : Event
+    public class DebugEvent : Event
     {
         public byte[] Data { get; set; }
 

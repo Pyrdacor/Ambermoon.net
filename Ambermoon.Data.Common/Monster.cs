@@ -5,10 +5,9 @@ namespace Ambermoon.Data
     public class Monster : Character
     {
         public ushort CombatGraphicIndex { get; set; }
-        public byte HitChance { get; set; }
         public MonsterFlags MonsterFlags { get; set; }
-        public MonsterElement Element { get; set; }
         public ushort DefeatExperience { get; set; }
+        public byte[] UnknownAdditionalBytes { get; set; }
 
         private Monster()
             : base(CharacterType.Monster)

@@ -7,7 +7,8 @@ namespace Ambermoon.Data.Legacy.Serialization
         public static void ReadItemSlot(ItemSlot itemSlot, IDataReader dataReader)
         {
             itemSlot.Amount = dataReader.ReadByte();
-            itemSlot.Unknown = dataReader.ReadBytes(2); // Unknown
+            itemSlot.NumRemainingCharges = dataReader.ReadByte();
+            itemSlot.Unknown = dataReader.ReadByte(); // Unknown
             itemSlot.Flags = (ItemSlotFlags)dataReader.ReadByte();
             itemSlot.ItemIndex = dataReader.ReadWord();
         }

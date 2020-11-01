@@ -24,5 +24,7 @@ namespace Ambermoon.Data.Serialization
         void Replace(int offset, dword value);
         void CopyTo(Stream stream);
         byte[] ToArray();
+        void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible;
+        void WriteEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible;
     }
 }

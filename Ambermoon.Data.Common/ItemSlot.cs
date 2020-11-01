@@ -6,9 +6,9 @@ namespace Ambermoon.Data
     {
         public uint ItemIndex;
         public int Amount; // 0-255, 255 = unlimited (**)
+        public int NumRemainingCharges; // 0-255, 255 = unlimited (**)
         public ItemSlotFlags Flags;
-        public byte[] Unknown; // 2
-        // TODO ...
+        public byte Unknown; // Unknown
 
         public bool Empty => Amount == 0;
         public bool Unlimited => Amount == 255;

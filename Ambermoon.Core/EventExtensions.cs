@@ -35,7 +35,7 @@ namespace Ambermoon
                 }
                 case EventType.Chest:
                 {
-                    if (!(@event is ChestMapEvent chestMapEvent))
+                    if (!(@event is ChestEvent chestMapEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
                     game.ShowChest(chestMapEvent);

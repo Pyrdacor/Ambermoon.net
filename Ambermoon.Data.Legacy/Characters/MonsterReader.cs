@@ -9,6 +9,7 @@ namespace Ambermoon.Data.Legacy.Characters
             ReadCharacter(monster, dataReader);
 
             // TODO: monsters have some additional data (maybe fight animations?)
+            monster.UnknownAdditionalBytes = dataReader.ReadToEnd();
         }
     }
 }

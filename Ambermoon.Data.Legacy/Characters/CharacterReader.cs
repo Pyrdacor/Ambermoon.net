@@ -21,20 +21,19 @@ namespace Ambermoon.Data.Legacy.Characters
             character.SpokenLanguages = (Language)dataReader.ReadByte();
             character.PortraitIndex = dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = value);
-            dataReader.Position += 2; // Unknown
-            ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.HitChance = value);
+            character.UnknownBytes13 = dataReader.ReadBytes(3); // Unknown
             character.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
             character.AttacksPerRound = dataReader.ReadByte();
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.MonsterFlags = (MonsterFlags)value);
-            ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.Element = (MonsterElement)value);
+            character.Element = (CharacterElement)dataReader.ReadByte();
             character.SpellLearningPoints = dataReader.ReadWord();
             character.TrainingPoints = dataReader.ReadWord();
             character.Gold = dataReader.ReadWord();
             character.Food = dataReader.ReadWord();
-            character.Unknown = dataReader.ReadWord(); // Unknown
+            character.UnknownWord28 = dataReader.ReadWord(); // Unknown
             character.Ailments = (Ailment)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
-            dataReader.Position += 2; // Unknown
+            character.UnknownWord34 = dataReader.ReadWord(); // Unknown
             // mark of return location is stored here: word x, word y, word mapIndex
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnX = value);
             ProcessIfPartyMember(dataReader, character, (PartyMember member, ushort value) => member.MarkOfReturnY = value);
@@ -59,24 +58,26 @@ namespace Ambermoon.Data.Legacy.Characters
             character.SpellPoints.CurrentValue = dataReader.ReadWord();
             character.SpellPoints.MaxValue = dataReader.ReadWord();
             character.SpellPoints.BonusValue = dataReader.ReadWord();
-            dataReader.Position += 2; // Unknown
-            character.Defense = (short)dataReader.ReadWord();
-            dataReader.Position += 2; // Unknown
-            character.Attack = (short)dataReader.ReadWord();
-            character.MagicAttack = dataReader.ReadWord();
-            character.MagicDefense = dataReader.ReadWord();
+            character.CombatDefense = (short)dataReader.ReadWord();
+            character.DisplayedDefense = (short)dataReader.ReadWord();
+            character.CombatAttack = (short)dataReader.ReadWord();
+            character.DisplayedAttack = (short)dataReader.ReadWord();
+            character.MagicAttack = (short)dataReader.ReadWord();
+            character.MagicDefense = (short)dataReader.ReadWord();
             character.AttacksPerRoundPerLevel = dataReader.ReadWord();
             character.HitPointsPerLevel = dataReader.ReadWord();
             character.SpellPointsPerLevel = dataReader.ReadWord();
             character.SpellLearningPointsPerLevel = dataReader.ReadWord();
             character.TrainingPointsPerLevel = dataReader.ReadWord();
-            dataReader.Position += 2; // Unknown
+            character.UnknownWord236 = dataReader.ReadWord(); // Unknown
             character.ExperiencePoints = dataReader.ReadDword();
             character.LearnedHealingSpells = dataReader.ReadDword();
             character.LearnedAlchemisticSpells = dataReader.ReadDword();
             character.LearnedMysticSpells = dataReader.ReadDword();
             character.LearnedDestructionSpells = dataReader.ReadDword();
-            dataReader.Position += 12; // Unknown
+            character.LearnedSpellsType5 = dataReader.ReadDword();
+            character.LearnedSpellsType6 = dataReader.ReadDword();
+            character.LearnedSpellsType7 = dataReader.ReadDword();
             character.TotalWeight = dataReader.ReadDword();
             character.Name = dataReader.ReadString(16);
 
@@ -100,8 +101,6 @@ namespace Ambermoon.Data.Legacy.Characters
                 for (int i = 0; i < Inventory.Width * Inventory.Height; ++i)
                     ItemSlotReader.ReadItemSlot(character.Inventory.Slots[i], dataReader);
             }
-
-            // TODO: ignore the rest for now
         }
 
         void ProcessIfMonster(IDataReader reader, Character character, Action<Monster, byte> processor)

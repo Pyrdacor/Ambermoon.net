@@ -12,14 +12,14 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (textDataReader != null)
             {
                 textDataReader.Position = 0;
-                int numMapTexts = textDataReader.ReadWord();
-                int[] mapTextLengths = new int[numMapTexts];
+                int numTexts = textDataReader.ReadWord();
+                int[] textLengths = new int[numTexts];
 
-                for (int i = 0; i < numMapTexts; ++i)
-                    mapTextLengths[i] = textDataReader.ReadWord();
+                for (int i = 0; i < numTexts; ++i)
+                    textLengths[i] = textDataReader.ReadWord();
 
-                for (int i = 0; i < numMapTexts; ++i)
-                    texts.Add(textDataReader.ReadString(mapTextLengths[i]).Trim(' ', '\0'));
+                for (int i = 0; i < numTexts; ++i)
+                    texts.Add(textDataReader.ReadString(textLengths[i]).Trim(' ', '\0'));
             }
 
             return texts;

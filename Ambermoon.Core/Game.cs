@@ -1810,11 +1810,11 @@ namespace Ambermoon
                     TextColor.White, TextAlign.Center));
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
                 characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.Attack < 0 ? '-' : '+'), Math.Abs(character.Attack)),
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.CombatAttack < 0 ? '-' : '+'), Math.Abs(character.CombatAttack)),
                     TextColor.White, TextAlign.Left));
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
                 characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.Defense < 0 ? '-' : '+'), Math.Abs(character.Defense)),
+                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.CombatDefense < 0 ? '-' : '+'), Math.Abs(character.CombatDefense)),
                     TextColor.White, TextAlign.Left));
             }
             else
@@ -1877,9 +1877,9 @@ namespace Ambermoon
             UpdateText(CharacterInfo.GoldAndFood, () =>
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
             UpdateText(CharacterInfo.Attack, () =>
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.Attack < 0 ? '-' : '+'), Math.Abs(character.Attack)));
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.CombatAttack < 0 ? '-' : '+'), Math.Abs(character.CombatAttack)));
             UpdateText(CharacterInfo.Defense, () =>
-                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.Defense < 0 ? '-' : '+'), Math.Abs(character.Defense)));
+                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.CombatDefense < 0 ? '-' : '+'), Math.Abs(character.CombatDefense)));
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
                 Util.Round(character.TotalWeight / 1000.0f), character.Attributes[Data.Attribute.Strength].TotalCurrentValue));
             if (npc != null)
@@ -1952,8 +1952,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            partyMember.Attack = (short)(partyMember.Attack + item.Damage);
-            partyMember.Defense = (short)(partyMember.Defense + item.Defense);
+            partyMember.CombatAttack = (short)(partyMember.CombatAttack + item.Damage);
+            partyMember.CombatDefense = (short)(partyMember.CombatDefense + item.Defense);
             partyMember.TotalWeight += (uint)amount * item.Weight;
             // TODO ...
         }
@@ -1969,8 +1969,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            partyMember.Attack = (short)(partyMember.Attack - item.Damage);
-            partyMember.Defense = (short)(partyMember.Defense - item.Defense);
+            partyMember.CombatAttack = (short)(partyMember.CombatAttack - item.Damage);
+            partyMember.CombatDefense = (short)(partyMember.CombatDefense - item.Defense);
             partyMember.TotalWeight -= (uint)amount * item.Weight;
             // TODO ...
         }
@@ -2314,7 +2314,7 @@ namespace Ambermoon
             OpenStorage.ResetItem(slotIndex, item);
         }
 
-        internal void ShowChest(ChestMapEvent chestMapEvent)
+        internal void ShowChest(ChestEvent chestMapEvent)
         {
             Fade(() =>
             {
@@ -2332,7 +2332,7 @@ namespace Ambermoon
                 if (!chestMapEvent.RemoveWhenEmpty)
                     OpenStorage = chest;
 
-                if (chestMapEvent.Lock != ChestMapEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
+                if (chestMapEvent.Lock != ChestEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
                 {
                     layout.Set80x80Picture(Picture80x80.ChestClosed);
                     itemGrid.Disabled = true;
@@ -2969,7 +2969,7 @@ namespace Ambermoon
                 }
                 case Window.Chest:
                 {
-                    var chestEvent = (ChestMapEvent)currentWindow.WindowParameters[0];
+                    var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
                     ShowChest(chestEvent);
                     break;

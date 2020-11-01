@@ -152,5 +152,9 @@ namespace Ambermoon.Data.Legacy.Serialization
         }
 
         public byte[] ToArray() => data.ToArray();
+
+        public void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible => Write(value.ToByte(null));
+
+        public void WriteEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible => Write(value.ToUInt16(null));
     }
 }

@@ -61,7 +61,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         static Event ParseEvent(IDataReader dataReader)
         {
-            Event mapEvent;
+            Event @event;
             var type = (EventType)dataReader.ReadByte();
 
             switch (type)
@@ -70,7 +70,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     // 1. byte is the x coordinate
                     // 2. byte is the y coordinate
-                    // Then 3 unknown bytes
+                    // 3. byte is the character direction
+                    // Then 2 unknown bytes
                     // Then a word for the map index
                     // Then 2 unknown bytes (seem to be 00 FF)
                     uint x = dataReader.ReadByte();
@@ -79,7 +80,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unknown1 = dataReader.ReadBytes(2);
                     uint mapIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(2);
-                    mapEvent = new MapChangeEvent
+                    @event = new MapChangeEvent
                     {
                         MapIndex = mapIndex,
                         X = x,
@@ -102,7 +103,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unknown = dataReader.ReadBytes(5); // Unknown
                     uint keyIndex = dataReader.ReadWord();
                     var unlockFailEventIndex = dataReader.ReadWord();
-                    mapEvent = new DoorEvent
+                    @event = new DoorEvent
                     {
                         Unknown = unknown,
                         KeyIndex = keyIndex,
@@ -119,13 +120,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // 5. byte (0 = chest, 1 = pile/removable loot or item) or "remove if empty"
                     // word at position 6 is the key index if a key must unlock it
                     // last word is the event index (0-based) of the event that is called when unlocking fails
-                    var lockType = (ChestMapEvent.LockFlags)dataReader.ReadByte();
+                    var lockType = (ChestEvent.LockFlags)dataReader.ReadByte();
                     var unknown = dataReader.ReadWord(); // Unknown
                     uint chestIndex = dataReader.ReadByte();
                     bool removeWhenEmpty = dataReader.ReadByte() != 0;
                     uint keyIndex = dataReader.ReadWord();
                     var unlockFailEventIndex = dataReader.ReadWord();
-                    mapEvent = new ChestMapEvent
+                    @event = new ChestEvent
                     {
                         Unknown = unknown,
                         Lock = lockType,
@@ -140,15 +141,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     // event image index (0xff = no image)
                     // trigger (1 = move, 2 = cursor, 3 = both)
-                    // 2 unknown bytes
-                    // 4-5. byte is the map text index
+                    // 1 unknown byte
+                    // map text index as word
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
                     var popupTrigger = (PopupTextEvent.Trigger)dataReader.ReadByte();
                     var unknown1 = dataReader.ReadByte();
                     var textIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(4);
-                    mapEvent = new PopupTextEvent
+                    @event = new PopupTextEvent
                     {
                         EventImageIndex = eventImageIndex,
                         PopupTrigger = popupTrigger,
@@ -162,10 +163,10 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var direction = (CharacterDirection)dataReader.ReadByte();
                     var unknown = dataReader.ReadBytes(8);
-                    mapEvent = new SpinnerEvent
+                    @event = new SpinnerEvent
                     {
                         Direction = direction,
-                        Unknown = unknown,
+                        Unknown = unknown
                     };
                     break;
                 }
@@ -175,13 +176,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var target = (TrapEvent.TrapTarget)dataReader.ReadByte();
                     var value = dataReader.ReadByte();
                     var unknown = dataReader.ReadByte();
-                    dataReader.ReadBytes(5); // unused
-                    mapEvent = new TrapEvent
+                    var unused = dataReader.ReadBytes(5); // unused
+                    @event = new TrapEvent
                     {
                         TypeOfTrap = trapType,
                         Target = target,
                         Value = value,
                         Unknown = unknown,
+                        Unused = unused
                     };
                     break;
                 }
@@ -191,7 +193,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var solutionTextIndex = dataReader.ReadByte();
                     var unknown = dataReader.ReadBytes(5);
                     var correctAnswerTextIndex = dataReader.ReadWord();
-                    mapEvent = new RiddlemouthEvent
+                    @event = new RiddlemouthEvent
                     {
                         RiddleTextIndex = introTextIndex,
                         SolutionTextIndex = solutionTextIndex,
@@ -210,7 +212,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var awardTypeValue = dataReader.ReadWord();
                     var value = dataReader.ReadWord();
 
-                    mapEvent = new AwardEvent
+                    @event = new AwardEvent
                     {
                         TypeOfAward = awardType,
                         Operation = awardOperation,
@@ -229,7 +231,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unknown = dataReader.ReadByte();
                     var tileData = dataReader.ReadBytes(4);
                     var mapIndex = dataReader.ReadWord();
-                    mapEvent = new ChangeTileEvent
+                    @event = new ChangeTileEvent
                     {
                         X = x,
                         Y = y,
@@ -245,7 +247,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unknown1 = dataReader.ReadBytes(6);
                     var monsterGroupIndex = dataReader.ReadByte();
                     var unknown2 = dataReader.ReadBytes(2);
-                    mapEvent = new StartBattleEvent
+                    @event = new StartBattleEvent
                     {
                         MonsterGroupIndex = monsterGroupIndex,
                         Unknown1 = unknown1,
@@ -260,7 +262,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unknown1 = dataReader.ReadBytes(4);
                     var objectIndex = dataReader.ReadByte();
                     var jumpToIfNotFulfilled = dataReader.ReadWord();
-                    mapEvent = new ConditionEvent
+                    @event = new ConditionEvent
                     {
                         TypeOfCondition = conditionType,
                         ObjectIndex = objectIndex,
@@ -277,7 +279,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unknown1 = dataReader.ReadBytes(4);
                     var objectIndex = dataReader.ReadByte();
                     var unknown2 = dataReader.ReadBytes(2);
-                    mapEvent = new ActionEvent
+                    @event = new ActionEvent
                     {
                         TypeOfAction = actionType,
                         ObjectIndex = objectIndex,
@@ -292,7 +294,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var chance = dataReader.ReadByte();
                     var unused = dataReader.ReadBytes(6);
                     var jumpToIfNotFulfilled = dataReader.ReadWord();
-                    mapEvent = new Dice100RollEvent
+                    @event = new Dice100RollEvent
                     {
                         Chance = chance,
                         Unused = unused,
@@ -303,23 +305,26 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.Conversation:
                 {
                     var interaction = (ConversationEvent.InteractionType)dataReader.ReadByte();
-                    dataReader.Position += 4; // unused
+                    var unused1 = dataReader.ReadBytes(4); // unused
                     var value = dataReader.ReadWord();
-                    dataReader.Position += 2; // unused
-                    mapEvent = new ConversationEvent
+                    var unused2 = dataReader.ReadBytes(4); // unused
+                    @event = new ConversationEvent
                     {
                         Interaction = interaction,
-                        Value = value
+                        Value = value,
+                        Unused1 = unused1,
+                        Unused2 = unused2
                     };
                     break;
                 }
                 case EventType.PrintText:
                 {
                     var npcTextIndex = dataReader.ReadByte();
-                    dataReader.Position += 8; // unused
-                    mapEvent = new PrintTextEvent
+                    var unused = dataReader.ReadBytes(8); // unused
+                    @event = new PrintTextEvent
                     {
-                        NPCTextIndex = npcTextIndex
+                        NPCTextIndex = npcTextIndex,
+                        Unused = unused
                     };
                     break;
                 }
@@ -328,7 +333,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var textIndex = dataReader.ReadByte();
                     var unknown1 = dataReader.ReadBytes(6);
                     var noEventIndex = dataReader.ReadWord();
-                    mapEvent = new DecisionEvent
+                    @event = new DecisionEvent
                     {
                         TextIndex = textIndex,
                         NoEventIndex = noEventIndex,
@@ -341,7 +346,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var musicIndex = dataReader.ReadWord();
                     var volume = dataReader.ReadByte();
                     var unknown1 = dataReader.ReadBytes(6);
-                    mapEvent = new ChangeMusicEvent
+                    @event = new ChangeMusicEvent
                     {
                         MusicIndex = musicIndex,
                         Volume = volume,
@@ -351,7 +356,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Exit:
                 {
-                    mapEvent = new ExitEvent
+                    @event = new ExitEvent
                     {
                         Unused = dataReader.ReadBytes(9)
                     };
@@ -359,7 +364,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 default:
                 {
-                    mapEvent = new DebugMapEvent
+                    @event = new DebugEvent
                     {
                         Data = dataReader.ReadBytes(9)
                     };
@@ -367,9 +372,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
             }
 
-            mapEvent.Type = type;
+            @event.Type = type;
 
-            return mapEvent;
+            return @event;
         }
     }
 }
