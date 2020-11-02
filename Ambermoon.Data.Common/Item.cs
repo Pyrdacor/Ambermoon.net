@@ -29,6 +29,12 @@ namespace Ambermoon.Data
         /// </summary>
         public AmmunitionType UsedAmmunitionType { get; set; }
         public byte[] UnknownBytes17To20 { get; set; } // 4
+        /// <summary>
+        /// This value is used for:
+        /// - Special item purposes like clock, compass, etc (<see cref="SpecialItemPurpose"/>)
+        /// - Transportation (<see cref="Transportation"/>)
+        /// - Text index of text scrolls (<see cref="TextIndex"/>)
+        /// </summary>
         public byte SpecialValue { get; set; } // special item purpose, transportation, etc
         public byte TextSubIndex { get; set; }
         public SpellType SpellType { get; set; }
@@ -46,16 +52,34 @@ namespace Ambermoon.Data
 
         /// <summary>
         /// Used only for special items.
+        /// 
+        /// Note that this is the same as <see cref="SpecialValue"/>.
         /// </summary>
-        public SpecialItemPurpose SpecialItemPurpose => (SpecialItemPurpose)SpecialValue;
+        public SpecialItemPurpose SpecialItemPurpose
+        {
+            get => (SpecialItemPurpose)SpecialValue;
+            set => SpecialValue = (byte)value;
+        }
         /// <summary>
         /// Used only for transportation items.
+        /// 
+        /// Note that this is the same as <see cref="SpecialValue"/>.
         /// </summary>
-        public Transportation Transportation => (Transportation)SpecialValue;
+        public Transportation Transportation
+        {
+            get => (Transportation)SpecialValue;
+            set => SpecialValue = (byte)value;
+        }
         /// <summary>
         /// Used only for text scrolls.
+        /// 
+        /// Note that this is the same as <see cref="SpecialValue"/>.
         /// </summary>
-        public uint TextIndex => SpecialValue;
+        public uint TextIndex
+        {
+            get => SpecialValue;
+            set => SpecialValue = (byte)value;
+        }
         public Spell Spell => SpellIndex == 0 ? Spell.None : (Spell)((int)SpellType * 30 + SpellIndex);
 
         float GetPriceFactor(PartyMember character) => 2.92f + character.Attributes[Data.Attribute.Charisma].TotalCurrentValue * 0.16f / 100.0f;
