@@ -213,7 +213,9 @@ namespace Ambermoon.Data
                     Spell = spell.Key,
                     SpellType = (SpellType)(((int)spell.Key - 1) / 30),
                     SP = spell.Value.SP,
-                    SLP = spell.Value.SLP
+                    SLP = spell.Value.SLP,
+                    Target = spell.Value.Target,
+                    ApplicationArea = spell.Value.ApplicationArea
                 };
            }
         }
