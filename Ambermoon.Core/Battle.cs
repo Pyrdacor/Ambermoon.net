@@ -259,7 +259,7 @@ namespace Ambermoon
             }
             if (monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster))
                 possibleActions.Add(BattleAction.Attack);
-            if (!possibleActions.Contains(BattleAction.Attack) && monster.Ailments.CanMove())
+            if ((wantsToFlee || !possibleActions.Contains(BattleAction.Attack)) && monster.Ailments.CanMove()) // TODO: small chance to move even if the monster could attack?
             {
                 // Only move if there is nobody to attack
                 if (MoveSpotAvailable(position, monster))
