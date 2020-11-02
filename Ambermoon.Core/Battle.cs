@@ -5,6 +5,49 @@ using System.Linq;
 
 namespace Ambermoon
 {
+    internal static class CharacterBattleExtensions
+    {
+        public static bool HasLongRangedAttack(this Character character, IItemManager itemManager, out bool hasAmmo)
+        {
+            hasAmmo = false;
+
+            var itemIndex = character.Equipment?.Slots[EquipmentSlot.RightHand]?.ItemIndex;
+
+            if (itemIndex == null || itemIndex == 0)
+                return false;
+
+            var longRangedWeapon = itemManager.GetItem(itemIndex.Value);
+            bool hasLongRangedWeapon = longRangedWeapon.Type == ItemType.LongRangeWeapon;
+
+            if (hasLongRangedWeapon)
+            {
+                var ammoSlot = character.Equipment.Slots[EquipmentSlot.LeftHand];
+                hasAmmo = ammoSlot?.ItemIndex != null && ammoSlot?.ItemIndex != 0 && ammoSlot?.Amount > 0;
+
+                // I guess for monsters it's fine if the monster has the ammo in inventory
+                if (!hasAmmo && character is Monster)
+                {
+                    hasAmmo = character.Inventory.Slots.Any(slot =>
+                    {
+                        if (slot?.ItemIndex == null || slot.ItemIndex == 0 || slot.Amount == 0)
+                            return false;
+
+                        var item = itemManager.GetItem(slot.ItemIndex);
+
+                        if (item?.Type != ItemType.Ammunition || item.AmmunitionType != longRangedWeapon.UsedAmmunitionType)
+                            return false;
+
+                        return true;
+                    });
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     internal class Battle
     {
         internal enum BattleAction
@@ -107,9 +150,10 @@ namespace Ambermoon
         /// <param name="battleActionParameters">Parameters for those battle actions.</param>
         internal void StartRound(BattleAction[] battleActions, uint[] battleActionParameters)
         {
-            roundActors = partyMembers.Where(p => p != null && p.Alive).Cast<Character>()
-                .Concat(monsters.ToList().Where(m => m != null && m.Alive).Cast<Character>())
-                .OrderBy(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue).ToList();
+            roundActors = battleField
+                .Where(f => f != null)
+                .OrderBy(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue)
+                .ToList();
             roundBattleActions = new BattleAction[roundActors.Count];
             roundBattleActionParameters = new uint[roundActors.Count];
 
@@ -261,8 +305,9 @@ namespace Ambermoon
 
         bool MoveSpotAvailable(int characterPosition, Monster monster)
         {
-            // TODO: monsters like spiders can move more than 1 field at once. where is this info stored?
-            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, 1))
+            int moveRange = monster.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
+
+            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, moveRange))
                 return false;
 
             for (int y = minY; y <= maxY; ++y)
@@ -279,7 +324,7 @@ namespace Ambermoon
 
         bool AttackSpotAvailable(int characterPosition, Monster monster)
         {
-            int range = 1; // TODO: long-ranged attacks
+            int range = monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
 
             if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range))
                 return false;
@@ -326,8 +371,8 @@ namespace Ambermoon
 
         uint GetBestMoveSpot(int characterPosition, Monster monster)
         {
-            // TODO: monsters like spiders can move more than 1 field at once. where is this info stored?
-            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, 1);
+            int moveRange = monster.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
+            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, moveRange);
             var possiblePositions = new List<int>();
 
             for (int y = minY; y <= maxY; ++y)
@@ -379,7 +424,7 @@ namespace Ambermoon
 
         uint GetBestAttackSpot(int characterPosition, Monster monster)
         {
-            int range = 1; // TODO: long-ranged attacks
+            int range = monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
             GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range);
             var possiblePositions = new List<int>();
 

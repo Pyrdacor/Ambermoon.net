@@ -159,7 +159,7 @@ namespace Ambermoon
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly Dictionary<CharacterInfo, Panel> characterInfoPanels = new Dictionary<CharacterInfo, Panel>();
         readonly IMapManager mapManager;
-        readonly IItemManager itemManager;
+        internal IItemManager ItemManager { get; }
         internal ICharacterManager CharacterManager { get; }
         readonly IRenderView renderView;
         internal ISavegameManager SavegameManager { get; }
@@ -286,7 +286,7 @@ namespace Ambermoon
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
             this.mapManager = mapManager;
-            this.itemManager = itemManager;
+            this.ItemManager = itemManager;
             CharacterManager = characterManager;
             SavegameManager = savegameManager;
             this.savegameSerializer = savegameSerializer;
@@ -1522,7 +1522,7 @@ namespace Ambermoon
                     slot => new Position(Global.InventoryX + (slot % Inventory.Width) * Global.InventorySlotWidth,
                         Global.InventoryY + (slot / Inventory.Width) * Global.InventorySlotHeight)
                 ).ToList();
-                var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, itemManager,
+                var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, ItemManager,
                     inventorySlotPositions, partyMember.Inventory.Slots.ToList());
                 layout.AddItemGrid(inventoryGrid);
                 for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
@@ -1530,7 +1530,7 @@ namespace Ambermoon
                     if (!partyMember.Inventory.Slots[i].Empty)
                         inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
                 }
-                var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, itemManager,
+                var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, ItemManager,
                     equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList());
                 layout.AddItemGrid(equipmentGrid);
                 foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
@@ -1596,7 +1596,7 @@ namespace Ambermoon
                 };
                 void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {
-                    var item = itemManager.GetItem(itemSlot.ItemIndex);
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
                     EquipmentRemoved(item, amount);
 
                     if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
@@ -1610,7 +1610,7 @@ namespace Ambermoon
                 }
                 void AddEquipment(int slotIndex, ItemSlot itemSlot)
                 {
-                    var item = itemManager.GetItem(itemSlot.ItemIndex);
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
                     EquipmentAdded(item, itemSlot.Amount);
 
                     if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
@@ -1625,12 +1625,12 @@ namespace Ambermoon
                 }
                 void RemoveInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
                 {
-                    InventoryItemRemoved(itemManager.GetItem(itemSlot.ItemIndex), amount);
+                    InventoryItemRemoved(ItemManager.GetItem(itemSlot.ItemIndex), amount);
                     UpdateCharacterInfo();
                 }
                 void AddInventoryItem(int slotIndex, ItemSlot itemSlot)
                 {
-                    InventoryItemAdded(itemManager.GetItem(itemSlot.ItemIndex), itemSlot.Amount);
+                    InventoryItemAdded(ItemManager.GetItem(itemSlot.ItemIndex), itemSlot.Amount);
                     UpdateCharacterInfo();
                 }
                 equipmentGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
@@ -1940,7 +1940,7 @@ namespace Ambermoon
 
         internal void InventoryItemAdded(uint itemIndex, int amount, PartyMember partyMember)
         {
-            InventoryItemAdded(itemManager.GetItem(itemIndex), amount);
+            InventoryItemAdded(ItemManager.GetItem(itemIndex), amount);
         }
 
         void InventoryItemRemoved(Item item, int amount)
@@ -1953,7 +1953,7 @@ namespace Ambermoon
 
         internal void InventoryItemRemoved(uint itemIndex, int amount)
         {
-            InventoryItemRemoved(itemManager.GetItem(itemIndex), amount);
+            InventoryItemRemoved(ItemManager.GetItem(itemIndex), amount);
         }
 
         void EquipmentAdded(Item item, int amount, PartyMember partyMember = null)
@@ -1970,7 +1970,7 @@ namespace Ambermoon
 
         internal void EquipmentAdded(uint itemIndex, int amount, PartyMember partyMember)
         {
-            EquipmentAdded(itemManager.GetItem(itemIndex), amount, partyMember);
+            EquipmentAdded(ItemManager.GetItem(itemIndex), amount, partyMember);
         }
 
         void EquipmentRemoved(Item item, int amount)
@@ -1987,7 +1987,7 @@ namespace Ambermoon
 
         internal void EquipmentRemoved(uint itemIndex, int amount)
         {
-            EquipmentRemoved(itemManager.GetItem(itemIndex), amount);
+            EquipmentRemoved(ItemManager.GetItem(itemIndex), amount);
         }
 
         void RenewTimedEvent(TimedGameEvent timedGameEvent, TimeSpan delay)
@@ -2335,7 +2335,7 @@ namespace Ambermoon
                 var chest = GetChest(chestMapEvent.ChestIndex);
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
                 itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-                var itemGrid = ItemGrid.Create(layout, renderView, itemManager, itemSlotPositions, chest.Slots.ToList(),
+                var itemGrid = ItemGrid.Create(layout, renderView, ItemManager, itemSlotPositions, chest.Slots.ToList(),
                     !chestMapEvent.RemoveWhenEmpty, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
                 layout.AddItemGrid(itemGrid);
 
@@ -2842,7 +2842,7 @@ namespace Ambermoon
             if (OpenStorage == null)
                 return false; // should not happen
 
-            if (itemManager.GetItem(itemSlot.ItemIndex).Flags.HasFlag(ItemFlags.Stackable))
+            if (ItemManager.GetItem(itemSlot.ItemIndex).Flags.HasFlag(ItemFlags.Stackable))
             {
                 foreach (var slot in OpenStorage.Slots)
                 {
@@ -2896,12 +2896,12 @@ namespace Ambermoon
                 int remaining = emptySlot.Add(item);
                 int added = amountToAdd - remaining;
 
-                InventoryItemAdded(itemManager.GetItem(emptySlot.ItemIndex), added, partyMember);
+                InventoryItemAdded(ItemManager.GetItem(emptySlot.ItemIndex), added, partyMember);
 
                 return remaining;
             }
 
-            var itemToAdd = itemManager.GetItem(item.ItemIndex);
+            var itemToAdd = ItemManager.GetItem(item.ItemIndex);
 
             foreach (var slot in slots)
             {
