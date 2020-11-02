@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="2.0.2" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="2.0.3" />
     <PackageReference Include="Silk.NET.OpenGL" Version="1.7.0" />
   </ItemGroup>
 

@@ -136,7 +136,7 @@ namespace Ambermoon.Data
             { Spell.MysticalMapII, new SpellInfo { SP = 35, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle } },
             { Spell.MysticalMapIII, new SpellInfo { SP = 45, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle } },
             { Spell.MysticalGlobe, new SpellInfo { SP = 250, SLP = 25, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle } },
-            { Spell.ShowMonsterLP, new SpellInfo { SP = 5, SLP = 5, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly } }, // TODO: SP and SLP info missing
+            { Spell.ShowMonsterLP, new SpellInfo { SP = 15, SLP = 5, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly } },
             { Spell.UnusedMystic18, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
             { Spell.UnusedMystic19, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
             { Spell.UnusedMystic20, new SpellInfo { SP = uint.MaxValue, SLP = uint.MaxValue } },
