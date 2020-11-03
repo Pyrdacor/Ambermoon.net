@@ -86,9 +86,14 @@ namespace Ambermoon.Render
         }
     }
 
+    public interface IAnimatedLayerSprite : IAnimatedSprite, ILayerSprite
+    {
+
+    }
+
     public interface ISpriteFactory
     {
         ISprite Create(int width, int height, bool masked, bool layered, byte displayLayer = 0);
-        IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames = 1);
+        IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames, bool layered = false, byte displayLayer = 0);
     }
 }

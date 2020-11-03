@@ -161,6 +161,7 @@ namespace Ambermoon
         readonly IMapManager mapManager;
         internal IItemManager ItemManager { get; }
         internal ICharacterManager CharacterManager { get; }
+        readonly Places places;
         readonly IRenderView renderView;
         internal ISavegameManager SavegameManager { get; }
         readonly ISavegameSerializer savegameSerializer;
@@ -278,7 +279,8 @@ namespace Ambermoon
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
             ICharacterManager characterManager, ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
-            IDataNameProvider dataNameProvider, TextDictionary textDictionary, Cursor cursor, bool legacyMode)
+            IDataNameProvider dataNameProvider, IPlacesReader placesReader, TextDictionary textDictionary, Cursor cursor,
+            bool legacyMode)
         {
             this.cursor = cursor;
             this.legacyMode = legacyMode;
@@ -289,6 +291,7 @@ namespace Ambermoon
             this.ItemManager = itemManager;
             CharacterManager = characterManager;
             SavegameManager = savegameManager;
+            places = Places.Load(placesReader, renderView.GameData.Files["Place_data"].Files[1]);
             this.savegameSerializer = savegameSerializer;
             DataNameProvider = dataNameProvider;
             this.textDictionary = textDictionary;
@@ -2480,13 +2483,35 @@ namespace Ambermoon
                 layout.AddSprite(new Rect(0, 38, 320, 95), Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                     (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1);
                 layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), false);
+                var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex);
                 currentBattle = new Battle(this, Enumerable.Range(0, Game.MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
-                    CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex));
+                    monsterGroup);
                 currentBattle.RoundFinished += () =>
                 {
                     InputEnable = true;
                     CursorType = CursorType.Sword;
                 };
+                currentBattle.CharacterDied += character =>
+                {
+                    if (character is Monster monster)
+                    {
+                        layout.RemoveMonsterCombatSprite(monster);
+                    }
+
+                    // TODO
+                };
+
+                // Add animated monster combat graphics
+                for (int row = 0; row < 3; ++row)
+                {
+                    for (int column = 0; column < 6; ++column)
+                    {
+                        if (monsterGroup.Monsters[column, row] != null)
+                        {
+                            layout.AddMonsterCombatSprite(column, row, monsterGroup.Monsters[column, row]);
+                        }
+                    }
+                }
 
                 // TODO: REMOVE. This is only for testing.
                 layout.AttachEventToButton(2, () =>

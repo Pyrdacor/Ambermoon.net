@@ -311,10 +311,16 @@ namespace Ambermoon.Data
 
     public class EnterPlaceEvent : Event
     {
-        // TODO
+        public byte OpeningHour { get; set; }
+        public byte ClosingHour { get; set; }
+        public uint PlaceIndex { get; set; }
+        public byte[] Unknown1 { get; set; }
+        public byte Unknown2 { get; set; }
+        public byte[] Unknown3 { get; set; }
+
         public override string ToString()
         {
-            return $"{Type}";
+            return $"{Type}: Place index {PlaceIndex}, Open {OpeningHour:00}-{ClosingHour:00} Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {Unknown2:x2}, Unknown3 {string.Join(" ", Unknown3.Select(u => u.ToString("x2")))}";
         }
     }
 

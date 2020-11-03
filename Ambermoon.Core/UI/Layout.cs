@@ -328,6 +328,14 @@ namespace Ambermoon.UI
             }
         }
 
+        class MonsterCombatGraphic
+        {
+            public Monster Monster { get; set; }
+            public int Row{ get; set; }
+            public int Column { get; set; }
+            public IAnimatedSprite Sprite { get; set; }
+        }
+
         public LayoutType Type { get; private set; }
         readonly Game game;
         readonly ILayerSprite sprite;
@@ -348,6 +356,7 @@ namespace Ambermoon.UI
         readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new Dictionary<ActiveSpellType, ILayerSprite>();
         readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new Dictionary<ActiveSpellType, IColoredRect>();
         readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
+        readonly List<MonsterCombatGraphic> monsterCombatGraphics = new List<MonsterCombatGraphic>();
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
         readonly List<IColoredRect> barAreas = new List<IColoredRect>();
@@ -1094,6 +1103,8 @@ namespace Ambermoon.UI
             activeSpellDurationBars.Clear(); // areas are destroyed above
             specialItemSprites.Clear(); // sprites are destroyed above
             specialItemTexts.Clear(); // texts are destroyed above
+            monsterCombatGraphics.ForEach(g => g.Sprite?.Delete());
+            monsterCombatGraphics.Clear();
 
             // Note: Don't remove fadeEffects or bars here.
         }
@@ -1896,6 +1907,48 @@ namespace Ambermoon.UI
         {
             for (int i = 0; i < 9; ++i)
                 ReleaseButton(i);
+        }
+
+        public void AddMonsterCombatSprite(int column, int row, Monster monster)
+        {
+            var layer = Layer.BattleMonsterRowFarthest + row;
+            int centerX = 100; // TODO
+            var area = new Rect(0, 0, 140, 80); // TODO
+            int slotWidth = area.Width / 6;
+            float sizeMultiplier = 1.0f + row * 0.25f; // TODO
+            int width = Util.Round(64 * sizeMultiplier); // TODO
+            int height = Util.Round(64 * sizeMultiplier); // TODO
+            int x = centerX - (3 - column) * slotWidth + (slotWidth - width) / 2;
+            int y = area.Y + row * 40; // TODO
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
+            var graphicIndex = monster.CombatGraphicIndex;
+            var sprite = RenderView.SpriteFactory.CreateAnimated(width, height, textureAtlas.Texture.Width, 1, true) as IAnimatedLayerSprite; // TODO: frames
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(graphicIndex);
+            sprite.DisplayLayer = (byte)column;
+            sprite.X = x;
+            sprite.Y = y;
+            sprite.PaletteIndex = 49; // TODO
+            sprite.Layer = RenderView.GetLayer(layer);
+            sprite.Visible = true;
+            additionalSprites.Add(sprite);
+            monsterCombatGraphics.Add(new MonsterCombatGraphic
+            {
+                Monster = monster,
+                Row = row,
+                Column = column,
+                Sprite = sprite
+            });
+        }
+
+        public void RemoveMonsterCombatSprite(Monster monster)
+        {
+            var monsterCombatGraphic = monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster);
+
+            if (monsterCombatGraphic != null)
+            {
+                monsterCombatGraphic.Sprite?.Delete();
+                monsterCombatGraphics.Remove(monsterCombatGraphic);
+            }
         }
     }
 }

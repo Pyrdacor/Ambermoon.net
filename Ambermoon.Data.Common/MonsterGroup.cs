@@ -6,6 +6,11 @@ namespace Ambermoon.Data
     {
         public Monster[,] Monsters { get; } = new Monster[6, 3];
 
+        private MonsterGroup()
+        {
+
+        }
+
         public static MonsterGroup Load(ICharacterManager characterManager, IMonsterGroupReader monsterGroupReader, IDataReader dataReader)
         {
             var monsterGroup = new MonsterGroup();

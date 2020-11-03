@@ -21,6 +21,11 @@ namespace Ambermoon.Data
 
         public bool Empty => Gold == 0 && Food == 0 && !Slots.Cast<ItemSlot>().Any(s => s.Amount != 0);
 
+        private Chest()
+        {
+
+        }
+
         public static Chest Load(IChestReader chestReader, IDataReader dataReader)
         {
             var chest = new Chest();

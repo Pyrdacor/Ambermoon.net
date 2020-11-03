@@ -82,6 +82,11 @@ namespace Ambermoon.Data
         }
         public Spell Spell => SpellIndex == 0 ? Spell.None : (Spell)((int)SpellType * 30 + SpellIndex);
 
+        private Item()
+        {
+
+        }
+
         float GetPriceFactor(PartyMember character) => 2.92f + character.Attributes[Data.Attribute.Charisma].TotalCurrentValue * 0.16f / 100.0f;
         public uint GetBuyPrice(PartyMember buyer) => (uint)Util.Round(Price / GetPriceFactor(buyer));
         public uint GetSellPrice(PartyMember seller) => (uint)Util.Round(0.5f * Price * GetPriceFactor(seller));

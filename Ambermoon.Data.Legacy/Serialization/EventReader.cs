@@ -255,6 +255,31 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.EnterPlace:
+                {
+                    // 2 unknown bytes
+                    // opening hour
+                    // closing hour
+                    // 1 unknown byte
+                    // place index (1-based, word)
+                    // 2 unknown bytes
+                    var unknown1 = dataReader.ReadBytes(2);
+                    var openingHour = dataReader.ReadByte();
+                    var closingHour = dataReader.ReadByte();
+                    var unknown2 = dataReader.ReadByte();
+                    var placeIndex = dataReader.ReadWord();
+                    var unknown3 = dataReader.ReadBytes(2);
+                    @event = new EnterPlaceEvent
+                    {
+                        OpeningHour = openingHour,
+                        ClosingHour = closingHour,
+                        PlaceIndex = placeIndex,
+                        Unknown1 = unknown1,
+                        Unknown2 = unknown2,
+                        Unknown3 = unknown3
+                    };
+                    break;
+                }
                 case EventType.Condition:
                 {
                     var conditionType = (ConditionEvent.ConditionType)dataReader.ReadByte(); // TODO: this needs more research

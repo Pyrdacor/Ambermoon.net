@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Ambermoon.Data.Enumerations;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
@@ -35,5 +36,6 @@ namespace Ambermoon.Data
         List<Graphic> GetGraphics(GraphicType type);
         CombatBackgroundInfo Get2DCombatBackground(uint index);
         CombatBackgroundInfo Get3DCombatBackground(uint index);
+        CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index);
     }
 }

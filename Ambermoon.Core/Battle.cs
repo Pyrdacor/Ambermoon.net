@@ -66,12 +66,14 @@ namespace Ambermoon
         List<Character> roundActors;
         BattleAction[] roundBattleActions;
         uint[] roundBattleActionParameters;
-        public event Action RoundFinished;
         Character currentActor;
         uint currentActorAction = 0;
         uint currentActorActionCount = 0;
         readonly Character[] battleField = new Character[6 * 5];
         bool wantsToFlee = false;
+
+        public event Action RoundFinished;
+        public event Action<Character> CharacterDied;
 
         public Battle(Game game, PartyMember[] partyMembers, MonsterGroup monsterGroup)
         {

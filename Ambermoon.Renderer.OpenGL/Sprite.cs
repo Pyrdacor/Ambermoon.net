@@ -388,6 +388,38 @@ namespace Ambermoon.Renderer
         }
     }
 
+    internal class AnimatedLayerSprite : AnimatedSprite, IAnimatedLayerSprite
+    {
+        byte displayLayer = 0;
+
+        public AnimatedLayerSprite(int width, int height, int textureAtlasX, int textureAtlasY, byte displayLayer,
+            Rect virtualScreen, uint numFrames, int textureAtlasWidth)
+            : base(width, height, textureAtlasX, textureAtlasY, virtualScreen, numFrames, textureAtlasWidth)
+        {
+            this.displayLayer = displayLayer;
+        }
+
+        public byte DisplayLayer
+        {
+            get => displayLayer;
+            set
+            {
+                if (displayLayer == value)
+                    return;
+
+                displayLayer = value;
+
+                UpdateDisplayLayer();
+            }
+        }
+
+        protected virtual void UpdateDisplayLayer()
+        {
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdateDisplayLayer(drawIndex, displayLayer);
+        }
+    }
+
     internal class TextCharacterSprite : LayerSprite
     {
         public byte TextColorIndex { get; set; }
@@ -437,9 +469,12 @@ namespace Ambermoon.Renderer
             }
         }
 
-        public IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames = 1)
+        public IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames, bool layered = false, byte displayLayer = 0)
         {
-            return new AnimatedSprite(width, height, 0, 0, virtualScreen, numFrames, textureAtlasWidth);
+            if (layered)
+                return new AnimatedLayerSprite(width, height, 0, 0, displayLayer, virtualScreen, numFrames, textureAtlasWidth);
+            else
+                return new AnimatedSprite(width, height, 0, 0, virtualScreen, numFrames, textureAtlasWidth);
         }
     }
 }

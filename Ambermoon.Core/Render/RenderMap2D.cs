@@ -67,8 +67,8 @@ namespace Ambermoon.Render
             {
                 for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                 {
-                    var backgroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0);
-                    var foregroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0);
+                    var backgroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 1);
+                    var foregroundSprite = spriteFactory.CreateAnimated(TILE_WIDTH, TILE_HEIGHT, 0, 1);
 
                     backgroundSprite.Visible = true;
                     backgroundSprite.X = Global.Map2DViewX + column * TILE_WIDTH;

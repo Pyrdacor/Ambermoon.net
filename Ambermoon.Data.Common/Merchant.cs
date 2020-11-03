@@ -6,6 +6,11 @@ namespace Ambermoon.Data
     {
         public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
 
+        private Merchant()
+        {
+
+        }
+
         public static Merchant Load(IMerchantReader merchantReader, IDataReader dataReader)
         {
             var merchant = new Merchant();
