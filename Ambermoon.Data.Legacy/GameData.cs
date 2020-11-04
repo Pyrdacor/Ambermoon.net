@@ -181,9 +181,9 @@ namespace Ambermoon.Data.Legacy
                 }
             }
 
-            if (foundNoDictionary)
+            if (foundNoDictionary && stopAtFirstError)
             {
-                throw new FileNotFoundException($"Unable to find any dictionary file.");
+                throw new FileNotFoundException("Unable to find any dictionary file.");
             }
 
             LoadTravelGraphics();
@@ -197,6 +197,10 @@ namespace Ambermoon.Data.Legacy
             // uword XOffset (in pixels relative to drawing position)
             // uword YOffset (in pixels relative to drawing position)
             var container = Files["Travel_gfx.amb"];
+
+            if (container == null && stopAtFirstError)
+                throw new FileNotFoundException("Unable to find travel graphics.");
+
             var graphicReader = new GraphicReader();
             var graphicInfo = new GraphicInfo
             {

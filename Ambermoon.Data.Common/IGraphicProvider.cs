@@ -37,5 +37,6 @@ namespace Ambermoon.Data
         CombatBackgroundInfo Get2DCombatBackground(uint index);
         CombatBackgroundInfo Get3DCombatBackground(uint index);
         CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index);
+        MonsterGraphicInfo GetMonsterGraphicInfo(MonsterGraphicIndex index);
     }
 }

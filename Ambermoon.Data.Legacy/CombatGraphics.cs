@@ -1,7 +1,5 @@
 ﻿using Ambermoon.Data.Enumerations;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ambermoon.Data.Legacy
 {

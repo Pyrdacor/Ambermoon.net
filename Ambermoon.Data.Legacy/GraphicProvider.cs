@@ -383,5 +383,6 @@ namespace Ambermoon.Data.Legacy
         public CombatBackgroundInfo Get2DCombatBackground(uint index) => CombatBackgrounds.Info2D[index];
         public CombatBackgroundInfo Get3DCombatBackground(uint index) => CombatBackgrounds.Info3D[index];
         public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index) => CombatGraphics.Info[index];
+        public MonsterGraphicInfo GetMonsterGraphicInfo(MonsterGraphicIndex index) => MonsterGraphics.Info[index];
     }
 }
