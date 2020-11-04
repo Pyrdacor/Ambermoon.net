@@ -5,7 +5,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public static class FileWriter
     {
-        public static void WriteJH(DataWriter writer, byte[] fileData, ushort encryptKey, bool additionalLobCompression)
+        public static void WriteJH(DataWriter writer, byte[] fileData, ushort encryptKey, bool additionalLobCompression, bool noHeader = false)
         {
             if (additionalLobCompression)
             {
@@ -15,9 +15,13 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
 
             var encryptedData = Compression.JH.Crypt(fileData, encryptKey);
-            uint header = (uint)FileType.JH | (uint)((ushort)((uint)FileType.JH >> 16) ^ encryptKey);
 
-            writer.Write(header);
+            if (!noHeader)
+            {
+                uint header = (uint)FileType.JH | (uint)((ushort)((uint)FileType.JH >> 16) ^ encryptKey);
+                writer.Write(header);
+            }
+
             writer.Write(encryptedData);
         }
 
@@ -94,7 +98,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         {
                             // this is always JH encoded and may be LOB compress if size is better
                             var jhWriter = new DataWriter();
-                            WriteJH(jhWriter, fileData, (ushort)fileIndex++, false);
+                            WriteJH(jhWriter, fileData, (ushort)fileIndex++, false, true);
                             var lobWriter = new DataWriter();
                             WriteLob(lobWriter, jhWriter.ToArray(), (uint)FileType.LOB);
                             var compressedData = lobWriter.ToArray();
