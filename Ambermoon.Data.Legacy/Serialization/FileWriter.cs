@@ -65,10 +65,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                     if (filesData.Count >= 0xffff) // -1 cause JH uses the 1-based index as a word
                         throw new AmbermoonException(ExceptionScope.Data, $"In a container file there can only be {0xffff-1} files at max.");
 
-                    int firstIndex = filesData.ContainsKey(0) ? 0 : 1;
-                    int fileIndex = 1; // this is needed for JH key and is always 1-based
+                    if (filesData.ContainsKey(0))
+                        throw new AmbermoonException(ExceptionScope.Data, "The first file must have index 1 and not 0.");
+
                     var writerWithoutHeader = new DataWriter();
-                    int totalFileNumber = (int)filesData.Keys.Max() + 1 - firstIndex;
+                    int totalFileNumber = (int)filesData.Keys.Max();
                     List<int> fileSizes = Enumerable.Repeat(0, totalFileNumber).ToList();
 
                     foreach (var file in filesData)
@@ -83,22 +84,20 @@ namespace Ambermoon.Data.Legacy.Serialization
                            AMPC | Another multiple file container (only compressed, not JH encrypted) | 0x414d5043 ('AMPC')
                          */
                         if (fileType == FileType.AMNC)
-                            WriteJH(writerWithoutHeader, fileData, (ushort)fileIndex++, false);
+                            WriteJH(writerWithoutHeader, fileData, (ushort)file.Key, false);
                         else if (fileType == FileType.AMBR)
                         {
                             writerWithoutHeader.Write(fileData);
-                            ++fileIndex;
                         }
                         else if (fileType == FileType.AMPC)
                         {
                             WriteLob(writerWithoutHeader, fileData);
-                            ++fileIndex;
                         }
                         else // AMNP
                         {
                             // this is always JH encoded and may be LOB compress if size is better
                             var jhWriter = new DataWriter();
-                            WriteJH(jhWriter, fileData, (ushort)fileIndex++, false, true);
+                            WriteJH(jhWriter, fileData, (ushort)file.Key, false, true);
                             var lobWriter = new DataWriter();
                             WriteLob(lobWriter, jhWriter.ToArray(), (uint)FileType.LOB);
                             var compressedData = lobWriter.ToArray();
@@ -108,7 +107,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             writerWithoutHeader.Write(data);
                         }
 
-                        fileSizes[(int)file.Key - firstIndex] = writerWithoutHeader.Position - prevOffset;
+                        fileSizes[(int)file.Key - 1] = writerWithoutHeader.Position - prevOffset;
                     }
 
                     writer.Write((uint)fileType);
