@@ -99,6 +99,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                             WriteLob(lobWriter, jhWriter.ToArray(), (uint)FileType.LOB);
                             var compressedData = lobWriter.ToArray();
                             var data = compressedData.Length - 4 < jhWriter.Size ? compressedData : jhWriter.ToArray();
+                            if (data != compressedData)
+                                writerWithoutHeader.Write((uint)0);
                             writerWithoutHeader.Write(data);
                         }
 
