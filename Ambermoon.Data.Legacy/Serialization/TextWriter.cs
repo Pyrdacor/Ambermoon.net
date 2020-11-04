@@ -16,7 +16,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             textDataWriter.Write((ushort)texts.Count);
 
             texts.ForEach(text => textDataWriter.Write((ushort)(text.Length + 1)));
-            texts.ForEach(text => textDataWriter.Write(text + "\0", text.Length + 1));
+            texts.ForEach(text => textDataWriter.WriteWithoutLength(text + "\0"));
         }
     }
 }

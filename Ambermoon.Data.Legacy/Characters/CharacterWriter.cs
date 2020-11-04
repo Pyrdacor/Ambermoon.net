@@ -79,7 +79,7 @@ namespace Ambermoon.Data.Legacy.Characters
             string serializedCharacterName = character.Name.Length == 16
                 ? character.Name.Substring(0, 15) + "\0"
                 : character.Name.PadRight(16, '\0');
-            dataWriter.Write(serializedCharacterName);
+            dataWriter.WriteWithoutLength(serializedCharacterName);
 
             if (character.Type != CharacterType.NPC)
             {

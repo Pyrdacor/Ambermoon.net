@@ -129,6 +129,31 @@ namespace Ambermoon.Data.Legacy.Serialization
             Write(value, encoding);
         }
 
+        public void WriteNullTerminated(string value)
+        {
+            WriteNullTerminated(value, Encoding);
+        }
+
+        public void WriteNullTerminated(string value, Encoding encoding)
+        {
+            var bytes = encoding.GetBytes(value);
+
+            if (bytes.Length != 0)
+                Write(bytes);
+
+            Write((byte)0);
+        }
+
+        public void WriteWithoutLength(string value)
+        {
+            WriteWithoutLength(value, Encoding);
+        }
+
+        public void WriteWithoutLength(string value, Encoding encoding)
+        {
+            Write(encoding.GetBytes(value));
+        }
+
         public void Write(byte[] bytes)
         {
             data.AddRange(bytes);

@@ -26,5 +26,9 @@ namespace Ambermoon.Data.Serialization
         byte[] ToArray();
         void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible;
         void WriteEnumAsWord<T>(T value) where T : struct, System.Enum, IConvertible;
+        void WriteNullTerminated(string value);
+        void WriteNullTerminated(string value, Encoding encoding);
+        void WriteWithoutLength(string value);
+        void WriteWithoutLength(string value, Encoding encoding);
     }
 }
