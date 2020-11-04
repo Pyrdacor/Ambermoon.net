@@ -53,9 +53,10 @@ namespace Ambermoon.Data.Legacy.Serialization
                     if (filesData.Count >= 0xffff) // -1 cause JH uses the 1-based index as a word
                         throw new AmbermoonException(ExceptionScope.Data, $"In a container file there can only be {0xffff-1} files at max.");
 
-                    int fileIndex = 1;
+                    int firstIndex = filesData.ContainsKey(0) ? 0 : 1;
+                    int fileIndex = 1; // this is needed for JH key and is always 1-based
                     var writerWithoutHeader = new DataWriter();
-                    int totalFileNumber = (int)filesData.Keys.Max();
+                    int totalFileNumber = (int)filesData.Keys.Max() + 1 - firstIndex;
                     List<int> fileSizes = Enumerable.Repeat(0, totalFileNumber).ToList();
 
                     foreach (var file in filesData)
@@ -91,7 +92,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             WriteJH(writerWithoutHeader, data, (ushort)fileIndex++, false);
                         }
 
-                        fileSizes[(int)file.Key - 1] = writerWithoutHeader.Position - prevOffset;
+                        fileSizes[(int)file.Key - firstIndex] = writerWithoutHeader.Position - prevOffset;
                     }
 
                     writer.Write((uint)fileType);

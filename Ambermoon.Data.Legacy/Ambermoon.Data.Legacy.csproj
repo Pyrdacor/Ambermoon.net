@@ -9,13 +9,13 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Legacy Amiga Game Data</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.0.8</Version>
-    <AssemblyVersion>2.0.8.0</AssemblyVersion>
+    <Version>2.0.9</Version>
+    <AssemblyVersion>2.0.9.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <FileVersion>2.0.8.0</FileVersion>
+    <FileVersion>2.0.9.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
