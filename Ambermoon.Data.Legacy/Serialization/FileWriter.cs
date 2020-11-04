@@ -41,6 +41,14 @@ namespace Ambermoon.Data.Legacy.Serialization
             writer.Write(compressedData);
         }
 
+        public static void WriteContainer(DataWriter writer, FileType fileType, params byte[][] filesData)
+        {
+            if (filesData == null)
+                WriteContainer(writer, new Dictionary<uint, byte[]>(), fileType);
+            else
+                WriteContainer(writer, filesData.Select((f, i) => new { f, i }).ToDictionary(f => 1 + (uint)f.i, f => f.f), fileType);
+        }
+
         public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType)
         {
             switch (fileType)
