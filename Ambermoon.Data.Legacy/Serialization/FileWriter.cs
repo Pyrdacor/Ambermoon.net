@@ -93,11 +93,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                         else // AMNP
                         {
                             // this is always JH encoded and may be LOB compress if size is better
+                            var jhWriter = new DataWriter();
+                            WriteJH(jhWriter, fileData, (ushort)fileIndex++, false);
                             var lobWriter = new DataWriter();
-                            WriteLob(lobWriter, fileData, (uint)FileType.LOB);
+                            WriteLob(lobWriter, jhWriter.ToArray(), (uint)FileType.LOB);
                             var compressedData = lobWriter.ToArray();
-                            var data = compressedData.Length - 4 < fileData.Length ? compressedData : fileData;
-                            WriteJH(writerWithoutHeader, data, (ushort)fileIndex++, false);
+                            var data = compressedData.Length - 4 < jhWriter.Size ? compressedData : jhWriter.ToArray();
+                            writerWithoutHeader.Write(data);
                         }
 
                         fileSizes[(int)file.Key - firstIndex] = writerWithoutHeader.Position - prevOffset;
