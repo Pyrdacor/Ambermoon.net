@@ -1338,15 +1338,16 @@ namespace Ambermoon.UI
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
-            string tooltip = null, TextColor? tooltipTextColor = null)
+            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null)
         {
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, false, true) as ILayerSprite;
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+            sprite.TextureAtlasOffset = layer == null ? textureAtlas.GetOffset(textureIndex)
+                : TextureAtlasManager.Instance.GetOrCreate(layer.Value).GetOffset(textureIndex);
             sprite.DisplayLayer = displayLayer;
             sprite.X = rect.Left;
             sprite.Y = rect.Top;
             sprite.PaletteIndex = paletteIndex;
-            sprite.Layer = renderLayer;
+            sprite.Layer = layer == null ? renderLayer : RenderView.GetLayer(layer.Value);
             sprite.Visible = true;
             additionalSprites.Add(sprite);
 
@@ -1911,26 +1912,26 @@ namespace Ambermoon.UI
 
         public void AddMonsterCombatSprite(int column, int row, Monster monster)
         {
+            int[] yOffsets = new[] { 82, 88, 100, 124 };
+            var combatBackgroundArea = Global.CombatBackgroundArea;
+            var graphicInfo = RenderView.GraphicProvider.GetMonsterGraphicInfo(monster.CombatGraphicIndex);
             var layer = Layer.BattleMonsterRowFarthest + row;
-            int centerX = 100; // TODO
-            var area = new Rect(0, 0, 140, 80); // TODO
-            int slotWidth = area.Width / 6;
-            float sizeMultiplier = 1.0f + row * 0.25f; // TODO
-            int width = Util.Round(64 * sizeMultiplier); // TODO
-            int height = Util.Round(64 * sizeMultiplier); // TODO
+            int centerX = combatBackgroundArea.Width / 2;
+            float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            int slotWidth = Util.Round(40 * sizeMultiplier); // TODO
+            int width = Util.Floor(graphicInfo.Width * sizeMultiplier);
+            int height = Util.Floor(graphicInfo.Height * sizeMultiplier);
             int x = centerX - (3 - column) * slotWidth + (slotWidth - width) / 2;
-            int y = area.Y + row * 40; // TODO
+            int y = combatBackgroundArea.Y + yOffsets[row] - height;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
-            var graphicIndex = monster.CombatGraphicIndex;
             var sprite = RenderView.SpriteFactory.CreateAnimated(width, height, textureAtlas.Texture.Width, 1, true) as IAnimatedLayerSprite; // TODO: frames
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset(graphicIndex);
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)monster.CombatGraphicIndex);
             sprite.DisplayLayer = (byte)column;
             sprite.X = x;
             sprite.Y = y;
-            sprite.PaletteIndex = 49; // TODO
+            sprite.PaletteIndex = (byte)(game.Map.PaletteIndex - 1);
             sprite.Layer = RenderView.GetLayer(layer);
             sprite.Visible = true;
-            additionalSprites.Add(sprite);
             monsterCombatGraphics.Add(new MonsterCombatGraphic
             {
                 Monster = monster,

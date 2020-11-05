@@ -239,7 +239,19 @@ namespace Ambermoon.Render
             var combatBackgrounds = graphicProvider.GetGraphics(GraphicType.CombatBackground);
 
             for (int i = 0; i < combatBackgrounds.Count; ++i)
-                AddTexture(Layer.UI, Graphics.CombatBackgroundOffset + (uint)i, combatBackgrounds[i]);
+                AddTexture(Layer.CombatBackground, Graphics.CombatBackgroundOffset + (uint)i, combatBackgrounds[i]);
+
+            #endregion
+
+            #region Monster graphics
+
+            for (int row = 0; row < 4; ++row) // Note: Monsters can not move into the bottom row.
+            {
+                var monsterGraphics = graphicProvider.GetGraphics(GraphicType.MonsterTiny + row);
+
+                for (int i = 0; i < monsterGraphics.Count; ++i)
+                    AddTexture(Layer.BattleMonsterRowFarthest + row, (uint)(i + 1), monsterGraphics[i]);
+            }
 
             #endregion
         }

@@ -11,8 +11,6 @@ namespace Ambermoon.Data.Legacy
                 {
                     Width = 96,
                     Height = 67,
-                    FirstIdleAnimationFrame = 13, // TODO
-                    IdleAnimationFrameCount = 1, // TODO
                     FirstAttackFrame = 1,
                     AttackFrameCount = 6,
                     FirstCastFrame = 10,
@@ -24,10 +22,8 @@ namespace Ambermoon.Data.Legacy
             },
             { MonsterGraphicIndex.Undead, new MonsterGraphicInfo
                 {
-                    Width = 96,
+                    Width = 64,
                     Height = 67,
-                    FirstIdleAnimationFrame = 1,
-                    IdleAnimationFrameCount = 2,
                     FirstAttackFrame = 1,
                     AttackFrameCount = 2,
                     FirstCastFrame = 3,
@@ -51,12 +47,15 @@ namespace Ambermoon.Data.Legacy
                     // TODO ...
                 }
             },
-
             { MonsterGraphicIndex.Lizard, new MonsterGraphicInfo
                 {
                     Width = 80,
                     Height = 84,
-                    // TODO ...
+                    FirstAttackFrame = 1,
+                    AttackFrameCount = 10,
+                    FirstMoveFrame = 1,
+                    MoveFrameCount = 3,
+                    HurtFrame = 11
                 }
             },
             { MonsterGraphicIndex.Giant, new MonsterGraphicInfo

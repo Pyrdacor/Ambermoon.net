@@ -26,8 +26,32 @@ namespace Ambermoon.Data
         TravelGfx,
         Transports,
         NPC,
-        CombatBackground
+        CombatBackground,
+        /// <summary>
+        /// Farthest battle row (1st)
+        /// </summary>
+        MonsterTiny,
+        /// <summary>
+        /// Far battle row (2nd)
+        /// </summary>
+        MonsterSmall,
+        /// <summary>
+        /// Middle battle row (3rd)
+        /// </summary>
+        MonsterNormal,
+        /// <summary>
+        /// Closest battle row (4th)
+        /// </summary>
+        MonsterBig
         // TODO ...
+    }
+
+    public enum MonsterRow
+    {
+        Farthest,
+        Far,
+        Middle,
+        Near
     }
 
     public interface IGraphicProvider
@@ -38,5 +62,6 @@ namespace Ambermoon.Data
         CombatBackgroundInfo Get3DCombatBackground(uint index);
         CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index);
         MonsterGraphicInfo GetMonsterGraphicInfo(MonsterGraphicIndex index);
+        float GetMonsterRowImageScaleFactor(MonsterRow row);
     }
 }

@@ -2480,8 +2480,8 @@ namespace Ambermoon
                 var combatBackground = is3D
                     ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex)
                     : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex);
-                layout.AddSprite(new Rect(0, 38, 320, 95), Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
-                    (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1);
+                layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
+                    (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
                 layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), false);
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex);
                 currentBattle = new Battle(this, Enumerable.Range(0, Game.MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),

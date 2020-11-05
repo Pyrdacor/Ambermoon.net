@@ -722,6 +722,8 @@ namespace Ambermoon.Render
 
         void AddWall(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint mapX, uint mapY, uint wallIndex)
         {
+            wallIndex %= (uint)labdata.Walls.Count;
+
             uint blockIndex = mapX + mapY * (uint)Map.Width;
             blockCollisionBodies.Add(blockIndex, new List<ICollisionBody>(4));
             float wallHeight = WallHeight;
@@ -749,7 +751,7 @@ namespace Ambermoon.Render
                 if (block.WallIndex == 0)
                     return true;
 
-                var wall = labdata.Walls[(int)block.WallIndex - 1];
+                var wall = labdata.Walls[((int)block.WallIndex - 1) % labdata.Walls.Count];
 
                 return wall.Flags.HasFlag(Labdata.WallFlags.Transparency) ||
                     !wall.Flags.HasFlag(Labdata.WallFlags.BlockMovement) ||
@@ -834,7 +836,7 @@ namespace Ambermoon.Render
             if (block.WallIndex != 0)
                 AddWall(surfaceFactory, layer, x, y, block.WallIndex - 1);
             else if (block.ObjectIndex != 0)
-                AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
+                AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[((int)block.ObjectIndex - 1) % labdata.Objects.Count]);
 
             if (wallRemoved && block.WallIndex == 0)
             {
@@ -917,7 +919,7 @@ namespace Ambermoon.Render
                     if (block.WallIndex != 0)
                         AddWall(surfaceFactory, layer, x, y, block.WallIndex - 1);
                     else if (block.ObjectIndex != 0)
-                        AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[(int)block.ObjectIndex - 1]);
+                        AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[((int)block.ObjectIndex - 1) % labdata.Objects.Count]);
                 }
             }
         }

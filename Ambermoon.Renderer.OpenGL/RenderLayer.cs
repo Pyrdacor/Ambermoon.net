@@ -86,7 +86,6 @@ namespace Ambermoon.Renderer
             0.63f,  // BattleMonsterRowFar
             0.64f,  // BattleMonsterRowCenter
             0.65f,  // BattleMonsterRowNear
-            0.66f,  // BattleMonsterRowNearest
             0.70f,  // UI
             0.70f,  // Items
             0.70f,  // Text

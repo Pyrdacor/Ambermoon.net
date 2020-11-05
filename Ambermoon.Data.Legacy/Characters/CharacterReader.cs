@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Legacy.Serialization;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System;
 
@@ -20,7 +21,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.NumberOfFreeFingers = dataReader.ReadByte();
             character.SpokenLanguages = (Language)dataReader.ReadByte();
             character.PortraitIndex = dataReader.ReadWord();
-            ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = value);
+            ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = (MonsterGraphicIndex)value);
             character.UnknownBytes13 = dataReader.ReadBytes(3); // Unknown
             character.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
             character.AttacksPerRound = dataReader.ReadByte();

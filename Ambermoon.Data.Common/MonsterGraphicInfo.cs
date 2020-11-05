@@ -1,12 +1,11 @@
 ﻿namespace Ambermoon.Data
 {
     // Note: First frame is always the idle frame.
+    // Note: There is an idle animation which is identical to the move animation.
     public struct MonsterGraphicInfo
     {
         public uint Width;
         public uint Height;
-        public uint FirstIdleAnimationFrame;
-        public int IdleAnimationFrameCount;
         public uint FirstAttackFrame;
         public int AttackFrameCount;
         public uint? FirstCastFrame;

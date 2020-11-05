@@ -27,7 +27,6 @@
         BattleMonsterRowFar,
         BattleMonsterRowCenter,
         BattleMonsterRowNear,
-        BattleMonsterRowNearest,
         UI,
         Items,
         Text,

@@ -18,7 +18,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.NumberOfFreeFingers);
             dataWriter.WriteEnumAsByte(character.SpokenLanguages);
             dataWriter.Write(character.PortraitIndex);
-            dataWriter.Write(GetIfMonster<ushort>(character, monster => monster.CombatGraphicIndex, 0));
+            dataWriter.Write(GetIfMonster<ushort>(character, monster => (ushort)monster.CombatGraphicIndex, 0));
             dataWriter.Write(character.UnknownBytes13); // Unknown
             dataWriter.WriteEnumAsByte(character.SpellTypeImmunity);
             dataWriter.Write(character.AttacksPerRound);

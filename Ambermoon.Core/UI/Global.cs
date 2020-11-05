@@ -39,5 +39,6 @@ namespace Ambermoon
             new Rect(15 + index * 48, 0, 48, 36)).ToArray();
         public const int GlyphWidth = 6;
         public const int GlyphLineHeight = 7;
+        public static readonly Rect CombatBackgroundArea = new Rect(0, 38, 320, 95);
     }
 }

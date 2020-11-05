@@ -175,7 +175,7 @@ namespace Ambermoon.Data.Legacy
                         Alpha = true,
                         PaletteOffset = 0
                     };
-                    Graphic graphic = new Graphic();
+                    var graphic = new Graphic();
                     foreach (var file in gameData.Files["NPC_gfx.amb"].Files)
                     {
                         var reader = file.Value;
@@ -197,6 +197,44 @@ namespace Ambermoon.Data.Legacy
                     }
 
                     graphics[type] = npcGraphics;
+                }
+                else if (type >= GraphicType.MonsterTiny && type <= GraphicType.MonsterBig)
+                {
+                    // We process all sized monster graphics in one go.
+                    // They use all the same graphics but scaled versions of them.
+                    if (type == GraphicType.MonsterNormal)
+                    {
+                        var graphicInfo = new GraphicInfo
+                        {
+                            GraphicFormat = GraphicFormat.Palette5Bit,
+                            Alpha = true,
+                            PaletteOffset = 0
+                        };
+                        var graphic = new Graphic();
+                        var monsterGraphics = new List<Graphic>();
+                        foreach (var file in gameData.Files["Monster_gfx.amb"].Files)
+                        {
+                            var reader = file.Value;
+                            var info = GetMonsterGraphicInfo((MonsterGraphicIndex)file.Key);
+                            graphicInfo.Width = (int)info.Width;
+                            graphicInfo.Height = (int)info.Height;
+                            int sizePerFrame = (graphicInfo.Width * graphicInfo.Height * 5 + 7) / 8;
+                            int numFrames = reader.Size / sizePerFrame;
+                            var compoundGraphic = new Graphic(numFrames * graphicInfo.Width, graphicInfo.Height, 0);
+
+                            for (int i = 0; i < numFrames; ++i)
+                            {
+                                graphicReader.ReadGraphic(graphic, reader, graphicInfo);
+                                compoundGraphic.AddOverlay((uint)i * info.Width, 0, graphic);
+                            }
+
+                            monsterGraphics.Add(compoundGraphic);
+                        }
+                        graphics[GraphicType.MonsterNormal] = monsterGraphics;
+                        graphics[GraphicType.MonsterTiny] = monsterGraphics.Select(g => g.CreateScaled(GetMonsterRowImageScaleFactor(MonsterRow.Farthest))).ToList();
+                        graphics[GraphicType.MonsterSmall] = monsterGraphics.Select(g => g.CreateScaled(GetMonsterRowImageScaleFactor(MonsterRow.Far))).ToList();
+                        graphics[GraphicType.MonsterBig] = monsterGraphics.Select(g => g.CreateScaled(GetMonsterRowImageScaleFactor(MonsterRow.Near))).ToList();
+                    }
                 }
                 else
                 {
@@ -384,5 +422,12 @@ namespace Ambermoon.Data.Legacy
         public CombatBackgroundInfo Get3DCombatBackground(uint index) => CombatBackgrounds.Info3D[index];
         public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index) => CombatGraphics.Info[index];
         public MonsterGraphicInfo GetMonsterGraphicInfo(MonsterGraphicIndex index) => MonsterGraphics.Info[index];
+        public float GetMonsterRowImageScaleFactor(MonsterRow row) => row switch
+        {
+            MonsterRow.Farthest => 0.667f,
+            MonsterRow.Far => 0.8f,
+            MonsterRow.Near => 1.5f,
+            _ => 1.0f,
+        };
     }
 }
