@@ -11,8 +11,16 @@ namespace Ambermoon.Data.Legacy.Characters
             foreach (var animation in monster.Animations)
                 dataWriter.Write(animation.FrameIndices);
 
-            // TODO: monsters have some additional data
-            dataWriter.Write(monster.UnknownAdditionalBytes);
+            foreach (var animation in monster.Animations)
+                dataWriter.Write((byte)animation.UsedAmount);
+
+            dataWriter.Write(monster.UnknownAdditionalBytes1);
+            dataWriter.Write(monster.MonsterPalette);
+            dataWriter.Write(monster.UnknownAdditionalBytes2);
+            dataWriter.Write((ushort)monster.FrameWidth);
+            dataWriter.Write((ushort)monster.FrameHeight);
+            dataWriter.Write((ushort)monster.MappedFrameWidth);
+            dataWriter.Write((ushort)monster.MappedFrameHeight);
         }
     }
 }

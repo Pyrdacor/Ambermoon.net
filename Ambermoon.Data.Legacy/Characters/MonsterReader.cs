@@ -8,11 +8,24 @@ namespace Ambermoon.Data.Legacy.Characters
         {
             ReadCharacter(monster, dataReader);
 
-            foreach (var animation in monster.Animations)
-                animation.FrameIndices = dataReader.ReadBytes(32);
+            for (int i = 0; i < 8; ++i)
+            {
+                monster.Animations[i] = new Monster.Animation
+                {
+                    FrameIndices = dataReader.ReadBytes(32)
+                };
+            }
 
-            // TODO: monsters have some additional data (maybe palette index changes?)
-            monster.UnknownAdditionalBytes = dataReader.ReadToEnd();
+            foreach (var animation in monster.Animations)
+                animation.UsedAmount = dataReader.ReadByte();
+
+            monster.UnknownAdditionalBytes1 = dataReader.ReadBytes(16); // TODO
+            monster.MonsterPalette = dataReader.ReadBytes(32);
+            monster.UnknownAdditionalBytes2 = dataReader.ReadBytes(2); // TODO
+            monster.FrameWidth = dataReader.ReadWord();
+            monster.FrameHeight = dataReader.ReadWord();
+            monster.MappedFrameWidth = dataReader.ReadWord();
+            monster.MappedFrameHeight = dataReader.ReadWord();
         }
     }
 }
