@@ -1,10 +1,25 @@
 ﻿using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
     public class TextWriter
     {
+        public static byte[] ToBytes(List<string> texts)
+        {
+            var writer = new DataWriter();
+            WriteTexts(writer, texts);
+            return writer.ToArray();
+        }
+
+        public static byte[] ToBytes(List<string> texts, char[] trimChars)
+        {
+            var writer = new DataWriter();
+            WriteTexts(writer, texts, trimChars);
+            return writer.ToArray();
+        }
+
         public static void WriteTexts(IDataWriter textDataWriter, List<string> texts)
         {
             WriteTexts(textDataWriter, texts, new char[] { ' ', '\0' });
@@ -20,7 +35,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             textDataWriter.Write((ushort)texts.Count);
 
-            void WriteText(string text)
+            var trimmedTexts = texts.Select(text =>
             {
                 if (trimChars?.Length > 0)
                     text = text.Trim(trimChars);
@@ -28,11 +43,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 if (!text.Contains('\0'))
                     text += "\0";
 
-                textDataWriter.Write((ushort)text.Length);
-                textDataWriter.WriteWithoutLength(text);
-            }
+                return text;
+            });
 
-            texts.ForEach(WriteText);
+            foreach (var text in trimmedTexts)
+                textDataWriter.Write((ushort)text.Length);
+
+            foreach (var text in trimmedTexts)
+                textDataWriter.WriteWithoutLength(text);
         }
     }
 }

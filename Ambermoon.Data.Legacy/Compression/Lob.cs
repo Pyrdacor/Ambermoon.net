@@ -19,7 +19,7 @@ namespace Ambermoon.Data.Legacy.Compression
             var trie = new MatchTrie();
             int currentHeaderPosition = 0;
             byte currentHeaderBitMask = 0x80 >> 1; // skip first bit
-            byte currentHeader = 0x80; // first entriy/byte is no match
+            byte currentHeader = 0x80; // first entry/byte is no match
             compressedData.Add(0); // add header dummy
             int i = 1;
 
@@ -106,7 +106,8 @@ namespace Ambermoon.Data.Legacy.Compression
                 AddByte(data[i], i == data.Length - 1);
             }
 
-            compressedData[currentHeaderPosition] = currentHeader;
+            if (currentHeaderBitMask != 0x80)
+                compressedData[currentHeaderPosition] = currentHeader;
 
             return compressedData.ToArray();
         }

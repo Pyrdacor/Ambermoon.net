@@ -196,10 +196,19 @@ namespace Ambermoon.Data.Legacy
             // uword Height (in pixels)
             // uword XOffset (in pixels relative to drawing position)
             // uword YOffset (in pixels relative to drawing position)
-            var container = Files["Travel_gfx.amb"];
+            IFileContainer container;
 
-            if (container == null && stopAtFirstError)
-                throw new FileNotFoundException("Unable to find travel graphics.");
+            try
+            {
+                container = Files["Travel_gfx.amb"];
+            }
+            catch (KeyNotFoundException)
+            {
+                if (stopAtFirstError)
+                    throw new FileNotFoundException("Unable to find travel graphics.");
+                else
+                    return;
+            }
 
             var graphicReader = new GraphicReader();
             var graphicInfo = new GraphicInfo
