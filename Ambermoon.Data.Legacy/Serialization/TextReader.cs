@@ -7,6 +7,11 @@ namespace Ambermoon.Data.Legacy.Serialization
     {
         public static List<string> ReadTexts(IDataReader textDataReader)
         {
+            return ReadTexts(textDataReader, new char[] { ' ', '\0' });
+        }
+
+        public static List<string> ReadTexts(IDataReader textDataReader, char[] trimChars)
+        {
             var texts = new List<string>();
 
             if (textDataReader != null)
@@ -19,7 +24,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                     textLengths[i] = textDataReader.ReadWord();
 
                 for (int i = 0; i < numTexts; ++i)
-                    texts.Add(textDataReader.ReadString(textLengths[i]).Trim(' ', '\0'));
+                {
+                    if (trimChars?.Length > 0)
+                        texts.Add(textDataReader.ReadString(textLengths[i]).Trim(trimChars));
+                    else
+                        texts.Add(textDataReader.ReadString(textLengths[i]));
+                }
             }
 
             return texts;
