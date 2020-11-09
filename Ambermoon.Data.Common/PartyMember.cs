@@ -18,10 +18,13 @@ namespace Ambermoon.Data
 
         }
 
-        public static PartyMember Load(IPartyMemberReader partyMemberReader,
+        public static PartyMember Load(uint index, IPartyMemberReader partyMemberReader,
             IDataReader dataReader, IDataReader partyTextReader)
         {
-            var partyMember = new PartyMember();
+            var partyMember = new PartyMember
+            {
+                Index = index
+            };
 
             partyMemberReader.ReadPartyMember(partyMember, dataReader, partyTextReader);
 

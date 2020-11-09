@@ -9,6 +9,8 @@ namespace Ambermoon.Data.Legacy.Characters
     {
         internal void ReadCharacter(Character character, IDataReader dataReader)
         {
+            dataReader.Position = 0;
+
             if (dataReader.ReadByte() != (byte)character.Type)
                 throw new Exception("Wrong character type.");
 

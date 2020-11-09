@@ -1914,18 +1914,18 @@ namespace Ambermoon.UI
         {
             int[] yOffsets = new[] { 82, 88, 100, 124 };
             var combatBackgroundArea = Global.CombatBackgroundArea;
-            var graphicInfo = RenderView.GraphicProvider.GetMonsterGraphicInfo(monster.CombatGraphicIndex);
             var layer = Layer.BattleMonsterRowFarthest + row;
             int centerX = combatBackgroundArea.Width / 2;
             float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
-            int slotWidth = Util.Round(40 * sizeMultiplier); // TODO
-            int width = Util.Floor(graphicInfo.Width * sizeMultiplier);
-            int height = Util.Floor(graphicInfo.Height * sizeMultiplier);
+            int slotWidth = Util.Round(40 * sizeMultiplier);
+            int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
+            int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
             int x = centerX - (3 - column) * slotWidth + (slotWidth - width) / 2;
             int y = combatBackgroundArea.Y + yOffsets[row] - height;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
-            var sprite = RenderView.SpriteFactory.CreateAnimated(width, height, textureAtlas.Texture.Width, 1, true) as IAnimatedLayerSprite; // TODO: frames
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)monster.CombatGraphicIndex);
+            var sprite = RenderView.SpriteFactory.CreateAnimated(width, height,
+                textureAtlas.Texture.Width, 1, true) as IAnimatedLayerSprite; // TODO: frames
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
             sprite.DisplayLayer = (byte)column;
             sprite.X = x;
             sprite.Y = y;

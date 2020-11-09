@@ -81,6 +81,12 @@ namespace Ambermoon.Render
             return atlas[layer];
         }
 
+        public void AddFromGraphics(Layer layer, Dictionary<uint, Graphic> graphics)
+        {
+            foreach (var graphic in graphics)
+                AddTexture(layer, graphic.Key, graphic.Value);
+        }
+
         public ITextureAtlas CreateFromGraphics(Dictionary<uint, Graphic> graphics, uint bytesPerPixel)
         {
             var builder = factory.Create();
@@ -240,18 +246,6 @@ namespace Ambermoon.Render
 
             for (int i = 0; i < combatBackgrounds.Count; ++i)
                 AddTexture(Layer.CombatBackground, Graphics.CombatBackgroundOffset + (uint)i, combatBackgrounds[i]);
-
-            #endregion
-
-            #region Monster graphics
-
-            for (int row = 0; row < 4; ++row) // Note: Monsters can not move into the bottom row.
-            {
-                var monsterGraphics = graphicProvider.GetGraphics(GraphicType.MonsterTiny + row);
-
-                for (int i = 0; i < monsterGraphics.Count; ++i)
-                    AddTexture(Layer.BattleMonsterRowFarthest + row, (uint)(i + 1), monsterGraphics[i]);
-            }
 
             #endregion
         }

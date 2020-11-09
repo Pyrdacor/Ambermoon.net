@@ -150,7 +150,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var partyTextFile = partyTextsContainer.Files.ContainsKey(partyMemberDataReader.Key)
                     ? partyTextsContainer.Files[partyMemberDataReader.Key] : null;
                 partyMemberDataReader.Value.Position = 0;
-                savegame.PartyMembers.Add(PartyMember.Load(partyMemberReader, partyMemberDataReader.Value, partyTextFile));
+                savegame.PartyMembers.Add(PartyMember.Load((uint)partyMemberDataReader.Key, partyMemberReader, partyMemberDataReader.Value, partyTextFile));
             }
             foreach (var chestDataReader in files.ChestDataReaders.Files)
             {

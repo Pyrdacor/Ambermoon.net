@@ -309,6 +309,14 @@ namespace Ambermoon
             ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
             ouchSprite.Visible = false;
             ouchEvent.Action = () => ouchSprite.Visible = false;
+
+            // Create texture atlas for each battle row
+            var textureAtlasManager = TextureAtlasManager.Instance;
+            for (int row = 0; row < 4; ++row)
+            {
+                textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRowFarthest + row, CharacterManager.Monsters.ToDictionary(m => m.Index, m => m.CombatGraphics[row]));
+                renderView.GetLayer(Layer.BattleMonsterRowFarthest + row).Texture = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRowFarthest + row).Texture;
+            }
         }
 
         /// <summary>

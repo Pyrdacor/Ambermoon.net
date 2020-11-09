@@ -26,23 +26,7 @@ namespace Ambermoon.Data
         TravelGfx,
         Transports,
         NPC,
-        CombatBackground,
-        /// <summary>
-        /// Farthest battle row (1st)
-        /// </summary>
-        MonsterTiny,
-        /// <summary>
-        /// Far battle row (2nd)
-        /// </summary>
-        MonsterSmall,
-        /// <summary>
-        /// Middle battle row (3rd)
-        /// </summary>
-        MonsterNormal,
-        /// <summary>
-        /// Closest battle row (4th)
-        /// </summary>
-        MonsterBig
+        CombatBackground
         // TODO ...
     }
 
@@ -61,7 +45,6 @@ namespace Ambermoon.Data
         CombatBackgroundInfo Get2DCombatBackground(uint index);
         CombatBackgroundInfo Get3DCombatBackground(uint index);
         CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index);
-        MonsterGraphicInfo GetMonsterGraphicInfo(MonsterGraphicIndex index);
         float GetMonsterRowImageScaleFactor(MonsterRow row);
     }
 }

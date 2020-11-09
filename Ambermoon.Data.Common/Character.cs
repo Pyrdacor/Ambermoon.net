@@ -5,6 +5,7 @@ namespace Ambermoon.Data
 {
     public abstract class Character
     {
+        public uint Index { get; set; }
         public CharacterType Type { get; }
         public Gender Gender { get; set; }
         public Race Race { get; set; }

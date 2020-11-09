@@ -83,6 +83,32 @@ namespace Ambermoon.Data
             return graphic;
         }
 
+        public Graphic CreateScaled(int width, int height)
+        {
+            if (width == Width && height == Height)
+                return this;
+
+            if (Width == 0 || Height == 0 || width == 0 || height == 0)
+                return new Graphic(0, 0, 0);
+
+            var graphic = new Graphic(width, height, 0);
+
+            float xFactor = (float)width / Width;
+            float yFactor = (float)height / Height;
+
+            for (int y = 0; y < height; ++y)
+            {
+                for (int x = 0; x < width; ++x)
+                {
+                    int sourceX = Math.Min(Util.Round(x / xFactor), Width - 1);
+                    int sourceY = Math.Min(Util.Round(y / yFactor), Height - 1);
+                    graphic.Data[x + y * width] = Data[sourceX + sourceY * Width];
+                }
+            }
+
+            return graphic;
+        }
+
         public void ReplaceColor(byte oldColorIndex, byte newColorIndex)
         {
             for (int i = 0; i < Data.Length; ++i)

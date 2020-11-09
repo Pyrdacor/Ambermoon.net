@@ -16,6 +16,10 @@ namespace Ambermoon.Data
         public uint FrameHeight { get; set; }
         public uint MappedFrameWidth { get; set; }
         public uint MappedFrameHeight { get; set; }
+        /// <summary>
+        /// One graphic for each possible combat row (0-3).
+        /// </summary>
+        public Graphic[] CombatGraphics { get; set; } // 4
 
         public class Animation
         {
@@ -29,13 +33,28 @@ namespace Ambermoon.Data
 
         }
 
-        public static Monster Load(IMonsterReader monsterReader, IDataReader dataReader)
+        public static Monster Load(uint index, IMonsterReader monsterReader, IDataReader dataReader)
         {
-            var monster = new Monster();
+            var monster = new Monster
+            {
+                Index = index
+            };
 
             monsterReader.ReadMonster(monster, dataReader);
 
             return monster;
+        }
+
+        public uint GetAnimationFrameIndex(MonsterAnimationType animationType, uint animationTicks, uint ticksPerFrame)
+        {
+            var animation = Animations[(int)animationType];
+
+            if (animation.UsedAmount == 0)
+                return 0;
+
+            uint frameIndex = (animationTicks / ticksPerFrame) % (uint)animation.UsedAmount;
+
+            return animation.FrameIndices[frameIndex];
         }
     }
 }
