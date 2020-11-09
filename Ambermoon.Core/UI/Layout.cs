@@ -1929,7 +1929,12 @@ namespace Ambermoon.UI
             sprite.DisplayLayer = (byte)column;
             sprite.X = x;
             sprite.Y = y;
-            sprite.PaletteIndex = (byte)(game.Map.PaletteIndex - 1); // TODO: monsters seem to have palette overrides
+            sprite.PaletteIndex = monster.CombatGraphicIndex switch // TODO
+            {
+                MonsterGraphicIndex.Tornak => 19,
+                MonsterGraphicIndex.MoragMachine => 19,
+                _ => 36
+            };
             sprite.Layer = RenderView.GetLayer(layer);
             sprite.Visible = true;
             monsterCombatGraphics.Add(new MonsterCombatGraphic
