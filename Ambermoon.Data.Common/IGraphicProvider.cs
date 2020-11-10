@@ -26,7 +26,9 @@ namespace Ambermoon.Data
         TravelGfx,
         Transports,
         NPC,
-        CombatBackground
+        CombatBackground,
+        CombatGraphics,
+        BattleFieldIcons
         // TODO ...
     }
 

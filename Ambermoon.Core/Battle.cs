@@ -83,7 +83,9 @@ namespace Ambermoon
 
         public event Action RoundFinished;
         public event Action<Character> CharacterDied;
+        public event Action<Character, uint, uint> CharacterMoved;
         public IEnumerable<CharacterState> Monsters => battleField.Where(c => c?.Character != null && c.Character.Type == CharacterType.Monster);
+        public IEnumerable<CharacterState> Characters => battleField.Where(c => c?.Character != null);
         public bool RoundActive { get; private set; } = false;
 
         public Battle(Game game, PartyMember[] partyMembers, MonsterGroup monsterGroup)

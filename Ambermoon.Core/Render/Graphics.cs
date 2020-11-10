@@ -18,6 +18,8 @@ namespace Ambermoon.Render
         public const uint EventPictureOffset = 200u;
         public const uint UICustomGraphicOffset = 250u;
         public const uint CombatBackgroundOffset = 2000u;
+        public const uint CombatGraphicOffset = 2500u;
+        public const uint BattleFieldIconOffset = 3000u;
 
         // We load 3 things into the same layer -> GraphicType.UIElements
         // 1. Our own UI elements like scrollbars, etc (see UICustomGraphic)

@@ -177,6 +177,7 @@ namespace Ambermoon
         internal bool MonsterSeesPlayer { get; set; } = false;
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
+        readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         readonly ILayerSprite ouchSprite;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputDisabled = false;
@@ -2523,7 +2524,7 @@ namespace Ambermoon
                     else
                     {
                         // Start new animation by chance from time to time.
-                        if (RandomInt(0, 1000) < 2)
+                        if (RandomInt(0, 1000) < 2) // TODO: how is it done in original?
                         {
                             idleAnimationStartTicks[i] = currentBattleTicks;
                             layout.UpdateMonsterCombatSprite(monster.Character as Monster, MonsterAnimationType.Move, 0, currentBattleTicks);
@@ -2580,8 +2581,7 @@ namespace Ambermoon
 
                     // TODO
                 };
-
-                // Add animated monster combat graphics
+                // Add animated monster combat graphics and battle field sprites
                 for (int row = 0; row < 3; ++row)
                 {
                     for (int column = 0; column < 6; ++column)
@@ -2590,6 +2590,29 @@ namespace Ambermoon
                         {
                             layout.AddMonsterCombatSprite(column, row, monsterGroup.Monsters[column, row]);
                         }
+                    }
+                }
+                // Add battle field sprites for party members
+                for (int i = 0; i < MaxPartyMembers; ++i)
+                {
+                    var partyMember = GetPartyMember(i);
+
+                    if (partyMember == null)
+                        partyMemberBattleFieldSprites[i] = null;
+                    else
+                    {
+                        var battlePosition = 18 + CurrentSavegame.BattlePositions[i];
+                        var battleColumn = battlePosition % 6;
+                        var battleRow = battlePosition / 6;
+
+                        partyMemberBattleFieldSprites[i] = layout.AddSprite(new Rect
+                        (
+                            Global.BattleFieldX + battleColumn * Global.BattleFieldSlotWidth,
+                            Global.BattleFieldY + battleRow * Global.BattleFieldSlotHeight - 1,
+                            Global.BattleFieldSlotWidth,
+                            Global.BattleFieldSlotHeight + 1
+                        ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, 2,
+                        $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}", TextColor.White);
                     }
                 }
 

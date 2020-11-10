@@ -334,6 +334,7 @@ namespace Ambermoon.UI
             public int Row{ get; set; }
             public int Column { get; set; }
             public BattleAnimation Animation { get; set; }
+            public ILayerSprite BattleFieldSprite { get; set; }
         }
 
         public LayoutType Type { get; private set; }
@@ -1103,7 +1104,7 @@ namespace Ambermoon.UI
             activeSpellDurationBars.Clear(); // areas are destroyed above
             specialItemSprites.Clear(); // sprites are destroyed above
             specialItemTexts.Clear(); // texts are destroyed above
-            monsterCombatGraphics.ForEach(g => g.Animation?.Destroy());
+            monsterCombatGraphics.ForEach(g => { g.Animation?.Destroy(); g.BattleFieldSprite?.Delete(); });
             monsterCombatGraphics.Clear();
 
             // Note: Don't remove fadeEffects or bars here.
@@ -1393,8 +1394,9 @@ namespace Ambermoon.UI
 
                 activeTooltip.Text = text;
                 activeTooltip.TextColor = tooltip.TextColor;
-                activeTooltip.X = Util.Limit(0, cursorPosition.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
-                activeTooltip.Y = cursorPosition.Y - Global.GlyphLineHeight - 1;
+                int x = Util.Limit(0, cursorPosition.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
+                int y = cursorPosition.Y - text.LineCount * Global.GlyphLineHeight - 1;
+                activeTooltip.Place(new Rect(x, y, textWidth, text.LineCount * Global.GlyphLineHeight), TextAlign.Center);
             }
         }
 
@@ -1942,7 +1944,14 @@ namespace Ambermoon.UI
                 Monster = monster,
                 Row = row,
                 Column = column,
-                Animation = new BattleAnimation(sprite, sizeMultiplier)
+                Animation = new BattleAnimation(sprite, sizeMultiplier),
+                BattleFieldSprite = AddSprite(new Rect
+                (
+                    Global.BattleFieldX + column * Global.BattleFieldSlotWidth,
+                    Global.BattleFieldY + row * Global.BattleFieldSlotHeight - 1,
+                    Global.BattleFieldSlotWidth, Global.BattleFieldSlotHeight + 1
+                ), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
+                49, 2, monster.Name, TextColor.Orange)
             });
         }
 
@@ -1953,6 +1962,7 @@ namespace Ambermoon.UI
             if (monsterCombatGraphic != null)
             {
                 monsterCombatGraphic.Animation?.Destroy();
+                monsterCombatGraphic.BattleFieldSprite?.Delete();
                 monsterCombatGraphics.Remove(monsterCombatGraphic);
             }
         }
@@ -1980,6 +1990,20 @@ namespace Ambermoon.UI
             }
 
             return false;
+        }
+
+        public void MoveMonsterTo(uint column, uint row, Monster monster)
+        {
+            var monsterCombatGraphic = monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster);
+
+            if (monsterCombatGraphic != null)
+            {
+                // slot: 16x13
+                // graphic: 16x14 (1 pixel higher than the slot)
+                // x starts at 96, y at 134
+                monsterCombatGraphic.BattleFieldSprite.X = Global.BattleFieldX + (int)column * Global.BattleFieldSlotWidth;
+                monsterCombatGraphic.BattleFieldSprite.Y = Global.BattleFieldY + (int)row * Global.BattleFieldSlotHeight - 1;
+            }
         }
     }
 }

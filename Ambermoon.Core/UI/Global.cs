@@ -40,5 +40,9 @@ namespace Ambermoon
         public const int GlyphWidth = 6;
         public const int GlyphLineHeight = 7;
         public static readonly Rect CombatBackgroundArea = new Rect(0, 38, 320, 95);
+        public const int BattleFieldX = 96;
+        public const int BattleFieldY = 134;
+        public const int BattleFieldSlotWidth = 16;
+        public const int BattleFieldSlotHeight = 13;
     }
 }

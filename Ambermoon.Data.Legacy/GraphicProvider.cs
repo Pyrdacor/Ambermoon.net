@@ -198,6 +198,64 @@ namespace Ambermoon.Data.Legacy
 
                     graphics[type] = npcGraphics;
                 }
+                else if (type == GraphicType.CombatGraphics)
+                {
+                    var combatGraphics = new List<Graphic>(42);
+                    var graphicInfo = new GraphicInfo
+                    {
+                        GraphicFormat = GraphicFormat.Palette5Bit,
+                        Alpha = true,
+                        PaletteOffset = 0
+                    };
+                    var reader = gameData.Files["Combat_graphics"].Files[1];
+                    reader.Position = 0;
+
+                    foreach (var combatGraphic in CombatGraphics.Info)
+                    {
+                        var info = combatGraphic.Value;
+
+                        if (combatGraphic.Key == CombatGraphicIndex.BattleFieldIcons)
+                        {
+                            var battleFieldIcons = new List<Graphic>(35);
+                            var iconGraphicInfo = new GraphicInfo
+                            {
+                                Width = 16,
+                                Height = 14,
+                                GraphicFormat = GraphicFormat.Palette5Bit,
+                                Alpha = true,
+                                PaletteOffset = 0
+                            };
+
+                            for (int i = 0; i < 35; ++i)
+                            {
+                                var graphic = new Graphic();
+                                graphicReader.ReadGraphic(graphic, reader, iconGraphicInfo);
+                                battleFieldIcons.Add(graphic);
+                            }
+
+                            graphics[GraphicType.BattleFieldIcons] = battleFieldIcons;
+                        }
+                        else
+                        {
+                            var graphic = new Graphic();
+                            var compoundGraphic = new Graphic((int)info.FrameCount * info.GraphicInfo.Width, info.GraphicInfo.Height, 0);
+
+                            for (int i = 0; i < info.FrameCount; ++i)
+                            {
+                                graphicReader.ReadGraphic(graphic, reader, info.GraphicInfo);
+                                compoundGraphic.AddOverlay((uint)(i * info.GraphicInfo.Width), 0, graphic);
+                            }
+
+                            combatGraphics.Add(compoundGraphic);
+                        }
+                    }
+
+                    graphics[type] = combatGraphics;
+                }
+                else if (type == GraphicType.BattleFieldIcons)
+                {
+                    // Do nothing. This is filled when processing GraphicType.CombatGraphics.
+                }
                 else
                 {
                     LoadGraphics(type);
