@@ -28,7 +28,7 @@ namespace Ambermoon.UI
             this.renderView = renderView;
             this.itemManager = itemManager;
             Item = item;
-            sprite = renderView.SpriteFactory.Create(16, 16, false, true) as ILayerSprite;
+            sprite = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
             sprite.Layer = renderView.GetLayer(Layer.Items);
             sprite.PaletteIndex = 49;
 

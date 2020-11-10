@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
+    [Serializable]
     public abstract class Character
     {
         public uint Index { get; set; }

@@ -33,16 +33,6 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultAlphaName = "alpha";
         internal static readonly string DefaultLightName = "light";
 
-        readonly string texCoordName;
-        readonly string texEndCoordName;
-        readonly string texSizeName;
-        readonly string samplerName;
-        readonly string atlasSizeName;
-        readonly string paletteName;
-        readonly string paletteIndexName;
-        readonly string alphaName;
-        readonly string lightName;
-
         // The palette has a size of 32x52 pixels.
         // Each row represents one palette of 32 colors.
         // So the palette index determines the pixel row.
@@ -107,50 +97,35 @@ namespace Ambermoon.Renderer
         };
 
         Texture3DShader(State state)
-            : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
-                  DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
-                  DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultAlphaName,
-                  DefaultLightName, Texture3DFragmentShader(state), Texture3DVertexShader(state))
+            : this(state, Texture3DFragmentShader(state), Texture3DVertexShader(state))
         {
 
         }
 
-        protected Texture3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
-            string positionName, string texCoordName, string texEndCoordName, string texSizeName,
-            string samplerName, string atlasSizeName, string paletteName, string paletteIndexName,
-            string alphaName, string lightName, string[] fragmentShaderLines, string[] vertexShaderLines)
-            : base(state, modelViewMatrixName, projectionMatrixName, DefaultColorName, DefaultZName,
-                  positionName, DefaultLayerName, fragmentShaderLines, vertexShaderLines)
+        protected Texture3DShader(State state, string[] fragmentShaderLines, string[] vertexShaderLines)
+            : base(state, fragmentShaderLines, vertexShaderLines)
         {
-            this.texCoordName = texCoordName;
-            this.texEndCoordName = texEndCoordName;
-            this.texSizeName = texSizeName;
-            this.samplerName = samplerName;
-            this.atlasSizeName = atlasSizeName;
-            this.paletteName = paletteName;
-            this.paletteIndexName = paletteIndexName;
-            this.alphaName = alphaName;
-            this.lightName = lightName;
+
         }
 
         public void SetSampler(int textureUnit = 0)
         {
-            shaderProgram.SetInput(samplerName, textureUnit);
+            shaderProgram.SetInput(DefaultSamplerName, textureUnit);
         }
 
         public void SetPalette(int textureUnit = 1)
         {
-            shaderProgram.SetInput(paletteName, textureUnit);
+            shaderProgram.SetInput(DefaultPaletteName, textureUnit);
         }
 
         public void SetAtlasSize(uint width, uint height)
         {
-            shaderProgram.SetInputVector2(atlasSizeName, width, height);
+            shaderProgram.SetInputVector2(DefaultAtlasSizeName, width, height);
         }
 
         public void SetLight(float light)
         {
-            shaderProgram.SetInput(lightName, light);
+            shaderProgram.SetInput(DefaultLightName, light);
         }
 
         public new static Texture3DShader Create(State state) => new Texture3DShader(state);

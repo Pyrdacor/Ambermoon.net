@@ -1,4 +1,7 @@
 ﻿using Ambermoon.Data.Serialization;
+using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Ambermoon.Data
 {
@@ -18,6 +21,21 @@ namespace Ambermoon.Data
             monsterGroupReader.ReadMonsterGroup(characterManager, monsterGroup, dataReader);
 
             return monsterGroup;
+        }
+
+        public MonsterGroup Clone()
+        {
+            var clone = new MonsterGroup();
+
+            for (int row = 0; row < 3; ++row)
+            {
+                for (int column = 0; column < 6; ++column)
+                {
+                    clone.Monsters[column, row] = Monsters[column, row]?.Clone();
+                }
+            }
+
+            return clone;
         }
     }
 }

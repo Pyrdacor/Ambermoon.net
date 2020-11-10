@@ -363,10 +363,7 @@ namespace Ambermoon.Render
                 var stationaryImage = travelType.ToStationaryImage();
                 var info = renderView.GameData.StationaryImageInfos[stationaryImage];
                 var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters);
-                var sprite = renderView.SpriteFactory.Create
-                (
-                    info.Width, info.Height, false, false
-                );
+                var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
                 var offset = new Position(-(48 - info.Width) / 2, -(32 - info.Height) / 2);
                 sprite.Layer = renderView.GetLayer(Layer.Characters);
                 sprite.BaseLineOffset = 4;

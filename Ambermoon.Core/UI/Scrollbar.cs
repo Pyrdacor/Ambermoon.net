@@ -62,7 +62,7 @@ namespace Ambermoon.UI
             position = new Position(scrollArea.Position);
             baseType = type;
 
-            backgroundSprite = layout.RenderView.SpriteFactory.Create(scrollArea.Width, scrollArea.Height, false, true) as ILayerSprite;
+            backgroundSprite = layout.RenderView.SpriteFactory.Create(scrollArea.Width, scrollArea.Height, true) as ILayerSprite;
             backgroundSprite.Layer = layout.RenderView.GetLayer(Layer.UI);
             backgroundSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + type switch
             {
@@ -77,7 +77,7 @@ namespace Ambermoon.UI
             backgroundSprite.Visible = true;
 
             // We add 1 to height because there is 1 pixel row for a shadow.
-            sprite = layout.RenderView.SpriteFactory.Create(width, height + 1, false, true) as ILayerSprite;
+            sprite = layout.RenderView.SpriteFactory.Create(width, height + 1, true) as ILayerSprite;
             sprite.Layer = layout.RenderView.GetLayer(Layer.UI);
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)type);
             sprite.DisplayLayer = 2;

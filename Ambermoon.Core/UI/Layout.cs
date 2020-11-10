@@ -333,7 +333,7 @@ namespace Ambermoon.UI
             public Monster Monster { get; set; }
             public int Row{ get; set; }
             public int Column { get; set; }
-            public IAnimatedSprite Sprite { get; set; }
+            public BattleAnimation Animation { get; set; }
         }
 
         public LayoutType Type { get; private set; }
@@ -387,7 +387,7 @@ namespace Ambermoon.UI
             textLayer = renderView.GetLayer(Layer.Text);
             this.itemManager = itemManager;
 
-            sprite = RenderView.SpriteFactory.Create(320, 163, false, true) as ILayerSprite;
+            sprite = RenderView.SpriteFactory.Create(320, 163, true) as ILayerSprite;
             sprite.Layer = renderLayer;
             sprite.X = Global.LayoutX;
             sprite.Y = Global.LayoutY;
@@ -420,7 +420,7 @@ namespace Ambermoon.UI
             var barBackgroundTexCoords = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.CharacterValueBarFrames));
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
-                var barBackgroundSprite = portraitBarBackgrounds[i] = RenderView.SpriteFactory.Create(16, 36, false, true) as ILayerSprite;
+                var barBackgroundSprite = portraitBarBackgrounds[i] = RenderView.SpriteFactory.Create(16, 36, true) as ILayerSprite;
                 barBackgroundSprite.Layer = renderLayer;
                 barBackgroundSprite.PaletteIndex = 49;
                 barBackgroundSprite.TextureAtlasOffset = barBackgroundTexCoords;
@@ -430,7 +430,7 @@ namespace Ambermoon.UI
             }
 
             // Left portrait border
-            var sprite = RenderView.SpriteFactory.Create(16, 36, false, true);
+            var sprite = RenderView.SpriteFactory.Create(16, 36, true);
             sprite.Layer = renderLayer;
             sprite.PaletteIndex = 49;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.LeftPortraitBorder));
@@ -440,7 +440,7 @@ namespace Ambermoon.UI
             portraitBorders.Add(sprite);
 
             // Right portrait border
-            sprite = RenderView.SpriteFactory.Create(16, 36, false, true);
+            sprite = RenderView.SpriteFactory.Create(16, 36, true);
             sprite.Layer = renderLayer;
             sprite.PaletteIndex = 49;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.RightPortraitBorder));
@@ -452,7 +452,7 @@ namespace Ambermoon.UI
             // Thin portrait borders
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
-                sprite = RenderView.SpriteFactory.Create(32, 1, false, true);
+                sprite = RenderView.SpriteFactory.Create(32, 1, true);
                 sprite.Layer = renderLayer;
                 sprite.PaletteIndex = 49;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
@@ -461,7 +461,7 @@ namespace Ambermoon.UI
                 sprite.Visible = true;
                 portraitBorders.Add(sprite);
 
-                sprite = RenderView.SpriteFactory.Create(32, 1, false, true);
+                sprite = RenderView.SpriteFactory.Create(32, 1, true);
                 sprite.Layer = renderLayer;
                 sprite.PaletteIndex = 49;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
@@ -1103,7 +1103,7 @@ namespace Ambermoon.UI
             activeSpellDurationBars.Clear(); // areas are destroyed above
             specialItemSprites.Clear(); // sprites are destroyed above
             specialItemTexts.Clear(); // texts are destroyed above
-            monsterCombatGraphics.ForEach(g => g.Sprite?.Delete());
+            monsterCombatGraphics.ForEach(g => g.Animation?.Destroy());
             monsterCombatGraphics.Clear();
 
             // Note: Don't remove fadeEffects or bars here.
@@ -1125,7 +1125,7 @@ namespace Ambermoon.UI
         /// </summary>
         public void SetCharacter(int slot, PartyMember partyMember)
         {
-            var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, false, true, 1);
+            var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 1);
             sprite.Layer = renderLayer;
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
@@ -1151,7 +1151,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, false, true, 0);
+                sprite = portraitBackgrounds[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 0);
                 sprite.Layer = renderLayer;
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
@@ -1340,7 +1340,7 @@ namespace Ambermoon.UI
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
             string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null)
         {
-            var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, false, true) as ILayerSprite;
+            var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, true) as ILayerSprite;
             sprite.TextureAtlasOffset = layer == null ? textureAtlas.GetOffset(textureIndex)
                 : TextureAtlasManager.Instance.GetOrCreate(layer.Value).GetOffset(textureIndex);
             sprite.DisplayLayer = displayLayer;
@@ -1426,7 +1426,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                var sprite = sprite80x80Picture ??= RenderView.SpriteFactory.Create(80, 80, false, true);
+                var sprite = sprite80x80Picture ??= RenderView.SpriteFactory.Create(80, 80, true);
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
                 sprite.X = Global.LayoutX + 16;
                 sprite.Y = Global.LayoutY + 6;
@@ -1438,7 +1438,7 @@ namespace Ambermoon.UI
 
         public void AddEventPicture(uint index)
         {
-            var sprite = eventPicture ??= RenderView.SpriteFactory.Create(320, 92, false, true, 10) as ILayerSprite;
+            var sprite = eventPicture ??= RenderView.SpriteFactory.Create(320, 92, true, 10) as ILayerSprite;
             sprite.PaletteIndex = index switch
             {
                 0 => 26,
@@ -1923,17 +1923,17 @@ namespace Ambermoon.UI
             int x = centerX - (3 - column) * slotWidth + (slotWidth - width) / 2;
             int y = combatBackgroundArea.Y + yOffsets[row] - height;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
-            var sprite = RenderView.SpriteFactory.CreateAnimated(width, height,
-                textureAtlas.Texture.Width, 1, true) as IAnimatedLayerSprite; // TODO: frames
+            var sprite = RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
             sprite.DisplayLayer = (byte)column;
             sprite.X = x;
             sprite.Y = y;
             sprite.PaletteIndex = monster.CombatGraphicIndex switch // TODO
             {
+                MonsterGraphicIndex.Gizzek => 36,
                 MonsterGraphicIndex.Tornak => 19,
                 MonsterGraphicIndex.MoragMachine => 19,
-                _ => 36
+                _ => 17
             };
             sprite.Layer = RenderView.GetLayer(layer);
             sprite.Visible = true;
@@ -1942,7 +1942,7 @@ namespace Ambermoon.UI
                 Monster = monster,
                 Row = row,
                 Column = column,
-                Sprite = sprite
+                Animation = new BattleAnimation(sprite, sizeMultiplier)
             });
         }
 
@@ -1952,9 +1952,34 @@ namespace Ambermoon.UI
 
             if (monsterCombatGraphic != null)
             {
-                monsterCombatGraphic.Sprite?.Delete();
+                monsterCombatGraphic.Animation?.Destroy();
                 monsterCombatGraphics.Remove(monsterCombatGraphic);
             }
+        }
+
+        public void ResetMonsterCombatSprite(Monster monster)
+        {
+            monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster)?.Animation?.Reset();
+        }
+
+        public bool UpdateMonsterCombatSprite(Monster monster, MonsterAnimationType animationType, uint animationTicks, uint totalTicks)
+        {
+            var monsterCombatGraphic = monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster);
+
+            if (monsterCombatGraphic != null)
+            {
+                var animation = monsterCombatGraphic.Animation;
+
+                if (animationTicks == 0) // new animation
+                    animation.Play(monster.GetAnimationFrameIndices(animationType), Game.TicksPerSecond / 4, totalTicks); // TODO: ticks per frame
+
+                if (!animation.Update(totalTicks))
+                    return false;
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -109,7 +109,7 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < slotBackgrounds.Length; ++i)
             {
-                var background = slotBackgrounds[i] = renderView.SpriteFactory.Create(16, 24, false, true) as ILayerSprite;
+                var background = slotBackgrounds[i] = renderView.SpriteFactory.Create(16, 24, true) as ILayerSprite;
                 background.Layer = layer;
                 background.PaletteIndex = 49;
                 background.TextureAtlasOffset = texCoords;

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
+    [Serializable]
     public class CharacterValue
     {
         public uint CurrentValue { get; set; }
@@ -13,6 +14,7 @@ namespace Ambermoon.Data
         public uint TotalCurrentValue => CurrentValue + BonusValue;
     }
 
+    [Serializable]
     public class CharacterValueCollection<TType> : IEnumerable<CharacterValue> where TType : System.Enum
     {
         readonly CharacterValue[] values = null;

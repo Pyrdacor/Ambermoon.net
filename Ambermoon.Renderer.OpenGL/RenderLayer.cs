@@ -99,13 +99,12 @@ namespace Ambermoon.Renderer
                 throw new AmbermoonException(ExceptionScope.Application, "Layer.None should never be used.");
 
             this.state = state;
-            bool masked = false; // TODO: do we need this for some layer?
             bool supportAnimations = layer >= Global.First2DLayer && layer <= Global.Last2DLayer; // TODO
             bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
             bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
-                masked, supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
+                supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
                 opaque);
 
             // UI uses color-filled areas and creates effects like black fading map transitions.
@@ -197,8 +196,7 @@ namespace Ambermoon.Renderer
                 }
                 else
                 {
-                    TextureShader shader = RenderBuffer.Masked ? RenderBuffer.MaskedTextureShader : 
-                        RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
+                    TextureShader shader = RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
 
                     shader.UpdateMatrices(state);
 
@@ -223,10 +221,10 @@ namespace Ambermoon.Renderer
             RenderBuffer.Render();
         }
 
-        public int GetDrawIndex(ISprite sprite, Position maskSpriteTextureAtlasOffset = null, byte? textColorIndex = null)
+        public int GetDrawIndex(ISprite sprite, byte? textColorIndex = null)
         {
-            return RenderBuffer.GetDrawIndex(sprite, PositionTransformation, SizeTransformation,
-                maskSpriteTextureAtlasOffset, textColorIndex);
+            return RenderBuffer.GetDrawIndex(sprite, PositionTransformation,
+                SizeTransformation, textColorIndex);
         }
 
         public int GetDrawIndex(ISurface3D surface)
@@ -244,9 +242,9 @@ namespace Ambermoon.Renderer
             RenderBuffer.UpdatePosition(index, sprite, sprite.BaseLineOffset, PositionTransformation, SizeTransformation);
         }
 
-        public void UpdateTextureAtlasOffset(int index, ISprite sprite, Position maskSpriteTextureAtlasOffset = null)
+        public void UpdateTextureAtlasOffset(int index, ISprite sprite)
         {
-            RenderBuffer.UpdateTextureAtlasOffset(index, sprite, maskSpriteTextureAtlasOffset);
+            RenderBuffer.UpdateTextureAtlasOffset(index, sprite);
         }
 
         public void UpdatePosition(int index, ISurface3D surface)

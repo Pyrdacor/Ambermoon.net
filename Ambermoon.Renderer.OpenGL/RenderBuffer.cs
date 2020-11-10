@@ -28,7 +28,6 @@ namespace Ambermoon.Renderer
 {
     public class RenderBuffer : IDisposable
     {
-        public bool Masked { get; } = false;
         public bool Opaque { get; } = false;
         bool disposed = false;
         readonly State state;
@@ -37,7 +36,6 @@ namespace Ambermoon.Renderer
         readonly VectorBuffer vectorBuffer = null;
         readonly PositionBuffer positionBuffer = null;
         readonly PositionBuffer textureAtlasOffsetBuffer = null;
-        readonly PositionBuffer maskTextureAtlasOffsetBuffer = null; // is null for normal sprites
         readonly WordBuffer baseLineBuffer = null;
         readonly ColorBuffer colorBuffer = null;
         readonly ByteBuffer layerBuffer = null;
@@ -51,23 +49,21 @@ namespace Ambermoon.Renderer
         readonly ByteBuffer alphaBuffer = null;
         readonly FloatBuffer extrudeBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
-        static readonly Dictionary<State, MaskedTextureShader> maskedTextureShaders = new Dictionary<State, MaskedTextureShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
         static readonly Dictionary<State, OpaqueTextureShader> opaqueTextureShaders = new Dictionary<State, OpaqueTextureShader>();
         static readonly Dictionary<State, Texture3DShader> texture3DShaders = new Dictionary<State, Texture3DShader>();
         static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = new Dictionary<State, Billboard3DShader>();
         static readonly Dictionary<State, TextShader> textShaders = new Dictionary<State, TextShader>();
 
-        public RenderBuffer(State state, bool is3D, bool masked, bool supportAnimations, bool layered,
+        public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
             bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false)
         {
             this.state = state;
-            Masked = masked;
             Opaque = opaque;
 
             if (is3D)
             {
-                if (masked || layered || noTexture)
+                if (layered || noTexture)
                     throw new AmbermoonException(ExceptionScope.Render, "3D render buffers can't be masked nor layered and must not lack a texture.");
             }
 
@@ -76,12 +72,6 @@ namespace Ambermoon.Renderer
                 if (!colorShaders.ContainsKey(state))
                     colorShaders[state] = ColorShader.Create(state);
                 vertexArrayObject = new VertexArrayObject(state, colorShaders[state].ShaderProgram);
-            }
-            else if (masked)
-            {
-                if (!maskedTextureShaders.ContainsKey(state))
-                    maskedTextureShaders[state] = MaskedTextureShader.Create(state);
-                vertexArrayObject = new VertexArrayObject(state, maskedTextureShaders[state].ShaderProgram);
             }
             else if (isText)
             {
@@ -185,13 +175,6 @@ namespace Ambermoon.Renderer
                 vertexArrayObject.AddBuffer(Billboard3DShader.DefaultExtrudeName, extrudeBuffer);
             }
 
-            if (masked && !noTexture)
-            {
-                maskTextureAtlasOffsetBuffer = new PositionBuffer(state, !supportAnimations);
-
-                vertexArrayObject.AddBuffer(MaskedTextureShader.DefaultMaskTexCoordName, maskTextureAtlasOffsetBuffer);
-            }
-
             if (is3D)
             {
                 vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, vectorBuffer);
@@ -209,7 +192,6 @@ namespace Ambermoon.Renderer
         }
 
         internal ColorShader ColorShader => colorShaders[state];
-        internal MaskedTextureShader MaskedTextureShader => maskedTextureShaders[state];
         internal TextureShader TextureShader => textureShaders[state];
         internal OpaqueTextureShader OpaqueTextureShader => opaqueTextureShaders[state];
         internal Texture3DShader Texture3DShader => texture3DShaders[state];
@@ -266,13 +248,11 @@ namespace Ambermoon.Renderer
         }
 
         public int GetDrawIndex(Render.ISprite sprite, Render.PositionTransformation positionTransformation,
-            Render.SizeTransformation sizeTransformation, Position maskSpriteTextureAtlasOffset = null,
-            byte? textColorIndex = null)
+            Render.SizeTransformation sizeTransformation, byte? textColorIndex = null)
         {
             var position = new Position(sprite.X, sprite.Y);
             var spriteSize = new Size(sprite.Width, sprite.Height);
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
-            var maskedTextureAtlasOffset = maskSpriteTextureAtlasOffset == null ? null : new Position(maskSpriteTextureAtlasOffset);
 
             if (sprite.ClipArea != null)
             {
@@ -281,12 +261,6 @@ namespace Ambermoon.Renderer
                 sprite.ClipArea.ClipRect(position, spriteSize);
                 textureAtlasOffset.X += position.X - oldX;
                 textureAtlasOffset.Y += position.Y - oldY;
-
-                if (maskedTextureAtlasOffset != null)
-                {
-                    maskedTextureAtlasOffset.X += position.X - oldX;
-                    maskedTextureAtlasOffset.Y += position.Y - oldY;
-                }
             }
 
             var size = new Size(spriteSize);
@@ -316,6 +290,8 @@ namespace Ambermoon.Renderer
                 paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 3);
             }
 
+            var textureSize = sprite.TextureSize ?? spriteSize;
+
             if (textureAtlasOffsetBuffer != null)
             {
                 int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
@@ -323,21 +299,9 @@ namespace Ambermoon.Renderer
                 if (textureAtlasOffsetBufferIndex != index)
                     throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
 
-                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + spriteSize.Width), (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + spriteSize.Width), (short)(textureAtlasOffset.Y + spriteSize.Height), textureAtlasOffsetBufferIndex + 2);
-                textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + spriteSize.Height), textureAtlasOffsetBufferIndex + 3);
-            }
-
-            if (Masked && maskedTextureAtlasOffset != null)
-            {
-                int maskTextureAtlasOffsetBufferIndex = maskTextureAtlasOffsetBuffer.Add((short)maskedTextureAtlasOffset.X, (short)maskedTextureAtlasOffset.Y);
-
-                if (maskTextureAtlasOffsetBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
-                maskTextureAtlasOffsetBuffer.Add((short)(maskedTextureAtlasOffset.X + spriteSize.Width), (short)maskedTextureAtlasOffset.Y, maskTextureAtlasOffsetBufferIndex + 1);
-                maskTextureAtlasOffsetBuffer.Add((short)(maskedTextureAtlasOffset.X + spriteSize.Width), (short)(maskedTextureAtlasOffset.Y + spriteSize.Height), maskTextureAtlasOffsetBufferIndex + 2);
-                maskTextureAtlasOffsetBuffer.Add((short)maskedTextureAtlasOffset.X, (short)(maskedTextureAtlasOffset.Y + spriteSize.Height), maskTextureAtlasOffsetBufferIndex + 3);
+                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
+                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
+                textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
             }
 
             if (baseLineBuffer != null)
@@ -734,37 +698,27 @@ namespace Ambermoon.Renderer
                 return;
 
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
-            var maskedTextureAtlasOffset = maskSpriteTextureAtlasOffset == null ? null : new Position(maskSpriteTextureAtlasOffset);
-            var size = new Size(sprite.Width, sprite.Height);
+            var textureSize = sprite.TextureSize;
 
-            if (sprite.ClipArea != null)
+            if (textureSize == null)
             {
-                var position = new Position(sprite.X, sprite.Y);
-                int oldX = position.X;
-                int oldY = position.Y;
-                sprite.ClipArea.ClipRect(position, size);
-                textureAtlasOffset.X += position.X - oldX;
-                textureAtlasOffset.Y += position.Y - oldY;
+                textureSize = new Size(sprite.Width, sprite.Height);
 
-                if (maskedTextureAtlasOffset != null)
+                if (sprite.ClipArea != null)
                 {
-                    maskedTextureAtlasOffset.X += position.X - oldX;
-                    maskedTextureAtlasOffset.Y += position.Y - oldY;
+                    var position = new Position(sprite.X, sprite.Y);
+                    int oldX = position.X;
+                    int oldY = position.Y;
+                    sprite.ClipArea.ClipRect(position, textureSize);
+                    textureAtlasOffset.X += position.X - oldX;
+                    textureAtlasOffset.Y += position.Y - oldY;
                 }
             }
 
             textureAtlasOffsetBuffer.Update(index, (short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 1, (short)(textureAtlasOffset.X + size.Width), (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 2, (short)(textureAtlasOffset.X + size.Width), (short)(textureAtlasOffset.Y + size.Height));
-            textureAtlasOffsetBuffer.Update(index + 3, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + size.Height));
-
-            if (Masked && maskedTextureAtlasOffset != null)
-            {
-                maskTextureAtlasOffsetBuffer.Update(index, (short)maskedTextureAtlasOffset.X, (short)maskedTextureAtlasOffset.Y);
-                maskTextureAtlasOffsetBuffer.Update(index + 1, (short)(maskedTextureAtlasOffset.X + size.Width), (short)maskedTextureAtlasOffset.Y);
-                maskTextureAtlasOffsetBuffer.Update(index + 2, (short)(maskedTextureAtlasOffset.X + size.Width), (short)(maskedTextureAtlasOffset.Y + size.Height));
-                maskTextureAtlasOffsetBuffer.Update(index + 3, (short)maskedTextureAtlasOffset.X, (short)(maskedTextureAtlasOffset.Y + size.Height));
-            }
+            textureAtlasOffsetBuffer.Update(index + 1, (short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
+            textureAtlasOffsetBuffer.Update(index + 2, (short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height));
+            textureAtlasOffsetBuffer.Update(index + 3, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height));
         }
 
         public void UpdateTextureAtlasOffset(int index, Render.ISurface3D surface)
@@ -897,14 +851,6 @@ namespace Ambermoon.Renderer
                 textureAtlasOffsetBuffer.Remove(index + 1);
                 textureAtlasOffsetBuffer.Remove(index + 2);
                 textureAtlasOffsetBuffer.Remove(index + 3);
-            }
-
-            if (maskTextureAtlasOffsetBuffer != null)
-            {
-                maskTextureAtlasOffsetBuffer.Remove(index);
-                maskTextureAtlasOffsetBuffer.Remove(index + 1);
-                maskTextureAtlasOffsetBuffer.Remove(index + 2);
-                maskTextureAtlasOffsetBuffer.Remove(index + 3);
             }
 
             if (baseLineBuffer != null)
@@ -1056,7 +1002,6 @@ namespace Ambermoon.Renderer
                     paletteIndexBuffer?.Dispose();
                     textColorIndexBuffer?.Dispose();
                     textureAtlasOffsetBuffer?.Dispose();
-                    maskTextureAtlasOffsetBuffer?.Dispose();
                     baseLineBuffer?.Dispose();
                     colorBuffer?.Dispose();
                     layerBuffer?.Dispose();

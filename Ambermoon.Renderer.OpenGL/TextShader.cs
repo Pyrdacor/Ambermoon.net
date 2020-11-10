@@ -25,8 +25,6 @@ namespace Ambermoon.Renderer
     {
         internal static readonly string DefaultTextColorIndexName = "textColorIndex";
 
-        readonly string textColorIndexName;
-
         // The palette has a size of 32x52 pixels.
         // Each row represents one palette of 32 colors.
         // So the palette index determines the pixel row.
@@ -80,22 +78,15 @@ namespace Ambermoon.Renderer
         };
 
         TextShader(State state)
-            : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultZName, DefaultPositionName,
-                  DefaultTexCoordName, DefaultSamplerName, DefaultAtlasSizeName, DefaultLayerName, DefaultPaletteName,
-                  DefaultPaletteIndexName, DefaultTextColorIndexName, TextFragmentShader(state), TextVertexShader(state))
+            : this(state, TextFragmentShader(state), TextVertexShader(state))
         {
 
         }
 
-        protected TextShader(State state, string modelViewMatrixName, string projectionMatrixName, string zName,
-            string positionName, string texCoordName, string samplerName, string atlasSizeName, string layerName,
-            string paletteName, string paletteIndexName, string textColorIndexName, string[] fragmentShaderLines,
-            string[] vertexShaderLines)
-            : base(state, modelViewMatrixName, projectionMatrixName, zName, positionName, texCoordName,
-                  samplerName, atlasSizeName, layerName, paletteName, paletteIndexName, DefaultColorKeyName,
-                  fragmentShaderLines, vertexShaderLines)
+        protected TextShader(State state, string[] fragmentShaderLines, string[] vertexShaderLines)
+            : base(state, fragmentShaderLines, vertexShaderLines)
         {
-            this.textColorIndexName = textColorIndexName;
+
         }
 
         public new static TextShader Create(State state) => new TextShader(state);

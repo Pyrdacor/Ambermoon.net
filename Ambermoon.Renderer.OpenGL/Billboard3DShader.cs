@@ -23,27 +23,9 @@ namespace Ambermoon.Renderer
 {
     internal class Billboard3DShader : Texture3DShader
     {
-        internal static readonly string DefaultTexCoordName = Texture3DShader.DefaultTexCoordName;
-        internal static readonly string DefaultSamplerName = Texture3DShader.DefaultSamplerName;
-        internal static readonly string DefaultAtlasSizeName = Texture3DShader.DefaultAtlasSizeName;
-        internal static readonly string DefaultTexEndCoordName = Texture3DShader.DefaultTexEndCoordName;
-        internal static readonly string DefaultTexSizeName = Texture3DShader.DefaultTexSizeName;
-        internal static readonly string DefaultPaletteName = Texture3DShader.DefaultPaletteName;
-        internal static readonly string DefaultPaletteIndexName = Texture3DShader.DefaultPaletteIndexName;
         internal static readonly string DefaultBillboardCenterName = "center";
         internal static readonly string DefaultBillboardOrientationName = "orientation";
         internal static readonly string DefaultExtrudeName = "extrude";
-
-        readonly string texCoordName;
-        readonly string texEndCoordName;
-        readonly string texSizeName;
-        readonly string samplerName;
-        readonly string atlasSizeName;
-        readonly string paletteName;
-        readonly string paletteIndexName;
-        readonly string billboardCenterName;
-        readonly string billboardOrientationName;
-        readonly string extrudeName;
 
         static string[] Billboard3DFragmentShader(State state) => new string[]
         {
@@ -125,27 +107,15 @@ namespace Ambermoon.Renderer
         };
 
         Billboard3DShader(State state)
-            : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultPositionName,
-                  DefaultTexCoordName, DefaultTexEndCoordName, DefaultTexSizeName, DefaultSamplerName,
-                  DefaultAtlasSizeName, DefaultPaletteName, DefaultPaletteIndexName, DefaultBillboardCenterName,
-                  DefaultBillboardOrientationName, DefaultExtrudeName, DefaultLightName,
-                  Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
+            : this(state, Billboard3DFragmentShader(state), Billboard3DVertexShader(state))
         {
 
         }
 
-        protected Billboard3DShader(State state, string modelViewMatrixName, string projectionMatrixName,
-            string positionName, string texCoordName, string texEndCoordName, string texSizeName,
-            string samplerName, string atlasSizeName, string paletteName, string paletteIndexName,
-            string billboardCenterName, string billboardOrientationName, string extrudeName, string lightName,
-            string[] fragmentShaderLines, string[] vertexShaderLines)
-            : base(state, modelViewMatrixName, projectionMatrixName, positionName, texCoordName, texEndCoordName,
-                  texSizeName, samplerName, atlasSizeName, paletteName, paletteIndexName, null, lightName,
-                  fragmentShaderLines, vertexShaderLines)
+        protected Billboard3DShader(State state, string[] fragmentShaderLines, string[] vertexShaderLines)
+            : base(state, fragmentShaderLines, vertexShaderLines)
         {
-            this.billboardCenterName = billboardCenterName;
-            this.billboardOrientationName = billboardOrientationName;
-            this.extrudeName = extrudeName;
+
         }
 
         public new static Billboard3DShader Create(State state) => new Billboard3DShader(state);

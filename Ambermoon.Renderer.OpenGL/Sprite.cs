@@ -33,6 +33,7 @@ namespace Ambermoon.Renderer
         Position textureAtlasOffset = null;
         int baseLineOffset = 0;
         byte paletteIndex = 0;
+        Size textureSize = null;
 
         public Sprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
             : base(width, height, virtualScreen)
@@ -63,6 +64,23 @@ namespace Ambermoon.Renderer
                     return;
 
                 textureAtlasOffset = new Position(value);
+
+                UpdateTextureAtlasOffset();
+            }
+        }
+
+        public virtual Size TextureSize
+        {
+            get => textureSize;
+            set
+            {
+                if (textureSize == value)
+                    return;
+
+                if (value == null)
+                    textureSize = null;
+                else
+                    textureSize = new Size(value);
 
                 UpdateTextureAtlasOffset();
             }
@@ -141,172 +159,11 @@ namespace Ambermoon.Renderer
         }
     }
 
-    internal class MaskedSprite : RenderNode, IMaskedSprite
-    {
-        protected int drawIndex = -1;
-        Position textureAtlasOffset = null;
-        int baseLineOffset = 0;
-        Position maskTextureAtlasOffset = null;
-        byte paletteIndex = 0;
-
-        public MaskedSprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
-            : base(width, height, virtualScreen)
-        {
-            textureAtlasOffset = new Position(textureAtlasX, textureAtlasY);
-            maskTextureAtlasOffset = new Position(textureAtlasX, textureAtlasY);
-        }
-
-        public byte PaletteIndex
-        {
-            get => paletteIndex;
-            set
-            {
-                if (paletteIndex == value)
-                    return;
-
-                paletteIndex = value;
-
-                UpdatePaletteIndex();
-            }
-        }
-
-        public Position TextureAtlasOffset
-        {
-            get => textureAtlasOffset;
-            set
-            {
-                if (textureAtlasOffset == value)
-                    return;
-
-                textureAtlasOffset = new Position(value);
-
-                UpdateTextureAtlasOffset();
-            }
-        }
-
-        public int BaseLineOffset
-        {
-            get => baseLineOffset;
-            set
-            {
-                if (baseLineOffset == value)
-                    return;
-
-                baseLineOffset = value;
-
-                UpdatePosition();
-            }
-        }
-
-        public Position MaskTextureAtlasOffset
-        {
-            get => maskTextureAtlasOffset;
-            set
-            {
-                if (maskTextureAtlasOffset == value)
-                    return;
-
-                maskTextureAtlasOffset = new Position(value);
-
-                UpdateTextureAtlasOffset();
-            }
-        }
-
-        public override void Resize(int width, int height)
-        {
-            if (Width == width && Height == height)
-                return;
-
-            base.Resize(width, height);
-
-            UpdatePosition();
-
-            if (ClipArea == null)
-                UpdateTextureAtlasOffset();
-        }
-
-        protected override void AddToLayer()
-        {
-            drawIndex = (Layer as RenderLayer).GetDrawIndex(this, maskTextureAtlasOffset);
-        }
-
-        protected override void RemoveFromLayer()
-        {
-            if (drawIndex != -1)
-            {
-                (Layer as RenderLayer).FreeDrawIndex(drawIndex);
-                drawIndex = -1;
-            }
-        }
-
-        protected override void OnClipAreaChanged(bool onScreen, bool needUpdate)
-        {
-            if (onScreen && needUpdate)
-            {
-                UpdatePosition();
-            }
-        }
-
-        protected override void UpdatePosition()
-        {
-            if (drawIndex != -1) // -1 means not attached to a layer
-            {
-                (Layer as RenderLayer).UpdatePosition(drawIndex, this);
-
-                if (ClipArea != null) // We need to adjust tex coords if clipped
-                    UpdateTextureAtlasOffset();
-            }
-        }
-
-        protected virtual void UpdateTextureAtlasOffset()
-        {
-            if (drawIndex != -1) // -1 means not attached to a layer
-                (Layer as RenderLayer).UpdateTextureAtlasOffset(drawIndex, this, maskTextureAtlasOffset);
-        }
-
-        protected virtual void UpdatePaletteIndex()
-        {
-            if (drawIndex != -1) // -1 means not attached to a layer
-                (Layer as RenderLayer).UpdatePaletteIndex(drawIndex, PaletteIndex);
-        }
-    }
-
     internal class LayerSprite : Sprite, ILayerSprite
     {
         byte displayLayer = 0;
 
         public LayerSprite(int width, int height, int textureAtlasX, int textureAtlasY, byte displayLayer, Rect virtualScreen)
-            : base(width, height, textureAtlasX, textureAtlasY, virtualScreen)
-        {
-            this.displayLayer = displayLayer;
-        }
-
-        public byte DisplayLayer
-        {
-            get => displayLayer;
-            set
-            {
-                if (displayLayer == value)
-                    return;
-
-                displayLayer = value;
-
-                UpdateDisplayLayer();
-            }
-        }
-
-        protected virtual void UpdateDisplayLayer()
-        {
-            if (drawIndex != -1) // -1 means not attached to a layer
-                (Layer as RenderLayer).UpdateDisplayLayer(drawIndex, displayLayer);
-        }
-    }
-
-    internal class MaskedLayerSprite : MaskedSprite, IMaskedLayerSprite
-    {
-        byte displayLayer = 0;
-
-        public MaskedLayerSprite(int width, int height, int textureAtlasX, int textureAtlasY, byte displayLayer, Rect virtualScreen)
             : base(width, height, textureAtlasX, textureAtlasY, virtualScreen)
         {
             this.displayLayer = displayLayer;
@@ -361,6 +218,7 @@ namespace Ambermoon.Renderer
         }
         public int TextureAtlasWidth { get; set; }
         public uint NumFrames { get; set; }
+        public uint BaseFrame { get; set; } = 0;
         public uint CurrentFrame
         {
             get => currentFrame;
@@ -368,7 +226,7 @@ namespace Ambermoon.Renderer
             {
                 if (NumFrames > 1)
                 {
-                    currentFrame = value % NumFrames;
+                    currentFrame = BaseFrame + value % NumFrames;
                     int newTextureOffsetX = initialTextureOffset.X + (int)currentFrame * Width;
                     int newTextureOffsetY = initialTextureOffset.Y;
 
@@ -382,7 +240,7 @@ namespace Ambermoon.Renderer
                 }
                 else
                 {
-                    currentFrame = 0;
+                    currentFrame = BaseFrame;
                 }
             }
         }
@@ -432,7 +290,7 @@ namespace Ambermoon.Renderer
 
         protected override void AddToLayer()
         {
-            drawIndex = (Layer as RenderLayer).GetDrawIndex(this, null, TextColorIndex);
+            drawIndex = (Layer as RenderLayer).GetDrawIndex(this, TextColorIndex);
         }
 
         public void UpdateTextColorIndex()
@@ -451,22 +309,12 @@ namespace Ambermoon.Renderer
             this.virtualScreen = virtualScreen;
         }
 
-        public ISprite Create(int width, int height, bool masked, bool layered, byte displayLayer = 0)
+        public ISprite Create(int width, int height, bool layered, byte displayLayer = 0)
         {
-            if (masked)
-            {
-                if (layered)
-                    return new MaskedLayerSprite(width, height, 0, 0, displayLayer, virtualScreen);
-                else
-                    return new MaskedSprite(width, height, 0, 0, virtualScreen);
-            }
+            if (layered)
+                return new LayerSprite(width, height, 0, 0, displayLayer, virtualScreen);
             else
-            {
-                if (layered)
-                    return new LayerSprite(width, height, 0, 0, displayLayer, virtualScreen);
-                else
-                    return new Sprite(width, height, 0, 0, virtualScreen);
-            }
+                return new Sprite(width, height, 0, 0, virtualScreen);
         }
 
         public IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames, bool layered = false, byte displayLayer = 0)

@@ -29,6 +29,15 @@ namespace Ambermoon.Render
             set;
         }
 
+        /// <summary>
+        /// If null the sprite dimensions are used.
+        /// </summary>
+        Size TextureSize
+        {
+            get;
+            set;
+        }
+
         int BaseLineOffset
         {
             get;
@@ -36,15 +45,6 @@ namespace Ambermoon.Render
         }
 
         byte PaletteIndex
-        {
-            get;
-            set;
-        }
-    }
-
-    public interface IMaskedSprite : ISprite
-    {
-        Position MaskTextureAtlasOffset
         {
             get;
             set;
@@ -60,11 +60,6 @@ namespace Ambermoon.Render
         }
     }
 
-    public interface IMaskedLayerSprite : IMaskedSprite, ILayerSprite
-    {
-
-    }
-
     public interface IAnimatedSprite : ISprite
     {
         uint NumFrames
@@ -74,6 +69,12 @@ namespace Ambermoon.Render
         }
 
         uint CurrentFrame
+        {
+            get;
+            set;
+        }
+
+        uint BaseFrame
         {
             get;
             set;
@@ -93,7 +94,7 @@ namespace Ambermoon.Render
 
     public interface ISpriteFactory
     {
-        ISprite Create(int width, int height, bool masked, bool layered, byte displayLayer = 0);
+        ISprite Create(int width, int height, bool layered, byte displayLayer = 0);
         IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames, bool layered = false, byte displayLayer = 0);
     }
 }

@@ -16,7 +16,7 @@ namespace Ambermoon.Render
         {
             this.renderView = renderView;
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Cursor);
-            sprite = renderView.SpriteFactory.Create(16, 16, false, true);
+            sprite = renderView.SpriteFactory.Create(16, 16, true);
             sprite.PaletteIndex = 0;
             sprite.Layer = renderView.GetLayer(Layer.Cursor);
 

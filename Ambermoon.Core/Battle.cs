@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,37 +61,54 @@ namespace Ambermoon
             Flee
         }
 
+        internal class CharacterState
+        {
+            public Character Character;
+            public BattleAction CurrentAction = BattleAction.None;
+            public uint AnimationTicks;
+            public uint SourceTileIndex;
+            public uint[] DestinationTileIndices;
+        }
+
         readonly Game game;
         readonly PartyMember[] partyMembers;
-        readonly Monster[,] monsters;
         List<Character> roundActors;
         BattleAction[] roundBattleActions;
         uint[] roundBattleActionParameters;
         Character currentActor;
         uint currentActorAction = 0;
         uint currentActorActionCount = 0;
-        readonly Character[] battleField = new Character[6 * 5];
+        readonly CharacterState[] battleField = new CharacterState[6 * 5];
         bool wantsToFlee = false;
 
         public event Action RoundFinished;
         public event Action<Character> CharacterDied;
+        public IEnumerable<CharacterState> Monsters => battleField.Where(c => c?.Character != null && c.Character.Type == CharacterType.Monster);
+        public bool RoundActive { get; private set; } = false;
 
         public Battle(Game game, PartyMember[] partyMembers, MonsterGroup monsterGroup)
         {
             this.game = game;
             this.partyMembers = partyMembers;
-            monsters = monsterGroup.Monsters;
 
             // place characters
             for (int i = 0; i < partyMembers.Length; ++i)
             {
-                battleField[18 + game.CurrentSavegame.BattlePositions[i]] = partyMembers[i];
+                battleField[18 + game.CurrentSavegame.BattlePositions[i]] = new CharacterState
+                {
+                    Character = partyMembers[i],
+                    SourceTileIndex = 18u + game.CurrentSavegame.BattlePositions[i]
+                };
             }
             for (int y = 0; y < 3; ++y)
             {
                 for (int x = 0; x < 6; ++x)
                 {
-                    battleField[x + y * 6] = monsters[x, y];
+                    battleField[x + y * 6] = new CharacterState
+                    {
+                        Character = monsterGroup.Monsters[x, y],
+                        SourceTileIndex = (uint)(x + y * 6)
+                    };
                 }
             }
         }
@@ -124,8 +142,11 @@ namespace Ambermoon
                 {
                     roundActors.RemoveAt(actorIndex);
 
-                    if (roundActors.Count == 0)
+                    if (roundActors.Count(a => a.Alive) == 0)
+                    {
+                        RoundActive = false;
                         RoundFinished?.Invoke();
+                    }
                     else if (idle)
                         NextAction();
                 }
@@ -153,7 +174,8 @@ namespace Ambermoon
         internal void StartRound(BattleAction[] battleActions, uint[] battleActionParameters)
         {
             roundActors = battleField
-                .Where(f => f != null)
+                .Where(f => f?.Character != null)
+                .Select(f => f.Character)
                 .OrderBy(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue)
                 .ToList();
             roundBattleActions = new BattleAction[roundActors.Count];
@@ -168,6 +190,8 @@ namespace Ambermoon
                     roundBattleActionParameters[index] = battleActionParameters[i];
                 }
             }
+
+            RoundActive = true;
 
             NextAction();
         }
@@ -228,6 +252,7 @@ namespace Ambermoon
                     break;
                 case BattleAction.Attack:
                     // Parameter: Tile index to attack (0-29)
+                    // TODO: If someone dies, call CharacterDied and remove it from the battle field
                     // TODO
                     break;
                 case BattleAction.CastSpell:
@@ -248,7 +273,7 @@ namespace Ambermoon
             }
         }
 
-        int GetCharacterPosition(Character character) => battleField.ToList().IndexOf(character);
+        int GetCharacterPosition(Character character) => battleField.Select(f => f.Character).ToList().IndexOf(character);
 
         BattleAction PickMonsterAction(Monster monster, bool wantsToFlee)
         {
@@ -290,7 +315,8 @@ namespace Ambermoon
             if (possibleSpells.Count == 0)
                 return false;
 
-            bool monsterNeedsHealing = monsters.ToList().Any(m => m.HitPoints.TotalCurrentValue < m.HitPoints.MaxValue / 2);
+            bool monsterNeedsHealing = battleField.Where(f => f?.Character.Type == CharacterType.Monster).ToList()
+                .Any(m => m.Character.HitPoints.TotalCurrentValue < m.Character.HitPoints.MaxValue / 2);
 
             if (monsterNeedsHealing)
             {
@@ -335,7 +361,7 @@ namespace Ambermoon
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6]?.Type == CharacterType.PartyMember)
+                    if (battleField[x + y * 6]?.Character?.Type == CharacterType.PartyMember)
                         return true;
                 }
             }
@@ -408,7 +434,7 @@ namespace Ambermoon
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6]?.Type == CharacterType.PartyMember)
+                    if (battleField[x + y * 6]?.Character?.Type == CharacterType.PartyMember)
                         return true;
                 }
             }
@@ -434,7 +460,7 @@ namespace Ambermoon
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6]?.Type == CharacterType.PartyMember)
+                    if (battleField[x + y * 6]?.Character?.Type == CharacterType.PartyMember)
                         possiblePositions.Add(x + y * 6);
                 }
             }
@@ -476,5 +502,19 @@ namespace Ambermoon
         // Above is the spell index
         public static uint CreateCastSpellParameter(uint targetTile, uint spell) =>
             (targetTile & 0xff) | (spell << 8);
+    }
+
+    internal static class BattleActionExtensions
+    {
+        public static MonsterAnimationType? ToAnimationType(this Battle.BattleAction battleAction) => battleAction switch
+        {
+            Battle.BattleAction.None => null,
+            Battle.BattleAction.Move => MonsterAnimationType.Move,
+            Battle.BattleAction.MoveGroupForward => null,
+            Battle.BattleAction.Attack => MonsterAnimationType.Attack,
+            Battle.BattleAction.CastSpell => MonsterAnimationType.Cast,
+            Battle.BattleAction.Flee => null,
+            _ => null
+        };
     }
 }

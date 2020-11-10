@@ -32,13 +32,6 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultLayerName = "layer";
 
         internal ShaderProgram shaderProgram;
-        readonly string fragmentOutColorName;
-        readonly string modelViewMatrixName;
-        readonly string projectionMatrixName;
-        readonly string colorName;
-        readonly string zName;
-        readonly string positionName;
-        readonly string layerName;
 
         protected static string GetFragmentShaderHeader(State state)
         {
@@ -93,8 +86,8 @@ namespace Ambermoon.Renderer
 
         public void UpdateMatrices(State state)
         {
-            shaderProgram.SetInputMatrix(modelViewMatrixName, state.CurrentModelViewMatrix.ToArray(), true);
-            shaderProgram.SetInputMatrix(projectionMatrixName, state.CurrentProjectionMatrix.ToArray(), true);
+            shaderProgram.SetInputMatrix(DefaultModelViewMatrixName, state.CurrentModelViewMatrix.ToArray(), true);
+            shaderProgram.SetInputMatrix(DefaultProjectionMatrixName, state.CurrentProjectionMatrix.ToArray(), true);
         }
 
         public void Use()
@@ -104,24 +97,13 @@ namespace Ambermoon.Renderer
         }
 
         ColorShader(State state)
-            : this(state, DefaultModelViewMatrixName, DefaultProjectionMatrixName, DefaultColorName, DefaultZName,
-                  DefaultPositionName, DefaultLayerName, ColorFragmentShader(state), ColorVertexShader(state))
+            : this(state, ColorFragmentShader(state), ColorVertexShader(state))
         {
 
         }
 
-        protected ColorShader(State state, string modelViewMatrixName, string projectionMatrixName, string colorName, string zName,
-            string positionName, string layerName, string[] fragmentShaderLines, string[] vertexShaderLines)
+        protected ColorShader(State state, string[] fragmentShaderLines, string[] vertexShaderLines)
         {
-            fragmentOutColorName = DefaultFragmentOutColorName;
-
-            this.modelViewMatrixName = modelViewMatrixName;
-            this.projectionMatrixName = projectionMatrixName;
-            this.colorName = colorName;
-            this.zName = zName;
-            this.positionName = positionName;
-            this.layerName = layerName;
-
             var fragmentShader = new Shader(state, Shader.Type.Fragment, string.Join("\n", fragmentShaderLines));
             var vertexShader = new Shader(state, Shader.Type.Vertex, string.Join("\n", vertexShaderLines));
 
@@ -132,7 +114,7 @@ namespace Ambermoon.Renderer
 
         public void SetZ(float z)
         {
-            shaderProgram.SetInput(zName, z);
+            shaderProgram.SetInput(DefaultZName, z);
         }
 
         public static ColorShader Create(State state) => new ColorShader(state);

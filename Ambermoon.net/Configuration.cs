@@ -18,7 +18,7 @@ namespace Ambermoon
         {
             get
             {
-                const bool isWindows = true; // TODO
+                bool isWindows = System.Environment.OSVersion.Platform == System.PlatformID.Win32NT;
 
                 var assemblyPath = Process.GetCurrentProcess().MainModule.FileName;
 

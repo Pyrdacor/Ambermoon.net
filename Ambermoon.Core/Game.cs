@@ -148,6 +148,7 @@ namespace Ambermoon
         readonly List<TimedGameEvent> timedEvents = new List<TimedGameEvent>();
         readonly Movement movement;
         internal uint CurrentTicks { get; private set; } = 0;
+        uint currentBattleTicks = 0;
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly TimedGameEvent ouchEvent = new TimedGameEvent();
@@ -237,6 +238,7 @@ namespace Ambermoon
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
         readonly IRenderText windowTitle = null;
+        List<uint?> idleAnimationStartTicks = new List<uint?>();
         /// <summary>
         /// Open chest which can be used to store items.
         /// </summary>
@@ -303,7 +305,7 @@ namespace Ambermoon
                 new Rect(8, 40, 192, 10), TextAlign.Center);
             windowTitle.DisplayLayer = 2;
             layout = new Layout(this, renderView, itemManager);
-            ouchSprite = renderView.SpriteFactory.Create(32, 23, false, true) as ILayerSprite;
+            ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
             ouchSprite.PaletteIndex = 0;
             ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
@@ -312,11 +314,11 @@ namespace Ambermoon
 
             // Create texture atlas for each battle row
             var textureAtlasManager = TextureAtlasManager.Instance;
+            var monsterGraphicDictionary = CharacterManager.Monsters.ToDictionary(m => m.Index, m => m.CombatGraphic);
+            textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRowCenter, monsterGraphicDictionary);
+            var monsterGraphicAtlas = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRowCenter);
             for (int row = 0; row < 4; ++row)
-            {
-                textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRowFarthest + row, CharacterManager.Monsters.ToDictionary(m => m.Index, m => m.CombatGraphics[row]));
-                renderView.GetLayer(Layer.BattleMonsterRowFarthest + row).Texture = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRowFarthest + row).Texture;
-            }
+                renderView.GetLayer(Layer.BattleMonsterRowFarthest + row).Texture = monsterGraphicAtlas.Texture;
         }
 
         /// <summary>
@@ -407,6 +409,20 @@ namespace Ambermoon
                         Move();
                 }
             }
+
+            if (currentBattle != null)
+            {
+                uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
+
+                if (currentBattleTicks <= uint.MaxValue - add)
+                    currentBattleTicks += add;
+                else
+                    currentBattleTicks = (uint)(((long)currentBattleTicks + add) % uint.MaxValue);
+
+                UpdateBattle();
+            }
+            else
+                currentBattleTicks = 0;
 
             layout.Update(CurrentTicks);
         }
@@ -2044,6 +2060,8 @@ namespace Ambermoon
                 this.player.Position.X = RenderPlayer.Position.X;
                 this.player.Position.Y = RenderPlayer.Position.Y;
 
+                ShowMap(true);
+
                 if (!mapTypeChanged)
                 {
                     // Trigger events after map transition
@@ -2052,8 +2070,6 @@ namespace Ambermoon
 
                     PlayerMoved(mapChange);
                 }
-
-                ShowMap(true);
             });
         }
 
@@ -2468,6 +2484,59 @@ namespace Ambermoon
             ShowBattleWindow(null, failedEscape);
         }
 
+        void UpdateBattle()
+        {
+            if (currentBattle.RoundActive)
+            {
+                foreach (var monster in currentBattle.Monsters)
+                {
+                    var animationType = monster.CurrentAction.ToAnimationType();
+
+                    if (animationType != null)
+                    {
+                        layout.UpdateMonsterCombatSprite(monster.Character as Monster, animationType.Value, monster.AnimationTicks, currentBattleTicks);
+                    }
+                }
+            }
+            else
+            {
+                var monsters = currentBattle.Monsters.ToList();
+
+                // No active battle, play idle animations from time to time.
+                for (int i = 0; i < monsters.Count; ++i)
+                {
+                    var monster = monsters[i];
+
+                    if (idleAnimationStartTicks[i] != null)
+                    {
+                        var animationTicks = currentBattleTicks - idleAnimationStartTicks[i].Value;
+
+                        // Note: Idle animations use the move animation.
+                        if (!layout.UpdateMonsterCombatSprite(monster.Character as Monster, MonsterAnimationType.Move, animationTicks, currentBattleTicks))
+                        {
+                            // If UpdateMonsterCombatSprite returns false, the animation is no longer valid.
+                            // The monster might have been removed or the animation is over.
+                            idleAnimationStartTicks[i] = null;
+                            layout.ResetMonsterCombatSprite(monster.Character as Monster);
+                        }
+                    }
+                    else
+                    {
+                        // Start new animation by chance from time to time.
+                        if (RandomInt(0, 1000) < 2)
+                        {
+                            idleAnimationStartTicks[i] = currentBattleTicks;
+                            layout.UpdateMonsterCombatSprite(monster.Character as Monster, MonsterAnimationType.Move, 0, currentBattleTicks);
+                        }
+                        else
+                        {
+                            layout.ResetMonsterCombatSprite(monster.Character as Monster);
+                        }
+                    }
+                }
+            }
+        }
+
         void ShowBattleWindow(Event nextEvent, bool surpriseAttack)
         {
             Fade(() =>
@@ -2491,13 +2560,16 @@ namespace Ambermoon
                 layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                     (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
                 layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), false);
-                var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex);
-                currentBattle = new Battle(this, Enumerable.Range(0, Game.MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
+                // Note: Create clones so we can change the values in battle for each monster.
+                var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
+                currentBattle = new Battle(this, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
                     monsterGroup);
+                idleAnimationStartTicks = Enumerable.Repeat((uint?)null, currentBattle.Monsters.Count()).ToList();
                 currentBattle.RoundFinished += () =>
                 {
                     InputEnable = true;
                     CursorType = CursorType.Sword;
+                    idleAnimationStartTicks = Enumerable.Repeat((uint?)null, currentBattle.Monsters.Count()).ToList();
                 };
                 currentBattle.CharacterDied += character =>
                 {

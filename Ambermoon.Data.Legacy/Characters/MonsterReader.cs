@@ -38,9 +38,7 @@ namespace Ambermoon.Data.Legacy.Characters
             monster.MappedFrameWidth = dataReader.ReadWord();
             monster.MappedFrameHeight = dataReader.ReadWord();
 
-            var graphic = LoadGraphic(monster);
-            monster.CombatGraphics = Enumerable.Range(0, 4).Select(i =>
-                graphic.CreateScaled(graphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)i))).ToArray();
+            monster.CombatGraphic = LoadGraphic(monster);
         }
 
         Graphic LoadGraphic(Monster monster)

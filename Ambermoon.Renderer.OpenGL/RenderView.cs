@@ -50,6 +50,7 @@ namespace Ambermoon.Renderer.OpenGL
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
 
+#pragma warning disable 0067
         public event EventHandler Closed;
         public event EventHandler Click;
         public event EventHandler DoubleClick;
@@ -57,6 +58,7 @@ namespace Ambermoon.Renderer.OpenGL
         public event EventHandler KeyPress;
         public event EventHandler SystemKeyPress;
         public event EventHandler StopDrag;
+#pragma warning restore 0067
         public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
 
         public Rect VirtualScreen { get; }

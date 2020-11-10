@@ -27,9 +27,9 @@ namespace Ambermoon.UI
         {
             Area = new Rect(position, new Size(Width, Height));
 
-            frameSprite = renderView.SpriteFactory.Create(Width, Height, false, true, 3) as ILayerSprite;
-            disableOverlay = renderView.SpriteFactory.Create(Width - 8, Height - 6, false, true, 5) as ILayerSprite;
-            iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, false, true, 4) as ILayerSprite;
+            frameSprite = renderView.SpriteFactory.Create(Width, Height, true, 3) as ILayerSprite;
+            disableOverlay = renderView.SpriteFactory.Create(Width - 8, Height - 6, true, 5) as ILayerSprite;
+            iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, true, 4) as ILayerSprite;
 
             var layer = renderView.GetLayer(Layer.UI);
             frameSprite.Layer = layer;

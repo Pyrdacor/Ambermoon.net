@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -7,7 +8,17 @@ namespace Ambermoon.Data.Legacy.Serialization
     {
         public static List<string> ReadTexts(IDataReader textDataReader)
         {
-            return ReadTexts(textDataReader, new char[] { ' ', '\0' });
+            return ReadTexts(textDataReader, new char[] { ' ', '\0' })
+                .Select(t =>
+                {
+                    // There are some texts with \0 chars inside them.
+                    // This is a bug but we should be able to handle
+                    // such input data.
+                    if (t.Contains('\0'))
+                        return t.Substring(0, t.IndexOf('\0'));
+                    else
+                        return t;
+                }).ToList();
         }
 
         public static List<string> ReadTexts(IDataReader textDataReader, char[] trimChars)
