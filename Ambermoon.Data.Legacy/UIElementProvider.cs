@@ -151,6 +151,22 @@ namespace Ambermoon.Data.Legacy
                 .AddColoredArea(new Rect(143, 1, 1, 24), 27)
                 .AddColoredArea(new Rect(0, 25, 1, 1), 28)
                 .AddColoredArea(new Rect(1, 25, 143, 1), 27)
+                .Build(),
+
+                // BattleFieldYellowBorder (5 in text palette = yellow)
+                GraphicBuilder.Create(16, 13)
+                .AddColoredArea(new Rect(0, 0, 16, 1), 5)
+                .AddColoredArea(new Rect(0, 1, 1, 11), 5)
+                .AddColoredArea(new Rect(15, 1, 1, 11), 5)
+                .AddColoredArea(new Rect(0, 12, 16, 1), 5)
+                .Build(),
+
+                // BattleFieldOrangeBorder (6 in text palette = orange)
+                GraphicBuilder.Create(16, 13)
+                .AddColoredArea(new Rect(0, 0, 16, 1), 6)
+                .AddColoredArea(new Rect(0, 1, 1, 11), 6)
+                .AddColoredArea(new Rect(15, 1, 1, 11), 6)
+                .AddColoredArea(new Rect(0, 12, 16, 1), 6)
                 .Build()
             };
         }

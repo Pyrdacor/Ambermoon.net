@@ -54,11 +54,37 @@ namespace Ambermoon
         internal enum BattleAction
         {
             None,
+            /// <summary>
+            /// Parameter: New position index (0-29)
+            /// </summary>
             Move,
+            /// <summary>
+            /// No parameter
+            /// </summary>
             MoveGroupForward,
+            /// <summary>
+            /// Parameter: Tile index to attack (0-29)
+            /// TODO: If someone dies, call CharacterDied and remove it from the battle field
+            /// </summary>
             Attack,
+            /// <summary>
+            /// Parameter:
+            /// - Low word: Tile index (0-29) or row (0-4) to cast spell on
+            /// - High word: Spell index
+            /// TODO: Can support spells miss? If not for those spells the
+            ///       parameter should be the monster/partymember index instead.
+            /// </summary>
             CastSpell,
+            /// <summary>
+            /// No parameter
+            /// </summary>
             Flee
+        }
+
+        internal class PlayerBattleAction
+        {
+            public BattleAction BattleAction;
+            public uint Parameter;
         }
 
         internal class CharacterState
@@ -86,6 +112,8 @@ namespace Ambermoon
         public event Action<Character, uint, uint> CharacterMoved;
         public IEnumerable<CharacterState> Monsters => battleField.Where(c => c?.Character != null && c.Character.Type == CharacterType.Monster);
         public IEnumerable<CharacterState> Characters => battleField.Where(c => c?.Character != null);
+        public CharacterState GetCharacterAt(int column, int row) => battleField[column + row * 6];
+        public int GetSlotFromCharacter(Character character) => battleField.ToList().FindIndex(c => c?.Character == character);
         public bool RoundActive { get; private set; } = false;
 
         public Battle(Game game, PartyMember[] partyMembers, MonsterGroup monsterGroup)
@@ -172,8 +200,7 @@ namespace Ambermoon
         /// Starts a new battle round.
         /// </summary>
         /// <param name="battleActions">Battle actions for party members 1-6.</param>
-        /// <param name="battleActionParameters">Parameters for those battle actions.</param>
-        internal void StartRound(BattleAction[] battleActions, uint[] battleActionParameters)
+        internal void StartRound(PlayerBattleAction[] battleActions)
         {
             roundActors = battleField
                 .Where(f => f?.Character != null)
@@ -188,8 +215,8 @@ namespace Ambermoon
                 if (partyMembers[i] != null && partyMembers[i].Alive)
                 {
                     int index = roundActors.IndexOf(partyMembers[i]);
-                    roundBattleActions[index] = battleActions[i];
-                    roundBattleActionParameters[index] = battleActionParameters[i];
+                    roundBattleActions[index] = battleActions[i].BattleAction;
+                    roundBattleActionParameters[index] = battleActions[i].Parameter;
                 }
             }
 
@@ -258,7 +285,9 @@ namespace Ambermoon
                     // TODO
                     break;
                 case BattleAction.CastSpell:
-                    // Parameter: Tile index (0-29) or row (0-4) to cast spell on
+                    // Parameter:
+                    // - Low word: Tile index (0-29) or row (0-4) to cast spell on
+                    // - High word: Spell index
                     // TODO: Can support spells miss? If not for those spells the
                     //       parameter should be the monster/partymember index instead.
                     // TODO

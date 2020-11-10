@@ -104,6 +104,20 @@ namespace Ambermoon
             internal void EndBattle(BattleEndInfo battleEndInfo) => BattleEnded?.Invoke(battleEndInfo);
         }
 
+        enum PlayerBattleAction
+        {
+            /// <summary>
+            /// This is the initial action in each round.
+            /// The player can select the active party member.
+            /// He also can select actions.
+            /// </summary>
+            PickPlayerAction,
+            PickEnemyTarget,
+            PickEnemyTargetRow,
+            PickFriendTarget,
+            PickFriendTargetRow
+        }
+
         /// <summary>
         /// Character info texts that may change while
         /// in Inventory/Stats window.
@@ -178,6 +192,8 @@ namespace Ambermoon
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
+        PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
+        readonly Dictionary<int, Battle.PlayerBattleAction> roundPlayerBattleActions = new Dictionary<int, Battle.PlayerBattleAction>(MaxPartyMembers);
         readonly ILayerSprite ouchSprite;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputDisabled = false;
@@ -306,6 +322,7 @@ namespace Ambermoon
                 new Rect(8, 40, 192, 10), TextAlign.Center);
             windowTitle.DisplayLayer = 2;
             layout = new Layout(this, renderView, itemManager);
+            layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
             ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
             ouchSprite.PaletteIndex = 0;
@@ -2581,6 +2598,7 @@ namespace Ambermoon
 
                     // TODO
                 };
+                roundPlayerBattleActions.Clear();
                 // Add animated monster combat graphics and battle field sprites
                 for (int row = 0; row < 3; ++row)
                 {
@@ -2666,15 +2684,125 @@ namespace Ambermoon
                 {
                     InputEnable = false;
                     CursorType = CursorType.Click;
-                    currentBattle.StartRound
-                    (
-                        Enumerable.Repeat(Battle.BattleAction.None, 6).ToArray(),
-                        Enumerable.Repeat(0u, 6).ToArray()
-                    );
+                    currentBattle.StartRound(Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray());
                 }
 
                 // TODO
             });
+        }
+
+        Battle.PlayerBattleAction CurrentPlayerBattleAction => roundPlayerBattleActions.ContainsKey(CurrentSavegame.ActivePartyMemberSlot)
+            ? roundPlayerBattleActions[CurrentSavegame.ActivePartyMemberSlot] : null;
+
+        void BattlePlayerSwitched()
+        {
+            int partyMemberSlot = SlotFromPartyMember(CurrentPartyMember).Value;
+            layout.ClearBattleFieldSlotColors();
+            int battleFieldSlot = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+            layout.SetBattleFieldSlotColor(battleFieldSlot, BattleFieldSlotColor.Yellow);
+
+            if (roundPlayerBattleActions.ContainsKey(partyMemberSlot))
+            {
+                var action = roundPlayerBattleActions[partyMemberSlot];
+
+                switch (action.BattleAction)
+                {
+                    case Battle.BattleAction.Attack:
+                    case Battle.BattleAction.Move:
+                        layout.SetBattleFieldSlotColor((int)action.Parameter, BattleFieldSlotColor.Orange);
+                        break;
+                    case Battle.BattleAction.CastSpell:
+                        var spell = (Spell)(action.Parameter >> 16);
+                        switch (SpellInfos.Entries[spell].Target)
+                        {
+                            case SpellTarget.Self:
+                                layout.SetBattleFieldSlotColor(battleFieldSlot, BattleFieldSlotColor.Orange);
+                                break;
+                            case SpellTarget.SingleEnemy:
+                            case SpellTarget.SingleFriend:
+                                layout.SetBattleFieldSlotColor((int)action.Parameter & 0xf, BattleFieldSlotColor.Orange);
+                                break;
+                            case SpellTarget.EnemyRow:
+                            case SpellTarget.FriendRow:
+                            {
+                                var targetType = SpellInfos.Entries[spell].Target == SpellTarget.EnemyRow
+                                    ? CharacterType.Monster : CharacterType.PartyMember;
+                                SetBattleRowSlotColors((int)action.Parameter & 0xf,
+                                    (c, r) => currentBattle.GetCharacterAt(c, r)?.Character?.Type == targetType,
+                                    BattleFieldSlotColor.Orange);
+                                break;
+                            }
+                            case SpellTarget.AllEnemies:
+                                for (int i = 0; i < 24; ++i)
+                                    layout.SetBattleFieldSlotColor(i, BattleFieldSlotColor.Orange);
+                                break;
+                            case SpellTarget.AllFriends:
+                                for (int i = 0; i < 12; ++i)
+                                    layout.SetBattleFieldSlotColor(18 + i, BattleFieldSlotColor.Orange);
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+
+        void BattleFieldSlotClicked(int column, int row)
+        {
+            switch (currentPlayerBattleAction)
+            {
+                case PlayerBattleAction.PickPlayerAction:
+                {
+                    var character = currentBattle.GetCharacterAt(column, row);
+                    if (character?.Character?.Type == CharacterType.PartyMember)
+                    {
+                        var partyMember = character.Character as PartyMember;
+
+                        if (CurrentPartyMember != partyMember)
+                        {
+                            int partyMemberSlot = SlotFromPartyMember(character.Character as PartyMember).Value;
+                            SetActivePartyMember(partyMemberSlot, false);
+                            BattlePlayerSwitched();
+                        }
+                    }
+                    break;
+                }
+                case PlayerBattleAction.PickEnemyTarget:
+                case PlayerBattleAction.PickFriendTarget:
+                {
+                    var target = currentBattle.GetCharacterAt(column, row);
+                    if (target != null)
+                    {
+                        CurrentPlayerBattleAction.Parameter = (uint)(column + row * 6);
+                        layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange);
+                        SetCurrentPlayerBattleAction(PlayerBattleAction.PickPlayerAction);
+                    }
+                    break;
+                }
+                case PlayerBattleAction.PickEnemyTargetRow:
+                case PlayerBattleAction.PickFriendTargetRow:
+                {
+                    CurrentPlayerBattleAction.Parameter = (uint)row;
+                    var targetType = currentPlayerBattleAction == PlayerBattleAction.PickEnemyTargetRow
+                        ? CharacterType.Monster : CharacterType.PartyMember;
+                    layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(CurrentPartyMember));
+                    SetBattleRowSlotColors(row, (c, r) => currentBattle.GetCharacterAt(c, r)?.Character?.Type == targetType, BattleFieldSlotColor.Orange);
+                    break;
+                }
+            }
+        }
+
+        void SetBattleRowSlotColors(int row, Func<int, int, bool> condition, BattleFieldSlotColor color)
+        {
+            for (int column = 0; column < 6; ++column)
+            {
+                if (condition(column, row))
+                    layout.SetBattleFieldSlotColor(column, row, color);
+            }
+        }
+
+        void SetCurrentPlayerBattleAction(PlayerBattleAction playerBattleAction)
+        {
+            // TODO
         }
 
         internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent)
@@ -2918,7 +3046,7 @@ namespace Ambermoon
             ShowDecisionPopup(map.Texts[(int)decisionEvent.TextIndex], responseHandler);
         }
 
-        internal void SetActivePartyMember(int index)
+        internal void SetActivePartyMember(int index, bool updateBattlePosition = true)
         {
             var partyMember = GetPartyMember(index);
 
@@ -2927,6 +3055,9 @@ namespace Ambermoon
                 CurrentSavegame.ActivePartyMemberSlot = index;
                 CurrentPartyMember = partyMember;
                 layout.SetActiveCharacter(index, CurrentSavegame.PartyMembers);
+
+                if (updateBattlePosition && layout.Type == LayoutType.Battle)
+                    BattlePlayerSwitched();
             }
         }
 

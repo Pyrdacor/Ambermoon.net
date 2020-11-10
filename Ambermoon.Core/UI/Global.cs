@@ -44,5 +44,12 @@ namespace Ambermoon
         public const int BattleFieldY = 134;
         public const int BattleFieldSlotWidth = 16;
         public const int BattleFieldSlotHeight = 13;
+        public static Rect BattleFieldSlotArea(int column, int row) => new Rect
+        (
+            BattleFieldX + column * BattleFieldSlotWidth,
+            BattleFieldY + row * BattleFieldSlotHeight,
+            BattleFieldSlotWidth, BattleFieldSlotHeight
+        );
+        public static Rect BattleFieldSlotArea(int index) => BattleFieldSlotArea(index % 6, index / 6);
     }
 }

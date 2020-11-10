@@ -231,6 +231,13 @@ namespace Ambermoon.UI
         public TextColor TextColor;
     }
 
+    internal enum BattleFieldSlotColor
+    {
+        None,
+        Yellow,
+        Orange
+    }
+
     internal class Layout
     {
         // There are a few possibilities:
@@ -367,6 +374,7 @@ namespace Ambermoon.UI
         readonly List<ISprite> additionalSprites = new List<ISprite>();
         readonly List<UIText> texts = new List<UIText>();
         readonly List<Tooltip> tooltips = new List<Tooltip>();
+        readonly Dictionary<int, ISprite> battleFieldSlotMarkers = new Dictionary<int, ISprite>();
         IRenderText activeTooltip = null;
         UIText inventoryMessage = null;
         readonly ButtonGrid buttonGrid;
@@ -378,6 +386,7 @@ namespace Ambermoon.UI
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
         public bool TransportEnabled { get; set; } = false;
+        public event Action<int, int> BattleFieldSlotClicked;
 
         public Layout(Game game, IRenderView renderView, IItemManager itemManager)
         {
@@ -1644,6 +1653,18 @@ namespace Ambermoon.UI
 
             foreach (var itemGrid in itemGrids)
                 itemGrid.LeftMouseUp(position);
+
+            if (Type == LayoutType.Battle)
+            {
+                if (position.X >= Global.BattleFieldX && position.X < Global.BattleFieldX + 6 * Global.BattleFieldSlotWidth &&
+                    position.Y >= Global.BattleFieldY && position.Y < Global.BattleFieldY + 5 * Global.BattleFieldSlotHeight)
+                {
+                    int slotColumn = (position.X - Global.BattleFieldX) / Global.BattleFieldSlotWidth;
+                    int slotRow = (position.Y - Global.BattleFieldY) / Global.BattleFieldSlotHeight;
+
+                    BattleFieldSlotClicked?.Invoke(slotColumn, slotRow);
+                }
+            }
         }
 
         public void RightMouseUp(Position position, out CursorType? newCursorType, uint currentTicks)
@@ -2004,6 +2025,58 @@ namespace Ambermoon.UI
                 monsterCombatGraphic.BattleFieldSprite.X = Global.BattleFieldX + (int)column * Global.BattleFieldSlotWidth;
                 monsterCombatGraphic.BattleFieldSprite.Y = Global.BattleFieldY + (int)row * Global.BattleFieldSlotHeight - 1;
             }
+        }
+
+        public void SetBattleFieldSlotColor(int column, int row, BattleFieldSlotColor slotColor)
+        {
+            SetBattleFieldSlotColor(column + row * 6, slotColor);
+        }
+
+        public void SetBattleFieldSlotColor(int index, BattleFieldSlotColor slotColor)
+        {
+            if (slotColor == BattleFieldSlotColor.None)
+            {
+                if (battleFieldSlotMarkers.ContainsKey(index))
+                {
+                    battleFieldSlotMarkers[index]?.Delete();
+                    battleFieldSlotMarkers.Remove(index);
+                }
+            }
+            else
+            {
+                uint textureIndex = (uint)Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.BattleFieldYellowBorder + (uint)slotColor - 1;
+
+                if (!battleFieldSlotMarkers.ContainsKey(index))
+                {
+                    battleFieldSlotMarkers.Add(index, AddSprite(Global.BattleFieldSlotArea(index),
+                        textureIndex, 50, 1));
+                }
+                else
+                {
+                    battleFieldSlotMarkers[index].TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+                }
+            }
+        }
+
+        public void ClearBattleFieldSlotColors()
+        {
+            foreach (var slotMarker in battleFieldSlotMarkers.Values)
+                slotMarker?.Delete();
+
+            battleFieldSlotMarkers.Clear();
+        }
+
+        public void ClearBattleFieldSlotColorsExcept(int exceptionSlotIndex)
+        {
+            foreach (var slotMarker in battleFieldSlotMarkers.Where(s => s.Key != exceptionSlotIndex))
+                slotMarker.Value?.Delete();
+
+            var exceptionSlot = battleFieldSlotMarkers?[exceptionSlotIndex];
+
+            battleFieldSlotMarkers.Clear();
+
+            if (exceptionSlot != null)
+                battleFieldSlotMarkers.Add(exceptionSlotIndex, exceptionSlot);
         }
     }
 }

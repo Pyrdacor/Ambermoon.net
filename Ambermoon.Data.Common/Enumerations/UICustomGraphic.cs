@@ -23,6 +23,8 @@
         ButtonDisableOverlay, // 28x13 pixel gray dotted overlay
         MapDisableOverlay, // 176x144 (2D maps use full, 3D maps use only 144x144)
         AmbermoonInfoBox, // 128x19
-        BiggerInfoBox // 144x26
+        BiggerInfoBox, // 144x26
+        BattleFieldYellowBorder,
+        BattleFieldOrangeBorder
     }
 }
