@@ -238,6 +238,15 @@ namespace Ambermoon
             Game.Update(delta);
         }
 
+        void Window_Resize(System.Drawing.Size size)
+        {
+            if (size.Width != Width || size.Height != Height)
+            {
+                // This seems to happen when changing the screen resolution.
+                window.Size = new System.Drawing.Size(Width, Height);
+            }
+        }
+
         public void Run(Configuration configuration)
         {
             this.configuration = configuration;
@@ -258,6 +267,7 @@ namespace Ambermoon
                 window.Load += Window_Load;
                 window.Render += Window_Render;
                 window.Update += Window_Update;
+                window.Resize += Window_Resize;
                 window.Run();
             }
             finally
