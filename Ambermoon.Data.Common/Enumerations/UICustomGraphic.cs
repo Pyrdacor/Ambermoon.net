@@ -25,6 +25,7 @@
         AmbermoonInfoBox, // 128x19
         BiggerInfoBox, // 144x26
         BattleFieldYellowBorder,
-        BattleFieldOrangeBorder
+        BattleFieldOrangeBorder,
+        BattleFieldGreenHighlight
     }
 }

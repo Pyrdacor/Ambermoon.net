@@ -33,6 +33,15 @@ namespace Ambermoon.Data
         Item
     }
 
+    public enum SpellTargetType
+    {
+        None,
+        SingleBattleField,
+        BattleFieldRow,
+        HalfBattleField,
+        Item
+    }
+
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class SpellTargetExtensions
     {
@@ -42,6 +51,19 @@ namespace Ambermoon.Data
             SpellTarget.EnemyRow => true,
             SpellTarget.AllEnemies => true,
             _ => false
+        };
+
+        public static SpellTargetType GetTargetType(this SpellTarget spellTarget) => spellTarget switch
+        {
+            SpellTarget.Self => SpellTargetType.SingleBattleField,
+            SpellTarget.SingleEnemy => SpellTargetType.SingleBattleField,
+            SpellTarget.SingleFriend => SpellTargetType.SingleBattleField,
+            SpellTarget.EnemyRow => SpellTargetType.BattleFieldRow,
+            SpellTarget.FriendRow => SpellTargetType.BattleFieldRow,
+            SpellTarget.AllEnemies => SpellTargetType.HalfBattleField,
+            SpellTarget.AllFriends => SpellTargetType.HalfBattleField,
+            SpellTarget.Item => SpellTargetType.Item,
+            _ => SpellTargetType.None
         };
     }
 

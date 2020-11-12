@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Ambermoon.Render
 {
@@ -12,6 +13,11 @@ namespace Ambermoon.Render
         uint ticksPerFrame;
         int[] frameIndices;
         float scale = 1.0f;
+        float endScale = 1.0f;
+        float startScale = 1.0f;
+        int endY;
+        int startY;
+        public bool Finished { get; private set; } = true;
 
         public event Action AnimationFinished;
 
@@ -61,30 +67,35 @@ namespace Ambermoon.Render
 
         public void Destroy() => sprite?.Delete();
 
-        public void MoveAndScale(int x, int y, float yFactorPerPixel)
+        public void Play(int[] frameIndices, uint ticksPerFrame, uint ticks, int? endY = null, float? endScale = null)
         {
-            var offset = new Position(x, y);
-            baseSpriteLocation += offset;
-            Position += offset;
-            Scale += y * yFactorPerPixel;
-        }
-
-        public void Play(int[] frameIndices, uint ticksPerFrame, uint ticks)
-        {
+            Finished = false;
             this.frameIndices = frameIndices;
             this.ticksPerFrame = ticksPerFrame;
+            startScale = scale;
+            this.endScale = endScale ?? startScale;
+            startY = baseSpriteLocation.Y;
+            this.endY = endY ?? startY;
             startAnimationTicks = ticks;
+            sprite.DisplayLayer += (byte)((this.endY - startY) * 6 * 5);
+        }
+
+        public void PlayWithoutAnimating(uint durationInTicks, uint ticks, int? endY = null, float? endScale = null)
+        {
+            Play(new int[] { 0 }, durationInTicks, ticks, endY, endScale);
         }
 
         public void Reset()
         {
             sprite.TextureAtlasOffset = baseTextureCoords;
+            Finished = true;
         }
 
         public bool Update(uint ticks)
         {
             if (ticksPerFrame == 0)
             {
+                Finished = true;
                 AnimationFinished?.Invoke();
                 return false;
             }
@@ -94,13 +105,27 @@ namespace Ambermoon.Render
 
             if (frame >= frameIndices.Length)
             {
+                baseSpriteLocation.Y = endY; // TODO: respect scale here?
+                Position = baseSpriteLocation;
+                Scale = endScale;
+                Finished = true;
                 AnimationFinished?.Invoke();
                 return false;
             }
 
+            float animationTime = frameIndices.Length * ticksPerFrame;
+            float factor = elapsed / animationTime;
+            baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor); // TODO: respect scale here?
+            Position = baseSpriteLocation;
+            Scale = startScale + (endScale - startScale) * factor;
             sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * baseSpriteSize.Width, 0);
 
             return true;
+        }
+
+        public void SetDisplayLayer(byte displayLayer)
+        {
+            sprite.DisplayLayer = displayLayer;
         }
     }
 }

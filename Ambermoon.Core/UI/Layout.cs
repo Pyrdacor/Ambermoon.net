@@ -377,6 +377,7 @@ namespace Ambermoon.UI
         readonly Dictionary<int, ISprite> battleFieldSlotMarkers = new Dictionary<int, ISprite>();
         IRenderText activeTooltip = null;
         UIText inventoryMessage = null;
+        UIText battleMessage = null;
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
@@ -549,6 +550,11 @@ namespace Ambermoon.UI
             UpdateLayoutButtons(ticksPerMovement);
             game.Resume();
             game.InputEnable = true;
+        }
+
+        public void ShowButtons(bool show)
+        {
+            buttonGrid.Visible = show;
         }
 
         public void EnableButton(int index, bool enable)
@@ -1107,6 +1113,8 @@ namespace Ambermoon.UI
             tooltips.Clear();
             inventoryMessage?.Destroy();
             inventoryMessage = null;
+            battleMessage?.Destroy();
+            battleMessage = null;
             activeSpellSprites.Clear(); // sprites are destroyed above
             activeSpellDurationBackgrounds.Values.ToList().ForEach(b => b?.Delete());
             activeSpellDurationBackgrounds.Clear();
@@ -1933,24 +1941,29 @@ namespace Ambermoon.UI
                 ReleaseButton(i);
         }
 
-        public void AddMonsterCombatSprite(int column, int row, Monster monster)
+        public Position GetMonsterCombatPosition(int column, int row, Monster monster)
         {
             int[] yOffsets = new[] { 82, 88, 100, 124 };
             var combatBackgroundArea = Global.CombatBackgroundArea;
-            var layer = Layer.BattleMonsterRowFarthest + row;
             int centerX = combatBackgroundArea.Width / 2;
             float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
             int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
-            int x = centerX - (3 - column) * slotWidth + (slotWidth - width) / 2;
-            int y = combatBackgroundArea.Y + yOffsets[row] - height;
+            return new Position(centerX - (3 - column) * slotWidth + (slotWidth - width) / 2, combatBackgroundArea.Y + yOffsets[row] - height);
+        }
+
+        public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster)
+        {
+            var layer = Layer.BattleMonsterRowFarthest + row;            
+            float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
+            var position = GetMonsterCombatPosition(column, row, monster);
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
             var sprite = RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
-            sprite.DisplayLayer = (byte)column;
-            sprite.X = x;
-            sprite.Y = y;
+            sprite.DisplayLayer = (byte)((column + row * 6) * 5);
+            sprite.X = position.X;
+            sprite.Y = position.Y;
             sprite.PaletteIndex = monster.CombatGraphicIndex switch // TODO
             {
                 MonsterGraphicIndex.Gizzek => 36,
@@ -1960,12 +1973,13 @@ namespace Ambermoon.UI
             };
             sprite.Layer = RenderView.GetLayer(layer);
             sprite.Visible = true;
+            var animation = new BattleAnimation(sprite, sizeMultiplier);
             monsterCombatGraphics.Add(new MonsterCombatGraphic
             {
                 Monster = monster,
                 Row = row,
                 Column = column,
-                Animation = new BattleAnimation(sprite, sizeMultiplier),
+                Animation = animation,
                 BattleFieldSprite = AddSprite(new Rect
                 (
                     Global.BattleFieldX + column * Global.BattleFieldSlotWidth,
@@ -1974,6 +1988,7 @@ namespace Ambermoon.UI
                 ), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
                 49, 2, monster.Name, TextColor.Orange)
             });
+            return animation;
         }
 
         public void RemoveMonsterCombatSprite(Monster monster)
@@ -1988,12 +2003,19 @@ namespace Ambermoon.UI
             }
         }
 
+        public BattleAnimation GetMonsterBattleAnimation(Monster monster) => monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster)?.Animation;
+
         public void ResetMonsterCombatSprite(Monster monster)
         {
             monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster)?.Animation?.Reset();
         }
 
-        public bool UpdateMonsterCombatSprite(Monster monster, MonsterAnimationType animationType, uint animationTicks, uint totalTicks)
+        public void ResetMonsterCombatSprites()
+        {
+            monsterCombatGraphics.ForEach(g => g?.Animation?.Reset());
+        }
+
+        public BattleAnimation UpdateMonsterCombatSprite(Monster monster, MonsterAnimationType animationType, uint animationTicks, uint totalTicks)
         {
             var monsterCombatGraphic = monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster);
 
@@ -2002,15 +2024,14 @@ namespace Ambermoon.UI
                 var animation = monsterCombatGraphic.Animation;
 
                 if (animationTicks == 0) // new animation
-                    animation.Play(monster.GetAnimationFrameIndices(animationType), Game.TicksPerSecond / 4, totalTicks); // TODO: ticks per frame
+                    animation.Play(monster.GetAnimationFrameIndices(animationType), Game.TicksPerSecond / 6, totalTicks); // TODO: ticks per frame
 
-                if (!animation.Update(totalTicks))
-                    return false;
+                animation.Update(totalTicks);
 
-                return true;
+                return animation;
             }
 
-            return false;
+            return null;
         }
 
         public void MoveMonsterTo(uint column, uint row, Monster monster)
@@ -2077,6 +2098,32 @@ namespace Ambermoon.UI
 
             if (exceptionSlot != null)
                 battleFieldSlotMarkers.Add(exceptionSlotIndex, exceptionSlot);
+        }
+
+        public void SetBattleMessage(string message, TextColor textColor = TextColor.White)
+        {
+            if (message == null)
+            {
+                battleMessage?.Destroy();
+                battleMessage = null;
+            }
+            else
+            {
+                var area = new Rect(5, 139, 84, 54);
+                var glyphSize = new Size(Global.GlyphWidth, Global.GlyphLineHeight);
+                var text = RenderView.TextProcessor.CreateText(message);
+                text = RenderView.TextProcessor.WrapText(text, area, glyphSize);
+
+                if (battleMessage == null)
+                {
+                    battleMessage = AddScrollableText(area, text, textColor);
+                }
+                else
+                {
+                    battleMessage.SetText(text);
+                    battleMessage.SetTextColor(textColor);
+                }
+            }
         }
     }
 }

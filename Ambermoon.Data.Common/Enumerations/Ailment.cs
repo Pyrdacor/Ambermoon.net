@@ -28,6 +28,18 @@ namespace Ambermoon.Data
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class AilmentExtensions
     {
+        public static bool CanSelect(this Ailment ailment)
+        {
+            return
+                !ailment.HasFlag(Ailment.Sleep) &&
+                !ailment.HasFlag(Ailment.Panic) &&
+                !ailment.HasFlag(Ailment.Crazy) &&
+                !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.DeadCorpse) &&
+                !ailment.HasFlag(Ailment.DeadAshes) &&
+                !ailment.HasFlag(Ailment.DeadDust);
+        }
+
         public static bool CanMove(this Ailment ailment)
         {
             return
@@ -57,7 +69,19 @@ namespace Ambermoon.Data
             return
                 !ailment.HasFlag(Ailment.Sleep) &&
                 !ailment.HasFlag(Ailment.Panic) &&
-                !ailment.HasFlag(Ailment.Lamed) && // TODO: not sure
+                !ailment.HasFlag(Ailment.Lamed) &&
+                !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.DeadCorpse) &&
+                !ailment.HasFlag(Ailment.DeadAshes) &&
+                !ailment.HasFlag(Ailment.DeadDust);
+        }
+
+        public static bool CanParry(this Ailment ailment)
+        {
+            return
+                !ailment.HasFlag(Ailment.Sleep) &&
+                !ailment.HasFlag(Ailment.Panic) &&
+                !ailment.HasFlag(Ailment.Lamed) &&
                 !ailment.HasFlag(Ailment.Petrified) &&
                 !ailment.HasFlag(Ailment.DeadCorpse) &&
                 !ailment.HasFlag(Ailment.DeadAshes) &&
@@ -70,7 +94,7 @@ namespace Ambermoon.Data
                 !ailment.HasFlag(Ailment.Irritated) &&
                 !ailment.HasFlag(Ailment.Sleep) &&
                 !ailment.HasFlag(Ailment.Panic) &&
-                !ailment.HasFlag(Ailment.Lamed) && // TODO: not sure
+                !ailment.HasFlag(Ailment.Drugged) &&
                 !ailment.HasFlag(Ailment.Petrified) &&
                 !ailment.HasFlag(Ailment.DeadCorpse) &&
                 !ailment.HasFlag(Ailment.DeadAshes) &&

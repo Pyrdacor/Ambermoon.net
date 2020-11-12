@@ -41,6 +41,7 @@
         };
         public string GetLanguageName(Language language) => executableData.LanguageNames.Entries[language];
         public string GetRaceName(Race race) => executableData.RaceNames.Entries[race];
+        public string GetSpellname(Spell spell) => executableData.SpellNames.Entries[spell];
         public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
@@ -73,5 +74,59 @@
         public string WantToFightMessage => executableData.Messages.GetEntry(Messages.Index.AttackWantToFight);
         public string CompassDirections => executableData.UITexts.Entries[UITextIndex.CardinalDirections];
         public string AttackEscapeFailedMessage => executableData.Messages.GetEntry(Messages.Index.CouldNotEscape);
+        public string SelectNewLeaderMessage => executableData.Messages.GetEntry(Messages.Index.SelectNewLeader);
+
+
+        #region Battle messages
+
+        public string BattleMessageAttacksWith => executableData.Messages.GetEntry(Messages.Index.AttacksWith);
+        public string BattleMessageAttacks => executableData.Messages.GetEntry(Messages.Index.Attacks);
+        public string BattleMessageWasBroken => executableData.Messages.GetEntry(Messages.Index.WasBroken);
+        public string BattleMessageDidPointsOfDamage => executableData.Messages.GetEntry(Messages.Index.DidPointsOfDamage);
+        public string BattleMessageCastsSpell => executableData.Messages.GetEntry(Messages.Index.CastsSpell);
+        public string BattleMessageCastsSpellFrom => executableData.Messages.GetEntry(Messages.Index.CastsSpellFrom);
+        public string BattleMessageWhoToBlink => executableData.Messages.GetEntry(Messages.Index.WhichMemberShouldBeBlinked);
+        public string BattleMessageFlees => executableData.Messages.GetEntry(Messages.Index.Flees);
+        public string BattleMessageWhereToMoveTo => executableData.Messages.GetEntry(Messages.Index.WhereToMoveTo);
+        public string BattleMessageNowhereToMoveTo => executableData.Messages.GetEntry(Messages.Index.NowhereToMoveTo);
+        public string BattleMessageNoAmmunition => executableData.Messages.GetEntry(Messages.Index.NoAmmunition);
+        public string BattleMessageWhatToAttack => executableData.Messages.GetEntry(Messages.Index.WhatToAttack);
+        public string BattleMessageCannotReachAnyone => executableData.Messages.GetEntry(Messages.Index.CannotReachAnyone);
+        public string BattleMessageMissedTheTarget => executableData.Messages.GetEntry(Messages.Index.MissedTheTarget);
+        public string BattleMessageCannotPenetrateMagicalAura => executableData.Messages.GetEntry(Messages.Index.CannotPenetrateMagicalAura);
+        public string BattleMessageAttackFailed => executableData.Messages.GetEntry(Messages.Index.AttackFailed);
+        public string BattleMessageAttackWasParried => executableData.Messages.GetEntry(Messages.Index.AttackWasDeflected);
+        public string BattleMessageAttackDidNoDamage => executableData.Messages.GetEntry(Messages.Index.AttackDidNoDamage);
+        public string BattleMessageMadeCriticalHit => executableData.Messages.GetEntry(Messages.Index.MadeCriticalHit);
+        public string BattleMessageUsedLastAmmunition => executableData.Messages.GetEntry(Messages.Index.UsedLastAmmunition);
+        public string BattleMessageCannotMove => executableData.Messages.GetEntry(Messages.Index.CannotMove);
+        public string BattleMessageTooFarAway => executableData.Messages.GetEntry(Messages.Index.TooFarAway);
+        public string BattleMessageUnableToAttack => executableData.Messages.GetEntry(Messages.Index.UnableToAttack);
+        public string BattleMessageSomeoneAlreadyGoingThere => executableData.Messages.GetEntry(Messages.Index.SomeoneAlreadyGoingThere);
+        public string BattleMessageMonstersAdvance => executableData.Messages.GetEntry(Messages.Index.MonstersAdvance);
+        public string BattleMessageMoves => executableData.Messages.GetEntry(Messages.Index.Moves);
+        public string BattleMessageWayWasBlocked => executableData.Messages.GetEntry(Messages.Index.WayWasBlocked);
+        public string BattleMessageHasDroppedWeapon => executableData.Messages.GetEntry(Messages.Index.HasDroppedWeapon);
+        public string BattleMessageRetreats => executableData.Messages.GetEntry(Messages.Index.Retreats);
+        public string BattleMessagePartyAdvances => executableData.Messages.GetEntry(Messages.Index.PartyAdvances);
+        public string BattleMessageWhichPartyMemberAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichPartyMemberAsTarget);
+        public string BattleMessageWhichMonsterAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichMonsterAsTarget);
+        public string BattleMessageWhichPartyMemberRowAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichPartyMemberRowAsTarget);
+        public string BattleMessageWhichMonsterRowAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichMonsterRowAsTarget);
+        public string BattleMessageSpellFailed => executableData.Messages.GetEntry(Messages.Index.SpellFailed);
+        public string BattleMessageDeflectedSpell => executableData.Messages.GetEntry(Messages.Index.DeflectedSpell);
+        public string BattleMessageImmuneToSpellType => executableData.Messages.GetEntry(Messages.Index.ImmuneToSpellType);
+        public string BattleMessageTheSpellFailed => executableData.Messages.GetEntry(Messages.Index.TheSpellFailed);
+        public string BattleMessageCannotDamagePetrifiedMonsters => executableData.Messages.GetEntry(Messages.Index.CannotDamagePetrifiedMonsters);
+        public string BattleMessageImmuneToSpell => executableData.Messages.GetEntry(Messages.Index.ImmuneToSpell);
+        public string BattleMessageWhereToBlinkTo => executableData.Messages.GetEntry(Messages.Index.WhereToBlinkTo);
+        public string BattleMessageHasBlinked => executableData.Messages.GetEntry(Messages.Index.HasBlinked);
+        public string BattleMessageCannotBlink => executableData.Messages.GetEntry(Messages.Index.CannotBlink);
+        public string BattleMessageCannotCastCauseIrritation => executableData.Messages.GetEntry(Messages.Index.CannotCastCauseIrritation);
+        public string BattleMessageYouDontKnowAnySpellsYet => executableData.Messages.GetEntry(Messages.Index.YouDontKnowAnySpellsYet);
+        public string BattleMessageCannotParry => executableData.Messages.GetEntry(Messages.Index.CannotParry);
+        public string BattleMessageUseItOnWhom => executableData.Messages.GetEntry(Messages.Index.UseItOnWhom);
+
+        #endregion
     }
 }

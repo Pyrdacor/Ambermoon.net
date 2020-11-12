@@ -10,6 +10,7 @@
         string GetGenderName(GenderFlag gender);
         string GetLanguageName(Language language);
         string GetAilmentName(Ailment ailment);
+        string GetSpellname(Spell spell);
         string CharacterInfoHitPointsString { get; }
         string CharacterInfoSpellPointsString { get; }
         string CharacterInfoSpellLearningPointsString { get; }
@@ -50,6 +51,60 @@
         string WantToFightMessage { get; }
         string CompassDirections { get; }
         string AttackEscapeFailedMessage { get; }
+        string SelectNewLeaderMessage { get; }
+
+
+        #region Battle messages
+
+        string BattleMessageAttacksWith { get; }
+        string BattleMessageAttacks { get; }
+        string BattleMessageWasBroken { get; }
+        string BattleMessageDidPointsOfDamage { get; }
+        string BattleMessageCastsSpell { get; }
+        string BattleMessageCastsSpellFrom { get; }
+        string BattleMessageWhoToBlink { get; }
+        string BattleMessageFlees { get; }
+        string BattleMessageWhereToMoveTo { get; }
+        string BattleMessageNowhereToMoveTo { get; }
+        string BattleMessageNoAmmunition { get; }
+        string BattleMessageWhatToAttack { get; }
+        string BattleMessageCannotReachAnyone { get; }
+        string BattleMessageMissedTheTarget { get; }
+        string BattleMessageCannotPenetrateMagicalAura { get; }
+        string BattleMessageAttackFailed { get; }
+        string BattleMessageAttackWasParried { get; }
+        string BattleMessageAttackDidNoDamage { get; }
+        string BattleMessageMadeCriticalHit { get; }
+        string BattleMessageUsedLastAmmunition { get; }
+        string BattleMessageCannotMove { get; }
+        string BattleMessageTooFarAway { get; }
+        string BattleMessageUnableToAttack { get; }
+        string BattleMessageSomeoneAlreadyGoingThere { get; }
+        string BattleMessageMonstersAdvance { get; }
+        string BattleMessageMoves { get; }
+        string BattleMessageWayWasBlocked { get; }
+        string BattleMessageHasDroppedWeapon { get; }
+        string BattleMessageRetreats { get; }
+        string BattleMessagePartyAdvances { get; }
+        string BattleMessageWhichPartyMemberAsTarget { get; }
+        string BattleMessageWhichMonsterAsTarget { get; }
+        string BattleMessageWhichPartyMemberRowAsTarget { get; }
+        string BattleMessageWhichMonsterRowAsTarget { get; }
+        string BattleMessageSpellFailed { get; }
+        string BattleMessageDeflectedSpell { get; }
+        string BattleMessageImmuneToSpellType { get; }
+        string BattleMessageTheSpellFailed { get; }
+        string BattleMessageCannotDamagePetrifiedMonsters { get; }
+        string BattleMessageImmuneToSpell { get; }
+        string BattleMessageWhereToBlinkTo { get; }
+        string BattleMessageHasBlinked { get; }
+        string BattleMessageCannotBlink { get; }
+        string BattleMessageCannotCastCauseIrritation { get; }
+        string BattleMessageYouDontKnowAnySpellsYet { get; }
+        string BattleMessageCannotParry { get; }
+        string BattleMessageUseItOnWhom { get; }
+
+        #endregion
 
         // TODO
     }
