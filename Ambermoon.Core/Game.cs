@@ -333,6 +333,7 @@ namespace Ambermoon
             battleRoundActiveSprite = renderView.SpriteFactory.Create(32, 36, true) as ILayerSprite;
             battleRoundActiveSprite.Layer = renderView.GetLayer(Layer.UI);
             battleRoundActiveSprite.PaletteIndex = 0;
+            battleRoundActiveSprite.DisplayLayer = 2;
             battleRoundActiveSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset((uint)Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace);
             battleRoundActiveSprite.X = 240;
             battleRoundActiveSprite.Y = 150;
@@ -2547,7 +2548,8 @@ namespace Ambermoon
                     : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex);
                 layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                     (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
-                layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), false);
+                layout.FillArea(new Rect(0, 132, 320, 68), Color.Black, 0);
+                layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), 1);                
                 // Note: Create clones so we can change the values in battle for each monster.
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
                 var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);
@@ -2646,7 +2648,7 @@ namespace Ambermoon
                     layout.ResetMonsterCombatSprites();
                     layout.ShowButtons(false);
                     buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
-                        GetPaletteColor(50, 28), false);
+                        GetPaletteColor(50, 28), 1);
                     battleRoundActiveSprite.Visible = true;
                     currentBattle.StartRound
                     (
@@ -2681,7 +2683,7 @@ namespace Ambermoon
                     layout.ResetMonsterCombatSprites();
                     layout.ShowButtons(false);
                     buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
-                        GetPaletteColor(50, 28), false);
+                        GetPaletteColor(50, 28), 1);
                     battleRoundActiveSprite.Visible = true;
                     currentBattle.StartRound(Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray(), currentBattleTicks);
                 }

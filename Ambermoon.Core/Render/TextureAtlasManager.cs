@@ -262,7 +262,10 @@ namespace Ambermoon.Render
             var combatGraphics = graphicProvider.GetGraphics(GraphicType.CombatGraphics);
 
             for (int i = 0; i < combatGraphics.Count; ++i)
+            {
+                combatGraphics[i].ReplaceColor(0, 25); // This will make the background transparent with palette 50.
                 AddTexture(Layer.UI, Graphics.CombatGraphicOffset + (uint)i, combatGraphics[i]);
+            }
 
             #endregion
 

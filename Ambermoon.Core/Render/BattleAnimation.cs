@@ -1,21 +1,22 @@
 ﻿using System;
-using System.Linq;
 
 namespace Ambermoon.Render
 {
     internal class BattleAnimation
     {
         Position baseSpriteLocation;
-        readonly Size baseSpriteSize;
+        Size baseSpriteSize;
         readonly ILayerSprite sprite;
-        readonly Position baseTextureCoords;
+        Position baseTextureCoords;
         uint startAnimationTicks;
         uint ticksPerFrame;
         int[] frameIndices;
         float scale = 1.0f;
         float endScale = 1.0f;
         float startScale = 1.0f;
+        int endX;
         int endY;
+        int startX;
         int startY;
         public bool Finished { get; private set; } = true;
 
@@ -32,6 +33,26 @@ namespace Ambermoon.Render
             // Scaling might change location but we don't want this on
             // initial placement so ensure correct one here again.
             Position = baseSpriteLocation;
+        }
+
+        public void SetStartFrame(Position textureOffset, Size size, Position position = null, float initialScale = 1.0f)
+        {
+            if (position != null)
+                baseSpriteLocation = new Position(position);
+            baseSpriteSize = new Size(size);
+            baseTextureCoords = new Position(textureOffset);
+            sprite.Resize(size.Width, size.Height);
+            sprite.TextureSize = baseSpriteSize;
+            Scale = initialScale;
+            // Scaling might change location but we don't want this on
+            // manual placement so ensure correct one here again.
+            Position = baseSpriteLocation;
+        }
+
+        public bool Visible
+        {
+            get => sprite.Visible;
+            set => sprite.Visible = value;
         }
 
         public Position Position
@@ -67,22 +88,24 @@ namespace Ambermoon.Render
 
         public void Destroy() => sprite?.Delete();
 
-        public void Play(int[] frameIndices, uint ticksPerFrame, uint ticks, int? endY = null, float? endScale = null)
+        public void Play(int[] frameIndices, uint ticksPerFrame, uint ticks, Position endPosition = null, float? endScale = null)
         {
             Finished = false;
             this.frameIndices = frameIndices;
             this.ticksPerFrame = ticksPerFrame;
             startScale = scale;
             this.endScale = endScale ?? startScale;
+            startX = baseSpriteLocation.X;
             startY = baseSpriteLocation.Y;
-            this.endY = endY ?? startY;
+            endX = endPosition?.X ?? startX;
+            endY = endPosition?.Y ?? startY;
             startAnimationTicks = ticks;
-            sprite.DisplayLayer += (byte)((this.endY - startY) * 6 * 5);
+            sprite.DisplayLayer += (byte)((endY - startY) * 6 * 5);
         }
 
-        public void PlayWithoutAnimating(uint durationInTicks, uint ticks, int? endY = null, float? endScale = null)
+        public void PlayWithoutAnimating(uint durationInTicks, uint ticks, Position endPosition = null, float? endScale = null)
         {
-            Play(new int[] { 0 }, durationInTicks, ticks, endY, endScale);
+            Play(new int[] { 0 }, durationInTicks, ticks, endPosition, endScale);
         }
 
         public void Reset()
@@ -105,6 +128,7 @@ namespace Ambermoon.Render
 
             if (frame >= frameIndices.Length)
             {
+                baseSpriteLocation.X = endX; // TODO: respect scale here?
                 baseSpriteLocation.Y = endY; // TODO: respect scale here?
                 Position = baseSpriteLocation;
                 Scale = endScale;
@@ -115,6 +139,7 @@ namespace Ambermoon.Render
 
             float animationTime = frameIndices.Length * ticksPerFrame;
             float factor = elapsed / animationTime;
+            baseSpriteLocation.X = startX + Util.Round((endX - startX) * factor); // TODO: respect scale here?
             baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor); // TODO: respect scale here?
             Position = baseSpriteLocation;
             Scale = startScale + (endScale - startScale) * factor;

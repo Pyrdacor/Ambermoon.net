@@ -378,6 +378,7 @@ namespace Ambermoon.UI
         IRenderText activeTooltip = null;
         UIText inventoryMessage = null;
         UIText battleMessage = null;
+        BattleAnimation battleEffectAnimation = null;
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
@@ -1115,6 +1116,8 @@ namespace Ambermoon.UI
             inventoryMessage = null;
             battleMessage?.Destroy();
             battleMessage = null;
+            battleEffectAnimation?.Destroy();
+            battleEffectAnimation = null;
             activeSpellSprites.Clear(); // sprites are destroyed above
             activeSpellDurationBackgrounds.Values.ToList().ForEach(b => b?.Delete());
             activeSpellDurationBackgrounds.Clear();
@@ -1525,6 +1528,11 @@ namespace Ambermoon.UI
         public FilledArea FillArea(Rect rect, Color color, bool topMost)
         {
             return new FilledArea(filledAreas, CreateArea(rect, color, (byte)(topMost ? 245 : 0)));
+        }
+
+        public FilledArea FillArea(Rect rect, Color color, byte displayLayer)
+        {
+            return new FilledArea(filledAreas, CreateArea(rect, color, displayLayer));
         }
 
         public Panel AddPanel(Rect rect, byte displayLayer)
@@ -2124,6 +2132,16 @@ namespace Ambermoon.UI
                     battleMessage.SetTextColor(textColor);
                 }
             }
+        }
+
+        public BattleAnimation GetOrCreateBattleEffectAnimation()
+        {
+            if (battleEffectAnimation != null)
+                return battleEffectAnimation;
+
+            var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 49);
+            sprite.Visible = false;
+            return battleEffectAnimation = new BattleAnimation(sprite);
         }
     }
 }

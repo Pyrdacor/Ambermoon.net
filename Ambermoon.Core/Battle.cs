@@ -59,47 +59,80 @@ namespace Ambermoon
             None,
             /// <summary>
             /// Parameter: New position index (0-29)
+            /// 
+            /// Plays the move animation for monsters and the moves
+            /// the monster or party member.
             /// </summary>
             Move,
             /// <summary>
             /// No parameter
+            /// 
+            /// This is an immediate action for the party and is therefore
+            /// processed outside of battle rounds. If the monster group decides
+            /// to move forward this is done as the first action in a battle
+            /// round even if a party member is the first actor in the round.
             /// </summary>
             MoveGroupForward,
             /// <summary>
-            /// Parameter: Tile index to attack (0-29)
+            /// - Lowest 5 bits: Tile index (0-29) to attack
+            /// - Next 11 bits: Weapon item index (can be 0 for monsters)
+            /// - Next 11 bits: Optional ammunition item index
+            /// 
+            /// This plays a monster or attack animation and prints text about
+            /// how much damage the attacker dealt or if he missed etc.
+            /// 
+            /// After this an additional <see cref="Hurt"/> action will follow
+            /// which plays the hurt animation and removed the hitpoints from the enemy.
+            /// 
             /// TODO: If someone dies, call CharacterDied and remove it from the battle field
             /// </summary>
             Attack,
             /// <summary>
-            /// This plays a monster or attack animation and prints text about
-            /// how much damage the attacker dealt or if he missed etc.
+            /// No parameter
+            /// 
+            /// This is not used as a real action and it is only available for party members.
+            /// Each player who picks this action will get a chance equal to his Parry
+            /// ability to block physical attacks. This is only checked if the attack did
+            /// not miss or failed before.
             /// </summary>
             Parry,
             /// <summary>
             /// Parameter:
-            /// - Lowest 4 bits: Tile index (0-29) or row (0-4) to cast spell on
-            /// - Next 12 bits: Item index (when spell came from an item, otherwise 0)
+            /// - Lowest 5 bits: Tile index (0-29) or row (0-4) to cast spell on
+            /// - Next 11 bits: Item index (when spell came from an item, otherwise 0)
             /// - Upper 16 bits: Spell index
+            /// 
+            /// This plays the spell animation and also calculates and applies
+            /// spell effects like damage. So this also plays hurt effects on monsters.
+            /// 
             /// TODO: Can support spells miss? If not for those spells the
             ///       parameter should be the monster/partymember index instead.
             /// </summary>
             CastSpell,
             /// <summary>
             /// No parameter
+            /// 
+            /// Plays the flee animation for monsters and removes the monster or
+            /// party member from the battle.
             /// </summary>
             Flee,
             /// <summary>
             /// No parameter
+            /// 
             /// This just prints text about what the actor is doing.
             /// The text depends on the following enqueued action.
             /// </summary>
             DisplayActionText,
             /// <summary>
+            /// - Lowest 5 bits: Tile index (0-29) which should be hurt
+            /// - Rest: Damage amount
+            /// 
             /// This is playing hurt animations like blood on monsters
-            /// or claw on player. It also removed the hitpoints and
+            /// or claw on player. It also removes the hitpoints and
             /// displays this as an effect on players.
-            /// This is used after spells and attacks. It is added
-            /// for every spell cast or attack action but might be
+            /// This is used after attacks only, spells will automatically
+            /// play the hurt animations as well.
+            /// It is added for every  attack action but might be
             /// skipped if attack misses etc.
             /// </summary>
             Hurt
@@ -115,7 +148,6 @@ namespace Ambermoon
          *  - Cast spell
          *      1. DisplayActionText
          *      2. CastSpell
-         *      3. Hurt
          *  - Move
          *      1. DisplayActionText
          *      2. Move
@@ -141,6 +173,7 @@ namespace Ambermoon
             public Character Character;
             public BattleActionType Action = BattleActionType.None;
             public uint ActionParameter;
+            public bool Skip = false; // Used for hurt actions if attacks miss, etc.
         }
 
         readonly Game game;
@@ -150,11 +183,13 @@ namespace Ambermoon
         readonly Character[] battleField = new Character[6 * 5];
         Character[] preRoundBattleField;
         readonly List<PartyMember> parryingPlayers = new List<PartyMember>(Game.MaxPartyMembers);
+        readonly List<Character> fledCharacters = new List<Character>();
         uint? animationStartTicks = null;
         Monster currentlyAnimatedMonster = null;
         BattleAnimation currentBattleAnimation = null;
         bool idleAnimationRunning = false;
         uint nextIdleAnimationTicks = 0;
+        BattleAnimation effectAnimation = null;
         bool wantsToFlee = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
@@ -171,8 +206,9 @@ namespace Ambermoon
         public Character GetCharacterAt(int column, int row) => battleField[column + row * 6];
         public int GetSlotFromCharacter(Character character) => battleField.ToList().FindIndex(c => c == character);
         public bool RoundActive { get; private set; } = false;
-        public bool CanMoveForward => battleField.Skip(12).Take(6).Any(c => c != null) && // middle row empty
+        public bool CanMoveForward => !battleField.Skip(12).Take(6).Any(c => c != null) && // middle row empty
             !battleField.Skip(18).Take(6).Any(c => c?.Type == CharacterType.Monster); // and no monster in front row
+
         public Battle(Game game, Layout layout, PartyMember[] partyMembers, MonsterGroup monsterGroup,
             Dictionary<int, BattleAnimation> monsterBattleAnimations, bool needsClickForNextAction)
         {
@@ -203,6 +239,9 @@ namespace Ambermoon
                     }
                 }
             }
+
+            effectAnimation = layout.GetOrCreateBattleEffectAnimation();
+            effectAnimation.Visible = false;
 
             SetupNextIdleAnimation(0);
         }
@@ -353,10 +392,11 @@ namespace Ambermoon
                 .ToList();
             parryingPlayers.Clear();
             preRoundBattleField = battleField.ToArray(); // copy
+            bool monstersAdvance = false;
 
             // This is added in addition to normal monster actions directly
-            if (CanMoveForward &&
-                !playerBattleActions.Any(a => a.BattleAction == BattleActionType.MoveGroupForward))
+            // TODO: removed for now, check later when this is used (it seems awkward at the moment, maybe only later in battle?)
+            /*if (CanMoveForward)
             {
                 var firstMonster = roundActors.FirstOrDefault(c => c.Type == CharacterType.Monster && c.Alive);
                 roundBattleActions.Enqueue(new BattleAction
@@ -371,19 +411,22 @@ namespace Ambermoon
                     Action = BattleActionType.MoveGroupForward,
                     ActionParameter = 0
                 });
-            }
+                monstersAdvance = true;
+            }*/
 
             foreach (var roundActor in roundActors)
             {
                 if (roundActor is Monster monster)
                 {
-                    AddMonsterActions(monster);
+                    AddMonsterActions(monster, ref monstersAdvance);
                 }
                 else
                 {
                     var partyMember = roundActor as PartyMember;
                     int playerIndex = partyMembers.ToList().IndexOf(partyMember);
                     var playerAction = playerBattleActions[playerIndex];
+
+                    // TODO: pick random actions for mad party members
 
                     if (playerAction.BattleAction == BattleActionType.None)
                         continue;
@@ -410,15 +453,13 @@ namespace Ambermoon
                             Action = playerAction.BattleAction,
                             ActionParameter = playerAction.Parameter
                         });
-                        if (playerAction.BattleAction == BattleActionType.Attack ||
-                            (playerAction.BattleAction == BattleActionType.CastSpell &&
-                            SpellInfos.Entries[GetCastSpell(playerAction.Parameter)].Target.TargetsEnemy()))
+                        if (playerAction.BattleAction == BattleActionType.Attack)
                         {
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.Hurt,
-                                ActionParameter = 0
+                                ActionParameter = playerAction.Parameter
                             });
                         }
                     }
@@ -429,11 +470,11 @@ namespace Ambermoon
             NextAction(battleTicks);
         }
 
-        void AddMonsterActions(Monster monster)
+        void AddMonsterActions(Monster monster, ref bool monstersAdvance)
         {
             bool wantsToFlee = MonsterWantsToFlee(monster);
 
-            if (wantsToFlee && roundBattleActions.Count > 1)
+            if (wantsToFlee && monstersAdvance && roundBattleActions.Count > 1)
             {
                 // The second action might be a monster advance.
                 // Remove this if any monster wants to flee.
@@ -446,6 +487,8 @@ namespace Ambermoon
                     roundBattleActions.Dequeue();
                     roundBattleActions.Dequeue();
                 }
+
+                monstersAdvance = false;
             }
 
             var action = PickMonsterAction(monster, wantsToFlee);
@@ -522,9 +565,9 @@ namespace Ambermoon
                         case BattleActionType.Attack:
                         {
                             // TODO: handle dropping weapon / no ammunition
-                            var weaponIndex = next.Character.Equipment.Slots[EquipmentSlot.RightHand]?.ItemIndex;
-                            var weapon = weaponIndex == null ? null : game.ItemManager.GetItem(weaponIndex.Value);
-                            var target = preRoundBattleField[next.ActionParameter];
+                            GetAttackInformation(next.ActionParameter, out uint targetTile, out uint weaponIndex, out uint _);
+                            var weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
+                            var target = preRoundBattleField[targetTile];
 
                             if (weapon == null)
                                 text = next.Character.Name + string.Format(game.DataNameProvider.BattleMessageAttacks, target.Name);
@@ -591,16 +634,16 @@ namespace Ambermoon
                         void MoveAnimationFinished()
                         {
                             animation.AnimationFinished -= MoveAnimationFinished;
+                            EndMove();
                             UpdateMonsterDisplayLayer(monster);
                             currentBattleAnimation = null;
-                            currentlyAnimatedMonster = null;
-                            EndMove();
+                            currentlyAnimatedMonster = null;                            
                         }
 
                         var newDisplayPosition = layout.GetMonsterCombatPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
                         animation.AnimationFinished += MoveAnimationFinished;
                         animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move), Game.TicksPerSecond / 6,
-                            battleTicks, newDisplayPosition.Y, layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
+                            battleTicks, newDisplayPosition, layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
                     }
@@ -620,10 +663,52 @@ namespace Ambermoon
                     // TODO
                     break;
                 case BattleActionType.Attack:
-                    // Parameter: Tile index to attack (0-29)
-                    // TODO: If someone dies, call CharacterDied and remove it from the battle field
-                    // TODO
+                {
+                    uint damage = 10; // TODO calculate
+
+                    void EndAttack()
+                    {
+                        // Next action is a hurt action
+                        var hurtAction = roundBattleActions.Peek();
+
+                        if (false) // TODO: if miss/fail/block
+                        {
+                            hurtAction.Skip = true;
+                        }
+                        else
+                        {
+                            hurtAction.ActionParameter = UpdateHurtParameter(hurtAction.ActionParameter, damage);
+                        }
+
+                        ActionFinished();
+                    }
+
+                    // TODO: long range
+                    if (battleAction.Character is Monster monster)
+                    {
+                        var animation = layout.GetMonsterBattleAnimation(monster);
+
+                        void AttackAnimationFinished()
+                        {
+                            animation.AnimationFinished -= AttackAnimationFinished;
+                            EndAttack();
+                            currentBattleAnimation = null;
+                            currentlyAnimatedMonster = null;
+                        }
+
+                        animation.AnimationFinished += AttackAnimationFinished;
+                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Attack), Game.TicksPerSecond / 6,
+                            battleTicks);
+                        currentBattleAnimation = animation;
+                        currentlyAnimatedMonster = monster;
+                    }
+                    else
+                    {
+                        PlayBattleEffectAnimation(BattleEffect.PlayerAtack, (uint)GetCharacterPosition(battleAction.Character),
+                            battleTicks, ActionFinished);
+                    }
                     break;
+                }
                 case BattleActionType.CastSpell:
                     // Parameter:
                     // - Low word: Tile index (0-29) or row (0-4) to cast spell on
@@ -633,11 +718,41 @@ namespace Ambermoon
                     // TODO
                     break;
                 case BattleActionType.Flee:
-                    // No parameter
-                    // TODO
+                {
+                    void EndFlee()
+                    {
+                        fledCharacters.Add(battleAction.Character);
+                        RemoveCharacterFromBattleField(battleAction.Character);
+                        ActionFinished();
+                    }
+                    if (battleAction.Character is Monster monster)
+                    {
+                        var animation = layout.GetMonsterBattleAnimation(monster);
+
+                        void MoveAnimationFinished()
+                        {
+                            animation.AnimationFinished -= MoveAnimationFinished;
+                            EndFlee();
+                            currentBattleAnimation = null;
+                            currentlyAnimatedMonster = null;
+                        }
+
+                        animation.AnimationFinished += MoveAnimationFinished;
+                        // TODO: Is the move animation used for flee? I guess so.
+                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move), Game.TicksPerSecond / 6,
+                            battleTicks, null, 0.0f);
+                        currentBattleAnimation = animation;
+                        currentlyAnimatedMonster = monster;
+                    }
+                    else
+                    {
+                        EndFlee();
+                    }
                     break;
+                }
                 case BattleActionType.Hurt:
                     // TODO
+                    // TODO: If someone dies, call CharacterDied and remove it from the battle field
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, "Invalid battle action.");
@@ -665,6 +780,7 @@ namespace Ambermoon
         void MoveCharacterTo(uint column, uint row, Character character)
         {
             battleField[GetCharacterPosition(character)] = null;
+            battleField[column + row * 6] = character;
             game.MoveBattleActorTo(column, row, character);
         }
 
@@ -756,6 +872,9 @@ namespace Ambermoon
             if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range))
                 return false;
 
+            if (maxY < 3)
+                return false;
+
             for (int y = minY; y <= maxY; ++y)
             {
                 for (int x = minX; x <= maxX; ++x)
@@ -833,11 +952,19 @@ namespace Ambermoon
                 if (nearPlayerPositions.Count != 0)
                     return (uint)nearPlayerPositions[game.RandomInt(0, nearPlayerPositions.Count - 1)];
 
-                for (int row = Math.Min(4, currentRow + moveRange); row > currentRow; --row)
+                List<int> possibleSpots = new List<int>(5);
+                for (int row = currentRow + 1; row < Math.Min(4, currentRow + moveRange); ++row)
                 {
-                    if (battleField[currentColumn + row * 6] == null)
-                        return (uint)(currentColumn + row * 6);
+                    int index = currentColumn + row * 6;
+
+                    //  only walk until you find first player
+                    if (IsPlayerNearby(index))
+                        return (uint)index;
+                    else if (battleField[index] == null)
+                        possibleSpots.Add(index);
                 }
+                if (possibleSpots.Count != 0)
+                    return (uint)possibleSpots.Last();
             }
 
             return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
@@ -868,15 +995,6 @@ namespace Ambermoon
             return !monster.MonsterFlags.HasFlag(MonsterFlags.Boss) &&
                 monster.HitPoints.TotalCurrentValue < monster.HitPoints.MaxValue / 2 &&
                 game.RandomInt(0, (int)(monster.HitPoints.MaxValue - monster.HitPoints.TotalCurrentValue)) > monster.HitPoints.MaxValue / 2;
-        }
-
-        Spell GetCastSpell(uint actionParameter) => (Spell)(actionParameter >> 16);
-
-        void GetCastSpellInformation(uint actionParameter, out uint targetRowOrTile, out Spell spell, out uint itemIndex)
-        {
-            spell = (Spell)(actionParameter >> 16);
-            itemIndex = (actionParameter >> 4) & 0xfff;
-            targetRowOrTile = actionParameter & 0xf;
         }
 
         uint GetBestAttackSpot(int characterPosition, Monster monster)
@@ -992,17 +1110,85 @@ namespace Ambermoon
             }
         }
 
-        // Lowest byte: Tile index
-        public static uint CreateMoveParameter(uint targetTile) => targetTile & 0xff;
-        // Lowest byte: Tile index
-        // Above is the weapon index encoded with 12 bits (can be 0 for monsters)
-        // Above is the optional ammon index encoded with 12 bits
+        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint tile, uint ticks, Action finishedAction)
+        {
+            PlayBattleEffectAnimation(battleEffect, tile, tile, ticks, finishedAction);
+        }
+
+        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint sourceTile, uint targetTile, uint ticks, Action finishedAction)
+        {
+            var effects = BattleEffects.GetEffectInfo(layout.RenderView, battleEffect, sourceTile, targetTile);
+            int numFinishedEffects = 0;
+
+            void FinishEffect()
+            {
+                if (++numFinishedEffects == effects.Count)
+                    finishedAction?.Invoke();
+            }
+
+            foreach (var effect in effects)
+            {
+                PlayBattleEffectAnimation(effect.StartTextureIndex, effect.FrameSize, effect.FrameCount, ticks, FinishEffect,
+                    effect.Duration / effect.FrameCount, effect.StartPosition, effect.EndPosition, effect.StartScale, effect.EndScale);
+            }
+        }
+
+        void PlayBattleEffectAnimation(uint graphicIndex, Size frameSize, uint numFrames, uint ticks, Action finishedAction,
+            uint ticksPerFrame, Position startPosition, Position endPosition, float initialScale = 1.0f, float endScale = 1.0f)
+        {
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale);
+            effectAnimation.Play(Enumerable.Range(0, (int)numFrames).ToArray(), ticksPerFrame, ticks, endPosition, endScale);
+            effectAnimation.Visible = true;
+            currentBattleAnimation = effectAnimation;
+            currentlyAnimatedMonster = null;
+
+            void EffectAnimationFinished()
+            {
+                effectAnimation.AnimationFinished -= EffectAnimationFinished;
+                effectAnimation.Visible = false;
+                finishedAction?.Invoke();
+            }
+
+            effectAnimation.AnimationFinished += EffectAnimationFinished;
+        }
+
+        // Lowest 5 bits: Tile index (0-29) to move to
+        public static uint CreateMoveParameter(uint targetTile) => targetTile & 0x1f;
+        // Lowest 5 bits: Tile index (0-29) to attack
+        // Next 11 bits: Weapon item index (can be 0 for monsters)
+        // Next 11 bits: Optional ammunition item index
         public static uint CreateAttackParameter(uint targetTile, uint weaponIndex = 0, uint ammoIndex = 0) =>
-            (targetTile & 0xff) | (weaponIndex << 8) | (ammoIndex << 20);
-        // Lowest byte: Tile index
-        // Above is the spell index
+            (targetTile & 0x1f) | ((weaponIndex & 0x7ff) << 5) | ((ammoIndex & 0x7ff) << 16);
+        // Lowest 5 bits: Tile index (0-29) or row (0-4) to cast spell on
+        // Next 11 bits: Item index (when spell came from an item, otherwise 0)
+        // Upper 16 bits: Spell index
         public static uint CreateCastSpellParameter(uint targetTileOrRow, Spell spell, uint itemIndex = 0) =>
-            (targetTileOrRow & 0xf) | (itemIndex << 4) | ((uint)spell << 16);
+            (targetTileOrRow & 0x1f) | ((itemIndex & 0x7ff) << 5) | ((uint)spell << 16);
+        // Lowest 5 bits: Tile index (0-29) where a character is hurt
+        // Rest: Damage
+        public static uint CreateHurtParameter(uint targetTile) => targetTile & 0x1f;
+        public static uint UpdateHurtParameter(uint hurtParameter, uint damage) =>
+            (hurtParameter & 0x1f) | ((damage & 0x7ffffff) << 5);
+
+        static void GetAttackInformation(uint actionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex)
+        {
+            ammoIndex = (actionParameter >> 16) & 0x7ff;
+            weaponIndex = (actionParameter >> 5) & 0x7ff;
+            targetTile = actionParameter & 0x1f;
+        }
+        static Spell GetCastSpell(uint actionParameter) => (Spell)(actionParameter >> 16);
+        static void GetCastSpellInformation(uint actionParameter, out uint targetRowOrTile, out Spell spell, out uint itemIndex)
+        {
+            spell = (Spell)(actionParameter >> 16);
+            itemIndex = (actionParameter >> 5) & 0x7ff;
+            targetRowOrTile = actionParameter & 0x1f;
+        }
+        static void GetHurtInformation(uint actionParameter, out uint targetTile, out uint damage)
+        {
+            damage = (actionParameter >> 5) & 0x7ffffff;
+            targetTile = actionParameter & 0x1f;
+        }
     }
 
     internal static class BattleActionExtensions
