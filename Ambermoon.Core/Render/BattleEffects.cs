@@ -38,7 +38,7 @@ namespace Ambermoon.Render
     {
         static List<BattleEffectInfo> Effects(params BattleEffectInfo[] battleEffects) => new List<BattleEffectInfo>(battleEffects);
 
-        static readonly int[] RowYOffsets = new[] { 82, 88, 100, 124 };
+        public static readonly int[] RowYOffsets = new[] { 82, 88, 100, 124 };
 
         static Position GetCenterPosition(IRenderView renderView, uint tile)
         {

@@ -445,7 +445,7 @@ namespace Ambermoon.Data.Legacy
         {
             MonsterRow.Farthest => 0.667f,
             MonsterRow.Far => 0.8f,
-            MonsterRow.Near => 1.5f,
+            MonsterRow.Near => 1.25f,
             _ => 1.0f,
         };
     }

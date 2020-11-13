@@ -1951,14 +1951,13 @@ namespace Ambermoon.UI
 
         public Position GetMonsterCombatPosition(int column, int row, Monster monster)
         {
-            int[] yOffsets = new[] { 82, 88, 100, 124 };
             var combatBackgroundArea = Global.CombatBackgroundArea;
             int centerX = combatBackgroundArea.Width / 2;
             float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
             int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
-            return new Position(centerX - (3 - column) * slotWidth + (slotWidth - width) / 2, combatBackgroundArea.Y + yOffsets[row] - height);
+            return new Position(centerX - (3 - column) * slotWidth + (slotWidth - width) / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
         }
 
         public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster)

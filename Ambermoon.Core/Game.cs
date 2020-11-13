@@ -2549,7 +2549,7 @@ namespace Ambermoon
                 layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                     (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
                 layout.FillArea(new Rect(0, 132, 320, 68), Color.Black, 0);
-                layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), 1);                
+                layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), 1);
                 // Note: Create clones so we can change the values in battle for each monster.
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
                 var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);

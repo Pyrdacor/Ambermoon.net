@@ -30,9 +30,6 @@ namespace Ambermoon.Render
             baseTextureCoords = new Position(sprite.TextureAtlasOffset);
             sprite.TextureSize = baseSpriteSize;
             Scale = initialScale;
-            // Scaling might change location but we don't want this on
-            // initial placement so ensure correct one here again.
-            Position = baseSpriteLocation;
         }
 
         public void SetStartFrame(Position textureOffset, Size size, Position position = null, float initialScale = 1.0f)
@@ -70,9 +67,6 @@ namespace Ambermoon.Render
             get => scale;
             set
             {
-                if (value == scale)
-                    return;
-
                 scale = value;
 
                 int newWidth = Util.Round(baseSpriteSize.Width * scale);
@@ -130,8 +124,7 @@ namespace Ambermoon.Render
             {
                 baseSpriteLocation.X = endX; // TODO: respect scale here?
                 baseSpriteLocation.Y = endY; // TODO: respect scale here?
-                Position = baseSpriteLocation;
-                Scale = endScale;
+                Scale = endScale; // Note: scale will also set the new position
                 Finished = true;
                 AnimationFinished?.Invoke();
                 return false;
@@ -141,8 +134,7 @@ namespace Ambermoon.Render
             float factor = elapsed / animationTime;
             baseSpriteLocation.X = startX + Util.Round((endX - startX) * factor); // TODO: respect scale here?
             baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor); // TODO: respect scale here?
-            Position = baseSpriteLocation;
-            Scale = startScale + (endScale - startScale) * factor;
+            Scale = startScale + (endScale - startScale) * factor; // Note: scale will also set the new position
             sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * baseSpriteSize.Width, 0);
 
             return true;

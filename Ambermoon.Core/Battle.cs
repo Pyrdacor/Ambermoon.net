@@ -366,6 +366,13 @@ namespace Ambermoon
             }
 
             var action = roundBattleActions.Dequeue();
+
+            if (action.Skip)
+            {
+                NextAction(battleTicks);
+                return;
+            }
+
             RunBattleAction(action, battleTicks);
         }
 
@@ -613,15 +620,28 @@ namespace Ambermoon
                         ActionFinished();
                     }
 
-                    // TODO: Test if move fails and then display a message
-                    if (false) // TODO: move fails
+                    bool moveFailed = false;
+                    if (!battleAction.Character.Ailments.CanMove())
                     {
-                        // layout.SetBattleMessage()
-                        // Way could be blocked or character can not move anymore
+                        // TODO: is this right or is the action just skipped?
+                        layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotMove,
+                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                        moveFailed = true;
+                    }
+                    else if (battleField[battleAction.ActionParameter & 0x1f] != null)
+                    {
+                        layout.SetBattleMessage(game.DataNameProvider.BattleMessageWayWasBlocked,
+                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                        moveFailed = true;
+                    }
+
+                    if (moveFailed)
+                    {
                         game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                         {
                             ActionFinished();
                         });
+                        return;
                     }
 
                     if (battleAction.Character is Monster monster)
@@ -637,12 +657,13 @@ namespace Ambermoon
                             EndMove();
                             UpdateMonsterDisplayLayer(monster);
                             currentBattleAnimation = null;
-                            currentlyAnimatedMonster = null;                            
+                            currentlyAnimatedMonster = null;
                         }
 
                         var newDisplayPosition = layout.GetMonsterCombatPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
                         animation.AnimationFinished += MoveAnimationFinished;
-                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move), Game.TicksPerSecond / 6,
+                        var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Move);
+                        animation.Play(frames, (uint)Math.Abs(newRow - currentRow) * Game.TicksPerSecond / (2 * (uint)frames.Length),
                             battleTicks, newDisplayPosition, layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
@@ -654,8 +675,6 @@ namespace Ambermoon
                             EndMove();
                         });
                     }
-                    // Parameter: New position index (0-29)
-                    // TODO
                     return;
                 }
                 case BattleActionType.MoveGroupForward:
