@@ -52,6 +52,7 @@ namespace Ambermoon
     }
 
     // TODO: Check reset later (e.g. when loading while in battle)
+    // TODO: monsters should not pick a move spot where another monster is going to
     internal class Battle
     {
         internal enum BattleActionType
@@ -624,13 +625,13 @@ namespace Ambermoon
                     if (!battleAction.Character.Ailments.CanMove())
                     {
                         // TODO: is this right or is the action just skipped?
-                        layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotMove,
+                        layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotMove,
                             battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
                         moveFailed = true;
                     }
                     else if (battleField[battleAction.ActionParameter & 0x1f] != null)
                     {
-                        layout.SetBattleMessage(game.DataNameProvider.BattleMessageWayWasBlocked,
+                        layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageWayWasBlocked,
                             battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
                         moveFailed = true;
                     }

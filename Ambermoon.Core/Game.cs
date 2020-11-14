@@ -6,6 +6,7 @@ using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Attribute = Ambermoon.Data.Attribute;
 
 namespace Ambermoon
 {
@@ -2552,6 +2553,8 @@ namespace Ambermoon
                 layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), 1);
                 // Note: Create clones so we can change the values in battle for each monster.
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
+                foreach (var monster in monsterGroup.Monsters)
+                    InitializeMonster(monster);
                 var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);
                 // Add animated monster combat graphics and battle field sprites
                 for (int row = 0; row < 3; ++row)
@@ -2688,6 +2691,34 @@ namespace Ambermoon
                     currentBattle.StartRound(Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray(), currentBattleTicks);
                 }
             });
+        }
+
+        // Note: In original the max hitpoints are often much higher
+        // than the current hitpoints. It seems like the max hitpoints
+        // are often a multiple of 99 like 99, 198, 297, etc.
+        // I assume in that case the max hitpoints should be the same
+        // as current hit points. Maybe the value is used for LP stealer?
+        static void InitializeMonster(Monster monster)
+        {
+            if (monster == null)
+                return;
+
+            static void FixValue(CharacterValue characterValue)
+            {
+                if (characterValue.CurrentValue < characterValue.MaxValue && characterValue.MaxValue % 99 == 0)
+                    characterValue.MaxValue = characterValue.CurrentValue;
+            }
+
+            // Attributes, abilities, LP and SP is special for monsters.
+            // If the max value is a multiple of 99, the max value is set to current value.
+            foreach (var attribute in Enum.GetValues<Attribute>())
+                FixValue(monster.Attributes[attribute]);
+            foreach (var ability in Enum.GetValues<Ability>())
+                FixValue(monster.Abilities[ability]);
+            FixValue(monster.HitPoints);
+            FixValue(monster.SpellPoints);
+
+            // TODO: some values seem to be a bit different (use monster knowledge on skeleton for examples)
         }
 
         internal void MoveBattleActorTo(uint column, uint row, Character character)

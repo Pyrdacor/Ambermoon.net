@@ -1,6 +1,5 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
-using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Characters
 {
@@ -18,29 +17,6 @@ namespace Ambermoon.Data.Legacy.Characters
         public void ReadMonster(Monster monster, IDataReader dataReader)
         {
             ReadCharacter(monster, dataReader);
-
-            // Attributes, abilities, LP and SP is special for monsters.
-            // If the max value is 99, the max value is set to current value.
-            foreach (var attribute in Enum.GetValues<Attribute>())
-            {
-                var value = monster.Attributes[attribute];
-
-                if (value.MaxValue == 99)
-                    value.MaxValue = value.CurrentValue;
-            }
-            foreach (var ability in Enum.GetValues<Ability>())
-            {
-                var value = monster.Abilities[ability];
-
-                if (value.MaxValue == 99)
-                    value.MaxValue = value.CurrentValue;
-            }
-            if (monster.HitPoints.MaxValue == 99)
-                monster.HitPoints.MaxValue = monster.HitPoints.CurrentValue;
-            if (monster.SpellPoints.MaxValue == 99)
-                monster.SpellPoints.MaxValue = monster.SpellPoints.CurrentValue;
-            // TODO: maybe this should be done in game and not here
-            // TODO: some values seem to be a bit different (use monster knowledge on skeleton for examples)
 
             for (int i = 0; i < 8; ++i)
             {
