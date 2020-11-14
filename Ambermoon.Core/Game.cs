@@ -2098,8 +2098,6 @@ namespace Ambermoon
                 this.player.Position.X = RenderPlayer.Position.X;
                 this.player.Position.Y = RenderPlayer.Position.Y;
 
-                ShowMap(true);
-
                 if (!mapTypeChanged)
                 {
                     // Trigger events after map transition
