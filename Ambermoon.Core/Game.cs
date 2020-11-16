@@ -186,6 +186,7 @@ namespace Ambermoon
         Player player;
         internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
         PartyMember CurrentPartyMember { get; set; } = null;
+        bool pickingNewLeader = false;
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
@@ -834,7 +835,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled)
+            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled || pickingNewLeader)
             {
                 clickMoveActive = false;
                 return;
@@ -993,7 +994,7 @@ namespace Ambermoon
 
         void Move()
         {
-            if (paused || WindowActive || !InputEnable || allInputDisabled)
+            if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader)
                 return;
 
             if (keys[(int)Key.Left] && !keys[(int)Key.Right])
@@ -1044,7 +1045,7 @@ namespace Ambermoon
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
-            if (allInputDisabled)
+            if (allInputDisabled || pickingNewLeader)
                 return;
 
             if (!InputEnable)
@@ -1126,7 +1127,7 @@ namespace Ambermoon
             if (allInputDisabled)
                 return;
 
-            if (!InputEnable)
+            if (!InputEnable || pickingNewLeader)
             {
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
                     return;
@@ -1161,7 +1162,7 @@ namespace Ambermoon
             if (!InputEnable || allInputDisabled)
                 return;
 
-            if (layout.KeyChar(keyChar))
+            if (!pickingNewLeader && layout.KeyChar(keyChar))
                 return;
 
             if (keyChar >= '1' && keyChar <= '6')
@@ -1222,7 +1223,7 @@ namespace Ambermoon
             {
                 var relativePosition = renderView.ScreenToGame(position);
 
-                if (!WindowActive && InputEnable && mapViewArea.Contains(relativePosition))
+                if (!WindowActive && InputEnable && !pickingNewLeader && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
                     if (buttons == MouseButtons.Right)
@@ -1254,7 +1255,7 @@ namespace Ambermoon
                 }
                 else
                 {
-                    if (currentWindow.Window == Window.Battle)
+                    if (!pickingNewLeader && currentWindow.Window == Window.Battle)
                     {
                         if (currentBattle?.WaitForClick == true)
                         {
@@ -1269,10 +1270,10 @@ namespace Ambermoon
                     }
 
                     var cursorType = CursorType.Sword;
-                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks);
+                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader);
                     CursorType = cursorType;
 
-                    if (InputEnable)
+                    if (InputEnable && !pickingNewLeader)
                     {
                         layout.Hover(relativePosition, ref cursorType); // Update cursor
                         if (cursor.Type != CursorType.None)
@@ -2612,6 +2613,7 @@ namespace Ambermoon
                     layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
                     AddCurrentPlayerActionVisuals();
                     layout.SetBattleMessage(null);
+                    RecheckActivePartyMember();
                 };
                 currentBattle.CharacterDied += RemoveBattleActor;
                 currentBattle.BattleEnded += battleEndInfo =>
@@ -2642,7 +2644,6 @@ namespace Ambermoon
                 currentBattle.ActionCompleted += battleAction =>
                 {
                     CursorType = CursorType.Click;
-                    RecheckActivePartyMember();
                 };
                 roundPlayerBattleActions.Clear();
                 // Add battle field sprites for party members
@@ -3433,8 +3434,23 @@ namespace Ambermoon
 
         void RecheckActivePartyMember()
         {
-            if (!CurrentPartyMember.Ailments.CanSelect())
+            if (!CurrentPartyMember.Ailments.CanSelect() || currentBattle.GetSlotFromCharacter(CurrentPartyMember) == -1)
             {
+                Pause();
+                // Simple text popup
+                var popup = layout.OpenTextPopup(ProcessText(DataNameProvider.SelectNewLeaderMessage), () =>
+                {
+                    UntrapMouse();
+                    Resume();
+                    ResetCursor();
+                }, true, false);
+                popup.CanAbort = false;
+                pickingNewLeader = true;
+                CursorType = CursorType.Sword;
+                TrapMouse(Global.PartyMemberPortraitArea);
+
+                // TODO
+
                 // TODO: Display message "The group needs a new leader.".
                 // TODO: Player has to choose a new leader.
                 // TODO: What happens if all party members are no longer selectable? E.g. all sleeping?
@@ -3447,12 +3463,21 @@ namespace Ambermoon
 
             if (partyMember != null && partyMember.Ailments.CanSelect())
             {
+                if (currentBattle != null && currentBattle.GetSlotFromCharacter(partyMember) == -1)
+                    return;
+
                 CurrentSavegame.ActivePartyMemberSlot = index;
                 CurrentPartyMember = partyMember;
                 layout.SetActiveCharacter(index, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToList());
 
                 if (updateBattlePosition && layout.Type == LayoutType.Battle)
                     BattlePlayerSwitched();
+
+                if (pickingNewLeader)
+                {
+                    pickingNewLeader = false;
+                    layout.ClosePopup(true, true);
+                }
             }
         }
 

@@ -683,12 +683,16 @@ namespace Ambermoon.UI
             popup?.Destroy();
         }
 
-        internal void ClosePopup(bool raiseEvent = true)
+        internal void ClosePopup(bool raiseEvent = true, bool force = false)
         {
             // Note: As ClosePopup may trigger popup?.OnClosed
             // and this event might open a new popup we have
             // to set activePopup to null BEFORE we call it!
             var popup = activePopup;
+
+            if (popup != null && !popup.CanAbort && !force)
+                return;
+
             activePopup = null;
             ClosePopup(popup, raiseEvent);
         }
@@ -1697,93 +1701,98 @@ namespace Ambermoon.UI
         }
 
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
-            uint currentTicks)
+            uint currentTicks, bool pickingNewLeader = false)
         {
-            if (Type == LayoutType.Event)
+            if (!pickingNewLeader)
             {
-                if (buttons == MouseButtons.Right)
-                    game.CloseWindow();
-                else if (buttons == MouseButtons.Left)
+                if (Type == LayoutType.Event)
                 {
-                    texts[0].Click(position);
-                    cursorType = CursorType.Click;
-                }
-                return true;
-            }
-
-            if (PopupActive)
-            {
-                if (activePopup.CloseOnClick || (buttons == MouseButtons.Right &&
-                    (!activePopup.HasTextInput() || TextInput.FocusedInput == null)))
-                {
-                    ClosePopup();
+                    if (buttons == MouseButtons.Right)
+                        game.CloseWindow();
+                    else if (buttons == MouseButtons.Left)
+                    {
+                        texts[0].Click(position);
+                        cursorType = CursorType.Click;
+                    }
                     return true;
                 }
-                else
+
+                if (PopupActive)
                 {
-                    if (activePopup.Click(position, buttons))
-                        return true;
-                }
-
-                if (activePopup.DisableButtons || TextInput.FocusedInput != null)
-                    return false;
-            }
-
-            if (draggedItem == null && buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
-            {
-                if (newCursorType != null)
-                    cursorType = newCursorType.Value;
-                return true;
-            }
-
-            if (!game.InputEnable || PopupActive)
-                return false;
-
-            if (buttons == MouseButtons.Left)
-            {
-                foreach (var itemGrid in itemGrids)
-                {
-                    if
-                    (
-                        itemGrid.Click(position, draggedItem, out ItemGrid.ItemAction itemAction,
-                            buttons, ref cursorType, item =>
-                            {
-                                draggedItem = item;
-                                draggedItem.Item.Position = position;
-                                draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
-                            }
-                        )
-                    )
+                    if (activePopup.CloseOnClick || (buttons == MouseButtons.Right &&
+                        (!activePopup.HasTextInput() || TextInput.FocusedInput == null)))
                     {
-                        if (itemAction == ItemGrid.ItemAction.Drop)
-                            DropItem();
-
+                        ClosePopup();
                         return true;
                     }
-                }
-            }
-            else if (buttons == MouseButtons.Right)
-            {
-                if (draggedItem == null)
-                {
-                    cursorType = CursorType.Sword;
+                    else
+                    {
+                        if (activePopup.Click(position, buttons))
+                            return true;
+                    }
 
+                    if (activePopup.DisableButtons || TextInput.FocusedInput != null)
+                        return false;
+                }
+
+                if (draggedItem == null && buttonGrid.MouseDown(position, buttons, out CursorType? newCursorType, currentTicks))
+                {
+                    if (newCursorType != null)
+                        cursorType = newCursorType.Value;
+                    return true;
+                }
+
+                if (!game.InputEnable || PopupActive)
+                    return false;
+
+                if (buttons == MouseButtons.Left)
+                {
                     foreach (var itemGrid in itemGrids)
                     {
-                        if (itemGrid.Click(position, null, out var _, buttons, ref cursorType,
-                            item =>
-                            {
-                                draggedItem = item;
-                                draggedItem.Item.Position = position;
-                                draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
-                            }
-                        ))
+                        if
+                        (
+                            itemGrid.Click(position, draggedItem, out ItemGrid.ItemAction itemAction,
+                                buttons, ref cursorType, item =>
+                                {
+                                    draggedItem = item;
+                                    draggedItem.Item.Position = position;
+                                    draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
+                                }
+                            )
+                        )
                         {
+                            if (itemAction == ItemGrid.ItemAction.Drop)
+                                DropItem();
+
                             return true;
                         }
                     }
                 }
+                else if (buttons == MouseButtons.Right)
+                {
+                    if (draggedItem == null)
+                    {
+                        cursorType = CursorType.Sword;
+
+                        foreach (var itemGrid in itemGrids)
+                        {
+                            if (itemGrid.Click(position, null, out var _, buttons, ref cursorType,
+                                item =>
+                                {
+                                    draggedItem = item;
+                                    draggedItem.Item.Position = position;
+                                    draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
+                                }
+                            ))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
             }
+            else if (buttons != MouseButtons.Left)
+                return false;
 
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
