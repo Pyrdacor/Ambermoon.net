@@ -563,7 +563,7 @@ namespace Ambermoon
                         {
                             uint currentRow = (uint)GetCharacterPosition(next.Character) / 6;
                             uint newRow = next.ActionParameter / 6;
-                            bool retreat = newRow < currentRow;
+                            bool retreat = battleAction.Character.Type == CharacterType.Monster && newRow < currentRow;
                             text = next.Character.Name + (retreat ? game.DataNameProvider.BattleMessageRetreats : game.DataNameProvider.BattleMessageMoves);
                             break;
                         }
