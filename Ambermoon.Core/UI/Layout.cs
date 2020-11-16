@@ -1672,8 +1672,7 @@ namespace Ambermoon.UI
 
             if (Type == LayoutType.Battle)
             {
-                if (position.X >= Global.BattleFieldX && position.X < Global.BattleFieldX + 6 * Global.BattleFieldSlotWidth &&
-                    position.Y >= Global.BattleFieldY && position.Y < Global.BattleFieldY + 5 * Global.BattleFieldSlotHeight)
+                if (Global.BattleFieldArea.Contains(position))
                 {
                     int slotColumn = (position.X - Global.BattleFieldX) / Global.BattleFieldSlotWidth;
                     int slotRow = (position.Y - Global.BattleFieldY) / Global.BattleFieldSlotHeight;
@@ -1993,7 +1992,7 @@ namespace Ambermoon.UI
                     Global.BattleFieldY + row * Global.BattleFieldSlotHeight - 1,
                     Global.BattleFieldSlotWidth, Global.BattleFieldSlotHeight + 1
                 ), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
-                49, 2, monster.Name, TextColor.Orange)
+                49, 3, monster.Name, TextColor.Orange)
             });
             return animation;
         }
@@ -2072,7 +2071,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                uint textureIndex = (uint)Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.BattleFieldYellowBorder + (uint)slotColor - 1;
+                uint textureIndex = Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.BattleFieldYellowBorder + (uint)slotColor - 1;
 
                 if (!battleFieldSlotMarkers.ContainsKey(index))
                 {
@@ -2118,7 +2117,7 @@ namespace Ambermoon.UI
             {
                 var area = new Rect(5, 139, 84, 54);
                 var glyphSize = new Size(Global.GlyphWidth, Global.GlyphLineHeight);
-                var text = RenderView.TextProcessor.CreateText(message);
+                var text = game.ProcessText(message);
                 text = RenderView.TextProcessor.WrapText(text, area, glyphSize);
 
                 if (battleMessage == null)

@@ -37,6 +37,7 @@ namespace Ambermoon
         /// </summary>
         public static readonly Rect[] ExtendedPartyMemberPortraitAreas = Enumerable.Range(0, 6).Select(index =>
             new Rect(15 + index * 48, 0, 48, 36)).ToArray();
+        public static readonly Rect PartyMemberPortraitArea = new Rect(0, 0, 320, 36);
         public const int GlyphWidth = 6;
         public const int GlyphLineHeight = 7;
         public static readonly Rect CombatBackgroundArea = new Rect(0, 38, 320, 95);
@@ -44,6 +45,7 @@ namespace Ambermoon
         public const int BattleFieldY = 134;
         public const int BattleFieldSlotWidth = 16;
         public const int BattleFieldSlotHeight = 13;
+        public static readonly Rect BattleFieldArea = new Rect(BattleFieldX, BattleFieldY, 6 * BattleFieldSlotWidth, 5 * BattleFieldSlotHeight);
         public static Rect BattleFieldSlotArea(int column, int row) => new Rect
         (
             BattleFieldX + column * BattleFieldSlotWidth,

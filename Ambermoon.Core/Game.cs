@@ -113,11 +113,12 @@ namespace Ambermoon
             /// He also can select actions.
             /// </summary>
             PickPlayerAction,
-            PickEnemyTarget,
-            PickEnemyTargetRow,
-            PickFriendTarget,
-            PickFriendTargetRow,
-            PickMoveSpot
+            PickEnemySpellTarget,
+            PickEnemySpellTargetRow,
+            PickFriendSpellTarget,
+            PickFriendSpellTargetRow,
+            PickMoveSpot,
+            PickAttackSpot
         }
 
         /// <summary>
@@ -198,6 +199,8 @@ namespace Ambermoon
         readonly Dictionary<int, Battle.PlayerBattleAction> roundPlayerBattleActions = new Dictionary<int, Battle.PlayerBattleAction>(MaxPartyMembers);
         readonly ILayerSprite ouchSprite;
         readonly ILayerSprite battleRoundActiveSprite; // sword and mace
+        readonly List<ILayerSprite> highlightBattleFieldSprites = new List<ILayerSprite>();
+        bool blinkingHighlight = false;
         FilledArea buttonGridBackground;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputDisabled = false;
@@ -1172,11 +1175,17 @@ namespace Ambermoon
             if (allInputDisabled)
                 return;
 
-            var position = GetMousePosition(cursorPosition);
+            var position = renderView.ScreenToGame(GetMousePosition(cursorPosition));
+
+            if (currentBattle != null && buttons == MouseButtons.Right)
+            {
+                if (CheckBattleRightClick())
+                    return;
+            }
 
             if (buttons.HasFlag(MouseButtons.Right))
             {
-                layout.RightMouseUp(renderView.ScreenToGame(position), out CursorType? cursorType, CurrentTicks);
+                layout.RightMouseUp(position, out CursorType? cursorType, CurrentTicks);
 
                 if (cursorType != null)
                     CursorType = cursorType.Value;
@@ -1187,7 +1196,7 @@ namespace Ambermoon
                 leftMouseDown = false;
                 clickMoveActive = false;
 
-                layout.LeftMouseUp(renderView.ScreenToGame(position), out CursorType? cursorType, CurrentTicks);
+                layout.LeftMouseUp(position, out CursorType? cursorType, CurrentTicks);
 
                 if (cursorType != null && cursorType != CursorType.None)
                     CursorType = cursorType.Value;
@@ -1253,6 +1262,10 @@ namespace Ambermoon
                             currentBattle.Click(currentBattleTicks);
                             return;
                         }
+                        else
+                        {
+                            currentBattle.ResetClick();
+                        }
                     }
 
                     var cursorType = CursorType.Sword;
@@ -1292,7 +1305,9 @@ namespace Ambermoon
                         layout.Hover(renderView.ScreenToGame(cursorPosition), ref cursorType);
                         CursorType = cursorType;
                     }
-                    else if (layout.Type == LayoutType.Event || (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true))
+                    else if (layout.Type == LayoutType.Event ||
+                        (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true) ||
+                        currentBattle?.WaitForClick == true)
                         CursorType = CursorType.Click;
                     else
                         CursorType = CursorType.Sword;
@@ -2524,6 +2539,21 @@ namespace Ambermoon
         void UpdateBattle()
         {
             currentBattle.Update(currentBattleTicks);
+
+            if (highlightBattleFieldSprites.Count != 0)
+            {
+                bool showBlinkingSprites = !blinkingHighlight || (currentBattleTicks % (2 * TicksPerSecond / 3)) < TicksPerSecond / 3;
+
+                foreach (var blinkingBattleFieldSprite in highlightBattleFieldSprites)
+                {
+                    blinkingBattleFieldSprite.Visible = showBlinkingSprites;
+                }
+
+                if (showBlinkingSprites)
+                    RemoveCurrentPlayerActionVisuals();
+                else
+                    AddCurrentPlayerActionVisuals();
+            }
         }
 
         void ShowBattleWindow(Event nextEvent, bool surpriseAttack)
@@ -2583,15 +2613,7 @@ namespace Ambermoon
                     AddCurrentPlayerActionVisuals();
                     layout.SetBattleMessage(null);
                 };
-                currentBattle.CharacterDied += character =>
-                {
-                    if (character is Monster monster)
-                    {
-                        layout.RemoveMonsterCombatSprite(monster);
-                    }
-
-                    // TODO
-                };
+                currentBattle.CharacterDied += RemoveBattleActor;
                 currentBattle.BattleEnded += battleEndInfo =>
                 {
                     void EndBattle(BattleEndInfo battleEndInfo)
@@ -2642,7 +2664,7 @@ namespace Ambermoon
                             Global.BattleFieldY + battleRow * Global.BattleFieldSlotHeight - 1,
                             Global.BattleFieldSlotWidth,
                             Global.BattleFieldSlotHeight + 1
-                        ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, 2,
+                        ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, 3,
                         $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}",
                         partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray);
                     }
@@ -2667,6 +2689,11 @@ namespace Ambermoon
                     );
                 }
 
+                // Flee button
+                layout.AttachEventToButton(0, () =>
+                {
+                    SetCurrentPlayerBattleAction(Battle.BattleActionType.Flee);
+                });
                 // OK button
                 layout.AttachEventToButton(2, () =>
                 {
@@ -2678,24 +2705,41 @@ namespace Ambermoon
                     };
                     */
                 });
-                // TODO: REMOVE. This is only for testing.
-                layout.AttachEventToButton(0, () =>
+                // Move button
+                layout.AttachEventToButton(3, () =>
                 {
-                    CloseWindow();
-                    currentBattleInfo.EndBattle(new BattleEndInfo
-                    {
-                        MonstersDefeated = false,
-                        FledMonsterIndices = new List<uint>()
-                    });
+                    SetCurrentPlayerAction(PlayerBattleAction.PickMoveSpot);
+                });
+                // Attack button
+                layout.AttachEventToButton(6, () =>
+                {
+                    SetCurrentPlayerAction(PlayerBattleAction.PickAttackSpot);
                 });
 
-                layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
+                BattlePlayerSwitched();
 
                 if (surpriseAttack)
                 {
                     StartBattleRound(true);
                 }
             });
+        }
+
+        void CancelSpecificPlayerAction()
+        {
+            SetCurrentPlayerAction(PlayerBattleAction.PickPlayerAction);
+            UntrapMouse();
+            AddCurrentPlayerActionVisuals();
+            layout.SetBattleMessage(null);
+        }
+
+        bool CheckBattleRightClick()
+        {
+            if (currentPlayerBattleAction == PlayerBattleAction.PickPlayerAction)
+                return false; // This is handled by layout/game interaction.
+
+            CancelSpecificPlayerAction();
+            return true;
         }
 
         // Note: In original the max hitpoints are often much higher
@@ -2743,14 +2787,15 @@ namespace Ambermoon
         internal void RemoveBattleActor(Character character)
         {
             if (character is Monster monster)
-                layout.RemoveMonsterCombatSprite(monster);
-            else
             {
-                var partyMember = character as PartyMember;
-                int index = SlotFromPartyMember(partyMember).Value;
-                var sprite = partyMemberBattleFieldSprites[index];
-                sprite?.Delete();
-                partyMemberBattleFieldSprites[index] = null;
+                layout.RemoveMonsterCombatSprite(monster);
+            }
+            else if (character is PartyMember partyMember)
+            {
+                int slot = SlotFromPartyMember(partyMember).Value;
+                roundPlayerBattleActions.Remove(slot);
+                partyMemberBattleFieldSprites[slot]?.Delete();
+                partyMemberBattleFieldSprites[slot] = null;
             }
         }
 
@@ -2890,6 +2935,17 @@ namespace Ambermoon
                 roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
         }
 
+        void SetCurrentPlayerBattleAction(Battle.BattleActionType actionType, uint Parameter = 0)
+        {
+            RemoveCurrentPlayerActionVisuals();
+            var action = GetOrCreateBattleAction();
+            action.BattleAction = actionType;
+            action.Parameter = Parameter;
+            AddCurrentPlayerActionVisuals();
+
+            // TODO: Show icon next to player portrait
+        }
+
         Battle.PlayerBattleAction GetOrCreateBattleAction()
         {
             int slot = SlotFromPartyMember(CurrentPartyMember).Value;
@@ -2900,13 +2956,29 @@ namespace Ambermoon
             return roundPlayerBattleActions[slot];
         }
 
+        void SetBattleMessageWithClick(string message, TextColor textColor = TextColor.White)
+        {
+            layout.SetBattleMessage(message, textColor);
+            InputEnable = false;
+            currentBattle.WaitForClick = true;
+            CursorType = CursorType.Click;
+        }
+
         void BattleFieldSlotClicked(int column, int row)
         {
+            if (currentBattle.SkipNextBattleFieldClick)
+                return;
+
+            if (row < 0 || row > 4 ||
+                column < 0 || column > 5)
+                return;
+
             switch (currentPlayerBattleAction)
             {
                 case PlayerBattleAction.PickPlayerAction:
                 {
                     var character = currentBattle.GetCharacterAt(column, row);
+
                     if (character?.Type == CharacterType.PartyMember)
                     {
                         var partyMember = character as PartyMember;
@@ -2920,42 +2992,78 @@ namespace Ambermoon
                     }
                     else if (character?.Type == CharacterType.Monster)
                     {
-                        RemoveCurrentPlayerActionVisuals();
-                        var action = GetOrCreateBattleAction();
-                        action.BattleAction = Battle.BattleActionType.Attack;
-                        action.Parameter = (uint)(column + row * 6);
-                        AddCurrentPlayerActionVisuals();
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack, (uint)(column + row * 6));
                     }
                     else // empty field
                     {
-                        RemoveCurrentPlayerActionVisuals();
-                        var action = GetOrCreateBattleAction();
-                        action.BattleAction = Battle.BattleActionType.Move;
-                        action.Parameter = (uint)(column + row * 6);
-                        AddCurrentPlayerActionVisuals();
+                        if (row < 3)
+                            return;
+                        int position = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+                        if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
+                        {
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.Gray);
+                            return;
+                        }
+                        if (!CurrentPartyMember.Ailments.CanMove())
+                        {
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove);
+                            return;
+                        }
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, (uint)(column + row * 6));
                     }
                     break;
                 }
-                case PlayerBattleAction.PickEnemyTarget:
-                case PlayerBattleAction.PickFriendTarget:
+                case PlayerBattleAction.PickEnemySpellTarget:
+                case PlayerBattleAction.PickFriendSpellTarget:
                 {
                     var target = currentBattle.GetCharacterAt(column, row);
                     if (target != null)
                     {
+                        if (currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTarget)
+                        {
+                            if (target.Type != CharacterType.Monster)
+                                return;
+                        }
+                        else
+                        {
+                            if (target.Type != CharacterType.PartyMember)
+                                return;
+                        }
+
                         CurrentPlayerBattleAction.Parameter = (uint)(column + row * 6);
                         layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange);
-                        SetCurrentPlayerBattleAction(PlayerBattleAction.PickPlayerAction);
+                        SetCurrentPlayerAction(PlayerBattleAction.PickPlayerAction);
+                        CancelSpecificPlayerAction();
                     }
                     break;
                 }
-                case PlayerBattleAction.PickEnemyTargetRow:
-                case PlayerBattleAction.PickFriendTargetRow:
+                case PlayerBattleAction.PickEnemySpellTargetRow:
+                case PlayerBattleAction.PickFriendSpellTargetRow:
                 {
+                    if (currentPlayerBattleAction == PlayerBattleAction.PickFriendSpellTargetRow)
+                    {
+                        if (row < 3)
+                            return;
+                    }
+                    else if (row > 3)
+                    {
+                        return;
+                    }
                     CurrentPlayerBattleAction.Parameter = (uint)row;
-                    var targetType = currentPlayerBattleAction == PlayerBattleAction.PickEnemyTargetRow
+                    var targetType = currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow
                         ? CharacterType.Monster : CharacterType.PartyMember;
                     layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(CurrentPartyMember));
                     SetBattleRowSlotColors(row, (c, r) => currentBattle.GetCharacterAt(c, r)?.Type == targetType, BattleFieldSlotColor.Orange);
+                    CancelSpecificPlayerAction();
+                    break;
+                }
+                case PlayerBattleAction.PickMoveSpot:
+                {
+                    if (currentBattle.IsBattleFieldEmpty(column + row * 6))
+                    {
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, (uint)(column + row * 6));
+                        CancelSpecificPlayerAction();
+                    }
                     break;
                 }
             }
@@ -2970,9 +3078,111 @@ namespace Ambermoon
             }
         }
 
-        void SetCurrentPlayerBattleAction(PlayerBattleAction playerBattleAction)
+        IEnumerable<int> GetValuableBattleFieldSlots(Func<int, bool> condition, int range, int minRow, int maxRow)
         {
-            // TODO
+            int slot = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+            int currentColumn = slot % 6;
+            int currentRow = slot / 6;
+            for (int row = Math.Max(minRow, currentRow - range); row <= Math.Min(maxRow, currentRow + range); ++row)
+            {
+                for (int column = Math.Max(0, currentColumn - 1); column <= Math.Min(5, currentColumn + 1); ++column)
+                {
+                    int index = column + row * 6;
+
+                    if (condition(index))
+                        yield return index;
+                }
+            }
+        }
+
+        void SetCurrentPlayerAction(PlayerBattleAction playerBattleAction)
+        {
+            currentPlayerBattleAction = playerBattleAction;
+            highlightBattleFieldSprites.ForEach(s => s?.Delete());
+            highlightBattleFieldSprites.Clear();
+            blinkingHighlight = false;
+
+            // TODO: show possible fields etc
+            switch (currentPlayerBattleAction)
+            {
+                case PlayerBattleAction.PickPlayerAction:
+                case PlayerBattleAction.PickEnemySpellTarget:
+                case PlayerBattleAction.PickEnemySpellTargetRow:
+                case PlayerBattleAction.PickFriendSpellTarget:
+                case PlayerBattleAction.PickFriendSpellTargetRow:
+                    // TODO
+                    break;
+                case PlayerBattleAction.PickMoveSpot:
+                {
+                    var valuableSlots = GetValuableBattleFieldSlots(currentBattle.IsBattleFieldEmpty,
+                        1, 3, 4);
+                    foreach (var slot in valuableSlots)
+                    {
+                        highlightBattleFieldSprites.Add
+                        (
+                            layout.AddSprite
+                            (
+                                Global.BattleFieldSlotArea(slot),
+                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                            )
+                        );
+                    }
+                    if (highlightBattleFieldSprites.Count == 0)
+                    {
+                        // No movement possible
+                        CancelSpecificPlayerAction();
+                        SetBattleMessageWithClick(DataNameProvider.BattleMessageNowhereToMoveTo, TextColor.Gray);
+                    }
+                    else
+                    {
+                        RemoveCurrentPlayerActionVisuals();
+                        TrapMouse(Global.BattleFieldArea);
+                        blinkingHighlight = true;
+                        layout.SetBattleMessage(DataNameProvider.BattleMessageWhereToMoveTo);
+                    }
+                    break;
+                }
+                case PlayerBattleAction.PickAttackSpot:
+                {
+                    bool ranged = CurrentPartyMember.HasLongRangedAttack(ItemManager, out bool hasAmmo);
+
+                    if (ranged && !hasAmmo)
+                    {
+                        // No ammo for ranged weapon
+                        CancelSpecificPlayerAction();
+                        SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.Gray);
+                        return;
+                    }
+
+                    var valuableSlots = GetValuableBattleFieldSlots(index => currentBattle.GetCharacterAt(index)?.Type == CharacterType.Monster,
+                        ranged ? 6 : 1, 0, 3);
+                    foreach (var slot in valuableSlots)
+                    {
+                        highlightBattleFieldSprites.Add
+                        (
+                            layout.AddSprite
+                            (
+                                Global.BattleFieldSlotArea(slot),
+                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                            )
+                        );
+                    }
+                    if (highlightBattleFieldSprites.Count == 0)
+                    {
+                        // No attack possible
+                        CancelSpecificPlayerAction();
+                        SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotReachAnyone, TextColor.Gray);
+                    }
+                    else
+                    {
+                        RemoveCurrentPlayerActionVisuals();
+                        TrapMouse(Global.BattleFieldArea);
+                        blinkingHighlight = true;
+                        layout.SetBattleMessage(DataNameProvider.BattleMessageWhatToAttack);
+                    }
+                    break;
+                }
+            }
         }
 
         void GameOver()

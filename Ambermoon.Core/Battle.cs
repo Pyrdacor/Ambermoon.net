@@ -19,8 +19,8 @@ namespace Ambermoon
             if (itemIndex == null || itemIndex == 0)
                 return false;
 
-            var longRangedWeapon = itemManager.GetItem(itemIndex.Value);
-            bool hasLongRangedWeapon = longRangedWeapon.Type == ItemType.LongRangeWeapon;
+            var weapon = itemManager.GetItem(itemIndex.Value);
+            bool hasLongRangedWeapon = weapon.Type == ItemType.LongRangeWeapon;
 
             if (hasLongRangedWeapon)
             {
@@ -37,7 +37,7 @@ namespace Ambermoon
 
                         var item = itemManager.GetItem(slot.ItemIndex);
 
-                        if (item?.Type != ItemType.Ammunition || item.AmmunitionType != longRangedWeapon.UsedAmmunitionType)
+                        if (item?.Type != ItemType.Ammunition || item.AmmunitionType != weapon.UsedAmmunitionType)
                             return false;
 
                         return true;
@@ -76,7 +76,7 @@ namespace Ambermoon
             MoveGroupForward,
             /// <summary>
             /// - Lowest 5 bits: Tile index (0-29) to attack
-            /// - Next 11 bits: Weapon item index (can be 0 for monsters)
+            /// - Next 11 bits: Weapon item index (can be 0 -> attacking without weapon)
             /// - Next 11 bits: Optional ammunition item index
             /// 
             /// This plays a monster or attack animation and prints text about
@@ -194,7 +194,8 @@ namespace Ambermoon
         bool wantsToFlee = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
-        public bool WaitForClick { get; private set; } = false;
+        public bool WaitForClick { get; set; } = false;
+        public bool SkipNextBattleFieldClick { get; private set; } = false;
 
         public event Action RoundFinished;
         public event Action<Character> CharacterDied;
@@ -204,8 +205,10 @@ namespace Ambermoon
         event Action AnimationFinished;
         public IEnumerable<Monster> Monsters => battleField.Where(c => c?.Type == CharacterType.Monster).Cast<Monster>();
         public IEnumerable<Character> Characters => battleField.Where(c => c != null);
-        public Character GetCharacterAt(int column, int row) => battleField[column + row * 6];
-        public int GetSlotFromCharacter(Character character) => battleField.ToList().FindIndex(c => c == character);
+        public Character GetCharacterAt(int index) => battleField[index];
+        public Character GetCharacterAt(int column, int row) => GetCharacterAt(column + row * 6);
+        public int GetSlotFromCharacter(Character character) => battleField.ToList().IndexOf(character);
+        public bool IsBattleFieldEmpty(int slot) => battleField[slot] == null;
         public bool RoundActive { get; private set; } = false;
         public bool CanMoveForward => !battleField.Skip(12).Take(6).Any(c => c != null) && // middle row empty
             !battleField.Skip(18).Take(6).Any(c => c?.Type == CharacterType.Monster); // and no monster in front row
@@ -259,9 +262,6 @@ namespace Ambermoon
             idleAnimationRunning = false;
             currentlyAnimatedMonster = null;
             layout.ResetMonsterCombatSprite(monster);
-
-            if (RoundActive)
-                ReadyForNextAction = true;
         }
 
         void SetupNextIdleAnimation(uint battleTicks)
@@ -377,16 +377,32 @@ namespace Ambermoon
             RunBattleAction(action, battleTicks);
         }
 
+        public void ResetClick()
+        {
+            SkipNextBattleFieldClick = false;
+        }
+
         public void Click(uint battleTicks)
         {
+            SkipNextBattleFieldClick = false;
+
             if (!WaitForClick)
                 return;
 
             WaitForClick = false;
+            SkipNextBattleFieldClick = true;
 
-            if (ReadyForNextAction && needsClickForNextAction)
+            if (RoundActive)
             {
-                NextAction(battleTicks);
+                if (ReadyForNextAction && needsClickForNextAction)
+                {
+                    NextAction(battleTicks);
+                }
+            }
+            else
+            {
+                layout.SetBattleMessage(null);
+                game.InputEnable = true;
             }
         }
 
@@ -793,6 +809,7 @@ namespace Ambermoon
         void RemoveCharacterFromBattleField(Character character)
         {
             battleField[GetCharacterPosition(character)] = null;
+            roundBattleActions.Where(b => b.Character == character).ToList().ForEach(b => b.Skip = true);
             game.RemoveBattleActor(character);
         }
 
