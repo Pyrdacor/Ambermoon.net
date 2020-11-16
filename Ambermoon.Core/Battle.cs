@@ -331,7 +331,7 @@ namespace Ambermoon
                 }
             }
 
-            if (ReadyForNextAction && !needsClickForNextAction)
+            if (ReadyForNextAction && (!needsClickForNextAction || !WaitForClick))
                 NextAction(battleTicks);
 
             if (currentBattleAnimation != null)
@@ -379,6 +379,9 @@ namespace Ambermoon
 
         public void Click(uint battleTicks)
         {
+            if (!WaitForClick)
+                return;
+
             WaitForClick = false;
 
             if (ReadyForNextAction && needsClickForNextAction)
@@ -396,7 +399,7 @@ namespace Ambermoon
         {
             var roundActors = battleField
                 .Where(f => f != null)
-                .OrderBy(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue)
+                .OrderByDescending(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue)
                 .ToList();
             parryingPlayers.Clear();
             preRoundBattleField = battleField.ToArray(); // copy
@@ -544,10 +547,10 @@ namespace Ambermoon
 
             void ActionFinished()
             {
+                ActionCompleted?.Invoke(battleAction);
                 if (needsClickForNextAction)
                     WaitForClick = true;
                 ReadyForNextAction = true;
-                ActionCompleted?.Invoke(battleAction);
             }
 
             switch (battleAction.Action)
@@ -618,7 +621,8 @@ namespace Ambermoon
                     void EndMove()
                     {
                         MoveCharacterTo(battleAction.ActionParameter, battleAction.Character);
-                        ActionFinished();
+                        ActionCompleted?.Invoke(battleAction);
+                        ReadyForNextAction = true;
                     }
 
                     bool moveFailed = false;
@@ -724,7 +728,7 @@ namespace Ambermoon
                     }
                     else
                     {
-                        PlayBattleEffectAnimation(BattleEffect.PlayerAtack, (uint)GetCharacterPosition(battleAction.Character),
+                        PlayBattleEffectAnimation(BattleEffect.PlayerAtack, battleAction.ActionParameter,
                             battleTicks, ActionFinished);
                     }
                     break;

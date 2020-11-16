@@ -46,7 +46,8 @@ namespace Ambermoon.Render
             uint row = tile / 6;
             var combatBackgroundArea = Global.CombatBackgroundArea;
             int centerX = combatBackgroundArea.Width / 2;
-            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            var monsterRow = row > (uint)MonsterRow.Near ? MonsterRow.Near : (MonsterRow)row;
+            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
             int slotWidth = Util.Round(40 * sizeMultiplier);
             int slotHeight = Util.Round(64 * sizeMultiplier); // TODO
             return new Position(centerX - (3 - (int)column) * slotWidth, combatBackgroundArea.Y + RowYOffsets[row] - slotHeight / 2);
@@ -141,7 +142,7 @@ namespace Ambermoon.Render
                 BattleEffect.SickleAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.FlyingSickle)),
                 BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, Game.TicksPerSecond)),
                 BattleEffect.BlockSpell => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.SpellBlock, Game.TicksPerSecond)),
-                BattleEffect.PlayerAtack => Effects(CreateSimpleEffect(renderView, sourceTile, CombatGraphicIndex.AttackSword, Game.TicksPerSecond / 4)),
+                BattleEffect.PlayerAtack => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackSword, Game.TicksPerSecond / 3)),
                 _ => null // TODO spells
             };
         }

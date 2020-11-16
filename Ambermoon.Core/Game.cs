@@ -116,7 +116,8 @@ namespace Ambermoon
             PickEnemyTarget,
             PickEnemyTargetRow,
             PickFriendTarget,
-            PickFriendTargetRow
+            PickFriendTargetRow,
+            PickMoveSpot
         }
 
         /// <summary>
@@ -2575,6 +2576,12 @@ namespace Ambermoon
                     battleRoundActiveSprite.Visible = false;
                     buttonGridBackground?.Destroy();
                     buttonGridBackground = null;
+
+                    foreach (var action in roundPlayerBattleActions)
+                        CheckPlayerActionVisuals(GetPartyMember(action.Key), action.Value);
+                    layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
+                    AddCurrentPlayerActionVisuals();
+                    layout.SetBattleMessage(null);
                 };
                 currentBattle.CharacterDied += character =>
                 {
@@ -2641,22 +2648,29 @@ namespace Ambermoon
                     }
                 }
 
-                // OK button
-                layout.AttachEventToButton(2, () =>
+                void StartBattleRound(bool withoutPlayerActions)
                 {
                     InputEnable = false;
                     CursorType = CursorType.Click;
                     layout.ResetMonsterCombatSprites();
+                    layout.ClearBattleFieldSlotColors();
                     layout.ShowButtons(false);
                     buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
                         GetPaletteColor(50, 28), 1);
                     battleRoundActiveSprite.Visible = true;
                     currentBattle.StartRound
                     (
-                        Enumerable.Range(0, MaxPartyMembers)
-                        .Select(i => roundPlayerBattleActions.ContainsKey(i) ? roundPlayerBattleActions[i] : new Battle.PlayerBattleAction())
-                        .ToArray(), currentBattleTicks
+                        withoutPlayerActions ? Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray() :
+                            Enumerable.Range(0, MaxPartyMembers)
+                            .Select(i => roundPlayerBattleActions.ContainsKey(i) ? roundPlayerBattleActions[i] : new Battle.PlayerBattleAction())
+                            .ToArray(), currentBattleTicks
                     );
+                }
+
+                // OK button
+                layout.AttachEventToButton(2, () =>
+                {
+                    StartBattleRound(false);
                     /*var battleEndInfo = new BattleEndInfo
                     {
                         MonstersDefeated = true,
@@ -2679,14 +2693,7 @@ namespace Ambermoon
 
                 if (surpriseAttack)
                 {
-                    InputEnable = false;
-                    CursorType = CursorType.Click;
-                    layout.ResetMonsterCombatSprites();
-                    layout.ShowButtons(false);
-                    buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
-                        GetPaletteColor(50, 28), 1);
-                    battleRoundActiveSprite.Visible = true;
-                    currentBattle.StartRound(Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray(), currentBattleTicks);
+                    StartBattleRound(true);
                 }
             });
         }
@@ -2809,6 +2816,90 @@ namespace Ambermoon
             layout.EnableButton(8, CurrentPartyMember.Ailments.CanCastSpell() && CurrentPartyMember.HasAnySpell());
         }
 
+        /// <summary>
+        /// This adds the target slots' coloring.
+        /// </summary>
+        void AddCurrentPlayerActionVisuals()
+        {
+            var action = GetOrCreateBattleAction();
+
+            switch (action.BattleAction)
+            {
+                case Battle.BattleActionType.Attack:
+                case Battle.BattleActionType.Move:
+                    layout.SetBattleFieldSlotColor((int)action.Parameter, BattleFieldSlotColor.Orange);
+                    break;
+                case Battle.BattleActionType.CastSpell:
+                    // TODO
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// This removes the target slots' coloring.
+        /// </summary>
+        void RemoveCurrentPlayerActionVisuals()
+        {
+            var action = GetOrCreateBattleAction();
+
+            switch (action.BattleAction)
+            {
+                case Battle.BattleActionType.Attack:
+                case Battle.BattleActionType.Move:
+                    layout.SetBattleFieldSlotColor((int)action.Parameter, BattleFieldSlotColor.None);
+                    break;
+                case Battle.BattleActionType.CastSpell:
+                    // TODO
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a player action should be still active after
+        /// a battle round.
+        /// </summary>
+        /// <param name="action"></param>
+        void CheckPlayerActionVisuals(PartyMember partyMember, Battle.PlayerBattleAction action)
+        {
+            bool remove = !partyMember.Alive || partyMember.Ailments.HasFlag(Ailment.Crazy);
+
+            if (!remove)
+            {
+                switch (action.BattleAction)
+                {
+                    case Battle.BattleActionType.Move:
+                    case Battle.BattleActionType.Flee:
+                    case Battle.BattleActionType.CastSpell:
+                        remove = true;
+                        break;
+                    case Battle.BattleActionType.Attack:
+                        if (!partyMember.Ailments.CanAttack() || !partyMember.HasWorkingWeapon(ItemManager))
+                            remove = true;
+                        break;
+                    case Battle.BattleActionType.Parry:
+                        if (!partyMember.Ailments.CanParry())
+                            remove = true;
+                        break;
+                    default:
+                        remove = true;
+                        break;
+                }
+            }
+
+            if (remove)
+                roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
+        }
+
+        Battle.PlayerBattleAction GetOrCreateBattleAction()
+        {
+            int slot = SlotFromPartyMember(CurrentPartyMember).Value;
+
+            if (!roundPlayerBattleActions.ContainsKey(slot))
+                roundPlayerBattleActions.Add(slot, new Battle.PlayerBattleAction());
+
+            return roundPlayerBattleActions[slot];
+        }
+
         void BattleFieldSlotClicked(int column, int row)
         {
             switch (currentPlayerBattleAction)
@@ -2826,6 +2917,22 @@ namespace Ambermoon
                             SetActivePartyMember(partyMemberSlot, false);
                             BattlePlayerSwitched();
                         }
+                    }
+                    else if (character?.Type == CharacterType.Monster)
+                    {
+                        RemoveCurrentPlayerActionVisuals();
+                        var action = GetOrCreateBattleAction();
+                        action.BattleAction = Battle.BattleActionType.Attack;
+                        action.Parameter = (uint)(column + row * 6);
+                        AddCurrentPlayerActionVisuals();
+                    }
+                    else // empty field
+                    {
+                        RemoveCurrentPlayerActionVisuals();
+                        var action = GetOrCreateBattleAction();
+                        action.BattleAction = Battle.BattleActionType.Move;
+                        action.Parameter = (uint)(column + row * 6);
+                        AddCurrentPlayerActionVisuals();
                     }
                     break;
                 }

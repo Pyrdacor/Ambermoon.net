@@ -30,5 +30,32 @@ namespace Ambermoon.Data
 
             return partyMember;
         }
+
+        public bool HasAmmunition(IItemManager itemManager, AmmunitionType ammunitionType)
+        {
+            var ammunitionSlot = Equipment.Slots[EquipmentSlot.LeftHand];
+
+            if (ammunitionSlot.Empty)
+                return false;
+
+            var ammunition = itemManager.GetItem(ammunitionSlot.ItemIndex);
+
+            return ammunition.Type == ItemType.Ammunition && ammunition.AmmunitionType == ammunitionType;
+        }
+
+        public bool HasWorkingWeapon(IItemManager itemManager)
+        {
+            var weaponSlot = Equipment.Slots[EquipmentSlot.RightHand];
+
+            if (weaponSlot.Empty || weaponSlot.Flags.HasFlag(ItemSlotFlags.Broken))
+                return false;
+
+            var weapon = itemManager.GetItem(weaponSlot.ItemIndex);
+
+            if (weapon.Type == ItemType.LongRangeWeapon)
+                return HasAmmunition(itemManager, weapon.UsedAmmunitionType);
+
+            return true;
+        }
     }
 }
