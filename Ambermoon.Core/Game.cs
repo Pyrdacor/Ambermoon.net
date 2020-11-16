@@ -2557,30 +2557,102 @@ namespace Ambermoon
             }
         }
 
+        void ShowBattleWindow(Event nextEvent)
+        {
+            SetWindow(Window.Battle, nextEvent);
+            layout.SetLayout(LayoutType.Battle);
+            ShowMap(false);
+            layout.Reset();
+
+            // TODO: where is the combat background index for 2D maps?
+            uint combatBackgroundIndex = is3D ? renderMap3D.CombatBackgroundIndex : Map.World switch
+            {
+                World.Lyramion => 0u,
+                World.ForestMoon => 6u,
+                World.Morag => 4u,
+                _ => 0u
+            };
+            var combatBackground = is3D
+                ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex)
+                : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex);
+            layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
+                (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
+            layout.FillArea(new Rect(0, 132, 320, 68), Color.Black, 0);
+            layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), 1);
+
+            if (currentBattle != null)
+            {
+                var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);
+                foreach (var monster in currentBattle.Monsters)
+                {
+                    int slot = currentBattle.GetSlotFromCharacter(monster);
+                    monsterBattleAnimations.Add(slot, layout.AddMonsterCombatSprite(slot % 6, slot / 6, monster));
+                }
+                currentBattle.SetMonsterAnimations(monsterBattleAnimations);
+            }
+
+            // Add battle field sprites for party members
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                var partyMember = GetPartyMember(i);
+
+                if (partyMember == null || !partyMember.Alive || currentBattle?.GetSlotFromCharacter(partyMember) == -1)
+                    partyMemberBattleFieldSprites[i] = null;
+                else
+                {
+                    var battlePosition = 18 + CurrentSavegame.BattlePositions[i];
+                    var battleColumn = battlePosition % 6;
+                    var battleRow = battlePosition / 6;
+
+                    partyMemberBattleFieldSprites[i] = layout.AddSprite(new Rect
+                    (
+                        Global.BattleFieldX + battleColumn * Global.BattleFieldSlotWidth,
+                        Global.BattleFieldY + battleRow * Global.BattleFieldSlotHeight - 1,
+                        Global.BattleFieldSlotWidth,
+                        Global.BattleFieldSlotHeight + 1
+                    ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, 3,
+                    $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}",
+                    partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray);
+                }
+            }
+
+            // Flee button
+            layout.AttachEventToButton(0, () =>
+            {
+                SetCurrentPlayerBattleAction(Battle.BattleActionType.Flee);
+            });
+            // OK button
+            layout.AttachEventToButton(2, () =>
+            {
+                StartBattleRound(false);
+                /*var battleEndInfo = new BattleEndInfo
+                {
+                    MonstersDefeated = true,
+                    FledMonsterIndices = new List<uint>()
+                };
+                */
+            });
+            // Move button
+            layout.AttachEventToButton(3, () =>
+            {
+                SetCurrentPlayerAction(PlayerBattleAction.PickMoveSpot);
+            });
+            // Attack button
+            layout.AttachEventToButton(6, () =>
+            {
+                SetCurrentPlayerAction(PlayerBattleAction.PickAttackSpot);
+            });
+
+            if (currentBattle != null)
+                BattlePlayerSwitched();
+        }
+
         void ShowBattleWindow(Event nextEvent, bool surpriseAttack)
         {
             Fade(() =>
             {
-                SetWindow(Window.Battle);
-                layout.SetLayout(LayoutType.Battle);
-                ShowMap(false);
-                layout.Reset();
-
-                // TODO: where is the combat background index for 2D maps?
-                uint combatBackgroundIndex = is3D ? renderMap3D.CombatBackgroundIndex : Map.World switch
-                {
-                    World.Lyramion => 0u,
-                    World.ForestMoon => 6u,
-                    World.Morag => 4u,
-                    _ => 0u
-                };
-                var combatBackground = is3D
-                    ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex)
-                    : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex);
-                layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
-                    (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
-                layout.FillArea(new Rect(0, 132, 320, 68), Color.Black, 0);
-                layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), 1);
+                roundPlayerBattleActions.Clear();
+                ShowBattleWindow(nextEvent);
                 // Note: Create clones so we can change the values in battle for each monster.
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
                 foreach (var monster in monsterGroup.Monsters)
@@ -2645,78 +2717,6 @@ namespace Ambermoon
                 {
                     CursorType = CursorType.Click;
                 };
-                roundPlayerBattleActions.Clear();
-                // Add battle field sprites for party members
-                for (int i = 0; i < MaxPartyMembers; ++i)
-                {
-                    var partyMember = GetPartyMember(i);
-
-                    if (partyMember == null || !partyMember.Alive)
-                        partyMemberBattleFieldSprites[i] = null;
-                    else
-                    {
-                        var battlePosition = 18 + CurrentSavegame.BattlePositions[i];
-                        var battleColumn = battlePosition % 6;
-                        var battleRow = battlePosition / 6;
-
-                        partyMemberBattleFieldSprites[i] = layout.AddSprite(new Rect
-                        (
-                            Global.BattleFieldX + battleColumn * Global.BattleFieldSlotWidth,
-                            Global.BattleFieldY + battleRow * Global.BattleFieldSlotHeight - 1,
-                            Global.BattleFieldSlotWidth,
-                            Global.BattleFieldSlotHeight + 1
-                        ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, 3,
-                        $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}",
-                        partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray);
-                    }
-                }
-
-                void StartBattleRound(bool withoutPlayerActions)
-                {
-                    InputEnable = false;
-                    CursorType = CursorType.Click;
-                    layout.ResetMonsterCombatSprites();
-                    layout.ClearBattleFieldSlotColors();
-                    layout.ShowButtons(false);
-                    buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
-                        GetPaletteColor(50, 28), 1);
-                    battleRoundActiveSprite.Visible = true;
-                    currentBattle.StartRound
-                    (
-                        withoutPlayerActions ? Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray() :
-                            Enumerable.Range(0, MaxPartyMembers)
-                            .Select(i => roundPlayerBattleActions.ContainsKey(i) ? roundPlayerBattleActions[i] : new Battle.PlayerBattleAction())
-                            .ToArray(), currentBattleTicks
-                    );
-                }
-
-                // Flee button
-                layout.AttachEventToButton(0, () =>
-                {
-                    SetCurrentPlayerBattleAction(Battle.BattleActionType.Flee);
-                });
-                // OK button
-                layout.AttachEventToButton(2, () =>
-                {
-                    StartBattleRound(false);
-                    /*var battleEndInfo = new BattleEndInfo
-                    {
-                        MonstersDefeated = true,
-                        FledMonsterIndices = new List<uint>()
-                    };
-                    */
-                });
-                // Move button
-                layout.AttachEventToButton(3, () =>
-                {
-                    SetCurrentPlayerAction(PlayerBattleAction.PickMoveSpot);
-                });
-                // Attack button
-                layout.AttachEventToButton(6, () =>
-                {
-                    SetCurrentPlayerAction(PlayerBattleAction.PickAttackSpot);
-                });
-
                 BattlePlayerSwitched();
 
                 if (surpriseAttack)
@@ -2724,6 +2724,25 @@ namespace Ambermoon
                     StartBattleRound(true);
                 }
             });
+        }
+
+        void StartBattleRound(bool withoutPlayerActions)
+        {
+            InputEnable = false;
+            CursorType = CursorType.Click;
+            layout.ResetMonsterCombatSprites();
+            layout.ClearBattleFieldSlotColors();
+            layout.ShowButtons(false);
+            buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
+                GetPaletteColor(50, 28), 1);
+            battleRoundActiveSprite.Visible = true;
+            currentBattle.StartRound
+            (
+                withoutPlayerActions ? Enumerable.Repeat(new Battle.PlayerBattleAction(), 6).ToArray() :
+                    Enumerable.Range(0, MaxPartyMembers)
+                    .Select(i => roundPlayerBattleActions.ContainsKey(i) ? roundPlayerBattleActions[i] : new Battle.PlayerBattleAction())
+                    .ToArray(), currentBattleTicks
+            );
         }
 
         void CancelSpecificPlayerAction()
@@ -2993,6 +3012,21 @@ namespace Ambermoon
                     }
                     else if (character?.Type == CharacterType.Monster)
                     {
+                        if (!CurrentPartyMember.HasLongRangedAttack(ItemManager, out bool hasAmmo))
+                        {
+                            int position = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+                            if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
+                            {
+                                SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.Gray);
+                                return;
+                            }
+                        }
+                        else if (!hasAmmo)
+                        {
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.Gray);
+                            return;
+                        }
+
                         SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack, (uint)(column + row * 6));
                     }
                     else // empty field
@@ -3682,6 +3716,17 @@ namespace Ambermoon
                     var conversationEvent = currentWindow.WindowParameters[1] as Event;
                     currentWindow = DefaultWindow;
                     ShowConversation(conversationPartner, conversationEvent);
+                    break;
+                }
+                case Window.Battle:
+                {
+                    var nextEvent = (Event)currentWindow.WindowParameters[0];
+                    ShowBattleWindow(nextEvent);
+                    break;
+                }
+                case Window.BattleLoot:
+                {
+                    // TODO
                     break;
                 }
                 default:

@@ -250,6 +250,15 @@ namespace Ambermoon
             SetupNextIdleAnimation(0);
         }
 
+        public void SetMonsterAnimations(Dictionary<int, BattleAnimation> monsterBattleAnimations)
+        {
+            foreach (var monsterBattleAnimation in monsterBattleAnimations)
+            {
+                var monster = GetCharacterAt(monsterBattleAnimation.Key) as Monster;
+                monsterBattleAnimation.Value.AnimationFinished += () => MonsterAnimationFinished(monster);
+            }
+        }
+
         void UpdateMonsterDisplayLayer(Monster monster)
         {
             int position = GetCharacterPosition(currentlyAnimatedMonster);
