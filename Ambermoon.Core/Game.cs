@@ -22,19 +22,19 @@ namespace Ambermoon
             }
 
             /// <inheritdoc />
-            public string LeadName => game.CurrentSavegame.PartyMembers.First(p => p.Alive).Name;
+            public string LeadName => game.CurrentPartyMember.Name;
             /// <inheritdoc />
-            public string SelfName => game.CurrentPartyMember.Name;
+            public string SelfName => game.CurrentPartyMember.Name; // TODO: maybe this is the active actor in battle?
             /// <inheritdoc />
-            public string CastName => game.CurrentCaster?.Name;
+            public string CastName => game.CurrentCaster?.Name ?? LeadName;
             /// <inheritdoc />
-            public string InvnName => game.CurrentInventory?.Name;
+            public string InvnName => game.CurrentInventory?.Name ?? LeadName;
             /// <inheritdoc />
-            public string SubjName => game.CurrentPartyMember?.Name; // TODO
+            public string SubjName => game.CurrentPartyMember.Name; // TODO
             /// <inheritdoc />
-            public string Sex1Name => game.CurrentPartyMember.Gender == Gender.Male ? "he" : "she"; // TODO
+            public string Sex1Name => game.CurrentPartyMember.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
             /// <inheritdoc />
-            public string Sex2Name => game.CurrentPartyMember.Gender == Gender.Male ? "his" : "her"; // TODO
+            public string Sex2Name => game.CurrentPartyMember.Gender == Gender.Male ? game.DataNameProvider.His : game.DataNameProvider.Her;
         }
 
         class Movement
@@ -440,6 +440,18 @@ namespace Ambermoon
                         HandleClickMovement();
                     else
                         Move();
+                }
+            }
+
+            if (currentWindow.Window == Window.Inventory ||
+                currentWindow.Window == Window.Stats)
+            {
+                for (int i = 0; i < MaxPartyMembers; ++i)
+                {
+                    var partyMember = GetPartyMember(i);
+
+                    if (partyMember != null)
+                        layout.UpdateCharacterStatus(i, partyMember);
                 }
             }
 
@@ -2892,7 +2904,7 @@ namespace Ambermoon
             {
                 case Battle.BattleActionType.Attack:
                 case Battle.BattleActionType.Move:
-                    layout.SetBattleFieldSlotColor((int)action.Parameter, BattleFieldSlotColor.Orange);
+                    layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
                     break;
                 case Battle.BattleActionType.CastSpell:
                     // TODO
@@ -2911,7 +2923,7 @@ namespace Ambermoon
             {
                 case Battle.BattleActionType.Attack:
                 case Battle.BattleActionType.Move:
-                    layout.SetBattleFieldSlotColor((int)action.Parameter, BattleFieldSlotColor.None);
+                    layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.None);
                     break;
                 case Battle.BattleActionType.CastSpell:
                     // TODO
@@ -3027,7 +3039,8 @@ namespace Ambermoon
                             return;
                         }
 
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack, (uint)(column + row * 6));
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack,
+                            Battle.CreateAttackParameter((uint)(column + row * 6), CurrentPartyMember, ItemManager));
                     }
                     else // empty field
                     {
@@ -3044,7 +3057,7 @@ namespace Ambermoon
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove);
                             return;
                         }
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, (uint)(column + row * 6));
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
                     }
                     break;
                 }
@@ -3096,7 +3109,17 @@ namespace Ambermoon
                 {
                     if (currentBattle.IsBattleFieldEmpty(column + row * 6))
                     {
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, (uint)(column + row * 6));
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
+                        CancelSpecificPlayerAction();
+                    }
+                    break;
+                }
+                case PlayerBattleAction.PickAttackSpot:
+                {
+                    if (currentBattle.GetCharacterAt(column + row * 6)?.Type == CharacterType.Monster)
+                    {
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack,
+                            Battle.CreateAttackParameter((uint)(column + row * 6), CurrentPartyMember, ItemManager));
                         CancelSpecificPlayerAction();
                     }
                     break;
@@ -3120,7 +3143,7 @@ namespace Ambermoon
             int currentRow = slot / 6;
             for (int row = Math.Max(minRow, currentRow - range); row <= Math.Min(maxRow, currentRow + range); ++row)
             {
-                for (int column = Math.Max(0, currentColumn - 1); column <= Math.Min(5, currentColumn + 1); ++column)
+                for (int column = Math.Max(0, currentColumn - range); column <= Math.Min(5, currentColumn + range); ++column)
                 {
                     int index = column + row * 6;
 
@@ -3470,6 +3493,7 @@ namespace Ambermoon
         {
             if (!CurrentPartyMember.Ailments.CanSelect() || currentBattle.GetSlotFromCharacter(CurrentPartyMember) == -1)
             {
+                layout.ClearBattleFieldSlotColors();
                 Pause();
                 // Simple text popup
                 var popup = layout.OpenTextPopup(ProcessText(DataNameProvider.SelectNewLeaderMessage), () =>

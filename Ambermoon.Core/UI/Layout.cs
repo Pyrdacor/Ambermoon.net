@@ -356,6 +356,7 @@ namespace Ambermoon.UI
         readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
         readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
         readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
+        readonly ILayerSprite[] characterStatusIcons = new ILayerSprite[Game.MaxPartyMembers];
         readonly Bar[] characterBars = new Bar[Game.MaxPartyMembers * 4]; // 2 bars and each has fill and shadow color
         ISprite sprite80x80Picture;
         ISprite eventPicture;
@@ -1173,6 +1174,8 @@ namespace Ambermoon.UI
                 portraitBackgrounds[slot] = null;
                 portraitNames[slot]?.Delete();
                 portraitNames[slot] = null;
+                characterStatusIcons[slot]?.Delete();
+                characterStatusIcons[slot] = null;
             }
             else
             {
@@ -1199,9 +1202,49 @@ namespace Ambermoon.UI
                 text.DisplayLayer = 1;
                 text.TextColor = partyMember.Alive ? TextColor.Red : TextColor.PaleGray;
                 text.Visible = true;
+                UpdateCharacterStatus(slot, partyMember);
             }
 
             FillCharacterBars(slot, partyMember);
+        }
+
+        internal void UpdateCharacterStatus(int slot, PartyMember partyMember, uint? forcedGraphicIndex = null)
+        {
+            var sprite = characterStatusIcons[slot] ??= RenderView.SpriteFactory.Create(16, 16, true, 3) as ILayerSprite;
+            sprite.Layer = renderLayer;
+            sprite.PaletteIndex = 49;
+            sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 33;
+            sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 2;
+
+            if (forcedGraphicIndex != null)
+            {
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(forcedGraphicIndex.Value);
+                sprite.Visible = true;
+            }
+            else
+            {
+                if (partyMember.Ailments != Ailment.None)
+                {
+                    var ailments = Enum.GetValues<Ailment>().Where(a => partyMember.Ailments.HasFlag(a)).ToList();
+                    uint ailmentCount = (uint)ailments.Count;
+
+                    if (ailmentCount == 1)
+                    {
+                        sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAilmentGraphicIndex(partyMember.Ailments));
+                    }
+                    else
+                    {
+                        uint ticksPerAilment = Game.TicksPerSecond / 4;
+                        int index = (int)((game.CurrentTicks % (ailmentCount * ticksPerAilment)) / ticksPerAilment);
+                        sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAilmentGraphicIndex(ailments[index]));
+                    }
+                    sprite.Visible = true;
+                }
+                else
+                {
+                    sprite.Visible = false;
+                }
+            }
         }
 
         void FillCharacterBars(int slot, PartyMember partyMember)

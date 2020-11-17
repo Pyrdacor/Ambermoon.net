@@ -52,6 +52,10 @@
         string CompassDirections { get; }
         string AttackEscapeFailedMessage { get; }
         string SelectNewLeaderMessage { get; }
+        string He { get; }
+        string She { get; }
+        string His { get; }
+        string Her { get; }
 
 
         #region Battle messages

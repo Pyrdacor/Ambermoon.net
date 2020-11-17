@@ -24,6 +24,12 @@ namespace Ambermoon
 
             if (hasLongRangedWeapon)
             {
+                if (weapon.UsedAmmunitionType == AmmunitionType.None)
+                {
+                    hasAmmo = true;
+                    return true;
+                }
+
                 var ammoSlot = character.Equipment.Slots[EquipmentSlot.LeftHand];
                 hasAmmo = ammoSlot?.ItemIndex != null && ammoSlot?.ItemIndex != 0 && ammoSlot?.Amount > 0;
 
@@ -349,6 +355,14 @@ namespace Ambermoon
                 {
                     currentBattleAnimation = null;
                     AnimationFinished?.Invoke();
+                }
+            }
+
+            if (effectAnimation?.Visible == true)
+            {
+                if (!effectAnimation.Update(battleTicks))
+                {
+                    effectAnimation.Visible = false;
                 }
             }
         }
@@ -713,26 +727,20 @@ namespace Ambermoon
                     break;
                 case BattleActionType.Attack:
                 {
-                    uint damage = 10; // TODO calculate
+                    GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
+                    var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage);
+                    // Next action is a hurt action
+                    var hurtAction = roundBattleActions.Peek();
 
-                    void EndAttack()
+                    if (attackResult != AttackResult.Damage)
                     {
-                        // Next action is a hurt action
-                        var hurtAction = roundBattleActions.Peek();
-
-                        if (false) // TODO: if miss/fail/block
-                        {
-                            hurtAction.Skip = true;
-                        }
-                        else
-                        {
-                            hurtAction.ActionParameter = UpdateHurtParameter(hurtAction.ActionParameter, damage);
-                        }
-
-                        ActionFinished();
+                        hurtAction.Skip = true;
                     }
-
-                    // TODO: long range
+                    else
+                    {
+                        hurtAction.ActionParameter = UpdateHurtParameter(hurtAction.ActionParameter, (uint)damage);
+                    }
+                    Item weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
                     if (battleAction.Character is Monster monster)
                     {
                         var animation = layout.GetMonsterBattleAnimation(monster);
@@ -740,9 +748,21 @@ namespace Ambermoon
                         void AttackAnimationFinished()
                         {
                             animation.AnimationFinished -= AttackAnimationFinished;
-                            EndAttack();
+                            if (weapon == null || weapon.Type != ItemType.LongRangeWeapon) // in this case the ammunition effect calls it
+                                ActionFinished();
                             currentBattleAnimation = null;
                             currentlyAnimatedMonster = null;
+                        }
+
+                        if (weapon?.Type == ItemType.LongRangeWeapon)
+                        {
+                            PlayBattleEffectAnimation(weapon.UsedAmmunitionType switch
+                            {
+                                AmmunitionType.Slingstone => BattleEffect.SlingstoneAttack,
+                                AmmunitionType.Arrow => BattleEffect.MonsterArrowAttack,
+                                AmmunitionType.Bolt => BattleEffect.MonsterBoltAttack,
+                                _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid ammunition type for monster.")
+                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, ActionFinished);
                         }
 
                         animation.AnimationFinished += AttackAnimationFinished;
@@ -753,10 +773,24 @@ namespace Ambermoon
                     }
                     else
                     {
-                        PlayBattleEffectAnimation(BattleEffect.PlayerAtack, battleAction.ActionParameter,
-                            battleTicks, ActionFinished);
+                        if (weapon?.Type == ItemType.LongRangeWeapon)
+                        {
+                            PlayBattleEffectAnimation(weapon.UsedAmmunitionType switch
+                            {
+                                AmmunitionType.Slingstone => BattleEffect.SlingstoneAttack,
+                                AmmunitionType.Arrow => BattleEffect.PlayerArrowAttack,
+                                AmmunitionType.Bolt => BattleEffect.PlayerBoltAttack,
+                                AmmunitionType.Slingdagger => BattleEffect.SlingdaggerAttack,
+                                _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid ammunition type for player.")
+                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, ActionFinished);
+                        }
+                        else
+                        {
+                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, battleAction.ActionParameter,
+                                battleTicks, ActionFinished);
+                        }
                     }
-                    break;
+                    return;
                 }
                 case BattleActionType.CastSpell:
                     // Parameter:
@@ -772,7 +806,8 @@ namespace Ambermoon
                     {
                         fledCharacters.Add(battleAction.Character);
                         RemoveCharacterFromBattleField(battleAction.Character);
-                        ActionFinished();
+                        ActionCompleted?.Invoke(battleAction);
+                        ReadyForNextAction = true;
                     }
                     if (battleAction.Character is Monster monster)
                     {
@@ -797,7 +832,7 @@ namespace Ambermoon
                     {
                         EndFlee();
                     }
-                    break;
+                    return;
                 }
                 case BattleActionType.Hurt:
                     // TODO
@@ -1190,7 +1225,6 @@ namespace Ambermoon
             effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale);
             effectAnimation.Play(Enumerable.Range(0, (int)numFrames).ToArray(), ticksPerFrame, ticks, endPosition, endScale);
             effectAnimation.Visible = true;
-            currentBattleAnimation = effectAnimation;
             currentlyAnimatedMonster = null;
 
             void EffectAnimationFinished()
@@ -1210,6 +1244,23 @@ namespace Ambermoon
         // Next 11 bits: Optional ammunition item index
         public static uint CreateAttackParameter(uint targetTile, uint weaponIndex = 0, uint ammoIndex = 0) =>
             (targetTile & 0x1f) | ((weaponIndex & 0x7ff) << 5) | ((ammoIndex & 0x7ff) << 16);
+        public static uint CreateAttackParameter(uint targetTile, PartyMember partyMember, IItemManager itemManager)
+        {
+            uint weaponIndex = partyMember.Equipment.Slots[EquipmentSlot.RightHand]?.ItemIndex ?? 0;
+            uint ammoIndex = 0;
+
+            if (weaponIndex != 0)
+            {
+                var weapon = itemManager.GetItem(weaponIndex);
+
+                if (weapon.Type == ItemType.LongRangeWeapon && weapon.UsedAmmunitionType != AmmunitionType.None)
+                {
+                    ammoIndex = partyMember.Equipment.Slots[EquipmentSlot.LeftHand]?.ItemIndex ?? 0;
+                }
+            }
+
+            return CreateAttackParameter(targetTile, weaponIndex, ammoIndex);
+        }
         // Lowest 5 bits: Tile index (0-29) or row (0-4) to cast spell on
         // Next 11 bits: Item index (when spell came from an item, otherwise 0)
         // Upper 16 bits: Spell index
@@ -1218,9 +1269,9 @@ namespace Ambermoon
         // Lowest 5 bits: Tile index (0-29) where a character is hurt
         // Rest: Damage
         public static uint CreateHurtParameter(uint targetTile) => targetTile & 0x1f;
-        public static uint UpdateHurtParameter(uint hurtParameter, uint damage) =>
+        static uint UpdateHurtParameter(uint hurtParameter, uint damage) =>
             (hurtParameter & 0x1f) | ((damage & 0x7ffffff) << 5);
-
+        public static uint GetTargetTileFromParameter(uint actionParameter) => actionParameter & 0x1f;
         static void GetAttackInformation(uint actionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex)
         {
             ammoIndex = (actionParameter >> 16) & 0x7ff;
@@ -1238,6 +1289,41 @@ namespace Ambermoon
         {
             damage = (actionParameter >> 5) & 0x7ffffff;
             targetTile = actionParameter & 0x1f;
+        }
+
+        enum AttackResult
+        {
+            Damage,
+            Failed, // Chance depending on attackers ATT ability
+            NoDamage, // Chance depending on ATK / DEF
+            Missed, // Target moved
+            Blocked // Parry
+        }
+
+        AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage)
+        {
+            damage = 0;
+
+            if (battleField[attackedSlot] == null)
+                return AttackResult.Missed;
+
+            var target = GetCharacterAt(attackedSlot);
+
+            if (game.RollDice100() > attacker.Abilities[Ability.Attack].TotalCurrentValue)
+                return AttackResult.Failed;
+
+            // TODO: how is damage calculated?
+            damage = attacker.CombatAttack - 2 + game.RandomInt(0, 4) - target.CombatDefense;
+
+            if (damage <= 0)
+                return AttackResult.NoDamage;
+
+            // TODO: can monsters parry?
+            if (target is PartyMember partyMember && parryingPlayers.Contains(partyMember) &&
+                game.RollDice100() < partyMember.Abilities[Ability.Parry].TotalCurrentValue)
+                return AttackResult.Blocked;
+
+            return AttackResult.Damage;
         }
     }
 

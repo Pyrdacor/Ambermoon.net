@@ -75,6 +75,10 @@
         public string CompassDirections => executableData.UITexts.Entries[UITextIndex.CardinalDirections];
         public string AttackEscapeFailedMessage => executableData.Messages.GetEntry(Messages.Index.CouldNotEscape);
         public string SelectNewLeaderMessage => executableData.Messages.GetEntry(Messages.Index.SelectNewLeader);
+        public string He => executableData.UITexts.Entries[UITextIndex.He];
+        public string She => executableData.UITexts.Entries[UITextIndex.She];
+        public string His => executableData.UITexts.Entries[UITextIndex.His];
+        public string Her => executableData.UITexts.Entries[UITextIndex.Her];
 
 
         #region Battle messages
