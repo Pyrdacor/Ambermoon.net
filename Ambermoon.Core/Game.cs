@@ -2905,7 +2905,7 @@ namespace Ambermoon
                 {
                     case Battle.BattleActionType.Attack:
                     case Battle.BattleActionType.Move:
-                        layout.SetBattleFieldSlotColor((int)action.Parameter, BattleFieldSlotColor.Orange);
+                        layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
                         break;
                     case Battle.BattleActionType.CastSpell:
                         var spell = (Spell)(action.Parameter >> 16);
