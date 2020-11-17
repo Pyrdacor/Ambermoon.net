@@ -253,14 +253,21 @@ namespace Ambermoon.Renderer
             var position = new Position(sprite.X, sprite.Y);
             var spriteSize = new Size(sprite.Width, sprite.Height);
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
+            var textureSize = new Size(sprite.TextureSize ?? spriteSize);
 
             if (sprite.ClipArea != null)
             {
+                float textureWidthFactor = spriteSize.Width / textureSize.Width;
+                float textureHeightFactor = spriteSize.Height / textureSize.Height;
                 int oldX = position.X;
                 int oldY = position.Y;
+                int oldWidth = spriteSize.Width;
+                int oldHeight = spriteSize.Height;
                 sprite.ClipArea.ClipRect(position, spriteSize);
-                textureAtlasOffset.X += position.X - oldX;
-                textureAtlasOffset.Y += position.Y - oldY;
+                textureAtlasOffset.X += Util.Round((position.X - oldX) / textureWidthFactor);
+                textureAtlasOffset.Y += Util.Round((position.Y - oldY) / textureHeightFactor);
+                textureSize.Width -= Util.Round((oldWidth - spriteSize.Width) / textureWidthFactor);
+                textureSize.Height -= Util.Round((oldHeight - spriteSize.Height) / textureHeightFactor);
             }
 
             var size = new Size(spriteSize);
@@ -289,8 +296,6 @@ namespace Ambermoon.Renderer
                 paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 2);
                 paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 3);
             }
-
-            var textureSize = sprite.TextureSize ?? spriteSize;
 
             if (textureAtlasOffsetBuffer != null)
             {
@@ -692,15 +697,15 @@ namespace Ambermoon.Renderer
             }
         }
 
-        public void UpdateTextureAtlasOffset(int index, Render.ISprite sprite, Position maskSpriteTextureAtlasOffset = null)
+        public void UpdateTextureAtlasOffset(int index, Render.ISprite sprite)
         {
             if (textureAtlasOffsetBuffer == null)
                 return;
 
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
-            var textureSize = sprite.TextureSize;
+            Size textureSize;
 
-            if (textureSize == null)
+            if (sprite.TextureSize == null)
             {
                 textureSize = new Size(sprite.Width, sprite.Height);
 
@@ -712,6 +717,29 @@ namespace Ambermoon.Renderer
                     sprite.ClipArea.ClipRect(position, textureSize);
                     textureAtlasOffset.X += position.X - oldX;
                     textureAtlasOffset.Y += position.Y - oldY;
+                }
+            }
+            else
+            {
+                textureSize = new Size(sprite.TextureSize);
+
+                if (sprite.ClipArea != null)
+                {
+                    textureSize = new Size(sprite.TextureSize);
+
+                    var position = new Position(sprite.X, sprite.Y);
+                    var spriteSize = new Size(sprite.Width, sprite.Height);
+                    float textureWidthFactor = spriteSize.Width / textureSize.Width;
+                    float textureHeightFactor = spriteSize.Height / textureSize.Height;
+                    int oldX = position.X;
+                    int oldY = position.Y;
+                    int oldWidth = spriteSize.Width;
+                    int oldHeight = spriteSize.Height;
+                    sprite.ClipArea.ClipRect(position, spriteSize);
+                    textureAtlasOffset.X += Util.Round((position.X - oldX) / textureWidthFactor);
+                    textureAtlasOffset.Y += Util.Round((position.Y - oldY) / textureHeightFactor);
+                    textureSize.Width -= Util.Round((oldWidth - spriteSize.Width) / textureWidthFactor);
+                    textureSize.Height -= Util.Round((oldHeight - spriteSize.Height) / textureHeightFactor);
                 }
             }
 

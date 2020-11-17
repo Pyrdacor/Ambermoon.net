@@ -61,10 +61,10 @@ namespace Ambermoon.Data.Legacy.Characters
             character.SpellPoints.CurrentValue = dataReader.ReadWord();
             character.SpellPoints.MaxValue = dataReader.ReadWord();
             character.SpellPoints.BonusValue = dataReader.ReadWord();
-            character.CombatDefense = (short)dataReader.ReadWord();
-            character.DisplayedDefense = (short)dataReader.ReadWord();
-            character.CombatAttack = (short)dataReader.ReadWord();
-            character.DisplayedAttack = (short)dataReader.ReadWord();
+            character.VariableDefense = (short)dataReader.ReadWord();
+            character.BaseDefense = (short)dataReader.ReadWord();
+            character.VariableAttack = (short)dataReader.ReadWord();
+            character.BaseAttack = (short)dataReader.ReadWord();
             character.MagicAttack = (short)dataReader.ReadWord();
             character.MagicDefense = (short)dataReader.ReadWord();
             character.AttacksPerRoundPerLevel = dataReader.ReadWord();

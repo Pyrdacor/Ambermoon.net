@@ -32,10 +32,10 @@ namespace Ambermoon.Data
         public CharacterValueCollection<Ability> Abilities { get; } = new CharacterValueCollection<Ability>(10);
         public CharacterValue HitPoints { get; } = new CharacterValue();
         public CharacterValue SpellPoints { get; } = new CharacterValue();
-        public short DisplayedAttack { get; set; }
-        public short DisplayedDefense { get; set; }
-        public short CombatAttack { get; set; }
-        public short CombatDefense { get; set; }
+        public short BaseAttack { get; set; }
+        public short BaseDefense { get; set; }
+        public short VariableAttack { get; set; }
+        public short VariableDefense { get; set; }
         public short MagicAttack { get; set; }
         public short MagicDefense { get; set; }
         public ushort AttacksPerRoundPerLevel { get; set; }

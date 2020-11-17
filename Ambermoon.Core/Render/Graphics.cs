@@ -34,24 +34,25 @@ namespace Ambermoon.Render
         public static uint GetUIGraphicIndex(UIGraphic graphic) => UIGraphicOffset + (uint)graphic;
         public static uint GetButtonGraphicIndex(ButtonType buttonType) => ButtonOffset + (uint)buttonType;
         public static uint GetPopupFrameGraphicIndex(PopupFrame frame) => PopupFrameOffset + (uint)frame;
-        public static uint GetAilmentGraphicIndex(Ailment ailment) => ailment switch
+        public static UIGraphic GetAilmentGraphic(Ailment ailment) => ailment switch
         {
-            Ailment.Irritated => GetUIGraphicIndex(UIGraphic.StatusIrritated),
-            Ailment.Crazy => GetUIGraphicIndex(UIGraphic.StatusCrazy),
-            Ailment.Sleep => GetUIGraphicIndex(UIGraphic.StatusSleep),
-            Ailment.Panic => GetUIGraphicIndex(UIGraphic.StatusPanic),
-            Ailment.Blind => GetUIGraphicIndex(UIGraphic.StatusBlind),
-            Ailment.Drugged => GetUIGraphicIndex(UIGraphic.StatusDrugs),
-            Ailment.Exhausted => GetUIGraphicIndex(UIGraphic.StatusExhausted),
-            Ailment.Lamed => GetUIGraphicIndex(UIGraphic.StatusLamed),
-            Ailment.Poisoned => GetUIGraphicIndex(UIGraphic.StatusPoisoned),
-            Ailment.Petrified => GetUIGraphicIndex(UIGraphic.StatusPetrified),
-            Ailment.Diseased => GetUIGraphicIndex(UIGraphic.StatusDiseased),
-            Ailment.Aging => GetUIGraphicIndex(UIGraphic.StatusAging),
-            Ailment.DeadCorpse => GetUIGraphicIndex(UIGraphic.StatusDead),
-            Ailment.DeadAshes => GetUIGraphicIndex(UIGraphic.StatusDead),
-            Ailment.DeadDust => GetUIGraphicIndex(UIGraphic.StatusDead),
+            Ailment.Irritated => UIGraphic.StatusIrritated,
+            Ailment.Crazy => UIGraphic.StatusCrazy,
+            Ailment.Sleep => UIGraphic.StatusSleep,
+            Ailment.Panic => UIGraphic.StatusPanic,
+            Ailment.Blind => UIGraphic.StatusBlind,
+            Ailment.Drugged => UIGraphic.StatusDrugs,
+            Ailment.Exhausted => UIGraphic.StatusExhausted,
+            Ailment.Lamed => UIGraphic.StatusLamed,
+            Ailment.Poisoned => UIGraphic.StatusPoisoned,
+            Ailment.Petrified => UIGraphic.StatusPetrified,
+            Ailment.Diseased => UIGraphic.StatusDiseased,
+            Ailment.Aging => UIGraphic.StatusAging,
+            Ailment.DeadCorpse => UIGraphic.StatusDead,
+            Ailment.DeadAshes => UIGraphic.StatusDead,
+            Ailment.DeadDust => UIGraphic.StatusDead,
             _ => throw new AmbermoonException(ExceptionScope.Application, "Ailment has no graphic")
         };
+        public static uint GetAilmentGraphicIndex(Ailment ailment) => GetUIGraphicIndex(GetAilmentGraphic(ailment));
     }
 }

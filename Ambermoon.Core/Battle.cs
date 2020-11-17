@@ -196,7 +196,7 @@ namespace Ambermoon
         BattleAnimation currentBattleAnimation = null;
         bool idleAnimationRunning = false;
         uint nextIdleAnimationTicks = 0;
-        BattleAnimation effectAnimation = null;
+        List<BattleAnimation> effectAnimations = null;
         bool wantsToFlee = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
@@ -208,6 +208,8 @@ namespace Ambermoon
         public event Action<Character, uint, uint> CharacterMoved;
         public event Action<Game.BattleEndInfo> BattleEnded;
         public event Action<BattleAction> ActionCompleted;
+        public event Action<PartyMember> PlayerWeaponBroke;
+        public event Action<PartyMember> PlayerLostTarget;
         event Action AnimationFinished;
         public IEnumerable<Monster> Monsters => battleField.Where(c => c?.Type == CharacterType.Monster).Cast<Monster>();
         public IEnumerable<Character> Characters => battleField.Where(c => c != null);
@@ -250,8 +252,7 @@ namespace Ambermoon
                 }
             }
 
-            effectAnimation = layout.GetOrCreateBattleEffectAnimation();
-            effectAnimation.Visible = false;
+            effectAnimations = layout.GetOrCreateBattleEffectAnimations();
 
             SetupNextIdleAnimation(0);
         }
@@ -358,11 +359,11 @@ namespace Ambermoon
                 }
             }
 
-            if (effectAnimation?.Visible == true)
+            foreach (var effectAnimation in effectAnimations)
             {
-                if (!effectAnimation.Update(battleTicks))
+                if (effectAnimation?.Visible == true)
                 {
-                    effectAnimation.Visible = false;
+                    effectAnimation.Update(battleTicks);
                 }
             }
         }
@@ -619,7 +620,15 @@ namespace Ambermoon
                             var weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
                             var target = preRoundBattleField[targetTile];
 
-                            if (weapon == null)
+                            if (target == null)
+                            {
+                                text = next.Character.Name + string.Format(game.DataNameProvider.BattleMessageMissedTheTarget, target.Name);
+                                foreach (var action in roundBattleActions.Where(a => a.Character == next.Character))
+                                    action.Skip = true;
+                                if (next.Character is PartyMember partyMember)
+                                    PlayerLostTarget?.Invoke(partyMember);
+                            }
+                            else if (weapon == null)
                                 text = next.Character.Name + string.Format(game.DataNameProvider.BattleMessageAttacks, target.Name);
                             else
                                 text = next.Character.Name + string.Format(game.DataNameProvider.BattleMessageAttacksWith, target.Name, weapon.Name);
@@ -727,18 +736,49 @@ namespace Ambermoon
                     break;
                 case BattleActionType.Attack:
                 {
+                    // TODO: first check if the weapon breaks. If so add a message which states it.
+                    // After a click this attack action should follow.
                     GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
-                    var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage);
+                    var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort);
                     // Next action is a hurt action
                     var hurtAction = roundBattleActions.Peek();
-
                     if (attackResult != AttackResult.Damage)
                     {
                         hurtAction.Skip = true;
+                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+
+                        switch (attackResult)
+                        {
+                            case AttackResult.Failed:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackFailed, textColor);
+                                break;
+                            case AttackResult.NoDamage:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, textColor);
+                                break;
+                            case AttackResult.Missed:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget, textColor);
+                                break;
+                            case AttackResult.Blocked:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried, textColor);
+                                break;
+                            case AttackResult.Protected:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotPenetrateMagicalAura, textColor);
+                                break;
+                        }
+
+                        if (abort)
+                        {
+                            foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
+                                action.Skip = true;
+                            if (battleAction.Character is PartyMember partyMember)
+                                PlayerLostTarget?.Invoke(partyMember);
+                        }
                     }
                     else
                     {
                         hurtAction.ActionParameter = UpdateHurtParameter(hurtAction.ActionParameter, (uint)damage);
+                        layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage),
+                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
                     }
                     Item weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
                     if (battleAction.Character is Monster monster)
@@ -786,8 +826,7 @@ namespace Ambermoon
                         }
                         else
                         {
-                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, battleAction.ActionParameter,
-                                battleTicks, ActionFinished);
+                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, targetTile, battleTicks, ActionFinished);
                         }
                     }
                     return;
@@ -835,9 +874,40 @@ namespace Ambermoon
                     return;
                 }
                 case BattleActionType.Hurt:
-                    // TODO
-                    // TODO: If someone dies, call CharacterDied and remove it from the battle field
-                    break;
+                {
+                    GetHurtInformation(battleAction.ActionParameter, out uint tile, out uint damage);
+
+                    var target = GetCharacterAt((int)tile);
+
+                    target.Damage(damage);
+
+                    void EndHurt()
+                    {
+                        ActionFinished();
+
+                        if (!target.Alive)
+                        {
+                            RemoveCharacterFromBattleField(target);
+                            CharacterDied?.Invoke(target);
+                            foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character || a.Character == target))
+                                action.Skip = true;
+                            if (battleAction.Character is PartyMember partyMember)
+                                PlayerLostTarget?.Invoke(partyMember);
+                        }
+                    }
+
+                    if (target is PartyMember partyMember)
+                    {
+                        // TODO: show damage splash at portrait
+
+                        PlayBattleEffectAnimation(BattleEffect.HurtPlayer, tile, battleTicks, EndHurt);
+                    }
+                    else if (target is Monster monster)
+                    {
+                        PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, EndHurt);
+                    }
+                    return;
+                }
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, "Invalid battle action.");
             }
@@ -1211,21 +1281,28 @@ namespace Ambermoon
                     finishedAction?.Invoke();
             }
 
-            foreach (var effect in effects)
+            effectAnimations = layout.GetOrCreateBattleEffectAnimations(effects.Count);
+
+            for (int i = 0; i < effects.Count; ++i)
             {
-                PlayBattleEffectAnimation(effect.StartTextureIndex, effect.FrameSize, effect.FrameCount, ticks, FinishEffect,
-                    effect.Duration / effect.FrameCount, effect.StartPosition, effect.EndPosition, effect.StartScale, effect.EndScale);
+                var effect = effects[i];
+
+                PlayBattleEffectAnimation(i, effect.StartTextureIndex, effect.FrameSize, effect.FrameCount, ticks, FinishEffect,
+                    effect.Duration / effect.FrameCount, effect.InitialDisplayLayer, effect.StartPosition, effect.EndPosition,
+                    effect.StartScale, effect.EndScale);
             }
         }
 
-        void PlayBattleEffectAnimation(uint graphicIndex, Size frameSize, uint numFrames, uint ticks, Action finishedAction,
-            uint ticksPerFrame, Position startPosition, Position endPosition, float initialScale = 1.0f, float endScale = 1.0f)
+        void PlayBattleEffectAnimation(int index, uint graphicIndex, Size frameSize, uint numFrames, uint ticks,
+            Action finishedAction, uint ticksPerFrame, byte initialDisplayLayer, Position startPosition, Position endPosition,
+            float initialScale = 1.0f, float endScale = 1.0f)
         {
+            var effectAnimation = effectAnimations[index];
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            effectAnimation.SetDisplayLayer(initialDisplayLayer);
             effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale);
             effectAnimation.Play(Enumerable.Range(0, (int)numFrames).ToArray(), ticksPerFrame, ticks, endPosition, endScale);
             effectAnimation.Visible = true;
-            currentlyAnimatedMonster = null;
 
             void EffectAnimationFinished()
             {
@@ -1278,6 +1355,15 @@ namespace Ambermoon
             weaponIndex = (actionParameter >> 5) & 0x7ff;
             targetTile = actionParameter & 0x1f;
         }
+        public static bool IsLongRangedAttack(uint actionParameter, IItemManager itemManager)
+        {
+            var weaponIndex = (actionParameter >> 5) & 0x7ff;
+
+            if (weaponIndex == 0)
+                return false;
+
+            return itemManager.GetItem(weaponIndex)?.Type == ItemType.LongRangeWeapon;
+        }
         static Spell GetCastSpell(uint actionParameter) => (Spell)(actionParameter >> 16);
         static void GetCastSpellInformation(uint actionParameter, out uint targetRowOrTile, out Spell spell, out uint itemIndex)
         {
@@ -1285,6 +1371,7 @@ namespace Ambermoon
             itemIndex = (actionParameter >> 5) & 0x7ff;
             targetRowOrTile = actionParameter & 0x1f;
         }
+        public static bool IsCastFromItem(uint actionParameter) => ((actionParameter >> 5) & 0x7ff) != 0;
         static void GetHurtInformation(uint actionParameter, out uint targetTile, out uint damage)
         {
             damage = (actionParameter >> 5) & 0x7ffffff;
@@ -1297,23 +1384,34 @@ namespace Ambermoon
             Failed, // Chance depending on attackers ATT ability
             NoDamage, // Chance depending on ATK / DEF
             Missed, // Target moved
-            Blocked // Parry
+            Blocked, // Parry
+            Protected // magic protection level
         }
 
-        AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage)
+        AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking)
         {
             damage = 0;
+            abortAttacking = false;
 
             if (battleField[attackedSlot] == null)
+            {
+                abortAttacking = true;
                 return AttackResult.Missed;
+            }
 
             var target = GetCharacterAt(attackedSlot);
+
+            if (attacker.MagicAttack >= 0 && target.MagicDefense > attacker.MagicAttack)
+            {
+                abortAttacking = true;
+                return AttackResult.Protected;
+            }
 
             if (game.RollDice100() > attacker.Abilities[Ability.Attack].TotalCurrentValue)
                 return AttackResult.Failed;
 
             // TODO: how is damage calculated?
-            damage = attacker.CombatAttack - 2 + game.RandomInt(0, 4) - target.CombatDefense;
+            damage = attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense));
 
             if (damage <= 0)
                 return AttackResult.NoDamage;
@@ -1331,12 +1429,19 @@ namespace Ambermoon
     {
         public static MonsterAnimationType? ToAnimationType(this Battle.BattleActionType battleAction) => battleAction switch
         {
-            Battle.BattleActionType.None => null,
             Battle.BattleActionType.Move => MonsterAnimationType.Move,
-            Battle.BattleActionType.MoveGroupForward => null,
             Battle.BattleActionType.Attack => MonsterAnimationType.Attack,
             Battle.BattleActionType.CastSpell => MonsterAnimationType.Cast,
-            Battle.BattleActionType.Flee => null,
+            _ => null
+        };
+
+        public static UIGraphic? ToStatusGraphic(this Battle.BattleActionType battleAction, uint parameter = 0, IItemManager itemManager = null) => battleAction switch
+        {
+            Battle.BattleActionType.Move => UIGraphic.StatusMove,
+            Battle.BattleActionType.Attack => Battle.IsLongRangedAttack(parameter, itemManager) ? UIGraphic.StatusRangeAttack : UIGraphic.StatusAttack,
+            Battle.BattleActionType.CastSpell => Battle.IsCastFromItem(parameter) ? UIGraphic.StatusUseItem : UIGraphic.StatusUseMagic,
+            Battle.BattleActionType.Flee => UIGraphic.StatusFlee,
+            Battle.BattleActionType.Parry => UIGraphic.StatusDefend,
             _ => null
         };
     }

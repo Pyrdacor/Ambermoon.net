@@ -32,13 +32,14 @@ namespace Ambermoon.Render
         public Size FrameSize;
         public uint FrameCount;
         public uint Duration;
+        public byte InitialDisplayLayer;
     }
 
     internal static class BattleEffects
     {
         static List<BattleEffectInfo> Effects(params BattleEffectInfo[] battleEffects) => new List<BattleEffectInfo>(battleEffects);
 
-        public static readonly int[] RowYOffsets = new[] { 82, 88, 100, 124 };
+        public static readonly int[] RowYOffsets = new[] { 82, 88, 100, 124, 130 };
 
         static Position GetCenterPosition(IRenderView renderView, uint tile)
         {
@@ -46,10 +47,9 @@ namespace Ambermoon.Render
             uint row = tile / 6;
             var combatBackgroundArea = Global.CombatBackgroundArea;
             int centerX = combatBackgroundArea.Width / 2;
-            var monsterRow = row > (uint)MonsterRow.Near ? MonsterRow.Near : (MonsterRow)row;
-            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
+            float sizeMultiplier = GetScaleFromRow(renderView, row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
-            int slotHeight = Util.Round(64 * sizeMultiplier); // TODO
+            int slotHeight = Util.Round(80 * sizeMultiplier); // TODO
             return new Position(centerX - (3 - (int)column) * slotWidth, combatBackgroundArea.Y + RowYOffsets[row] - slotHeight / 2);
         }
 
@@ -61,8 +61,8 @@ namespace Ambermoon.Render
             var endPosition = GetCenterPosition(renderView, targetTile);
             float endScale = startScale + (endPosition.Y - startPosition.Y) * scaleChangePerY;
 
-            startPosition -= new Position(Util.Round(0.5f * startScale * info.GraphicInfo.Width), Util.Round(0.5f * startScale * info.GraphicInfo.Height));
-            endPosition -= new Position(Util.Round(0.5f * endScale * info.GraphicInfo.Width), Util.Round(0.5f * endScale * info.GraphicInfo.Height));
+            startPosition -= new Position(Util.Round(0.5f * info.GraphicInfo.Width), Util.Round(0.5f * info.GraphicInfo.Height));
+            endPosition -= new Position(Util.Round(0.5f * info.GraphicInfo.Width), Util.Round(0.5f * info.GraphicInfo.Height));
 
             return new BattleEffectInfo
             {
@@ -73,7 +73,8 @@ namespace Ambermoon.Render
                 StartTextureIndex = Graphics.CombatGraphicOffset + (uint)graphicIndex,
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
-                Duration = duration
+                Duration = duration,
+                InitialDisplayLayer = (byte)sourceTile
             };
         }
 
@@ -82,6 +83,7 @@ namespace Ambermoon.Render
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var position = GetCenterPosition(renderView, tile);
+            scale *= GetScaleFromRow(renderView, tile / 6);
 
             return new BattleEffectInfo
             {
@@ -92,8 +94,15 @@ namespace Ambermoon.Render
                 StartTextureIndex = Graphics.CombatGraphicOffset + (uint)graphicIndex,
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
-                Duration = duration
+                Duration = duration,
+                InitialDisplayLayer = (byte)tile
             };
+        }
+
+        static float GetScaleFromRow(IRenderView renderView, uint row)
+        {
+            var monsterRow = row > (uint)MonsterRow.Near ? MonsterRow.Near : (MonsterRow)row;
+            return renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
         }
 
         static BattleEffectInfo CreateFlyingEffect(IRenderView renderView, uint sourceTile, uint targetTile, CombatGraphicIndex graphicIndex)
@@ -101,8 +110,8 @@ namespace Ambermoon.Render
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var startPosition = GetCenterPosition(renderView, sourceTile);
             var endPosition = GetCenterPosition(renderView, targetTile);
-            var sourceScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(sourceTile / 6));
-            var targetScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(targetTile / 6));
+            var sourceScale = GetScaleFromRow(renderView, sourceTile / 6);
+            var targetScale = GetScaleFromRow(renderView, targetTile / 6);
 
             return new BattleEffectInfo
             {
@@ -113,18 +122,19 @@ namespace Ambermoon.Render
                 StartTextureIndex = Graphics.CombatGraphicOffset + (uint)graphicIndex,
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
-                Duration = GetFlyDuration(sourceTile, targetTile)
+                Duration = GetFlyDuration(sourceTile, targetTile),
+                InitialDisplayLayer = (byte)sourceTile
             };
         }
 
         static uint GetFlyDuration(uint sourceTile, uint targetTile)
         {
-            uint sourceColumn = sourceTile % 6;
-            uint sourceRow = sourceTile / 6;
-            uint targetColumn = targetTile % 6;
-            uint targetRow = targetTile / 6;
+            int sourceColumn = (int)sourceTile % 6;
+            int sourceRow = (int)sourceTile / 6;
+            int targetColumn = (int)targetTile % 6;
+            int targetRow = (int)targetTile / 6;
 
-            return (uint)((Math.Abs(targetColumn - sourceColumn) + Math.Abs(targetRow - sourceRow) * 2) * Game.TicksPerSecond / 4);
+            return (uint)((Math.Abs(targetColumn - sourceColumn) + Math.Abs(targetRow - sourceRow) * 2) * Game.TicksPerSecond / 12);
         }
 
         public static List<BattleEffectInfo> GetEffectInfo(IRenderView renderView, BattleEffect battleEffect, uint sourceTile, uint targetTile)

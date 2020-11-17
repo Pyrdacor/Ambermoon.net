@@ -30,6 +30,7 @@ namespace Ambermoon.Render
             baseTextureCoords = new Position(sprite.TextureAtlasOffset);
             sprite.TextureSize = baseSpriteSize;
             Scale = initialScale;
+            sprite.ClipArea = Global.CombatBackgroundArea;
         }
 
         public void SetStartFrame(Position textureOffset, Size size, Position position = null, float initialScale = 1.0f)

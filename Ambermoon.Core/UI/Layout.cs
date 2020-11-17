@@ -342,6 +342,7 @@ namespace Ambermoon.UI
             public int Column { get; set; }
             public BattleAnimation Animation { get; set; }
             public ILayerSprite BattleFieldSprite { get; set; }
+            public Tooltip Tooltip { get; set; }
         }
 
         public LayoutType Type { get; private set; }
@@ -379,7 +380,7 @@ namespace Ambermoon.UI
         IRenderText activeTooltip = null;
         UIText inventoryMessage = null;
         UIText battleMessage = null;
-        BattleAnimation battleEffectAnimation = null;
+        readonly List<BattleAnimation> battleEffectAnimations = new List<BattleAnimation>();
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
         public bool PopupActive => activePopup != null;
@@ -1121,15 +1122,15 @@ namespace Ambermoon.UI
             inventoryMessage = null;
             battleMessage?.Destroy();
             battleMessage = null;
-            battleEffectAnimation?.Destroy();
-            battleEffectAnimation = null;
+            battleEffectAnimations.ForEach(a => a?.Destroy());
+            battleEffectAnimations.Clear();
             activeSpellSprites.Clear(); // sprites are destroyed above
             activeSpellDurationBackgrounds.Values.ToList().ForEach(b => b?.Delete());
             activeSpellDurationBackgrounds.Clear();
             activeSpellDurationBars.Clear(); // areas are destroyed above
             specialItemSprites.Clear(); // sprites are destroyed above
             specialItemTexts.Clear(); // texts are destroyed above
-            monsterCombatGraphics.ForEach(g => { g.Animation?.Destroy(); g.BattleFieldSprite?.Delete(); });
+            monsterCombatGraphics.ForEach(g => { g.Animation?.Destroy(); g.BattleFieldSprite?.Delete(); RemoveTooltip(g.Tooltip); });
             monsterCombatGraphics.Clear();
 
             // Note: Don't remove fadeEffects or bars here.
@@ -1141,7 +1142,32 @@ namespace Ambermoon.UI
             {
                 if (portraitNames[i] != null)
                 {
-                    portraitNames[i].TextColor = i == slot ? TextColor.Yellow : partyMembers[i].Alive ? TextColor.Red : TextColor.PaleGray;
+                    if (i == slot)
+                        portraitNames[i].TextColor = TextColor.Yellow;
+                    else if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
+                        portraitNames[i].TextColor = TextColor.PaleGray;
+                    else if (game.HasCharacterFled(partyMembers[i]))
+                        portraitNames[i].TextColor = TextColor.PaleGray;
+                    else
+                        portraitNames[i].TextColor = TextColor.Red;
+                }
+            }
+        }
+
+        public void UpdateCharacterNameColors(int activeSlot)
+        {
+            var partyMembers = Enumerable.Range(0, Game.MaxPartyMembers).Select(i => game.GetPartyMember(i)).ToList();
+
+            for (int i = 0; i < portraitNames.Length; ++i)
+            {
+                if (portraitNames[i] != null)
+                {
+                    if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
+                        portraitNames[i].TextColor = TextColor.PaleGray;
+                    else if (game.HasCharacterFled(partyMembers[i]))
+                        portraitNames[i].TextColor = TextColor.PaleGray;
+                    else
+                        portraitNames[i].TextColor = activeSlot == i ? TextColor.Yellow : TextColor.Red;
                 }
             }
         }
@@ -1202,13 +1228,13 @@ namespace Ambermoon.UI
                 text.DisplayLayer = 1;
                 text.TextColor = partyMember.Alive ? TextColor.Red : TextColor.PaleGray;
                 text.Visible = true;
-                UpdateCharacterStatus(slot, partyMember);
+                UpdateCharacterStatus(partyMember);
             }
 
             FillCharacterBars(slot, partyMember);
         }
 
-        internal void UpdateCharacterStatus(int slot, PartyMember partyMember, uint? forcedGraphicIndex = null)
+        internal void UpdateCharacterStatus(int slot, UIGraphic? graphicIndex = null)
         {
             var sprite = characterStatusIcons[slot] ??= RenderView.SpriteFactory.Create(16, 16, true, 3) as ILayerSprite;
             sprite.Layer = renderLayer;
@@ -1216,34 +1242,40 @@ namespace Ambermoon.UI
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 33;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 2;
 
-            if (forcedGraphicIndex != null)
+            if (graphicIndex != null)
             {
-                sprite.TextureAtlasOffset = textureAtlas.GetOffset(forcedGraphicIndex.Value);
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(graphicIndex.Value));
                 sprite.Visible = true;
             }
             else
             {
-                if (partyMember.Ailments != Ailment.None)
-                {
-                    var ailments = Enum.GetValues<Ailment>().Where(a => partyMember.Ailments.HasFlag(a)).ToList();
-                    uint ailmentCount = (uint)ailments.Count;
+                sprite.Visible = false;
+            }
+        }
 
-                    if (ailmentCount == 1)
-                    {
-                        sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAilmentGraphicIndex(partyMember.Ailments));
-                    }
-                    else
-                    {
-                        uint ticksPerAilment = Game.TicksPerSecond / 4;
-                        int index = (int)((game.CurrentTicks % (ailmentCount * ticksPerAilment)) / ticksPerAilment);
-                        sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAilmentGraphicIndex(ailments[index]));
-                    }
-                    sprite.Visible = true;
+        internal void UpdateCharacterStatus(PartyMember partyMember)
+        {
+            int slot = game.SlotFromPartyMember(partyMember).Value;
+
+            if (partyMember.Ailments != Ailment.None)
+            {
+                var ailments = Enum.GetValues<Ailment>().Where(a => partyMember.Ailments.HasFlag(a)).ToList();
+                uint ailmentCount = (uint)ailments.Count;
+
+                if (ailmentCount == 1)
+                {
+                    sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAilmentGraphicIndex(partyMember.Ailments));
                 }
                 else
                 {
-                    sprite.Visible = false;
+                    uint ticksPerAilment = Game.TicksPerSecond / 4;
+                    int index = (int)((game.CurrentTicks % (ailmentCount * ticksPerAilment)) / ticksPerAilment);
+                    UpdateCharacterStatus(slot, Graphics.GetAilmentGraphic(ailments[index]));
                 }
+            }
+            else
+            {
+                UpdateCharacterStatus(slot, null);
             }
         }
 
@@ -1405,9 +1437,10 @@ namespace Ambermoon.UI
                     game.ProcessText($"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}"));
         }
 
-        public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
-            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null)
+        public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer,
+            string tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip createdTooltip)
         {
+            createdTooltip = null;
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, true) as ILayerSprite;
             sprite.TextureAtlasOffset = layer == null ? textureAtlas.GetOffset(textureIndex)
                 : TextureAtlasManager.Instance.GetOrCreate(layer.Value).GetOffset(textureIndex);
@@ -1420,19 +1453,35 @@ namespace Ambermoon.UI
             additionalSprites.Add(sprite);
 
             if (tooltip != null)
-                AddTooltip(rect, tooltip, tooltipTextColor ?? TextColor.White);
+                createdTooltip = AddTooltip(rect, tooltip, tooltipTextColor ?? TextColor.White);
 
             return sprite;
         }
 
-        void AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
+        public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
+            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null)
         {
-            tooltips.Add(new Tooltip
+            return AddSprite(rect, textureIndex, paletteIndex, displayLayer, tooltip, tooltipTextColor, layer, out _);
+        }
+
+        Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
+        {
+            var toolTip = new Tooltip
             {
                 Area = rect,
                 Text = tooltip,
                 TextColor = tooltipTextColor
-            });
+            };
+            tooltips.Add(toolTip);
+            return toolTip;
+        }
+
+        void RemoveTooltip(Tooltip tooltip)
+        {
+            tooltips.Remove(tooltip);
+
+            if (activeTooltip == tooltip)
+                SetActiveTooltip(null, null);
         }
 
         void SetActiveTooltip(Position cursorPosition, Tooltip tooltip)
@@ -2044,7 +2093,8 @@ namespace Ambermoon.UI
                     Global.BattleFieldY + row * Global.BattleFieldSlotHeight - 1,
                     Global.BattleFieldSlotWidth, Global.BattleFieldSlotHeight + 1
                 ), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
-                49, 3, monster.Name, TextColor.Orange)
+                49, 3, monster.Name, TextColor.Orange, Layer.UI, out Tooltip tooltip),
+                Tooltip = tooltip
             });
             return animation;
         }
@@ -2057,6 +2107,7 @@ namespace Ambermoon.UI
             {
                 monsterCombatGraphic.Animation?.Destroy();
                 monsterCombatGraphic.BattleFieldSprite?.Delete();
+                RemoveTooltip(monsterCombatGraphic.Tooltip);
                 monsterCombatGraphics.Remove(monsterCombatGraphic);
             }
         }
@@ -2103,6 +2154,8 @@ namespace Ambermoon.UI
                 // x starts at 96, y at 134
                 monsterCombatGraphic.BattleFieldSprite.X = Global.BattleFieldX + (int)column * Global.BattleFieldSlotWidth;
                 monsterCombatGraphic.BattleFieldSprite.Y = Global.BattleFieldY + (int)row * Global.BattleFieldSlotHeight - 1;
+                monsterCombatGraphic.Tooltip.Area = new Rect(monsterCombatGraphic.BattleFieldSprite.X, monsterCombatGraphic.BattleFieldSprite.Y,
+                    monsterCombatGraphic.BattleFieldSprite.Width, monsterCombatGraphic.BattleFieldSprite.Height);
             }
         }
 
@@ -2184,14 +2237,18 @@ namespace Ambermoon.UI
             }
         }
 
-        public BattleAnimation GetOrCreateBattleEffectAnimation()
+        public List<BattleAnimation> GetOrCreateBattleEffectAnimations(int amount = 1)
         {
-            if (battleEffectAnimation != null)
-                return battleEffectAnimation;
+            if (battleEffectAnimations.Count >= amount)
+                return battleEffectAnimations;
 
-            var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 49);
-            sprite.Visible = false;
-            return battleEffectAnimation = new BattleAnimation(sprite);
+            for (int i = battleEffectAnimations.Count; i < amount; ++i)
+            {
+                var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 49, 0);
+                sprite.Visible = false;
+                battleEffectAnimations.Add(new BattleAnimation(sprite));
+            }
+            return battleEffectAnimations;
         }
     }
 }

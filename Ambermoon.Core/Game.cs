@@ -451,7 +451,7 @@ namespace Ambermoon
                     var partyMember = GetPartyMember(i);
 
                     if (partyMember != null)
-                        layout.UpdateCharacterStatus(i, partyMember);
+                        layout.UpdateCharacterStatus(partyMember);
                 }
             }
 
@@ -713,6 +713,7 @@ namespace Ambermoon
             ingame = true;
             CurrentSavegame = savegame;
             GameTime = new SavegameTime(savegame);
+            currentBattle = null;
 
             ClearPartyMembers();
             for (int i = 0; i < MaxPartyMembers; ++i)
@@ -1533,6 +1534,7 @@ namespace Ambermoon
         {
             if (show)
             {
+                currentBattle = null;
                 layout.CancelDrag();
                 ResetCursor();
                 OpenStorage = null;
@@ -1914,11 +1916,11 @@ namespace Ambermoon
                     TextColor.White, TextAlign.Center));
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
                 characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.CombatAttack < 0 ? '-' : '+'), Math.Abs(character.CombatAttack)),
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.VariableAttack < 0 ? '-' : '+'), Math.Abs(character.VariableAttack)),
                     TextColor.White, TextAlign.Left));
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
                 characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.CombatDefense < 0 ? '-' : '+'), Math.Abs(character.CombatDefense)),
+                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.VariableDefense < 0 ? '-' : '+'), Math.Abs(character.VariableDefense)),
                     TextColor.White, TextAlign.Left));
             }
             else
@@ -1981,9 +1983,9 @@ namespace Ambermoon
             UpdateText(CharacterInfo.GoldAndFood, () =>
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
             UpdateText(CharacterInfo.Attack, () =>
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.CombatAttack < 0 ? '-' : '+'), Math.Abs(character.CombatAttack)));
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.VariableAttack < 0 ? '-' : '+'), Math.Abs(character.VariableAttack)));
             UpdateText(CharacterInfo.Defense, () =>
-                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.CombatDefense < 0 ? '-' : '+'), Math.Abs(character.CombatDefense)));
+                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.VariableDefense < 0 ? '-' : '+'), Math.Abs(character.VariableDefense)));
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
                 Util.Round(character.TotalWeight / 1000.0f), character.Attributes[Data.Attribute.Strength].TotalCurrentValue));
             if (npc != null)
@@ -2056,8 +2058,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            partyMember.CombatAttack = (short)(partyMember.CombatAttack + item.Damage);
-            partyMember.CombatDefense = (short)(partyMember.CombatDefense + item.Defense);
+            partyMember.VariableAttack = (short)(partyMember.VariableAttack + item.Damage);
+            partyMember.VariableDefense = (short)(partyMember.VariableDefense + item.Defense);
             partyMember.TotalWeight += (uint)amount * item.Weight;
             // TODO ...
         }
@@ -2073,8 +2075,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            partyMember.CombatAttack = (short)(partyMember.CombatAttack - item.Damage);
-            partyMember.CombatDefense = (short)(partyMember.CombatDefense - item.Defense);
+            partyMember.VariableAttack = (short)(partyMember.VariableAttack - item.Damage);
+            partyMember.VariableDefense = (short)(partyMember.VariableDefense - item.Defense);
             partyMember.TotalWeight -= (uint)amount * item.Weight;
             // TODO ...
         }
@@ -2569,6 +2571,20 @@ namespace Ambermoon
             }
         }
 
+        void CheckMadPlayers()
+        {
+            // Note: Mad players will show the mad status icon next to
+            // their portraits instead of an action icon. When the
+            // battle starts the action icon will be shown instead.
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                var partyMember = GetPartyMember(i);
+
+                if (partyMember != null && partyMember.Ailments.HasFlag(Ailment.Crazy))
+                    layout.UpdateCharacterStatus(i, UIGraphic.StatusCrazy);
+            }
+        }
+
         void ShowBattleWindow(Event nextEvent)
         {
             SetWindow(Window.Battle, nextEvent);
@@ -2627,6 +2643,7 @@ namespace Ambermoon
                     partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray);
                 }
             }
+            CheckMadPlayers();
 
             // Flee button
             layout.AttachEventToButton(0, () =>
@@ -2649,10 +2666,25 @@ namespace Ambermoon
             {
                 SetCurrentPlayerAction(PlayerBattleAction.PickMoveSpot);
             });
+            // Move group forward button
+            layout.AttachEventToButton(4, () =>
+            {
+                // TODO
+            });
             // Attack button
             layout.AttachEventToButton(6, () =>
             {
                 SetCurrentPlayerAction(PlayerBattleAction.PickAttackSpot);
+            });
+            // Parry button
+            layout.AttachEventToButton(7, () =>
+            {
+                SetCurrentPlayerBattleAction(Battle.BattleActionType.Parry);
+            });
+            // Use magic button
+            layout.AttachEventToButton(8, () =>
+            {
+                // TODO
             });
 
             if (currentBattle != null)
@@ -2698,8 +2730,13 @@ namespace Ambermoon
                     AddCurrentPlayerActionVisuals();
                     layout.SetBattleMessage(null);
                     RecheckActivePartyMember();
+                    CheckMadPlayers();
                 };
-                currentBattle.CharacterDied += RemoveBattleActor;
+                currentBattle.CharacterDied += character =>
+                {
+                    if (character is PartyMember partyMember)
+                        layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember);
+                };
                 currentBattle.BattleEnded += battleEndInfo =>
                 {
                     void EndBattle(BattleEndInfo battleEndInfo)
@@ -2728,6 +2765,22 @@ namespace Ambermoon
                 currentBattle.ActionCompleted += battleAction =>
                 {
                     CursorType = CursorType.Click;
+
+                    if (battleAction.Character is PartyMember partyMember &&
+                        (battleAction.Action == Battle.BattleActionType.Move ||
+                        battleAction.Action == Battle.BattleActionType.Flee ||
+                        battleAction.Action == Battle.BattleActionType.CastSpell))
+                        layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value, null);
+                };
+                currentBattle.PlayerWeaponBroke += partyMember =>
+                {
+                    // Note: no need to check action here as it only can break while attacking
+                    layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value, null);
+                };
+                currentBattle.PlayerLostTarget += partyMember =>
+                {
+                    roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
+                    layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value, null);
                 };
                 BattlePlayerSwitched();
 
@@ -2967,15 +3020,16 @@ namespace Ambermoon
                 roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
         }
 
-        void SetCurrentPlayerBattleAction(Battle.BattleActionType actionType, uint Parameter = 0)
+        void SetCurrentPlayerBattleAction(Battle.BattleActionType actionType, uint parameter = 0)
         {
             RemoveCurrentPlayerActionVisuals();
             var action = GetOrCreateBattleAction();
             action.BattleAction = actionType;
-            action.Parameter = Parameter;
+            action.Parameter = parameter;
             AddCurrentPlayerActionVisuals();
 
-            // TODO: Show icon next to player portrait
+            int slot = SlotFromPartyMember(CurrentPartyMember).Value;
+            layout.UpdateCharacterStatus(slot, actionType.ToStatusGraphic(parameter, ItemManager));
         }
 
         Battle.PlayerBattleAction GetOrCreateBattleAction()
@@ -3513,6 +3567,15 @@ namespace Ambermoon
                 // TODO: Player has to choose a new leader.
                 // TODO: What happens if all party members are no longer selectable? E.g. all sleeping?
             }
+            else
+            {
+                layout.UpdateCharacterNameColors(SlotFromPartyMember(CurrentPartyMember).Value);
+            }
+        }
+
+        internal bool HasCharacterFled(PartyMember partyMember)
+        {
+            return currentBattle != null && currentBattle.GetSlotFromCharacter(partyMember) == -1;
         }
 
         internal void SetActivePartyMember(int index, bool updateBattlePosition = true)
@@ -3528,7 +3591,7 @@ namespace Ambermoon
                 CurrentPartyMember = partyMember;
                 layout.SetActiveCharacter(index, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToList());
 
-                if (updateBattlePosition && layout.Type == LayoutType.Battle)
+                if (currentBattle != null && updateBattlePosition && layout.Type == LayoutType.Battle)
                     BattlePlayerSwitched();
 
                 if (pickingNewLeader)

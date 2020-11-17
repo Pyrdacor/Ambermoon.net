@@ -55,10 +55,10 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write((ushort)character.SpellPoints.CurrentValue);
             dataWriter.Write((ushort)character.SpellPoints.MaxValue);
             dataWriter.Write((ushort)character.SpellPoints.BonusValue);
-            dataWriter.Write((ushort)character.CombatDefense);
-            dataWriter.Write((ushort)character.DisplayedDefense);
-            dataWriter.Write((ushort)character.CombatAttack);
-            dataWriter.Write((ushort)character.DisplayedAttack);
+            dataWriter.Write((ushort)character.VariableDefense);
+            dataWriter.Write((ushort)character.BaseDefense);
+            dataWriter.Write((ushort)character.VariableAttack);
+            dataWriter.Write((ushort)character.BaseAttack);
             dataWriter.Write((ushort)character.MagicAttack);
             dataWriter.Write((ushort)character.MagicDefense);
             dataWriter.Write(character.AttacksPerRoundPerLevel);
