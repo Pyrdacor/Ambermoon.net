@@ -211,6 +211,7 @@ namespace Ambermoon
         public event Action<PartyMember> PlayerWeaponBroke;
         public event Action<PartyMember> PlayerLostTarget;
         event Action AnimationFinished;
+        List<Monster> initialMonsters = new List<Monster>();
         public IEnumerable<Monster> Monsters => battleField.Where(c => c?.Type == CharacterType.Monster).Cast<Monster>();
         public IEnumerable<Character> Characters => battleField.Where(c => c != null);
         public Character GetCharacterAt(int index) => battleField[index];
@@ -248,6 +249,7 @@ namespace Ambermoon
                         int index = x + y * 6;
                         battleField[index] = monster;
                         monsterBattleAnimations[index].AnimationFinished += () => MonsterAnimationFinished(monster);
+                        initialMonsters.Add(monster);
                     }
                 }
             }
@@ -510,7 +512,7 @@ namespace Ambermoon
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.Hurt,
-                                ActionParameter = playerAction.Parameter
+                                ActionParameter = CreateHurtParameter(GetTargetTileFromParameter(playerAction.Parameter))
                             });
                         }
                     }
@@ -798,6 +800,7 @@ namespace Ambermoon
                         {
                             PlayBattleEffectAnimation(weapon.UsedAmmunitionType switch
                             {
+                                AmmunitionType.None => BattleEffect.SickleAttack,
                                 AmmunitionType.Slingstone => BattleEffect.SlingstoneAttack,
                                 AmmunitionType.Arrow => BattleEffect.MonsterArrowAttack,
                                 AmmunitionType.Bolt => BattleEffect.MonsterBoltAttack,
@@ -817,6 +820,7 @@ namespace Ambermoon
                         {
                             PlayBattleEffectAnimation(weapon.UsedAmmunitionType switch
                             {
+                                AmmunitionType.None => BattleEffect.SickleAttack,
                                 AmmunitionType.Slingstone => BattleEffect.SlingstoneAttack,
                                 AmmunitionType.Arrow => BattleEffect.PlayerArrowAttack,
                                 AmmunitionType.Bolt => BattleEffect.PlayerBoltAttack,
@@ -887,12 +891,43 @@ namespace Ambermoon
 
                         if (!target.Alive)
                         {
-                            RemoveCharacterFromBattleField(target);
-                            CharacterDied?.Invoke(target);
+                            static float GetMonsterDeathScale(Monster monster)
+                            {
+                                // 48 is the normal frame width
+                                return monster.MappedFrameWidth / 48.0f;
+                            }
                             foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character || a.Character == target))
                                 action.Skip = true;
                             if (battleAction.Character is PartyMember partyMember)
-                                PlayerLostTarget?.Invoke(partyMember);
+                            {
+                                RemoveCharacterFromBattleField(target);
+                                PlayBattleEffectAnimation(BattleEffect.Death, tile, battleTicks, () =>
+                                {
+                                    CharacterDied?.Invoke(target);
+                                    PlayerLostTarget?.Invoke(partyMember);
+                                    if (Monsters.Count() == 0)
+                                    {
+                                        BattleEnded?.Invoke(new Game.BattleEndInfo
+                                        {
+                                            MonstersDefeated = true,
+                                            KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList()
+                                        });
+                                    }
+                                }, GetMonsterDeathScale(target as Monster));
+                            }
+                            else
+                            {
+                                RemoveCharacterFromBattleField(target);
+                                CharacterDied?.Invoke(target);
+
+                                if (!partyMembers.Any(p => p != null && p.Alive && p.Ailments.CanFight()))
+                                {
+                                    BattleEnded?.Invoke(new Game.BattleEndInfo
+                                    {
+                                        MonstersDefeated = false
+                                    });
+                                }
+                            }
                         }
                     }
 
@@ -904,6 +939,21 @@ namespace Ambermoon
                     }
                     else if (target is Monster monster)
                     {
+                        var animation = layout.GetMonsterBattleAnimation(monster);
+
+                        void HurtAnimationFinished()
+                        {
+                            animation.AnimationFinished -= HurtAnimationFinished;
+                            currentBattleAnimation = null;
+                            currentlyAnimatedMonster = null;
+                        }
+
+                        animation.AnimationFinished += HurtAnimationFinished;
+                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt), Game.TicksPerSecond / 3,
+                            battleTicks);
+                        currentBattleAnimation = animation;
+                        currentlyAnimatedMonster = monster;
+
                         PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, EndHurt);
                     }
                     return;
@@ -1265,14 +1315,14 @@ namespace Ambermoon
             }
         }
 
-        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint tile, uint ticks, Action finishedAction)
+        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint tile, uint ticks, Action finishedAction, float scale = 1.0f)
         {
-            PlayBattleEffectAnimation(battleEffect, tile, tile, ticks, finishedAction);
+            PlayBattleEffectAnimation(battleEffect, tile, tile, ticks, finishedAction, scale);
         }
 
-        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint sourceTile, uint targetTile, uint ticks, Action finishedAction)
+        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint sourceTile, uint targetTile, uint ticks, Action finishedAction, float scale = 1.0f)
         {
-            var effects = BattleEffects.GetEffectInfo(layout.RenderView, battleEffect, sourceTile, targetTile);
+            var effects = BattleEffects.GetEffectInfo(layout.RenderView, battleEffect, sourceTile, targetTile, scale);
             int numFinishedEffects = 0;
 
             void FinishEffect()

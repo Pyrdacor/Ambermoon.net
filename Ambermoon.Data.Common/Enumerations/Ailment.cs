@@ -28,6 +28,15 @@ namespace Ambermoon.Data
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class AilmentExtensions
     {
+        public static bool CanFight(this Ailment ailment)
+        {
+            return
+                !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.DeadCorpse) &&
+                !ailment.HasFlag(Ailment.DeadAshes) &&
+                !ailment.HasFlag(Ailment.DeadDust);
+        }
+
         public static bool CanSelect(this Ailment ailment)
         {
             return

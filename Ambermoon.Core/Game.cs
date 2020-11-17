@@ -91,10 +91,9 @@ namespace Ambermoon
             public bool MonstersDefeated;
             /// <summary>
             /// If all monsters were defeated this list contains
-            /// the indices of monsters inside the monster group
-            /// who fled instead of dying.
+            /// the monsters who died.
             /// </summary>
-            public List<uint> FledMonsterIndices;
+            public List<Monster> KilledMonsters;
         }
 
         class BattleInfo
@@ -2742,6 +2741,7 @@ namespace Ambermoon
                     void EndBattle(BattleEndInfo battleEndInfo)
                     {
                         currentBattleInfo.EndBattle(battleEndInfo);
+                        currentBattleInfo = null;
                         if (nextEvent != null)
                         {
                             bool lastStatus = true;
@@ -2751,6 +2751,7 @@ namespace Ambermoon
                     }
                     if (battleEndInfo.MonstersDefeated)
                     {
+                        currentBattle = null;
                         ShowBattleLoot(battleEndInfo, () =>
                         {
                             EndBattle(battleEndInfo);
@@ -2758,6 +2759,8 @@ namespace Ambermoon
                     }
                     else
                     {
+                        currentBattleInfo = null;
+                        currentBattle = null;
                         CloseWindow();
                         GameOver();
                     }
@@ -3313,6 +3316,7 @@ namespace Ambermoon
 
         internal void ShowBattleLoot(BattleEndInfo battleEndInfo, Action closeAction)
         {
+            InputEnable = true;
             // TODO
             CloseWindow();
             closeAction?.Invoke();
