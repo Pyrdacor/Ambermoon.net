@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.18](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.18/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.17](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.17/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.16](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.16/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.1.15](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.15/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -38,30 +38,7 @@ Let's bring this game to life on modern PCs with modern resolutions and graphic 
 You may also checkout my already working Settlers I rewrite at [freeserf.net](https://github.com/Pyrdacor/freeserf.net).
 
 
-## Current state
-
-Working things:
-- 2D maps
-	- movement / auto scrolling / collision detection
-	- change map events / chest events / some conditions and actions / text events
-	- walk animations, animated tiles, auto-sit, auto-sleep
-	- transports like horses
-	- NPCs and monsters
-- 3D maps
-	- movement / static billboards / collision detection
-	- change map events / chest events / text events / riddlemouth
-	- interaction with eye, hand and mouth
-	- NPCs and monsters
-- window mode / fullscreen
-- cursors and mouse movement, trigger events with hand/eye cursor
-- text rendering including runes
-- fading effect for map transitions etc
-- item drag&drop, inventory and equip, player stats
-- view chests and loot items
-- character info, portraits and names
-- savegame loading
-- many buttons and UI stuff
-- active special items and buffs (only display for the latter)
+## Screenshots
 
 ![Map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png "Map rendering")
 ![World map](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png "World map")
@@ -96,6 +73,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [1.1.18](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.18): First battle implementation (no spells yet, beta status)
 - Version [1.1.17](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.17): Bugfixing
 - Version [1.1.16](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.16): Added 3D NPCs interaction, turn toward monsters, active spells and items, bugfixing
 - Version [1.1.15](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.15): Added 3D NPCs/monsters with movement (still WIP), bugfixing
