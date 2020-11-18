@@ -188,7 +188,6 @@ namespace Ambermoon
         readonly PartyMember[] partyMembers;
         readonly Queue<BattleAction> roundBattleActions = new Queue<BattleAction>();
         readonly Character[] battleField = new Character[6 * 5];
-        Character[] preRoundBattleField;
         readonly List<PartyMember> parryingPlayers = new List<PartyMember>(Game.MaxPartyMembers);
         readonly List<Character> fledCharacters = new List<Character>();
         uint? animationStartTicks = null;
@@ -444,7 +443,6 @@ namespace Ambermoon
                 .OrderByDescending(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue)
                 .ToList();
             parryingPlayers.Clear();
-            preRoundBattleField = battleField.ToArray(); // copy
             bool monstersAdvance = false;
 
             // This is added in addition to normal monster actions directly
@@ -568,15 +566,13 @@ namespace Ambermoon
                     Action = action,
                     ActionParameter = actionParameter
                 });
-                if (action == BattleActionType.Attack ||
-                    (action == BattleActionType.CastSpell &&
-                    SpellInfos.Entries[GetCastSpell(actionParameter)].Target.TargetsEnemy()))
+                if (action == BattleActionType.Attack)
                 {
                     roundBattleActions.Enqueue(new BattleAction
                     {
                         Character = monster,
                         Action = BattleActionType.Hurt,
-                        ActionParameter = 0
+                        ActionParameter = CreateHurtParameter(GetTargetTileFromParameter(actionParameter))
                     });
                 }
             }
@@ -620,11 +616,11 @@ namespace Ambermoon
                             // TODO: handle dropping weapon / no ammunition
                             GetAttackInformation(next.ActionParameter, out uint targetTile, out uint weaponIndex, out uint _);
                             var weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
-                            var target = preRoundBattleField[targetTile];
+                            var target = battleField[targetTile];
 
                             if (target == null)
                             {
-                                text = next.Character.Name + string.Format(game.DataNameProvider.BattleMessageMissedTheTarget, target.Name);
+                                text = next.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget;
                                 foreach (var action in roundBattleActions.Where(a => a.Character == next.Character))
                                     action.Skip = true;
                                 if (next.Character is PartyMember partyMember)
