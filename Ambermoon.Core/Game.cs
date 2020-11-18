@@ -3144,6 +3144,12 @@ namespace Ambermoon
             }
         }
 
+        bool AnyPlayerMovesTo(int slot)
+        {
+            return roundPlayerBattleActions.Any(p => p.Value.BattleAction == Battle.BattleActionType.Move &&
+                Battle.GetTargetTileFromParameter(p.Value.Parameter) == slot);
+        }
+
         void BattleFieldSlotClicked(int column, int row)
         {
             if (currentBattle.SkipNextBattleFieldClick)
@@ -3202,7 +3208,12 @@ namespace Ambermoon
                         }
                         if (!CurrentPartyMember.Ailments.CanMove())
                         {
-                            SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove);
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove, TextColor.Gray);
+                            return;
+                        }
+                        if (AnyPlayerMovesTo(column + row * 6))
+                        {
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageSomeoneAlreadyGoingThere, TextColor.Gray);
                             return;
                         }
                         SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
@@ -3255,9 +3266,10 @@ namespace Ambermoon
                 }
                 case PlayerBattleAction.PickMoveSpot:
                 {
-                    if (currentBattle.IsBattleFieldEmpty(column + row * 6))
+                    int position = column + row * 6;
+                    if (currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
                     {
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)position));
                         CancelSpecificPlayerAction();
                     }
                     break;
@@ -3320,7 +3332,8 @@ namespace Ambermoon
                     break;
                 case PlayerBattleAction.PickMoveSpot:
                 {
-                    var valuableSlots = GetValuableBattleFieldSlots(currentBattle.IsBattleFieldEmpty,
+                    // TODO: In original game if a slot is empty but someone moves there, it is still highlighted but with a red cross icon.
+                    var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position),
                         1, 3, 4);
                     foreach (var slot in valuableSlots)
                     {
