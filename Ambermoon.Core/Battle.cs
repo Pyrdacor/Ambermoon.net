@@ -973,7 +973,7 @@ namespace Ambermoon
             game.RemoveBattleActor(character);
         }
 
-        void MoveCharacterTo(uint tile, Character character)
+        public void MoveCharacterTo(uint tile, Character character)
         {
             MoveCharacterTo(tile % 6, tile / 6, character);
         }

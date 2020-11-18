@@ -186,6 +186,7 @@ namespace Ambermoon
         internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
         PartyMember CurrentPartyMember { get; set; } = null;
         bool pickingNewLeader = false;
+        bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
@@ -206,6 +207,7 @@ namespace Ambermoon
         bool allInputDisabled = false;
         bool inputEnable = true;
         bool paused = false;
+        Action nextClickHandler = null;
         /// <summary>
         /// The 3x3 buttons will always be enabled!
         /// </summary>
@@ -1225,6 +1227,13 @@ namespace Ambermoon
         {
             if (allInputDisabled)
                 return;
+
+            if (nextClickHandler != null)
+            {
+                nextClickHandler?.Invoke();
+                nextClickHandler = null;
+                return;
+            }
 
             position = GetMousePosition(position);
 
@@ -2554,6 +2563,12 @@ namespace Ambermoon
         {
             currentBattle.Update(currentBattleTicks);
 
+            if (advancing)
+            {
+                foreach (var monster in currentBattle.Monsters)
+                    layout.GetMonsterBattleAnimation(monster).Update(currentBattleTicks);
+            }
+
             if (highlightBattleFieldSprites.Count != 0)
             {
                 bool showBlinkingSprites = !blinkingHighlight || (currentBattleTicks % (2 * TicksPerSecond / 3)) < TicksPerSecond / 3;
@@ -2668,7 +2683,18 @@ namespace Ambermoon
             // Move group forward button
             layout.AttachEventToButton(4, () =>
             {
-                // TODO
+                SetBattleMessageWithClick(DataNameProvider.BattleMessagePartyAdvances, TextColor.Gray, () =>
+                {
+                    InputEnable = false;
+                    currentBattle.WaitForClick = true;
+                    CursorType = CursorType.Click;
+                    AdvanceParty(() =>
+                    {
+                        InputEnable = true;
+                        currentBattle.WaitForClick = false;
+                        CursorType = CursorType.Sword;
+                    });
+                });
             });
             // Attack button
             layout.AttachEventToButton(6, () =>
@@ -2688,6 +2714,47 @@ namespace Ambermoon
 
             if (currentBattle != null)
                 BattlePlayerSwitched();
+        }
+
+        void AdvanceParty(Action finishAction)
+        {
+            int advancedMonsters = 0;
+            int totalMonsters = currentBattle.Monsters.Count();
+
+            void MoveMonster(Monster monster)
+            {
+                int position = currentBattle.GetSlotFromCharacter(monster);
+                int currentColumn = position % 6;
+                int currentRow = position / 6;
+                int newRow = currentRow + 1;
+                var animation = layout.GetMonsterBattleAnimation(monster);
+
+                void MoveAnimationFinished()
+                {
+                    animation.AnimationFinished -= MoveAnimationFinished;
+                    animation.SetDisplayLayer((byte)((position + 6) * 5));
+                    currentBattle.MoveCharacterTo((uint)(position + 6), monster);
+
+                    if (++advancedMonsters == totalMonsters)
+                    {
+                        advancing = false;
+                        layout.EnableButton(4, currentBattle.CanMoveForward);
+                        finishAction?.Invoke();
+                    }
+                }
+
+                var newDisplayPosition = layout.GetMonsterCombatPosition(currentColumn, newRow, monster);
+                animation.AnimationFinished += MoveAnimationFinished;
+                animation.Play(new int[] { 0 }, TicksPerSecond / 2, currentBattleTicks, newDisplayPosition,
+                    layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
+            }
+
+            foreach (var monster in currentBattle.Monsters)
+            {
+                MoveMonster(monster);
+            }
+
+            advancing = true;
         }
 
         void ShowBattleWindow(Event nextEvent, bool surpriseAttack)
@@ -3045,12 +3112,26 @@ namespace Ambermoon
             return roundPlayerBattleActions[slot];
         }
 
-        void SetBattleMessageWithClick(string message, TextColor textColor = TextColor.White)
+        void SetBattleMessageWithClick(string message, TextColor textColor = TextColor.White, Action followAction = null)
         {
             layout.SetBattleMessage(message, textColor);
             InputEnable = false;
             currentBattle.WaitForClick = true;
             CursorType = CursorType.Click;
+
+            if (followAction != null)
+            {
+                void Follow()
+                {
+                    layout.SetBattleMessage(null);
+                    InputEnable = true;
+                    currentBattle.WaitForClick = false;
+                    CursorType = CursorType.Sword;
+                    followAction?.Invoke();
+                }
+
+                nextClickHandler = Follow;
+            }
         }
 
         void BattleFieldSlotClicked(int column, int row)
