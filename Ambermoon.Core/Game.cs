@@ -2801,10 +2801,20 @@ namespace Ambermoon
                 currentBattle.CharacterDied += character =>
                 {
                     if (character is PartyMember partyMember)
-                        layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember);
+                    {
+                        int slot = SlotFromPartyMember(partyMember).Value;
+                        layout.SetCharacter(slot, partyMember);
+                        layout.UpdateCharacterStatus(slot, null);
+                        roundPlayerBattleActions.Remove(slot);
+                    }
                 };
                 currentBattle.BattleEnded += battleEndInfo =>
                 {
+                    for (int i = 0; i < MaxPartyMembers; ++i)
+                    {
+                        if (GetPartyMember(i) != null)
+                            layout.UpdateCharacterStatus(i, null);
+                    }
                     void EndBattle(BattleEndInfo battleEndInfo)
                     {
                         currentBattleInfo.EndBattle(battleEndInfo);

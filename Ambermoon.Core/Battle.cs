@@ -196,7 +196,7 @@ namespace Ambermoon
         bool idleAnimationRunning = false;
         uint nextIdleAnimationTicks = 0;
         List<BattleAnimation> effectAnimations = null;
-        bool wantsToFlee = false;
+        SpellAnimation currentSpellAnimation = null;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
         public bool WaitForClick { get; set; } = false;
@@ -367,6 +367,9 @@ namespace Ambermoon
                     effectAnimation.Update(battleTicks);
                 }
             }
+
+            if (currentSpellAnimation != null)
+                currentSpellAnimation.Update(battleTicks);
         }
 
         /// <summary>
@@ -465,6 +468,9 @@ namespace Ambermoon
                 monstersAdvance = true;
             }*/
 
+            var forbiddenMoveSpots = playerBattleActions.Where(a => a != null && a.BattleAction == BattleActionType.Move)
+                .Select(a => (int)GetTargetTileFromParameter(a.Parameter)).ToList();
+
             foreach (var roundActor in roundActors)
             {
                 if (roundActor is Monster monster)
@@ -477,7 +483,10 @@ namespace Ambermoon
                     int playerIndex = partyMembers.ToList().IndexOf(partyMember);
                     var playerAction = playerBattleActions[playerIndex];
 
-                    // TODO: pick random actions for mad party members
+                    if (partyMember.Ailments.HasFlag(Ailment.Crazy))
+                    {
+                        PickMadAction(partyMember, playerAction, forbiddenMoveSpots);
+                    }
 
                     if (playerAction.BattleAction == BattleActionType.None)
                         continue;
@@ -547,7 +556,7 @@ namespace Ambermoon
             if (action == BattleActionType.None) // do nothing
                 return;
 
-            var actionParameter = PickActionParameter(action, monster);
+            var actionParameter = PickActionParameter(action, monster, wantsToFlee);
 
             int numActions = action == BattleActionType.Attack
                 ? monster.AttacksPerRound : 1;
@@ -832,13 +841,142 @@ namespace Ambermoon
                     return;
                 }
                 case BattleActionType.CastSpell:
-                    // Parameter:
-                    // - Low word: Tile index (0-29) or row (0-4) to cast spell on
-                    // - High word: Spell index
-                    // TODO: Can support spells miss? If not for those spells the
-                    //       parameter should be the monster/partymember index instead.
-                    // TODO
+                {
+                    GetCastSpellInformation(battleAction.ActionParameter, out uint targetRowOrTile, out Spell spell, out uint itemIndex);
+
+                    // Note: Support spells like healing can also miss. In this case no message is displayed but the SP is spent.
+                    // I guess the same is true for offensive spells.
+
+                    var spellInfo = SpellInfos.Entries[spell];
+                    currentSpellAnimation = new SpellAnimation(game, layout.RenderView, spell);
+
+                    void EndCast()
+                    {
+                        currentSpellAnimation?.Destroy();
+                        currentSpellAnimation = null;
+                        ActionCompleted?.Invoke(battleAction);
+                        ReadyForNextAction = true;
+                    }
+
+                    void CastSpellOn(Character target, Action finishAction)
+                    {
+                        if (target == null)
+                        {
+                            finishAction?.Invoke();
+                            return;
+                        }
+
+                        int position = GetCharacterPosition(target);
+                        // Note: Some spells like Whirlwind move to the target.
+                        currentSpellAnimation.MoveTo(position, ticks =>
+                        {
+                            PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
+                                (uint)position, ticks, () =>
+                                {
+                                    // TODO: calculate and deal damage, heal, etc
+                                    finishAction?.Invoke();
+                                }
+                            );
+                        });
+                    }
+
+                    void CastSpellOnRow(CharacterType characterType, int row, Action finishAction)
+                    {
+                        var targets = Enumerable.Range(0, 6).Select(column => battleField[column + row * 6])
+                            .Where(c => c?.Type == characterType).ToList();
+
+                        if (targets.Count == 0)
+                        {
+                            finishAction?.Invoke();
+                            return;
+                        }
+
+                        void Cast(int index)
+                        {
+                            CastSpellOn(targets[index], () =>
+                            {
+                                if (index == targets.Count - 1)
+                                    finishAction?.Invoke();
+                                else
+                                    Cast(index + 1);
+                            });
+                        }
+
+                        Cast(0);
+                    }
+
+                    void CastSpellOnAll(CharacterType characterType, Action finishAction)
+                    {
+                        int minRow = characterType == CharacterType.Monster ? 0 : 3;
+                        int maxRow = characterType == CharacterType.Monster ? 3 : 4;
+
+                        void Cast(int row)
+                        {
+                            CastSpellOnRow(characterType, row, () =>
+                            {
+                                if (row == maxRow)
+                                    finishAction?.Invoke();
+                                else
+                                    Cast(row + 1);
+                            });
+                        }
+
+                        Cast(minRow);
+                    }
+
+                    if (battleAction.Character is Monster monster)
+                    {
+                        var animation = layout.GetMonsterBattleAnimation(monster);
+
+                        void CastAnimationFinished()
+                        {
+                            animation.AnimationFinished -= CastAnimationFinished;
+                            currentBattleAnimation = null;
+                            currentlyAnimatedMonster = null;
+                            StartCasting();
+                        }
+
+                        animation.AnimationFinished += CastAnimationFinished;
+                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Cast), Game.TicksPerSecond / 6,
+                            battleTicks);
+                        currentBattleAnimation = animation;
+                        currentlyAnimatedMonster = monster;
+                    }
+                    else
+                    {
+                        // TODO: If this is a player we should decrease item charge if item was used. For monster items as well?
+                        StartCasting();
+                    }
+
+                    void StartCasting()
+                    {
+                        // TODO: first play initial spell animation here
+
+                        switch (spellInfo.Target)
+                        {
+                            case SpellTarget.Self:
+                            case SpellTarget.SingleEnemy:
+                            case SpellTarget.SingleFriend:
+                                CastSpellOn(GetCharacterAt((int)targetRowOrTile), EndCast);
+                                break;
+                            case SpellTarget.AllEnemies:
+                                CastSpellOnAll(battleAction.Character.Type == CharacterType.Monster
+                                    ? CharacterType.PartyMember : CharacterType.Monster, EndCast);
+                                break;
+                            case SpellTarget.AllFriends:
+                                CastSpellOnAll(battleAction.Character.Type, EndCast);
+                                break;
+                            case SpellTarget.EnemyRow:
+                                CastSpellOnRow(battleAction.Character.Type == CharacterType.Monster
+                                    ? CharacterType.PartyMember : CharacterType.Monster, (int)targetRowOrTile, EndCast);
+                                break;
+                            case SpellTarget.FriendRow:
+                                CastSpellOnRow(battleAction.Character.Type, (int)targetRowOrTile, EndCast);
+                                break;
+                        }
+                    }
                     break;
+                }
                 case BattleActionType.Flee:
                 {
                     void EndFlee()
@@ -987,6 +1125,40 @@ namespace Ambermoon
 
         int GetCharacterPosition(Character character) => battleField.ToList().IndexOf(character);
 
+        void PickMadAction(PartyMember partyMember, PlayerBattleAction playerBattleAction, List<int> forbiddenMoveSpots)
+        {
+            // Mad players can attack, move, flee or parry.
+            // TODO: Can they cast spells too?
+            var position = GetCharacterPosition(partyMember);
+            List<BattleActionType> possibleActions = new List<BattleActionType>();
+
+            if (position < 6 && partyMember.Ailments.CanFlee() && game.RollDice100() < 10) // TODO
+                possibleActions.Add(BattleActionType.Flee);
+            if (partyMember.Ailments.CanAttack() && AttackSpotAvailable(position, partyMember))
+                possibleActions.Add(BattleActionType.Attack);
+            if (partyMember.Ailments.CanMove() && MoveSpotAvailable(position, partyMember, false, forbiddenMoveSpots))
+                possibleActions.Add(BattleActionType.Move);
+            if (partyMember.Ailments.CanParry())
+                possibleActions.Add(BattleActionType.Parry);
+            playerBattleAction.BattleAction = possibleActions.Count == 0 ? BattleActionType.None
+                : possibleActions.Count == 1 ? possibleActions[0] : possibleActions[game.RandomInt(0, possibleActions.Count - 1)];
+            switch (playerBattleAction.BattleAction)
+            {
+                case BattleActionType.Move:
+                {
+                    uint moveSpot = GetRandomMoveSpot(position, partyMember, forbiddenMoveSpots);
+                    playerBattleAction.Parameter = CreateMoveParameter(moveSpot);
+                    forbiddenMoveSpots.Add((int)moveSpot);
+                    break;
+                }
+                case BattleActionType.Attack:
+                    playerBattleAction.Parameter = CreateAttackParameter(GetRandomAttackSpot(position, partyMember), partyMember, game.ItemManager);
+                    break;
+            }
+            layout.UpdateCharacterStatus(game.SlotFromPartyMember(partyMember).Value,
+                playerBattleAction.BattleAction.ToStatusGraphic(playerBattleAction.Parameter, game.ItemManager));
+        }
+
         BattleActionType PickMonsterAction(Monster monster, bool wantsToFlee)
         {
             var position = GetCharacterPosition(monster);
@@ -1001,7 +1173,7 @@ namespace Ambermoon
             if ((wantsToFlee || !possibleActions.Contains(BattleActionType.Attack)) && monster.Ailments.CanMove()) // TODO: small chance to move even if the monster could attack?
             {
                 // Only move if there is nobody to attack
-                if (MoveSpotAvailable(position, monster))
+                if (MoveSpotAvailable(position, monster, wantsToFlee))
                     possibleActions.Add(BattleActionType.Move);
             }
             if (monster.HasAnySpell() && monster.Ailments.CanCastSpell() && CanCastSpell(monster))
@@ -1047,18 +1219,19 @@ namespace Ambermoon
             return possibleSpells.Any(s => SpellInfos.Entries[s].Target.TargetsEnemy());
         }
 
-        bool MoveSpotAvailable(int characterPosition, Monster monster)
+        bool MoveSpotAvailable(int characterPosition, Character character, bool wantsToFlee, List<int> forbiddenMoveSpots = null)
         {
-            int moveRange = monster.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
+            int moveRange = character.Type == CharacterType.Monster && character.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
 
-            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, moveRange))
+            if (!GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY,
+                moveRange, RangeType.Move, wantsToFlee))
                 return false;
 
             for (int y = minY; y <= maxY; ++y)
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6] == null)
+                    if (battleField[x + y * 6] == null && (forbiddenMoveSpots == null || !forbiddenMoveSpots.Contains(x + y * 6)))
                         return true;
                 }
             }
@@ -1066,21 +1239,19 @@ namespace Ambermoon
             return false;
         }
 
-        bool AttackSpotAvailable(int characterPosition, Monster monster)
+        bool AttackSpotAvailable(int characterPosition, Character character)
         {
-            int range = monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
+            int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
 
-            if (!GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range))
-                return false;
-
-            if (maxY < 3)
+            if (!GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy))
                 return false;
 
             for (int y = minY; y <= maxY; ++y)
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6]?.Type == CharacterType.PartyMember)
+                    int position = x + y * 6;
+                    if (battleField[position] != null && battleField[position].Type != character.Type)
                         return true;
                 }
             }
@@ -1088,38 +1259,106 @@ namespace Ambermoon
             return false;
         }
 
-        bool GetRangeMinMaxValues(int characterPosition, Monster monster, out int minX, out int maxX, out int minY, out int maxY, int range)
+        enum RangeType
+        {
+            Move,
+            Enemy,
+            Friend
+        }
+
+        bool GetRangeMinMaxValues(int characterPosition, Character character, out int minX, out int maxX,
+            out int minY, out int maxY, int range, RangeType rangeType, bool wantsToFlee = false)
         {
             int characterX = characterPosition % 6;
             int characterY = characterPosition / 6;
             minX = Math.Max(0, characterX - range);
             maxX = Math.Min(5, characterX + range);
-            minY = Math.Max(0, characterY - range);
-            maxY = Math.Min(4, characterY + range);
 
-            if (wantsToFlee)
+            if (character.Type == CharacterType.Monster)
             {
-                if (characterY == 0) // We are in perfect flee position, so don't move
-                    return false;
+                if (rangeType == RangeType.Enemy)
+                {
+                    minY = Math.Max(3, characterX - range);
+                    maxY = Math.Min(4, characterY + range);
+                }
+                else
+                {
+                    minY = Math.Max(0, characterX - range);
+                    maxY = Math.Min(3, characterY + range);
+                }
 
-                // Don't move down or to the side when trying to flee
-                maxY = characterY - 1;
+                if (wantsToFlee)
+                {
+                    if (characterY == 0) // We are in perfect flee position, so don't move
+                        return false;
+
+                    // Don't move down or to the side when trying to flee
+                    maxY = characterY - 1;
+                }
+                else
+                {
+                    // TODO: Allow up movement if other monsters block path to players
+                    //       and we need to move around them.
+                    // Don't move up (away from players)
+                    minY = characterY;
+                }
             }
-            else
+            else // Mad party member
             {
-                // TODO: Allow up movement if other monsters block path to players
-                //       and we need to move around them.
-                // Don't move up (away from players)
-                minY = characterY;
+                if (rangeType == RangeType.Enemy)
+                {
+                    minY = Math.Max(0, characterX - range);
+                    maxY = Math.Min(3, characterY + range);
+                }
+                else
+                {
+                    minY = Math.Max(3, characterX - range);
+                    maxY = Math.Min(4, characterY + range);
+                }
             }
 
             return true;
         }
 
-        uint GetBestMoveSpot(int characterPosition, Monster monster)
+        uint GetRandomMoveSpot(int characterPosition, Character character, List<int> forbiddenPositions)
+        {
+            GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, 1, RangeType.Move);
+            var possiblePositions = new List<int>();
+            for (int y = minY; y <= maxY; ++y)
+            {
+                for (int x = minX; x <= maxX; ++x)
+                {
+                    int position = x + y * 6;
+
+                    if (battleField[position] == null && !forbiddenPositions.Contains(position))
+                        possiblePositions.Add(position);
+                }
+            }
+            return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
+        }
+
+        uint GetRandomAttackSpot(int characterPosition, Character character)
+        {
+            GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, 1, RangeType.Enemy);
+            var possiblePositions = new List<int>();
+            for (int y = minY; y <= maxY; ++y)
+            {
+                for (int x = minX; x <= maxX; ++x)
+                {
+                    int position = x + y * 6;
+
+                    if (battleField[position] != null && battleField[position].Type != character.Type)
+                        possiblePositions.Add(position);
+                }
+            }
+            return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
+        }
+
+        uint GetBestMoveSpot(int characterPosition, Monster monster, bool wantsToFlee)
         {
             int moveRange = monster.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
-            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, moveRange);
+            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY,
+                moveRange, RangeType.Move, wantsToFlee);
             int currentColumn = characterPosition % 6;
             int currentRow = characterPosition / 6;
             var possiblePositions = new List<int>();
@@ -1198,18 +1437,19 @@ namespace Ambermoon
                 game.RandomInt(0, (int)(monster.HitPoints.MaxValue - monster.HitPoints.TotalCurrentValue)) > monster.HitPoints.MaxValue / 2;
         }
 
-        uint GetBestAttackSpot(int characterPosition, Monster monster)
+        uint GetBestAttackSpot(int characterPosition, Character character)
         {
-            int range = monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
-            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range);
+            int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
+            GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy);
             var possiblePositions = new List<int>();
 
             for (int y = minY; y <= maxY; ++y)
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6]?.Type == CharacterType.PartyMember)
-                        possiblePositions.Add(x + y * 6);
+                    int position = x + y * 6;
+                    if (battleField[position] != null && battleField[position].Type != character.Type)
+                        possiblePositions.Add(position);
                 }
             }
 
@@ -1253,12 +1493,12 @@ namespace Ambermoon
             }
         }
 
-        uint PickActionParameter(BattleActionType battleAction, Monster monster)
+        uint PickActionParameter(BattleActionType battleAction, Monster monster, bool wantsToFlee)
         {
             switch (battleAction)
             {
             case BattleActionType.Move:
-                return CreateMoveParameter(GetBestMoveSpot(GetCharacterPosition(monster), monster));
+                return CreateMoveParameter(GetBestMoveSpot(GetCharacterPosition(monster), monster, wantsToFlee));
             case BattleActionType.Attack:
                 {
                     var weaponIndex = monster.Equipment.Slots[EquipmentSlot.RightHand].ItemIndex;
