@@ -984,6 +984,26 @@ namespace Ambermoon
                         fledCharacters.Add(battleAction.Character);
                         RemoveCharacterFromBattleField(battleAction.Character);
                         ActionCompleted?.Invoke(battleAction);
+
+                        if (battleAction.Character.Type == CharacterType.Monster &&
+                            Monsters.Count() == 0)
+                        {
+                            BattleEnded?.Invoke(new Game.BattleEndInfo
+                            {
+                                MonstersDefeated = true,
+                                KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList()
+                            });
+                            return;
+                        }
+                        else if (battleAction.Character.Type == CharacterType.PartyMember &&
+                            !battleField.Any(c => c?.Type == CharacterType.PartyMember))
+                        {
+                            BattleEnded?.Invoke(new Game.BattleEndInfo
+                            {
+                                MonstersDefeated = false
+                            });
+                            return;
+                        }
                         ReadyForNextAction = true;
                     }
                     if (battleAction.Character is Monster monster)

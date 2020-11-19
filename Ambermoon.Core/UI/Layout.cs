@@ -1259,16 +1259,16 @@ namespace Ambermoon.UI
 
             if (partyMember.Ailments != Ailment.None)
             {
-                var ailments = Enum.GetValues<Ailment>().Where(a => partyMember.Ailments.HasFlag(a)).ToList();
+                var ailments = partyMember.VisibleAilments;
                 uint ailmentCount = (uint)ailments.Count;
 
                 if (ailmentCount == 1)
                 {
-                    sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAilmentGraphicIndex(partyMember.Ailments));
+                    UpdateCharacterStatus(slot, Graphics.GetAilmentGraphic(ailments[0]));
                 }
                 else
                 {
-                    uint ticksPerAilment = Game.TicksPerSecond / 4;
+                    uint ticksPerAilment = Game.TicksPerSecond * 2;
                     int index = (int)((game.CurrentTicks % (ailmentCount * ticksPerAilment)) / ticksPerAilment);
                     UpdateCharacterStatus(slot, Graphics.GetAilmentGraphic(ailments[index]));
                 }

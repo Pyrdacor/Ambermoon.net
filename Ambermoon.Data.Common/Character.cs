@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data
 {
@@ -122,6 +123,21 @@ namespace Ambermoon.Data
 
         public Inventory Inventory { get; } = new Inventory();
         public Equipment Equipment { get; } = new Equipment();
+
+        public static readonly List<Ailment> PossibleAilments = Enum.GetValues<Ailment>()
+            .Where(a => a != Ailment.None && a != Ailment.Unused).ToList();
+        public static readonly List<Ailment> PossibleVisibleAilments = PossibleAilments
+            .Where(a => a != Ailment.DeadAshes && a != Ailment.DeadDust).ToList();
+        public List<Ailment> VisibleAilments
+        {
+            get
+            {
+                if (!Alive) // When dead, only show the dead condition.
+                    return new List<Ailment> { Ailment.DeadCorpse };
+                else
+                    return PossibleVisibleAilments.Where(a => Ailments.HasFlag(a)).ToList();
+            }
+        }
 
         protected Character(CharacterType type)
         {

@@ -408,67 +408,71 @@ namespace Ambermoon
                 }
             }
 
-            if (!paused && ingame)
+            if (ingame)
             {
-                GameTime?.Update();
-                MonsterSeesPlayer = false; // Will be set by the monsters Update methods eventually
-
-                uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
-
-                if (CurrentTicks <= uint.MaxValue - add)
-                    CurrentTicks += add;
-                else
-                    CurrentTicks = (uint)(((long)CurrentTicks + add) % uint.MaxValue);
-
-                var animationTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
-
-                if (is3D)
+                if (!paused)
                 {
-                    renderMap3D.Update(animationTicks, GameTime);
-                }
-                else // 2D
-                {
-                    renderMap2D.Update(animationTicks, GameTime);
-                }
+                    GameTime?.Update();
+                    MonsterSeesPlayer = false; // Will be set by the monsters Update methods eventually
 
-                var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
+                    uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
 
-                if (moveTicks >= movement.MovementTicks(is3D, Map.IsWorldMap, TravelType))
-                {
-                    lastMoveTicksReset = CurrentTicks;
-
-                    if (clickMoveActive)
-                        HandleClickMovement();
+                    if (CurrentTicks <= uint.MaxValue - add)
+                        CurrentTicks += add;
                     else
-                        Move();
-                }
-            }
+                        CurrentTicks = (uint)(((long)CurrentTicks + add) % uint.MaxValue);
 
-            if (currentWindow.Window == Window.Inventory ||
-                currentWindow.Window == Window.Stats)
-            {
-                for (int i = 0; i < MaxPartyMembers; ++i)
+                    var animationTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
+
+                    if (is3D)
+                    {
+                        renderMap3D.Update(animationTicks, GameTime);
+                    }
+                    else // 2D
+                    {
+                        renderMap2D.Update(animationTicks, GameTime);
+                    }
+
+                    var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
+
+                    if (moveTicks >= movement.MovementTicks(is3D, Map.IsWorldMap, TravelType))
+                    {
+                        lastMoveTicksReset = CurrentTicks;
+
+                        if (clickMoveActive)
+                            HandleClickMovement();
+                        else
+                            Move();
+                    }
+                }
+
+                if (!WindowActive ||
+                    currentWindow.Window == Window.Inventory ||
+                    currentWindow.Window == Window.Stats) // TODO: healer, etc?
                 {
-                    var partyMember = GetPartyMember(i);
+                    for (int i = 0; i < MaxPartyMembers; ++i)
+                    {
+                        var partyMember = GetPartyMember(i);
 
-                    if (partyMember != null)
-                        layout.UpdateCharacterStatus(partyMember);
+                        if (partyMember != null)
+                            layout.UpdateCharacterStatus(partyMember);
+                    }
                 }
-            }
 
-            if (currentBattle != null)
-            {
-                uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
+                if (currentBattle != null)
+                {
+                    uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
 
-                if (currentBattleTicks <= uint.MaxValue - add)
-                    currentBattleTicks += add;
+                    if (currentBattleTicks <= uint.MaxValue - add)
+                        currentBattleTicks += add;
+                    else
+                        currentBattleTicks = (uint)(((long)currentBattleTicks + add) % uint.MaxValue);
+
+                    UpdateBattle();
+                }
                 else
-                    currentBattleTicks = (uint)(((long)currentBattleTicks + add) % uint.MaxValue);
-
-                UpdateBattle();
+                    currentBattleTicks = 0;
             }
-            else
-                currentBattleTicks = 0;
 
             layout.Update(CurrentTicks);
         }
@@ -1851,28 +1855,22 @@ namespace Ambermoon
                 index = 0;
                 // Total space is 80 pixels wide. Each ailment icon is 16 pixels wide. So there is space for 5 ailment icons per line.
                 const int ailmentsPerRow = 5;
-                if (!partyMember.Alive)
+                foreach (var ailment in partyMember.VisibleAilments)
                 {
-                    // When dead, only show the dead condition.
-                    layout.AddSprite(new Rect(96, 124, 16, 16), Graphics.GetAilmentGraphicIndex(Ailment.DeadCorpse), 49,
-                        2, DataNameProvider.GetAilmentName(Ailment.DeadCorpse), TextColor.Yellow);
-                }
-                else
-                {
-                    foreach (var ailment in Enum.GetValues<Ailment>().Skip(1)) // skip Ailment.None
-                    {
-                        if (!partyMember.Ailments.HasFlag(ailment))
-                            continue;
+                    if (ailment == Ailment.DeadAshes || ailment == Ailment.DeadDust)
+                        continue; // TODO: is dead corpse set if those are set
 
-                        int column = index % ailmentsPerRow;
-                        int row = index / ailmentsPerRow;
-                        ++index;
+                    if (!partyMember.Ailments.HasFlag(ailment))
+                        continue;
 
-                        int x = 96 + column * 16;
-                        int y = 124 + row * 17;
-                        layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), 49,
-                            2, DataNameProvider.GetAilmentName(ailment), TextColor.Yellow);
-                    }
+                    int column = index % ailmentsPerRow;
+                    int row = index / ailmentsPerRow;
+                    ++index;
+
+                    int x = 96 + column * 16;
+                    int y = 124 + row * 17;
+                    layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), 49,
+                        2, DataNameProvider.GetAilmentName(ailment), ailment == Ailment.DeadCorpse ? TextColor.PaleGray : TextColor.Yellow);
                 }
                 #endregion
             }

@@ -34,7 +34,7 @@ namespace Ambermoon.Render
         public static uint GetUIGraphicIndex(UIGraphic graphic) => UIGraphicOffset + (uint)graphic;
         public static uint GetButtonGraphicIndex(ButtonType buttonType) => ButtonOffset + (uint)buttonType;
         public static uint GetPopupFrameGraphicIndex(PopupFrame frame) => PopupFrameOffset + (uint)frame;
-        public static UIGraphic GetAilmentGraphic(Ailment ailment) => ailment switch
+        public static UIGraphic? GetAilmentGraphic(Ailment ailment) => ailment switch
         {
             Ailment.Irritated => UIGraphic.StatusIrritated,
             Ailment.Crazy => UIGraphic.StatusCrazy,
@@ -51,8 +51,8 @@ namespace Ambermoon.Render
             Ailment.DeadCorpse => UIGraphic.StatusDead,
             Ailment.DeadAshes => UIGraphic.StatusDead,
             Ailment.DeadDust => UIGraphic.StatusDead,
-            _ => throw new AmbermoonException(ExceptionScope.Application, "Ailment has no graphic")
+            _ => null
         };
-        public static uint GetAilmentGraphicIndex(Ailment ailment) => GetUIGraphicIndex(GetAilmentGraphic(ailment));
+        public static uint GetAilmentGraphicIndex(Ailment ailment) => GetUIGraphicIndex(GetAilmentGraphic(ailment).Value);
     }
 }
