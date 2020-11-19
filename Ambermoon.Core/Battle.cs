@@ -723,7 +723,7 @@ namespace Ambermoon
                         var newDisplayPosition = layout.GetMonsterCombatPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
                         animation.AnimationFinished += MoveAnimationFinished;
                         var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Move);
-                        animation.Play(frames, (uint)Math.Abs(newRow - currentRow) * Game.TicksPerSecond / (2 * (uint)frames.Length),
+                        animation.Play(frames, (uint)Math.Abs((int)newRow - (int)currentRow) * Game.TicksPerSecond / (2 * (uint)frames.Length),
                             battleTicks, newDisplayPosition, layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
@@ -1020,8 +1020,8 @@ namespace Ambermoon
 
                         animation.AnimationFinished += MoveAnimationFinished;
                         // TODO: Is the move animation used for flee? I guess so.
-                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move), Game.TicksPerSecond / 6,
-                            battleTicks, null, 0.0f);
+                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move), Game.TicksPerSecond / 20,
+                            battleTicks, Global.CombatBackgroundArea.Center, 0.0f);
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
                     }
@@ -1188,13 +1188,19 @@ namespace Ambermoon
             {
                 return BattleActionType.Flee;
             }
-            if (monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster))
+            bool willFlee = wantsToFlee && monster.Ailments.CanMove();
+            if (!willFlee && monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster))
                 possibleActions.Add(BattleActionType.Attack);
             if ((wantsToFlee || !possibleActions.Contains(BattleActionType.Attack)) && monster.Ailments.CanMove()) // TODO: small chance to move even if the monster could attack?
             {
                 // Only move if there is nobody to attack
                 if (MoveSpotAvailable(position, monster, wantsToFlee))
-                    possibleActions.Add(BattleActionType.Move);
+                {
+                    if (wantsToFlee)
+                        return BattleActionType.Move;
+                    else
+                        possibleActions.Add(BattleActionType.Move);
+                }
             }
             if (monster.HasAnySpell() && monster.Ailments.CanCastSpell() && CanCastSpell(monster))
                 possibleActions.Add(BattleActionType.CastSpell);
@@ -1298,12 +1304,12 @@ namespace Ambermoon
             {
                 if (rangeType == RangeType.Enemy)
                 {
-                    minY = Math.Max(3, characterX - range);
+                    minY = Math.Max(3, characterY - range);
                     maxY = Math.Min(4, characterY + range);
                 }
                 else
                 {
-                    minY = Math.Max(0, characterX - range);
+                    minY = Math.Max(0, characterY - range);
                     maxY = Math.Min(3, characterY + range);
                 }
 
@@ -1327,12 +1333,12 @@ namespace Ambermoon
             {
                 if (rangeType == RangeType.Enemy)
                 {
-                    minY = Math.Max(0, characterX - range);
+                    minY = Math.Max(0, characterY - range);
                     maxY = Math.Min(3, characterY + range);
                 }
                 else
                 {
-                    minY = Math.Max(3, characterX - range);
+                    minY = Math.Max(3, characterY - range);
                     maxY = Math.Min(4, characterY + range);
                 }
             }
@@ -1454,7 +1460,7 @@ namespace Ambermoon
             // TODO
             return !monster.MonsterFlags.HasFlag(MonsterFlags.Boss) &&
                 monster.HitPoints.TotalCurrentValue < monster.HitPoints.MaxValue / 2 &&
-                game.RandomInt(0, (int)(monster.HitPoints.MaxValue - monster.HitPoints.TotalCurrentValue)) > monster.HitPoints.MaxValue / 2;
+                game.RollDice100() < (monster.HitPoints.MaxValue - monster.HitPoints.TotalCurrentValue) * 100 / monster.HitPoints.MaxValue;
         }
 
         uint GetBestAttackSpot(int characterPosition, Character character)
