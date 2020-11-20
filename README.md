@@ -46,6 +46,7 @@ You may also checkout my already working Settlers I rewrite at [freeserf.net](ht
 ![3D map rendering 2](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D2.png "3D map rendering 2")
 ![Billboards](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Billboards1.png "Billboards")
 ![Battles](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Battle.png "Battles")
+![Spells](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Spells.png "Spells")
 ![Chests](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png "Chests")
 ![Inventory](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png "Inventory")
 ![Load game](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/LoadWindow.png "Load game")
