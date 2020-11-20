@@ -34,7 +34,8 @@ namespace Ambermoon.UI
     {
         CharacterBar,
         FadeEffect,
-        Custom
+        Custom,
+        CustomEffect
     }
 
     public class FilledArea
@@ -1602,7 +1603,8 @@ namespace Ambermoon.UI
         {
             var coloredRect = RenderView.ColoredRectFactory.Create(rect.Width, rect.Height,
                 color, displayLayer);
-            coloredRect.Layer = type == FilledAreaType.FadeEffect ? RenderView.GetLayer(Layer.Effects) : renderLayer;
+            coloredRect.Layer = type == FilledAreaType.FadeEffect || type == FilledAreaType.CustomEffect
+                ? RenderView.GetLayer(Layer.Effects) : renderLayer;
             coloredRect.X = rect.Left;
             coloredRect.Y = rect.Top;
             coloredRect.Visible = true;
@@ -1617,7 +1619,7 @@ namespace Ambermoon.UI
                 default:
                     filledAreas.Add(coloredRect);
                     break;
-            }               
+            }
             return coloredRect;
         }
 
@@ -2049,28 +2051,58 @@ namespace Ambermoon.UI
                 ReleaseButton(i);
         }
 
-        public Position GetMonsterCombatPosition(int column, int row, Monster monster)
+        public static Position GetPlayerSlotCenterPosition(int column)
         {
+            return new Position(40 + column * 40 + 20, Global.CombatBackgroundArea.Center.Y);
+        }
+
+        // This is used for spells and effects. X is center of monster and Y is in the upper half.
+        public static Position GetMonsterCombatCenterPosition(IRenderView renderView, int position, Monster monster)
+        {
+            int column = position % 6;
+            int row = position / 6;
             var combatBackgroundArea = Global.CombatBackgroundArea;
             int centerX = combatBackgroundArea.Width / 2;
-            float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
             int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
-            return new Position(centerX - (3 - column) * slotWidth + (slotWidth - width) / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
+            var center = new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height / 2);
+            return center + new Position(((int)monster.MappedFrameWidth - width) / 2, ((int)monster.MappedFrameHeight - height) / 2);
+        }
+
+        public static Position GetMonsterCombatGroundPosition(IRenderView renderView, int position, Monster monster)
+        {
+            int column = position % 6;
+            int row = position / 6;
+            var combatBackgroundArea = Global.CombatBackgroundArea;
+            int centerX = combatBackgroundArea.Width / 2;
+            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            int slotWidth = Util.Round(40 * sizeMultiplier);
+            int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
+            int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
+            var center = new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
+            return center + new Position(((int)monster.MappedFrameWidth - width) / 2, ((int)monster.MappedFrameHeight - height) / 2);
+        }
+
+        public Position GetMonsterCombatCenterPosition(int position, Monster monster)
+        {
+            return GetMonsterCombatCenterPosition(RenderView, position, monster);
+        }
+
+        public Position GetMonsterCombatCenterPosition(int column, int row, Monster monster)
+        {
+            return GetMonsterCombatCenterPosition(column + row * 6, monster);
         }
 
         public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster)
         {
             var layer = Layer.BattleMonsterRowFarthest + row;            
             float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
-            var position = GetMonsterCombatPosition(column, row, monster);
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
             var sprite = RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
             sprite.DisplayLayer = (byte)((column + row * 6) * 5);
-            sprite.X = position.X;
-            sprite.Y = position.Y;
             sprite.PaletteIndex = monster.CombatGraphicIndex switch // TODO
             {
                 MonsterGraphicIndex.Gizzek => 36,
@@ -2080,7 +2112,8 @@ namespace Ambermoon.UI
             };
             sprite.Layer = RenderView.GetLayer(layer);
             sprite.Visible = true;
-            var animation = new BattleAnimation(sprite, sizeMultiplier);
+            var animation = new BattleAnimation(sprite);
+            animation.SetStartFrame(GetMonsterCombatCenterPosition(column, row, monster), sizeMultiplier);
             monsterCombatGraphics.Add(new MonsterCombatGraphic
             {
                 Monster = monster,

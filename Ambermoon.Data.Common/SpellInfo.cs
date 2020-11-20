@@ -28,7 +28,6 @@ namespace Ambermoon.Data
         EnemyRow,
         AllEnemies,
         SingleFriend,
-        FriendRow,
         AllFriends,
         Item
     }
@@ -59,7 +58,6 @@ namespace Ambermoon.Data
             SpellTarget.SingleEnemy => SpellTargetType.SingleBattleField,
             SpellTarget.SingleFriend => SpellTargetType.SingleBattleField,
             SpellTarget.EnemyRow => SpellTargetType.BattleFieldRow,
-            SpellTarget.FriendRow => SpellTargetType.BattleFieldRow,
             SpellTarget.AllEnemies => SpellTargetType.HalfBattleField,
             SpellTarget.AllFriends => SpellTargetType.HalfBattleField,
             SpellTarget.Item => SpellTargetType.Item,

@@ -4,6 +4,7 @@ namespace Ambermoon.Render
 {
     internal class BattleAnimation
     {
+        // Note: Positions are always center positions
         Position baseSpriteLocation;
         Size baseSpriteSize;
         readonly ILayerSprite sprite;
@@ -22,29 +23,32 @@ namespace Ambermoon.Render
 
         public event Action AnimationFinished;
 
-        public BattleAnimation(ILayerSprite sprite, float initialScale = 1.0f)
+        public BattleAnimation(ILayerSprite sprite)
         {
-            baseSpriteLocation = new Position(sprite.X, sprite.Y);
+            baseSpriteLocation = new Position(sprite.X + sprite.Width / 2, sprite.Y + sprite.Height / 2);
             baseSpriteSize = new Size(sprite.Width, sprite.Height);
             this.sprite = sprite;
             baseTextureCoords = new Position(sprite.TextureAtlasOffset);
-            sprite.TextureSize = baseSpriteSize;
-            Scale = initialScale;
+            sprite.TextureSize ??= baseSpriteSize;
+            Scale = 1.0f;
             sprite.ClipArea = Global.CombatBackgroundArea;
         }
 
-        public void SetStartFrame(Position textureOffset, Size size, Position position = null, float initialScale = 1.0f)
+        public void SetStartFrame(Position textureOffset, Size size, Position centerPosition = null, float initialScale = 1.0f)
         {
-            if (position != null)
-                baseSpriteLocation = new Position(position);
+            if (centerPosition != null)
+                baseSpriteLocation = new Position(centerPosition);
             baseSpriteSize = new Size(size);
             baseTextureCoords = new Position(textureOffset);
-            sprite.Resize(size.Width, size.Height);
             sprite.TextureSize = baseSpriteSize;
             Scale = initialScale;
-            // Scaling might change location but we don't want this on
-            // manual placement so ensure correct one here again.
-            Position = baseSpriteLocation;
+        }
+
+        public void SetStartFrame(Position centerPosition, float initialScale = 1.0f)
+        {
+            if (centerPosition != null)
+                baseSpriteLocation = new Position(centerPosition);
+            Scale = initialScale;
         }
 
         public bool Visible
@@ -53,9 +57,8 @@ namespace Ambermoon.Render
             set => sprite.Visible = value;
         }
 
-        public Position Position
+        Position Position
         {
-            get => new Position(sprite.X, sprite.Y);
             set
             {
                 sprite.X = value.X;
@@ -63,9 +66,8 @@ namespace Ambermoon.Render
             }
         }
 
-        public float Scale
+        float Scale
         {
-            get => scale;
             set
             {
                 scale = value;
@@ -73,10 +75,7 @@ namespace Ambermoon.Render
                 int newWidth = Util.Round(baseSpriteSize.Width * scale);
                 int newHeight = Util.Round(baseSpriteSize.Height * scale);
 
-                int xOffset = (baseSpriteSize.Width - newWidth) / 2;
-                int yOffset = (baseSpriteSize.Height - newHeight) / 2;
-
-                Position = baseSpriteLocation + new Position(xOffset, yOffset);
+                Position = baseSpriteLocation - new Position(newWidth / 2, newHeight / 2);
                 sprite.Resize(newWidth, newHeight);
             }
         }
@@ -123,8 +122,8 @@ namespace Ambermoon.Render
 
             if (frame >= frameIndices.Length)
             {
-                baseSpriteLocation.X = endX; // TODO: respect scale here?
-                baseSpriteLocation.Y = endY; // TODO: respect scale here?
+                baseSpriteLocation.X = endX;
+                baseSpriteLocation.Y = endY;
                 Scale = endScale; // Note: scale will also set the new position
                 Finished = true;
                 AnimationFinished?.Invoke();
@@ -133,8 +132,8 @@ namespace Ambermoon.Render
 
             float animationTime = frameIndices.Length * ticksPerFrame;
             float factor = elapsed / animationTime;
-            baseSpriteLocation.X = startX + Util.Round((endX - startX) * factor); // TODO: respect scale here?
-            baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor); // TODO: respect scale here?
+            baseSpriteLocation.X = startX + Util.Round((endX - startX) * factor);
+            baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor);
             Scale = startScale + (endScale - startScale) * factor; // Note: scale will also set the new position
             sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * baseSpriteSize.Width, 0);
 

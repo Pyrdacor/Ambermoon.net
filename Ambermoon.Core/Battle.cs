@@ -267,12 +267,6 @@ namespace Ambermoon
             }
         }
 
-        void UpdateMonsterDisplayLayer(Monster monster)
-        {
-            int position = GetCharacterPosition(currentlyAnimatedMonster);
-            currentBattleAnimation.SetDisplayLayer((byte)(position * 5));
-        }
-
         void MonsterAnimationFinished(Monster monster)
         {
             animationStartTicks = null;
@@ -362,7 +356,7 @@ namespace Ambermoon
 
             foreach (var effectAnimation in effectAnimations)
             {
-                if (effectAnimation?.Visible == true)
+                if (effectAnimation != null && !effectAnimation.Finished)
                 {
                     effectAnimation.Update(battleTicks);
                 }
@@ -707,20 +701,21 @@ namespace Ambermoon
                     if (battleAction.Character is Monster monster)
                     {
                         uint currentRow = (uint)GetCharacterPosition(monster) / 6;
-                        uint newRow = battleAction.ActionParameter / 6;
+                        uint newPosition = GetTargetTileFromParameter(battleAction.ActionParameter);
+                        uint newRow = newPosition / 6;
                         bool retreat = newRow < currentRow;
                         var animation = layout.GetMonsterBattleAnimation(monster);
 
                         void MoveAnimationFinished()
                         {
                             animation.AnimationFinished -= MoveAnimationFinished;
+                            currentBattleAnimation.SetDisplayLayer((byte)(newPosition * 5));
                             EndMove();
-                            UpdateMonsterDisplayLayer(monster);
                             currentBattleAnimation = null;
                             currentlyAnimatedMonster = null;
                         }
 
-                        var newDisplayPosition = layout.GetMonsterCombatPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
+                        var newDisplayPosition = layout.GetMonsterCombatCenterPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
                         animation.AnimationFinished += MoveAnimationFinished;
                         var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Move);
                         animation.Play(frames, (uint)Math.Abs((int)newRow - (int)currentRow) * Game.TicksPerSecond / (2 * (uint)frames.Length),
@@ -848,7 +843,13 @@ namespace Ambermoon
                     // I guess the same is true for offensive spells.
 
                     var spellInfo = SpellInfos.Entries[spell];
-                    currentSpellAnimation = new SpellAnimation(game, layout.RenderView, spell);
+
+                    battleAction.Character.SpellPoints.CurrentValue -= spellInfo.SP;
+
+                    if (spell != Spell.Fireball) // TODO: REMOVE. For now we only allow fire ball for testing.
+                    {
+                        break;
+                    }
 
                     void EndCast()
                     {
@@ -857,6 +858,34 @@ namespace Ambermoon
                         ActionCompleted?.Invoke(battleAction);
                         ReadyForNextAction = true;
                     }
+
+                    switch (spellInfo.Target)
+                    {
+                        case SpellTarget.SingleEnemy:
+                            if (GetCharacterAt((int)targetRowOrTile) == null)
+                            {
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
+                                    battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                                game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                                {
+                                    EndCast();
+                                });
+                                return;
+                            }
+                            break;
+                        case SpellTarget.SingleFriend:
+                            if (GetCharacterAt((int)targetRowOrTile) == null)
+                            {
+                                EndCast();
+                                return;
+                            }
+                            break;
+                        // Note: For row spells the initial animation is cast and in move to the miss message is displayed.
+                    }
+
+
+                    currentSpellAnimation = new SpellAnimation(game, layout, this, spell,
+                        battleAction.Character.Type == CharacterType.Monster, GetCharacterPosition(battleAction.Character));
 
                     void CastSpellOn(Character target, Action finishAction)
                     {
@@ -950,32 +979,44 @@ namespace Ambermoon
 
                     void StartCasting()
                     {
-                        // TODO: first play initial spell animation here
-
-                        switch (spellInfo.Target)
+                        currentSpellAnimation.Play(() =>
                         {
-                            case SpellTarget.Self:
-                            case SpellTarget.SingleEnemy:
-                            case SpellTarget.SingleFriend:
-                                CastSpellOn(GetCharacterAt((int)targetRowOrTile), EndCast);
-                                break;
-                            case SpellTarget.AllEnemies:
-                                CastSpellOnAll(battleAction.Character.Type == CharacterType.Monster
-                                    ? CharacterType.PartyMember : CharacterType.Monster, EndCast);
-                                break;
-                            case SpellTarget.AllFriends:
-                                CastSpellOnAll(battleAction.Character.Type, EndCast);
-                                break;
-                            case SpellTarget.EnemyRow:
-                                CastSpellOnRow(battleAction.Character.Type == CharacterType.Monster
-                                    ? CharacterType.PartyMember : CharacterType.Monster, (int)targetRowOrTile, EndCast);
-                                break;
-                            case SpellTarget.FriendRow:
-                                CastSpellOnRow(battleAction.Character.Type, (int)targetRowOrTile, EndCast);
-                                break;
-                        }
+                            switch (spellInfo.Target)
+                            {
+                                case SpellTarget.Self:
+                                case SpellTarget.SingleEnemy:
+                                case SpellTarget.SingleFriend:
+                                    CastSpellOn(GetCharacterAt((int)targetRowOrTile), EndCast);
+                                    break;
+                                case SpellTarget.AllEnemies:
+                                    CastSpellOnAll(battleAction.Character.Type == CharacterType.Monster
+                                        ? CharacterType.PartyMember : CharacterType.Monster, EndCast);
+                                    break;
+                                case SpellTarget.AllFriends:
+                                    CastSpellOnAll(battleAction.Character.Type, EndCast);
+                                    break;
+                                case SpellTarget.EnemyRow:
+                                {
+                                    var enemyType = battleAction.Character.Type == CharacterType.Monster ?
+                                        CharacterType.PartyMember : CharacterType.Monster;
+                                    if (!Enumerable.Range((int)targetRowOrTile * 6, 6).Any(p => GetCharacterAt(p)?.Type == enemyType))
+                                    {
+                                        layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
+                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                                        {
+                                            EndCast();
+                                        });
+                                        return;
+                                    }
+                                    CastSpellOnRow(battleAction.Character.Type == CharacterType.Monster
+                                        ? CharacterType.PartyMember : CharacterType.Monster, (int)targetRowOrTile, EndCast);
+                                    break;
+                                }
+                            }
+                        });
                     }
-                    break;
+                    return;
                 }
                 case BattleActionType.Flee:
                 {
@@ -1019,7 +1060,6 @@ namespace Ambermoon
                         }
 
                         animation.AnimationFinished += MoveAnimationFinished;
-                        // TODO: Is the move animation used for flee? I guess so.
                         animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move), Game.TicksPerSecond / 20,
                             battleTicks, Global.CombatBackgroundArea.Center, 0.0f);
                         currentBattleAnimation = animation;
@@ -1054,6 +1094,7 @@ namespace Ambermoon
                                 action.Skip = true;
                             if (battleAction.Character is PartyMember partyMember)
                             {
+                                var battleFieldCopy = (Character[])battleField.Clone();
                                 RemoveCharacterFromBattleField(target);
                                 PlayBattleEffectAnimation(BattleEffect.Death, tile, battleTicks, () =>
                                 {
@@ -1067,7 +1108,7 @@ namespace Ambermoon
                                             KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList()
                                         });
                                     }
-                                }, GetMonsterDeathScale(target as Monster));
+                                }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
                             }
                             else
                             {
@@ -1504,18 +1545,11 @@ namespace Ambermoon
             }
             else
             {
-                if (spellInfo.Target == SpellTarget.FriendRow)
-                {
-                    // TODO: pick the row where monsters need healing
-                    // TODO: don't cast on rows without friends
-                    return (uint)game.RandomInt(0, 3);
-                }
-                else
-                {
-                    var positions = Monsters.Where(m => m?.Alive == true)
-                        .Select(p => GetCharacterPosition(p)).ToArray();
-                    return (uint)positions[game.RandomInt(0, positions.Length - 1)];
-                }
+                // Note: Friend spells can only target single targets or all.
+                // For all no target has to be selected so here only a single target is selected.
+                var positions = Monsters.Where(m => m?.Alive == true)
+                    .Select(p => GetCharacterPosition(p)).ToArray();
+                return (uint)positions[game.RandomInt(0, positions.Length - 1)];
             }
         }
 
@@ -1577,14 +1611,15 @@ namespace Ambermoon
             }
         }
 
-        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint tile, uint ticks, Action finishedAction, float scale = 1.0f)
+        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint tile, uint ticks, Action finishedAction, float scale = 1.0f, Character[] battleField = null)
         {
-            PlayBattleEffectAnimation(battleEffect, tile, tile, ticks, finishedAction, scale);
+            PlayBattleEffectAnimation(battleEffect, tile, tile, ticks, finishedAction, scale, battleField);
         }
 
-        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint sourceTile, uint targetTile, uint ticks, Action finishedAction, float scale = 1.0f)
+        void PlayBattleEffectAnimation(BattleEffect battleEffect, uint sourceTile, uint targetTile, uint ticks, Action finishedAction, float scale = 1.0f, Character[] battleField = null)
         {
-            var effects = BattleEffects.GetEffectInfo(layout.RenderView, battleEffect, sourceTile, targetTile, scale);
+            battleField ??= this.battleField;
+            var effects = BattleEffects.GetEffectInfo(layout.RenderView, battleEffect, sourceTile, targetTile, battleField, scale);
             int numFinishedEffects = 0;
 
             void FinishEffect()

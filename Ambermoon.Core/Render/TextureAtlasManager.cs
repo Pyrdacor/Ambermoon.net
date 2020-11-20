@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
 

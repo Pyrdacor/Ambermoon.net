@@ -79,6 +79,8 @@ namespace Ambermoon.Render
         public static readonly Color BrightGray = new Color(0x77, 0x77, 0x66);
         public static readonly Color BrightAccent = new Color(0x88, 0x88, 0x77);
         public static readonly Color DarkAccent = new Color(0x55, 0x55, 0x44);
+        public static readonly Color FireOverlay = new Color(0xff, 0x00, 0x00, 0x3f);
+        public static readonly Color IceOverlay = new Color(0x00, 0x00, 0xff, 0x3f);
 
         public static bool operator ==(Color color1, Color color2)
         {

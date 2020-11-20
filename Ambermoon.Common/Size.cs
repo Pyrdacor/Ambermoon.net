@@ -27,6 +27,16 @@ namespace Ambermoon
             Height = size.Height;
         }
 
+        public static FloatSize operator *(Size size, float factor)
+        {
+            return new FloatSize(size.Width * factor, size.Height * factor);
+        }
+
+        public static FloatSize operator *(float factor, Size size)
+        {
+            return size * factor;
+        }
+
         public static bool operator ==(Size size1, Size size2)
         {
             if (ReferenceEquals(size1, size2))
@@ -139,6 +149,11 @@ namespace Ambermoon
         public static implicit operator FloatSize(Size size)
         {
             return new FloatSize(size);
+        }
+
+        public Size ToSize()
+        {
+            return new Size(Util.Round(Width), Util.Round(Height));
         }
 
         public override bool Equals(object obj)
