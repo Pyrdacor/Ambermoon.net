@@ -2417,14 +2417,6 @@ namespace Ambermoon
             }
         }
 
-        internal void ResetStorageItem(int slotIndex, ItemSlot item)
-        {
-            if (OpenStorage == null)
-                throw new AmbermoonException(ExceptionScope.Application, "Reset storage item while no storage is open.");
-
-            OpenStorage.ResetItem(slotIndex, item);
-        }
-
         internal void ShowChest(ChestEvent chestMapEvent)
         {
             // TODO: execute following events
@@ -2441,8 +2433,8 @@ namespace Ambermoon
                     !chestMapEvent.RemoveWhenEmpty, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
                 layout.AddItemGrid(itemGrid);
 
-                if (!chestMapEvent.RemoveWhenEmpty)
-                    OpenStorage = chest;
+                OpenStorage = chest;
+                OpenStorage.AllowsItemDrop = !chestMapEvent.RemoveWhenEmpty;
 
                 if (chestMapEvent.Lock != ChestEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
                 {

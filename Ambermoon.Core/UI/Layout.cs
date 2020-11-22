@@ -287,7 +287,7 @@ namespace Ambermoon.UI
                 }
                 else if (game.OpenStorage != null)
                 {
-                    game.ResetStorageItem(SourceSlot, Item.Item);
+                    SourceGrid.DropItem(SourceSlot, this);
                 }
 
                 if (updateGrid && SourceGrid != null)
@@ -777,7 +777,7 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false);
                     buttonGrid.SetButton(1, ButtonType.UseItem, true, null, true); // TODO: use item
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
-                    if (game.OpenStorage != null)
+                    if (game.OpenStorage?.AllowsItemDrop == true)
                     {
                         buttonGrid.SetButton(3, ButtonType.StoreItem, false, () => PickInventoryItemForAction(StoreItem,
                             false, game.DataNameProvider.WhichItemToStoreMessage), false);
@@ -1921,8 +1921,17 @@ namespace Ambermoon.UI
                         }
                         else if (buttons == MouseButtons.Right)
                         {
-                            if (i != game.CurrentInventoryIndex)
-                                game.OpenPartyMember(i, Type != LayoutType.Stats);
+                            // Only allow opening inventory with dragged item if we are
+                            // not inside a chest window.
+                            if (game.CurrentInventory != null)
+                            {
+                                if (i != game.CurrentInventoryIndex)
+                                    game.OpenPartyMember(i, Type != LayoutType.Stats);
+                            }
+                            else // In chest window right click aborts dragging instead
+                            {
+                                CancelDrag();
+                            }
                         }
 
                         return true;

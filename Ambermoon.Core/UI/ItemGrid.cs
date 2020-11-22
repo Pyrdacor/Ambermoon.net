@@ -78,7 +78,6 @@ namespace Ambermoon.UI
         }
         public bool DisableDrag { get; set; } = false;
 
-
         private ItemGrid(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
             List<ItemSlot> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction,
             int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect scrollbarArea = null, Size scrollbarSize = null,

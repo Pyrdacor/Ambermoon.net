@@ -18,6 +18,7 @@ namespace Ambermoon.Data
         public ItemSlot[,] Slots { get; } = new ItemSlot[SlotsPerRow, SlotRows];
         public uint Gold { get; set; }
         public uint Food { get; set; }
+        public bool AllowsItemDrop { get; set; } = true;
 
         public bool Empty => Gold == 0 && Food == 0 && !Slots.Cast<ItemSlot>().Any(s => s.Amount != 0);
 
@@ -43,5 +44,7 @@ namespace Ambermoon.Data
             if (Slots[column, row].Add(item) != 0)
                 throw new AmbermoonException(ExceptionScope.Application, "Unable to reset chest item.");
         }
+
+        public ItemSlot GetSlot(int slot) => Slots[slot % SlotsPerRow, slot / SlotsPerRow];
     }
 }
