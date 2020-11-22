@@ -131,8 +131,8 @@ namespace Ambermoon.Data
         {
             None = 0,
             Move = 0x01,
-            Cursor = 0x02, // Hand or Eye
-            Always = Move | Cursor
+            EyeCursor = 0x02,
+            Always = Move | EyeCursor
         }
 
         public uint TextIndex { get; set; }
@@ -143,7 +143,7 @@ namespace Ambermoon.Data
         public bool HasImage => EventImageIndex != 0xff;
         public Trigger PopupTrigger { get; set; }
         public bool CanTriggerByMoving => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.Move);
-        public bool CanTriggerByCursor => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.Cursor);
+        public bool CanTriggerByCursor => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.EyeCursor);
         public byte Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
 
@@ -336,6 +336,7 @@ namespace Ambermoon.Data
             UseItem = 0x07,
             Success = 0x09, // treasure fully looted, battle won, etc
             Hand = 0x0e,
+            Eye = 0x14,
             // TODO
         }
 
@@ -369,6 +370,7 @@ namespace Ambermoon.Data
                 ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Success => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.Eye => $"{Type}: Eye cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
             };
         }

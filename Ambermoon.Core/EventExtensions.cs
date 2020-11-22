@@ -56,12 +56,13 @@ namespace Ambermoon
                             }
                             break;
                         case EventTrigger.Eye:
-                        case EventTrigger.Hand:
                             if (!popupTextEvent.CanTriggerByCursor)
                             {
                                 aborted = true;
                                 return null;
                             }
+                            break;
+                        case EventTrigger.Always:
                             break;
                         default:
                             aborted = true;
@@ -163,6 +164,14 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.Hand:
                             if (trigger != EventTrigger.Hand)
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.Eye:
+                            if (trigger != EventTrigger.Eye)
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;

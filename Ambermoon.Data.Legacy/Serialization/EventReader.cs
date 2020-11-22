@@ -140,7 +140,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.PopupText:
                 {
                     // event image index (0xff = no image)
-                    // trigger (1 = move, 2 = cursor, 3 = both)
+                    // trigger (1 = move, 2 = eye cursor, 3 = both)
                     // 1 unknown byte
                     // map text index as word
                     // 4 unknown bytes

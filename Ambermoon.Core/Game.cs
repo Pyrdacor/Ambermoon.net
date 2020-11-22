@@ -2427,6 +2427,7 @@ namespace Ambermoon
 
         internal void ShowChest(ChestEvent chestMapEvent)
         {
+            // TODO: execute following events
             Fade(() =>
             {
                 layout.Reset();
@@ -2807,6 +2808,7 @@ namespace Ambermoon
                     battleRoundActiveSprite.Visible = false;
                     buttonGridBackground?.Destroy();
                     buttonGridBackground = null;
+                    layout.EnableButton(4, currentBattle.CanMoveForward);
 
                     foreach (var action in roundPlayerBattleActions)
                         CheckPlayerActionVisuals(GetPartyMember(action.Key), action.Value);
@@ -2928,8 +2930,8 @@ namespace Ambermoon
         // Note: In original the max hitpoints are often much higher
         // than the current hitpoints. It seems like the max hitpoints
         // are often a multiple of 99 like 99, 198, 297, etc.
-        // I assume in that case the max hitpoints should be the same
-        // as current hit points. Maybe the value is used for LP stealer?
+        // I assume that the max hitpoints should be the same
+        // as current hit points.
         static void InitializeMonster(Monster monster)
         {
             if (monster == null)
@@ -2942,13 +2944,13 @@ namespace Ambermoon
             }
 
             // Attributes, abilities, LP and SP is special for monsters.
-            // If the max value is a multiple of 99, the max value is set to current value.
             foreach (var attribute in Enum.GetValues<Attribute>())
                 FixValue(monster.Attributes[attribute]);
             foreach (var ability in Enum.GetValues<Ability>())
                 FixValue(monster.Abilities[ability]);
-            FixValue(monster.HitPoints);
-            FixValue(monster.SpellPoints);
+            // TODO: the given max value might be used for something else
+            monster.HitPoints.MaxValue = monster.HitPoints.CurrentValue;
+            monster.SpellPoints.MaxValue = monster.SpellPoints.CurrentValue;
 
             // TODO: some values seem to be a bit different (use monster knowledge on skeleton for examples)
         }
