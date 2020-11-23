@@ -39,7 +39,7 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
                     game.ShowChest(chestMapEvent);
-                    break;
+                    return null;
                 }
                 case EventType.PopupText:
                 {
