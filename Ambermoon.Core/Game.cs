@@ -196,6 +196,7 @@ namespace Ambermoon
         internal bool MonsterSeesPlayer { get; set; } = false;
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
+        internal UIText ChestText { get; private set; } = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
         Spell pickedSpell = Spell.None;
@@ -1344,7 +1345,8 @@ namespace Ambermoon
                     }
                     else if (layout.Type == LayoutType.Event ||
                         (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true) ||
-                        currentBattle?.WaitForClick == true)
+                        currentBattle?.WaitForClick == true ||
+                        ChestText != null)
                         CursorType = CursorType.Click;
                     else
                         CursorType = CursorType.Sword;
@@ -1530,14 +1532,80 @@ namespace Ambermoon
             }
         }
 
-        internal void TriggerMapEvents(EventTrigger trigger)
+        internal bool TestUseItemMapEvent(uint itemIndex)
+        {
+            uint x = (uint)player.Position.X;
+            uint y = (uint)player.Position.Y;
+            var @event = is3D ? Map.GetEvent(x, y, CurrentSavegame) : renderMap2D.GetEvent(x, y, CurrentSavegame);
+
+            if (@event is ConditionEvent conditionEvent &&
+                conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.UseItem &&
+                conditionEvent.ObjectIndex == itemIndex)
+            {
+                return true;
+            }
+
+            var mapWidth = Map.IsWorldMap ? int.MaxValue : Map.Width;
+            var mapHeight = Map.IsWorldMap ? int.MaxValue : Map.Height;
+
+            if (is3D)
+            {
+                camera3D.GetForwardPosition(Global.DistancePerBlock, out float px, out float pz, false, false);
+                var position = Geometry.Geometry.CameraToBlockPosition(Map, px, pz);
+
+                if (position != player.Position &&
+                    position.X >= 0 && position.X < Map.Width &&
+                    position.Y >= 0 && position.Y < Map.Height)
+                {
+                    @event = Map.GetEvent((uint)position.X, (uint)position.Y, CurrentSavegame);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                switch (player.Direction)
+                {
+                    case CharacterDirection.Left:
+                        if (x == 0)
+                            return false;
+                        --x;
+                        break;
+                    case CharacterDirection.Right:
+                        if (x == mapWidth - 1)
+                            return false;
+                        ++x;
+                        break;
+                    case CharacterDirection.Up:
+                        if (y == 0)
+                            return false;
+                        --y;
+                        break;
+                    case CharacterDirection.Down:
+                        if (y == mapHeight - 1)
+                            return false;
+                        ++y;
+                        break;
+                }
+
+                @event = renderMap2D.GetEvent(x, y, CurrentSavegame);
+            }
+
+            return  @event is ConditionEvent adjacentConditionEvent &&
+                    adjacentConditionEvent.TypeOfCondition == ConditionEvent.ConditionType.UseItem &&
+                    adjacentConditionEvent.ObjectIndex == itemIndex;
+        }
+
+        internal bool TriggerMapEvents(EventTrigger trigger)
         {
             bool consumed = TriggerMapEvents(trigger, (uint)player.Position.X, (uint)player.Position.Y);
 
             if (is3D)
             {
                 if (consumed)
-                    return;
+                    return true;
 
                 // In 3D we might trigger adjacent tile events.
                 if (trigger != EventTrigger.Move)
@@ -1549,10 +1617,19 @@ namespace Ambermoon
                         position.X >= 0 && position.X < Map.Width &&
                         position.Y >= 0 && position.Y < Map.Height)
                     {
-                        TriggerMapEvents(trigger, (uint)position.X, (uint)position.Y);
+                        return TriggerMapEvents(trigger, (uint)position.X, (uint)position.Y);
                     }
                 }
             }
+            else if (trigger >= EventTrigger.Item0)
+            {
+                if (consumed)
+                    return true;
+
+                // In 2D we might trigger adjacent tile events when items are used.
+            }
+
+            return false;
         }
 
         void ShowMap(bool show)
@@ -2512,7 +2589,7 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowChest(ChestEvent chestMapEvent)
+        internal void ShowChest(ChestEvent chestMapEvent, Map map = null)
         {
             var chest = GetChest(chestMapEvent.ChestIndex);
 
@@ -2582,6 +2659,24 @@ namespace Ambermoon
                     {
                         ShowTextPanel(CharacterInfo.ChestFood, true,
                             $"{DataNameProvider.FoodName}^{chest.Food}", new Rect(260, 104, 43, 15));
+                    }
+
+                    if (map != null && chestMapEvent.TextIndex != 255)
+                    {
+                        CursorType = CursorType.Click;
+                        ChestText = layout.AddScrollableText(new Rect(114, 46, 189, 48), ProcessText(map.Texts[(int)chestMapEvent.TextIndex]));
+                        ChestText.Clicked += scrolledToEnd =>
+                        {
+                            if (scrolledToEnd)
+                            {
+                                ChestText?.Destroy();
+                                ChestText = null;
+                                InputEnable = true;
+                                CursorType = CursorType.Sword;
+                            }
+                        };
+                        CursorType = CursorType.Click;
+                        InputEnable = false;
                     }
                 }
             });

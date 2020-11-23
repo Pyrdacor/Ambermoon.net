@@ -782,7 +782,8 @@ namespace Ambermoon.UI
                     break;
                 case LayoutType.Inventory:
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false);
-                    buttonGrid.SetButton(1, ButtonType.UseItem, true, null, true); // TODO: use item
+                    buttonGrid.SetButton(1, ButtonType.UseItem, false, () => PickInventoryItemForAction(UseItem,
+                        false, game.DataNameProvider.WhichItemToDropMessage), true);
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
                     if (game.OpenStorage?.AllowsItemDrop == true)
                     {
@@ -954,7 +955,17 @@ namespace Ambermoon.UI
 
         void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
+            // TODO
 
+            if (game.TestUseItemMapEvent(itemSlot.ItemIndex))
+            {
+                game.CloseWindow();
+                game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex));
+            }
+            else
+            {
+                // do other things
+            }
         }
 
         void DistributeGold(Chest chest)
@@ -1108,9 +1119,9 @@ namespace Ambermoon.UI
             }
         }
 
-        void ShowChestMessage(string message)
+        internal void ShowChestMessage(string message)
         {
-            game.ShowMessage(new Rect(111, 46, 192, 54), message, TextColor.White, true, TextAlign.Center);
+            game.ShowMessage(new Rect(114, 46, 189, 48), message, TextColor.White, true, TextAlign.Center);
         }
 
         void DropGold()
@@ -1994,6 +2005,15 @@ namespace Ambermoon.UI
                         cursorType = CursorType.Click;
                     }
                     return true;
+                }
+                else if (game.ChestText != null)
+                {
+                    if (buttons == MouseButtons.Left)
+                    {
+                        game.ChestText.Click(position);
+                        cursorType = game.ChestText == null ? CursorType.Sword : CursorType.Click;
+                        return true;
+                    }
                 }
 
                 if (PopupActive)

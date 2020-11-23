@@ -36,6 +36,7 @@
         string DropItemQuestion { get; }
         string DropGoldQuestion { get; }
         string DropFoodQuestion { get; }
+        string WhichItemToUseMessage { get; }
         string WhichItemToDropMessage { get; }
         string WhichItemToStoreMessage { get; }
         string GoldName { get; }

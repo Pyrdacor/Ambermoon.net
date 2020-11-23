@@ -30,6 +30,17 @@ namespace Ambermoon
                 out bool _, false);
         }
 
+        public static Event GetEvent(this Map map, uint x, uint y, Savegame savegame)
+        {
+            var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
+            bool hasMapEvent = mapEventId != 0 && !savegame.GetEventBit(map.Index, mapEventId - 1);
+
+            if (!hasMapEvent)
+                return null;
+
+            return map.EventList[(int)mapEventId - 1];
+        }
+
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
             uint x, uint y, uint ticks, Savegame savegame,
             out bool hasMapEvent, bool noIndexReset = false)

@@ -171,6 +171,25 @@ namespace Ambermoon.Render
             }
         }
 
+        public Event GetEvent(uint x, uint y, Savegame savegame)
+        {
+            if (x >= Map.Width)
+            {
+                if (y >= Map.Height)
+                    return adjacentMaps[2].GetEvent(x - (uint)Map.Width, y - (uint)Map.Height, savegame);
+                else
+                    return adjacentMaps[0].GetEvent(x - (uint)Map.Width, y, savegame);
+            }
+            else if (y >= Map.Height)
+            {
+                return adjacentMaps[1].GetEvent(x, y - (uint)Map.Height, savegame);
+            }
+            else
+            {
+                return Map.GetEvent(x, y, savegame);
+            }
+        }
+
         /// <summary>
         /// Converts a map view position (pixels) to a tile position
         /// (x gives the tile column index and y the tile row index).

@@ -59,6 +59,7 @@
         public string DropItemQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropIt);
         public string DropGoldQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropGold);
         public string DropFoodQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropFood);
+        public string WhichItemToUseMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToUse);
         public string WhichItemToDropMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToDrop);
         public string WhichItemToStoreMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToPutInChest);
         public string GoldName => executableData.UITexts.Entries[UITextIndex.Gold];

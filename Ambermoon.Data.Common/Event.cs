@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 
@@ -102,7 +101,7 @@ namespace Ambermoon.Data
         }
 
         public LockFlags Lock { get; set; }
-        public ushort Unknown { get; set; }        
+        public uint TextIndex { get; set; } // 255 = none
         /// <summary>
         /// Note: This is 0-based but the files might by 1-based.
         /// </summary>
@@ -110,10 +109,11 @@ namespace Ambermoon.Data
         public bool RemoveWhenEmpty { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
+        public byte Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Unknown1 {Unknown:x4}";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Unknown: {Unknown:x2}";
         }
     }
 
