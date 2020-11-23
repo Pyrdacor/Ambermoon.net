@@ -6,8 +6,6 @@
         ItemSlot GetSlot(int slot);
 
         ItemSlot[,] Slots { get; }
-        uint Gold { get; set; }
-        uint Food { get; set; }
         bool AllowsItemDrop { get; set; }
     }
 }

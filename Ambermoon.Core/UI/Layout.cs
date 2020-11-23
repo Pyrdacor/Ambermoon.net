@@ -715,7 +715,7 @@ namespace Ambermoon.UI
             buttonGrid.SetButtonAction(index, action);
         }
 
-        void UpdateLayoutButtons(uint? ticksPerMovement = null)
+        internal void UpdateLayoutButtons(uint? ticksPerMovement = null)
         {
             switch (Type)
             {
@@ -808,15 +808,18 @@ namespace Ambermoon.UI
                     break;
                 case LayoutType.Items:
                     // TODO: this is only for open chests now
-                    buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
-                    buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(4, ButtonType.DistributeGold, true, null, false); // TODO: distribute gold
-                    buttonGrid.SetButton(5, ButtonType.DistributeFood, true, null, false); // TODO: distribute food
-                    buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
-                    buttonGrid.SetButton(7, ButtonType.GoldToPlayer, true, null, false); // TODO: gold to player
-                    buttonGrid.SetButton(8, ButtonType.FoodToPlayer, true, null, false); // TODO: food to player
+                    if (game.OpenStorage is Chest chest)
+                    {
+                        buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                        buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(4, ButtonType.DistributeGold, chest.Gold == 0, () => DistributeGold(chest), false);
+                        buttonGrid.SetButton(5, ButtonType.DistributeFood, chest.Food == 0, () => DistributeFood(chest), false);
+                        buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
+                        buttonGrid.SetButton(7, ButtonType.GoldToPlayer, chest.Gold == 0, () => GiveGold(chest), false);
+                        buttonGrid.SetButton(8, ButtonType.FoodToPlayer, chest.Food == 0, () => GiveFood(chest), false);
+                    }
                     break;
                 case LayoutType.Riddlemouth:
                     buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
@@ -945,6 +948,104 @@ namespace Ambermoon.UI
         void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
 
+        }
+
+        void DistributeGold(Chest chest)
+        {
+            var partyMembers = game.PartyMembers.ToList();
+            var initialGold = chest.Gold;
+
+            while (chest.Gold != 0)
+            {
+                int numTargetPlayers = partyMembers.Count;
+                uint goldPerPlayer = chest.Gold / (uint)numTargetPlayers;
+                bool anyCouldTake = false;
+
+                if (goldPerPlayer == 0)
+                {
+                    numTargetPlayers = (int)chest.Gold;
+                    goldPerPlayer = 1;
+                }
+
+                foreach (var partyMember in partyMembers)
+                {
+                    uint goldToTake = Math.Min(partyMember.MaxGoldToTake, goldPerPlayer);
+                    chest.Gold -= goldToTake;
+                    partyMember.Gold += (ushort)goldToTake;
+                    partyMember.TotalWeight += goldToTake * 5;
+
+                    if (goldToTake != 0)
+                    {
+                        anyCouldTake = true;
+
+                        if (--numTargetPlayers == 0)
+                            break;
+                    }
+                }
+
+                if (!anyCouldTake)
+                    return;
+            }
+
+            if (chest.Gold != initialGold)
+            {
+                game.ChestGoldChanged();
+                UpdateLayoutButtons();
+            }
+        }
+
+        void DistributeFood(Chest chest)
+        {
+            var partyMembers = game.PartyMembers.ToList();
+            var initialFood = chest.Food;
+
+            while (chest.Food != 0)
+            {
+                int numTargetPlayers = partyMembers.Count;
+                uint foodPerPlayer = chest.Food / (uint)numTargetPlayers;
+                bool anyCouldTake = false;
+
+                if (foodPerPlayer == 0)
+                {
+                    numTargetPlayers = (int)chest.Food;
+                    foodPerPlayer = 1;
+                }
+
+                foreach (var partyMember in partyMembers)
+                {
+                    uint foodToTake = Math.Min(partyMember.MaxFoodToTake, foodPerPlayer);
+                    chest.Food -= foodToTake;
+                    partyMember.Food += (ushort)foodToTake;
+                    partyMember.TotalWeight += foodToTake * 250;
+
+                    if (foodToTake != 0)
+                    {
+                        anyCouldTake = true;
+
+                        if (--numTargetPlayers == 0)
+                            break;
+                    }
+                }
+
+                if (!anyCouldTake)
+                    return;
+            }
+
+            if (chest.Food != initialFood)
+            {
+                game.ChestFoodChanged();
+                UpdateLayoutButtons();
+            }
+        }
+
+        void GiveGold(Chest chest)
+        {
+            // TODO
+        }
+
+        void GiveFood(Chest chest)
+        {
+            // TODO
         }
 
         void DropGold()
@@ -1913,6 +2014,10 @@ namespace Ambermoon.UI
                                 if (remaining == 0)
                                 {
                                     draggedItem.Item.Destroy();
+
+                                    if (draggedItem.SourcePlayer == null && game.OpenStorage != null)
+                                        game.ItemRemovedFromStorage();
+
                                     DropItem();
                                 }
                                 else

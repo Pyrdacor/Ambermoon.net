@@ -142,7 +142,9 @@ namespace Ambermoon
             /// <summary>
             /// Food of the conversating party member.
             /// </summary>
-            ConversationFood
+            ConversationFood,
+            ChestGold,
+            ChestFood
         }
 
         // TODO: cleanup members
@@ -1483,6 +1485,8 @@ namespace Ambermoon
             UpdateCursor(position, buttons);
         }
 
+        internal IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
+            .Select(i => GetPartyMember(i)).Where(p => p != null);
         internal PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
         internal Chest GetChest(uint index) => CurrentSavegame.Chests[(int)index];
         internal Merchant GetMerchant(uint index) => CurrentSavegame.Merchants[(int)index];
@@ -1780,7 +1784,7 @@ namespace Ambermoon
                     TextColor.White, TextAlign.Center, 5);
                 characterInfoTexts.Add(CharacterInfo.Weight, layout.AddText(weightArea.CreateModified(0, 8, 0, 0),
                     string.Format(DataNameProvider.CharacterInfoWeightString, Util.Round(partyMember.TotalWeight / 1000.0f),
-                    partyMember.Attributes[Data.Attribute.Strength].TotalCurrentValue), TextColor.White, TextAlign.Center, 5));
+                    partyMember.MaxWeight / 1000), TextColor.White, TextAlign.Center, 5));
                 #endregion
             }
 
@@ -1935,17 +1939,13 @@ namespace Ambermoon
                 layout.AddText(new Rect(208, 99, 96, 7), CurrentPartyMember.Name, TextColor.Yellow, TextAlign.Center);
                 if (CurrentPartyMember.Gold > 0)
                 {
-                    var goldArea = new Rect(209, 107, 43, 15);
-                    characterInfoPanels.Add(CharacterInfo.ConversationGold, layout.AddPanel(goldArea, 2));
-                    characterInfoTexts.Add(CharacterInfo.ConversationGold, layout.AddText(goldArea.CreateOffset(0, 1),
-                        $"{DataNameProvider.GoldName}^{CurrentPartyMember.Gold}", TextColor.White, TextAlign.Center, 4));
+                    ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
+                        $"{DataNameProvider.GoldName}^{CurrentPartyMember.Gold}", new Rect(209, 107, 43, 15));
                 }
                 if (CurrentPartyMember.Food > 0)
                 {
-                    var foodArea = new Rect(257, 107, 43, 15);
-                    characterInfoPanels.Add(CharacterInfo.ConversationFood, layout.AddPanel(foodArea, 2));
-                    characterInfoTexts.Add(CharacterInfo.ConversationFood, layout.AddText(foodArea.CreateOffset(0, 1),
-                        $"{DataNameProvider.FoodName}^{CurrentPartyMember.Food}", TextColor.White, TextAlign.Center, 4));
+                    ShowTextPanel(CharacterInfo.ConversationFood, CurrentPartyMember.Food > 0,
+                        $"{DataNameProvider.FoodName}^{CurrentPartyMember.Food}", new Rect(257, 107, 43, 15));
                 }
             }
         }
@@ -1976,7 +1976,7 @@ namespace Ambermoon
             var character = (Character)npc ?? CurrentInventory;
 
             UpdateText(CharacterInfo.Age, () => string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
-                character.Attributes[Data.Attribute.Age].CurrentValue));
+                character.Attributes[Attribute.Age].CurrentValue));
             UpdateText(CharacterInfo.Level, () => $"{DataNameProvider.GetClassName(character.Class)} {character.Level}");
             UpdateText(CharacterInfo.EP, () => string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                 character.ExperiencePoints));
@@ -1994,42 +1994,47 @@ namespace Ambermoon
             UpdateText(CharacterInfo.Defense, () =>
                 string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.VariableDefense < 0 ? '-' : '+'), Math.Abs(character.VariableDefense)));
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
-                Util.Round(character.TotalWeight / 1000.0f), character.Attributes[Data.Attribute.Strength].TotalCurrentValue));
+                Util.Round(character.TotalWeight / 1000.0f), (character as PartyMember).MaxWeight / 1000));
             if (npc != null)
             {
-                void ShowTextPanel(CharacterInfo characterInfo, bool show, string text, Rect area)
-                {
-                    if (show)
-                    {
-                        if (!characterInfoPanels.ContainsKey(characterInfo))
-                            characterInfoPanels[characterInfo] = layout.AddPanel(area, 2);
-                        if (!characterInfoTexts.ContainsKey(characterInfo))
-                        {
-                            characterInfoTexts[characterInfo] = layout.AddText(area.CreateOffset(0, 1),
-                                text, TextColor.White, TextAlign.Center, 4);
-                        }
-                        else
-                            characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text));
-                    }
-                    else
-                    {
-                        if (characterInfoPanels.ContainsKey(characterInfo))
-                        {
-                            characterInfoPanels[characterInfo].Destroy();
-                            characterInfoPanels.Remove(characterInfo);
-                        }
-                        if (characterInfoTexts.ContainsKey(characterInfo))
-                        {
-                            characterInfoTexts[characterInfo].Destroy();
-                            characterInfoTexts.Remove(characterInfo);
-                        }
-                    }
-                }
-
                 ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
                     $"{DataNameProvider.GoldName}^{CurrentPartyMember.Gold}", new Rect(209, 107, 43, 15));
                 ShowTextPanel(CharacterInfo.ConversationFood, CurrentPartyMember.Food > 0,
                     $"{DataNameProvider.FoodName}^{CurrentPartyMember.Food}", new Rect(257, 107, 43, 15));
+            }
+        }
+
+        void HideTextPanel(CharacterInfo characterInfo)
+        {
+            ShowTextPanel(characterInfo, false, null, null);
+        }
+
+        void ShowTextPanel(CharacterInfo characterInfo, bool show, string text, Rect area)
+        {
+            if (show)
+            {
+                if (!characterInfoPanels.ContainsKey(characterInfo))
+                    characterInfoPanels[characterInfo] = layout.AddPanel(area, 2);
+                if (!characterInfoTexts.ContainsKey(characterInfo))
+                {
+                    characterInfoTexts[characterInfo] = layout.AddText(area.CreateOffset(0, 1),
+                        text, TextColor.White, TextAlign.Center, 4);
+                }
+                else
+                    characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text));
+            }
+            else
+            {
+                if (characterInfoPanels.ContainsKey(characterInfo))
+                {
+                    characterInfoPanels[characterInfo].Destroy();
+                    characterInfoPanels.Remove(characterInfo);
+                }
+                if (characterInfoTexts.ContainsKey(characterInfo))
+                {
+                    characterInfoTexts[characterInfo].Destroy();
+                    characterInfoTexts.Remove(characterInfo);
+                }
             }
         }
 
@@ -2417,6 +2422,87 @@ namespace Ambermoon
             }
         }
 
+        void ChestRemoved()
+        {
+            var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
+
+            // TODO: Remove chest from map
+
+            CloseWindow();
+        }
+
+        internal void ItemRemovedFromStorage()
+        {
+            if (OpenStorage is Chest chest)
+            {
+                if (chest.Empty)
+                {
+                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+
+                    // If a chest has AllowsItemDrop = false this
+                    // means it is removed when it is empty.
+                    if (!chest.AllowsItemDrop)
+                        ChestRemoved();
+                }
+                else
+                {
+                    layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                }
+            }
+            else if (OpenStorage is Merchant merchant)
+            {
+                // TODO: Show message that he doesn't sell anything if no item is left
+            }
+        }
+
+        internal void ChestGoldChanged()
+        {
+            var chest = OpenStorage as Chest;
+
+            if (chest.Gold > 0)
+            {
+                layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                ShowTextPanel(CharacterInfo.ChestGold, true,
+                    $"{DataNameProvider.GoldName}^{chest.Gold}", new Rect(111, 104, 43, 15));
+            }
+            else
+            {
+                HideTextPanel(CharacterInfo.ChestGold);
+
+                if (chest.Empty)
+                {
+                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+
+                    if (!chest.AllowsItemDrop)
+                        ChestRemoved();
+                }
+            }
+        }
+
+        internal void ChestFoodChanged()
+        {
+            var chest = OpenStorage as Chest;
+
+            if (chest.Food > 0)
+            {
+                layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                ShowTextPanel(CharacterInfo.ChestFood, true,
+                    $"{DataNameProvider.FoodName}^{chest.Food}", new Rect(260, 104, 43, 15));
+            }
+            else
+            {
+                HideTextPanel(CharacterInfo.ChestFood);
+
+                if (chest.Empty)
+                {
+                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+
+                    if (!chest.AllowsItemDrop)
+                        ChestRemoved();
+                }
+            }
+        }
+
         internal void ShowChest(ChestEvent chestMapEvent)
         {
             // TODO: execute following events
@@ -2425,16 +2511,16 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Chest, chestMapEvent);
-                layout.SetLayout(LayoutType.Items);
                 var chest = GetChest(chestMapEvent.ChestIndex);
+                OpenStorage = chest;
+                OpenStorage.AllowsItemDrop = !chestMapEvent.RemoveWhenEmpty;
+                layout.SetLayout(LayoutType.Items);
+                layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
                 itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
                 var itemGrid = ItemGrid.Create(layout, renderView, ItemManager, itemSlotPositions, chest.Slots.ToList(),
                     !chestMapEvent.RemoveWhenEmpty, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
                 layout.AddItemGrid(itemGrid);
-
-                OpenStorage = chest;
-                OpenStorage.AllowsItemDrop = !chestMapEvent.RemoveWhenEmpty;
 
                 if (chestMapEvent.Lock != ChestEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
                 {
@@ -2469,8 +2555,22 @@ namespace Ambermoon
                         int row = slotIndex / Chest.SlotsPerRow;
                         chest.Slots[column, row].Remove(amount);
                     };
+                    itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+                    {
+                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                    };
 
-                    // TODO: gold and food
+                    if (chest.Gold > 0)
+                    {
+                        ShowTextPanel(CharacterInfo.ChestGold, true,
+                            $"{DataNameProvider.GoldName}^{chest.Gold}", new Rect(111, 104, 43, 15));
+                    }
+
+                    if (chest.Food > 0)
+                    {
+                        ShowTextPanel(CharacterInfo.ChestFood, true,
+                            $"{DataNameProvider.FoodName}^{chest.Food}", new Rect(260, 104, 43, 15));
+                    }
                 }
             });
         }
@@ -3714,31 +3814,41 @@ namespace Ambermoon
 
         internal void DropGold(uint amount)
         {
+            layout.ClosePopup(false, true);
             CurrentInventory.Gold = (ushort)Math.Max(0, CurrentInventory.Gold - (int)amount);
+            layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
         }
 
         internal void DropFood(uint amount)
         {
+            layout.ClosePopup(false, true);
             CurrentInventory.Food = (ushort)Math.Max(0, CurrentInventory.Food - (int)amount);
+            layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
         }
 
         internal void StoreGold(uint amount)
         {
+            layout.ClosePopup(false, true);
+            var chest = OpenStorage as Chest;
             const uint MaxGoldPerChest = 50000; // TODO
-            amount = Math.Min(amount, MaxGoldPerChest - OpenStorage.Gold);
+            amount = Math.Min(amount, MaxGoldPerChest - chest.Gold);
             CurrentInventory.Gold = (ushort)Math.Max(0, CurrentInventory.Gold - (int)amount);
-            OpenStorage.Gold += amount;
+            chest.Gold += amount;
+            layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
         }
 
         internal void StoreFood(uint amount)
         {
+            layout.ClosePopup(false, true);
+            var chest = OpenStorage as Chest;
             const uint MaxFoodPerChest = 5000; // TODO
-            amount = Math.Min(amount, MaxFoodPerChest - OpenStorage.Food);
+            amount = Math.Min(amount, MaxFoodPerChest - chest.Food);
             CurrentInventory.Food = (ushort)Math.Max(0, CurrentInventory.Food - (int)amount);
-            OpenStorage.Food += amount;
+            chest.Food += amount;
+            layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
         }
 
@@ -3855,6 +3965,8 @@ namespace Ambermoon
             if (!WindowActive)
                 return;
 
+            characterInfoTexts.Clear();
+            characterInfoPanels.Clear();
             CurrentInventoryIndex = null;
 
             if (currentWindow.Window == Window.Event || currentWindow.Window == Window.Riddlemouth)
