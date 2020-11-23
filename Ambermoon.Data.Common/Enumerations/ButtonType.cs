@@ -47,8 +47,8 @@
         Train,
         Grid, // TODO (3x3 blocks, not sure were it was used)
         GiveItem,
-        GiveFood,
-        GiveGold,
+        GiveFoodToNPC,
+        GiveGoldToNPC,
         AskToJoin,
         AskToLeave,
         Attack,
@@ -58,8 +58,8 @@
         Inventory,
         UseItem,
         ViewItem, // also show item
-        GoldToPlayer,
-        FoodToPlayer,
+        GiveGold,
+        GiveFood,
         DropItem,
         DropGold,
         DropFood,

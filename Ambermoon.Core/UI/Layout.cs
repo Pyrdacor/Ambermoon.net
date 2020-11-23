@@ -824,8 +824,8 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(4, ButtonType.DistributeGold, chest.Gold == 0, () => DistributeGold(chest), false);
                         buttonGrid.SetButton(5, ButtonType.DistributeFood, chest.Food == 0, () => DistributeFood(chest), false);
                         buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
-                        buttonGrid.SetButton(7, ButtonType.GoldToPlayer, chest.Gold == 0, () => GiveGold(chest), false);
-                        buttonGrid.SetButton(8, ButtonType.FoodToPlayer, chest.Food == 0, () => GiveFood(chest), false);
+                        buttonGrid.SetButton(7, ButtonType.GiveGold, chest.Gold == 0, () => GiveGold(chest), false);
+                        buttonGrid.SetButton(8, ButtonType.GiveFood, chest.Food == 0, () => GiveFood(chest), false);
                     }
                     break;
                 case LayoutType.Riddlemouth:
@@ -847,8 +847,8 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(4, ButtonType.AskToJoin, true, null, false); // TODO
                     buttonGrid.SetButton(5, ButtonType.AskToLeave, true, null, false); // TODO
                     buttonGrid.SetButton(6, ButtonType.GiveItem, true, null, false); // TODO
-                    buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO
-                    buttonGrid.SetButton(8, ButtonType.GiveFood, true, null, false); // TODO
+                    buttonGrid.SetButton(7, ButtonType.GiveGoldToNPC, true, null, false); // TODO
+                    buttonGrid.SetButton(8, ButtonType.GiveFoodToNPC, true, null, false); // TODO
                     break;
             case LayoutType.Battle:
                 buttonGrid.SetButton(0, ButtonType.Flee, false, null, false); // this is set later manually
@@ -1048,7 +1048,7 @@ namespace Ambermoon.UI
         {
             // Note: 96 is the object icon index for coins (gold).
             OpenAmountInputBox(game.DataNameProvider.GiveHowMuchGoldMessage,
-                96, game.DataNameProvider.GoldName, game.CurrentInventory.Gold,
+                96, game.DataNameProvider.GoldName, chest == null ? game.CurrentInventory.Gold : chest.Gold,
                 GiveAmount);
 
             void GiveAmount(uint amount)
@@ -1079,7 +1079,7 @@ namespace Ambermoon.UI
         {
             // Note: 109 is the object icon index for food.
             OpenAmountInputBox(game.DataNameProvider.GiveHowMuchFoodMessage,
-                109, game.DataNameProvider.FoodName, game.CurrentInventory.Food,
+                109, game.DataNameProvider.FoodName, chest == null ? game.CurrentInventory.Food : chest.Food,
                 GiveAmount);
 
             void GiveAmount(uint amount)
@@ -2120,13 +2120,18 @@ namespace Ambermoon.UI
                                 partyMember.AddGold(draggedGold);
                                 draggedGoldOrFoodRemover?.Invoke(draggedGold);
                                 CancelDrag();
+                                game.CursorType = CursorType.Sword;
                             }
+                            else
+                                cursorType = CursorType.Gold;
                         }
                         else if (buttons == MouseButtons.Right)
                         {
                             CancelDrag();
                             game.CursorType = CursorType.Sword;
                         }
+
+                        return true;
                     }
                     else if (draggedFood != 0)
                     {
@@ -2137,13 +2142,18 @@ namespace Ambermoon.UI
                                 partyMember.AddFood(draggedFood);
                                 draggedGoldOrFoodRemover?.Invoke(draggedFood);
                                 CancelDrag();
+                                game.CursorType = CursorType.Sword;
                             }
+                            else
+                                cursorType = CursorType.Food;
                         }
                         else if (buttons == MouseButtons.Right)
                         {
                             CancelDrag();
                             game.CursorType = CursorType.Sword;
                         }
+
+                        return true;
                     }
                     else
                     {
@@ -2157,10 +2167,9 @@ namespace Ambermoon.UI
                 }
             }
 
-            if (buttons == MouseButtons.Right && draggedItem != null)
+            if (buttons == MouseButtons.Right && IsDragging)
             {
-                draggedItem.Reset(game);
-                draggedItem = null;
+                CancelDrag();
                 return true;
             }
 
