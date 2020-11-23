@@ -568,6 +568,7 @@ namespace Ambermoon
 
             layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
             is3D = false;
+            uint scrollRefY = playerY + (map.Flags.HasFlag(MapFlags.Indoor) ? 1u : 0u);
 
             if (renderMap2D.Map != map)
             {
@@ -575,7 +576,7 @@ namespace Ambermoon
                 (
                     map,
                     (uint)Util.Limit(0, (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                    (uint)Util.Limit(0, (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)
+                    (uint)Util.Limit(0, (int)scrollRefY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)
                 );
             }
             else
@@ -583,7 +584,7 @@ namespace Ambermoon
                 renderMap2D.ScrollTo
                 (
                     (uint)Util.Limit(0, (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                    (uint)Util.Limit(0, (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y),
+                    (uint)Util.Limit(0, (int)scrollRefY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y),
                     true
                 );
             }
