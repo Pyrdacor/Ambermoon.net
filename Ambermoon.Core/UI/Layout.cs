@@ -264,6 +264,7 @@ namespace Ambermoon.UI
                 //                  First players inventory is opened in addition on reset.
                 // Reset in case 3: Is only possible while in chest screen.
                 bool updateGrid = true;
+                ItemSlot updateSlot = Item.Item;
 
                 if (SourcePlayer != null)
                 {
@@ -273,13 +274,15 @@ namespace Ambermoon.UI
                     {
                         game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                         game.UpdateCharacterInfo();
-                        partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Replace(Item.Item);
+                        partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Add(Item.Item);
+                        updateSlot = partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)];
                     }
                     else
                     {
                         game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                         game.UpdateCharacterInfo();
-                        partyMember.Inventory.Slots[SourceSlot].Replace(Item.Item);
+                        partyMember.Inventory.Slots[SourceSlot].Add(Item.Item);
+                        updateSlot = partyMember.Inventory.Slots[SourceSlot];
                     }
 
                     if (game.CurrentInventoryIndex != SourcePlayer)
@@ -291,7 +294,7 @@ namespace Ambermoon.UI
                 }
 
                 if (updateGrid && SourceGrid != null)
-                    SourceGrid.SetItem(SourceSlot, Item.Item);
+                    SourceGrid.SetItem(SourceSlot, updateSlot);
 
                 Item.Destroy();
             }
@@ -370,6 +373,10 @@ namespace Ambermoon.UI
         readonly List<MonsterCombatGraphic> monsterCombatGraphics = new List<MonsterCombatGraphic>();
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
+        uint draggedGold = 0;
+        uint draggedFood = 0;
+        public bool IsDragging => draggedItem != null || draggedGold != 0 || draggedFood != 0;
+        Action<uint> draggedGoldOrFoodRemover = null;
         readonly List<IColoredRect> barAreas = new List<IColoredRect>();
         readonly List<IColoredRect> filledAreas = new List<IColoredRect>();
         readonly List<IColoredRect> fadeEffectAreas = new List<IColoredRect>();
@@ -792,8 +799,8 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(5, ButtonType.DropFood, game.CurrentInventory?.Food == 0, DropFood, false);
                     }
                     buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
-                    buttonGrid.SetButton(7, ButtonType.GiveGold, true, null, false); // TODO: give gold
-                    buttonGrid.SetButton(8, ButtonType.GiveFood, true, null, false); // TODO: give food
+                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.CurrentInventory?.Gold == 0, () => GiveGold(null), false);
+                    buttonGrid.SetButton(8, ButtonType.GiveFood, game.CurrentInventory?.Food == 0, () => GiveFood(null), false);
                     break;
                 case LayoutType.Stats:
                     buttonGrid.SetButton(0, ButtonType.Inventory, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, true), false);
@@ -971,8 +978,7 @@ namespace Ambermoon.UI
                 {
                     uint goldToTake = Math.Min(partyMember.MaxGoldToTake, goldPerPlayer);
                     chest.Gold -= goldToTake;
-                    partyMember.Gold += (ushort)goldToTake;
-                    partyMember.TotalWeight += goldToTake * 5;
+                    partyMember.AddGold(goldToTake);
 
                     if (goldToTake != 0)
                     {
@@ -1040,12 +1046,64 @@ namespace Ambermoon.UI
 
         void GiveGold(Chest chest)
         {
-            // TODO
+            // Note: 96 is the object icon index for coins (gold).
+            OpenAmountInputBox(game.DataNameProvider.GiveHowMuchGoldMessage,
+                96, game.DataNameProvider.GoldName, game.CurrentInventory.Gold,
+                GiveAmount);
+
+            void GiveAmount(uint amount)
+            {
+                ClosePopup();
+                CancelDrag();
+                draggedGold = amount;
+                game.CursorType = CursorType.Gold;
+                game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
+                draggedGoldOrFoodRemover = chest == null
+                    ? (Action<uint>)(gold => { game.CurrentInventory.RemoveGold(gold); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); })
+                    : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); };
+
+                for (int i = 0; i < Game.MaxPartyMembers; ++i)
+                {
+                    var partyMember = game.GetPartyMember(i);
+
+                    if (partyMember != null)
+                    {
+                        UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
+                            partyMember.MaxGoldToTake >= amount ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                    }
+                }
+            }
         }
 
         void GiveFood(Chest chest)
         {
-            // TODO
+            // Note: 109 is the object icon index for food.
+            OpenAmountInputBox(game.DataNameProvider.GiveHowMuchFoodMessage,
+                109, game.DataNameProvider.FoodName, game.CurrentInventory.Food,
+                GiveAmount);
+
+            void GiveAmount(uint amount)
+            {
+                ClosePopup();
+                CancelDrag();
+                draggedFood = amount;
+                game.CursorType = CursorType.Food;
+                game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
+                draggedGoldOrFoodRemover = chest == null
+                    ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); })
+                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); };
+
+                for (int i = 0; i < Game.MaxPartyMembers; ++i)
+                {
+                    var partyMember = game.GetPartyMember(i);
+
+                    if (partyMember != null)
+                    {
+                        UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
+                            partyMember.MaxFoodToTake >= amount ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                    }
+                }
+            }
         }
 
         void DropGold()
@@ -1686,6 +1744,16 @@ namespace Ambermoon.UI
                 draggedItem.Reset(game);
                 draggedItem = null;
             }
+
+            if (draggedGold != 0 || draggedFood != 0)
+            {
+                draggedGold = 0;
+                draggedFood = 0;
+                draggedGoldOrFoodRemover = null;
+            }
+
+            // Remove hand icons and set current status icons
+            game.PartyMembers.ToList().ForEach(p => UpdateCharacterStatus(p));
         }
 
         void DropItem()
@@ -1952,6 +2020,7 @@ namespace Ambermoon.UI
                                     draggedItem = item;
                                     draggedItem.Item.Position = position;
                                     draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
+                                    PostItemDrag();
                                 }
                             )
                         )
@@ -1977,6 +2046,7 @@ namespace Ambermoon.UI
                                     draggedItem = item;
                                     draggedItem.Item.Position = position;
                                     draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
+                                    PostItemDrag();
                                 }
                             ))
                             {
@@ -2041,6 +2111,40 @@ namespace Ambermoon.UI
 
                         return true;
                     }
+                    else if (draggedGold != 0)
+                    {
+                        if (buttons == MouseButtons.Left)
+                        {
+                            if (partyMember.MaxGoldToTake >= draggedGold)
+                            {
+                                partyMember.AddGold(draggedGold);
+                                draggedGoldOrFoodRemover?.Invoke(draggedGold);
+                                CancelDrag();
+                            }
+                        }
+                        else if (buttons == MouseButtons.Right)
+                        {
+                            CancelDrag();
+                            game.CursorType = CursorType.Sword;
+                        }
+                    }
+                    else if (draggedFood != 0)
+                    {
+                        if (buttons == MouseButtons.Left)
+                        {
+                            if (partyMember.MaxFoodToTake >= draggedFood)
+                            {
+                                partyMember.AddFood(draggedFood);
+                                draggedGoldOrFoodRemover?.Invoke(draggedFood);
+                                CancelDrag();
+                            }
+                        }
+                        else if (buttons == MouseButtons.Right)
+                        {
+                            CancelDrag();
+                            game.CursorType = CursorType.Sword;
+                        }
+                    }
                     else
                     {
                         if (buttons == MouseButtons.Left)
@@ -2061,6 +2165,20 @@ namespace Ambermoon.UI
             }
 
             return false;
+        }
+
+        void PostItemDrag()
+        {
+            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            {
+                var partyMember = game.GetPartyMember(i);
+
+                if (partyMember != null)
+                {
+                    UpdateCharacterStatus(i, partyMember.CanTakeItems(itemManager, draggedItem.Item.Item)
+                        ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                }
+            }
         }
 
         public void Drag(Position position, ref CursorType cursorType)

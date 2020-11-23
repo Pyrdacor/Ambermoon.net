@@ -449,9 +449,11 @@ namespace Ambermoon
                     }
                 }
 
-                if (!WindowActive ||
+                if ((!WindowActive ||
                     currentWindow.Window == Window.Inventory ||
-                    currentWindow.Window == Window.Stats) // TODO: healer, etc?
+                    currentWindow.Window == Window.Stats ||
+                    currentWindow.Window == Window.Chest) && // TODO: healer, etc?
+                    !layout.IsDragging)
                 {
                     for (int i = 0; i < MaxPartyMembers; ++i)
                     {
@@ -499,11 +501,11 @@ namespace Ambermoon
             return position;
         }
 
-        internal void TrapMouse(Rect area)
+        internal void TrapMouse(Rect area, bool keepX = false, bool maxY = false)
         {
             trapMouseArea = renderView.GameToScreen(area);
-            trappedMousePositionOffset.X = trapMouseArea.X - lastMousePosition.X;
-            trappedMousePositionOffset.Y = trapMouseArea.Y - lastMousePosition.Y;
+            trappedMousePositionOffset.X = keepX ? 0 : trapMouseArea.X - lastMousePosition.X;
+            trappedMousePositionOffset.Y = (maxY ? trapMouseArea.Bottom : trapMouseArea.Y) - lastMousePosition.Y;
             UpdateCursor(trapMouseArea.Position, MouseButtons.None);
             MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
         }
@@ -1095,7 +1097,12 @@ namespace Ambermoon
                         }
                         else
                         {
-                            if (currentWindow.Closable)
+                            if (layout.IsDragging)
+                            {
+                                layout.CancelDrag();
+                                CursorType = CursorType.Sword;
+                            }
+                            else if (currentWindow.Closable)
                                 layout.PressButton(2, CurrentTicks);
                         }
                     }
@@ -3897,7 +3904,7 @@ namespace Ambermoon
         {
             var partyMember = GetPartyMember(partyMemberIndex);
 
-            if (partyMember == null)
+            if (partyMember == null || !partyMember.CanTakeItems(ItemManager, item))
                 return item.Amount;
 
             var slots = slotIndex == null
