@@ -1293,9 +1293,14 @@ namespace Ambermoon
             if (!GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY,
                 moveRange, RangeType.Move, wantsToFlee))
                 return false;
+            int currentRow = characterPosition / 6;
 
             for (int y = minY; y <= maxY; ++y)
             {
+                if ((!wantsToFlee && y <= currentRow) ||
+                    (wantsToFlee && y >= currentRow))
+                    continue;
+
                 for (int x = minX; x <= maxX; ++x)
                 {
                     if (battleField[x + y * 6] == null && (forbiddenMoveSpots == null || !forbiddenMoveSpots.Contains(x + y * 6)))
