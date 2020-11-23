@@ -73,7 +73,7 @@ namespace Ambermoon
 
                     game.ShowTextPopup(map, popupTextEvent, _ =>
                     {
-                        TriggerEventChain(map, game, EventTrigger.Always,
+                        map.TriggerEventChain(game, EventTrigger.Always,
                             x, y, game.CurrentTicks, @event.Next, eventStatus);
                     });
                     return null; // next event is only executed after popup response
@@ -91,7 +91,7 @@ namespace Ambermoon
 
                     game.ShowRiddlemouth(map, riddleMouthEvent, () =>
                     {
-                        TriggerEventChain(map, game, EventTrigger.Always,
+                        map.TriggerEventChain(game, EventTrigger.Always,
                             x, y, game.CurrentTicks, @event.Next, true);
                     });
                     return null; // next event is only executed after popup response
@@ -105,14 +105,14 @@ namespace Ambermoon
                     {
                         if (response == PopupTextEvent.Response.Yes)
                         {
-                            TriggerEventChain(map, game, EventTrigger.Always,
+                            map.TriggerEventChain(game, EventTrigger.Always,
                                 x, y, game.CurrentTicks, @event.Next, true);
                         }
                         else // Close and No have the same meaning here
                         {
                             if (decisionEvent.NoEventIndex != 0xffff)
                             {
-                                TriggerEventChain(map, game, EventTrigger.Always,
+                                map.TriggerEventChain(game, EventTrigger.Always,
                                     x, y, game.CurrentTicks, map.Events[(int)decisionEvent.NoEventIndex], false);
                             }
                         }
@@ -121,6 +121,7 @@ namespace Ambermoon
                 }
                 case EventType.ChangeTile:
                 {
+                    // TODO: add those to the savegame as well!
                     if (!(@event is ChangeTileEvent changeTileEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
@@ -314,7 +315,7 @@ namespace Ambermoon
             return @event.Next;
         }
 
-        public static bool TriggerEventChain(Map map, Game game, EventTrigger trigger, uint x, uint y,
+        public static bool TriggerEventChain(this Map map, Game game, EventTrigger trigger, uint x, uint y,
             uint ticks, Event firstMapEvent, bool lastEventStatus = false)
         {
             var mapEvent = firstMapEvent;

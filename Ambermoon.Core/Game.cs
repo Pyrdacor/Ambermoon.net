@@ -2434,7 +2434,8 @@ namespace Ambermoon
         {
             var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
 
-            // TODO: Remove chest from map
+            if (chestEvent.Next != null)
+                Map.TriggerEventChain(this, EventTrigger.Always, 0, 0, CurrentTicks, chestEvent.Next, true);
 
             CloseWindow();
         }
@@ -2513,13 +2514,17 @@ namespace Ambermoon
 
         internal void ShowChest(ChestEvent chestMapEvent)
         {
+            var chest = GetChest(chestMapEvent.ChestIndex);
+
+            if (chestMapEvent.RemoveWhenEmpty && chest.Empty)
+                return;
+
             // TODO: execute following events
             Fade(() =>
             {
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Chest, chestMapEvent);
-                var chest = GetChest(chestMapEvent.ChestIndex);
                 OpenStorage = chest;
                 OpenStorage.AllowsItemDrop = !chestMapEvent.RemoveWhenEmpty;
                 layout.SetLayout(LayoutType.Items);

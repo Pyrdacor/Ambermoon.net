@@ -53,7 +53,7 @@ namespace Ambermoon
             if (mapEventId == 0)
                 return false; // no map events at this position
 
-            return EventExtensions.TriggerEventChain(map, game, trigger, x, y, ticks, map.EventList[(int)mapEventId - 1]);
+            return map.TriggerEventChain(game, trigger, x, y, ticks, map.EventList[(int)mapEventId - 1]);
         }
 
         public static void ClearLastEvent(this Map map)
