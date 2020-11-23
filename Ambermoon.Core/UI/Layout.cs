@@ -1060,7 +1060,8 @@ namespace Ambermoon.UI
                 game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
                 draggedGoldOrFoodRemover = chest == null
                     ? (Action<uint>)(gold => { game.CurrentInventory.RemoveGold(gold); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); })
-                    : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); };
+                    : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };
+                ShowChestMessage(game.DataNameProvider.GiveToWhom);
 
                 for (int i = 0; i < Game.MaxPartyMembers; ++i)
                 {
@@ -1091,7 +1092,8 @@ namespace Ambermoon.UI
                 game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
                 draggedGoldOrFoodRemover = chest == null
                     ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); })
-                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); };
+                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };
+                ShowChestMessage(game.DataNameProvider.GiveToWhom);
 
                 for (int i = 0; i < Game.MaxPartyMembers; ++i)
                 {
@@ -1104,6 +1106,11 @@ namespace Ambermoon.UI
                     }
                 }
             }
+        }
+
+        void ShowChestMessage(string message)
+        {
+            game.ShowMessage(new Rect(111, 46, 192, 54), message, TextColor.White, true, TextAlign.Center);
         }
 
         void DropGold()
@@ -1743,6 +1750,9 @@ namespace Ambermoon.UI
             {
                 draggedItem.Reset(game);
                 draggedItem = null;
+
+                if (game.OpenStorage is Chest)
+                    game.HideMessage();
             }
 
             if (draggedGold != 0 || draggedFood != 0)
@@ -1750,6 +1760,9 @@ namespace Ambermoon.UI
                 draggedGold = 0;
                 draggedFood = 0;
                 draggedGoldOrFoodRemover = null;
+
+                if (game.OpenStorage is Chest)
+                    game.HideMessage();
             }
 
             // Remove hand icons and set current status icons
@@ -1759,6 +1772,9 @@ namespace Ambermoon.UI
         void DropItem()
         {
             draggedItem = null;
+
+            if (game.OpenStorage is Chest)
+                game.HideMessage();
         }
 
         bool IsInventory => Type == LayoutType.Inventory;
@@ -2188,6 +2204,9 @@ namespace Ambermoon.UI
                         ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                 }
             }
+
+            if (game.OpenStorage is Chest)
+                ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
         }
 
         public void Drag(Position position, ref CursorType cursorType)

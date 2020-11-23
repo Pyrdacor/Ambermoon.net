@@ -48,6 +48,8 @@
         string StoreHowMuchFoodMessage { get; }
         string GiveHowMuchGoldMessage { get; }
         string GiveHowMuchFoodMessage { get; }
+        string GiveToWhom { get; }
+        string WhereToMoveIt { get; }
         string TakeHowManyMessage { get; }
         string PersonAsleepMessage { get; }
         string WantToFightMessage { get; }

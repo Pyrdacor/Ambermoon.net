@@ -71,6 +71,8 @@
         public string StoreHowMuchFoodMessage => executableData.Messages.GetEntry(Messages.Index.StoreHowMuchFood);
         public string GiveHowMuchGoldMessage => executableData.Messages.GetEntry(Messages.Index.GiveHowMuchGold);
         public string GiveHowMuchFoodMessage => executableData.Messages.GetEntry(Messages.Index.GiveHowMuchFood);
+        public string GiveToWhom => executableData.Messages.GetEntry(Messages.Index.WhomGiveItTo);
+        public string WhereToMoveIt => executableData.Messages.GetEntry(Messages.Index.WhereToMoveItTo);
         public string TakeHowManyMessage => executableData.Messages.GetEntry(Messages.Index.TakeHowMany);
         public string PersonAsleepMessage => executableData.Messages.GetEntry(Messages.Index.ThisPersonIsAsleep);
         public string WantToFightMessage => executableData.Messages.GetEntry(Messages.Index.AttackWantToFight);

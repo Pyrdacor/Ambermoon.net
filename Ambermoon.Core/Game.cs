@@ -2519,7 +2519,6 @@ namespace Ambermoon
             if (chestMapEvent.RemoveWhenEmpty && chest.Empty)
                 return;
 
-            // TODO: execute following events
             Fade(() =>
             {
                 layout.Reset();
