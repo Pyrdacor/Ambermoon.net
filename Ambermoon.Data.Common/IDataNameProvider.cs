@@ -36,6 +36,19 @@
         string DropItemQuestion { get; }
         string DropGoldQuestion { get; }
         string DropFoodQuestion { get; }
+        string WrongClassToUseItem { get; }
+        string WrongPlaceToUseItem { get; }
+        string WrongWorldToUseItem { get; }
+        string WrongClassToEquipItem { get; }
+        string WrongSexToEquipItem { get; }
+        string NotEnoughFreeFingers { get; }
+        string NotEnoughFreeHands { get; }
+        string CannotEquip { get; }
+        string CannotEquipInFight { get; }
+        string CannotUnequipInFight { get; }
+        string ItemHasNoEffectHere { get; }
+        string ItemCannotBeUsedHere { get; }
+        string CannotUseBrokenItems { get; }
         string WhichItemToUseMessage { get; }
         string WhichItemToDropMessage { get; }
         string WhichItemToStoreMessage { get; }

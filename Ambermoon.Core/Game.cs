@@ -196,6 +196,7 @@ namespace Ambermoon
         internal bool MonsterSeesPlayer { get; set; } = false;
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
+        internal bool BattleActive => currentBattle != null;
         internal UIText ChestText { get; private set; } = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
@@ -1117,7 +1118,7 @@ namespace Ambermoon
                 case Key.F4:
                 case Key.F5:
                 case Key.F6:
-                    if (!layout.PopupActive)
+                    if (!layout.PopupActive && !layout.IsDragging)
                         OpenPartyMember(key - Key.F1, currentWindow.Window != Window.Stats);
                     break;
                 case Key.Num1:
@@ -1130,7 +1131,7 @@ namespace Ambermoon
                 case Key.Num8:
                 case Key.Num9:
                 {
-                    if (layout.PopupDisableButtons)
+                    if (layout.PopupDisableButtons || layout.IsDragging)
                         break;
 
                     int index = key - Key.Num1;
@@ -1694,12 +1695,14 @@ namespace Ambermoon
             if (CurrentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
 
+            bool switchedFromOtherPartyMember = CurrentInventory != null;
+
             void OpenInventory()
             {
                 CurrentInventoryIndex = slot;
                 var partyMember = GetPartyMember(slot);
 
-                layout.Reset();
+                layout.Reset(switchedFromOtherPartyMember);
                 ShowMap(false);
                 SetWindow(Window.Inventory, slot);
                 layout.SetLayout(LayoutType.Inventory);
@@ -1720,7 +1723,7 @@ namespace Ambermoon
                     slot => new Position(Global.InventoryX + (slot % Inventory.Width) * Global.InventorySlotWidth,
                         Global.InventoryY + (slot / Inventory.Width) * Global.InventorySlotHeight)
                 ).ToList();
-                var inventoryGrid = ItemGrid.CreateInventory(layout, slot, renderView, ItemManager,
+                var inventoryGrid = ItemGrid.CreateInventory(this, layout, slot, renderView, ItemManager,
                     inventorySlotPositions, partyMember.Inventory.Slots.ToList());
                 layout.AddItemGrid(inventoryGrid);
                 for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
@@ -1728,70 +1731,28 @@ namespace Ambermoon
                     if (!partyMember.Inventory.Slots[i].Empty)
                         inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
                 }
-                var equipmentGrid = ItemGrid.CreateEquipment(layout, slot, renderView, ItemManager,
-                    equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList());
+                var equipmentGrid = ItemGrid.CreateEquipment(this, layout, slot, renderView, ItemManager,
+                    equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList(), itemSlot =>
+                    {
+                        if (currentBattle != null)
+                        {
+                            var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                            if (!item.Flags.HasFlag(ItemFlags.RemovableDuringFight))
+                            {
+                                layout.SetInventoryMessage(DataNameProvider.CannotUnequipInFight, true);
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    });
                 layout.AddItemGrid(equipmentGrid);
                 foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
                 {
                     if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
                         equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
                 }
-                equipmentGrid.Dropping += (int slotIndex, Item item) =>
-                {
-                    var equipmentSlot = (EquipmentSlot)(slotIndex + 1);
-
-                    if (item.Type == ItemType.Ring)
-                    {
-                        if (equipmentSlot == EquipmentSlot.RightFinger ||
-                            equipmentSlot == EquipmentSlot.LeftFinger)
-                        {
-                            // place on first free finger starting at right one
-                            int rightFingerSlot = (int)(EquipmentSlot.RightFinger - 1);
-
-                            if (equipmentGrid.GetItem(rightFingerSlot) == null)
-                                return rightFingerSlot;
-                            else
-                                return rightFingerSlot + 2; // left finger
-                        }
-                        else
-                        {
-                            return -1;
-                        }
-                    }
-                    else if (item.Type == ItemType.Amulet ||
-                        item.Type == ItemType.Brooch)
-                    {
-                        if (equipmentSlot == EquipmentSlot.Neck ||
-                            equipmentSlot == EquipmentSlot.Chest)
-                        {
-                            return (int)item.Type.ToEquipmentSlot() - 1;
-                        }
-                        else
-                        {
-                            return -1;
-                        }
-                    }
-                    else if (item.Type == ItemType.CloseRangeWeapon ||
-                        item.Type == ItemType.LongRangeWeapon)
-                    {
-                        if (equipmentSlot == EquipmentSlot.RightHand ||
-                            equipmentSlot == EquipmentSlot.LeftHand)
-                        {
-                            return (int)item.Type.ToEquipmentSlot() - 1;
-                        }
-                        else
-                        {
-                            return -1;
-                        }
-                    }
-
-                    var itemEquipmentSlot = item.Type.ToEquipmentSlot();
-
-                    if (equipmentSlot == itemEquipmentSlot)
-                        return slotIndex;
-
-                    return -1;
-                };
                 void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
@@ -2607,7 +2568,7 @@ namespace Ambermoon
                 layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
                 itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-                var itemGrid = ItemGrid.Create(layout, renderView, ItemManager, itemSlotPositions, chest.Slots.ToList(),
+                var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, chest.Slots.ToList(),
                     !chestMapEvent.RemoveWhenEmpty, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
                 layout.AddItemGrid(itemGrid);
 

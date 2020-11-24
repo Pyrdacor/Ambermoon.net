@@ -48,4 +48,9 @@ namespace Ambermoon.Data
         AllWithUnused = 0x7fff,
         All = 0x03ff
     }
+
+    public static class ClassExtensions
+    {
+        public static bool Contains(this ClassFlag classes, Class @class) => classes.HasFlag((ClassFlag)(1 << (int)@class));
+    }
 }

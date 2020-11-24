@@ -14,7 +14,11 @@ namespace Ambermoon.Data
         Accursed = 0x01,
         Sellable = 0x02,
         Stackable = 0x04,
-        Unknown8 = 0x08, // TODO
+        /// <summary>
+        /// Mostly used for armor but also for some other
+        /// equipment like pickaxe or Valdyn's boots.
+        /// </summary>
+        RemovableDuringFight = 0x08,
         DestroyAfterUsage = 0x10,
         /// <summary>
         /// Text popup when item is viewed.

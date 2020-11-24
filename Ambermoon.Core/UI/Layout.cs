@@ -783,7 +783,7 @@ namespace Ambermoon.UI
                 case LayoutType.Inventory:
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false);
                     buttonGrid.SetButton(1, ButtonType.UseItem, false, () => PickInventoryItemForAction(UseItem,
-                        false, game.DataNameProvider.WhichItemToDropMessage), true);
+                        false, game.DataNameProvider.WhichItemToUseMessage), true);
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
                     if (game.OpenStorage?.AllowsItemDrop == true)
                     {
@@ -955,7 +955,21 @@ namespace Ambermoon.UI
 
         void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
-            // TODO
+            if (itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
+            {
+                SetInventoryMessage(game.DataNameProvider.CannotUseBrokenItems, true);
+                return;
+            }
+
+            // TODO: cannot use it here, wrong place, wrong world
+            var user = game.CurrentInventory;
+            var item = itemManager.GetItem(itemSlot.ItemIndex);
+
+            if (!item.Classes.Contains(user.Class))
+            {
+                SetInventoryMessage(game.DataNameProvider.WrongClassToUseItem, true);
+                return;
+            }
 
             if (game.TestUseItemMapEvent(itemSlot.ItemIndex))
             {
@@ -965,6 +979,7 @@ namespace Ambermoon.UI
             else
             {
                 // do other things
+                // TODO: item has no effect here (only if it does nothing else, e.g. torches can be used on spider webs and without them)
             }
         }
 
@@ -1070,15 +1085,18 @@ namespace Ambermoon.UI
                 game.CursorType = CursorType.Gold;
                 game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
                 draggedGoldOrFoodRemover = chest == null
-                    ? (Action<uint>)(gold => { game.CurrentInventory.RemoveGold(gold); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); })
+                    ? (Action<uint>)(gold => { game.CurrentInventory.RemoveGold(gold); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
                     : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };
-                ShowChestMessage(game.DataNameProvider.GiveToWhom);
+                if (chest != null)
+                    ShowChestMessage(game.DataNameProvider.GiveToWhom);
+                else
+                    SetInventoryMessage(game.DataNameProvider.GiveToWhom);
 
                 for (int i = 0; i < Game.MaxPartyMembers; ++i)
                 {
                     var partyMember = game.GetPartyMember(i);
 
-                    if (partyMember != null)
+                    if (partyMember != null && partyMember != game.CurrentInventory)
                     {
                         UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
                             partyMember.MaxGoldToTake >= amount ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
@@ -1102,15 +1120,18 @@ namespace Ambermoon.UI
                 game.CursorType = CursorType.Food;
                 game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
                 draggedGoldOrFoodRemover = chest == null
-                    ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); })
+                    ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
                     : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };
-                ShowChestMessage(game.DataNameProvider.GiveToWhom);
+                if (chest != null)
+                    ShowChestMessage(game.DataNameProvider.GiveToWhom);
+                else
+                    SetInventoryMessage(game.DataNameProvider.GiveToWhom);
 
                 for (int i = 0; i < Game.MaxPartyMembers; ++i)
                 {
                     var partyMember = game.GetPartyMember(i);
 
-                    if (partyMember != null)
+                    if (partyMember != null && partyMember != game.CurrentInventory)
                     {
                         UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
                             partyMember.MaxFoodToTake >= amount ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
@@ -1224,20 +1245,32 @@ namespace Ambermoon.UI
             }
         }
 
-        void SetInventoryMessage(string message)
+        internal void SetInventoryMessage(string message, bool waitForClick = false)
         {
             if (message == null)
             {
                 inventoryMessage?.Destroy();
                 inventoryMessage = null;
             }
-            else if (inventoryMessage == null)
-            {
-                inventoryMessage = AddScrollableText(new Rect(21, 50, 162, 21), RenderView.TextProcessor.CreateText(message));
-            }
             else
             {
-                inventoryMessage.SetText(RenderView.TextProcessor.CreateText(message));
+                if (waitForClick)
+                {
+                    inventoryMessage?.Destroy();
+                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 20), game.ProcessText(message));
+                    inventoryMessage.Scrolled += toEnd =>
+                    {
+                        // TODO
+                    };
+                }
+                else if (inventoryMessage == null)
+                {
+                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 20), game.ProcessText(message));
+                }
+                else
+                {
+                    inventoryMessage.SetText(game.ProcessText(message));
+                }
             }
         }
 
@@ -1277,7 +1310,7 @@ namespace Ambermoon.UI
             itemGrids[1].RightClicked += Aborted;
         }
 
-        public void Reset()
+        public void Reset(bool keepInventoryMessage = false)
         {
             sprite80x80Picture?.Delete();
             sprite80x80Picture = null;
@@ -1289,15 +1322,25 @@ namespace Ambermoon.UI
             itemGrids.Clear();
             filledAreas.ForEach(area => area?.Delete());
             filledAreas.Clear();
-            texts.ForEach(text => text?.Destroy());
-            texts.Clear();
             activePopup?.Destroy();
             activePopup = null;
             activeTooltip?.Delete();
             activeTooltip = null;
             tooltips.Clear();
-            inventoryMessage?.Destroy();
-            inventoryMessage = null;
+            if (keepInventoryMessage)
+            {
+                texts.Remove(inventoryMessage);
+                texts.ForEach(text => text?.Destroy());
+                texts.Clear();
+                texts.Add(inventoryMessage);
+            }
+            else
+            {
+                texts.ForEach(text => text?.Destroy());
+                texts.Clear();
+                inventoryMessage?.Destroy();
+                inventoryMessage = null;
+            }
             battleMessage?.Destroy();
             battleMessage = null;
             battleEffectAnimations.ForEach(a => a?.Destroy());
@@ -1760,10 +1803,7 @@ namespace Ambermoon.UI
             if (draggedItem != null)
             {
                 draggedItem.Reset(game);
-                draggedItem = null;
-
-                if (game.OpenStorage is Chest)
-                    game.HideMessage();
+                DropItem();
             }
 
             if (draggedGold != 0 || draggedFood != 0)
@@ -1771,9 +1811,7 @@ namespace Ambermoon.UI
                 draggedGold = 0;
                 draggedFood = 0;
                 draggedGoldOrFoodRemover = null;
-
-                if (game.OpenStorage is Chest)
-                    game.HideMessage();
+                DropItem();
             }
 
             // Remove hand icons and set current status icons
@@ -1786,6 +1824,8 @@ namespace Ambermoon.UI
 
             if (game.OpenStorage is Chest)
                 game.HideMessage();
+            else
+                SetInventoryMessage(null);
         }
 
         bool IsInventory => Type == LayoutType.Inventory;
@@ -2218,7 +2258,7 @@ namespace Ambermoon.UI
             {
                 var partyMember = game.GetPartyMember(i);
 
-                if (partyMember != null)
+                if (partyMember != null && partyMember != game.CurrentInventory)
                 {
                     UpdateCharacterStatus(i, partyMember.CanTakeItems(itemManager, draggedItem.Item.Item)
                         ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
@@ -2227,6 +2267,8 @@ namespace Ambermoon.UI
 
             if (game.OpenStorage is Chest)
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
+            else
+                SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
         }
 
         public void Drag(Position position, ref CursorType cursorType)

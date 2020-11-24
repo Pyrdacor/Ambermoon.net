@@ -15,6 +15,7 @@ namespace Ambermoon.UI
         const int SlotWidth = 16;
         const int SlotHeight = 24;
         public static readonly Size SlotSize = new Size(SlotWidth, SlotHeight);
+        readonly Game game;
         readonly IRenderView renderView;
         readonly IItemManager itemManager;
         readonly List<Position> slotPositions;
@@ -29,6 +30,7 @@ namespace Ambermoon.UI
         Scrollbar scrollbar;
         Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
         bool disabled;
+        Func<Position, Item, int?> dropSlotProvider = null;
 
         internal enum ItemAction
         {
@@ -43,12 +45,6 @@ namespace Ambermoon.UI
         public event Action<int, ItemSlot, int, ItemSlot> ItemExchanged;
         public event Action<ItemGrid, int, ItemSlot> ItemClicked;
         public event Func<bool> RightClicked;
-        /// <summary>
-        /// Called when starting dropping. Should return
-        /// the slot index to drop or -1 if dropping is
-        /// denied.
-        /// </summary>
-        public event Func<int, Item, int> Dropping;
         public int SlotCount => items.Length;
         public int ScrollOffset { get; private set; } = 0;
         public bool Disabled
@@ -78,11 +74,12 @@ namespace Ambermoon.UI
         }
         public bool DisableDrag { get; set; } = false;
 
-        private ItemGrid(Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
+        private ItemGrid(Game game, Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
             List<ItemSlot> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction,
             int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect scrollbarArea = null, Size scrollbarSize = null,
             ScrollbarType? scrollbarType = null)
         {
+            this.game = game;
             this.renderView = renderView;
             this.itemManager = itemManager;
             this.slotPositions = slotPositions;
@@ -118,33 +115,124 @@ namespace Ambermoon.UI
             }
         }
 
-        public static ItemGrid CreateInventory(Layout layout, int partyMemberIndex, IRenderView renderView,
+        public static ItemGrid CreateInventory(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
             IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
         {
-            return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, true,
+            var grid = new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, true,
                 (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
                     layout.DragItems(item, takeAll, dragAction,
                     () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false)),
                 12, 3, 24, new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
+            grid.dropSlotProvider = (position, _) => grid.SlotFromPosition(position);
+            return grid;
         }
 
-        public static ItemGrid CreateEquipment(Layout layout, int partyMemberIndex, IRenderView renderView,
-            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
+        public static ItemGrid CreateEquipment(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
+            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots, Func<ItemSlot, bool> equipChecker)
         {
-            return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, true,
+            var grid = new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, true,
                 (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
-                    layout.DragItems(item, takeAll, dragAction,
-                    () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true)), 9, 0, 9);
+                {
+                    if (equipChecker(item.Item))
+                    {
+                        layout.DragItems(item, takeAll, dragAction,
+                            () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true));
+                    }
+                }, 9, 0, 9);
+            grid.dropSlotProvider = (position, item) =>
+            {
+                if (!new Rect(19, 71, 82, 122).Contains(position))
+                    return null;
+
+                if (!item.Classes.Contains(game.CurrentInventory.Class))
+                {
+                    layout.SetInventoryMessage(game.DataNameProvider.WrongClassToEquipItem, true);
+                    return null;
+                }
+                if (!item.Genders.Contains(game.CurrentInventory.Gender))
+                {
+                    layout.SetInventoryMessage(game.DataNameProvider.WrongSexToEquipItem, true);
+                    return null;
+                }
+                if (game.BattleActive && !item.Flags.HasFlag(ItemFlags.RemovableDuringFight))
+                {
+                    layout.SetInventoryMessage(game.DataNameProvider.CannotEquipInFight, true);
+                    return null;
+                }
+
+                var equipmentSlot = item.EquipmentSlot;
+
+                if (equipmentSlot == EquipmentSlot.None)
+                {
+                    layout.SetInventoryMessage(game.DataNameProvider.CannotEquip, true);
+                    return null;
+                }
+
+                if (equipmentSlot == EquipmentSlot.RightFinger ||
+                    equipmentSlot == EquipmentSlot.LeftFinger)
+                {
+                    int rightFingerSlot = (int)(EquipmentSlot.RightFinger - 1);
+
+                    if (item.NumberOfFingers == 2)
+                    {
+                        if (grid.GetItem(rightFingerSlot)?.Empty == false &&
+                            grid.GetItem(rightFingerSlot + 2)?.Empty == false)
+                        {
+                            layout.SetInventoryMessage(game.DataNameProvider.NotEnoughFreeFingers, true);
+                            return null;
+                        }
+                    }
+
+                    // place on first free finger starting at right one
+                    if (grid.GetItem(rightFingerSlot)?.Empty ?? true)
+                        return rightFingerSlot;
+                    else
+                        return rightFingerSlot + 2; // left finger
+                }
+
+                if (equipmentSlot == EquipmentSlot.RightHand ||
+                    equipmentSlot == EquipmentSlot.LeftHand)
+                {
+                    if (item.NumberOfHands == 2)
+                    {
+                        var leftHandSlot = grid.GetItem((int)(EquipmentSlot.LeftHand - 1));
+
+                        if (grid.GetItem((int)(EquipmentSlot.RightHand - 1))?.Empty == false &&
+                            leftHandSlot?.Empty == false && (leftHandSlot?.ItemIndex ?? 0) != 0)
+                        {
+                            layout.SetInventoryMessage(game.DataNameProvider.NotEnoughFreeHands, true);
+                            return null;
+                        }
+                    }
+                }
+
+                if (game.BattleActive)
+                {
+                    var itemIndexAtDestinationSlot = grid.GetItem((int)equipmentSlot - 1)?.ItemIndex;
+                    var itemAtDestinationSlot = (itemIndexAtDestinationSlot ?? 0) == 0 ? null : itemManager.GetItem(itemIndexAtDestinationSlot.Value);
+
+                    if (itemAtDestinationSlot != null && !itemAtDestinationSlot.Flags.HasFlag(ItemFlags.RemovableDuringFight))
+                    {
+                        layout.SetInventoryMessage(game.DataNameProvider.CannotUnequipInFight, true);
+                        return null;
+                    }
+                }
+
+                return (int)equipmentSlot - 1;
+            };
+            return grid;
         }
 
-        public static ItemGrid Create(Layout layout, IRenderView renderView, IItemManager itemManager,
+        public static ItemGrid Create(Game game, Layout layout, IRenderView renderView, IItemManager itemManager,
             List<Position> slotPositions, List<ItemSlot> slots, bool allowExternalDrop, int slotsPerPage,
             int slotsPerScroll, int numTotalSlots, Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType)
         {
-            return new ItemGrid(layout, renderView, itemManager, slotPositions, slots, allowExternalDrop,
+            var grid =  new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, allowExternalDrop,
                 (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
                     layout.DragItems(item, takeAll, dragAction, () => Layout.DraggedItem.FromExternal(itemGrid, slot, item)),
                     slotsPerPage, slotsPerScroll, numTotalSlots, scrollbarArea, scrollbarSize, scrollbarType);
+            grid.dropSlotProvider = (position, _) => grid.SlotFromPosition(position);
+            return grid;
         }
 
         public void Destroy()
@@ -204,11 +292,6 @@ namespace Ambermoon.UI
         {
             if (DisableDrag)
                 return item.Item.Item.Amount;
-
-            int? newSlot = Dropping?.Invoke(slot, itemManager.GetItem(item.Item.Item.ItemIndex));
-
-            if (newSlot != null)
-                slot = newSlot.Value;
 
             if (slot == -1)
                 return item.Item.Item.Amount;
@@ -391,14 +474,14 @@ namespace Ambermoon.UI
                     return true;
             }
 
-            var slot = SlotFromPosition(position);
-
-            if (slot == null)
-                return false;
-
             if (draggedItem != null)
             {
                 if (!allowExternalDrop && draggedItem.SourceGrid != this)
+                    return false;
+
+                var slot = dropSlotProvider?.Invoke(position, itemManager.GetItem(draggedItem.Item.Item.ItemIndex));
+
+                if (slot == null)
                     return false;
 
                 if (DropItem(slot.Value, draggedItem) == 0)
@@ -416,6 +499,11 @@ namespace Ambermoon.UI
             }
             else
             {
+                var slot = SlotFromPosition(position);
+
+                if (slot == null)
+                    return false;
+
                 var itemSlot = items[slot.Value];
 
                 if (itemSlot != null)
