@@ -90,7 +90,7 @@ namespace Ambermoon.Data
 
             public CharacterType Type { get; set; }
             public Flags CharacterFlags { get; set; }
-            public byte Unknown1 { get; set; }
+            public bool OnlyMoveWhenSeePlayer { get; set; }
             public uint Index { get; set; } // of party member, npc, monster or map text
             public byte[] Unknown2 { get; set; }
             public uint EventIndex { get; set; }

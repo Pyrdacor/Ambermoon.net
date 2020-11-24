@@ -144,6 +144,7 @@ namespace Ambermoon.Render
             if (characterReference.Type == CharacterType.Monster)
             {
                 // TODO: if the monsters see the player, they should run towards him
+                // TODO: use characterReference.OnlyMoveWhenSeePlayer
 
                 if (characterReference.CharacterFlags.HasFlag(Flags.RandomMovement))
                 {

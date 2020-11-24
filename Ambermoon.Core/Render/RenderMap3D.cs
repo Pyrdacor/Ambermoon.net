@@ -134,7 +134,9 @@ namespace Ambermoon.Render
 
             public void ResetPosition(ITime gameTime)
             {
-                Position = characterReference.Positions[0];
+                var position = characterReference.Positions[0];
+                position.Offset(-1, -1); // positions are 1-based
+                Position = position;
                 ResetFrame();
             }
 
@@ -406,7 +408,8 @@ namespace Ambermoon.Render
                 if (canSeePlayer)
                     game.MonsterSeesPlayer = true;
 
-                character3D.Update(ticks, playerPosition, randomMovement, canSeePlayer);
+                character3D.Update(ticks, playerPosition, randomMovement, canSeePlayer,
+                    characterReference.OnlyMoveWhenSeePlayer);
 
                 UpdateCurrentMovement(ticks);
             }

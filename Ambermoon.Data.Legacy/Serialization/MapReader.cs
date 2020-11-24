@@ -34,7 +34,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             for (int i = 0; i < 32; ++i)
             {
                 var index = dataReader.ReadByte();
-                var unknown1 = dataReader.ReadByte();
+                var onlyMoveWhenSeePlayer = dataReader.ReadByte() != 0; // TODO: Not 100% sure about this
                 var type = dataReader.ReadByte();
                 var eventIndex = dataReader.ReadByte();
                 var gfxIndex = dataReader.ReadWord();
@@ -43,7 +43,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 map.CharacterReferences[i] = index == 0 || type == 0 ? null : new Map.CharacterReference
                 {
                     Index = index,
-                    Unknown1 = unknown1,
+                    OnlyMoveWhenSeePlayer = onlyMoveWhenSeePlayer,
                     Type = (CharacterType)(type & 0x03),
                     CharacterFlags = (Map.CharacterReference.Flags)(type >> 2),
                     EventIndex = eventIndex,

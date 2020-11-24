@@ -135,7 +135,8 @@ namespace Ambermoon.Geometry
             NextMoveTimeSlot = (game.GameTime.TimeSlot + 1) % 12;
         }
 
-        public void Update(uint ticks, FloatPosition playerPosition, bool moveRandom, bool canSeePlayer)
+        public void Update(uint ticks, FloatPosition playerPosition, bool moveRandom, bool canSeePlayer,
+            bool onlyMoveWhenSeePlayer)
         {
             if (Paused)
                 return;
@@ -148,7 +149,7 @@ namespace Ambermoon.Geometry
                     movedTicks = 0;
                     MoveTowardsPlayer(playerPosition);
                 }
-                else if (moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
+                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
                 {
                     ResetMovementTimer();
                     RandomMovementRequested?.Invoke();
