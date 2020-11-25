@@ -120,8 +120,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                     }
                 }
                 labdata.Walls.Add(wallData);
-
-                //Console.WriteLine($"Wall{i+1} -> {wallData}");
             }
 
             // Load labyrinth graphics

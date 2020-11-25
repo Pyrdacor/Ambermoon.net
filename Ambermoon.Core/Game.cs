@@ -351,13 +351,12 @@ namespace Ambermoon
             battleRoundActiveSprite.Y = 150;
             battleRoundActiveSprite.Visible = false;
 
-            // Create texture atlas for each battle row
+            // Create texture atlas for monsters in battle
             var textureAtlasManager = TextureAtlasManager.Instance;
             var monsterGraphicDictionary = CharacterManager.Monsters.ToDictionary(m => m.Index, m => m.CombatGraphic);
-            textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRowCenter, monsterGraphicDictionary);
-            var monsterGraphicAtlas = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRowCenter);
-            for (int row = 0; row < 4; ++row)
-                renderView.GetLayer(Layer.BattleMonsterRowFarthest + row).Texture = monsterGraphicAtlas.Texture;
+            textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRow, monsterGraphicDictionary);
+            var monsterGraphicAtlas = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRow);
+            renderView.GetLayer(Layer.BattleMonsterRow).Texture = monsterGraphicAtlas.Texture;
         }
 
         /// <summary>
@@ -1347,7 +1346,8 @@ namespace Ambermoon
                     else if (layout.Type == LayoutType.Event ||
                         (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true) ||
                         currentBattle?.WaitForClick == true ||
-                        ChestText != null)
+                        ChestText != null ||
+                        layout.InventoryMessageWaitsForClick)
                         CursorType = CursorType.Click;
                     else
                         CursorType = CursorType.Sword;
@@ -2624,7 +2624,6 @@ namespace Ambermoon
 
                     if (map != null && chestMapEvent.TextIndex != 255)
                     {
-                        CursorType = CursorType.Click;
                         ChestText = layout.AddScrollableText(new Rect(114, 46, 189, 48), ProcessText(map.Texts[(int)chestMapEvent.TextIndex]));
                         ChestText.Clicked += scrolledToEnd =>
                         {

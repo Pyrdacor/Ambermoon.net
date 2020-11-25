@@ -94,7 +94,6 @@ namespace Ambermoon.Render
             endX = endPosition?.X ?? startX;
             endY = endPosition?.Y ?? startY;
             startAnimationTicks = ticks;
-            sprite.DisplayLayer += (byte)((endY - startY) * 6 * 5);
         }
 
         public void PlayWithoutAnimating(uint durationInTicks, uint ticks, Position endPosition = null, float? endScale = null)

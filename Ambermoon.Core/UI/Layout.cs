@@ -1245,6 +1245,8 @@ namespace Ambermoon.UI
             }
         }
 
+        internal bool InventoryMessageWaitsForClick => inventoryMessage != null && !game.InputEnable;
+
         internal void SetInventoryMessage(string message, bool waitForClick = false)
         {
             if (message == null)
@@ -1257,11 +1259,20 @@ namespace Ambermoon.UI
                 if (waitForClick)
                 {
                     inventoryMessage?.Destroy();
+                    game.CursorType = CursorType.Click;
                     inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 20), game.ProcessText(message));
-                    inventoryMessage.Scrolled += toEnd =>
+                    inventoryMessage.Clicked += scrolledToEnd =>
                     {
-                        // TODO
+                        if (scrolledToEnd)
+                        {
+                            inventoryMessage?.Destroy();
+                            inventoryMessage = null;
+                            game.InputEnable = true;
+                            game.CursorType = CursorType.Sword;
+                        }
                     };
+                    game.CursorType = CursorType.Click;
+                    game.InputEnable = false;
                 }
                 else if (inventoryMessage == null)
                 {
@@ -2055,6 +2066,15 @@ namespace Ambermoon.UI
                         return true;
                     }
                 }
+                else if (InventoryMessageWaitsForClick)
+                {
+                    if (buttons == MouseButtons.Left)
+                    {
+                        inventoryMessage.Click(position);
+                        cursorType = inventoryMessage == null ? CursorType.Sword : CursorType.Click;
+                        return true;
+                    }
+                }
 
                 if (PopupActive)
                 {
@@ -2419,9 +2439,8 @@ namespace Ambermoon.UI
 
         public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster)
         {
-            var layer = Layer.BattleMonsterRowFarthest + row;            
             float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleMonsterRow);
             var sprite = RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
             sprite.DisplayLayer = (byte)((column + row * 6) * 5);
@@ -2432,7 +2451,7 @@ namespace Ambermoon.UI
                 MonsterGraphicIndex.MoragMachine => 19,
                 _ => 17
             };
-            sprite.Layer = RenderView.GetLayer(layer);
+            sprite.Layer = RenderView.GetLayer(Layer.BattleMonsterRow);
             sprite.Visible = true;
             var animation = new BattleAnimation(sprite);
             animation.SetStartFrame(GetMonsterCombatCenterPosition(column, row, monster), sizeMultiplier);

@@ -71,17 +71,12 @@ namespace Ambermoon.Render
 
         public ITextureAtlas GetOrCreate(Layer layer)
         {
-            if (layer == Layer.BattleMonsterRowFarthest ||
-                layer == Layer.BattleMonsterRowFar ||
-                layer == Layer.BattleMonsterRowNear)
-                layer = Layer.BattleMonsterRowCenter;
-
             if (!atlas.ContainsKey(layer))
             {
                 if (!atlasBuilders.ContainsKey(layer))
                     return null; // no texture for this layer
 
-                if (layer == Layer.BattleMonsterRowCenter)
+                if (layer == Layer.BattleMonsterRow)
                     atlas.Add(layer, atlasBuilders[layer].Create(1));
                 else
                     atlas.Add(layer, atlasBuilders[layer].CreateUnpacked(320, 1));

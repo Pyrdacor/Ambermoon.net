@@ -82,10 +82,7 @@ namespace Ambermoon.Renderer
             0.31f,  // MapForeground7
             0.31f,  // MapForeground8
             0.61f,  // CombatBackground
-            0.62f,  // BattleMonsterRowFarthest
-            0.63f,  // BattleMonsterRowFar
-            0.64f,  // BattleMonsterRowCenter
-            0.65f,  // BattleMonsterRowNear
+            0.62f,  // BattleMonsterRow
             0.70f,  // UI
             0.70f,  // Items
             0.70f,  // Text

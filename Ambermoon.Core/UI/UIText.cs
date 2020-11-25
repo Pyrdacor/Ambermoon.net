@@ -93,19 +93,21 @@ namespace Ambermoon.UI
         {
             if (allowScrolling)
             {
-                lineOffset = Math.Min(lineOffset + numVisibleLines, text.LineCount - numVisibleLines);
-
-                UpdateText(lineOffset);
-
                 if (lineOffset == text.LineCount - numVisibleLines)
                 {
                     allowScrolling = false;
                     Scrolled?.Invoke(true);
+                    Clicked?.Invoke(true);
                 }
                 else
-                    Scrolled?.Invoke(false);
+                {
+                    lineOffset = Math.Min(lineOffset + numVisibleLines, text.LineCount - numVisibleLines);
 
-                Clicked?.Invoke(false);
+                    UpdateText(lineOffset);
+
+                    Scrolled?.Invoke(false);
+                    Clicked?.Invoke(false);
+                }
 
                 return true;
             }

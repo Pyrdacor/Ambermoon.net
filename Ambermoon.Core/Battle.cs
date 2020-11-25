@@ -352,6 +352,10 @@ namespace Ambermoon
                     currentBattleAnimation = null;
                     AnimationFinished?.Invoke();
                 }
+                else if (currentlyAnimatedMonster != null)
+                {
+                    currentBattleAnimation.SetDisplayLayer((byte)(GetCharacterPosition(currentlyAnimatedMonster) * 5));
+                }
             }
 
             foreach (var effectAnimation in effectAnimations)
@@ -464,12 +468,13 @@ namespace Ambermoon
 
             var forbiddenMoveSpots = playerBattleActions.Where(a => a != null && a.BattleAction == BattleActionType.Move)
                 .Select(a => (int)GetTargetTileFromParameter(a.Parameter)).ToList();
+            var forbiddenMonsterMoveSpots = new List<int>();
 
             foreach (var roundActor in roundActors)
             {
                 if (roundActor is Monster monster)
                 {
-                    AddMonsterActions(monster, ref monstersAdvance);
+                    AddMonsterActions(monster, ref monstersAdvance, forbiddenMonsterMoveSpots);
                 }
                 else
                 {
@@ -524,7 +529,7 @@ namespace Ambermoon
             NextAction(battleTicks);
         }
 
-        void AddMonsterActions(Monster monster, ref bool monstersAdvance)
+        void AddMonsterActions(Monster monster, ref bool monstersAdvance, List<int> forbiddenMonsterMoveSpots)
         {
             bool wantsToFlee = MonsterWantsToFlee(monster);
 
@@ -545,12 +550,12 @@ namespace Ambermoon
                 monstersAdvance = false;
             }
 
-            var action = PickMonsterAction(monster, wantsToFlee);
+            var action = PickMonsterAction(monster, wantsToFlee, forbiddenMonsterMoveSpots);
 
             if (action == BattleActionType.None) // do nothing
                 return;
 
-            var actionParameter = PickActionParameter(action, monster, wantsToFlee);
+            var actionParameter = PickActionParameter(action, monster, wantsToFlee, forbiddenMonsterMoveSpots);
 
             int numActions = action == BattleActionType.Attack
                 ? monster.AttacksPerRound : 1;
@@ -709,7 +714,7 @@ namespace Ambermoon
                         void MoveAnimationFinished()
                         {
                             animation.AnimationFinished -= MoveAnimationFinished;
-                            currentBattleAnimation.SetDisplayLayer((byte)(newPosition * 5));
+                            animation.SetDisplayLayer((byte)(newPosition * 5));
                             EndMove();
                             currentBattleAnimation = null;
                             currentlyAnimatedMonster = null;
@@ -1220,7 +1225,7 @@ namespace Ambermoon
                 playerBattleAction.BattleAction.ToStatusGraphic(playerBattleAction.Parameter, game.ItemManager));
         }
 
-        BattleActionType PickMonsterAction(Monster monster, bool wantsToFlee)
+        BattleActionType PickMonsterAction(Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots)
         {
             var position = GetCharacterPosition(monster);
             List<BattleActionType> possibleActions = new List<BattleActionType>();
@@ -1235,7 +1240,7 @@ namespace Ambermoon
             if ((wantsToFlee || !possibleActions.Contains(BattleActionType.Attack)) && monster.Ailments.CanMove()) // TODO: small chance to move even if the monster could attack?
             {
                 // Only move if there is nobody to attack
-                if (MoveSpotAvailable(position, monster, wantsToFlee))
+                if (MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
                 {
                     if (wantsToFlee)
                         return BattleActionType.Move;
@@ -1297,7 +1302,7 @@ namespace Ambermoon
 
             for (int y = minY; y <= maxY; ++y)
             {
-                if ((!wantsToFlee && y <= currentRow) ||
+                if ((!wantsToFlee && y < currentRow) ||
                     (wantsToFlee && y >= currentRow))
                     continue;
 
@@ -1426,7 +1431,7 @@ namespace Ambermoon
             return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
         }
 
-        uint GetBestMoveSpot(int characterPosition, Monster monster, bool wantsToFlee)
+        uint GetBestMoveSpot(int characterPosition, Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots)
         {
             int moveRange = monster.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
             GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY,
@@ -1437,7 +1442,7 @@ namespace Ambermoon
 
             if (wantsToFlee)
             {
-                for (int row = Math.Max(0, currentRow - moveRange); row < currentRow; ++row)
+                for (int row = minY; row < currentRow; ++row)
                 {
                     if (battleField[currentColumn + row * 6] == null)
                         return (uint)(currentColumn + row * 6);
@@ -1446,37 +1451,50 @@ namespace Ambermoon
 
             for (int y = minY; y <= maxY; ++y)
             {
-                if ((!wantsToFlee && y <= currentRow) ||
-                    (wantsToFlee && y >= currentRow))
-                    continue;
-
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6] == null)
+                    if (battleField[x + y * 6] == null && !forbiddenMonsterMoveSpots.Contains(x + y * 6))
                         possiblePositions.Add(x + y * 6);
                 }
             }
 
             if (!wantsToFlee)
             {
+                // Prefer moving to positions where a player is nearby.
+                // Also prefer moving straight down.
                 var nearPlayerPositions = possiblePositions.Where(p => IsPlayerNearby(p)).ToList();
 
                 if (nearPlayerPositions.Count != 0)
-                    return (uint)nearPlayerPositions[game.RandomInt(0, nearPlayerPositions.Count - 1)];
-
-                List<int> possibleSpots = new List<int>(5);
-                for (int row = currentRow + 1; row < Math.Min(4, currentRow + moveRange); ++row)
                 {
-                    int index = currentColumn + row * 6;
+                    var nearPlayerPositionInSameRow = nearPlayerPositions
+                        .Where(p => p % 6 == currentColumn)
+                        .Select(p => (int?)p).FirstOrDefault();
 
-                    //  only walk until you find first player
-                    if (IsPlayerNearby(index))
-                        return (uint)index;
-                    else if (battleField[index] == null)
-                        possibleSpots.Add(index);
+                    if (nearPlayerPositionInSameRow != null)
+                        return (uint)nearPlayerPositionInSameRow.Value;
+
+                    return (uint)nearPlayerPositions[game.RandomInt(0, nearPlayerPositions.Count - 1)];
                 }
-                if (possibleSpots.Count != 0)
-                    return (uint)possibleSpots.Last();
+
+                // Prefer moving straight down
+                for (int row = maxY; row > currentRow; --row)
+                {
+                    if (battleField[currentColumn + row * 6] == null)
+                    {
+                        return (uint)(currentColumn + row * 6);
+                    }
+                }
+            }
+            else
+            {
+                // Prefer moving straight back when fleeing
+                for (int row = minY; row <= maxX; ++row)
+                {
+                    if (battleField[currentColumn + row * 6] == null)
+                    {
+                        return (uint)(currentColumn + row * 6);
+                    }
+                }
             }
 
             return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
@@ -1484,10 +1502,10 @@ namespace Ambermoon
 
         bool IsPlayerNearby(int position)
         {
-            int minX = Math.Max(0, position - 1);
-            int maxX = Math.Min(5, position + 1);
-            int minY = Math.Max(0, position - 1);
-            int maxY = Math.Min(4, position + 1);
+            int minX = Math.Max(0, position % 6 - 1);
+            int maxX = Math.Min(5, position % 6 + 1);
+            int minY = Math.Max(0, position / 6 - 1);
+            int maxY = Math.Min(4, position / 6 + 1);
 
             for (int y = minY; y <= maxY; ++y)
             {
@@ -1558,12 +1576,16 @@ namespace Ambermoon
             }
         }
 
-        uint PickActionParameter(BattleActionType battleAction, Monster monster, bool wantsToFlee)
+        uint PickActionParameter(BattleActionType battleAction, Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots)
         {
             switch (battleAction)
             {
             case BattleActionType.Move:
-                return CreateMoveParameter(GetBestMoveSpot(GetCharacterPosition(monster), monster, wantsToFlee));
+                {
+                    var moveSpot = GetBestMoveSpot(GetCharacterPosition(monster), monster, wantsToFlee, forbiddenMonsterMoveSpots);
+                    forbiddenMonsterMoveSpots.Add((int)moveSpot);
+                    return CreateMoveParameter(moveSpot);
+                }
             case BattleActionType.Attack:
                 {
                     var weaponIndex = monster.Equipment.Slots[EquipmentSlot.RightHand].ItemIndex;
