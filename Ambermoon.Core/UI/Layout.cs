@@ -2424,7 +2424,7 @@ namespace Ambermoon.UI
             int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
             var center = new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
-            return center + new Position(((int)monster.MappedFrameWidth - width) / 2, ((int)monster.MappedFrameHeight - height) / 2);
+            return center;// + new Position(((int)monster.MappedFrameWidth - width) / 2, ((int)monster.MappedFrameHeight - height) / 2);
         }
 
         public Position GetMonsterCombatCenterPosition(int position, Monster monster)
@@ -2490,12 +2490,20 @@ namespace Ambermoon.UI
 
         public void ResetMonsterCombatSprite(Monster monster)
         {
-            monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster)?.Animation?.Reset();
+            int frame = monster.GetAnimationFrameIndices(MonsterAnimationType.Move)[0];
+            monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster)?.Animation?.Reset(frame);
         }
 
         public void ResetMonsterCombatSprites()
         {
-            monsterCombatGraphics.ForEach(g => g?.Animation?.Reset());
+            monsterCombatGraphics.ForEach(g =>
+            {
+                if (g != null)
+                {
+                    int frame = g.Monster.GetAnimationFrameIndices(MonsterAnimationType.Move)[0];
+                    g.Animation?.Reset(frame);
+                }
+            });
         }
 
         public BattleAnimation UpdateMonsterCombatSprite(Monster monster, MonsterAnimationType animationType, uint animationTicks, uint totalTicks)

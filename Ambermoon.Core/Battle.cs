@@ -321,7 +321,8 @@ namespace Ambermoon
                 {
                     animationStartTicks = null;
                     idleAnimationRunning = false;
-                    layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
+                    if (currentlyAnimatedMonster != null)
+                        layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
                     SetupNextIdleAnimation(battleTicks);
                 }
             }

@@ -101,9 +101,9 @@ namespace Ambermoon.Render
             Play(new int[] { 0 }, durationInTicks, ticks, endPosition, endScale);
         }
 
-        public void Reset()
+        public void Reset(int frame = 0)
         {
-            sprite.TextureAtlasOffset = baseTextureCoords;
+            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frame * baseSpriteSize.Width, 0);
             Finished = true;
         }
 
