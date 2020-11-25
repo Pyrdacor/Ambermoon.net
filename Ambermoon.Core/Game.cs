@@ -2418,6 +2418,8 @@ namespace Ambermoon
                 }
             }
 
+            if (mapChange)
+                ResetMoveKeys();
             // TODO
         }
 
