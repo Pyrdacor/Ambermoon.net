@@ -2424,7 +2424,7 @@ namespace Ambermoon.UI
             int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
             var center = new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
-            return center;// + new Position(((int)monster.MappedFrameWidth - width) / 2, ((int)monster.MappedFrameHeight - height) / 2);
+            return center;
         }
 
         public Position GetMonsterCombatCenterPosition(int position, Monster monster)
