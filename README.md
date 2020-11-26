@@ -14,9 +14,9 @@ I got some questions of how to run the game:
 
 Version | OS
 --- | ---
+[1.1.21](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.21/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.20](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.20/Ambermoon.net-Windows.zip) | Windows 64bit
 [1.1.19](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.19/Ambermoon.net-Windows.zip) | Windows 64bit
-[1.1.18](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v1.1.18/Ambermoon.net-Windows.zip) | Windows 64bit
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -74,6 +74,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [1.1.21](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.21): Added spell list, many additions and fixed regarding chests, inventory and battles, bugfixing
 - Version [1.1.20](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.20): Improved battle animations, added first test spell, fix flee logic
 - Version [1.1.19](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.19): Improvements, additions and fixes for battles
 - Version [1.1.18](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.18): First battle implementation (no spells yet, beta status)
