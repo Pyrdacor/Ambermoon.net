@@ -48,7 +48,7 @@ namespace Ambermoon.Render
             if (battleField[(int)tile] is Monster monster)
             {
                 if (groundBased)
-                    return Layout.GetMonsterCombatGroundPosition(renderView, (int)tile, monster) + offset;
+                    return Layout.GetMonsterCombatGroundPosition(renderView, (int)tile) + offset;
                 else
                     return Layout.GetMonsterCombatCenterPosition(renderView, (int)tile, monster) + offset;
             }

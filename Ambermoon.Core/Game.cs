@@ -2870,26 +2870,46 @@ namespace Ambermoon
             // Use magic button
             layout.AttachEventToButton(8, () =>
             {
-                pickedSpell = Spell.Fireball; // TODO
-                // TODO: spellItemSlot
-                var spellInfo = SpellInfos.Entries[pickedSpell];
+                OpenSpellList(CurrentPartyMember,
+                    spell =>
+                    {
+                        var spellInfo = SpellInfos.Entries[spell];
 
-                switch (spellInfo.Target)
-                {
-                    case SpellTarget.SingleEnemy:
-                        SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTarget);
-                        break;
-                    case SpellTarget.SingleFriend:
-                        SetCurrentPlayerAction(PlayerBattleAction.PickFriendSpellTarget);
-                        break;
-                    case SpellTarget.EnemyRow:
-                        SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
-                        break;
-                    default:
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell,
-                            Battle.CreateCastSpellParameter(0, pickedSpell, spellItemSlot?.ItemIndex ?? 0));
-                        break;
-                }
+                        if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle))
+                            return DataNameProvider.WrongArea;
+
+                        if (spellInfo.SP > CurrentPartyMember.SpellPoints.TotalCurrentValue)
+                            return DataNameProvider.NotEnoughSP;
+
+                        // TODO: Is there more to check? Irritated?
+
+                        return null;
+                    },
+                    spell =>
+                    {
+                        // pickedSpell = spell;
+                        pickedSpell = Spell.Fireball; // TODO
+                                                      // TODO: spellItemSlot
+                        var spellInfo = SpellInfos.Entries[pickedSpell];
+
+                        switch (spellInfo.Target)
+                        {
+                            case SpellTarget.SingleEnemy:
+                                SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTarget);
+                                break;
+                            case SpellTarget.SingleFriend:
+                                SetCurrentPlayerAction(PlayerBattleAction.PickFriendSpellTarget);
+                                break;
+                            case SpellTarget.EnemyRow:
+                                SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
+                                break;
+                            default:
+                                SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell,
+                                    Battle.CreateCastSpellParameter(0, pickedSpell, spellItemSlot?.ItemIndex ?? 0));
+                                break;
+                        }
+                    }
+                );
             });
 
             if (currentBattle != null)
@@ -3496,11 +3516,73 @@ namespace Ambermoon
             switch (currentPlayerBattleAction)
             {
                 case PlayerBattleAction.PickPlayerAction:
-                case PlayerBattleAction.PickEnemySpellTarget:
-                case PlayerBattleAction.PickEnemySpellTargetRow:
-                case PlayerBattleAction.PickFriendSpellTarget:
-                    // TODO
                     break;
+                case PlayerBattleAction.PickEnemySpellTarget:
+                {
+                    var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.GetCharacterAt(position)?.Type == CharacterType.Monster,
+                        6, 0, 3);
+                    foreach (var slot in valuableSlots)
+                    {
+                        highlightBattleFieldSprites.Add
+                        (
+                            layout.AddSprite
+                            (
+                                Global.BattleFieldSlotArea(slot),
+                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                            )
+                        );
+                    }
+                    RemoveCurrentPlayerActionVisuals();
+                    TrapMouse(Global.BattleFieldArea);
+                    blinkingHighlight = true;
+                    layout.SetBattleMessage(DataNameProvider.BattleMessageWhichMonsterAsTarget);
+                    break;
+                }
+                case PlayerBattleAction.PickEnemySpellTargetRow:
+                {
+                    // TODO: only show 1 row and only when hovering the row
+                    var valuableRows = Enumerable.Range(0, 3).Where(r => Enumerable.Range(0, 6).Any(c => currentBattle.GetCharacterAt(c + r * 6)?.Type == CharacterType.Monster));
+                    foreach (var row in valuableRows)
+                    {
+                        for (int column = 0; column < 6; ++column)
+                        {
+                            highlightBattleFieldSprites.Add
+                            (
+                                layout.AddSprite
+                                (
+                                    Global.BattleFieldSlotArea(column + row * 6),
+                                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                                )
+                            );
+                        }
+                    }
+                    RemoveCurrentPlayerActionVisuals();
+                    TrapMouse(Global.BattleFieldArea);
+                    blinkingHighlight = true;
+                    layout.SetBattleMessage(DataNameProvider.BattleMessageWhichMonsterRowAsTarget);
+                    break;
+                }
+                case PlayerBattleAction.PickFriendSpellTarget:
+                {
+                    var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.GetCharacterAt(position)?.Type == CharacterType.PartyMember,
+                        6, 3, 4);
+                    foreach (var slot in valuableSlots)
+                    {
+                        highlightBattleFieldSprites.Add
+                        (
+                            layout.AddSprite
+                            (
+                                Global.BattleFieldSlotArea(slot),
+                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                            )
+                        );
+                    }
+                    RemoveCurrentPlayerActionVisuals();
+                    TrapMouse(Global.BattleFieldArea);
+                    blinkingHighlight = true;
+                    layout.SetBattleMessage(DataNameProvider.BattleMessageWhichPartyMemberAsTarget);
+                    break;
+                }
                 case PlayerBattleAction.PickMoveSpot:
                 {
                     // TODO: In original game if a slot is empty but someone moves there, it is still highlighted but with a red cross icon.
@@ -3723,6 +3805,49 @@ namespace Ambermoon
                 }
             )).ToList());
             popup.Closed += UntrapMouse;
+        }
+
+        /// <summary>
+        /// Opens the list of spells.
+        /// </summary>
+        /// <param name="partyMember">Party member who want to use a spell.</param>
+        /// <param name="spellAvailableChecker">Returns null if the spell can be used, otherwise the error message.</param>
+        /// <param name="choiceHandler">Handler which receives the selected spell.</param>
+        internal void OpenSpellList(PartyMember partyMember, Func<Spell, string> spellAvailableChecker, Action<Spell> choiceHandler)
+        {
+            const int columns = 13;
+            const int rows = 10;
+            var popupArea = new Rect(32, 40, columns * 16, rows * 16);
+            TrapMouse(new Rect(popupArea.Left + 16, popupArea.Top + 16, popupArea.Width - 32, popupArea.Height - 32));
+            var popup = layout.OpenPopup(popupArea.Position, columns, rows, true, false);
+            var spells = partyMember.LearnedSpells.Select(spell => new KeyValuePair<Spell, string>(spell, spellAvailableChecker(spell))).ToList();
+            var spellList = popup.AddSpellListBox(spells.Select(spell => new KeyValuePair<string, Action<int, string>>
+            (
+                DataNameProvider.GetSpellname(spell.Key), spell.Value != null ? null : (Action<int, string>)((int index, string _) =>
+                {
+                    UntrapMouse();
+                    layout.ClosePopup(false);
+                    choiceHandler?.Invoke(spells[index].Key);
+                })
+            )).ToList());
+            popup.AddSunkenBox(new Rect(48, 173, 174, 10));
+            var spellMessage = popup.AddText(new Rect(49, 175, 172, 6), "", TextColor.White, TextAlign.Center, true, 2);
+            popup.Closed += UntrapMouse;
+            spellList.HoverItem += index =>
+            {
+                var message = index == -1 ? null : spells[index].Value;
+
+                if (message == null)
+                    spellMessage.SetText(renderView.TextProcessor.CreateText(""));
+                else
+                    spellMessage.SetText(ProcessText(message));
+            };
+            int scrollRange = Math.Max(0, spells.Count - 16);
+            var scrollbar = popup.AddScrollbar(layout, scrollRange, 2);
+            scrollbar.Scrolled += offset =>
+            {
+                spellList.ScrollTo(offset);
+            };
         }
 
         internal void ShowMessagePopup(string text, Action closeAction = null)

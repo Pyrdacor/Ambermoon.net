@@ -2293,12 +2293,18 @@ namespace Ambermoon.UI
 
         public void Drag(Position position, ref CursorType cursorType)
         {
+            if (activePopup != null && activePopup.Drag(position))
+            {
+                cursorType = CursorType.None;
+                return;
+            }
+
             foreach (var itemGrid in itemGrids)
             {
                 if (itemGrid.Drag(position))
                 {
                     cursorType = CursorType.None;
-                    break;
+                    return;
                 }
             }
         }
@@ -2407,13 +2413,11 @@ namespace Ambermoon.UI
             int centerX = combatBackgroundArea.Width / 2;
             float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
-            int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
             int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
-            var center = new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height / 2);
-            return center + new Position(((int)monster.MappedFrameWidth - width) / 2, ((int)monster.MappedFrameHeight - height) / 2);
+            return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height / 2);
         }
 
-        public static Position GetMonsterCombatGroundPosition(IRenderView renderView, int position, Monster monster)
+        public static Position GetMonsterCombatGroundPosition(IRenderView renderView, int position)
         {
             int column = position % 6;
             int row = position / 6;
@@ -2421,10 +2425,7 @@ namespace Ambermoon.UI
             int centerX = combatBackgroundArea.Width / 2;
             float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
             int slotWidth = Util.Round(40 * sizeMultiplier);
-            int width = Util.Round(sizeMultiplier * monster.MappedFrameWidth);
-            int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
-            var center = new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
-            return center;
+            return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row]);
         }
 
         public Position GetMonsterCombatCenterPosition(int position, Monster monster)

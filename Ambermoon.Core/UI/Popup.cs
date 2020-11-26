@@ -21,6 +21,7 @@ namespace Ambermoon.UI
         readonly List<Button> buttons = new List<Button>();
         readonly List<TextInput> inputs = new List<TextInput>();
         ListBox listBox = null;
+        Scrollbar scrollbar = null;
         public Rect ContentArea { get; }
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows, bool transparent,
@@ -113,6 +114,12 @@ namespace Ambermoon.UI
 
             inputs.ForEach(input => input?.Destroy());
             inputs.Clear();
+
+            listBox?.Destroy();
+            listBox = null;
+
+            scrollbar?.Destroy();
+            scrollbar = null;
         }
 
         public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
@@ -216,9 +223,14 @@ namespace Ambermoon.UI
             FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, 1);
             FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);            
             var button = new Button(renderView, position);
-            button.DisplayLayer = 3;
+            button.DisplayLayer = (byte)Util.Min(255, displayLayer + 3);
             buttons.Add(button);
             return button;
+        }
+
+        void ScrollTo(int offset)
+        {
+            scrollbar.SetScrollPosition(offset);
         }
 
         public bool KeyChar(char ch)
@@ -248,13 +260,55 @@ namespace Ambermoon.UI
                     return true;
             }
 
+            if (scrollbar != null && !scrollbar.Disabled)
+            {
+                int scrollOffset = scrollbar.ScrollOffset;
+
+                switch (key)
+                {
+                    case Key.Up:
+                        if (scrollOffset > 0)
+                            ScrollTo(scrollOffset - 1);
+                        return true;
+                    case Key.Down:
+                        if (scrollOffset < scrollbar.ScrollRange)
+                            ScrollTo(scrollOffset + 1);
+                        return true;
+                    case Key.PageUp:
+                        if (scrollOffset > 0)
+                            ScrollTo(Math.Max(0, scrollOffset - 5));
+                        return true;
+                    case Key.PageDown:
+                        if (scrollOffset < scrollbar.ScrollRange)
+                            ScrollTo(Math.Min(scrollbar.ScrollRange, scrollOffset + 5));
+                        return true;
+                    case Key.Home:
+                        ScrollTo(0);
+                        return true;
+                    case Key.End:
+                        ScrollTo(scrollbar.ScrollRange);
+                        return true;
+                }
+            }
+
             return false;
+        }
+
+        public bool Drag(Position position)
+        {
+            if (scrollbar == null || scrollbar.Disabled)
+                return false;
+
+            return scrollbar.Drag(position);
         }
 
         public bool Click(Position position, MouseButtons mouseButtons)
         {
             if (mouseButtons == MouseButtons.Left && TextInput.FocusedInput == null)
             {
+                if (scrollbar != null && !scrollbar.Disabled && scrollbar.LeftClick(position))
+                    return true;
+
                 if (listBox?.Click(position) == true)
                     return true;
 
@@ -294,6 +348,14 @@ namespace Ambermoon.UI
 
         public void LeftMouseUp(Position position)
         {
+            if (scrollbar != null && !scrollbar.Disabled)
+            {
+                scrollbar.LeftMouseUp();
+
+                if (game.CursorType == CursorType.None)
+                    game.CursorType = CursorType.Sword;
+            }
+
             if (TextInput.FocusedInput != null)
                 return;
 
@@ -326,6 +388,20 @@ namespace Ambermoon.UI
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
 
             listBox = ListBox.CreateDictionaryListbox(renderView, game, this, items);
+        }
+
+        public ListBox AddSpellListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        {
+            if (listBox != null)
+                throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
+
+            return listBox = ListBox.CreateSpellListbox(renderView, game, this, items);
+        }
+
+        public Scrollbar AddScrollbar(Layout layout, int scrollRange, int displayLayer = 1, int yOffset = 0)
+        {
+            return scrollbar = new Scrollbar(layout, ScrollbarType.LargeVertical, new Rect(ContentArea.Right - 9, ContentArea.Top + yOffset, 6, 112),
+                6, 56, scrollRange, (byte)Util.Min(255, this.displayLayer + displayLayer));
         }
 
         public bool HasTextInput() => inputs.Count != 0;

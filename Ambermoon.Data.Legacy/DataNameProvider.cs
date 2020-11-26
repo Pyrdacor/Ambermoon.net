@@ -59,6 +59,8 @@
         public string DropItemQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropIt);
         public string DropGoldQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropGold);
         public string DropFoodQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropFood);
+        public string NotEnoughSP => executableData.Messages.GetEntry(Messages.Index.NotEnoughSP);
+        public string WrongArea => executableData.Messages.GetEntry(Messages.Index.WrongArea);
         public string WrongClassToUseItem => executableData.Messages.GetEntry(Messages.Index.WrongClassToUseItem);
         public string WrongPlaceToUseItem => executableData.Messages.GetEntry(Messages.Index.WrongPlaceToUseItem);
         public string WrongWorldToUseItem => executableData.Messages.GetEntry(Messages.Index.WrongWorldToUseItem);

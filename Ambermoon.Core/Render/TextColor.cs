@@ -10,6 +10,7 @@
         Yellow,
         Orange,
         PaleGray,
-        Green
+        Green,
+        Disabled
     }
 }

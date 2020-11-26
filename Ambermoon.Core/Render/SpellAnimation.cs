@@ -19,10 +19,11 @@ namespace Ambermoon.Render
         readonly ITextureAtlas textureAtlas;
         readonly bool fromMonster;
         readonly int startPosition;
+        readonly int targetRow;
         Action finishAction;
 
         public SpellAnimation(Game game, Layout layout, Battle battle, Spell spell,
-            bool fromMonster, int sourcePosition)
+            bool fromMonster, int sourcePosition, int targetRow = 0)
         {
             this.game = game;
             this.layout = layout;
@@ -31,6 +32,7 @@ namespace Ambermoon.Render
             this.spell = spell;
             this.fromMonster = fromMonster;
             startPosition = sourcePosition;
+            this.targetRow = targetRow;
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
         }
 
@@ -55,7 +57,7 @@ namespace Ambermoon.Render
                 finishAction?.Invoke();
         }
 
-        void AddAnimation(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
+        void AddAnimation(CombatGraphicIndex graphicIndex, int[] frameIndices, Position startPosition, Position endPosition,
             uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 200, Action finishAction = null)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
@@ -76,14 +78,15 @@ namespace Ambermoon.Render
             animation.AnimationFinished += AnimationEnded;
             animation.SetStartFrame(textureAtlas.GetOffset(Graphics.CombatGraphicOffset + (uint)graphicIndex),
                 new Size(info.GraphicInfo.Width, info.GraphicInfo.Height), startPosition, startScale);
-            if (numFrames == 1)
-                animation.PlayWithoutAnimating(duration, game.CurrentBattleTicks, endPosition, endScale);
-            else
-            {
-                var frames = Enumerable.Range(0, numFrames).ToArray();
-                animation.Play(frames, duration / (uint)frames.Length, game.CurrentBattleTicks, endPosition, endScale);
-            }
+            animation.Play(frameIndices, duration / (uint)frameIndices.Length, game.CurrentBattleTicks, endPosition, endScale);
             animations.Add(animation);
+        }
+
+        void AddAnimation(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
+            uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 200, Action finishAction = null)
+        {
+            AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
+                duration, startScale, endScale, displayLayer, finishAction);
         }
 
         Position GetSourcePosition()
@@ -211,6 +214,8 @@ namespace Ambermoon.Render
                 case Spell.AntiMagicSphere:
                 case Spell.Hurry:
                 case Spell.MassHurry:
+                case Spell.LPStealer:
+                case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
                 case Spell.MagicalProjectile:
@@ -235,18 +240,14 @@ namespace Ambermoon.Render
                 case Spell.Windhowler:
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
+                case Spell.Firebeam:
+                case Spell.Fireball:
                 case Spell.Firestorm:
                 case Spell.Firepillar:
                 case Spell.Waterfall:
+                case Spell.Iceball:
                 case Spell.Icestorm:
                 case Spell.Iceshower:
-                    // TODO
-                    return new Position();
-                case Spell.LPStealer:
-                case Spell.SPStealer:
-                case Spell.Firebeam:
-                case Spell.Fireball:
-                case Spell.Iceball:
                     if (fromMonster) // target is party member
                     {
                         return Layout.GetPlayerSlotCenterPosition(position % 6);
@@ -345,9 +346,59 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Firestorm:
+                {
+                    ShowOverlay(Color.FireOverlay);
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
+                    void AddFlameAnimation(float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
+                        int startFrame, Action finishAction)
+                    {
+                        // Note: The start frame also adds an x-offset
+                        int[] frames = (startFrame == 0 ? Enumerable.Range(0, 8) :
+                            Enumerable.Concat(Enumerable.Range(startFrame, 8 - startFrame), Enumerable.Range(0, startFrame))).ToArray();
+                        int startXOffset = startFrame * Util.Round(startScale * info.GraphicInfo.Width);
+                        int endXOffset = startFrame * Util.Round(endScale * info.GraphicInfo.Width);
+                        int halfStartHeight = Util.Round(0.5f * startScale * info.GraphicInfo.Height);
+                        int halfEndHeight = Util.Round(0.5f * endScale * info.GraphicInfo.Height);
+                        AddAnimation(CombatGraphicIndex.BigFlame, frames, new Position(startGroundPosition.X + startXOffset, startGroundPosition.Y - halfStartHeight),
+                            new Position(endGroundPosition.X + endXOffset, endGroundPosition.Y - halfEndHeight), Game.TicksPerSecond * 3 / 4,
+                            startScale, endScale, 200, finishAction);
+                    }
+                    float scale = fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 2.0f;
+                    var combatArea = Global.CombatBackgroundArea;
+                    var leftMonsterPosition = Layout.GetMonsterCombatGroundPosition(renderView, targetRow * 6);
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        float baseScale = scale - i * 0.1f;
+
+                        AddFlameAnimation(baseScale, baseScale, new Position(combatArea.Right, leftMonsterPosition.Y),
+                            leftMonsterPosition, i, () =>
+                        {
+                            AddFlameAnimation(baseScale, 0.0f, leftMonsterPosition,
+                                new Position(combatArea.Left, leftMonsterPosition.Y), 0, i == 3 ? (Action)(() =>
+                                {
+                                    HideOverlay();
+                                    this.finishAction?.Invoke();
+                                }) : null);
+                        });
+                    }
+                    break;
+                }
                 case Spell.Firepillar:
                 case Spell.Waterfall:
+                    return; // TODO
                 case Spell.Iceball:
+                {
+                    // This only shows a static iceball in the foreground and makes the screen blue.
+                    /*ShowOverlay(Color.IceOverlay);
+                    float scale = fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 2.0f;
+                    AddAnimation(CombatGraphicIndex.IceBall, 8, GetSourcePosition(), GetSourcePosition(), Game.TicksPerSecond * 3 / 4, scale, scale, 200, () =>
+                    {
+                        HideOverlay();
+                        this.finishAction?.Invoke();
+                    });
+                    break;*/
+                    return; // TODO
+                }
                 case Spell.Icestorm:
                 case Spell.Iceshower:
                     // TODO
@@ -355,19 +406,6 @@ namespace Ambermoon.Render
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} can not be rendered during a fight.");
             }
-        }
-
-        public void Destroy()
-        {
-            animations.ForEach(a => a?.Destroy());
-            animations.Clear();
-            HideOverlay();
-        }
-
-        public void Update(uint ticks)
-        {
-            // Note: ToList is important as Update might remove the animation from the collection.
-            animations.ToList().ForEach(a => a?.Update(ticks));
         }
 
         public void MoveTo(int tile, Action<uint> finishAction)
@@ -456,6 +494,10 @@ namespace Ambermoon.Render
                 }
                 case Spell.Firestorm:
                 case Spell.Firepillar:
+                {
+                    PlayBurn();
+                    break;
+                }
                 case Spell.Waterfall:
                 case Spell.Iceball:
                 case Spell.Icestorm:
@@ -465,6 +507,19 @@ namespace Ambermoon.Render
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} can not be rendered during a fight.");
             }
+        }
+
+        public void Destroy()
+        {
+            animations.ForEach(a => a?.Destroy());
+            animations.Clear();
+            HideOverlay();
+        }
+
+        public void Update(uint ticks)
+        {
+            // Note: ToList is important as Update might remove the animation from the collection.
+            animations.ToList().ForEach(a => a?.Update(ticks));
         }
 
         // TODO

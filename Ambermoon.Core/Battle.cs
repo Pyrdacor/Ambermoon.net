@@ -891,7 +891,7 @@ namespace Ambermoon
 
 
                     currentSpellAnimation = new SpellAnimation(game, layout, this, spell,
-                        battleAction.Character.Type == CharacterType.Monster, GetCharacterPosition(battleAction.Character));
+                        battleAction.Character.Type == CharacterType.Monster, GetCharacterPosition(battleAction.Character), (int)targetRowOrTile);
 
                     void CastSpellOn(Character target, Action finishAction)
                     {
@@ -1319,7 +1319,7 @@ namespace Ambermoon
 
         bool AttackSpotAvailable(int characterPosition, Character character)
         {
-            int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
+            int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? 6 : 1;
 
             if (!GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy))
                 return false;
@@ -1530,7 +1530,7 @@ namespace Ambermoon
 
         uint GetBestAttackSpot(int characterPosition, Character character)
         {
-            int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? int.MaxValue : 1;
+            int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? 6 : 1;
             GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy);
             var possiblePositions = new List<int>();
 

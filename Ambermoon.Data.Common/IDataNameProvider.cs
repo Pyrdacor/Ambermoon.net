@@ -36,6 +36,8 @@
         string DropItemQuestion { get; }
         string DropGoldQuestion { get; }
         string DropFoodQuestion { get; }
+        string NotEnoughSP { get; }
+        string WrongArea { get; }
         string WrongClassToUseItem { get; }
         string WrongPlaceToUseItem { get; }
         string WrongWorldToUseItem { get; }
