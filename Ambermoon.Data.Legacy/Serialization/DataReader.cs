@@ -28,7 +28,6 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         static DataReader()
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Encoding = new AmbermoonEncoding();
         }
 
