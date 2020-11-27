@@ -3412,7 +3412,12 @@ namespace Ambermoon
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove, TextColor.Gray);
                             return;
                         }
-                        if (AnyPlayerMovesTo(column + row * 6))
+                        int newPosition = column + row * 6;
+                        int slot = SlotFromPartyMember(CurrentPartyMember).Value;
+                        if ((!roundPlayerBattleActions.ContainsKey(slot) ||
+                            roundPlayerBattleActions[slot].BattleAction != Battle.BattleActionType.Move ||
+                            Battle.GetTargetTileFromParameter(roundPlayerBattleActions[slot].Parameter) != newPosition) &&
+                            AnyPlayerMovesTo(newPosition))
                         {
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageSomeoneAlreadyGoingThere, TextColor.Gray);
                             return;
