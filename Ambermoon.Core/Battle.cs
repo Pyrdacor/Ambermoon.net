@@ -190,6 +190,7 @@ namespace Ambermoon
         readonly Character[] battleField = new Character[6 * 5];
         readonly List<PartyMember> parryingPlayers = new List<PartyMember>(Game.MaxPartyMembers);
         readonly List<Character> fledCharacters = new List<Character>();
+        readonly Dictionary<int, int> monsterSizeDisplayLayerMapping = new Dictionary<int, int>();
         uint? animationStartTicks = null;
         Monster currentlyAnimatedMonster = null;
         BattleAnimation currentBattleAnimation = null;
@@ -237,6 +238,7 @@ namespace Ambermoon
                     battleField[18 + game.CurrentSavegame.BattlePositions[i]] = partyMembers[i];
                 }
             }
+            List<int> monsterSizes = new List<int>(24);
             for (int y = 0; y < 3; ++y)
             {
                 for (int x = 0; x < 6; ++x)
@@ -249,8 +251,22 @@ namespace Ambermoon
                         battleField[index] = monster;
                         monsterBattleAnimations[index].AnimationFinished += () => MonsterAnimationFinished(monster);
                         initialMonsters.Add(monster);
+                        monsterSizes.Add((int)monster.MappedFrameWidth);
                     }
                 }
+            }
+            monsterSizes.Sort();
+            // Each row has a display layer range of 60 (row 0: 0-59, row 1: 60-119, row 2: 120-179, row 3: 180-239).
+            // Depending on monster size an offset of 0, 6, 12, 18, 24, 30, 36, 42, 48 or 54 is possible (up to 10 monster sizes).
+            // Smaller (thinner) monsters get higher values to appear in front of larger monsters.
+            // Each column then increases the value by 0 to 5.
+            int currentMonsterSizeIndex = 0;
+            foreach (var monsterSize in monsterSizes.Distinct())
+            {
+                monsterSizeDisplayLayerMapping.Add(monsterSize, (9 - currentMonsterSizeIndex) * 6);
+
+                if (currentMonsterSizeIndex < 9)
+                    ++currentMonsterSizeIndex;
             }
 
             effectAnimations = layout.GetOrCreateBattleEffectAnimations();
@@ -355,7 +371,7 @@ namespace Ambermoon
                 }
                 else if (currentlyAnimatedMonster != null)
                 {
-                    currentBattleAnimation.SetDisplayLayer((byte)(GetCharacterPosition(currentlyAnimatedMonster) * 5));
+                    SetMonsterDisplayLayer(currentBattleAnimation, currentlyAnimatedMonster);
                 }
             }
 
@@ -369,6 +385,18 @@ namespace Ambermoon
 
             if (currentSpellAnimation != null)
                 currentSpellAnimation.Update(battleTicks);
+        }
+
+        public void SetMonsterDisplayLayer(BattleAnimation animation, Monster monster, int? position = null)
+        {
+            position ??= GetCharacterPosition(monster);
+            // Each row has a display layer range of 60 (row 0: 0-59, row 1: 60-119, row 2: 120-179, row 3: 180-239).
+            // Depending on monster size an offset of 0, 6, 12, 18, 24, 30, 36, 42, 48 or 54 is possible (up to 10 monster sizes).
+            // Each column then increases the value by 0 to 5.
+            int column = position.Value % 6;
+            int row = position.Value / 6;
+            byte displayLayer = (byte)(row * 60 + monsterSizeDisplayLayerMapping[(int)monster.MappedFrameWidth] + column);
+            animation.SetDisplayLayer(displayLayer);
         }
 
         /// <summary>
@@ -715,7 +743,7 @@ namespace Ambermoon
                         void MoveAnimationFinished()
                         {
                             animation.AnimationFinished -= MoveAnimationFinished;
-                            animation.SetDisplayLayer((byte)(newPosition * 5));
+                            SetMonsterDisplayLayer(animation, monster, (int)newPosition);
                             EndMove();
                             currentBattleAnimation = null;
                             currentlyAnimatedMonster = null;

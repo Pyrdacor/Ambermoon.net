@@ -2935,7 +2935,7 @@ namespace Ambermoon
                 void MoveAnimationFinished()
                 {
                     animation.AnimationFinished -= MoveAnimationFinished;
-                    animation.SetDisplayLayer((byte)((position + 6) * 5));
+                    currentBattle.SetMonsterDisplayLayer(animation, monster, position);
                     currentBattle.MoveCharacterTo((uint)(position + 6), monster);
 
                     if (++advancedMonsters == totalMonsters)
