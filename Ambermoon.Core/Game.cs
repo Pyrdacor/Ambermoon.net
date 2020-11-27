@@ -390,7 +390,7 @@ namespace Ambermoon
 
         public void Resume()
         {
-            if (!paused)
+            if (!paused || WindowActive)
                 return;
 
             paused = false;
@@ -3029,20 +3029,31 @@ namespace Ambermoon
                             nextEvent.ExecuteEvent(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
                                 (uint)RenderPlayer.Position.Y, CurrentTicks, ref lastStatus, out bool aborted);
                         }
+                        // TODO: Remove battle-only ailments like sleep and irritation
                     }
                     if (battleEndInfo.MonstersDefeated)
                     {
+                        currentBattleInfo = null;
                         currentBattle = null;
                         ShowBattleLoot(battleEndInfo, () =>
                         {
                             EndBattle(battleEndInfo);
                         });
                     }
+                    else if (PartyMembers.Any(p => p.Alive && p.Ailments.CanFight()))
+                    {
+                        // There are fled survivors
+                        currentBattle = null;
+                        EndBattle(battleEndInfo);
+                        CloseWindow();
+                        InputEnable = true;
+                    }
                     else
                     {
                         currentBattleInfo = null;
                         currentBattle = null;
                         CloseWindow();
+                        InputEnable = true;
                         GameOver();
                     }
                 };
@@ -3932,20 +3943,24 @@ namespace Ambermoon
                 {
                     layout.ClosePopup(false);
                     InputEnable = true;
+                    Resume();
                     responseHandler?.Invoke(PopupTextEvent.Response.Yes);
                 },
                 () =>
                 {
                     layout.ClosePopup(false);
                     InputEnable = true;
+                    Resume();
                     responseHandler?.Invoke(PopupTextEvent.Response.No);
                 },
                 () =>
                 {
                     InputEnable = true;
+                    Resume();
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
                 }, minLines
             );
+            Pause();
             InputEnable = false;
             CursorType = CursorType.Sword;
         }

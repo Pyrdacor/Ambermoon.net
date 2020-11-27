@@ -958,18 +958,22 @@ namespace Ambermoon.UI
                 {
                     ClosePopup(false);
                     game.InputEnable = true;
+                    game.Resume();
                     yesAction?.Invoke();
                 },
                 () =>
                 {
                     ClosePopup(false);
                     game.InputEnable = true;
+                    game.Resume();
                 },
                 () =>
                 {
                     game.InputEnable = true;
+                    game.Resume();
                 }, 1
             );
+            game.Pause();
             game.InputEnable = false;
             game.CursorType = CursorType.Sword;
         }
