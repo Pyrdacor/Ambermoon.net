@@ -1067,7 +1067,7 @@ namespace Ambermoon
 
                         animation.AnimationFinished += MoveAnimationFinished;
                         animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move), Game.TicksPerSecond / 20,
-                            battleTicks, Global.CombatBackgroundArea.Center, 0.0f);
+                            battleTicks, new Position(160, 105), 0.0f);
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
                     }
