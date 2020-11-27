@@ -467,14 +467,17 @@ namespace Ambermoon
 
                 if (currentBattle != null)
                 {
-                    uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
+                    if (!layout.OptionMenuOpen)
+                    {
+                        uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
 
-                    if (CurrentBattleTicks <= uint.MaxValue - add)
-                        CurrentBattleTicks += add;
-                    else
-                        CurrentBattleTicks = (uint)(((long)CurrentBattleTicks + add) % uint.MaxValue);
+                        if (CurrentBattleTicks <= uint.MaxValue - add)
+                            CurrentBattleTicks += add;
+                        else
+                            CurrentBattleTicks = (uint)(((long)CurrentBattleTicks + add) % uint.MaxValue);
 
-                    UpdateBattle();
+                        UpdateBattle();
+                    }
                 }
                 else
                     CurrentBattleTicks = 0;

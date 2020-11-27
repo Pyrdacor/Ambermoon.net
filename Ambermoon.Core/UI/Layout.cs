@@ -375,6 +375,7 @@ namespace Ambermoon.UI
         DraggedItem draggedItem = null;
         uint draggedGold = 0;
         uint draggedFood = 0;
+        public bool OptionMenuOpen { get; private set; } = false;
         public bool IsDragging => draggedItem != null || draggedGold != 0 || draggedFood != 0;
         Action<uint> draggedGoldOrFoodRemover = null;
         readonly List<IColoredRect> barAreas = new List<IColoredRect>();
@@ -530,20 +531,33 @@ namespace Ambermoon.UI
 
         public void OpenOptionMenu()
         {
+            OptionMenuOpen = true;
             game.InputEnable = false;
             game.Pause();
             var area = Type switch
             {
                 LayoutType.Map2D => Game.Map2DViewArea,
                 LayoutType.Map3D => Game.Map3DViewArea,
-                _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from another open window is not supported.")
+                LayoutType.Battle => Global.CombatBackgroundArea,
+                _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from the current window is not supported.")
             };
             AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), 49, 1);
-            AddSprite(new Rect(32, 82, 144, 26), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), 49, 2);
             var version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
-            AddText(new Rect(32, 84, 144, 26),
-                $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}",
-                TextColor.White, TextAlign.Center, 3);
+            string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}";
+            Rect boxArea;
+            Rect textArea;
+            if (Type == LayoutType.Battle)
+            {
+                boxArea = new Rect(88, 56, 144, 26);
+                textArea = new Rect(88, 58, 144, 26);
+            }
+            else
+            {
+                boxArea = new Rect(32, 82, 144, 26);
+                textArea = new Rect(32, 84, 144, 26);
+            }
+            AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), 49, 2);
+            AddText(textArea, versionString, TextColor.White, TextAlign.Center, 3);
 
             buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false); // TODO: ask to really quit etc
             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
@@ -558,7 +572,13 @@ namespace Ambermoon.UI
 
         void CloseOptionMenu()
         {
-            Reset();
+            OptionMenuOpen = false;
+            additionalSprites.Last()?.Delete();
+            additionalSprites.Remove(additionalSprites.Last());
+            additionalSprites.Last()?.Delete();
+            additionalSprites.Remove(additionalSprites.Last());
+            texts.Last()?.Destroy();
+            texts.Remove(texts.Last());
             UpdateLayoutButtons(ticksPerMovement);
             game.Resume();
             game.InputEnable = true;
@@ -854,7 +874,7 @@ namespace Ambermoon.UI
                     break;
             case LayoutType.Battle:
                 buttonGrid.SetButton(0, ButtonType.Flee, false, null, false); // this is set later manually
-                buttonGrid.SetButton(1, ButtonType.Load, false, OpenLoadMenu, false);
+                buttonGrid.SetButton(1, ButtonType.Options, false, OpenOptionMenu, false);
                 buttonGrid.SetButton(2, ButtonType.Ok, false, null, false); // this is set later manually
                 buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false); // this is set later manually
                 buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false); // this is set later manually
@@ -1324,6 +1344,7 @@ namespace Ambermoon.UI
 
         public void Reset(bool keepInventoryMessage = false)
         {
+            OptionMenuOpen = false;
             sprite80x80Picture?.Delete();
             sprite80x80Picture = null;
             eventPicture?.Delete();

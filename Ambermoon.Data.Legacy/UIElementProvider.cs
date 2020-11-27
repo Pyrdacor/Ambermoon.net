@@ -127,7 +127,7 @@ namespace Ambermoon.Data.Legacy
                 Graphic.FromIndexedData(24, 11, Enumerable.Range(0, 24 * 11).Select(i => (byte)((i + i / 24) % 2 == 0 ? 0 : 26)).ToArray()),
 
                 // Map disable overlay (palette 50 -> 0 = black, 25 = transparent)
-                Graphic.FromIndexedData(176, 144, Enumerable.Range(0, 176 * 144).Select(i => (byte)((i + i / 176) % 2 == 0 ? 25 : 0)).ToArray()),
+                Graphic.FromIndexedData(320, 144, Enumerable.Range(0, 320 * 144).Select(i => (byte)((i + i / 320) % 2 == 0 ? 25 : 0)).ToArray()),
 
                 // Ambermoon info box (shown over the map when opening option menu)
                 GraphicBuilder.Create(128, 19)
