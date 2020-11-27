@@ -1467,12 +1467,24 @@ namespace Ambermoon
 
                 if (nearPlayerPositions.Count != 0)
                 {
-                    var nearPlayerPositionInSameRow = nearPlayerPositions
-                        .Where(p => p % 6 == currentColumn)
-                        .Select(p => (int?)p).FirstOrDefault();
+                    // Prefer spots with the most reachable players
+                    if (nearPlayerPositions.Count > 1)
+                    {
+                        var nearPlayerPositionsWithAmount = nearPlayerPositions.Select(p => new { p, n = NearbyPlayerAmount(p) }).ToList();
+                        nearPlayerPositionsWithAmount.Sort((a, b) => b.n.CompareTo(a.n));
+                        int maxAmount = nearPlayerPositionsWithAmount[0].n;
 
-                    if (nearPlayerPositionInSameRow != null)
-                        return (uint)nearPlayerPositionInSameRow.Value;
+                        if (maxAmount > nearPlayerPositionsWithAmount[^1].n)
+                        {
+                            nearPlayerPositions = nearPlayerPositionsWithAmount.TakeWhile(p => p.n == maxAmount).Select(p => p.p).ToList();
+                        }
+
+                        // Prefer spots in the center
+                        if (nearPlayerPositions.Any(p => p % 6 == 2 || p % 6 == 3))
+                            nearPlayerPositions = nearPlayerPositions.Where(p => p % 6 == 2 || p % 6 == 3).ToList();
+                        else if (nearPlayerPositions.Any(p => p % 6 == 1 || p % 6 == 4))
+                            nearPlayerPositions = nearPlayerPositions.Where(p => p % 6 == 1 || p % 6 == 4).ToList();
+                    }
 
                     return (uint)nearPlayerPositions[game.RandomInt(0, nearPlayerPositions.Count - 1)];
                 }
@@ -1528,6 +1540,26 @@ namespace Ambermoon
             }
 
             return false;
+        }
+
+        int NearbyPlayerAmount(int position)
+        {
+            int minX = Math.Max(0, position % 6 - 1);
+            int maxX = Math.Min(5, position % 6 + 1);
+            int minY = Math.Max(0, position / 6 - 1);
+            int maxY = Math.Min(4, position / 6 + 1);
+            int amount = 0;
+
+            for (int y = minY; y <= maxY; ++y)
+            {
+                for (int x = minX; x <= maxX; ++x)
+                {
+                    if (battleField[x + y * 6]?.Type == CharacterType.PartyMember)
+                        ++amount;
+                }
+            }
+
+            return amount;
         }
 
         bool MonsterWantsToFlee(Monster monster)
