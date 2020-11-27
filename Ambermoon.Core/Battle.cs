@@ -1477,14 +1477,24 @@ namespace Ambermoon
                     return (uint)nearPlayerPositions[game.RandomInt(0, nearPlayerPositions.Count - 1)];
                 }
 
-                // Prefer moving straight down
-                for (int row = maxY; row > currentRow; --row)
+                // Prefer moving straight down if not on left or right column
+                if (currentColumn != 0 && currentColumn != 5)
                 {
-                    if (battleField[currentColumn + row * 6] == null)
+                    for (int row = maxY; row > currentRow; --row)
                     {
-                        return (uint)(currentColumn + row * 6);
+                        if (battleField[currentColumn + row * 6] == null)
+                        {
+                            return (uint)(currentColumn + row * 6);
+                        }
                     }
                 }
+
+                // Prefer move positions that are not on left or right side because positions in the middle
+                // will generally be better for reaching players sooner.
+                var positionsWithoutOutsideColumns = possiblePositions.Where(p => p % 6 != 0 && p % 6 != 5).ToList();
+
+                if (positionsWithoutOutsideColumns.Count != 0)
+                    return (uint)positionsWithoutOutsideColumns[game.RandomInt(0, positionsWithoutOutsideColumns.Count - 1)];
             }
             else
             {
