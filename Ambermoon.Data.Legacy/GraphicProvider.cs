@@ -443,7 +443,7 @@ namespace Ambermoon.Data.Legacy
         public CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index) => CombatGraphics.Info[index];
         public float GetMonsterRowImageScaleFactor(MonsterRow row) => row switch
         {
-            MonsterRow.Farthest => 0.667f,
+            MonsterRow.Farthest => 0.7f,
             MonsterRow.Far => 0.8f,
             MonsterRow.Near => 1.25f,
             _ => 1.0f,

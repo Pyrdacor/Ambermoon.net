@@ -365,16 +365,16 @@ namespace Ambermoon.Render
                     }
                     float scale = fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 2.0f;
                     var combatArea = Global.CombatBackgroundArea;
-                    var leftMonsterPosition = Layout.GetMonsterCombatGroundPosition(renderView, targetRow * 6);
+                    var leftPosition = fromMonster ? Layout.GetPlayerSlotCenterPosition(0) : Layout.GetMonsterCombatGroundPosition(renderView, targetRow * 6);
                     for (int i = 0; i < 4; ++i)
                     {
                         float baseScale = scale - i * 0.1f;
 
-                        AddFlameAnimation(baseScale, baseScale, new Position(combatArea.Right, leftMonsterPosition.Y),
-                            leftMonsterPosition, i, () =>
+                        AddFlameAnimation(baseScale, baseScale, new Position(combatArea.Right, leftPosition.Y),
+                            leftPosition, i, () =>
                         {
-                            AddFlameAnimation(baseScale, 0.0f, leftMonsterPosition,
-                                new Position(combatArea.Left, leftMonsterPosition.Y), 0, i == 3 ? (Action)(() =>
+                            AddFlameAnimation(baseScale, 0.0f, leftPosition,
+                                new Position(combatArea.Left, leftPosition.Y), 0, i == 3 ? (Action)(() =>
                                 {
                                     HideOverlay();
                                     this.finishAction?.Invoke();
