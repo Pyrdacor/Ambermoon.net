@@ -3033,7 +3033,6 @@ namespace Ambermoon
                     }
                     if (battleEndInfo.MonstersDefeated)
                     {
-                        currentBattleInfo = null;
                         currentBattle = null;
                         ShowBattleLoot(battleEndInfo, () =>
                         {

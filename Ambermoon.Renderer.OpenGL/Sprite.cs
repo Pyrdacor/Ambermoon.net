@@ -34,6 +34,7 @@ namespace Ambermoon.Renderer
         int baseLineOffset = 0;
         byte paletteIndex = 0;
         Size textureSize = null;
+        bool mirrorX = false;
 
         public Sprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
             : base(width, height, virtualScreen)
@@ -97,6 +98,20 @@ namespace Ambermoon.Renderer
                 baseLineOffset = value;
 
                 UpdatePosition();
+            }
+        }
+
+        public bool MirrorX
+        {
+            get => mirrorX;
+            set
+            {
+                if (mirrorX == value)
+                    return;
+
+                mirrorX = value;
+
+                UpdateTextureAtlasOffset();
             }
         }
 

@@ -2430,6 +2430,11 @@ namespace Ambermoon.UI
             return new Position(40 + column * 40 + 20, Global.CombatBackgroundArea.Center.Y);
         }
 
+        public static Position GetPlayerSlotTargetPosition(int column)
+        {
+            return new Position(40 + column * 40 + 20, Global.CombatBackgroundArea.Bottom);
+        }
+
         // This is used for spells and effects. X is center of monster and Y is in the upper half.
         public static Position GetMonsterCombatCenterPosition(IRenderView renderView, int position, Monster monster)
         {

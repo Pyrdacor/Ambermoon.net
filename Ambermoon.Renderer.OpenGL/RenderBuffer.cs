@@ -255,6 +255,7 @@ namespace Ambermoon.Renderer
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
             var textureSize = new Size(sprite.TextureSize ?? spriteSize);
 
+            // TODO: if mirrored, clip other side
             if (sprite.ClipArea != null)
             {
                 float textureWidthFactor = spriteSize.Width / textureSize.Width;
@@ -299,14 +300,28 @@ namespace Ambermoon.Renderer
 
             if (textureAtlasOffsetBuffer != null)
             {
-                int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
+                if (sprite.MirrorX)
+                {
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
 
-                if (textureAtlasOffsetBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+                    if (textureAtlasOffsetBufferIndex != index)
+                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
 
-                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
-                textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
-                textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
+                    textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
+                    textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
+                    textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
+                }
+                else
+                {
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
+
+                    if (textureAtlasOffsetBufferIndex != index)
+                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                    textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
+                    textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
+                    textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
+                }
             }
 
             if (baseLineBuffer != null)
@@ -709,6 +724,7 @@ namespace Ambermoon.Renderer
             {
                 textureSize = new Size(sprite.Width, sprite.Height);
 
+                // TODO: if mirrored, clip other side
                 if (sprite.ClipArea != null)
                 {
                     var position = new Position(sprite.X, sprite.Y);
@@ -723,6 +739,7 @@ namespace Ambermoon.Renderer
             {
                 textureSize = new Size(sprite.TextureSize);
 
+                // TODO: if mirrored, clip other side
                 if (sprite.ClipArea != null)
                 {
                     textureSize = new Size(sprite.TextureSize);
@@ -743,10 +760,20 @@ namespace Ambermoon.Renderer
                 }
             }
 
-            textureAtlasOffsetBuffer.Update(index, (short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 1, (short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
-            textureAtlasOffsetBuffer.Update(index + 2, (short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height));
-            textureAtlasOffsetBuffer.Update(index + 3, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height));
+            if (sprite.MirrorX)
+            {
+                textureAtlasOffsetBuffer.Update(index, (short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
+                textureAtlasOffsetBuffer.Update(index + 1, (short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
+                textureAtlasOffsetBuffer.Update(index + 2, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height));
+                textureAtlasOffsetBuffer.Update(index + 3, (short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height));
+            }
+            else
+            {
+                textureAtlasOffsetBuffer.Update(index, (short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
+                textureAtlasOffsetBuffer.Update(index + 1, (short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
+                textureAtlasOffsetBuffer.Update(index + 2, (short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height));
+                textureAtlasOffsetBuffer.Update(index + 3, (short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height));
+            }
         }
 
         public void UpdateTextureAtlasOffset(int index, Render.ISurface3D surface)

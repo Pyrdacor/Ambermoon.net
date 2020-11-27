@@ -33,6 +33,7 @@ namespace Ambermoon.Render
         public uint FrameCount;
         public uint Duration;
         public byte InitialDisplayLayer;
+        public bool MirrorX;
     }
 
     internal static class BattleEffects
@@ -40,6 +41,18 @@ namespace Ambermoon.Render
         static List<BattleEffectInfo> Effects(params BattleEffectInfo[] battleEffects) => new List<BattleEffectInfo>(battleEffects);
 
         public static readonly int[] RowYOffsets = new[] { 81, 88, 98, 111, 124 };
+
+        static Position GetProjectileTargetPosition(IRenderView renderView, uint tile, Character[] battleField)
+        {
+            if (battleField[(int)tile] is Monster monster)
+            {
+                return Layout.GetMonsterCombatCenterPosition(renderView, (int)tile, monster);
+            }
+            else
+            {
+                return Layout.GetPlayerSlotTargetPosition((int)tile % 6);
+            }
+        }
 
         static Position GetCenterPosition(IRenderView renderView, uint tile, Character[] battleField, int yOffset = 0, bool groundBased = false)
         {
@@ -53,7 +66,12 @@ namespace Ambermoon.Render
                     return Layout.GetMonsterCombatCenterPosition(renderView, (int)tile, monster) + offset;
             }
             else
-                return Layout.GetPlayerSlotCenterPosition((int)tile % 6) + offset;
+            {
+                if (groundBased)
+                    return Layout.GetPlayerSlotCenterPosition((int)tile % 6) + offset;
+                else
+                    return Layout.GetPlayerSlotTargetPosition((int)tile % 6) + offset;
+            }
         }
 
         static BattleEffectInfo CreateSimpleEffect(IRenderView renderView, uint sourceTile, uint targetTile, CombatGraphicIndex graphicIndex,
@@ -74,7 +92,8 @@ namespace Ambermoon.Render
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
                 Duration = duration,
-                InitialDisplayLayer = (byte)((sourceTile / 6) * 60 + 59) // display over the given row
+                InitialDisplayLayer = (byte)((sourceTile / 6) * 60 + 59), // display over the given row
+                MirrorX = false
             };
         }
 
@@ -95,7 +114,8 @@ namespace Ambermoon.Render
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
                 Duration = duration,
-                InitialDisplayLayer = (byte)((tile / 6) * 60 + 59) // display over the given row
+                InitialDisplayLayer = (byte)((tile / 6) * 60 + 59), // display over the given row
+                MirrorX = false
             };
         }
 
@@ -111,10 +131,16 @@ namespace Ambermoon.Render
             CombatGraphicIndex graphicIndex, Character[] battleField, float baseScale = 1.0f)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
-            var startPosition = GetCenterPosition(renderView, sourceTile, battleField);
-            var endPosition = GetCenterPosition(renderView, targetTile, battleField);
+            var startPosition = GetProjectileTargetPosition(renderView, sourceTile, battleField);
+            var endPosition = GetProjectileTargetPosition(renderView, targetTile, battleField);
             var sourceScale = GetScaleFromRow(renderView, sourceTile, battleField);
             var targetScale = GetScaleFromRow(renderView, targetTile, battleField);
+            int maxY = Global.CombatBackgroundArea.Bottom;
+
+            if (startPosition.Y > maxY)
+                startPosition.Y = maxY;
+            if (endPosition.Y > maxY)
+                endPosition.Y = maxY;
 
             return new BattleEffectInfo
             {
@@ -126,7 +152,8 @@ namespace Ambermoon.Render
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
                 Duration = GetFlyDuration(sourceTile, targetTile),
-                InitialDisplayLayer = (byte)((sourceTile / 6) * 60 + 59) // display over the given row
+                InitialDisplayLayer = (byte)((sourceTile / 6) * 60 + 59), // display over the given row
+                MirrorX = startPosition.X > endPosition.X
             };
         }
 

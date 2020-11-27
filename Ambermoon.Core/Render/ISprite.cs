@@ -49,6 +49,12 @@ namespace Ambermoon.Render
             get;
             set;
         }
+
+        bool MirrorX
+        {
+            get;
+            set;
+        }
     }
 
     public interface ILayerSprite : ISprite

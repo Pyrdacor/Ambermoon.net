@@ -34,13 +34,15 @@ namespace Ambermoon.Render
             sprite.ClipArea = Global.CombatBackgroundArea;
         }
 
-        public void SetStartFrame(Position textureOffset, Size size, Position centerPosition = null, float initialScale = 1.0f)
+        public void SetStartFrame(Position textureOffset, Size size, Position centerPosition = null,
+            float initialScale = 1.0f, bool mirrorX = false)
         {
             if (centerPosition != null)
                 baseSpriteLocation = new Position(centerPosition);
             baseSpriteSize = new Size(size);
             baseTextureCoords = new Position(textureOffset);
             sprite.TextureSize = baseSpriteSize;
+            sprite.MirrorX = mirrorX;
             Scale = initialScale;
         }
 

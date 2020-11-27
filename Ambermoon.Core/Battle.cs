@@ -1734,18 +1734,18 @@ namespace Ambermoon
 
                 PlayBattleEffectAnimation(i, effect.StartTextureIndex, effect.FrameSize, effect.FrameCount, ticks, FinishEffect,
                     effect.Duration / effect.FrameCount, effect.InitialDisplayLayer, effect.StartPosition, effect.EndPosition,
-                    effect.StartScale, effect.EndScale);
+                    effect.StartScale, effect.EndScale, effect.MirrorX);
             }
         }
 
         void PlayBattleEffectAnimation(int index, uint graphicIndex, Size frameSize, uint numFrames, uint ticks,
             Action finishedAction, uint ticksPerFrame, byte initialDisplayLayer, Position startPosition, Position endPosition,
-            float initialScale = 1.0f, float endScale = 1.0f)
+            float initialScale = 1.0f, float endScale = 1.0f, bool mirrorX = false)
         {
             var effectAnimation = effectAnimations[index];
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
             effectAnimation.SetDisplayLayer(initialDisplayLayer);
-            effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale);
+            effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale, mirrorX);
             effectAnimation.Play(Enumerable.Range(0, (int)numFrames).ToArray(), ticksPerFrame, ticks, endPosition, endScale);
             effectAnimation.Visible = true;
 
