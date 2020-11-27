@@ -429,7 +429,8 @@ namespace Ambermoon.UI
             if (Type == LayoutType.Map2D ||
                 Type == LayoutType.Map3D)
             {
-                if (game.CursorType == CursorType.Sword)
+                if (game.CursorType == CursorType.Sword &&
+                    game.InputEnable)
                 {
                     ButtonGridPage = 1 - ButtonGridPage;
                     SetLayout(Type, ticksPerMovement);
