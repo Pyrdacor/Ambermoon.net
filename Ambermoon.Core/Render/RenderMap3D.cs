@@ -246,19 +246,53 @@ namespace Ambermoon.Render
 
                     switch (characterReference.Type)
                     {
-                    case CharacterType.PartyMember:
-                        return HandleConversation(game.CurrentSavegame.PartyMembers[(int)characterReference.Index]);
-                    case CharacterType.NPC:
-                        return HandleConversation(game.CharacterManager.GetNPC(characterReference.Index));
-                    case CharacterType.Monster:
-                        // TODO
-                        break;
-                    case CharacterType.MapObject:
-                        // TODO
-                        break;
+                        case CharacterType.PartyMember:
+                            return HandleConversation(game.CurrentSavegame.PartyMembers[(int)characterReference.Index]);
+                        case CharacterType.NPC:
+                            return HandleConversation(game.CharacterManager.GetNPC(characterReference.Index));
+                        case CharacterType.MapObject:
+                            if (characterReference.EventIndex != 0)
+                            {
+                                var @event = map.Map.EventList[(int)characterReference.EventIndex - 1];
+
+                                if (@event is ConditionEvent conditionEvent)
+                                {
+                                    switch (conditionEvent.TypeOfCondition)
+                                    {
+                                        case ConditionEvent.ConditionType.Eye:
+                                            if (trigger != EventTrigger.Eye)
+                                                return false;
+                                            @event = conditionEvent.Next;
+                                            trigger = EventTrigger.Always;
+                                            break;
+                                        case ConditionEvent.ConditionType.Hand:
+                                            if (trigger != EventTrigger.Hand)
+                                                return false;
+                                            @event = conditionEvent.Next;
+                                            trigger = EventTrigger.Always;
+                                            break;
+                                        // TODO: Mouth condition?
+                                        case ConditionEvent.ConditionType.UseItem:
+                                        {
+                                            if (trigger < EventTrigger.Item0)
+                                                return false;
+                                            var itemIndex = (uint)trigger - (uint)EventTrigger.Item0;
+                                            if (conditionEvent.ObjectIndex != itemIndex)
+                                                return false;
+                                            @event = conditionEvent.Next;
+                                            trigger = EventTrigger.Always;
+                                            break;
+                                        }
+                                    }
+                                }
+                                var position = game.RenderPlayer.Position;
+                                EventExtensions.TriggerEventChain(map.Map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
+                                return true;
+                            }
+                            break;
                     }
 
-                    return true;
+                    return false;
                 }
             }
 
@@ -380,19 +414,18 @@ namespace Ambermoon.Render
                 var camera = (game.RenderPlayer as Player3D).Camera;
                 Geometry.Geometry.CameraToMapPosition(map.Map, camera.X, camera.Z, out float mapX, out float mapY);
                 var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
+                var distanceToPlayer = game.RenderPlayer.Position - Position;
 
-                if (characterReference.Type == CharacterType.Monster)
+                if (distanceToPlayer.X == 0 && distanceToPlayer.Y == 0)
                 {
-                    var distanceToPlayer = game.RenderPlayer.Position - Position;
-
-                    if (distanceToPlayer.X == 0 && distanceToPlayer.Y == 0)
+                    if (characterReference.Type == CharacterType.Monster)
                     {
                         // Monster has reached player -> interact/fight
                         game.MonsterSeesPlayer = true;
                         character3D.Stop(true);
-                        Interact(EventTrigger.Move, false);
-                        return;
                     }
+                    if (Interact(EventTrigger.Move, false))
+                        return;
                 }
 
                 bool randomMovement = characterReference.CharacterFlags.HasFlag(Flags.RandomMovement);
@@ -1002,7 +1035,8 @@ namespace Ambermoon.Render
             uint x, uint y, uint ticks, Savegame savegame)
         {
             // first check for NPC interaction
-            if (trigger == EventTrigger.Eye || trigger == EventTrigger.Mouth)
+            if (trigger == EventTrigger.Eye || trigger == EventTrigger.Mouth ||
+                trigger == EventTrigger.Hand || trigger >= EventTrigger.Item0)
             {
                 foreach (var mapCharacter in mapCharacters)
                 {

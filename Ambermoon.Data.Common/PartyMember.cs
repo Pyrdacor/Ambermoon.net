@@ -82,7 +82,7 @@ namespace Ambermoon.Data
         {
             var weaponSlot = Equipment.Slots[EquipmentSlot.RightHand];
 
-            if (weaponSlot.Empty || weaponSlot.Flags.HasFlag(ItemSlotFlags.Broken))
+            if (weaponSlot.Empty || weaponSlot.ItemIndex == 0 || weaponSlot.Flags.HasFlag(ItemSlotFlags.Broken))
                 return false;
 
             var weapon = itemManager.GetItem(weaponSlot.ItemIndex);
