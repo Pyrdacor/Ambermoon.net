@@ -136,7 +136,7 @@ namespace Ambermoon.Geometry
         }
 
         public void Update(uint ticks, FloatPosition playerPosition, bool moveRandom, bool canSeePlayer,
-            bool onlyMoveWhenSeePlayer)
+            bool onlyMoveWhenSeePlayer, bool monster)
         {
             if (Paused)
                 return;
@@ -146,8 +146,16 @@ namespace Ambermoon.Geometry
             case State.IdleOnTile:
                 if (canSeePlayer)
                 {
-                    movedTicks = 0;
-                    MoveTowardsPlayer(playerPosition);
+                    if (monster)
+                    {
+                        movedTicks = 0;
+                        MoveTowardsPlayer(playerPosition);
+                    }
+                    else if (moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
+                    {
+                        ResetMovementTimer();
+                        RandomMovementRequested?.Invoke();
+                    }
                 }
                 else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
                 {
@@ -158,10 +166,18 @@ namespace Ambermoon.Geometry
             case State.Idle:
                 if (canSeePlayer)
                 {
-                    movedTicks = 0;
-                    MoveTowardsPlayer(playerPosition);
+                    if (monster)
+                    {
+                        movedTicks = 0;
+                        MoveTowardsPlayer(playerPosition);
+                    }
+                    else if (moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
+                    {
+                        ResetMovementTimer();
+                        MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);
+                    }
                 }
-                else if (game.GameTime.TimeSlot == NextMoveTimeSlot)
+                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
                 {
                     ResetMovementTimer();
                     MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);
@@ -169,7 +185,7 @@ namespace Ambermoon.Geometry
                 break;
             case State.MovingToTile:
                 {
-                    if (canSeePlayer)
+                    if (monster && canSeePlayer)
                     {
                         movedTicks = 0;
                         lastTilePosition = Position;

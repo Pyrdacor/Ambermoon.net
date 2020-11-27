@@ -75,6 +75,7 @@ namespace Ambermoon.Render
             readonly uint ticksPerFrame;
             readonly Map.CharacterReference characterReference;
             readonly uint textureIndex;
+            readonly uint extrudeOffset;
             readonly Labdata.ObjectPosition objectPosition;
             bool active = true;
             DateTime lastInteractionTime = DateTime.MinValue;
@@ -84,7 +85,7 @@ namespace Ambermoon.Render
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
                 Labdata.ObjectPosition objectPosition, uint textureIndex,
-                uint numFrames, float fps = 1.0f)
+                uint extrudeOffset, uint numFrames, float fps = 1.0f)
             {
                 this.game = game;
                 this.surface = surface;
@@ -94,6 +95,7 @@ namespace Ambermoon.Render
                 ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
                 this.characterReference = characterReference;
                 this.textureIndex = textureIndex;
+                this.extrudeOffset = extrudeOffset;
                 this.objectPosition = objectPosition;
                 character3D = new Character3D(game);
                 character3D.RandomMovementRequested += MoveRandom;
@@ -267,7 +269,7 @@ namespace Ambermoon.Render
 
             void UpdatePosition()
             {
-                map.UpdateCharacterSurfaceCoordinates(character3D.RealPosition, surface, objectPosition);
+                map.UpdateCharacterSurfaceCoordinates(character3D.RealPosition, surface, objectPosition, extrudeOffset);
             }
 
             void UpdateCurrentMovement(uint ticks)
@@ -276,12 +278,12 @@ namespace Ambermoon.Render
                     ResetFrame();
                 else
                 {
-                    if (numFrames <= 1 || !surface.Visible)
-                        return;
-
-                    uint frame = (ticks / ticksPerFrame) % numFrames; // TODO
-                    surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
-                        new Position((int)(frame * surface.TextureWidth), 0);
+                    if (surface.Visible && numFrames > 1)
+                    {
+                        uint frame = (ticks / ticksPerFrame) % numFrames; // TODO
+                        surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
+                            new Position((int)(frame * surface.TextureWidth), 0);
+                    }
                 }
 
                 UpdatePosition();
@@ -403,13 +405,14 @@ namespace Ambermoon.Render
                     character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y);
                 }
 
-                bool canSeePlayer = characterReference.Type == CharacterType.Monster && CanSee(playerPosition);
+                bool monster = characterReference.Type == CharacterType.Monster;
+                bool canSeePlayer = (monster || characterReference.OnlyMoveWhenSeePlayer) && CanSee(playerPosition);
 
-                if (canSeePlayer)
+                if (monster && canSeePlayer)
                     game.MonsterSeesPlayer = true;
 
                 character3D.Update(ticks, playerPosition, randomMovement, canSeePlayer,
-                    characterReference.OnlyMoveWhenSeePlayer);
+                    characterReference.OnlyMoveWhenSeePlayer, monster);
 
                 UpdateCurrentMovement(ticks);
             }
@@ -623,22 +626,26 @@ namespace Ambermoon.Render
                 character.Value.Resume();
         }
 
-        void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition)
+        void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition, uint extrudeOffset)
         {
             float baseX = position.X;
             float baseY = -Map.Height * Global.DistancePerBlock + position.Y;
             surface.X = baseX + (objectPosition.X / BlockSize) * Global.DistancePerBlock;
-            surface.Y = WallHeight * (objectPosition.Z / 400.0f + objectPosition.Object.MappedTextureHeight / ReferenceWallHeight);
+            surface.Y = surface.Type == SurfaceType.BillboardFloor
+                ? (float)extrudeOffset / labdata.WallHeight
+                : WallHeight * (objectPosition.Z / 400.0f + objectPosition.Object.MappedTextureHeight / ReferenceWallHeight);
             surface.Z = baseY + Global.DistancePerBlock - (objectPosition.Y / BlockSize) * Global.DistancePerBlock;
         }
 
         void UpdateCharacterSurfaceCoordinates(Position position, ISurface3D surface, Labdata.ObjectPosition objectPosition,
-            float xOffset = 0.0f, float yOffset = 0.0f)
+            uint extrudeOffset, float xOffset = 0.0f, float yOffset = 0.0f)
         {
             float baseX = position.X * Global.DistancePerBlock;
             float baseY = (-Map.Height + position.Y) * Global.DistancePerBlock;
             surface.X = baseX + (objectPosition.X / BlockSize) * Global.DistancePerBlock + xOffset;
-            surface.Y = WallHeight * (objectPosition.Z / 400.0f + objectPosition.Object.MappedTextureHeight / ReferenceWallHeight);
+            surface.Y = surface.Type == SurfaceType.BillboardFloor
+                ? (float)extrudeOffset / labdata.WallHeight
+                : WallHeight * (objectPosition.Z / 400.0f + objectPosition.Object.MappedTextureHeight / ReferenceWallHeight);
             surface.Z = baseY + Global.DistancePerBlock - (objectPosition.Y / BlockSize) * Global.DistancePerBlock + yOffset;
         }
 
@@ -653,18 +660,26 @@ namespace Ambermoon.Render
 
             var subObject = obj.SubObjects[0];
             var objectInfo = subObject.Object;
-            var mapObject = surfaceFactory.Create(SurfaceType.Billboard,
-                Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
-                wallHeight * objectInfo.MappedTextureHeight / ReferenceWallHeight,
-                objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
-                objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
-                objectInfo.ExtrudeOffset / BlockSize);
+            bool floorObject = objectInfo.Flags.HasFlag(Labdata.ObjectFlags.FloorObject);
+            var mapObject = floorObject
+                ? surfaceFactory.Create(SurfaceType.BillboardFloor,
+                    Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
+                    Global.DistancePerBlock * objectInfo.MappedTextureHeight / BlockSize,
+                    objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
+                    objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
+                    0.7075f * Global.DistancePerBlock) // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
+                : surfaceFactory.Create(SurfaceType.Billboard,
+                    Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
+                    wallHeight * objectInfo.MappedTextureHeight / ReferenceWallHeight,
+                    objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
+                    objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
+                    objectInfo.ExtrudeOffset / BlockSize);
             mapObject.Layer = layer;
             mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-            UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, subObject);
+            UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, subObject, objectInfo.ExtrudeOffset);
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
-                subObject, objectInfo.TextureIndex, objectInfo.NumAnimationFrames, 4.0f); // TODO: fps?
+                subObject, objectInfo.TextureIndex, objectInfo.ExtrudeOffset, objectInfo.NumAnimationFrames, 4.0f); // TODO: fps?
             mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
             if (mapCharacter.Active)
                 mapObject.Visible = true;
