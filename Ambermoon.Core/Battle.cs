@@ -946,6 +946,12 @@ namespace Ambermoon
                                 (uint)position, ticks, () =>
                                 {
                                     // TODO: calculate and deal damage, heal, etc
+                                    uint damage = 10; // TODO
+                                    if (target is PartyMember partyMember)
+                                    {
+                                        game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
+                                            Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
+                                    }
                                     finishAction?.Invoke();
                                 }
                             );
