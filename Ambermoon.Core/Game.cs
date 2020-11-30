@@ -2792,7 +2792,8 @@ namespace Ambermoon
                 foreach (var monster in currentBattle.Monsters)
                 {
                     int slot = currentBattle.GetSlotFromCharacter(monster);
-                    monsterBattleAnimations.Add(slot, layout.AddMonsterCombatSprite(slot % 6, slot / 6, monster));
+                    monsterBattleAnimations.Add(slot, layout.AddMonsterCombatSprite(slot % 6, slot / 6, monster,
+                        currentBattle.GetMonsterDisplayLayer(monster, slot)));
                 }
                 currentBattle.SetMonsterAnimations(monsterBattleAnimations);
             }
@@ -2816,7 +2817,7 @@ namespace Ambermoon
                         Global.BattleFieldY + battleRow * Global.BattleFieldSlotHeight - 1,
                         Global.BattleFieldSlotWidth,
                         Global.BattleFieldSlotHeight + 1
-                    ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, 3,
+                    ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, (byte)(3 + battleRow),
                     $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}",
                     partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray);
                 }
@@ -2976,14 +2977,19 @@ namespace Ambermoon
                 {
                     for (int column = 0; column < 6; ++column)
                     {
-                        if (monsterGroup.Monsters[column, row] != null)
+                        var monster = monsterGroup.Monsters[column, row];
+
+                        if (monster != null)
                         {
-                            monsterBattleAnimations.Add(column + row * 6, layout.AddMonsterCombatSprite(column, row, monsterGroup.Monsters[column, row]));
+                            monsterBattleAnimations.Add(column + row * 6,
+                                layout.AddMonsterCombatSprite(column, row, monster, 0));
                         }
                     }
                 }
                 currentBattle = new Battle(this, layout, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
                     monsterGroup, monsterBattleAnimations, true); // TODO: make last param dependent on game options
+                foreach (var monsterBattleAnimation in monsterBattleAnimations)
+                    currentBattle.SetMonsterDisplayLayer(monsterBattleAnimation.Value, currentBattle.GetCharacterAt(monsterBattleAnimation.Key) as Monster);
                 currentBattle.RoundFinished += () =>
                 {
                     InputEnable = true;
@@ -2999,7 +3005,8 @@ namespace Ambermoon
                     layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
                     AddCurrentPlayerActionVisuals();
                     layout.SetBattleMessage(null);
-                    RecheckActivePartyMember();
+                    if (RecheckActivePartyMember())
+                        BattlePlayerSwitched();
                     CheckMadPlayers();
                 };
                 currentBattle.CharacterDied += character =>
@@ -3160,6 +3167,7 @@ namespace Ambermoon
                 var sprite = partyMemberBattleFieldSprites[index];
                 sprite.X = Global.BattleFieldX + (int)column * Global.BattleFieldSlotWidth;
                 sprite.Y = Global.BattleFieldY + (int)row * Global.BattleFieldSlotHeight - 1;
+                sprite.DisplayLayer = (byte)(3 + row);
             }
         }
 
@@ -3969,7 +3977,7 @@ namespace Ambermoon
             ShowDecisionPopup(map.Texts[(int)decisionEvent.TextIndex], responseHandler);
         }
 
-        void RecheckActivePartyMember()
+        bool RecheckActivePartyMember()
         {
             if (!CurrentPartyMember.Ailments.CanSelect() || currentBattle.GetSlotFromCharacter(CurrentPartyMember) == -1)
             {
@@ -3986,16 +3994,13 @@ namespace Ambermoon
                 pickingNewLeader = true;
                 CursorType = CursorType.Sword;
                 TrapMouse(Global.PartyMemberPortraitArea);
-
-                // TODO
-
-                // TODO: Display message "The group needs a new leader.".
-                // TODO: Player has to choose a new leader.
                 // TODO: What happens if all party members are no longer selectable? E.g. all sleeping?
+                return false;
             }
             else
             {
                 layout.UpdateCharacterNameColors(SlotFromPartyMember(CurrentPartyMember).Value);
+                return true;
             }
         }
 

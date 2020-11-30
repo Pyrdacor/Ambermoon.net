@@ -2469,13 +2469,13 @@ namespace Ambermoon.UI
             return GetMonsterCombatCenterPosition(column + row * 6, monster);
         }
 
-        public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster)
+        public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster, byte displayLayer)
         {
             float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleMonsterRow);
             var sprite = RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
-            sprite.DisplayLayer = (byte)((column + row * 6) * 5);
+            sprite.DisplayLayer = displayLayer;
             sprite.PaletteIndex = monster.CombatGraphicIndex switch // TODO
             {
                 MonsterGraphicIndex.Gizzek => 36,
@@ -2499,7 +2499,7 @@ namespace Ambermoon.UI
                     Global.BattleFieldY + row * Global.BattleFieldSlotHeight - 1,
                     Global.BattleFieldSlotWidth, Global.BattleFieldSlotHeight + 1
                 ), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
-                49, 3, monster.Name, TextColor.Orange, Layer.UI, out Tooltip tooltip),
+                49, (byte)(3 + row), monster.Name, TextColor.Orange, Layer.UI, out Tooltip tooltip),
                 Tooltip = tooltip
             });
             return animation;
@@ -2570,6 +2570,7 @@ namespace Ambermoon.UI
                 monsterCombatGraphic.BattleFieldSprite.Y = Global.BattleFieldY + (int)row * Global.BattleFieldSlotHeight - 1;
                 monsterCombatGraphic.Tooltip.Area = new Rect(monsterCombatGraphic.BattleFieldSprite.X, monsterCombatGraphic.BattleFieldSprite.Y,
                     monsterCombatGraphic.BattleFieldSprite.Width, monsterCombatGraphic.BattleFieldSprite.Height);
+                monsterCombatGraphic.BattleFieldSprite.DisplayLayer = (byte)(3 + row);
             }
         }
 

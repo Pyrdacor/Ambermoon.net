@@ -387,7 +387,7 @@ namespace Ambermoon
                 currentSpellAnimation.Update(battleTicks);
         }
 
-        public void SetMonsterDisplayLayer(BattleAnimation animation, Monster monster, int? position = null)
+        public byte GetMonsterDisplayLayer(Monster monster, int? position = null)
         {
             position ??= GetCharacterPosition(monster);
             // Each row has a display layer range of 60 (row 0: 0-59, row 1: 60-119, row 2: 120-179, row 3: 180-239).
@@ -395,7 +395,12 @@ namespace Ambermoon
             // Each column then increases the value by 0 to 5.
             int column = position.Value % 6;
             int row = position.Value / 6;
-            byte displayLayer = (byte)(row * 60 + monsterSizeDisplayLayerMapping[(int)monster.MappedFrameWidth] + column);
+            return (byte)(row * 60 + monsterSizeDisplayLayerMapping[(int)monster.MappedFrameWidth] + column);
+        }
+
+        public void SetMonsterDisplayLayer(BattleAnimation animation, Monster monster, int? position = null)
+        {
+            byte displayLayer = GetMonsterDisplayLayer(monster, position);
             animation.SetDisplayLayer(displayLayer);
         }
 
@@ -734,9 +739,11 @@ namespace Ambermoon
 
                     if (battleAction.Character is Monster monster)
                     {
-                        uint currentRow = (uint)GetCharacterPosition(monster) / 6;
+                        int currentColumn = GetCharacterPosition(monster) % 6;
+                        int currentRow = GetCharacterPosition(monster) / 6;
                         uint newPosition = GetTargetTileFromParameter(battleAction.ActionParameter);
-                        uint newRow = newPosition / 6;
+                        int newColumn = (int)newPosition % 6;
+                        int newRow = (int)newPosition / 6;
                         bool retreat = newRow < currentRow;
                         var animation = layout.GetMonsterBattleAnimation(monster);
 
@@ -752,7 +759,7 @@ namespace Ambermoon
                         var newDisplayPosition = layout.GetMonsterCombatCenterPosition((int)battleAction.ActionParameter % 6, (int)newRow, monster);
                         animation.AnimationFinished += MoveAnimationFinished;
                         var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Move);
-                        animation.Play(frames, (uint)Math.Abs((int)newRow - (int)currentRow) * Game.TicksPerSecond / (2 * (uint)frames.Length),
+                        animation.Play(frames, (uint)Math.Max(Math.Abs(newRow - currentRow), Math.Abs(newColumn - currentColumn)) * Game.TicksPerSecond / (2 * (uint)frames.Length),
                             battleTicks, newDisplayPosition, layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
@@ -1338,7 +1345,18 @@ namespace Ambermoon
                 for (int x = minX; x <= maxX; ++x)
                 {
                     if (battleField[x + y * 6] == null && (forbiddenMoveSpots == null || !forbiddenMoveSpots.Contains(x + y * 6)))
-                        return true;
+                    {
+                        if (y == currentRow) // we only allow moving left/right in rare cases
+                        {
+                            // Note: This can only happen if the monster doesn't want to flee
+                            if (IsPlayerNearby(x + y * 6)) // only move left/right to reach a player
+                                return true;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
 
@@ -1482,8 +1500,21 @@ namespace Ambermoon
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
-                    if (battleField[x + y * 6] == null && !forbiddenMonsterMoveSpots.Contains(x + y * 6))
-                        possiblePositions.Add(x + y * 6);
+                    int position = x + y * 6;
+
+                    if (battleField[position] == null && !forbiddenMonsterMoveSpots.Contains(position))
+                    {
+                        if (y == currentRow) // we only allow moving left/right in rare cases
+                        {
+                            // Note: This can only happen if the monster doesn't want to flee
+                            if (IsPlayerNearby(position)) // only move left/right to reach a player
+                                possiblePositions.Add(position);
+                        }
+                        else
+                        {
+                            possiblePositions.Add(position);
+                        }
+                    }
                 }
             }
 
