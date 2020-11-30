@@ -33,7 +33,7 @@ namespace Ambermoon.Render
             this.fromMonster = fromMonster;
             startPosition = sourcePosition;
             this.targetRow = targetRow;
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
         }
 
         void ShowOverlay(Color color)
@@ -63,7 +63,7 @@ namespace Ambermoon.Render
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var sprite = renderView.SpriteFactory.Create(info.GraphicInfo.Width, info.GraphicInfo.Height, true, displayLayer) as ILayerSprite;
             sprite.ClipArea = Global.CombatBackgroundArea;
-            sprite.Layer = renderView.GetLayer(Layer.UI);
+            sprite.Layer = renderView.GetLayer(Layer.BattleEffects);
             sprite.PaletteIndex = 17;
             sprite.Visible = true;
             var animation = new BattleAnimation(sprite);
@@ -360,8 +360,8 @@ namespace Ambermoon.Render
                         int halfStartHeight = Util.Round(0.5f * startScale * info.GraphicInfo.Height);
                         int halfEndHeight = Util.Round(0.5f * endScale * info.GraphicInfo.Height);
                         AddAnimation(CombatGraphicIndex.BigFlame, frames, new Position(startGroundPosition.X + startXOffset, startGroundPosition.Y - halfStartHeight),
-                            new Position(endGroundPosition.X + endXOffset, endGroundPosition.Y - halfEndHeight), Game.TicksPerSecond * 3 / 4,
-                            startScale, endScale, 200, finishAction);
+                            new Position(endGroundPosition.X + endXOffset, endGroundPosition.Y - halfEndHeight), Game.TicksPerSecond * 3 / 2,
+                            startScale, endScale, (byte)Math.Min(255, targetRow * 60 + 59), finishAction);
                     }
                     float scale = fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 2.0f;
                     var combatArea = Global.CombatBackgroundArea;
@@ -374,7 +374,7 @@ namespace Ambermoon.Render
                             leftPosition, i, () =>
                         {
                             AddFlameAnimation(baseScale, 0.0f, leftPosition,
-                                new Position(combatArea.Left, leftPosition.Y), 0, i == 3 ? (Action)(() =>
+                                new Position(combatArea.Left, leftPosition.Y), i, i == 3 ? (Action)(() =>
                                 {
                                     HideOverlay();
                                     this.finishAction?.Invoke();

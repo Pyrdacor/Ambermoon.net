@@ -83,6 +83,7 @@ namespace Ambermoon.Renderer
             0.31f,  // MapForeground8
             0.61f,  // CombatBackground
             0.62f,  // BattleMonsterRow
+            0.62f,  // BattleEffects
             0.70f,  // UI
             0.70f,  // Items
             0.70f,  // Text

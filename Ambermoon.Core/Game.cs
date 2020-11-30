@@ -2898,7 +2898,7 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        pickedSpell = Spell.Fireball; // TODO
+                        pickedSpell = Spell.Firestorm; // TODO
                                                       // TODO: spellItemSlot
                         var spellInfo = SpellInfos.Entries[pickedSpell];
 
@@ -3573,7 +3573,7 @@ namespace Ambermoon
                 case PlayerBattleAction.PickEnemySpellTargetRow:
                 {
                     // TODO: only show 1 row and only when hovering the row
-                    var valuableRows = Enumerable.Range(0, 3).Where(r => Enumerable.Range(0, 6).Any(c => currentBattle.GetCharacterAt(c + r * 6)?.Type == CharacterType.Monster));
+                    var valuableRows = Enumerable.Range(0, 4).Where(r => Enumerable.Range(0, 6).Any(c => currentBattle.GetCharacterAt(c + r * 6)?.Type == CharacterType.Monster));
                     foreach (var row in valuableRows)
                     {
                         for (int column = 0; column < 6; ++column)

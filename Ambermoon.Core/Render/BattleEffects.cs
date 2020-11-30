@@ -92,7 +92,7 @@ namespace Ambermoon.Render
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
                 Duration = duration,
-                InitialDisplayLayer = (byte)((sourceTile / 6) * 60 + 59), // display over the given row
+                InitialDisplayLayer = (byte)Math.Min(255, (sourceTile / 6) * 60 + 59), // display over the given row
                 MirrorX = false
             };
         }
@@ -114,7 +114,7 @@ namespace Ambermoon.Render
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
                 Duration = duration,
-                InitialDisplayLayer = (byte)((tile / 6) * 60 + 59), // display over the given row
+                InitialDisplayLayer = (byte)Math.Min(255, (tile / 6) * 60 + 59), // display over the given row
                 MirrorX = false
             };
         }
@@ -152,7 +152,7 @@ namespace Ambermoon.Render
                 FrameSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height),
                 FrameCount = info.FrameCount,
                 Duration = GetFlyDuration(sourceTile, targetTile),
-                InitialDisplayLayer = (byte)((sourceTile / 6) * 60 + 59), // display over the given row
+                InitialDisplayLayer = (byte)Math.Min(255, (sourceTile / 6) * 60 + 59), // display over the given row
                 MirrorX = startPosition.X > endPosition.X
             };
         }

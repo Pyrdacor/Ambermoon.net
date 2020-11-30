@@ -887,7 +887,8 @@ namespace Ambermoon
 
                     battleAction.Character.SpellPoints.CurrentValue -= spellInfo.SP;
 
-                    if (spell != Spell.Fireball) // TODO: REMOVE. For now we only allow fire ball for testing.
+                    if (spell != Spell.Fireball &&
+                        spell != Spell.Firestorm) // TODO: REMOVE. For now we only allow fire ball and fire storm for testing.
                     {
                         break;
                     }
@@ -1774,7 +1775,7 @@ namespace Ambermoon
             float initialScale = 1.0f, float endScale = 1.0f, bool mirrorX = false)
         {
             var effectAnimation = effectAnimations[index];
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
             effectAnimation.SetDisplayLayer(initialDisplayLayer);
             effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale, mirrorX);
             effectAnimation.Play(Enumerable.Range(0, (int)numFrames).ToArray(), ticksPerFrame, ticks, endPosition, endScale);

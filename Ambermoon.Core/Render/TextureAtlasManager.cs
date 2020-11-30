@@ -259,7 +259,8 @@ namespace Ambermoon.Render
 
             for (int i = 0; i < combatGraphics.Count; ++i)
             {
-                AddTexture(Layer.UI, Graphics.CombatGraphicOffset + (uint)i, combatGraphics[i]);
+                // Note: One graphic is an UI element so we put it into the UI layer. The rest goes into the BattleEffects layer.
+                AddTexture(i == (int)CombatGraphicIndex.UISwordAndMace ? Layer.UI : Layer.BattleEffects, Graphics.CombatGraphicOffset + (uint)i, combatGraphics[i]);
             }
 
             #endregion

@@ -2667,7 +2667,7 @@ namespace Ambermoon.UI
 
             for (int i = battleEffectAnimations.Count; i < amount; ++i)
             {
-                var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 17, 0);
+                var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 17, 0, null, null, Layer.BattleEffects);
                 sprite.Visible = false;
                 battleEffectAnimations.Add(new BattleAnimation(sprite));
             }

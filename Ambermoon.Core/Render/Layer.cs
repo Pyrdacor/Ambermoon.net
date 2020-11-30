@@ -24,6 +24,7 @@
         MapForeground8,
         CombatBackground,
         BattleMonsterRow,
+        BattleEffects,
         UI,
         Items,
         Text,
