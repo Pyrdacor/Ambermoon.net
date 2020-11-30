@@ -1355,6 +1355,12 @@ namespace Ambermoon
                     else
                         CursorType = CursorType.Sword;
 
+                    if (layout.IsDragging && layout.InventoryMessageWaitsForClick &&
+                        buttons == MouseButtons.None)
+                    {
+                        layout.UpdateDraggedItemPosition(renderView.ScreenToGame(cursorPosition));
+                    }
+
                     return;
                 }
 

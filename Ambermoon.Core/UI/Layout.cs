@@ -2358,6 +2358,14 @@ namespace Ambermoon.UI
             }
         }
 
+        public void UpdateDraggedItemPosition(Position position)
+        {
+            if (draggedItem != null)
+            {
+                draggedItem.Item.Position = position;
+            }
+        }
+
         public bool Hover(Position position, ref CursorType cursorType)
         {
             if (PopupActive)
