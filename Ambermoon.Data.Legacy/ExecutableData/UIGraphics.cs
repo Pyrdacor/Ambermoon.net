@@ -23,11 +23,14 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 PaletteOffset = 24
             };
 
-            Graphic ReadGraphic(IDataReader dataReader)
+            Graphic ReadGraphic(IDataReader dataReader, byte colorKeyIndex = 0)
             {
                 var graphic = new Graphic();
 
                 graphicReader.ReadGraphic(graphic, dataReader, graphicInfo);
+
+                if (colorKeyIndex != 0)
+                    graphic.ReplaceColor(0, colorKeyIndex);
 
                 return graphic;
             }
@@ -61,7 +64,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.PaletteOffset = 0;
             entries.Add(UIGraphic.Eagle, ReadGraphic(dataReader)); // Palette of the map (e.g. 1)
             graphicInfo.Height = 26;
-            entries.Add(UIGraphic.Explosion, ReadGraphic(dataReader)); // Palette 50 (items)
+            entries.Add(UIGraphic.Explosion, ReadGraphic(dataReader, 25)); // Palette 50 (items)
             graphicInfo.Height = 23;
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
             graphicInfo.PaletteOffset = 24;

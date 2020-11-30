@@ -169,6 +169,7 @@ namespace Ambermoon
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly TimedGameEvent ouchEvent = new TimedGameEvent();
+        readonly TimedGameEvent hurtPlayerEvent = new TimedGameEvent();
         TravelType travelType = TravelType.Walk;
         readonly NameProvider nameProvider;
         readonly TextDictionary textDictionary;
@@ -204,6 +205,8 @@ namespace Ambermoon
         ItemSlot spellItemSlot = null;
         readonly Dictionary<int, Battle.PlayerBattleAction> roundPlayerBattleActions = new Dictionary<int, Battle.PlayerBattleAction>(MaxPartyMembers);
         readonly ILayerSprite ouchSprite;
+        readonly ILayerSprite hurtPlayerSprite; // splash
+        readonly IRenderText hurtPlayerDamageText;
         readonly ILayerSprite battleRoundActiveSprite; // sword and mace
         readonly List<ILayerSprite> highlightBattleFieldSprites = new List<ILayerSprite>();
         bool blinkingHighlight = false;
@@ -342,6 +345,19 @@ namespace Ambermoon
             ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
             ouchSprite.Visible = false;
             ouchEvent.Action = () => ouchSprite.Visible = false;
+            hurtPlayerSprite = renderView.SpriteFactory.Create(32, 26, true, 200) as ILayerSprite;
+            hurtPlayerSprite.Layer = renderView.GetLayer(Layer.UI);
+            hurtPlayerSprite.PaletteIndex = 49;
+            hurtPlayerSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Explosion));
+            hurtPlayerSprite.Visible = false;
+            hurtPlayerDamageText = renderView.RenderTextFactory.Create();
+            hurtPlayerDamageText.Layer = renderView.GetLayer(Layer.Text);
+            hurtPlayerDamageText.DisplayLayer = 201;
+            hurtPlayerDamageText.TextAlign = TextAlign.Center;
+            hurtPlayerDamageText.Shadow = true;
+            hurtPlayerDamageText.TextColor = TextColor.White;
+            hurtPlayerDamageText.Visible = false;
+            hurtPlayerEvent.Action = () => { hurtPlayerDamageText.Visible = false; hurtPlayerSprite.Visible = false; };
             battleRoundActiveSprite = renderView.SpriteFactory.Create(32, 36, true) as ILayerSprite;
             battleRoundActiveSprite.Layer = renderView.GetLayer(Layer.UI);
             battleRoundActiveSprite.PaletteIndex = 0;
@@ -859,6 +875,23 @@ namespace Ambermoon
             ouchSprite.Visible = true;
 
             RenewTimedEvent(ouchEvent, TimeSpan.FromMilliseconds(150));
+        }
+
+        internal void ShowPlayerDamage(int slot, uint amount)
+        {
+            if (amount == 0)
+                return;
+
+            var area = Global.PartyMemberPortraitAreas[slot];
+            hurtPlayerSprite.X = area.X;
+            hurtPlayerSprite.Y = area.Y + 5;
+            hurtPlayerSprite.Visible = true;
+            hurtPlayerDamageText.Text = renderView.TextProcessor.CreateText(amount.ToString());
+            area.Position.Y += 15;
+            hurtPlayerDamageText.Place(area, TextAlign.Center);
+            hurtPlayerDamageText.Visible = true;
+
+            RenewTimedEvent(hurtPlayerEvent, TimeSpan.FromMilliseconds(500));
         }
 
         void HandleClickMovement()

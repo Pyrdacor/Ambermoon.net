@@ -1120,8 +1120,6 @@ namespace Ambermoon
 
                     var target = GetCharacterAt((int)tile);
 
-                    target.Damage(damage);
-
                     void EndHurt()
                     {
                         ActionFinished();
@@ -1171,9 +1169,8 @@ namespace Ambermoon
 
                     if (target is PartyMember partyMember)
                     {
-                        // TODO: show damage splash at portrait
-
                         PlayBattleEffectAnimation(BattleEffect.HurtPlayer, tile, battleTicks, EndHurt);
+                        game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
                     }
                     else if (target is Monster monster)
                     {
@@ -1194,6 +1191,7 @@ namespace Ambermoon
 
                         PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, EndHurt);
                     }
+                    target.Damage(damage);
                     return;
                 }
                 default:
