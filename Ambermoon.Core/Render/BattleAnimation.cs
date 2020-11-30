@@ -4,6 +4,14 @@ namespace Ambermoon.Render
 {
     internal class BattleAnimation
     {
+        public enum AnimationScaleType
+        {
+            None,
+            XOnly,
+            YOnly,
+            Both
+        }
+
         // Note: Positions are always center positions
         Position baseSpriteLocation;
         Size baseSpriteSize;
@@ -20,6 +28,7 @@ namespace Ambermoon.Render
         int startX;
         int startY;
         public bool Finished { get; private set; } = true;
+        public AnimationScaleType ScaleType { get; set; } = AnimationScaleType.Both;
 
         public event Action AnimationFinished;
 
@@ -35,13 +44,13 @@ namespace Ambermoon.Render
         }
 
         public void SetStartFrame(Position textureOffset, Size size, Position centerPosition = null,
-            float initialScale = 1.0f, bool mirrorX = false)
+            float initialScale = 1.0f, bool mirrorX = false, Size customTextureSize = null)
         {
             if (centerPosition != null)
                 baseSpriteLocation = new Position(centerPosition);
             baseSpriteSize = new Size(size);
             baseTextureCoords = new Position(textureOffset);
-            sprite.TextureSize = baseSpriteSize;
+            sprite.TextureSize = customTextureSize ?? baseSpriteSize;
             sprite.MirrorX = mirrorX;
             Scale = initialScale;
         }
@@ -74,8 +83,18 @@ namespace Ambermoon.Render
             {
                 scale = value;
 
-                int newWidth = Util.Round(baseSpriteSize.Width * scale);
-                int newHeight = Util.Round(baseSpriteSize.Height * scale);
+                int newWidth = ScaleType switch
+                {
+                    AnimationScaleType.None => baseSpriteSize.Width,
+                    AnimationScaleType.YOnly => baseSpriteSize.Width,
+                    _ => Util.Round(baseSpriteSize.Width * scale)
+                };
+                int newHeight = ScaleType switch
+                {
+                    AnimationScaleType.None => baseSpriteSize.Height,
+                    AnimationScaleType.XOnly => baseSpriteSize.Height,
+                    _ => Util.Round(baseSpriteSize.Height * scale)
+                };
 
                 Position = baseSpriteLocation - new Position(newWidth / 2, newHeight / 2);
                 sprite.Resize(newWidth, newHeight);
@@ -136,7 +155,7 @@ namespace Ambermoon.Render
             baseSpriteLocation.X = startX + Util.Round((endX - startX) * factor);
             baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor);
             Scale = startScale + (endScale - startScale) * factor; // Note: scale will also set the new position
-            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * baseSpriteSize.Width, 0);
+            sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * sprite.TextureSize.Width, 0);
 
             return true;
         }
