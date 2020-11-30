@@ -255,7 +255,6 @@ namespace Ambermoon.Renderer
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
             var textureSize = new Size(sprite.TextureSize ?? spriteSize);
 
-            // TODO: if mirrored, clip other side
             if (sprite.ClipArea != null)
             {
                 float textureWidthFactor = spriteSize.Width / textureSize.Width;
@@ -265,10 +264,20 @@ namespace Ambermoon.Renderer
                 int oldWidth = spriteSize.Width;
                 int oldHeight = spriteSize.Height;
                 sprite.ClipArea.ClipRect(position, spriteSize);
-                textureAtlasOffset.X += Util.Round((position.X - oldX) / textureWidthFactor);
                 textureAtlasOffset.Y += Util.Round((position.Y - oldY) / textureHeightFactor);
                 textureSize.Width -= Util.Round((oldWidth - spriteSize.Width) / textureWidthFactor);
                 textureSize.Height -= Util.Round((oldHeight - spriteSize.Height) / textureHeightFactor);
+
+                if (sprite.MirrorX)
+                {
+                    int oldRight = oldX + oldWidth;
+                    int newRight = position.X + spriteSize.Width;
+                    textureAtlasOffset.X += Util.Round((oldRight - newRight) / textureWidthFactor);
+                }
+                else
+                {
+                    textureAtlasOffset.X += Util.Round((position.X - oldX) / textureWidthFactor);
+                }
             }
 
             var size = new Size(spriteSize);
@@ -717,46 +726,33 @@ namespace Ambermoon.Renderer
             if (textureAtlasOffsetBuffer == null)
                 return;
 
+            var position = new Position(sprite.X, sprite.Y);
+            var spriteSize = new Size(sprite.Width, sprite.Height);
             var textureAtlasOffset = new Position(sprite.TextureAtlasOffset);
-            Size textureSize;
+            var textureSize = new Size(sprite.TextureSize ?? new Size(sprite.Width, sprite.Height));
 
-            if (sprite.TextureSize == null)
+            if (sprite.ClipArea != null)
             {
-                textureSize = new Size(sprite.Width, sprite.Height);
+                float textureWidthFactor = spriteSize.Width / textureSize.Width;
+                float textureHeightFactor = spriteSize.Height / textureSize.Height;
+                int oldX = position.X;
+                int oldY = position.Y;
+                int oldWidth = spriteSize.Width;
+                int oldHeight = spriteSize.Height;
+                sprite.ClipArea.ClipRect(position, spriteSize);
+                textureAtlasOffset.Y += Util.Round((position.Y - oldY) / textureHeightFactor);
+                textureSize.Width -= Util.Round((oldWidth - spriteSize.Width) / textureWidthFactor);
+                textureSize.Height -= Util.Round((oldHeight - spriteSize.Height) / textureHeightFactor);
 
-                // TODO: if mirrored, clip other side
-                if (sprite.ClipArea != null)
+                if (sprite.MirrorX)
                 {
-                    var position = new Position(sprite.X, sprite.Y);
-                    int oldX = position.X;
-                    int oldY = position.Y;
-                    sprite.ClipArea.ClipRect(position, textureSize);
-                    textureAtlasOffset.X += position.X - oldX;
-                    textureAtlasOffset.Y += position.Y - oldY;
+                    int oldRight = oldX + oldWidth;
+                    int newRight = position.X + spriteSize.Width;
+                    textureAtlasOffset.X += Util.Round((oldRight - newRight) / textureWidthFactor);
                 }
-            }
-            else
-            {
-                textureSize = new Size(sprite.TextureSize);
-
-                // TODO: if mirrored, clip other side
-                if (sprite.ClipArea != null)
+                else
                 {
-                    textureSize = new Size(sprite.TextureSize);
-
-                    var position = new Position(sprite.X, sprite.Y);
-                    var spriteSize = new Size(sprite.Width, sprite.Height);
-                    float textureWidthFactor = spriteSize.Width / textureSize.Width;
-                    float textureHeightFactor = spriteSize.Height / textureSize.Height;
-                    int oldX = position.X;
-                    int oldY = position.Y;
-                    int oldWidth = spriteSize.Width;
-                    int oldHeight = spriteSize.Height;
-                    sprite.ClipArea.ClipRect(position, spriteSize);
                     textureAtlasOffset.X += Util.Round((position.X - oldX) / textureWidthFactor);
-                    textureAtlasOffset.Y += Util.Round((position.Y - oldY) / textureHeightFactor);
-                    textureSize.Width -= Util.Round((oldWidth - spriteSize.Width) / textureWidthFactor);
-                    textureSize.Height -= Util.Round((oldHeight - spriteSize.Height) / textureHeightFactor);
                 }
             }
 
