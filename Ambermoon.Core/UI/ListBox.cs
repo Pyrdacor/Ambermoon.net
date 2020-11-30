@@ -133,7 +133,7 @@ namespace Ambermoon.UI
                     if (items[scrollOffset + i].Value == null)
                         return false;
 
-                    items[scrollOffset + i].Value.Invoke(i, items[scrollOffset + i].Key);
+                    items[scrollOffset + i].Value.Invoke(scrollOffset + i, items[scrollOffset + i].Key);
                     return true;
                 }
             }

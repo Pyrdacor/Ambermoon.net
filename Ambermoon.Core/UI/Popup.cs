@@ -302,15 +302,20 @@ namespace Ambermoon.UI
             return scrollbar.Drag(position);
         }
 
-        public bool Click(Position position, MouseButtons mouseButtons)
+        public bool Click(Position position, MouseButtons mouseButtons, out bool ignoreNextMouseUp)
         {
+            ignoreNextMouseUp = false;
+
             if (mouseButtons == MouseButtons.Left && TextInput.FocusedInput == null)
             {
                 if (scrollbar != null && !scrollbar.Disabled && scrollbar.LeftClick(position))
                     return true;
 
                 if (listBox?.Click(position) == true)
+                {
+                    ignoreNextMouseUp = true;
                     return true;
+                }
 
                 // Note: LeftMouseDown may remove buttons or close the popup.
                 for (int i = buttons.Count - 1; i >= 0; --i)

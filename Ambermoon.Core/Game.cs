@@ -2898,8 +2898,13 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        pickedSpell = Spell.Firestorm; // TODO
-                                                      // TODO: spellItemSlot
+                        if (spell != Spell.Fireball &&
+                            spell != Spell.Firestorm &&
+                            spell != Spell.Iceball)
+                            pickedSpell = Spell.Iceball; // TODO
+                        else
+                            pickedSpell = spell;
+                        // TODO: spellItemSlot
                         var spellInfo = SpellInfos.Entries[pickedSpell];
 
                         switch (spellInfo.Target)

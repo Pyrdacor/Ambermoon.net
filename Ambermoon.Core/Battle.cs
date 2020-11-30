@@ -888,7 +888,8 @@ namespace Ambermoon
                     battleAction.Character.SpellPoints.CurrentValue -= spellInfo.SP;
 
                     if (spell != Spell.Fireball &&
-                        spell != Spell.Firestorm) // TODO: REMOVE. For now we only allow fire ball and fire storm for testing.
+                        spell != Spell.Firestorm &&
+                        spell != Spell.Iceball) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         break;
                     }

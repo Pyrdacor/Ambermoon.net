@@ -392,6 +392,7 @@ namespace Ambermoon.UI
         readonly List<BattleAnimation> battleEffectAnimations = new List<BattleAnimation>();
         readonly ButtonGrid buttonGrid;
         Popup activePopup = null;
+        bool ignoreNextMouseUp = false;
         public bool PopupActive => activePopup != null;
         public bool PopupDisableButtons => activePopup?.DisableButtons == true;
         public bool PopupClickCursor => activePopup?.ClickCursor == true;
@@ -2021,6 +2022,12 @@ namespace Ambermoon.UI
         {
             newCursorType = null;
 
+            if (ignoreNextMouseUp)
+            {
+                ignoreNextMouseUp = false;
+                return;
+            }
+
             if (PopupActive)
             {
                 activePopup.LeftMouseUp(position);
@@ -2112,7 +2119,7 @@ namespace Ambermoon.UI
                     }
                     else
                     {
-                        if (activePopup.Click(position, buttons))
+                        if (activePopup.Click(position, buttons, out ignoreNextMouseUp))
                             return true;
                     }
 
