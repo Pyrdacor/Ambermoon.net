@@ -2611,7 +2611,7 @@ namespace Ambermoon.UI
                 if (!battleFieldSlotMarkers.ContainsKey(index))
                 {
                     battleFieldSlotMarkers.Add(index, AddSprite(Global.BattleFieldSlotArea(index),
-                        textureIndex, 50, 1));
+                        textureIndex, 50, 2));
                 }
                 else
                 {
