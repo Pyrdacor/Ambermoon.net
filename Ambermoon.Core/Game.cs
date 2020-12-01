@@ -1844,7 +1844,7 @@ namespace Ambermoon
                 {
                     RemoveEquipment(slotIndex, itemSlot, amount);
                     partyMember.Equipment.Slots[(EquipmentSlot)(slotIndex + 1)].Remove(amount);
-                    // TODO: When resetting the item back to the slot the previous battle action should be restored.
+                    // TODO: When resetting the item back to the slot (even just dropping it there) the previous battle action should be restored.
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(itemSlot.ItemIndex));
                 };
                 equipmentGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
@@ -2019,11 +2019,11 @@ namespace Ambermoon
                     TextColor.White, TextAlign.Center));
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
                 characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.VariableAttack < 0 ? '-' : '+'), Math.Abs(character.VariableAttack)),
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack)),
                     TextColor.White, TextAlign.Left));
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
                 characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.VariableDefense < 0 ? '-' : '+'), Math.Abs(character.VariableDefense)),
+                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)),
                     TextColor.White, TextAlign.Left));
             }
             else
@@ -2082,9 +2082,9 @@ namespace Ambermoon
             UpdateText(CharacterInfo.GoldAndFood, () =>
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
             UpdateText(CharacterInfo.Attack, () =>
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.VariableAttack < 0 ? '-' : '+'), Math.Abs(character.VariableAttack)));
+                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack)));
             UpdateText(CharacterInfo.Defense, () =>
-                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.VariableDefense < 0 ? '-' : '+'), Math.Abs(character.VariableDefense)));
+                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)));
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
                 Util.Round(character.TotalWeight / 1000.0f), (character as PartyMember).MaxWeight / 1000));
             if (npc != null)
@@ -2162,8 +2162,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            partyMember.VariableAttack = (short)(partyMember.VariableAttack + item.Damage);
-            partyMember.VariableDefense = (short)(partyMember.VariableDefense + item.Defense);
+            partyMember.BaseAttack = (short)(partyMember.BaseAttack + item.Damage);
+            partyMember.BaseDefense = (short)(partyMember.BaseDefense + item.Defense);
             partyMember.TotalWeight += (uint)amount * item.Weight;
             // TODO ...
         }
@@ -2179,8 +2179,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            partyMember.VariableAttack = (short)(partyMember.VariableAttack - item.Damage);
-            partyMember.VariableDefense = (short)(partyMember.VariableDefense - item.Defense);
+            partyMember.BaseAttack = (short)(partyMember.BaseAttack - item.Damage);
+            partyMember.BaseDefense = (short)(partyMember.BaseDefense - item.Defense);
             partyMember.TotalWeight -= (uint)amount * item.Weight;
             // TODO ...
         }
@@ -2938,7 +2938,7 @@ namespace Ambermoon
                         if (spell != Spell.Fireball &&
                             spell != Spell.Firestorm &&
                             spell != Spell.Iceball)
-                            pickedSpell = Spell.Firestorm; // TODO
+                            pickedSpell = Spell.Iceball; // TODO
                         else
                             pickedSpell = spell;
                         // TODO: spellItemSlot
@@ -3451,7 +3451,10 @@ namespace Ambermoon
                     }
                     else if (character?.Type == CharacterType.Monster)
                     {
-                        if (!CurrentPartyMember.HasLongRangedAttack(ItemManager, out bool hasAmmo))
+                        if (!CheckAbilityToAttack(out bool ranged))
+                            return;
+
+                        if (!ranged)
                         {
                             int position = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
                             if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
@@ -3459,11 +3462,6 @@ namespace Ambermoon
                                 SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.Gray);
                                 return;
                             }
-                        }
-                        else if (!hasAmmo)
-                        {
-                            SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.Gray);
-                            return;
                         }
 
                         SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack,
@@ -3596,7 +3594,7 @@ namespace Ambermoon
             {
                 // No ammo for ranged weapon
                 CancelSpecificPlayerAction();
-                SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.White);
+                SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.Gray);
                 return false;
             }
 
