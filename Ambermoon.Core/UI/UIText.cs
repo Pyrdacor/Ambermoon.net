@@ -93,7 +93,7 @@ namespace Ambermoon.UI
         {
             if (allowScrolling)
             {
-                if (lineOffset == text.LineCount - numVisibleLines)
+                if (lineOffset >= text.LineCount - numVisibleLines)
                 {
                     allowScrolling = false;
                     Scrolled?.Invoke(true);
