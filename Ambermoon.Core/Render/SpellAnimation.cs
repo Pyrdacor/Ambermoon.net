@@ -126,7 +126,6 @@ namespace Ambermoon.Render
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
-                case Spell.GhostWeapon:
                 case Spell.Blink:
                 case Spell.Flight:
                 case Spell.MagicalShield:
@@ -168,8 +167,11 @@ namespace Ambermoon.Render
                 case Spell.Waterfall:
                 case Spell.Icestorm:
                 case Spell.Iceshower:
-                    // TODO
-                    return new Position();
+                    // Those spells have no source position. They just appear somewhere.
+                    // Or they only work with the target position. GetSourcePosition should
+                    // never be called for those spells so we throw here.
+                    throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a source position.");
+                case Spell.GhostWeapon:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.Firebeam:
@@ -249,7 +251,6 @@ namespace Ambermoon.Render
                 case Spell.Fear:
                 case Spell.Blind:
                 case Spell.Drug:
-                case Spell.DissolveVictim:
                 case Spell.Mudsling:
                 case Spell.Rockfall:
                 case Spell.Earthslide:
@@ -278,6 +279,19 @@ namespace Ambermoon.Render
                     }
                     if (targetPosition.Y > Global.CombatBackgroundArea.Bottom - 20)
                         targetPosition.Y = Global.CombatBackgroundArea.Bottom - 20;
+                    return targetPosition;
+                }
+                case Spell.DissolveVictim:
+                {
+                    Position targetPosition;
+                    if (fromMonster) // target is party member
+                    {
+                        targetPosition = Layout.GetPlayerSlotCenterPosition(position % 6); // TODO: is this right?
+                    }
+                    else // target is monster
+                    {
+                        targetPosition = Layout.GetMonsterCombatGroundPosition(renderView, position);
+                    }
                     return targetPosition;
                 }
                 default:
@@ -316,9 +330,6 @@ namespace Ambermoon.Render
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
-                case Spell.GhostWeapon:
-                case Spell.Blink:
-                case Spell.Flight:
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:
@@ -329,12 +340,23 @@ namespace Ambermoon.Render
                 case Spell.AntiMagicSphere:
                 case Spell.Hurry:
                 case Spell.MassHurry:
+                case Spell.DissolveVictim:
+                case Spell.Mudsling:
+                case Spell.Rockfall:
+                case Spell.Winddevil:
+                case Spell.Windhowler:
+                    // Those spells use only the MoveTo method.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                case Spell.GhostWeapon:
+                case Spell.Blink:
+                case Spell.Flight:
                     return; // TODO
                 case Spell.Lame:
                 case Spell.Poison:
@@ -350,13 +372,8 @@ namespace Ambermoon.Render
                     // Curses will only use the MoveTo method.
                     this.finishAction?.Invoke();
                     break;
-                case Spell.DissolveVictim:
-                case Spell.Mudsling:
-                case Spell.Rockfall:
                 case Spell.Earthslide:
                 case Spell.Earthquake:
-                case Spell.Winddevil:
-                case Spell.Windhowler:
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
                     return; // TODO
@@ -443,6 +460,8 @@ namespace Ambermoon.Render
             }
         }
 
+        public delegate void MoveToFinishAction(uint ticks, bool playHurtAnimation, bool finish);
+
         /// <summary>
         /// Moves a spell to a given target represented by a tile.
         /// 
@@ -453,7 +472,7 @@ namespace Ambermoon.Render
         /// </summary>
         /// <param name="tile"></param>
         /// <param name="finishAction"></param>
-        public void MoveTo(int tile, Action<uint, bool, bool> finishAction)
+        public void MoveTo(int tile, MoveToFinishAction finishAction)
         {
             this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, true, true);
 
@@ -588,6 +607,29 @@ namespace Ambermoon.Render
                     PlayCurse(CombatGraphicIndex.IconDrugs);
                     break;
                 case Spell.DissolveVictim:
+                {
+                    int row = tile / 6;
+                    // TODO: position should be ground of monster but when scaling this looks odd. Therefore the offset. Improve later!
+                    var position = GetTargetPosition(tile) - new Position(0, 6 + row * row);
+                    void ShowParticle()
+                    {
+                        AddAnimation(CombatGraphicIndex.GreenStar, 5, position, position - new Position(0, 4), Game.TicksPerSecond / 5, 1, 1, 255,
+                            () => finishAction?.Invoke(game.CurrentBattleTicks, false, true));
+                    }                   
+                    if (battle.GetCharacterAt(tile) is Monster monster)
+                    {
+                        // Shrink monster to zero
+                        battle.StartMonsterAnimation(monster, animation =>
+                        {
+                            animation.PlayWithoutAnimating(Game.TicksPerSecond / 4, game.CurrentBattleTicks, position, 0.0f);
+                        }, ShowParticle);
+                    }
+                    else
+                    {
+                        ShowParticle();
+                    }
+                    break;
+                }
                 case Spell.Mudsling:
                 case Spell.Rockfall:
                 case Spell.Earthslide:

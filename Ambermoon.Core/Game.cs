@@ -2956,6 +2956,7 @@ namespace Ambermoon
                             spell != Spell.Fireball &&
                             spell != Spell.Firestorm &&
                             spell != Spell.Iceball &&
+                            spell != Spell.DissolveVictim &&
                             !(spell >= Spell.Lame && spell <= Spell.Drug))
                             pickedSpell = Spell.Iceball; // TODO
                         else

@@ -890,7 +890,8 @@ namespace Ambermoon
                     if (spell != Spell.Firebeam &&
                         spell != Spell.Fireball &&
                         spell != Spell.Firestorm &&
-                        spell != Spell.Iceball) // TODO: REMOVE. For now we only allow some spells for testing.
+                        spell != Spell.Iceball &&
+                        spell != Spell.DissolveVictim) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         if (spell < Spell.Lame || spell > Spell.Drug)
                             break;
@@ -1219,6 +1220,27 @@ namespace Ambermoon
             {
                 ActionFinished();
             });
+        }
+
+        public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action finishAction)
+        {
+            if (setupAction == null)
+                return;
+
+            var animation = layout.GetMonsterBattleAnimation(monster);
+
+            void AnimationFinished()
+            {
+                animation.AnimationFinished -= AnimationFinished;
+                currentBattleAnimation = null;
+                currentlyAnimatedMonster = null;
+                finishAction?.Invoke();
+            }
+
+            animation.AnimationFinished += AnimationFinished;
+            setupAction(animation);
+            currentBattleAnimation = animation;
+            currentlyAnimatedMonster = monster;
         }
 
         void RemoveCharacterFromBattleField(Character character)
