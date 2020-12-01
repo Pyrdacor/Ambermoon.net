@@ -1867,6 +1867,8 @@ namespace Ambermoon.UI
         }
 
         bool IsInventory => Type == LayoutType.Inventory;
+        bool HasScrollableItemGrid => IsInventory ||
+            (Type == LayoutType.Items && itemGrids.Count != 0 && !itemGrids[0].Disabled);
 
         public void AddItemGrid(ItemGrid itemGrid)
         {
@@ -1992,30 +1994,50 @@ namespace Ambermoon.UI
             switch (key)
             {
                 case Key.Up:
-                    if (IsInventory)
+                    if (HasScrollableItemGrid)
                         itemGrids[0].ScrollUp();
                     break;
                 case Key.Down:
-                    if (IsInventory)
+                    if (HasScrollableItemGrid)
                         itemGrids[0].ScrollDown();
                     break;
                 case Key.PageUp:
-                    if (IsInventory)
+                    if (HasScrollableItemGrid)
                         itemGrids[0].ScrollPageUp();
                     break;
                 case Key.PageDown:
-                    if (IsInventory)
+                    if (HasScrollableItemGrid)
                         itemGrids[0].ScrollPageDown();
                     break;
                 case Key.Home:
-                    if (IsInventory)
+                    if (HasScrollableItemGrid)
                         itemGrids[0].ScrollToBegin();
                     break;
                 case Key.End:
-                    if (IsInventory)
+                    if (HasScrollableItemGrid)
                         itemGrids[0].ScrollToEnd();
                     break;
             }
+        }
+
+        public bool ScrollX(bool right)
+        {
+            // not used as of now
+            return false;
+        }
+
+        public bool ScrollY(bool down)
+        {
+            if (!game.InputEnable)
+                return false;
+
+            if (PopupActive && activePopup.Scroll(down))
+                return true;
+
+            if (HasScrollableItemGrid)
+                return itemGrids[0].Scroll(down);
+
+            return false;
         }
 
         public void LeftMouseUp(Position position, out CursorType? newCursorType, uint currentTicks)

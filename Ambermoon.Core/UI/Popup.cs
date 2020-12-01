@@ -230,7 +230,7 @@ namespace Ambermoon.UI
 
         void ScrollTo(int offset)
         {
-            scrollbar.SetScrollPosition(offset);
+            scrollbar.SetScrollPosition(offset, true);
         }
 
         public bool KeyChar(char ch)
@@ -243,6 +243,29 @@ namespace Ambermoon.UI
 
                 if (inputs[i].KeyChar(ch))
                     return true;
+            }
+
+            return false;
+        }
+
+        public bool Scroll(bool down)
+        {
+            if (scrollbar != null && !scrollbar.Disabled)
+            {
+                int scrollOffset = scrollbar.ScrollOffset;
+
+                if (down)
+                {
+                    if (scrollOffset < scrollbar.ScrollRange)
+                        ScrollTo(scrollOffset + 1);
+                }
+                else // up
+                {
+                    if (scrollOffset > 0)
+                        ScrollTo(scrollOffset - 1);
+                }
+
+                return true;
             }
 
             return false;

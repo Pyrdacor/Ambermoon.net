@@ -1538,6 +1538,22 @@ namespace Ambermoon
             UpdateCursor(position, buttons);
         }
 
+        public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
+        {
+            bool updateHover = false;
+
+            if (xScroll != 0)
+                updateHover = layout.ScrollX(xScroll < 0);
+            if (yScroll != 0 && layout.ScrollY(yScroll < 0))
+                updateHover = true;
+
+            if (updateHover)
+            {
+                mousePosition = GetMousePosition(mousePosition);
+                UpdateCursor(mousePosition, MouseButtons.None);
+            }
+        }
+
         internal IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
             .Select(i => GetPartyMember(i)).Where(p => p != null);
         internal PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
@@ -1689,6 +1705,7 @@ namespace Ambermoon
                 windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
                 windowTitle.TextColor = TextColor.Gray;
                 Resume();
+                ResetMoveKeys();
             }
             else
             {
@@ -2943,7 +2960,7 @@ namespace Ambermoon
                             pickedSpell = Spell.Iceball; // TODO
                         else
                             pickedSpell = spell;
-                        // TODO: spellItemSlot
+                        // TODO: spellItemSlot -> item used to cast the spell or null
                         var spellInfo = SpellInfos.Entries[pickedSpell];
 
                         switch (spellInfo.Target)

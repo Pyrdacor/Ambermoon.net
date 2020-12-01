@@ -71,6 +71,7 @@ namespace Ambermoon
                 mouse.MouseDown += Mouse_MouseDown;
                 mouse.MouseUp += Mouse_MouseUp;
                 mouse.MouseMove += Mouse_MouseMove;
+                mouse.Scroll += Mouse_Scroll;
             }
         }
 
@@ -185,6 +186,11 @@ namespace Ambermoon
         void Mouse_MouseMove(IMouse mouse, System.Drawing.PointF position)
         {
             Game.OnMouseMove(position.Round(), GetMouseButtons(mouse));
+        }
+
+        void Mouse_Scroll(IMouse mouse, ScrollWheel wheelDelta)
+        {
+            Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
         }
 
         void Window_Load()

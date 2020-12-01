@@ -336,6 +336,27 @@ namespace Ambermoon.UI
             }
         }
 
+        public bool Scroll(bool down)
+        {
+            if (scrollbar != null && !scrollbar.Disabled)
+            {
+                int scrollOffset = scrollbar.ScrollOffset;
+
+                if (down)
+                {
+                    ScrollDown();
+                }
+                else // up
+                {
+                    ScrollUp();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         public void ScrollUp()
         {
             if (ScrollOffset > 0)

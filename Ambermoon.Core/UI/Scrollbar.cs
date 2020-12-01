@@ -101,8 +101,11 @@ namespace Ambermoon.UI
             sprite.Y = vertical ? Util.Limit(scrollArea.Top, position.Y, scrollArea.Bottom - barSize) : position.Y;
         }
 
-        public void SetScrollPosition(int position)
+        public void SetScrollPosition(int position, bool raiseEvent = false)
         {
+            if (ScrollOffset == position)
+                return;
+
             ScrollOffset = position;
 
             if (vertical)
@@ -113,6 +116,9 @@ namespace Ambermoon.UI
             {
                 SetBarPosition(new Position(scrollArea.Left + Util.Round((float)position * (scrollArea.Width - barSize) / ScrollRange), this.position.Y));
             }
+
+            if (raiseEvent)
+                Scrolled?.Invoke(ScrollOffset);
         }
 
         public void Destroy()
