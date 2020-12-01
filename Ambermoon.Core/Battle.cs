@@ -923,9 +923,8 @@ namespace Ambermoon
                                 return;
                             }
                             break;
-                        // Note: For row spells the initial animation is cast and in move to the miss message is displayed.
+                        // Note: For row spells the initial animation is cast and in "spell move to" the miss message is displayed.
                     }
-
 
                     currentSpellAnimation = new SpellAnimation(game, layout, this, spell,
                         battleAction.Character.Type == CharacterType.Monster, GetCharacterPosition(battleAction.Character), (int)targetRowOrTile);
@@ -960,7 +959,7 @@ namespace Ambermoon
 
                     void CastSpellOnRow(CharacterType characterType, int row, Action finishAction)
                     {
-                        var targets = Enumerable.Range(0, 6).Select(column => battleField[column + row * 6])
+                        var targets = Enumerable.Range(0, 6).Select(column => battleField[5 - column + row * 6])
                             .Where(c => c?.Type == characterType).ToList();
 
                         if (targets.Count == 0)
@@ -992,14 +991,14 @@ namespace Ambermoon
                         {
                             CastSpellOnRow(characterType, row, () =>
                             {
-                                if (row == maxRow)
+                                if (row == minRow)
                                     finishAction?.Invoke();
                                 else
-                                    Cast(row + 1);
+                                    Cast(row - 1);
                             });
                         }
 
-                        Cast(minRow);
+                        Cast(maxRow);
                     }
 
                     if (battleAction.Character is Monster monster)
@@ -1242,7 +1241,7 @@ namespace Ambermoon
 
             if (position < 6 && partyMember.Ailments.CanFlee() && game.RollDice100() < 10) // TODO
                 possibleActions.Add(BattleActionType.Flee);
-            if (partyMember.Ailments.CanAttack() && AttackSpotAvailable(position, partyMember))
+            if (partyMember.BaseAttack > 0 && partyMember.Ailments.CanAttack() && AttackSpotAvailable(position, partyMember))
                 possibleActions.Add(BattleActionType.Attack);
             if (partyMember.Ailments.CanMove() && MoveSpotAvailable(position, partyMember, false, forbiddenMoveSpots))
                 possibleActions.Add(BattleActionType.Move);

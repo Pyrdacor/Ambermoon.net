@@ -1838,15 +1838,19 @@ namespace Ambermoon
                 {
                     RemoveEquipment(slotIndex, draggedItem, draggedAmount);
                     AddEquipment(slotIndex, droppedItem);
+                    RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(draggedItem.ItemIndex));
                 };
                 equipmentGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
                 {
                     RemoveEquipment(slotIndex, itemSlot, amount);
                     partyMember.Equipment.Slots[(EquipmentSlot)(slotIndex + 1)].Remove(amount);
+                    // TODO: When resetting the item back to the slot the previous battle action should be restored.
+                    RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(itemSlot.ItemIndex));
                 };
                 equipmentGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
                 {
                     AddEquipment(slotIndex, itemSlot);
+                    RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), null);
                 };
                 inventoryGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
                 {
@@ -2846,7 +2850,7 @@ namespace Ambermoon
                     partyMemberBattleFieldSprites[i] = null;
                 else
                 {
-                    var battlePosition = 18 + CurrentSavegame.BattlePositions[i];
+                    var battlePosition = currentBattle == null ? 18 + CurrentSavegame.BattlePositions[i] : currentBattle.GetSlotFromCharacter(partyMember);
                     var battleColumn = battlePosition % 6;
                     var battleRow = battlePosition / 6;
 
@@ -2934,7 +2938,7 @@ namespace Ambermoon
                         if (spell != Spell.Fireball &&
                             spell != Spell.Firestorm &&
                             spell != Spell.Iceball)
-                            pickedSpell = Spell.Iceball; // TODO
+                            pickedSpell = Spell.Firestorm; // TODO
                         else
                             pickedSpell = spell;
                         // TODO: spellItemSlot
@@ -3279,12 +3283,18 @@ namespace Ambermoon
                         }
                         break;
                 }
+
+                layout.UpdateCharacterStatus(partyMemberSlot, action.BattleAction.ToStatusGraphic(action.Parameter, ItemManager));
+            }
+            else
+            {
+                layout.UpdateCharacterStatus(partyMemberSlot, null);
             }
 
             layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.Ailments.CanFlee()); // flee button, only enable in last row
             layout.EnableButton(3, CurrentPartyMember.Ailments.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
             layout.EnableButton(4, currentBattle.CanMoveForward);
-            layout.EnableButton(6, CurrentPartyMember.Ailments.CanAttack());
+            layout.EnableButton(6, CurrentPartyMember.BaseAttack > 0 && CurrentPartyMember.Ailments.CanAttack());
             layout.EnableButton(7, CurrentPartyMember.Ailments.CanParry());
             layout.EnableButton(8, CurrentPartyMember.Ailments.CanCastSpell() && CurrentPartyMember.HasAnySpell());
         }
@@ -3346,7 +3356,7 @@ namespace Ambermoon
                         remove = true;
                         break;
                     case Battle.BattleActionType.Attack:
-                        if (!partyMember.Ailments.CanAttack() || !partyMember.HasWorkingWeapon(ItemManager))
+                        if (partyMember.BaseAttack <= 0 || !partyMember.Ailments.CanAttack())
                             remove = true;
                         break;
                     case Battle.BattleActionType.Parry:
@@ -3538,6 +3548,9 @@ namespace Ambermoon
                 }
                 case PlayerBattleAction.PickAttackSpot:
                 {
+                    if (!CheckAbilityToAttack(out bool ranged))
+                        return;
+
                     if (currentBattle.GetCharacterAt(column + row * 6)?.Type == CharacterType.Monster)
                     {
                         SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack,
@@ -3573,6 +3586,28 @@ namespace Ambermoon
                         yield return index;
                 }
             }
+        }
+
+        bool CheckAbilityToAttack(out bool ranged)
+        {
+            ranged = CurrentPartyMember.HasLongRangedAttack(ItemManager, out bool hasAmmo);
+
+            if (ranged && !hasAmmo)
+            {
+                // No ammo for ranged weapon
+                CancelSpecificPlayerAction();
+                SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.White);
+                return false;
+            }
+
+            if (CurrentPartyMember.BaseAttack <= 0)
+            {
+                CancelSpecificPlayerAction();
+                SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, TextColor.Gray);
+                return false;
+            }
+
+            return true;
         }
 
         void SetCurrentPlayerAction(PlayerBattleAction playerBattleAction)
@@ -3686,15 +3721,8 @@ namespace Ambermoon
                 }
                 case PlayerBattleAction.PickAttackSpot:
                 {
-                    bool ranged = CurrentPartyMember.HasLongRangedAttack(ItemManager, out bool hasAmmo);
-
-                    if (ranged && !hasAmmo)
-                    {
-                        // No ammo for ranged weapon
-                        CancelSpecificPlayerAction();
-                        SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.Gray);
+                    if (!CheckAbilityToAttack(out bool ranged))
                         return;
-                    }
 
                     var valuableSlots = GetValuableBattleFieldSlots(index => currentBattle.GetCharacterAt(index)?.Type == CharacterType.Monster,
                         ranged ? 6 : 1, 0, 3);
@@ -4019,6 +4047,30 @@ namespace Ambermoon
         internal void ShowDecisionPopup(Map map, DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
         {
             ShowDecisionPopup(map.Texts[(int)decisionEvent.TextIndex], responseHandler);
+        }
+
+        void RecheckBattleEquipment(int partyMemberSlot, EquipmentSlot equipmentSlot, Item removedItem)
+        {
+            if (currentBattle != null)
+            {
+                if (removedItem != null && roundPlayerBattleActions.ContainsKey(partyMemberSlot))
+                {
+                    var action = roundPlayerBattleActions[partyMemberSlot];
+
+                    if (action.BattleAction == Battle.BattleActionType.Attack)
+                    {
+                        bool removedWeapon = equipmentSlot == EquipmentSlot.RightHand ||
+                            (equipmentSlot == EquipmentSlot.LeftHand && removedItem.Type == ItemType.Ammunition &&
+                            CurrentInventory.Equipment.Slots[EquipmentSlot.RightHand]?.ItemIndex != null &&
+                            ItemManager.GetItem(CurrentInventory.Equipment.Slots[EquipmentSlot.RightHand].ItemIndex).UsedAmmunitionType == removedItem.AmmunitionType);
+
+                        if (removedWeapon || !CheckAbilityToAttack(out _))
+                        {
+                            roundPlayerBattleActions.Remove(partyMemberSlot);
+                        }
+                    }
+                }
+            }
         }
 
         bool RecheckActivePartyMember()
