@@ -355,8 +355,8 @@ namespace Ambermoon.Render
                 case Spell.Windhowler:
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
-                case Spell.Firebeam:
                     return; // TODO
+                case Spell.Firebeam:
                 case Spell.Fireball:
                 {
                     // This only makes the screen red for a brief duration.
@@ -443,32 +443,36 @@ namespace Ambermoon.Render
         {
             this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks);
 
-            // Used by fire spells
-            void PlayBurn()
-            {
-                var position = GetTargetPosition(tile);
-                AddAnimation(CombatGraphicIndex.SmallFlame, 6, position, position, Game.TicksPerSecond);
-            }
-
-            // Used for ice spells
-            void PlayChill()
+            void PlayParticleEffect(CombatGraphicIndex combatGraphicIndex, int frameCount)
             {
                 var position = GetTargetPosition(tile) - new Position(2, 0);
                 if (position.Y > Global.CombatBackgroundArea.Bottom - 6)
                     position.Y = Global.CombatBackgroundArea.Bottom - 6;
-                AddAnimation(CombatGraphicIndex.SnowFlake, 5, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, 255, () => { });
+                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 3, 1, 1, 255, () => { });
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(150), () =>
                 {
                     position.X += 6;
                     position.Y += 6;
-                    AddAnimation(CombatGraphicIndex.SnowFlake, 5, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, 255, () => { });
+                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 3, 1, 1, 255, () => { });
                 });
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(300), () =>
                 {
                     position.X -= 12;
                     position.Y -= 4;
-                    AddAnimation(CombatGraphicIndex.SnowFlake, 5, position, position - new Position(0, 6), Game.TicksPerSecond / 4);
+                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 3);
                 });
+            }
+
+            // Used by fire spells
+            void PlayBurn()
+            {
+                PlayParticleEffect(CombatGraphicIndex.SmallFlame, 6);
+            }
+
+            // Used for ice spells
+            void PlayChill()
+            {
+                PlayParticleEffect(CombatGraphicIndex.SnowFlake, 5);
             }
 
             switch (spell)
@@ -533,8 +537,55 @@ namespace Ambermoon.Render
                 case Spell.Windhowler:
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
-                case Spell.Firebeam:
                     return; // TODO
+                case Spell.Firebeam:
+                {
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.FireBall);
+                    var monsterRow = (MonsterRow)(fromMonster ? this.startPosition / 6 : tile / 6);
+                    float startScale = 2.0f;
+                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
+                    var startPosition = GetSourcePosition();
+                    var endPosition = GetTargetPosition(tile);
+                    int maxStartOffset = Util.Round(0.75f * startScale * info.GraphicInfo.Width);
+                    int maxEndOffset = Util.Round(0.75f * endScale * info.GraphicInfo.Width);
+                    int maxOffset = Math.Max(maxStartOffset, maxEndOffset);
+                    int xOffset = (startPosition.X - endPosition.X) / 8;
+                    xOffset = xOffset < -maxOffset ? -maxOffset :
+                        (xOffset > maxOffset ? maxOffset : xOffset);
+                    int startXOffset = Util.Round(0.5f * xOffset * startScale);
+                    int endXOffset = Util.Round(0.5f * xOffset * endScale);
+                    float scaleFactor = 1.0f;
+                    AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition, endPosition,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 252, () => { });
+                    scaleFactor = 0.85f;
+                    var startOffset = new Position(Util.Round(scaleFactor * startXOffset), 4);
+                    var endOffset = new Position(Util.Round(scaleFactor * endXOffset), 4);
+                    AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition + startOffset, endPosition + endOffset,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 253, () => { });
+                    scaleFactor = 0.7f;
+                    startOffset.X += Util.Round(scaleFactor * startXOffset);
+                    endOffset.X += Util.Round(scaleFactor * endXOffset);
+                    startOffset.Y += 3;
+                    endOffset.Y += 3;
+                    AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition + startOffset, endPosition + endOffset,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 254, () => { });
+                    scaleFactor = 0.55f;
+                    startOffset.X += Util.Round(scaleFactor * startXOffset);
+                    endOffset.X += Util.Round(scaleFactor * endXOffset);
+                    startOffset.Y += 2;
+                    endOffset.Y += 2;
+                    AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition + startOffset, endPosition + endOffset,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 255, () => { HideOverlay(); PlayBurn(); });
+                    break;
+                }
                 case Spell.Fireball:
                 {
                     var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);

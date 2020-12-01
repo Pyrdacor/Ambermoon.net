@@ -2935,7 +2935,8 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        if (spell != Spell.Fireball &&
+                        if (spell != Spell.Firebeam &&
+                            spell != Spell.Fireball &&
                             spell != Spell.Firestorm &&
                             spell != Spell.Iceball)
                             pickedSpell = Spell.Iceball; // TODO
