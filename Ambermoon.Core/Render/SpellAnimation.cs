@@ -335,6 +335,7 @@ namespace Ambermoon.Render
                 case Spell.ShowMonsterLP:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                    return; // TODO
                 case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
@@ -346,6 +347,9 @@ namespace Ambermoon.Render
                 case Spell.Fear:
                 case Spell.Blind:
                 case Spell.Drug:
+                    // Curses will only use the MoveTo method.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.DissolveVictim:
                 case Spell.Mudsling:
                 case Spell.Rockfall:
@@ -439,9 +443,19 @@ namespace Ambermoon.Render
             }
         }
 
-        public void MoveTo(int tile, Action<uint> finishAction)
+        /// <summary>
+        /// Moves a spell to a given target represented by a tile.
+        /// 
+        /// The finish actions takes 3 arguments:
+        /// - The battle ticks when invoking (used for starting the hurt animation)
+        /// - A bool which specifies if the hurt animation should be played
+        /// - A bool which specifies if the caller should treat the spell movement as finished
+        /// </summary>
+        /// <param name="tile"></param>
+        /// <param name="finishAction"></param>
+        public void MoveTo(int tile, Action<uint, bool, bool> finishAction)
         {
-            this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks);
+            this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, true, true);
 
             void PlayParticleEffect(CombatGraphicIndex combatGraphicIndex, int frameCount)
             {
@@ -473,6 +487,28 @@ namespace Ambermoon.Render
             void PlayChill()
             {
                 PlayParticleEffect(CombatGraphicIndex.SnowFlake, 5);
+            }
+
+            // Used for all curses
+            void PlayCurse(CombatGraphicIndex iconGraphicIndex)
+            {
+                // Note: The hurt animation comes first so we immediately call the passed finish action
+                // which will display the hurt animation.
+                finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
+                this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
+
+                float scale = fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(8 * scale));
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                {
+                    void AddCurseAnimation(CombatGraphicIndex graphicIndex, bool finish)
+                    {
+                        AddAnimation(graphicIndex, 1, targetPosition, targetPosition, Game.TicksPerSecond * 3 / 4,
+                            0.0f, scale, (byte)((tile / 6) * 60 + 59), finish ? (Action)null : () => { });
+                    }
+                    AddCurseAnimation(CombatGraphicIndex.RedRing, false);
+                    AddCurseAnimation(iconGraphicIndex, true);
+                });
             }
 
             switch (spell)
@@ -517,17 +553,40 @@ namespace Ambermoon.Render
                 case Spell.ShowMonsterLP:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                    return; // TODO
                 case Spell.Lame:
+                    PlayCurse(CombatGraphicIndex.IconParalyze);
+                    break;
                 case Spell.Poison:
+                    PlayCurse(CombatGraphicIndex.IconPoison);
+                    break;
                 case Spell.Petrify:
+                    PlayCurse(CombatGraphicIndex.IconPetrify);
+                    break;
                 case Spell.CauseDisease:
+                    PlayCurse(CombatGraphicIndex.IconDisease);
+                    break;
                 case Spell.CauseAging:
+                    PlayCurse(CombatGraphicIndex.IconAging);
+                    break;
                 case Spell.Irritate:
+                    PlayCurse(CombatGraphicIndex.IconIrritation);
+                    break;
                 case Spell.CauseMadness:
+                    PlayCurse(CombatGraphicIndex.IconMadness);
+                    break;
                 case Spell.Sleep:
+                    PlayCurse(CombatGraphicIndex.IconSleep);
+                    break;
                 case Spell.Fear:
+                    PlayCurse(CombatGraphicIndex.IconPanic);
+                    break;
                 case Spell.Blind:
+                    PlayCurse(CombatGraphicIndex.IconBlind);
+                    break;
                 case Spell.Drug:
+                    PlayCurse(CombatGraphicIndex.IconDrugs);
+                    break;
                 case Spell.DissolveVictim:
                 case Spell.Mudsling:
                 case Spell.Rockfall:

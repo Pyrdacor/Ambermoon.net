@@ -892,7 +892,8 @@ namespace Ambermoon
                         spell != Spell.Firestorm &&
                         spell != Spell.Iceball) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
-                        break;
+                        if (spell < Spell.Lame || spell > Spell.Drug)
+                            break;
                     }
 
                     void EndCast()
@@ -940,21 +941,29 @@ namespace Ambermoon
 
                         int position = GetCharacterPosition(target);
                         // Note: Some spells like Whirlwind move to the target.
-                        currentSpellAnimation.MoveTo(position, ticks =>
+                        currentSpellAnimation.MoveTo(position, (ticks, playHurt, finish) =>
                         {
-                            PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
-                                (uint)position, ticks, () =>
-                                {
-                                    // TODO: calculate and deal damage, heal, etc
-                                    uint damage = 10; // TODO
-                                    if (target is PartyMember partyMember)
+                            if (playHurt)
+                            {
+                                PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
+                                    (uint)position, ticks, () =>
                                     {
-                                        game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
-                                            Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
+                                        // TODO: calculate and deal damage, heal, etc
+                                        uint damage = 10; // TODO
+                                        if (target is PartyMember partyMember)
+                                        {
+                                            game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
+                                                Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
+                                        }
+                                        if (finish)
+                                            finishAction?.Invoke();
                                     }
-                                    finishAction?.Invoke();
-                                }
-                            );
+                                );
+                            }
+                            else if (finish)
+                            {
+                                finishAction?.Invoke();
+                            }
                         });
                     }
 
