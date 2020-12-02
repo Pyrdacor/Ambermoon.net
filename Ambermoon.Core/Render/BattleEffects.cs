@@ -153,7 +153,7 @@ namespace Ambermoon.Render
                 FrameCount = info.FrameCount,
                 Duration = GetFlyDuration(sourceTile, targetTile),
                 InitialDisplayLayer = (byte)Math.Min(255, (sourceTile / 6) * 60 + 59), // display over the given row
-                MirrorX = startPosition.X > endPosition.X
+                MirrorX = battleField[(int)sourceTile] is Monster ? startPosition.X < endPosition.X : startPosition.X > endPosition.X
             };
         }
 

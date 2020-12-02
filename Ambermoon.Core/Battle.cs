@@ -887,6 +887,9 @@ namespace Ambermoon
 
                     battleAction.Character.SpellPoints.CurrentValue -= spellInfo.SP;
 
+                    if (battleAction.Character is PartyMember partyMember)
+                        layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+
                     if (spell != Spell.Firebeam &&
                         spell != Spell.Fireball &&
                         spell != Spell.Firestorm &&
@@ -1179,7 +1182,16 @@ namespace Ambermoon
                                         MonstersDefeated = false
                                     });
                                 }
+                                else
+                                {
+                                    var targetPartyMember = target as PartyMember;
+                                    layout.SetCharacter(game.SlotFromPartyMember(targetPartyMember).Value, targetPartyMember);
+                                }
                             }
+                        }
+                        else if (target is PartyMember partyMember)
+                        {
+                            layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
                         }
                     }
 

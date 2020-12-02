@@ -349,6 +349,22 @@ namespace Ambermoon.UI
             public Tooltip Tooltip { get; set; }
         }
 
+        class PortraitAnimation
+        {
+            public uint StartTicks;
+            public int Offset;
+            public ISprite PrimarySprite;
+            public ISprite SecondarySprite;
+        }
+
+        enum PartyMemberPortaitState
+        {
+            None,
+            Empty,
+            Normal,
+            Dead
+        }
+
         public LayoutType Type { get; private set; }
         readonly Game game;
         readonly ILayerSprite sprite;
@@ -361,6 +377,7 @@ namespace Ambermoon.UI
         readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
         readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
         readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
+        readonly PartyMemberPortaitState[] portraitStates = new PartyMemberPortaitState[Game.MaxPartyMembers];
         readonly ILayerSprite[] characterStatusIcons = new ILayerSprite[Game.MaxPartyMembers];
         readonly Bar[] characterBars = new Bar[Game.MaxPartyMembers * 4]; // 2 bars and each has fill and shadow color
         ISprite sprite80x80Picture;
@@ -371,6 +388,7 @@ namespace Ambermoon.UI
         readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new Dictionary<ActiveSpellType, IColoredRect>();
         readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
         readonly List<MonsterCombatGraphic> monsterCombatGraphics = new List<MonsterCombatGraphic>();
+        PortraitAnimation portraitAnimation = null;
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
         DraggedItem draggedItem = null;
         uint draggedGold = 0;
@@ -1431,21 +1449,71 @@ namespace Ambermoon.UI
             }
         }
 
+        void PlayPortraitAnimation(int slot, PartyMember partyMember)
+        {
+            var newState = partyMember == null ? PartyMemberPortaitState.Empty
+                : partyMember.Alive ? PartyMemberPortaitState.Normal : PartyMemberPortaitState.Dead;
+
+            if (portraitStates[slot] == newState)
+                return;
+
+            bool animation = portraitStates[slot] != PartyMemberPortaitState.None;
+
+            portraitStates[slot] = newState;
+            uint newGraphicIndex = newState switch
+            {
+                PartyMemberPortaitState.Empty => Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot),
+                PartyMemberPortaitState.Dead => Graphics.GetUIGraphicIndex(UIGraphic.Skull),
+                _ => Graphics.PortraitOffset + partyMember.PortraitIndex - 1
+            };
+            if (animation)
+            {
+                int yOffset = newState == PartyMemberPortaitState.Normal ? 34 : -34;
+                var sprite = portraits[slot];
+                var overlaySprite = RenderView.SpriteFactory.Create(32, 34, true, 1);
+                overlaySprite.Layer = renderLayer;
+                overlaySprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
+                overlaySprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
+                overlaySprite.ClipArea = Global.PartyMemberPortraitAreas[slot].CreateModified(1, 1, -2, -2);
+                overlaySprite.TextureAtlasOffset = sprite.TextureAtlasOffset;
+                overlaySprite.PaletteIndex = 49;
+                overlaySprite.Visible = true;
+                sprite.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
+                sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset;
+
+                portraitAnimation = new PortraitAnimation
+                {
+                    StartTicks = game.BattleActive ? game.CurrentBattleTicks : game.CurrentTicks,
+                    Offset = yOffset,
+                    PrimarySprite = sprite,
+                    SecondarySprite = overlaySprite
+                };
+            }
+            else
+            {
+                portraits[slot].TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
+            }
+        }
+
         /// <summary>
         /// Set portait to 0 to remove the portrait.
         /// </summary>
-        public void SetCharacter(int slot, PartyMember partyMember)
+        public void SetCharacter(int slot, PartyMember partyMember, bool initialize = false)
         {
-            var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 1);
+            var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 2);
             sprite.Layer = renderLayer;
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
-            if (partyMember == null)
+            sprite.ClipArea = Global.PartyMemberPortraitAreas[slot].CreateModified(1, 1, -2, -2);
+            if (initialize)
+            {
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.EmptyCharacterSlot));
-            else if (!partyMember.Alive)
-                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Skull));
+                portraitStates[slot] = PartyMemberPortaitState.None;
+            }
             else
-                sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.PortraitOffset + partyMember.PortraitIndex - 1);
+            {
+                PlayPortraitAnimation(slot, partyMember);
+            }
             sprite.PaletteIndex = 49;
             sprite.Visible = true;
 
@@ -1484,7 +1552,7 @@ namespace Ambermoon.UI
                 {
                     text.Text = name;
                 }
-                text.DisplayLayer = 1;
+                text.DisplayLayer = 3;
                 text.TextColor = partyMember.Alive ? TextColor.Red : TextColor.PaleGray;
                 text.Visible = true;
                 UpdateCharacterStatus(partyMember);
@@ -1538,7 +1606,7 @@ namespace Ambermoon.UI
             }
         }
 
-        void FillCharacterBars(int slot, PartyMember partyMember)
+        public void FillCharacterBars(int slot, PartyMember partyMember)
         {
             float lpPercentage = partyMember == null ? 0.0f : Math.Min(1.0f, (float)partyMember.HitPoints.TotalCurrentValue / partyMember.HitPoints.MaxValue);
             float spPercentage = partyMember == null ? 0.0f : Math.Min(1.0f, (float)partyMember.SpellPoints.TotalCurrentValue / partyMember.SpellPoints.MaxValue);
@@ -1969,6 +2037,36 @@ namespace Ambermoon.UI
                 }
 
                 UpdateSpecialItems();
+            }
+
+            if (portraitAnimation != null)
+            {
+                uint elapsed = (game.BattleActive ? game.CurrentBattleTicks : currentTicks) - portraitAnimation.StartTicks;
+
+                if (elapsed > Game.TicksPerSecond)
+                {
+                    portraitAnimation.PrimarySprite.Y = 1;
+                    portraitAnimation.SecondarySprite.Delete();
+                    portraitAnimation = null;
+                }
+                else
+                {
+                    int diff;
+
+                    if (portraitAnimation.Offset < 0)
+                    {
+                        portraitAnimation.Offset = Math.Min(0, -34 + (int)elapsed * 34 / (int)Game.TicksPerSecond);
+                        diff = 34;
+                    }
+                    else
+                    {
+                        portraitAnimation.Offset = Math.Max(0, 34 - (int)elapsed * 34 / (int)Game.TicksPerSecond);
+                        diff = -34;
+                    }
+
+                    portraitAnimation.PrimarySprite.Y = 1 + portraitAnimation.Offset;
+                    portraitAnimation.SecondarySprite.Y = portraitAnimation.PrimarySprite.Y + diff;
+                }
             }
         }
 

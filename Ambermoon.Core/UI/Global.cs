@@ -30,7 +30,7 @@ namespace Ambermoon
         /// This includes a 1-pixel border around the portrait.
         /// </summary>
         public static readonly Rect[] PartyMemberPortraitAreas = Enumerable.Range(0, 6).Select(index =>
-            new Rect(15 + index * 48, 0, 32, 36)).ToArray();
+            new Rect(15 + index * 48, 0, 34, 36)).ToArray();
         /// <summary>
         /// This includes a 1-pixel border around the portrait.
         /// This also includes the ailment icon and the bars for HP and SP.

@@ -710,20 +710,20 @@ namespace Ambermoon
             layout.SetCharacter(slot, partyMember);
         }
 
-        void RemovePartyMember(int slot)
+        void RemovePartyMember(int slot, bool initialize)
         {
             var partyMember = GetPartyMember(slot);
 
             if (partyMember != null)
                 partyMember.Died -= PartyMemberDied;
 
-            layout.SetCharacter(slot, null);
+            layout.SetCharacter(slot, null, initialize);
         }
 
         void ClearPartyMembers()
         {
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
-                RemovePartyMember(i);
+                RemovePartyMember(i, true);
         }
 
         internal int? SlotFromPartyMember(PartyMember partyMember)
@@ -882,7 +882,7 @@ namespace Ambermoon
             if (amount == 0)
                 return;
 
-            var area = Global.PartyMemberPortraitAreas[slot];
+            var area = new Rect(Global.PartyMemberPortraitAreas[slot]);
             hurtPlayerSprite.X = area.X;
             hurtPlayerSprite.Y = area.Y + 5;
             hurtPlayerSprite.Visible = true;

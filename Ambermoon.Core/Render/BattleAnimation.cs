@@ -12,6 +12,20 @@ namespace Ambermoon.Render
             Both
         }
 
+        public enum HorizontalAnchor
+        {
+            Left,
+            Center,
+            Right
+        }
+
+        public enum VerticalAnchor
+        {
+            Top,
+            Center,
+            Bottom
+        }
+
         // Note: Positions are always center positions
         Position baseSpriteLocation;
         Size baseSpriteSize;
@@ -27,6 +41,8 @@ namespace Ambermoon.Render
         int endY;
         int startX;
         int startY;
+        public HorizontalAnchor AnchorX { get; set; } = HorizontalAnchor.Center;
+        public VerticalAnchor AnchorY { get; set; } = VerticalAnchor.Center;
         public bool Finished { get; private set; } = true;
         public AnimationScaleType ScaleType { get; set; } = AnimationScaleType.Both;
 
@@ -44,7 +60,8 @@ namespace Ambermoon.Render
         }
 
         public void SetStartFrame(Position textureOffset, Size size, Position centerPosition = null,
-            float initialScale = 1.0f, bool mirrorX = false, Size customTextureSize = null)
+            float initialScale = 1.0f, bool mirrorX = false, Size customTextureSize = null,
+            HorizontalAnchor anchorX = HorizontalAnchor.Center, VerticalAnchor anchorY = VerticalAnchor.Center)
         {
             if (centerPosition != null)
                 baseSpriteLocation = new Position(centerPosition);
@@ -52,6 +69,8 @@ namespace Ambermoon.Render
             baseTextureCoords = new Position(textureOffset);
             sprite.TextureSize = customTextureSize ?? baseSpriteSize;
             sprite.MirrorX = mirrorX;
+            AnchorX = anchorX;
+            AnchorY = anchorY;
             Scale = initialScale;
         }
 
@@ -95,8 +114,19 @@ namespace Ambermoon.Render
                     AnimationScaleType.XOnly => baseSpriteSize.Height,
                     _ => Util.Round(baseSpriteSize.Height * scale)
                 };
-
-                Position = baseSpriteLocation - new Position(newWidth / 2, newHeight / 2);
+                int newX = AnchorX switch
+                {
+                    HorizontalAnchor.Left => baseSpriteLocation.X,
+                    HorizontalAnchor.Right => baseSpriteLocation.X + (sprite.Width - newWidth) / 2,
+                    _ => baseSpriteLocation.X - newWidth / 2
+                };
+                int newY = AnchorY switch
+                {
+                    VerticalAnchor.Top => baseSpriteLocation.Y,
+                    VerticalAnchor.Bottom => baseSpriteLocation.Y + (sprite.Height - newHeight) / 2,
+                    _ => baseSpriteLocation.Y - newHeight / 2
+                };
+                Position = new Position(newX, newY);
                 sprite.Resize(newWidth, newHeight);
             }
         }

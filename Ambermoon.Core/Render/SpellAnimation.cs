@@ -59,7 +59,9 @@ namespace Ambermoon.Render
 
         BattleAnimation AddAnimation(CombatGraphicIndex graphicIndex, int[] frameIndices, Position startPosition, Position endPosition,
             uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255, Action finishAction = null,
-            Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both)
+            Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
+            BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
+            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
@@ -82,7 +84,7 @@ namespace Ambermoon.Render
             animation.AnimationFinished += AnimationEnded;
             animation.ScaleType = scaleType;
             animation.SetStartFrame(textureAtlas.GetOffset(Graphics.CombatGraphicOffset + (uint)graphicIndex),
-                size, startPosition, startScale, false, textureSize);
+                size, startPosition, startScale, false, textureSize, anchorX, anchorY);
             animation.Play(frameIndices, duration / (uint)frameIndices.Length, game.CurrentBattleTicks, endPosition, endScale);
             animations.Add(animation);
             return animation;
@@ -90,7 +92,9 @@ namespace Ambermoon.Render
 
         BattleAnimation AddAnimation(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
             uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255, Action finishAction = null,
-            Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both)
+            Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
+            BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
+            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center)
         {
             return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
                 duration, startScale, endScale, displayLayer, finishAction, customBaseSize, scaleType);
@@ -609,7 +613,6 @@ namespace Ambermoon.Render
                 case Spell.DissolveVictim:
                 {
                     int row = tile / 6;
-                    // TODO: position should be ground of monster but when scaling this looks odd. Therefore the offset. Improve later!
                     var position = GetTargetPosition(tile) - new Position(0, 6 + row * row);
                     void ShowParticle()
                     {
@@ -621,7 +624,8 @@ namespace Ambermoon.Render
                         // Shrink monster to zero
                         battle.StartMonsterAnimation(monster, animation =>
                         {
-                            animation.PlayWithoutAnimating(Game.TicksPerSecond / 4, game.CurrentBattleTicks, position, 0.0f);
+                            animation.AnchorY = BattleAnimation.VerticalAnchor.Bottom;
+                            animation.PlayWithoutAnimating(Game.TicksPerSecond, game.CurrentBattleTicks, position, 0.0f);
                         }, ShowParticle);
                     }
                     else
