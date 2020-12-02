@@ -885,6 +885,12 @@ namespace Ambermoon
 
                     var spellInfo = SpellInfos.Entries[spell];
 
+                    if (!CheckSpellCast(battleAction.Character, spellInfo))
+                    {
+                        EndCast();
+                        return;
+                    }
+
                     battleAction.Character.SpellPoints.CurrentValue -= spellInfo.SP;
 
                     if (battleAction.Character is PartyMember partyMember)
@@ -943,8 +949,16 @@ namespace Ambermoon
                             return;
                         }
 
+                        if (!CheckSpell(battleAction.Character, target, spell, finishAction))
+                        {
+                            // Note: The finishAction is called automatically if CheckSpell returns false.
+                            // But it might be called a bit later (e.g. after block animation) so we won't
+                            // invoke it here ourself.
+                            return;
+                        }
+
                         int position = GetCharacterPosition(target);
-                        // Note: Some spells like Whirlwind move to the target.
+                        // Note: Some spells like Fireball or Whirlwind move to the target.
                         currentSpellAnimation.MoveTo(position, (ticks, playHurt, finish) =>
                         {
                             if (playHurt)
@@ -960,12 +974,16 @@ namespace Ambermoon
                                                 Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
                                         }
                                         if (finish)
+                                        {
+                                            ApplySpellEffect(target, spell);
                                             finishAction?.Invoke();
+                                        }
                                     }
                                 );
                             }
                             else if (finish)
                             {
+                                ApplySpellEffect(target, spell);
                                 finishAction?.Invoke();
                             }
                         });
@@ -1232,6 +1250,68 @@ namespace Ambermoon
             {
                 ActionFinished();
             });
+        }
+
+        bool CheckSpellCast(Character caster, SpellInfo spellInfo)
+        {
+            // TODO: check if fails (UseMagic ability)
+            // return false and show message if failed
+
+            return true;
+        }
+
+        bool CheckSpell(Character caster, Character target, Spell spell, Action failAction)
+        {
+            var spellInfo = SpellInfos.Entries[spell];
+
+            void ShowFailMessage(string message)
+            {
+                var color = target.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                layout.SetBattleMessage(message, color);
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                {
+                    failAction?.Invoke();
+                });
+            }
+            
+            if (target.SpellTypeImmunity.HasFlag((SpellTypeImmunity)spellInfo.SpellType))
+            {
+                ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType);
+                return false;
+            }
+
+            if (target.IsImmuneToSpell(spell))
+            {
+                ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell);
+                return false;
+            }
+
+            if (game.RollDice100() < (int)target.Attributes[Data.Attribute.AntiMagic].TotalCurrentValue)
+            {
+                // Blocked
+                // TODO: player blocked animation
+                // PlayBattleEffectAnimation(BattleEffect.BlockSpell, ...)
+                ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell);
+                return false;
+            }
+
+            return true;
+        }
+
+        void ApplySpellEffect(Character target, Spell spell)
+        {
+            switch (spell)
+            {
+                case Spell.DissolveVictim:
+                case Spell.DispellUndead:
+                case Spell.DestroyUndead:
+                case Spell.HolyWord:
+                    RemoveCharacterFromBattleField(target);
+                    break;
+                default:
+                    // TODO
+                    break;
+            }
         }
 
         public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action finishAction)

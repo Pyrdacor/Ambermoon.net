@@ -59,6 +59,11 @@ namespace Ambermoon.Data
             !Ailments.HasFlag(Ailment.DeadCorpse) &&
             !Ailments.HasFlag(Ailment.DeadAshes) &&
             !Ailments.HasFlag(Ailment.DeadDust);
+        public bool IsImmuneToSpell(Spell spell)
+        {
+            // TODO: boss, element, etc
+            return false;
+        }
         public bool HasAnySpell() =>
             LearnedHealingSpells != 0 ||
             LearnedAlchemisticSpells != 0 ||
