@@ -263,7 +263,7 @@ namespace Ambermoon
             var videoMode = new VideoMode(new System.Drawing.Size(Width, Height), 60);
             var options = new WindowOptions(true, true, new System.Drawing.Point(100, 100),
                 new System.Drawing.Size(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
-                $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}",
+                $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} beta",
                 WindowState.Normal, WindowBorder.Fixed, VSyncMode.Off,
                 10, false, videoMode, 24);
 

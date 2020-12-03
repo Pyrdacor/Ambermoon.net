@@ -521,7 +521,7 @@ namespace Ambermoon.Render
                 this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
 
                 float scale = fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
-                var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(8 * scale));
+                var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(6 * scale));
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                 {
                     byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 59));

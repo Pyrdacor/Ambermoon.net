@@ -4,8 +4,7 @@
     <LangVersion>8</LangVersion>
     <RootNamespace>Ambermoon</RootNamespace>
     <UserSecretsId>5ff861f6-0255-427a-978a-7a8030ee8731</UserSecretsId>
-    <Version>1.1.16</Version>
-    <AssemblyVersion>1.1.16.0</AssemblyVersion>
+    <Version>1.1.17</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
@@ -17,7 +16,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="2.0.10" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="2.0.11" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>

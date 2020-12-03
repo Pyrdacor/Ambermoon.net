@@ -9,8 +9,7 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Legacy Amiga Game Data</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.0.21</Version>
-    <AssemblyVersion>2.0.21.0</AssemblyVersion>
+    <Version>2.0.22</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -23,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="2.0.10" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="2.0.11" />
   </ItemGroup>
 
   <ItemGroup>
