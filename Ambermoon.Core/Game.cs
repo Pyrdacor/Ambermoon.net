@@ -885,10 +885,10 @@ namespace Ambermoon
 
             var area = new Rect(Global.PartyMemberPortraitAreas[slot]);
             hurtPlayerSprite.X = area.X;
-            hurtPlayerSprite.Y = area.Y + 5;
+            hurtPlayerSprite.Y = area.Y + 1;
             hurtPlayerSprite.Visible = true;
             hurtPlayerDamageText.Text = renderView.TextProcessor.CreateText(amount.ToString());
-            area.Position.Y += 15;
+            area.Position.Y += 11;
             hurtPlayerDamageText.Place(area, TextAlign.Center);
             hurtPlayerDamageText.Visible = true;
 
@@ -2825,18 +2825,66 @@ namespace Ambermoon
             }
         }
 
-        void CheckMadPlayers()
+        UIGraphic GetDisabledStatusGraphic(PartyMember partyMember)
         {
-            // Note: Mad players will show the mad status icon next to
-            // their portraits instead of an action icon. When the
-            // battle starts the action icon will be shown instead.
+            if (!partyMember.Alive)
+                return UIGraphic.StatusDead;
+            else if (partyMember.Ailments.HasFlag(Ailment.Petrified))
+                return UIGraphic.StatusPetrified;
+            else if (partyMember.Ailments.HasFlag(Ailment.Sleep))
+                return UIGraphic.StatusSleep;
+            else if (partyMember.Ailments.HasFlag(Ailment.Panic))
+                return UIGraphic.StatusPanic;
+            else if (partyMember.Ailments.HasFlag(Ailment.Crazy))
+                return UIGraphic.StatusCrazy;
+            else
+                throw new AmbermoonException(ExceptionScope.Application, $"Party member {partyMember.Name} is not disabled.");
+        }
+
+        internal void UpdateBattleStatus(PartyMember partyMember)
+        {
+            UpdateBattleStatus(SlotFromPartyMember(partyMember).Value, partyMember);
+        }
+
+        void UpdateBattleStatus(int slot)
+        {
+            UpdateBattleStatus(slot, GetPartyMember(slot));
+        }
+
+        void UpdateBattleStatus(int slot, PartyMember partyMember)
+        {
+            if (partyMember == null)
+            {
+                layout.UpdateCharacterStatus(slot, null);
+                roundPlayerBattleActions.Remove(slot);
+            }
+            else if (!partyMember.Ailments.CanSelect())
+            {
+                // Note: Disabled players will show the status icon next to
+                // their portraits instead of an action icon. For mad players
+                // when the battle starts the action icon will be shown instead.
+                layout.UpdateCharacterStatus(slot, GetDisabledStatusGraphic(partyMember));
+                roundPlayerBattleActions.Remove(slot);
+            }
+            else if (roundPlayerBattleActions.ContainsKey(slot))
+            {
+                var action = roundPlayerBattleActions[slot];
+                layout.UpdateCharacterStatus(slot, action.BattleAction.ToStatusGraphic(action.Parameter, ItemManager));
+            }
+            else
+            {
+                layout.UpdateCharacterStatus(slot, null);
+            }
+        }
+
+        void UpdateBattleStatus()
+        {
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
-                var partyMember = GetPartyMember(i);
-
-                if (partyMember != null && partyMember.Ailments.HasFlag(Ailment.Crazy))
-                    layout.UpdateCharacterStatus(i, UIGraphic.StatusCrazy);
+                UpdateBattleStatus(i);
             }
+
+            layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
         }
 
         void ShowBattleWindow(Event nextEvent)
@@ -2898,7 +2946,7 @@ namespace Ambermoon
                     partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray);
                 }
             }
-            CheckMadPlayers();
+            UpdateBattleStatus();
 
             // Flee button
             layout.AttachEventToButton(0, () =>
@@ -3091,7 +3139,7 @@ namespace Ambermoon
                     layout.SetBattleMessage(null);
                     if (RecheckActivePartyMember())
                         BattlePlayerSwitched();
-                    CheckMadPlayers();
+                    UpdateBattleStatus();
                 };
                 currentBattle.CharacterDied += character =>
                 {
@@ -3324,7 +3372,7 @@ namespace Ambermoon
             }
             else
             {
-                layout.UpdateCharacterStatus(partyMemberSlot, null);
+                layout.UpdateCharacterStatus(partyMemberSlot, CurrentPartyMember.Ailments.CanSelect() ? (UIGraphic?)null : GetDisabledStatusGraphic(CurrentPartyMember));
             }
 
             layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.Ailments.CanFlee()); // flee button, only enable in last row
@@ -3380,7 +3428,7 @@ namespace Ambermoon
         /// <param name="action"></param>
         void CheckPlayerActionVisuals(PartyMember partyMember, Battle.PlayerBattleAction action)
         {
-            bool remove = !partyMember.Alive || partyMember.Ailments.HasFlag(Ailment.Crazy);
+            bool remove = !partyMember.Ailments.CanSelect();
 
             if (!remove)
             {
@@ -3405,7 +3453,7 @@ namespace Ambermoon
                 }
             }
 
-            if (remove)
+            if (remove) // Note: Don't use 'else' here as remove could be set inside the if-block above as well.
                 roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
         }
 

@@ -4,7 +4,6 @@ namespace Ambermoon
 {
     public enum ExceptionScope
     {
-        General,
         Application,
         Data,
         Render

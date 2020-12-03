@@ -301,5 +301,16 @@
                     spell == Spell.MagicalArrows ||
                     (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
+
+        public static bool DealsDamage(this Spell spell)
+        {
+            // No dissolve spells.
+            return spell == Spell.GhostWeapon ||
+                   spell == Spell.LPStealer ||
+                   spell == Spell.SPStealer ||
+                   spell == Spell.MagicalProjectile ||
+                   spell == Spell.MagicalArrows ||
+                   (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
+        }
     }
 }

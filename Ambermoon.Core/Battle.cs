@@ -517,7 +517,11 @@ namespace Ambermoon
                     int playerIndex = partyMembers.ToList().IndexOf(partyMember);
                     var playerAction = playerBattleActions[playerIndex];
 
-                    if (partyMember.Ailments.HasFlag(Ailment.Crazy))
+                    if (partyMember.Ailments.HasFlag(Ailment.Panic))
+                    {
+                        PickPanicAction(partyMember, playerAction, forbiddenMoveSpots);
+                    }
+                    else if (partyMember.Ailments.HasFlag(Ailment.Crazy))
                     {
                         PickMadAction(partyMember, playerAction, forbiddenMoveSpots);
                     }
@@ -996,30 +1000,30 @@ namespace Ambermoon
                         // Note: Some spells like Fireball or Whirlwind move to the target.
                         currentSpellAnimation.MoveTo(position, (ticks, playHurt, finish) =>
                         {
-                            if (playHurt)
+                            if (playHurt && target is Monster monster) // This is only for the hurt monster animation
                             {
-                                PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
-                                    (uint)position, ticks, () =>
-                                    {
-                                        // TODO: calculate and deal damage, heal, etc
-                                        uint damage = 10; // TODO
-                                        if (target is PartyMember partyMember)
-                                        {
-                                            game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
-                                                Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
-                                        }
-                                        if (finish)
-                                        {
-                                            ApplySpellEffect(battleAction.Character, target, spell);
-                                            finishAction?.Invoke(true);
-                                        }
-                                    }
-                                );
+                                var animation = layout.GetMonsterBattleAnimation(monster);
+
+                                void HurtAnimationFinished()
+                                {
+                                    animation.AnimationFinished -= HurtAnimationFinished;
+                                    currentBattleAnimation = null;
+                                    currentlyAnimatedMonster = null;
+                                }
+
+                                animation.AnimationFinished += HurtAnimationFinished;
+                                animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt), Game.TicksPerSecond / 5,
+                                    game.CurrentBattleTicks);
+                                currentBattleAnimation = animation;
+                                currentlyAnimatedMonster = monster;
+                                if (finish)
+                                {
+                                    ApplySpellEffect(battleAction.Character, target, spell, game.CurrentBattleTicks, finishAction);
+                                }
                             }
                             else if (finish)
                             {
-                                ApplySpellEffect(battleAction.Character, target, spell);
-                                finishAction?.Invoke(true);
+                                ApplySpellEffect(battleAction.Character, target, spell, game.CurrentBattleTicks, finishAction);
                             }
                         });
                     }
@@ -1200,27 +1204,7 @@ namespace Ambermoon
 
                         if (!target.Alive)
                         {
-                            static float GetMonsterDeathScale(Monster monster)
-                            {
-                                // 48 is the normal frame width
-                                return monster.MappedFrameWidth / 48.0f;
-                            }
-                            foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character || a.Character == target))
-                                action.Skip = true;
-                            if (battleAction.Character is PartyMember partyMember)
-                            {
-                                var battleFieldCopy = (Character[])battleField.Clone();
-                                RemoveCharacterFromBattleField(target);
-                                PlayBattleEffectAnimation(BattleEffect.Death, tile, battleTicks, () =>
-                                {
-                                    KillMonster(partyMember, target);
-                                }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
-                            }
-                            else
-                            {
-                                RemoveCharacterFromBattleField(target);
-                                KillPlayer(target);
-                            }
+                            HandleCharacterDeath(battleAction.Character, target);
                         }
                         else if (target is PartyMember partyMember)
                         {
@@ -1334,7 +1318,49 @@ namespace Ambermoon
             return true;
         }
 
-        void ApplySpellEffect(Character caster, Character target, Spell spell)
+        void AddAilment(Ailment ailment, Character target)
+        {
+            target.Ailments |= ailment;
+
+            if (target is PartyMember partyMember)
+            {
+                game.UpdateBattleStatus(partyMember);
+                layout.UpdateCharacterNameColors(game.CurrentSavegame.ActivePartyMemberSlot);
+            }
+        }
+
+        static float GetMonsterDeathScale(Monster monster)
+        {
+            // 48 is the normal frame width
+            return monster.MappedFrameWidth / 48.0f;
+        }
+
+        void HandleCharacterDeath(Character attacker, Character target)
+        {
+            // Remove all actions that are performed by the dead target
+            // or by the attacker. Note that following target of a multi-target
+            // spell won't be skipped as the spell cast action is already running.
+            foreach (var action in roundBattleActions.Where(a => a.Character == target || a.Character == attacker))
+                action.Skip = true;
+
+            if (attacker is PartyMember partyMember)
+            {
+                var battleFieldCopy = (Character[])battleField.Clone();
+                int slot = GetSlotFromCharacter(target);
+                RemoveCharacterFromBattleField(target);
+                PlayBattleEffectAnimation(BattleEffect.Death, (uint)slot, game.CurrentBattleTicks, () =>
+                {
+                    KillMonster(partyMember, target);
+                }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
+            }
+            else
+            {
+                RemoveCharacterFromBattleField(target);
+                KillPlayer(target);
+            }
+        }
+
+        void ApplySpellEffect(Character caster, Character target, Spell spell, uint ticks, Action<bool> finishAction)
         {
             switch (spell)
             {
@@ -1348,9 +1374,91 @@ namespace Ambermoon
                     else
                         KillPlayer(target);
                     break;
+                case Spell.Lame:
+                    AddAilment(Ailment.Lamed, target);
+                    break;
+                case Spell.Poison:
+                    AddAilment(Ailment.Poisoned, target);
+                    break;
+                case Spell.Petrify:
+                    AddAilment(Ailment.Petrified, target);
+                    break;
+                case Spell.CauseDisease:
+                    AddAilment(Ailment.Diseased, target);
+                    break;
+                case Spell.CauseAging:
+                    AddAilment(Ailment.Aging, target);
+                    break;
+                case Spell.Irritate:
+                    AddAilment(Ailment.Irritated, target);
+                    break;
+                case Spell.CauseMadness:
+                    AddAilment(Ailment.Crazy, target);
+                    break;
+                case Spell.Sleep:
+                    AddAilment(Ailment.Sleep, target);
+                    break;
+                case Spell.Fear:
+                    AddAilment(Ailment.Panic, target);
+                    break;
+                case Spell.Blind:
+                    AddAilment(Ailment.Blind, target);
+                    break;
+                case Spell.Drug:
+                    AddAilment(Ailment.Drugged, target);
+                    break;
+                case Spell.GhostWeapon:
+                    DealDamage(25, 10); // TODO
+                    return;
+                case Spell.Firebeam:
+                    DealDamage(25, 10); // TODO
+                    return;
+                case Spell.Fireball:
+                    DealDamage(45, 10); // TODO
+                    return;
+                case Spell.Firestorm:
+                    DealDamage(60, 10); // TODO
+                    return;
+                case Spell.Firepillar:
+                    DealDamage(80, 10); // TODO
+                    return;
                 default:
                     // TODO
                     break;
+            }
+
+            finishAction?.Invoke(false);
+
+            void DealDamage(uint baseDamage, uint variableDamage)
+            {
+                void EndHurt()
+                {
+                    if (!target.Alive)
+                    {
+                        HandleCharacterDeath(caster, target);
+                    }
+                    else if (target is PartyMember partyMember)
+                    {
+                        layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                    }
+
+                    finishAction?.Invoke(true);
+                }
+
+                uint position = (uint)GetSlotFromCharacter(target);
+                PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
+                    position, ticks, () =>
+                    {
+                        uint damage = CalculateSpellDamage(caster, target, baseDamage, variableDamage);
+                        if (target is PartyMember partyMember)
+                        {
+                            game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
+                                Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
+                        }
+                        target.Damage(damage);
+                        EndHurt();
+                    }
+                );
             }
         }
 
@@ -1396,6 +1504,56 @@ namespace Ambermoon
 
         int GetCharacterPosition(Character character) => battleField.ToList().IndexOf(character);
 
+        void PickPanicAction(PartyMember partyMember, PlayerBattleAction playerBattleAction, List<int> forbiddenMoveSpots)
+        {
+            var position = GetCharacterPosition(partyMember);
+
+            if (position >= 24 && partyMember.Ailments.CanFlee())
+            {
+                playerBattleAction.BattleAction = BattleActionType.Flee;
+            }
+            else if (position < 24 && partyMember.Ailments.CanMove() && MoveSpotAvailable(position, partyMember, true, forbiddenMoveSpots))
+            {
+                playerBattleAction.BattleAction = BattleActionType.Move;
+                int playerColumn = position % 6;
+                int playerRow = position / 6;
+                var possibleSpots = new List<int>(2);
+                int newSpot = -1;
+
+                for (int column = Math.Max(0, playerColumn - 1); column <= Math.Min(5, playerColumn + 1); ++column)
+                {
+                    int newPosition = column + (playerRow + 1) * 6;
+
+                    if (battleField[newPosition] == null && !forbiddenMoveSpots.Contains(newPosition))
+                    {
+                        if (column == playerColumn)
+                        {
+                            newSpot = newPosition;
+                            break;
+                        }
+                        else
+                        {
+                            possibleSpots.Add(newPosition);
+                        }
+                    }
+                }
+
+                if (newSpot == -1)
+                {
+                    if (possibleSpots.Count == 0)
+                        throw new AmbermoonException(ExceptionScope.Application, "No move spot found for panic player."); // should never happen
+
+                    newSpot = possibleSpots[game.RandomInt(0, possibleSpots.Count - 1)];
+                }
+
+                playerBattleAction.Parameter = CreateMoveParameter((uint)newSpot);
+            }
+            else
+            {
+                playerBattleAction.BattleAction = BattleActionType.None;
+            }
+        }
+
         void PickMadAction(PartyMember partyMember, PlayerBattleAction playerBattleAction, List<int> forbiddenMoveSpots)
         {
             // Mad players can attack, move, flee or parry.
@@ -1403,7 +1561,7 @@ namespace Ambermoon
             var position = GetCharacterPosition(partyMember);
             List<BattleActionType> possibleActions = new List<BattleActionType>();
 
-            if (position < 6 && partyMember.Ailments.CanFlee() && game.RollDice100() < 10) // TODO
+            if (position >= 24 && partyMember.Ailments.CanFlee() && game.RollDice100() < 10) // TODO
                 possibleActions.Add(BattleActionType.Flee);
             if (partyMember.BaseAttack > 0 && partyMember.Ailments.CanAttack() && AttackSpotAvailable(position, partyMember))
                 possibleActions.Add(BattleActionType.Attack);
@@ -1507,9 +1665,17 @@ namespace Ambermoon
 
             for (int y = minY; y <= maxY; ++y)
             {
-                if ((!wantsToFlee && y < currentRow) ||
-                    (wantsToFlee && y >= currentRow))
-                    continue;
+                if (character.Type == CharacterType.Monster)
+                {
+                    if ((!wantsToFlee && y < currentRow) ||
+                        (wantsToFlee && y >= currentRow))
+                        continue;
+                }
+                else
+                {
+                    if (wantsToFlee && y <= currentRow)
+                        continue;
+                }
 
                 for (int x = minX; x <= maxX; ++x)
                 {
@@ -1518,7 +1684,7 @@ namespace Ambermoon
                         if (y == currentRow) // we only allow moving left/right in rare cases
                         {
                             // Note: This can only happen if the monster doesn't want to flee
-                            if (IsPlayerNearby(x + y * 6)) // only move left/right to reach a player
+                            if (character.Type != CharacterType.Monster || IsPlayerNearby(x + y * 6)) // only move left/right to reach a player
                                 return true;
                         }
                         else
@@ -1792,6 +1958,9 @@ namespace Ambermoon
 
         bool MonsterWantsToFlee(Monster monster)
         {
+            if (monster.Ailments.HasFlag(Ailment.Panic))
+                return true;
+
             // TODO
             return !monster.MonsterFlags.HasFlag(MonsterFlags.Boss) &&
                 monster.HitPoints.TotalCurrentValue < monster.HitPoints.MaxValue / 2 &&
@@ -2064,8 +2233,7 @@ namespace Ambermoon
             if (game.RollDice100() > attacker.Abilities[Ability.Attack].TotalCurrentValue)
                 return AttackResult.Failed;
 
-            // TODO: how is damage calculated?
-            damage = attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense));
+            damage = CalculatePhysicalDamage(attacker, target);
 
             if (damage <= 0)
                 return AttackResult.NoDamage;
@@ -2076,6 +2244,19 @@ namespace Ambermoon
                 return AttackResult.Blocked;
 
             return AttackResult.Damage;
+        }
+
+        int CalculatePhysicalDamage(Character attacker, Character target)
+        {
+            // TODO: how is damage calculated?
+            return attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense)); ;
+        }
+
+        uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
+        {
+            // TODO: how is magic damage calculated?
+            // Note: In contrast to physical attacks this should always deal at least 1 damage
+            return baseDamage; // TODO
         }
     }
 
