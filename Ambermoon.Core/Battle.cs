@@ -217,6 +217,7 @@ namespace Ambermoon
         public Character GetCharacterAt(int index) => battleField[index];
         public Character GetCharacterAt(int column, int row) => GetCharacterAt(column + row * 6);
         public int GetSlotFromCharacter(Character character) => battleField.ToList().IndexOf(character);
+        public bool HasPartyMemberFled(PartyMember partyMember) => fledCharacters.Contains(partyMember);
         public bool IsBattleFieldEmpty(int slot) => battleField[slot] == null;
         public bool RoundActive { get; private set; } = false;
         public bool CanMoveForward => !battleField.Skip(12).Take(6).Any(c => c != null) && // middle row empty
@@ -1280,9 +1281,12 @@ namespace Ambermoon
                 return false;
             }
 
-            if (target.IsImmuneToSpell(spell))
+            if (target.IsImmuneToSpell(spell, out bool silent))
             {
-                ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell);
+                if (silent)
+                    failAction?.Invoke();
+                else
+                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell);
                 return false;
             }
 

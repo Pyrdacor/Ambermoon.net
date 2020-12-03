@@ -59,8 +59,59 @@ namespace Ambermoon.Data
             !Ailments.HasFlag(Ailment.DeadCorpse) &&
             !Ailments.HasFlag(Ailment.DeadAshes) &&
             !Ailments.HasFlag(Ailment.DeadDust);
-        public bool IsImmuneToSpell(Spell spell)
+        /// <summary>
+        /// Checks if the character is immune to the given
+        /// spell.
+        /// </summary>
+        /// <param name="spell">The spell to check</param>
+        /// <param name="silent">If true no "is immune to" message should be shown on cast. This is used for holy spells for example.</param>
+        /// <returns></returns>
+        public bool IsImmuneToSpell(Spell spell, out bool silent)
         {
+            silent = false;
+
+            /*return spell switch
+            {
+                Spell.DispellUndead => ,
+                Spell.DestroyUndead => ,
+                Spell.HolyWord => ,
+                Spell.GhostWeapon => ,
+                Spell.LPStealer => ,
+                Spell.SPStealer => ,
+                Spell.MonsterKnowledge => ,
+                Spell.ShowMonsterLP => ,
+                Spell.MagicalProjectile => ,
+                Spell.MagicalArrows => ,
+                Spell.Lame => ,
+                Spell.Poison => ,
+                Spell.Petrify => ,
+                Spell.CauseDisease => ,
+                Spell.CauseAging => ,
+                Spell.Irritate => ,
+                Spell.CauseMadness => ,
+                Spell.Sleep => ,
+                Spell.Fear => ,
+                Spell.Blind => ,
+                Spell.Drug => ,
+                Spell.DissolveVictim => ,
+                Spell.Mudsling => ,
+                Spell.Rockfall => ,
+                Spell.Earthslide => ,
+                Spell.Earthquake => ,
+                Spell.Winddevil => ,
+                Spell.Windhowler => ,
+                Spell.Thunderbolt => ,
+                Spell.Whirlwind => ,
+                Spell.Firebeam => ,
+                Spell.Fireball => ,
+                Spell.Firestorm => ,
+                Spell.Firepillar => ,
+                Spell.Waterfall => ,
+                Spell.Iceball => ,
+                Spell.Icestorm => ,
+                Spell.Iceshower => ,
+                _ => false
+            };*/
             // TODO: boss, element, etc
             return false;
         }

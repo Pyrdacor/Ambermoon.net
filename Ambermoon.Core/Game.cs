@@ -1755,6 +1755,20 @@ namespace Ambermoon
                 return;
 
             bool switchedFromOtherPartyMember = CurrentInventory != null;
+            bool canAccessInventory = !HasPartyMemberFled(GetPartyMember(slot));
+
+            if (inventory && !canAccessInventory)
+            {
+                // When fled you can only access the stats.
+                // When coming from inventory of another party member
+                // you won't be able to open the inventory but if
+                // you open the character with F1-F6 or right click
+                // you will enter the stats window instead.
+                if (switchedFromOtherPartyMember)
+                    return;
+                else
+                    inventory = false;
+            }
 
             void OpenInventory()
             {
@@ -1903,6 +1917,7 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Stats, slot);
                 layout.SetLayout(LayoutType.Stats);
+                layout.EnableButton(0, canAccessInventory);
                 layout.FillArea(new Rect(16, 49, 176, 145), Color.LightGray, false);
 
                 windowTitle.Visible = false;
@@ -2863,7 +2878,7 @@ namespace Ambermoon
             {
                 var partyMember = GetPartyMember(i);
 
-                if (partyMember == null || !partyMember.Alive || currentBattle?.GetSlotFromCharacter(partyMember) == -1)
+                if (partyMember == null || !partyMember.Alive || HasPartyMemberFled(partyMember))
                     partyMemberBattleFieldSprites[i] = null;
                 else
                 {
@@ -4118,9 +4133,9 @@ namespace Ambermoon
             }
         }
 
-        internal bool HasCharacterFled(PartyMember partyMember)
+        internal bool HasPartyMemberFled(PartyMember partyMember)
         {
-            return currentBattle != null && currentBattle.GetSlotFromCharacter(partyMember) == -1;
+            return currentBattle?.HasPartyMemberFled(partyMember) == true;
         }
 
         internal void SetActivePartyMember(int index, bool updateBattlePosition = true)
@@ -4129,7 +4144,7 @@ namespace Ambermoon
 
             if (partyMember != null && partyMember.Ailments.CanSelect())
             {
-                if (currentBattle != null && currentBattle.GetSlotFromCharacter(partyMember) == -1)
+                if (HasPartyMemberFled(partyMember))
                     return;
 
                 CurrentSavegame.ActivePartyMemberSlot = index;

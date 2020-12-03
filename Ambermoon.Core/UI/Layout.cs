@@ -1143,7 +1143,7 @@ namespace Ambermoon.UI
                     if (partyMember != null && partyMember != game.CurrentInventory)
                     {
                         UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
-                            partyMember.MaxGoldToTake >= amount ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                            partyMember.MaxGoldToTake >= amount && !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                     }
                 }
             }
@@ -1178,7 +1178,7 @@ namespace Ambermoon.UI
                     if (partyMember != null && partyMember != game.CurrentInventory)
                     {
                         UpdateCharacterStatus(i, partyMember == game.CurrentInventory ? (UIGraphic?)null :
-                            partyMember.MaxFoodToTake >= amount ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                            partyMember.MaxFoodToTake >= amount && !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                     }
                 }
             }
@@ -1423,7 +1423,7 @@ namespace Ambermoon.UI
                         portraitNames[i].TextColor = TextColor.Yellow;
                     else if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
                         portraitNames[i].TextColor = TextColor.PaleGray;
-                    else if (game.HasCharacterFled(partyMembers[i]))
+                    else if (game.HasPartyMemberFled(partyMembers[i]))
                         portraitNames[i].TextColor = TextColor.PaleGray;
                     else
                         portraitNames[i].TextColor = TextColor.Red;
@@ -1441,7 +1441,7 @@ namespace Ambermoon.UI
                 {
                     if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
                         portraitNames[i].TextColor = TextColor.PaleGray;
-                    else if (game.HasCharacterFled(partyMembers[i]))
+                    else if (game.HasPartyMemberFled(partyMembers[i]))
                         portraitNames[i].TextColor = TextColor.PaleGray;
                     else
                         portraitNames[i].TextColor = activeSlot == i ? TextColor.Yellow : TextColor.Red;
@@ -2323,11 +2323,14 @@ namespace Ambermoon.UI
                         {
                             if (draggedItem.SourcePlayer == i)
                             {
-                                draggedItem.Reset(game);
-                                draggedItem = null;
+                                CancelDrag();
                             }
                             else
                             {
+                                if (!partyMember.CanTakeItems(itemManager, draggedItem.Item.Item) ||
+                                    game.HasPartyMemberFled(partyMember))
+                                    return false;
+
                                 int remaining = game.DropItem(i, null, draggedItem.Item.Item);
 
                                 if (remaining == 0)
@@ -2350,7 +2353,14 @@ namespace Ambermoon.UI
                             if (game.CurrentInventory != null)
                             {
                                 if (i != game.CurrentInventoryIndex)
-                                    game.OpenPartyMember(i, Type != LayoutType.Stats);
+                                {
+                                    if (game.HasPartyMemberFled(partyMember))
+                                        return false;
+                                    else
+                                        game.OpenPartyMember(i, Type != LayoutType.Stats);
+                                }
+                                else
+                                    return false;
                             }
                             else // In chest window right click aborts dragging instead
                             {
@@ -2433,8 +2443,8 @@ namespace Ambermoon.UI
 
                 if (partyMember != null && partyMember != game.CurrentInventory)
                 {
-                    UpdateCharacterStatus(i, partyMember.CanTakeItems(itemManager, draggedItem.Item.Item)
-                        ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
+                    UpdateCharacterStatus(i, partyMember.CanTakeItems(itemManager, draggedItem.Item.Item) &&
+                        !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);
                 }
             }
 
