@@ -621,6 +621,38 @@ namespace Ambermoon
             }
         }
 
+        void KillMonster(PartyMember attacker, Character target)
+        {
+            CharacterDied?.Invoke(target);
+            PlayerLostTarget?.Invoke(attacker);
+            if (Monsters.Count() == 0)
+            {
+                BattleEnded?.Invoke(new Game.BattleEndInfo
+                {
+                    MonstersDefeated = true,
+                    KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList()
+                });
+            }
+        }
+
+        void KillPlayer(Character target)
+        {
+            CharacterDied?.Invoke(target);
+
+            if (!partyMembers.Any(p => p != null && p.Alive && p.Ailments.CanFight()))
+            {
+                BattleEnded?.Invoke(new Game.BattleEndInfo
+                {
+                    MonstersDefeated = false
+                });
+            }
+            else
+            {
+                var targetPartyMember = target as PartyMember;
+                layout.SetCharacter(game.SlotFromPartyMember(targetPartyMember).Value, targetPartyMember);
+            }
+        }
+
         void RunBattleAction(BattleAction battleAction, uint battleTicks)
         {
             layout.SetBattleMessage(null);
@@ -976,7 +1008,7 @@ namespace Ambermoon
                                         }
                                         if (finish)
                                         {
-                                            ApplySpellEffect(target, spell);
+                                            ApplySpellEffect(battleAction.Character, target, spell);
                                             finishAction?.Invoke();
                                         }
                                     }
@@ -984,7 +1016,7 @@ namespace Ambermoon
                             }
                             else if (finish)
                             {
-                                ApplySpellEffect(target, spell);
+                                ApplySpellEffect(battleAction.Character, target, spell);
                                 finishAction?.Invoke();
                             }
                         });
@@ -1177,35 +1209,13 @@ namespace Ambermoon
                                 RemoveCharacterFromBattleField(target);
                                 PlayBattleEffectAnimation(BattleEffect.Death, tile, battleTicks, () =>
                                 {
-                                    CharacterDied?.Invoke(target);
-                                    PlayerLostTarget?.Invoke(partyMember);
-                                    if (Monsters.Count() == 0)
-                                    {
-                                        BattleEnded?.Invoke(new Game.BattleEndInfo
-                                        {
-                                            MonstersDefeated = true,
-                                            KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList()
-                                        });
-                                    }
+                                    KillMonster(partyMember, target);
                                 }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
                             }
                             else
                             {
                                 RemoveCharacterFromBattleField(target);
-                                CharacterDied?.Invoke(target);
-
-                                if (!partyMembers.Any(p => p != null && p.Alive && p.Ailments.CanFight()))
-                                {
-                                    BattleEnded?.Invoke(new Game.BattleEndInfo
-                                    {
-                                        MonstersDefeated = false
-                                    });
-                                }
-                                else
-                                {
-                                    var targetPartyMember = target as PartyMember;
-                                    layout.SetCharacter(game.SlotFromPartyMember(targetPartyMember).Value, targetPartyMember);
-                                }
+                                KillPlayer(target);
                             }
                         }
                         else if (target is PartyMember partyMember)
@@ -1255,8 +1265,12 @@ namespace Ambermoon
 
         bool CheckSpellCast(Character caster, SpellInfo spellInfo)
         {
-            // TODO: check if fails (UseMagic ability)
-            // return false and show message if failed
+            if (game.RollDice100() >= caster.Abilities[Ability.UseMagic].TotalCurrentValue)
+            {
+                layout.SetBattleMessage(caster.Name + game.DataNameProvider.BattleMessageSpellFailed,
+                    caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                return false;
+            }
 
             return true;
         }
@@ -1302,7 +1316,7 @@ namespace Ambermoon
             return true;
         }
 
-        void ApplySpellEffect(Character target, Spell spell)
+        void ApplySpellEffect(Character caster, Character target, Spell spell)
         {
             switch (spell)
             {
@@ -1311,6 +1325,10 @@ namespace Ambermoon
                 case Spell.DestroyUndead:
                 case Spell.HolyWord:
                     RemoveCharacterFromBattleField(target);
+                    if (caster is PartyMember partyMember)
+                        KillMonster(partyMember, target);
+                    else
+                        KillPlayer(target);
                     break;
                 default:
                     // TODO
