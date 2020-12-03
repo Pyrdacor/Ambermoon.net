@@ -28,6 +28,12 @@ namespace Ambermoon.Data
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class AilmentExtensions
     {
+        public static Ailment WithoutBattleOnlyAilments(this Ailment ailments)
+        {
+            // TODO: Is madness also battle-only?
+            return (Ailment)((int)ailments & 0xfff2);
+        }
+
         public static bool CanFight(this Ailment ailment)
         {
             return

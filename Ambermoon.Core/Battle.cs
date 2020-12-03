@@ -1236,6 +1236,8 @@ namespace Ambermoon
 
                         PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, EndHurt);
                     }
+                    if (target.Ailments.HasFlag(Ailment.Sleep))
+                        RemoveAilment(Ailment.Sleep, target);
                     target.Damage(damage);
                     return;
                 }
@@ -1318,6 +1320,19 @@ namespace Ambermoon
             return true;
         }
 
+        void RemoveAilment(Ailment ailment, Character target)
+        {
+            // Healing spells or potions.
+            // Sleep can be removed by attacking as well.
+            target.Ailments &= ~ailment;
+
+            if (target is PartyMember partyMember)
+            {
+                game.UpdateBattleStatus(partyMember);
+                layout.UpdateCharacterNameColors(game.CurrentSavegame.ActivePartyMemberSlot);
+            }
+        }
+
         void AddAilment(Ailment ailment, Character target)
         {
             target.Ailments |= ailment;
@@ -1326,6 +1341,12 @@ namespace Ambermoon
             {
                 game.UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(game.CurrentSavegame.ActivePartyMemberSlot);
+            }
+
+            if (!ailment.CanSelect()) // disabled
+            {
+                foreach (var action in roundBattleActions.Where(a => a.Character == target))
+                    action.Skip = true;
             }
         }
 
@@ -1407,21 +1428,24 @@ namespace Ambermoon
                 case Spell.Drug:
                     AddAilment(Ailment.Drugged, target);
                     break;
-                case Spell.GhostWeapon:
-                    DealDamage(25, 10); // TODO
-                    return;
                 case Spell.Firebeam:
-                    DealDamage(25, 10); // TODO
+                    // seen 21-29 (assume 20-30)
+                    DealDamage(20, 10); // TODO
                     return;
                 case Spell.Fireball:
-                    DealDamage(45, 10); // TODO
+                    // seen 41-80 (assume 40-80)
+                    DealDamage(40, 40); // TODO
                     return;
                 case Spell.Firestorm:
-                    DealDamage(60, 10); // TODO
+                    // seen 35-63 (assume 35-65)
+                    DealDamage(35, 30); // TODO
                     return;
                 case Spell.Firepillar:
-                    DealDamage(80, 10); // TODO
+                    // seen 41-69 (assume 40-70)
+                    DealDamage(40, 30); // TODO
                     return;
+                // Winddevil: seen 10-15
+                // Windhowler: seen 35-46
                 default:
                     // TODO
                     break;
@@ -1455,6 +1479,8 @@ namespace Ambermoon
                             game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
                                 Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
                         }
+                        if (target.Ailments.HasFlag(Ailment.Sleep))
+                            RemoveAilment(Ailment.Sleep, target);
                         target.Damage(damage);
                         EndHurt();
                     }
@@ -2255,8 +2281,9 @@ namespace Ambermoon
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
         {
             // TODO: how is magic damage calculated?
+            // TODO: does INT affect damage?
             // Note: In contrast to physical attacks this should always deal at least 1 damage
-            return baseDamage; // TODO
+            return baseDamage + (uint)game.RandomInt(0, (int)variableDamage); // TODO
         }
     }
 

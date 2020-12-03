@@ -3160,6 +3160,13 @@ namespace Ambermoon
                     }
                     void EndBattle(BattleEndInfo battleEndInfo)
                     {
+                        for (int i = 0; i < MaxPartyMembers; ++i)
+                        {
+                            var partyMember = GetPartyMember(i);
+
+                            partyMember.Ailments = partyMember.Ailments.WithoutBattleOnlyAilments();
+                        }
+                        UpdateBattleStatus();
                         currentBattleInfo.EndBattle(battleEndInfo);
                         currentBattleInfo = null;
                         if (nextEvent != null)
@@ -3168,7 +3175,6 @@ namespace Ambermoon
                             nextEvent.ExecuteEvent(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
                                 (uint)RenderPlayer.Position.Y, CurrentTicks, ref lastStatus, out bool aborted);
                         }
-                        // TODO: Remove battle-only ailments like sleep and irritation
                     }
                     if (battleEndInfo.MonstersDefeated)
                     {

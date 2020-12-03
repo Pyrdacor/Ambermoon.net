@@ -524,13 +524,18 @@ namespace Ambermoon.Render
                 var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(8 * scale));
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                 {
-                    void AddCurseAnimation(CombatGraphicIndex graphicIndex, bool finish)
+                    byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 59));
+                    void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action finishAction, bool reverse)
                     {
-                        AddAnimation(graphicIndex, 1, targetPosition, targetPosition, Game.TicksPerSecond * 3 / 4,
-                            0.0f, scale, (byte)((tile / 6) * 60 + 59), finish ? (Action)null : () => { });
+                        AddAnimation(graphicIndex, 1, targetPosition, targetPosition, reverse ? Game.TicksPerSecond / 4 : Game.TicksPerSecond / 2,
+                            reverse ? scale : 0.0f, reverse ? 0.5f * scale : scale, displayLayer, finishAction);
                     }
-                    AddCurseAnimation(CombatGraphicIndex.RedRing, false);
-                    AddCurseAnimation(iconGraphicIndex, true);
+                    AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, false);
+                    AddCurseAnimation(iconGraphicIndex, () =>
+                    {
+                        AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, true);
+                        AddCurseAnimation(iconGraphicIndex, null, true); // This will trigger the outer finish action
+                    }, false);
                 });
             }
 
