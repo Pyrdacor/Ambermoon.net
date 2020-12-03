@@ -257,7 +257,7 @@ namespace Ambermoon.UI
             /// <summary>
             /// Drop back to source.
             /// </summary>
-            public void Reset(Game game)
+            public void Reset(Game game, Layout layout)
             {
                 // Reset in case 1: Is only possible while in first player inventory.
                 // Reset in case 2: Is also possible while in second player inventory.
@@ -287,6 +287,15 @@ namespace Ambermoon.UI
 
                     if (game.CurrentInventoryIndex != SourcePlayer)
                         updateGrid = false;
+                    else
+                    {
+                        // Note: When switching to another inventory and back to the
+                        // source inventory the current ItemGrid and the SourceGrid
+                        // are two different instances even if they represent the
+                        // same inventory. Therefore we have to update the SourceGrid.
+                        if (SourceGrid != null)
+                            SourceGrid = layout.itemGrids[0];
+                    }
                 }
                 else if (game.OpenStorage != null)
                 {
@@ -1908,7 +1917,7 @@ namespace Ambermoon.UI
         {
             if (draggedItem != null)
             {
-                draggedItem.Reset(game);
+                draggedItem.Reset(game, this);
                 DropItem();
             }
 
