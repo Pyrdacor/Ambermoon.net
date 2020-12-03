@@ -658,10 +658,10 @@ namespace Ambermoon
             layout.SetBattleMessage(null);
             game.CursorType = CursorType.Sword;
 
-            void ActionFinished()
+            void ActionFinished(bool needClickAfterwards = true)
             {
                 ActionCompleted?.Invoke(battleAction);
-                if (needsClickForNextAction)
+                if (needsClickForNextAction && needClickAfterwards)
                     WaitForClick = true;
                 ReadyForNextAction = true;
             }
@@ -815,7 +815,7 @@ namespace Ambermoon
                     // TODO: first check if the weapon breaks. If so add a message which states it.
                     // After a click this attack action should follow.
                     GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
-                    var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort);
+                    var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort, out bool loseTarget);
                     // Next action is a hurt action
                     var hurtAction = roundBattleActions.Peek();
                     if (attackResult != AttackResult.Damage)
@@ -840,15 +840,19 @@ namespace Ambermoon
                             case AttackResult.Protected:
                                 layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotPenetrateMagicalAura, textColor);
                                 break;
+                            case AttackResult.Petrified:
+                                layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, textColor);
+                                break;
                         }
 
                         if (abort)
                         {
                             foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
                                 action.Skip = true;
-                            if (battleAction.Character is PartyMember partyMember)
-                                PlayerLostTarget?.Invoke(partyMember);
                         }
+
+                        if (loseTarget && battleAction.Character is PartyMember partyMember)
+                            PlayerLostTarget?.Invoke(partyMember);
                     }
                     else
                     {
@@ -879,7 +883,7 @@ namespace Ambermoon
                                 AmmunitionType.Arrow => BattleEffect.MonsterArrowAttack,
                                 AmmunitionType.Bolt => BattleEffect.MonsterBoltAttack,
                                 _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid ammunition type for monster.")
-                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, ActionFinished);
+                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, () => ActionFinished(true));
                         }
 
                         animation.AnimationFinished += AttackAnimationFinished;
@@ -900,11 +904,11 @@ namespace Ambermoon
                                 AmmunitionType.Bolt => BattleEffect.PlayerBoltAttack,
                                 AmmunitionType.Slingdagger => BattleEffect.SlingdaggerAttack,
                                 _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid ammunition type for player.")
-                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, ActionFinished);
+                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, () => ActionFinished(true));
                         }
                         else
                         {
-                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, targetTile, battleTicks, ActionFinished);
+                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, targetTile, battleTicks, () => ActionFinished(true));
                         }
                     }
                     return;
@@ -914,7 +918,6 @@ namespace Ambermoon
                     GetCastSpellInformation(battleAction.ActionParameter, out uint targetRowOrTile, out Spell spell, out uint itemIndex);
 
                     // Note: Support spells like healing can also miss. In this case no message is displayed but the SP is spent.
-                    // I guess the same is true for offensive spells.
 
                     var spellInfo = SpellInfos.Entries[spell];
 
@@ -939,12 +942,11 @@ namespace Ambermoon
                             break;
                     }
 
-                    void EndCast()
+                    void EndCast(bool needClickAfterwards = true)
                     {
                         currentSpellAnimation?.Destroy();
                         currentSpellAnimation = null;
-                        ActionCompleted?.Invoke(battleAction);
-                        ReadyForNextAction = true;
+                        ActionFinished(needClickAfterwards);
                     }
 
                     switch (spellInfo.Target)
@@ -964,7 +966,7 @@ namespace Ambermoon
                         case SpellTarget.SingleFriend:
                             if (GetCharacterAt((int)targetRowOrTile) == null)
                             {
-                                EndCast();
+                                EndCast(false);
                                 return;
                             }
                             break;
@@ -974,15 +976,15 @@ namespace Ambermoon
                     currentSpellAnimation = new SpellAnimation(game, layout, this, spell,
                         battleAction.Character.Type == CharacterType.Monster, GetCharacterPosition(battleAction.Character), (int)targetRowOrTile);
 
-                    void CastSpellOn(Character target, Action finishAction)
+                    void CastSpellOn(Character target, Action<bool> finishAction)
                     {
                         if (target == null)
                         {
-                            finishAction?.Invoke();
+                            finishAction?.Invoke(false);
                             return;
                         }
 
-                        if (!CheckSpell(battleAction.Character, target, spell, finishAction))
+                        if (!CheckSpell(battleAction.Character, target, spell, () => finishAction(false)))
                         {
                             // Note: The finishAction is called automatically if CheckSpell returns false.
                             // But it might be called a bit later (e.g. after block animation) so we won't
@@ -1009,7 +1011,7 @@ namespace Ambermoon
                                         if (finish)
                                         {
                                             ApplySpellEffect(battleAction.Character, target, spell);
-                                            finishAction?.Invoke();
+                                            finishAction?.Invoke(true);
                                         }
                                     }
                                 );
@@ -1017,28 +1019,28 @@ namespace Ambermoon
                             else if (finish)
                             {
                                 ApplySpellEffect(battleAction.Character, target, spell);
-                                finishAction?.Invoke();
+                                finishAction?.Invoke(true);
                             }
                         });
                     }
 
-                    void CastSpellOnRow(CharacterType characterType, int row, Action finishAction)
+                    void CastSpellOnRow(CharacterType characterType, int row, Action<bool> finishAction, bool lastNeedClickAfterwards = true)
                     {
                         var targets = Enumerable.Range(0, 6).Select(column => battleField[5 - column + row * 6])
                             .Where(c => c?.Type == characterType).ToList();
 
                         if (targets.Count == 0)
                         {
-                            finishAction?.Invoke();
+                            finishAction?.Invoke(lastNeedClickAfterwards);
                             return;
                         }
 
                         void Cast(int index)
                         {
-                            CastSpellOn(targets[index], () =>
+                            CastSpellOn(targets[index], needClickAfterwards =>
                             {
                                 if (index == targets.Count - 1)
-                                    finishAction?.Invoke();
+                                    finishAction?.Invoke(needClickAfterwards);
                                 else
                                     Cast(index + 1);
                             });
@@ -1047,20 +1049,22 @@ namespace Ambermoon
                         Cast(0);
                     }
 
-                    void CastSpellOnAll(CharacterType characterType, Action finishAction)
+                    void CastSpellOnAll(CharacterType characterType, Action<bool> finishAction)
                     {
                         int minRow = characterType == CharacterType.Monster ? 0 : 3;
                         int maxRow = characterType == CharacterType.Monster ? 3 : 4;
+                        bool lastNeedClickAfterwards = true;
 
                         void Cast(int row)
                         {
-                            CastSpellOnRow(characterType, row, () =>
+                            CastSpellOnRow(characterType, row, needClickAfterwards =>
                             {
+                                lastNeedClickAfterwards = needClickAfterwards;
                                 if (row == minRow)
-                                    finishAction?.Invoke();
+                                    finishAction?.Invoke(needClickAfterwards);
                                 else
                                     Cast(row - 1);
-                            });
+                            }, lastNeedClickAfterwards);
                         }
 
                         Cast(maxRow);
@@ -1281,12 +1285,18 @@ namespace Ambermoon
 
             void ShowFailMessage(string message)
             {
-                var color = target.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
-                layout.SetBattleMessage(message, color);
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                var color = caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                var delay = TimeSpan.FromMilliseconds(500);
+
+                if (needsClickForNextAction)
                 {
-                    failAction?.Invoke();
-                });
+                    game.SetBattleMessageWithClick(message, color, failAction, delay);
+                }
+                else
+                {
+                    layout.SetBattleMessage(message, color);
+                    game.AddTimedEvent(delay, failAction);
+                }
             }
             
             if (target.SpellTypeImmunity.HasFlag((SpellTypeImmunity)spellInfo.SpellType))
@@ -1304,10 +1314,18 @@ namespace Ambermoon
                 return false;
             }
 
+            if (target.Ailments.HasFlag(Ailment.Petrified) && spell.FailsAgainstPetrifiedEnemy())
+            {
+                // Note: In original there is no message in this case but I think
+                //       it's better to show the reason.
+                ShowFailMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters);
+                return false;
+            }
+
             if (game.RollDice100() < (int)target.Attributes[Data.Attribute.AntiMagic].TotalCurrentValue)
             {
                 // Blocked
-                // TODO: player blocked animation
+                // TODO: play blocked animation
                 // PlayBattleEffectAnimation(BattleEffect.BlockSpell, ...)
                 ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell);
                 return false;
@@ -2012,21 +2030,30 @@ namespace Ambermoon
             NoDamage, // Chance depending on ATK / DEF
             Missed, // Target moved
             Blocked, // Parry
-            Protected // magic protection level
+            Protected, // Magic protection level
+            Petrified // Petrified monsters can't be damaged
         }
 
-        AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking)
+        AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking, out bool loseTarget)
         {
             damage = 0;
             abortAttacking = false;
+            loseTarget = false;
 
             if (battleField[attackedSlot] == null)
             {
                 abortAttacking = true;
+                loseTarget = true;
                 return AttackResult.Missed;
             }
 
             var target = GetCharacterAt(attackedSlot);
+
+            if (target.Ailments.HasFlag(Ailment.Petrified))
+            {
+                abortAttacking = true;
+                return AttackResult.Petrified;
+            }
 
             if (attacker.MagicAttack >= 0 && target.MagicDefense > attacker.MagicAttack)
             {

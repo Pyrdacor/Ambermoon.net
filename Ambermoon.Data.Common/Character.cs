@@ -70,50 +70,64 @@ namespace Ambermoon.Data
         {
             silent = false;
 
-            /*return spell switch
+            // Only monsters can have spell immunities
+            if (!(this is Monster monster))
+                return false;
+
+            // Note: This only checks for immunities based on monster flags and elements.
+            // Other things like condition-dependent immunities or spell type immunities
+            // are not checked here.
+            bool boss = monster.MonsterFlags.HasFlag(MonsterFlags.Boss);
+            bool undead = monster.MonsterFlags.HasFlag(MonsterFlags.Undead);
+            bool demon = monster.MonsterFlags.HasFlag(MonsterFlags.Demon);
+            bool animal = monster.MonsterFlags.HasFlag(MonsterFlags.Animal);
+
+            silent = !undead &&
+                     (spell == Spell.DispellUndead ||
+                     spell == Spell.DestroyUndead ||
+                     spell == Spell.HolyWord);
+
+            return spell switch
             {
-                Spell.DispellUndead => ,
-                Spell.DestroyUndead => ,
-                Spell.HolyWord => ,
-                Spell.GhostWeapon => ,
-                Spell.LPStealer => ,
-                Spell.SPStealer => ,
-                Spell.MonsterKnowledge => ,
-                Spell.ShowMonsterLP => ,
-                Spell.MagicalProjectile => ,
-                Spell.MagicalArrows => ,
-                Spell.Lame => ,
-                Spell.Poison => ,
-                Spell.Petrify => ,
-                Spell.CauseDisease => ,
-                Spell.CauseAging => ,
-                Spell.Irritate => ,
-                Spell.CauseMadness => ,
-                Spell.Sleep => ,
-                Spell.Fear => ,
-                Spell.Blind => ,
-                Spell.Drug => ,
-                Spell.DissolveVictim => ,
-                Spell.Mudsling => ,
-                Spell.Rockfall => ,
-                Spell.Earthslide => ,
-                Spell.Earthquake => ,
-                Spell.Winddevil => ,
-                Spell.Windhowler => ,
-                Spell.Thunderbolt => ,
-                Spell.Whirlwind => ,
-                Spell.Firebeam => ,
-                Spell.Fireball => ,
-                Spell.Firestorm => ,
-                Spell.Firepillar => ,
-                Spell.Waterfall => ,
-                Spell.Iceball => ,
-                Spell.Icestorm => ,
-                Spell.Iceshower => ,
+                Spell.DispellUndead => !undead || boss,
+                Spell.DestroyUndead => !undead || boss,
+                Spell.HolyWord => !undead || boss,
+                Spell.GhostWeapon => Element == CharacterElement.Ghost,
+                Spell.LPStealer => Element == CharacterElement.Undead || Element == CharacterElement.Earth,
+                Spell.SPStealer => false,
+                Spell.MonsterKnowledge => Element == CharacterElement.Psychic,
+                Spell.MagicalProjectile => Element == CharacterElement.Ghost,
+                Spell.MagicalArrows => Element == CharacterElement.Ghost,
+                Spell.Lame => boss || Element == CharacterElement.Earth,
+                Spell.Poison => Element == CharacterElement.Earth,
+                Spell.Petrify => boss,
+                Spell.CauseDisease => Element == CharacterElement.Earth,
+                Spell.CauseAging => false,
+                Spell.Irritate => boss || Element == CharacterElement.Psychic,
+                Spell.CauseMadness => boss || Element == CharacterElement.Psychic,
+                Spell.Sleep => Element == CharacterElement.Psychic,
+                Spell.Fear => boss || Element == CharacterElement.Psychic,
+                Spell.Blind => Element == CharacterElement.Ghost,
+                Spell.Drug => boss,
+                Spell.DissolveVictim => boss || Element == CharacterElement.Ghost,
+                Spell.Mudsling => false,
+                Spell.Rockfall => false,
+                Spell.Earthslide => false,
+                Spell.Earthquake => false,
+                Spell.Winddevil => false,
+                Spell.Windhowler => false,
+                Spell.Thunderbolt => false,
+                Spell.Whirlwind => false,
+                Spell.Firebeam => false,
+                Spell.Fireball => false,
+                Spell.Firestorm => false,
+                Spell.Firepillar => false,
+                Spell.Waterfall => false,
+                Spell.Iceball => false,
+                Spell.Icestorm => false,
+                Spell.Iceshower => false,
                 _ => false
-            };*/
-            // TODO: boss, element, etc
-            return false;
+            };
         }
         public bool HasAnySpell() =>
             LearnedHealingSpells != 0 ||

@@ -287,4 +287,19 @@
         Icestorm,
         Iceshower
     }
+
+    public static class SpellExtensions
+    {
+        public static bool FailsAgainstPetrifiedEnemy(this Spell spell)
+        {
+            // Most damage dealing spells except for
+            // dissolving spells fail against petrified enemies.
+            return  spell == Spell.GhostWeapon ||
+                    spell == Spell.LPStealer ||
+                    spell == Spell.SPStealer ||
+                    spell == Spell.MagicalProjectile ||
+                    spell == Spell.MagicalArrows ||
+                    (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
+        }
+    }
 }

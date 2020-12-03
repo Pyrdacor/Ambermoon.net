@@ -2543,13 +2543,16 @@ namespace Ambermoon.UI
 
             if (!consumed)
             {
-                foreach (var tooltip in tooltips)
+                if (!game.BattleRoundActive)
                 {
-                    if (tooltip.Area.Contains(position))
+                    foreach (var tooltip in tooltips)
                     {
-                        SetActiveTooltip(position, tooltip);
-                        consumed = true;
-                        break;
+                        if (tooltip.Area.Contains(position))
+                        {
+                            SetActiveTooltip(position, tooltip);
+                            consumed = true;
+                            break;
+                        }
                     }
                 }
 

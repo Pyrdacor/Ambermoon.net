@@ -198,6 +198,7 @@ namespace Ambermoon
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
         internal bool BattleActive => currentBattle != null;
+        internal bool BattleRoundActive => currentBattle?.RoundActive == true;
         internal UIText ChestText { get; private set; } = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
@@ -3430,25 +3431,34 @@ namespace Ambermoon
             return roundPlayerBattleActions[slot];
         }
 
-        void SetBattleMessageWithClick(string message, TextColor textColor = TextColor.White, Action followAction = null)
+        internal void SetBattleMessageWithClick(string message, TextColor textColor = TextColor.White, Action followAction = null, TimeSpan? delay = null)
         {
             layout.SetBattleMessage(message, textColor);
-            InputEnable = false;
-            currentBattle.WaitForClick = true;
-            CursorType = CursorType.Click;
 
-            if (followAction != null)
+            if (delay == null)
+                Setup();
+            else
+                AddTimedEvent(delay.Value, Setup);
+
+            void Setup()
             {
-                void Follow()
-                {
-                    layout.SetBattleMessage(null);
-                    InputEnable = true;
-                    currentBattle.WaitForClick = false;
-                    CursorType = CursorType.Sword;
-                    followAction?.Invoke();
-                }
+                InputEnable = false;
+                currentBattle.WaitForClick = true;
+                CursorType = CursorType.Click;
 
-                nextClickHandler = Follow;
+                if (followAction != null)
+                {
+                    void Follow()
+                    {
+                        layout.SetBattleMessage(null);
+                        InputEnable = true;
+                        currentBattle.WaitForClick = false;
+                        CursorType = CursorType.Sword;
+                        followAction?.Invoke();
+                    }
+
+                    nextClickHandler = Follow;
+                }
             }
         }
 
