@@ -3164,7 +3164,8 @@ namespace Ambermoon
                         {
                             var partyMember = GetPartyMember(i);
 
-                            partyMember.Ailments = partyMember.Ailments.WithoutBattleOnlyAilments();
+                            if (partyMember != null)
+                                partyMember.Ailments = partyMember.Ailments.WithoutBattleOnlyAilments();
                         }
                         UpdateBattleStatus();
                         currentBattleInfo.EndBattle(battleEndInfo);
