@@ -1201,15 +1201,14 @@ namespace Ambermoon
 
                     void EndHurt()
                     {
-                        ActionFinished();
-
                         if (!target.Alive)
                         {
-                            HandleCharacterDeath(battleAction.Character, target);
+                            HandleCharacterDeath(battleAction.Character, target, () => ActionFinished());
                         }
                         else if (target is PartyMember partyMember)
                         {
                             layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                            ActionFinished();
                         }
                     }
 
@@ -1353,11 +1352,11 @@ namespace Ambermoon
 
         static float GetMonsterDeathScale(Monster monster)
         {
-            // 48 is the normal frame width
-            return monster.MappedFrameWidth / 48.0f;
+            // 59 is the normal frame height
+            return monster.MappedFrameHeight / 59.0f;
         }
 
-        void HandleCharacterDeath(Character attacker, Character target)
+        void HandleCharacterDeath(Character attacker, Character target, Action finishAction)
         {
             // Remove all actions that are performed by the dead target
             // or by the attacker. Note that following target of a multi-target
@@ -1373,12 +1372,14 @@ namespace Ambermoon
                 PlayBattleEffectAnimation(BattleEffect.Death, (uint)slot, game.CurrentBattleTicks, () =>
                 {
                     KillMonster(partyMember, target);
+                    finishAction?.Invoke();
                 }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
             }
             else
             {
                 RemoveCharacterFromBattleField(target);
                 KillPlayer(target);
+                finishAction?.Invoke();
             }
         }
 
@@ -1460,14 +1461,13 @@ namespace Ambermoon
                 {
                     if (!target.Alive)
                     {
-                        HandleCharacterDeath(caster, target);
+                        HandleCharacterDeath(caster, target, () => finishAction?.Invoke(true));
                     }
                     else if (target is PartyMember partyMember)
                     {
                         layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                        finishAction?.Invoke(true);
                     }
-
-                    finishAction?.Invoke(true);
                 }
 
                 uint position = (uint)GetSlotFromCharacter(target);
@@ -1512,6 +1512,13 @@ namespace Ambermoon
 
         void RemoveCharacterFromBattleField(Character character)
         {
+            if (currentBattleAnimation != null && character == currentlyAnimatedMonster)
+            {
+                currentBattleAnimation?.Destroy();
+                currentBattleAnimation = null;
+                currentlyAnimatedMonster = null;
+            }
+
             battleField[GetCharacterPosition(character)] = null;
             roundBattleActions.Where(b => b.Character == character).ToList().ForEach(b => b.Skip = true);
             game.RemoveBattleActor(character);

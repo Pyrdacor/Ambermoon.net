@@ -54,23 +54,17 @@ namespace Ambermoon.Render
             }
         }
 
-        static Position GetCenterPosition(IRenderView renderView, uint tile, Character[] battleField, int yOffset = 0, bool groundBased = false)
+        static Position GetCenterPosition(IRenderView renderView, uint tile, Character[] battleField, int yOffset = 0)
         {
             var offset = new Position(0, yOffset);
 
             if (battleField[(int)tile] is Monster monster)
             {
-                if (groundBased)
-                    return Layout.GetMonsterCombatGroundPosition(renderView, (int)tile) + offset;
-                else
-                    return Layout.GetMonsterCombatCenterPosition(renderView, (int)tile, monster) + offset;
+                return Layout.GetMonsterCombatCenterPosition(renderView, (int)tile, monster) + offset;
             }
             else
             {
-                if (groundBased)
-                    return Layout.GetPlayerSlotCenterPosition((int)tile % 6) + offset;
-                else
-                    return Layout.GetPlayerSlotTargetPosition((int)tile % 6) + offset;
+                return Layout.GetPlayerSlotTargetPosition((int)tile % 6) + offset;
             }
         }
 
@@ -98,10 +92,10 @@ namespace Ambermoon.Render
         }
 
         static BattleEffectInfo CreateSimpleEffect(IRenderView renderView, uint tile, CombatGraphicIndex graphicIndex,
-            Character[] battleField, uint duration, int yOffset = 0, float scale = 1.0f, bool groundBased = false)
+            Character[] battleField, uint duration, int yOffset = 0, float scale = 1.0f)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
-            var position = GetCenterPosition(renderView, tile, battleField, yOffset, groundBased);
+            var position = GetCenterPosition(renderView, tile, battleField, yOffset);
             scale *= GetScaleFromRow(renderView, tile, battleField);
 
             return new BattleEffectInfo
@@ -181,7 +175,7 @@ namespace Ambermoon.Render
                 BattleEffect.SlingstoneAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.Slingstone, battleField)),
                 BattleEffect.SlingdaggerAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.Slingdagger, battleField)),
                 BattleEffect.SickleAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.FlyingSickle, battleField, 1.5f)),
-                BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, battleField, Game.TicksPerSecond * 5 / 2, 0, scale, true)),
+                BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, battleField, Game.TicksPerSecond * 5 / 4, 0, scale)),
                 BattleEffect.BlockSpell => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.SpellBlock, battleField, Game.TicksPerSecond)),
                 BattleEffect.PlayerAtack => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackSword, battleField, Game.TicksPerSecond / 3, -10)),
                 _ => null

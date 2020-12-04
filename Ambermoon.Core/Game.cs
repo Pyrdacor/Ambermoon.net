@@ -3326,9 +3326,6 @@ namespace Ambermoon
             }
         }
 
-        Battle.PlayerBattleAction CurrentPlayerBattleAction => roundPlayerBattleActions.ContainsKey(CurrentSavegame.ActivePartyMemberSlot)
-            ? roundPlayerBattleActions[CurrentSavegame.ActivePartyMemberSlot] : null;
-
         void BattlePlayerSwitched()
         {
             int partyMemberSlot = SlotFromPartyMember(CurrentPartyMember).Value;

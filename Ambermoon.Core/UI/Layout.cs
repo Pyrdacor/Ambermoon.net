@@ -1774,7 +1774,7 @@ namespace Ambermoon.UI
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer,
-            string tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip createdTooltip)
+            string tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip createdTooltip, bool visible = true)
         {
             createdTooltip = null;
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, true) as ILayerSprite;
@@ -1785,7 +1785,7 @@ namespace Ambermoon.UI
             sprite.Y = rect.Top;
             sprite.PaletteIndex = paletteIndex;
             sprite.Layer = layer == null ? renderLayer : RenderView.GetLayer(layer.Value);
-            sprite.Visible = true;
+            sprite.Visible = visible;
             additionalSprites.Add(sprite);
 
             if (tooltip != null)
@@ -1795,9 +1795,9 @@ namespace Ambermoon.UI
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
-            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null)
+            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null, bool visible = true)
         {
-            return AddSprite(rect, textureIndex, paletteIndex, displayLayer, tooltip, tooltipTextColor, layer, out _);
+            return AddSprite(rect, textureIndex, paletteIndex, displayLayer, tooltip, tooltipTextColor, layer, out _, visible);
         }
 
         Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
@@ -2819,8 +2819,7 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < amount; ++i)
             {
-                var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 17, 0, null, null, Layer.BattleEffects);
-                sprite.Visible = false;
+                var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 17, 0, null, null, Layer.BattleEffects, false);
                 battleEffectAnimations.Add(new BattleAnimation(sprite));
             }
 

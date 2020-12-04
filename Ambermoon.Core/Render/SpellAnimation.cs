@@ -444,10 +444,11 @@ namespace Ambermoon.Render
                 case Spell.Firepillar:
                 {
                     ShowOverlay(Color.FireOverlay);
-                    var position = new Position(Global.CombatBackgroundArea.Center);
+                    var startPosition = new Position(Global.CombatBackgroundArea.Center) + new Position(0, 10);
+                    var endPosition = new Position(Global.CombatBackgroundArea.Center) + new Position(0, 25);
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     AddAnimation(CombatGraphicIndex.BigFlame, Enumerable.Range(0, 16).Select(i => i % 8).ToArray(),
-                        position, position, Game.TicksPerSecond * 5 / 2, 4.0f, 10.0f, 255, () =>
+                        startPosition, endPosition, Game.TicksPerSecond * 7 / 2, 4.0f, 10.0f, 255, () =>
                         {
                             HideOverlay();
                             this.finishAction?.Invoke();
