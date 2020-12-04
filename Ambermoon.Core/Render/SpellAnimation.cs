@@ -412,7 +412,7 @@ namespace Ambermoon.Render
                         int halfEndHeight = Util.Round(0.5f * endScale * info.GraphicInfo.Height);
                         var startPosition = new Position(startGroundPosition.X + startXOffset, startGroundPosition.Y - startHeight / 2);
                         var endPosition = new Position(endGroundPosition.X + endXOffset, endGroundPosition.Y - halfEndHeight);
-                        var animation = AddAnimation(CombatGraphicIndex.BigFlame, frames,
+                        AddAnimation(CombatGraphicIndex.BigFlame, frames,
                             startPosition, endPosition, duration,
                             1.0f, endScale / startScale, (byte)Math.Min(255, targetRow * 60 + 59), finishAction,
                             new Size(width, startHeight), BattleAnimation.AnimationScaleType.YOnly);
@@ -442,6 +442,19 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Firepillar:
+                {
+                    ShowOverlay(Color.FireOverlay);
+                    var position = new Position(Global.CombatBackgroundArea.Center);
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
+                    AddAnimation(CombatGraphicIndex.BigFlame, Enumerable.Range(0, 16).Select(i => i % 8).ToArray(),
+                        position, position, Game.TicksPerSecond * 5 / 2, 4.0f, 10.0f, 255, () =>
+                        {
+                            HideOverlay();
+                            this.finishAction?.Invoke();
+                        });
+                    // TODO: The flame turns black afterwards
+                    break;
+                }
                 case Spell.Waterfall:
                     return; // TODO
                 case Spell.Iceball:

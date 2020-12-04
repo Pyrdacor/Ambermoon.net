@@ -2809,17 +2809,21 @@ namespace Ambermoon.UI
             }
         }
 
-        public List<BattleAnimation> GetOrCreateBattleEffectAnimations(int amount = 1)
+        public List<BattleAnimation> CreateBattleEffectAnimations(int amount = 1)
         {
-            if (battleEffectAnimations.Count >= amount)
-                return battleEffectAnimations;
+            if (battleEffectAnimations.Count != 0)
+            {
+                battleEffectAnimations.ForEach(a => a?.Destroy());
+                battleEffectAnimations.Clear();
+            }
 
-            for (int i = battleEffectAnimations.Count; i < amount; ++i)
+            for (int i = 0; i < amount; ++i)
             {
                 var sprite = AddSprite(new Rect(0, 0, 16, 16), Graphics.CombatGraphicOffset, 17, 0, null, null, Layer.BattleEffects);
                 sprite.Visible = false;
                 battleEffectAnimations.Add(new BattleAnimation(sprite));
             }
+
             return battleEffectAnimations;
         }
     }

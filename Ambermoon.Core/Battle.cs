@@ -270,7 +270,7 @@ namespace Ambermoon
                     ++currentMonsterSizeIndex;
             }
 
-            effectAnimations = layout.GetOrCreateBattleEffectAnimations();
+            effectAnimations = new List<BattleAnimation>();
 
             SetupNextIdleAnimation(0);
         }
@@ -376,7 +376,7 @@ namespace Ambermoon
                 }
             }
 
-            foreach (var effectAnimation in effectAnimations)
+            foreach (var effectAnimation in effectAnimations.ToList())
             {
                 if (effectAnimation != null && !effectAnimation.Finished)
                 {
@@ -939,6 +939,7 @@ namespace Ambermoon
                     if (spell != Spell.Firebeam &&
                         spell != Spell.Fireball &&
                         spell != Spell.Firestorm &&
+                        spell != Spell.Firepillar &&
                         spell != Spell.Iceball &&
                         spell != Spell.DissolveVictim) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
@@ -2121,7 +2122,7 @@ namespace Ambermoon
                     finishedAction?.Invoke();
             }
 
-            effectAnimations = layout.GetOrCreateBattleEffectAnimations(effects.Count);
+            effectAnimations = layout.CreateBattleEffectAnimations(effects.Count);
 
             for (int i = 0; i < effects.Count; ++i)
             {
@@ -2211,6 +2212,7 @@ namespace Ambermoon
             itemIndex = (actionParameter >> 5) & 0x7ff;
             targetRowOrTile = actionParameter & 0x1f;
         }
+        public static bool IsSelfSpell(uint actionParameter) => SpellInfos.Entries[GetCastSpell(actionParameter)].Target == SpellTarget.Self;
         public static bool IsCastFromItem(uint actionParameter) => ((actionParameter >> 5) & 0x7ff) != 0;
         static void GetHurtInformation(uint actionParameter, out uint targetTile, out uint damage)
         {

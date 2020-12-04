@@ -3019,6 +3019,7 @@ namespace Ambermoon
                         if (spell != Spell.Firebeam &&
                             spell != Spell.Fireball &&
                             spell != Spell.Firestorm &&
+                            spell != Spell.Firepillar &&
                             spell != Spell.Iceball &&
                             spell != Spell.DissolveVictim &&
                             !(spell >= Spell.Lame && spell <= Spell.Drug))
@@ -3135,10 +3136,11 @@ namespace Ambermoon
                     foreach (var action in roundPlayerBattleActions)
                         CheckPlayerActionVisuals(GetPartyMember(action.Key), action.Value);
                     layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
-                    AddCurrentPlayerActionVisuals();
                     layout.SetBattleMessage(null);
                     if (RecheckActivePartyMember())
                         BattlePlayerSwitched();
+                    else
+                        AddCurrentPlayerActionVisuals();
                     UpdateBattleStatus();
                 };
                 currentBattle.CharacterDied += character =>
@@ -3333,10 +3335,36 @@ namespace Ambermoon
             layout.ClearBattleFieldSlotColors();
             int battleFieldSlot = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
             layout.SetBattleFieldSlotColor(battleFieldSlot, BattleFieldSlotColor.Yellow);
+            AddCurrentPlayerActionVisuals();
 
             if (roundPlayerBattleActions.ContainsKey(partyMemberSlot))
             {
                 var action = roundPlayerBattleActions[partyMemberSlot];
+                layout.UpdateCharacterStatus(partyMemberSlot, action.BattleAction.ToStatusGraphic(action.Parameter, ItemManager));
+            }
+            else
+            {
+                layout.UpdateCharacterStatus(partyMemberSlot, CurrentPartyMember.Ailments.CanSelect() ? (UIGraphic?)null : GetDisabledStatusGraphic(CurrentPartyMember));
+            }
+
+            layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.Ailments.CanFlee()); // flee button, only enable in last row
+            layout.EnableButton(3, CurrentPartyMember.Ailments.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
+            layout.EnableButton(4, currentBattle.CanMoveForward);
+            layout.EnableButton(6, CurrentPartyMember.BaseAttack > 0 && CurrentPartyMember.Ailments.CanAttack());
+            layout.EnableButton(7, CurrentPartyMember.Ailments.CanParry());
+            layout.EnableButton(8, CurrentPartyMember.Ailments.CanCastSpell() && CurrentPartyMember.HasAnySpell());
+        }
+
+        /// <summary>
+        /// This adds the target slots' coloring.
+        /// </summary>
+        void AddCurrentPlayerActionVisuals()
+        {
+            int slot = SlotFromPartyMember(CurrentPartyMember).Value;
+
+            if (roundPlayerBattleActions.ContainsKey(slot))
+            {
+                var action = roundPlayerBattleActions[slot];
 
                 switch (action.BattleAction)
                 {
@@ -3349,7 +3377,7 @@ namespace Ambermoon
                         switch (SpellInfos.Entries[spell].Target)
                         {
                             case SpellTarget.Self:
-                                layout.SetBattleFieldSlotColor(battleFieldSlot, BattleFieldSlotColor.Orange);
+                                layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Orange);
                                 break;
                             case SpellTarget.SingleEnemy:
                             case SpellTarget.SingleFriend:
@@ -3373,38 +3401,6 @@ namespace Ambermoon
                         }
                         break;
                 }
-
-                layout.UpdateCharacterStatus(partyMemberSlot, action.BattleAction.ToStatusGraphic(action.Parameter, ItemManager));
-            }
-            else
-            {
-                layout.UpdateCharacterStatus(partyMemberSlot, CurrentPartyMember.Ailments.CanSelect() ? (UIGraphic?)null : GetDisabledStatusGraphic(CurrentPartyMember));
-            }
-
-            layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.Ailments.CanFlee()); // flee button, only enable in last row
-            layout.EnableButton(3, CurrentPartyMember.Ailments.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
-            layout.EnableButton(4, currentBattle.CanMoveForward);
-            layout.EnableButton(6, CurrentPartyMember.BaseAttack > 0 && CurrentPartyMember.Ailments.CanAttack());
-            layout.EnableButton(7, CurrentPartyMember.Ailments.CanParry());
-            layout.EnableButton(8, CurrentPartyMember.Ailments.CanCastSpell() && CurrentPartyMember.HasAnySpell());
-        }
-
-        /// <summary>
-        /// This adds the target slots' coloring.
-        /// </summary>
-        void AddCurrentPlayerActionVisuals()
-        {
-            var action = GetOrCreateBattleAction();
-
-            switch (action.BattleAction)
-            {
-                case Battle.BattleActionType.Attack:
-                case Battle.BattleActionType.Move:
-                    layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
-                    break;
-                case Battle.BattleActionType.CastSpell:
-                    // TODO
-                    break;
             }
         }
 
@@ -3422,7 +3418,9 @@ namespace Ambermoon
                     layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.None);
                     break;
                 case Battle.BattleActionType.CastSpell:
-                    // TODO
+                    layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(CurrentPartyMember));
+                    if (Battle.IsSelfSpell(action.Parameter))
+                        layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
                     break;
             }
         }
