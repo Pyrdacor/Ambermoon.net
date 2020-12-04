@@ -3172,9 +3172,8 @@ namespace Ambermoon
                         currentBattleInfo = null;
                         if (nextEvent != null)
                         {
-                            bool lastStatus = true;
-                            nextEvent.ExecuteEvent(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
-                                (uint)RenderPlayer.Position.Y, CurrentTicks, ref lastStatus, out bool aborted);
+                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
+                                (uint)RenderPlayer.Position.Y, CurrentTicks, nextEvent, true);
                         }
                     }
                     if (battleEndInfo.MonstersDefeated)
