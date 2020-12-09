@@ -24,7 +24,7 @@ artifacts:
     name: NugetPackages
 
 after_build:
-  - dotnet publish -c Release "%APPVEYOR_BUILD_FOLDER%/Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r %RID% --no-restore
+  - ps: dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r $env:RID --no-restore
   - ps: ./pack.ps1
 
 for:
@@ -43,7 +43,7 @@ test: off
 
 deploy:
   - provider: GitHub
-    name: Ambermoon.net-Windows Ambermoon.net-Linux
+    name: Ambermoon.net-Windows
     artifact: Ambermoon.net-Windows
     tag: $(APPVEYOR_REPO_TAG_NAME)
     release: $(APPVEYOR_REPO_TAG_NAME)
@@ -51,7 +51,20 @@ deploy:
     auth_token:
       secure: CP6qsCjIlyJrYsuHs4tzdrYUWOO83Jlx6/U0Gqtl/SicGmBaN1hrYUEk6RSL6D8j
     draft: true
-    prerelease: false
+    prerelease: true
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
+  - provider: GitHub
+    name: Ambermoon.net-Linux
+    artifact: Ambermoon.net-Linux
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    auth_token:
+      secure: CP6qsCjIlyJrYsuHs4tzdrYUWOO83Jlx6/U0Gqtl/SicGmBaN1hrYUEk6RSL6D8j
+    draft: true
+    prerelease: true
     force_update: true
     on:
       APPVEYOR_REPO_TAG: true
