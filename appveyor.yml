@@ -24,7 +24,7 @@ artifacts:
     name: NugetPackages
 
 after_build:
-  - dotnet publish -c Release "%APPVEYOR_BUILD_FOLDER%\Ambermoon.net\Ambermoon.net.csproj" -p:PublishSingleFile=true -r $(RID) --no-restore
+  - dotnet publish -c Release "%APPVEYOR_BUILD_FOLDER%\Ambermoon.net\Ambermoon.net.csproj" -p:PublishSingleFile=true -r %RID% --no-restore
   - ps: ./pack.ps1
   - mkdir "nuget"
   - xcopy /Y /I "Ambermoon.Common\bin\Release\*.nupkg" "nuget\*"
