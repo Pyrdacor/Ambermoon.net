@@ -12,10 +12,10 @@ I got some questions of how to run the game:
 
 ## Download
 
-Version | OS
---- | ---
-[0.1.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.1beta/Ambermoon.net-Windows.zip) | Windows 64bit
-[0.1.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.0beta/Ambermoon.net-Windows.zip) | Windows 64bit
+Version | Windows 64bit | Linux 64bit
+--- | --- | ---
+0.1.1 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.1beta/Ambermoon.net-Linux.tar.gz)
+0.1.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.0beta/Ambermoon.net-Windows.zip) | -
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
