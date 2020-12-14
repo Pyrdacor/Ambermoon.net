@@ -2957,12 +2957,6 @@ namespace Ambermoon
             layout.AttachEventToButton(2, () =>
             {
                 StartBattleRound(false);
-                /*var battleEndInfo = new BattleEndInfo
-                {
-                    MonstersDefeated = true,
-                    FledMonsterIndices = new List<uint>()
-                };
-                */
             });
             // Move button
             layout.AttachEventToButton(3, () =>

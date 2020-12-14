@@ -820,12 +820,12 @@ namespace Ambermoon
                     // After a click this attack action should follow.
                     GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
                     var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort, out bool loseTarget);
+                    var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
                     // Next action is a hurt action
                     var hurtAction = roundBattleActions.Peek();
-                    if (attackResult != AttackResult.Damage)
+                    if (attackResult != AttackResult.Damage && attackResult != AttackResult.CirticalHit)
                     {
                         hurtAction.Skip = true;
-                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
 
                         switch (attackResult)
                         {
@@ -861,8 +861,16 @@ namespace Ambermoon
                     else
                     {
                         hurtAction.ActionParameter = UpdateHurtParameter(hurtAction.ActionParameter, (uint)damage);
-                        layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage),
-                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                        if (attackResult == AttackResult.CirticalHit)
+                        {
+                            layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMadeCriticalHit,
+                                textColor);
+                        }
+                        else
+                        {
+                            layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage),
+                                textColor);
+                        }
                     }
                     Item weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
                     if (battleAction.Character is Monster monster)
@@ -2235,7 +2243,8 @@ namespace Ambermoon
             Missed, // Target moved
             Blocked, // Parry
             Protected, // Magic protection level
-            Petrified // Petrified monsters can't be damaged
+            Petrified, // Petrified monsters can't be damaged
+            CirticalHit
         }
 
         AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking, out bool loseTarget)
@@ -2267,6 +2276,15 @@ namespace Ambermoon
 
             if (game.RollDice100() > attacker.Abilities[Ability.Attack].TotalCurrentValue)
                 return AttackResult.Failed;
+
+            if (game.RollDice100() < attacker.Abilities[Ability.CriticalHit].TotalCurrentValue)
+            {
+                if (!(target is Monster monster) || !monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
+                {
+                    damage = (int)target.HitPoints.TotalCurrentValue;
+                    return AttackResult.CirticalHit;
+                }
+            }
 
             damage = CalculatePhysicalDamage(attacker, target);
 
