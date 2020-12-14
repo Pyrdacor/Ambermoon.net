@@ -204,6 +204,10 @@ namespace Ambermoon.Render
         {
             switch (spell)
             {
+                case Spell.DispellUndead:
+                case Spell.DestroyUndead:
+                case Spell.HolyWord:
+                    return Layout.GetMonsterCombatGroundPosition(renderView, position);
                 case Spell.HealingHand:
                 case Spell.RemoveFear:
                 case Spell.RemovePanic:
@@ -215,9 +219,6 @@ namespace Ambermoon.Render
                 case Spell.RemovePoison:
                 case Spell.NeutralizePoison:
                 case Spell.MediumHealing:
-                case Spell.DispellUndead:
-                case Spell.DestroyUndead:
-                case Spell.HolyWord:
                 case Spell.GreatHealing:
                 case Spell.MassHealing:
                 case Spell.RemoveRigidness:
@@ -414,7 +415,7 @@ namespace Ambermoon.Render
                         var endPosition = new Position(endGroundPosition.X + endXOffset, endGroundPosition.Y - halfEndHeight);
                         AddAnimation(CombatGraphicIndex.BigFlame, frames,
                             startPosition, endPosition, duration,
-                            1.0f, endScale / startScale, (byte)Math.Min(255, targetRow * 60 + 59), finishAction,
+                            1.0f, endScale / startScale, (byte)Math.Min(255, targetRow * 60 + 60), finishAction,
                             new Size(width, startHeight), BattleAnimation.AnimationScaleType.YOnly);
                     }
                     var combatArea = Global.CombatBackgroundArea;
@@ -538,7 +539,7 @@ namespace Ambermoon.Render
                 var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(6 * scale));
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                 {
-                    byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 59));
+                    byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 60));
                     void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action finishAction, bool reverse)
                     {
                         AddAnimation(graphicIndex, 1, targetPosition, targetPosition, reverse ? Game.TicksPerSecond / 4 : Game.TicksPerSecond / 2,
@@ -551,6 +552,41 @@ namespace Ambermoon.Render
                         AddCurseAnimation(iconGraphicIndex, null, true); // This will trigger the outer finish action
                     }, false);
                 });
+            }
+
+            // Used for Anti-undead spells
+            void PlayHolyLight()
+            {
+                // Should always be a monster but just in case we check here.
+                if (battle.GetCharacterAt(tile) is Monster monster)
+                {
+                    var position = GetTargetPosition(tile) + new Position(0, 4);
+                    int beamHeight = 8 + position.Y - Global.CombatBackgroundArea.Top;
+                    // Note: Positions are ground-based (anchor at the bottom).
+                    var startPosition = new Position(position.X, Global.CombatBackgroundArea.Top - beamHeight / 2);
+                    var endPosition = new Position(position.X, position.Y - beamHeight / 2);
+                    byte displayLayer = (byte)((tile / 6) * 60); // Show behind the monsters
+                    float rowScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    int beamWidth = Util.Round(rowScale * monster.MappedFrameWidth);
+                    AddAnimation(CombatGraphicIndex.HolyBeam, 1, startPosition, endPosition, Game.TicksPerSecond * 3 / 2, 1, 1, displayLayer, () =>
+                    {
+                        startPosition = new Position(endPosition);
+                        int diff = endPosition.Y - Global.CombatBackgroundArea.Top;
+                        endPosition.Y = Global.CombatBackgroundArea.Top;
+                        var monsterEndPosition = new Position(endPosition.X, Layout.GetMonsterCombatCenterPosition(renderView, tile, monster).Y - diff);
+
+                        // Move monster to heavens
+                        battle.StartMonsterAnimation(monster, animation =>
+                        {
+                            animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                            var hurtFrames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
+                            animation.Play(hurtFrames, (Game.TicksPerSecond * 3 / 4) / (uint)hurtFrames.Length, game.CurrentBattleTicks, monsterEndPosition, 0.0f);
+                        }, () => { });
+                        // And fade out beam too
+                        AddAnimation(CombatGraphicIndex.HolyBeam, 1, startPosition, endPosition, Game.TicksPerSecond * 3 / 4, 1, 0, displayLayer, null,
+                            new Size(beamWidth, beamHeight), BattleAnimation.AnimationScaleType.XOnly);
+                    }, new Size(beamWidth, beamHeight));
+                }
             }
 
             switch (spell)
@@ -566,9 +602,12 @@ namespace Ambermoon.Render
                 case Spell.RemovePoison:
                 case Spell.NeutralizePoison:
                 case Spell.MediumHealing:
+                    return; // TODO
                 case Spell.DispellUndead:
                 case Spell.DestroyUndead:
                 case Spell.HolyWord:
+                    PlayHolyLight();
+                    break;
                 case Spell.GreatHealing:
                 case Spell.MassHealing:
                 case Spell.RemoveRigidness:

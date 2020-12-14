@@ -257,7 +257,7 @@ namespace Ambermoon
                 }
             }
             monsterSizes.Sort();
-            // Each row has a display layer range of 60 (row 0: 0-59, row 1: 60-119, row 2: 120-179, row 3: 180-239).
+            // Each row has a display layer range of 60 (row 0: 1-60, row 1: 61-120, row 2: 121-180, row 3: 181-240).
             // Depending on monster size an offset of 0, 6, 12, 18, 24, 30, 36, 42, 48 or 54 is possible (up to 10 monster sizes).
             // Smaller (thinner) monsters get higher values to appear in front of larger monsters.
             // Each column then increases the value by 0 to 5.
@@ -391,12 +391,12 @@ namespace Ambermoon
         public byte GetMonsterDisplayLayer(Monster monster, int? position = null)
         {
             position ??= GetCharacterPosition(monster);
-            // Each row has a display layer range of 60 (row 0: 0-59, row 1: 60-119, row 2: 120-179, row 3: 180-239).
+            // Each row has a display layer range of 60 (row 0: 1-60, row 1: 61-120, row 2: 121-180, row 3: 181-240).
             // Depending on monster size an offset of 0, 6, 12, 18, 24, 30, 36, 42, 48 or 54 is possible (up to 10 monster sizes).
             // Each column then increases the value by 0 to 5.
             int column = position.Value % 6;
             int row = position.Value / 6;
-            return (byte)(row * 60 + monsterSizeDisplayLayerMapping[(int)monster.MappedFrameWidth] + column);
+            return (byte)(1 + row * 60 + monsterSizeDisplayLayerMapping[(int)monster.MappedFrameWidth] + column);
         }
 
         public void SetMonsterDisplayLayer(BattleAnimation animation, Monster monster, int? position = null)
@@ -949,7 +949,10 @@ namespace Ambermoon
                         spell != Spell.Firestorm &&
                         spell != Spell.Firepillar &&
                         spell != Spell.Iceball &&
-                        spell != Spell.DissolveVictim) // TODO: REMOVE. For now we only allow some spells for testing.
+                        spell != Spell.DissolveVictim &&
+                        spell != Spell.DispellUndead &&
+                        spell != Spell.DestroyUndead &&
+                        spell != Spell.HolyWord) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         if (spell < Spell.Lame || spell > Spell.Drug)
                             break;
@@ -1689,7 +1692,8 @@ namespace Ambermoon
                 if (possibleSpells.Contains(Spell.SmallHealing) ||
                     possibleSpells.Contains(Spell.MediumHealing) ||
                     possibleSpells.Contains(Spell.GreatHealing) ||
-                    possibleSpells.Contains(Spell.MassHealing))
+                    possibleSpells.Contains(Spell.MassHealing) ||
+                    possibleSpells.Contains(Spell.HealingHand))
                     return true;
             }
 
@@ -2095,7 +2099,8 @@ namespace Ambermoon
                         (possibleSpells.Contains(Spell.SmallHealing) ||
                         possibleSpells.Contains(Spell.MediumHealing) ||
                         possibleSpells.Contains(Spell.GreatHealing) ||
-                        possibleSpells.Contains(Spell.MassHealing)))
+                        possibleSpells.Contains(Spell.MassHealing) ||
+                        possibleSpells.Contains(Spell.HealingHand)))
                     {
                         if (!possibleSpells.Any(s => SpellInfos.Entries[s].Target.TargetsEnemy()) || game.RollDice100() < 50)
                         {

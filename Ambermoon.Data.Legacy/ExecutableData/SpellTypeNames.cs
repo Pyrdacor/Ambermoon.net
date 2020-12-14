@@ -13,8 +13,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class SpellTypeNames
     {
-        readonly Dictionary<SpellType, string> entries = new Dictionary<SpellType, string>();
-        public IReadOnlyDictionary<SpellType, string> Entries => entries;
+        readonly Dictionary<SpellSchool, string> entries = new Dictionary<SpellSchool, string>();
+        public IReadOnlyDictionary<SpellSchool, string> Entries => entries;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -25,7 +25,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal SpellTypeNames(IDataReader dataReader)
         {
-            foreach (var type in Enum.GetValues<SpellType>())
+            foreach (var type in Enum.GetValues<SpellSchool>())
             {
                 entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
             }

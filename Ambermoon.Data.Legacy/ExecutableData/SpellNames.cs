@@ -16,9 +16,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     public class SpellNames
     {
         readonly Dictionary<Spell, string> entries = new Dictionary<Spell, string>();
-        readonly Dictionary<SpellType, List<string>> entriesPerType = new Dictionary<SpellType, List<string>>();
+        readonly Dictionary<SpellSchool, List<string>> entriesPerType = new Dictionary<SpellSchool, List<string>>();
         public IReadOnlyDictionary<Spell, string> Entries => entries;
-        public IReadOnlyDictionary<SpellType, List<string>> EntriesPerType => entriesPerType;
+        public IReadOnlyDictionary<SpellSchool, List<string>> EntriesPerType => entriesPerType;
 
         /// <summary>
         /// The position of the data reader should be at
@@ -32,7 +32,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(Spell.None, "");
             int spellIndex = 1; // we skip Spell.None as it has no text entry
 
-            foreach (var type in Enum.GetValues<SpellType>())
+            foreach (var type in Enum.GetValues<SpellSchool>())
             {
                 entriesPerType.Add(type, new List<string>(30));
 

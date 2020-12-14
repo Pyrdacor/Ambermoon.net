@@ -5,6 +5,23 @@ using System.Linq;
 
 namespace Ambermoon.Data
 {
+    /// <summary>
+    /// This is very similar to <see cref="SpellSchool"/>
+    /// but spells like Holy Word or Ghost Weapon count
+    /// as Destruction.
+    /// </summary>
+    [Flags]
+    public enum SpellType
+    {
+        Healing,
+        Alchemistic,
+        Mystic,
+        Destruction,
+        Unknown1,
+        Unknown2,
+        Function // lockpicking, call eagle, play elf harp etc
+    }
+
     [Flags]
     public enum SpellApplicationArea
     {
@@ -67,6 +84,7 @@ namespace Ambermoon.Data
 
     public struct SpellInfo
     {
+        public SpellSchool SpellSchool;
         public SpellType SpellType;
         public Spell Spell;
         public uint SP;
@@ -231,13 +249,28 @@ namespace Ambermoon.Data
                 entries[spell.Key] = new SpellInfo
                 {
                     Spell = spell.Key,
-                    SpellType = (SpellType)(((int)spell.Key - 1) / 30),
+                    SpellSchool = (SpellSchool)(((int)spell.Key - 1) / 30),
+                    SpellType = GetSpellType(spell.Key),
                     SP = spell.Value.SP,
                     SLP = spell.Value.SLP,
                     Target = spell.Value.Target,
                     ApplicationArea = spell.Value.ApplicationArea
                 };
            }
+        }
+
+        static SpellType GetSpellType(Spell spell)
+        {
+            switch (spell)
+            {
+                case Spell.DispellUndead:
+                case Spell.DestroyUndead:
+                case Spell.HolyWord:
+                case Spell.GhostWeapon:
+                    return SpellType.Destruction;
+                default:
+                    return (SpellType)(((int)spell - 1) / 30);
+            }
         }
 
         public static IReadOnlyDictionary<Spell, SpellInfo> Entries => entries;

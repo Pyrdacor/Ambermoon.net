@@ -38,7 +38,7 @@ namespace Ambermoon.Data
         /// </summary>
         public byte SpecialValue { get; set; } // special item purpose, transportation, etc
         public byte TextSubIndex { get; set; }
-        public SpellType SpellType { get; set; }
+        public SpellSchool SpellSchool { get; set; }
         public byte SpellIndex { get; set; }
         public byte SpellUsageCount { get; set; } // 255 = infinite
         public byte[] UnknownBytes26To29 { get; set; } // 4
@@ -81,7 +81,7 @@ namespace Ambermoon.Data
             get => SpecialValue;
             set => SpecialValue = (byte)value;
         }
-        public Spell Spell => SpellIndex == 0 ? Spell.None : (Spell)((int)SpellType * 30 + SpellIndex);
+        public Spell Spell => SpellIndex == 0 ? Spell.None : (Spell)((int)SpellSchool * 30 + SpellIndex);
 
         private Item()
         {
