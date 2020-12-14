@@ -525,9 +525,16 @@ namespace Ambermoon
         internal void TrapMouse(Rect area, bool keepX = false, bool maxY = false)
         {
             trapMouseArea = renderView.GameToScreen(area);
-            trappedMousePositionOffset.X = keepX ? 0 : trapMouseArea.X - lastMousePosition.X;
-            trappedMousePositionOffset.Y = (maxY ? trapMouseArea.Bottom : trapMouseArea.Y) - lastMousePosition.Y;
-            UpdateCursor(trapMouseArea.Position, MouseButtons.None);
+            if (lastMousePosition.X >= trapMouseArea.Left && lastMousePosition.X <= trapMouseArea.Right)
+                keepX = true;
+            bool keepY = lastMousePosition.Y >= trapMouseArea.Top && lastMousePosition.Y <= trapMouseArea.Bottom;
+            var newPosition = new Position(keepX ? Util.Limit(trapMouseArea.Left, lastMousePosition.X, trapMouseArea.Right) : trapMouseArea.Center.X - 8,
+                keepY ? Util.Limit(trapMouseArea.Top, lastMousePosition.Y, trapMouseArea.Bottom) : trapMouseArea.Center.Y - 8);
+            if (!keepY && maxY)
+                newPosition.Y = trapMouseArea.Bottom;
+            trappedMousePositionOffset.X = newPosition.X - lastMousePosition.X;
+            trappedMousePositionOffset.Y = newPosition.Y - lastMousePosition.Y;
+            UpdateCursor(newPosition, MouseButtons.None);
             MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
         }
 
@@ -1541,18 +1548,67 @@ namespace Ambermoon
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
         {
-            bool updateHover = false;
+            bool scrolled = false;
 
             if (xScroll != 0)
-                updateHover = layout.ScrollX(xScroll < 0);
+                scrolled = layout.ScrollX(xScroll < 0);
             if (yScroll != 0 && layout.ScrollY(yScroll < 0))
-                updateHover = true;
+                scrolled = true;
 
-            if (updateHover)
+            if (scrolled)
             {
                 mousePosition = GetMousePosition(mousePosition);
                 UpdateCursor(mousePosition, MouseButtons.None);
             }
+            else if (yScroll != 0)
+            {
+                if (!WindowActive && !is3D)
+                {
+                    ScrollCursor(mousePosition, yScroll < 0);
+                }
+            }
+        }
+
+        void ScrollCursor(Position cursorPosition, bool down)
+        {
+            if (down)
+            {
+                if (CursorType < CursorType.Eye)
+                    CursorType = CursorType.Eye;
+                else if (CursorType == CursorType.Eye)
+                    CursorType = CursorType.Mouth;
+                else if (CursorType == CursorType.Mouth)
+                    CursorType = CursorType.Hand;
+                else if (CursorType == CursorType.Hand)
+                {
+                    CursorType = CursorType.Sword;
+                    UpdateCursor(cursorPosition, MouseButtons.None);
+                    return;
+                }
+                else
+                    return;
+            }
+            else // up
+            {
+                if (CursorType < CursorType.Eye)
+                    CursorType = CursorType.Hand;
+                else if (CursorType == CursorType.Eye)
+                {
+                    CursorType = CursorType.Sword;
+                    UpdateCursor(cursorPosition, MouseButtons.None);
+                    return;
+                }
+                else if (CursorType == CursorType.Mouth)
+                    CursorType = CursorType.Eye;
+                else if (CursorType == CursorType.Hand)
+                    CursorType = CursorType.Mouth;
+                else
+                    return;
+            }
+
+            UpdateCursor(trapMouseArea.Center - new Position(8, 8), MouseButtons.None);
+            trappedMousePositionOffset.X += trapMouseArea.Width / 2 - 8;
+            trappedMousePositionOffset.Y += trapMouseArea.Height / 2 - 8;
         }
 
         internal IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
@@ -2957,12 +3013,6 @@ namespace Ambermoon
             layout.AttachEventToButton(2, () =>
             {
                 StartBattleRound(false);
-                /*var battleEndInfo = new BattleEndInfo
-                {
-                    MonstersDefeated = true,
-                    FledMonsterIndices = new List<uint>()
-                };
-                */
             });
             // Move button
             layout.AttachEventToButton(3, () =>
