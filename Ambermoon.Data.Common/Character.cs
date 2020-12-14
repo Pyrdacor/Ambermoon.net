@@ -141,34 +141,34 @@ namespace Ambermoon.Data
                 var learnedSpells = new List<Spell>();
                 if (LearnedHealingSpells != 0)
                 {
-                    for (int i = 0; i < 30; ++i)
+                    for (int i = 1; i < 31; ++i)
                     {
                         if ((LearnedHealingSpells & (1 << i)) != 0)
-                            learnedSpells.Add((Spell)(i + 1));
+                            learnedSpells.Add((Spell)i);
                     }
                 }
                 if (LearnedAlchemisticSpells != 0)
                 {
-                    for (int i = 0; i < 30; ++i)
+                    for (int i = 1; i < 31; ++i)
                     {
                         if ((LearnedAlchemisticSpells & (1 << i)) != 0)
-                            learnedSpells.Add((Spell)(i + 31));
+                            learnedSpells.Add((Spell)(i + 30));
                     }
                 }
                 if (LearnedMysticSpells != 0)
                 {
-                    for (int i = 0; i < 30; ++i)
+                    for (int i = 1; i < 31; ++i)
                     {
                         if ((LearnedMysticSpells & (1 << i)) != 0)
-                            learnedSpells.Add((Spell)(i + 61));
+                            learnedSpells.Add((Spell)(i + 60));
                     }
                 }
                 if (LearnedDestructionSpells != 0)
                 {
-                    for (int i = 0; i < 30; ++i)
+                    for (int i = 1; i < 31; ++i)
                     {
                         if ((LearnedDestructionSpells & (1 << i)) != 0)
-                            learnedSpells.Add((Spell)(i + 91));
+                            learnedSpells.Add((Spell)(i + 90));
                     }
                 }
                 return learnedSpells;
