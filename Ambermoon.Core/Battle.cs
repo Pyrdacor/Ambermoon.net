@@ -1475,6 +1475,11 @@ namespace Ambermoon
                     // assume 75-125
                     DealDamage(75, 50);
                     return;
+                case Spell.Iceshower:
+                    // seen 129-254
+                    // assume 125-255
+                    DealDamage(125, 130);
+                    return;
                 // Winddevil: seen 10-15
                 // Windhowler: seen 35-46
                 default:

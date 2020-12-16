@@ -47,6 +47,7 @@ namespace Ambermoon.Render
         public AnimationScaleType ScaleType { get; set; } = AnimationScaleType.Both;
 
         public event Action AnimationFinished;
+        public event Action<float> AnimationUpdated;
 
         public BattleAnimation(ILayerSprite sprite)
         {
@@ -187,6 +188,7 @@ namespace Ambermoon.Render
             baseSpriteLocation.Y = startY + Util.Round((endY - startY) * factor);
             Scale = startScale + (endScale - startScale) * factor; // Note: scale will also set the new position
             sprite.TextureAtlasOffset = baseTextureCoords + new Position(frameIndices[frame] * sprite.TextureSize.Width, 0);
+            AnimationUpdated?.Invoke(factor);
 
             return true;
         }

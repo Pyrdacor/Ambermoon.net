@@ -515,8 +515,51 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Iceshower:
-                    // TODO
-                    return;
+                {
+                    ShowOverlay(Color.IceOverlay);
+                    int lowerWidth = Global.CombatBackgroundArea.Width;
+                    int upperWidth = 140;
+                    int upperXOffset = 92;
+                    int sourceYOffset = fromMonster ? 92 : Global.CombatBackgroundArea.Center.Y;
+                    int targetYOffset = fromMonster ? Global.CombatBackgroundArea.Center.Y : 92;
+                    void ShootIceBall(bool last)
+                    {
+                        var startPosition = RandomPosition();
+                        int targetX = fromMonster ? (startPosition.X - upperXOffset) * lowerWidth / upperWidth
+                            : upperXOffset + startPosition.X * upperWidth / lowerWidth;
+                        float dyFactor = fromMonster ? (float)lowerWidth / upperWidth : (float)upperWidth / lowerWidth;
+                        int yDiff = startPosition.Y - sourceYOffset;
+                        float startScale = fromMonster ? 0.0f : 1.5f;
+                        float endScale = fromMonster ? 1.5f : 0.0f;
+                        var animation = AddAnimation(CombatGraphicIndex.IceBall, 1, startPosition, new Position(targetX, targetYOffset + Util.Round(dyFactor * yDiff)),
+                            Game.TicksPerSecond * 2, startScale, endScale, 255, () => { if (last) { HideOverlay(); this.finishAction?.Invoke(); } });
+                        animation.AnimationUpdated += Updated;
+                        animation.AnimationFinished += Finished;
+                        void Updated(float progress)
+                        {
+                            int displayLayerBase = Util.Round(progress * 250);
+                            animation.SetDisplayLayer((byte)Math.Min(255, fromMonster ? displayLayerBase : 251 - displayLayerBase));
+                        }
+                        void Finished()
+                        {
+                            animation.AnimationUpdated -= Updated;
+                            animation.AnimationFinished -= Finished;
+                        }
+                    }
+                    Position RandomPosition()
+                    {
+                        int minX = fromMonster ? upperXOffset + 16 : 32;
+                        int maxX = Global.CombatBackgroundArea.Right - minX;
+                        int diffY = fromMonster ? upperWidth * 32 / lowerWidth : 32;
+                        int minY = sourceYOffset - diffY;
+                        int maxY = sourceYOffset + diffY;
+
+                        return new Position(game.RandomInt(minX, maxX), game.RandomInt(minY, maxY));
+                    }
+                    for (int i = 0; i < 8; ++i)
+                        ShootIceBall(i == 7);
+                    break;
+                }
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} can not be rendered during a fight.");
             }
@@ -543,18 +586,18 @@ namespace Ambermoon.Render
                 var position = GetTargetPosition(tile) - new Position(2, 0);
                 if (position.Y > Global.CombatBackgroundArea.Bottom - 6)
                     position.Y = Global.CombatBackgroundArea.Bottom - 6;
-                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 3, 1, 1, 255, () => { });
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(150), () =>
+                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, 255, () => { });
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(125), () =>
                 {
                     position.X += 6;
                     position.Y += 6;
-                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 3, 1, 1, 255, () => { });
+                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, 255, () => { });
                 });
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(300), () =>
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
                 {
                     position.X -= 12;
                     position.Y -= 4;
-                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 3);
+                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4);
                 });
             }
 
@@ -842,7 +885,5 @@ namespace Ambermoon.Render
             // Note: ToList is important as Update might remove the animation from the collection.
             animations.ToList().ForEach(a => a?.Update(ticks));
         }
-
-        // TODO
     }
 }
