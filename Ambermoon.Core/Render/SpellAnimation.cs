@@ -387,7 +387,6 @@ namespace Ambermoon.Render
                 {
                     // This only makes the screen red for a brief duration.
                     ShowOverlay(Color.FireOverlay);
-                    float scale = fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 2.0f;
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
                     {
                         this.finishAction?.Invoke();
@@ -399,8 +398,8 @@ namespace Ambermoon.Render
                     ShowOverlay(Color.FireOverlay);
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     const float scaleReducePerFlame = 0.225f;
-                    float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.85f) *
-                        (fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 1.5f);
+                    float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 1.15f) *
+                        (fromMonster ? 1.5f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                     void AddFlameAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
                         int startFrame, uint duration, Action finishAction)
                     {
@@ -463,7 +462,6 @@ namespace Ambermoon.Render
                 {
                     // This only makes the screen blue for a brief duration.
                     ShowOverlay(Color.IceOverlay);
-                    float scale = fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 2.0f;
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
                     {
                         this.finishAction?.Invoke();
@@ -475,14 +473,14 @@ namespace Ambermoon.Render
                     ShowOverlay(Color.IceOverlay);
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.IceBlock);
                     const float scaleReducePerIceBlock = 0.225f;
-                    float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.75f) *
-                        (fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 1.5f);
+                    float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.9f) *
+                        (fromMonster ? 1.5f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                     void AddIceAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
                         int index, uint duration, Action finishAction)
                     {
                         int[] frames = new int[] { 0, 0, 1, 1, 0, 0, 1, 1 };
-                        int startXOffset = index * width * 5 / 6;
-                        int endXOffset = index * width * 5 / 6;
+                        int startXOffset = index * width * 7 / 8;
+                        int endXOffset = index * width * 7 / 8;
                         int startHeight = Util.Round(startScale * info.GraphicInfo.Height);
                         int halfEndHeight = Util.Round(0.5f * endScale * info.GraphicInfo.Height);
                         var startPosition = new Position(startGroundPosition.X + startXOffset, startGroundPosition.Y - startHeight / 2);
