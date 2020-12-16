@@ -1459,6 +1459,22 @@ namespace Ambermoon
                     // seen 41-69 (assume 40-70)
                     DealDamage(40, 30); // TODO
                     return;
+                case Spell.Iceball:
+                    // seen 96-166 (skeleton)
+                    // seen 100-174 (small spider)
+                    // seen 111-130 (gigantula)
+                    // seen 111-152 (poison spider)
+                    // assume 95-175
+                    DealDamage(95, 80);
+                    return;
+                case Spell.Icestorm:
+                    // seen 83-112 (skeleton)
+                    // seen 80-121 (small spider)
+                    // seen 113 (gigantula)
+                    // seen 75-104 (poison spider)
+                    // assume 75-125
+                    DealDamage(75, 50);
+                    return;
                 // Winddevil: seen 10-15
                 // Windhowler: seen 35-46
                 default:

@@ -87,6 +87,8 @@ namespace Ambermoon
             return max;
         }
 
+        public static float Square(float value) => value * value;
+
         public static string BytesToHexString(string separator, params byte[] bytes) =>
             string.Join(separator, bytes.Select(b => b.ToString("x2")));
 
