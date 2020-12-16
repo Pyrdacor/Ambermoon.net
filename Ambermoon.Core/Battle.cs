@@ -949,6 +949,8 @@ namespace Ambermoon
                         spell != Spell.Firestorm &&
                         spell != Spell.Firepillar &&
                         spell != Spell.Iceball &&
+                        spell != Spell.Icestorm &&
+                        spell != Spell.Iceshower &&
                         spell != Spell.DissolveVictim &&
                         spell != Spell.DispellUndead &&
                         spell != Spell.DestroyUndead &&

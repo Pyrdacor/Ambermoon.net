@@ -67,6 +67,7 @@ namespace Ambermoon.Render
                 baseSpriteLocation = new Position(centerPosition);
             baseSpriteSize = new Size(size);
             baseTextureCoords = new Position(textureOffset);
+            sprite.TextureAtlasOffset = new Position(textureOffset);
             sprite.TextureSize = customTextureSize ?? baseSpriteSize;
             sprite.MirrorX = mirrorX;
             AnchorX = anchorX;

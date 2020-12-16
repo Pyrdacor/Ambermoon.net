@@ -399,7 +399,7 @@ namespace Ambermoon.Render
                     ShowOverlay(Color.FireOverlay);
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     const float scaleReducePerFlame = 0.225f;
-                    float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.65f) *
+                    float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.85f) *
                         (fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 1.5f);
                     void AddFlameAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
                         int startFrame, uint duration, Action finishAction)
@@ -420,7 +420,7 @@ namespace Ambermoon.Render
                     }
                     var combatArea = Global.CombatBackgroundArea;
                     var leftPosition = fromMonster ? Layout.GetPlayerSlotCenterPosition(2) : Layout.GetMonsterCombatGroundPosition(renderView, targetRow * 6 + 2);
-                    int width = Util.Round(scale * info.GraphicInfo.Width * 0.65f);
+                    int width = Util.Round(scale * info.GraphicInfo.Width * 0.5f);
                     uint primaryDuration = Game.TicksPerSecond;
                     uint secondaryDuration = Game.TicksPerSecond * 5 / 8;
                     int endX = leftPosition.X - (combatArea.Right - leftPosition.X) * (int)secondaryDuration / (int)primaryDuration;
@@ -471,6 +471,51 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Icestorm:
+                {
+                    ShowOverlay(Color.IceOverlay);
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.IceBlock);
+                    const float scaleReducePerIceBlock = 0.225f;
+                    float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 0.75f) *
+                        (fromMonster ? renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startPosition / 6)) : 1.5f);
+                    void AddIceAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
+                        int index, uint duration, Action finishAction)
+                    {
+                        int[] frames = new int[] { 0, 0, 1, 1, 0, 0, 1, 1 };
+                        int startXOffset = index * width * 5 / 6;
+                        int endXOffset = index * width * 5 / 6;
+                        int startHeight = Util.Round(startScale * info.GraphicInfo.Height);
+                        int halfEndHeight = Util.Round(0.5f * endScale * info.GraphicInfo.Height);
+                        var startPosition = new Position(startGroundPosition.X + startXOffset, startGroundPosition.Y - startHeight / 2);
+                        var endPosition = new Position(endGroundPosition.X + endXOffset, endGroundPosition.Y - halfEndHeight);
+                        AddAnimation(CombatGraphicIndex.IceBlock, frames,
+                            startPosition, endPosition, duration,
+                            1.0f, endScale / startScale, (byte)Math.Min(255, targetRow * 60 + 60), finishAction,
+                            new Size(width, startHeight), BattleAnimation.AnimationScaleType.YOnly);
+                    }
+                    var combatArea = Global.CombatBackgroundArea;
+                    var leftPosition = fromMonster ? Layout.GetPlayerSlotCenterPosition(2) : Layout.GetMonsterCombatGroundPosition(renderView, targetRow * 6 + 2);
+                    int width = Util.Round(scale * info.GraphicInfo.Width * 0.5f);
+                    uint primaryDuration = Game.TicksPerSecond;
+                    uint secondaryDuration = Game.TicksPerSecond * 5 / 8;
+                    int endX = leftPosition.X - (combatArea.Right - leftPosition.X) * (int)secondaryDuration / (int)primaryDuration;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        float baseScale = scale * (1.0f - i * scaleReducePerIceBlock);
+                        int frame = i;
+
+                        AddIceAnimation(width, baseScale, baseScale, new Position(combatArea.Right, leftPosition.Y),
+                            leftPosition, frame, primaryDuration, () =>
+                            {
+                                AddIceAnimation(width, baseScale, 0.5f * baseScale, leftPosition,
+                                    new Position(endX, leftPosition.Y), frame, secondaryDuration, frame == 3 ? (Action)(() =>
+                                    {
+                                        HideOverlay();
+                                        this.finishAction?.Invoke();
+                                    }) : null);
+                            });
+                    }
+                    break;
+                }
                 case Spell.Iceshower:
                     // TODO
                     return;
@@ -778,8 +823,10 @@ namespace Ambermoon.Render
                 }
                 case Spell.Icestorm:
                 case Spell.Iceshower:
-                    // TODO
-                    return;
+                {
+                    PlayChill();
+                    break;
+                }
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} can not be rendered during a fight.");
             }
