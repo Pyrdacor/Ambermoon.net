@@ -827,27 +827,30 @@ namespace Ambermoon
                     {
                         hurtAction.Skip = true;
 
-                        switch (attackResult)
+                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                         {
-                            case AttackResult.Failed:
-                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackFailed, textColor);
-                                break;
-                            case AttackResult.NoDamage:
-                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, textColor);
-                                break;
-                            case AttackResult.Missed:
-                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget, textColor);
-                                break;
-                            case AttackResult.Blocked:
-                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried, textColor);
-                                break;
-                            case AttackResult.Protected:
-                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotPenetrateMagicalAura, textColor);
-                                break;
-                            case AttackResult.Petrified:
-                                layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, textColor);
-                                break;
-                        }
+                            switch (attackResult)
+                            {
+                                case AttackResult.Failed:
+                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackFailed, textColor);
+                                    break;
+                                case AttackResult.NoDamage:
+                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, textColor);
+                                    break;
+                                case AttackResult.Missed:
+                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget, textColor);
+                                    break;
+                                case AttackResult.Blocked:
+                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried, textColor);
+                                    break;
+                                case AttackResult.Protected:
+                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotPenetrateMagicalAura, textColor);
+                                    break;
+                                case AttackResult.Petrified:
+                                    layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, textColor);
+                                    break;
+                            }
+                        });
 
                         if (abort)
                         {
@@ -954,7 +957,9 @@ namespace Ambermoon
                         spell != Spell.DissolveVictim &&
                         spell != Spell.DispellUndead &&
                         spell != Spell.DestroyUndead &&
-                        spell != Spell.HolyWord) // TODO: REMOVE. For now we only allow some spells for testing.
+                        spell != Spell.HolyWord &&
+                        spell != Spell.MagicalProjectile &&
+                        spell != Spell.MagicalArrows) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         if (spell < Spell.Lame || spell > Spell.Drug)
                             break;
@@ -1218,10 +1223,11 @@ namespace Ambermoon
                         {
                             HandleCharacterDeath(battleAction.Character, target, () => ActionFinished());
                         }
-                        else if (target is PartyMember partyMember)
+                        else
                         {
-                            layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
-                            ActionFinished();
+                            if (target is PartyMember partyMember)
+                                layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                            ActionFinished(false);
                         }
                     }
 
@@ -1479,6 +1485,11 @@ namespace Ambermoon
                     // seen 129-254
                     // assume 125-255
                     DealDamage(125, 130);
+                    return;
+                case Spell.MagicalProjectile:
+                case Spell.MagicalArrows:
+                    // Those deal half the caster level as damage.
+                    DealDamage(Math.Max(1, (uint)caster.Level / 2), 0);
                     return;
                 // Winddevil: seen 10-15
                 // Windhowler: seen 35-46

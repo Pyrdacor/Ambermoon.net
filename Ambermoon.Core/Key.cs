@@ -38,6 +38,7 @@
         PageUp,
         PageDown,
         Home,
-        End
+        End,
+        Space
     }
 }

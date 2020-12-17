@@ -61,7 +61,8 @@ namespace Ambermoon.Render
             uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255, Action finishAction = null,
             Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
             BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
-            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center)
+            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center,
+            bool mirrorX = false)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
@@ -84,7 +85,7 @@ namespace Ambermoon.Render
             animation.AnimationFinished += AnimationEnded;
             animation.ScaleType = scaleType;
             animation.SetStartFrame(textureAtlas.GetOffset(Graphics.CombatGraphicOffset + (uint)graphicIndex),
-                size, startPosition, startScale, false, textureSize, anchorX, anchorY);
+                size, startPosition, startScale, mirrorX, textureSize, anchorX, anchorY);
             animation.Play(frameIndices, duration / (uint)frameIndices.Length, game.CurrentBattleTicks, endPosition, endScale);
             animations.Add(animation);
             return animation;
@@ -94,10 +95,10 @@ namespace Ambermoon.Render
             uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255, Action finishAction = null,
             Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
             BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
-            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center)
+            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center, bool mirrorX = false)
         {
             return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
-                duration, startScale, endScale, displayLayer, finishAction, customBaseSize, scaleType);
+                duration, startScale, endScale, displayLayer, finishAction, customBaseSize, scaleType, anchorX, anchorY, mirrorX);
         }
 
         float GetScaleYRelativeToCombatArea(int baseHeight, float factor)
@@ -144,8 +145,6 @@ namespace Ambermoon.Render
                 case Spell.MassHurry:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
-                case Spell.MagicalProjectile:
-                case Spell.MagicalArrows:
                 case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
@@ -193,6 +192,21 @@ namespace Ambermoon.Render
                     }
                     if (position.Y > Global.CombatBackgroundArea.Bottom - 20)
                         position.Y = Global.CombatBackgroundArea.Bottom - 20;
+                    return position;
+                }
+                case Spell.MagicalProjectile:
+                case Spell.MagicalArrows:
+                {
+                    Position position;
+                    if (fromMonster)
+                    {
+                        position = layout.GetMonsterCombatCenterPosition(startPosition, battle.GetCharacterAt(startPosition) as Monster);
+                    }
+                    else
+                    {
+                        position = new Position(startPosition % 6 < 3 ? Global.CombatBackgroundArea.Left + 32 : Global.CombatBackgroundArea.Right - 32,
+                            Global.CombatBackgroundArea.Top + 64);
+                    }
                     return position;
                 }
                 default:
@@ -350,6 +364,8 @@ namespace Ambermoon.Render
                 case Spell.Rockfall:
                 case Spell.Winddevil:
                 case Spell.Windhowler:
+                case Spell.MagicalProjectile:
+                case Spell.MagicalArrows:
                     // Those spells use only the MoveTo method.
                     this.finishAction?.Invoke();
                     break;
@@ -357,8 +373,6 @@ namespace Ambermoon.Render
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
-                case Spell.MagicalProjectile:
-                case Spell.MagicalArrows:
                 case Spell.GhostWeapon:
                 case Spell.Blink:
                 case Spell.Flight:
@@ -718,9 +732,43 @@ namespace Ambermoon.Render
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
+                    return; // TODO
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
-                    return; // TODO
+                {
+                    // Both spells use the same animation. For magical arrows it is just called multiple times.
+                    var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);
+                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow);
+                    var graphic = fromMonster ? CombatGraphicIndex.MagicProjectileMonster : CombatGraphicIndex.MagicProjectileHuman;
+                    var sourcePosition = GetSourcePosition();
+                    var targetPosition = GetTargetPosition(tile);
+                    bool mirrorX = targetPosition.X < sourcePosition.X;
+                    int rowDist = Math.Abs(startPosition / 6 - tile / 6);
+                    float perspectiveScaleFactor = fromMonster ? 1.0f : Util.Limit(0.5f, Math.Abs(targetPosition.X - sourcePosition.X) / 48.0f - rowDist * 0.1f, 1.0f);
+
+                    void Shoot()
+                    {
+                        var frames = (fromMonster ? Enumerable.Range(0, 12) : Enumerable.Range(16, 8)).ToArray();
+                        AddAnimation(graphic, frames, sourcePosition, targetPosition,
+                            (uint)Math.Min(280, Math.Abs(targetPosition.X - sourcePosition.X) + rowDist * 50) * Game.TicksPerSecond / 560,
+                            fromMonster ? endScale : 1.0f, fromMonster ? 1.0f : Math.Min(endScale, perspectiveScaleFactor), 255, null, null,
+                            fromMonster || perspectiveScaleFactor >= endScale ? BattleAnimation.AnimationScaleType.Both : BattleAnimation.AnimationScaleType.XOnly,
+                            BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center, mirrorX);
+                    }
+
+                    if (!fromMonster)
+                    {
+                        AddAnimation(graphic, fromMonster ? 12 : 17, sourcePosition, sourcePosition,
+                            Game.TicksPerSecond * 5 / 6, 1.0f, 1.0f, 255, Shoot, null,
+                            BattleAnimation.AnimationScaleType.None, BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center,
+                            mirrorX);
+                    }
+                    else
+                    {
+                        Shoot();
+                    }
+                    break;
+                }
                 case Spell.Lame:
                     PlayCurse(CombatGraphicIndex.IconParalyze);
                     break;

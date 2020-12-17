@@ -1112,6 +1112,13 @@ namespace Ambermoon
 
             if (!InputEnable)
             {
+                // In battle the space key can be used to click for next action.
+                if (key == Key.Space && BattleRoundActive && currentBattle.WaitForClick)
+                {
+                    currentBattle.Click(CurrentBattleTicks);
+                    return;
+                }
+
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
                     return;
             }
@@ -3021,6 +3028,8 @@ namespace Ambermoon
                             spell != Spell.DispellUndead &&
                             spell != Spell.DestroyUndead &&
                             spell != Spell.HolyWord &&
+                            spell != Spell.MagicalProjectile &&
+                            spell != Spell.MagicalArrows &&
                             !(spell >= Spell.Lame && spell <= Spell.Drug))
                             pickedSpell = Spell.Iceball; // TODO
                         else
