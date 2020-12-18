@@ -212,7 +212,7 @@ namespace Ambermoon
         public event Action<PartyMember> PlayerLostTarget;
         event Action AnimationFinished;
         readonly List<Monster> initialMonsters = new List<Monster>();
-        readonly Dictionary<int, IRenderText> monsterDamageTexts = new Dictionary<int, IRenderText>();
+        readonly Dictionary<int, IRenderText> battleFieldDamageTexts = new Dictionary<int, IRenderText>();
         public IEnumerable<Monster> Monsters => battleField.Where(c => c?.Type == CharacterType.Monster).Cast<Monster>();
         public IEnumerable<Character> Characters => battleField.Where(c => c != null);
         public Character GetCharacterAt(int index) => battleField[index];
@@ -1255,8 +1255,8 @@ namespace Ambermoon
                         currentlyAnimatedMonster = monster;
 
                         PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, EndHurt);
-                        ShowMonsterDamage((int)tile, damage);
                     }
+                    ShowBattleFieldDamage((int)tile, damage);
                     if (target.Ailments.HasFlag(Ailment.Sleep))
                         RemoveAilment(Ailment.Sleep, target);
                     target.Damage(damage);
@@ -1274,7 +1274,7 @@ namespace Ambermoon
             });
         }
 
-        void ShowMonsterDamage(int tile, uint damage)
+        void ShowBattleFieldDamage(int tile, uint damage)
         {
             var layer = layout.RenderView.GetLayer(Layer.Text);
             var text = layout.RenderView.TextProcessor.CreateText(damage > 999 ? "***" : $"{damage:000}");
@@ -1291,14 +1291,14 @@ namespace Ambermoon
             };
             int colorIndex = -1;
 
-            if (monsterDamageTexts.ContainsKey(tile))
+            if (battleFieldDamageTexts.ContainsKey(tile))
             {
-                monsterDamageTexts[tile].Delete();
-                monsterDamageTexts[tile] = damageText;
+                battleFieldDamageTexts[tile].Delete();
+                battleFieldDamageTexts[tile] = damageText;
             }
             else
             {
-                monsterDamageTexts.Add(tile, damageText);
+                battleFieldDamageTexts.Add(tile, damageText);
             }
 
             game.AddTimedEvent(TimeSpan.FromMilliseconds(150), ChangeColor);
@@ -1309,12 +1309,12 @@ namespace Ambermoon
 
                 if (colorIndex == colors.Length)
                 {
-                    monsterDamageTexts[tile].Delete();
-                    monsterDamageTexts.Remove(tile);
+                    battleFieldDamageTexts[tile].Delete();
+                    battleFieldDamageTexts.Remove(tile);
                 }
                 else
                 {
-                    monsterDamageTexts[tile].TextColor = colors[colorIndex];
+                    battleFieldDamageTexts[tile].TextColor = colors[colorIndex];
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(150), ChangeColor);
                 }
             }
@@ -1588,8 +1588,7 @@ namespace Ambermoon
                         EndHurt();
                     }
                 );
-                if (target.Type == CharacterType.Monster)
-                    ShowMonsterDamage(GetSlotFromCharacter(target), damage);
+                ShowBattleFieldDamage(GetSlotFromCharacter(target), damage);
             }
         }
 
