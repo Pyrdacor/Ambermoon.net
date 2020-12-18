@@ -14,8 +14,8 @@ I got some questions of how to run the game:
 
 Version | Windows 64bit | Linux 64bit
 --- | --- | ---
+0.1.2 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Linux.tar.gz)
 0.1.1 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.1beta/Ambermoon.net-Linux.tar.gz)
-0.1.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.0beta/Ambermoon.net-Windows.zip) | -
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -73,6 +73,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [0.1.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.2beta): Added more spells, added damage display on battle field, added critical hits
 - Version [0.1.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.1beta): Fixed end battle crash, fixed monster death animation, added firepillar spell
 - Version [0.1.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.0beta): Many improvements to battles and UI, some spells do damage or have effects now
 
