@@ -3030,6 +3030,8 @@ namespace Ambermoon
                             spell != Spell.HolyWord &&
                             spell != Spell.MagicalProjectile &&
                             spell != Spell.MagicalArrows &&
+                            spell != Spell.LPStealer &&
+                            spell != Spell.SPStealer &&
                             !(spell >= Spell.Lame && spell <= Spell.Drug))
                             pickedSpell = Spell.Iceball; // TODO
                         else

@@ -937,16 +937,19 @@ namespace Ambermoon
 
                     var spellInfo = SpellInfos.Entries[spell];
 
+                    if (itemIndex == 0)
+                    {
+                        battleAction.Character.SpellPoints.CurrentValue = Math.Max(0, battleAction.Character.SpellPoints.CurrentValue - spellInfo.SP);
+
+                        if (battleAction.Character is PartyMember partyMember)
+                            layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                    }
+
                     if (!CheckSpellCast(battleAction.Character, spellInfo))
                     {
                         EndCast();
                         return;
                     }
-
-                    battleAction.Character.SpellPoints.CurrentValue -= spellInfo.SP;
-
-                    if (battleAction.Character is PartyMember partyMember)
-                        layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
 
                     if (spell != Spell.Firebeam &&
                         spell != Spell.Fireball &&
@@ -960,7 +963,9 @@ namespace Ambermoon
                         spell != Spell.DestroyUndead &&
                         spell != Spell.HolyWord &&
                         spell != Spell.MagicalProjectile &&
-                        spell != Spell.MagicalArrows) // TODO: REMOVE. For now we only allow some spells for testing.
+                        spell != Spell.MagicalArrows &&
+                        spell != Spell.LPStealer &&
+                        spell != Spell.SPStealer) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         if (spell < Spell.Lame || spell > Spell.Drug)
                             break;
@@ -1459,6 +1464,9 @@ namespace Ambermoon
             }
         }
 
+        /// <summary>
+        /// The boolean argument of the finish action means: NeedsClickAfterwards
+        /// </summary>
         void ApplySpellEffect(Character caster, Character target, Spell spell, uint ticks, Action<bool> finishAction)
         {
             switch (spell)
@@ -1548,6 +1556,24 @@ namespace Ambermoon
                     // Those deal half the caster level as damage.
                     DealDamage(Math.Max(1, (uint)caster.Level / 2), 0);
                     return;
+                case Spell.LPStealer:
+                {
+                    DealDamage(caster.Level, 0);
+                    caster.HitPoints.CurrentValue = Math.Min(caster.HitPoints.MaxValue, caster.HitPoints.CurrentValue +
+                        Math.Min(caster.Level, caster.HitPoints.MaxValue - caster.HitPoints.CurrentValue));
+                    if (caster is PartyMember castingMember)
+                        layout.FillCharacterBars(game.SlotFromPartyMember(castingMember).Value, castingMember);
+                    return;
+                }
+                case Spell.SPStealer:
+                    // TODO: what happens if a monster wants to cast a spell afterwards but has not enough SP through SP stealer anymore?
+                    target.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)target.SpellPoints.CurrentValue - caster.Level);
+                    caster.SpellPoints.CurrentValue += Math.Min(caster.Level, caster.SpellPoints.MaxValue - caster.SpellPoints.CurrentValue);
+                    if (target is PartyMember targetMember)
+                        layout.FillCharacterBars(game.SlotFromPartyMember(targetMember).Value, targetMember);
+                    else if (caster is PartyMember castingMember)
+                        layout.FillCharacterBars(game.SlotFromPartyMember(castingMember).Value, castingMember);
+                    break;
                 // Winddevil: seen 10-15
                 // Windhowler: seen 35-46
                 default:

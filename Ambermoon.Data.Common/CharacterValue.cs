@@ -11,7 +11,7 @@ namespace Ambermoon.Data
         public uint MaxValue { get; set; }
         public uint BonusValue { get; set; }
         public uint Unknown { get; set; }
-        public uint TotalCurrentValue => CurrentValue + BonusValue;
+        public uint TotalCurrentValue => Util.Limit(0, CurrentValue + BonusValue, MaxValue);
     }
 
     [Serializable]

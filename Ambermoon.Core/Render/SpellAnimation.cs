@@ -366,14 +366,14 @@ namespace Ambermoon.Render
                 case Spell.Windhowler:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
+                case Spell.LPStealer:
+                case Spell.SPStealer:
+                case Spell.GhostWeapon:
                     // Those spells use only the MoveTo method.
                     this.finishAction?.Invoke();
                     break;
-                case Spell.LPStealer:
-                case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
-                case Spell.GhostWeapon:
                 case Spell.Blink:
                 case Spell.Flight:
                     return; // TODO
@@ -728,11 +728,27 @@ namespace Ambermoon.Render
                 case Spell.AntiMagicSphere:
                 case Spell.Hurry:
                 case Spell.MassHurry:
-                case Spell.LPStealer:
-                case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
                     return; // TODO
+                case Spell.LPStealer:
+                case Spell.SPStealer:
+                {
+                    // Note: The hurt animation comes first so we immediately call the passed finish action
+                    // which will display the hurt animation.
+                    finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
+                    this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
+
+                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                    {
+                        byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 60));
+                        AddAnimation(spell == Spell.LPStealer ? CombatGraphicIndex.BlueBeam : CombatGraphicIndex.GreenBeam, 1,
+                            GetTargetPosition(tile), GetSourcePosition(), BattleEffects.GetFlyDuration((uint)tile, (uint)startPosition),
+                            fromMonster ? 2.5f: endScale, fromMonster ? endScale : 2.5f, displayLayer);
+                    });
+                    break;
+                }
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
                 {
