@@ -46,9 +46,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class ExecutableData
     {
+        public const int DigitGlyphOffset = 48; // Glyph 48 is '0'
         public string DataVersionString { get; }
         public string DataInfoString { get; }
         public UIGraphics UIGraphics { get; }
+        public DigitGlyphs DigitGlyphs { get; }
         public Glyphs Glyphs { get; }
         public Cursors Cursors { get; }
         public FileList FileList { get; }
@@ -114,6 +116,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 throw new AmbermoonException(ExceptionScope.Data, "Unexpected executable format.");
 
             var relocOffsets = reloc32Hunk.Value.Entries[5];
+            uint digitOffset = relocOffsets.Take(9).Aggregate((a, b) => a + b) + 0x76D; // TODO: does this work for all versions?
             uint codepageOffset = relocOffsets.Take(12).Aggregate((a, b) => a + b);
             uint textOffset = codepageOffset + relocOffsets.Skip(12).Take(2).Aggregate((a, b) => a + b) + 4;
             uint glyphOffset = codepageOffset + relocOffsets.Skip(12).Aggregate((a, b) => a + b) + 262;
@@ -124,11 +127,13 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
 
-            dataHunkReaders[1].Position = (int)glyphOffset;
             dataHunkIndex = 1;
+            dataHunkReaders[1].Position = (int)digitOffset;
+            DigitGlyphs = Read<DigitGlyphs>(dataHunkReaders, ref dataHunkIndex);
 
             // TODO ...
 
+            dataHunkReaders[1].Position = (int)glyphOffset;
             Glyphs = Read<Glyphs>(dataHunkReaders, ref dataHunkIndex);
             Cursors = Read<Cursors>(dataHunkReaders, ref dataHunkIndex);
 

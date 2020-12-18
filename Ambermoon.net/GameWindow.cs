@@ -213,6 +213,7 @@ namespace Ambermoon
                 new TextProcessor(), Width, Height);
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text);
             renderView.RenderTextFactory.GlyphTextureMapping = Enumerable.Range(0, 94).ToDictionary(x => (byte)x, x => textureAtlas.GetOffset((uint)x));
+            renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => textureAtlas.GetOffset(100 + (uint)x));
 
             // Setup input
             SetupInput(window.CreateInput());

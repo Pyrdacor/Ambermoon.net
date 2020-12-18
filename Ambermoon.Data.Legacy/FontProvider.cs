@@ -11,7 +11,7 @@
 
         public IFont GetFont()
         {
-            return new Font(executableData.Glyphs);
+            return new Font(executableData.Glyphs, executableData.DigitGlyphs);
         }
     }
 }

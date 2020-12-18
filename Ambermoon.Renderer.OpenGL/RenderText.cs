@@ -21,6 +21,7 @@
 
 using Ambermoon.Data;
 using Ambermoon.Render;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -45,6 +46,8 @@ namespace Ambermoon.Renderer
         Position[] characterPositions = null;
         int lastCharacterToRender = -1;
         bool updatingPositions = false;
+        protected readonly int characterWidth = CharacterWidth;
+        protected readonly int characterHeight = CharacterHeight;
 
         public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping)
             : base(0, 0, virtualScreen)
@@ -66,8 +69,9 @@ namespace Ambermoon.Renderer
         }
 
         public RenderText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
-            IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign)
-            : base(text.MaxLineSize * CharacterWidth, text.LineCount * CharacterHeight - (LineHeight - CharacterHeight), virtualScreen)
+            IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign,
+            int characterWidth = CharacterWidth, int characterHeight = CharacterHeight)
+            : base(text.MaxLineSize * characterWidth, text.LineCount * characterHeight - (LineHeight - characterHeight), virtualScreen)
         {
             this.glyphTextureMapping = glyphTextureMapping;
             this.bounds = bounds;
@@ -78,6 +82,8 @@ namespace Ambermoon.Renderer
             Shadow = shadow;
             X = bounds.Left;
             Y = bounds.Top;
+            this.characterWidth = characterWidth;
+            this.characterHeight = characterHeight;
         }
 
         public byte DisplayLayer
@@ -195,7 +201,7 @@ namespace Ambermoon.Renderer
                 y += LineHeight;
                 numEmptyCharacterInLine = 0;
 
-                return y + CharacterHeight - 1 <= bounds.Bottom;
+                return y + characterHeight - 1 <= bounds.Bottom;
             }
 
             void AdjustLineAlign(int lineEndGlyphIndex)
@@ -203,7 +209,7 @@ namespace Ambermoon.Renderer
                 if (textAlign == TextAlign.Left)
                     return;
 
-                int remainingWidth = bounds.Width - (lineEndGlyphIndex - lastLineBreakIndex - numEmptyCharacterInLine) * CharacterWidth;
+                int remainingWidth = bounds.Width - (lineEndGlyphIndex - lastLineBreakIndex - numEmptyCharacterInLine) * characterWidth;
                 int adjustment = textAlign == TextAlign.Right
                     ? remainingWidth
                     : remainingWidth / 2; // center
@@ -231,9 +237,9 @@ namespace Ambermoon.Renderer
                 if (glyphIndex == (byte)SpecialGlyph.SoftSpace || glyphIndex == (byte)SpecialGlyph.HardSpace)
                 {
                     lastWhitespaceIndex = i;
-                    x += CharacterWidth;
+                    x += characterWidth;
 
-                    if (x + CharacterWidth - 1 >= bounds.Right)
+                    if (x + characterWidth - 1 >= bounds.Right)
                     {
                         AdjustLineAlign(i - 1);
                         lastLineBreakIndex = i;
@@ -258,7 +264,7 @@ namespace Ambermoon.Renderer
 
                 characterPositions[i] = new Position(x, y);
 
-                x += CharacterWidth;
+                x += characterWidth;
 
                 if (x - 1 >= bounds.Right) // the character didn't fit into the line -> move the whole word to next line
                 {
@@ -273,7 +279,7 @@ namespace Ambermoon.Renderer
                         else                            
                         {
                             characterPositions[i] = new Position(x, y);
-                            x += CharacterWidth;
+                            x += characterWidth;
                         }
                     }
 
@@ -287,7 +293,7 @@ namespace Ambermoon.Renderer
             if (x > width)
                 width = x;
 
-            Resize(width, y + CharacterHeight - Y);
+            Resize(width, y + characterHeight - Y);
 
             lastCharacterToRender = characterPositions.Select((pos, index) => new { pos, index }).LastOrDefault(p => p.pos != null)?.index ?? -1;
 
@@ -322,7 +328,7 @@ namespace Ambermoon.Renderer
 
                 var position = characterPositions[i];
                 var textureCoord = glyphTextureMapping[glyphIndex];
-                var sprite = new TextCharacterSprite(CharacterWidth, CharacterHeight, textureCoord.X, textureCoord.Y, virtualScreen,
+                var sprite = new TextCharacterSprite(characterWidth, characterHeight, textureCoord.X, textureCoord.Y, virtualScreen,
                     (byte)Util.Min(255, DisplayLayer + 2)) // ensure to draw it in front of the shadow
                 {
                     TextColorIndex = colorIndex,
@@ -341,7 +347,7 @@ namespace Ambermoon.Renderer
             {
                 foreach (var characterSprite in characterSprites)
                 {
-                    var shadowSprite = new TextCharacterSprite(CharacterWidth, CharacterHeight,
+                    var shadowSprite = new TextCharacterSprite(characterWidth, characterHeight,
                         characterSprite.TextureAtlasOffset.X, characterSprite.TextureAtlasOffset.Y,
                         virtualScreen, DisplayLayer)
                     {
@@ -428,7 +434,10 @@ namespace Ambermoon.Renderer
             this.virtualScreen = virtualScreen;
         }
 
+        /// <inheritdoc/>
         public Dictionary<byte, Position> GlyphTextureMapping { get; set; }
+        /// <inheritdoc/>
+        public Dictionary<byte, Position> DigitGlyphTextureMapping { get; set; }
 
         public IRenderText Create()
         {
@@ -443,6 +452,24 @@ namespace Ambermoon.Renderer
         public IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
         {
             return new RenderText(virtualScreen, GlyphTextureMapping, layer, text, textColor, shadow, bounds, textAlign);
+        }
+
+        public IRenderText CreateDigits(IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
+        {
+            return new DigitText(virtualScreen, DigitGlyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign);
+        }
+
+        private class DigitText : RenderText
+        {
+            const int DigitWidth = 5;
+            const int DigitHeight = 5;
+
+            public DigitText(Rect virtualScreen, Dictionary<byte, Position> glyphTextureMapping,
+                IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign)
+                : base(virtualScreen, glyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign, DigitWidth, DigitHeight)
+            {
+
+            }
         }
     }
 }

@@ -211,7 +211,8 @@ namespace Ambermoon
         public event Action<PartyMember> PlayerWeaponBroke;
         public event Action<PartyMember> PlayerLostTarget;
         event Action AnimationFinished;
-        List<Monster> initialMonsters = new List<Monster>();
+        readonly List<Monster> initialMonsters = new List<Monster>();
+        readonly Dictionary<int, IRenderText> monsterDamageTexts = new Dictionary<int, IRenderText>();
         public IEnumerable<Monster> Monsters => battleField.Where(c => c?.Type == CharacterType.Monster).Cast<Monster>();
         public IEnumerable<Character> Characters => battleField.Where(c => c != null);
         public Character GetCharacterAt(int index) => battleField[index];
@@ -1254,6 +1255,7 @@ namespace Ambermoon
                         currentlyAnimatedMonster = monster;
 
                         PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, EndHurt);
+                        ShowMonsterDamage((int)tile, damage);
                     }
                     if (target.Ailments.HasFlag(Ailment.Sleep))
                         RemoveAilment(Ailment.Sleep, target);
@@ -1270,6 +1272,55 @@ namespace Ambermoon
             {
                 ActionFinished();
             });
+        }
+
+        void ShowMonsterDamage(int tile, uint damage)
+        {
+            var layer = layout.RenderView.GetLayer(Layer.Text);
+            var text = layout.RenderView.TextProcessor.CreateText(damage > 999 ? "***" : $"{damage:000}");
+            var area = Global.BattleFieldSlotArea(tile).CreateModified(-5, 9, 12, 0);
+            var damageText = layout.RenderView.RenderTextFactory.CreateDigits(layer, text, TextColor.Red, false, area, TextAlign.Center);
+            TextColor[] colors = new TextColor[]
+            {
+                TextColor.Orange,
+                TextColor.Yellow,
+                TextColor.White,
+                TextColor.Yellow,
+                TextColor.Orange,
+                TextColor.Red
+            };
+            int colorIndex = -1;
+
+            if (monsterDamageTexts.ContainsKey(tile))
+            {
+                monsterDamageTexts[tile].Delete();
+                monsterDamageTexts[tile] = damageText;
+            }
+            else
+            {
+                monsterDamageTexts.Add(tile, damageText);
+            }
+
+            game.AddTimedEvent(TimeSpan.FromMilliseconds(150), ChangeColor);
+
+            void ChangeColor()
+            {
+                ++colorIndex;
+
+                if (colorIndex == colors.Length)
+                {
+                    monsterDamageTexts[tile].Delete();
+                    monsterDamageTexts.Remove(tile);
+                }
+                else
+                {
+                    monsterDamageTexts[tile].TextColor = colors[colorIndex];
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(150), ChangeColor);
+                }
+            }
+
+            damageText.DisplayLayer = 255;
+            damageText.Visible = true;
         }
 
         bool CheckSpellCast(Character caster, SpellInfo spellInfo)
@@ -1378,7 +1429,7 @@ namespace Ambermoon
         void HandleCharacterDeath(Character attacker, Character target, Action finishAction)
         {
             // Remove all actions that are performed by the dead target
-            // or by the attacker. Note that following target of a multi-target
+            // or by the attacker. Note that following targets of a multi-target
             // spell won't be skipped as the spell cast action is already running.
             foreach (var action in roundBattleActions.Where(a => a.Character == target || a.Character == attacker))
                 action.Skip = true;
@@ -1387,9 +1438,15 @@ namespace Ambermoon
             {
                 var battleFieldCopy = (Character[])battleField.Clone();
                 int slot = GetSlotFromCharacter(target);
-                RemoveCharacterFromBattleField(target);
+                if (currentBattleAnimation != null && target == currentlyAnimatedMonster)
+                {
+                    currentBattleAnimation?.Destroy();
+                    currentBattleAnimation = null;
+                    currentlyAnimatedMonster = null;
+                }
                 PlayBattleEffectAnimation(BattleEffect.Death, (uint)slot, game.CurrentBattleTicks, () =>
                 {
+                    RemoveCharacterFromBattleField(target);
                     KillMonster(partyMember, target);
                     finishAction?.Invoke();
                 }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
@@ -1508,18 +1565,18 @@ namespace Ambermoon
                     {
                         HandleCharacterDeath(caster, target, () => finishAction?.Invoke(true));
                     }
-                    else if (target is PartyMember partyMember)
+                    else
                     {
-                        layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                        if (target is PartyMember partyMember)
+                            layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
                         finishAction?.Invoke(true);
                     }
                 }
-
+                uint damage = CalculateSpellDamage(caster, target, baseDamage, variableDamage);
                 uint position = (uint)GetSlotFromCharacter(target);
                 PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
                     position, ticks, () =>
                     {
-                        uint damage = CalculateSpellDamage(caster, target, baseDamage, variableDamage);
                         if (target is PartyMember partyMember)
                         {
                             game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
@@ -1531,6 +1588,8 @@ namespace Ambermoon
                         EndHurt();
                     }
                 );
+                if (target.Type == CharacterType.Monster)
+                    ShowMonsterDamage(GetSlotFromCharacter(target), damage);
             }
         }
 

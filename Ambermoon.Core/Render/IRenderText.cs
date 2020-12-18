@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon.Render
@@ -16,9 +17,19 @@ namespace Ambermoon.Render
 
     public interface IRenderTextFactory
     {
+        /// <summary>
+        /// Mapping from glyph code to texture index.
+        /// </summary>
         Dictionary<byte, Position> GlyphTextureMapping { get; set; }
+        /// <summary>
+        /// Mapping from digit (0 to 9) to texture index.
+        /// </summary>
+        Dictionary<byte, Position> DigitGlyphTextureMapping { get; set; }
         IRenderText Create();
         IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow);
-        IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left);
+        IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow,
+            Rect bounds, TextAlign textAlign = TextAlign.Left);
+        IRenderText CreateDigits(IRenderLayer layer, IText digits, TextColor textColor,
+            bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left);
     }
 }
