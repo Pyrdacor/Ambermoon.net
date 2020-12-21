@@ -26,6 +26,7 @@
         BiggerInfoBox, // 144x26
         BattleFieldYellowBorder,
         BattleFieldOrangeBorder,
-        BattleFieldGreenHighlight
+        BattleFieldGreenHighlight,
+        HealingStarAnimation // 7x7, 3 frames
     }
 }

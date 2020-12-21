@@ -127,7 +127,7 @@ namespace Ambermoon.Data
             { Spell.RemoveIrritation, new SpellInfo { SP = 10, SLP = 5, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.BattleOnly } },
             { Spell.RemoveDrugged, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.NoBattle } },
             { Spell.RemoveMadness, new SpellInfo { SP = 100, SLP = 15, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.NoBattle } },
-            { Spell.RestoreStamina, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All } }, // TODO: target right?
+            { Spell.RestoreStamina, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All } },
             { Spell.ChargeItem, new SpellInfo { SP = 250, SLP = 20, Target = SpellTarget.Item, ApplicationArea = SpellApplicationArea.Camp } },
             { Spell.Light, new SpellInfo { SP = 5, SLP = 2, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle } },
             { Spell.MagicalTorch, new SpellInfo { SP = 10, SLP = 5, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle } },

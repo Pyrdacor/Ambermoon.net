@@ -880,9 +880,6 @@ namespace Ambermoon
 
         internal void ShowPlayerDamage(int slot, uint amount)
         {
-            if (amount == 0)
-                return;
-
             var area = new Rect(Global.PartyMemberPortraitAreas[slot]);
             hurtPlayerSprite.X = area.X;
             hurtPlayerSprite.Y = area.Y + 1;
@@ -890,7 +887,7 @@ namespace Ambermoon
             hurtPlayerDamageText.Text = renderView.TextProcessor.CreateText(amount.ToString());
             area.Position.Y += 11;
             hurtPlayerDamageText.Place(area, TextAlign.Center);
-            hurtPlayerDamageText.Visible = true;
+            hurtPlayerDamageText.Visible = amount != 0;
 
             RenewTimedEvent(hurtPlayerEvent, TimeSpan.FromMilliseconds(500));
         }
@@ -3040,7 +3037,8 @@ namespace Ambermoon
                             spell != Spell.MagicalArrows &&
                             spell != Spell.LPStealer &&
                             spell != Spell.SPStealer &&
-                            !(spell >= Spell.Lame && spell <= Spell.Drug))
+                            !(spell >= Spell.Lame && spell <= Spell.Drug) &&
+                            SpellInfos.Entries[spell].SpellSchool != SpellSchool.Healing)
                             pickedSpell = Spell.Iceball; // TODO
                         else
                             pickedSpell = spell;

@@ -131,7 +131,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.Talisman, ReadGraphic(dataReader));
             dataReader.Position += 64; // Unknown 64 bytes
             graphicInfo.Width = 64;
-            graphicInfo.Height = 9;
+            graphicInfo.Height = 11;
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
             graphicInfo.PaletteOffset = 24;
             entries.Add(UIGraphic.Diagonals, ReadGraphic(dataReader));

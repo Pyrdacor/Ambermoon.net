@@ -191,6 +191,11 @@ namespace Ambermoon.Data
                 Die(deadAilment);
         }
 
+        public void Heal(uint amount)
+        {
+            HitPoints.CurrentValue = Math.Min(HitPoints.MaxValue, HitPoints.CurrentValue + amount);
+        }
+
         public Inventory Inventory { get; } = new Inventory();
         public Equipment Equipment { get; } = new Equipment();
 

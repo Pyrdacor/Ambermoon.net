@@ -172,7 +172,42 @@ namespace Ambermoon.Data.Legacy
                 // BattleFieldGreenHighlight (8 in text palette = light green)
                 GraphicBuilder.Create(16, 13)
                 .AddColoredArea(new Rect(1, 1, 14, 11), 8)
-                .Build()
+                .Build(),
+
+                // HealingStarAnimation (3 frames of a redish star)
+                Graphic.FromIndexedData(7 * 3, 7, new byte[7 * 7 * 3]
+                {
+                    // Transparency: 25
+                    // Red: 20 (CC4433)
+                    // Orange: 21 (EE6633)
+                    // Yellow: 16 (FFCC00)
+                    // White: 1 (EEDDCC)
+                    // -----------------------
+                    // 1st frame: Big star
+                    25, 25, 25, 20, 25, 25, 25,
+                    25, 25, 25, 21, 25, 25, 25,
+                    25, 25, 20, 16, 20, 25, 25,
+                    20, 21, 16,  1, 16, 21, 20,
+                    25, 25, 20, 16, 20, 25, 25,
+                    25, 25, 25, 21, 25, 25, 25,
+                    25, 25, 25, 20, 25, 25, 25,
+                    // 2nd frame: Small star
+                    25, 25, 25, 25, 25, 25, 25,
+                    25, 25, 25, 20, 25, 25, 25,
+                    25, 25, 25, 21, 25, 25, 25,
+                    25, 20, 21, 16, 21, 20, 25,
+                    25, 25, 25, 21, 25, 25, 25,
+                    25, 25, 25, 20, 25, 25, 25,
+                    25, 25, 25, 25, 25, 25, 25,
+                    // 3rd frame: Single orange pixel
+                    25, 25, 25, 25, 25, 25, 25,
+                    25, 25, 25, 25, 25, 25, 25,
+                    25, 25, 25, 25, 25, 25, 25,
+                    25, 25, 25, 21, 25, 25, 25,
+                    25, 25, 25, 25, 25, 25, 25,
+                    25, 25, 25, 25, 25, 25, 25,
+                    25, 25, 25, 25, 25, 25, 25
+                }),
             };
         }
     }

@@ -101,6 +101,36 @@ namespace Ambermoon.Render
                 duration, startScale, endScale, displayLayer, finishAction, customBaseSize, scaleType, anchorX, anchorY, mirrorX);
         }
 
+        BattleAnimation AddPortraitAnimation(int slot, UICustomGraphic graphicIndex, Size frameSize, int frameCount, Position startOffset,
+            Position endOffset, uint duration, Action finishAction = null)
+        {
+            var area = Global.PartyMemberPortraitAreas[slot];
+            var sprite = renderView.SpriteFactory.Create(frameSize.Width, frameSize.Height, true, 200) as ILayerSprite;
+            sprite.ClipArea = area;
+            sprite.Layer = renderView.GetLayer(Layer.UI);
+            sprite.PaletteIndex = 49;
+            sprite.TextureSize = frameSize;
+            sprite.Visible = true;
+            var animation = new BattleAnimation(sprite);
+            void AnimationEnded()
+            {
+                animation.AnimationFinished -= AnimationEnded;
+                RemoveAnimation(animation, finishAction == null);
+
+                if (finishAction != null)
+                    finishAction?.Invoke();
+            }
+            animation.AnimationFinished += AnimationEnded;
+            animation.ScaleType = BattleAnimation.AnimationScaleType.None;
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            animation.SetStartFrame(textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(graphicIndex)), frameSize,
+                area.Position + startOffset, 1.0f, false, frameSize, BattleAnimation.HorizontalAnchor.Left, BattleAnimation.VerticalAnchor.Top);
+            var ticks = battle != null ? game.CurrentBattleTicks : game.CurrentTicks;
+            animation.Play(Enumerable.Range(0, frameCount).ToArray(), duration / (uint)frameCount, ticks, area.Position + endOffset);
+            animations.Add(animation);
+            return animation;
+        }
+
         float GetScaleYRelativeToCombatArea(int baseHeight, float factor)
         {
             return (Global.CombatBackgroundArea.Height * factor) / baseHeight;
@@ -240,9 +270,6 @@ namespace Ambermoon.Render
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
-                case Spell.GhostWeapon:
-                case Spell.Blink:
-                case Spell.Flight:
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:
@@ -253,6 +280,12 @@ namespace Ambermoon.Render
                 case Spell.AntiMagicSphere:
                 case Spell.Hurry:
                 case Spell.MassHurry:
+                    // Those spells have no target position. They are just visible on portraits or not at all.
+                    // GetTargetPosition should never be called for those spells so we throw here.
+                    throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
+                case Spell.GhostWeapon:
+                case Spell.Blink:
+                case Spell.Flight:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
@@ -318,6 +351,61 @@ namespace Ambermoon.Render
             }
         }
 
+        void PlayHealingAnimation(PartyMember partyMember, Action finishAction)
+        {
+            int slot = game.SlotFromPartyMember(partyMember).Value;
+            const int starCount = 25;
+            int remainingStars = starCount;
+
+            void FallingStarFinished()
+            {
+                if (--remainingStars == 0)
+                    finishAction?.Invoke();
+            }
+
+            // x and y are relative to the portrait area
+            void PlayFallingStar(int x, int y)
+            {
+                AddPortraitAnimation(slot, UICustomGraphic.HealingStarAnimation, new Size(7, 7), 3, new Position(x, y),
+                    new Position(x, y + 16), Game.TicksPerSecond / 3, FallingStarFinished);
+            }
+
+            for (int i = 0; i < starCount; ++i)
+            {
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(game.RandomInt(0, 300)), () =>
+                {
+                    PlayFallingStar(game.RandomInt(0, 46) - 6, game.RandomInt(0, 18) - 6);
+                });
+            }
+        }
+
+        /// <summary>
+        /// This is used only outside of battles.
+        /// For mass spells use <see cref="Play"/> instead.
+        /// </summary>
+        /// <param name="partyMember">The target party member.</param>
+        /// <param name="finishAction">Action which is performed after the animation has finished.</param>
+        public void CastOn(Spell spell, PartyMember partyMember, Action finishAction)
+        {
+            switch (spell)
+            {
+                case Spell.HealingHand:
+                case Spell.RemoveFear:
+                case Spell.RemoveShadows:
+                case Spell.RemovePain:
+                case Spell.SmallHealing:
+                case Spell.RemovePoison:
+                case Spell.MediumHealing:
+                case Spell.GreatHealing:
+                case Spell.RemoveRigidness:
+                case Spell.WakeUp:
+                case Spell.RemoveIrritation:
+                    PlayHealingAnimation(partyMember, finishAction);
+                    break;
+                // TODO ...
+            }
+        }
+
         /// <summary>
         /// This starts the spell animation (e.g. color overlays, starting animation).
         /// If a spell has only a per-target effects, this function does nothing.
@@ -339,16 +427,45 @@ namespace Ambermoon.Render
                 case Spell.RemovePoison:
                 case Spell.NeutralizePoison:
                 case Spell.MediumHealing:
-                case Spell.DispellUndead:
-                case Spell.DestroyUndead:
-                case Spell.HolyWord:
                 case Spell.GreatHealing:
                 case Spell.MassHealing:
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
+                {
+                    if (fromMonster)
+                    {
+                        // No effect if monster casts those.
+                        this.finishAction?.Invoke();
+                    }
+                    else
+                    {
+                        // These spells only show some redish falling stars above the portraits.
+                        var massSpell = SpellInfos.Entries[spell].Target != SpellTarget.SingleFriend;
+
+                        if (massSpell)
+                        {
+                            var partyMembers = (battle != null ? battle.PartyMembers : game.PartyMembers).Where(p => p.Alive).ToList();
+
+                            for (int i = 0; i < partyMembers.Count; ++i)
+                                PlayHealingAnimation(partyMembers[i], i == partyMembers.Count - 1 ? this.finishAction : null);
+                        }
+                        else
+                        {
+                            // For single target spells this is handled in MoveTo.
+                            this.finishAction?.Invoke();
+                        }
+                    }
+                    break;
+                }
                 case Spell.RestoreStamina:
+                    // This doesn't seem to have any visual effect.
+                    this.finishAction?.Invoke();
+                    break;
+                case Spell.DispellUndead:
+                case Spell.DestroyUndead:
+                case Spell.HolyWord:
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:
@@ -639,18 +756,19 @@ namespace Ambermoon.Render
                 var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(6 * scale));
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                 {
-                    byte displayLayer = (byte)(fromMonster ? 255 : ((tile / 6) * 60 + 60));
-                    void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action finishAction, bool reverse)
+                    void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action finishAction, bool reverse, byte displayLayer)
                     {
                         AddAnimation(graphicIndex, 1, targetPosition, targetPosition, reverse ? Game.TicksPerSecond / 4 : Game.TicksPerSecond / 2,
                             reverse ? scale : 0.0f, reverse ? 0.5f * scale : scale, displayLayer, finishAction);
                     }
-                    AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, false);
+                    byte displayLayerRing = (byte)(fromMonster ? 254 : ((tile / 6) * 60 + 60));
+                    byte displayLayer = (byte)(displayLayerRing + 1);
+                    AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, false, displayLayerRing);
                     AddCurseAnimation(iconGraphicIndex, () =>
                     {
-                        AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, true);
-                        AddCurseAnimation(iconGraphicIndex, null, true); // This will trigger the outer finish action
-                    }, false);
+                        AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, true, displayLayerRing);
+                        AddCurseAnimation(iconGraphicIndex, null, true, displayLayer); // This will trigger the outer finish action
+                    }, false, displayLayer);
                 });
             }
 
@@ -693,28 +811,43 @@ namespace Ambermoon.Render
             {
                 case Spell.HealingHand:
                 case Spell.RemoveFear:
-                case Spell.RemovePanic:
                 case Spell.RemoveShadows:
-                case Spell.RemoveBlindness:
                 case Spell.RemovePain:
-                case Spell.RemoveDisease:
                 case Spell.SmallHealing:
                 case Spell.RemovePoison:
-                case Spell.NeutralizePoison:
                 case Spell.MediumHealing:
-                    return; // TODO
+                case Spell.GreatHealing:
+                case Spell.RemoveRigidness:
+                case Spell.WakeUp:
+                case Spell.RemoveIrritation:
+                    if (fromMonster)
+                    {
+                        // No visual effect if monster casts it.
+                        this.finishAction?.Invoke();
+                    }
+                    else
+                    {
+                        CastOn(spell, battle.GetCharacterAt(tile) as PartyMember, this.finishAction);
+                    }
+                    break;
+                case Spell.RemovePanic:
+                case Spell.RemoveBlindness:
+                case Spell.RemoveDisease:
+                case Spell.NeutralizePoison:
+                case Spell.MassHealing:
+                case Spell.RemoveLamedness:
+                    // Mass healing spells are handled in Play.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.DispellUndead:
                 case Spell.DestroyUndead:
                 case Spell.HolyWord:
                     PlayHolyLight();
                     break;
-                case Spell.GreatHealing:
-                case Spell.MassHealing:
-                case Spell.RemoveRigidness:
-                case Spell.RemoveLamedness:
-                case Spell.WakeUp:
-                case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
+                    // No visual effect.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.GhostWeapon:
                 case Spell.Blink:
                 case Spell.Flight:

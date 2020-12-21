@@ -214,6 +214,7 @@ namespace Ambermoon
         readonly List<Monster> initialMonsters = new List<Monster>();
         readonly Dictionary<int, IRenderText> battleFieldDamageTexts = new Dictionary<int, IRenderText>();
         public IEnumerable<Monster> Monsters => battleField.Where(c => c?.Type == CharacterType.Monster).Cast<Monster>();
+        public IEnumerable<PartyMember> PartyMembers => battleField.Where(c => c?.Type == CharacterType.PartyMember).Cast<PartyMember>();
         public IEnumerable<Character> Characters => battleField.Where(c => c != null);
         public Character GetCharacterAt(int index) => battleField[index];
         public Character GetCharacterAt(int column, int row) => GetCharacterAt(column + row * 6);
@@ -968,7 +969,10 @@ namespace Ambermoon
                         spell != Spell.SPStealer) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         if (spell < Spell.Lame || spell > Spell.Drug)
-                            break;
+                        {
+                            if (spellInfo.SpellSchool != SpellSchool.Healing)
+                                break;
+                        }
                     }
 
                     void EndCast(bool needClickAfterwards = true)
@@ -1359,20 +1363,32 @@ namespace Ambermoon
                     game.AddTimedEvent(delay, failAction);
                 }
             }
-            
-            if (target.SpellTypeImmunity.HasFlag((SpellTypeImmunity)spellInfo.SpellType))
-            {
-                ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType);
-                return false;
-            }
 
-            if (target.IsImmuneToSpell(spell, out bool silent))
+            if (target.Type != caster.Type)
             {
-                if (silent)
-                    failAction?.Invoke();
-                else
-                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell);
-                return false;
+                if (target.SpellTypeImmunity.HasFlag((SpellTypeImmunity)spellInfo.SpellType))
+                {
+                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType);
+                    return false;
+                }
+
+                if (target.IsImmuneToSpell(spell, out bool silent))
+                {
+                    if (silent)
+                        failAction?.Invoke();
+                    else
+                        ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell);
+                    return false;
+                }
+
+                if (game.RollDice100() < (int)target.Attributes[Data.Attribute.AntiMagic].TotalCurrentValue)
+                {
+                    // Blocked
+                    // TODO: play blocked animation
+                    // PlayBattleEffectAnimation(BattleEffect.BlockSpell, ...)
+                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell);
+                    return false;
+                }
             }
 
             if (target.Ailments.HasFlag(Ailment.Petrified) && spell.FailsAgainstPetrifiedEnemy())
@@ -1380,15 +1396,6 @@ namespace Ambermoon
                 // Note: In original there is no message in this case but I think
                 //       it's better to show the reason.
                 ShowFailMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters);
-                return false;
-            }
-
-            if (game.RollDice100() < (int)target.Attributes[Data.Attribute.AntiMagic].TotalCurrentValue)
-            {
-                // Blocked
-                // TODO: play blocked animation
-                // PlayBattleEffectAnimation(BattleEffect.BlockSpell, ...)
-                ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell);
                 return false;
             }
 
@@ -1414,6 +1421,7 @@ namespace Ambermoon
 
             if (target is PartyMember partyMember)
             {
+                game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, 0);
                 game.UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(game.CurrentSavegame.ActivePartyMemberSlot);
             }
@@ -1480,6 +1488,58 @@ namespace Ambermoon
                         KillMonster(partyMember, target);
                     else
                         KillPlayer(target);
+                    break;
+                case Spell.RemoveFear:
+                case Spell.RemovePanic:
+                    RemoveAilment(Ailment.Panic, target);
+                    break;
+                case Spell.RemoveShadows:
+                case Spell.RemoveBlindness:
+                    RemoveAilment(Ailment.Blind, target);
+                    break;
+                case Spell.RemovePain:
+                case Spell.RemoveDisease:
+                    RemoveAilment(Ailment.Diseased, target);
+                    break;
+                case Spell.RemovePoison:
+                case Spell.NeutralizePoison:
+                    RemoveAilment(Ailment.Poisoned, target);
+                    break;
+                case Spell.HealingHand:
+                    target.Heal(target.HitPoints.MaxValue / 10); // 10%
+                    break;
+                case Spell.SmallHealing:
+                case Spell.MassHealing:
+                    target.Heal(target.HitPoints.MaxValue / 4); // 25%
+                    break;
+                case Spell.MediumHealing:
+                    target.Heal(target.HitPoints.MaxValue / 2); // 50%
+                    break;
+                case Spell.GreatHealing:
+                    target.Heal(target.HitPoints.MaxValue * 3 / 4); // 75%
+                    break;
+                case Spell.RemoveRigidness:
+                case Spell.RemoveLamedness:
+                    RemoveAilment(Ailment.Lamed, target);
+                    break;
+                case Spell.HealAging:
+                case Spell.StopAging:
+                    RemoveAilment(Ailment.Aging, target);
+                    break;
+                case Spell.WakeUp:
+                    RemoveAilment(Ailment.Sleep, target);
+                    break;
+                case Spell.RemoveIrritation:
+                    RemoveAilment(Ailment.Irritated, target);
+                    break;
+                case Spell.RemoveDrugged:
+                    RemoveAilment(Ailment.Drugged, target);
+                    break;
+                case Spell.RemoveMadness:
+                    RemoveAilment(Ailment.Crazy, target);
+                    break;
+                case Spell.RestoreStamina:
+                    RemoveAilment(Ailment.Exhausted, target);
                     break;
                 case Spell.Lame:
                     AddAilment(Ailment.Lamed, target);
