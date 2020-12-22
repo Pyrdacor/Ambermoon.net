@@ -199,6 +199,7 @@ namespace Ambermoon
         uint nextIdleAnimationTicks = 0;
         List<BattleAnimation> effectAnimations = null;
         SpellAnimation currentSpellAnimation = null;
+        bool showMonsterLP = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
         public bool WaitForClick { get; set; } = false;
@@ -426,6 +427,14 @@ namespace Ambermoon
             if (roundBattleActions.Count == 0)
             {
                 RoundActive = false;
+                if (showMonsterLP)
+                {
+                    foreach (var monster in Monsters)
+                    {
+                        layout.GetMonsterBattleFieldTooltip(monster).Text =
+                            $"{monster.HitPoints.TotalCurrentValue}/{monster.HitPoints.MaxValue}^{monster.Name}";
+                    }
+                }
                 RoundFinished?.Invoke();
                 return;
             }
@@ -968,7 +977,8 @@ namespace Ambermoon
                         spell != Spell.MagicalArrows &&
                         spell != Spell.LPStealer &&
                         spell != Spell.SPStealer &&
-                        spell != Spell.MonsterKnowledge) // TODO: REMOVE. For now we only allow some spells for testing.
+                        spell != Spell.MonsterKnowledge &&
+                        spell != Spell.ShowMonsterLP) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         if (spell < Spell.Lame || spell > Spell.Drug)
                         {
@@ -1135,6 +1145,9 @@ namespace Ambermoon
                         {
                             switch (spellInfo.Target)
                             {
+                                case SpellTarget.None:
+                                    ApplySpellEffect(battleAction.Character, null, spell, game.CurrentBattleTicks, EndCast);
+                                    break;
                                 case SpellTarget.Self:
                                 case SpellTarget.SingleEnemy:
                                 case SpellTarget.SingleFriend:
@@ -1585,17 +1598,17 @@ namespace Ambermoon
                     RemoveAilment(Ailment.Poisoned, target);
                     break;
                 case Spell.HealingHand:
-                    target.Heal(target.HitPoints.MaxValue / 10); // 10%
+                    Heal(target.HitPoints.MaxValue / 10); // 10%
                     break;
                 case Spell.SmallHealing:
                 case Spell.MassHealing:
-                    target.Heal(target.HitPoints.MaxValue / 4); // 25%
+                    Heal(target.HitPoints.MaxValue / 4); // 25%
                     break;
                 case Spell.MediumHealing:
-                    target.Heal(target.HitPoints.MaxValue / 2); // 50%
+                    Heal(target.HitPoints.MaxValue / 2); // 50%
                     break;
                 case Spell.GreatHealing:
-                    target.Heal(target.HitPoints.MaxValue * 3 / 4); // 75%
+                    Heal(target.HitPoints.MaxValue * 3 / 4); // 75%
                     break;
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
@@ -1724,12 +1737,33 @@ namespace Ambermoon
                     }
                     break;
                 }
+                case Spell.ShowMonsterLP:
+                {
+                    if (!showMonsterLP)
+                    {
+                        foreach (var monster in Monsters)
+                        {
+                            layout.GetMonsterBattleFieldTooltip(monster).Text =
+                                $"{monster.HitPoints.TotalCurrentValue}/{monster.HitPoints.MaxValue}^{monster.Name}";
+                        }
+                        showMonsterLP = true;
+                    }
+                    break;
+                }
                 default:
                     // TODO
                     break;
             }
 
             finishAction?.Invoke(false);
+
+            void Heal(uint amount)
+            {
+                target.Heal(amount);
+
+                if (target is PartyMember partyMember)
+                    layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+            }
 
             void DealDamage(uint baseDamage, uint variableDamage)
             {

@@ -1812,7 +1812,7 @@ namespace Ambermoon.UI
             return toolTip;
         }
 
-        void RemoveTooltip(Tooltip tooltip)
+        internal void RemoveTooltip(Tooltip tooltip)
         {
             tooltips.Remove(tooltip);
 
@@ -2676,6 +2676,8 @@ namespace Ambermoon.UI
         }
 
         public BattleAnimation GetMonsterBattleAnimation(Monster monster) => monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster)?.Animation;
+
+        public Tooltip GetMonsterBattleFieldTooltip(Monster monster) => monsterCombatGraphics.FirstOrDefault(g => g.Monster == monster)?.Tooltip;
 
         public void ResetMonsterCombatSprite(Monster monster)
         {

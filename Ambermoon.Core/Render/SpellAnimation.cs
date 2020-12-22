@@ -280,6 +280,7 @@ namespace Ambermoon.Render
                 case Spell.AntiMagicSphere:
                 case Spell.Hurry:
                 case Spell.MassHurry:
+                case Spell.ShowMonsterLP:
                     // Those spells have no target position. They are just visible on portraits or not at all.
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
@@ -289,7 +290,6 @@ namespace Ambermoon.Render
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
-                case Spell.ShowMonsterLP:
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
                 case Spell.Lame:
@@ -491,6 +491,55 @@ namespace Ambermoon.Render
                     this.finishAction?.Invoke();
                     break;
                 case Spell.ShowMonsterLP:
+                {
+                    if (fromMonster)
+                    {
+                        this.finishAction?.Invoke();
+                    }
+                    else
+                    {
+                        int lowerWidth = Global.CombatBackgroundArea.Width;
+                        int upperWidth = 140;
+                        int upperXOffset = 92;
+                        int sourceYOffset = Global.CombatBackgroundArea.Center.Y;
+                        int targetYOffset = 92;
+                        var frames = new int[] { 4, 3, 2, 1, 0, 1, 2, 3, 4, 3, 2, 1, 0 };
+                        void ShootGreenStar(bool last)
+                        {
+                            var startPosition = RandomPosition();
+                            int targetX = upperXOffset + startPosition.X * upperWidth / lowerWidth;
+                            float dyFactor = (float)upperWidth / lowerWidth;
+                            int yDiff = startPosition.Y - sourceYOffset;
+                            float startScale = game.RandomInt(50, 150) / 100.0f;
+                            var animation = AddAnimation(CombatGraphicIndex.GreenStar, frames, startPosition, new Position(targetX, targetYOffset + Util.Round(dyFactor * yDiff) - 8),
+                                Game.TicksPerSecond * 5 / 2, startScale, 0.0f, 255, last ? (Action)null : () => { });
+                            animation.AnimationUpdated += Updated;
+                            animation.AnimationFinished += Finished;
+                            void Updated(float progress)
+                            {
+                                animation.SetDisplayLayer((byte)Math.Min(255, 251 - Util.Round(progress * 250)));
+                            }
+                            void Finished()
+                            {
+                                animation.AnimationUpdated -= Updated;
+                                animation.AnimationFinished -= Finished;
+                            }
+                        }
+                        Position RandomPosition()
+                        {
+                            int minX =  32;
+                            int maxX = Global.CombatBackgroundArea.Right - minX;
+                            int diffY = 32;
+                            int minY = sourceYOffset - diffY;
+                            int maxY = sourceYOffset + diffY;
+
+                            return new Position(game.RandomInt(minX, maxX), game.RandomInt(minY, maxY));
+                        }
+                        for (int i = 0; i < 20; ++i)
+                            ShootGreenStar(i == 19);
+                    }
+                    break;
+                }
                 case Spell.Blink:
                 case Spell.Flight:
                     return; // TODO
@@ -869,6 +918,8 @@ namespace Ambermoon.Render
                 case Spell.GhostWeapon:
                 case Spell.Blink:
                 case Spell.Flight:
+                case Spell.Hurry:
+                    return; // TODO
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:
@@ -877,10 +928,11 @@ namespace Ambermoon.Render
                 case Spell.MagicalAttack:
                 case Spell.AntiMagicWall:
                 case Spell.AntiMagicSphere:
-                case Spell.Hurry:
                 case Spell.MassHurry:
                 case Spell.ShowMonsterLP:
-                    return; // TODO
+                    // Buffs are handled in Play.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.MonsterKnowledge:
                     PlayKnowledge();
                     break;

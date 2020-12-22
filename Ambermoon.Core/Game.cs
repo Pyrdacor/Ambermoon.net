@@ -201,6 +201,7 @@ namespace Ambermoon
         internal bool BattleRoundActive => currentBattle?.RoundActive == true;
         internal UIText ChestText { get; private set; } = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
+        readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
         Spell pickedSpell = Spell.None;
         ItemSlot spellItemSlot = null;
@@ -2953,7 +2954,10 @@ namespace Ambermoon
                 var partyMember = GetPartyMember(i);
 
                 if (partyMember == null || !partyMember.Alive || HasPartyMemberFled(partyMember))
+                {
                     partyMemberBattleFieldSprites[i] = null;
+                    partyMemberBattleFieldTooltips[i] = null;
+                }
                 else
                 {
                     var battlePosition = currentBattle == null ? 18 + CurrentSavegame.BattlePositions[i] : currentBattle.GetSlotFromCharacter(partyMember);
@@ -2968,7 +2972,7 @@ namespace Ambermoon
                         Global.BattleFieldSlotHeight + 1
                     ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, (byte)(3 + battleRow),
                     $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}",
-                    partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray);
+                    partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray, null, out partyMemberBattleFieldTooltips[i]);
                 }
             }
             UpdateBattleStatus();
@@ -3051,6 +3055,7 @@ namespace Ambermoon
                             spell != Spell.LPStealer &&
                             spell != Spell.SPStealer &&
                             spell != Spell.MonsterKnowledge &&
+                            spell != Spell.ShowMonsterLP &&
                             !(spell >= Spell.Lame && spell <= Spell.Drug) &&
                             SpellInfos.Entries[spell].SpellSchool != SpellSchool.Healing)
                             pickedSpell = Spell.Iceball; // TODO
@@ -3172,6 +3177,16 @@ namespace Ambermoon
                     else
                         AddCurrentPlayerActionVisuals();
                     UpdateBattleStatus();
+                    for (int i = 0; i < MaxPartyMembers; ++i)
+                    {
+                        if (partyMemberBattleFieldTooltips[i] != null)
+                        {
+                            var partyMember = GetPartyMember(i);
+
+                            partyMemberBattleFieldTooltips[i].Text =
+                                $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}";
+                        }
+                    }
                 };
                 currentBattle.CharacterDied += character =>
                 {
@@ -3353,6 +3368,12 @@ namespace Ambermoon
                 roundPlayerBattleActions.Remove(slot);
                 partyMemberBattleFieldSprites[slot]?.Delete();
                 partyMemberBattleFieldSprites[slot] = null;
+
+                if (partyMemberBattleFieldTooltips[slot] != null)
+                {
+                    layout.RemoveTooltip(partyMemberBattleFieldTooltips[slot]);
+                    partyMemberBattleFieldTooltips[slot] = null;
+                }
             }
         }
 
