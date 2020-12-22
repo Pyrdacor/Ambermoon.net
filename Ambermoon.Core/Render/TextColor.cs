@@ -11,6 +11,7 @@
         Orange,
         PaleGray,
         Green,
-        Disabled
+        Disabled,
+        DarkGray
     }
 }

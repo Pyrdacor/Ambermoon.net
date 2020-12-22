@@ -139,7 +139,7 @@ namespace Ambermoon.UI
             bool shadow = true, byte displayLayer = 1, bool scrolling = false)
         {
             return AddText(bounds, renderView.TextProcessor.CreateText(text), textColor, textAlign,
-                shadow, (byte)Util.Min(255, this.displayLayer + displayLayer), scrolling);
+                shadow, (byte)Util.Min(255, displayLayer), scrolling);
         }
 
         public UIText AddText(Rect bounds, IText text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
@@ -177,12 +177,12 @@ namespace Ambermoon.UI
             return filledArea;
         }
 
-        public void AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer = 1)
+        public void AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer = 1, byte paletteIndex = 49)
         {
             var sprite = renderView.SpriteFactory.Create(area.Width, area.Height, true,
                 (byte)Util.Min(255, this.displayLayer + displayLayer)) as ILayerSprite;
             sprite.Layer = renderView.GetLayer(layer);
-            sprite.PaletteIndex = 49;
+            sprite.PaletteIndex = paletteIndex;
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(layer).GetOffset(imageIndex);
             sprite.X = area.X;
             sprite.Y = area.Y;

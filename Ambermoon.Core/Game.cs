@@ -258,6 +258,7 @@ namespace Ambermoon
         bool leftMouseDown = false;
         bool clickMoveActive = false;
         Rect trapMouseArea = null;
+        bool mouseTrappingActive = false;
         Position lastMousePosition = new Position();
         readonly Position trappedMousePositionOffset = new Position();
         bool trapped => trapMouseArea != null;
@@ -524,15 +525,27 @@ namespace Ambermoon
 
         internal void TrapMouse(Rect area, bool keepX = false, bool maxY = false)
         {
-            trapMouseArea = renderView.GameToScreen(area);
-            trappedMousePositionOffset.X = keepX ? 0 : trapMouseArea.X - lastMousePosition.X;
-            trappedMousePositionOffset.Y = (maxY ? trapMouseArea.Bottom : trapMouseArea.Y) - lastMousePosition.Y;
-            UpdateCursor(trapMouseArea.Position, MouseButtons.None);
-            MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
+            mouseTrappingActive = true;
+
+            try
+            {
+                trapMouseArea = renderView.GameToScreen(area);
+                trappedMousePositionOffset.X = keepX ? 0 : trapMouseArea.X - lastMousePosition.X;
+                trappedMousePositionOffset.Y = (maxY ? trapMouseArea.Bottom : trapMouseArea.Y) - lastMousePosition.Y;
+                UpdateCursor(trapMouseArea.Position, MouseButtons.None);
+                MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
+            }
+            finally
+            {
+                mouseTrappingActive = false;
+            }
         }
 
         internal void UntrapMouse()
         {
+            if (mouseTrappingActive)
+                return;
+
             if (trapMouseArea == null)
                 return;
 
@@ -1942,9 +1955,9 @@ namespace Ambermoon
                 #region Attributes
                 layout.AddText(new Rect(22, 50, 72, Global.GlyphLineHeight), DataNameProvider.AttributesHeaderString, TextColor.Green, TextAlign.Center);
                 index = 0;
-                foreach (var attribute in Enum.GetValues<Data.Attribute>())
+                foreach (var attribute in Enum.GetValues<Attribute>())
                 {
-                    if (attribute == Data.Attribute.Age)
+                    if (attribute == Attribute.Age)
                         break;
 
                     int y = 57 + index++ * Global.GlyphLineHeight;
@@ -3037,6 +3050,7 @@ namespace Ambermoon
                             spell != Spell.MagicalArrows &&
                             spell != Spell.LPStealer &&
                             spell != Spell.SPStealer &&
+                            spell != Spell.MonsterKnowledge &&
                             !(spell >= Spell.Lame && spell <= Spell.Drug) &&
                             SpellInfos.Entries[spell].SpellSchool != SpellSchool.Healing)
                             pickedSpell = Spell.Iceball; // TODO

@@ -5,6 +5,7 @@ using Ambermoon.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Attribute = Ambermoon.Data.Attribute;
 
 namespace Ambermoon
 {
@@ -966,7 +967,8 @@ namespace Ambermoon
                         spell != Spell.MagicalProjectile &&
                         spell != Spell.MagicalArrows &&
                         spell != Spell.LPStealer &&
-                        spell != Spell.SPStealer) // TODO: REMOVE. For now we only allow some spells for testing.
+                        spell != Spell.SPStealer &&
+                        spell != Spell.MonsterKnowledge) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         if (spell < Spell.Lame || spell > Spell.Drug)
                         {
@@ -1472,6 +1474,83 @@ namespace Ambermoon
             }
         }
 
+        void ShowMonsterInfo(Monster monster, Action<bool> finishAction)
+        {
+            var area = new Rect(64, 38, 12 * 16, 10 * 16);
+            var popup = layout.OpenPopup(area.Position, 12, 10, true, true, 225);
+            area = area.CreateShrinked(16);
+            int panelWidth = 12 * Global.GlyphWidth;
+            // Attributes
+            popup.AddText(new Rect(area.Position, new Size(panelWidth, Global.GlyphLineHeight)),
+                game.DataNameProvider.AttributesHeaderString, TextColor.DarkGray, TextAlign.Center);
+            var position = new Position(area.Position.X, area.Position.Y + Global.GlyphLineHeight + 1);
+            foreach (var attribute in Enum.GetValues<Attribute>())
+            {
+                if (attribute == Attribute.Age)
+                    break;
+
+                var attributeValues = monster.Attributes[attribute];
+                popup.AddText(position,
+                    $"{game.DataNameProvider.GetAttributeUIName(attribute)}  {(attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}"}",
+                    TextColor.Gray);
+                position.Y += Global.GlyphLineHeight;
+            }
+            // Abilities
+            position = area.Position + new Position(panelWidth + Global.GlyphWidth, 0);
+            popup.AddText(new Rect(position, new Size(panelWidth, Global.GlyphLineHeight)),
+                game.DataNameProvider.AbilitiesHeaderString, TextColor.DarkGray, TextAlign.Center);
+            position.Y += Global.GlyphLineHeight + 1;
+            foreach (var ability in Enum.GetValues<Ability>())
+            {
+                var abilityValues = monster.Abilities[ability];
+                popup.AddText(position,
+                    $"{game.DataNameProvider.GetAbilityUIName(ability)}  {(abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%"}",
+                    TextColor.Gray);
+                position.Y += Global.GlyphLineHeight - 1;
+            }
+            // Data
+            position.X = area.X;
+            position.Y += 3;
+            popup.AddText(new Rect(position, new Size(area.Width, Global.GlyphLineHeight)),
+                game.DataNameProvider.DataHeaderString, TextColor.DarkGray, TextAlign.Center);
+            position.Y += Global.GlyphLineHeight + 1;
+            popup.AddText(position,
+                string.Format(game.DataNameProvider.CharacterInfoHitPointsString, monster.HitPoints.CurrentValue, monster.HitPoints.MaxValue) + " " +
+                string.Format(game.DataNameProvider.CharacterInfoSpellPointsString, monster.SpellPoints.CurrentValue, monster.SpellPoints.MaxValue),
+                TextColor.Gray);
+            position.Y += Global.GlyphLineHeight;
+            popup.AddText(position,
+                string.Format(game.DataNameProvider.CharacterInfoGoldAndFoodString.Replace(" ", "      "), monster.Gold, monster.Food),
+                TextColor.Gray);
+            position.Y += Global.GlyphLineHeight;
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, 0);
+            popup.AddText(position + new Position(6, 2),
+                string.Format(game.DataNameProvider.CharacterInfoDamageString.Replace(' ', monster.BaseAttack < 0 ? '-' : '+'), Math.Abs(monster.BaseAttack)),
+                TextColor.Gray);
+            position.X = area.X + panelWidth + Global.GlyphWidth;
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, 0);
+            popup.AddText(position + new Position(7, 2),
+                string.Format(game.DataNameProvider.CharacterInfoDefenseString.Replace(' ', monster.BaseDefense < 0 ? '-' : '+'), Math.Abs(monster.BaseDefense)),
+                TextColor.Gray);
+            position.X = area.X;
+            position.Y += Global.GlyphLineHeight + 4;
+            popup.AddText(position, $"{game.DataNameProvider.CharacterInfoAPRString.TrimEnd()}{monster.AttacksPerRound}", TextColor.Gray);
+            // Icon and level
+            --position.X;
+            position.Y += Global.GlyphLineHeight;
+            popup.AddSunkenBox(new Rect(position, new Size(18, 18)));
+            popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1, Layer.UI, 2);
+            popup.AddText(position + new Position(21, 5), $"{monster.Name} {monster.Level}", TextColor.Gray);
+            // Closing
+            game.TrapMouse(area);
+            popup.Closed += () =>
+            {
+                game.CursorType = CursorType.Sword;
+                game.UntrapMouse();
+                finishAction?.Invoke(false);
+            };
+        }
+
         /// <summary>
         /// The boolean argument of the finish action means: NeedsClickAfterwards
         /// </summary>
@@ -1636,6 +1715,15 @@ namespace Ambermoon
                     break;
                 // Winddevil: seen 10-15
                 // Windhowler: seen 35-46
+                case Spell.MonsterKnowledge:
+                {
+                    if (target is Monster monster)
+                    {
+                        ShowMonsterInfo(monster, finishAction);
+                        return;
+                    }
+                    break;
+                }
                 default:
                     // TODO
                     break;

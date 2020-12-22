@@ -17,6 +17,7 @@
         string CharacterInfoTrainingPointsString { get; }
         string CharacterInfoExperiencePointsString { get; }
         string CharacterInfoGoldAndFoodString { get; }
+        string CharacterInfoAPRString { get; }
         string CharacterInfoAgeString { get; }
         string CharacterInfoWeightHeaderString { get; }
         string CharacterInfoWeightString { get; }
@@ -28,6 +29,7 @@
         string AbilitiesHeaderString { get; }
         string LanguagesHeaderString { get; }
         string AilmentsHeaderString { get; }
+        string DataHeaderString { get; }
         string GetAttributeUIName(Attribute attribute);
         string GetAbilityUIName(Ability ability);
         string LoadWhichSavegameString { get; }

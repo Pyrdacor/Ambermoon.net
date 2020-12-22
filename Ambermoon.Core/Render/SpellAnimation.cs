@@ -486,10 +486,10 @@ namespace Ambermoon.Render
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.GhostWeapon:
+                case Spell.MonsterKnowledge:
                     // Those spells use only the MoveTo method.
                     this.finishAction?.Invoke();
                     break;
-                case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
                 case Spell.Blink:
                 case Spell.Flight:
@@ -728,7 +728,7 @@ namespace Ambermoon.Render
                 {
                     position.X -= 12;
                     position.Y -= 4;
-                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4);
+                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1);
                 });
             }
 
@@ -742,6 +742,24 @@ namespace Ambermoon.Render
             void PlayChill()
             {
                 PlayParticleEffect(CombatGraphicIndex.SnowFlake, 5);
+            }
+
+            // Used for monster knowledge
+            void PlayKnowledge()
+            {
+                const int count = 8;
+                var basePosition = GetTargetPosition(tile) + new Position(0, 18);
+
+                for (int i = 0; i < count; ++i)
+                {
+                    int index = i;
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(i * 50), () =>
+                    {
+                        var position = basePosition + new Position(game.RandomInt(0, 32) - 16, -2 * index);
+                        AddAnimation(CombatGraphicIndex.GreenStar, 5, position, new Position(position.X, position.Y - 38),
+                            Game.TicksPerSecond * 7 / 10, 1.0f, 1.2f, 255, index == count - 1 ? (Action)null : () => { });
+                    });
+                }
             }
 
             // Used for all curses
@@ -861,9 +879,11 @@ namespace Ambermoon.Render
                 case Spell.AntiMagicSphere:
                 case Spell.Hurry:
                 case Spell.MassHurry:
-                case Spell.MonsterKnowledge:
                 case Spell.ShowMonsterLP:
                     return; // TODO
+                case Spell.MonsterKnowledge:
+                    PlayKnowledge();
+                    break;
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 {

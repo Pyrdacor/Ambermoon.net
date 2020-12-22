@@ -14,6 +14,7 @@
         public string DataVersionString => executableData.DataVersionString;
         public string DataInfoString => executableData.DataInfoString;
         public string CharacterInfoAgeString => executableData.UITexts.Entries[UITextIndex.AgeDisplay];
+        public string CharacterInfoAPRString => executableData.UITexts.Entries[UITextIndex.APR];
         public string CharacterInfoExperiencePointsString => executableData.UITexts.Entries[UITextIndex.EPDisplay];
         public string CharacterInfoGoldAndFoodString => executableData.UITexts.Entries[UITextIndex.GoldAndFoodDisplay];
         public string CharacterInfoHitPointsString => executableData.UITexts.Entries[UITextIndex.LPDisplay];
@@ -48,6 +49,7 @@
         public string AbilitiesHeaderString => executableData.UITexts.Entries[UITextIndex.Abilities];
         public string LanguagesHeaderString => executableData.UITexts.Entries[UITextIndex.Languages];
         public string AilmentsHeaderString => executableData.UITexts.Entries[UITextIndex.Ailments];
+        public string DataHeaderString => executableData.UITexts.Entries[UITextIndex.DataHeader];
         public string GetAttributeUIName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
         public string GetAbilityUIName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
         public string LoadWhichSavegameString => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
