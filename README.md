@@ -147,4 +147,5 @@ Special thanks to:
 - Metibor
 - Thallyrion
 - a1exh
+- kermitfrog
 - Karol-13
