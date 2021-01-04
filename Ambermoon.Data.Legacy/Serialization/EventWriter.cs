@@ -34,7 +34,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // 1. byte is the x coordinate
                     // 2. byte is the y coordinate
                     // 3. byte is the character direction
-                    // Then 2 unknown bytes
+                    // Then 1 unknown byte
+                    // Then 1 byte for the transtion type (0-5)
                     // Then a word for the map index
                     // Then 2 unknown bytes (seem to be 00 FF)
                     var mapChangeEvent = @event as MapChangeEvent;
@@ -42,6 +43,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((byte)mapChangeEvent.Y);
                     dataWriter.WriteEnumAsByte(mapChangeEvent.Direction);
                     dataWriter.Write(mapChangeEvent.Unknown1);
+                    dataWriter.Write((byte)mapChangeEvent.Transition);
                     dataWriter.Write((ushort)mapChangeEvent.MapIndex);
                     dataWriter.Write(mapChangeEvent.Unknown2);
                     break;
@@ -105,9 +107,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var trapEvent = @event as TrapEvent;
                     dataWriter.WriteEnumAsByte(trapEvent.TypeOfTrap);
                     dataWriter.WriteEnumAsByte(trapEvent.Target);
-                    dataWriter.Write(trapEvent.Value);
                     dataWriter.Write(trapEvent.Unknown);
+                    dataWriter.Write(trapEvent.BaseDamage);
                     dataWriter.Write(trapEvent.Unused);
+                    break;
+                }
+                case EventType.RemoveBuffs:
+                {
+                    var removeBuffsEvent = @event as RemoveBuffsEvent;
+                    dataWriter.Write(removeBuffsEvent.Unused);
                     break;
                 }
                 case EventType.Riddlemouth:

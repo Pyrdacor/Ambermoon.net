@@ -199,6 +199,9 @@ namespace Ambermoon
         uint nextIdleAnimationTicks = 0;
         List<BattleAnimation> effectAnimations = null;
         SpellAnimation currentSpellAnimation = null;
+        readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new Dictionary<ActiveSpellType, ILayerSprite>();
+        readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new Dictionary<ActiveSpellType, IColoredRect>();
+        readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
         bool showMonsterLP = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
@@ -962,29 +965,18 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (spell != Spell.Firebeam &&
-                        spell != Spell.Fireball &&
-                        spell != Spell.Firestorm &&
-                        spell != Spell.Firepillar &&
-                        spell != Spell.Iceball &&
-                        spell != Spell.Icestorm &&
-                        spell != Spell.Iceshower &&
-                        spell != Spell.DissolveVictim &&
-                        spell != Spell.DispellUndead &&
-                        spell != Spell.DestroyUndead &&
-                        spell != Spell.HolyWord &&
-                        spell != Spell.MagicalProjectile &&
-                        spell != Spell.MagicalArrows &&
-                        spell != Spell.LPStealer &&
-                        spell != Spell.SPStealer &&
-                        spell != Spell.MonsterKnowledge &&
-                        spell != Spell.ShowMonsterLP) // TODO: REMOVE. For now we only allow some spells for testing.
+                    if (spell == Spell.GhostWeapon ||
+                        spell == Spell.Mudsling ||
+                        spell == Spell.Rockfall ||
+                        spell == Spell.Earthquake ||
+                        spell == Spell.Earthslide ||
+                        spell == Spell.Winddevil ||
+                        spell == Spell.Windhowler ||
+                        spell == Spell.Thunderbolt ||
+                        spell == Spell.Whirlwind ||
+                        spell == Spell.Waterfall) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
-                        if (spell < Spell.Lame || spell > Spell.Drug)
-                        {
-                            if (spellInfo.SpellSchool != SpellSchool.Healing)
-                                break;
-                        }
+                        break;
                     }
 
                     void EndCast(bool needClickAfterwards = true)
@@ -1282,7 +1274,7 @@ namespace Ambermoon
                     }
                     ShowBattleFieldDamage((int)tile, damage);
                     if (target.Ailments.HasFlag(Ailment.Sleep))
-                        RemoveAilment(Ailment.Sleep, target);
+                        game.RemoveAilment(Ailment.Sleep, target);
                     target.Damage(damage);
                     return;
                 }
@@ -1571,6 +1563,13 @@ namespace Ambermoon
         {
             switch (spell)
             {
+                case Spell.GhostWeapon:
+                    // TODO
+                    DealDamage(25, 0);
+                    return;
+                case Spell.Blink:
+                    // TODO
+                    break;
                 case Spell.DissolveVictim:
                 case Spell.DispellUndead:
                 case Spell.DestroyUndead:
@@ -1580,58 +1579,6 @@ namespace Ambermoon
                         KillMonster(partyMember, target);
                     else
                         KillPlayer(target);
-                    break;
-                case Spell.RemoveFear:
-                case Spell.RemovePanic:
-                    RemoveAilment(Ailment.Panic, target);
-                    break;
-                case Spell.RemoveShadows:
-                case Spell.RemoveBlindness:
-                    RemoveAilment(Ailment.Blind, target);
-                    break;
-                case Spell.RemovePain:
-                case Spell.RemoveDisease:
-                    RemoveAilment(Ailment.Diseased, target);
-                    break;
-                case Spell.RemovePoison:
-                case Spell.NeutralizePoison:
-                    RemoveAilment(Ailment.Poisoned, target);
-                    break;
-                case Spell.HealingHand:
-                    Heal(target.HitPoints.MaxValue / 10); // 10%
-                    break;
-                case Spell.SmallHealing:
-                case Spell.MassHealing:
-                    Heal(target.HitPoints.MaxValue / 4); // 25%
-                    break;
-                case Spell.MediumHealing:
-                    Heal(target.HitPoints.MaxValue / 2); // 50%
-                    break;
-                case Spell.GreatHealing:
-                    Heal(target.HitPoints.MaxValue * 3 / 4); // 75%
-                    break;
-                case Spell.RemoveRigidness:
-                case Spell.RemoveLamedness:
-                    RemoveAilment(Ailment.Lamed, target);
-                    break;
-                case Spell.HealAging:
-                case Spell.StopAging:
-                    RemoveAilment(Ailment.Aging, target);
-                    break;
-                case Spell.WakeUp:
-                    RemoveAilment(Ailment.Sleep, target);
-                    break;
-                case Spell.RemoveIrritation:
-                    RemoveAilment(Ailment.Irritated, target);
-                    break;
-                case Spell.RemoveDrugged:
-                    RemoveAilment(Ailment.Drugged, target);
-                    break;
-                case Spell.RemoveMadness:
-                    RemoveAilment(Ailment.Crazy, target);
-                    break;
-                case Spell.RestoreStamina:
-                    RemoveAilment(Ailment.Exhausted, target);
                     break;
                 case Spell.Lame:
                     AddAilment(Ailment.Lamed, target);
@@ -1666,42 +1613,69 @@ namespace Ambermoon
                 case Spell.Drug:
                     AddAilment(Ailment.Drugged, target);
                     break;
+                case Spell.Mudsling:
+                    // 4-8 damage
+                    DealDamage(4, 4);
+                    return;
+                case Spell.Rockfall:
+                    // 10-25 damage
+                    DealDamage(10, 15);
+                    return;
+                case Spell.Earthslide:
+                    // 8-16 damage
+                    DealDamage(8, 8);
+                    return;
+                case Spell.Earthquake:
+                    // 8-22 damage
+                    DealDamage(8, 14);
+                    return;
+                case Spell.Winddevil:
+                    // 8-16 damage
+                    DealDamage(8, 8);
+                    return;
+                case Spell.Windhowler:
+                    // 16-48 damage
+                    DealDamage(16, 32);
+                    return;
+                case Spell.Thunderbolt:
+                    // 20-32 damage
+                    DealDamage(20, 12);
+                    return;
+                case Spell.Whirlwind:
+                    // 20-35 damage
+                    DealDamage(20, 15);
+                    return;
                 case Spell.Firebeam:
-                    // seen 21-29 (assume 20-30)
-                    DealDamage(20, 10); // TODO
+                    // 20-30 damage
+                    DealDamage(20, 10);
                     return;
                 case Spell.Fireball:
-                    // seen 41-80 (assume 40-80)
-                    DealDamage(40, 40); // TODO
+                    // 40-85 damage
+                    DealDamage(40, 45);
                     return;
                 case Spell.Firestorm:
-                    // seen 35-63 (assume 35-65)
-                    DealDamage(35, 30); // TODO
+                    // 35-65 damage
+                    DealDamage(35, 30);
                     return;
                 case Spell.Firepillar:
-                    // seen 41-69 (assume 40-70)
-                    DealDamage(40, 30); // TODO
+                    // 40-70 damage
+                    DealDamage(40, 30);
+                    return;
+                case Spell.Waterfall:
+                    // 32-60 damage
+                    DealDamage(32, 28);
                     return;
                 case Spell.Iceball:
-                    // seen 96-166 (skeleton)
-                    // seen 100-174 (small spider)
-                    // seen 111-130 (gigantula)
-                    // seen 111-152 (poison spider)
-                    // assume 95-175
-                    DealDamage(95, 80);
+                    // 90-180 damage
+                    DealDamage(90, 90);
                     return;
                 case Spell.Icestorm:
-                    // seen 83-112 (skeleton)
-                    // seen 80-121 (small spider)
-                    // seen 113 (gigantula)
-                    // seen 75-104 (poison spider)
-                    // assume 75-125
-                    DealDamage(75, 50);
+                    // 64-128 damage
+                    DealDamage(64, 64);
                     return;
                 case Spell.Iceshower:
-                    // seen 129-254
-                    // assume 125-255
-                    DealDamage(125, 130);
+                    // 128-256 damage
+                    DealDamage(128, 128);
                     return;
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
@@ -1726,8 +1700,6 @@ namespace Ambermoon
                     else if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(game.SlotFromPartyMember(castingMember).Value, castingMember);
                     break;
-                // Winddevil: seen 10-15
-                // Windhowler: seen 35-46
                 case Spell.MonsterKnowledge:
                 {
                     if (target is Monster monster)
@@ -1751,19 +1723,11 @@ namespace Ambermoon
                     break;
                 }
                 default:
-                    // TODO
+                    game.ApplySpellEffect(spell, caster, target);
                     break;
             }
 
             finishAction?.Invoke(false);
-
-            void Heal(uint amount)
-            {
-                target.Heal(amount);
-
-                if (target is PartyMember partyMember)
-                    layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
-            }
 
             void DealDamage(uint baseDamage, uint variableDamage)
             {

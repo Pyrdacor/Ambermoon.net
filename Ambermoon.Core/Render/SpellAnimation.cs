@@ -400,6 +400,7 @@ namespace Ambermoon.Render
                 case Spell.RemoveRigidness:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
+                case Spell.Hurry:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
                 // TODO ...
@@ -433,6 +434,9 @@ namespace Ambermoon.Render
                 case Spell.RemoveLamedness:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
+                case Spell.Hurry:
+                case Spell.MassHurry:
+                case Spell.CreateFood:
                 {
                     if (fromMonster)
                     {
@@ -463,9 +467,6 @@ namespace Ambermoon.Render
                     // This doesn't seem to have any visual effect.
                     this.finishAction?.Invoke();
                     break;
-                case Spell.DispellUndead:
-                case Spell.DestroyUndead:
-                case Spell.HolyWord:
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:
@@ -474,8 +475,12 @@ namespace Ambermoon.Render
                 case Spell.MagicalAttack:
                 case Spell.AntiMagicWall:
                 case Spell.AntiMagicSphere:
-                case Spell.Hurry:
-                case Spell.MassHurry:
+                    // Buffs have no animation at all.
+                    this.finishAction?.Invoke();
+                    break;
+                case Spell.DispellUndead:
+                case Spell.DestroyUndead:
+                case Spell.HolyWord:
                 case Spell.DissolveVictim:
                 case Spell.Mudsling:
                 case Spell.Rockfall:
@@ -532,7 +537,6 @@ namespace Ambermoon.Render
                             int diffY = 32;
                             int minY = sourceYOffset - diffY;
                             int maxY = sourceYOffset + diffY;
-
                             return new Position(game.RandomInt(minX, maxX), game.RandomInt(minY, maxY));
                         }
                         for (int i = 0; i < 20; ++i)
@@ -680,7 +684,6 @@ namespace Ambermoon.Render
                     {
                         float baseScale = scale * (1.0f - i * scaleReducePerIceBlock);
                         int frame = i;
-
                         AddIceAnimation(width, baseScale, baseScale, new Position(combatArea.Right, leftPosition.Y),
                             leftPosition, frame, primaryDuration, () =>
                             {
@@ -733,7 +736,6 @@ namespace Ambermoon.Render
                         int diffY = fromMonster ? upperWidth * 32 / lowerWidth : 32;
                         int minY = sourceYOffset - diffY;
                         int maxY = sourceYOffset + diffY;
-
                         return new Position(game.RandomInt(minX, maxX), game.RandomInt(minY, maxY));
                     }
                     for (int i = 0; i < 8; ++i)

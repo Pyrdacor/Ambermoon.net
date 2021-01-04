@@ -1768,7 +1768,7 @@ namespace Ambermoon
                 foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
                 {
                     if (CurrentSavegame.ActiveSpells[(int)activeSpell] != null)
-                        layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell]);
+                        layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell], false);
                 }
             }
         }
@@ -2976,6 +2976,7 @@ namespace Ambermoon
                 }
             }
             UpdateBattleStatus();
+            UpdateActiveBattleSpells();
 
             // Flee button
             layout.AttachEventToButton(0, () =>
@@ -3039,26 +3040,17 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        if (spell != Spell.Firebeam &&
-                            spell != Spell.Fireball &&
-                            spell != Spell.Firestorm &&
-                            spell != Spell.Firepillar &&
-                            spell != Spell.Iceball &&
-                            spell != Spell.Icestorm &&
-                            spell != Spell.Iceshower &&
-                            spell != Spell.DissolveVictim &&
-                            spell != Spell.DispellUndead &&
-                            spell != Spell.DestroyUndead &&
-                            spell != Spell.HolyWord &&
-                            spell != Spell.MagicalProjectile &&
-                            spell != Spell.MagicalArrows &&
-                            spell != Spell.LPStealer &&
-                            spell != Spell.SPStealer &&
-                            spell != Spell.MonsterKnowledge &&
-                            spell != Spell.ShowMonsterLP &&
-                            !(spell >= Spell.Lame && spell <= Spell.Drug) &&
-                            SpellInfos.Entries[spell].SpellSchool != SpellSchool.Healing)
-                            pickedSpell = Spell.Iceball; // TODO
+                        if (spell == Spell.GhostWeapon ||
+                            spell == Spell.Mudsling ||
+                            spell == Spell.Rockfall ||
+                            spell == Spell.Earthquake ||
+                            spell == Spell.Earthslide ||
+                            spell == Spell.Winddevil ||
+                            spell == Spell.Windhowler ||
+                            spell == Spell.Thunderbolt ||
+                            spell == Spell.Whirlwind ||
+                            spell == Spell.Waterfall) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
+                                pickedSpell = Spell.Iceball; // TODO
                         else
                             pickedSpell = spell;
                         // TODO: spellItemSlot -> item used to cast the spell or null
@@ -3129,6 +3121,166 @@ namespace Ambermoon
             advancing = true;
         }
 
+        void UpdateActiveBattleSpells()
+        {
+            foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+            {
+                if (activeSpell.AvailableInBattle() && CurrentSavegame.ActiveSpells[(int)activeSpell] != null)
+                    layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell], true);
+            }
+        }
+
+        internal void RemoveAilment(Ailment ailment, Character target)
+        {
+            // Healing spells or potions.
+            // Sleep can be removed by attacking as well.
+            target.Ailments &= ~ailment;
+
+            if (target is PartyMember partyMember)
+            {
+                if (BattleActive)
+                    UpdateBattleStatus(partyMember);
+                layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+            }
+        }
+
+        /// <summary>
+        /// Adds a spell effect.
+        /// </summary>
+        /// <param name="spell">Spell</param>
+        /// <param name="caster">Casting party member or monster.</param>
+        /// <param name="target">Party member or item or null.</param>
+        internal void ApplySpellEffect(Spell spell, Character caster, object target)
+        {
+            if (target == null)
+                ApplySpellEffect(spell, caster);
+            else if (target is Character character)
+                ApplySpellEffect(spell, caster, character);
+            else if (target is Item item)
+                ApplySpellEffect(spell, caster, item);
+            else
+                throw new AmbermoonException(ExceptionScope.Application, $"Invalid spell target type: {target.GetType()}");
+        }
+
+        void ApplySpellEffect(Spell spell, Character caster)
+        {
+            // TODO
+            switch (spell)
+            {
+                case Spell.Light:
+                case Spell.MagicalTorch:
+                case Spell.MagicalLantern:
+                case Spell.MagicalSun:
+                case Spell.CreateFood:
+                case Spell.Jump:
+                case Spell.Flight:
+                case Spell.WordOfMarking:
+                case Spell.WordOfReturning:
+                case Spell.MagicalShield:
+                case Spell.MagicalWall:
+                case Spell.MagicalBarrier:
+                case Spell.MagicalWeapon:
+                case Spell.MagicalAssault:
+                case Spell.MagicalAttack:
+                case Spell.Levitation:
+                case Spell.AntiMagicWall:
+                case Spell.AntiMagicSphere:
+                case Spell.AlchemisticGlobe:
+                    // TODO
+                    break;
+                default:
+                    throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no spell without target.");
+            }
+        }
+
+        void ApplySpellEffect(Spell spell, Character caster, Item item)
+        {
+            switch (spell)
+            {
+                case Spell.ChargeItem:
+                case Spell.RepairItem:
+                case Spell.DuplicateItem:
+                case Spell.RemoveCurses:
+                    // TODO
+                    break;
+                default:
+                    throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no item-targeted spell.");
+            }
+        }
+
+        void ApplySpellEffect(Spell spell, Character caster, Character target)
+        {
+            switch (spell)
+            {
+                case Spell.Hurry:
+                case Spell.MassHurry:
+                    // TODO: add speed bonus for fight duration
+                    break;
+                case Spell.RemoveFear:
+                case Spell.RemovePanic:
+                    RemoveAilment(Ailment.Panic, target);
+                    break;
+                case Spell.RemoveShadows:
+                case Spell.RemoveBlindness:
+                    RemoveAilment(Ailment.Blind, target);
+                    break;
+                case Spell.RemovePain:
+                case Spell.RemoveDisease:
+                    RemoveAilment(Ailment.Diseased, target);
+                    break;
+                case Spell.RemovePoison:
+                case Spell.NeutralizePoison:
+                    RemoveAilment(Ailment.Poisoned, target);
+                    break;
+                case Spell.HealingHand:
+                    Heal(target.HitPoints.MaxValue / 10); // 10%
+                    break;
+                case Spell.SmallHealing:
+                case Spell.MassHealing:
+                    Heal(target.HitPoints.MaxValue / 4); // 25%
+                    break;
+                case Spell.MediumHealing:
+                    Heal(target.HitPoints.MaxValue / 2); // 50%
+                    break;
+                case Spell.GreatHealing:
+                    Heal(target.HitPoints.MaxValue * 3 / 4); // 75%
+                    break;
+                case Spell.RemoveRigidness:
+                case Spell.RemoveLamedness:
+                    RemoveAilment(Ailment.Lamed, target);
+                    break;
+                case Spell.HealAging:
+                case Spell.StopAging:
+                    RemoveAilment(Ailment.Aging, target);
+                    break;
+                case Spell.WakeUp:
+                    RemoveAilment(Ailment.Sleep, target);
+                    break;
+                case Spell.RemoveIrritation:
+                    RemoveAilment(Ailment.Irritated, target);
+                    break;
+                case Spell.RemoveDrugged:
+                    RemoveAilment(Ailment.Drugged, target);
+                    break;
+                case Spell.RemoveMadness:
+                    RemoveAilment(Ailment.Crazy, target);
+                    break;
+                case Spell.RestoreStamina:
+                    RemoveAilment(Ailment.Exhausted, target);
+                    break;
+                default:
+                    throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
+            }
+
+            void Heal(uint amount)
+            {
+                target.Heal(amount);
+
+                if (target is PartyMember partyMember)
+                    layout.FillCharacterBars(SlotFromPartyMember(partyMember).Value, partyMember);
+            }
+        }
+
         void ShowBattleWindow(Event nextEvent, bool surpriseAttack)
         {
             Fade(() =>
@@ -3187,6 +3339,7 @@ namespace Ambermoon
                                 $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}";
                         }
                     }
+                    UpdateActiveBattleSpells();
                 };
                 currentBattle.CharacterDied += character =>
                 {

@@ -1626,17 +1626,22 @@ namespace Ambermoon.UI
             characterBars[slot * 4 + 3].Fill(spPercentage);
         }
 
-        public void AddActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell)
+        public void AddActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell, bool battle)
         {
+            if (activeSpellSprites.ContainsKey(activeSpellType))
+                return;
+
+            var baseLocation = battle ? new Position(0, 170) : new Position(208, 106);
             int index = (int)activeSpellType;
             uint graphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.Candle + index);
-            activeSpellSprites.Add(activeSpellType, AddSprite(new Rect(208 + index * 16, 106, 16, 16), graphicIndex, 49));
+            activeSpellSprites.Add(activeSpellType, AddSprite(new Rect(baseLocation.X + index * 16, baseLocation.Y, 16, 16), graphicIndex, 49));
 
-            activeSpellDurationBackgrounds.Add(activeSpellType, CreateArea(new Rect(209 + index * 16, 123, 14, 4), game.GetPaletteColor(50, 26), 2));
+            activeSpellDurationBackgrounds.Add(activeSpellType, CreateArea(new Rect(baseLocation.X + 1 + index * 16, baseLocation.Y + 17, 14, 4),
+                game.GetPaletteColor(50, 26), 2));
             var durationBar = new Bar(filledAreas,
-                CreateArea(new Rect(210 + index * 16, 124, 12, 2), game.GetPaletteColor(50, 31), 2), 12, true);
+                CreateArea(new Rect(baseLocation.X + 2 + index * 16, baseLocation.Y + 18, 12, 2), game.GetPaletteColor(50, 31), 2), 12, true);
             activeSpellDurationBars.Add(activeSpellType, durationBar);
-            durationBar.Fill((float)activeSpell.Duration / 200.0f);
+            durationBar.Fill(activeSpell.Duration / 200.0f);
         }
 
         void UpdateActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell)
@@ -1657,11 +1662,11 @@ namespace Ambermoon.UI
             {
                 if (!activeSpellSprites.ContainsKey(activeSpellType))
                 {
-                    AddActiveSpell(activeSpellType, activeSpell);
+                    AddActiveSpell(activeSpellType, activeSpell, false);
                 }
                 else // update duration display
                 {
-                    activeSpellDurationBars[activeSpellType].Fill((float)activeSpell.Duration / 200.0f);
+                    activeSpellDurationBars[activeSpellType].Fill(activeSpell.Duration / 200.0f);
                 }
             }
         }

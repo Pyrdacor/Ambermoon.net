@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Ambermoon.Data.Enumerations
+﻿namespace Ambermoon.Data.Enumerations
 {
     public enum AutomapType
     {

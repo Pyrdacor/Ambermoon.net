@@ -137,8 +137,8 @@ namespace Ambermoon.Data
             { Spell.CreateFood, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.Camp } },
             { Spell.RemoveCurses, new SpellInfo { SP = 100, SLP = 20, Target = SpellTarget.Item, ApplicationArea = SpellApplicationArea.Camp } },
             { Spell.Blink, new SpellInfo { SP = 20, SLP = 5, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly } },
-            { Spell.Jump, new SpellInfo { SP = 50, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap } },
-            { Spell.Flight, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly } }, // TODO: battle only makes sense but on docu it is "not in battle"
+            { Spell.Jump, new SpellInfo { SP = 50, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.DungeonOnly } },
+            { Spell.Flight, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.DungeonOnly } },
             { Spell.WordOfMarking, new SpellInfo { SP = 150, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap } },
             { Spell.WordOfReturning, new SpellInfo { SP = 250, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle } },
             { Spell.MagicalShield, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.All } },

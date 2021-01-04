@@ -112,7 +112,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             CannotUnequipInCombat,
             ReviveMessage,
             SeeRoundDiskInFloor,
-            YouNotiveATrap,
+            YouNoticeATrap,
             ReallyQuit,
             AlreadyKnowsSpell,
             CannotUseBrokenItems,

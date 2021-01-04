@@ -71,13 +71,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // 1. byte is the x coordinate
                     // 2. byte is the y coordinate
                     // 3. byte is the character direction
-                    // Then 2 unknown bytes
+                    // Then 1 unknown byte
+                    // Then 1 byte for the transtion type (0-5)
                     // Then a word for the map index
                     // Then 2 unknown bytes (seem to be 00 FF)
                     uint x = dataReader.ReadByte();
                     uint y = dataReader.ReadByte();
                     var direction = (CharacterDirection)dataReader.ReadByte();
-                    var unknown1 = dataReader.ReadBytes(2);
+                    var unknown1 = dataReader.ReadByte();
+                    var transition = (MapChangeEvent.TransitionType)dataReader.ReadByte();
                     uint mapIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(2);
                     @event = new MapChangeEvent
@@ -86,8 +88,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                         X = x,
                         Y = y,
                         Direction = direction,
+                        Transition = transition,
                         Unknown1 = unknown1,
-                        Unknown2 = unknown2
+                        Unknown2 = unknown2,
                     };
                     break;
                 }
@@ -176,15 +179,24 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var trapType = (TrapEvent.TrapType)dataReader.ReadByte();
                     var target = (TrapEvent.TrapTarget)dataReader.ReadByte();
-                    var value = dataReader.ReadByte();
                     var unknown = dataReader.ReadByte();
+                    var baseDamage = dataReader.ReadByte();
                     var unused = dataReader.ReadBytes(5); // unused
                     @event = new TrapEvent
                     {
                         TypeOfTrap = trapType,
                         Target = target,
-                        Value = value,
                         Unknown = unknown,
+                        BaseDamage = baseDamage,
+                        Unused = unused
+                    };
+                    break;
+                }
+                case EventType.RemoveBuffs:
+                {
+                    var unused = dataReader.ReadBytes(9);
+                    @event = new RemoveBuffsEvent
+                    {
                         Unused = unused
                     };
                     break;

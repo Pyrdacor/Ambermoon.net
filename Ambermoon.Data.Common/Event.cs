@@ -13,7 +13,7 @@ namespace Ambermoon.Data
         PopupText, // events with text popup
         Spinner, // rotates the player to a random direction
         Trap, // the burning fire places in grandfathers house, chest/door traps etc
-        Unknown7,
+        RemoveBuffs, // this removes mystic map and clairvoyance in lebabs tower 4
         Riddlemouth,
         Award,
         ChangeTile,
@@ -41,16 +41,28 @@ namespace Ambermoon.Data
 
     public class MapChangeEvent : Event
     {
+        public enum TransitionType
+        {
+            MapChange, // with black fading
+            Teleporter, // without black fading
+            WindGate, // you need the wind chain to use it
+            Levitating, // moving up (levitating or climbing up)
+            Outro, // teleport to outro sequence
+            Falling // moving down (falling or climbing down)
+        }
+
         public uint MapIndex { get; set; }
         public uint X { get; set; }
         public uint Y { get; set; }
         public CharacterDirection Direction { get; set; }
-        public byte[] Unknown1 { get; set; }
+        public byte Unknown1 { get; set; }
+        public TransitionType Transition { get; set; }
         public byte[] Unknown2 { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Map {MapIndex} / Position {X},{Y} / Direction {Direction}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            var position = X == 0 || Y == 0 ? "same" : $"{X},{Y}";
+            return $"{Type}: Map {MapIndex} / Position {position} / Direction {Direction}, Transition {Transition}, Unknown1 {Unknown1:x2}, Unknown3 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -184,18 +196,28 @@ namespace Ambermoon.Data
         public TrapType TypeOfTrap { get; set; }
         public TrapTarget Target { get; set; }
         /// <summary>
+        /// Base damage. Sometimes direct value but maybe in percentage of max health for other TrapType than 0?
+        /// </summary>
+        public byte BaseDamage { get; set; }
+        /// <summary>
         /// Most of the times 3. Big water vortex has 150 and Value 0.
         /// </summary>
         public byte Unknown { get; set; }
-        /// <summary>
-        /// Value (e.g. damage). I guess it is in percentage of max health? Maybe for TrapType 0 only?
-        /// </summary>
-        public byte Value { get; set; }
         public byte[] Unused { get; set; } // 5 bytes
 
         public override string ToString()
         {
-            return $"{Type}: {Value} {TypeOfTrap} on {Target} Unknown {Unknown:x2}";
+            return $"{Type}: {BaseDamage} {TypeOfTrap} on {Target} Unknown {Unknown:x2}";
+        }
+    }
+
+    public class RemoveBuffsEvent : Event
+    {
+        public byte[] Unused { get; set; } // TODO: Maybe some byte is used but was 0 in test case?
+
+        public override string ToString()
+        {
+            return $"{Type}: Unused {string.Join(" ", Unused.Select(u => u.ToString("x2")))}";
         }
     }
 
