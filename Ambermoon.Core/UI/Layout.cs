@@ -1639,9 +1639,15 @@ namespace Ambermoon.UI
             activeSpellDurationBackgrounds.Add(activeSpellType, CreateArea(new Rect(baseLocation.X + 1 + index * 16, baseLocation.Y + 17, 14, 4),
                 game.GetPaletteColor(50, 26), 2));
             var durationBar = new Bar(filledAreas,
-                CreateArea(new Rect(baseLocation.X + 2 + index * 16, baseLocation.Y + 18, 12, 2), game.GetPaletteColor(50, 31), 2), 12, true);
+                CreateArea(new Rect(baseLocation.X + 2 + index * 16, baseLocation.Y + 18, 12, 2), game.GetPaletteColor(50, 31), 3), 12, true);
             activeSpellDurationBars.Add(activeSpellType, durationBar);
             durationBar.Fill(activeSpell.Duration / 200.0f);
+        }
+
+        public void RemoveAllActiveSpells()
+        {
+            foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
+                UpdateActiveSpell(activeSpell, null);
         }
 
         void UpdateActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell)

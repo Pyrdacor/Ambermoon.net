@@ -13,7 +13,7 @@ namespace Ambermoon.Data
         PopupText, // events with text popup
         Spinner, // rotates the player to a random direction
         Trap, // the burning fire places in grandfathers house, chest/door traps etc
-        RemoveBuffs, // this removes mystic map and clairvoyance in lebabs tower 4
+        RemoveBuffs, // this removes mystic map, light and clairvoyance in lebabs tower 4
         Riddlemouth,
         Award,
         ChangeTile,

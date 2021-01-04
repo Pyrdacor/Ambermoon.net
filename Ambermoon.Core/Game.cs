@@ -3130,6 +3130,11 @@ namespace Ambermoon
             }
         }
 
+        void HideActiveBattleSpells()
+        {
+            layout.RemoveAllActiveSpells();
+        }
+
         internal void RemoveAilment(Ailment ailment, Character target)
         {
             // Healing spells or potions.
@@ -3168,23 +3173,51 @@ namespace Ambermoon
             switch (spell)
             {
                 case Spell.Light:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    break;
                 case Spell.MagicalTorch:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    break;
                 case Spell.MagicalLantern:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    break;
                 case Spell.MagicalSun:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    break;
                 case Spell.CreateFood:
                 case Spell.Jump:
                 case Spell.Flight:
                 case Spell.WordOfMarking:
                 case Spell.WordOfReturning:
+                    // TODO
+                    break;
                 case Spell.MagicalShield:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 120, 1); // TODO
+                    break;
                 case Spell.MagicalWall:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 120, 1); // TODO
+                    break;
                 case Spell.MagicalBarrier:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 120, 1); // TODO
+                    break;
                 case Spell.MagicalWeapon:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 120, 1); // TODO
+                    break;
                 case Spell.MagicalAssault:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 120, 1); // TODO
+                    break;
                 case Spell.MagicalAttack:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 120, 1); // TODO
+                    break;
                 case Spell.Levitation:
+                    // TODO
+                    break;
                 case Spell.AntiMagicWall:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 120, 1); // TODO
+                    break;
                 case Spell.AntiMagicSphere:
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 120, 1); // TODO
+                    break;
                 case Spell.AlchemisticGlobe:
                     // TODO
                     break;
@@ -3432,6 +3465,7 @@ namespace Ambermoon
 
         void StartBattleRound(bool withoutPlayerActions)
         {
+            HideActiveBattleSpells();
             InputEnable = false;
             CursorType = CursorType.Click;
             layout.ResetMonsterCombatSprites();
