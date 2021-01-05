@@ -1,40 +1,33 @@
 # Ambermoon.net
 
+## Introduction
+
+Ambermoon.net is a full C# rewrite of Ambermoon.
+
+I also created another github project called [Ambermoon](https://github.com/Pyrdacor/Ambermoon) for providing resources and research the game data. Feel free to have a look or contribute.
+
+If you want to support this project or contribute scroll down to the bottom. You may also checkout my already working 'SerfCity (Die Siedler) rewrite' at [freeserf.net](https://github.com/Pyrdacor/freeserf.net).
+
+
+## Download
+
+Version | Windows 64bit | Linux 64bit
+
+0.1.3 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Linux.tar.gz)--- | --- | ---
+0.1.2 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Linux.tar.gz)
+
+Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
+
+[![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
+
 ### How to run the game
 
-I got some questions of how to run the game:
 1. You need the original game data (either ADF files or extracted files like Party_char.amb etc).
 2. Put these files next to the downloaded executable file called Ambermoon.net.exe.
 3. If you have not yet, install the latest .NET framework for Windows.
 4. The game only runs on Windows as of now.
 5. If it still doesn't work try to start from Windows CMD and check for error printouts.
 6. If this still doesn't help please file an issue on the [Issue tracker](https://github.com/Pyrdacor/Ambermoon.net/issues).
-
-## Download
-
-Version | Windows 64bit | Linux 64bit
---- | --- | ---
-0.1.2 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Linux.tar.gz)
-0.1.1 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.1beta/Ambermoon.net-Linux.tar.gz)
-
-Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
-
-[![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
-
-
-## Introduction
-
-Ambermoon.net should become a full C# rewrite of Ambermoon. For the first version the original game data will be used (but not provided). The loader will be able to load ADF disk files or the extracted files like Party_char.amb etc.
-
-Later maybe new data (enhanced textures, etc) may be provided or even the possibility to mod several things.
-
-First focus lies on loading and decrypting data so parts of this project can be used by others to read and understand the original game data as well.
-
-I also created another github project called [Ambermoon](https://github.com/Pyrdacor/Ambermoon) for providing resources and research the game data. Feel free to have a look or contribute.
-
-Let's bring this game to life on modern PCs with modern resolutions and graphic APIs. :)
-
-You may also checkout my already working Settlers I rewrite at [freeserf.net](https://github.com/Pyrdacor/freeserf.net).
 
 
 ## Screenshots
@@ -74,6 +67,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [0.1.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.3beta): Added more spells, bug fixing
 - Version [0.1.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.2beta): Added more spells, added damage display on battle field, added critical hits
 - Version [0.1.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.1beta): Fixed end battle crash, fixed monster death animation, added firepillar spell
 - Version [0.1.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.0beta): Many improvements to battles and UI, some spells do damage or have effects now

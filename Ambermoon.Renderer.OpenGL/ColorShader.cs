@@ -1,7 +1,7 @@
 ﻿/*
  * ColorShader.cs - Basic color shader for colored shapes
  *
- * Copyright (C) 2020  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
