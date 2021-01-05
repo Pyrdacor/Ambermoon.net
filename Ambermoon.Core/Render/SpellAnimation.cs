@@ -62,7 +62,7 @@ namespace Ambermoon.Render
             Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
             BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
             BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center,
-            bool mirrorX = false)
+            bool mirrorX = false, byte palette = 17)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
@@ -70,7 +70,7 @@ namespace Ambermoon.Render
             var sprite = renderView.SpriteFactory.Create(size.Width, size.Height, true, displayLayer) as ILayerSprite;
             sprite.ClipArea = Global.CombatBackgroundArea;
             sprite.Layer = renderView.GetLayer(Layer.BattleEffects);
-            sprite.PaletteIndex = 17;
+            sprite.PaletteIndex = palette;
             sprite.TextureSize = textureSize;
             sprite.Visible = true;
             var animation = new BattleAnimation(sprite);
@@ -95,10 +95,18 @@ namespace Ambermoon.Render
             uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255, Action finishAction = null,
             Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
             BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
-            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center, bool mirrorX = false)
+            BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center, bool mirrorX = false, byte palette = 17)
         {
             return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
-                duration, startScale, endScale, displayLayer, finishAction, customBaseSize, scaleType, anchorX, anchorY, mirrorX);
+                duration, startScale, endScale, displayLayer, finishAction, customBaseSize, scaleType, anchorX, anchorY, mirrorX, palette);
+        }
+
+        BattleAnimation AddAnimation(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
+            uint duration, float startScale, float endScale, byte displayLayer, Action finishAction, byte palette)
+        {
+            return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
+                duration, startScale, endScale, displayLayer, finishAction, null, BattleAnimation.AnimationScaleType.Both,
+                BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center, false, palette);
         }
 
         BattleAnimation AddPortraitAnimation(int slot, UICustomGraphic graphicIndex, Size frameSize, int frameCount, Position startOffset,
@@ -889,6 +897,7 @@ namespace Ambermoon.Render
                 case Spell.RemoveRigidness:
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
+                case Spell.Hurry:
                     if (fromMonster)
                     {
                         // No visual effect if monster casts it.
@@ -918,9 +927,55 @@ namespace Ambermoon.Render
                     this.finishAction?.Invoke();
                     break;
                 case Spell.GhostWeapon:
+                {
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
+                    var monsterRow = (MonsterRow)(fromMonster ? this.startPosition / 6 : tile / 6);
+                    float startScale = 3.0f;
+                    float endScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow) * 1.5f;
+                    var startPosition = GetSourcePosition();
+                    var endPosition = GetTargetPosition(tile);
+                    int maxStartOffset = Util.Round(0.75f * startScale * info.GraphicInfo.Width);
+                    int maxEndOffset = Util.Round(0.75f * endScale * info.GraphicInfo.Width);
+                    int maxOffset = Math.Max(maxStartOffset, maxEndOffset);
+                    int xOffset = (startPosition.X - endPosition.X) / 8;
+                    xOffset = xOffset < -maxOffset ? -maxOffset :
+                        (xOffset > maxOffset ? maxOffset : xOffset);
+                    int startXOffset = Util.Round(0.5f * xOffset * startScale);
+                    int endXOffset = Util.Round(0.5f * xOffset * endScale);
+                    float scaleFactor = 1.0f;
+                    AddAnimation(CombatGraphicIndex.BigFlame, 8, startPosition, endPosition,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 252, () => { }, 19);
+                    scaleFactor = 0.975f;
+                    var startOffset = new Position(Util.Round(scaleFactor * startXOffset), 4);
+                    var endOffset = new Position(Util.Round(scaleFactor * endXOffset), 4);
+                    AddAnimation(CombatGraphicIndex.BigFlame, 8, startPosition + startOffset, endPosition + endOffset,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 253, () => { }, 19);
+                    scaleFactor = 0.95f;
+                    startOffset.X += Util.Round(scaleFactor * startXOffset);
+                    endOffset.X += Util.Round(scaleFactor * endXOffset);
+                    startOffset.Y += 3;
+                    endOffset.Y += 3;
+                    AddAnimation(CombatGraphicIndex.BigFlame, 8, startPosition + startOffset, endPosition + endOffset,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 254, () => { }, 19);
+                    scaleFactor = 0.925f;
+                    startOffset.X += Util.Round(scaleFactor * startXOffset);
+                    endOffset.X += Util.Round(scaleFactor * endXOffset);
+                    startOffset.Y += 2;
+                    endOffset.Y += 2;
+                    AddAnimation(CombatGraphicIndex.BigFlame, 8, startPosition + startOffset, endPosition + endOffset,
+                        BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
+                        scaleFactor * (fromMonster ? endScale : startScale),
+                        scaleFactor * (fromMonster ? startScale : endScale), 255, () => { HideOverlay(); PlayBurn(); }, 19);
+                    break;
+                }
                 case Spell.Blink:
                 case Spell.Flight:
-                case Spell.Hurry:
                     return; // TODO
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:

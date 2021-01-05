@@ -3040,8 +3040,7 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        if (spell == Spell.GhostWeapon ||
-                            spell == Spell.Mudsling ||
+                        if (spell == Spell.Mudsling ||
                             spell == Spell.Rockfall ||
                             spell == Spell.Earthquake ||
                             spell == Spell.Earthslide ||
@@ -3049,7 +3048,8 @@ namespace Ambermoon
                             spell == Spell.Windhowler ||
                             spell == Spell.Thunderbolt ||
                             spell == Spell.Whirlwind ||
-                            spell == Spell.Waterfall) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
+                            spell == Spell.Waterfall ||
+                            spell == Spell.Blink) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
                                 pickedSpell = Spell.Iceball; // TODO
                         else
                             pickedSpell = spell;
@@ -3274,7 +3274,7 @@ namespace Ambermoon
             {
                 case Spell.Hurry:
                 case Spell.MassHurry:
-                    // TODO: add speed bonus for fight duration
+                    // TODO: add speed bonus for fight duration?
                     break;
                 case Spell.RemoveFear:
                 case Spell.RemovePanic:

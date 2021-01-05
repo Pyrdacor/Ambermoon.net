@@ -965,8 +965,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (spell == Spell.GhostWeapon ||
-                        spell == Spell.Mudsling ||
+                    if (spell == Spell.Mudsling ||
                         spell == Spell.Rockfall ||
                         spell == Spell.Earthquake ||
                         spell == Spell.Earthslide ||
@@ -974,7 +973,8 @@ namespace Ambermoon
                         spell == Spell.Windhowler ||
                         spell == Spell.Thunderbolt ||
                         spell == Spell.Whirlwind ||
-                        spell == Spell.Waterfall) // TODO: REMOVE. For now we only allow some spells for testing.
+                        spell == Spell.Waterfall ||
+                        spell == Spell.Blink) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         break;
                     }
@@ -1564,7 +1564,6 @@ namespace Ambermoon
             switch (spell)
             {
                 case Spell.GhostWeapon:
-                    // TODO
                     DealDamage(25, 0);
                     return;
                 case Spell.Blink:
