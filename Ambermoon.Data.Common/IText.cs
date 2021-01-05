@@ -52,6 +52,9 @@ namespace Ambermoon.Data
         /// Note that the height still can exceed the bound height.
         /// In this case the text must be scrolled to view all of it.
         /// This only wraps text lines to keep them inside the bound width.
+        /// 
+        /// If a single word exceeds the width it is continued on the
+        /// next line.
         /// </summary>
         IText WrapText(IText text, Rect bounds, Size glyphSize);
         IText GetLines(IText text, int lineOffset, int numLines);

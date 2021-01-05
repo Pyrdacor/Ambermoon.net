@@ -219,23 +219,35 @@ namespace Ambermoon.Data.Legacy
                         break;
                     default:
                     {
-                        line.Add(glyph);
-                        ++currentLineSize;
                         x += glyphSize.Width;
                         if (x > bounds.Right)
                         {
-                            if (lastSpaceIndex == -1)
-                                throw new AmbermoonException(ExceptionScope.Data, "Text can not be wrapped inside the given bounds.");
-
-                            line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
-                            int nextLineSize = (currentLineSize - lastSpaceIndex - 1) * glyphSize.Width;
-                            var tempLine = line.Skip(lastSpaceIndex + 1);
-                            line = line.Take(lastSpaceIndex + 1).ToList();
-                            currentLineSize = lastSpaceIndex;
-                            x = currentLineSize * glyphSize.Width;
-                            NewLine(nextLineSize);
-                            line = tempLine.ToList();
-                            currentLineSize = line.Count;
+                            if (lastSpaceIndex != -1)
+                            {
+                                line.Add(glyph);
+                                ++currentLineSize;
+                                line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
+                                int nextLineSize = (currentLineSize - lastSpaceIndex - 1) * glyphSize.Width;
+                                var tempLine = line.Skip(lastSpaceIndex + 1);
+                                line = line.Take(lastSpaceIndex + 1).ToList();
+                                currentLineSize = lastSpaceIndex;
+                                x = currentLineSize * glyphSize.Width;
+                                NewLine(nextLineSize);
+                                line = tempLine.ToList();
+                                currentLineSize = line.Count;
+                            }
+                            else
+                            {
+                                line.Add((byte)SpecialGlyph.NewLine);
+                                NewLine();
+                                line.Add(glyph);
+                                currentLineSize = 1;
+                            }
+                        }
+                        else
+                        {
+                            line.Add(glyph);
+                            ++currentLineSize;
                         }
                         break;
                     }
