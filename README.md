@@ -24,10 +24,11 @@ Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/rel
 
 1. You need the original game data (either ADF files or extracted files like Party_char.amb etc).
 2. Put these files next to the downloaded executable file called Ambermoon.net.exe.
-3. If you have not yet, install the latest .NET framework for Windows.
-4. The game only runs on Windows as of now.
-5. If it still doesn't work try to start from Windows CMD and check for error printouts.
-6. If this still doesn't help please file an issue on the [Issue tracker](https://github.com/Pyrdacor/Ambermoon.net/issues).
+3. If it doesn't work try to start from Windows CMD or Linux bash and check for error printouts.
+4. If this isn't working, try to install the latest .NET framework for your OS.
+5. If this still doesn't help please file an issue on the [Issue tracker](https://github.com/Pyrdacor/Ambermoon.net/issues). Please provide error messages, your setup (OS, game version, etc) and a description what you tried.
+
+**Note:** The game only runs on Windows and Ubuntu as of now. Feel free to try other linux distributions but I can't guarantee that it will run then.
 
 
 ## Screenshots
