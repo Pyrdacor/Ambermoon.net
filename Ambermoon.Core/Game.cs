@@ -3121,7 +3121,7 @@ namespace Ambermoon
             advancing = true;
         }
 
-        void UpdateActiveBattleSpells()
+        internal void UpdateActiveBattleSpells()
         {
             foreach (var activeSpell in Enum.GetValues<ActiveSpellType>())
             {
@@ -3130,7 +3130,7 @@ namespace Ambermoon
             }
         }
 
-        void HideActiveBattleSpells()
+        internal void HideActiveBattleSpells()
         {
             layout.RemoveAllActiveSpells();
         }

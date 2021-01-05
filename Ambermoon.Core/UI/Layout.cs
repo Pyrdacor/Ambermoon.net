@@ -2802,6 +2802,8 @@ namespace Ambermoon.UI
             {
                 battleMessage?.Destroy();
                 battleMessage = null;
+
+                game.UpdateActiveBattleSpells();
             }
             else
             {
@@ -2819,6 +2821,8 @@ namespace Ambermoon.UI
                     battleMessage.SetText(text);
                     battleMessage.SetTextColor(textColor);
                 }
+
+                game.HideActiveBattleSpells();
             }
         }
 
