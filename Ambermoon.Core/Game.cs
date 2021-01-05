@@ -3169,20 +3169,27 @@ namespace Ambermoon
 
         void ApplySpellEffect(Spell spell, Character caster)
         {
-            // TODO
             switch (spell)
             {
                 case Spell.Light:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    // Duration: 30 (150 minutes = 2h30m)
+                    // Level: 1 (Light radius 1)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 30, 1);
                     break;
                 case Spell.MagicalTorch:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    // Duration: 60 (300 minutes = 5h)
+                    // Level: 1 (Light radius 1)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 60, 1);
                     break;
                 case Spell.MagicalLantern:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    // Duration: 120 (600 minutes = 10h)
+                    // Level: 2 (Light radius 2)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 2);
                     break;
                 case Spell.MagicalSun:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 1); // TODO
+                    // Duration: 180 (900 minutes = 15h)
+                    // Level: 3 (Light radius 3)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3);
                     break;
                 case Spell.CreateFood:
                 case Spell.Jump:
@@ -3192,34 +3199,54 @@ namespace Ambermoon
                     // TODO
                     break;
                 case Spell.MagicalShield:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 120, 1); // TODO
+                    // Duration: 30 (150 minutes = 2h30m)
+                    // Level: 10 (10% defense increase)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 30, 10);
                     break;
                 case Spell.MagicalWall:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 120, 1); // TODO
+                    // Duration: 90 (450 minutes = 7h30m)
+                    // Level: 20 (20% defense increase)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 90, 20);
                     break;
                 case Spell.MagicalBarrier:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 120, 1); // TODO
+                    // Duration: 180 (900 minutes = 15h)
+                    // Level: 30 (30% defense increase)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
                     break;
                 case Spell.MagicalWeapon:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 120, 1); // TODO
+                    // Duration: 30 (150 minutes = 2h30m)
+                    // Level: 10 (10% damage increase)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 30, 10);
                     break;
                 case Spell.MagicalAssault:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 120, 1); // TODO
+                    // Duration: 90 (450 minutes = 7h30m)
+                    // Level: 20 (20% damage increase)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 90, 20);
                     break;
                 case Spell.MagicalAttack:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 120, 1); // TODO
+                    // Duration: 180 (900 minutes = 15h)
+                    // Level: 30 (30% damage increase)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
                     break;
                 case Spell.Levitation:
                     // TODO
                     break;
                 case Spell.AntiMagicWall:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 120, 1); // TODO
+                    // Duration: 30 (150 minutes = 2h30m)
+                    // Level: 15 (15% anti-magic protection)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 30, 15);
                     break;
                 case Spell.AntiMagicSphere:
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 120, 1); // TODO
+                    // Duration: 180 (900 minutes = 15h)
+                    // Level: 25 (25% anti-magic protection)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
                     break;
                 case Spell.AlchemisticGlobe:
-                    // TODO
+                    // Duration: 180 (900 minutes = 15h)
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3);
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no spell without target.");
