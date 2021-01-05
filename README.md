@@ -12,8 +12,8 @@ If you want to support this project or contribute scroll down to the bottom. You
 ## Download
 
 Version | Windows 64bit | Linux 64bit
-
-0.1.3 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Linux.tar.gz)--- | --- | ---
+--- | --- | ---
+0.1.3 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Linux.tar.gz)
 0.1.2 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.2beta/Ambermoon.net-Linux.tar.gz)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
