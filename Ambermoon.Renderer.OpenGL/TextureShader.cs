@@ -29,6 +29,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultPaletteName = "palette";
         internal static readonly string DefaultPaletteIndexName = "paletteIndex";
         internal static readonly string DefaultColorKeyName = "colorKeyIndex";
+        internal static readonly string DefaultMaskColorIndexName = "maskColorIndex";
 
         // The palette has a size of 32x52 pixels.
         // Each row represents one palette of 32 colors.
@@ -42,6 +43,7 @@ namespace Ambermoon.Renderer
             $"uniform float {DefaultColorKeyName};",
             $"in vec2 varTexCoord;",
             $"flat in float palIndex;",
+            $"flat in float maskColIndex;",
             $"",
             $"void main()",
             $"{{",
@@ -54,7 +56,7 @@ namespace Ambermoon.Renderer
             $"    if (abs(colorIndex - colorKey) < 0.5f || pixelColor.a < 0.5f)",
             $"        discard;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = pixelColor;",
+            $"        {DefaultFragmentOutColorName} = (maskColIndex < 0.5f) ? pixelColor : texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / 52.0f));",
             $"}}"
         };
 
@@ -65,12 +67,14 @@ namespace Ambermoon.Renderer
             $"in ivec2 {DefaultTexCoordName};",
             $"in uint {DefaultLayerName};",
             $"in uint {DefaultPaletteIndexName};",
+            $"in uint {DefaultMaskColorIndexName};",
             $"uniform uvec2 {DefaultAtlasSizeName};",
             $"uniform float {DefaultZName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
             $"out vec2 varTexCoord;",
             $"flat out float palIndex;",
+            $"flat out float maskColIndex;",
             $"",
             $"void main()",
             $"{{",
@@ -78,6 +82,7 @@ namespace Ambermoon.Renderer
             $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
+            $"    maskColIndex = float({DefaultMaskColorIndexName});",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
             $"}}"
         };

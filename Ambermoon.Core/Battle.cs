@@ -965,9 +965,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (spell == Spell.Mudsling ||
-                        spell == Spell.Rockfall ||
-                        spell == Spell.Earthquake ||
+                    if (spell == Spell.Earthquake ||
                         spell == Spell.Earthslide ||
                         spell == Spell.Winddevil ||
                         spell == Spell.Windhowler ||
@@ -1763,7 +1761,7 @@ namespace Ambermoon
             }
         }
 
-        public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action finishAction)
+        public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action<BattleAnimation> finishAction)
         {
             if (setupAction == null)
                 return;
@@ -1775,7 +1773,7 @@ namespace Ambermoon
                 animation.AnimationFinished -= AnimationFinished;
                 currentBattleAnimation = null;
                 currentlyAnimatedMonster = null;
-                finishAction?.Invoke();
+                finishAction?.Invoke(animation);
             }
 
             animation.AnimationFinished += AnimationFinished;

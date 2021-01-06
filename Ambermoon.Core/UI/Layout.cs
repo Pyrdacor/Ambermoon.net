@@ -2627,6 +2627,18 @@ namespace Ambermoon.UI
             return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row]);
         }
 
+        public static Position GetMonsterCombatTopPosition(IRenderView renderView, int position, Monster monster)
+        {
+            int column = position % 6;
+            int row = position / 6;
+            var combatBackgroundArea = Global.CombatBackgroundArea;
+            int centerX = combatBackgroundArea.Width / 2;
+            float sizeMultiplier = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);
+            int slotWidth = Util.Round(40 * sizeMultiplier);
+            int height = Util.Round(sizeMultiplier * monster.MappedFrameHeight);
+            return new Position(centerX - (3 - column) * slotWidth + slotWidth / 2, combatBackgroundArea.Y + BattleEffects.RowYOffsets[row] - height);
+        }
+
         public Position GetMonsterCombatCenterPosition(int position, Monster monster)
         {
             return GetMonsterCombatCenterPosition(RenderView, position, monster);
@@ -2635,6 +2647,11 @@ namespace Ambermoon.UI
         public Position GetMonsterCombatCenterPosition(int column, int row, Monster monster)
         {
             return GetMonsterCombatCenterPosition(column + row * 6, monster);
+        }
+
+        public Position GetMonsterCombatTopPosition(int position, Monster monster)
+        {
+            return GetMonsterCombatTopPosition(RenderView, position, monster);
         }
 
         public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster, byte displayLayer)

@@ -35,6 +35,7 @@ namespace Ambermoon.Renderer
         byte paletteIndex = 0;
         Size textureSize = null;
         bool mirrorX = false;
+        byte? maskColor = null;
 
         public Sprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen)
             : base(width, height, virtualScreen)
@@ -115,6 +116,20 @@ namespace Ambermoon.Renderer
             }
         }
 
+        public byte? MaskColor
+        {
+            get => maskColor;
+            set
+            {
+                if (maskColor == value)
+                    return;
+
+                maskColor = value;
+
+                UpdateMaskColor();
+            }
+        }
+
         protected override void AddToLayer()
         {
             drawIndex = (Layer as RenderLayer).GetDrawIndex(this);
@@ -152,6 +167,12 @@ namespace Ambermoon.Renderer
         {
             if (drawIndex != -1) // -1 means not attached to a layer
                 (Layer as RenderLayer).UpdateTextureAtlasOffset(drawIndex, this);
+        }
+
+        protected virtual void UpdateMaskColor()
+        {
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdateMaskColor(drawIndex, maskColor);
         }
 
         protected virtual void UpdatePaletteIndex()

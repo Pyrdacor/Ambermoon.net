@@ -3040,9 +3040,7 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        if (spell == Spell.Mudsling ||
-                            spell == Spell.Rockfall ||
-                            spell == Spell.Earthquake ||
+                        if (spell == Spell.Earthquake ||
                             spell == Spell.Earthslide ||
                             spell == Spell.Winddevil ||
                             spell == Spell.Windhowler ||
@@ -3643,7 +3641,7 @@ namespace Ambermoon
                                 break;
                             case SpellTarget.SingleEnemy:
                             case SpellTarget.SingleFriend:
-                                layout.SetBattleFieldSlotColor((int)action.Parameter & 0xf, BattleFieldSlotColor.Orange);
+                                layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
                                 break;
                             case SpellTarget.EnemyRow:
                             {

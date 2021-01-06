@@ -142,6 +142,13 @@ namespace Ambermoon.Renderer
                     vertexArrayObject.AddBuffer(TextShader.DefaultTextColorIndexName, textColorIndexBuffer);
                 }
 
+                if (!isText && !is3D)
+                {
+                    colorBuffer = new ColorBuffer(state, true);
+
+                    vertexArrayObject.AddBuffer(TextureShader.DefaultMaskColorIndexName, colorBuffer);
+                }
+
                 if (layered || isText)
                 {
                     layerBuffer = new ByteBuffer(state, true);
@@ -364,6 +371,19 @@ namespace Ambermoon.Renderer
                 layerBuffer.Add(layer, layerBufferIndex + 1);
                 layerBuffer.Add(layer, layerBufferIndex + 2);
                 layerBuffer.Add(layer, layerBufferIndex + 3);
+            }
+
+            if (colorBuffer != null)
+            {
+                byte color = sprite.MaskColor ?? 0;
+                int maskColorBufferIndex = colorBuffer.Add(color);
+
+                if (maskColorBufferIndex != index)
+                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
+
+                colorBuffer.Add(color, maskColorBufferIndex + 1);
+                colorBuffer.Add(color, maskColorBufferIndex + 2);
+                colorBuffer.Add(color, maskColorBufferIndex + 3);
             }
 
             if (textColorIndexBuffer != null)
@@ -718,6 +738,18 @@ namespace Ambermoon.Renderer
                     default:
                         throw new AmbermoonException(ExceptionScope.Render, "Invalid surface type.");
                 }
+            }
+        }
+
+        public void UpdateMaskColor(int index, byte? maskColor)
+        {
+            if (colorBuffer != null)
+            {
+                var color = maskColor ?? 0;
+                colorBuffer.Update(index, color);
+                colorBuffer.Update(index + 1, color);
+                colorBuffer.Update(index + 2, color);
+                colorBuffer.Update(index + 3, color);
             }
         }
 

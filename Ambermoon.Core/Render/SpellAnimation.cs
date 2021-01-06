@@ -62,7 +62,7 @@ namespace Ambermoon.Render
             Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
             BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
             BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center,
-            bool mirrorX = false, byte palette = 17)
+            bool mirrorX = false, byte palette = 17, byte[] maskColors = null)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
@@ -71,6 +71,7 @@ namespace Ambermoon.Render
             sprite.ClipArea = Global.CombatBackgroundArea;
             sprite.Layer = renderView.GetLayer(Layer.BattleEffects);
             sprite.PaletteIndex = palette;
+            sprite.MaskColor = maskColors == null ? (byte?)null : maskColors[0];
             sprite.TextureSize = textureSize;
             sprite.Visible = true;
             var animation = new BattleAnimation(sprite);
@@ -88,6 +89,24 @@ namespace Ambermoon.Render
                 size, startPosition, startScale, mirrorX, textureSize, anchorX, anchorY);
             animation.Play(frameIndices, duration / (uint)frameIndices.Length, game.CurrentBattleTicks, endPosition, endScale);
             animations.Add(animation);
+
+            if (maskColors != null)
+            {
+                void UpdateMask(float progress)
+                {
+                    sprite.MaskColor = maskColors[Math.Min(maskColors.Length - 1, Util.Round(progress * maskColors.Length))];
+                }
+
+                void FinishMasking()
+                {
+                    animation.AnimationUpdated -= UpdateMask;
+                    animation.AnimationFinished -= FinishMasking;
+                }
+
+                animation.AnimationUpdated += UpdateMask;
+                animation.AnimationFinished += FinishMasking;
+            }
+
             return animation;
         }
 
@@ -107,6 +126,14 @@ namespace Ambermoon.Render
             return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition,
                 duration, startScale, endScale, displayLayer, finishAction, null, BattleAnimation.AnimationScaleType.Both,
                 BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center, false, palette);
+        }
+
+        BattleAnimation AddMaskedAnimation(CombatGraphicIndex graphicIndex, Position startPosition, Position endPosition,
+            uint duration, float startScale, float endScale, byte displayLayer, Action finishAction, byte[] maskColors, byte palette)
+        {
+            return AddAnimation(graphicIndex, Enumerable.Repeat(0, maskColors.Length).ToArray(), startPosition, endPosition,
+                duration, startScale, endScale, displayLayer, finishAction, null, BattleAnimation.AnimationScaleType.Both,
+                BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center, false, palette, maskColors);
         }
 
         BattleAnimation AddPortraitAnimation(int slot, UICustomGraphic graphicIndex, Size frameSize, int frameCount, Position startOffset,
@@ -170,7 +197,6 @@ namespace Ambermoon.Render
                 case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
                 case Spell.Blink:
-                case Spell.Flight:
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:
@@ -294,7 +320,6 @@ namespace Ambermoon.Render
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
                 case Spell.GhostWeapon:
                 case Spell.Blink:
-                case Spell.Flight:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
@@ -311,8 +336,6 @@ namespace Ambermoon.Render
                 case Spell.Fear:
                 case Spell.Blind:
                 case Spell.Drug:
-                case Spell.Mudsling:
-                case Spell.Rockfall:
                 case Spell.Earthslide:
                 case Spell.Earthquake:
                 case Spell.Winddevil:
@@ -341,12 +364,24 @@ namespace Ambermoon.Render
                         targetPosition.Y = Global.CombatBackgroundArea.Bottom - 20;
                     return targetPosition;
                 }
+                case Spell.Mudsling:
+                case Spell.Rockfall:
+                {
+                    if (fromMonster) // target is party member
+                    {
+                        return Layout.GetPlayerSlotCenterPosition(position % 6) - new Position(0, 24); // TODO
+                    }
+                    else // target is monster
+                    {
+                        return layout.GetMonsterCombatTopPosition(position, battle.GetCharacterAt(position) as Monster);
+                    }
+                }
                 case Spell.DissolveVictim:
                 {
                     Position targetPosition;
                     if (fromMonster) // target is party member
                     {
-                        targetPosition = Layout.GetPlayerSlotCenterPosition(position % 6); // TODO: is this right?
+                        targetPosition = Layout.GetPlayerSlotCenterPosition(position % 6); // TODO: is this right? Is this spell working on players in general?
                     }
                     else // target is monster
                     {
@@ -553,7 +588,6 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Blink:
-                case Spell.Flight:
                     return; // TODO
                 case Spell.Lame:
                 case Spell.Poison:
@@ -755,6 +789,19 @@ namespace Ambermoon.Render
             }
         }
 
+        static readonly byte[] materializeColorIndices = Enumerable.Range(1, 6).Select(i => (byte)i).ToArray();
+
+        void PlayMaterialization(Position position, CombatGraphicIndex combatGraphicIndex, float scale,
+            byte displayLayer, Action finishAction)
+        {
+            // Materialize some sprite
+            // It used the following color sequence which is encoded in palette 52 at index 1-6:
+            // Black -> dark red -> light purple -> dark purple -> dark beige -> light beige.
+            // See materializeColorIndices above.
+            AddMaskedAnimation(combatGraphicIndex, position, position, Game.TicksPerSecond * 3 / 4, scale, scale,
+                displayLayer, finishAction, materializeColorIndices, 51);
+        }
+
         public delegate void MoveToFinishAction(uint ticks, bool playHurtAnimation, bool finish);
 
         /// <summary>
@@ -876,7 +923,7 @@ namespace Ambermoon.Render
                             animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
                             var hurtFrames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
                             animation.Play(hurtFrames, (Game.TicksPerSecond * 3 / 4) / (uint)hurtFrames.Length, game.CurrentBattleTicks, monsterEndPosition, 0.0f);
-                        }, () => { });
+                        }, animation => animation.ScaleType = BattleAnimation.AnimationScaleType.Both);
                         // And fade out beam too
                         AddAnimation(CombatGraphicIndex.HolyBeam, 1, startPosition, endPosition, Game.TicksPerSecond * 3 / 4, 1, 0, displayLayer, null,
                             new Size(beamWidth, beamHeight), BattleAnimation.AnimationScaleType.XOnly);
@@ -975,7 +1022,6 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Blink:
-                case Spell.Flight:
                     return; // TODO
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
@@ -1096,7 +1142,7 @@ namespace Ambermoon.Render
                         {
                             animation.AnchorY = BattleAnimation.VerticalAnchor.Bottom;
                             animation.PlayWithoutAnimating(Game.TicksPerSecond, game.CurrentBattleTicks, position, 0.0f);
-                        }, ShowParticle);
+                        }, animation => { animation.AnchorY = BattleAnimation.VerticalAnchor.Center; ShowParticle(); });
                     }
                     else
                     {
@@ -1106,6 +1152,68 @@ namespace Ambermoon.Render
                 }
                 case Spell.Mudsling:
                 case Spell.Rockfall:
+                {
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.LargeStone);
+                    float baseScale = spell == Spell.Mudsling ? 1.0f : 1.5f;
+                    var monsterScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    float rowScale = fromMonster ? 2.0f : monsterScale;
+                    float scale = baseScale * rowScale;
+                    var spellSpriteHeight = Util.Round(info.GraphicInfo.Height * scale);
+                    var headPosition = GetTargetPosition(tile);
+                    int fallHeight = Util.Round(16.0f * rowScale);
+                    var startPosition = headPosition - new Position(0, fallHeight);
+                    byte displayLayer = (byte)Math.Min(255, targetRow * 60 + 60);
+                    PlayMaterialization(startPosition, CombatGraphicIndex.LargeStone, scale, displayLayer, () =>
+                        {
+                            // Play fall animation
+                            AddAnimation(CombatGraphicIndex.LargeStone, 1, startPosition, headPosition, Game.TicksPerSecond / 4,
+                                scale, scale, displayLayer, () =>
+                                {
+                                    if (battle.GetCharacterAt(tile) is Monster monster)
+                                    {
+                                        const float squashFactor = 0.8f;
+                                        int squashAmount = Util.Round(monster.MappedFrameHeight * monsterScale * (1.0f - squashFactor));
+                                        var duration = Game.TicksPerSecond / 5;
+                                        var squashRockPosition = headPosition + new Position(0, squashAmount);
+                                        // Squash monster ...
+                                        battle.StartMonsterAnimation(monster, animation =>
+                                        {
+                                            animation.AnchorY = BattleAnimation.VerticalAnchor.Bottom;
+                                            animation.ScaleType = BattleAnimation.AnimationScaleType.YOnly;
+                                            animation.ReferenceScale = monsterScale;
+                                            animation.PlayWithoutAnimating(duration, game.CurrentBattleTicks, null, squashFactor * monsterScale);
+                                        }, null);
+                                        // ... and let the rock fall a bit more
+                                        AddAnimation(CombatGraphicIndex.LargeStone, 1, headPosition, squashRockPosition,
+                                            duration, scale, scale, displayLayer, () =>
+                                            {
+                                                // Un-squash monster ...
+                                                battle.StartMonsterAnimation(monster, animation =>
+                                                {
+                                                    animation.PlayWithoutAnimating(duration, game.CurrentBattleTicks, null, monsterScale);
+                                                }, animation =>
+                                                {
+                                                    animation.AnchorY = BattleAnimation.VerticalAnchor.Center;
+                                                    animation.ScaleType = BattleAnimation.AnimationScaleType.Both;
+                                                    animation.ReferenceScale = 1.0f;
+                                                });
+                                                // ... and let the rock rebounce up a bit
+                                                AddAnimation(CombatGraphicIndex.LargeStone, 1, squashRockPosition, headPosition,
+                                                    duration, scale, scale, displayLayer); // This will invoke the finish action automatically.
+                                            }
+                                        );
+                                    }
+                                    else
+                                    {
+                                        this.finishAction?.Invoke();
+                                    }
+                                }
+                            );
+                        }
+                    );
+
+                    break;
+                }
                 case Spell.Earthslide:
                 case Spell.Earthquake:
                 case Spell.Winddevil:

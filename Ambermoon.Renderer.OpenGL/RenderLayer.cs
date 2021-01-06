@@ -245,6 +245,11 @@ namespace Ambermoon.Renderer
             RenderBuffer.UpdateTextureAtlasOffset(index, sprite);
         }
 
+        public void UpdateMaskColor(int index, byte? maskColor)
+        {
+            RenderBuffer.UpdateMaskColor(index, maskColor);
+        }
+
         public void UpdatePosition(int index, ISurface3D surface)
         {
             RenderBuffer.UpdatePosition(index, surface);

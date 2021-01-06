@@ -1,6 +1,6 @@
 ﻿using Ambermoon.Data;
-using Ambermoon.Render;
 using System;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -206,6 +206,43 @@ namespace Ambermoon
                                 lastEventStatus = false;
                                 return mapEventIfFalse;
                             }
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.PartyMember:
+                        {
+                            if (game.PartyMembers.Any(m => m.Index == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.ItemOwned:
+                        {
+                            int totalCount = 0;
+
+                            foreach (var partyMember in game.PartyMembers)
+                            {
+                                foreach (var slot in partyMember.Inventory.Slots)
+                                {
+                                    if (slot.ItemIndex == conditionEvent.ObjectIndex)
+                                        totalCount += slot.Amount;
+                                }
+                                foreach (var slot in partyMember.Equipment.Slots)
+                                {
+                                    if (slot.Value.ItemIndex == conditionEvent.ObjectIndex)
+                                        totalCount += slot.Value.Amount;
+                                }
+                            }
+
+                            if (totalCount != conditionEvent.Value)
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+
                             break;
                         }
                         // TODO ...

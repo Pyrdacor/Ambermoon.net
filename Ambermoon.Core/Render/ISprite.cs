@@ -55,6 +55,16 @@ namespace Ambermoon.Render
             get;
             set;
         }
+
+        /// <summary>
+        /// If not null and not 0, each non-transparent pixel
+        /// is filled with this color.
+        /// </summary>
+        byte? MaskColor
+        {
+            get;
+            set;
+        }
     }
 
     public interface ILayerSprite : ISprite

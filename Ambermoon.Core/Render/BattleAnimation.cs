@@ -45,6 +45,10 @@ namespace Ambermoon.Render
         public VerticalAnchor AnchorY { get; set; } = VerticalAnchor.Center;
         public bool Finished { get; private set; } = true;
         public AnimationScaleType ScaleType { get; set; } = AnimationScaleType.Both;
+        /// <summary>
+        /// When scaling the center point is in relation to this reference scale.
+        /// </summary>
+        public float ReferenceScale { get; set; } = 1.0f;
 
         public event Action AnimationFinished;
         public event Action<float> AnimationUpdated;
@@ -104,29 +108,44 @@ namespace Ambermoon.Render
             {
                 scale = value;
 
+                var baseLocation = new Position(baseSpriteLocation);
+                float refScaleX = ScaleType switch
+                {
+                    AnimationScaleType.None => 1.0f,
+                    AnimationScaleType.YOnly => 1.0f,
+                    _ => ReferenceScale
+                };
+                float refScaleY = ScaleType switch
+                {
+                    AnimationScaleType.None => 1.0f,
+                    AnimationScaleType.XOnly => 1.0f,
+                    _ => ReferenceScale
+                };
+                var baseSize = new Size(Util.Round(refScaleX * baseSpriteSize.Width), Util.Round(refScaleY * baseSpriteSize.Height));
+
                 int newWidth = ScaleType switch
                 {
-                    AnimationScaleType.None => baseSpriteSize.Width,
-                    AnimationScaleType.YOnly => baseSpriteSize.Width,
+                    AnimationScaleType.None => sprite.Width,
+                    AnimationScaleType.YOnly => sprite.Width,
                     _ => Util.Round(baseSpriteSize.Width * scale)
                 };
                 int newHeight = ScaleType switch
                 {
-                    AnimationScaleType.None => baseSpriteSize.Height,
-                    AnimationScaleType.XOnly => baseSpriteSize.Height,
+                    AnimationScaleType.None => sprite.Height,
+                    AnimationScaleType.XOnly => sprite.Height,
                     _ => Util.Round(baseSpriteSize.Height * scale)
                 };
                 int newX = AnchorX switch
                 {
-                    HorizontalAnchor.Left => baseSpriteLocation.X,
-                    HorizontalAnchor.Right => baseSpriteLocation.X + (sprite.Width - newWidth) / 2,
-                    _ => baseSpriteLocation.X - newWidth / 2
+                    HorizontalAnchor.Left => baseLocation.X - baseSize.Width / 2,
+                    HorizontalAnchor.Right => baseLocation.X + baseSize.Width / 2 - newWidth,
+                    _ => baseLocation.X - newWidth / 2
                 };
                 int newY = AnchorY switch
                 {
-                    VerticalAnchor.Top => baseSpriteLocation.Y,
-                    VerticalAnchor.Bottom => baseSpriteLocation.Y + (sprite.Height - newHeight) / 2,
-                    _ => baseSpriteLocation.Y - newHeight / 2
+                    VerticalAnchor.Top => baseLocation.Y - baseSize.Height / 2,
+                    VerticalAnchor.Bottom => baseLocation.Y + baseSize.Height / 2 - newHeight,
+                    _ => baseLocation.Y - newHeight / 2
                 };
                 Position = new Position(newX, newY);
                 sprite.Resize(newWidth, newHeight);
