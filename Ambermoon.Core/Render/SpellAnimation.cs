@@ -1129,7 +1129,7 @@ namespace Ambermoon.Render
                 case Spell.DissolveVictim:
                 {
                     int row = tile / 6;
-                    var position = GetTargetPosition(tile) - new Position(0, 6 + row * row);
+                    var position = GetTargetPosition(tile);
                     void ShowParticle()
                     {
                         AddAnimation(CombatGraphicIndex.GreenStar, 5, position, position - new Position(0, 4), Game.TicksPerSecond / 5, 1, 1, 255,
@@ -1139,10 +1139,8 @@ namespace Ambermoon.Render
                     {
                         // Shrink monster to zero
                         battle.StartMonsterAnimation(monster, animation =>
-                        {
-                            animation.AnchorY = BattleAnimation.VerticalAnchor.Bottom;
-                            animation.PlayWithoutAnimating(Game.TicksPerSecond, game.CurrentBattleTicks, position, 0.0f);
-                        }, animation => { animation.AnchorY = BattleAnimation.VerticalAnchor.Center; ShowParticle(); });
+                            animation.PlayWithoutAnimating(Game.TicksPerSecond, game.CurrentBattleTicks, position, 0.0f),
+                            _ => ShowParticle());
                     }
                     else
                     {
