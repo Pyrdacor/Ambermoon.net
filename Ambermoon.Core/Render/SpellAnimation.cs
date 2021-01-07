@@ -360,7 +360,6 @@ namespace Ambermoon.Render
                 case Spell.Fireball:
                 case Spell.Firestorm:
                 case Spell.Firepillar:
-                case Spell.Waterfall:
                 case Spell.Iceball:
                 case Spell.Icestorm:
                 case Spell.Iceshower:
@@ -399,6 +398,17 @@ namespace Ambermoon.Render
                     else // target is monster
                     {
                         return Layout.GetMonsterCombatGroundPosition(renderView, position);
+                    }
+                }
+                case Spell.Waterfall:
+                {
+                    if (fromMonster) // target is party member
+                    {
+                        return Layout.GetPlayerSlotTargetPosition(position % 6) + new Position(0, 10);
+                    }
+                    else // target is monster
+                    {
+                        return Layout.GetMonsterCombatGroundPosition(renderView, position) - new Position(0, 4);
                     }
                 }
                 case Spell.DissolveVictim:
@@ -781,7 +791,9 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Waterfall:
-                    return; // TODO
+                    // Only uses the MoveTo method.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.Iceball:
                 {
                     // This only makes the screen blue for a brief duration.
@@ -1421,8 +1433,32 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Waterfall:
-                    // TODO
-                    return;
+                {
+                    var targetPosition = GetTargetPosition(tile);
+                    var startPosition = new Position(targetPosition.X, Global.CombatBackgroundArea.Top);
+                    byte displayLayer = (byte)Math.Min(255, (tile / 6) * 60 + 60);
+                    PlayMaterialization(startPosition, CombatGraphicIndex.Waterdrop, 1.0f, displayLayer, () =>
+                    {
+                        var animation = AddAnimation(CombatGraphicIndex.Waterdrop, 1, startPosition, targetPosition,
+                            Game.TicksPerSecond / 2, 1.0f, 1.5f, displayLayer, () =>
+                            {
+                                var animation = AddAnimation(CombatGraphicIndex.Waterdrop, 1, targetPosition, targetPosition,
+                                    Game.TicksPerSecond * 3 / 4, 0.25f, 2.5f, displayLayer);
+                                animation.SetStartFrame(null, 0.25f);
+                                animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                            }, null, BattleAnimation.AnimationScaleType.YOnly);
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                        animation.SetStartFrame(null, 0.5f);
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.YOnly;
+                        animation.SetStartFrame(null, 1.0f);
+                    }, startPosition, 1.0f, animation =>
+                    {
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                        animation.SetStartFrame(null, 0.5f);
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.None;
+                    });
+                    break;
+                }
                 case Spell.Iceball:
                 {
                     var monsterRow = (MonsterRow)(fromMonster ? startPosition / 6 : tile / 6);

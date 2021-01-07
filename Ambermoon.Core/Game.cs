@@ -3074,7 +3074,6 @@ namespace Ambermoon
                             spell == Spell.Windhowler ||
                             spell == Spell.Thunderbolt ||
                             spell == Spell.Whirlwind ||
-                            spell == Spell.Waterfall ||
                             spell == Spell.Blink) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
                                 pickedSpell = Spell.Iceball; // TODO
                         else
