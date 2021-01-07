@@ -350,7 +350,7 @@ namespace Ambermoon.Renderer.OpenGL
             layers[layer].Visible = show;
         }
 
-        public void Render()
+        public void Render(FloatPosition viewportOffset)
         {
             if (disposed)
                 return;
@@ -360,6 +360,11 @@ namespace Ambermoon.Renderer.OpenGL
             State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
             bool render3DMap = layers[Layer.Map3D].Visible;
+            var viewOffset = new Position
+            (
+                Util.Round((viewportOffset?.X ?? 0.0f) * virtualScreenDisplay.Width),
+                Util.Round((viewportOffset?.Y ?? 0.0f) * virtualScreenDisplay.Height)
+            );
 
             foreach (var layer in layers)
             {
@@ -375,8 +380,8 @@ namespace Ambermoon.Renderer.OpenGL
                         mapViewArea.Size = SizeTransformation(mapViewArea.Size);
                         State.Gl.Viewport
                         (
-                            virtualScreenDisplay.X + mapViewArea.X,
-                            VirtualScreen.Height - (virtualScreenDisplay.Y + mapViewArea.Y + mapViewArea.Height),
+                            virtualScreenDisplay.X + mapViewArea.X + viewOffset.X,
+                            VirtualScreen.Height - (virtualScreenDisplay.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
                             (uint)mapViewArea.Width, (uint)mapViewArea.Height
                         );
                         State.Gl.Enable(EnableCap.CullFace);
@@ -390,9 +395,14 @@ namespace Ambermoon.Renderer.OpenGL
                         // Reset to 2D stuff
                         State.RestoreModelViewMatrix(Matrix4.Identity);
                         State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
-                        State.Gl.Viewport(virtualScreenDisplay.X, virtualScreenDisplay.Y,
+                        State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
                             (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
                     }
+                }
+                else
+                {
+                    State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
+                        (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
                 }
 
                 if (layer.Key == Layer.Effects)

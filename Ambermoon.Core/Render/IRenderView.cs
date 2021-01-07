@@ -25,7 +25,7 @@ namespace Ambermoon.Render
 {
     public interface IRenderView : IRenderLayerFactory
     {
-        void Render();
+        void Render(FloatPosition viewportOffset);
         void AddLayer(IRenderLayer layer);
         IRenderLayer GetLayer(Layer layer);
         void Resize(int width, int height);

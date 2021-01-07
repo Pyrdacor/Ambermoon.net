@@ -237,7 +237,7 @@ namespace Ambermoon
 
         void Window_Render(double delta)
         {
-            renderView.Render();
+            renderView.Render(Game.ViewportOffset);
             window.SwapBuffers();
         }
 

@@ -646,6 +646,7 @@ namespace Ambermoon
             PlayerLostTarget?.Invoke(attacker);
             if (Monsters.Count() == 0)
             {
+                EndBattleCleanup();
                 BattleEnded?.Invoke(new Game.BattleEndInfo
                 {
                     MonstersDefeated = true,
@@ -654,12 +655,22 @@ namespace Ambermoon
             }
         }
 
+        void EndBattleCleanup()
+        {
+            foreach (var battleFieldDamageText in battleFieldDamageTexts)
+                battleFieldDamageText.Value?.Delete();
+            battleFieldDamageTexts.Clear();
+            currentSpellAnimation?.Destroy();
+            currentSpellAnimation = null;
+        }
+
         void KillPlayer(Character target)
         {
             CharacterDied?.Invoke(target);
 
             if (!partyMembers.Any(p => p != null && p.Alive && p.Ailments.CanFight()))
             {
+                EndBattleCleanup();
                 BattleEnded?.Invoke(new Game.BattleEndInfo
                 {
                     MonstersDefeated = false
@@ -789,10 +800,14 @@ namespace Ambermoon
                         return;
                     }
 
+                    int currentPosition = GetCharacterPosition(battleAction.Character);
+
+                    HideBattleFieldDamage(currentPosition);
+
                     if (battleAction.Character is Monster monster)
                     {
-                        int currentColumn = GetCharacterPosition(monster) % 6;
-                        int currentRow = GetCharacterPosition(monster) / 6;
+                        int currentColumn = currentPosition % 6;
+                        int currentRow = currentPosition / 6;
                         uint newPosition = GetTargetTileFromParameter(battleAction.ActionParameter);
                         int newColumn = (int)newPosition % 6;
                         int newRow = (int)newPosition / 6;
@@ -965,8 +980,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (spell == Spell.Earthquake ||
-                        spell == Spell.Winddevil ||
+                    if (spell == Spell.Winddevil ||
                         spell == Spell.Windhowler ||
                         spell == Spell.Thunderbolt ||
                         spell == Spell.Whirlwind ||
@@ -1203,6 +1217,7 @@ namespace Ambermoon
                         if (battleAction.Character.Type == CharacterType.Monster &&
                             Monsters.Count() == 0)
                         {
+                            EndBattleCleanup();
                             BattleEnded?.Invoke(new Game.BattleEndInfo
                             {
                                 MonstersDefeated = true,
@@ -1213,6 +1228,7 @@ namespace Ambermoon
                         else if (battleAction.Character.Type == CharacterType.PartyMember &&
                             !battleField.Any(c => c?.Type == CharacterType.PartyMember))
                         {
+                            EndBattleCleanup();
                             BattleEnded?.Invoke(new Game.BattleEndInfo
                             {
                                 MonstersDefeated = false
@@ -1307,6 +1323,15 @@ namespace Ambermoon
             });
         }
 
+        void HideBattleFieldDamage(int tile)
+        {
+            if (battleFieldDamageTexts.ContainsKey(tile))
+            {
+                battleFieldDamageTexts[tile]?.Delete();
+                battleFieldDamageTexts.Remove(tile);
+            }
+        }
+
         void ShowBattleFieldDamage(int tile, uint damage)
         {
             var layer = layout.RenderView.GetLayer(Layer.Text);
@@ -1340,6 +1365,9 @@ namespace Ambermoon
 
             void ChangeColor()
             {
+                if (!battleFieldDamageTexts.ContainsKey(tile))
+                    return; // Might be removed by moving/dying or battle end
+
                 ++colorIndex;
 
                 if (colorIndex == colors.Length)
@@ -1490,15 +1518,15 @@ namespace Ambermoon
                 PlayBattleEffectAnimation(BattleEffect.Death, (uint)slot, game.CurrentBattleTicks, () =>
                 {
                     RemoveCharacterFromBattleField(target);
-                    KillMonster(partyMember, target);
                     finishAction?.Invoke();
+                    KillMonster(partyMember, target);
                 }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
             }
             else
             {
                 RemoveCharacterFromBattleField(target);
-                KillPlayer(target);
                 finishAction?.Invoke();
+                KillPlayer(target);
             }
         }
 
@@ -1809,6 +1837,10 @@ namespace Ambermoon
 
         void RemoveCharacterFromBattleField(Character character)
         {
+            int position = GetCharacterPosition(character);
+
+            HideBattleFieldDamage(position);
+
             if (currentBattleAnimation != null && character == currentlyAnimatedMonster)
             {
                 currentBattleAnimation?.Destroy();
@@ -1816,7 +1848,7 @@ namespace Ambermoon
                 currentlyAnimatedMonster = null;
             }
 
-            battleField[GetCharacterPosition(character)] = null;
+            battleField[position] = null;
             roundBattleActions.Where(b => b.Character == character).ToList().ForEach(b => b.Skip = true);
             game.RemoveBattleActor(character);
         }

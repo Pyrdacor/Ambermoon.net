@@ -153,6 +153,11 @@ namespace Ambermoon
         const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         internal const uint TicksPerSecond = 60;
+        /// <summary>
+        /// This is used for screen shaking.
+        /// Position is in percentage of the resolution.
+        /// </summary>
+        public FloatPosition ViewportOffset { get; private set; } = null;
         readonly bool legacyMode = false;
         public event Action QuitRequested;
         bool ingame = false;
@@ -2263,6 +2268,31 @@ namespace Ambermoon
             });
         }
 
+        static readonly float[] ShakeOffsetFactors = new float[]
+        {
+            -0.5f, 0.0f, 1.0f, 0.5f, -1.0f, 0.0f, 0.5f
+        };
+
+        internal void ShakeScreen(TimeSpan durationPerShake, int numShakes, float amplitude)
+        {
+            int shakeIndex = 0;
+
+            void Shake()
+            {
+                if (++shakeIndex == numShakes)
+                {
+                    ViewportOffset = null;
+                }
+                else
+                {
+                    ViewportOffset = new FloatPosition(0.0f, amplitude * ShakeOffsetFactors[(shakeIndex - 1) % ShakeOffsetFactors.Length]);
+                    AddTimedEvent(durationPerShake, Shake);
+                }
+            }
+
+            Shake();
+        }
+
         void Fade(Action midFadeAction)
         {
             allInputDisabled = true;
@@ -3040,8 +3070,7 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        if (spell == Spell.Earthquake ||
-                            spell == Spell.Winddevil ||
+                        if (spell == Spell.Winddevil ||
                             spell == Spell.Windhowler ||
                             spell == Spell.Thunderbolt ||
                             spell == Spell.Whirlwind ||

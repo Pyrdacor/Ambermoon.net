@@ -631,7 +631,7 @@ namespace Ambermoon.Render
                 case Spell.Earthslide:
                 {
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
-                    float scale = fromMonster ? 1.5f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
+                    float scale = fromMonster ? 1.333f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
                     float endScale = GetScaleXRelativeToCombatArea(info.GraphicInfo.Width, scale * 0.85f);
                     scale = endScale * 0.4f;
                     int halfSpriteHeight = Util.Round(0.5f * scale * info.GraphicInfo.Height);
@@ -660,6 +660,49 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Earthquake:
+                {
+                    var position = Global.CombatBackgroundArea.Center + new Position(0, 5);
+                    const float initialScale = 1.85f;
+                    const float materializeScale = 3.0f;
+                    const float endScale = 4.5f;
+                    PlayMaterialization(position, CombatGraphicIndex.Landslide, initialScale, 0, () =>
+                    {
+                        game.ShakeScreen(TimeSpan.FromMilliseconds(150), 9, 0.025f);
+                        BattleAnimation animation = AddAnimationThatRemains(CombatGraphicIndex.Landslide, 1,
+                            position, position + new Position(0, 14), Game.TicksPerSecond * 7 / 5,
+                            materializeScale, endScale, 0);
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.YOnly;
+                        animation.SetStartFrame(null, initialScale);
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                        animation.ReferenceScale = materializeScale;
+                        animation.SetStartFrame(null, materializeScale);
+                        animation.AnimationFinished += AnimationFinished;
+                        animation.AnimationUpdated += AnimationUpdated;
+                        void AnimationFinished()
+                        {
+                            animation.AnimationUpdated -= AnimationUpdated;
+                            animation.AnimationFinished -= AnimationFinished;
+
+                            animation.ScaleType = BattleAnimation.AnimationScaleType.None;
+                            animation.AnchorY = BattleAnimation.VerticalAnchor.Top;
+                            animation.PlayWithoutAnimating(Game.TicksPerSecond / 2, game.CurrentBattleTicks,
+                                new Position(position.X, Global.CombatBackgroundArea.Bottom), null);
+                            animation.AnimationFinished += () => RemoveAnimation(animation);
+                        }
+                        void AnimationUpdated(float progress)
+                        {
+                            int row = Util.Round(progress * 5.0f);
+                            animation.SetDisplayLayer((byte)Math.Min(255, row * 60));
+                        }
+                    }, null, materializeScale, animation =>
+                    {
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.YOnly;
+                        animation.SetStartFrame(null, initialScale);
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                        animation.ReferenceScale = initialScale;
+                    }, Game.TicksPerSecond);
+                    break;
+                }
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
                     return; // TODO
