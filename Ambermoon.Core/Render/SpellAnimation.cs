@@ -62,7 +62,7 @@ namespace Ambermoon.Render
             Size customBaseSize = null, BattleAnimation.AnimationScaleType scaleType = BattleAnimation.AnimationScaleType.Both,
             BattleAnimation.HorizontalAnchor anchorX = BattleAnimation.HorizontalAnchor.Center,
             BattleAnimation.VerticalAnchor anchorY = BattleAnimation.VerticalAnchor.Center,
-            bool mirrorX = false, byte palette = 17, byte[] maskColors = null)
+            bool mirrorX = false, byte palette = 17, byte[] maskColors = null, bool removeWhenFinished = true)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var textureSize = new Size(info.GraphicInfo.Width, info.GraphicInfo.Height);
@@ -78,7 +78,9 @@ namespace Ambermoon.Render
             void AnimationEnded()
             {
                 animation.AnimationFinished -= AnimationEnded;
-                RemoveAnimation(animation, finishAction == null);
+
+                if (removeWhenFinished)
+                    RemoveAnimation(animation, finishAction == null);
 
                 if (finishAction != null)
                     finishAction?.Invoke();
@@ -108,6 +110,14 @@ namespace Ambermoon.Render
             }
 
             return animation;
+        }
+
+        BattleAnimation AddAnimationThatRemains(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
+            uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255)
+        {
+            return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition, duration, startScale,
+                endScale, displayLayer, null, null, BattleAnimation.AnimationScaleType.Both, BattleAnimation.HorizontalAnchor.Center,
+                BattleAnimation.VerticalAnchor.Center, false, 17, null, false);
         }
 
         BattleAnimation AddAnimation(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
@@ -164,6 +174,11 @@ namespace Ambermoon.Render
             animation.Play(Enumerable.Range(0, frameCount).ToArray(), duration / (uint)frameCount, ticks, area.Position + endOffset);
             animations.Add(animation);
             return animation;
+        }
+
+        float GetScaleXRelativeToCombatArea(int baseWidth, float factor)
+        {
+            return (Global.CombatBackgroundArea.Width * factor) / baseWidth;
         }
 
         float GetScaleYRelativeToCombatArea(int baseHeight, float factor)
@@ -315,6 +330,7 @@ namespace Ambermoon.Render
                 case Spell.Hurry:
                 case Spell.MassHurry:
                 case Spell.ShowMonsterLP:
+                case Spell.Earthquake:
                     // Those spells have no target position. They are just visible on portraits or not at all.
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
@@ -336,8 +352,6 @@ namespace Ambermoon.Render
                 case Spell.Fear:
                 case Spell.Blind:
                 case Spell.Drug:
-                case Spell.Earthslide:
-                case Spell.Earthquake:
                 case Spell.Winddevil:
                 case Spell.Windhowler:
                 case Spell.Thunderbolt:
@@ -369,11 +383,22 @@ namespace Ambermoon.Render
                 {
                     if (fromMonster) // target is party member
                     {
-                        return Layout.GetPlayerSlotCenterPosition(position % 6) - new Position(0, 24); // TODO
+                        return Layout.GetPlayerSlotCenterPosition(position % 6);
                     }
                     else // target is monster
                     {
                         return layout.GetMonsterCombatTopPosition(position, battle.GetCharacterAt(position) as Monster);
+                    }
+                }
+                case Spell.Earthslide:
+                {
+                    if (fromMonster) // target is party member
+                    {
+                        return new Position(0, Global.CombatBackgroundArea.Bottom + 10);
+                    }
+                    else // target is monster
+                    {
+                        return Layout.GetMonsterCombatGroundPosition(renderView, position);
                     }
                 }
                 case Spell.DissolveVictim:
@@ -604,6 +629,36 @@ namespace Ambermoon.Render
                     this.finishAction?.Invoke();
                     break;
                 case Spell.Earthslide:
+                {
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
+                    float scale = fromMonster ? 1.5f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
+                    float endScale = GetScaleXRelativeToCombatArea(info.GraphicInfo.Width, scale * 0.85f);
+                    scale = endScale * 0.4f;
+                    int halfSpriteHeight = Util.Round(0.5f * scale * info.GraphicInfo.Height);
+                    var targetPosition = GetTargetPosition(targetRow * 6) - new Position(0, halfSpriteHeight);
+                    targetPosition.X = Global.CombatBackgroundArea.Center.X;
+                    var startPosition = new Position(targetPosition.X, Math.Min(targetPosition.Y - 10, Global.CombatBackgroundArea.Y + halfSpriteHeight));
+                    byte displayLayer = (byte)Math.Min(255, targetRow * 60 + 60);
+                    PlayMaterialization(startPosition, CombatGraphicIndex.Landslide, scale, displayLayer, () =>
+                    {
+                        var animation = AddAnimationThatRemains(CombatGraphicIndex.Landslide, 1, startPosition, targetPosition,
+                            Game.TicksPerSecond * 4 / 5, scale, endScale, displayLayer);
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                        animation.ReferenceScale = endScale;
+                        animation.SetStartFrame(startPosition, endScale);
+                        animation.AnimationFinished += FallingFinished;
+                        void FallingFinished()
+                        {
+                            animation.AnimationFinished -= FallingFinished;
+                            game.AddTimedEvent(TimeSpan.FromMilliseconds(250), this.finishAction);
+                        }
+                    }, null, endScale, animation =>
+                    {
+                        animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
+                        animation.ReferenceScale = scale;
+                    }, Game.TicksPerSecond);
+                    break;
+                }
                 case Spell.Earthquake:
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
@@ -792,14 +847,51 @@ namespace Ambermoon.Render
         static readonly byte[] materializeColorIndices = Enumerable.Range(1, 6).Select(i => (byte)i).ToArray();
 
         void PlayMaterialization(Position position, CombatGraphicIndex combatGraphicIndex, float scale,
-            byte displayLayer, Action finishAction)
+            byte displayLayer, Action finishAction, Position endPosition = null, float? endScale = null,
+            Action<BattleAnimation> setupAnimation = null, uint duration = Game.TicksPerSecond * 3 / 4)
         {
             // Materialize some sprite
             // It used the following color sequence which is encoded in palette 52 at index 1-6:
             // Black -> dark red -> light purple -> dark purple -> dark beige -> light beige.
             // See materializeColorIndices above.
-            AddMaskedAnimation(combatGraphicIndex, position, position, Game.TicksPerSecond * 3 / 4, scale, scale,
-                displayLayer, finishAction, materializeColorIndices, 51);
+            var animation = AddMaskedAnimation(combatGraphicIndex, position, endPosition ?? position, duration,
+                scale, endScale ?? scale, displayLayer, finishAction, materializeColorIndices, 51);
+            setupAnimation?.Invoke(animation);
+        }
+
+        /// <summary>
+        /// Called after the whole spell cast is over.
+        /// Some spells like Earthslide needs after-spell animations.
+        /// </summary>
+        public void PostCast(Action finishedAction)
+        {
+            if (spell == Spell.Earthslide)
+            {
+                if (animations.Count != 1)
+                    throw new AmbermoonException(ExceptionScope.Application, "Earthslide spell has wrong animation count.");
+
+                animations[0].AnimationFinished += () =>
+                {
+                    RemoveAnimation(animations[0], false); // Remove when finished
+                    finishedAction?.Invoke();
+                };
+                var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
+                float scale = fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
+                scale = GetScaleXRelativeToCombatArea(info.GraphicInfo.Width, scale * 0.85f);
+                scale *= 0.4f;
+                animations[0].AnchorY = BattleAnimation.VerticalAnchor.Bottom;
+                animations[0].ScaleType = BattleAnimation.AnimationScaleType.YOnly;
+                animations[0].ReferenceScale = scale;
+                animations[0].SetStartFrame(null, scale);
+                animations[0].PlayWithoutAnimating(Game.TicksPerSecond / 2, game.CurrentBattleTicks, null, 0.0f);
+            }
+            else
+            {
+                // Ensure all remaining animations are cleaned up.
+                for (int i = animations.Count - 1; i >= 0; --i)
+                    RemoveAnimation(animations[i], false);
+                finishedAction?.Invoke();
+            }
         }
 
         public delegate void MoveToFinishAction(uint ticks, bool playHurtAnimation, bool finish);
@@ -1214,6 +1306,9 @@ namespace Ambermoon.Render
                 }
                 case Spell.Earthslide:
                 case Spell.Earthquake:
+                    // Just hurt each monster.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.Winddevil:
                 case Spell.Windhowler:
                 case Spell.Thunderbolt:

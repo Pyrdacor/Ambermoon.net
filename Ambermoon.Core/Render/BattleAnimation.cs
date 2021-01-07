@@ -77,14 +77,14 @@ namespace Ambermoon.Render
             sprite.MirrorX = mirrorX;
             AnchorX = anchorX;
             AnchorY = anchorY;
-            Scale = initialScale;
+            Scale = startScale = initialScale;
         }
 
         public void SetStartFrame(Position centerPosition, float initialScale = 1.0f)
         {
             if (centerPosition != null)
                 baseSpriteLocation = new Position(centerPosition);
-            Scale = initialScale;
+            Scale = startScale = initialScale;
         }
 
         public bool Visible
@@ -102,9 +102,10 @@ namespace Ambermoon.Render
             }
         }
 
-        float Scale
+        public float Scale
         {
-            set
+            get => scale;
+            private set
             {
                 scale = value;
 

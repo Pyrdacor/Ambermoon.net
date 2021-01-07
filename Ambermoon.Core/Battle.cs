@@ -966,7 +966,6 @@ namespace Ambermoon
                     }
 
                     if (spell == Spell.Earthquake ||
-                        spell == Spell.Earthslide ||
                         spell == Spell.Winddevil ||
                         spell == Spell.Windhowler ||
                         spell == Spell.Thunderbolt ||
@@ -979,9 +978,19 @@ namespace Ambermoon
 
                     void EndCast(bool needClickAfterwards = true)
                     {
-                        currentSpellAnimation?.Destroy();
-                        currentSpellAnimation = null;
-                        ActionFinished(needClickAfterwards);
+                        if (currentSpellAnimation != null)
+                        {
+                            currentSpellAnimation.PostCast(() =>
+                            {
+                                currentSpellAnimation?.Destroy();
+                                currentSpellAnimation = null;
+                                ActionFinished(needClickAfterwards);
+                            });
+                        }
+                        else
+                        {
+                            ActionFinished(needClickAfterwards);
+                        }
                     }
 
                     switch (spellInfo.Target)
@@ -1042,6 +1051,16 @@ namespace Ambermoon
                                     currentlyAnimatedMonster = null;
                                 }
 
+                                void EffectApplied(bool needsClickAfterwards)
+                                {
+                                    // We have to wait until the monster hurt animation finishes.
+                                    // Otherwise the animation reset might not happen.
+                                    if (currentBattleAnimation == null)
+                                        finishAction?.Invoke(needsClickAfterwards);
+                                    else
+                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(25), () => EffectApplied(needsClickAfterwards));
+                                }
+
                                 animation.AnimationFinished += HurtAnimationFinished;
                                 animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt), Game.TicksPerSecond / 5,
                                     game.CurrentBattleTicks);
@@ -1049,7 +1068,7 @@ namespace Ambermoon
                                 currentlyAnimatedMonster = monster;
                                 if (finish)
                                 {
-                                    ApplySpellEffect(battleAction.Character, target, spell, game.CurrentBattleTicks, finishAction);
+                                    ApplySpellEffect(battleAction.Character, target, spell, game.CurrentBattleTicks, EffectApplied);
                                 }
                             }
                             else if (finish)
@@ -1303,7 +1322,9 @@ namespace Ambermoon
                 TextColor.Orange,
                 TextColor.Red
             };
+            int colorCycle = 0;
             int colorIndex = -1;
+            const int numColorCycles = 3;
 
             if (battleFieldDamageTexts.ContainsKey(tile))
             {
@@ -1323,14 +1344,18 @@ namespace Ambermoon
 
                 if (colorIndex == colors.Length)
                 {
-                    battleFieldDamageTexts[tile].Delete();
-                    battleFieldDamageTexts.Remove(tile);
+                    colorIndex = 0;
+
+                    if (++colorCycle == numColorCycles)
+                    {
+                        battleFieldDamageTexts[tile].Delete();
+                        battleFieldDamageTexts.Remove(tile);
+                        return;
+                    }
                 }
-                else
-                {
-                    battleFieldDamageTexts[tile].TextColor = colors[colorIndex];
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(150), ChangeColor);
-                }
+
+                battleFieldDamageTexts[tile].TextColor = colors[colorIndex];
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(150), ChangeColor);
             }
 
             damageText.DisplayLayer = 255;

@@ -3041,7 +3041,6 @@ namespace Ambermoon
                     {
                         // pickedSpell = spell;
                         if (spell == Spell.Earthquake ||
-                            spell == Spell.Earthslide ||
                             spell == Spell.Winddevil ||
                             spell == Spell.Windhowler ||
                             spell == Spell.Thunderbolt ||
