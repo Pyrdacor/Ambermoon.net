@@ -980,9 +980,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (spell == Spell.Winddevil ||
-                        spell == Spell.Windhowler ||
-                        spell == Spell.Thunderbolt ||
+                    if (spell == Spell.Thunderbolt ||
                         spell == Spell.Whirlwind) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         break;

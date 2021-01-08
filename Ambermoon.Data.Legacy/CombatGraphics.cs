@@ -12,7 +12,7 @@ namespace Ambermoon.Data.Legacy
             { CombatGraphicIndex.SmallFlame, new CombatGraphicInfo(6, 16, 16) },
             { CombatGraphicIndex.MagicProjectileHuman, new CombatGraphicInfo(24, 32, 32) },
             { CombatGraphicIndex.MagicProjectileMonster, new CombatGraphicInfo(12, 32, 32) },
-            { CombatGraphicIndex.Whirlwind, new CombatGraphicInfo(8, 32, 32) },
+            { CombatGraphicIndex.Whirlwind, new CombatGraphicInfo(4, 32, 64) },
             { CombatGraphicIndex.Blood, new CombatGraphicInfo(4, 32, 32) },
             { CombatGraphicIndex.SnowFlake, new CombatGraphicInfo(5, 16, 16) },
             { CombatGraphicIndex.GreenStar, new CombatGraphicInfo(5, 16, 16) },

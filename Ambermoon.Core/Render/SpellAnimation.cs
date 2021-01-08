@@ -352,8 +352,6 @@ namespace Ambermoon.Render
                 case Spell.Fear:
                 case Spell.Blind:
                 case Spell.Drug:
-                case Spell.Winddevil:
-                case Spell.Windhowler:
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
                 case Spell.Firebeam:
@@ -377,6 +375,18 @@ namespace Ambermoon.Render
                         targetPosition.Y = Global.CombatBackgroundArea.Bottom - 20;
                     return targetPosition;
                 }
+                case Spell.Winddevil:
+                case Spell.Windhowler:
+                {
+                    if (fromMonster) // target is party member
+                    {
+                        return Layout.GetPlayerSlotCenterPosition(position % 6) + new Position(0, 18);
+                    }
+                    else // target is monster
+                    {
+                        return layout.GetMonsterCombatCenterPosition(position, battle.GetCharacterAt(position) as Monster) - new Position(0, spell == Spell.Windhowler ? 14 : 8);
+                    }
+                }
                 case Spell.Mudsling:
                 case Spell.Rockfall:
                 {
@@ -386,7 +396,7 @@ namespace Ambermoon.Render
                     }
                     else // target is monster
                     {
-                        return layout.GetMonsterCombatTopPosition(position, battle.GetCharacterAt(position) as Monster);
+                        return layout.GetMonsterCombatTopPosition(position, battle.GetCharacterAt(position) as Monster) - new Position(0, 6);
                     }
                 }
                 case Spell.Earthslide:
@@ -1370,6 +1380,45 @@ namespace Ambermoon.Render
                     break;
                 case Spell.Winddevil:
                 case Spell.Windhowler:
+                {
+                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
+                    bool howler = spell == Spell.Windhowler;
+                    var scale = (howler ? 1.75f : 1.25f) * (fromMonster ? 1.75f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6)));
+                    var position = GetTargetPosition(tile);
+                    byte displayLayer = (byte)Math.Min(255, (tile / 6) * 60);
+                    uint duration = Game.TicksPerSecond * (howler ? 3u : 2u);
+                    PlayMaterialization(position, CombatGraphicIndex.Whirlwind, scale, displayLayer, () =>
+                    {
+                        AddAnimation(CombatGraphicIndex.Whirlwind, Enumerable.Range(0, howler ? 12 : 8).Select(i => i % 4).ToArray(),
+                            position, position, duration, scale, scale, displayLayer);
+                        if (battle.GetCharacterAt(tile) is Monster monster)
+                        {
+                            int remainingTicks = (int)duration;
+                            const int TimePerScaling = (int)Game.TicksPerSecond / 2;
+                            float baseScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                            var basePosition = Layout.GetMonsterCombatCenterPosition(renderView, tile, monster);
+                            var hurtFrames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
+                            void PlayScale(float additionalScale)
+                            {
+                                battle.StartMonsterAnimation(monster, animation =>
+                                {
+                                    remainingTicks -= TimePerScaling;
+                                    int yOffset = Util.Round((16 * (1.0f + additionalScale) - 16) * baseScale);
+                                    animation.Play(hurtFrames, TimePerScaling / (uint)hurtFrames.Length, game.CurrentBattleTicks,
+                                        basePosition - new Position(0, yOffset), baseScale * (1.0f + additionalScale));
+                                }, _ =>
+                                {
+                                    if (remainingTicks > 0)
+                                    {
+                                        PlayScale(0.2f - additionalScale);
+                                    }
+                                });
+                            }
+                            PlayScale(0.2f);
+                        }
+                    });
+                    break;
+                }
                 case Spell.Thunderbolt:
                 case Spell.Whirlwind:
                     return; // TODO

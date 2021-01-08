@@ -186,7 +186,7 @@ namespace Ambermoon.Render
             {
                 Finished = true;
                 AnimationFinished?.Invoke();
-                return false;
+                return !Finished;
             }
 
             uint elapsed = ticks - startAnimationTicks;
@@ -199,7 +199,7 @@ namespace Ambermoon.Render
                 Scale = endScale; // Note: scale will also set the new position
                 Finished = true;
                 AnimationFinished?.Invoke();
-                return false;
+                return !Finished;
             }
 
             float animationTime = frameIndices.Length * ticksPerFrame;
