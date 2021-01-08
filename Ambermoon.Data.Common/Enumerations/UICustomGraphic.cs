@@ -27,6 +27,7 @@
         BattleFieldYellowBorder,
         BattleFieldOrangeBorder,
         BattleFieldGreenHighlight,
-        HealingStarAnimation // 7x7, 3 frames
+        HealingStarAnimation, // 7x7, 3 frames
+        BattleFieldBlockedMovementCursor // Blinking red cross (14x11)
     }
 }

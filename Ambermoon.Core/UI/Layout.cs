@@ -236,7 +236,8 @@ namespace Ambermoon.UI
     {
         None,
         Yellow,
-        Orange
+        Orange,
+        Both = 5 // Only used by blink
     }
 
     internal class Layout
@@ -374,6 +375,13 @@ namespace Ambermoon.UI
             Dead
         }
 
+        class BattleFieldSlotMarker
+        {
+            public ISprite Sprite = null;
+            public uint? BlinkStartTicks = null;
+            public bool ToggleColors = false;
+        }
+
         public LayoutType Type { get; private set; }
         readonly Game game;
         readonly ILayerSprite sprite;
@@ -412,7 +420,8 @@ namespace Ambermoon.UI
         readonly List<ISprite> additionalSprites = new List<ISprite>();
         readonly List<UIText> texts = new List<UIText>();
         readonly List<Tooltip> tooltips = new List<Tooltip>();
-        readonly Dictionary<int, ISprite> battleFieldSlotMarkers = new Dictionary<int, ISprite>();
+        readonly Dictionary<int, BattleFieldSlotMarker> battleFieldSlotMarkers = new Dictionary<int, BattleFieldSlotMarker>();
+        public const uint TicksPerBlink = Game.TicksPerSecond / 4;
         IRenderText activeTooltip = null;
         UIText inventoryMessage = null;
         UIText battleMessage = null;
@@ -2088,6 +2097,28 @@ namespace Ambermoon.UI
                     portraitAnimation.SecondarySprite.Y = portraitAnimation.PrimarySprite.Y + diff;
                 }
             }
+
+            // The spell Blink uses blinking battle field slot markers
+            foreach (var slotMarker in battleFieldSlotMarkers.Values)
+            {
+                if (slotMarker.BlinkStartTicks == null)
+                    slotMarker.Sprite.Visible = true;
+                else
+                {
+                    uint diff = game.CurrentBattleTicks - slotMarker.BlinkStartTicks.Value;
+                    if (slotMarker.ToggleColors)
+                    {
+                        var slotColor = (diff % (TicksPerBlink * 2) < TicksPerBlink) ? BattleFieldSlotColor.Orange : BattleFieldSlotColor.Yellow;
+                        uint textureIndex = Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.BattleFieldYellowBorder + (uint)slotColor - 1;
+                        slotMarker.Sprite.Visible = true;
+                        slotMarker.Sprite.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+                    }
+                    else
+                    {
+                        slotMarker.Sprite.Visible = diff % (TicksPerBlink * 2) < TicksPerBlink;
+                    }
+                }
+            }
         }
 
         public bool KeyChar(char ch)
@@ -2761,33 +2792,39 @@ namespace Ambermoon.UI
             }
         }
 
-        public void SetBattleFieldSlotColor(int column, int row, BattleFieldSlotColor slotColor)
+        public void SetBattleFieldSlotColor(int column, int row, BattleFieldSlotColor slotColor, uint? blinkStartTime = null)
         {
-            SetBattleFieldSlotColor(column + row * 6, slotColor);
+            SetBattleFieldSlotColor(column + row * 6, slotColor, blinkStartTime);
         }
 
-        public void SetBattleFieldSlotColor(int index, BattleFieldSlotColor slotColor)
+        public void SetBattleFieldSlotColor(int index, BattleFieldSlotColor slotColor, uint? blinkStartTime = null)
         {
             if (slotColor == BattleFieldSlotColor.None)
             {
                 if (battleFieldSlotMarkers.ContainsKey(index))
                 {
-                    battleFieldSlotMarkers[index]?.Delete();
+                    battleFieldSlotMarkers[index].Sprite?.Delete();
                     battleFieldSlotMarkers.Remove(index);
                 }
             }
             else
             {
-                uint textureIndex = Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.BattleFieldYellowBorder + (uint)slotColor - 1;
+                uint textureIndex = Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.BattleFieldYellowBorder + (uint)slotColor % 3 - 1;
 
                 if (!battleFieldSlotMarkers.ContainsKey(index))
                 {
-                    battleFieldSlotMarkers.Add(index, AddSprite(Global.BattleFieldSlotArea(index),
-                        textureIndex, 50, 2));
+                    battleFieldSlotMarkers.Add(index, new BattleFieldSlotMarker
+                    {
+                        Sprite = AddSprite(Global.BattleFieldSlotArea(index), textureIndex, 50, 2),
+                        BlinkStartTicks = blinkStartTime,
+                        ToggleColors = slotColor == BattleFieldSlotColor.Both
+                    });
                 }
                 else
                 {
-                    battleFieldSlotMarkers[index].TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+                    battleFieldSlotMarkers[index].Sprite.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+                    battleFieldSlotMarkers[index].BlinkStartTicks = blinkStartTime;
+                    battleFieldSlotMarkers[index].ToggleColors = slotColor == BattleFieldSlotColor.Both;
                 }
             }
         }
@@ -2795,7 +2832,7 @@ namespace Ambermoon.UI
         public void ClearBattleFieldSlotColors()
         {
             foreach (var slotMarker in battleFieldSlotMarkers.Values)
-                slotMarker?.Delete();
+                slotMarker.Sprite?.Delete();
 
             battleFieldSlotMarkers.Clear();
         }
@@ -2803,7 +2840,7 @@ namespace Ambermoon.UI
         public void ClearBattleFieldSlotColorsExcept(int exceptionSlotIndex)
         {
             foreach (var slotMarker in battleFieldSlotMarkers.Where(s => s.Key != exceptionSlotIndex))
-                slotMarker.Value?.Delete();
+                slotMarker.Value.Sprite?.Delete();
 
             var exceptionSlot = battleFieldSlotMarkers?[exceptionSlotIndex];
 

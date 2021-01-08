@@ -116,7 +116,9 @@ namespace Ambermoon
             PickEnemySpellTargetRow,
             PickFriendSpellTarget,
             PickMoveSpot,
-            PickAttackSpot
+            PickAttackSpot,
+            PickMemberToBlink,
+            PickBlinkTarget
         }
 
         /// <summary>
@@ -210,6 +212,7 @@ namespace Ambermoon
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
         Spell pickedSpell = Spell.None;
         ItemSlot spellItemSlot = null;
+        uint? blinkCharacterPosition = null;
         readonly Dictionary<int, Battle.PlayerBattleAction> roundPlayerBattleActions = new Dictionary<int, Battle.PlayerBattleAction>(MaxPartyMembers);
         readonly ILayerSprite ouchSprite;
         readonly ILayerSprite hurtPlayerSprite; // splash
@@ -3073,8 +3076,7 @@ namespace Ambermoon
                         if (spell == Spell.Winddevil ||
                             spell == Spell.Windhowler ||
                             spell == Spell.Thunderbolt ||
-                            spell == Spell.Whirlwind ||
-                            spell == Spell.Blink) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
+                            spell == Spell.Whirlwind) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
                                 pickedSpell = Spell.Iceball; // TODO
                         else
                             pickedSpell = spell;
@@ -3091,6 +3093,12 @@ namespace Ambermoon
                                 break;
                             case SpellTarget.EnemyRow:
                                 SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
+                                break;
+                            case SpellTarget.BattleField:
+                                if (spell == Spell.Blink)
+                                    SetCurrentPlayerAction(PlayerBattleAction.PickMemberToBlink);
+                                else
+                                    throw new AmbermoonException(ExceptionScope.Data, "Only the Blink spell should have target type BattleField.");
                                 break;
                             default:
                                 SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell,
@@ -3657,22 +3665,26 @@ namespace Ambermoon
                 {
                     case Battle.BattleActionType.Attack:
                     case Battle.BattleActionType.Move:
-                        layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
+                        layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
                         break;
                     case Battle.BattleActionType.CastSpell:
-                        var spell = (Spell)(action.Parameter >> 16);
+                        var spell = Battle.GetCastSpell(action.Parameter);
                         switch (SpellInfos.Entries[spell].Target)
                         {
-                            case SpellTarget.Self:
-                                layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Orange);
-                                break;
                             case SpellTarget.SingleEnemy:
                             case SpellTarget.SingleFriend:
-                                layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
+                                layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter), BattleFieldSlotColor.Orange);
                                 break;
+                            case SpellTarget.FriendRow:
+                            {
+                                SetBattleRowSlotColors((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter),
+                                    (c, r) => currentBattle.GetCharacterAt(c, r)?.Type == CharacterType.PartyMember,
+                                    BattleFieldSlotColor.Orange);
+                                break;
+                            }
                             case SpellTarget.EnemyRow:
                             {
-                                SetBattleRowSlotColors((int)action.Parameter & 0xf,
+                                SetBattleRowSlotColors((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter),
                                     (c, r) => currentBattle.GetCharacterAt(c, r)?.Type == CharacterType.Monster,
                                     BattleFieldSlotColor.Orange);
                                 break;
@@ -3685,6 +3697,14 @@ namespace Ambermoon
                                 for (int i = 0; i < 12; ++i)
                                     layout.SetBattleFieldSlotColor(18 + i, BattleFieldSlotColor.Orange);
                                 break;
+                            case SpellTarget.BattleField:
+                            {
+                                int blinkCharacterSlot = (int)Battle.GetBlinkCharacterPosition(action.Parameter);
+                                bool selfBlink = currentBattle.GetSlotFromCharacter(CurrentPartyMember) == blinkCharacterSlot;
+                                layout.SetBattleFieldSlotColor(blinkCharacterSlot, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentBattleTicks);
+                                layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter), BattleFieldSlotColor.Orange, CurrentBattleTicks + Layout.TicksPerBlink);
+                                break;
+                            }
                         }
                         break;
                 }
@@ -3702,11 +3722,11 @@ namespace Ambermoon
             {
                 case Battle.BattleActionType.Attack:
                 case Battle.BattleActionType.Move:
-                    layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileFromParameter(action.Parameter), BattleFieldSlotColor.None);
+                    layout.SetBattleFieldSlotColor((int)Battle.GetTargetTileOrRowFromParameter(action.Parameter), BattleFieldSlotColor.None);
                     break;
                 case Battle.BattleActionType.CastSpell:
                     layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(CurrentPartyMember));
-                    if (Battle.IsSelfSpell(action.Parameter))
+                    if (currentBattle.IsSelfSpell(CurrentPartyMember, action.Parameter))
                         layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
                     break;
             }
@@ -3803,8 +3823,25 @@ namespace Ambermoon
 
         bool AnyPlayerMovesTo(int slot)
         {
-            return roundPlayerBattleActions.Any(p => p.Value.BattleAction == Battle.BattleActionType.Move &&
-                Battle.GetTargetTileFromParameter(p.Value.Parameter) == slot);
+            var actions = roundPlayerBattleActions.Where(p => p.Key != SlotFromPartyMember(CurrentPartyMember));
+            bool anyMovesTo = actions.Any(p => p.Value.BattleAction == Battle.BattleActionType.Move &&
+                Battle.GetTargetTileOrRowFromParameter(p.Value.Parameter) == slot);
+
+            if (anyMovesTo)
+                return true;
+
+            // Anyone blinks to? This is different to original where this isn't checked but I guess it's better this way.
+            return actions.Any(p =>
+            {
+                if (p.Value.BattleAction == Battle.BattleActionType.CastSpell &&
+                    Battle.GetCastSpell(p.Value.Parameter) == Spell.Blink)
+                {
+                    if (Battle.GetTargetTileOrRowFromParameter(p.Value.Parameter) == slot)
+                        return true;
+                }
+
+                return false;
+            });
         }
 
         void BattleFieldSlotClicked(int column, int row)
@@ -3870,13 +3907,53 @@ namespace Ambermoon
                         int slot = SlotFromPartyMember(CurrentPartyMember).Value;
                         if ((!roundPlayerBattleActions.ContainsKey(slot) ||
                             roundPlayerBattleActions[slot].BattleAction != Battle.BattleActionType.Move ||
-                            Battle.GetTargetTileFromParameter(roundPlayerBattleActions[slot].Parameter) != newPosition) &&
+                            Battle.GetTargetTileOrRowFromParameter(roundPlayerBattleActions[slot].Parameter) != newPosition) &&
                             AnyPlayerMovesTo(newPosition))
                         {
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageSomeoneAlreadyGoingThere, TextColor.Gray);
                             return;
                         }
                         SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
+                    }
+                    break;
+                }
+                case PlayerBattleAction.PickMemberToBlink:
+                {
+                    var target = currentBattle.GetCharacterAt(column, row);
+                    if (target != null && target.Type == CharacterType.PartyMember)
+                    {
+                        if (!target.Ailments.CanMove())
+                        {
+                            CancelSpecificPlayerAction();
+                            // TODO: Test this later. Is CanMove equal to CanBlink?
+                            SetBattleMessageWithClick(target.Name + DataNameProvider.BattleMessageCannotBlink, TextColor.Gray);
+                            return;
+                        }
+
+                        blinkCharacterPosition = (uint)(column + row * 6);
+                        SetCurrentPlayerAction(PlayerBattleAction.PickBlinkTarget);
+                    }
+                    break;
+                }
+                case PlayerBattleAction.PickBlinkTarget:
+                {
+                    // Note: If someone moves to the target spot, it can't be selected (red cross).
+                    // But someone can move to a spot where someone blinks to in Ambermoon.
+                    // Here we disallow moving to a spot where someone blinks to by considering
+                    // blink targets in AnyPlayerMovesTo. This will also disallow 2 characters to
+                    // blink to the same spot.
+                    int position = column + row * 6;
+                    if (row > 2 && currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
+                    {
+                        SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)(column + row * 6),
+                            pickedSpell, spellItemSlot?.ItemIndex ?? 0, blinkCharacterPosition.Value));
+                        int casterSlot = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+                        bool selfBlink = casterSlot == blinkCharacterPosition.Value;
+                        layout.SetBattleFieldSlotColor((int)blinkCharacterPosition.Value, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentBattleTicks);
+                        layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange, CurrentBattleTicks + Layout.TicksPerBlink);
+                        if (!selfBlink)
+                            layout.SetBattleFieldSlotColor(casterSlot, BattleFieldSlotColor.Yellow);
+                        CancelSpecificPlayerAction();
                     }
                     break;
                 }
@@ -3900,7 +3977,6 @@ namespace Ambermoon
                         SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)(column + row * 6),
                             pickedSpell, spellItemSlot?.ItemIndex ?? 0));
                         layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange);
-                        SetCurrentPlayerAction(PlayerBattleAction.PickPlayerAction);
                         CancelSpecificPlayerAction();
                     }
                     break;
@@ -3999,7 +4075,6 @@ namespace Ambermoon
             highlightBattleFieldSprites.Clear();
             blinkingHighlight = false;
 
-            // TODO: show possible fields etc
             switch (currentPlayerBattleAction)
             {
                 case PlayerBattleAction.PickPlayerAction:
@@ -4050,6 +4125,7 @@ namespace Ambermoon
                     break;
                 }
                 case PlayerBattleAction.PickFriendSpellTarget:
+                case PlayerBattleAction.PickMemberToBlink:
                 {
                     var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.GetCharacterAt(position)?.Type == CharacterType.PartyMember,
                         6, 3, 4);
@@ -4067,13 +4143,36 @@ namespace Ambermoon
                     RemoveCurrentPlayerActionVisuals();
                     TrapMouse(Global.BattleFieldArea);
                     blinkingHighlight = true;
-                    layout.SetBattleMessage(DataNameProvider.BattleMessageWhichPartyMemberAsTarget);
+                    layout.SetBattleMessage(playerBattleAction == PlayerBattleAction.PickMemberToBlink
+                        ? DataNameProvider.BattleMessageWhoToBlink
+                        : DataNameProvider.BattleMessageWhichPartyMemberAsTarget);
+                    break;
+                }
+                case PlayerBattleAction.PickBlinkTarget:
+                {
+                    var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.IsBattleFieldEmpty(position),
+                        6, 3, 4);
+                    foreach (var slot in valuableSlots)
+                    {
+                        highlightBattleFieldSprites.Add
+                        (
+                            layout.AddSprite
+                            (
+                                Global.BattleFieldSlotArea(slot),
+                                Graphics.GetCustomUIGraphicIndex
+                                (
+                                    AnyPlayerMovesTo(slot) ? UICustomGraphic.BattleFieldBlockedMovementCursor : UICustomGraphic.BattleFieldGreenHighlight
+                                ), 50
+                            )
+                        );
+                    }
+                    blinkingHighlight = true;
+                    layout.SetBattleMessage(DataNameProvider.BattleMessageWhereToBlinkTo);
                     break;
                 }
                 case PlayerBattleAction.PickMoveSpot:
                 {
-                    // TODO: In original game if a slot is empty but someone moves there, it is still highlighted but with a red cross icon.
-                    var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position),
+                    var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.IsBattleFieldEmpty(position),
                         1, 3, 4);
                     foreach (var slot in valuableSlots)
                     {
@@ -4082,7 +4181,10 @@ namespace Ambermoon
                             layout.AddSprite
                             (
                                 Global.BattleFieldSlotArea(slot),
-                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                                Graphics.GetCustomUIGraphicIndex
+                                (
+                                    AnyPlayerMovesTo(slot) ? UICustomGraphic.BattleFieldBlockedMovementCursor : UICustomGraphic.BattleFieldGreenHighlight
+                                ), 50
                             )
                         );
                     }

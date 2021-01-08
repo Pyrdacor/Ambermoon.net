@@ -331,11 +331,11 @@ namespace Ambermoon.Render
                 case Spell.MassHurry:
                 case Spell.ShowMonsterLP:
                 case Spell.Earthquake:
+                case Spell.Blink:
                     // Those spells have no target position. They are just visible on portraits or not at all.
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
                 case Spell.GhostWeapon:
-                case Spell.Blink:
                 case Spell.LPStealer:
                 case Spell.SPStealer:
                 case Spell.MonsterKnowledge:
@@ -623,7 +623,9 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Blink:
-                    return; // TODO
+                    // Blink has no spell animation at all.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.Lame:
                 case Spell.Poison:
                 case Spell.Petrify:
@@ -1169,7 +1171,9 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Blink:
-                    return; // TODO
+                    // Blink has no spell animation at all.
+                    this.finishAction?.Invoke();
+                    break;
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:

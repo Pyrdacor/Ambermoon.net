@@ -312,5 +312,26 @@
                    spell == Spell.MagicalArrows ||
                    (spell >= Spell.Mudsling && spell <= Spell.Iceshower);
         }
+
+        public static bool IsCastableByMonster(this Spell spell)
+        {
+            var spellInfo = SpellInfos.Entries[spell];
+
+            if (spellInfo.SpellSchool == SpellSchool.Mystic ||
+                (spellInfo.SpellSchool == SpellSchool.Alchemistic && spell != Spell.GhostWeapon) ||
+                spellInfo.SpellSchool > SpellSchool.Destruction)
+                return false;
+
+            return
+                spell != Spell.DispellUndead &&
+                spell != Spell.DestroyUndead &&
+                spell != Spell.HolyWord &&
+                spell != Spell.WakeTheDead &&
+                spell != Spell.ChangeAshes &&
+                spell != Spell.ChangeDust &&
+                spell != Spell.Resurrection &&
+                spell != Spell.RestoreStamina &&
+                spell != Spell.DissolveVictim;
+        }
     }
 }

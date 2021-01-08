@@ -39,14 +39,15 @@ namespace Ambermoon.Data
 
     public enum SpellTarget
     {
-        None,
-        Self,
+        None = -1,
+        SingleFriend,
+        FriendRow,
+        AllFriends,
         SingleEnemy,
         EnemyRow,
         AllEnemies,
-        SingleFriend,
-        AllFriends,
-        Item
+        Item,
+        BattleField // Blink
     }
 
     public enum SpellTargetType
@@ -71,13 +72,13 @@ namespace Ambermoon.Data
 
         public static SpellTargetType GetTargetType(this SpellTarget spellTarget) => spellTarget switch
         {
-            SpellTarget.Self => SpellTargetType.SingleBattleField,
             SpellTarget.SingleEnemy => SpellTargetType.SingleBattleField,
             SpellTarget.SingleFriend => SpellTargetType.SingleBattleField,
             SpellTarget.EnemyRow => SpellTargetType.BattleFieldRow,
             SpellTarget.AllEnemies => SpellTargetType.HalfBattleField,
             SpellTarget.AllFriends => SpellTargetType.HalfBattleField,
             SpellTarget.Item => SpellTargetType.Item,
+            SpellTarget.BattleField => SpellTargetType.SingleBattleField,
             _ => SpellTargetType.None
         };
     }
@@ -136,7 +137,7 @@ namespace Ambermoon.Data
             { Spell.GhostWeapon, new SpellInfo { SP = 10, SLP = 5, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly } },
             { Spell.CreateFood, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.Camp } },
             { Spell.RemoveCurses, new SpellInfo { SP = 100, SLP = 20, Target = SpellTarget.Item, ApplicationArea = SpellApplicationArea.Camp } },
-            { Spell.Blink, new SpellInfo { SP = 20, SLP = 5, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly } },
+            { Spell.Blink, new SpellInfo { SP = 20, SLP = 5, Target = SpellTarget.BattleField, ApplicationArea = SpellApplicationArea.BattleOnly } },
             { Spell.Jump, new SpellInfo { SP = 50, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.DungeonOnly } },
             { Spell.Flight, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.DungeonOnly } },
             { Spell.WordOfMarking, new SpellInfo { SP = 150, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap } },
