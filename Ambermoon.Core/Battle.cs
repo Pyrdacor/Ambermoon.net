@@ -2382,8 +2382,13 @@ namespace Ambermoon
                 if (spellInfo.Target == SpellTarget.EnemyRow)
                 {
                     // TODO: maybe pick the row with most players for some clever monsters?
-                    // TODO: don't cast on rows without enemies
-                    return (uint)game.RandomInt(3, 4);
+                    bool RowEmpty(int row) => !battleField.Skip(row * 6).Take(6).Any(c => c?.Type == CharacterType.PartyMember);
+                    if (RowEmpty(3))
+                        return 4;
+                    else if (RowEmpty(4))
+                        return 3;
+                    else
+                        return (uint)game.RandomInt(3, 4);
                 }
                 else
                 {
