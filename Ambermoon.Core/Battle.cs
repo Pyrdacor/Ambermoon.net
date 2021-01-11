@@ -650,7 +650,9 @@ namespace Ambermoon
                 BattleEnded?.Invoke(new Game.BattleEndInfo
                 {
                     MonstersDefeated = true,
-                    KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList()
+                    KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList(),
+                    FledPartyMembers = fledCharacters.Where(c => c?.Type == CharacterType.PartyMember).Cast<PartyMember>().ToList(),
+                    TotalExperience = initialMonsters.Sum(m => m.DefeatExperience)
                 });
             }
         }
@@ -1241,7 +1243,9 @@ namespace Ambermoon
                             BattleEnded?.Invoke(new Game.BattleEndInfo
                             {
                                 MonstersDefeated = true,
-                                KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList()
+                                KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList(),
+                                FledPartyMembers = fledCharacters.Where(c => c?.Type == CharacterType.PartyMember).Cast<PartyMember>().ToList(),
+                                TotalExperience = initialMonsters.Sum(m => m.DefeatExperience)
                             });
                             return;
                         }

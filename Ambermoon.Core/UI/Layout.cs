@@ -873,12 +873,26 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                     break;
                 case LayoutType.Items:
+                {
                     // TODO: this is only for open chests now
                     if (game.OpenStorage is Chest chest)
                     {
+                        void CloseChest()
+                        {
+                            if (chest.IsBattleLoot)
+                            {
+                                if (chest.HasAnyImportantItem(itemManager))
+                                {
+                                    ShowClickChestMessage(game.DataNameProvider.DontForgetItems +
+                                        string.Join(", ", chest.GetImportantItemNames(itemManager)) + ".");
+                                    return;
+                                }
+                            }
+                            game.CloseWindow();
+                        }
                         buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                         buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                        buttonGrid.SetButton(2, ButtonType.Exit, false, CloseChest, false);
                         buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
                         buttonGrid.SetButton(4, ButtonType.DistributeGold, chest.Gold == 0, () => DistributeGold(chest), false);
                         buttonGrid.SetButton(5, ButtonType.DistributeFood, chest.Food == 0, () => DistributeFood(chest), false);
@@ -887,6 +901,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(8, ButtonType.GiveFood, chest.Food == 0, () => GiveFood(chest), false);
                     }
                     break;
+                }
                 case LayoutType.Riddlemouth:
                     buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
@@ -921,6 +936,7 @@ namespace Ambermoon.UI
                 buttonGrid.SetButton(8, ButtonType.Spells, true, null, false); // this is set later manually
                 break;
                 // TODO
+
             }
         }
 
@@ -1202,9 +1218,28 @@ namespace Ambermoon.UI
             }
         }
 
-        internal void ShowChestMessage(string message)
+        internal void ShowChestMessage(string message, TextAlign textAlign = TextAlign.Center)
         {
-            game.ShowMessage(new Rect(114, 46, 189, 48), message, TextColor.White, true, TextAlign.Center);
+            game.ShowMessage(new Rect(114, 46, 189, 48), message, TextColor.White, true, textAlign);
+        }
+
+        internal void ShowClickChestMessage(string message, Action clickEvent = null)
+        {
+            var bounds = new Rect(114, 46, 189, 48);
+            game.ChestText = AddScrollableText(bounds, game.ProcessText(message, bounds));
+            game.ChestText.Clicked += scrolledToEnd =>
+            {
+                if (scrolledToEnd)
+                {
+                    game.ChestText?.Destroy();
+                    game.ChestText = null;
+                    game.InputEnable = true;
+                    game.CursorType = CursorType.Sword;
+                    clickEvent?.Invoke();
+                }
+            };
+            game.CursorType = CursorType.Click;
+            game.InputEnable = false;
         }
 
         void DropGold()

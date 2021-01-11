@@ -9,7 +9,7 @@ namespace Ambermoon.Data
         Chest // will stay there and new items can be added by the player
     }
 
-    public class Chest : IItemStorage
+    public class Chest : ITreasureStorage
     {
         public const int SlotsPerRow = 6;
         public const int SlotRows = 4;
@@ -19,10 +19,11 @@ namespace Ambermoon.Data
         public uint Gold { get; set; }
         public uint Food { get; set; }
         public bool AllowsItemDrop { get; set; } = true;
+        public bool IsBattleLoot { get; set; } = false;
 
         public bool Empty => Gold == 0 && Food == 0 && !Slots.Cast<ItemSlot>().Any(s => s.Amount != 0);
 
-        private Chest()
+        public Chest()
         {
 
         }

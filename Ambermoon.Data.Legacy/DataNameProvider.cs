@@ -101,6 +101,9 @@
         public string She => executableData.UITexts.Entries[UITextIndex.She];
         public string His => executableData.UITexts.Entries[UITextIndex.His];
         public string Her => executableData.UITexts.Entries[UITextIndex.Her];
+        public string DontForgetItems => executableData.Messages.GetEntry(Messages.Index.DontForgetItems);
+        public string LootAfterBattle => executableData.Messages.GetEntry(Messages.Index.LootAfterBattle);
+        public string ReceiveExp => executableData.Messages.GetEntry(Messages.Index.ReceiveExp);
 
 
         #region Battle messages

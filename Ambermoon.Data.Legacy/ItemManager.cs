@@ -8,7 +8,7 @@ namespace Ambermoon.Data.Legacy
 
         internal ItemManager(Dictionary<uint, Item> items)
         {
-            this.items = items;            
+            this.items = items;
         }
 
         public Item GetItem(uint index) => items[index];

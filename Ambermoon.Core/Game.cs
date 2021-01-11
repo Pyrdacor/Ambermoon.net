@@ -94,6 +94,14 @@ namespace Ambermoon
             /// the monsters who died.
             /// </summary>
             public List<Monster> KilledMonsters;
+            /// <summary>
+            /// Total experience for the party.
+            /// </summary>
+            public int TotalExperience;
+            /// <summary>
+            /// Partymembers who fled.
+            /// </summary>
+            public List<PartyMember> FledPartyMembers;
         }
 
         class BattleInfo
@@ -206,7 +214,7 @@ namespace Ambermoon
         Battle currentBattle = null;
         internal bool BattleActive => currentBattle != null;
         internal bool BattleRoundActive => currentBattle?.RoundActive == true;
-        internal UIText ChestText { get; private set; } = null;
+        internal UIText ChestText { get; set; } = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
@@ -864,9 +872,14 @@ namespace Ambermoon
             return renderView.TextProcessor.ProcessText(text, nameProvider, Dictionary);
         }
 
+        public IText ProcessText(string text, Rect bounds)
+        {
+            return renderView.TextProcessor.WrapText(ProcessText(text), bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+        }
+
         public void ShowMessage(Rect bounds, string text, TextColor color, bool shadow, TextAlign textAlign = TextAlign.Left)
         {
-            messageText.Text = ProcessText(text);
+            messageText.Text = ProcessText(text, bounds);
             messageText.TextColor = color;
             messageText.Shadow = shadow;
             messageText.Place(bounds, textAlign);
@@ -2622,18 +2635,21 @@ namespace Ambermoon
         {
             if (OpenStorage is Chest chest)
             {
-                if (chest.Empty)
+                if (!chest.IsBattleLoot)
                 {
-                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+                    if (chest.Empty)
+                    {
+                        layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
 
-                    // If a chest has AllowsItemDrop = false this
-                    // means it is removed when it is empty.
-                    if (!chest.AllowsItemDrop)
-                        ChestRemoved();
-                }
-                else
-                {
-                    layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                        // If a chest has AllowsItemDrop = false this
+                        // means it is removed when it is empty.
+                        if (!chest.AllowsItemDrop)
+                            ChestRemoved();
+                    }
+                    else
+                    {
+                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                    }
                 }
             }
             else if (OpenStorage is Merchant merchant)
@@ -2648,7 +2664,8 @@ namespace Ambermoon
 
             if (chest.Gold > 0)
             {
-                layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                if (!chest.IsBattleLoot)
+                    layout.Set80x80Picture(Picture80x80.ChestOpenFull);
                 ShowTextPanel(CharacterInfo.ChestGold, true,
                     $"{DataNameProvider.GoldName}^{chest.Gold}", new Rect(111, 104, 43, 15));
             }
@@ -2656,7 +2673,7 @@ namespace Ambermoon
             {
                 HideTextPanel(CharacterInfo.ChestGold);
 
-                if (chest.Empty)
+                if (chest.Empty && !chest.IsBattleLoot)
                 {
                     layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
 
@@ -2672,7 +2689,8 @@ namespace Ambermoon
 
             if (chest.Food > 0)
             {
-                layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                if (!chest.IsBattleLoot)
+                    layout.Set80x80Picture(Picture80x80.ChestOpenFull);
                 ShowTextPanel(CharacterInfo.ChestFood, true,
                     $"{DataNameProvider.FoodName}^{chest.Food}", new Rect(260, 104, 43, 15));
             }
@@ -2680,12 +2698,86 @@ namespace Ambermoon
             {
                 HideTextPanel(CharacterInfo.ChestFood);
 
-                if (chest.Empty)
+                if (chest.Empty && !chest.IsBattleLoot)
                 {
                     layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
 
                     if (!chest.AllowsItemDrop)
                         ChestRemoved();
+                }
+            }
+        }
+
+        void ShowLoot(ITreasureStorage storage, string initialText, Action initialTextClosedEvent, ChestEvent chestMapEvent = null)
+        {
+            OpenStorage = storage;
+            OpenStorage.AllowsItemDrop = chestMapEvent == null ? false : !chestMapEvent.RemoveWhenEmpty;
+            layout.SetLayout(LayoutType.Items);
+            layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+            var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, storage.Slots.ToList(),
+                OpenStorage.AllowsItemDrop, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+            layout.AddItemGrid(itemGrid);
+
+            if (chestMapEvent != null && chestMapEvent.Lock != ChestEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
+            {
+                layout.Set80x80Picture(Picture80x80.ChestClosed);
+                itemGrid.Disabled = true;
+            }
+            else
+            {
+                if (storage.IsBattleLoot)
+                {
+                    layout.Set80x80Picture(Picture80x80.Treasure);
+                }
+                else if (storage.Empty)
+                {
+                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+                }
+                else
+                {
+                    layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                }
+
+                for (int y = 0; y < 2; ++y)
+                {
+                    for (int x = 0; x < 6; ++x)
+                    {
+                        var slot = storage.Slots[x, y];
+
+                        if (!slot.Empty)
+                            itemGrid.SetItem(x + y * 6, slot);
+                    }
+                }
+
+                itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+                {
+                    int column = slotIndex % Chest.SlotsPerRow;
+                    int row = slotIndex / Chest.SlotsPerRow;
+                    storage.Slots[column, row].Remove(amount);
+                };
+                itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+                {
+                    if (!storage.IsBattleLoot)
+                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                };
+
+                if (storage.Gold > 0)
+                {
+                    ShowTextPanel(CharacterInfo.ChestGold, true,
+                        $"{DataNameProvider.GoldName}^{storage.Gold}", new Rect(111, 104, 43, 15));
+                }
+
+                if (storage.Food > 0)
+                {
+                    ShowTextPanel(CharacterInfo.ChestFood, true,
+                        $"{DataNameProvider.FoodName}^{storage.Food}", new Rect(260, 104, 43, 15));
+                }
+
+                if (initialText != null)
+                {
+                    layout.ShowClickChestMessage(initialText, initialTextClosedEvent);
                 }
             }
         }
@@ -2699,86 +2791,12 @@ namespace Ambermoon
 
             Fade(() =>
             {
+                string initialText = map != null && chestMapEvent.TextIndex != 255 ?
+                    map.Texts[(int)chestMapEvent.TextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Chest, chestMapEvent);
-                OpenStorage = chest;
-                OpenStorage.AllowsItemDrop = !chestMapEvent.RemoveWhenEmpty;
-                layout.SetLayout(LayoutType.Items);
-                layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
-                var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
-                itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-                var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, chest.Slots.ToList(),
-                    !chestMapEvent.RemoveWhenEmpty, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
-                layout.AddItemGrid(itemGrid);
-
-                if (chestMapEvent.Lock != ChestEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
-                {
-                    layout.Set80x80Picture(Picture80x80.ChestClosed);
-                    itemGrid.Disabled = true;
-                }
-                else
-                {
-                    if (chest.Empty)
-                    {
-                        layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
-                    }
-                    else
-                    {
-                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
-                    }
-
-                    for (int y = 0; y < 2; ++y)
-                    {
-                        for (int x = 0; x < 6; ++x)
-                        {
-                            var slot = chest.Slots[x, y];
-
-                            if (!slot.Empty)
-                                itemGrid.SetItem(x + y * 6, slot);
-                        }
-                    }
-
-                    itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
-                    {
-                        int column = slotIndex % Chest.SlotsPerRow;
-                        int row = slotIndex / Chest.SlotsPerRow;
-                        chest.Slots[column, row].Remove(amount);
-                    };
-                    itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
-                    {
-                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
-                    };
-
-                    if (chest.Gold > 0)
-                    {
-                        ShowTextPanel(CharacterInfo.ChestGold, true,
-                            $"{DataNameProvider.GoldName}^{chest.Gold}", new Rect(111, 104, 43, 15));
-                    }
-
-                    if (chest.Food > 0)
-                    {
-                        ShowTextPanel(CharacterInfo.ChestFood, true,
-                            $"{DataNameProvider.FoodName}^{chest.Food}", new Rect(260, 104, 43, 15));
-                    }
-
-                    if (map != null && chestMapEvent.TextIndex != 255)
-                    {
-                        ChestText = layout.AddScrollableText(new Rect(114, 46, 189, 48), ProcessText(map.Texts[(int)chestMapEvent.TextIndex]));
-                        ChestText.Clicked += scrolledToEnd =>
-                        {
-                            if (scrolledToEnd)
-                            {
-                                ChestText?.Destroy();
-                                ChestText = null;
-                                InputEnable = true;
-                                CursorType = CursorType.Sword;
-                            }
-                        };
-                        CursorType = CursorType.Click;
-                        InputEnable = false;
-                    }
-                }
+                ShowLoot(chest, initialText, null, chestMapEvent);
             });
         }
 
@@ -4246,12 +4264,109 @@ namespace Ambermoon
             ShowBattleWindow(nextEvent, true);
         }
 
+        void AddExperience(List<PartyMember> partyMembers, uint amount, Action finishedEvent = null)
+        {
+            void Add(int index)
+            {
+                if (index == partyMembers.Count)
+                {
+                    finishedEvent?.Invoke();
+                    return;
+                }
+
+                AddExperience(partyMembers[index], amount, () => Add(index + 1));
+            }
+
+            Add(0);
+        }
+
+        void AddExperience(PartyMember partyMember, uint amount, Action finishedEvent)
+        {
+            // TODO: Add exp and check for level up.
+            // If level up, display level up window.
+            // Call finishedEvent if no window or after window is closed.
+        }
+
         internal void ShowBattleLoot(BattleEndInfo battleEndInfo, Action closeAction)
         {
-            InputEnable = true;
-            // TODO
-            CloseWindow();
-            closeAction?.Invoke();
+            var gold = battleEndInfo.KilledMonsters.Sum(m => m.Gold);
+            var food = battleEndInfo.KilledMonsters.Sum(m => m.Food);
+            var loot = new Chest
+            {
+                Type = ChestType.Pile,
+                Gold = (uint)gold,
+                Food = (uint)food,
+                AllowsItemDrop = false,
+                IsBattleLoot = true
+            };
+            for (int r = 0; r < 4; ++r)
+            {
+                for (int c = 0; c < 6; ++c)
+                {
+                    loot.Slots[c, r] = new ItemSlot
+                    {
+                        ItemIndex = 0,
+                        Amount = 0
+                    };
+                }
+            }
+            int slot = 0;
+            foreach (var item in battleEndInfo.KilledMonsters
+                .SelectMany(m => Enumerable.Concat(m.Inventory.Slots, m.Equipment.Slots.Values)
+                    .Where(slot => slot != null && !slot.Empty)))
+            {
+                int column = slot % 6;
+                int row = slot / 6;
+                ++slot;
+                loot.Slots[column, row].Replace(item);
+            }
+            var expReceivingPartyMembers = PartyMembers.Where(m => m.Alive && !battleEndInfo.FledPartyMembers.Contains(m)).ToList();
+            int expPerPartyMember = battleEndInfo.TotalExperience / expReceivingPartyMembers.Count;
+
+            if (loot.Empty)
+            {
+                closeAction?.Invoke();
+                CloseWindow();
+                ShowMessagePopup(string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
+                {
+                    AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember);
+                });
+            }
+            else
+            {
+                Fade(() =>
+                {
+                    InputEnable = true;
+                    SetWindow(Window.BattleLoot, loot, closeAction);
+                    lastWindow = DefaultWindow;
+                    ShowBattleLoot(loot, expReceivingPartyMembers, expPerPartyMember, false);
+                });
+            }
+        }
+
+        void ShowBattleLoot(ITreasureStorage storage, List<PartyMember> expReceivingPartyMembers,
+            int expPerPartyMember, bool fade = true)
+        {
+            void Show()
+            {
+                InputEnable = true;
+                layout.Reset();
+                ShowLoot(storage, expReceivingPartyMembers == null ? null : string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
+                {
+                    if (expReceivingPartyMembers != null)
+                    {
+                        AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, () =>
+                        {
+                            layout.ShowChestMessage(DataNameProvider.LootAfterBattle, TextAlign.Left);
+                        });
+                    }
+                });
+            }
+
+            if (fade)
+                Fade(Show);
+            else
+                Show();
         }
 
         internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler, bool showRiddle = true)
@@ -4762,11 +4877,16 @@ namespace Ambermoon
             characterInfoTexts.Clear();
             characterInfoPanels.Clear();
             CurrentInventoryIndex = null;
+            windowTitle.Visible = false;
 
             if (currentWindow.Window == Window.Event || currentWindow.Window == Window.Riddlemouth)
             {
                 InputEnable = true;
                 ResetCursor();
+            }
+            else if (currentWindow.Window == Window.BattleLoot)
+            {
+                (currentWindow.WindowParameters[1] as Action)?.Invoke(); // Close action
             }
 
             if (currentWindow.Window == lastWindow.Window)
@@ -4824,12 +4944,15 @@ namespace Ambermoon
                 case Window.Battle:
                 {
                     var nextEvent = (Event)currentWindow.WindowParameters[0];
+                    currentWindow = DefaultWindow;
                     ShowBattleWindow(nextEvent);
                     break;
                 }
                 case Window.BattleLoot:
                 {
-                    // TODO
+                    var storage = (ITreasureStorage)currentWindow.WindowParameters[0];
+                    lastWindow = DefaultWindow;
+                    ShowBattleLoot(storage, null, 0);
                     break;
                 }
                 default:

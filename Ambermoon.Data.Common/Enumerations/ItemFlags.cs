@@ -12,7 +12,12 @@ namespace Ambermoon.Data
         /// LP or SP are subtracted instead of added.
         /// </summary>
         Accursed = 0x01,
-        Sellable = 0x02,
+        /// <summary>
+        /// Item is not important and therefore can be dropped,
+        /// sold, etc. Items without that flag can not be left
+        /// after battles, in conversations or at merchants.
+        /// </summary>
+        NotImportant = 0x02,
         Stackable = 0x04,
         /// <summary>
         /// Mostly used for armor but also for some other

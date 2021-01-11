@@ -78,6 +78,9 @@
         string She { get; }
         string His { get; }
         string Her { get; }
+        string DontForgetItems { get; }
+        string LootAfterBattle { get; }
+        string ReceiveExp { get; }
 
 
         #region Battle messages
