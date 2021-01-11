@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>Ambermoon</RootNamespace>
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
-    <Version>0.1.3</Version>
+    <Version>0.1.4</Version>
     <Copyright>Copyright (C) 2020-2021 by Robert Schneckenhaus</Copyright>
     <Company>Robert Schneckenhaus</Company>
     <Authors>Robert Schneckenhaus</Authors>
@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Legacy" Version="2.0.24" />
+    <PackageReference Include="Ambermoon.Data.Legacy" Version="2.0.25" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Silk.NET.Input" Version="1.8.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="1.8.0" />
