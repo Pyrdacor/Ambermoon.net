@@ -16,7 +16,7 @@ namespace Ambermoon.Data.Legacy
             { CombatGraphicIndex.Blood, new CombatGraphicInfo(4, 32, 32) },
             { CombatGraphicIndex.SnowFlake, new CombatGraphicInfo(5, 16, 16) },
             { CombatGraphicIndex.GreenStar, new CombatGraphicInfo(5, 16, 16) },
-            { CombatGraphicIndex.Lightning, new CombatGraphicInfo(2, 32, 32) },
+            { CombatGraphicIndex.Lightning, new CombatGraphicInfo(1, 32, 64) },
             { CombatGraphicIndex.HolyBeam, new CombatGraphicInfo(1, 16, 1) },
             { CombatGraphicIndex.ArrowRedHuman, new CombatGraphicInfo(1, 16, 19) },
             { CombatGraphicIndex.ArrowRedMonster, new CombatGraphicInfo(1, 16, 19) },

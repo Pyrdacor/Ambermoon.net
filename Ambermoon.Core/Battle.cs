@@ -980,11 +980,6 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (spell == Spell.Thunderbolt) // TODO: REMOVE. For now we only allow some spells for testing.
-                    {
-                        break;
-                    }
-
                     void EndCast(bool needClickAfterwards = true)
                     {
                         if (currentSpellAnimation != null)
