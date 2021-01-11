@@ -20,6 +20,7 @@ namespace Ambermoon.Render
         readonly bool fromMonster;
         readonly int startPosition;
         readonly int targetRow;
+        int lastPosition = -1;
         Action finishAction;
 
         public SpellAnimation(Game game, Layout layout, Battle battle, Spell spell,
@@ -113,10 +114,17 @@ namespace Ambermoon.Render
         }
 
         BattleAnimation AddAnimationThatRemains(CombatGraphicIndex graphicIndex, int numFrames, Position startPosition, Position endPosition,
-            uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255)
+            uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255, Action finishAction = null)
         {
-            return AddAnimation(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition, duration, startScale,
-                endScale, displayLayer, null, null, BattleAnimation.AnimationScaleType.Both, BattleAnimation.HorizontalAnchor.Center,
+            return AddAnimationThatRemains(graphicIndex, Enumerable.Range(0, numFrames).ToArray(), startPosition, endPosition, duration, startScale,
+                endScale, displayLayer, finishAction);
+        }
+
+        BattleAnimation AddAnimationThatRemains(CombatGraphicIndex graphicIndex, int[] frameIndices, Position startPosition, Position endPosition,
+            uint duration, float startScale = 1.0f, float endScale = 1.0f, byte displayLayer = 255, Action finishAction = null)
+        {
+            return AddAnimation(graphicIndex, frameIndices, startPosition, endPosition, duration, startScale,
+                endScale, displayLayer, finishAction, null, BattleAnimation.AnimationScaleType.Both, BattleAnimation.HorizontalAnchor.Center,
                 BattleAnimation.VerticalAnchor.Center, false, 17, null, false);
         }
 
@@ -353,7 +361,6 @@ namespace Ambermoon.Render
                 case Spell.Blind:
                 case Spell.Drug:
                 case Spell.Thunderbolt:
-                case Spell.Whirlwind:
                 case Spell.Firebeam:
                 case Spell.Fireball:
                 case Spell.Firestorm:
@@ -377,14 +384,19 @@ namespace Ambermoon.Render
                 }
                 case Spell.Winddevil:
                 case Spell.Windhowler:
+                case Spell.Whirlwind:
                 {
-                    if (fromMonster) // target is party member
+                    int row = position / 6;
+                    if (fromMonster && (spell != Spell.Whirlwind || row != 0)) // target is party member
                     {
-                        return Layout.GetPlayerSlotCenterPosition(position % 6) + new Position(0, 18);
+                        return Layout.GetPlayerSlotCenterPosition(position % 6) + new Position(0, 10 + row * 2);
                     }
                     else // target is monster
                     {
-                        return layout.GetMonsterCombatCenterPosition(position, battle.GetCharacterAt(position) as Monster) - new Position(0, spell == Spell.Windhowler ? 14 : 8);
+                        int yOffset = Util.Round(32 * renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row)) + 8;
+                        if (spell != Spell.Winddevil)
+                            yOffset += 6;
+                        return Layout.GetMonsterCombatGroundPosition(renderView, position) - new Position(0, yOffset);
                     }
                 }
                 case Spell.Mudsling:
@@ -726,8 +738,20 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Thunderbolt:
-                case Spell.Whirlwind:
                     return; // TODO
+                case Spell.Whirlwind:
+                {
+                    // If cast by player, whirlwind starts at the bottom right monster position.
+                    // Then starts at the bottom monster row on the right and proceed upwards starting each row on the right.
+                    // If cast by monster, whirlwind starts at the upper left battle field position.
+                    // Then starts with bottom row on the right and proceed on the above row on the right.
+                    lastPosition = fromMonster ? 0 : 4 * 6 - 1;
+                    var monsterRow = fromMonster ? MonsterRow.Farthest : MonsterRow.Near;
+                    byte displayLayer = (byte)(fromMonster ? 0 : 180); // Behind row 0 or 3
+                    PlayMaterialization(GetTargetPosition(lastPosition), CombatGraphicIndex.Whirlwind,
+                        renderView.GraphicProvider.GetMonsterRowImageScaleFactor(monsterRow) * 1.75f, displayLayer, this.finishAction);
+                    break;
+                }
                 case Spell.Firebeam:
                 case Spell.Fireball:
                 {
@@ -952,6 +976,24 @@ namespace Ambermoon.Render
                 animations[0].SetStartFrame(null, scale);
                 animations[0].PlayWithoutAnimating(Game.TicksPerSecond / 2, game.CurrentBattleTicks, null, 0.0f);
             }
+            else if (spell == Spell.Whirlwind)
+            {
+                if (animations.Count != 1)
+                    throw new AmbermoonException(ExceptionScope.Application, "Whirlwind spell has wrong animation count.");
+
+                animations[0].AnimationFinished += () =>
+                {
+                    RemoveAnimation(animations[0], false); // Remove when finished
+                    finishedAction?.Invoke();
+                };
+                var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
+                var scale = animations[0].Scale;
+                animations[0].AnchorY = BattleAnimation.VerticalAnchor.Bottom;
+                animations[0].ScaleType = BattleAnimation.AnimationScaleType.Both;
+                animations[0].ReferenceScale = scale;
+                animations[0].SetStartFrame(null, scale);
+                animations[0].PlayWithoutAnimating(Game.TicksPerSecond / 3, game.CurrentBattleTicks, null, 0.0f);
+            }
             else
             {
                 // Ensure all remaining animations are cleaned up.
@@ -1087,6 +1129,113 @@ namespace Ambermoon.Render
                         AddAnimation(CombatGraphicIndex.HolyBeam, 1, startPosition, endPosition, Game.TicksPerSecond * 3 / 4, 1, 0, displayLayer, null,
                             new Size(beamWidth, beamHeight), BattleAnimation.AnimationScaleType.XOnly);
                     }, new Size(beamWidth, beamHeight));
+                }
+            }
+
+            // Used for Winddevil, Windhowler and Whirlwind
+            void PlayWhirlwind(int startTile, bool materialize, Action finishAction = null)
+            {
+                var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
+                var baseScale = spell switch
+                {
+                    Spell.Winddevil => 1.25f,
+                    _ => 1.75f
+                };
+                var startScale = baseScale * (fromMonster && startTile >= 18 ? 1.75f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(startTile / 6)));
+                var endScale = baseScale * (fromMonster ? 1.75f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6)));
+                byte displayLayer = (byte)Math.Min(255, (startTile / 6) * 60);
+                byte endDisplayLayer = (byte)Math.Min(255, (tile / 6) * 60);
+                float GetDiffDurationFactor()
+                {
+                    int diffRow = Math.Abs(tile / 6 - startTile / 6);
+                    if (diffRow != 0)
+                        return 0.5f + diffRow * 0.25f;
+                    else
+                    {
+                        int diffColumn = Math.Abs(tile % 6 - startTile % 6);
+
+                        if (diffColumn == 0)
+                            return 1.0f;
+
+                        return diffColumn * 0.2f;
+                    }
+                }
+                float durationFactor = spell switch
+                {
+                    Spell.Winddevil => 2.0f,
+                    Spell.Windhowler => 2.5f,
+                    _ => GetDiffDurationFactor()
+                };
+                int framesPerDuration = spell switch
+                {
+                    Spell.Whirlwind => 12,
+                    _ => 8
+                };
+                var duration = Util.Round(Game.TicksPerSecond * durationFactor);
+                var frames = Enumerable.Range(0, Util.Round(durationFactor * framesPerDuration)).Select(i => i % 4).ToArray();
+                var startPosition = GetTargetPosition(startTile);
+                var endPosition = GetTargetPosition(tile);
+                if (materialize)
+                    PlayMaterialization(startPosition, CombatGraphicIndex.Whirlwind, startScale, displayLayer, PlayAnimation);
+                else
+                    PlayAnimation();
+                void Finished()
+                {
+                    if (spell == Spell.Whirlwind)
+                        finishAction?.Invoke();
+                    else
+                    {
+                        AddAnimation(CombatGraphicIndex.Whirlwind, 1, endPosition, endPosition, Game.TicksPerSecond / 3, endScale, 0.0f, endDisplayLayer,
+                            finishAction, null, BattleAnimation.AnimationScaleType.Both, BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Bottom);
+                    }
+                }
+                void PlayAnimation()
+                {
+                    var animation = spell == Spell.Whirlwind && startTile == tile
+                        ? AddAnimationThatRemains(CombatGraphicIndex.Whirlwind, frames,
+                        startPosition, endPosition, (uint)duration, startScale, endScale, displayLayer, Finished)
+                        : AddAnimation(CombatGraphicIndex.Whirlwind, frames,
+                            startPosition, endPosition, (uint)duration, startScale, endScale, displayLayer, Finished);
+                    if (startTile == tile && battle.GetCharacterAt(tile) is Monster monster)
+                    {
+                        int remainingTicks = duration;
+                        const int TimePerScaling = (int)Game.TicksPerSecond / 2;
+                        float baseScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                        var basePosition = Layout.GetMonsterCombatCenterPosition(renderView, tile, monster);
+                        var hurtFrames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
+                        void PlayScale(float additionalScale)
+                        {
+                            battle.StartMonsterAnimation(monster, animation =>
+                            {
+                                remainingTicks -= TimePerScaling;
+                                int yOffset = Util.Round((16 * (1.0f + additionalScale) - 16) * baseScale);
+                                animation.Play(hurtFrames, TimePerScaling / (uint)hurtFrames.Length, game.CurrentBattleTicks,
+                                    basePosition - new Position(0, yOffset), baseScale * (1.0f + additionalScale));
+                            }, _ =>
+                            {
+                                if (remainingTicks > 0)
+                                {
+                                    PlayScale(0.2f - additionalScale);
+                                }
+                            });
+                        }
+                        PlayScale(0.2f);
+                    }
+                    if (endDisplayLayer != displayLayer)
+                    {
+                        void UpdateDisplayLayer(float progress)
+                        {
+                            var newDisplayLayer = (byte)Util.Limit(0, Util.Round(displayLayer + (endDisplayLayer - displayLayer) * progress), 255);
+                            animation.SetDisplayLayer(newDisplayLayer);
+                        }
+                        void AnimationFinished()
+                        {
+                            animation.AnimationUpdated -= UpdateDisplayLayer;
+                            animation.AnimationFinished -= AnimationFinished;
+                        }
+                        animation.AnimationUpdated += UpdateDisplayLayer;
+                        animation.AnimationFinished += AnimationFinished;
+                    }
                 }
             }
 
@@ -1381,47 +1530,34 @@ namespace Ambermoon.Render
                 case Spell.Winddevil:
                 case Spell.Windhowler:
                 {
-                    var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Whirlwind);
-                    bool howler = spell == Spell.Windhowler;
-                    var scale = (howler ? 1.75f : 1.25f) * (fromMonster ? 1.75f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6)));
-                    var position = GetTargetPosition(tile);
-                    byte displayLayer = (byte)Math.Min(255, (tile / 6) * 60);
-                    uint duration = Game.TicksPerSecond * (howler ? 3u : 2u);
-                    PlayMaterialization(position, CombatGraphicIndex.Whirlwind, scale, displayLayer, () =>
-                    {
-                        AddAnimation(CombatGraphicIndex.Whirlwind, Enumerable.Range(0, howler ? 12 : 8).Select(i => i % 4).ToArray(),
-                            position, position, duration, scale, scale, displayLayer);
-                        if (battle.GetCharacterAt(tile) is Monster monster)
-                        {
-                            int remainingTicks = (int)duration;
-                            const int TimePerScaling = (int)Game.TicksPerSecond / 2;
-                            float baseScale = renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
-                            var basePosition = Layout.GetMonsterCombatCenterPosition(renderView, tile, monster);
-                            var hurtFrames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
-                            void PlayScale(float additionalScale)
-                            {
-                                battle.StartMonsterAnimation(monster, animation =>
-                                {
-                                    remainingTicks -= TimePerScaling;
-                                    int yOffset = Util.Round((16 * (1.0f + additionalScale) - 16) * baseScale);
-                                    animation.Play(hurtFrames, TimePerScaling / (uint)hurtFrames.Length, game.CurrentBattleTicks,
-                                        basePosition - new Position(0, yOffset), baseScale * (1.0f + additionalScale));
-                                }, _ =>
-                                {
-                                    if (remainingTicks > 0)
-                                    {
-                                        PlayScale(0.2f - additionalScale);
-                                    }
-                                });
-                            }
-                            PlayScale(0.2f);
-                        }
-                    });
+                    PlayWhirlwind(tile, true);
                     break;
                 }
                 case Spell.Thunderbolt:
-                case Spell.Whirlwind:
                     return; // TODO
+                case Spell.Whirlwind:
+                {
+                    if (animations.Count != 0)
+                    {
+                        RemoveAnimation(animations[0], false);
+                        animations.Clear();
+                    }
+                    void Play()
+                    {
+                        PlayWhirlwind(tile, false, () =>
+                        {
+                            lastPosition = tile;
+                            this.finishAction?.Invoke();
+                        });
+                    }
+                    if (tile == lastPosition) // The very first whirlwind could potentially be already on spot.
+                        Play();
+                    else // In all other cases move the whirlwind to the right spot first.
+                    {
+                        PlayWhirlwind(lastPosition, false, Play);
+                    }
+                    break;
+                }
                 case Spell.Firebeam:
                 {
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.FireBall);
@@ -1530,6 +1666,8 @@ namespace Ambermoon.Render
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} can not be rendered during a fight.");
             }
+
+            lastPosition = tile;
         }
 
         public void Destroy()

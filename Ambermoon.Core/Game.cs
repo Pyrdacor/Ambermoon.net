@@ -3073,8 +3073,7 @@ namespace Ambermoon
                     spell =>
                     {
                         // pickedSpell = spell;
-                        if (spell == Spell.Thunderbolt ||
-                            spell == Spell.Whirlwind) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
+                        if (spell == Spell.Thunderbolt) // TODO: REMOVE. For now we disallow some spells and fallback to iceball.
                                 pickedSpell = Spell.Iceball; // TODO
                         else
                             pickedSpell = spell;

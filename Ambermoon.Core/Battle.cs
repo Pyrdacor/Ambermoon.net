@@ -980,8 +980,7 @@ namespace Ambermoon
                         return;
                     }
 
-                    if (spell == Spell.Thunderbolt ||
-                        spell == Spell.Whirlwind) // TODO: REMOVE. For now we only allow some spells for testing.
+                    if (spell == Spell.Thunderbolt) // TODO: REMOVE. For now we only allow some spells for testing.
                     {
                         break;
                     }
