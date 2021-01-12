@@ -33,6 +33,7 @@ namespace Ambermoon.Render
         public uint FrameCount;
         public uint Duration;
         public byte InitialDisplayLayer;
+        public byte EndDisplayLayer;
         public bool MirrorX;
     }
 
@@ -87,6 +88,7 @@ namespace Ambermoon.Render
                 FrameCount = info.FrameCount,
                 Duration = duration,
                 InitialDisplayLayer = (byte)Math.Min(255, (sourceTile / 6) * 60 + 60), // display over the given row
+                EndDisplayLayer = (byte)Math.Min(255, (sourceTile / 6) * 60 + 60), // display over the given row
                 MirrorX = false
             };
         }
@@ -109,6 +111,7 @@ namespace Ambermoon.Render
                 FrameCount = info.FrameCount,
                 Duration = duration,
                 InitialDisplayLayer = (byte)Math.Min(255, (tile / 6) * 60 + 60), // display over the given row
+                EndDisplayLayer = (byte)Math.Min(255, (tile / 6) * 60 + 60), // display over the given row
                 MirrorX = false
             };
         }
@@ -147,6 +150,7 @@ namespace Ambermoon.Render
                 FrameCount = info.FrameCount,
                 Duration = GetFlyDuration(sourceTile, targetTile),
                 InitialDisplayLayer = (byte)Math.Min(255, (sourceTile / 6) * 60 + 60), // display over the given row
+                EndDisplayLayer = (byte)Math.Min(255, (targetTile / 6) * 60 + 60), // display over the given row
                 MirrorX = battleField[(int)sourceTile] is Monster ? startPosition.X < endPosition.X : startPosition.X > endPosition.X
             };
         }

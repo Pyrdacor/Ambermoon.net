@@ -1445,20 +1445,19 @@ namespace Ambermoon
         {
             var spellInfo = SpellInfos.Entries[spell];
 
-            void ShowFailMessage(string message, bool runFailAction = true)
+            void ShowFailMessage(string message, Action finishAction)
             {
                 var color = caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
                 var delay = TimeSpan.FromMilliseconds(500);
 
                 if (needsClickForNextAction)
                 {
-                    game.SetBattleMessageWithClick(message, color, runFailAction ? failAction : null, delay);
+                    game.SetBattleMessageWithClick(message, color, finishAction, delay);
                 }
                 else
                 {
                     layout.SetBattleMessage(message, color);
-                    if (runFailAction)
-                        game.AddTimedEvent(delay, failAction);
+                    game.AddTimedEvent(delay, finishAction);
                 }
             }
 
@@ -1466,7 +1465,7 @@ namespace Ambermoon
             {
                 if (target.SpellTypeImmunity.HasFlag((SpellTypeImmunity)spellInfo.SpellType))
                 {
-                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType);
+                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType, failAction);
                     return false;
                 }
 
@@ -1475,18 +1474,18 @@ namespace Ambermoon
                     if (silent)
                         failAction?.Invoke();
                     else
-                        ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell);
+                        ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell, failAction);
                     return false;
                 }
 
                 var antiMagicBuff = game.CurrentSavegame.ActiveSpells.FirstOrDefault(s => s?.Type == ActiveSpellType.AntiMagic && s?.Duration > 0);
-                uint antiMagicBuffValue = antiMagicBuff == null ? 0 : (5 + antiMagicBuff.Level * 10);
+                uint antiMagicBuffValue = antiMagicBuff?.Level ?? 0;
 
                 if (game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
                 {
                     // Blocked
-                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, false);
-                    PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, failAction);
+                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? failAction : null);
+                    PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : failAction);
                     return false;
                 }
             }
@@ -1495,7 +1494,7 @@ namespace Ambermoon
             {
                 // Note: In original there is no message in this case but I think
                 //       it's better to show the reason.
-                ShowFailMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters);
+                ShowFailMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, failAction);
                 return false;
             }
 
@@ -2519,13 +2518,13 @@ namespace Ambermoon
 
                 PlayBattleEffectAnimation(i, effect.StartTextureIndex, effect.FrameSize, effect.FrameCount, ticks, FinishEffect,
                     effect.Duration / effect.FrameCount, effect.InitialDisplayLayer, effect.StartPosition, effect.EndPosition,
-                    effect.StartScale, effect.EndScale, effect.MirrorX);
+                    effect.StartScale, effect.EndScale, effect.MirrorX, effect.EndDisplayLayer);
             }
         }
 
         void PlayBattleEffectAnimation(int index, uint graphicIndex, Size frameSize, uint numFrames, uint ticks,
             Action finishedAction, uint ticksPerFrame, byte initialDisplayLayer, Position startPosition, Position endPosition,
-            float initialScale = 1.0f, float endScale = 1.0f, bool mirrorX = false)
+            float initialScale = 1.0f, float endScale = 1.0f, bool mirrorX = false, byte? endDisplayLayer = null)
         {
             var effectAnimation = effectAnimations[index];
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
@@ -2536,12 +2535,23 @@ namespace Ambermoon
 
             void EffectAnimationFinished()
             {
+                if (endDisplayLayer != initialDisplayLayer)
+                    effectAnimation.AnimationUpdated -= UpdateDisplayLayer;
                 effectAnimation.AnimationFinished -= EffectAnimationFinished;
                 effectAnimation.Visible = false;
                 finishedAction?.Invoke();
             }
 
             effectAnimation.AnimationFinished += EffectAnimationFinished;
+
+            void UpdateDisplayLayer(float progress)
+            {
+                effectAnimation.SetDisplayLayer((byte)Util.Limit(0, Util.Round(initialDisplayLayer +
+                    ((int)endDisplayLayer.Value - (int)initialDisplayLayer) * progress), 255));
+            }
+
+            if (endDisplayLayer != initialDisplayLayer)
+                effectAnimation.AnimationUpdated += UpdateDisplayLayer;
         }
 
         // Lowest 5 bits: Tile index (0-29) to move to
