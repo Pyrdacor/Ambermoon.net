@@ -1034,18 +1034,33 @@ namespace Ambermoon
                             return;
                         }
 
-                        if (!CheckSpell(battleAction.Character, target, spell, () => finishAction(false)))
-                        {
-                            // Note: The finishAction is called automatically if CheckSpell returns false.
-                            // But it might be called a bit later (e.g. after block animation) so we won't
-                            // invoke it here ourself.
-                            return;
-                        }
-
                         int position = GetCharacterPosition(target);
+                        bool failed = false;
                         // Note: Some spells like Fireball or Whirlwind move to the target.
                         currentSpellAnimation.MoveTo(position, (ticks, playHurt, finish) =>
                         {
+                            if (playHurt || finish)
+                            {
+                                if (failed)
+                                {
+                                    if (finish)
+                                        finishAction?.Invoke(false);
+                                    return;
+                                }
+                                else if (!CheckSpell(battleAction.Character, target, spell, () =>
+                                {
+                                    if (finish)
+                                        finishAction?.Invoke(false);
+                                }))
+                                {
+                                    failed = true;
+                                    // Note: The finishAction is called automatically if CheckSpell returns false.
+                                    // But it might be called a bit later (e.g. after block animation) so we won't
+                                    // invoke it here ourself.
+                                    return;
+                                }
+                            }
+
                             if (playHurt && target is Monster monster) // This is only for the hurt monster animation
                             {
                                 var animation = layout.GetMonsterBattleAnimation(monster);
@@ -1430,19 +1445,20 @@ namespace Ambermoon
         {
             var spellInfo = SpellInfos.Entries[spell];
 
-            void ShowFailMessage(string message)
+            void ShowFailMessage(string message, bool runFailAction = true)
             {
                 var color = caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
                 var delay = TimeSpan.FromMilliseconds(500);
 
                 if (needsClickForNextAction)
                 {
-                    game.SetBattleMessageWithClick(message, color, failAction, delay);
+                    game.SetBattleMessageWithClick(message, color, runFailAction ? failAction : null, delay);
                 }
                 else
                 {
                     layout.SetBattleMessage(message, color);
-                    game.AddTimedEvent(delay, failAction);
+                    if (runFailAction)
+                        game.AddTimedEvent(delay, failAction);
                 }
             }
 
@@ -1463,12 +1479,14 @@ namespace Ambermoon
                     return false;
                 }
 
-                if (game.RollDice100() < (int)target.Attributes[Data.Attribute.AntiMagic].TotalCurrentValue)
+                var antiMagicBuff = game.CurrentSavegame.ActiveSpells.FirstOrDefault(s => s?.Type == ActiveSpellType.AntiMagic && s?.Duration > 0);
+                uint antiMagicBuffValue = antiMagicBuff == null ? 0 : (5 + antiMagicBuff.Level * 10);
+
+                if (game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
                 {
                     // Blocked
-                    // TODO: play blocked animation
-                    // PlayBattleEffectAnimation(BattleEffect.BlockSpell, ...)
-                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell);
+                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, false);
+                    PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, failAction);
                     return false;
                 }
             }
