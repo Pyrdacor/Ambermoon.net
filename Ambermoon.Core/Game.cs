@@ -218,8 +218,10 @@ namespace Ambermoon
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
+        PartyMember currentPickingActionMember = null;
         Spell pickedSpell = Spell.None;
-        ItemSlot spellItemSlot = null;
+        uint? spellItemSlotIndex = null;
+        bool? spellItemIsEquipped = null;
         uint? blinkCharacterPosition = null;
         readonly Dictionary<int, Battle.PlayerBattleAction> roundPlayerBattleActions = new Dictionary<int, Battle.PlayerBattleAction>(MaxPartyMembers);
         readonly ILayerSprite ouchSprite;
@@ -1873,6 +1875,7 @@ namespace Ambermoon
                 }
                 void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {
+                    RecheckUsedBattleItem(CurrentInventoryIndex.Value, slotIndex, true);
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
                     EquipmentRemoved(item, amount);
 
@@ -1902,6 +1905,7 @@ namespace Ambermoon
                 }
                 void RemoveInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
                 {
+                    RecheckUsedBattleItem(CurrentInventoryIndex.Value, slotIndex, false);
                     InventoryItemRemoved(ItemManager.GetItem(itemSlot.ItemIndex), amount);
                     UpdateCharacterInfo();
                 }
@@ -3088,40 +3092,46 @@ namespace Ambermoon
 
                         return null;
                     },
-                    spell =>
-                    {
-                        pickedSpell = spell;
-                        // TODO: spellItemSlot -> item used to cast the spell or null
-                        var spellInfo = SpellInfos.Entries[pickedSpell];
-
-                        switch (spellInfo.Target)
-                        {
-                            case SpellTarget.SingleEnemy:
-                                SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTarget);
-                                break;
-                            case SpellTarget.SingleFriend:
-                                SetCurrentPlayerAction(PlayerBattleAction.PickFriendSpellTarget);
-                                break;
-                            case SpellTarget.EnemyRow:
-                                SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
-                                break;
-                            case SpellTarget.BattleField:
-                                if (spell == Spell.Blink)
-                                    SetCurrentPlayerAction(PlayerBattleAction.PickMemberToBlink);
-                                else
-                                    throw new AmbermoonException(ExceptionScope.Data, "Only the Blink spell should have target type BattleField.");
-                                break;
-                            default:
-                                SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell,
-                                    Battle.CreateCastSpellParameter(0, pickedSpell, spellItemSlot?.ItemIndex ?? 0));
-                                break;
-                        }
-                    }
+                    spell => PickBattleSpell(spell)
                 );
             });
 
             if (currentBattle != null)
                 BattlePlayerSwitched();
+        }
+
+        internal void PickBattleSpell(Spell spell, uint? itemSlotIndex = null, bool? itemIsEquipped = null,
+            PartyMember caster = null)
+        {
+            pickedSpell = spell;
+            spellItemSlotIndex = itemSlotIndex;
+            spellItemIsEquipped = itemIsEquipped;
+            currentPickingActionMember = caster ?? CurrentPartyMember;
+
+            var spellInfo = SpellInfos.Entries[pickedSpell];
+
+            switch (spellInfo.Target)
+            {
+                case SpellTarget.SingleEnemy:
+                    SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTarget);
+                    break;
+                case SpellTarget.SingleFriend:
+                    SetCurrentPlayerAction(PlayerBattleAction.PickFriendSpellTarget);
+                    break;
+                case SpellTarget.EnemyRow:
+                    SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
+                    break;
+                case SpellTarget.BattleField:
+                    if (spell == Spell.Blink)
+                        SetCurrentPlayerAction(PlayerBattleAction.PickMemberToBlink);
+                    else
+                        throw new AmbermoonException(ExceptionScope.Data, "Only the Blink spell should have target type BattleField.");
+                    break;
+                default:
+                    SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
+                        Battle.CreateCastSpellParameter(0, pickedSpell, spellItemSlotIndex, spellItemIsEquipped));
+                    break;
+            }
         }
 
         void AdvanceParty(Action finishAction)
@@ -3800,9 +3810,23 @@ namespace Ambermoon
             layout.UpdateCharacterStatus(slot, actionType.ToStatusGraphic(parameter, ItemManager));
         }
 
+        void SetPlayerBattleAction(Battle.BattleActionType actionType, uint parameter = 0)
+        {
+            if (currentPickingActionMember == CurrentPartyMember)
+                SetCurrentPlayerBattleAction(actionType, parameter);
+            else
+            {
+                var action = GetOrCreateBattleAction();
+                action.BattleAction = actionType;
+                action.Parameter = parameter;
+                int slot = SlotFromPartyMember(currentPickingActionMember).Value;
+                layout.UpdateCharacterStatus(slot, actionType.ToStatusGraphic(parameter, ItemManager));
+            }
+        }
+
         Battle.PlayerBattleAction GetOrCreateBattleAction()
         {
-            int slot = SlotFromPartyMember(CurrentPartyMember).Value;
+            int slot = SlotFromPartyMember(currentPickingActionMember).Value;
 
             if (!roundPlayerBattleActions.ContainsKey(slot))
                 roundPlayerBattleActions.Add(slot, new Battle.PlayerBattleAction());
@@ -3843,7 +3867,7 @@ namespace Ambermoon
 
         bool AnyPlayerMovesTo(int slot)
         {
-            var actions = roundPlayerBattleActions.Where(p => p.Key != SlotFromPartyMember(CurrentPartyMember));
+            var actions = roundPlayerBattleActions.Where(p => p.Key != SlotFromPartyMember(currentPickingActionMember));
             bool anyMovesTo = actions.Any(p => p.Value.BattleAction == Battle.BattleActionType.Move &&
                 Battle.GetTargetTileOrRowFromParameter(p.Value.Parameter) == slot);
 
@@ -3883,7 +3907,7 @@ namespace Ambermoon
                     {
                         var partyMember = character as PartyMember;
 
-                        if (CurrentPartyMember != partyMember && partyMember.Ailments.CanSelect())
+                        if (currentPickingActionMember != partyMember && partyMember.Ailments.CanSelect())
                         {
                             int partyMemberSlot = SlotFromPartyMember(partyMember).Value;
                             SetActivePartyMember(partyMemberSlot, false);
@@ -3897,7 +3921,7 @@ namespace Ambermoon
 
                         if (!ranged)
                         {
-                            int position = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+                            int position = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
                             if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
                             {
                                 SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.Gray);
@@ -3905,26 +3929,26 @@ namespace Ambermoon
                             }
                         }
 
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack,
-                            Battle.CreateAttackParameter((uint)(column + row * 6), CurrentPartyMember, ItemManager));
+                        SetPlayerBattleAction(Battle.BattleActionType.Attack,
+                            Battle.CreateAttackParameter((uint)(column + row * 6), currentPickingActionMember, ItemManager));
                     }
                     else // empty field
                     {
                         if (row < 3)
                             return;
-                        int position = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+                        int position = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
                         if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
                         {
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.Gray);
                             return;
                         }
-                        if (!CurrentPartyMember.Ailments.CanMove())
+                        if (!currentPickingActionMember.Ailments.CanMove())
                         {
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove, TextColor.Gray);
                             return;
                         }
                         int newPosition = column + row * 6;
-                        int slot = SlotFromPartyMember(CurrentPartyMember).Value;
+                        int slot = SlotFromPartyMember(currentPickingActionMember).Value;
                         if ((!roundPlayerBattleActions.ContainsKey(slot) ||
                             roundPlayerBattleActions[slot].BattleAction != Battle.BattleActionType.Move ||
                             Battle.GetTargetTileOrRowFromParameter(roundPlayerBattleActions[slot].Parameter) != newPosition) &&
@@ -3933,7 +3957,7 @@ namespace Ambermoon
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageSomeoneAlreadyGoingThere, TextColor.Gray);
                             return;
                         }
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
+                        SetPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
                     }
                     break;
                 }
@@ -3965,14 +3989,17 @@ namespace Ambermoon
                     int position = column + row * 6;
                     if (row > 2 && currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
                     {
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)(column + row * 6),
-                            pickedSpell, spellItemSlot?.ItemIndex ?? 0, blinkCharacterPosition.Value));
-                        int casterSlot = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
-                        bool selfBlink = casterSlot == blinkCharacterPosition.Value;
-                        layout.SetBattleFieldSlotColor((int)blinkCharacterPosition.Value, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentBattleTicks);
-                        layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange, CurrentBattleTicks + Layout.TicksPerBlink);
-                        if (!selfBlink)
-                            layout.SetBattleFieldSlotColor(casterSlot, BattleFieldSlotColor.Yellow);
+                        SetPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)(column + row * 6),
+                            pickedSpell, spellItemSlotIndex, spellItemIsEquipped, blinkCharacterPosition.Value));
+                        if (currentPickingActionMember == CurrentPartyMember)
+                        {
+                            int casterSlot = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
+                            bool selfBlink = casterSlot == blinkCharacterPosition.Value;
+                            layout.SetBattleFieldSlotColor((int)blinkCharacterPosition.Value, selfBlink ? BattleFieldSlotColor.Both : BattleFieldSlotColor.Orange, CurrentBattleTicks);
+                            layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange, CurrentBattleTicks + Layout.TicksPerBlink);
+                            if (!selfBlink)
+                                layout.SetBattleFieldSlotColor(casterSlot, BattleFieldSlotColor.Yellow);
+                        }
                         CancelSpecificPlayerAction();
                     }
                     break;
@@ -3994,9 +4021,10 @@ namespace Ambermoon
                                 return;
                         }
 
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)(column + row * 6),
-                            pickedSpell, spellItemSlot?.ItemIndex ?? 0));
-                        layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange);
+                        SetPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)(column + row * 6),
+                            pickedSpell, spellItemSlotIndex, spellItemIsEquipped));
+                        if (currentPickingActionMember == CurrentPartyMember)
+                            layout.SetBattleFieldSlotColor(column, row, BattleFieldSlotColor.Orange);
                         CancelSpecificPlayerAction();
                     }
                     break;
@@ -4007,10 +4035,13 @@ namespace Ambermoon
                     {
                         return;
                     }
-                    SetCurrentPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)row,
-                        pickedSpell, spellItemSlot?.ItemIndex ?? 0));
-                    layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(CurrentPartyMember));
-                    SetBattleRowSlotColors(row, (c, r) => currentBattle.GetCharacterAt(c, r)?.Type == CharacterType.Monster, BattleFieldSlotColor.Orange);
+                    SetPlayerBattleAction(Battle.BattleActionType.CastSpell, Battle.CreateCastSpellParameter((uint)row,
+                        pickedSpell, spellItemSlotIndex, spellItemIsEquipped));
+                    if (currentPickingActionMember == CurrentPartyMember)
+                    {
+                        layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(currentPickingActionMember));
+                        SetBattleRowSlotColors(row, (c, r) => currentBattle.GetCharacterAt(c, r)?.Type == CharacterType.Monster, BattleFieldSlotColor.Orange);
+                    }
                     CancelSpecificPlayerAction();
                     break;
                 }
@@ -4019,7 +4050,7 @@ namespace Ambermoon
                     int position = column + row * 6;
                     if (currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
                     {
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)position));
+                        SetPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)position));
                         CancelSpecificPlayerAction();
                     }
                     break;
@@ -4031,8 +4062,8 @@ namespace Ambermoon
 
                     if (currentBattle.GetCharacterAt(column + row * 6)?.Type == CharacterType.Monster)
                     {
-                        SetCurrentPlayerBattleAction(Battle.BattleActionType.Attack,
-                            Battle.CreateAttackParameter((uint)(column + row * 6), CurrentPartyMember, ItemManager));
+                        SetPlayerBattleAction(Battle.BattleActionType.Attack,
+                            Battle.CreateAttackParameter((uint)(column + row * 6), currentPickingActionMember, ItemManager));
                         CancelSpecificPlayerAction();
                     }
                     break;
@@ -4051,7 +4082,7 @@ namespace Ambermoon
 
         IEnumerable<int> GetValuableBattleFieldSlots(Func<int, bool> condition, int range, int minRow, int maxRow)
         {
-            int slot = currentBattle.GetSlotFromCharacter(CurrentPartyMember);
+            int slot = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
             int currentColumn = slot % 6;
             int currentRow = slot / 6;
             for (int row = Math.Max(minRow, currentRow - range); row <= Math.Min(maxRow, currentRow + range); ++row)
@@ -4068,7 +4099,7 @@ namespace Ambermoon
 
         bool CheckAbilityToAttack(out bool ranged)
         {
-            ranged = CurrentPartyMember.HasLongRangedAttack(ItemManager, out bool hasAmmo);
+            ranged = currentPickingActionMember.HasLongRangedAttack(ItemManager, out bool hasAmmo);
 
             if (ranged && !hasAmmo)
             {
@@ -4078,7 +4109,7 @@ namespace Ambermoon
                 return false;
             }
 
-            if (CurrentPartyMember.BaseAttack <= 0)
+            if (currentPickingActionMember.BaseAttack <= 0)
             {
                 CancelSpecificPlayerAction();
                 SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, TextColor.Gray);
@@ -4098,6 +4129,7 @@ namespace Ambermoon
             switch (currentPlayerBattleAction)
             {
                 case PlayerBattleAction.PickPlayerAction:
+                    currentPickingActionMember = CurrentPartyMember;
                     break;
                 case PlayerBattleAction.PickEnemySpellTarget:
                 {
@@ -4654,6 +4686,24 @@ namespace Ambermoon
             ShowDecisionPopup(map.Texts[(int)decisionEvent.TextIndex], responseHandler);
         }
 
+        void RecheckUsedBattleItem(int partyMemberSlot, int slotIndex, bool equipped)
+        {
+            if (currentBattle != null && roundPlayerBattleActions.ContainsKey(partyMemberSlot))
+            {
+                var action = roundPlayerBattleActions[partyMemberSlot];
+
+                if (action.BattleAction == Battle.BattleActionType.CastSpell &&
+                    Battle.IsCastFromItem(action.Parameter))
+                {
+                    if (Battle.GetCastItemSlot(action.Parameter) == slotIndex)
+                    {
+                        roundPlayerBattleActions.Remove(partyMemberSlot);
+                        UpdateBattleStatus(partyMemberSlot);
+                    }
+                }
+            }
+        }
+
         void RecheckBattleEquipment(int partyMemberSlot, EquipmentSlot equipmentSlot, Item removedItem)
         {
             if (currentBattle != null)
@@ -4720,7 +4770,7 @@ namespace Ambermoon
                     return;
 
                 CurrentSavegame.ActivePartyMemberSlot = index;
-                CurrentPartyMember = partyMember;
+                currentPickingActionMember = CurrentPartyMember = partyMember;
                 layout.SetActiveCharacter(index, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToList());
 
                 if (currentBattle != null && updateBattlePosition && layout.Type == LayoutType.Battle)
@@ -4919,6 +4969,8 @@ namespace Ambermoon
                     int partyMemberIndex = (int)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
                     OpenPartyMember(partyMemberIndex, true);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
                 }
                 case Window.Stats:
@@ -4926,6 +4978,8 @@ namespace Ambermoon
                     int partyMemberIndex = (int)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
                     OpenPartyMember(partyMemberIndex, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
                 }
                 case Window.Chest:
@@ -4933,11 +4987,15 @@ namespace Ambermoon
                     var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
                     ShowChest(chestEvent);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
                 }
                 case Window.Merchant:
                 {
                     // TODO
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
                 }
                 case Window.Riddlemouth:
@@ -4946,6 +5004,8 @@ namespace Ambermoon
                     var solvedEvent = currentWindow.WindowParameters[1] as Action;
                     currentWindow = DefaultWindow;
                     ShowRiddlemouth(Map, riddlemouthEvent, solvedEvent, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
                 }
                 case Window.Conversation:
@@ -4954,13 +5014,15 @@ namespace Ambermoon
                     var conversationEvent = currentWindow.WindowParameters[1] as Event;
                     currentWindow = DefaultWindow;
                     ShowConversation(conversationPartner, conversationEvent);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
                 }
                 case Window.Battle:
                 {
                     var nextEvent = (Event)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
-                    Fade(() => ShowBattleWindow(nextEvent));
+                    Fade(() => { ShowBattleWindow(nextEvent); finishAction?.Invoke(); });
                     break;
                 }
                 case Window.BattleLoot:
@@ -4968,15 +5030,12 @@ namespace Ambermoon
                     var storage = (ITreasureStorage)currentWindow.WindowParameters[0];
                     lastWindow = DefaultWindow;
                     ShowBattleLoot(storage, null, 0);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
                 }
                 default:
                     break;
-            }
-
-            if (finishAction != null && currentWindow.Window != Window.MapView)
-            {
-                AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
             }
         }
     }

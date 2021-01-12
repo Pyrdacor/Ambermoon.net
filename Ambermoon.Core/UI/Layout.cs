@@ -1043,20 +1043,66 @@ namespace Ambermoon.UI
             var user = game.CurrentInventory;
             var item = itemManager.GetItem(itemSlot.ItemIndex);
 
+            if (!item.IsUsable)
+            {
+                // TODO: correct message?
+                SetInventoryMessage(game.DataNameProvider.ItemHasNoEffectHere, true);
+                return;
+            }
+
+            // TODO: check available charges
+
             if (!item.Classes.Contains(user.Class))
             {
                 SetInventoryMessage(game.DataNameProvider.WrongClassToUseItem, true);
                 return;
             }
 
-            if (game.TestUseItemMapEvent(itemSlot.ItemIndex))
+            if (game.BattleActive)
             {
+                if (item.Spell != Spell.None)
+                {
+                    if (!SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Battle))
+                    {
+                        SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                        return;
+                    }
+
+                    // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
+                    bool equipped = itemGrid == itemGrids[1];
+                    var caster = game.CurrentInventory;
+                    game.CloseWindow(() => game.PickBattleSpell(item.Spell, (uint)slot, equipped, caster));
+                }
+            }
+            else if (game.TestUseItemMapEvent(itemSlot.ItemIndex))
+            {
+                ReduceItemCharge(itemSlot);
                 game.CloseWindow(() => game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex)));
             }
             else
             {
                 // do other things
                 // TODO: item has no effect here (only if it does nothing else, e.g. torches can be used on spider webs and without them)
+            }
+        }
+
+        internal void ReduceItemCharge(ItemSlot itemSlot, bool slotVisible = true)
+        {
+            itemSlot.NumRemainingCharges = Math.Max(0, itemSlot.NumRemainingCharges - 1);
+
+            if (itemSlot.NumRemainingCharges == 0)
+            {
+                var item = itemManager.GetItem(itemSlot.ItemIndex);
+
+                if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage))
+                {
+                    itemSlot.Remove(1);
+
+                    if (slotVisible)
+                    {
+                        // TODO: play destroy animation
+                    }
+                }
             }
         }
 
@@ -1366,7 +1412,7 @@ namespace Ambermoon.UI
                 {
                     inventoryMessage?.Destroy();
                     game.CursorType = CursorType.Click;
-                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 20), game.ProcessText(message));
+                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 14), game.ProcessText(message));
                     inventoryMessage.Clicked += scrolledToEnd =>
                     {
                         if (scrolledToEnd)
@@ -1379,10 +1425,11 @@ namespace Ambermoon.UI
                     };
                     game.CursorType = CursorType.Click;
                     game.InputEnable = false;
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(50), () => SetActiveTooltip(null, null));
                 }
                 else if (inventoryMessage == null)
                 {
-                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 20), game.ProcessText(message));
+                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 14), game.ProcessText(message));
                 }
                 else
                 {

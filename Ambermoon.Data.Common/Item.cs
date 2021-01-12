@@ -92,6 +92,15 @@ namespace Ambermoon.Data
         public uint GetBuyPrice(PartyMember buyer) => (uint)Util.Round(Price / GetPriceFactor(buyer));
         public uint GetSellPrice(PartyMember seller) => (uint)Util.Round(0.5f * Price * GetPriceFactor(seller));
 
+        public bool IsUsable
+        {
+            get
+            {
+                return Spell != Spell.None || Type == ItemType.Potion || Type == ItemType.SpecialItem || Type == ItemType.SpellScroll ||
+                    Type == ItemType.TextScroll || Type == ItemType.Tool || Type == ItemType.Transportation;
+            }
+        }
+
         public static Item Load(uint index, IItemReader itemReader, IDataReader dataReader)
         {
             var item = new Item { Index = index };

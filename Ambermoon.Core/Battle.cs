@@ -741,12 +741,15 @@ namespace Ambermoon
                         }
                         case BattleActionType.CastSpell:
                         {
-                            GetCastSpellInformation(next.ActionParameter, out _, out Spell spell, out uint itemIndex);
+                            GetCastSpellInformation(next.ActionParameter, out _, out Spell spell, out var itemSlotIndex, out bool equippedItem);
                             string spellName = game.DataNameProvider.GetSpellname(spell);
 
-                            if (itemIndex != 0)
+                            if (itemSlotIndex != null)
                             {
-                                var item = game.ItemManager.GetItem(itemIndex);
+                                var itemSlot = equippedItem
+                                    ? battleAction.Character.Equipment.Slots[(EquipmentSlot)itemSlotIndex.Value]
+                                    : battleAction.Character.Inventory.Slots[itemSlotIndex.Value];
+                                var item = game.ItemManager.GetItem(itemSlot.ItemIndex);
                                 text = next.Character.Name + string.Format(game.DataNameProvider.BattleMessageCastsSpellFrom, spellName, item.Name);
                             }
                             else
@@ -962,13 +965,14 @@ namespace Ambermoon
                 }
                 case BattleActionType.CastSpell:
                 {
-                    GetCastSpellInformation(battleAction.ActionParameter, out uint targetRowOrTile, out Spell spell, out uint itemIndex);
+                    GetCastSpellInformation(battleAction.ActionParameter, out uint targetRowOrTile, out Spell spell,
+                        out var itemSlotIndex, out bool equippedItem);
 
                     // Note: Support spells like healing can also miss. In this case no message is displayed but the SP is spent.
 
                     var spellInfo = SpellInfos.Entries[spell];
 
-                    if (itemIndex == 0)
+                    if (itemSlotIndex == null)
                     {
                         battleAction.Character.SpellPoints.CurrentValue = Math.Max(0, battleAction.Character.SpellPoints.CurrentValue - spellInfo.SP);
 
@@ -978,12 +982,21 @@ namespace Ambermoon
 
                     if (!CheckSpellCast(battleAction.Character, spellInfo))
                     {
-                        EndCast();
+                        EndCast(true);
                         return;
                     }
 
-                    void EndCast(bool needClickAfterwards = true)
+                    void EndCast(bool needClickAfterwards = false)
                     {
+                        if (itemSlotIndex != null)
+                        {
+                            // Note: It will always be a party member as monsters can't use item spells.
+                            var itemSlot = equippedItem
+                                ? battleAction.Character.Equipment.Slots[(EquipmentSlot)itemSlotIndex.Value]
+                                : battleAction.Character.Inventory.Slots[itemSlotIndex.Value];
+                            layout.ReduceItemCharge(itemSlot, false);
+                        }
+
                         if (currentSpellAnimation != null)
                         {
                             currentSpellAnimation.PostCast(() =>
@@ -1016,7 +1029,7 @@ namespace Ambermoon
                         case SpellTarget.SingleFriend:
                             if (GetCharacterAt((int)targetRowOrTile) == null)
                             {
-                                EndCast(false);
+                                EndCast();
                                 return;
                             }
                             break;
@@ -1026,11 +1039,11 @@ namespace Ambermoon
                     currentSpellAnimation = new SpellAnimation(game, layout, this, spell,
                         battleAction.Character.Type == CharacterType.Monster, GetCharacterPosition(battleAction.Character), (int)targetRowOrTile);
 
-                    void CastSpellOn(Character target, Action<bool> finishAction)
+                    void CastSpellOn(Character target, Action finishAction)
                     {
                         if (target == null)
                         {
-                            finishAction?.Invoke(false);
+                            finishAction?.Invoke();
                             return;
                         }
 
@@ -1044,13 +1057,13 @@ namespace Ambermoon
                                 if (failed)
                                 {
                                     if (finish)
-                                        finishAction?.Invoke(false);
+                                        finishAction?.Invoke();
                                     return;
                                 }
                                 else if (!CheckSpell(battleAction.Character, target, spell, () =>
                                 {
                                     if (finish)
-                                        finishAction?.Invoke(false);
+                                        finishAction?.Invoke();
                                 }))
                                 {
                                     failed = true;
@@ -1072,14 +1085,14 @@ namespace Ambermoon
                                     currentlyAnimatedMonster = null;
                                 }
 
-                                void EffectApplied(bool needsClickAfterwards)
+                                void EffectApplied()
                                 {
                                     // We have to wait until the monster hurt animation finishes.
                                     // Otherwise the animation reset might not happen.
                                     if (currentBattleAnimation == null)
-                                        finishAction?.Invoke(needsClickAfterwards);
+                                        finishAction?.Invoke();
                                     else
-                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(25), () => EffectApplied(needsClickAfterwards));
+                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(25), EffectApplied);
                                 }
 
                                 animation.AnimationFinished += HurtAnimationFinished;
@@ -1099,23 +1112,23 @@ namespace Ambermoon
                         });
                     }
 
-                    void CastSpellOnRow(CharacterType characterType, int row, Action<bool> finishAction, bool lastNeedClickAfterwards = true)
+                    void CastSpellOnRow(CharacterType characterType, int row, Action finishAction)
                     {
                         var targets = Enumerable.Range(0, 6).Select(column => battleField[5 - column + row * 6])
                             .Where(c => c?.Type == characterType).ToList();
 
                         if (targets.Count == 0)
                         {
-                            finishAction?.Invoke(lastNeedClickAfterwards);
+                            finishAction?.Invoke();
                             return;
                         }
 
                         void Cast(int index)
                         {
-                            CastSpellOn(targets[index], needClickAfterwards =>
+                            CastSpellOn(targets[index], () =>
                             {
                                 if (index == targets.Count - 1)
-                                    finishAction?.Invoke(needClickAfterwards);
+                                    finishAction?.Invoke();
                                 else
                                     Cast(index + 1);
                             });
@@ -1124,22 +1137,20 @@ namespace Ambermoon
                         Cast(0);
                     }
 
-                    void CastSpellOnAll(CharacterType characterType, Action<bool> finishAction)
+                    void CastSpellOnAll(CharacterType characterType, Action finishAction)
                     {
                         int minRow = characterType == CharacterType.Monster ? 0 : 3;
                         int maxRow = characterType == CharacterType.Monster ? 3 : 4;
-                        bool lastNeedClickAfterwards = true;
 
                         void Cast(int row)
                         {
-                            CastSpellOnRow(characterType, row, needClickAfterwards =>
+                            CastSpellOnRow(characterType, row, () =>
                             {
-                                lastNeedClickAfterwards = needClickAfterwards;
                                 if (row == minRow)
-                                    finishAction?.Invoke(needClickAfterwards);
+                                    finishAction?.Invoke();
                                 else
                                     Cast(row - 1);
-                            }, lastNeedClickAfterwards);
+                            });
                         }
 
                         Cast(maxRow);
@@ -1176,18 +1187,18 @@ namespace Ambermoon
                             switch (spellInfo.Target)
                             {
                                 case SpellTarget.None:
-                                    ApplySpellEffect(battleAction.Character, null, spell, game.CurrentBattleTicks, EndCast);
+                                    ApplySpellEffect(battleAction.Character, null, spell, game.CurrentBattleTicks, () => EndCast());
                                     break;
                                 case SpellTarget.SingleEnemy:
                                 case SpellTarget.SingleFriend:
-                                    CastSpellOn(GetCharacterAt((int)targetRowOrTile), EndCast);
+                                    CastSpellOn(GetCharacterAt((int)targetRowOrTile), () => EndCast());
                                     break;
                                 case SpellTarget.AllEnemies:
                                     CastSpellOnAll(battleAction.Character.Type == CharacterType.Monster
-                                        ? CharacterType.PartyMember : CharacterType.Monster, EndCast);
+                                        ? CharacterType.PartyMember : CharacterType.Monster, () => EndCast());
                                     break;
                                 case SpellTarget.AllFriends:
-                                    CastSpellOnAll(battleAction.Character.Type, EndCast);
+                                    CastSpellOnAll(battleAction.Character.Type, () => EndCast());
                                     break;
                                 case SpellTarget.EnemyRow:
                                 {
@@ -1197,13 +1208,10 @@ namespace Ambermoon
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
                                             battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
-                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                                        {
-                                            EndCast();
-                                        });
+                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => EndCast());
                                         return;
                                     }
-                                    CastSpellOnRow(enemyType, (int)targetRowOrTile, EndCast);
+                                    CastSpellOnRow(enemyType, (int)targetRowOrTile, () => EndCast());
                                     break;
                                 }
                                 case SpellTarget.FriendRow:
@@ -1212,13 +1220,10 @@ namespace Ambermoon
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
                                             battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
-                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                                        {
-                                            EndCast();
-                                        });
+                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => EndCast());
                                         return;
                                     }
-                                    CastSpellOnRow(battleAction.Character.Type, (int)targetRowOrTile, EndCast);
+                                    CastSpellOnRow(battleAction.Character.Type, (int)targetRowOrTile, () => EndCast());
                                     break;
                                 }
                                 case SpellTarget.BattleField:
@@ -1234,7 +1239,7 @@ namespace Ambermoon
                                         });
                                         return;
                                     }
-                                    ApplySpellEffect(battleAction.Character, character, spell, game.CurrentBattleTicks, EndCast,
+                                    ApplySpellEffect(battleAction.Character, character, spell, game.CurrentBattleTicks, () => EndCast(),
                                         targetRowOrTile);
                                     break;
                                 }
@@ -1448,16 +1453,20 @@ namespace Ambermoon
             void ShowFailMessage(string message, Action finishAction)
             {
                 var color = caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
-                var delay = TimeSpan.FromMilliseconds(500);
+                var delay = TimeSpan.FromMilliseconds(700);
 
-                if (needsClickForNextAction)
+                if (needsClickForNextAction && !spellInfo.Target.TargetsMultipleEnemies())
                 {
                     game.SetBattleMessageWithClick(message, color, finishAction, delay);
                 }
                 else
                 {
                     layout.SetBattleMessage(message, color);
-                    game.AddTimedEvent(delay, finishAction);
+                    game.AddTimedEvent(delay, () =>
+                    {
+                        layout.SetBattleMessage(null);
+                        finishAction?.Invoke();
+                    });
                 }
             }
 
@@ -1571,7 +1580,7 @@ namespace Ambermoon
             }
         }
 
-        void ShowMonsterInfo(Monster monster, Action<bool> finishAction)
+        void ShowMonsterInfo(Monster monster, Action finishAction)
         {
             var area = new Rect(64, 38, 12 * 16, 10 * 16);
             var popup = layout.OpenPopup(area.Position, 12, 10, true, true, 225);
@@ -1644,14 +1653,14 @@ namespace Ambermoon
             {
                 game.CursorType = CursorType.Sword;
                 game.UntrapMouse();
-                finishAction?.Invoke(false);
+                finishAction?.Invoke();
             };
         }
 
         /// <summary>
         /// The boolean argument of the finish action means: NeedsClickAfterwards
         /// </summary>
-        void ApplySpellEffect(Character caster, Character target, Spell spell, uint ticks, Action<bool> finishAction, uint? targetField = null)
+        void ApplySpellEffect(Character caster, Character target, Spell spell, uint ticks, Action finishAction, uint? targetField = null)
         {
             switch (spell)
             {
@@ -1660,7 +1669,7 @@ namespace Ambermoon
                     return;
                 case Spell.Blink:
                     game.SetBattleMessageWithClick(target.Name + game.DataNameProvider.BattleMessageHasBlinked, TextColor.White,
-                        () => { MoveCharacterTo(targetField.Value, target); finishAction?.Invoke(false); });
+                        () => { MoveCharacterTo(targetField.Value, target); finishAction?.Invoke(); });
                     return;
                 case Spell.DissolveVictim:
                 case Spell.DispellUndead:
@@ -1819,7 +1828,7 @@ namespace Ambermoon
                     break;
             }
 
-            finishAction?.Invoke(false);
+            finishAction?.Invoke();
 
             void DealDamage(uint baseDamage, uint variableDamage)
             {
@@ -1827,13 +1836,13 @@ namespace Ambermoon
                 {
                     if (!target.Alive)
                     {
-                        HandleCharacterDeath(caster, target, () => finishAction?.Invoke(true));
+                        HandleCharacterDeath(caster, target, finishAction);
                     }
                     else
                     {
                         if (target is PartyMember partyMember)
                             layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
-                        finishAction?.Invoke(true);
+                        finishAction?.Invoke();
                     }
                 }
                 uint damage = CalculateSpellDamage(caster, target, baseDamage, variableDamage);
@@ -2579,12 +2588,14 @@ namespace Ambermoon
             return CreateAttackParameter(targetTile, weaponIndex, ammoIndex);
         }
         // Lowest 5 bits: Tile index (0-29) or row (0-4) to cast spell on
-        // Next 11 bits: Item index (when spell came from an item, otherwise 0)
-        // Next 11 bits: Spell index
+        // Next 5 bits: Item slot index (when spell came from an item, otherwise 0x1f)
+        // Next bit: 0 = inventory item, 1 = equipped item
+        // Next 16 bits: Spell index
         // Next 5 bits: Blink character position (0-29)
-        public static uint CreateCastSpellParameter(uint targetTileOrRow, Spell spell, uint itemIndex = 0,
-            uint blinkCharacterPosition = 0) =>
-            (targetTileOrRow & 0x1f) | ((itemIndex & 0x7ff) << 5) | (((uint)spell & 0x7ff) << 16) | ((blinkCharacterPosition & 0x1f) << 27);
+        public static uint CreateCastSpellParameter(uint targetTileOrRow, Spell spell, uint? itemSlotIndex = null,
+            bool? equippedItem = null, uint blinkCharacterPosition = 0) =>
+            (targetTileOrRow & 0x1f) | (((itemSlotIndex ?? 0x1f) & 0x1f) << 5) | ((equippedItem == true) ? 0x400u : 0) |
+            (((uint)spell & 0xffff) << 11) | ((blinkCharacterPosition & 0x1f) << 27);
         // Lowest 5 bits: Tile index (0-29) where a character is hurt
         // Rest: Damage
         public static uint CreateHurtParameter(uint targetTile) => targetTile & 0x1f;
@@ -2606,18 +2617,24 @@ namespace Ambermoon
 
             return itemManager.GetItem(weaponIndex)?.Type == ItemType.LongRangeWeapon;
         }
-        public static Spell GetCastSpell(uint actionParameter) => (Spell)((actionParameter >> 16) & 0x7ff);
+        public static Spell GetCastSpell(uint actionParameter) => (Spell)((actionParameter >> 11) & 0xffff);
         public static uint GetBlinkCharacterPosition(uint actionParameter) => (actionParameter >> 27) & 0x1f;
-        static void GetCastSpellInformation(uint actionParameter, out uint targetRowOrTile, out Spell spell, out uint itemIndex)
+        static void GetCastSpellInformation(uint actionParameter, out uint targetRowOrTile, out Spell spell,
+            out uint? itemSlotIndex, out bool equippedItem)
         {
-            spell = (Spell)((actionParameter >> 16) & 0x7ff);
-            itemIndex = (actionParameter >> 5) & 0x7ff;
+            spell = (Spell)((actionParameter >> 11) & 0xffff);
+            itemSlotIndex = (actionParameter >> 5) & 0x1f;
+            equippedItem = ((actionParameter >> 10) & 0x01) != 0;
             targetRowOrTile = actionParameter & 0x1f;
+
+            if (itemSlotIndex == 0x1f)
+                itemSlotIndex = null;
         }
         public bool IsSelfSpell(PartyMember caster, uint actionParameter) =>
             SpellInfos.Entries[GetCastSpell(actionParameter)].Target == SpellTarget.SingleFriend &&
                 GetTargetTileOrRowFromParameter(actionParameter) == GetSlotFromCharacter(caster);
-        public static bool IsCastFromItem(uint actionParameter) => ((actionParameter >> 5) & 0x7ff) != 0;
+        public static bool IsCastFromItem(uint actionParameter) => GetCastItemSlot(actionParameter) != 0x1f;
+        public static uint GetCastItemSlot(uint actionParameter) => (actionParameter >> 5) & 0x1f;
         static void GetHurtInformation(uint actionParameter, out uint targetTile, out uint damage)
         {
             damage = (actionParameter >> 5) & 0x7ffffff;

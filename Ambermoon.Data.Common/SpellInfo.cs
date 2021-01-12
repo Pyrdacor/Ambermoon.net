@@ -70,6 +70,9 @@ namespace Ambermoon.Data
             _ => false
         };
 
+        public static bool TargetsMultipleEnemies(this SpellTarget spellTarget) =>
+            spellTarget == SpellTarget.EnemyRow || spellTarget == SpellTarget.AllEnemies;
+
         public static SpellTargetType GetTargetType(this SpellTarget spellTarget) => spellTarget switch
         {
             SpellTarget.SingleEnemy => SpellTargetType.SingleBattleField,

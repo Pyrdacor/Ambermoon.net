@@ -712,12 +712,12 @@ namespace Ambermoon.Render
                     var position = Global.CombatBackgroundArea.Center + new Position(0, 5);
                     const float initialScale = 1.85f;
                     const float materializeScale = 3.0f;
-                    const float endScale = 4.5f;
+                    const float endScale = 4.75f;
                     PlayMaterialization(position, CombatGraphicIndex.Landslide, initialScale, 0, () =>
                     {
-                        game.ShakeScreen(TimeSpan.FromMilliseconds(150), 9, 0.025f);
+                        game.ShakeScreen(TimeSpan.FromMilliseconds(150), 9, 0.035f);
                         BattleAnimation animation = AddAnimationThatRemains(CombatGraphicIndex.Landslide, 1,
-                            position, position + new Position(0, 14), Game.TicksPerSecond * 7 / 5,
+                            position, position + new Position(0, 14), Game.TicksPerSecond * 8 / 5,
                             materializeScale, endScale, 0);
                         animation.ScaleType = BattleAnimation.AnimationScaleType.YOnly;
                         animation.SetStartFrame(null, initialScale);
