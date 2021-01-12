@@ -1422,7 +1422,7 @@ namespace Ambermoon
                     else if (layout.Type == LayoutType.Event ||
                         (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true) ||
                         currentBattle?.WaitForClick == true ||
-                        ChestText != null ||
+                        ChestText?.WithScrolling == true ||
                         layout.InventoryMessageWaitsForClick)
                         CursorType = CursorType.Click;
                     else
@@ -3462,7 +3462,7 @@ namespace Ambermoon
                         if (GetPartyMember(i) != null)
                             layout.UpdateCharacterStatus(i, null);
                     }
-                    void EndBattle(BattleEndInfo battleEndInfo)
+                    void EndBattle()
                     {
                         for (int i = 0; i < MaxPartyMembers; ++i)
                         {
@@ -3474,35 +3474,44 @@ namespace Ambermoon
                         UpdateBattleStatus();
                         currentBattleInfo.EndBattle(battleEndInfo);
                         currentBattleInfo = null;
-                        if (nextEvent != null)
-                        {
-                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
-                                (uint)RenderPlayer.Position.Y, CurrentTicks, nextEvent, true);
-                        }
                     }
                     if (battleEndInfo.MonstersDefeated)
                     {
                         currentBattle = null;
+                        EndBattle();
                         ShowBattleLoot(battleEndInfo, () =>
                         {
-                            EndBattle(battleEndInfo);
+                            if (nextEvent != null)
+                            {
+                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
+                                    (uint)RenderPlayer.Position.Y, CurrentTicks, nextEvent, true);
+                            }
                         });
                     }
                     else if (PartyMembers.Any(p => p.Alive && p.Ailments.CanFight()))
                     {
                         // There are fled survivors
                         currentBattle = null;
-                        EndBattle(battleEndInfo);
-                        CloseWindow();
-                        InputEnable = true;
+                        EndBattle();
+                        CloseWindow(() =>
+                        {
+                            InputEnable = true;
+                            if (nextEvent != null)
+                            {
+                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
+                                    (uint)RenderPlayer.Position.Y, CurrentTicks, nextEvent, false);
+                            }
+                        });
                     }
                     else
                     {
                         currentBattleInfo = null;
                         currentBattle = null;
-                        CloseWindow();
-                        InputEnable = true;
-                        GameOver();
+                        CloseWindow(() =>
+                        {
+                            InputEnable = true;
+                            GameOver();
+                        });
                     }
                 };
                 currentBattle.ActionCompleted += battleAction =>
@@ -4285,6 +4294,7 @@ namespace Ambermoon
             // TODO: Add exp and check for level up.
             // If level up, display level up window.
             // Call finishedEvent if no window or after window is closed.
+            finishedEvent?.Invoke();
         }
 
         internal void ShowBattleLoot(BattleEndInfo battleEndInfo, Action closeAction)
@@ -4325,11 +4335,12 @@ namespace Ambermoon
 
             if (loot.Empty)
             {
-                closeAction?.Invoke();
-                CloseWindow();
-                ShowMessagePopup(string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
+                CloseWindow(() =>
                 {
-                    AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember);
+                    ShowMessagePopup(string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
+                    {
+                        AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, closeAction);
+                    });
                 });
             }
             else
@@ -4398,9 +4409,11 @@ namespace Ambermoon
                         {
                             Fade(() =>
                             {
-                                CloseWindow();
-                                InputEnable = true;
-                                solvedHandler?.Invoke();
+                                CloseWindow(() =>
+                                {
+                                    InputEnable = true;
+                                    solvedHandler?.Invoke();
+                                });
                             });
                         });
                     }
@@ -4869,7 +4882,9 @@ namespace Ambermoon
             UpdateCursor(lastMousePosition, MouseButtons.None);
         }
 
-        internal void CloseWindow()
+        internal void CloseWindow() => CloseWindow(null);
+
+        internal void CloseWindow(Action finishAction)
         {
             if (!WindowActive)
                 return;
@@ -4897,7 +4912,7 @@ namespace Ambermoon
             switch (currentWindow.Window)
             {
                 case Window.MapView:
-                    Fade(() => ShowMap(true));
+                    Fade(() => { ShowMap(true); finishAction?.Invoke(); });
                     break;
                 case Window.Inventory:
                 {
@@ -4945,7 +4960,7 @@ namespace Ambermoon
                 {
                     var nextEvent = (Event)currentWindow.WindowParameters[0];
                     currentWindow = DefaultWindow;
-                    ShowBattleWindow(nextEvent);
+                    Fade(() => ShowBattleWindow(nextEvent));
                     break;
                 }
                 case Window.BattleLoot:
@@ -4957,6 +4972,11 @@ namespace Ambermoon
                 }
                 default:
                     break;
+            }
+
+            if (finishAction != null && currentWindow.Window != Window.MapView)
+            {
+                AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
             }
         }
     }

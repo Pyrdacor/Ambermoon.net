@@ -13,7 +13,7 @@ namespace Ambermoon.UI
         bool allowScrolling;
         int lineOffset = 0;
         readonly int numVisibleLines;
-        public bool WithScrolling { get; private set; }
+        public bool WithScrolling { get; internal set; }
 
         /// <summary>
         /// The boolean gives information if the

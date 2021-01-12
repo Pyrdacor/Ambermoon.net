@@ -1051,8 +1051,7 @@ namespace Ambermoon.UI
 
             if (game.TestUseItemMapEvent(itemSlot.ItemIndex))
             {
-                game.CloseWindow();
-                game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex));
+                game.CloseWindow(() => game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex)));
             }
             else
             {
@@ -1220,19 +1219,29 @@ namespace Ambermoon.UI
 
         internal void ShowChestMessage(string message, TextAlign textAlign = TextAlign.Center)
         {
-            game.ShowMessage(new Rect(114, 46, 189, 48), message, TextColor.White, true, textAlign);
+            var bounds = new Rect(114, 46, 189, 48);
+            game.ChestText?.Destroy();
+            game.ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
         }
 
-        internal void ShowClickChestMessage(string message, Action clickEvent = null)
+        internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = true)
         {
             var bounds = new Rect(114, 46, 189, 48);
+            game.ChestText?.Destroy();
             game.ChestText = AddScrollableText(bounds, game.ProcessText(message, bounds));
             game.ChestText.Clicked += scrolledToEnd =>
             {
                 if (scrolledToEnd)
                 {
-                    game.ChestText?.Destroy();
-                    game.ChestText = null;
+                    if (remainAfterClick)
+                    {
+                        game.ChestText.WithScrolling = false;
+                    }
+                    else
+                    {
+                        game.ChestText?.Destroy();
+                        game.ChestText = null;
+                    }
                     game.InputEnable = true;
                     game.CursorType = CursorType.Sword;
                     clickEvent?.Invoke();
@@ -1993,7 +2002,10 @@ namespace Ambermoon.UI
             draggedItem = null;
 
             if (game.OpenStorage is Chest)
-                game.HideMessage();
+            {
+                game.ChestText?.Destroy();
+                game.ChestText = null;
+            }
             else
                 SetInventoryMessage(null);
         }
@@ -2300,9 +2312,11 @@ namespace Ambermoon.UI
                 {
                     if (buttons == MouseButtons.Left)
                     {
-                        game.ChestText.Click(position);
-                        cursorType = game.ChestText == null ? CursorType.Sword : CursorType.Click;
-                        return true;
+                        if (game.ChestText.Click(position))
+                        {
+                            cursorType = game.ChestText?.WithScrolling == true ? CursorType.Click : CursorType.Sword;
+                            return true;
+                        }
                     }
                 }
                 else if (InventoryMessageWaitsForClick)
