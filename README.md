@@ -39,6 +39,8 @@ Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/rel
 ![3D map rendering](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D.png "3D map rendering")
 ![Battles](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Battle.png "Battles")
 ![Spells](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Spells.png "Spells")
+![Battle loot](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattleLoot.png "Battle loot")
+![Battle positions](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattlePositions.png "Battle positions")
 ![Chests](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png "Chests")
 ![Inventory](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png "Inventory")
 ![Load game](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/LoadWindow.png "Load game")
