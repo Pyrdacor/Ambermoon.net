@@ -636,25 +636,34 @@ namespace Ambermoon
             layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
             is3D = false;
             uint scrollRefY = playerY + (map.Flags.HasFlag(MapFlags.Indoor) ? 1u : 0u);
+            int xOffset = (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2;
+            int yOffset = (int)scrollRefY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2;
 
-            if (renderMap2D.Map != map)
+            if (map.IsWorldMap)
             {
-                renderMap2D.SetMap
-                (
-                    map,
-                    (uint)Util.Limit(0, (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                    (uint)Util.Limit(0, (int)scrollRefY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)
-                );
+                if (xOffset < 0)
+                {
+                    map = mapManager.GetMap(map.LeftMapIndex.Value);
+                    xOffset += map.Width;
+                    playerX += (uint)map.Width;
+                }
+                if (yOffset < 0)
+                {
+                    map = mapManager.GetMap(map.DownMapIndex.Value);
+                    yOffset += map.Height;
+                    playerY += (uint)map.Height;
+                }
             }
             else
             {
-                renderMap2D.ScrollTo
-                (
-                    (uint)Util.Limit(0, (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                    (uint)Util.Limit(0, (int)scrollRefY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y),
-                    true
-                );
+                xOffset = Util.Limit(0, xOffset, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X);
+                yOffset = Util.Limit(0, yOffset, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y);
             }
+
+            if (renderMap2D.Map != map)
+                renderMap2D.SetMap(map, (uint)xOffset, (uint)yOffset);
+            else
+                renderMap2D.ScrollTo((uint)xOffset, (uint)yOffset, true);
 
             if (player2D == null)
             {
