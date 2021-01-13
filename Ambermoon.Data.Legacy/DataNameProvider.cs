@@ -104,6 +104,7 @@
         public string DontForgetItems => executableData.Messages.GetEntry(Messages.Index.DontForgetItems);
         public string LootAfterBattle => executableData.Messages.GetEntry(Messages.Index.LootAfterBattle);
         public string ReceiveExp => executableData.Messages.GetEntry(Messages.Index.ReceiveExp);
+        public string ChooseBattlePositions => executableData.Messages.GetEntry(Messages.Index.EnterBattlePositions);
 
 
         #region Battle messages

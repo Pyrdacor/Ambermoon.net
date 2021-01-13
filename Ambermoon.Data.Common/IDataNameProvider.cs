@@ -81,6 +81,7 @@
         string DontForgetItems { get; }
         string LootAfterBattle { get; }
         string ReceiveExp { get; }
+        string ChooseBattlePositions { get; }
 
 
         #region Battle messages

@@ -807,7 +807,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
-                        buttonGrid.SetButton(7, ButtonType.BattlePositions, true, null, false); // TODO: battle positions
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
                     }
                     break;
@@ -834,7 +834,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
                         buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
-                        buttonGrid.SetButton(7, ButtonType.BattlePositions, true, null, false); // TODO: battle positions
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
                     }
                     break;
@@ -924,20 +924,49 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(7, ButtonType.GiveGoldToNPC, true, null, false); // TODO
                     buttonGrid.SetButton(8, ButtonType.GiveFoodToNPC, true, null, false); // TODO
                     break;
-            case LayoutType.Battle:
-                buttonGrid.SetButton(0, ButtonType.Flee, false, null, false); // this is set later manually
-                buttonGrid.SetButton(1, ButtonType.Options, false, OpenOptionMenu, false);
-                buttonGrid.SetButton(2, ButtonType.Ok, false, null, false); // this is set later manually
-                buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false); // this is set later manually
-                buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false); // this is set later manually
-                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                buttonGrid.SetButton(6, ButtonType.Attack, true, null, false); // this is set later manually
-                buttonGrid.SetButton(7, ButtonType.Defend, true, null, false); // this is set later manually
-                buttonGrid.SetButton(8, ButtonType.Spells, true, null, false); // this is set later manually
-                break;
-                // TODO
-
+                case LayoutType.Battle:
+                    buttonGrid.SetButton(0, ButtonType.Flee, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(1, ButtonType.Options, false, OpenOptionMenu, false);
+                    buttonGrid.SetButton(2, ButtonType.Ok, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false); // this is set later manually
+                    buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false); // this is set later manually
+                    buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(6, ButtonType.Attack, true, null, false); // this is set later manually
+                    buttonGrid.SetButton(7, ButtonType.Defend, true, null, false); // this is set later manually
+                    buttonGrid.SetButton(8, ButtonType.Spells, true, null, false); // this is set later manually
+                    break;
+                case LayoutType.BattlePositions:
+                    buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                    buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                    break;
+                    // TODO
             }
+        }
+
+        public void AddSunkenBox(Rect area, byte displayLayer = 1)
+        {
+            // TODO: use named palette colors
+            var darkBorderColor = game.GetPaletteColor(50, 26);
+            var brightBorderColor = game.GetPaletteColor(50, 31);
+            var fillColor = game.GetPaletteColor(50, 27);
+
+            // upper dark border
+            FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, displayLayer);
+            // left dark border
+            FillArea(new Rect(area.X, area.Y + 1, 1, area.Height - 2), darkBorderColor, displayLayer);
+            // fill
+            FillArea(new Rect(area.X + 1, area.Y + 1, area.Width - 2, area.Height - 2), fillColor, displayLayer);
+            // right bright border
+            FillArea(new Rect(area.Right - 1, area.Y + 1, 1, area.Height - 2), brightBorderColor, displayLayer);
+            // lower bright border
+            FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, displayLayer);
         }
 
         Popup OpenAmountInputBox(string message, uint imageIndex, string name, uint maxAmount,
@@ -2404,6 +2433,13 @@ namespace Ambermoon.UI
                 if (!game.InputEnable || PopupActive)
                     return false;
 
+                if (Type == LayoutType.BattlePositions &&
+                    game.BattlePositionWindowClick(position, buttons))
+                {
+                    cursorType = CursorType.Sword;
+                    return true;
+                }
+
                 if (buttons == MouseButtons.Left)
                 {
                     foreach (var itemGrid in itemGrids)
@@ -2655,6 +2691,12 @@ namespace Ambermoon.UI
             if (PopupActive)
             {
                 activePopup.Hover(position);
+                return true;
+            }
+
+            if (Type == LayoutType.BattlePositions)
+            {
+                game.BattlePositionWindowDrag(position);
                 return true;
             }
 

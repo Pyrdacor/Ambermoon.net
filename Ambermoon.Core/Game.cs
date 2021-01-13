@@ -176,6 +176,7 @@ namespace Ambermoon
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
         WindowInfo lastWindow = DefaultWindow;
+        Action closeWindowHandler = null;
         // Note: These are not meant for ingame stuff but for fade effects etc that use real time.
         readonly List<TimedGameEvent> timedEvents = new List<TimedGameEvent>();
         readonly Movement movement;
@@ -282,6 +283,9 @@ namespace Ambermoon
         readonly Position trappedMousePositionOffset = new Position();
         bool trapped => trapMouseArea != null;
         public event Action<bool, Position> MouseTrappedChanged;
+        Func<Position, MouseButtons, bool> battlePositionClickHandler = null;
+        Action<Position> battlePositionDragHandler = null;
+        bool battlePositionDragging = false;
         internal Savegame CurrentSavegame { get; private set; }
 
         // Rendering
@@ -536,6 +540,8 @@ namespace Ambermoon
 
         Position GetMousePosition(Position position)
         {
+            position = new Position(position); // Import to not modify passed position object!
+
             if (trapMouseArea != null)
                 position += trappedMousePositionOffset;
 
@@ -549,9 +555,17 @@ namespace Ambermoon
             try
             {
                 trapMouseArea = renderView.GameToScreen(area);
-                trappedMousePositionOffset.X = keepX ? 0 : trapMouseArea.X - lastMousePosition.X;
-                trappedMousePositionOffset.Y = (maxY ? trapMouseArea.Bottom : trapMouseArea.Y) - lastMousePosition.Y;
-                UpdateCursor(trapMouseArea.Position, MouseButtons.None);
+                if (trapMouseArea.Contains(lastMousePosition))
+                {
+                    trappedMousePositionOffset.X = 0;
+                    trappedMousePositionOffset.Y = 0;
+                }
+                else
+                {
+                    trappedMousePositionOffset.X = keepX ? 0 : trapMouseArea.X - lastMousePosition.X;
+                    trappedMousePositionOffset.Y = (maxY ? trapMouseArea.Bottom : trapMouseArea.Y) - lastMousePosition.Y;
+                    UpdateCursor(trapMouseArea.Position, MouseButtons.None);
+                }
                 MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
             }
             finally
@@ -1161,6 +1175,8 @@ namespace Ambermoon
 
             if (!WindowActive)
                 Move();
+            else if (currentWindow.Window == Window.BattlePositions && battlePositionDragging)
+                return;
 
             switch (key)
             {
@@ -1281,6 +1297,8 @@ namespace Ambermoon
 
         public void OnMouseUp(Position cursorPosition, MouseButtons buttons)
         {
+            lastMousePosition = new Position(cursorPosition);
+
             if (allInputDisabled)
                 return;
 
@@ -1319,6 +1337,8 @@ namespace Ambermoon
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            lastMousePosition = new Position(position);
+
             if (allInputDisabled)
                 return;
 
@@ -2966,6 +2986,210 @@ namespace Ambermoon
             }
 
             layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+        }
+
+        internal bool BattlePositionWindowClick(Position position, MouseButtons mouseButtons)
+        {
+            return battlePositionClickHandler?.Invoke(position, mouseButtons) ?? false;
+        }
+
+        internal void BattlePositionWindowDrag(Position position)
+        {
+            battlePositionDragHandler?.Invoke(position);
+        }
+
+        internal void ShowBattlePositionWindow()
+        {
+            Fade(() =>
+            {
+                SetWindow(Window.BattlePositions);
+                layout.SetLayout(LayoutType.BattlePositions);
+                ShowMap(false);
+                layout.Reset();
+
+                // Upper box
+                var backgroundColor = GetPaletteColor(50, 25);
+                var upperBoxBounds = new Rect(14, 43, 290, 80);
+                layout.FillArea(upperBoxBounds, GetPaletteColor(50, 28), 0);
+                var positionBoxes = new Rect[12];
+                var portraits = PartyMembers.ToDictionary(p => SlotFromPartyMember(p),
+                    p => layout.AddSprite(new Rect(0, 0, 32, 34), Graphics.PortraitOffset + p.PortraitIndex - 1, 49, 5, p.Name, TextColor.White));
+                var portraitBackgrounds = PartyMembers.ToDictionary(p => SlotFromPartyMember(p), _ => (FilledArea)null);
+                var battlePositions = CurrentSavegame.BattlePositions.Select((p, i) => new { p, i }).ToDictionary(p => (int)p.p, p => p.i);
+                // Each box is 34x36 pixels in size (with border)
+                // 43 pixels y-offset to second row
+                // Between each box there is a x-offset of 48 pixels
+                for (int r = 0; r < 2; ++r)
+                {
+                    for (int c = 0; c < 6; ++c)
+                    {
+                        int index = c + r * 6;
+                        var area = positionBoxes[index] = new Rect(15 + c * 48, 44 + r * 43, 34, 36);
+                        layout.AddSunkenBox(area, 2);
+
+                        if (battlePositions.ContainsKey(index))
+                        {
+                            int slot = battlePositions[index];
+                            portraits[slot].X = area.Left + 1;
+                            portraits[slot].Y = area.Top + 1;
+                            portraitBackgrounds[slot]?.Destroy();
+                            portraitBackgrounds[slot] = layout.FillArea(new Rect(area.Left + 1, area.Top + 1, 32, 34), backgroundColor, 4);
+                        }
+                    }
+                }
+
+                // Lower box
+                var lowerBoxBounds = new Rect(16, 144, 176, 48);
+                layout.FillArea(lowerBoxBounds, GetPaletteColor(50, 28), 0);
+                layout.AddText(lowerBoxBounds, DataNameProvider.ChooseBattlePositions);
+
+                closeWindowHandler = () =>
+                {
+                    battlePositionClickHandler = null;
+                    battlePositionDragHandler = null;
+                    battlePositionDragging = false;
+
+                    if (battlePositions.Count != PartyMembers.Count())
+                        throw new AmbermoonException(ExceptionScope.Application, "Invalid number of battle positions.");
+
+                    foreach (var battlePosition in battlePositions)
+                    {
+                        if (battlePosition.Value < 0 || battlePosition.Value >= MaxPartyMembers || GetPartyMember(battlePosition.Value) == null)
+                            throw new AmbermoonException(ExceptionScope.Application, $"Invalid party member slot: {battlePosition.Value}.");
+                        if (battlePosition.Key < 0 || battlePosition.Key >= 12)
+                            throw new AmbermoonException(ExceptionScope.Application, $"Invalid battle position for party member slot {battlePosition.Value}: {battlePosition.Key}");
+                        CurrentSavegame.BattlePositions[battlePosition.Value] = (byte)battlePosition.Key;
+                    }
+                };
+
+                // Quick&dirty dragging logic
+                int? slotOfDraggedPartyMember = null;
+                int? dragSource = null;
+                void Pickup(int position, bool trap = true, int? specificPartyMemberSlot = null)
+                {
+                    slotOfDraggedPartyMember = specificPartyMemberSlot ?? battlePositions[position];
+                    dragSource = position;
+                    battlePositionDragging = true;
+                    if (trap)
+                        TrapMouse(upperBoxBounds);
+                }
+                void Drop(int position, bool untrap = true)
+                {
+                    if (slotOfDraggedPartyMember != null)
+                    {
+                        var area = positionBoxes[position];
+                        int slot = slotOfDraggedPartyMember.Value;
+                        var draggedPortrait = portraits[slot];
+                        draggedPortrait.DisplayLayer = 5;
+                        draggedPortrait.X = area.Left + 1;
+                        draggedPortrait.Y = area.Top + 1;
+                        portraitBackgrounds[slot]?.Destroy();
+                        portraitBackgrounds[slot] = layout.FillArea(new Rect(area.Left + 1, area.Top + 1, 32, 34), backgroundColor, 4);
+                        slotOfDraggedPartyMember = null;
+                        dragSource = null;
+                        battlePositionDragging = false;
+                        if (untrap)
+                            UntrapMouse();
+                    }
+                }
+                void Drag(Position position)
+                {
+                    if (slotOfDraggedPartyMember != null)
+                    {
+                        int slot = slotOfDraggedPartyMember.Value;
+                        var draggedPortrait = portraits[slot];
+                        draggedPortrait.DisplayLayer = 7;
+                        draggedPortrait.X = position.X;
+                        draggedPortrait.Y = position.Y;
+                        portraitBackgrounds[slot]?.Destroy();
+                        portraitBackgrounds[slot] = layout.FillArea(new Rect(position.X, position.Y, 32, 34), backgroundColor, 6);
+                    }
+                }
+                void Reset(Position position)
+                {
+                    // Reset back to source
+                    // If there is already a party member, exchange instead
+                    if (battlePositions[dragSource.Value] == slotOfDraggedPartyMember.Value)
+                        Drop(dragSource.Value);
+                    else
+                    {
+                        // Exchange portrait
+                        int index = dragSource.Value;
+                        var temp = battlePositions[index];
+                        battlePositions[index] = slotOfDraggedPartyMember.Value;
+                        Drop(index, false);
+                        Pickup(index, false, temp);
+                        Drag(position);
+                    }
+                }
+                battlePositionClickHandler = (position, mouseButtons) =>
+                {
+                    if (mouseButtons == MouseButtons.Left)
+                    {
+                        for (int i = 0; i < positionBoxes.Length; ++i)
+                        {
+                            if (positionBoxes[i].Contains(position))
+                            {
+                                if (slotOfDraggedPartyMember == null) // Not dragging
+                                {
+                                    if (battlePositions.ContainsKey(i))
+                                    {
+                                        // Drag portrait
+                                        Pickup(i);
+                                        Drag(position);
+                                    }
+                                }
+                                else // Dragging
+                                {
+                                    if (battlePositions.ContainsKey(i))
+                                    {
+                                        if (battlePositions[i] != slotOfDraggedPartyMember.Value)
+                                        {
+                                            // Exchange portrait
+                                            var temp = battlePositions[i];
+                                            battlePositions[i] = slotOfDraggedPartyMember.Value;
+                                            if (battlePositions[dragSource.Value] == slotOfDraggedPartyMember.Value)
+                                                battlePositions.Remove(dragSource.Value);
+                                            Drop(i, false);
+                                            Pickup(i, false, temp);
+                                            Drag(position);
+                                        }
+                                        else
+                                        {
+                                            // Put back
+                                            Drop(i);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Drop portrait
+                                        battlePositions[i] = slotOfDraggedPartyMember.Value;
+                                        if (battlePositions[dragSource.Value] == slotOfDraggedPartyMember.Value)
+                                            battlePositions.Remove(dragSource.Value);
+                                        Drop(i);
+                                    }
+                                }
+
+                                return true;
+                            }
+                        }
+                    }
+                    else if (mouseButtons == MouseButtons.Right)
+                    {
+                        if (dragSource != null)
+                        {
+                            Reset(position);
+                            return true;
+                        }
+                    }
+
+                    return false;
+                };
+                battlePositionDragHandler = position =>
+                {
+                    Drag(position);
+                };
+            });
         }
 
         void ShowBattleWindow(Event nextEvent)
@@ -4939,6 +5163,9 @@ namespace Ambermoon
             if (!WindowActive)
                 return;
 
+            closeWindowHandler?.Invoke();
+            closeWindowHandler = null;
+
             characterInfoTexts.Clear();
             characterInfoPanels.Clear();
             CurrentInventoryIndex = null;
@@ -5030,6 +5257,13 @@ namespace Ambermoon
                     var storage = (ITreasureStorage)currentWindow.WindowParameters[0];
                     lastWindow = DefaultWindow;
                     ShowBattleLoot(storage, null, 0);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.BattlePositions:
+                {
+                    ShowBattlePositionWindow();
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

@@ -13,7 +13,8 @@ namespace Ambermoon.UI
         Riddlemouth,
         Conversation,
         Battle,
-        BattleLoot
+        BattleLoot,
+        BattlePositions,
         // TODO ...
     }
 
