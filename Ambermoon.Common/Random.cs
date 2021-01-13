@@ -2,7 +2,7 @@
 {
     public class Random
     {
-        ushort[] state = new ushort[] { 0x1234, 0x5678 };
+        readonly ushort[] state = new ushort[] { 0x1234, 0x5678 };
 
         public uint Next()
         {

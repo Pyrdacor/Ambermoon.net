@@ -4,7 +4,7 @@
     <LangVersion>8</LangVersion>
     <RootNamespace>Ambermoon</RootNamespace>
     <UserSecretsId>5ff861f6-0255-427a-978a-7a8030ee8731</UserSecretsId>
-    <Version>1.1.19</Version>
+    <Version>1.1.20</Version>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>

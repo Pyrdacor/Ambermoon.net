@@ -3714,6 +3714,7 @@ namespace Ambermoon
                             if (partyMember != null)
                                 partyMember.Ailments = partyMember.Ailments.WithoutBattleOnlyAilments();
                         }
+                        roundPlayerBattleActions.Clear();
                         UpdateBattleStatus();
                         currentBattleInfo.EndBattle(battleEndInfo);
                         currentBattleInfo = null;

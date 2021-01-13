@@ -13,8 +13,8 @@ If you want to support this project or contribute scroll down to the bottom. You
 
 Version | Windows 64bit | Linux 64bit
 --- | --- | ---
+0.1.5 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.5beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.5beta/Ambermoon.net-Linux.tar.gz)
 0.1.4 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.4beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.4beta/Ambermoon.net-Linux.tar.gz)
-0.1.3 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.3beta/Ambermoon.net-Linux.tar.gz)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -66,6 +66,7 @@ F1-F6 | Open inventory of party member 1-6
 
 ## Change log
 
+- Version [0.1.5 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.5beta): Added battle position window, battle loot window, spell blocking animation and spell items
 - Version [0.1.4 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.4beta): Added all remaining battle spells, bug fixing
 - Version [0.1.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.3beta): Added more spells, bug fixing
 - Version [0.1.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.2beta): Added more spells, added damage display on battle field, added critical hits
