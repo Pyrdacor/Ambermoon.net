@@ -548,7 +548,7 @@ namespace Ambermoon
             return position;
         }
 
-        internal void TrapMouse(Rect area, bool keepX = false, bool maxY = false)
+        internal void TrapMouse(Rect area)
         {
             mouseTrappingActive = true;
 
@@ -562,9 +562,22 @@ namespace Ambermoon
                 }
                 else
                 {
-                    trappedMousePositionOffset.X = keepX ? 0 : trapMouseArea.X - lastMousePosition.X;
-                    trappedMousePositionOffset.Y = (maxY ? trapMouseArea.Bottom : trapMouseArea.Y) - lastMousePosition.Y;
-                    UpdateCursor(trapMouseArea.Position, MouseButtons.None);
+                    bool keepX = lastMousePosition.X >= trapMouseArea.Left && lastMousePosition.X <= trapMouseArea.Right;
+                    bool keepY = lastMousePosition.Y >= trapMouseArea.Top && lastMousePosition.Y <= trapMouseArea.Bottom;
+                    bool right = lastMousePosition.X > trapMouseArea.Right;
+                    bool down = lastMousePosition.Y > trapMouseArea.Bottom;
+                    trappedMousePositionOffset.X = keepX ? 0 : right ? trapMouseArea.Right - lastMousePosition.X : trapMouseArea.Left - lastMousePosition.X;
+                    trappedMousePositionOffset.Y = keepY ? 0 : down ? trapMouseArea.Bottom - lastMousePosition.Y : trapMouseArea.Top - lastMousePosition.Y;
+                    var newPosition = new Position(trapMouseArea.Position);
+                    if (keepX)
+                        newPosition.X = lastMousePosition.X;
+                    else if (right)
+                        newPosition.X = trapMouseArea.Right;
+                    if (keepY)
+                        newPosition.Y = lastMousePosition.Y;
+                    else if (down)
+                        newPosition.Y = trapMouseArea.Bottom;
+                    UpdateCursor(newPosition, MouseButtons.None);
                 }
                 MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
             }
@@ -1639,17 +1652,59 @@ namespace Ambermoon
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
         {
-            bool updateHover = false;
+            bool scrolled = false;
 
             if (xScroll != 0)
-                updateHover = layout.ScrollX(xScroll < 0);
+                scrolled = layout.ScrollX(xScroll < 0);
             if (yScroll != 0 && layout.ScrollY(yScroll < 0))
-                updateHover = true;
+                scrolled = true;
 
-            if (updateHover)
+            if (scrolled)
             {
                 mousePosition = GetMousePosition(mousePosition);
                 UpdateCursor(mousePosition, MouseButtons.None);
+            }
+            else if (yScroll != 0 && !WindowActive && !is3D)
+            {
+                ScrollCursor(mousePosition, yScroll < 0);
+            }
+        }
+
+        void ScrollCursor(Position cursorPosition, bool down)
+        {
+            if (down)
+            {
+                if (CursorType < CursorType.Eye)
+                    CursorType = CursorType.Eye;
+                else if (CursorType == CursorType.Eye)
+                    CursorType = CursorType.Mouth;
+                else if (CursorType == CursorType.Mouth)
+                    CursorType = CursorType.Hand;
+                else if (CursorType == CursorType.Hand)
+                {
+                    CursorType = CursorType.Sword;
+                    UpdateCursor(cursorPosition, MouseButtons.None);
+                    return;
+                }
+                else
+                    return;
+            }
+            else // up
+            {
+                if (CursorType < CursorType.Eye)
+                    CursorType = CursorType.Hand;
+                else if (CursorType == CursorType.Eye)
+                {
+                    CursorType = CursorType.Sword;
+                    UpdateCursor(cursorPosition, MouseButtons.None);
+                    return;
+                }
+                else if (CursorType == CursorType.Mouth)
+                    CursorType = CursorType.Eye;
+                else if (CursorType == CursorType.Hand)
+                    CursorType = CursorType.Mouth;
+                else
+                    return;
             }
         }
 

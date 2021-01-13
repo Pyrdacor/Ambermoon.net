@@ -1235,7 +1235,7 @@ namespace Ambermoon.UI
                 CancelDrag();
                 draggedGold = amount;
                 game.CursorType = CursorType.Gold;
-                game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
+                game.TrapMouse(Global.PartyMemberPortraitArea);
                 draggedGoldOrFoodRemover = chest == null
                     ? (Action<uint>)(gold => { game.CurrentInventory.RemoveGold(gold); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
                     : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };
@@ -1270,7 +1270,7 @@ namespace Ambermoon.UI
                 CancelDrag();
                 draggedFood = amount;
                 game.CursorType = CursorType.Food;
-                game.TrapMouse(Global.PartyMemberPortraitArea, true, true);
+                game.TrapMouse(Global.PartyMemberPortraitArea);
                 draggedGoldOrFoodRemover = chest == null
                     ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
                     : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };

@@ -1,9 +1,7 @@
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      RID: win-x64
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      RID: linux-x64
 
 platform: Any CPU
 configuration: Release
@@ -18,26 +16,16 @@ build:
 artifacts:
   - path: Ambermoon.net-Windows.zip
     name: Ambermoon.net-Windows
+  - path: Ambermoon.net-Windows32Bit.zip
+    name: Ambermoon.net-Windows32Bit
   - path: Ambermoon.net-Linux.tar.gz
     name: Ambermoon.net-Linux
   - path: nuget\*.nupkg
     name: NugetPackages
 
 after_build:
-  - ps: dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r $env:RID --no-restore
-  - ps: ./pack.ps1
-
-for:
--
-  matrix:
-    only:
-      - image: Visual Studio 2019
-
-  after_build:
-    - mkdir "nuget"
-    - xcopy /Y /I "Ambermoon.Common\bin\Release\*.nupkg" "nuget\*"
-    - xcopy /Y /I "Ambermoon.Data.Legacy\bin\Release\*.nupkg" "nuget\*"
-    - xcopy /Y /I "Ambermoon.Data.Common\bin\Release\*.nupkg" "nuget\*"
+    - ps: if ($env:APPVEYOR_REPO_TAG -eq $true) { ./publish.ps1 }
+    - ps: if ($env:APPVEYOR_REPO_TAG -eq $true) { ./nuget.ps1 }
 
 test: off
 
@@ -45,6 +33,19 @@ deploy:
   - provider: GitHub
     name: Ambermoon.net-Windows
     artifact: Ambermoon.net-Windows
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    auth_token:
+      secure: CP6qsCjIlyJrYsuHs4tzdrYUWOO83Jlx6/U0Gqtl/SicGmBaN1hrYUEk6RSL6D8j
+    draft: true
+    prerelease: true
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
+  - provider: GitHub
+    name: Ambermoon.net-Windows32Bit
+    artifact: Ambermoon.net-Windows32Bit
     tag: $(APPVEYOR_REPO_TAG_NAME)
     release: $(APPVEYOR_REPO_TAG_NAME)
     description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
