@@ -1371,7 +1371,29 @@ namespace Ambermoon
                 {
                     // click into the map area
                     if (buttons == MouseButtons.Right)
-                        CursorType = CursorType.Sword;
+                    {
+                        if (is3D)
+                        {
+                            switch (CursorType)
+                            {
+                                case CursorType.ArrowTurnLeft:
+                                    PlayTimedSequence(6, () => player3D.TurnLeft(15.0f), 75);
+                                    return;
+                                case CursorType.ArrowTurnRight:
+                                    PlayTimedSequence(6, () => player3D.TurnRight(15.0f), 75);
+                                    return;
+                                case CursorType.ArrowRotateLeft:
+                                    PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 75);
+                                    return;
+                                case CursorType.ArrowRotateRight:
+                                    PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 75);
+                                    return;
+                            }
+                        }
+
+                        if (cursor.Type > CursorType.Wait)
+                            CursorType = CursorType.Sword;
+                    }
                     if (!buttons.HasFlag(MouseButtons.Left))
                         return;
 
