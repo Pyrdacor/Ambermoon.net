@@ -1325,6 +1325,8 @@ namespace Ambermoon
 
                 if (cursorType != null)
                     CursorType = cursorType.Value;
+                else if (is3D && !WindowActive && CursorType == CursorType.Target)
+                    CursorType = CursorType.Wait;
             }
 
             if (buttons.HasFlag(MouseButtons.Left))
@@ -1387,6 +1389,10 @@ namespace Ambermoon
                                     return;
                                 case CursorType.ArrowRotateRight:
                                     PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 75);
+                                    return;
+                                case CursorType.Wait:
+                                    CursorType = CursorType.Target;
+                                    TriggerMapEvents(null);
                                     return;
                             }
                         }
@@ -1750,9 +1756,21 @@ namespace Ambermoon
                     adjacentConditionEvent.ObjectIndex == itemIndex;
         }
 
-        internal bool TriggerMapEvents(EventTrigger trigger)
+        internal bool TriggerMapEvents(EventTrigger? trigger)
         {
-            bool consumed = TriggerMapEvents(trigger, (uint)player.Position.X, (uint)player.Position.Y);
+            if (trigger == null)
+            {
+                // If null it was triggered by crosshair cursor. We test eye, hand and mouth in this case.
+                if (TriggerMapEvents(EventTrigger.Eye))
+                    return true;
+                if (TriggerMapEvents(EventTrigger.Hand))
+                    return true;
+                if (TriggerMapEvents(EventTrigger.Mouth))
+                    return true;
+                return false;
+            }
+
+            bool consumed = TriggerMapEvents(trigger.Value, (uint)player.Position.X, (uint)player.Position.Y);
 
             if (is3D)
             {
@@ -1769,7 +1787,7 @@ namespace Ambermoon
                         position.X >= 0 && position.X < Map.Width &&
                         position.Y >= 0 && position.Y < Map.Height)
                     {
-                        return TriggerMapEvents(trigger, (uint)position.X, (uint)position.Y);
+                        return TriggerMapEvents(trigger.Value, (uint)position.X, (uint)position.Y);
                     }
                 }
             }
