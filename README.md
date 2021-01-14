@@ -2,23 +2,24 @@
 
 ## Introduction
 
-Ambermoon.net is a full C# rewrite of Ambermoon.
+Ambermoon.net is a full C# rewrite of Ambermoon and will run on Windows and Linux.
 
-I also created another github project called [Ambermoon](https://github.com/Pyrdacor/Ambermoon) for providing resources and research the game data. Feel free to have a look or contribute.
-
-If you want to support this project or contribute scroll down to the bottom. You may also checkout my already working 'SerfCity (Die Siedler) rewrite' at [freeserf.net](https://github.com/Pyrdacor/freeserf.net).
-
-
-## Download
+### Download
 
 Version | Windows 64bit | Linux 64bit
 --- | --- | ---
+0.1.6 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Linux.tar.gz)
 0.1.5 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.5beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.5beta/Ambermoon.net-Linux.tar.gz)
-0.1.4 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.4beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.4beta/Ambermoon.net-Linux.tar.gz)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
+
+<img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png" width="75%" height="75%" />
+
+If you want to support this project or contribute scroll down to the bottom. You may also checkout my already working 'SerfCity (Die Siedler) rewrite' at [freeserf.net](https://github.com/Pyrdacor/freeserf.net).
+
+I also created another github project called [Ambermoon](https://github.com/Pyrdacor/Ambermoon) for providing resources and research the game data. Feel free to have a look or contribute.
 
 ### How to run the game
 
@@ -60,14 +61,31 @@ Down | Move down (2D) or backward (3D)
 Left | Move left (2D) or turn left (3D)
 Right | Move right (2D) or turn right (3D)
 F11 | Toggle fullscreen mode
-ESC | Close ingame windows
+ESC | Close ingame windows, stop item dragging/speficic cursors/etc
 Num1-Num9 | Buttons 1-9
 1-6 | Set party member 1-6 as active
 F1-F6 | Open inventory of party member 1-6
 
+### Right clicks
+
+- On portrait will open the inventory.
+- On buttons in map view will toggle between move arrows and actions.
+- In 2D map view will show a crosshair cursor which can be used for interactions. Or it aborts an already active action cursor.
+- In 3D map view:
+  - On the corners (turn arrows) it will perform 90° or 180° rotations.
+  - On the center (Zzz) it will trigger interactions with a nearby map object.
+- On item it will pickup all the items without asking for the amount.
+- When dragging an item it will reset the item back to its source slot.
+
+### Left clicks
+
+- On portrait will select the party member as the active one.
+- Drag&drop of items.
+
 
 ## Change log
 
+- Version [0.1.6 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.6beta): Added crosshair cursor functionality, 3D corner right-click functionality, bugfixing
 - Version [0.1.5 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.5beta): Added battle position window, battle loot window, spell blocking animation and spell items
 - Version [0.1.4 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.4beta): Added all remaining battle spells, bug fixing
 - Version [0.1.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.3beta): Added more spells, bug fixing
