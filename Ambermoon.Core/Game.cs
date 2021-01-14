@@ -307,6 +307,7 @@ namespace Ambermoon
         internal static readonly Rect Map3DViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY,
             Global.Map3DViewWidth, Global.Map3DViewHeight);
         internal int PlayerAngle => is3D ? Util.Round(player3D.Angle) : (int)player2D.Direction.ToAngle();
+        bool targetMode2DActive = false;
         internal CursorType CursorType
         {
             get => cursor.Type;
@@ -317,6 +318,12 @@ namespace Ambermoon
 
                 cursor.Type = value;
 
+                if (value != CursorType.Eye &&
+                    value != CursorType.Mouth &&
+                    value != CursorType.Hand &&
+                    value != CursorType.Target)
+                    targetMode2DActive = false;
+
                 if (!is3D && !WindowActive &&
                     (cursor.Type == CursorType.Eye ||
                     cursor.Type == CursorType.Hand))
@@ -325,7 +332,8 @@ namespace Ambermoon
                     TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9 - yOffset, 33, 49));
                 }
                 else if (!is3D && !WindowActive &&
-                    cursor.Type == CursorType.Mouth)
+                    (cursor.Type == CursorType.Mouth ||
+                    cursor.Type == CursorType.Target))
                 {
                     int yOffset = Map.IsWorldMap ? 12 : 0;
                     TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25 - yOffset, 65, 65));
@@ -554,7 +562,10 @@ namespace Ambermoon
 
             try
             {
-                trapMouseArea = renderView.GameToScreen(area);
+                var newTrapArea = renderView.GameToScreen(area);
+                if (trapMouseArea == newTrapArea)
+                    return;
+                trapMouseArea = newTrapArea;
                 if (trapMouseArea.Contains(lastMousePosition))
                 {
                     trappedMousePositionOffset.X = 0;
@@ -1222,6 +1233,17 @@ namespace Ambermoon
                             }
                             else if (currentWindow.Closable)
                                 layout.PressButton(2, CurrentTicks);
+                            else if (!WindowActive && !is3D)
+                            {
+                                if (CursorType == CursorType.Eye ||
+                                    CursorType == CursorType.Mouth ||
+                                    CursorType == CursorType.Hand ||
+                                    CursorType == CursorType.Target)
+                                {
+                                    CursorType = CursorType.Sword;
+                                    UpdateCursor(lastMousePosition, MouseButtons.None);
+                                }
+                            }
                         }
                     }
 
@@ -1409,6 +1431,12 @@ namespace Ambermoon
                                     return;
                             }
                         }
+                        else if (CursorType > CursorType.Sword && CursorType <= CursorType.Wait)
+                        {
+                            Determine2DTargetMode(position);
+                            targetMode2DActive = true;
+                            return;
+                        }
 
                         if (cursor.Type > CursorType.Wait)
                             CursorType = CursorType.Sword;
@@ -1425,6 +1453,11 @@ namespace Ambermoon
                         TriggerMapEvents(EventTrigger.Hand, relativePosition);
                     else if (cursor.Type == CursorType.Mouth)
                         TriggerMapEvents(EventTrigger.Mouth, relativePosition);
+                    else if (cursor.Type == CursorType.Target && !is3D)
+                    {
+                        if (!TriggerMapEvents(EventTrigger.Eye, relativePosition))
+                            TriggerMapEvents(EventTrigger.Hand, relativePosition);
+                    }
                     else if (cursor.Type > CursorType.Sword && cursor.Type < CursorType.Wait)
                     {
                         clickMoveActive = true;
@@ -1475,6 +1508,20 @@ namespace Ambermoon
 
             if (TextInput.FocusedInput != null)
                 CursorType = CursorType.None;
+        }
+
+        void Determine2DTargetMode(Position cursorPosition)
+        {
+            var gamePosition = renderView.ScreenToGame(GetMousePosition(cursorPosition));
+            var playerArea = player2D.DisplayArea;
+
+            int xDiff = gamePosition.X < playerArea.Left ? playerArea.Left - gamePosition.X : gamePosition.X - playerArea.Right;
+            int yDiff = gamePosition.Y < playerArea.Top ? playerArea.Top - gamePosition.Y : gamePosition.Y - playerArea.Bottom;
+
+            if (xDiff <= RenderMap2D.TILE_WIDTH && yDiff <= RenderMap2D.TILE_HEIGHT)
+                CursorType = CursorType.Target;
+            else
+                CursorType = CursorType.Mouth;
         }
 
         void UpdateCursor(Position cursorPosition, MouseButtons buttons)
@@ -1642,6 +1689,11 @@ namespace Ambermoon
                 {
                     if (position.Y > lastMousePosition.Y)
                         trappedMousePositionOffset.Y -= position.Y - lastMousePosition.Y;
+                }
+
+                if (!WindowActive && !is3D && targetMode2DActive)
+                {
+                    Determine2DTargetMode(position);
                 }
             }
 

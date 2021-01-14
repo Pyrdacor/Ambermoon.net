@@ -22,6 +22,6 @@ namespace Ambermoon.UI
     {
         public Window Window;
         public object[] WindowParameters; // party member index, chest event, etc
-        public bool Closable => Window != Window.Battle; // TODO: add more (windows without exit button)
+        public bool Closable => Window != Window.Battle && Window != Window.MapView; // TODO: add more (windows without exit button)
     }
 }
