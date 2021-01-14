@@ -14,6 +14,8 @@
         Disabled,
         DarkGray,
         DarkRed,
-        PaleRed
+        PaleRed,
+        PaleYellow,
+        Azure
     }
 }

@@ -694,7 +694,10 @@ namespace Ambermoon.UI
             // Message display
             var messageArea = new Rect(79, 98, 145, 10);
             activePopup.AddSunkenBox(messageArea);
-            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), game.DataNameProvider.WaitHowManyHours, TextColor.PaleRed, TextAlign.Center);
+            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), game.DataNameProvider.WaitHowManyHours,
+                game.Map.Type == MapType.Map3D
+                ? TextColor.Azure : game.Map.Flags.HasFlag(MapFlags.Outdoor)
+                ? TextColor.PaleRed : TextColor.PaleYellow, TextAlign.Center);
             // Amount input
             var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
                 TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.LoseFocus);
