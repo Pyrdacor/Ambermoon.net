@@ -6,10 +6,9 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run on Windows and Linu
 
 ### Download
 
-Version | Windows 64bit | Linux 64bit
---- | --- | ---
-0.1.6 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Linux.tar.gz)
-0.1.5 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.5beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.5beta/Ambermoon.net-Linux.tar.gz)
+Version | Windows 64bit | Linux 64bit | Windows 32bit
+--- | --- | --- | ---
+0.1.6 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Windows32Bit.zip)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -61,7 +60,7 @@ Down | Move down (2D) or backward (3D)
 Left | Move left (2D) or turn left (3D)
 Right | Move right (2D) or turn right (3D)
 F11 | Toggle fullscreen mode
-ESC | Close ingame windows, stop item dragging/speficic cursors/etc
+ESC | Close ingame windows, stop item dragging/specific cursors/etc
 Num1-Num9 | Buttons 1-9
 1-6 | Set party member 1-6 as active
 F1-F6 | Open inventory of party member 1-6
