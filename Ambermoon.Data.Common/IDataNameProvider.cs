@@ -82,6 +82,8 @@
         string LootAfterBattle { get; }
         string ReceiveExp { get; }
         string ChooseBattlePositions { get; }
+        string WaitHowManyHours { get; }
+        string CannotWaitBecauseOfNearbyMonsters { get; }
 
 
         #region Battle messages

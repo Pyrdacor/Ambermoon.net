@@ -182,6 +182,7 @@ namespace Ambermoon
         readonly Movement movement;
         internal uint CurrentTicks { get; private set; } = 0;
         internal uint CurrentBattleTicks { get; private set; } = 0;
+        internal uint CurrentPopupTicks { get; private set; } = 0;
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly TimedGameEvent ouchEvent = new TimedGameEvent();
@@ -324,14 +325,14 @@ namespace Ambermoon
                     value != CursorType.Target)
                     targetMode2DActive = false;
 
-                if (!is3D && !WindowActive &&
+                if (!is3D && !WindowActive && !layout.PopupActive &&
                     (cursor.Type == CursorType.Eye ||
                     cursor.Type == CursorType.Hand))
                 {
                     int yOffset = Map.IsWorldMap ? 12 : 0;
                     TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9 - yOffset, 33, 49));
                 }
-                else if (!is3D && !WindowActive &&
+                else if (!is3D && !WindowActive && !layout.PopupActive &&
                     (cursor.Type == CursorType.Mouth ||
                     cursor.Type == CursorType.Target))
                 {
@@ -513,6 +514,18 @@ namespace Ambermoon
                             layout.UpdateCharacterStatus(partyMember);
                     }
                 }
+
+                if (layout.PopupActive)
+                {
+                    uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
+
+                    if (CurrentPopupTicks <= uint.MaxValue - add)
+                        CurrentPopupTicks += add;
+                    else
+                        CurrentPopupTicks = (uint)(((long)CurrentPopupTicks + add) % uint.MaxValue);
+                }
+                else
+                    CurrentPopupTicks = CurrentTicks;
 
                 if (currentBattle != null)
                 {
@@ -1013,6 +1026,11 @@ namespace Ambermoon
             AddTimedEvent(TimeSpan.FromMilliseconds((steps - 1) * stepTimeInMs), () => { stepAction?.Invoke(); EndSequence(); });
         }
 
+        internal void Wait(uint hours)
+        {
+            GameTime.Wait(hours);
+        }
+
         internal void Move(CursorType cursorType, bool fromNumpadButton = false)
         {
             if (is3D)
@@ -1193,6 +1211,12 @@ namespace Ambermoon
 
             if (!InputEnable)
             {
+                if (layout.PopupActive)
+                {
+                    layout.KeyDown(key, modifiers);
+                    return;
+                }
+
                 // In battle the space key can be used to click for next action.
                 if (key == Key.Space && BattleRoundActive && currentBattle.WaitForClick)
                 {
@@ -1206,7 +1230,7 @@ namespace Ambermoon
 
             keys[(int)key] = true;
 
-            if (!WindowActive)
+            if (!WindowActive && !layout.PopupActive)
                 Move();
             else if (currentWindow.Window == Window.BattlePositions && battlePositionDragging)
                 return;
@@ -1327,10 +1351,13 @@ namespace Ambermoon
 
         public void OnKeyChar(char keyChar)
         {
-            if (!InputEnable || allInputDisabled)
+            if (allInputDisabled)
                 return;
 
             if (!pickingNewLeader && layout.KeyChar(keyChar))
+                return;
+
+            if (!InputEnable)
                 return;
 
             if (keyChar >= '1' && keyChar <= '6')
@@ -1360,7 +1387,7 @@ namespace Ambermoon
 
                 if (cursorType != null)
                     CursorType = cursorType.Value;
-                else if (is3D && !WindowActive && CursorType == CursorType.Target)
+                else if (is3D && !WindowActive && !layout.PopupActive && CursorType == CursorType.Target)
                     CursorType = CursorType.Wait;
             }
 
@@ -1404,7 +1431,7 @@ namespace Ambermoon
             {
                 var relativePosition = renderView.ScreenToGame(position);
 
-                if (!WindowActive && InputEnable && !pickingNewLeader && mapViewArea.Contains(relativePosition))
+                if (!WindowActive && !layout.PopupActive && InputEnable && !pickingNewLeader && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
                     if (buttons == MouseButtons.Right)
@@ -1524,6 +1551,11 @@ namespace Ambermoon
                 CursorType = CursorType.Mouth;
         }
 
+        internal void UpdateCursor()
+        {
+            UpdateCursor(lastMousePosition, MouseButtons.None);
+        }
+
         void UpdateCursor(Position cursorPosition, MouseButtons buttons)
         {
             lock (cursor)
@@ -1558,7 +1590,7 @@ namespace Ambermoon
 
                 var relativePosition = renderView.ScreenToGame(cursorPosition);
 
-                if (!WindowActive && (mapViewArea.Contains(relativePosition) || clickMoveActive))
+                if (!WindowActive && !layout.PopupActive && (mapViewArea.Contains(relativePosition) || clickMoveActive))
                 {
                     // Change arrow cursors when hovering the map
                     if (ingame && cursor.Type >= CursorType.Sword && cursor.Type <= CursorType.Wait)
@@ -1691,7 +1723,7 @@ namespace Ambermoon
                         trappedMousePositionOffset.Y -= position.Y - lastMousePosition.Y;
                 }
 
-                if (!WindowActive && !is3D && targetMode2DActive)
+                if (!WindowActive && !layout.PopupActive && !is3D && targetMode2DActive)
                 {
                     Determine2DTargetMode(position);
                 }
@@ -1716,7 +1748,7 @@ namespace Ambermoon
                 mousePosition = GetMousePosition(mousePosition);
                 UpdateCursor(mousePosition, MouseButtons.None);
             }
-            else if (yScroll != 0 && !WindowActive && !is3D)
+            else if (yScroll != 0 && !WindowActive && !layout.PopupActive && !is3D)
             {
                 ScrollCursor(mousePosition, yScroll < 0);
             }
@@ -2693,7 +2725,7 @@ namespace Ambermoon
                         player2D.BaselineOffset = 0;
                 }
 
-                if (!WindowActive && Map.IsWorldMap)
+                if (Map.IsWorldMap)
                 {
                     var tile = renderMap2D[player.Position];
 
@@ -5312,6 +5344,8 @@ namespace Ambermoon
             }
             UpdateCursor(lastMousePosition, MouseButtons.None);
         }
+
+        internal void ClosePopup() => layout?.ClosePopup();
 
         internal void CloseWindow() => CloseWindow(null);
 

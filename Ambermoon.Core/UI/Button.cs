@@ -22,6 +22,8 @@ namespace Ambermoon.UI
         bool visible = true;
         DateTime pressedTime = DateTime.MinValue;
         uint lastActionTimeInTicks = 0;
+        uint? continuousActionDelayInTicks = null;
+        uint? initialContinuousActionDelayInTicks = null;
 
         public Button(IRenderView renderView, Position position)
         {
@@ -125,9 +127,24 @@ namespace Ambermoon.UI
         /// </summary>
         public uint? ContinuousActionDelayInTicks
         {
+            get => initialContinuousActionDelayInTicks;
+            set
+            {
+                initialContinuousActionDelayInTicks = value;
+                continuousActionDelayInTicks = value;
+            }
+        }
+
+        /// <summary>
+        /// Only used in conjunction with <see cref="ContinuousActionDelayInTicks"/>.
+        /// If set to non-zero value each execution will reduce the delay by the given ticks
+        /// down to 1 tick at max.
+        /// </summary>
+        public uint ContinuousActionDelayReductionInTicks
+        {
             get;
             set;
-        } = null;
+        } = 0;
 
         public bool Pressed
         {
@@ -141,6 +158,10 @@ namespace Ambermoon.UI
                 frameSprite.TextureAtlasOffset =
                     textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(pressed ? UIGraphic.ButtonFramePressed : UIGraphic.ButtonFrame));
                 iconSprite.Y = frameSprite.Y + (pressed ? 4 : 2);
+
+                if (!pressed)
+                    continuousActionDelayInTicks = initialContinuousActionDelayInTicks;
+
             }
         }
 
@@ -181,12 +202,12 @@ namespace Ambermoon.UI
             if (Disabled)
                 return;
 
-            if (Pressed && Area.Contains(position))
+            if (Pressed && !InstantAction && Area.Contains(position))
             {
-                released = true;
                 cursorType = ExecuteActions(currentTicks);
             }
 
+            released = true;
             Pressed = false;
         }
 
@@ -209,7 +230,7 @@ namespace Ambermoon.UI
 
                 if (InstantAction)
                 {
-                    if (ContinuousActionDelayInTicks == null)
+                    if (continuousActionDelayInTicks == null)
                         released = true;
                     cursorType = ExecuteActions(currentTicks);
                 }
@@ -225,6 +246,10 @@ namespace Ambermoon.UI
             lastActionTimeInTicks = currentTicks;
             var cursorChangeAction = CursorChangeAction; // The action invoke might change this by swapping buttons!
             Action?.Invoke();
+
+            if (continuousActionDelayInTicks != null && continuousActionDelayInTicks > 1)
+                continuousActionDelayInTicks = (uint)Math.Max(1, (int)continuousActionDelayInTicks.Value - (int)ContinuousActionDelayReductionInTicks);
+
             return cursorChangeAction?.Invoke();
         }
 
@@ -239,7 +264,7 @@ namespace Ambermoon.UI
 
             if (InstantAction)
             {
-                if (ContinuousActionDelayInTicks == null)
+                if (continuousActionDelayInTicks == null)
                     released = true;
             }
             else
@@ -258,9 +283,9 @@ namespace Ambermoon.UI
             if (Pressed && released && (DateTime.Now - pressedTime).TotalMilliseconds >= ButtonReleaseTime)
                 Pressed = false;
 
-            if (Pressed && ContinuousActionDelayInTicks != null)
+            if (Pressed && continuousActionDelayInTicks != null)
             {
-                if (currentTicks - lastActionTimeInTicks >= ContinuousActionDelayInTicks.Value)
+                if (currentTicks - lastActionTimeInTicks >= continuousActionDelayInTicks.Value)
                     ExecuteActions(currentTicks);
             }
         }

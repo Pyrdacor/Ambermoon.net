@@ -105,6 +105,8 @@
         public string LootAfterBattle => executableData.Messages.GetEntry(Messages.Index.LootAfterBattle);
         public string ReceiveExp => executableData.Messages.GetEntry(Messages.Index.ReceiveExp);
         public string ChooseBattlePositions => executableData.Messages.GetEntry(Messages.Index.EnterBattlePositions);
+        public string WaitHowManyHours => executableData.Messages.GetEntry(Messages.Index.WaitHowManyHours);
+        public string CannotWaitBecauseOfNearbyMonsters => executableData.Messages.GetEntry(Messages.Index.WaitingIsTooDangerous);
 
 
         #region Battle messages

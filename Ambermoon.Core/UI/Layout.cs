@@ -677,6 +677,85 @@ namespace Ambermoon.UI
             return popup;
         }
 
+        internal void OpenWaitPopup()
+        {
+            if (game.MonsterSeesPlayer)
+            {
+                game.ShowTextPopup(game.ProcessText(game.DataNameProvider.CannotWaitBecauseOfNearbyMonsters), null);
+                return;
+            }
+
+            ClosePopup(false);
+            activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
+            {
+                DisableButtons = true,
+                CloseOnClick = false
+            };
+            // Message display
+            var messageArea = new Rect(79, 98, 145, 10);
+            activePopup.AddSunkenBox(messageArea);
+            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), game.DataNameProvider.WaitHowManyHours, TextColor.PaleRed, TextAlign.Center);
+            // Amount input
+            var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
+                TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.LoseFocus);
+            input.DigitsOnly = true;
+            input.MaxIntegerValue = 24;
+            input.ReactToGlobalClicks = true;
+            input.ClearOnNewInput = true;
+            input.Text = "0";
+            input.Aborted += () => game.CursorType = CursorType.Sword;
+            input.InputSubmitted += _ => game.CursorType = CursorType.Sword;
+            // Increase and decrease buttons
+            var increaseButton = activePopup.AddButton(new Position(80, 110));
+            var decreaseButton = activePopup.AddButton(new Position(80, 127));
+            increaseButton.ButtonType = ButtonType.MoveUp;
+            decreaseButton.ButtonType = ButtonType.MoveDown;
+            increaseButton.DisplayLayer = 200;
+            decreaseButton.DisplayLayer = 200;
+            increaseButton.Action = () => ChangeInputValue(1);
+            decreaseButton.Action = () => ChangeInputValue(-1);
+            increaseButton.InstantAction = true;
+            decreaseButton.InstantAction = true;
+            increaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
+            decreaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
+            increaseButton.ContinuousActionDelayReductionInTicks = 1;
+            decreaseButton.ContinuousActionDelayReductionInTicks = 1;
+            // OK button
+            var okButton = activePopup.AddButton(new Position(192, 127));
+            okButton.ButtonType = ButtonType.Ok;
+            okButton.DisplayLayer = 200;
+            okButton.Action = Wait;
+            activePopup.ReturnAction = Wait;
+            activePopup.Closed += () =>
+            {
+                game.Resume();
+                game.InputEnable = true;
+                game.CursorType = CursorType.Sword;
+                game.UpdateCursor();
+            };
+            game.Pause();
+            game.InputEnable = false;
+            game.CursorType = CursorType.Sword;
+
+            void Wait()
+            {
+                ClosePopup(true, true);
+                game.Wait(input.Value);
+            }
+
+            void ChangeInputValue(int changeAmount)
+            {
+                if (changeAmount < 0)
+                {
+                    input.Text = Math.Max(0, (int)input.Value + changeAmount).ToString();
+                }
+                else if (changeAmount > 0)
+                {
+                    input.Text = Math.Min(24, input.Value + (uint)changeAmount).ToString();
+                }
+            }
+        }
+
         internal Popup OpenInputPopup(Position position, int inputLength, Action<string> inputHandler)
         {
             var openPopup = activePopup;
@@ -792,7 +871,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => game.Move(CursorType.ArrowUp), true, null, moveDelay);
                         buttonGrid.SetButton(2, ButtonType.MoveUpRight, false, () => game.Move(CursorType.ArrowUpRight), true, null, moveDelay);
                         buttonGrid.SetButton(3, ButtonType.MoveLeft, false, () => game.Move(CursorType.ArrowLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(4, ButtonType.Wait, true, null, true); // TODO: wait
+                        buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false);
                         buttonGrid.SetButton(5, ButtonType.MoveRight, false, () => game.Move(CursorType.ArrowRight), true, null, moveDelay);
                         buttonGrid.SetButton(6, ButtonType.MoveDownLeft, false, () => game.Move(CursorType.ArrowDownLeft), true, null, moveDelay);
                         buttonGrid.SetButton(7, ButtonType.MoveDown, false, () => game.Move(CursorType.ArrowDown), true, null, moveDelay);
@@ -819,7 +898,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => game.Move(CursorType.ArrowForward, true), true, null, moveDelay);
                         buttonGrid.SetButton(2, ButtonType.TurnRight, false, () => game.Move(CursorType.ArrowTurnRight, true), true, null, moveDelay);
                         buttonGrid.SetButton(3, ButtonType.StrafeLeft, false, () => game.Move(CursorType.ArrowStrafeLeft, true), true, null, moveDelay);
-                        buttonGrid.SetButton(4, ButtonType.Wait, true, null, true); // TODO: wait
+                        buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false);
                         buttonGrid.SetButton(5, ButtonType.StrafeRight, false, () => game.Move(CursorType.ArrowStrafeRight, true), true, null, moveDelay);
                         buttonGrid.SetButton(6, ButtonType.RotateLeft, false, () => game.Move(CursorType.ArrowRotateLeft, true), false, null, null);
                         buttonGrid.SetButton(7, ButtonType.MoveBackward, false, () => game.Move(CursorType.ArrowBackward, true), true, null, moveDelay);
@@ -1009,11 +1088,18 @@ namespace Ambermoon.UI
             decreaseButton.DisplayLayer = 200;
             increaseButton.Action = () => ChangeInputValue(1);
             decreaseButton.Action = () => ChangeInputValue(-1);
+            increaseButton.InstantAction = true;
+            decreaseButton.InstantAction = true;
+            increaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
+            decreaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
+            increaseButton.ContinuousActionDelayReductionInTicks = 1;
+            decreaseButton.ContinuousActionDelayReductionInTicks = 1;
             // OK button
             var okButton = activePopup.AddButton(new Position(192, 127));
             okButton.ButtonType = ButtonType.Ok;
             okButton.DisplayLayer = 200;
             okButton.Action = () => submitAction?.Invoke(input.Value);
+            activePopup.ReturnAction = () => submitAction?.Invoke(input.Value);
 
             void ChangeInputValue(int changeAmount)
             {
@@ -2171,7 +2257,7 @@ namespace Ambermoon.UI
         public void Update(uint currentTicks)
         {
             buttonGrid.Update(currentTicks);
-            activePopup?.Update(currentTicks);
+            activePopup?.Update(game.CurrentPopupTicks);
 
             for (int i = fadeEffects.Count - 1; i >= 0; --i)
             {
@@ -2246,9 +2332,6 @@ namespace Ambermoon.UI
 
         public bool KeyChar(char ch)
         {
-            if (!game.InputEnable)
-                return false;
-
             if (PopupActive && activePopup.KeyChar(ch))
                 return true;
 
@@ -2257,10 +2340,10 @@ namespace Ambermoon.UI
 
         public void KeyDown(Key key, KeyModifiers keyModifiers)
         {
-            if (!game.InputEnable)
+            if (PopupActive && activePopup.KeyDown(key))
                 return;
 
-            if (PopupActive && activePopup.KeyDown(key))
+            if (!game.InputEnable)
                 return;
 
             switch (key)

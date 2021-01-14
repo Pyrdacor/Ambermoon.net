@@ -12,6 +12,8 @@
         PaleGray,
         Green,
         Disabled,
-        DarkGray
+        DarkGray,
+        DarkRed,
+        PaleRed
     }
 }

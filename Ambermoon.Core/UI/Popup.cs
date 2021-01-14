@@ -23,6 +23,7 @@ namespace Ambermoon.UI
         ListBox listBox = null;
         Scrollbar scrollbar = null;
         public Rect ContentArea { get; }
+        public Action ReturnAction { get; set; } = null;
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows, bool transparent,
             byte displayLayerOffset = 0)
@@ -314,6 +315,18 @@ namespace Ambermoon.UI
                 }
             }
 
+            if (key == Key.Return && ReturnAction != null)
+            {
+                ReturnAction?.Invoke();
+                return true;
+            }
+
+            if (key == Key.Escape && CanAbort)
+            {
+                game.ClosePopup();
+                return true;
+            }
+
             return false;
         }
 
@@ -346,7 +359,7 @@ namespace Ambermoon.UI
                     if (i >= buttons.Count)
                         continue;
 
-                    if (buttons[i]?.LeftMouseDown(position, game.CurrentTicks) == true)
+                    if (buttons[i]?.LeftMouseDown(position, game.CurrentPopupTicks) == true)
                         return true;
                 }
 
@@ -393,7 +406,7 @@ namespace Ambermoon.UI
                 if (i >= buttons.Count)
                     continue;
 
-                buttons[i]?.LeftMouseUp(position, game.CurrentTicks);
+                buttons[i]?.LeftMouseUp(position, game.CurrentPopupTicks);
             }
         }
 
