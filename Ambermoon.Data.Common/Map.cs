@@ -1,6 +1,5 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
-using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 
@@ -51,10 +50,17 @@ namespace Ambermoon.Data
             public uint MapEventId { get; set; }
             public uint Unused { get; set; } // always 0
             public TileType Type { get; set; }
-            public bool AllowMovement(Tileset tileset, TravelType travelType)
+            public bool AllowMovement(Tileset tileset, TravelType travelType, bool isPlayer = true)
             {
+                if (!isPlayer && Type == TileType.Water)
+                {
+                    return false;
+                }
+
                 if (Type != TileType.Normal)
+                {
                     return true;
+                }
 
                 bool allowBack = BackTileIndex == 0 || tileset.Tiles[BackTileIndex - 1].AllowMovement(travelType);
                 bool allowFront = FrontTileIndex == 0 || tileset.Tiles[FrontTileIndex - 1].AllowMovement(travelType);
@@ -63,6 +69,15 @@ namespace Ambermoon.Data
                     allowBack = allowFront;
 
                 return allowBack && allowFront;
+            }
+            public bool BlocksSight(Tileset tileset)
+            {
+                // TODO: Is there a tile flag for that?
+
+                if (Type == TileType.Invisible || !AllowMovement(tileset, TravelType.Walk))
+                    return true;
+
+                return false;
             }
         }
 

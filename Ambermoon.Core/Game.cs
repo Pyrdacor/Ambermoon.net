@@ -212,6 +212,8 @@ namespace Ambermoon
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         internal bool MonsterSeesPlayer { get; set; } = false;
+        bool monstersCanMoveImmediately = false; // this is set when the player just moved so that monsters who see the player can instantly move (2D only)
+        Position lastPlayerPosition = null;
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
         internal bool BattleActive => currentBattle != null;
@@ -484,8 +486,10 @@ namespace Ambermoon
                     }
                     else // 2D
                     {
-                        renderMap2D.Update(animationTicks, GameTime);
+                        renderMap2D.Update(animationTicks, GameTime, monstersCanMoveImmediately, lastPlayerPosition);
                     }
+
+                    monstersCanMoveImmediately = false;
 
                     var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
@@ -714,7 +718,9 @@ namespace Ambermoon
             player.Position.X = (int)playerX;
             player.Position.Y = (int)playerY;
             player.Direction = direction;
-            
+
+            renderMap2D.CheckIfMonstersSeePlayer();
+
             renderView.GetLayer(Layer.Map3D).Visible = false;
             renderView.GetLayer(Layer.Billboards3D).Visible = false;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
@@ -771,6 +777,9 @@ namespace Ambermoon
             CurrentInventoryIndex = null;
             CurrentCaster = null;
             OpenStorage = null;
+
+            RenderMap3D.Reset();
+            MapCharacter2D.Reset();
 
             for (int i = 0; i < keys.Length; ++i)
                 keys[i] = false;
@@ -2709,7 +2718,7 @@ namespace Ambermoon
             }
         }
 
-        internal void PlayerMoved(bool mapChange)
+        internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null)
         {
             // Enable/disable transport button and show transports
             if (!WindowActive)
@@ -2782,8 +2791,15 @@ namespace Ambermoon
             }
 
             if (mapChange)
+            {
+                monstersCanMoveImmediately = false;
                 ResetMoveKeys();
-            // TODO
+            }
+            else
+            {
+                this.lastPlayerPosition = lastPlayerPosition;
+                monstersCanMoveImmediately = Map.Type == MapType.Map2D && !Map.IsWorldMap;
+            }
         }
 
         internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
@@ -3080,6 +3096,9 @@ namespace Ambermoon
         /// <param name="monsterGroupIndex">Monster group index</param>
         internal void StartBattle(uint monsterGroupIndex, bool failedEscape, Action<BattleEndInfo> battleEndHandler)
         {
+            if (BattleActive)
+                return;
+
             currentBattleInfo = new BattleInfo
             {
                 MonsterGroupIndex = monsterGroupIndex
@@ -3961,7 +3980,7 @@ namespace Ambermoon
 
                 if (surpriseAttack)
                 {
-                    StartBattleRound(true);
+                    SetBattleMessageWithClick(DataNameProvider.AttackEscapeFailedMessage, TextColor.Gray, () => StartBattleRound(true));
                 }
             });
         }
@@ -4711,6 +4730,9 @@ namespace Ambermoon
 
         internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent)
         {
+            if (BattleActive)
+                return;
+
             currentBattleInfo = new BattleInfo
             {
                 MonsterGroupIndex = battleEvent.MonsterGroupIndex

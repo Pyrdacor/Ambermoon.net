@@ -167,6 +167,8 @@ namespace Ambermoon.Render
                 Direction = newDirection.Value;
             }
 
+            bool moved = true;
+
             if (x == uint.MaxValue || y == uint.MaxValue)
             {
                 Position.X = (int)x;
@@ -208,18 +210,34 @@ namespace Ambermoon.Render
                 }
                 else
                     sprite.CurrentFrame = sprite.CurrentFrame; // this may correct the value if NumFrames has changed
-                Position.X = (int)x;
-                Position.Y = (int)y;
+                if (Position.X == x && Position.Y == y)
+                    moved = false;
+                else
+                {
+                    Position.X = (int)x;
+                    Position.Y = (int)y;
+                }
                 var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
                 sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
                 sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
                 sprite.PaletteIndex = (byte)paletteIndexProvider();
                 sprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
+                if (sprite.Visible && tileType == Data.Map.TileType.Invisible)
+                    sprite.Visible = false;
                 UpdateBaseline();
+            }
+
+            if (moved)
+            {
+                if (this is Player2D)
+                    Map.CheckIfMonstersSeePlayer(x, y);
+                else if (this is MapCharacter2D monster && monster.IsMonster)
+                    Map.CheckIfMonsterSeesPlayer(monster, sprite.Visible);
             }
         }
 
-        public virtual void Update(uint ticks, ITime gameTime)
+        public virtual void Update(uint ticks, ITime gameTime, bool allowInstantMovement = false,
+            Position lastPlayerPosition = null)
         {
             uint elapsedTicks = ticks - lastFrameReset;
             sprite.CurrentFrame = elapsedTicks / CurrentAnimationInfo.TicksPerFrame; // this will take care of modulo frame count

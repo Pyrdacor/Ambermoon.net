@@ -79,8 +79,11 @@ namespace Ambermoon.Render
             readonly Labdata.ObjectPosition objectPosition;
             bool active = true;
             DateTime lastInteractionTime = DateTime.MinValue;
-            bool interacting = false;
+            // This is used to avoid multiple monster encounters in the same update frame (e.g. 2 monsters move onto the player at the same time).
+            static bool interacting = false;
             readonly Character3D character3D;
+
+            public static void Reset() => interacting = false;
 
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
@@ -153,61 +156,66 @@ namespace Ambermoon.Render
             {
                 if (characterReference.Type == CharacterType.Monster)
                 {
-                    if (DateTime.Now - lastInteractionTime < TimeSpan.FromSeconds(2)) // TODO: Is this based on real time or ingame time?
-                        return false;
-
-                    // First set this to max so we won't trigger this again while we are interacting.
-                    lastInteractionTime = DateTime.MaxValue;
-
-                    // Turn the player towards the monster.
-                    interacting = true;
-                    var player3D = game.RenderPlayer as Player3D;
-                    player3D.TurnTowards(character3D.RealPosition);
-                    surface.Extrude = -1.0f;
-
-                    void StartBattle(bool failedEscape)
+                    if (trigger == EventTrigger.Move)
                     {
-                        game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
-                        {
-                            lastInteractionTime = DateTime.Now;
+                        if (DateTime.Now - lastInteractionTime < TimeSpan.FromSeconds(2)) // TODO: Is this based on real time or ingame time?
+                            return false;
 
-                            if (battleEndInfo.MonstersDefeated)
-                            {
-                                Active = false;
-                                game.CurrentSavegame.SetCharacterBit(map.Map.Index, characterIndex, true);
-                            }
-                            else
-                                character3D.ResetMovementTimer();
-                            // TODO
-                        });
-                    }
+                        // First set this to max so we won't trigger this again while we are interacting.
+                        lastInteractionTime = DateTime.MaxValue;
+                        interacting = true;
 
-                    game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
-                    {
-                        surface.Extrude = 0.0f;
+                        // Turn the player towards the monster.
+                        var player3D = game.RenderPlayer as Player3D;
+                        player3D.TurnTowards(character3D.RealPosition);
+                        surface.Extrude = -1.0f;
 
-                        if (response == PopupTextEvent.Response.Yes)
+                        void StartBattle(bool failedEscape)
                         {
-                            StartBattle(false);
-                        }
-                        else
-                        {
-                            // TODO: chance
-                            if (game.RollDice100() < 50)
+                            game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
                             {
-                                game.ShowMessagePopup(game.DataNameProvider.AttackEscapeFailedMessage, () => StartBattle(true));
-                            }
-                            else
-                            {
-                                // successfully fled
                                 lastInteractionTime = DateTime.Now;
-                            }
-                        }
-                    }, 2);
+                                interacting = false;
 
-                    return true;
+                                if (battleEndInfo.MonstersDefeated)
+                                {
+                                    Active = false;
+                                    game.CurrentSavegame.SetCharacterBit(map.Map.Index, characterIndex, true);
+                                }
+                                else
+                                    character3D.ResetMovementTimer();
+                            });
+                        }
+
+                        game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
+                        {
+                            surface.Extrude = 0.0f;
+
+                            if (response == PopupTextEvent.Response.Yes)
+                            {
+                                StartBattle(false);
+                            }
+                            else
+                            {
+                                // TODO: chance
+                                if (game.RollDice100() < 50)
+                                {
+                                    StartBattle(true);
+                                }
+                                else
+                                {
+                                    // successfully fled
+                                    lastInteractionTime = DateTime.Now;
+                                    interacting = false;
+                                    character3D.ResetMovementTimer();
+                                }
+                            }
+                        }, 2);
+
+                        return true;
+                    }
                 }
-                else
+                else if (trigger != EventTrigger.Move)
                 {
                     if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
                     {
@@ -291,9 +299,9 @@ namespace Ambermoon.Render
                             }
                             break;
                     }
-
-                    return false;
                 }
+
+                return false;
             }
 
             void ShowPopup(string text)
@@ -424,7 +432,7 @@ namespace Ambermoon.Render
                         game.MonsterSeesPlayer = true;
                         character3D.Stop(true);
                     }
-                    if (Interact(EventTrigger.Move, false))
+                    if (!interacting && Interact(EventTrigger.Move, false))
                         return;
                 }
 
@@ -486,6 +494,8 @@ namespace Ambermoon.Render
         float WallHeight => FullWallHeight * labdata.WallHeight / ReferenceWallHeight;
         float FullWallHeight => (ReferenceWallHeight / BlockSize) * 0.75f * Global.DistancePerBlock;
         public event Action<Map> MapChanged;
+
+        public static void Reset() => MapCharacter.Reset();
 
         public RenderMap3D(Game game, Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
         {

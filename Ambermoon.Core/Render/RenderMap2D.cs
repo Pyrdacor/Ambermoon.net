@@ -85,7 +85,7 @@ namespace Ambermoon.Render
             SetMap(map, initialScrollX, initialScrollY);
         }
 
-        public void Update(uint ticks, ITime gameTime)
+        public void Update(uint ticks, ITime gameTime, bool monstersCanMoveImmediately, Position lastPlayerPosition)
         {
             uint frame = ticks / ticksPerFrame;
 
@@ -109,7 +109,7 @@ namespace Ambermoon.Render
             }
 
             foreach (var mapCharacter in mapCharacters)
-                mapCharacter.Value.Update(ticks, gameTime);
+                mapCharacter.Value.Update(ticks, gameTime, monstersCanMoveImmediately, lastPlayerPosition);
         }
 
         public void Pause()
@@ -132,7 +132,7 @@ namespace Ambermoon.Render
             if (position == mapCharacter.Position)
                 return true;
 
-            return cursor && mapCharacter.IsNPC && position == new Position(mapCharacter.Position.X, mapCharacter.Position.Y + 1);
+            return cursor && mapCharacter.IsRealCharacter && position == new Position(mapCharacter.Position.X, mapCharacter.Position.Y + 1);
         }
 
         public bool TriggerEvents(IRenderPlayer player, EventTrigger trigger,
@@ -146,7 +146,7 @@ namespace Ambermoon.Render
                 {
                     if (TestCharacterInteraction(mapCharacter.Value, trigger != EventTrigger.Move, position) &&
                         mapCharacter.Value.Interact(trigger, this[(uint)mapCharacter.Value.Position.X,
-                            (uint)mapCharacter.Value.Position.Y + (mapCharacter.Value.IsNPC ? 1u : 0u)].Type == Map.TileType.Bed))
+                            (uint)mapCharacter.Value.Position.Y + (mapCharacter.Value.IsRealCharacter ? 1u : 0u)].Type == Map.TileType.Bed))
                         return true;
                 }
             }
@@ -486,7 +486,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            Update(0, game.GameTime);
+            Update(0, game.GameTime, false, null);
         }
 
         public bool IsMapVisible(uint index)
@@ -535,6 +535,8 @@ namespace Ambermoon.Render
 
             ClearCharacters();
 
+            ScrollTo(initialScrollX, initialScrollY, true); // also updates tiles etc
+
             for (uint characterIndex = 0; characterIndex < map.CharacterReferences.Length; ++characterIndex)
             {
                 var characterReference = map.CharacterReferences[characterIndex];
@@ -542,17 +544,78 @@ namespace Ambermoon.Render
                 if (characterReference == null)
                     break;
 
-                var mapCharacter = MapCharacter2D.Create(game, renderView, mapManager, this, characterReference);
+                var mapCharacter = MapCharacter2D.Create(game, renderView, mapManager, this, characterIndex, characterReference);
                 mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(map.Index, characterIndex);
                 mapCharacters.Add(characterIndex, mapCharacter);
             }
-
-            ScrollTo(initialScrollX, initialScrollY, true); // also updates tiles etc
 
             if (map.IsWorldMap)
                 InvokeMapChangedHandler(map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
             else
                 InvokeMapChangedHandler(map);
+        }
+
+        public void CheckIfMonsterSeesPlayer(MapCharacter2D monster, bool visible)
+        {
+            if (Map.IsWorldMap)
+            {
+                game.MonsterSeesPlayer = false;
+                return;
+            }
+
+            monster.CheckedIfSeesPlayer = true;
+            monster.SeesPlayer = false;
+
+            if (!game.MonsterSeesPlayer && visible)
+            {
+                monster.SeesPlayer = MonsterSeesPlayer(monster.Position, null, null);
+
+                if (monster.SeesPlayer)
+                    game.MonsterSeesPlayer = true;
+            }
+            else if (game.MonsterSeesPlayer)
+            {
+                CheckIfMonstersSeePlayer();
+            }
+        }
+
+        public void CheckIfMonstersSeePlayer(uint? playerX = null, uint? playerY = null)
+        {
+            game.MonsterSeesPlayer = false;
+
+            if (!Map.IsWorldMap)
+            {
+                bool check = true;
+
+                foreach (var monster in mapCharacters.Where(c => c.Value.Active && c.Value.IsMonster))
+                {
+                    if (check)
+                    {
+                        monster.Value.CheckedIfSeesPlayer = true;
+                        monster.Value.SeesPlayer = false;
+
+                        if (MonsterSeesPlayer(monster.Value.Position, playerX, playerY))
+                        {
+                            monster.Value.SeesPlayer = true;
+                            game.MonsterSeesPlayer = true;
+                            check = false;
+                        }
+                    }
+                    else
+                    {
+                        monster.Value.CheckedIfSeesPlayer = false;
+                    }
+                }
+            }
+        }
+
+        public bool MonsterSeesPlayer(Position monsterPosition, uint? playerX = null, uint? playerY = null)
+        {
+            var position = new Position((int)(playerX ?? (uint)game.RenderPlayer.Position.X), (int)(playerY ?? (uint)game.RenderPlayer.Position.Y));
+            //Console.WriteLine($"Test {position.X},{position.Y} and {monsterPosition.X},{monsterPosition.Y}");
+            bool see = !Geometry.Raycast2D.TestRay(Map, position.X, position.Y, monsterPosition.X, monsterPosition.Y, tile => tile.BlocksSight(tileset));
+            //Console.WriteLine($"Can see? {see}");
+            return see;
         }
 
         public void UpdateCharacterVisibility(uint characterIndex)
@@ -561,6 +624,8 @@ namespace Ambermoon.Render
                 throw new AmbermoonException(ExceptionScope.Application, "Null map character");
 
             mapCharacters[characterIndex].Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
+
+            CheckIfMonstersSeePlayer();
         }
 
         void InvokeMapChangedHandler(params Map[] maps)
@@ -595,6 +660,7 @@ namespace Ambermoon.Render
                     uint newMapScrollY = newScrollY < 0 ? (uint)(Map.Height + newScrollY) : (uint)(newScrollY % Map.Height);
 
                     SetMap(newMap, newMapScrollX, newMapScrollY);
+                    game.MonsterSeesPlayer = false;
 
                     return true;
                 }

@@ -97,6 +97,7 @@ namespace Ambermoon.Render
                 int scrollY = 0;
                 prevDirection ??= Direction;
                 var newDirection = CharacterDirection.Down;
+                var lastPlayerPosition = new Position(player.Position);
 
                 if (x > 0 && (map.IsWorldMap || (newX >= 6 && Map.ScrollX < Map.Map.Width - RenderMap2D.NUM_VISIBLE_TILES_X)))
                     scrollX = 1;
@@ -147,7 +148,7 @@ namespace Ambermoon.Render
                         tile = Map[(uint)player.Position.X, (uint)player.Position.Y + (Map.Map.IsWorldMap ? 0u : 1u)];
                         Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
 
-                        game.PlayerMoved(false);
+                        game.PlayerMoved(false, lastPlayerPosition);
                     }
                 }
                 else
@@ -222,7 +223,8 @@ namespace Ambermoon.Render
             base.MoveTo(map, x, y, ticks, frameReset, newDirection);
         }
 
-        public override void Update(uint ticks, ITime gameTime)
+        public override void Update(uint ticks, ITime gameTime, bool allowInstantMovement = false,
+            Position lastPlayerPosition = null)
         {
             // do not animate so don't call base.Update here
         }
