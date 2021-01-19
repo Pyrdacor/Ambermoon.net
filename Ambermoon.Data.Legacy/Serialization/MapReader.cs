@@ -48,7 +48,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                     CharacterFlags = (Map.CharacterReference.Flags)(type >> 2),
                     EventIndex = eventIndex,
                     GraphicIndex = gfxIndex,
-                    Unknown2 = unknown2
+                    Unknown2 = unknown2,
+                    CombatBackgroundIndex = (uint)unknown2[0] >> 4
                 };
 
                 // Note: Map 258 has 3 characters but one seems to be not used anymore.

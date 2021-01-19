@@ -107,6 +107,9 @@ namespace Ambermoon.Data
             public Flags CharacterFlags { get; set; }
             public bool OnlyMoveWhenSeePlayer { get; set; }
             public uint Index { get; set; } // of party member, npc, monster or map text
+            /// <summary>
+            /// Upper 4 bits of this contains the combat background index.
+            /// </summary>
             public byte[] Unknown2 { get; set; }
             public uint EventIndex { get; set; }
             /// <summary>
@@ -116,6 +119,7 @@ namespace Ambermoon.Data
             /// - an NPC graphic index for 2D maps if flag UseTileset is not set and it's an NPC
             /// </summary>
             public uint GraphicIndex { get; set; }
+            public uint CombatBackgroundIndex { get; set; }
             public List<Position> Positions { get; } = new List<Position>(288);
         }
 

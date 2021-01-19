@@ -286,18 +286,7 @@ namespace Ambermoon
                     if (!(@event is StartBattleEvent battleEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid battle event.");
 
-                    uint GetCombatBackground()
-                    {
-                        var tile = map.Tiles[x, y];
-                        var tileset = game.MapManager.GetTilesetForMap(map);
-                        var tilesetTile = tile.BackTileIndex == 0
-                            ? tileset.Tiles[tile.FrontTileIndex - 1]
-                            : tileset.Tiles[tile.BackTileIndex - 1];
-                        return tilesetTile.CombatBackgroundIndex;
-                    }
-
-                    uint? combatBackgroundIndex = map.Type == MapType.Map2D ? GetCombatBackground() : (uint?)null;
-                    game.StartBattle(battleEvent, battleEvent.Next, combatBackgroundIndex);
+                    game.StartBattle(battleEvent, battleEvent.Next, game.GetCombatBackgroundIndex(map, x, y));
                     return null;
                 }
                 case EventType.Conversation:

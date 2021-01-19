@@ -693,5 +693,14 @@ namespace Ambermoon.Render
             UpdateTiles();
             UpdateTransports();
         }
+
+        public uint GetCombatBackgroundIndex(Map map, uint x, uint y)
+        {
+            var tile = map.Tiles[x, y];
+            var tilesetTile = tile.BackTileIndex == 0
+                ? tileset.Tiles[tile.FrontTileIndex - 1]
+                : tileset.Tiles[tile.BackTileIndex - 1];
+            return tilesetTile.CombatBackgroundIndex;
+        }
     }
 }

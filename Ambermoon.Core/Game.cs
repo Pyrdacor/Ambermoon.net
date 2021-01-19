@@ -4745,6 +4745,8 @@ namespace Ambermoon
             ShowBattleWindow(nextEvent, true, combatBackgroundIndex);
         }
 
+        internal uint GetCombatBackgroundIndex(Map map, uint x, uint y) => is3D ? renderMap3D.CombatBackgroundIndex : renderMap2D.GetCombatBackgroundIndex(map, x, y);
+
         void AddExperience(List<PartyMember> partyMembers, uint amount, Action finishedEvent = null)
         {
             void Add(int index)

@@ -16,7 +16,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 tileset.Tiles[i] = new Tileset.Tile();
                 tileset.Tiles[i].GraphicIndex = dataReader.ReadWord();
                 tileset.Tiles[i].NumAnimationFrames = dataReader.ReadByte();
-                tileset.Tiles[i].Unknown2 = dataReader.ReadByte(); // Unknown
+                tileset.Tiles[i].Unknown = dataReader.ReadByte();
                 tileset.Tiles[i].Flags = tileFlags; // TODO: REMOVE later
 
                 ParseTileFlags(tileset.Tiles[i], tileFlags);
@@ -58,7 +58,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             //  4 -> sit and look left
             //  5 -> sleep (always face down)
             // Bit 26: Player invisible (doors, behind towers/walls, etc)
-            // Bit 28-31: Combat background index
+            // Bit 28-31: Combat background index when battle event is triggered on that tile
 
             // Another possible explanation for bit 2/6 would be:
             // - Bit 2: Disable baseline rendering / use custom sprite ordering

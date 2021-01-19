@@ -347,11 +347,6 @@ namespace Ambermoon.Render
 
                         void StartBattle(bool failedEscape)
                         {
-                            var tile = map.Tiles[Position.X, Position.Y];
-                            var tileset = game.MapManager.GetTilesetForMap(map);
-                            var tilesetTile = tile.BackTileIndex == 0
-                                ? tileset.Tiles[tile.FrontTileIndex - 1]
-                                : tileset.Tiles[tile.BackTileIndex - 1];
                             game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
                             {
                                 lastInteractionTime = DateTime.Now;
@@ -364,7 +359,7 @@ namespace Ambermoon.Render
                                 }
                                 else
                                     lastTimeSlot = game.GameTime.TimeSlot;
-                            }, tilesetTile.CombatBackgroundIndex);
+                            }, characterReference.CombatBackgroundIndex);
                         }
 
                         game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>

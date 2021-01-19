@@ -184,7 +184,7 @@ namespace Ambermoon.Render
                                 }
                                 else
                                     character3D.ResetMovementTimer();
-                            });
+                            }, characterReference.CombatBackgroundIndex);
                         }
 
                         game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
