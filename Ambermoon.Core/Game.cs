@@ -1494,6 +1494,10 @@ namespace Ambermoon
                         if (!TriggerMapEvents(EventTrigger.Eye, relativePosition))
                             TriggerMapEvents(EventTrigger.Hand, relativePosition);
                     }
+                    else if (cursor.Type == CursorType.Wait)
+                    {
+                        GameTime.Tick();
+                    }
                     else if (cursor.Type > CursorType.Sword && cursor.Type < CursorType.Wait)
                     {
                         clickMoveActive = true;
