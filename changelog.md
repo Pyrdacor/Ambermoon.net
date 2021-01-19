@@ -1,5 +1,6 @@
 # Changelog
 
+- Version [0.1.8 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.8beta): Fixed combat backgrounds, added waiting functionality, bugfixing
 - Version [0.1.7 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.7beta): Added 2D monster interaction, bugfixing
 - Version [0.1.6 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.6beta): Added crosshair cursor functionality, 3D corner right-click functionality, bugfixing
 - Version [0.1.5 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.5beta): Added battle position window, battle loot window, spell blocking animation and spell items
