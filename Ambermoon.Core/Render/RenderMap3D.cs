@@ -82,12 +82,14 @@ namespace Ambermoon.Render
             // This is used to avoid multiple monster encounters in the same update frame (e.g. 2 monsters move onto the player at the same time).
             static bool interacting = false;
             readonly Character3D character3D;
+            readonly List<MapCharacter> children = new List<MapCharacter>(7);
+            readonly MapCharacter parent = null;
 
             public static void Reset() => interacting = false;
 
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
-                Labdata.ObjectPosition objectPosition, uint textureIndex,
+                Labdata.ObjectPosition objectPosition, uint textureIndex, MapCharacter parent,
                 uint extrudeOffset, uint numFrames, float fps = 1.0f)
             {
                 this.game = game;
@@ -100,32 +102,58 @@ namespace Ambermoon.Render
                 this.textureIndex = textureIndex;
                 this.extrudeOffset = extrudeOffset;
                 this.objectPosition = objectPosition;
-                character3D = new Character3D(game);
-                character3D.RandomMovementRequested += MoveRandom;
-                character3D.MoveRequested += TestPossibleMovement;
-                ResetPosition(game.GameTime);
+                this.parent = parent;
+                if (parent != null)
+                    character3D = parent.character3D;
+                else
+                {
+                    character3D = new Character3D(game);
+                    character3D.RandomMovementRequested += MoveRandom;
+                    character3D.MoveRequested += TestPossibleMovement;
+                    ResetPosition(game.GameTime);
+                }
+            }
+
+            public void AddChild(MapCharacter child)
+            {
+                children.Add(child);
             }
 
             public void Destroy()
             {
+                children.ForEach(c => c?.Destroy());
+                children.Clear();
                 surface?.Delete();
             }
 
             public bool Active
             {
-                get => active;
+                get => parent?.Active ?? active;
                 set
                 {
+                    if (parent != null)
+                        return;
+
                     if (active == value)
                         return;
 
                     active = value;
                     surface.Visible = active;
+                    children.ForEach(c => c.Active = value);
                 }
             }
 
-            public void Pause() => character3D.Paused = true;
-            public void Resume() => character3D.Paused = false;
+            public void Pause()
+            {
+                if (parent == null)
+                    character3D.Paused = true;
+            }
+
+            public void Resume()
+            {
+                if (parent == null)
+                    character3D.Paused = false;
+            }
 
             public Position Position
             {
@@ -154,6 +182,9 @@ namespace Ambermoon.Render
 
             public bool Interact(EventTrigger trigger, bool bed)
             {
+                if (parent != null)
+                    return false;
+
                 if (characterReference.Type == CharacterType.Monster)
                 {
                     if (trigger == EventTrigger.Move)
@@ -329,6 +360,8 @@ namespace Ambermoon.Render
                 }
 
                 UpdatePosition();
+
+                children.ForEach(c => c.UpdateCurrentMovement(ticks));
             }
 
             bool TestPathCollision(FloatPosition position, List<uint> blockingTiles)
@@ -416,7 +449,7 @@ namespace Ambermoon.Render
 
             public void Update(uint ticks, ITime gameTime)
             {
-                if (!Active || character3D.Paused)
+                if (!Active || character3D.Paused || parent != null)
                     return;
 
                 var camera = (game.RenderPlayer as Player3D).Camera;
@@ -692,17 +725,11 @@ namespace Ambermoon.Render
             surface.Z = baseY + Global.DistancePerBlock - (objectPosition.Y / BlockSize) * Global.DistancePerBlock + yOffset;
         }
 
-        void AddMapCharacter(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint characterIndex,
-            Map.CharacterReference characterReference)
+        MapCharacter CreateMapCharacter(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint characterIndex,
+            Labdata.ObjectPosition objectPosition, Map.CharacterReference characterReference, MapCharacter parent)
         {
-            var obj = labdata.Objects[(int)characterReference.GraphicIndex - 1];
             float wallHeight = WallHeight;
-
-            if (obj.SubObjects.Count != 1)
-                throw new AmbermoonException(ExceptionScope.Data, "Character with more than 1 sub objects.");
-
-            var subObject = obj.SubObjects[0];
-            var objectInfo = subObject.Object;
+            var objectInfo = objectPosition.Object;
             bool floorObject = objectInfo.Flags.HasFlag(Labdata.ObjectFlags.FloorObject);
             var mapObject = floorObject
                 ? surfaceFactory.Create(SurfaceType.BillboardFloor,
@@ -719,13 +746,24 @@ namespace Ambermoon.Render
                     objectInfo.ExtrudeOffset / BlockSize);
             mapObject.Layer = layer;
             mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-            UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, subObject, objectInfo.ExtrudeOffset);
+            UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, objectPosition, objectInfo.ExtrudeOffset);
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
-                subObject, objectInfo.TextureIndex, objectInfo.ExtrudeOffset, objectInfo.NumAnimationFrames, 4.0f); // TODO: fps?
+                objectPosition, objectInfo.TextureIndex, parent, objectInfo.ExtrudeOffset, objectInfo.NumAnimationFrames, 4.0f); // TODO: fps?
             mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
             if (mapCharacter.Active)
                 mapObject.Visible = true;
+            return mapCharacter;
+        }
+
+        void AddMapCharacter(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint characterIndex,
+            Map.CharacterReference characterReference)
+        {
+            var obj = labdata.Objects[(int)characterReference.GraphicIndex - 1];
+            var subObject = obj.SubObjects[0];
+            var mapCharacter = CreateMapCharacter(surfaceFactory, layer, characterIndex, subObject, characterReference, null);
+            for (int i = 1; i < obj.SubObjects.Count; ++i)
+                mapCharacter.AddChild(CreateMapCharacter(surfaceFactory, layer, characterIndex, obj.SubObjects[i], characterReference, mapCharacter));
             mapCharacters.Add(characterIndex, mapCharacter);
         }
 
