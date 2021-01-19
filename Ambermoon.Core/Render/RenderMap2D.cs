@@ -612,10 +612,7 @@ namespace Ambermoon.Render
         public bool MonsterSeesPlayer(Position monsterPosition, uint? playerX = null, uint? playerY = null)
         {
             var position = new Position((int)(playerX ?? (uint)game.RenderPlayer.Position.X), (int)(playerY ?? (uint)game.RenderPlayer.Position.Y));
-            //Console.WriteLine($"Test {position.X},{position.Y} and {monsterPosition.X},{monsterPosition.Y}");
-            bool see = !Geometry.Raycast2D.TestRay(Map, position.X, position.Y, monsterPosition.X, monsterPosition.Y, tile => tile.BlocksSight(tileset));
-            //Console.WriteLine($"Can see? {see}");
-            return see;
+            return !Geometry.Raycast2D.TestRay(Map, position.X, position.Y, monsterPosition.X, monsterPosition.Y, tile => tile.BlocksSight(tileset));
         }
 
         public void UpdateCharacterVisibility(uint characterIndex)

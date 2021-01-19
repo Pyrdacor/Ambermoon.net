@@ -46,6 +46,20 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class ExecutableData
     {
+        // TODO: at offste 0x79be in data hunk 1 (german 1.05) there is the info about combat backgrounds
+        // descibed here https://gitlab.com/ambermoon/research/-/wikis/Amberfiles/Combat_background.
+        // there are 128 bytes (32 * 4). 4 bytes for 15 2D backgrounds and 4 bytes for 15 3D backgrounds.
+        // first byte is the combat background graphic index (1-based) and then 3 palette indices (daytime dependent).
+
+        // Before that there are 3*14 bytes. A 14 byte chunk for each world (Lyramion, Forest Moon, Morag).
+        // - ushort mapsPerRow
+        // - ushort mapsPerColumn
+        // - ushort tilesPerMapRow (= mapWidth)
+        // - ushort tilesPerMapColumn (= mapHeight)
+        // - ushort firstWorldMapIndex (1, 300, 513)
+        // - ushort nightEndTime (6)
+        // - ushort dayEndTime (18)
+
         public const int DigitGlyphOffset = 48; // Glyph 48 is '0'
         public string DataVersionString { get; }
         public string DataInfoString { get; }
@@ -88,7 +102,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
          * 
          * Offsets are for German 1.05.
          * 
-         * 0x7AA0: Palette indices for event pix (only 8 of 9)         * 
+         * 0x7AA0: Palette indices for event pix (only 8 of 9)
          * 0x8085: Name of the dictionary file. From here on the relative
          *         text offsets will differ between german and english version!
          */

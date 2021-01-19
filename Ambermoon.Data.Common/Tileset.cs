@@ -17,6 +17,7 @@ namespace Ambermoon.Data
             public byte Unknown2 { get; set; } // TODO: What is this? Remove if unused later.
             public ulong Flags { get; set; } // TODO: REMOVE later
             public ushort AllowedTravelTypes { get; set; }
+            public uint CombatBackgroundIndex { get; set; }
 
             public bool AllowMovement(TravelType travelType) => (AllowedTravelTypes & (1 << (int)travelType)) != 0;
         }

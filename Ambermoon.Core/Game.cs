@@ -194,7 +194,7 @@ namespace Ambermoon
         readonly Layout layout;
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly Dictionary<CharacterInfo, Panel> characterInfoPanels = new Dictionary<CharacterInfo, Panel>();
-        readonly IMapManager mapManager;
+        internal IMapManager MapManager { get; }
         internal IItemManager ItemManager { get; }
         internal ICharacterManager CharacterManager { get; }
         readonly Places places;
@@ -358,7 +358,7 @@ namespace Ambermoon
             movement = new Movement(legacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
-            this.mapManager = mapManager;
+            this.MapManager = mapManager;
             this.ItemManager = itemManager;
             CharacterManager = characterManager;
             SavegameManager = savegameManager;
@@ -684,13 +684,13 @@ namespace Ambermoon
             {
                 if (xOffset < 0)
                 {
-                    map = mapManager.GetMap(map.LeftMapIndex.Value);
+                    map = MapManager.GetMap(map.LeftMapIndex.Value);
                     xOffset += map.Width;
                     playerX += (uint)map.Width;
                 }
                 if (yOffset < 0)
                 {
-                    map = mapManager.GetMap(map.DownMapIndex.Value);
+                    map = MapManager.GetMap(map.DownMapIndex.Value);
                     yOffset += map.Height;
                     playerY += (uint)map.Height;
                 }
@@ -709,7 +709,7 @@ namespace Ambermoon
             if (player2D == null)
             {
                 player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
-                    renderView.SpriteFactory, renderView.GameData, new Position(0, 0), mapManager);
+                    renderView.SpriteFactory, renderView.GameData, new Position(0, 0), MapManager);
             }
 
             player2D.Visible = true;
@@ -861,11 +861,11 @@ namespace Ambermoon
             SetActivePartyMember(CurrentSavegame.ActivePartyMemberSlot);
 
             player = new Player();
-            var map = mapManager.GetMap(savegame.CurrentMapIndex);
+            var map = MapManager.GetMap(savegame.CurrentMapIndex);
             bool is3D = map.Type == MapType.Map3D;
-            renderMap2D = new RenderMap2D(this, null, mapManager, renderView);
-            renderMap3D = new RenderMap3D(this, null, mapManager, renderView, 0, 0, CharacterDirection.Up);
-            player3D = new Player3D(this, player, mapManager, camera3D, renderMap3D, 0, 0);
+            renderMap2D = new RenderMap2D(this, null, MapManager, renderView);
+            renderMap3D = new RenderMap3D(this, null, MapManager, renderView, 0, 0, CharacterDirection.Up);
+            player3D = new Player3D(this, player, MapManager, camera3D, renderMap3D, 0, 0);
             player.MovementAbility = PlayerMovementAbility.Walking;
             renderMap2D.MapChanged += RenderMap2D_MapChanged;
             renderMap3D.MapChanged += RenderMap3D_MapChanged;
@@ -1833,7 +1833,7 @@ namespace Ambermoon
             }
             else // 2D
             {
-                return renderMap2D.TriggerEvents(player2D, trigger, x, y, mapManager,
+                return renderMap2D.TriggerEvents(player2D, trigger, x, y, MapManager,
                     CurrentTicks, CurrentSavegame);
             }
         }
@@ -2542,7 +2542,7 @@ namespace Ambermoon
         {
             Fade(() =>
             {
-                var newMap = mapManager.GetMap(mapChangeEvent.MapIndex);
+                var newMap = MapManager.GetMap(mapChangeEvent.MapIndex);
                 bool mapChange = newMap.Index != Map.Index;
                 var player = is3D ? (IRenderPlayer)player3D : player2D;
                 bool mapTypeChanged = Map.Type != newMap.Type;
@@ -2780,7 +2780,7 @@ namespace Ambermoon
                         else
                         {
                             // Only allow if we could stand or swim there.
-                            var tileset = mapManager.GetTilesetForMap(renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y));
+                            var tileset = MapManager.GetTilesetForMap(renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y));
 
                             if (tile.AllowMovement(tileset, TravelType.Walk) ||
                                 tile.AllowMovement(tileset, TravelType.Swim))
@@ -2805,7 +2805,7 @@ namespace Ambermoon
         internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
         {
             bool sameMap = changeTileEvent.MapIndex == 0 || changeTileEvent.MapIndex == Map.Index;
-            var map = sameMap ? Map : mapManager.GetMap(changeTileEvent.MapIndex);
+            var map = sameMap ? Map : MapManager.GetMap(changeTileEvent.MapIndex);
             uint x = changeTileEvent.X - 1;
             uint y = changeTileEvent.Y - 1;
 
@@ -2819,7 +2819,7 @@ namespace Ambermoon
             }
             else // 2D
             {
-                map.UpdateTile(x, y, changeTileEvent.BackTileIndex, changeTileEvent.FrontTileIndex, mapManager.GetTilesetForMap(map));
+                map.UpdateTile(x, y, changeTileEvent.BackTileIndex, changeTileEvent.FrontTileIndex, MapManager.GetTilesetForMap(map));
 
                 if (sameMap) // TODO: what if we change an adjacent world map which is visible instead? is there even a use case?
                     renderMap2D.UpdateTile(x, y);
@@ -3094,7 +3094,8 @@ namespace Ambermoon
         /// It is used for monsters that are present on the map.
         /// </summary>
         /// <param name="monsterGroupIndex">Monster group index</param>
-        internal void StartBattle(uint monsterGroupIndex, bool failedEscape, Action<BattleEndInfo> battleEndHandler)
+        internal void StartBattle(uint monsterGroupIndex, bool failedEscape,
+            Action<BattleEndInfo> battleEndHandler, uint? combatBackgroundIndex = null)
         {
             if (BattleActive)
                 return;
@@ -3104,7 +3105,7 @@ namespace Ambermoon
                 MonsterGroupIndex = monsterGroupIndex
             };
             currentBattleInfo.BattleEnded += battleEndHandler;
-            ShowBattleWindow(null, failedEscape);
+            ShowBattleWindow(null, failedEscape, combatBackgroundIndex);
         }
 
         void UpdateBattle()
@@ -3399,24 +3400,24 @@ namespace Ambermoon
             });
         }
 
-        void ShowBattleWindow(Event nextEvent)
+        void ShowBattleWindow(Event nextEvent, uint? combatBackgroundIndex = null)
         {
-            SetWindow(Window.Battle, nextEvent);
-            layout.SetLayout(LayoutType.Battle);
-            ShowMap(false);
-            layout.Reset();
-
-            // TODO: where is the combat background index for 2D maps?
-            uint combatBackgroundIndex = is3D ? renderMap3D.CombatBackgroundIndex : Map.World switch
+            combatBackgroundIndex ??= is3D ? renderMap3D.CombatBackgroundIndex : Map.World switch
             {
                 World.Lyramion => 0u,
                 World.ForestMoon => 6u,
                 World.Morag => 4u,
                 _ => 0u
             };
+
+            SetWindow(Window.Battle, nextEvent, combatBackgroundIndex);
+            layout.SetLayout(LayoutType.Battle);
+            ShowMap(false);
+            layout.Reset();
+
             var combatBackground = is3D
-                ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex)
-                : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex);
+                ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex.Value)
+                : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex.Value);
             layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                 (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
             layout.FillArea(new Rect(0, 132, 320, 68), Color.Black, 0);
@@ -3826,12 +3827,12 @@ namespace Ambermoon
             }
         }
 
-        void ShowBattleWindow(Event nextEvent, bool surpriseAttack)
+        void ShowBattleWindow(Event nextEvent, bool surpriseAttack, uint? combatBackgroundIndex = null)
         {
             Fade(() =>
             {
                 roundPlayerBattleActions.Clear();
-                ShowBattleWindow(nextEvent);
+                ShowBattleWindow(nextEvent, combatBackgroundIndex);
                 // Note: Create clones so we can change the values in battle for each monster.
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
                 foreach (var monster in monsterGroup.Monsters)
@@ -4728,7 +4729,7 @@ namespace Ambermoon
             // TODO
         }
 
-        internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent)
+        internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent, uint? combatBackgroundIndex = null)
         {
             if (BattleActive)
                 return;
@@ -4737,7 +4738,7 @@ namespace Ambermoon
             {
                 MonsterGroupIndex = battleEvent.MonsterGroupIndex
             };
-            ShowBattleWindow(nextEvent, true);
+            ShowBattleWindow(nextEvent, true, combatBackgroundIndex);
         }
 
         void AddExperience(List<PartyMember> partyMembers, uint amount, Action finishedEvent = null)
@@ -5461,8 +5462,9 @@ namespace Ambermoon
                 case Window.Battle:
                 {
                     var nextEvent = (Event)currentWindow.WindowParameters[0];
+                    var combatBackgroundIndex = (uint?)currentWindow.WindowParameters[1];
                     currentWindow = DefaultWindow;
-                    Fade(() => { ShowBattleWindow(nextEvent); finishAction?.Invoke(); });
+                    Fade(() => { ShowBattleWindow(nextEvent, combatBackgroundIndex); finishAction?.Invoke(); });
                     break;
                 }
                 case Window.BattleLoot:

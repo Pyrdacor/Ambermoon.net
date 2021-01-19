@@ -1359,12 +1359,7 @@ namespace Ambermoon
                     throw new AmbermoonException(ExceptionScope.Application, "Invalid battle action.");
             }
 
-            // TODO: REMOVE
-            layout.SetBattleMessage("TODO^Click to continue ;)", TextColor.Green);
-            game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-            {
-                ActionFinished();
-            });
+            throw new AmbermoonException(ExceptionScope.Application, "Not processed battle action.");
         }
 
         void HideBattleFieldDamage(int tile)

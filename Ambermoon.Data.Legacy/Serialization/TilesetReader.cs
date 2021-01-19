@@ -44,7 +44,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             See: https://github.com/Faulo/slothsoft-amber/blob/master/assets/games/ambermoon/convert/lib.dictionaries.xsl */
         }
 
-        void ParseTileFlags(Tileset.Tile tile, ulong flags)
+        void ParseTileFlags(Tileset.Tile tile, uint flags)
         {
             // Bit 1: Draw partial in background? Bottom of a wall in the back?
             // Bit 2: Draw in background
@@ -58,6 +58,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             //  4 -> sit and look left
             //  5 -> sleep (always face down)
             // Bit 26: Player invisible (doors, behind towers/walls, etc)
+            // Bit 28-31: Combat background index
 
             // Another possible explanation for bit 2/6 would be:
             // - Bit 2: Disable baseline rendering / use custom sprite ordering
@@ -70,6 +71,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             tile.SitDirection = (sitSleepValue == 0 || sitSleepValue > 4) ? (CharacterDirection?)null : (CharacterDirection)(sitSleepValue - 1);
             tile.Sleep = sitSleepValue == 5;
             tile.Invisible = (flags & 0x04000000) != 0;
+            tile.CombatBackgroundIndex = flags >> 28;
         }
     }
 }
