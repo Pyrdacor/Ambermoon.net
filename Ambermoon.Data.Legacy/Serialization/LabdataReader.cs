@@ -110,7 +110,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     {
                         wallData.Overlays[o] = new Labdata.OverlayData
                         {
-                            NumAnimationFrames = dataReader.ReadByte(),
+                            Blend = dataReader.ReadByte() != 0,
                             TextureIndex = dataReader.ReadByte(),
                             PositionX = dataReader.ReadByte(),
                             PositionY = dataReader.ReadByte(),
@@ -172,7 +172,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                     foreach (var overlay in wall.Overlays)
                     {
                         wallGraphic.AddOverlay(overlay.PositionX, overlay.PositionY, ReadGraphic(graphicReader,
-                            overlayTextureFiles[(int)overlay.TextureIndex], (int)overlay.TextureWidth, (int)overlay.TextureHeight, true, true, true));
+                            overlayTextureFiles[(int)overlay.TextureIndex], (int)overlay.TextureWidth, (int)overlay.TextureHeight, true, true, true),
+                            overlay.Blend);
                     }
                 }
 

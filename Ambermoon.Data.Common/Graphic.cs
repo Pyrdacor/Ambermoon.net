@@ -119,7 +119,7 @@ namespace Ambermoon.Data
             }
         }
 
-        public void AddOverlay(uint x, uint y, Graphic overlay)
+        public void AddOverlay(uint x, uint y, Graphic overlay, bool blend = true)
         {
             if (!overlay.IndexedGraphic || !IndexedGraphic)
                 throw new AmbermoonException(ExceptionScope.Application, "Non-indexed graphics can not be used with overlays.");
@@ -133,8 +133,14 @@ namespace Ambermoon.Data
                 {
                     byte index = overlay.Data[c + r * overlay.Width];
 
-                    if (index != 0)
+                    if (!blend || index != 0)
                         Data[x + c + (y + r) * Width] = index;
+
+                    // In original the blend mode seems to be like this:
+                    //   mask = ~max(overlayA | overlayR | overlayG | overlayB)
+                    //   wallColor & colorARGB(mask, mask, mask, mask) | overlayColor
+                    // If graphics always are fully opaque or fully transparent (r,g,b,a = 0,0,0,0) this means blending
+                    // algorithm is like we do already with palette index 0.
                 }
             }
         }

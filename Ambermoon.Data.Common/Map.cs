@@ -15,11 +15,11 @@ namespace Ambermoon.Data
         Automapper = 1 << 3, // If active the map has to be explored
         Unknown1 = 1 << 4,
         WorldSurface = 1 << 5,
-        SecondaryUI3D = 1 << 6,
+        SecondaryUI3D = 1 << 6, // 3D maps with sky? All towns have this and the ruin tower.
         NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours
-        StationaryGraphics = 1 << 8,
+        StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images). Set for all world maps.
         Unknown2 = 1 << 9,
-        SecondaryUI2D = 1 << 10,
+        SecondaryUI2D = 1 << 10, // Display player smaller? Only all world maps have this set.
         Unknown3 = 1 << 11 // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
     }
 
@@ -48,7 +48,6 @@ namespace Ambermoon.Data
             /// </summary>
             public uint FrontTileIndex { get; set; }
             public uint MapEventId { get; set; }
-            public uint Unused { get; set; } // always 0
             public TileType Type { get; set; }
             public bool AllowMovement(Tileset tileset, TravelType travelType, bool isPlayer = true)
             {
@@ -62,13 +61,14 @@ namespace Ambermoon.Data
                     return true;
                 }
 
-                bool allowBack = BackTileIndex == 0 || tileset.Tiles[BackTileIndex - 1].AllowMovement(travelType);
+                /*bool allowBack = BackTileIndex == 0 || tileset.Tiles[BackTileIndex - 1].AllowMovement(travelType);
                 bool allowFront = FrontTileIndex == 0 || tileset.Tiles[FrontTileIndex - 1].AllowMovement(travelType);
 
                 if (FrontTileIndex != 0 && !tileset.Tiles[FrontTileIndex - 1].BringToFront)
                     allowBack = allowFront;
 
-                return allowBack && allowFront;
+                return allowBack && allowFront;*/
+                return tileset.AllowMovement(BackTileIndex, FrontTileIndex, travelType);
             }
             public bool BlocksSight(Tileset tileset)
             {
@@ -110,7 +110,7 @@ namespace Ambermoon.Data
             /// <summary>
             /// Upper 4 bits of this contains the combat background index.
             /// </summary>
-            public byte[] Unknown2 { get; set; }
+            public Tileset.TileFlags TileFlags { get; set; }
             public uint EventIndex { get; set; }
             /// <summary>
             /// This is:
@@ -271,7 +271,7 @@ namespace Ambermoon.Data
             return map;
         }
 
-        public static TileType TileTypeFromTile(Map.Tile tile, Tileset tileset)
+        public static TileType TileTypeFromTile(Tile tile, Tileset tileset)
         {
             var tilesetTile = tile.FrontTileIndex == 0 ? tileset.Tiles[tile.BackTileIndex - 1] : tileset.Tiles[tile.FrontTileIndex - 1];
 
@@ -279,7 +279,7 @@ namespace Ambermoon.Data
                 return TileType.Bed;
             if (tilesetTile.SitDirection != null)
                 return TileType.ChairUp + (int)tilesetTile.SitDirection.Value;
-            if (tilesetTile.Invisible)
+            if (tilesetTile.CharacterInvisible)
                 return TileType.Invisible;
             if (tile.AllowMovement(tileset, TravelType.Swim))
                 return TileType.Water;

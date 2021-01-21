@@ -38,7 +38,7 @@ namespace Ambermoon.Data
 
         public struct OverlayData
         {
-            public uint NumAnimationFrames;
+            public bool Blend;
             public uint TextureIndex;
             public uint PositionX;
             public uint PositionY;
@@ -83,7 +83,7 @@ namespace Ambermoon.Data
                     for (int o = 0; o < Overlays.Length; ++o)
                     {
                         var overlay = Overlays[o];
-                        content += $"\n\t\tOverlay{o + 1} -> Texture: {overlay.TextureIndex} ({overlay.TextureWidth}x{overlay.TextureHeight}), Position: {overlay.PositionX}:{overlay.PositionY}, Frames {overlay.NumAnimationFrames}";
+                        content += $"\n\t\tOverlay{o + 1} -> Texture: {overlay.TextureIndex} ({overlay.TextureWidth}x{overlay.TextureHeight}), Position: {overlay.PositionX}:{overlay.PositionY}, Blend {overlay.Blend}";
                     }
                 }
 

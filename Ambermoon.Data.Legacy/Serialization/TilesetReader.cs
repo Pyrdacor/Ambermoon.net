@@ -17,9 +17,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 tileset.Tiles[i].GraphicIndex = dataReader.ReadWord();
                 tileset.Tiles[i].NumAnimationFrames = dataReader.ReadByte();
                 tileset.Tiles[i].Unknown = dataReader.ReadByte();
-                tileset.Tiles[i].Flags = tileFlags; // TODO: REMOVE later
-
-                ParseTileFlags(tileset.Tiles[i], tileFlags);
+                tileset.Tiles[i].Flags = (Tileset.TileFlags)tileFlags;
             }
 
             // TODO
@@ -42,36 +40,6 @@ namespace Ambermoon.Data.Legacy.Serialization
 				<option key="15" val="15 orange" />
                And he said that Unknown2 above is this color index.
             See: https://github.com/Faulo/slothsoft-amber/blob/master/assets/games/ambermoon/convert/lib.dictionaries.xsl */
-        }
-
-        void ParseTileFlags(Tileset.Tile tile, uint flags)
-        {
-            // Bit 1: Draw partial in background? Bottom of a wall in the back?
-            // Bit 2: Draw in background
-            // Bit 6: Draw above player (not sure as it is in combination with bit 2 often, but it seems to work if this overrides bit 2)
-            // Bit 8-18: Travel type allowed flags (1 means allowed, 0 means not allowed/blocking).
-            // Bit 23-25: Sit/sleep value
-            //  0 -> no sitting nor sleeping
-            //  1 -> sit and look up
-            //  2 -> sit and look right
-            //  3 -> sit and look down
-            //  4 -> sit and look left
-            //  5 -> sleep (always face down)
-            // Bit 26: Player invisible (doors, behind towers/walls, etc)
-            // Bit 28-31: Combat background index when battle event is triggered on that tile
-
-            // Another possible explanation for bit 2/6 would be:
-            // - Bit 2: Disable baseline rendering / use custom sprite ordering
-            // - Bit 6: 0 = behind player, 1 = above player (only used if Bit 2 is set)
-
-            tile.Background = (flags & 0x04) != 0;
-            tile.BringToFront = (flags & 0x40) != 0;
-            tile.AllowedTravelTypes = (ushort)((flags >> 8) & 0x7ff);
-            var sitSleepValue = (flags >> 23) & 0x07;
-            tile.SitDirection = (sitSleepValue == 0 || sitSleepValue > 4) ? (CharacterDirection?)null : (CharacterDirection)(sitSleepValue - 1);
-            tile.Sleep = sitSleepValue == 5;
-            tile.Invisible = (flags & 0x04000000) != 0;
-            tile.CombatBackgroundIndex = flags >> 28;
         }
     }
 }

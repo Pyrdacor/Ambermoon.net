@@ -84,6 +84,7 @@ namespace Ambermoon.Render
             readonly Character3D character3D;
             readonly List<MapCharacter> children = new List<MapCharacter>(7);
             readonly MapCharacter parent = null;
+            public Tileset.TileFlags TileFlags => characterReference?.TileFlags ?? Tileset.TileFlags.None;
 
             public static void Reset() => interacting = false;
 
@@ -112,6 +113,16 @@ namespace Ambermoon.Render
                     character3D.MoveRequested += TestPossibleMovement;
                     ResetPosition(game.GameTime);
                 }
+            }
+
+            public ICollisionBody GetCollisionBody()
+            {
+                return new CollisionSphere3D
+                {
+                    CenterX = surface.X,
+                    CenterZ = -surface.Z,
+                    Radius = objectPosition.Object.CollisionRadius / BlockSize
+                };
             }
 
             public void AddChild(MapCharacter child)
@@ -1074,6 +1085,22 @@ namespace Ambermoon.Render
                     foreach (var collisionBody in blockCollisionBodies[blockIndex])
                         info.CollisionBodies.Add(collisionBody);
                 }
+                // TODO: characters on tiles
+                /*else
+                {
+                    foreach (var mapCharacter in mapCharacters.Where(c => c.Value?.Active == true && c.Value.Position == position))
+                    {
+                        var flags = mapCharacter.Value.TileFlags;
+
+                        if (!flags.HasFlag(Tileset.TileFlags.UseBackgroundTileFlags))
+                        {
+                            var tile = new Tileset.Tile { Flags = flags };
+
+                            if (tile.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement))
+                                info.CollisionBodies.Add(mapCharacter.Value.GetCollisionBody());
+                        }
+                    }
+                }*/
             }
 
             return info;

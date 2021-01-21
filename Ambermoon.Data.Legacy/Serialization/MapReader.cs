@@ -38,7 +38,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var type = dataReader.ReadByte();
                 var eventIndex = dataReader.ReadByte();
                 var gfxIndex = dataReader.ReadWord();
-                var unknown2 = dataReader.ReadBytes(4);
+                var tileFlags = dataReader.ReadDword();
 
                 map.CharacterReferences[i] = index == 0 || type == 0 ? null : new Map.CharacterReference
                 {
@@ -48,8 +48,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                     CharacterFlags = (Map.CharacterReference.Flags)(type >> 2),
                     EventIndex = eventIndex,
                     GraphicIndex = gfxIndex,
-                    Unknown2 = unknown2,
-                    CombatBackgroundIndex = (uint)unknown2[0] >> 4
+                    TileFlags = (Tileset.TileFlags)tileFlags,
+                    CombatBackgroundIndex = tileFlags >> 28
                 };
 
                 // Note: Map 258 has 3 characters but one seems to be not used anymore.
@@ -83,10 +83,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                         var tileData = dataReader.ReadBytes(4);
                         map.Tiles[x, y] = new Map.Tile
                         {
-                            BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
-                            FrontTileIndex = ((uint)(tileData[2] & 0x07) << 8) | tileData[3],
-                            MapEventId = tileData[1] & 0x1fu,
-                            Unused = (tileData[2] & 0xf8u) >> 3
+                            BackTileIndex = tileData[0],
+                            FrontTileIndex = (uint)(tileData[2] << 8) | tileData[3],
+                            MapEventId = tileData[1]
                         };
                         map.Tiles[x, y].Type = Map.TileTypeFromTile(map.Tiles[x, y], tileset);
                     }
