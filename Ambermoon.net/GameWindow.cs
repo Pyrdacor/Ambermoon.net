@@ -202,8 +202,13 @@ namespace Ambermoon
                 Fullscreen = true;
 
             // Load game data
-            var gameData = new GameData();
-            gameData.Load(configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutablePath);
+            var gameData = configuration.GameData as GameData;
+
+            if (gameData == null)
+            {
+                gameData = new GameData();
+                gameData.Load(configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutablePath);
+            }
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData);
             var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?

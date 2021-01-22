@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Ambermoon.Data;
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -13,6 +14,10 @@ namespace Ambermoon
         public bool UseDataPath { get; set; } = false;
         public string DataPath { get; set; } = ExecutablePath;
         public bool LegacyMode { get; set; } = false;
+        /// <summary>
+        /// Can be set manually to provide a game data (e.g. from memory).
+        /// </summary>
+        public IGameData GameData { get; set; } = null;
 
         public static string ExecutablePath
         {

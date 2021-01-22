@@ -66,6 +66,34 @@ namespace Ambermoon.Data.Legacy
 
         static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.");
 
+        public void LoadFromContainer(byte[] containerData)
+        {
+            using var containerStream = new MemoryStream(containerData);
+            containerStream.Position = 0;
+            using var decompressedStream = new MemoryStream();
+            using var decompressionStream = new System.IO.Compression.DeflateStream(containerStream,
+                System.IO.Compression.CompressionMode.Decompress);
+            decompressionStream.CopyTo(decompressedStream);
+            using var reader = new BinaryReader(decompressedStream);
+            var fileReader = new FileReader();
+            uint fileCount = reader.ReadUInt16();
+
+            for (int i = 0; i < fileCount; ++i)
+            {
+                var name = reader.ReadString();
+                int dataLength = (int)(reader.ReadUInt32() & (int.MaxValue - 1));
+                var data = reader.ReadBytes(dataLength);
+                Files.Add(name, fileReader.ReadFile(name, data));
+
+                if (IsDictionary(name))
+                {
+                    Dictionaries.Add(name.Split('.').Last(), Files[name].Files[1]);
+                }
+            }
+
+            LoadTravelGraphics();
+        }
+
         public void Load(string folderPath)
         {
             var ambermoonFiles = Legacy.Files.AmigaFiles;
