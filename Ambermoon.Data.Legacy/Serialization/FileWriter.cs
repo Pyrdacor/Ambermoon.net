@@ -5,6 +5,27 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public static class FileWriter
     {
+        public static void Write(DataWriter writer, IFileContainer fileContainer)
+        {
+            var fileType = ((fileContainer.Header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)fileContainer.Header;
+
+            switch (fileType)
+            {
+                case FileType.JH:
+                    WriteJH(writer, fileContainer.Files[1].ReadToEnd(), (ushort)(fileContainer.Header & 0xffff), false);
+                    break;
+                case FileType.LOB:
+                    WriteLob(writer, fileContainer.Files[1].ReadToEnd());
+                    break;
+                case FileType.VOL1:
+                    WriteVol1(writer, fileContainer.Files[1].ReadToEnd());
+                    break;
+                default:
+                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ReadToEnd()), fileType);
+                    break;
+            }
+        }
+
         public static void WriteJH(DataWriter writer, byte[] fileData, ushort encryptKey, bool additionalLobCompression, bool noHeader = false)
         {
             if (additionalLobCompression)
