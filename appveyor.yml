@@ -25,7 +25,7 @@ artifacts:
 
 after_build:
     - ps: if ($env:APPVEYOR_REPO_TAG -eq $true) { ./publish.ps1 }
-    - ps: if ($env:APPVEYOR_REPO_TAG -eq $true) { ./nuget.ps1 }
+    - ps: ./nuget.ps1
 
 test: off
 
