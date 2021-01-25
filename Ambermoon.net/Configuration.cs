@@ -31,7 +31,7 @@ namespace Ambermoon
 
                 if (isWindows)
                 {
-                    if (assemblyDirectory.EndsWith(@"Debug") || assemblyDirectory.EndsWith(@"Release"))
+                    if (assemblyDirectory.EndsWith("Debug") || assemblyDirectory.EndsWith("Release") || assemblyDirectory.EndsWith("netcoreapp3.1"))
                     {
                         string projectFile = Path.GetFileNameWithoutExtension(assemblyPath) + ".csproj";
 
@@ -62,10 +62,10 @@ namespace Ambermoon
             }
         }
 
-        public static Configuration Load(string filename)
+        public static Configuration Load(string filename, Configuration defaultValue = null)
         {
             if (!File.Exists(filename))
-                return new Configuration();
+                return defaultValue;
 
             return JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(filename));
         }
