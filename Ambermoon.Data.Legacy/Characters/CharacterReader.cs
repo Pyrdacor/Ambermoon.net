@@ -33,7 +33,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.TrainingPoints = dataReader.ReadWord();
             character.Gold = dataReader.ReadWord();
             character.Food = dataReader.ReadWord();
-            character.UnknownWord28 = dataReader.ReadWord(); // Unknown
+            character.CharacterBitIndex = dataReader.ReadWord();
             character.Ailments = (Ailment)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
             character.UnknownWord34 = dataReader.ReadWord(); // Unknown

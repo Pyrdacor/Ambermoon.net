@@ -482,7 +482,9 @@ namespace Ambermoon.Data
             Keyword = 0,
             ShowItem = 1,
             GiveItem = 2,
-            // TODO: ask to join, ask to leave, give gold, give food
+            // TODO: give gold, give food
+            JoinParty = 5,
+            LeaveParty = 6,
             Talk = 7,
             Leave = 8
         }

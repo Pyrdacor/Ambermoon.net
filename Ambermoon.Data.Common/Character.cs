@@ -26,7 +26,14 @@ namespace Ambermoon.Data
         public ushort TrainingPoints { get; set; }
         public ushort Gold { get; set; }
         public ushort Food { get; set; }
-        public ushort UnknownWord28 { get; set; }
+        /// <summary>
+        /// Is used for party members to identify their associated map character.
+        /// 0xffff means "use the map character you talked to".
+        /// But party members like Selena, Sabine or Valdyn will move to another
+        /// location after you met them. This character bit represents the new
+        /// location.
+        /// </summary>
+        public ushort CharacterBitIndex { get; set; }
         public Ailment Ailments { get; set; }
         public ushort UnknownWord34 { get; set; }
         public CharacterValueCollection<Attribute> Attributes { get; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute

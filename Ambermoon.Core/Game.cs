@@ -3042,6 +3042,13 @@ namespace Ambermoon
         /// </summary>
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent)
         {
+            // TODO: If a party member joins the party, set Character.CharacterBitIndex to the current
+            // map character bit if Character.CharacterBitIndex is 0xffff. Also deactivate the character
+            // bit of the current character.
+            // TODO: If you leave the conversation with a party member and it is not in the party,
+            // activate the character at Character.CharacterBitIndex if it is not 0xffff. Also
+            // deactivate the current character in this case.
+
             void SayWord(string word)
             {
                 UntrapMouse();
