@@ -634,6 +634,10 @@ namespace Ambermoon
             keys[(int)Key.Down] = false;
             keys[(int)Key.Left] = false;
             keys[(int)Key.Right] = false;
+            keys[(int)Key.W] = false;
+            keys[(int)Key.A] = false;
+            keys[(int)Key.S] = false;
+            keys[(int)Key.D] = false;
             lastMoveTicksReset = CurrentTicks;
         }
 
@@ -1166,45 +1170,50 @@ namespace Ambermoon
             if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader)
                 return;
 
-            if (keys[(int)Key.Left] && !keys[(int)Key.Right])
+            bool left = keys[(int)Key.Left] || keys[(int)Key.A];
+            bool right = keys[(int)Key.Right] || keys[(int)Key.D];
+            bool up = keys[(int)Key.Up] || keys[(int)Key.W];
+            bool down = keys[(int)Key.Down] || keys[(int)Key.S];
+
+            if (left && !right)
             {
                 if (!is3D)
                 {
                     // diagonal movement is handled in up/down
-                    if (!keys[(int)Key.Up] && !keys[(int)Key.Down])
+                    if (!up && !down)
                         Move2D(-1, 0);
                 }
                 else
                     player3D.TurnLeft(movement.TurnSpeed3D);
             }
-            if (keys[(int)Key.Right] && !keys[(int)Key.Left])
+            if (right && !left)
             {
                 if (!is3D)
                 {
                     // diagonal movement is handled in up/down
-                    if (!keys[(int)Key.Up] && !keys[(int)Key.Down])
+                    if (!up && !down)
                         Move2D(1, 0);
                 }
                 else
                     player3D.TurnRight(movement.TurnSpeed3D);
             }
-            if (keys[(int)Key.Up] && !keys[(int)Key.Down])
+            if (up && !down)
             {
                 if (!is3D)
                 {
-                    int x = keys[(int)Key.Left] && !keys[(int)Key.Right] ? -1 :
-                        keys[(int)Key.Right] && !keys[(int)Key.Left] ? 1 : 0;
+                    int x = left && !right ? -1 :
+                        right && !left ? 1 : 0;
                     Move2D(x, -1);
                 }
                 else
                     player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
             }
-            if (keys[(int)Key.Down] && !keys[(int)Key.Up])
+            if (down && !up)
             {
                 if (!is3D)
                 {
-                    int x = keys[(int)Key.Left] && !keys[(int)Key.Right] ? -1 :
-                        keys[(int)Key.Right] && !keys[(int)Key.Left] ? 1 : 0;
+                    int x = left && !right ? -1 :
+                        right && !left ? 1 : 0;
                     Move2D(x, 1);
                 }
                 else

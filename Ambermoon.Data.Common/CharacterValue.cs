@@ -7,11 +7,26 @@ namespace Ambermoon.Data
     [Serializable]
     public class CharacterValue
     {
+        /// <summary>
+        /// Current value without bonus.
+        /// While exhausted this will be the exhausted value
+        /// (half the previous value) and the actual value
+        /// is stored temporarly in <see cref="StoredValue"/>.
+        /// </summary>
         public uint CurrentValue { get; set; }
+        /// <summary>
+        /// Maximum value for the character.
+        /// </summary>
         public uint MaxValue { get; set; }
+        /// <summary>
+        /// Bonus from equipment.
+        /// </summary>
         public uint BonusValue { get; set; }
-        public uint Unknown { get; set; }
-        public uint TotalCurrentValue => Util.Limit(0, CurrentValue + BonusValue, MaxValue);
+        /// <summary>
+        /// This stores the actual value while exhaustion is active.
+        /// </summary>
+        public uint StoredValue { get; set; }
+        public uint TotalCurrentValue => Math.Max(0, CurrentValue + BonusValue);
     }
 
     [Serializable]

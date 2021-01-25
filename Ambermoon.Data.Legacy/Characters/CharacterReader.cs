@@ -46,14 +46,14 @@ namespace Ambermoon.Data.Legacy.Characters
                 attribute.CurrentValue = dataReader.ReadWord();
                 attribute.MaxValue = dataReader.ReadWord();
                 attribute.BonusValue = dataReader.ReadWord();
-                attribute.Unknown = dataReader.ReadWord();
+                attribute.StoredValue = dataReader.ReadWord();
             }
             foreach (var ability in character.Abilities)
             {
                 ability.CurrentValue = dataReader.ReadWord();
                 ability.MaxValue = dataReader.ReadWord();
                 ability.BonusValue = dataReader.ReadWord();
-                ability.Unknown = dataReader.ReadWord();
+                ability.StoredValue = dataReader.ReadWord();
             }
             character.HitPoints.CurrentValue = dataReader.ReadWord();
             character.HitPoints.MaxValue = dataReader.ReadWord();

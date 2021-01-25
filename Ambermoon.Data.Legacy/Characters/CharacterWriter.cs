@@ -40,14 +40,14 @@ namespace Ambermoon.Data.Legacy.Characters
                 dataWriter.Write((ushort)attribute.CurrentValue);
                 dataWriter.Write((ushort)attribute.MaxValue);
                 dataWriter.Write((ushort)attribute.BonusValue);
-                dataWriter.Write((ushort)attribute.Unknown); // Unknown
+                dataWriter.Write((ushort)attribute.StoredValue);
             }
             foreach (var ability in character.Abilities)
             {
                 dataWriter.Write((ushort)ability.CurrentValue);
                 dataWriter.Write((ushort)ability.MaxValue);
                 dataWriter.Write((ushort)ability.BonusValue);
-                dataWriter.Write((ushort)ability.Unknown); // Unknown
+                dataWriter.Write((ushort)ability.StoredValue);
             }
             dataWriter.Write((ushort)character.HitPoints.CurrentValue);
             dataWriter.Write((ushort)character.HitPoints.MaxValue);

@@ -128,6 +128,10 @@ namespace Ambermoon
             Silk.NET.Input.Common.Key.Home => Key.Home,
             Silk.NET.Input.Common.Key.End => Key.End,
             Silk.NET.Input.Common.Key.Space => Key.Space,
+            Silk.NET.Input.Common.Key.W => Key.W,
+            Silk.NET.Input.Common.Key.A => Key.A,
+            Silk.NET.Input.Common.Key.S => Key.S,
+            Silk.NET.Input.Common.Key.D => Key.D,
             _ => Key.Invalid,
         };
 

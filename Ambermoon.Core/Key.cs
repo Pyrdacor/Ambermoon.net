@@ -39,6 +39,10 @@
         PageDown,
         Home,
         End,
-        Space
+        Space,
+        W,
+        A,
+        S,
+        D
     }
 }
