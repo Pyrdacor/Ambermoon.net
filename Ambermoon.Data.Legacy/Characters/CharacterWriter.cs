@@ -28,7 +28,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.TrainingPoints);
             dataWriter.Write(character.Gold);
             dataWriter.Write(character.Food);
-            dataWriter.Write(character.UnknownWord28); // Unknown
+            dataWriter.Write(character.CharacterBitIndex);
             dataWriter.WriteEnumAsWord(character.Ailments);
             dataWriter.Write(GetIfMonster<ushort>(character, monster => monster.DefeatExperience, 0));
             dataWriter.Write(character.UnknownWord34); // Unknown
