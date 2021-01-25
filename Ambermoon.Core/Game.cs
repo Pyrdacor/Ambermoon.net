@@ -350,8 +350,7 @@ namespace Ambermoon
 
         public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
             ICharacterManager characterManager, ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
-            IDataNameProvider dataNameProvider, IPlacesReader placesReader, TextDictionary textDictionary, Cursor cursor,
-            bool legacyMode)
+            IDataNameProvider dataNameProvider, TextDictionary textDictionary, Places places, Cursor cursor, bool legacyMode)
         {
             this.cursor = cursor;
             this.legacyMode = legacyMode;
@@ -362,7 +361,7 @@ namespace Ambermoon
             this.ItemManager = itemManager;
             CharacterManager = characterManager;
             SavegameManager = savegameManager;
-            places = Places.Load(placesReader, renderView.GameData.Files["Place_data"].Files[1]);
+            this.places = places;
             this.savegameSerializer = savegameSerializer;
             DataNameProvider = dataNameProvider;
             this.textDictionary = textDictionary;

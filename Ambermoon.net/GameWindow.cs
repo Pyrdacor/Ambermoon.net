@@ -221,8 +221,9 @@ namespace Ambermoon
             // Create game
             Game = new Game(renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()), executableData.ItemManager,
-                new CharacterManager(gameData, graphicProvider), new SavegameManager(), new SavegameSerializer(), new DataNameProvider(executableData), new PlacesReader(),
-                textDictionary, new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
+                new CharacterManager(gameData, graphicProvider), new SavegameManager(), new SavegameSerializer(), new DataNameProvider(executableData),
+                textDictionary, Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]),
+                new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
                 configuration.LegacyMode);
             Game.QuitRequested += window.Close;
             Game.MouseTrappedChanged += (bool trapped, Position position) =>

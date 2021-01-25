@@ -11,8 +11,6 @@ namespace Ambermoon.Data
         Dictionary<string, IDataReader> Dictionaries { get; }
         Dictionary<StationaryImage, GraphicInfo> StationaryImageInfos { get; }
         TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction);
-
-        void Load(string folderPath);
         Character2DAnimationInfo PlayerAnimationInfo { get; }
     }
 }
