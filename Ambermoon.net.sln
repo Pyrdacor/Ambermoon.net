@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Data.Common", "Am
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Data.Legacy", "Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj", "{8A7AB439-BC15-4364-9E47-2C33493ABE65}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambermoon.Data.Pyrdacor", "Ambermoon.Data.Pyrdacor\Ambermoon.Data.Pyrdacor.csproj", "{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,18 @@ Global
 		{8A7AB439-BC15-4364-9E47-2C33493ABE65}.Release|x64.Build.0 = Release|Any CPU
 		{8A7AB439-BC15-4364-9E47-2C33493ABE65}.Release|x86.ActiveCfg = Release|Any CPU
 		{8A7AB439-BC15-4364-9E47-2C33493ABE65}.Release|x86.Build.0 = Release|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Debug|x64.Build.0 = Debug|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Debug|x86.Build.0 = Debug|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Release|x64.ActiveCfg = Release|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Release|x64.Build.0 = Release|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Release|x86.ActiveCfg = Release|Any CPU
+		{6578FC44-2E58-458F-B7A8-AD97BB3C12CA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

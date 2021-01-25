@@ -26,7 +26,7 @@ namespace Ambermoon.Data.Legacy
 
         public Dictionary<string, IFileContainer> Files { get; } = new Dictionary<string, IFileContainer>();
         public Dictionary<string, IDataReader> Dictionaries { get; } = new Dictionary<string, IDataReader>();
-        public Dictionary<StationaryImage, GraphicInfo> StationaryImageInfos { get; } = new Dictionary<StationaryImage, GraphicInfo>
+        public static Dictionary<StationaryImage, GraphicInfo> StationaryImageInformation { get; } = new Dictionary<StationaryImage, GraphicInfo>
         {
             { StationaryImage.Horse, new GraphicInfo { Width = 32, Height = 22, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
             { StationaryImage.Raft, new GraphicInfo { Width = 32, Height = 11, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
@@ -34,6 +34,7 @@ namespace Ambermoon.Data.Legacy
             { StationaryImage.SandLizard, new GraphicInfo { Width = 48, Height = 21, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
             { StationaryImage.SandShip, new GraphicInfo { Width = 48, Height = 39, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } }
         };
+        public Dictionary<StationaryImage, GraphicInfo> StationaryImageInfos => StationaryImageInformation;
         private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
         private readonly LoadPreference loadPreference;
         private readonly ILogger log;
@@ -248,12 +249,9 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction)
-        {
-            return travelGraphicInfos[(int)type * 4 + (int)direction];
-        }
+        public TravelGraphicInfo GetTravelGraphicInfo(TravelType type, CharacterDirection direction) => travelGraphicInfos[(int)type * 4 + (int)direction];
 
-        public Character2DAnimationInfo PlayerAnimationInfo => new Character2DAnimationInfo
+        public static Character2DAnimationInfo PlayerAnimationInformation => new Character2DAnimationInfo
         {
             FrameWidth = 16,
             FrameHeight = 32,
@@ -267,5 +265,7 @@ namespace Ambermoon.Data.Legacy
             NoDirections = false,
             IgnoreTileType = false
         };
+
+        public Character2DAnimationInfo PlayerAnimationInfo => PlayerAnimationInformation;
     }
 }
