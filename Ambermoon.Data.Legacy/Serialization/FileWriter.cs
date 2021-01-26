@@ -12,22 +12,22 @@ namespace Ambermoon.Data.Legacy.Serialization
             switch (fileType)
             {
                 case FileType.JH:
-                    WriteJH(writer, fileContainer.Files[1].ReadToEnd(), (ushort)(fileContainer.Header & 0xffff), false);
+                    WriteJH(writer, fileContainer.Files[1].ToArray(), (ushort)(fileContainer.Header & 0xffff), false);
                     break;
                 case FileType.LOB:
-                    WriteLob(writer, fileContainer.Files[1].ReadToEnd());
+                    WriteLob(writer, fileContainer.Files[1].ToArray());
                     break;
                 case FileType.VOL1:
-                    WriteVol1(writer, fileContainer.Files[1].ReadToEnd());
+                    WriteVol1(writer, fileContainer.Files[1].ToArray());
                     break;
                 case FileType.AMBR:
                 case FileType.AMNC:
                 case FileType.AMNP:
                 case FileType.AMPC:
-                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ReadToEnd()), fileType);
+                    WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ToArray()), fileType);
                     break;
                 default: // raw
-                    writer.Write(fileContainer.Files[1].ReadToEnd());
+                    writer.Write(fileContainer.Files[1].ToArray());
                     break;
             }
         }
