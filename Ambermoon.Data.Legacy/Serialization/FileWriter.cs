@@ -20,8 +20,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case FileType.VOL1:
                     WriteVol1(writer, fileContainer.Files[1].ReadToEnd());
                     break;
-                default:
+                case FileType.AMBR:
+                case FileType.AMNC:
+                case FileType.AMNP:
+                case FileType.AMPC:
                     WriteContainer(writer, fileContainer.Files.ToDictionary(f => (uint)f.Key, f => f.Value.ReadToEnd()), fileType);
+                    break;
+                default: // raw
+                    writer.Write(fileContainer.Files[1].ReadToEnd());
                     break;
             }
         }
