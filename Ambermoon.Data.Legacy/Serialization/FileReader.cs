@@ -98,6 +98,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                         offset += size;
                     }
                 }
+
+                reader.Position = offset;
             }
 
             return fileContainer;
@@ -105,7 +107,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         private DataReader DecodeFile(DataReader reader, FileType containerType, int fileNumber)
         {
-            var header = reader.PeekDword();
+            var header = reader.Size < 4 ? 0 : reader.PeekDword();
             var fileType = ((header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)header;
 
             if (fileType == FileType.JH)
@@ -118,7 +120,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 reader = new DataReader(JH.Crypt(reader, (ushort)fileNumber));
             }
 
-            header = reader.PeekDword(); // Note: The header might have changed above.
+            header = reader.Size < 4 ? 0 : reader.PeekDword(); // Note: The header might have changed above.
             fileType = (FileType)header; // Note: No need to check for JH here as this can not happen.
 
             // See if it is a LOB file

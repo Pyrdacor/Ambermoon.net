@@ -32,5 +32,6 @@ namespace Ambermoon.Data.Serialization
         long FindString(string str, long offset);
         void AlignToWord();
         void AlignToDword();
+        byte[] ToArray();
     }
 }

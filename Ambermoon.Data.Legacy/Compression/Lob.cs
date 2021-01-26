@@ -56,8 +56,6 @@ namespace Ambermoon.Data.Legacy.Compression
                 }
             }
 
-            // Note: The multiple for loops avoid additional if branches and therefore hopefully add to speed.
-
             // first byte can not contain a match
             trie.Add(data, 0, MaxMatchLength);
             compressedData.Add(data[0]);
@@ -81,7 +79,7 @@ namespace Ambermoon.Data.Legacy.Compression
                     AddByte(data[i]);
             }
 
-            for (; i <= data.Length - 3; ++i)
+            for (; i <= data.Length - MinMatchLength; ++i)
             {
                 int length = data.Length - i;
                 var match = trie.GetLongestMatch(data, i, length);

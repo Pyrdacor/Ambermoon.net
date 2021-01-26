@@ -69,7 +69,7 @@ namespace Ambermoon.Data
             int newWidth = Util.Floor(factor * Width);
             int newHeight = Util.Floor(factor * Height);
 
-            var graphic = new Graphic(newWidth, newHeight, 0);
+            var graphic = new Graphic(newWidth, newHeight, 0) { IndexedGraphic = IndexedGraphic };
 
             for (int y = 0; y < newHeight; ++y)
             {
@@ -92,7 +92,7 @@ namespace Ambermoon.Data
             if (Width == 0 || Height == 0 || width == 0 || height == 0)
                 return new Graphic(0, 0, 0);
 
-            var graphic = new Graphic(width, height, 0);
+            var graphic = new Graphic(width, height, 0) { IndexedGraphic = IndexedGraphic };
 
             float xFactor = (float)width / Width;
             float yFactor = (float)height / Height;
@@ -157,13 +157,14 @@ namespace Ambermoon.Data
             {
                 Width = width,
                 Height = height,
-                Data = data
+                Data = data,
+                IndexedGraphic = true
             };
         }
 
         public static Graphic CreateGradient(int width, int height, int startY, int rowsPerIncrease, byte colorIndex, byte endColorIndex)
         {
-            Graphic graphic = new Graphic(width, height, colorIndex);
+            Graphic graphic = new Graphic(width, height, colorIndex) { IndexedGraphic = true };
 
             for (int y = startY; y < height; ++y)
             {
@@ -235,7 +236,7 @@ namespace Ambermoon.Data
 
         public Graphic Build()
         {
-            var graphic = new Graphic(width, height, 0);
+            var graphic = new Graphic(width, height, 0) { IndexedGraphic = true };
 
             foreach (var coloredArea in coloredAreas)
             {

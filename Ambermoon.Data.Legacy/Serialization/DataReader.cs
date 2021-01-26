@@ -219,5 +219,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (Position % 4 != 0)
                 Position += 4 - Position % 4;
         }
+
+        public byte[] ToArray() => data;
     }
 }
