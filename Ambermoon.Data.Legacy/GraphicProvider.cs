@@ -161,6 +161,7 @@ namespace Ambermoon.Data.Legacy
                 else if (type == GraphicType.Transports)
                 {
                     var reader = gameData.Files["Stationary"].Files[1];
+                    reader.Position = 0;
                     graphics[type] = gameData.StationaryImageInfos.Select(info =>
                     {
                         var graphic = new Graphic();
@@ -183,6 +184,7 @@ namespace Ambermoon.Data.Legacy
                     foreach (var file in gameData.Files["NPC_gfx.amb"].Files)
                     {
                         var reader = file.Value;
+                        reader.Position = 0;
 
                         while (reader.Position <= reader.Size - graphicInfo.DataSize)
                         {

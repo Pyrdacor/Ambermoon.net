@@ -25,7 +25,7 @@ namespace Ambermoon.UI
         uint? continuousActionDelayInTicks = null;
         uint? initialContinuousActionDelayInTicks = null;
 
-        public Button(IRenderView renderView, Position position)
+        public Button(IRenderView renderView, Position position, TextureAtlasManager textureAtlasManager = null)
         {
             Area = new Rect(position, new Size(Width, Height));
 
@@ -38,7 +38,7 @@ namespace Ambermoon.UI
             disableOverlay.Layer = layer;
             iconSprite.Layer = layer;
 
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+            textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.UI);
             frameSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.ButtonFrame));
             disableOverlay.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ButtonDisableOverlay));
             iconSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetButtonGraphicIndex(ButtonType.Empty));

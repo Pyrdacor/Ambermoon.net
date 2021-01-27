@@ -120,6 +120,9 @@ namespace Ambermoon.Renderer
 
         protected void Update<U>(DataUpdater<U> updater, int index, U value)
         {
+            if (buffer == null)
+                return; // already disposed
+
             if (updater(buffer, index * Dimension, value))
                 changedSinceLastCreation = true;
         }

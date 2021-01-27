@@ -3242,7 +3242,7 @@ namespace Ambermoon
                 var portraits = PartyMembers.ToDictionary(p => SlotFromPartyMember(p),
                     p => layout.AddSprite(new Rect(0, 0, 32, 34), Graphics.PortraitOffset + p.PortraitIndex - 1, 49, 5, p.Name, TextColor.White));
                 var portraitBackgrounds = PartyMembers.ToDictionary(p => SlotFromPartyMember(p), _ => (FilledArea)null);
-                var battlePositions = CurrentSavegame.BattlePositions.Select((p, i) => new { p, i }).ToDictionary(p => (int)p.p, p => p.i);
+                var battlePositions = CurrentSavegame.BattlePositions.Select((p, i) => new { p, i }).Where(p => GetPartyMember(p.i) != null).ToDictionary(p => (int)p.p, p => p.i);
                 // Each box is 34x36 pixels in size (with border)
                 // 43 pixels y-offset to second row
                 // Between each box there is a x-offset of 48 pixels

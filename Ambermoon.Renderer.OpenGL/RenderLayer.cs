@@ -105,7 +105,7 @@ namespace Ambermoon.Renderer
                 supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
                 opaque);
 
-            // UI uses color-filled areas and creates effects like black fading map transitions.
+            // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
             if (layer == Layer.UI || layer == Layer.Effects)
                 renderBufferColorRects = new RenderBuffer(state, false, false, false, true, true);
 

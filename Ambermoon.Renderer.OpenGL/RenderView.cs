@@ -102,8 +102,9 @@ namespace Ambermoon.Renderer.OpenGL
 
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
-            IFontProvider fontProvider, ITextProcessor textProcessor, int screenWidth, int screenHeight,
-            DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
+            IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
+            int screenWidth, int screenHeight, DeviceType deviceType = DeviceType.Desktop,
+            SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
             OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
@@ -132,8 +133,7 @@ namespace Ambermoon.Renderer.OpenGL
 
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
-            var textureAtlasManager = TextureAtlasManager.Instance;
-            textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider);
+            var textureAtlasManager = textureAtlasManagerProvider?.Invoke();
             var palette = textureAtlasManager.CreatePalette(graphicProvider);
 
             foreach (var layer in Enum.GetValues<Layer>())

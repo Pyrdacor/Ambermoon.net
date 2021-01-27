@@ -12,10 +12,10 @@ namespace Ambermoon.Render
         CursorType type = CursorType.Sword;
         internal Position Hotspot { get; private set; } = null;
 
-        public Cursor(IRenderView renderView, IReadOnlyList<Position> cursorHotspots)
+        public Cursor(IRenderView renderView, IReadOnlyList<Position> cursorHotspots, TextureAtlasManager textureAtlasManager = null)
         {
             this.renderView = renderView;
-            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Cursor);
+            textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Cursor);
             sprite = renderView.SpriteFactory.Create(16, 16, true);
             sprite.PaletteIndex = 0;
             sprite.Layer = renderView.GetLayer(Layer.Cursor);

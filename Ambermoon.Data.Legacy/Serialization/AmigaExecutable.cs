@@ -126,6 +126,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
 		public static List<IHunk> Read(IDataReader dataReader, bool deplodeIfNecessary = true)
         {
+			dataReader.Position = 0;
+
 			static void Throw()
 			{
 				throw new AmbermoonException(ExceptionScope.Data, "Invalid executable file.");

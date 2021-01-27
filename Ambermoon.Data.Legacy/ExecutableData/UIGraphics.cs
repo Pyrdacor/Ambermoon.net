@@ -100,8 +100,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             dataReader.Position = 0x285C; // start at base button shape
 
             graphicInfo.Height = 17;
+            graphicInfo.Alpha = false;
             entries.Add(UIGraphic.ButtonFrame, ReadGraphic(dataReader));
             entries.Add(UIGraphic.ButtonFramePressed, ReadGraphic(dataReader));
+            graphicInfo.Alpha = true;
             graphicInfo.Width = 30;
             graphicInfo.Height = 4;
             entries.Add(UIGraphic.ButtonDisabledOverlay, ReadGraphic(dataReader));

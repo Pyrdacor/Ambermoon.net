@@ -112,6 +112,65 @@ namespace Ambermoon.Render
             return paletteBuilder.CreateUnpacked(32, 4).Texture;
         }
 
+        public static KeyValuePair<TextureAtlasManager, Action> CreateUIOnly(IGraphicProvider graphicProvider, IFontProvider fontProvider)
+        {
+            var textureAtlasManager = new TextureAtlasManager();
+            return KeyValuePair.Create<TextureAtlasManager, Action>(textureAtlasManager, () =>
+            {
+                textureAtlasManager.AddUI(graphicProvider, false);
+                textureAtlasManager.AddCursors(graphicProvider);
+                textureAtlasManager.AddFont(fontProvider);
+            });
+        }
+
+        public static TextureAtlasManager CreateEmpty()
+        {
+            return new TextureAtlasManager();
+        }
+
+        public void AddUIOnly(IGraphicProvider graphicProvider, IFontProvider fontProvider)
+        {
+            AddUI(graphicProvider, false);
+            AddCursors(graphicProvider);
+            AddFont(fontProvider);
+        }
+
+        void AddUI(IGraphicProvider graphicProvider, bool withLayout = true)
+        {
+            if (withLayout)
+            {
+                var layoutGraphics = graphicProvider.GetGraphics(GraphicType.Layout);
+
+                for (int i = 0; i < layoutGraphics.Count; ++i)
+                    AddTexture(Layer.UI, Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
+            }
+
+            var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
+
+            for (int i = 0; i < uiElementGraphics.Count; ++i)
+                AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
+        }
+
+        void AddCursors(IGraphicProvider graphicProvider)
+        {
+            var cursorGraphics = graphicProvider.GetGraphics(GraphicType.Cursor);
+
+            for (int i = 0; i < cursorGraphics.Count; ++i)
+                AddTexture(Layer.Cursor, (uint)i, cursorGraphics[i]);
+        }
+
+        void AddFont(IFontProvider fontProvider)
+        {
+            var font = fontProvider.GetFont();
+
+            for (uint i = 0; i < 94; ++i)
+                AddTexture(Layer.Text, i, font.GetGlyphGraphic(i));
+
+            // Add simple digits for damage display
+            for (uint i = 0; i < 10; ++i)
+                AddTexture(Layer.Text, 100 + i, font.GetDigitGlyphGraphic(i));
+        }
+
         public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider)
         {
             if (gameData == null)
@@ -178,15 +237,7 @@ namespace Ambermoon.Render
 
             #region UI Layout
 
-            var layoutGraphics = graphicProvider.GetGraphics(GraphicType.Layout);
-
-            for (int i = 0; i < layoutGraphics.Count; ++i)
-                AddTexture(Layer.UI, Graphics.LayoutOffset + (uint)i, layoutGraphics[i]);
-
-            var uiElementGraphics = graphicProvider.GetGraphics(GraphicType.UIElements);
-
-            for (int i = 0; i < uiElementGraphics.Count; ++i)
-                AddTexture(Layer.UI, Graphics.UICustomGraphicOffset + (uint)i, uiElementGraphics[i]);
+            AddUI(graphicProvider);
 
             #endregion
 
@@ -219,14 +270,7 @@ namespace Ambermoon.Render
 
             #region Text
 
-            var font = fontProvider.GetFont();
-
-            for (uint i = 0; i < 94; ++i)
-                AddTexture(Layer.Text, i, font.GetGlyphGraphic(i));
-
-            // Add simple digits for damage display
-            for (uint i = 0; i < 10; ++i)
-                AddTexture(Layer.Text, 100 + i, font.GetDigitGlyphGraphic(i));
+            AddFont(fontProvider);
 
             #endregion
 
@@ -241,10 +285,7 @@ namespace Ambermoon.Render
 
             #region Cursors
 
-            var cursorGraphics = graphicProvider.GetGraphics(GraphicType.Cursor);
-
-            for (int i = 0; i < cursorGraphics.Count; ++i)
-                AddTexture(Layer.Cursor, (uint)i, cursorGraphics[i]);
+            AddCursors(graphicProvider);
 
             #endregion
 

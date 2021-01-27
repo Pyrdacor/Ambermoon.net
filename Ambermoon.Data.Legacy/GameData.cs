@@ -2,6 +2,7 @@
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -66,7 +67,122 @@ namespace Ambermoon.Data.Legacy
 
         static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.");
 
+        public void LoadFromMemoryZip(Stream stream)
+        {
+            using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read, true);
+            var fileReader = new FileReader();
+            Func<string, IFileContainer> fileLoader = name =>
+            {
+                using var uncompressedStream = new MemoryStream();
+                archive.GetEntry(name).Open().CopyTo(uncompressedStream);
+                uncompressedStream.Position = 0;
+                return fileReader.ReadFile(name, uncompressedStream);
+            };
+            Func<string, bool> fileExistChecker = name => archive.GetEntry(name) != null;
+            Load(fileLoader, null, fileExistChecker);
+        }
+
+        public static string GetVersionInfo(string folderPath) => GetVersionInfo(folderPath, out _);
+
+        // TODO: preference settings?
+        public static string GetVersionInfo(string folderPath, out string language)
+        {
+            language = null;
+            var possibleAssemblies = new string[2] { "AM2_CPU", "AM2_BLIT" };
+
+            foreach (var assembly in possibleAssemblies)
+            {
+                var assemblyPath = Path.Combine(folderPath, assembly);
+
+                if (File.Exists(assemblyPath))
+                {
+                    // check last 128 bytes
+                    using var stream = File.OpenRead(assemblyPath);
+
+                    if (stream.Length < 128)
+                        return null;
+
+                    stream.Position = stream.Length - 128;
+                    Span<byte> buffer = new byte[128];
+                    stream.Read(buffer);
+                    return GetVersionFromAssembly(buffer, out language);
+                }
+            }
+
+            var diskFile = FindDiskFile(folderPath, 'A');
+
+            if (diskFile != null)
+            {
+                var adf = ADFReader.ReadADF(File.OpenRead(diskFile));
+
+                foreach (var assembly in possibleAssemblies)
+                {
+                    if (adf.ContainsKey(assembly))
+                    {
+                        var data = adf[assembly];
+
+                        if (data.Length < 128)
+                            continue;
+
+                        return GetVersionFromAssembly(data.TakeLast(128).ToArray(), out language);
+                    }
+                }
+            }
+
+            return null;
+
+            string GetVersionFromAssembly(Span<byte> last128Bytes, out string language)
+            {
+                language = null;
+                last128Bytes.Reverse();
+                string result = "";
+                string version = null;
+
+                for (int i = 0; i < last128Bytes.Length; ++i)
+                {
+                    if (last128Bytes[i] >= 128)
+                        result = "";
+                    else
+                    {
+                        if (last128Bytes[i] == 0 && result.Contains("Ambermoon "))
+                        {
+                            version = result.Substring(result.Length - 4, 4);
+                            result = "";
+                        }
+                        else if (version != null && last128Bytes[i] < 32)
+                        {
+                            language = result.Split(' ').LastOrDefault();
+                            return version;
+                        }
+                        else
+                            result += (char)last128Bytes[i];
+                    }
+                }
+
+                return version;
+            }
+        }
+
         public void Load(string folderPath)
+        {
+            var fileReader = new FileReader();
+            string GetPath(string name) => Path.Combine(folderPath, name.Replace('/', Path.DirectorySeparatorChar));
+            Func<string, IFileContainer> fileLoader = name => fileReader.ReadFile(name, File.OpenRead(GetPath(name)));
+            Func<char, Dictionary<string, byte[]>> diskLoader = disk =>
+            {
+                string diskFile = FindDiskFile(folderPath, disk);
+
+                if (diskFile == null)
+                    return null;
+
+                return ADFReader.ReadADF(File.OpenRead(diskFile));
+            };
+            Func<string, bool> fileExistChecker = name => File.Exists(GetPath(name));
+            Load(fileLoader, diskLoader, fileExistChecker);
+        }
+
+        void Load(Func<string, IFileContainer> fileLoader, Func<char, Dictionary<string, byte[]>> diskLoader,
+            Func<string, bool> fileExistChecker)
         {
             var ambermoonFiles = Legacy.Files.AmigaFiles;
             var fileReader = new FileReader();
@@ -103,28 +219,27 @@ namespace Ambermoon.Data.Legacy
             foreach (var ambermoonFile in ambermoonFiles)
             {
                 var name = ambermoonFile.Key;
-                var path = Path.Combine(folderPath, name.Replace('/', Path.DirectorySeparatorChar));
 
                 if (log != null)
                     log.Append($"Trying to load file '{name}' ... ");
 
                 // prefer direct files but also allow loading ADF disks
-                if (loadPreference == LoadPreference.PreferExtracted && File.Exists(path))
+                if (loadPreference == LoadPreference.PreferExtracted && fileExistChecker(name))
                 {
-                    Files.Add(name, fileReader.ReadFile(name, File.OpenRead(path)));
+                    Files.Add(name, fileLoader(name));
                     HandleFileLoaded(name);
                 }
                 else if (loadPreference == LoadPreference.ForceExtracted)
                 {
-                    if (File.Exists(path))
+                    if (fileExistChecker(name))
                     {
-                        Files.Add(name, fileReader.ReadFile(name, File.OpenRead(path)));
+                        Files.Add(name, fileLoader(name));
                         HandleFileLoaded(name);
                     }
                     else
                     {
                         HandleFileNotFound(name, ambermoonFile.Value);
-                    }                        
+                    }
                 }
                 else
                 {
@@ -133,9 +248,9 @@ namespace Ambermoon.Data.Legacy
 
                     if (!loadedDisks.ContainsKey(disk))
                     {
-                        string diskFile = FindDiskFile(folderPath, disk);
+                        var loadedDisk = diskLoader?.Invoke(disk);
 
-                        if (diskFile == null)
+                        if (loadedDisk == null)
                         {
                             // file not found
                             if (loadPreference == LoadPreference.ForceAdf)
@@ -152,13 +267,13 @@ namespace Ambermoon.Data.Legacy
 
                             if (loadPreference == LoadPreference.PreferAdf)
                             {
-                                if (!File.Exists(path))
+                                if (!fileExistChecker(name))
                                 {
                                     HandleFileNotFound(name, disk);
                                 }
                                 else
                                 {
-                                    Files.Add(name, fileReader.ReadFile(name, File.OpenRead(path)));
+                                    Files.Add(name, fileLoader(name));
                                     HandleFileLoaded(name);
                                 }
                             }
@@ -166,7 +281,7 @@ namespace Ambermoon.Data.Legacy
                             continue;
                         }
 
-                        loadedDisks.Add(disk, ADFReader.ReadADF(File.OpenRead(diskFile)));
+                        loadedDisks.Add(disk, loadedDisk);
                     }
 
                     if (!loadedDisks[disk].ContainsKey(name))
