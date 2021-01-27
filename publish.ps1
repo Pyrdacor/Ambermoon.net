@@ -12,9 +12,10 @@ if ($isWindows) {
 } else {
   Write-Host Publish Linux executable
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r linux-x64 --no-restore
+  dotnet publish -c Release "./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj" -r linux-x64 --no-restore
   Write-Host Pack tar for Linux
-  cat "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.net" "./versions.dat" > "./Ambermoon.net/Ambermoon.net"
-  7z a Ambermoon.net-Linux.tar "./Ambermoon.net/Ambermoon.net"
+  Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.net"'
+  7z a Ambermoon.net-Linux.tar "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.net"
   7z a Ambermoon.net-Linux.tar.gz Ambermoon.net-Linux.tar
   rm Ambermoon.net-Linux.tar
 }
