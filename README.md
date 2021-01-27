@@ -8,9 +8,9 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run on Windows and Linu
 
 Version | Windows 64bit | Linux 64bit | Windows 32bit
 --- | --- | --- | ---
+0.2.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Windows32Bit.zip)
 0.1.8 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.8beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.8beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.8beta/Ambermoon.net-Windows32Bit.zip)
 0.1.7 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.7beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.7beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.7beta/Ambermoon.net-Windows32Bit.zip)
-0.1.6 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.6beta/Ambermoon.net-Windows32Bit.zip)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -21,17 +21,6 @@ Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/rel
 If you want to support this project or contribute scroll down to the bottom. You may also checkout my already working 'SerfCity (Die Siedler) rewrite' at [freeserf.net](https://github.com/Pyrdacor/freeserf.net).
 
 I also created another github project called [Ambermoon](https://github.com/Pyrdacor/Ambermoon) for providing resources and research the game data. Feel free to have a look or contribute.
-
-### How to run the game
-
-1. You need the original game data (either ADF files or extracted files like Party_char.amb etc).
-2. Put these files next to the downloaded executable file called Ambermoon.net.exe.
-3. If it doesn't work try to start from Windows CMD or Linux bash and check for error printouts.
-4. If this isn't working, try to install the latest .NET framework for your OS.
-5. If this still doesn't help please file an issue on the [Issue tracker](https://github.com/Pyrdacor/Ambermoon.net/issues). Please provide error messages, your setup (OS, game version, etc) and a description what you tried.
-
-**Note:** The game only runs on Windows and Ubuntu as of now. Feel free to try other linux distributions but I can't guarantee that it will run then.
-
 
 ## Screenshots
 
@@ -51,6 +40,7 @@ I also created another github project called [Ambermoon](https://github.com/Pyrd
 ![Events](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/EventBox.png "Events")
 ![Text box](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/DecisionBox.png "Text box")
 ![Active items](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/SpecialItems.png "Active items")
+![Version selector](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/VersionSelector.png "Version selector")
 
 
 ## Controls
