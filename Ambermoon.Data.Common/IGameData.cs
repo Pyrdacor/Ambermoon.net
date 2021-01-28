@@ -7,6 +7,7 @@ namespace Ambermoon.Data
 {
     public interface IGameData
     {
+        bool Loaded { get; }
         Dictionary<string, IFileContainer> Files { get; }
         Dictionary<string, IDataReader> Dictionaries { get; }
         Dictionary<StationaryImage, GraphicInfo> StationaryImageInfos { get; }

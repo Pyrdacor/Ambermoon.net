@@ -158,6 +158,7 @@ namespace Ambermoon
         }
 
         // TODO: cleanup members
+        readonly IConfiguration configuration;
         readonly Random random = new Random();
         internal SavegameTime GameTime { get; private set; } = null;
         const int FadeTime = 1000;
@@ -348,13 +349,13 @@ namespace Ambermoon
             }
         }
 
-        public Game(IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
+        public Game(IConfiguration configuration, IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
             ICharacterManager characterManager, ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
-            IDataNameProvider dataNameProvider, TextDictionary textDictionary, Places places, Cursor cursor, bool legacyMode)
+            IDataNameProvider dataNameProvider, TextDictionary textDictionary, Places places, Cursor cursor)
         {
+            this.configuration = configuration;
             this.cursor = cursor;
-            this.legacyMode = legacyMode;
-            movement = new Movement(legacyMode);
+            movement = new Movement(configuration.LegacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
             this.MapManager = mapManager;

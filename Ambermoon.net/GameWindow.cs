@@ -23,7 +23,6 @@ namespace Ambermoon
         Configuration configuration;
         RenderView renderView;
         IWindow window;
-        bool fullscreen = false;
         IMouse mouse = null;
         ICursor cursor = null;
 
@@ -35,14 +34,11 @@ namespace Ambermoon
         public Game Game { get; private set; }
         public bool Fullscreen
         {
-            get => fullscreen;
+            get => configuration.Fullscreen;
             set
             {
-                if (fullscreen == value)
-                    return;
-
-                fullscreen = value;
-                window.WindowState = fullscreen ? WindowState.Fullscreen : WindowState.Normal;
+                configuration.Fullscreen = value;
+                window.WindowState = configuration.Fullscreen ? WindowState.Fullscreen : WindowState.Normal;
 
                 if (cursor != null)
                     cursor.CursorMode = value ? CursorMode.Disabled : CursorMode.Hidden;
@@ -242,12 +238,11 @@ namespace Ambermoon
             InitGlyphs();
 
             // Create game
-            Game = new Game(renderView,
+            Game = new Game(configuration, renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()), executableData.ItemManager,
                 new CharacterManager(gameData, graphicProvider), new SavegameManager(), new SavegameSerializer(), new DataNameProvider(executableData),
                 textDictionary, Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]),
-                new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()),
-                configuration.LegacyMode);
+                new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()));
             Game.QuitRequested += window.Close;
             Game.MouseTrappedChanged += (bool trapped, Position position) =>
             {
@@ -275,8 +270,6 @@ namespace Ambermoon
                 return;
             }
 
-            var firstVersion = versions[0]; // TODO: use last selected
-            gameData = LoadBuiltinVersionData(firstVersion);
             GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion)
             {
                 var gameData = new GameData();
@@ -287,10 +280,43 @@ namespace Ambermoon
                 gameData.LoadFromMemoryZip(tempStream);
                 return gameData;
             }
+
+            GameData LoadGameDataFromDataPath()
+            {
+                var gameData = new GameData();
+                gameData.Load(dataPath);
+                return gameData;
+            }
+
+            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > 2)
+                configuration.GameVersionIndex = 0;
+
+            var additionalVersion = GameData.GetVersionInfo(dataPath, out var language);
+
+            if (additionalVersion == null && configuration.GameVersionIndex == 2)
+                configuration.GameVersionIndex = 0;
+
+            if (configuration.GameVersionIndex < 2)
+            {
+                gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex]);
+            }
+            else
+            {
+                try
+                {
+                    gameData = LoadGameDataFromDataPath();
+                }
+                catch
+                {
+                    configuration.GameVersionIndex = 0;
+                    gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex]);
+                }
+            }
+
             var builtinVersionDataProviders = new Func<IGameData>[2]
             {
-                () => gameData, // TODO: when use last selected this has to be changed
-                () => LoadBuiltinVersionData(versions[1])
+                () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0]),
+                () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1])
             };
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData);
@@ -314,7 +340,6 @@ namespace Ambermoon
                     DataProvider = builtinVersionDataProviders[i]
                 });
             }
-            var additionalVersion = GameData.GetVersionInfo(dataPath, out var language);
             if (additionalVersion != null)
             {
                 gameVersions.Add(new GameVersion
@@ -322,19 +347,16 @@ namespace Ambermoon
                     Version = additionalVersion,
                     Language = language,
                     Info = "From external data",
-                    DataProvider = () =>
-                    {
-                        var gameData = new GameData();
-                        gameData.Load(dataPath);
-                        return gameData;
-                    }
+                    DataProvider = configuration.GameVersionIndex == 2 ? (Func<IGameData>)(() => gameData) : LoadGameDataFromDataPath
                 });
             }
             var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
                 textureAtlasManager);
-            versionSelector = new VersionSelector(renderView, textureAtlasManager, gameVersions, cursor);
-            versionSelector.Closed += (gameData, saveInDataPath) =>
+            versionSelector = new VersionSelector(renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex);
+            versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
             {
+                configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
+                configuration.GameVersionIndex = gameVersionIndex;
                 selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : Configuration.ExecutablePath);
                 versionLoader.Dispose();
             };
@@ -359,7 +381,8 @@ namespace Ambermoon
             window.MakeCurrent();
 
             if (configuration.Fullscreen)
-                Fullscreen = true;
+                Fullscreen = true; // This will adjust the window
+
             // Setup input
             SetupInput(window.CreateInput());
 
@@ -400,8 +423,9 @@ namespace Ambermoon
         public void Run(Configuration configuration)
         {
             this.configuration = configuration;
-            Width = configuration.Width;
-            Height = configuration.Height;
+            var size = configuration.GetScreenSize();
+            configuration.Width = Width = size.Width;
+            configuration.Height = Height = size.Height;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             var videoMode = new VideoMode(new System.Drawing.Size(Width, Height), 60);

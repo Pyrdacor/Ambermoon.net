@@ -41,6 +41,7 @@ namespace Ambermoon.Data.Legacy
         private readonly bool stopAtFirstError;
         private readonly List<TravelGraphicInfo> travelGraphicInfos = new List<TravelGraphicInfo>(44);
         internal List<Graphic> TravelGraphics { get; } = new List<Graphic>(44);
+        public bool Loaded { get; private set; } = false;
 
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true)
         {
@@ -51,6 +52,9 @@ namespace Ambermoon.Data.Legacy
 
         private static string FindDiskFile(string folderPath, char disk)
         {
+            if (!Directory.Exists(folderPath))
+                return null;
+
             disk = char.ToLower(disk);
             var adfFiles = Directory.GetFiles(folderPath, "*.adf");
 
@@ -69,6 +73,7 @@ namespace Ambermoon.Data.Legacy
 
         public void LoadFromMemoryZip(Stream stream)
         {
+            Loaded = false;
             using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read, true);
             var fileReader = new FileReader();
             Func<string, IFileContainer> fileLoader = name =>
@@ -88,6 +93,10 @@ namespace Ambermoon.Data.Legacy
         public static string GetVersionInfo(string folderPath, out string language)
         {
             language = null;
+
+            if (!Directory.Exists(folderPath))
+                return null;
+
             var possibleAssemblies = new string[2] { "AM2_CPU", "AM2_BLIT" };
 
             foreach (var assembly in possibleAssemblies)
@@ -165,6 +174,16 @@ namespace Ambermoon.Data.Legacy
 
         public void Load(string folderPath)
         {
+            Loaded = false;
+
+            if (!Directory.Exists(folderPath))
+            {
+                if (stopAtFirstError)
+                    throw new FileNotFoundException("Given data folder does not exist.");
+
+                return;
+            }
+
             var fileReader = new FileReader();
             string GetPath(string name) => Path.Combine(folderPath, name.Replace('/', Path.DirectorySeparatorChar));
             Func<string, IFileContainer> fileLoader = name => fileReader.ReadFile(name, File.OpenRead(GetPath(name)));
@@ -302,6 +321,8 @@ namespace Ambermoon.Data.Legacy
             }
 
             LoadTravelGraphics();
+
+            Loaded = true;
         }
 
         void LoadTravelGraphics()

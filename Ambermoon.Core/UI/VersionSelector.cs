@@ -42,10 +42,10 @@ namespace Ambermoon.UI
             }
         }
 
-        public event Action<IGameData, bool> Closed;
+        public event Action<int, IGameData, bool> Closed;
 
         public VersionSelector(IRenderView renderView, TextureAtlasManager textureAtlasManager,
-            List<GameVersion> gameVersions, Cursor cursor)
+            List<GameVersion> gameVersions, Cursor cursor, int selectedVersion)
         {
             this.renderView = renderView;
             textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
@@ -140,8 +140,13 @@ namespace Ambermoon.UI
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
             okButton.Visible = true;
-            okButton.LeftClickAction = () => Closed?.Invoke(gameVersions[selectedVersion].DataProvider?.Invoke(), selectedVersion == 2 && selectedSaveOption == 1);
+            okButton.LeftClickAction = () =>
+            {
+                Closed?.Invoke(this.selectedVersion, gameVersions[this.selectedVersion].DataProvider?.Invoke(), this.selectedVersion == 2 && selectedSaveOption == 1);
+            };
             #endregion
+
+            SelectedVersion = selectedVersion;
         }
 
         Button CreateButton(Position position, TextureAtlasManager textureAtlasManager)
