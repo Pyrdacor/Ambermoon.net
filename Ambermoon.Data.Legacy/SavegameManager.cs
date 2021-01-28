@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -15,19 +16,26 @@ namespace Ambermoon.Data.Legacy
             if (savegameNames != null)
                 return savegameNames;
 
-            var file = gameData.Files["Saves"].Files[1];
-            this.current = current = file.ReadWord();
-            savegameNames = new string[10];
-            int position = file.Position;
-
-            for (int i = 0; i < 10; ++i)
+            if (!gameData.Files.ContainsKey("Saves"))
             {
-                savegameNames[i] = file.ReadNullTerminatedString();
+                savegameNames = Enumerable.Repeat("", 10).ToArray();
+            }
+            else
+            {
+                var file = gameData.Files["Saves"].Files[1];
+                this.current = current = file.ReadWord();
+                savegameNames = new string[10];
+                int position = file.Position;
 
-                if (i < 9)
+                for (int i = 0; i < 10; ++i)
                 {
-                    position += 39;
-                    file.Position = position;
+                    savegameNames[i] = file.ReadNullTerminatedString();
+
+                    if (i < 9)
+                    {
+                        position += 39;
+                        file.Position = position;
+                    }
                 }
             }
 
