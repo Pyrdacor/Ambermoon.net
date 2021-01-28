@@ -27,6 +27,7 @@ namespace Ambermoon.Data
     {
         #region Map
 
+        public List<Automap> Automaps { get; } = new List<Automap>();
         public uint CurrentMapIndex { get; set; }
         public uint CurrentMapX { get; set; }
         public uint CurrentMapY { get; set; }
@@ -287,8 +288,6 @@ namespace Ambermoon.Data
 
         #endregion
 
-
-        // TODO: automap
         // TODO: ...
 
         public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot] - 1];

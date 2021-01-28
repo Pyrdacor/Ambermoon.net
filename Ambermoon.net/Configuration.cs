@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -12,14 +13,17 @@ namespace Ambermoon
         public int? Height { get; set; } = 800;
         public bool Fullscreen { get; set; } = false;
         public bool UseDataPath { get; set; } = false;
-        public string DataPath { get; set; } = ExecutablePath;
+        public string DataPath { get; set; } = ExecutableDirectoryPath;
         public SaveOption SaveOption { get; set; } = SaveOption.ProgramFolder;
         public int GameVersionIndex { get; set; } = 0;
         public bool LegacyMode { get; set; } = false;
         public bool Music { get; set; } = true;
         public bool FastBattles { get; set; } = false;
 
-        public static string ExecutablePath
+        public static readonly string FallbackConfigDirectory =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
+
+        public static string ExecutableDirectoryPath
         {
             get
             {

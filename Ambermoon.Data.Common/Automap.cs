@@ -1,10 +1,20 @@
-﻿using System;
+﻿using Ambermoon.Data.Serialization;
+using System;
 
 namespace Ambermoon.Data
 {
     public class Automap
     {
         public byte[] ExplorationBits { get; set; }
+
+        public static Automap Load(IAutomapReader automapReader, IDataReader dataReader)
+        {
+            var automap = new Automap();
+
+            automapReader.ReadAutomap(automap, dataReader);
+
+            return automap;
+        }
 
         public bool IsBlockExplored(Map map, uint x, uint y)
         {

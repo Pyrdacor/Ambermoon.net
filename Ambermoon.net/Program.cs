@@ -9,20 +9,19 @@ namespace Ambermoon
 
         static Configuration LoadConfig()
         {
-            var path = Path.Combine(Configuration.ExecutablePath, ConfigurationFileName);
+            var path = Path.Combine(Configuration.ExecutableDirectoryPath, ConfigurationFileName);
             var configuration = Configuration.Load(path);
 
             if (configuration != null)
                 return configuration;
 
-            path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Ambermoon", ConfigurationFileName);
+            path = Path.Combine(Configuration.FallbackConfigDirectory, ConfigurationFileName);
             return Configuration.Load(path, new Configuration());
         }
 
         static void SaveConfig(Configuration configuration)
         {
-            var path = Path.Combine(Configuration.ExecutablePath, ConfigurationFileName);
+            var path = Path.Combine(Configuration.ExecutableDirectoryPath, ConfigurationFileName);
 
             try
             {
@@ -32,8 +31,7 @@ namespace Ambermoon
             {
                 try
                 {
-                    path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        "Ambermoon", ConfigurationFileName);
+                    path = Path.Combine(Configuration.FallbackConfigDirectory, ConfigurationFileName);
                     configuration.Save(path);
                 }
                 catch

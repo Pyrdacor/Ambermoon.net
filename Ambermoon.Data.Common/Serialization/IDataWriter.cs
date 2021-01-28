@@ -10,6 +10,8 @@ namespace Ambermoon.Data.Serialization
 
     public interface IDataWriter
     {
+        int Position { get; }
+        int Size { get; }
         void Write(bool value);
         void Write(byte value);
         void Write(word value);

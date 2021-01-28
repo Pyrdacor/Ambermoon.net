@@ -42,6 +42,7 @@ namespace Ambermoon.Data.Legacy
         private readonly List<TravelGraphicInfo> travelGraphicInfos = new List<TravelGraphicInfo>(44);
         internal List<Graphic> TravelGraphics { get; } = new List<Graphic>(44);
         public bool Loaded { get; private set; } = false;
+        public GameDataSource GameDataSource { get; private set; } = GameDataSource.Memory;
 
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true)
         {
@@ -74,6 +75,7 @@ namespace Ambermoon.Data.Legacy
         public void LoadFromMemoryZip(Stream stream)
         {
             Loaded = false;
+            GameDataSource = GameDataSource.Memory;
             using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read, true);
             var fileReader = new FileReader();
             Func<string, IFileContainer> fileLoader = name =>
@@ -175,6 +177,7 @@ namespace Ambermoon.Data.Legacy
         public void Load(string folderPath)
         {
             Loaded = false;
+            GameDataSource = GameDataSource.LegacyFiles;
 
             if (!Directory.Exists(folderPath))
             {
@@ -309,6 +312,7 @@ namespace Ambermoon.Data.Legacy
                     }
                     else
                     {
+                        GameDataSource = GameDataSource.ADF;
                         Files.Add(name, fileReader.ReadFile(name, loadedDisks[disk][name]));
                         HandleFileLoaded(name);
                     }

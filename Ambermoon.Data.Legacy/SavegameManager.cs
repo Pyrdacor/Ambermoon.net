@@ -1,45 +1,29 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
     public class SavegameManager : ISavegameManager
     {
-        string[] savegameNames = null;
-        int current = 0;
+        readonly string path;
+
+        public SavegameManager(string path)
+        {
+            this.path = path;
+        }
 
         public string[] GetSavegameNames(IGameData gameData, out int current)
         {
-            current = this.current;
+            current = 0;
+            return SavegameSerializer.GetSavegameNames(gameData, ref current);
+        }
 
-            if (savegameNames != null)
-                return savegameNames;
-
-            if (!gameData.Files.ContainsKey("Saves"))
-            {
-                savegameNames = Enumerable.Repeat("", 10).ToArray();
-            }
-            else
-            {
-                var file = gameData.Files["Saves"].Files[1];
-                this.current = current = file.ReadWord();
-                savegameNames = new string[10];
-                int position = file.Position;
-
-                for (int i = 0; i < 10; ++i)
-                {
-                    savegameNames[i] = file.ReadNullTerminatedString();
-
-                    if (i < 9)
-                    {
-                        position += 39;
-                        file.Position = position;
-                    }
-                }
-            }
-
-            return savegameNames;
+        public void WriteSavegameName(IGameData gameData, int slot, ref string name)
+        {
+            SavegameSerializer.WriteSavegameName(gameData, slot, ref name);
         }
 
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
@@ -100,6 +84,69 @@ namespace Ambermoon.Data.Legacy
 
             savegameSerializer.Read(savegame, savegameFiles, partyTextContainer);
             return savegame;
+        }
+
+        public void Save(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, string name, Savegame savegame)
+        {
+            var savegameFiles = new SavegameOutputFiles();
+            savegameSerializer.Write(savegame, savegameFiles);
+            WriteSavegameName(gameData, saveSlot, ref name);
+            SaveToGameData(gameData, savegameFiles, saveSlot);
+            SaveToPath(path, savegameFiles, saveSlot, gameData.Files["Saves"]);
+        }
+
+        void SaveToGameData(IGameData gameData, SavegameOutputFiles savegameFiles, int saveSlot)
+        {
+            void WriteFile(string name, IDataWriter writer, int fileIndex)
+            {
+                if (!gameData.Files.ContainsKey(name))
+                {
+                    gameData.Files.Add(name, FileReader.CreateRawContainer(name, new Dictionary<int, byte[]> { { fileIndex, writer.ToArray() } }));
+                }
+                else
+                {
+                    gameData.Files[name].Files[fileIndex] = new DataReader(writer.ToArray());
+                }
+            }
+
+            void WriteFiles(string name, Dictionary<int, IDataWriter> writers)
+            {
+                foreach (var writer in writers)
+                    WriteFile(name, writer.Value, writer.Key);
+            }
+
+            WriteFile($"Save.{saveSlot:00}/Party_data.sav", savegameFiles.SaveDataWriter, 1);
+            WriteFiles($"Save.{saveSlot:00}/Party_char.amb", savegameFiles.PartyMemberDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Chest_data.sav", savegameFiles.ChestDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Merchant_data.sav", savegameFiles.MerchantDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Automap.sav", savegameFiles.AutomapDataWriters);
+        }
+
+        void SaveToPath(string path, SavegameOutputFiles savegameFiles, int saveSlot, IFileContainer savesContainer)
+        {
+            void WriteFile(string name, IDataWriter writer)
+            {
+                var output = new DataWriter();
+                FileWriter.WriteContainer(output, new Dictionary<uint, byte[]> { { 1u, writer.ToArray() } }, FileType.AMBR);
+                File.WriteAllBytes(Path.Combine(path, name), output.ToArray());
+            }
+
+            void WriteFiles(string name, Dictionary<int, IDataWriter> writers)
+            {
+                var output = new DataWriter();
+                FileWriter.WriteContainer(output, writers.ToDictionary(w => (uint)w.Key, w => w.Value.ToArray()), FileType.AMBR);
+                File.WriteAllBytes(Path.Combine(path, name), output.ToArray());
+            }
+
+            WriteFile($"Save.{saveSlot:00}/Party_data.sav", savegameFiles.SaveDataWriter);
+            WriteFiles($"Save.{saveSlot:00}/Party_char.amb", savegameFiles.PartyMemberDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Chest_data.sav", savegameFiles.ChestDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Merchant_data.sav", savegameFiles.MerchantDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Automap.sav", savegameFiles.AutomapDataWriters);
+
+            var savesWriter = new DataWriter();
+            FileWriter.Write(savesWriter, savesContainer);
+            File.WriteAllBytes(Path.Combine(path, "Saves"), savesWriter.ToArray());
         }
     }
 }

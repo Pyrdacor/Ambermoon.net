@@ -5,9 +5,17 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
+    public enum GameDataSource
+    {
+        Memory,
+        ADF,
+        LegacyFiles
+    }
+
     public interface IGameData
     {
         bool Loaded { get; }
+        GameDataSource GameDataSource { get; }
         Dictionary<string, IFileContainer> Files { get; }
         Dictionary<string, IDataReader> Dictionaries { get; }
         Dictionary<StationaryImage, GraphicInfo> StationaryImageInfos { get; }

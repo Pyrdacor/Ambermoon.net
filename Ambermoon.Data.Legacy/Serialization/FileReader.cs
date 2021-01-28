@@ -2,6 +2,7 @@
 using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -19,7 +20,17 @@ namespace Ambermoon.Data.Legacy.Serialization
             public string Name { get; set; }
             public FileType FileType { get; set; }
             public uint Header => (uint)FileType;
-            public Dictionary<int, IDataReader> Files { get; } = new Dictionary<int, IDataReader>();
+            public Dictionary<int, IDataReader> Files { get; set; } = new Dictionary<int, IDataReader>();
+        }
+
+        public static IFileContainer CreateRawContainer(string name, Dictionary<int, byte[]> fileData)
+        {
+            return new FileContainer
+            {
+                Name = name,
+                FileType = FileType.AMBR,
+                Files = fileData.ToDictionary(f => f.Key, f => (IDataReader)new DataReader(f.Value))
+            };
         }
 
         public IFileContainer ReadFile(string name, Stream stream)

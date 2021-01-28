@@ -1,6 +1,8 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -115,6 +117,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var y = dataReader.ReadByte();
                 var tileIndex = dataReader.ReadWord();
 
+                // TODO: handle other values
                 if (mapIndex < 0x0300 && tileIndex < (1 << 11)) // should be a real map and a valid front tile index (11 bit value)
                 {
                     savegame.TileChangeEvents.SafeAdd(mapIndex, new ChangeTileEvent
@@ -133,17 +136,114 @@ namespace Ambermoon.Data.Legacy.Serialization
             // TODO: load other data from Party_data.sav
         }
 
+        void WriteSaveData(Savegame savegame, IDataWriter dataWriter)
+        {
+            int startOffset = dataWriter.Position;
+
+            dataWriter.Write((ushort)savegame.Year);
+            dataWriter.Write((ushort)savegame.Month);
+            dataWriter.Write((ushort)savegame.DayOfMonth);
+            dataWriter.Write((ushort)savegame.Minute);
+            dataWriter.Write((ushort)savegame.CurrentMapIndex);
+            dataWriter.Write((ushort)savegame.CurrentMapX);
+            dataWriter.Write((ushort)savegame.CurrentMapY);
+            dataWriter.Write((ushort)savegame.CharacterDirection);
+
+            foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
+            {
+                var activeSpell = savegame.ActiveSpells[(int)activeSpellType];
+                dataWriter.Write((ushort)activeSpell.Duration);
+                dataWriter.Write((ushort)activeSpell.Level);
+            }
+
+            dataWriter.Write((ushort)savegame.CurrentPartyMemberIndices.Count(i => i != 0)); // party member count
+            dataWriter.Write((ushort)(1 + savegame.ActivePartyMemberSlot));
+
+            for (int i = 0; i < 6; ++i)
+                dataWriter.Write((ushort)savegame.CurrentPartyMemberIndices[i]);
+
+            // TODO: Unknown word
+            dataWriter.Write((ushort)0);
+            dataWriter.Write((ushort)savegame.TravelType);
+            dataWriter.Write((ushort)savegame.SpecialItemsActive);
+            dataWriter.Write((ushort)savegame.GameOptions);
+            dataWriter.Write((ushort)savegame.HoursWithoutSleep);
+
+            // up to 32 transport positions (6 bytes each)
+            for (int i = 0; i < 32; ++i)
+            {
+                if (savegame.TransportLocations[i] == null)
+                {
+                    // 6 zero bytes
+                    dataWriter.Write((uint)0);
+                    dataWriter.Write((ushort)0);
+                }
+                else
+                {
+                    dataWriter.Write((byte)savegame.TransportLocations[i].TravelType);
+                    dataWriter.Write((byte)savegame.TransportLocations[i].Position.X);
+                    dataWriter.Write((byte)savegame.TransportLocations[i].Position.Y);
+                    dataWriter.Write((byte)0); // unknown byte
+                    dataWriter.Write((ushort)savegame.TransportLocations[i].MapIndex);
+                }
+            }
+
+            // global variables (at offset 0x0104, 1024 bytes = 8192 bits = 8192 variables)
+            dataWriter.Write(savegame.GlobalVariables);
+
+            // map event bits. each bit stands for a event. order is 76543210 FECDBA98 ...
+            for (int i = 0; i < 1024; ++i)
+                dataWriter.Write(savegame.MapEventBits[i]);
+
+            // character event bits. each bit stands for a character. order is 76543210 FECDBA98 ...
+            for (int i = 0; i < 1024; ++i)
+                dataWriter.Write(savegame.CharacterBits[i]);
+
+            dataWriter.Write(savegame.DictionaryWords);
+
+            int unknownBytes = 0x35a4 - dataWriter.Position;
+            dataWriter.Write(Enumerable.Repeat((byte)0, unknownBytes).ToArray());
+
+            dataWriter.Write(savegame.ChestUnlockStates);
+
+            unknownBytes = 0x35e4 - dataWriter.Position;
+            dataWriter.Write(Enumerable.Repeat((byte)0, unknownBytes).ToArray());
+
+            dataWriter.Write(savegame.BattlePositions);
+
+            foreach (var tileChangeEvents in savegame.TileChangeEvents)
+            {
+                foreach (var tileChangeEvent in tileChangeEvents.Value)
+                {
+                    dataWriter.Write((ushort)tileChangeEvent.MapIndex);
+                    dataWriter.Write((byte)tileChangeEvent.X);
+                    dataWriter.Write((byte)tileChangeEvent.Y);
+                    dataWriter.Write(ConvertEventTileIndex(tileChangeEvent));
+                }
+            }
+
+            dataWriter.Write((ushort)0); // end marker
+
+            ushort ConvertEventTileIndex(ChangeTileEvent changeTileEvent)
+            {
+                // TODO: the savegame stores some other events too
+                return (ushort)changeTileEvent.FrontTileIndex;
+            }
+
+            // TODO: save other data to Party_data.sav
+        }
+
         public void Read(Savegame savegame, SavegameInputFiles files, IFileContainer partyTextsContainer)
         {
             var partyMemberReader = new Characters.PartyMemberReader();
             var chestReader = new ChestReader();
             var merchantReader = new MerchantReader();
-            // TODO automap reader
+            var automapReader = new AutomapReader();
 
             savegame.PartyMembers.Clear();
             savegame.Chests.Clear();
             savegame.Merchants.Clear();
-            // TODO automaps
+            savegame.Automaps.Clear();
 
             foreach (var partyMemberDataReader in files.PartyMemberDataReaders.Files)
             {
@@ -162,7 +262,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                 merchantDataReader.Value.Position = 0;
                 savegame.Merchants.Add(Merchant.Load(merchantReader, merchantDataReader.Value));
             }
-            // TODO automaps
+            foreach (var automapDataReader in files.AutomapDataReaders.Files)
+            {
+                automapDataReader.Value.Position = 0;
+                savegame.Automaps.Add(Automap.Load(automapReader, automapDataReader.Value));
+            }
 
             files.SaveDataReader.Position = 0;
             ReadSaveData(savegame, files.SaveDataReader);
@@ -170,8 +274,85 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public void Write(Savegame savegame, SavegameOutputFiles files)
         {
-            // TODO
-            throw new NotImplementedException();
+            var partyMemberWriter = new Characters.PartyMemberWriter();
+            var chestWriter = new ChestWriter();
+            var merchantWriter = new MerchantWriter();
+            var automapWriter = new AutomapWriter();
+
+            Dictionary<int, IDataWriter> WriteContainer<T>(List<T> collection, Action<IDataWriter, T> writer)
+            {
+                var container = new Dictionary<int, IDataWriter>(collection.Count);
+                for (int i = 0; i < collection.Count; ++i)
+                {
+                    var valueWriter = new DataWriter();
+                    writer(valueWriter, collection[i]);
+                    container.Add(i, valueWriter);
+                }
+                return container;
+            }
+
+            files.PartyMemberDataWriters = WriteContainer(savegame.PartyMembers, (w, p) => partyMemberWriter.WritePartyMember(p, w));
+            files.ChestDataWriters = WriteContainer(savegame.Chests, (w, c) => chestWriter.WriteChest(c, w));
+            files.MerchantDataWriters = WriteContainer(savegame.Merchants, (w, m) => merchantWriter.WriteMerchant(m, w));
+            files.AutomapDataWriters = WriteContainer(savegame.Automaps, (w, a) => automapWriter.WriteAutomap(a, w));
+            files.SaveDataWriter = new DataWriter();
+            WriteSaveData(savegame, files.SaveDataWriter);
+        }
+
+        internal static string[] GetSavegameNames(IGameData gameData, ref int current)
+        {
+            if (!gameData.Files.ContainsKey("Saves"))
+            {
+                return Enumerable.Repeat("", 10).ToArray();
+            }
+            else
+            {
+                var file = gameData.Files["Saves"].Files[1];
+                file.Position = 0;
+                current = file.ReadWord();
+                var savegameNames = new string[10];
+                int position = file.Position;
+
+                for (int i = 0; i < 10; ++i)
+                {
+                    savegameNames[i] = file.ReadNullTerminatedString();
+
+                    if (i < 9) // This is a workaround as some older game versions have fewer bytes for last savegame
+                    {
+                        position += 39;
+                        file.Position = position;
+                    }
+                }
+
+                return savegameNames;
+            }
+        }
+
+        internal static void WriteSavegameName(IGameData gameData, int slot, ref string name)
+        {
+            if (name.Length > 38)
+                name = name.Substring(0, 38);
+
+            string savegameName = name;
+
+            byte[] ConvertName(string name)
+            {
+                List<byte> buffer = new List<byte>(39);
+                buffer.AddRange(new AmbermoonEncoding().GetBytes(name));
+                for (int i = buffer.Count; i < 39; ++i)
+                    buffer.Add((byte)0);
+                return buffer.ToArray();
+            }
+
+            if (!gameData.Files.ContainsKey("Saves"))
+            {
+                gameData.Files.Add("Saves", FileReader.CreateRawContainer("Saves", Enumerable.Range(0, 10)
+                    .ToDictionary(i => i, i => ConvertName(i == slot ? savegameName : ""))));
+            }
+            else
+            {
+                gameData.Files["Saves"].Files[slot] = new DataReader(ConvertName(savegameName));
+            }
         }
     }
 }

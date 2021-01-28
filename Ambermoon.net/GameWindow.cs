@@ -13,6 +13,7 @@ using Silk.NET.Input.Common;
 using Silk.NET.Windowing.Common;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -25,6 +26,13 @@ namespace Ambermoon
         IWindow window;
         IMouse mouse = null;
         ICursor cursor = null;
+
+        static readonly string[] VersionSavegameFolders = new string[3]
+        {
+            "german",
+            "english",
+            "external"
+        };
 
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -220,7 +228,7 @@ namespace Ambermoon
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
         }
 
-        void StartGame(GameData gameData)
+        void StartGame(GameData gameData, string savePath)
         {
             // Load game data
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
@@ -240,7 +248,7 @@ namespace Ambermoon
             // Create game
             Game = new Game(configuration, renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()), executableData.ItemManager,
-                new CharacterManager(gameData, graphicProvider), new SavegameManager(), new SavegameSerializer(), new DataNameProvider(executableData),
+                new CharacterManager(gameData, graphicProvider), new SavegameManager(savePath), new SavegameSerializer(), new DataNameProvider(executableData),
                 textDictionary, Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]),
                 new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()));
             Game.QuitRequested += window.Close;
@@ -259,14 +267,14 @@ namespace Ambermoon
             var versionLoader = new BuiltinVersionLoader();
             var versions = versionLoader.Load();
             var gameData = new GameData();
-            var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutablePath;
+            var dataPath = configuration.UseDataPath ? configuration.DataPath : Configuration.ExecutableDirectoryPath;
 
             if (versions.Count == 0)
             {
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, Configuration.ExecutablePath);
+                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]));
                 return;
             }
 
@@ -357,7 +365,7 @@ namespace Ambermoon
             {
                 configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                 configuration.GameVersionIndex = gameVersionIndex;
-                selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : Configuration.ExecutablePath);
+                selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]));
                 versionLoader.Dispose();
             };
         }
@@ -374,7 +382,25 @@ namespace Ambermoon
         {
             return new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, Width, Height);
-         }
+        }
+
+        string GetSavePath(string version)
+        {
+            string suffix = $"Saves{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
+
+            try
+            {
+                var path = Path.Combine(Configuration.ExecutableDirectoryPath, suffix);
+                Directory.CreateDirectory(path);
+                return path;
+            }
+            catch
+            {
+                var path = Path.Combine(Configuration.FallbackConfigDirectory, suffix);
+                Directory.CreateDirectory(path);
+                return path;
+            }
+        }
 
         void Window_Load()
         {
@@ -386,10 +412,10 @@ namespace Ambermoon
             // Setup input
             SetupInput(window.CreateInput());
 
-            ShowVersionSelector((gameData, saveInDataPath) =>
+            ShowVersionSelector((gameData, savePath) =>
             {
                 renderView?.Dispose();
-                StartGame(gameData as GameData);
+                StartGame(gameData as GameData, savePath);
                 versionSelector = null;
             });
         }
