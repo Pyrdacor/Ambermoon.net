@@ -43,7 +43,7 @@ namespace Ambermoon.UI
 
         public void SetButtonAction(int slot, Action action)
         {
-            buttons[slot].Action = action;
+            buttons[slot].LeftClickAction = action;
         }
 
         public void EnableButton(int slot, bool enable)
@@ -56,7 +56,7 @@ namespace Ambermoon.UI
             uint? continuousActionDelayInTicks = null)
         {
             buttons[slot].ButtonType = buttonType;
-            buttons[slot].Action = action;
+            buttons[slot].LeftClickAction = action;
             buttons[slot].InstantAction = instantAction;
             buttons[slot].CursorChangeAction = cursorChangeAction;
             buttons[slot].ContinuousActionDelayInTicks = continuousActionDelayInTicks;

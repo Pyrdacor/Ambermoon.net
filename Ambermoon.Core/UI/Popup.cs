@@ -338,6 +338,21 @@ namespace Ambermoon.UI
             return scrollbar.Drag(position);
         }
 
+        public bool TestButtonRightClick(Position position)
+        {
+            // Note: RightMouseDown may remove buttons or close the popup.
+            for (int i = buttons.Count - 1; i >= 0; --i)
+            {
+                if (i >= buttons.Count)
+                    continue;
+
+                if (buttons[i]?.RightMouseDown(position, game.CurrentPopupTicks) == true)
+                    return true;
+            }
+
+            return false;
+        }
+
         public bool Click(Position position, MouseButtons mouseButtons, out bool ignoreNextMouseUp)
         {
             ignoreNextMouseUp = false;
@@ -407,6 +422,18 @@ namespace Ambermoon.UI
                     continue;
 
                 buttons[i]?.LeftMouseUp(position, game.CurrentPopupTicks);
+            }
+        }
+
+        public void RightMouseUp(Position position)
+        {
+            // Note: RightMouseUp may remove buttons or close the popup.
+            for (int i = buttons.Count - 1; i >= 0; --i)
+            {
+                if (i >= buttons.Count)
+                    continue;
+
+                buttons[i]?.RightMouseUp(position, game.CurrentPopupTicks);
             }
         }
 

@@ -4985,9 +4985,9 @@ namespace Ambermoon
             exitButton.ButtonType = ButtonType.Exit;
             mouthButton.DisplayLayer = 200;
             exitButton.DisplayLayer = 200;
-            mouthButton.Action = () =>
+            mouthButton.LeftClickAction = () =>
                 layout.OpenInputPopup(new Position(51, 87), 20, (string solution) => choiceHandler?.Invoke(solution));
-            exitButton.Action = () => layout.ClosePopup();
+            exitButton.LeftClickAction = () => layout.ClosePopup();
             popup.AddDictionaryListBox(Dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
             (
                 entry, (int _, string text) =>

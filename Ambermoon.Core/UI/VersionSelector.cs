@@ -134,13 +134,13 @@ namespace Ambermoon.UI
             changeSaveOptionButton = CreateButton(new Position(versionListArea.X, versionListArea.Bottom + 3), textureAtlasManager);
             changeSaveOptionButton.ButtonType = Data.Enumerations.ButtonType.MoveRight;
             changeSaveOptionButton.Visible = false;
-            changeSaveOptionButton.Action = () => ToggleSaveOption(savegameOptions);
+            changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption(savegameOptions);
             saveOptionText = AddText(new Position(versionListArea.X + 34, versionListArea.Bottom + 9), savegameOptions[0], TextColor.Gray);
             saveOptionText.Visible = false;
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
             okButton.Visible = true;
-            okButton.Action = () => Closed?.Invoke(gameVersions[selectedVersion].DataProvider?.Invoke(), selectedVersion == 2 && selectedSaveOption == 1);
+            okButton.LeftClickAction = () => Closed?.Invoke(gameVersions[selectedVersion].DataProvider?.Invoke(), selectedVersion == 2 && selectedSaveOption == 1);
             #endregion
         }
 

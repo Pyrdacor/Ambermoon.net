@@ -715,8 +715,8 @@ namespace Ambermoon.UI
             decreaseButton.ButtonType = ButtonType.MoveDown;
             increaseButton.DisplayLayer = 200;
             decreaseButton.DisplayLayer = 200;
-            increaseButton.Action = () => ChangeInputValue(1);
-            decreaseButton.Action = () => ChangeInputValue(-1);
+            increaseButton.LeftClickAction = () => ChangeInputValue(1);
+            decreaseButton.LeftClickAction = () => ChangeInputValue(-1);
             increaseButton.InstantAction = true;
             decreaseButton.InstantAction = true;
             increaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
@@ -727,7 +727,7 @@ namespace Ambermoon.UI
             var okButton = activePopup.AddButton(new Position(192, 127));
             okButton.ButtonType = ButtonType.Ok;
             okButton.DisplayLayer = 200;
-            okButton.Action = Wait;
+            okButton.LeftClickAction = Wait;
             activePopup.ReturnAction = Wait;
             activePopup.Closed += () =>
             {
@@ -811,8 +811,8 @@ namespace Ambermoon.UI
             yesButton.ButtonType = ButtonType.Yes;
             noButton.ButtonType = ButtonType.No;
 
-            yesButton.Action = yesAction;
-            noButton.Action = noAction;
+            yesButton.LeftClickAction = yesAction;
+            noButton.LeftClickAction = noAction;
 
             return activePopup;
         }
@@ -1089,8 +1089,10 @@ namespace Ambermoon.UI
             decreaseButton.ButtonType = ButtonType.MoveDown;
             increaseButton.DisplayLayer = 200;
             decreaseButton.DisplayLayer = 200;
-            increaseButton.Action = () => ChangeInputValue(1);
-            decreaseButton.Action = () => ChangeInputValue(-1);
+            increaseButton.LeftClickAction = () => ChangeInputValue(1);
+            decreaseButton.LeftClickAction = () => ChangeInputValue(-1);
+            increaseButton.RightClickAction = () => ChangeInputValueTo(maxAmount);
+            decreaseButton.RightClickAction = () => ChangeInputValueTo(0);
             increaseButton.InstantAction = true;
             decreaseButton.InstantAction = true;
             increaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
@@ -1101,19 +1103,17 @@ namespace Ambermoon.UI
             var okButton = activePopup.AddButton(new Position(192, 127));
             okButton.ButtonType = ButtonType.Ok;
             okButton.DisplayLayer = 200;
-            okButton.Action = () => submitAction?.Invoke(input.Value);
+            okButton.LeftClickAction = () => submitAction?.Invoke(input.Value);
             activePopup.ReturnAction = () => submitAction?.Invoke(input.Value);
+
+            void ChangeInputValueTo(long amount)
+            {
+                input.Text = Util.Limit(0, amount, maxAmount).ToString();
+            }
 
             void ChangeInputValue(int changeAmount)
             {
-                if (changeAmount < 0)
-                {
-                    input.Text = Math.Max(0, (int)input.Value + changeAmount).ToString();
-                }
-                else if (changeAmount > 0)
-                {
-                    input.Text = Math.Min(maxAmount, input.Value + (uint)changeAmount).ToString();
-                }
+                ChangeInputValueTo((long)input.Value + changeAmount);
             }
 
             return activePopup;
@@ -2448,6 +2448,13 @@ namespace Ambermoon.UI
                 return;
             }
 
+            if (PopupActive)
+            {
+                newCursorType = null;
+                activePopup.RightMouseUp(position);
+                return;
+            }
+
             buttonGrid.MouseUp(position, MouseButtons.Right, out newCursorType, currentTicks);
 
             if (!game.InputEnable)
@@ -2493,6 +2500,9 @@ namespace Ambermoon.UI
 
                 if (PopupActive)
                 {
+                    if (!activePopup.CloseOnClick && buttons == MouseButtons.Right && activePopup.TestButtonRightClick(position))
+                        return true;
+
                     if (activePopup.CloseOnClick || (buttons == MouseButtons.Right &&
                         (!activePopup.HasTextInput() || TextInput.FocusedInput == null)))
                     {

@@ -18,6 +18,7 @@ namespace Ambermoon.UI
         readonly ITextureAtlas textureAtlas;
         bool pressed = false;
         bool released = true;
+        bool rightMouse = false;
         bool disabled = false;
         bool visible = true;
         DateTime pressedTime = DateTime.MinValue;
@@ -93,7 +94,13 @@ namespace Ambermoon.UI
             }
         }
 
-        public Action Action
+        public Action LeftClickAction
+        {
+            get;
+            set;
+        }
+
+        public Action RightClickAction
         {
             get;
             set;
@@ -199,14 +206,29 @@ namespace Ambermoon.UI
 
         public void LeftMouseUp(Position position, ref CursorType? cursorType, uint currentTicks)
         {
-            if (Disabled)
+            if (Disabled || rightMouse)
                 return;
 
             if (Pressed && !InstantAction && Area.Contains(position))
             {
-                cursorType = ExecuteActions(currentTicks);
+                cursorType = ExecuteActions(currentTicks, false);
             }
 
+            released = true;
+            Pressed = false;
+        }
+
+        public void RightMouseUp(Position position, uint currentTicks)
+        {
+            if (Disabled || !rightMouse)
+                return;
+
+            if (Pressed && !InstantAction && Area.Contains(position))
+            {
+                ExecuteActions(currentTicks, true);
+            }
+
+            rightMouse = false;
             released = true;
             Pressed = false;
         }
@@ -227,12 +249,13 @@ namespace Ambermoon.UI
                 pressedTime = DateTime.Now;
                 Pressed = true;
                 released = false;
+                rightMouse = false;
 
                 if (InstantAction)
                 {
                     if (continuousActionDelayInTicks == null)
                         released = true;
-                    cursorType = ExecuteActions(currentTicks);
+                    cursorType = ExecuteActions(currentTicks, false);
                 }
 
                 return true;
@@ -241,11 +264,39 @@ namespace Ambermoon.UI
             return false;
         }
 
-        CursorType? ExecuteActions(uint currentTicks)
+        public bool RightMouseDown(Position position, uint currentTicks)
+        {
+            if (Disabled)
+                return false;
+
+            if (Area.Contains(position))
+            {
+                pressedTime = DateTime.Now;
+                Pressed = true;
+                released = false;
+                rightMouse = true;
+
+                if (InstantAction)
+                {
+                    if (continuousActionDelayInTicks == null)
+                        released = true;
+                    ExecuteActions(currentTicks, true);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        CursorType? ExecuteActions(uint currentTicks, bool rightMouse)
         {
             lastActionTimeInTicks = currentTicks;
             var cursorChangeAction = CursorChangeAction; // The action invoke might change this by swapping buttons!
-            Action?.Invoke();
+            if (rightMouse)
+                RightClickAction?.Invoke();
+            else
+                LeftClickAction?.Invoke();
 
             if (continuousActionDelayInTicks != null && continuousActionDelayInTicks > 1)
                 continuousActionDelayInTicks = (uint)Math.Max(1, (int)continuousActionDelayInTicks.Value - (int)ContinuousActionDelayReductionInTicks);
@@ -261,6 +312,7 @@ namespace Ambermoon.UI
             pressedTime = DateTime.Now;
             Pressed = true;
             released = false;
+            rightMouse = false;
 
             if (InstantAction)
             {
@@ -270,7 +322,7 @@ namespace Ambermoon.UI
             else
                 released = true;
 
-            return ExecuteActions(currentTicks);
+            return ExecuteActions(currentTicks, false);
         }
 
         internal void Release()
@@ -286,7 +338,7 @@ namespace Ambermoon.UI
             if (Pressed && continuousActionDelayInTicks != null)
             {
                 if (currentTicks - lastActionTimeInTicks >= continuousActionDelayInTicks.Value)
-                    ExecuteActions(currentTicks);
+                    ExecuteActions(currentTicks, rightMouse);
             }
         }
     }

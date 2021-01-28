@@ -30,6 +30,11 @@ namespace Ambermoon
             return Math.Max(minValue, Math.Min(value, maxValue));
         }
 
+        public static long Limit(long minValue, long value, long maxValue)
+        {
+            return Math.Max(minValue, Math.Min(value, maxValue));
+        }
+
         public static uint Limit(uint minValue, uint value, uint maxValue)
         {
             return Math.Max(minValue, Math.Min(value, maxValue));
