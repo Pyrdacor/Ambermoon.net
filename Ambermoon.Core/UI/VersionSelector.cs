@@ -45,7 +45,7 @@ namespace Ambermoon.UI
         public event Action<int, IGameData, bool> Closed;
 
         public VersionSelector(IRenderView renderView, TextureAtlasManager textureAtlasManager,
-            List<GameVersion> gameVersions, Cursor cursor, int selectedVersion)
+            List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption)
         {
             this.renderView = renderView;
             textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
@@ -131,11 +131,12 @@ namespace Ambermoon.UI
                 "Save games in program path",
                 "Save games in data path"
             };
+            selectedSaveOption = (int)saveOption % 2;
             changeSaveOptionButton = CreateButton(new Position(versionListArea.X, versionListArea.Bottom + 3), textureAtlasManager);
             changeSaveOptionButton.ButtonType = Data.Enumerations.ButtonType.MoveRight;
             changeSaveOptionButton.Visible = false;
             changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption(savegameOptions);
-            saveOptionText = AddText(new Position(versionListArea.X + 34, versionListArea.Bottom + 9), savegameOptions[0], TextColor.Gray);
+            saveOptionText = AddText(new Position(versionListArea.X + 34, versionListArea.Bottom + 9), savegameOptions[selectedSaveOption], TextColor.Gray);
             saveOptionText.Visible = false;
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
