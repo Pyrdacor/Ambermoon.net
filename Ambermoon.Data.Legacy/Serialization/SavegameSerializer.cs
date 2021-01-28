@@ -143,6 +143,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.Write((ushort)savegame.Year);
             dataWriter.Write((ushort)savegame.Month);
             dataWriter.Write((ushort)savegame.DayOfMonth);
+            dataWriter.Write((ushort)savegame.Hour);
             dataWriter.Write((ushort)savegame.Minute);
             dataWriter.Write((ushort)savegame.CurrentMapIndex);
             dataWriter.Write((ushort)savegame.CurrentMapX);
@@ -152,8 +153,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
             {
                 var activeSpell = savegame.ActiveSpells[(int)activeSpellType];
-                dataWriter.Write((ushort)activeSpell.Duration);
-                dataWriter.Write((ushort)activeSpell.Level);
+                dataWriter.Write((ushort)(activeSpell?.Duration ?? 0));
+                dataWriter.Write((ushort)(activeSpell?.Level ?? 0));
             }
 
             dataWriter.Write((ushort)savegame.CurrentPartyMemberIndices.Count(i => i != 0)); // party member count
@@ -272,8 +273,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             ReadSaveData(savegame, files.SaveDataReader);
         }
 
-        public void Write(Savegame savegame, SavegameOutputFiles files)
+        public SavegameOutputFiles Write(Savegame savegame)
         {
+            var files = new SavegameOutputFiles();
             var partyMemberWriter = new Characters.PartyMemberWriter();
             var chestWriter = new ChestWriter();
             var merchantWriter = new MerchantWriter();
@@ -286,7 +288,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var valueWriter = new DataWriter();
                     writer(valueWriter, collection[i]);
-                    container.Add(i, valueWriter);
+                    container.Add(1 + i, valueWriter);
                 }
                 return container;
             }
@@ -297,43 +299,38 @@ namespace Ambermoon.Data.Legacy.Serialization
             files.AutomapDataWriters = WriteContainer(savegame.Automaps, (w, a) => automapWriter.WriteAutomap(a, w));
             files.SaveDataWriter = new DataWriter();
             WriteSaveData(savegame, files.SaveDataWriter);
+
+            return files;
         }
 
-        internal static string[] GetSavegameNames(IGameData gameData, ref int current)
+        internal static string[] GetSavegameNames(IDataReader savesReader, ref int current)
         {
-            if (!gameData.Files.ContainsKey("Saves"))
-            {
-                return Enumerable.Repeat("", 10).ToArray();
-            }
-            else
-            {
-                var file = gameData.Files["Saves"].Files[1];
-                file.Position = 0;
-                current = file.ReadWord();
-                var savegameNames = new string[10];
-                int position = file.Position;
+            savesReader.Position = 0;
+            current = savesReader.ReadWord();
+            var savegameNames = new string[10];
+            int position = savesReader.Position;
 
-                for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < 10; ++i)
+            {
+                savegameNames[i] = savesReader.ReadNullTerminatedString();
+
+                if (i < 9) // This is a workaround as some older game versions have fewer bytes for last savegame
                 {
-                    savegameNames[i] = file.ReadNullTerminatedString();
-
-                    if (i < 9) // This is a workaround as some older game versions have fewer bytes for last savegame
-                    {
-                        position += 39;
-                        file.Position = position;
-                    }
+                    position += 39;
+                    savesReader.Position = position;
                 }
-
-                return savegameNames;
             }
+
+            return savegameNames;
         }
 
         internal static void WriteSavegameName(IGameData gameData, int slot, ref string name)
         {
+            if (--slot == -1)
+                throw new AmbermoonException(ExceptionScope.Application, "Savegame slots must be 1-based");
+
             if (name.Length > 38)
                 name = name.Substring(0, 38);
-
-            string savegameName = name;
 
             byte[] ConvertName(string name)
             {
@@ -344,14 +341,19 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return buffer.ToArray();
             }
 
+            var nameData = ConvertName(name);
+
             if (!gameData.Files.ContainsKey("Saves"))
             {
-                gameData.Files.Add("Saves", FileReader.CreateRawContainer("Saves", Enumerable.Range(0, 10)
-                    .ToDictionary(i => i, i => ConvertName(i == slot ? savegameName : ""))));
+                byte[] data = new byte[2 + 10 * 39];
+                Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
+                gameData.Files.Add("Saves", FileReader.CreateRawFile("Saves", data));
             }
             else
             {
-                gameData.Files["Saves"].Files[slot] = new DataReader(ConvertName(savegameName));
+                var data = gameData.Files["Saves"].Files[1].ToArray();
+                Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
+                gameData.Files["Saves"].Files[1] = new DataReader(data);
             }
         }
     }

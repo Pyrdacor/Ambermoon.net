@@ -53,6 +53,6 @@ namespace Ambermoon.Data.Serialization
     public interface ISavegameSerializer
     {
         void Read(Savegame savegame, SavegameInputFiles files, IFileContainer partyTextsContainer);
-        void Write(Savegame savegame, SavegameOutputFiles files);
+        SavegameOutputFiles Write(Savegame savegame);
     }
 }

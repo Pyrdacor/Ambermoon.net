@@ -52,7 +52,10 @@
         public string DataHeaderString => executableData.UITexts.Entries[UITextIndex.DataHeader];
         public string GetAttributeUIName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
         public string GetAbilityUIName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
-        public string LoadWhichSavegameString => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
+        public string LoadWhichSavegame => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
+        public string SaveWhichSavegame => executableData.Messages.GetEntry(Messages.Index.SaveWhichSavegame);
+        public string ReallyLoad => executableData.Messages.GetEntry(Messages.Index.ReallyLoad);
+        public string ReallyOverwriteSave => executableData.Messages.GetEntry(Messages.Index.ReallyOverwriteSave);
         public string WrongRiddlemouthSolutionText => executableData.Messages.GetEntry(Messages.Index.IsNotTheRightAnswer);
         /// <summary>
         /// This is used if the entered word is not part of the dictionary.

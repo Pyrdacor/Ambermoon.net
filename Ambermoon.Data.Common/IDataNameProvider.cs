@@ -32,7 +32,10 @@
         string DataHeaderString { get; }
         string GetAttributeUIName(Attribute attribute);
         string GetAbilityUIName(Ability ability);
-        string LoadWhichSavegameString { get; }
+        string LoadWhichSavegame { get; }
+        string SaveWhichSavegame { get; }
+        string ReallyLoad { get; }
+        string ReallyOverwriteSave { get; }
         string WrongRiddlemouthSolutionText { get; }
         string That { get; }
         string DropItemQuestion { get; }

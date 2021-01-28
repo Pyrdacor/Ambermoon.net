@@ -31,6 +31,7 @@ namespace Ambermoon.UI
         DateTime lastBlinkTime;
         string currentInput = "";
         string currentText = "";
+        bool visible = false;
 
         public event Action<string> InputSubmitted;
         public event Action Aborted;
@@ -66,6 +67,26 @@ namespace Ambermoon.UI
             }
         }
 
+        public void SetText(string text)
+        {
+            currentInput = text;
+            currentText = text;
+            UpdateText();
+        }
+
+        public bool Visible
+        {
+            get => visible;
+            set
+            {
+                visible = value;
+                text.Visible = value;
+
+                if (!value)
+                    blinkingCursor.Visible = false;
+            }
+        }
+
         public uint Value => Text.Length == 0 ? 0 : uint.Parse(Text);
 
         public bool ClearOnNewInput
@@ -98,7 +119,15 @@ namespace Ambermoon.UI
             lastBlinkTime = DateTime.Now;
         }
 
-        void Submit()
+        public void MoveTo(Position position)
+        {
+            area.Position = new Position(position);
+            text.SetPosition(position);
+            blinkingCursor.X = position.X;
+            blinkingCursor.Y = position.Y;
+        }
+
+        public void Submit()
         {
             if (string.IsNullOrEmpty(currentInput))
             {
@@ -147,6 +176,9 @@ namespace Ambermoon.UI
 
         public void SetFocus()
         {
+            if (!Visible)
+                return;
+
             var prevFocusedInput = FocusedInput;
             FocusedInput = this;
 

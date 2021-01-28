@@ -22,19 +22,19 @@ namespace Ambermoon
             }
 
             /// <inheritdoc />
-            public string LeadName => game.CurrentPartyMember.Name;
+            public string LeadName => game.CurrentPartyMember?.Name ?? "";
             /// <inheritdoc />
-            public string SelfName => game.CurrentPartyMember.Name; // TODO: maybe this is the active actor in battle?
+            public string SelfName => LeadName; // TODO: maybe this is the active actor in battle?
             /// <inheritdoc />
             public string CastName => game.CurrentCaster?.Name ?? LeadName;
             /// <inheritdoc />
             public string InvnName => game.CurrentInventory?.Name ?? LeadName;
             /// <inheritdoc />
-            public string SubjName => game.CurrentPartyMember.Name; // TODO
+            public string SubjName => LeadName; // TODO
             /// <inheritdoc />
-            public string Sex1Name => game.CurrentPartyMember.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
+            public string Sex1Name => game.CurrentPartyMember?.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
             /// <inheritdoc />
-            public string Sex2Name => game.CurrentPartyMember.Gender == Gender.Male ? game.DataNameProvider.His : game.DataNameProvider.Her;
+            public string Sex2Name => game.CurrentPartyMember?.Gender == Gender.Male ? game.DataNameProvider.His : game.DataNameProvider.Her;
         }
 
         class Movement
@@ -732,7 +732,7 @@ namespace Ambermoon
 
             mapViewArea = Map2DViewArea;
 
-            PlayerMoved(true);
+            PlayerMoved(true, null, false);
         }
 
         internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial)
@@ -761,7 +761,7 @@ namespace Ambermoon
 
             mapViewArea = Map3DViewArea;
 
-            PlayerMoved(true);
+            PlayerMoved(true, null, false);
         }
 
         void Cleanup()
@@ -926,6 +926,11 @@ namespace Ambermoon
 
             Start(savegame);
             return true;
+        }
+
+        public void SaveGame(int slot, string name)
+        {
+            SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame);
         }
 
         public bool HasContinueGame()
@@ -2731,8 +2736,17 @@ namespace Ambermoon
             }
         }
 
-        internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null)
+        internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true)
         {
+            if (updateSavegame)
+            {
+                var map = is3D ? Map : renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y);
+                CurrentSavegame.CurrentMapIndex = map.Index;
+                CurrentSavegame.CurrentMapX = 1u + (uint)player.Position.X;
+                CurrentSavegame.CurrentMapY = 1u + (uint)player.Position.Y + ((!is3D && !map.IsWorldMap) ? 1u : 0u);
+                CurrentSavegame.CharacterDirection = player.Direction;
+            }
+
             // Enable/disable transport button and show transports
             if (!WindowActive)
             {

@@ -168,7 +168,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.WriteEnumAsByte(conditionEvent.TypeOfCondition);
                     dataWriter.Write((byte)conditionEvent.Value);
                     dataWriter.Write(conditionEvent.Unknown1);
-                    dataWriter.Write((byte)conditionEvent.ObjectIndex);
+                    dataWriter.Write((ushort)conditionEvent.ObjectIndex);
                     dataWriter.Write((ushort)conditionEvent.ContinueIfFalseWithMapEventIndex);
                     break;
                 }
@@ -178,7 +178,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.WriteEnumAsByte(actionEvent.TypeOfAction);
                     dataWriter.Write((byte)actionEvent.Value);
                     dataWriter.Write(actionEvent.Unknown1);
-                    dataWriter.Write((byte)actionEvent.ObjectIndex);
+                    dataWriter.Write((ushort)actionEvent.ObjectIndex);
                     dataWriter.Write(actionEvent.Unknown2);
                     break;
                 }

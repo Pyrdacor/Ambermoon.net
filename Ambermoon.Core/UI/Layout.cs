@@ -602,7 +602,7 @@ namespace Ambermoon.UI
             buttonGrid.SetButton(3, ButtonType.Opt, true, null, false); // TODO: options
             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-            buttonGrid.SetButton(6, ButtonType.Save, true, null, false); // TODO: save
+            buttonGrid.SetButton(6, ButtonType.Save, game.BattleActive, OpenSaveMenu, false);
             buttonGrid.SetButton(7, ButtonType.Load, false, OpenLoadMenu, false);
             buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
         }
@@ -849,12 +849,61 @@ namespace Ambermoon.UI
 
         void OpenLoadMenu()
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out int current);
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegameString, TextColor.Gray, TextAlign.Center);
+            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.Gray, TextAlign.Center);
             activePopup.AddSavegameListBox(savegameNames.Select(name =>
-                new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => game.LoadGame(slot + 1))
-            ).ToList());
+                new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Load(slot + 1, name))
+            ).ToList(), false);
+
+            void Close() => ClosePopup(false);
+
+            void Load(int slot, string name)
+            {
+                if (!string.IsNullOrEmpty(name))
+                {
+                    OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyLoad), () =>
+                    {
+                        ClosePopup();
+                        game.LoadGame(slot);
+                    }, Close, Close);
+                }
+            }
+        }
+
+        void OpenSaveMenu()
+        {
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
+            OpenPopup(new Position(16, 62), 18, 7, true, false);
+            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, TextColor.Gray, TextAlign.Center);
+            activePopup.AddSavegameListBox(savegameNames.Select(name =>
+                new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Save(slot + 1, name))
+            ).ToList(), true);
+
+            void Close() => ClosePopup(false);
+
+            void Save(int slot, string name)
+            {
+                if (string.IsNullOrEmpty(name))
+                {
+                    Close();
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(savegameNames[slot - 1]))
+                {
+                    ClosePopup();
+                    game.SaveGame(slot, name);
+                }
+                else
+                {
+                    OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyOverwriteSave), () =>
+                    {
+                        ClosePopup();
+                        game.SaveGame(slot, name);
+                    }, Close, Close);
+                }
+            }
         }
 
         public void AttachEventToButton(int index, Action action)

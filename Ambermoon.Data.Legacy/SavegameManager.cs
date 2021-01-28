@@ -9,16 +9,31 @@ namespace Ambermoon.Data.Legacy
     public class SavegameManager : ISavegameManager
     {
         readonly string path;
+        readonly string savesPath;
+        bool transferredFolderSaves = false;
 
         public SavegameManager(string path)
         {
             this.path = path;
+            savesPath = Path.Combine(path, "Saves");
         }
 
         public string[] GetSavegameNames(IGameData gameData, out int current)
         {
             current = 0;
-            return SavegameSerializer.GetSavegameNames(gameData, ref current);
+
+            if (File.Exists(savesPath))
+            {
+                return SavegameSerializer.GetSavegameNames(new DataReader(File.ReadAllBytes(savesPath)), ref current);
+            }
+            else if (!gameData.Files.ContainsKey("Saves"))
+            {
+                return Enumerable.Repeat("", 10).ToArray();
+            }
+            else
+            {
+                return SavegameSerializer.GetSavegameNames(gameData.Files["Saves"].Files[1], ref current);
+            }            
         }
 
         public void WriteSavegameName(IGameData gameData, int slot, ref string name)
@@ -28,6 +43,37 @@ namespace Ambermoon.Data.Legacy
 
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
         {
+            if (!transferredFolderSaves && File.Exists(savesPath))
+            {
+                transferredFolderSaves = true;
+                var folderSaveData = new GameData(GameData.LoadPreference.ForceExtracted, null, false);
+
+                try
+                {
+                    folderSaveData.Load(path);
+
+                    void TransferFile(string name)
+                    {
+                        gameData.Files[name] = folderSaveData.Files[name];
+                    }
+
+                    for (int i = 1; i <= 10; ++i)
+                    {
+                        TransferFile($"Save.{saveSlot:00}/Party_data.sav");
+                        TransferFile($"Save.{saveSlot:00}/Party_char.amb");
+                        TransferFile($"Save.{saveSlot:00}/Chest_data.amb");
+                        TransferFile($"Save.{saveSlot:00}/Merchant_data.amb");
+                        TransferFile($"Save.{saveSlot:00}/Automap.amb");
+                    }
+
+                    TransferFile("Saves");
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+
             var savegame = new Savegame();
             SavegameInputFiles savegameFiles;
             try
@@ -88,8 +134,7 @@ namespace Ambermoon.Data.Legacy
 
         public void Save(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, string name, Savegame savegame)
         {
-            var savegameFiles = new SavegameOutputFiles();
-            savegameSerializer.Write(savegame, savegameFiles);
+            var savegameFiles = savegameSerializer.Write(savegame);
             WriteSavegameName(gameData, saveSlot, ref name);
             SaveToGameData(gameData, savegameFiles, saveSlot);
             SaveToPath(path, savegameFiles, saveSlot, gameData.Files["Saves"]);
@@ -97,6 +142,18 @@ namespace Ambermoon.Data.Legacy
 
         void SaveToGameData(IGameData gameData, SavegameOutputFiles savegameFiles, int saveSlot)
         {
+            void WriteSingleFile(string name, IDataWriter writer)
+            {
+                if (!gameData.Files.ContainsKey(name))
+                {
+                    gameData.Files.Add(name, FileReader.CreateRawFile(name, writer.ToArray()));
+                }
+                else
+                {
+                    gameData.Files[name].Files[1] = new DataReader(writer.ToArray());
+                }
+            }
+
             void WriteFile(string name, IDataWriter writer, int fileIndex)
             {
                 if (!gameData.Files.ContainsKey(name))
@@ -115,11 +172,11 @@ namespace Ambermoon.Data.Legacy
                     WriteFile(name, writer.Value, writer.Key);
             }
 
-            WriteFile($"Save.{saveSlot:00}/Party_data.sav", savegameFiles.SaveDataWriter, 1);
+            WriteSingleFile($"Save.{saveSlot:00}/Party_data.sav", savegameFiles.SaveDataWriter);
             WriteFiles($"Save.{saveSlot:00}/Party_char.amb", savegameFiles.PartyMemberDataWriters);
-            WriteFiles($"Save.{saveSlot:00}/Chest_data.sav", savegameFiles.ChestDataWriters);
-            WriteFiles($"Save.{saveSlot:00}/Merchant_data.sav", savegameFiles.MerchantDataWriters);
-            WriteFiles($"Save.{saveSlot:00}/Automap.sav", savegameFiles.AutomapDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Chest_data.amb", savegameFiles.ChestDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Merchant_data.amb", savegameFiles.MerchantDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Automap.amb", savegameFiles.AutomapDataWriters);
         }
 
         void SaveToPath(string path, SavegameOutputFiles savegameFiles, int saveSlot, IFileContainer savesContainer)
@@ -127,8 +184,10 @@ namespace Ambermoon.Data.Legacy
             void WriteFile(string name, IDataWriter writer)
             {
                 var output = new DataWriter();
+                var fullPath = Path.Combine(path, name);
                 FileWriter.WriteContainer(output, new Dictionary<uint, byte[]> { { 1u, writer.ToArray() } }, FileType.AMBR);
-                File.WriteAllBytes(Path.Combine(path, name), output.ToArray());
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+                File.WriteAllBytes(fullPath, output.ToArray());
             }
 
             void WriteFiles(string name, Dictionary<int, IDataWriter> writers)
@@ -140,9 +199,9 @@ namespace Ambermoon.Data.Legacy
 
             WriteFile($"Save.{saveSlot:00}/Party_data.sav", savegameFiles.SaveDataWriter);
             WriteFiles($"Save.{saveSlot:00}/Party_char.amb", savegameFiles.PartyMemberDataWriters);
-            WriteFiles($"Save.{saveSlot:00}/Chest_data.sav", savegameFiles.ChestDataWriters);
-            WriteFiles($"Save.{saveSlot:00}/Merchant_data.sav", savegameFiles.MerchantDataWriters);
-            WriteFiles($"Save.{saveSlot:00}/Automap.sav", savegameFiles.AutomapDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Chest_data.amb", savegameFiles.ChestDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Merchant_data.amb", savegameFiles.MerchantDataWriters);
+            WriteFiles($"Save.{saveSlot:00}/Automap.amb", savegameFiles.AutomapDataWriters);
 
             var savesWriter = new DataWriter();
             FileWriter.Write(savesWriter, savesContainer);

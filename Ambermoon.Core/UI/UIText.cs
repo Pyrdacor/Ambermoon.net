@@ -15,6 +15,12 @@ namespace Ambermoon.UI
         readonly int numVisibleLines;
         public bool WithScrolling { get; internal set; }
 
+        public bool Visible
+        {
+            get => renderText.Visible;
+            set => renderText.Visible = value;
+        }
+
         /// <summary>
         /// The boolean gives information if the
         /// text was scrolled to the end. It is

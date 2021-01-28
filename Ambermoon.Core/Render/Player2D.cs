@@ -202,6 +202,7 @@ namespace Ambermoon.Render
                     {
                         MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, newDirection);
                         player.Direction = newDirection;
+                        game.CurrentSavegame.CharacterDirection = newDirection;
                         UpdateAppearance(game.CurrentTicks);
                     }
                 }

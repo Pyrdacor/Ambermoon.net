@@ -23,6 +23,16 @@ namespace Ambermoon.Data.Legacy.Serialization
             public Dictionary<int, IDataReader> Files { get; set; } = new Dictionary<int, IDataReader>();
         }
 
+        public static IFileContainer CreateRawFile(string name, byte[] fileData)
+        {
+            return new FileContainer
+            {
+                Name = name,
+                FileType = FileType.None,
+                Files = new Dictionary<int, IDataReader> { { 1, new DataReader(fileData) } }
+            };
+        }
+
         public static IFileContainer CreateRawContainer(string name, Dictionary<int, byte[]> fileData)
         {
             return new FileContainer

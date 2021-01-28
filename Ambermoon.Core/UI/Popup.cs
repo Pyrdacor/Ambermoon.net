@@ -9,7 +9,6 @@ namespace Ambermoon.UI
     internal class Popup
     {
         const byte BaseDisplayLayer = 20;
-        readonly byte displayLayer;
         readonly Game game;
         readonly IRenderView renderView;
         readonly ITextureAtlas textureAtlas;
@@ -24,6 +23,7 @@ namespace Ambermoon.UI
         Scrollbar scrollbar = null;
         public Rect ContentArea { get; }
         public Action ReturnAction { get; set; } = null;
+        public byte DisplayLayer { get; private set; }
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows, bool transparent,
             byte displayLayerOffset = 0)
@@ -31,14 +31,14 @@ namespace Ambermoon.UI
             if (columns < 3 || rows < 3)
                 throw new AmbermoonException(ExceptionScope.Application, "Popups must at least have 3 columns and 3 rows.");
 
-            displayLayer = (byte)Math.Min(255, BaseDisplayLayer + displayLayerOffset);
+            DisplayLayer = (byte)Math.Min(255, BaseDisplayLayer + displayLayerOffset);
             this.game = game;
             this.renderView = renderView;
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
 
             void AddBorder(PopupFrame frame, int column, int row)
             {
-                var sprite = renderView.SpriteFactory.Create(16, 16, true, displayLayer) as ILayerSprite;
+                var sprite = renderView.SpriteFactory.Create(16, 16, true, DisplayLayer) as ILayerSprite;
                 sprite.Layer = renderView.GetLayer(Layer.UI);
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
                 sprite.PaletteIndex = 0;
@@ -73,7 +73,7 @@ namespace Ambermoon.UI
                 // fill
                 // TODO: use named palette color
                 fill = renderView.ColoredRectFactory.Create((columns - 2) * 16, (rows - 2) * 16,
-                    game.GetPaletteColor(50, 28), displayLayer);
+                    game.GetPaletteColor(50, 28), DisplayLayer);
                 fill.Layer = renderView.GetLayer(Layer.UI);
                 fill.X = position.X + 16;
                 fill.Y = position.Y + 16;
@@ -128,7 +128,7 @@ namespace Ambermoon.UI
         {
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
-            renderText.DisplayLayer = (byte)Util.Min(255, this.displayLayer + displayLayer);
+            renderText.DisplayLayer = (byte)Util.Min(255, this.DisplayLayer + displayLayer);
             renderText.X = position.X;
             renderText.Y = position.Y;
             renderText.Visible = true;
@@ -146,7 +146,7 @@ namespace Ambermoon.UI
         public UIText AddText(Rect bounds, IText text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
             bool shadow = true, byte displayLayer = 1, bool scrolling = false)
         {
-            var uiText = new UIText(renderView, text, bounds, (byte)Util.Min(255, this.displayLayer + displayLayer),
+            var uiText = new UIText(renderView, text, bounds, (byte)Util.Min(255, this.DisplayLayer + displayLayer),
                 textColor, shadow, textAlign, scrolling);
             texts.Add(uiText);
             if (scrolling)
@@ -159,7 +159,7 @@ namespace Ambermoon.UI
 
         public UIText AddText(IRenderText renderText, byte displayLayer = 1)
         {
-            renderText.DisplayLayer = (byte)Util.Min(255, this.displayLayer + displayLayer);
+            renderText.DisplayLayer = (byte)Util.Min(255, this.DisplayLayer + displayLayer);
             renderText.Visible = true;
             var uiText = new UIText(renderText);
             texts.Add(uiText);
@@ -169,7 +169,7 @@ namespace Ambermoon.UI
         public IColoredRect FillArea(Rect area, Color color, byte displayLayer = 1)
         {
             var filledArea = renderView.ColoredRectFactory.Create(area.Width, area.Height, color,
-                (byte)Util.Min(255, this.displayLayer + displayLayer));
+                (byte)Util.Min(255, this.DisplayLayer + displayLayer));
             filledArea.Layer = renderView.GetLayer(Layer.UI);
             filledArea.X = area.Left;
             filledArea.Y = area.Top;
@@ -181,7 +181,7 @@ namespace Ambermoon.UI
         public void AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer = 1, byte paletteIndex = 49)
         {
             var sprite = renderView.SpriteFactory.Create(area.Width, area.Height, true,
-                (byte)Util.Min(255, this.displayLayer + displayLayer)) as ILayerSprite;
+                (byte)Util.Min(255, this.DisplayLayer + displayLayer)) as ILayerSprite;
             sprite.Layer = renderView.GetLayer(layer);
             sprite.PaletteIndex = paletteIndex;
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(layer).GetOffset(imageIndex);
@@ -224,7 +224,7 @@ namespace Ambermoon.UI
             FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, 1);
             FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);            
             var button = new Button(renderView, position);
-            button.DisplayLayer = (byte)Util.Min(255, displayLayer + 3);
+            button.DisplayLayer = (byte)Util.Min(255, DisplayLayer + 3);
             buttons.Add(button);
             return button;
         }
@@ -236,6 +236,9 @@ namespace Ambermoon.UI
 
         public bool KeyChar(char ch)
         {
+            if (listBox?.KeyChar(ch) == true)
+                return true;
+
             // Note: Key may remove inputs or close the popup.
             for (int i = inputs.Count - 1; i >= 0; --i)
             {
@@ -274,6 +277,9 @@ namespace Ambermoon.UI
 
         public bool KeyDown(Key key)
         {
+            if (listBox?.KeyDown(key) == true)
+                return true;
+
             // Note: Key may remove inputs or close the popup.
             for (int i = inputs.Count - 1; i >= 0; --i)
             {
@@ -357,6 +363,12 @@ namespace Ambermoon.UI
         {
             ignoreNextMouseUp = false;
 
+            if (mouseButtons == MouseButtons.Left && listBox?.Editing == true)
+            {
+                listBox.CommitEdit();
+                return true;
+            }
+
             if (mouseButtons == MouseButtons.Left && TextInput.FocusedInput == null)
             {
                 if (scrollbar != null && !scrollbar.Disabled && scrollbar.LeftClick(position))
@@ -387,6 +399,12 @@ namespace Ambermoon.UI
                     if (texts[i].Click(position))
                         return true;
                 }
+            }
+
+            if (mouseButtons == MouseButtons.Right && listBox?.Editing == true)
+            {
+                listBox.AbortEdit();
+                return true;
             }
 
             // Note: Click may remove inputs or close the popup.
@@ -442,12 +460,12 @@ namespace Ambermoon.UI
             listBox?.Hover(position);
         }
 
-        public void AddSavegameListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        public void AddSavegameListBox(List<KeyValuePair<string, Action<int, string>>> items, bool canEdit)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
 
-            listBox = ListBox.CreateSavegameListbox(renderView, game, this, items);
+            listBox = ListBox.CreateSavegameListbox(renderView, game, this, items, canEdit);
         }
 
         public void AddDictionaryListBox(List<KeyValuePair<string, Action<int, string>>> items)
@@ -469,16 +487,16 @@ namespace Ambermoon.UI
         public Scrollbar AddScrollbar(Layout layout, int scrollRange, int displayLayer = 1, int yOffset = 0)
         {
             return scrollbar = new Scrollbar(layout, ScrollbarType.LargeVertical, new Rect(ContentArea.Right - 9, ContentArea.Top + yOffset, 6, 112),
-                6, 56, scrollRange, (byte)Util.Min(255, this.displayLayer + displayLayer));
+                6, 56, scrollRange, (byte)Util.Min(255, this.DisplayLayer + displayLayer));
         }
 
-        public bool HasTextInput() => inputs.Count != 0;
+        public bool HasTextInput() => inputs.Count != 0 || listBox?.Editing == true;
 
         public TextInput AddTextInput(Position position, int inputLength, TextAlign textAlign,
             TextInput.ClickAction leftClickAction, TextInput.ClickAction rightClickAction)
         {
             AddSunkenBox(new Rect(position, new Size((inputLength + 1) * Global.GlyphWidth + 3, 10)), 1);
-            var input = new TextInput(renderView, position + new Position(2, 2), inputLength, (byte)Math.Min(255, displayLayer + 2),
+            var input = new TextInput(renderView, position + new Position(2, 2), inputLength, (byte)Math.Min(255, DisplayLayer + 2),
                 leftClickAction, rightClickAction, textAlign);
             inputs.Add(input);
             return input;
@@ -491,6 +509,8 @@ namespace Ambermoon.UI
 
             foreach (var input in inputs)
                 input.Update();
+
+            listBox?.Update(currentTicks);
         }
     }
 }
