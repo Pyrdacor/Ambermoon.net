@@ -1,5 +1,6 @@
 # Changelog
 
+- Version [0.2.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.1beta): Added save menu and option menu, resolution etc can now be changed ingame
 - Version [0.2.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.0beta): Added builtin game versions and version selector, improved configuration, bugfixing
 - Version [0.1.8 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.8beta): Fixed combat backgrounds, added waiting functionality, bugfixing
 - Version [0.1.7 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.7beta): Added 2D monster interaction, bugfixing

@@ -8,9 +8,9 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run on Windows and Linu
 
 Version | Windows 64bit | Linux 64bit | Windows 32bit
 --- | --- | --- | ---
+0.2.1 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.1beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.1beta/Ambermoon.net-Windows32Bit.zip)
 0.2.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Windows32Bit.zip)
 0.1.8 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.8beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.8beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.8beta/Ambermoon.net-Windows32Bit.zip)
-0.1.7 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.7beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.7beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.1.7beta/Ambermoon.net-Windows32Bit.zip)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 
@@ -41,16 +41,17 @@ I also created another github project called [Ambermoon](https://github.com/Pyrd
 ![Text box](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/DecisionBox.png "Text box")
 ![Active items](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/SpecialItems.png "Active items")
 ![Version selector](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/VersionSelector.png "Version selector")
+![Options](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Options.png "Options")
 
 
 ## Controls
 
 Key | Description
 --- | ---
-Up | Move up (2D) or forward (3D)
-Down | Move down (2D) or backward (3D)
-Left | Move left (2D) or turn left (3D)
-Right | Move right (2D) or turn right (3D)
+Up or W | Move up (2D) or forward (3D)
+Down or S| Move down (2D) or backward (3D)
+Left or A | Move left (2D) or turn left (3D)
+Right or D | Move right (2D) or turn right (3D)
 F11 | Toggle fullscreen mode
 ESC | Close ingame windows, stop item dragging/specific cursors/etc
 Num1-Num9 | Buttons 1-9
