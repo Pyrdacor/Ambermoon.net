@@ -73,6 +73,12 @@ F1-F6 | Open inventory of party member 1-6
 
 - On portrait will select the party member as the active one.
 - Drag&drop of items.
+- On map center (Zzz) it will wait for 5 minutes.
+
+### Mouse wheel
+
+- Scrolling the wheel on 2D maps changes the cursor.
+- Clicking the wheel or middle mouse button on 2D maps will show the crosshair or mouth cursor.
 
 
 ## Changelog
