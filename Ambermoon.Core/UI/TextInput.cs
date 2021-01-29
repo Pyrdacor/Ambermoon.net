@@ -31,7 +31,7 @@ namespace Ambermoon.UI
         DateTime lastBlinkTime;
         string currentInput = "";
         string currentText = "";
-        bool visible = false;
+        bool visible = true;
 
         public event Action<string> InputSubmitted;
         public event Action Aborted;
@@ -66,6 +66,11 @@ namespace Ambermoon.UI
                 UpdateText();
             }
         }
+        public bool AllowEmpty
+        {
+            get;
+            set;
+        } = false;
 
         public void SetText(string text)
         {
@@ -111,7 +116,7 @@ namespace Ambermoon.UI
             text = new UIText(renderView, renderView.TextProcessor.CreateText(""), area,
                 displayLayer, TextColor.Gray, true, textAlign);
 
-            blinkingCursor = renderView.ColoredRectFactory.Create(5, 5, Color.DarkAccent, displayLayer); // TODO: named palette color?
+            blinkingCursor = renderView.ColoredRectFactory.Create(5, 5, Color.LightGray, displayLayer); // TODO: named palette color?
             blinkingCursor.Layer = renderView.GetLayer(Layer.UI);
             blinkingCursor.X = position.X;
             blinkingCursor.Y = position.Y;
@@ -129,7 +134,7 @@ namespace Ambermoon.UI
 
         public void Submit()
         {
-            if (string.IsNullOrEmpty(currentInput))
+            if ((!AllowEmpty || DigitsOnly) && string.IsNullOrEmpty(currentInput))
             {
                 Abort();
             }
@@ -214,7 +219,7 @@ namespace Ambermoon.UI
 
             var elapsed = DateTime.Now - lastBlinkTime;
 
-            if (elapsed.TotalMilliseconds >= 500)
+            if (elapsed.TotalMilliseconds >= 350)
             {
                 blinkingCursor.Visible = !blinkingCursor.Visible;
                 lastBlinkTime = DateTime.Now;

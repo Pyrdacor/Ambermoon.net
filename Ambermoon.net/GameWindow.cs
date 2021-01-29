@@ -267,7 +267,7 @@ namespace Ambermoon
                     Fullscreen = configuration.Fullscreen;
                 }
             };
-            Game.Run();
+            Game.Run(false); // TODO
         }
 
         void ShowVersionSelector(Action<IGameData, string, GameLanguage> selectHandler)

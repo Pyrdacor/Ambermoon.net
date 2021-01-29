@@ -161,6 +161,7 @@ namespace Ambermoon
         internal IConfiguration Configuration { get; private set; }
         public event Action<IConfiguration, bool> ConfigurationChanged;
         internal GameLanguage GameLanguage { get; private set; }
+        CharacterCreator characterCreator = null;
         readonly Random random = new Random();
         internal SavegameTime GameTime { get; private set; } = null;
         const int FadeTime = 1000;
@@ -419,11 +420,28 @@ namespace Ambermoon
         /// This is called when the game starts.
         /// This includes intro, main menu, etc.
         /// </summary>
-        public void Run()
+        public void Run(bool continueGame)
         {
-            // TODO: For now we just start a new game.
-            var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
-            Start(initialSavegame);
+            if (continueGame)
+            {
+                ContinueGame();
+            }
+            else
+            {
+                layout.ShowPortraitArea(false);
+                characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
+                {
+                    characterCreator = null;
+                    layout.ShowPortraitArea(true);
+                    var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+
+                    initialSavegame.PartyMembers[0].Name = name;
+                    initialSavegame.PartyMembers[0].Gender = female ? Gender.Female : Gender.Male;
+                    initialSavegame.PartyMembers[0].PortraitIndex = (ushort)portraitIndex;
+
+                    Start(initialSavegame);
+                });
+            }
         }
 
         public void Quit()
@@ -459,6 +477,12 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
+            if (characterCreator != null)
+            {
+                characterCreator.Update(deltaTime);
+                return;
+            }
+
             for (int i = timedEvents.Count - 1; i >= 0; --i)
             {
                 if (DateTime.Now >= timedEvents[i].ExecutionTime)
@@ -1235,6 +1259,12 @@ namespace Ambermoon
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
+            if (characterCreator != null)
+            {
+                characterCreator.OnKeyDown(key, modifiers);
+                return;
+            }
+
             if (allInputDisabled || pickingNewLeader)
                 return;
 
@@ -1345,7 +1375,7 @@ namespace Ambermoon
 
         public void OnKeyUp(Key key, KeyModifiers modifiers)
         {
-            if (allInputDisabled)
+            if (characterCreator != null || allInputDisabled)
                 return;
 
             if (!InputEnable || pickingNewLeader)
@@ -1380,6 +1410,12 @@ namespace Ambermoon
 
         public void OnKeyChar(char keyChar)
         {
+            if (characterCreator != null)
+            {
+                characterCreator.OnKeyChar(keyChar);
+                return;
+            }
+
             if (allInputDisabled)
                 return;
 
@@ -1397,6 +1433,12 @@ namespace Ambermoon
 
         public void OnMouseUp(Position cursorPosition, MouseButtons buttons)
         {
+            if (characterCreator != null)
+            {
+                characterCreator.OnMouseUp(cursorPosition, buttons);
+                return;
+            }
+
             lastMousePosition = new Position(cursorPosition);
 
             if (allInputDisabled)
@@ -1439,6 +1481,12 @@ namespace Ambermoon
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            if (characterCreator != null)
+            {
+                characterCreator.OnMouseDown(position, buttons);
+                return;
+            }
+
             lastMousePosition = new Position(position);
 
             if (allInputDisabled)
@@ -1769,6 +1817,12 @@ namespace Ambermoon
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
         {
+            if (characterCreator != null)
+            {
+                characterCreator.OnMouseWheel(xScroll, yScroll, mousePosition);
+                return;
+            }
+
             bool scrolled = false;
 
             if (xScroll != 0)

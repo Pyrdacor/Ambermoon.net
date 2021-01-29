@@ -35,6 +35,8 @@
         string GetAttributeUIName(Attribute attribute);
         string GetAbilityUIName(Ability ability);
         string OptionsHeader { get; }
+        string ChooseCharacter { get; }
+        string ConfirmCharacter { get; }
         string LoadWhichSavegame { get; }
         string SaveWhichSavegame { get; }
         string ReallyLoad { get; }

@@ -55,6 +55,8 @@
         public string GetAttributeUIName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
         public string GetAbilityUIName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
         public string OptionsHeader => executableData.Messages.GetEntry(Messages.Index.Options);
+        public string ChooseCharacter => executableData.UITexts.Entries[UITextIndex.ChooseCharacter];
+        public string ConfirmCharacter => executableData.Messages.GetEntry(Messages.Index.HappyWithCharacter);
         public string LoadWhichSavegame => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
         public string SaveWhichSavegame => executableData.Messages.GetEntry(Messages.Index.SaveWhichSavegame);
         public string ReallyLoad => executableData.Messages.GetEntry(Messages.Index.ReallyLoad);

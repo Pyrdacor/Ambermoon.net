@@ -462,6 +462,13 @@ namespace Ambermoon.UI
             SetLayout(LayoutType.None);
         }
 
+        public void ShowPortraitArea(bool show)
+        {
+            portraitBorders.ForEach(b => b.Visible = show);
+            portraitBarBackgrounds.ToList().ForEach(b => b.Visible = show);
+            characterBars.ToList().ForEach(b => b.Visible = show);
+        }
+
         void ButtonGrid_RightMouseClicked()
         {
             if (Type == LayoutType.Map2D ||
