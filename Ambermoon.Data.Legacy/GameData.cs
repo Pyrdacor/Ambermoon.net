@@ -43,6 +43,8 @@ namespace Ambermoon.Data.Legacy
         internal List<Graphic> TravelGraphics { get; } = new List<Graphic>(44);
         public bool Loaded { get; private set; } = false;
         public GameDataSource GameDataSource { get; private set; } = GameDataSource.Memory;
+        public string Version { get; private set; } = "Unknown";
+        public string Language { get; private set; } = "Unknown";
 
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true)
         {
@@ -141,37 +143,37 @@ namespace Ambermoon.Data.Legacy
             }
 
             return null;
+        }
 
-            string GetVersionFromAssembly(Span<byte> last128Bytes, out string language)
+        static string GetVersionFromAssembly(Span<byte> last128Bytes, out string language)
+        {
+            language = null;
+            last128Bytes.Reverse();
+            string result = "";
+            string version = null;
+
+            for (int i = 0; i < last128Bytes.Length; ++i)
             {
-                language = null;
-                last128Bytes.Reverse();
-                string result = "";
-                string version = null;
-
-                for (int i = 0; i < last128Bytes.Length; ++i)
+                if (last128Bytes[i] >= 128)
+                    result = "";
+                else
                 {
-                    if (last128Bytes[i] >= 128)
-                        result = "";
-                    else
+                    if (last128Bytes[i] == 0 && result.Contains("Ambermoon "))
                     {
-                        if (last128Bytes[i] == 0 && result.Contains("Ambermoon "))
-                        {
-                            version = result.Substring(result.Length - 4, 4);
-                            result = "";
-                        }
-                        else if (version != null && last128Bytes[i] < 32)
-                        {
-                            language = result.Split(' ').LastOrDefault();
-                            return version;
-                        }
-                        else
-                            result += (char)last128Bytes[i];
+                        version = result.Substring(result.Length - 4, 4);
+                        result = "";
                     }
+                    else if (version != null && last128Bytes[i] < 32)
+                    {
+                        language = result.Split(' ').LastOrDefault();
+                        return version;
+                    }
+                    else
+                        result += (char)last128Bytes[i];
                 }
-
-                return version;
             }
+
+            return version;
         }
 
         public void Load(string folderPath)
@@ -325,6 +327,32 @@ namespace Ambermoon.Data.Legacy
             }
 
             LoadTravelGraphics();
+
+            try
+            {
+                var possibleAssemblies = new string[2] { "AM2_CPU", "AM2_BLIT" };
+
+                foreach (var assembly in possibleAssemblies)
+                {
+                    if (Files.ContainsKey(assembly))
+                    {
+                        var file = Files[assembly].Files[1];
+
+                        if (file.Size >= 128)
+                        {
+                            file.Position = file.Size - 128;
+                            Version = GetVersionFromAssembly(file.ReadToEnd(), out var language);
+                            Language = language;
+                            file.Position = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
 
             Loaded = true;
         }

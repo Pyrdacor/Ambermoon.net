@@ -18,7 +18,7 @@ namespace Ambermoon
         public int GameVersionIndex { get; set; } = 0;
         public bool LegacyMode { get; set; } = false;
         public bool Music { get; set; } = true;
-        public bool FastBattles { get; set; } = false;
+        public bool FastBattleMode { get; set; } = false;
 
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");

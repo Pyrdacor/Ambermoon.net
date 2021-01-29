@@ -41,7 +41,8 @@ namespace Ambermoon.Render
         Size ScreenToView(Size size);
         Rect ScreenToView(Rect rect);
 
-        Rect VirtualScreen { get; }
+        Rect WindowArea { get; }
+        Size MaxScreenSize { get; }
         bool Fullscreen { get; set; }
 
         ISpriteFactory SpriteFactory { get; }

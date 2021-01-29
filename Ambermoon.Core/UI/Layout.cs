@@ -599,7 +599,7 @@ namespace Ambermoon.UI
             buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false); // TODO: ask to really quit etc
             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(2, ButtonType.Exit, false, CloseOptionMenu, false);
-            buttonGrid.SetButton(3, ButtonType.Opt, true, null, false); // TODO: options
+            buttonGrid.SetButton(3, ButtonType.Opt, false, OpenOptions, false);
             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(6, ButtonType.Save, game.BattleActive, OpenSaveMenu, false);
@@ -904,6 +904,140 @@ namespace Ambermoon.UI
                     }, Close, Close);
                 }
             }
+        }
+
+        // TODO: add more languages later and/or add these texts to the new game data format
+        const int OptionCount = 5;
+        static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
+        {
+            {
+                GameLanguage.German,
+                new string[OptionCount]
+                {
+                    "Musik",
+                    "Schneller Kampfmodus",
+                    "Seitenverhältnis",
+                    "Auflösung",
+                    "Vollbild"
+                }
+            },
+            {
+                GameLanguage.English,
+                new string[OptionCount]
+                {
+                    "Music",
+                    "Fast battle mode",
+                    "Screen ratio",
+                    "Resolution",
+                    "Fullscreen"
+                }
+            }
+        };
+
+        void OpenOptions()
+        {
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
+            OpenPopup(new Position(48, 62), 14, 6, true, false);
+            activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.Gray, TextAlign.Center);
+            var optionNames = OptionNames[game.GameLanguage];
+            bool changedConfiguration = false;
+            bool windowChange = false; // an option was changed that affects the window (screen ratio, resolution, fullscreen)
+            ListBox listBox = null;
+            var on = game.DataNameProvider.On;
+            var off = game.DataNameProvider.Off;
+            int width = game.Configuration.Width ?? 640;
+            var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
+            {
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleScreenRatio())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleResolution())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
+            };
+            listBox = activePopup.AddOptionsListBox(options);
+
+            string GetResolutionString()
+            {
+                var resolution = game.Configuration.GetScreenResolution();
+                return $"{resolution.Width}x{resolution.Height}";
+            }
+            void SetOptionString(int optionIndex, string value)
+            {
+                var optionString = optionNames[optionIndex];
+                int remainingSpace = 31 - optionString.Length - value.Length;
+                optionString += new string(' ', remainingSpace);
+                optionString += value;
+                listBox.SetItemText(optionIndex, optionString);
+            }
+            void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
+            void SetFastBattleMode() => SetOptionString(1, game.Configuration.FastBattleMode ? on : off);
+            void SetScreenRatio() => SetOptionString(2, game.Configuration.ScreenRatio.ToString().Replace("Ratio", "").Replace('_', ':'));
+            void SetResolution() => SetOptionString(3, GetResolutionString());
+            void SetFullscreen() => SetOptionString(4, game.Configuration.Fullscreen ? on : off);
+
+            void ToggleMusic()
+            {
+                game.Configuration.Music = !game.Configuration.Music;
+                // TODO: later turn on and off music as well
+                SetMusic();
+                changedConfiguration = true;
+            }
+            void ToggleFastBattleMode()
+            {
+                game.Configuration.FastBattleMode = !game.Configuration.FastBattleMode;
+                SetFastBattleMode();
+                changedConfiguration = true;
+            }
+            void ToggleScreenRatio()
+            {
+                game.Configuration.ScreenRatio = (ScreenRatio)(((int)game.Configuration.ScreenRatio + 1) % 3);
+                SetScreenRatio();
+                ChangeResolution(null);
+                changedConfiguration = true;
+                windowChange = true;
+            }
+            void ChangeResolution(int? oldWidth)
+            {
+                var possibleResolutions = ScreenResolutions.GetPossibleResolutions(game.Configuration.ScreenRatio, RenderView.MaxScreenSize);
+                int index = oldWidth == null ? 0 : (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count;
+                var resolution = possibleResolutions[index];
+                game.Configuration.Width = width = resolution.Width;
+                game.Configuration.Height = resolution.Height;
+                SetResolution();
+            }
+            void ToggleResolution()
+            {
+                ChangeResolution(width);
+                changedConfiguration = true;
+                windowChange = true;
+            }
+            void ToggleFullscreen()
+            {
+                game.Configuration.Fullscreen = !game.Configuration.Fullscreen;
+                SetFullscreen();
+                changedConfiguration = true;
+                windowChange = true;
+            }
+
+            var contentArea = activePopup.ContentArea;
+            var exitButton = activePopup.AddButton(new Position(contentArea.Right - 32, contentArea.Bottom - 17));
+            exitButton.ButtonType = ButtonType.Exit;
+            exitButton.Disabled = false;
+            exitButton.InstantAction = false;
+            exitButton.LeftClickAction = () =>
+            {
+                ClosePopup();
+                CloseOptionMenu();
+                if (changedConfiguration)
+                    game.NotifyConfigurationChange(windowChange);
+            };
+            exitButton.Visible = true;
+
+            SetMusic();
+            SetFastBattleMode();
+            SetScreenRatio();
+            SetResolution();
+            SetFullscreen();
         }
 
         public void AttachEventToButton(int index, Action action)

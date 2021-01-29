@@ -117,16 +117,16 @@ namespace Ambermoon.Renderer
 
     public class ColoredRectFactory : IColoredRectFactory
     {
-        readonly Rect virtualScreen = null;
+        internal Rect VirtualScreen { get; private set; } = null;
 
         public ColoredRectFactory(Rect virtualScreen)
         {
-            this.virtualScreen = virtualScreen;
+            VirtualScreen = virtualScreen;
         }
 
-        public IColoredRect Create(int width, int height, Render.Color color, byte displayLayer)
+        public IColoredRect Create(int width, int height, Color color, byte displayLayer)
         {
-            return new ColoredRect(width, height, color, displayLayer, virtualScreen);
+            return new ColoredRect(width, height, color, displayLayer, VirtualScreen);
         }
     }
 }

@@ -338,27 +338,27 @@ namespace Ambermoon.Renderer
 
     public class SpriteFactory : ISpriteFactory
     {
-        readonly Rect virtualScreen = null;
+        internal Rect VirtualScreen { get; private set; } = null;
 
         public SpriteFactory(Rect virtualScreen)
         {
-            this.virtualScreen = virtualScreen;
+            VirtualScreen = virtualScreen;
         }
 
         public ISprite Create(int width, int height, bool layered, byte displayLayer = 0)
         {
             if (layered)
-                return new LayerSprite(width, height, 0, 0, displayLayer, virtualScreen);
+                return new LayerSprite(width, height, 0, 0, displayLayer, VirtualScreen);
             else
-                return new Sprite(width, height, 0, 0, virtualScreen);
+                return new Sprite(width, height, 0, 0, VirtualScreen);
         }
 
         public IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames, bool layered = false, byte displayLayer = 0)
         {
             if (layered)
-                return new AnimatedLayerSprite(width, height, 0, 0, displayLayer, virtualScreen, numFrames, textureAtlasWidth);
+                return new AnimatedLayerSprite(width, height, 0, 0, displayLayer, VirtualScreen, numFrames, textureAtlasWidth);
             else
-                return new AnimatedSprite(width, height, 0, 0, virtualScreen, numFrames, textureAtlasWidth);
+                return new AnimatedSprite(width, height, 0, 0, VirtualScreen, numFrames, textureAtlasWidth);
         }
     }
 }

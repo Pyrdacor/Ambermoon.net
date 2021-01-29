@@ -158,7 +158,9 @@ namespace Ambermoon
         }
 
         // TODO: cleanup members
-        readonly IConfiguration configuration;
+        internal IConfiguration Configuration { get; private set; }
+        public event Action<IConfiguration, bool> ConfigurationChanged;
+        internal GameLanguage GameLanguage { get; private set; }
         readonly Random random = new Random();
         internal SavegameTime GameTime { get; private set; } = null;
         const int FadeTime = 1000;
@@ -349,11 +351,13 @@ namespace Ambermoon
             }
         }
 
-        public Game(IConfiguration configuration, IRenderView renderView, IMapManager mapManager, IItemManager itemManager,
-            ICharacterManager characterManager, ISavegameManager savegameManager, ISavegameSerializer savegameSerializer,
-            IDataNameProvider dataNameProvider, TextDictionary textDictionary, Places places, Cursor cursor)
+        public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IMapManager mapManager,
+            IItemManager itemManager, ICharacterManager characterManager, ISavegameManager savegameManager,
+            ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
+            Places places, Cursor cursor)
         {
-            this.configuration = configuration;
+            Configuration = configuration;
+            GameLanguage = gameLanguage;
             this.cursor = cursor;
             movement = new Movement(configuration.LegacyMode);
             nameProvider = new NameProvider(this);
@@ -551,6 +555,8 @@ namespace Ambermoon
 
             layout.Update(CurrentTicks);
         }
+
+        internal void NotifyConfigurationChange(bool windowChange) => ConfigurationChanged?.Invoke(Configuration, windowChange);
 
         internal int RollDice100()
         {

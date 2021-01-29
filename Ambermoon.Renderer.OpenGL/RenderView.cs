@@ -46,7 +46,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly RenderTextFactory renderTextFactory = null;
         readonly Camera3D camera3D = null;
         bool fullscreen = false;
-
+        public float VirtualAspectRatio { get; set; } = Global.VirtualAspectRatio;
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
 
@@ -61,7 +61,8 @@ namespace Ambermoon.Renderer.OpenGL
 #pragma warning restore 0067
         public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
 
-        public Rect VirtualScreen { get; }
+        public Rect WindowArea { get; }
+        public Size MaxScreenSize { get; set; }
 
         public ISpriteFactory SpriteFactory => spriteFactory;
 
@@ -103,7 +104,7 @@ namespace Ambermoon.Renderer.OpenGL
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
-            int screenWidth, int screenHeight, DeviceType deviceType = DeviceType.Desktop,
+            int windowWidth, int windowHeight, float virtualAspectRatio, DeviceType deviceType = DeviceType.Desktop,
             SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
             OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
@@ -111,14 +112,15 @@ namespace Ambermoon.Renderer.OpenGL
             GameData = gameData;
             GraphicProvider = graphicProvider;
             TextProcessor = textProcessor;
-            VirtualScreen = new Rect(0, 0, screenWidth, screenHeight);
-            virtualScreenDisplay = new Rect(VirtualScreen);
+            WindowArea = new Rect(0, 0, windowWidth, windowHeight);
+            virtualScreenDisplay = new Rect(WindowArea);
             this.sizingPolicy = sizingPolicy;
             this.orientationPolicy = orientationPolicy;
             this.deviceType = deviceType;
-            isLandscapeRatio = VirtualScreen.Width > VirtualScreen.Height;
+            isLandscapeRatio = WindowArea.Width > WindowArea.Height;
+            VirtualAspectRatio = virtualAspectRatio;
 
-            Resize(screenWidth, screenHeight);
+            Resize(windowWidth, windowHeight);
 
             context = new Context(State, virtualScreenDisplay.Width, virtualScreenDisplay.Height);
 
@@ -147,12 +149,7 @@ namespace Ambermoon.Renderer.OpenGL
                     var renderLayer = Create(layer, texture, palette);
 
                     if (layer != Layer.Map3D && layer != Layer.Billboards3D)
-                    {
-                        renderLayer.PositionTransformation = PositionTransformation;
-                        renderLayer.SizeTransformation = SizeTransformation;
-
                         renderLayer.Visible = true;
-                    }
 
                     AddLayer(renderLayer);
                 }
@@ -281,6 +278,9 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void Resize(int width, int height, Orientation orientation)
         {
+            WindowArea.Size.Width = width;
+            WindowArea.Size.Height = height;
+
             SetRotation(orientation);
 
             if (sizingPolicy == SizingPolicy.FitWindow ||
@@ -295,17 +295,17 @@ namespace Ambermoon.Renderer.OpenGL
             }
             else
             {
-                float ratio = (float)width / (float)height;
-                float virtualRatio = Global.VirtualAspectRatio;
+                float windowRatio = (float)width / height;
+                float virtualRatio = VirtualAspectRatio;
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
                     virtualRatio = 1.0f / virtualRatio;
 
-                if (Misc.FloatEqual(ratio, virtualRatio))
+                if (Misc.FloatEqual(windowRatio, virtualRatio))
                 {
                     virtualScreenDisplay = new Rect(0, 0, width, height);
                 }
-                else if (ratio < virtualRatio)
+                else if (windowRatio < virtualRatio)
                 {
                     int newHeight = Misc.Round(width / virtualRatio);
                     virtualScreenDisplay = new Rect(0, (height - newHeight) / 2, width, newHeight);
@@ -318,13 +318,13 @@ namespace Ambermoon.Renderer.OpenGL
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
                 {
-                    sizeFactorX = (float)VirtualScreen.Height / (float)virtualScreenDisplay.Width;
-                    sizeFactorY = (float)VirtualScreen.Width / (float)virtualScreenDisplay.Height;
+                    sizeFactorX = (float)WindowArea.Height / virtualScreenDisplay.Width;
+                    sizeFactorY = (float)WindowArea.Width / virtualScreenDisplay.Height;
                 }
                 else
                 {
-                    sizeFactorX = (float)VirtualScreen.Width / (float)virtualScreenDisplay.Width;
-                    sizeFactorY = (float)VirtualScreen.Height / (float)virtualScreenDisplay.Height;
+                    sizeFactorX = (float)WindowArea.Width / virtualScreenDisplay.Width;
+                    sizeFactorY = (float)WindowArea.Height / virtualScreenDisplay.Height;
                 }
             }
 
@@ -381,7 +381,7 @@ namespace Ambermoon.Renderer.OpenGL
                         State.Gl.Viewport
                         (
                             virtualScreenDisplay.X + mapViewArea.X + viewOffset.X,
-                            VirtualScreen.Height - (virtualScreenDisplay.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
+                            WindowArea.Height - (virtualScreenDisplay.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
                             (uint)mapViewArea.Width, (uint)mapViewArea.Height
                         );
                         State.Gl.Enable(EnableCap.CullFace);
@@ -571,78 +571,6 @@ namespace Ambermoon.Renderer.OpenGL
 
             return new Rect(position, size);
         }
-
-        bool RunHandler(EventHandler handler, EventArgs args)
-        {
-            /*bool? handlerResult = handler?.Invoke(this, args);
-
-            if (handlerResult.HasValue)
-                args.Done = handlerResult.Value;
-
-            return args.Done;*/
-            return false; //TODO
-        }
-
-        /*public bool NotifyClick(int x, int y, Button button, bool delayed)
-        {
-            // transform from screen to view
-            var position = ScreenToView(new Position(x, y));
-
-            if (position == null)
-                return false;
-
-            return RunHandler(Click, new EventArgs(delayed ? EventType.DelayedClick : EventType.Click, position.X, position.Y, 0, 0, button));
-        }
-
-        public bool NotifyDoubleClick(int x, int y, Button button)
-        {
-            // transform from screen to view
-            var position = ScreenToView(new Position(x, y));
-
-            if (position == null)
-                return false;
-
-            return RunHandler(DoubleClick, new EventArgs(EventType.DoubleClick, position.X, position.Y, 0, 0, button));
-        }
-
-        public bool NotifySpecialClick(int x, int y)
-        {
-            // transform from screen to view
-            var position = ScreenToView(new Position(x, y));
-
-            if (position == null)
-                return false;
-
-            // The special click is mapped to a double click with left mouse button
-            return RunHandler(SpecialClick, new EventArgs(EventType.SpecialClick, position.X, position.Y, 0, 0, Button.Left));
-        }
-
-        public bool NotifyDrag(int x, int y, int dx, int dy, Button button)
-        {
-            // transform from screen to view
-            var position = ScreenToView(new Position(x, y));
-            var delta = ScreenToView(new Size(dx, dy));
-
-            if (position == null)
-                position = new Position();
-
-            return RunHandler(Drag, new EventArgs(EventType.Drag, position.X, position.Y, delta.Width, delta.Height, button));
-        }
-
-        public bool NotifyStopDrag()
-        {
-            return RunHandler(StopDrag, new EventArgs(EventType.StopDrag, 0, 0, 0, 0));
-        }
-
-        public bool NotifyKeyPressed(char key, byte modifier)
-        {
-            return RunHandler(KeyPress, new EventArgs(EventType.KeyPressed, 0, 0, (byte)key, modifier));
-        }
-
-        public bool NotifySystemKeyPressed(SystemKey key, byte modifier)
-        {
-            return RunHandler(SystemKeyPress, new EventArgs(EventType.SystemKeyPressed, 0, 0, (int)key, modifier));
-        }*/
 
         public void Dispose()
         {

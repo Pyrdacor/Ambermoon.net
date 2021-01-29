@@ -307,11 +307,11 @@ namespace Ambermoon.Renderer.OpenGL
 
     public class Surface3DFactory : ISurface3DFactory
     {
-        readonly Rect virtualScreen = null;
+        internal Rect VirtualScreen { get; private set; } = null;
 
         public Surface3DFactory(Rect virtualScreen)
         {
-            this.virtualScreen = virtualScreen;
+            VirtualScreen = virtualScreen;
         }
 
         public ISurface3D Create(SurfaceType type, float width, float height, uint textureWidth, uint textureHeight,
@@ -319,7 +319,7 @@ namespace Ambermoon.Renderer.OpenGL
             WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0)
         {
             return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, textureWidth, textureHeight,
-                mappedTextureWidth, mappedTextureHeight, virtualScreen, wallOrientation, alpha, frameCount, extrude);
+                mappedTextureWidth, mappedTextureHeight, VirtualScreen, wallOrientation, alpha, frameCount, extrude);
         }
     }
 }

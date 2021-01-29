@@ -427,11 +427,11 @@ namespace Ambermoon.Renderer
 
     public class RenderTextFactory : IRenderTextFactory
     {
-        readonly Rect virtualScreen = null;
+        internal Rect VirtualScreen { get; private set; } = null;
 
         public RenderTextFactory(Rect virtualScreen)
         {
-            this.virtualScreen = virtualScreen;
+            VirtualScreen = virtualScreen;
         }
 
         /// <inheritdoc/>
@@ -441,22 +441,22 @@ namespace Ambermoon.Renderer
 
         public IRenderText Create()
         {
-            return new RenderText(virtualScreen, GlyphTextureMapping);
+            return new RenderText(VirtualScreen, GlyphTextureMapping);
         }
 
         public IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow)
         {
-            return new RenderText(virtualScreen, GlyphTextureMapping, layer, text, textColor, shadow);
+            return new RenderText(VirtualScreen, GlyphTextureMapping, layer, text, textColor, shadow);
         }
 
         public IRenderText Create(IRenderLayer layer, IText text, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
         {
-            return new RenderText(virtualScreen, GlyphTextureMapping, layer, text, textColor, shadow, bounds, textAlign);
+            return new RenderText(VirtualScreen, GlyphTextureMapping, layer, text, textColor, shadow, bounds, textAlign);
         }
 
         public IRenderText CreateDigits(IRenderLayer layer, IText digits, TextColor textColor, bool shadow, Rect bounds, TextAlign textAlign = TextAlign.Left)
         {
-            return new DigitText(virtualScreen, DigitGlyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign);
+            return new DigitText(VirtualScreen, DigitGlyphTextureMapping, layer, digits, textColor, shadow, bounds, textAlign);
         }
 
         private class DigitText : RenderText

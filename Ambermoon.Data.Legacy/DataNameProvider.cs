@@ -11,6 +11,8 @@
             this.executableData = executableData;
         }
 
+        public string On => executableData.UITexts.Entries[UITextIndex.On];
+        public string Off => executableData.UITexts.Entries[UITextIndex.Off];
         public string DataVersionString => executableData.DataVersionString;
         public string DataInfoString => executableData.DataInfoString;
         public string CharacterInfoAgeString => executableData.UITexts.Entries[UITextIndex.AgeDisplay];
@@ -52,6 +54,7 @@
         public string DataHeaderString => executableData.UITexts.Entries[UITextIndex.DataHeader];
         public string GetAttributeUIName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
         public string GetAbilityUIName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
+        public string OptionsHeader => executableData.Messages.GetEntry(Messages.Index.Options);
         public string LoadWhichSavegame => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
         public string SaveWhichSavegame => executableData.Messages.GetEntry(Messages.Index.SaveWhichSavegame);
         public string ReallyLoad => executableData.Messages.GetEntry(Messages.Index.ReallyLoad);

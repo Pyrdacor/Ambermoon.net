@@ -2,6 +2,8 @@
 {
     public interface IDataNameProvider
     {
+        string On { get; }
+        string Off { get; }
         string DataVersionString { get; }
         string DataInfoString { get; }
         string GetClassName(Class @class);
@@ -32,6 +34,7 @@
         string DataHeaderString { get; }
         string GetAttributeUIName(Attribute attribute);
         string GetAbilityUIName(Ability ability);
+        string OptionsHeader { get; }
         string LoadWhichSavegame { get; }
         string SaveWhichSavegame { get; }
         string ReallyLoad { get; }

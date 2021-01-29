@@ -228,7 +228,7 @@ namespace Ambermoon
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
         }
 
-        void StartGame(GameData gameData, string savePath)
+        void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage)
         {
             // Load game data
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
@@ -246,7 +246,7 @@ namespace Ambermoon
             InitGlyphs();
 
             // Create game
-            Game = new Game(configuration, renderView,
+            Game = new Game(configuration, gameLanguage, renderView,
                 new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()), executableData.ItemManager,
                 new CharacterManager(gameData, graphicProvider), new SavegameManager(savePath), new SavegameSerializer(), new DataNameProvider(executableData),
                 textDictionary, Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]),
@@ -259,10 +259,18 @@ namespace Ambermoon
                 if (!trapped) // Let the mouse stay at the current position when untrapping.
                     mouse.Position = new System.Drawing.PointF(position.X, position.Y);
             };
+            Game.ConfigurationChanged += (configuration, windowChange) =>
+            {
+                if (windowChange)
+                {
+                    UpdateWindow(configuration);
+                    Fullscreen = configuration.Fullscreen;
+                }
+            };
             Game.Run();
         }
 
-        void ShowVersionSelector(Action<IGameData, string> selectHandler)
+        void ShowVersionSelector(Action<IGameData, string, GameLanguage> selectHandler)
         {
             var versionLoader = new BuiltinVersionLoader();
             var versions = versionLoader.Load();
@@ -274,7 +282,7 @@ namespace Ambermoon
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]));
+                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]), gameData.Language.ToGameLanguage());
                 return;
             }
 
@@ -365,7 +373,8 @@ namespace Ambermoon
             {
                 configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                 configuration.GameVersionIndex = gameVersionIndex;
-                selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]));
+                selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]),
+                    gameVersions[gameVersionIndex].Language.ToGameLanguage());
                 versionLoader.Dispose();
             };
         }
@@ -380,8 +389,11 @@ namespace Ambermoon
         RenderView CreateRenderView(GameData gameData, ExecutableData executableData, GraphicProvider graphicProvider,
             FontProvider fontProvider, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
+            var screenResolution = configuration.GetScreenResolution();
+            var aspectRatio = (float)screenResolution.Width / screenResolution.Height;
+
             return new RenderView(this, gameData, graphicProvider, fontProvider,
-                new TextProcessor(), textureAtlasManagerProvider, Width, Height);
+                new TextProcessor(), textureAtlasManagerProvider, Width, Height, aspectRatio);
         }
 
         string GetSavePath(string version)
@@ -412,10 +424,11 @@ namespace Ambermoon
             // Setup input
             SetupInput(window.CreateInput());
 
-            ShowVersionSelector((gameData, savePath) =>
+            ShowVersionSelector((gameData, savePath, gameLanguage) =>
             {
                 renderView?.Dispose();
-                StartGame(gameData as GameData, savePath);
+                StartGame(gameData as GameData, savePath, gameLanguage);
+                WindowMoved();
                 versionSelector = null;
             });
         }
@@ -446,12 +459,34 @@ namespace Ambermoon
             }
         }
 
+        void Window_Move(System.Drawing.Point position)
+        {
+            WindowMoved();
+        }
+
+        void WindowMoved()
+        {
+            var monitorSize = window.Monitor.Bounds.Size;
+            renderView.MaxScreenSize = new Size(monitorSize.Width, monitorSize.Height);
+        }
+
+        void UpdateWindow(IConfiguration configuration)
+        {
+            var screenSize = configuration.GetScreenSize();
+            this.configuration.Width = Width = screenSize.Width;
+            this.configuration.Height = Height = screenSize.Height;
+            window.Size = new System.Drawing.Size(screenSize.Width, screenSize.Height);
+            var screenResolution = configuration.GetScreenResolution();
+            renderView.VirtualAspectRatio = (float)screenResolution.Width / screenResolution.Height;
+            renderView.Resize(screenSize.Width, screenSize.Height);
+        }
+
         public void Run(Configuration configuration)
         {
             this.configuration = configuration;
-            var size = configuration.GetScreenSize();
-            configuration.Width = Width = size.Width;
-            configuration.Height = Height = size.Height;
+            var screenSize = configuration.GetScreenSize();
+            this.configuration.Width = Width = screenSize.Width;
+            this.configuration.Height = Height = screenSize.Height;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             var videoMode = new VideoMode(new System.Drawing.Size(Width, Height), 60);
@@ -468,6 +503,7 @@ namespace Ambermoon
                 window.Render += Window_Render;
                 window.Update += Window_Update;
                 window.Resize += Window_Resize;
+                window.Move += Window_Move;
                 window.Run();
             }
             finally

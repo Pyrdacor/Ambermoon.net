@@ -54,7 +54,7 @@ namespace Ambermoon.UI
                     itemTexts.Add(popup.AddText(new Position(itemBasePosition.X, itemBasePosition.Y + i * itemHeight),
                         items[i].Key, color, true, 4, fallbackChar));
                 }
-                itemAreas.Add(new Rect(itemBasePosition.X, itemBasePosition.Y + i * itemHeight, area.Width - 34, itemHeight));
+                itemAreas.Add(new Rect(itemBasePosition.X, itemBasePosition.Y + i * itemHeight, area.Right - itemBasePosition.X - 1, itemHeight));
             }
 
             if (canEdit && itemTexts.Count != 0)
@@ -66,6 +66,11 @@ namespace Ambermoon.UI
                 editInput.ReactToGlobalClicks = true;
                 editInput.InputSubmitted += _ => CommitEdit();
             }
+        }
+
+        public static ListBox CreateOptionsListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items)
+        {
+            return new ListBox(renderView, game, popup, items, new Rect(64, 85, 191, 38), new Position(67, 87), 7, 189, new Position(-2, -1), false, 5);
         }
 
         public static ListBox CreateSavegameListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items, bool canEdit)
@@ -94,6 +99,13 @@ namespace Ambermoon.UI
             hoverBox?.Delete();
             hoveredItem = -1;
             scrollOffset = 0;
+        }
+
+        public void SetItemText(int index, string text, char? fallbackChar = null)
+        {
+            itemTexts[index - scrollOffset].Text = renderView.TextProcessor.CreateText(text, fallbackChar);
+            items[index] = KeyValuePair.Create(text, items[index].Value);
+            itemTexts[index - scrollOffset].Visible = !string.IsNullOrWhiteSpace(text);
         }
 
         void SetTextHovered(IRenderText text, bool hovered, bool enabled)

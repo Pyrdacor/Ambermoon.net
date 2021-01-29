@@ -52,12 +52,12 @@ namespace Ambermoon.Render
         {
             lock (sprite)
             {
-                var hotspot = this.Hotspot ?? new Position();
+                var hotspot = Hotspot ?? new Position();
                 int x = sprite.X + hotspot.X;
                 int y = sprite.Y + hotspot.Y;
-                this.Hotspot = cursorHotspots[type];
-                sprite.X = x - this.Hotspot.X;
-                sprite.Y = y - this.Hotspot.Y;
+                Hotspot = cursorHotspots[type];
+                sprite.X = x - Hotspot.X;
+                sprite.Y = y - Hotspot.Y;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)type);
             }
         }

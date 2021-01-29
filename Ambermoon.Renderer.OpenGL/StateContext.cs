@@ -23,6 +23,7 @@ using System;
 
 namespace Ambermoon.Renderer
 {
+    // TODO: this is not used. remove?
     internal class StateContext : IDisposable
     {
         readonly State state;
@@ -50,7 +51,7 @@ namespace Ambermoon.Renderer
             if (preProjectionMatrix != state.CurrentProjectionMatrix && preProjectionMatrix != null)
                 state.RestoreProjectionMatrix(preProjectionMatrix);
             if (preModelViewMatrix != state.CurrentModelViewMatrix && preModelViewMatrix != null)
-                state.RestoreProjectionMatrix(preModelViewMatrix);
+                state.RestoreModelViewMatrix(preModelViewMatrix);
         }
 
         public void Dispose()
