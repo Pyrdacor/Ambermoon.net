@@ -3559,6 +3559,11 @@ namespace Ambermoon
             UpdateBattleStatus();
             UpdateActiveBattleSpells();
 
+            SetupBattleButtons();
+        }
+
+        internal void SetupBattleButtons()
+        {
             // Flee button
             layout.AttachEventToButton(0, () =>
             {
@@ -3621,7 +3626,6 @@ namespace Ambermoon
                     spell => PickBattleSpell(spell)
                 );
             });
-
             if (currentBattle != null)
                 BattlePlayerSwitched();
         }

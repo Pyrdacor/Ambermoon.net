@@ -617,13 +617,15 @@ namespace Ambermoon.UI
         void CloseOptionMenu()
         {
             OptionMenuOpen = false;
-            additionalSprites.Last()?.Delete();
+            additionalSprites.Last()?.Delete(); // info box
             additionalSprites.Remove(additionalSprites.Last());
-            additionalSprites.Last()?.Delete();
+            additionalSprites.Last()?.Delete(); // map disable overlay
             additionalSprites.Remove(additionalSprites.Last());
-            texts.Last()?.Destroy();
+            texts.Last()?.Destroy(); // version string
             texts.Remove(texts.Last());
             UpdateLayoutButtons(ticksPerMovement);
+            if (game.BattleActive)
+                game.SetupBattleButtons();
             game.Resume();
             game.InputEnable = true;
         }
