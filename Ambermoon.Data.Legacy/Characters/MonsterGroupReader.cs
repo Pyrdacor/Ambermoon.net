@@ -6,6 +6,8 @@ namespace Ambermoon.Data.Legacy.Characters
     {
         public void ReadMonsterGroup(ICharacterManager characterManager, MonsterGroup monsterGroup, IDataReader dataReader)
         {
+            dataReader.Position = 0;
+
             for (int r = 0; r < 3; ++r)
             {
                 for (int c = 0; c < 6; ++c)

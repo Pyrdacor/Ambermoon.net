@@ -163,7 +163,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
 			for (int i = 0; i < numHunks; ++i)
 			{
-				var type = (HunkType)dataReader.ReadDword();
+				var type = (HunkType)(dataReader.ReadDword() & 0x1fffffff);
 				IHunk hunk;
 
 				switch (type)

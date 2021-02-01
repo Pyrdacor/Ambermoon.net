@@ -23,11 +23,11 @@ namespace Ambermoon.Data.Legacy.Characters
                 monsterGroups.Add((uint)monsterGroupFile.Key, MonsterGroup.Load(this, monsterGroupReader, monsterGroupFile.Value));
         }
 
-        public Monster GetMonster(uint index) => index == 0 ? null : monsters[index];
+        public Monster GetMonster(uint index) => index == 0 || !monsters.ContainsKey(index) ? null : monsters[index];
 
-        public NPC GetNPC(uint index) => index == 0 ? null : npcs[index];
+        public NPC GetNPC(uint index) => index == 0 || !npcs.ContainsKey(index) ? null : npcs[index];
 
-        public MonsterGroup GetMonsterGroup(uint index) => index == 0 ? null : monsterGroups[index];
+        public MonsterGroup GetMonsterGroup(uint index) => index == 0 || !monsterGroups.ContainsKey(index) ? null : monsterGroups[index];
 
         public Monster[] Monsters => monsters.Values.ToArray();
     }
