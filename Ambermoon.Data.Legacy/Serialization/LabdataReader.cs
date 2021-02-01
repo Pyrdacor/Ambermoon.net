@@ -148,7 +148,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         var partialGraphic = ReadGraphic(graphicReader, objectTextureFiles[(int)objectInfo.TextureIndex],
                             (int)objectInfo.TextureWidth, (int)objectInfo.TextureHeight, true, true, i == 0);
 
-                        compoundGraphic.AddOverlay(i * objectInfo.TextureWidth, 0u, partialGraphic);
+                        compoundGraphic.AddOverlay(i * objectInfo.TextureWidth, 0u, partialGraphic, false);
                     }
 
                     labdata.ObjectGraphics.Add(compoundGraphic);

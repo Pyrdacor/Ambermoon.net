@@ -59,7 +59,7 @@ namespace Ambermoon.Data.Legacy.Characters
             for (int i = 0; i < numFrames; ++i)
             {
                 graphicReader.ReadGraphic(graphic, file, graphicInfo);
-                compoundGraphic.AddOverlay((uint)i * monster.MappedFrameWidth, 0, graphic.CreateScaled((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight));
+                compoundGraphic.AddOverlay((uint)i * monster.MappedFrameWidth, 0, graphic.CreateScaled((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight), false);
             }
             for (int i = 0; i < compoundGraphic.Data.Length; ++i)
                 compoundGraphic.Data[i] = monster.MonsterPalette[compoundGraphic.Data[i] & 0x1f];

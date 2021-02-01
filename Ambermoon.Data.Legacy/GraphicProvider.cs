@@ -195,7 +195,7 @@ namespace Ambermoon.Data.Legacy
                             for (int i = 0; i < numFrames; ++i)
                             {
                                 graphicReader.ReadGraphic(graphic, reader, graphicInfo);
-                                compoundGraphic.AddOverlay((uint)i * 16, 0, graphic);
+                                compoundGraphic.AddOverlay((uint)i * 16, 0, graphic, false);
                             }
 
                             npcGraphics.Add(compoundGraphic);
@@ -249,7 +249,7 @@ namespace Ambermoon.Data.Legacy
                             for (int i = 0; i < info.FrameCount; ++i)
                             {
                                 graphicReader.ReadGraphic(graphic, reader, info.GraphicInfo);
-                                compoundGraphic.AddOverlay((uint)(i * info.GraphicInfo.Width), 0, graphic);
+                                compoundGraphic.AddOverlay((uint)(i * info.GraphicInfo.Width), 0, graphic, false);
                             }
 
                             combatGraphics.Add(compoundGraphic);

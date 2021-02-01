@@ -124,7 +124,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.PaletteOffset = 24;
             var compoundGraphic = new Graphic(176, 16, 0);
             for (uint i = 0; i < 11; ++i)
-                compoundGraphic.AddOverlay(i * 16u, 0u, ReadGraphic(dataReader));
+                compoundGraphic.AddOverlay(i * 16u, 0u, ReadGraphic(dataReader), false);
             entries.Add(UIGraphic.OpeningPortal, compoundGraphic);
             graphicInfo.Width = 32;
             graphicInfo.Height = 29;
