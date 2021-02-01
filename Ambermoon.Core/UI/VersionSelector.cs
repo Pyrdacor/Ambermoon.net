@@ -19,6 +19,11 @@ namespace Ambermoon.UI
         readonly IColoredRect selectedVersionMarker = null;
         readonly Button changeSaveOptionButton = null;
         readonly IRenderText saveOptionText = null;
+        readonly Tooltip saveOptionTooltip = new Tooltip();
+        readonly IRenderText saveOptionTooltipText = null;
+        IColoredRect saveOptionTooltipBorder = null;
+        IColoredRect saveOptionTooltipBackground = null;
+        IText currentTooltipText = null;
         readonly Button okButton = null;
         readonly List<Rect> versionAreas = new List<Rect>(3);
         int selectedSaveOption = 0;
@@ -131,12 +136,18 @@ namespace Ambermoon.UI
                 "Save games in program path",
                 "Save games in data path"
             };
+            var savegameOptionTooltips = new string[2]
+            {
+                "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'.",
+                "Savegames are stored in the original data path and may overwrite original savegames!"
+            };
             selectedSaveOption = (int)saveOption % 2;
             changeSaveOptionButton = CreateButton(new Position(versionListArea.X, versionListArea.Bottom + 3), textureAtlasManager);
             changeSaveOptionButton.ButtonType = Data.Enumerations.ButtonType.MoveRight;
             changeSaveOptionButton.Visible = false;
-            changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption(savegameOptions);
-            saveOptionText = AddText(new Position(versionListArea.X + 34, versionListArea.Bottom + 9), savegameOptions[selectedSaveOption], TextColor.Gray);
+            changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption(savegameOptions, savegameOptionTooltips);
+            var saveOptionPosition = new Position(versionListArea.X + 34, versionListArea.Bottom + 9);
+            saveOptionText = AddText(saveOptionPosition, savegameOptions[selectedSaveOption], TextColor.Gray);
             saveOptionText.Visible = false;
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
@@ -145,6 +156,10 @@ namespace Ambermoon.UI
             {
                 Closed?.Invoke(this.selectedVersion, gameVersions[this.selectedVersion].DataProvider?.Invoke(), this.selectedVersion == 2 && selectedSaveOption == 1);
             };
+            saveOptionTooltip.Area = new Rect(saveOptionPosition, new Size(savegameOptions[selectedSaveOption].Length * Global.GlyphWidth, Global.GlyphLineHeight));
+            saveOptionTooltipText = AddText(new Position(), "", TextColor.White, true, 250);
+            saveOptionTooltipText.Visible = false;
+            UpdateSaveOptionTooltip(savegameOptionTooltips);
             #endregion
 
             SelectedVersion = selectedVersion;
@@ -158,10 +173,21 @@ namespace Ambermoon.UI
             return button;
         }
 
-        void ToggleSaveOption(string[] savegameOptions)
+        void ToggleSaveOption(string[] savegameOptions, string[] savegameOptionTooltips)
         {
             selectedSaveOption = 1 - selectedSaveOption;
             saveOptionText.Text = renderView.TextProcessor.CreateText(savegameOptions[selectedSaveOption]);
+            saveOptionTooltip.Area.Size.Width = savegameOptions[selectedSaveOption].Length * Global.GlyphWidth;
+            UpdateSaveOptionTooltip(savegameOptionTooltips);
+        }
+
+        void UpdateSaveOptionTooltip(string[] savegameOptionTooltips)
+        {
+            saveOptionTooltip.Text = savegameOptionTooltips[selectedSaveOption];
+            saveOptionTooltip.TextColor = selectedSaveOption == 0 ? TextColor.Gray : TextColor.Orange;
+            currentTooltipText = renderView.TextProcessor.CreateText(saveOptionTooltip.Text);
+            currentTooltipText = renderView.TextProcessor.WrapText(currentTooltipText,
+                new Rect(0, 0, 200, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
         }
 
         Color GetPaletteColor(byte colorIndex)
@@ -246,6 +272,9 @@ namespace Ambermoon.UI
                     SelectedVersion = versionCount - 1;
                     break;
             }
+
+            if (SelectedVersion != 2)
+                HideTooltip();
         }
 
         public void OnKeyUp(Key key, KeyModifiers modifiers)
@@ -318,6 +347,35 @@ namespace Ambermoon.UI
             }
 
             HighlightVersion(-1);
+
+            if (selectedVersion == 2 && currentTooltipText != null && saveOptionTooltip.Area.Contains(position))
+            {
+                saveOptionTooltipText.Text = currentTooltipText;
+                saveOptionTooltipText.TextColor = saveOptionTooltip.TextColor;
+
+                int textWidth = currentTooltipText.MaxLineSize * Global.GlyphWidth;
+                int x = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
+                int y = position.Y + 16;
+                int textHeight = currentTooltipText.LineCount * Global.GlyphLineHeight;
+
+                saveOptionTooltipText.Place(new Rect(x, y, textWidth, textHeight), TextAlign.Center);
+                saveOptionTooltipText.Visible = true;
+                saveOptionTooltipBorder?.Delete();
+                saveOptionTooltipBackground?.Delete();
+                saveOptionTooltipBorder = FillArea(new Rect(x - 2, y - 3, textWidth + 4, textHeight + 4), GetPaletteColor(31), 248);
+                saveOptionTooltipBackground = FillArea(new Rect(x - 1, y - 2, textWidth + 2, textHeight + 2), GetPaletteColor(28), 249);
+            }
+            else
+            {
+                HideTooltip();
+            }
+        }
+
+        void HideTooltip()
+        {
+            saveOptionTooltipText.Visible = false;
+            saveOptionTooltipBorder?.Delete();
+            saveOptionTooltipBackground?.Delete();
         }
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
@@ -328,6 +386,9 @@ namespace Ambermoon.UI
                     SelectedVersion = (SelectedVersion - 1 + versionCount) % versionCount;
                 else
                     SelectedVersion = (SelectedVersion + 1) % versionCount;
+
+                if (SelectedVersion != 2)
+                    HideTooltip();
             }
         }
     }

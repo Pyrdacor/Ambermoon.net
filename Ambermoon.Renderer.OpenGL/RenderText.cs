@@ -311,6 +311,9 @@ namespace Ambermoon.Renderer
             characterShadowSprites.ForEach(s => s?.Delete());
             characterShadowSprites.Clear();
 
+            if (text == null)
+                return;
+
             if (!UpdateCharacterPositions())
                 return;
 
