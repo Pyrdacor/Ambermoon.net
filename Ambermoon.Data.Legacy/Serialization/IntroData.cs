@@ -14,7 +14,11 @@ namespace Ambermoon.Data.Legacy.Serialization
         DestroyedIllien,
         DestroyedSnakesign,
         ThalionLogo,
-        SunAnimation
+        SunAnimation,
+        Lyramion,
+        Morag,
+        ForestMoon,
+        Meteor
     }
 
     public class IntroData
@@ -33,6 +37,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             { IntroGraphic.DestroyedSnakesign, 4 },
             { IntroGraphic.ThalionLogo, 0 },
             { IntroGraphic.SunAnimation, 3 },
+            { IntroGraphic.Lyramion, 3 },
+            { IntroGraphic.Morag, 3 },
+            { IntroGraphic.ForestMoon, 3 },
+            { IntroGraphic.Meteor, 3 },
             // TODO ...
         };
         static GraphicInfo paletteGraphicInfo = new GraphicInfo
@@ -113,20 +121,28 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #region Hunk 3 - Intro graphics (planets, etc)
 
-            Size[] hunk3ImageSizes = new Size[2]
+            Size[] hunk3ImageSizes = new Size[6]
             {
-                new Size(128, 82),
-                new Size(64, 64),
+                new Size(128, 82), // Thalion Logo
+                new Size(64, 64), // Sun
+                new Size(128, 128), // Lyramion
+                new Size(64, 64), // Morag
+                new Size(64, 64), // Forest Moon
+                new Size(96, 96), // Meteor
                 // TODO ...
             };
-            int[] hunk3FrameCounts = new int[2]
+            int[] hunk3FrameCounts = new int[6]
             {
                 1,
                 12,
+                1,
+                1,
+                1,
+                1,
                 // TODO ...
             };
 
-            for (int i = 0; i < 2; ++i)
+            for (int i = 0; i < 6; ++i)
             {
                 var graphicInfo = new GraphicInfo
                 {
