@@ -21,6 +21,13 @@
 
   <ItemGroup>
     <None Remove="ambermoon.cfg" />
+    <None Remove="Resources\IntroFont.dat" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\IntroFont.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +41,21 @@
     <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
     <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
     <ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
