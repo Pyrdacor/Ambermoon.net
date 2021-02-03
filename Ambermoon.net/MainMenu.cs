@@ -36,6 +36,7 @@ namespace Ambermoon
             6, // Orange
             5 // Yellow
         };
+        bool closed = false;
         public event Action<CloseAction> Closed;
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
@@ -80,6 +81,7 @@ namespace Ambermoon
 
         public void Destroy()
         {
+            closed = true;
             background?.Delete();
             background = null;
             mainMenuTexts?.ForEach(t => t.Value?.Destroy());
@@ -96,11 +98,15 @@ namespace Ambermoon
 
         public void Render()
         {
-            renderView.Render(null);
+            if (!closed)
+                renderView.Render(null);
         }
 
         public void Update(double deltaTime)
         {
+            if (closed)
+                return;
+
             if (fadeOutStartTime != null)
             {
                 if (fadeArea != null)
@@ -138,6 +144,9 @@ namespace Ambermoon
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            if (closed)
+                return;
+
             if (fadeOutStartTime != null)
                 return;
 
@@ -150,6 +159,7 @@ namespace Ambermoon
                     if (mainMenuTexts[i].Key.Contains(position))
                     {
                         Closed?.Invoke((CloseAction)i);
+                        break;
                     }
                 }
             }
@@ -157,6 +167,9 @@ namespace Ambermoon
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
+            if (closed)
+                return;
+
             cursor.UpdatePosition(position);
 
             if (fadeOutStartTime != null)
