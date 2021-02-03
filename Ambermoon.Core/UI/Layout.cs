@@ -957,8 +957,8 @@ namespace Ambermoon.UI
             int width = game.Configuration.Width ?? 640;
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
+                KeyValuePair.Create("", (Action<int, string>)null/*((index, _) => ToggleMusic())*/), // TODO: enable later
+                KeyValuePair.Create("", (Action<int, string>)null/*((index, _) => ToggleFastBattleMode())*/), // TODO: enable later
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleScreenRatio())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleResolution())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
