@@ -126,11 +126,11 @@ namespace Ambermoon.Data.Legacy
                 }
             });
 
-            int introPaletteCount = introData == null ? 0 : Math.Min(18, introData.IntroPalettes.Count);
+            int introPaletteCount = introData == null ? 0 : Math.Min(9, introData.IntroPalettes.Count);
             int p = 0;
             for (; p < introPaletteCount; ++p)
                 Palettes.Add(53 + p, introData.IntroPalettes[p]);
-            for (; p < 18; ++p)
+            for (; p < 9; ++p)
                 Palettes.Add(53 + p, new Graphic(32 * 4, 1, 0) { IndexedGraphic = false });
 
             // TODO: The following bytes were extracted from AM2_CPU (behind cursors).

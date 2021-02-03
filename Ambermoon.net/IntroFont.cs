@@ -11,6 +11,7 @@ namespace Ambermoon
     {
         public int Advance;
         public Graphic Graphic;
+        public const int SpaceWidth = 20;
     }
 
     class IntroText
@@ -18,8 +19,8 @@ namespace Ambermoon
         readonly List<ILayerSprite> renderGlyphs = new List<ILayerSprite>(26);
         bool visible = false;
         readonly int totalWidth = 0;
-        const int SpaceWidth = 20;
         int baseX = 0;
+        byte colorIndex = 2; // white
 
         public IntroText(IRenderView renderView, string text, Dictionary<char, Glyph> glyphs, byte displayLayer)
         {
@@ -29,7 +30,7 @@ namespace Ambermoon
             foreach (char ch in text.ToUpper())
             {
                 if (ch == ' ')
-                    totalWidth += SpaceWidth;
+                    totalWidth += Glyph.SpaceWidth;
                 else if (ch >= 'A' && ch <= 'Z')
                 {
                     var glyph = glyphs[ch];
@@ -45,6 +46,19 @@ namespace Ambermoon
                 }
                 else
                     throw new AmbermoonException(ExceptionScope.Data, $"Unsupported character: {ch}");
+            }
+        }
+
+        public byte ColorIndex
+        {
+            get => colorIndex;
+            set
+            {
+                if (colorIndex == value)
+                    return;
+
+                colorIndex = value;
+                renderGlyphs?.ForEach(g => { if (g != null) g.MaskColor = colorIndex; });
             }
         }
 
@@ -148,63 +162,7 @@ namespace Ambermoon
                     Graphic = LoadGraphic(width, height)
                 };
                 glyphs.Add(ch, glyph);
-                SaveGraphic($@"D:\Programmierung\C#\Projects\Ambermoon\ambermoon.net\FileSpecs\Extract\decoded\ambermoon_intro_hunks\font\{ch}.png", glyph.Graphic, new Graphic
-                {
-                    Width = 2,
-                    Height = 1,
-                    IndexedGraphic = false,
-                    Data = new byte[12] { 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255 }
-                }, true);
             }
-        }
-
-        private static void SaveGraphic(string filename, Graphic graphic, Graphic palette = null, bool alpha = true)
-        {
-            var bitmap = new System.Drawing.Bitmap(graphic.Width, graphic.Height);
-            var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, graphic.Width, graphic.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            IntPtr ptr = data.Scan0;
-            int lineSize = graphic.IndexedGraphic ? graphic.Width : graphic.Width * 4;
-
-            for (int y = 0; y < graphic.Height; ++y)
-            {
-                for (int x = 0; x < graphic.Width; ++x)
-                {
-                    if (graphic.IndexedGraphic)
-                    {
-                        int offset = y * lineSize + x;
-                        int palIndex = graphic.Data[offset] * 4;
-                        if (!alpha || palIndex != 0)
-                        {
-                            //Marshal.Copy(palette.Data, palIndex, ptr, 4);
-                            System.Runtime.InteropServices.Marshal.Copy(palette.Data, palIndex + 2, ptr, 1);
-                            ptr += 1;
-                            System.Runtime.InteropServices.Marshal.Copy(palette.Data, palIndex + 1, ptr, 1);
-                            ptr += 1;
-                            System.Runtime.InteropServices.Marshal.Copy(palette.Data, palIndex + 0, ptr, 1);
-                            ptr += 1;
-                            System.Runtime.InteropServices.Marshal.Copy(palette.Data, palIndex + 3, ptr, 1);
-                            ptr += 1;
-                        }
-                        else
-                            ptr += 4;
-                    }
-                    else
-                    {
-                        int offset = y * /*graphic.Data.Length - (y + 1) **/ lineSize + x * 4;
-                        System.Runtime.InteropServices.Marshal.Copy(graphic.Data, offset + 2, ptr, 1);
-                        ptr += 1;
-                        System.Runtime.InteropServices.Marshal.Copy(graphic.Data, offset + 1, ptr, 1);
-                        ptr += 1;
-                        System.Runtime.InteropServices.Marshal.Copy(graphic.Data, offset + 0, ptr, 1);
-                        ptr += 1;
-                        System.Runtime.InteropServices.Marshal.Copy(graphic.Data, offset + 3, ptr, 1);
-                        ptr += 1;
-                    }
-                }
-            }
-
-            bitmap.UnlockBits(data);
-            bitmap.Save(filename);
         }
 
         public IntroText CreateText(IRenderView renderView, Rect area, string text, byte displayLayer, TextAlign textAlign = TextAlign.Center)
@@ -212,6 +170,23 @@ namespace Ambermoon
             var introText = new IntroText(renderView, text, glyphs, displayLayer);
             introText.Place(area, textAlign);
             return introText;
+        }
+
+        public int MeasureTextWidth(string text)
+        {
+            int totalWidth = 0;
+
+            foreach (char ch in text.ToUpper())
+            {
+                if (ch == ' ')
+                    totalWidth += Glyph.SpaceWidth;
+                else if (ch >= 'A' && ch <= 'Z')
+                    totalWidth += glyphs[ch].Advance;
+                else
+                    throw new AmbermoonException(ExceptionScope.Data, $"Unsupported character: {ch}");
+            }
+
+            return totalWidth;
         }
     }
 }

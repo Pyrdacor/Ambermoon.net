@@ -235,9 +235,10 @@ namespace Ambermoon
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
         }
 
-        void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IntroFont introFont, bool canContinue, Action<bool> startGameAction)
+        void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
+            IntroFont introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction)
         {
-            mainMenu = new MainMenu(renderView, cursor, introFont, canContinue);
+            mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue);
             mainMenu.Closed += closeAction =>
             {
                 mainMenu = null;
@@ -287,7 +288,8 @@ namespace Ambermoon
             cursor.UpdatePosition(mouse.Position.Round());
             bool canContinue = true; // TODO
 
-            ShowMainMenu(renderView, cursor, introFont, canContinue, continueGame =>
+            ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
+                introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
             {
                 // Create game
                 Game = new Game(configuration, gameLanguage, renderView,

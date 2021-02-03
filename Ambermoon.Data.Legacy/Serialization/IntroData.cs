@@ -21,6 +21,23 @@ namespace Ambermoon.Data.Legacy.Serialization
         Meteor
     }
 
+    public enum IntroText
+    {
+        Gemstone,
+        Illien,
+        Snakesign,
+        Presents,
+        Twinlake,
+        Lyramion,
+        SeventyYears,
+        After,
+        Continue,
+        NewGame,
+        Intro,
+        Quit
+        // TODO: also extract credits?
+    }
+
     public class IntroData
     {
         readonly List<Graphic> introPalettes = new List<Graphic>();
@@ -28,7 +45,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         static readonly Dictionary<IntroGraphic, byte> graphicPalettes = new Dictionary<IntroGraphic, byte>
         {
             { IntroGraphic.Frame, 0 }, // unknown
-            { IntroGraphic.MainMenuBackground, 6 }, // 8 will work too
+            { IntroGraphic.MainMenuBackground, 6 }, // 7 will work too
             { IntroGraphic.Gemstone, 4 },
             { IntroGraphic.Illien, 4 },
             { IntroGraphic.Snakesign, 4 },
@@ -49,10 +66,12 @@ namespace Ambermoon.Data.Legacy.Serialization
             Height = 1,
             GraphicFormat = GraphicFormat.XRGB16
         };
+        readonly Dictionary<IntroText, string> texts = new Dictionary<IntroText, string>();
 
         public IReadOnlyList<Graphic> IntroPalettes => introPalettes.AsReadOnly();
         public static IReadOnlyDictionary<IntroGraphic, byte> GraphicPalettes => graphicPalettes;
         public IReadOnlyDictionary<IntroGraphic, Graphic> Graphics => graphics;
+        public IReadOnlyDictionary<IntroText, string> Texts => texts;
 
 
         public IntroData(GameData gameData)
@@ -64,16 +83,39 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             #region Hunk 0 - Palettes and texts
 
+            var hunk0 = introHunks[0];
+
             Graphic LoadPalette()
             {
                 var paletteGraphic = new Graphic();
-                graphicReader.ReadGraphic(paletteGraphic, introHunks[0], paletteGraphicInfo);
+                graphicReader.ReadGraphic(paletteGraphic, hunk0, paletteGraphicInfo);
                 return paletteGraphic;
             }
 
-            for (int i = 0; i < 18; ++i)
+            for (int i = 0; i < 9; ++i)
                 introPalettes.Add(LoadPalette());
-            // TODO: after the 18 palettes there are many texts (including the main menu texts)
+
+            hunk0.Position += 8; // 8 unknown bytes
+
+            for (int i = 0; i < 8; ++i)
+            {
+                byte startByte = hunk0.PeekByte();
+                if (startByte != 0x20 && (startByte < 'A' || startByte > 'Z'))
+                    ++hunk0.Position; // Sometimes there is an unknown start byte
+                texts.Add((IntroText)i, hunk0.ReadNullTerminatedString());
+            }
+
+            if (hunk0.ReadByte() != 4) // Should contain the amount of main menu text (= 4)
+                throw new AmbermoonException(ExceptionScope.Data, "Wrong intro data.");
+
+            for (int i = 0; i < 4; ++i)
+            {
+                // The 4 main menu texts are prefixed by 2 bytes (x and y render offset).
+                hunk0.Position += 2; // We skip those bytes here.
+                texts.Add((IntroText)(8 + i), hunk0.ReadNullTerminatedString());
+            }
+
+            // TODO: the credits will follow
 
             #endregion
 
@@ -163,7 +205,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     graphic = new Graphic(frames * graphicInfo.Width, graphicInfo.Height, 0);
 
-                    for (int f = 0; f < hunk3FrameCounts[i]; ++f)
+                    for (int f = 0; f < frames; ++f)
                     {
                         var frameGraphic = new Graphic();
                         graphicReader.ReadGraphic(frameGraphic, introHunks[3], graphicInfo);
@@ -171,6 +213,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                     }
                 }
                 graphics.Add(IntroGraphic.ThalionLogo + i, graphic);
+                if (i == 0) // The other graphics start at 0x42B8 (the data between is unknown yet)
+                    introHunks[3].Position = 0x42B8;
             }
 
             // TODO ...

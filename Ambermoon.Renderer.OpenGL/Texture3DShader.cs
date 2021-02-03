@@ -33,7 +33,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultAlphaName = "alpha";
         internal static readonly string DefaultLightName = "light";
 
-        // The palette has a size of 32x70 pixels.
+        // The palette has a size of 32x61 pixels.
         // Each row represents one palette of 32 colors.
         // So the palette index determines the pixel row.
         // The column is the palette color index from 0 to 31.
@@ -57,7 +57,7 @@ namespace Ambermoon.Renderer
             $"    if (realTexCoord.y >= textureEndCoord.y)",
             $"        realTexCoord.y -= int((textureSize.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
-            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / 70.0f));",
+            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / 61.0f));",
             $"    ",
             $"    if (alphaEnabled > 0.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f))",
             $"        discard;",

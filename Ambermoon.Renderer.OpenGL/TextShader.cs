@@ -25,7 +25,7 @@ namespace Ambermoon.Renderer
     {
         internal static readonly string DefaultTextColorIndexName = "textColorIndex";
 
-        // The palette has a size of 32x52 pixels.
+        // The palette has a size of 32x61 pixels.
         // Each row represents one palette of 32 colors.
         // So the palette index determines the pixel row.
         // The column is the palette color index from 0 to 31.
@@ -41,7 +41,7 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f * textColIndex;",
-            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / 52.0f));",
+            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / 61.0f));",
             $"    ",
             $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
             $"        discard;",

@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon
 {
@@ -17,13 +18,25 @@ namespace Ambermoon
         readonly IRenderView renderView;
         readonly Cursor cursor = null;
         readonly ILayerSprite background;
-        readonly IntroText continueText;
-        readonly IntroText newGameText;
-        readonly IntroText introText;
-        readonly IntroText exitText;
+        readonly List<KeyValuePair<Rect, IntroText>> mainMenuTexts = new List<KeyValuePair<Rect, IntroText>>(4);
+        int hoveredTextIndex = -1;
+        DateTime? hoverStartTime = null;
+        const int HoverColorTime = 125;
+        static readonly byte[] hoveredColorIndices = new byte[]
+        {
+            2, // White
+            5, // Yellow
+            6, // Orange
+            4, // Red
+            11, // Dark red
+            4, // Red
+            6, // Orange
+            5 // Yellow
+        };
         public event Action<CloseAction> Closed;
 
-        public MainMenu(IRenderView renderView, Cursor cursor, IntroFont introFont, bool canContinue)
+        public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
+            IntroFont introFont, string[] texts, bool canContinue)
         {
             this.renderView = renderView;
             this.cursor = cursor;
@@ -31,7 +44,7 @@ namespace Ambermoon
 
             background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
             background.Layer = renderView.GetLayer(Layer.IntroGraphics);
-            background.PaletteIndex = 59; // intro palette 6
+            background.PaletteIndex = (byte)(52 + paletteIndices[IntroGraphic.MainMenuBackground]);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
             background.X = 0;
             background.Y = 0;
@@ -41,18 +54,17 @@ namespace Ambermoon
             // 16 pixel height area in the y-center (from y=6 to y=22). So basically these 16 pixels are
             // the height we use for calculations.
             int y = 56;
-            continueText = introFont.CreateText(renderView, new Rect(0, y - 6, 320, 24), "Weiterspielen", 1);
-            y += 16 + 8;
-            newGameText = introFont.CreateText(renderView, new Rect(0, y - 6, 320, 24), "Neue Quest starten", 1);
-            y += 16 + 8;
-            introText = introFont.CreateText(renderView, new Rect(0, y - 6, 320, 24), "Intro", 1);
-            y += 16 + 8;
-            exitText = introFont.CreateText(renderView, new Rect(0, y - 6, 320, 24), "Quit", 1);
-
-            continueText.Visible = canContinue;
-            newGameText.Visible = true;
-            introText.Visible = true;
-            exitText.Visible = true;
+            for (int i = 0; i < 4; ++i)
+            {
+                int textWidth = introFont.MeasureTextWidth(texts[i]);
+                int offsetX = (Global.VirtualScreenWidth - textWidth) / 2;
+                var area = new Rect(0, y - 6, Global.VirtualScreenWidth, 24);
+                var clickArea = new Rect(offsetX, y, textWidth, 16);
+                var mainMenuText = introFont.CreateText(renderView, area, texts[i], 1);
+                mainMenuText.Visible = i != 0 || canContinue;
+                mainMenuTexts.Add(KeyValuePair.Create(clickArea, mainMenuText));
+                y += 16 + 8;
+            }
 
             cursor.Type = Data.CursorType.Sword;
         }
@@ -69,7 +81,19 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
-
+            for (int i = 0; i < mainMenuTexts.Count; ++i)
+            {
+                if (i == hoveredTextIndex)
+                {
+                    int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
+                    byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
+                    mainMenuTexts[i].Value.ColorIndex = colorIndex;
+                }
+                else
+                {
+                    mainMenuTexts[i].Value.ColorIndex = 2; // White
+                }
+            }
         }
 
         public void OnMouseUp(Position position, MouseButtons buttons)
@@ -96,7 +120,21 @@ namespace Ambermoon
 
             position = renderView.ScreenToGame(position);
 
-            
+            for (int i = 0; i < mainMenuTexts.Count; ++i)
+            {
+                if (mainMenuTexts[i].Key.Contains(position))
+                {
+                    if (hoveredTextIndex != i)
+                    {
+                        hoveredTextIndex = i;
+                        hoverStartTime = DateTime.Now;
+                    }
+                    return;
+                }
+            }
+
+            hoveredTextIndex = -1;
+            hoverStartTime = null;
         }
     }
 }
