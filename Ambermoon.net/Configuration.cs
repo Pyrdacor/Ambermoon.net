@@ -8,7 +8,7 @@ namespace Ambermoon
 {
     internal class Configuration : IConfiguration
     {
-        public ScreenRatio ScreenRatio { get; set; } = ScreenRatio.Ratio4_3;
+        public ScreenRatio ScreenRatio { get; set; } = ScreenRatio.Ratio16_10;
         public int? Width { get; set; } = 1280;
         public int? Height { get; set; } = 800;
         public bool Fullscreen { get; set; } = false;
