@@ -26,6 +26,7 @@ namespace Ambermoon
         IWindow window;
         IMouse mouse = null;
         ICursor cursor = null;
+        MainMenu mainMenu = null;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -146,7 +147,7 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.OnKeyChar(keyChar);
-            else
+            else if (Game != null)
                 Game.OnKeyChar(keyChar);
         }
 
@@ -158,7 +159,7 @@ namespace Ambermoon
             {
                 if (versionSelector != null)
                     versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
-                else
+                else if (Game != null)
                     Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
             }
         }
@@ -167,7 +168,7 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
-            else
+            else if (Game != null)
                 Game.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
         }
 
@@ -200,7 +201,9 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.OnMouseDown(mouse.Position.Round(), GetMouseButtons(mouse));
-            else
+            else if (mainMenu != null)
+                mainMenu.OnMouseDown(mouse.Position.Round(), ConvertMouseButtons(button));
+            else if (Game != null)
                 Game.OnMouseDown(mouse.Position.Round(), GetMouseButtons(mouse));
         }
 
@@ -208,7 +211,9 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.OnMouseUp(mouse.Position.Round(), ConvertMouseButtons(button));
-            else
+            else if (mainMenu != null)
+                mainMenu.OnMouseUp(mouse.Position.Round(), ConvertMouseButtons(button));
+            else if (Game != null)
                 Game.OnMouseUp(mouse.Position.Round(), ConvertMouseButtons(button));
         }
 
@@ -216,7 +221,9 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.OnMouseMove(position.Round(), GetMouseButtons(mouse));
-            else
+            else if (mainMenu != null)
+                mainMenu.OnMouseMove(mouse.Position.Round(), GetMouseButtons(mouse));
+            else if (Game != null)
                 Game.OnMouseMove(position.Round(), GetMouseButtons(mouse));
         }
 
@@ -224,15 +231,46 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
-            else
+            else if (Game != null)
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
+        }
+
+        void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IntroFont introFont, bool canContinue, Action<bool> startGameAction)
+        {
+            mainMenu = new MainMenu(renderView, cursor, introFont, canContinue);
+            mainMenu.Closed += closeAction =>
+            {
+                mainMenu = null;
+
+                switch (closeAction)
+                {
+                    case MainMenu.CloseAction.NewGame:
+                        startGameAction?.Invoke(false);
+                        break;
+                    case MainMenu.CloseAction.Continue:
+                        startGameAction?.Invoke(true);
+                        break;
+                    case MainMenu.CloseAction.Intro:
+                        // TODO
+                        break;
+                    case MainMenu.CloseAction.Exit:
+                        window.Close();
+                        break;
+                    default:
+                        throw new AmbermoonException(ExceptionScope.Application, "Invalid main menu close action.");
+                }
+            };
         }
 
         void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage)
         {
+            // Load intro data
+            var introData = new IntroData(gameData);
+            var introFont = new IntroFont();
+
             // Load game data
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
-            var graphicProvider = new GraphicProvider(gameData, executableData);
+            var graphicProvider = new GraphicProvider(gameData, executableData, introData);
             var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
             var fontProvider = new FontProvider(executableData);
 
@@ -240,34 +278,40 @@ namespace Ambermoon
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
-                textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider);
+                textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
+                    introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
                 return textureAtlasManager;
             });
             InitGlyphs();
+            var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
+            cursor.UpdatePosition(mouse.Position.Round());
+            bool canContinue = true; // TODO
 
-            // Create game
-            Game = new Game(configuration, gameLanguage, renderView,
-                new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()), executableData.ItemManager,
-                new CharacterManager(gameData, graphicProvider), new SavegameManager(savePath), new SavegameSerializer(), new DataNameProvider(executableData),
-                textDictionary, Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]),
-                new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly()));
-            Game.QuitRequested += window.Close;
-            Game.MouseTrappedChanged += (bool trapped, Position position) =>
+            ShowMainMenu(renderView, cursor, introFont, canContinue, continueGame =>
             {
-                cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
-
-                if (!trapped) // Let the mouse stay at the current position when untrapping.
-                    mouse.Position = new System.Drawing.PointF(position.X, position.Y);
-            };
-            Game.ConfigurationChanged += (configuration, windowChange) =>
-            {
-                if (windowChange)
+                // Create game
+                Game = new Game(configuration, gameLanguage, renderView,
+                    new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader()), executableData.ItemManager,
+                    new CharacterManager(gameData, graphicProvider), new SavegameManager(savePath), new SavegameSerializer(), new DataNameProvider(executableData),
+                    textDictionary, Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]), cursor);
+                Game.QuitRequested += window.Close;
+                Game.MouseTrappedChanged += (bool trapped, Position position) =>
                 {
-                    UpdateWindow(configuration);
-                    Fullscreen = configuration.Fullscreen;
-                }
-            };
-            Game.Run(false); // TODO
+                    this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+
+                    if (!trapped) // Let the mouse stay at the current position when untrapping.
+                        mouse.Position = new System.Drawing.PointF(position.X, position.Y);
+                };
+                Game.ConfigurationChanged += (configuration, windowChange) =>
+                {
+                    if (windowChange)
+                    {
+                        UpdateWindow(configuration);
+                        Fullscreen = configuration.Fullscreen;
+                    }
+                };
+                Game.Run(continueGame);
+            });
         }
 
         void ShowVersionSelector(Action<IGameData, string, GameLanguage> selectHandler)
@@ -335,7 +379,7 @@ namespace Ambermoon
                 () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1])
             };
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
-            var graphicProvider = new GraphicProvider(gameData, executableData);
+            var graphicProvider = new GraphicProvider(gameData, executableData, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             var fontProvider = new FontProvider(executableData);
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
@@ -437,7 +481,9 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.Render();
-            else
+            if (mainMenu != null)
+                mainMenu.Render();
+            else if (Game != null)
                 renderView.Render(Game.ViewportOffset);
             window.SwapBuffers();
         }
@@ -446,7 +492,9 @@ namespace Ambermoon
         {
             if (versionSelector != null)
                 versionSelector.Update(delta);
-            else
+            else if (mainMenu != null)
+                mainMenu.Update(delta);
+            else if (Game != null)
                 Game.Update(delta);
         }
 
@@ -466,8 +514,11 @@ namespace Ambermoon
 
         void WindowMoved()
         {
-            var monitorSize = window.Monitor.Bounds.Size;
-            renderView.MaxScreenSize = new Size(monitorSize.Width, monitorSize.Height);
+            if (renderView != null)
+            {
+                var monitorSize = window.Monitor.Bounds.Size;
+                renderView.MaxScreenSize = new Size(monitorSize.Width, monitorSize.Height);
+            }
         }
 
         void UpdateWindow(IConfiguration configuration)

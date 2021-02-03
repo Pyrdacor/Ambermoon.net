@@ -87,6 +87,8 @@ namespace Ambermoon.Renderer
             0.70f,  // UI
             0.70f,  // Items
             0.70f,  // Text
+            0.70f,  // IntroGraphics
+            0.70f,  // IntroText
             0.98f,  // Effects
             0.99f   // Cursor
         };

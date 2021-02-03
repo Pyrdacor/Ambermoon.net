@@ -57,7 +57,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public IntroData(GameData gameData)
         {
-            var introHunks = AmigaExecutable.Read(gameData.Files["ambermoon_intro"].Files[1])
+            var introHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_intro"].Files[1])
                 .Where(h => h.Type == AmigaExecutable.HunkType.Data).Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
                 .ToList();
             var graphicReader = new GraphicReader();

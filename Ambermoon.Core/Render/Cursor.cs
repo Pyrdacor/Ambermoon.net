@@ -26,6 +26,11 @@ namespace Ambermoon.Render
             UpdateCursor();
         }
 
+        public void Destroy()
+        {
+            sprite?.Delete();
+        }
+
         public CursorType Type
         {
             get => type;

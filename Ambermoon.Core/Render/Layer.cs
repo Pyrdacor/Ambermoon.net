@@ -28,6 +28,8 @@
         UI,
         Items,
         Text,
+        IntroGraphics,
+        IntroText,
         Effects,
         Cursor
     }

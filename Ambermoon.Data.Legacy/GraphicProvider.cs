@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,7 +34,7 @@ namespace Ambermoon.Data.Legacy
         readonly ExecutableData.ExecutableData executableData;
         public Dictionary<int, Graphic> Palettes { get; }
 
-        public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData)
+        public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData, IntroData introData)
         {
             this.gameData = gameData;
             this.executableData = executableData;
@@ -124,6 +125,13 @@ namespace Ambermoon.Data.Legacy
                     0x22, 0x22, 0x22, 0xff, 0x88, 0x88, 0x77, 0xff, 0xAA, 0xAA, 0x99, 0xff, 0xCC, 0xCC, 0xBB, 0xff
                 }
             });
+
+            int introPaletteCount = introData == null ? 0 : Math.Min(18, introData.IntroPalettes.Count);
+            int p = 0;
+            for (; p < introPaletteCount; ++p)
+                Palettes.Add(53 + p, introData.IntroPalettes[p]);
+            for (; p < 18; ++p)
+                Palettes.Add(53 + p, new Graphic(32 * 4, 1, 0) { IndexedGraphic = false });
 
             // TODO: The following bytes were extracted from AM2_CPU (behind cursors).
             // These are 3 palettes.

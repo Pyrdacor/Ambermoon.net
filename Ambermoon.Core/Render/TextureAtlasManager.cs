@@ -171,7 +171,8 @@ namespace Ambermoon.Render
                 AddTexture(Layer.Text, 100 + i, font.GetDigitGlyphGraphic(i));
         }
 
-        public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider)
+        public void AddAll(IGameData gameData, IGraphicProvider graphicProvider, IFontProvider fontProvider,
+            Dictionary<uint, Graphic> introTextGlyphs, Dictionary<uint, Graphic> introGraphics)
         {
             if (gameData == null)
                 throw new ArgumentNullException(nameof(gameData));
@@ -319,6 +320,20 @@ namespace Ambermoon.Render
                 battleFieldIcons[i].ReplaceColor(0, 25); // This will make the background transparent with palette 50.
                 AddTexture(Layer.UI, Graphics.BattleFieldIconOffset + (uint)i, battleFieldIcons[i]);
             }
+
+            #endregion
+
+            #region Intro Text
+
+            foreach (var introTextGlyph in introTextGlyphs)
+                AddTexture(Layer.IntroText, introTextGlyph.Key, introTextGlyph.Value);
+
+            #endregion
+
+            #region Intro Graphics
+
+            foreach (var introGraphic in introGraphics)
+                AddTexture(Layer.IntroGraphics, introGraphic.Key, introGraphic.Value);
 
             #endregion
         }
