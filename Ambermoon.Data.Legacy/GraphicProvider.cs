@@ -131,7 +131,15 @@ namespace Ambermoon.Data.Legacy
             for (; p < introPaletteCount; ++p)
                 Palettes.Add(53 + p, introData.IntroPalettes[p]);
             for (; p < 9; ++p)
-                Palettes.Add(53 + p, new Graphic(32 * 4, 1, 0) { IndexedGraphic = false });
+            {
+                Palettes.Add(53 + p, new Graphic
+                {
+                    Width = 32,
+                    Height = 1,
+                    IndexedGraphic = false,
+                    Data = new byte[32 * 4]
+                });
+            }
 
             // TODO: The following bytes were extracted from AM2_CPU (behind cursors).
             // These are 3 palettes.

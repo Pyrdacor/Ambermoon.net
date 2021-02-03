@@ -518,6 +518,7 @@ namespace Ambermoon
                 {
                     // Create game
                     Game = gameCreator();
+                    mainMenu?.Destroy();
                     mainMenu = null;
                     gameCreator = null;
                 }

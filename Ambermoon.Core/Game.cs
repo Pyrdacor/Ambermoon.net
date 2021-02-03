@@ -881,8 +881,8 @@ namespace Ambermoon
         {
             Cleanup();
             allInputDisabled = true;
-            layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Color.Black, FadeEffectType.FadeOut, FadeTime);
-            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = true);
+            layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Color.Black, FadeEffectType.FadeOut, FadeTime / 2);
+            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () => allInputDisabled = false);
 
             ingame = true;
             CurrentSavegame = savegame;

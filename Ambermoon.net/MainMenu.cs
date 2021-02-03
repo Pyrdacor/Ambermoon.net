@@ -17,9 +17,9 @@ namespace Ambermoon
 
         readonly IRenderView renderView;
         readonly Cursor cursor = null;
-        readonly ILayerSprite background;
+        ILayerSprite background;
         IColoredRect fadeArea;
-        readonly List<KeyValuePair<Rect, IntroText>> mainMenuTexts = new List<KeyValuePair<Rect, IntroText>>(4);
+        List<KeyValuePair<Rect, IntroText>> mainMenuTexts = new List<KeyValuePair<Rect, IntroText>>(4);
         int hoveredTextIndex = -1;
         DateTime? hoverStartTime = null;
         const int HoverColorTime = 125;
@@ -81,8 +81,10 @@ namespace Ambermoon
         public void Destroy()
         {
             background?.Delete();
+            background = null;
             mainMenuTexts?.ForEach(t => t.Value?.Destroy());
-            fadeArea.Delete();
+            mainMenuTexts = null;
+            fadeArea?.Delete();
             fadeArea = null;
         }
 

@@ -9,10 +9,8 @@ namespace Ambermoon.UI
     {
         readonly IRenderView renderView;
         readonly ITextureAtlas textureAtlas;
-        readonly ITextureAtlas fontTextureAtlas;
 
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
-        readonly IColoredRect backgroundFill = null;
         readonly Cursor cursor = null;
         readonly IRenderText[] versionTexts = new IRenderText[3];
         readonly IColoredRect[] versionHighlights = new IColoredRect[3];
@@ -54,7 +52,7 @@ namespace Ambermoon.UI
         {
             this.renderView = renderView;
             textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
-            fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
+            var fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
             this.cursor = cursor;
@@ -100,7 +98,7 @@ namespace Ambermoon.UI
                 AddBorder(PopupFrame.FrameLeft, 0, i + 1);
                 AddBorder(PopupFrame.FrameRight, windowSize.Width - 1, i + 1);
             }
-            backgroundFill = FillArea(new Rect(windowArea.X + 16, windowArea.Y + 16,
+            FillArea(new Rect(windowArea.X + 16, windowArea.Y + 16,
                 windowSize.Width * 16 - 32, windowSize.Height * 16 - 32), GetPaletteColor(28), 0);
             #endregion
 
