@@ -113,21 +113,34 @@ namespace Ambermoon.Data.Legacy
                     MerchantDataReaders = gameData.Files["Initial/Merchant_data.amb"],
                     AutomapDataReaders = gameData.Files["Initial/Automap.amb"]
                 };
-                partyTextContainer = gameData.Files["Party_texts.amb"];
             }
             catch
             {
-                savegameFiles = new SavegameInputFiles
+                try
                 {
-                    SaveDataReader = gameData.Files["Party_data.sav"].Files[1],
-                    PartyMemberDataReaders = gameData.Files["Party_char.amb"],
-                    ChestDataReaders = gameData.Files["Chest_data.amb"],
-                    MerchantDataReaders = gameData.Files["Merchant_data.amb"],
-                    AutomapDataReaders = gameData.Files["Automap.amb"]
-                };
-                partyTextContainer = gameData.Files["Party_texts.amb"];
+                    savegameFiles = new SavegameInputFiles
+                    {
+                        SaveDataReader = gameData.Files["Save.00/Party_data.sav"].Files[1],
+                        PartyMemberDataReaders = gameData.Files["Save.00/Party_char.amb"],
+                        ChestDataReaders = gameData.Files["Save.00/Chest_data.amb"],
+                        MerchantDataReaders = gameData.Files["Save.00/Merchant_data.amb"],
+                        AutomapDataReaders = gameData.Files["Save.00/Automap.amb"]
+                    };
+                }
+                catch
+                {
+                    savegameFiles = new SavegameInputFiles
+                    {
+                        SaveDataReader = gameData.Files["Party_data.sav"].Files[1],
+                        PartyMemberDataReaders = gameData.Files["Party_char.amb"],
+                        ChestDataReaders = gameData.Files["Chest_data.amb"],
+                        MerchantDataReaders = gameData.Files["Merchant_data.amb"],
+                        AutomapDataReaders = gameData.Files["Automap.amb"]
+                    };
+                }
             }
 
+            partyTextContainer = gameData.Files["Party_texts.amb"];
             savegameSerializer.Read(savegame, savegameFiles, partyTextContainer);
             return savegame;
         }

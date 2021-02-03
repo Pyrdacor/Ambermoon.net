@@ -363,8 +363,8 @@ namespace Ambermoon
             movement = new Movement(configuration.LegacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
-            this.MapManager = mapManager;
-            this.ItemManager = itemManager;
+            MapManager = mapManager;
+            ItemManager = itemManager;
             CharacterManager = characterManager;
             SavegameManager = savegameManager;
             this.places = places;
@@ -414,25 +414,28 @@ namespace Ambermoon
             textureAtlasManager.AddFromGraphics(Layer.BattleMonsterRow, monsterGraphicDictionary);
             var monsterGraphicAtlas = textureAtlasManager.GetOrCreate(Layer.BattleMonsterRow);
             renderView.GetLayer(Layer.BattleMonsterRow).Texture = monsterGraphicAtlas.Texture;
+
+            layout.ShowPortraitArea(false);
         }
 
         /// <summary>
         /// This is called when the game starts.
-        /// This includes intro, main menu, etc.
         /// </summary>
-        public void Run(bool continueGame)
+        public void Run(bool continueGame, Position startCursorPosition)
         {
+            layout.ShowPortraitArea(false);
+
+            lastMousePosition = new Position(startCursorPosition);
+            UpdateCursor(lastMousePosition, MouseButtons.None);
+
             if (continueGame)
             {
                 ContinueGame();
             }
             else
             {
-                layout.ShowPortraitArea(false);
                 characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
                 {
-                    characterCreator = null;
-                    layout.ShowPortraitArea(true);
                     var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
 
                     initialSavegame.PartyMembers[0].Name = name;
@@ -440,6 +443,7 @@ namespace Ambermoon
                     initialSavegame.PartyMembers[0].PortraitIndex = (ushort)portraitIndex;
 
                     Start(initialSavegame);
+                    characterCreator = null;
                 });
             }
         }
@@ -876,6 +880,9 @@ namespace Ambermoon
         public void Start(Savegame savegame)
         {
             Cleanup();
+            allInputDisabled = true;
+            layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Color.Black, FadeEffectType.FadeOut, FadeTime);
+            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = true);
 
             ingame = true;
             CurrentSavegame = savegame;
@@ -913,6 +920,7 @@ namespace Ambermoon
             TravelType = savegame.TravelType; // Yes this is necessary twice.
 
             ShowMap(true);
+            layout.ShowPortraitArea(true);
 
             InputEnable = true;
             paused = false;
@@ -963,14 +971,12 @@ namespace Ambermoon
             SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame);
         }
 
-        public bool HasContinueGame()
-        {
-            return SavegameManager.Load(renderView.GameData, savegameSerializer, 0) != null;
-        }
-
         public void ContinueGame()
         {
-            LoadGame(0);
+            SavegameManager.GetSavegameNames(renderView.GameData, out int current);
+
+            if (current != 0)
+                LoadGame(current);
         }
 
         // TODO: Optimize to not query this every time

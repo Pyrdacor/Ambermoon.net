@@ -9,8 +9,8 @@ namespace Ambermoon
     {
         public enum CloseAction
         {
-            NewGame,
             Continue,
+            NewGame,
             Intro,
             Exit
         }
@@ -18,10 +18,13 @@ namespace Ambermoon
         readonly IRenderView renderView;
         readonly Cursor cursor = null;
         readonly ILayerSprite background;
+        IColoredRect fadeArea;
         readonly List<KeyValuePair<Rect, IntroText>> mainMenuTexts = new List<KeyValuePair<Rect, IntroText>>(4);
         int hoveredTextIndex = -1;
         DateTime? hoverStartTime = null;
         const int HoverColorTime = 125;
+        const int FadeOutTime = 1000;
+        DateTime? fadeOutStartTime = null;
         static readonly byte[] hoveredColorIndices = new byte[]
         {
             2, // White
@@ -66,12 +69,27 @@ namespace Ambermoon
                 y += 16 + 8;
             }
 
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Transparent, 255);
+            fadeArea.Layer = renderView.GetLayer(Layer.Effects);
+            fadeArea.X = 0;
+            fadeArea.Y = 0;
+            fadeArea.Visible = false;
+
             cursor.Type = Data.CursorType.Sword;
         }
 
         public void Destroy()
         {
             background?.Delete();
+            mainMenuTexts?.ForEach(t => t.Value?.Destroy());
+            fadeArea.Delete();
+            fadeArea = null;
+        }
+
+        public void FadeOutAndDestroy()
+        {
+            fadeArea.Visible = true;
+            fadeOutStartTime = DateTime.Now;
         }
 
         public void Render()
@@ -81,42 +99,66 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
-            for (int i = 0; i < mainMenuTexts.Count; ++i)
+            if (fadeOutStartTime != null)
             {
-                if (i == hoveredTextIndex)
+                if (fadeArea != null)
                 {
-                    int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
-                    byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
-                    mainMenuTexts[i].Value.ColorIndex = colorIndex;
+                    var blackness = (float)(DateTime.Now - fadeOutStartTime.Value).TotalMilliseconds / FadeOutTime;
+
+                    if (blackness >= 1.0f)
+                        Destroy();
+                    else
+                        fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
                 }
-                else
+            }
+            else
+            {
+                for (int i = 0; i < mainMenuTexts.Count; ++i)
                 {
-                    mainMenuTexts[i].Value.ColorIndex = 2; // White
+                    if (i == hoveredTextIndex)
+                    {
+                        int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
+                        byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
+                        mainMenuTexts[i].Value.ColorIndex = colorIndex;
+                    }
+                    else
+                    {
+                        mainMenuTexts[i].Value.ColorIndex = 2; // White
+                    }
                 }
             }
         }
 
         public void OnMouseUp(Position position, MouseButtons buttons)
         {
-            if (buttons == MouseButtons.Left)
-            {
-                position = renderView.ScreenToGame(position);
 
-            }
         }
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            if (fadeOutStartTime != null)
+                return;
+
             if (buttons == MouseButtons.Left)
             {
                 position = renderView.ScreenToGame(position);
 
+                for (int i = 0; i < mainMenuTexts.Count; ++i)
+                {
+                    if (mainMenuTexts[i].Key.Contains(position))
+                    {
+                        Closed?.Invoke((CloseAction)i);
+                    }
+                }
             }
         }
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
             cursor.UpdatePosition(position);
+
+            if (fadeOutStartTime != null)
+                return;
 
             position = renderView.ScreenToGame(position);
 

@@ -1,9 +1,7 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Render;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace Ambermoon
 {
@@ -11,7 +9,7 @@ namespace Ambermoon
     {
         public int Advance;
         public Graphic Graphic;
-        public const int SpaceWidth = 20;
+        public const int SpaceWidth = 12;
     }
 
     class IntroText

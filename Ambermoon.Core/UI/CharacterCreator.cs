@@ -1,5 +1,4 @@
-﻿using Ambermoon.Data;
-using Ambermoon.Data.Enumerations;
+﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
@@ -11,7 +10,6 @@ namespace Ambermoon.UI
     {
         readonly IRenderView renderView;
         readonly ITextureAtlas textureAtlas;
-        readonly ITextureAtlas fontTextureAtlas;
 
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
         readonly IColoredRect backgroundFill = null;
@@ -26,7 +24,13 @@ namespace Ambermoon.UI
         readonly TextInput nameInput = null;
         readonly List<IColoredRect> portraitBorders = new List<IColoredRect>(4);
         readonly List<IColoredRect> sunkenBoxParts = new List<IColoredRect>(5);
-
+        IColoredRect fadeArea;
+        const int FadeTime = 250;
+        DateTime? fadeInStartTime = null;
+        DateTime? fadeOutStartTime = null;
+        bool fadeIn = true;
+        bool fadeOut = false;
+        Action afterFadeOutAction;
         bool isFemale = false;
         int portraitIndex = MalePortraitIndices[0];
 
@@ -44,7 +48,7 @@ namespace Ambermoon.UI
         {
             this.renderView = renderView;
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
-            fontTextureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text);
+            var fontTextureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Text);
             var spriteFactory = renderView.SpriteFactory;
             var layer = renderView.GetLayer(Layer.UI);
 
@@ -112,8 +116,8 @@ namespace Ambermoon.UI
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
-                Cleanup();
-                selectHandler?.Invoke(nameInput.Text, isFemale, portraitIndex);
+                afterFadeOutAction = () => selectHandler?.Invoke(nameInput.Text, isFemale, portraitIndex);
+                DestroyAndFadeOut();
             };
             #endregion
 
@@ -159,6 +163,21 @@ namespace Ambermoon.UI
             int textWidth = headerText.Length * Global.GlyphWidth;
             int textOffset = (windowArea.Width - textWidth) / 2;
             header = AddText(offset + new Position(textOffset, 16), headerText, TextColor.Gray);
+
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
+            fadeArea.Layer = renderView.GetLayer(Layer.Effects);
+            fadeArea.X = 0;
+            fadeArea.Y = 0;
+            fadeArea.Visible = true;
+            fadeInStartTime = DateTime.Now;
+        }
+
+        void DestroyAndFadeOut()
+        {
+            fadeOutStartTime = DateTime.Now;
+            fadeOut = true;
+            fadeArea.Color = Color.Transparent;
+            fadeArea.Visible = true;
         }
 
         void Cleanup()
@@ -176,6 +195,8 @@ namespace Ambermoon.UI
             portraitBorders.ForEach(b => b?.Delete());
             nameInput?.Destroy();
             sunkenBoxParts.ForEach(b => b?.Delete());
+            fadeArea.Delete();
+            fadeArea = null;
         }
 
         void ChangeMale(bool female)
@@ -254,16 +275,49 @@ namespace Ambermoon.UI
 
         public void Update(double deltaTime)
         {
-            maleButton.Update(0u);
-            femaleButton.Update(0u);
-            leftButton.Update(0u);
-            rightButton.Update(0u);
-            okButton.Update(0u);
-            nameInput.Update();
+            if (fadeIn)
+            {
+                var blackness = 1.0f - (float)(DateTime.Now - fadeInStartTime.Value).TotalMilliseconds / FadeTime;
+
+                if (blackness <= 0.0f)
+                {
+                    fadeArea.Visible = false;
+                    fadeIn = false;
+                }
+                else
+                    fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+            }
+            else if (fadeOut)
+            {
+                if (fadeArea != null)
+                {
+                    var blackness = (float)(DateTime.Now - fadeOutStartTime.Value).TotalMilliseconds / FadeTime;
+
+                    if (blackness >= 1.0f)
+                    {
+                        afterFadeOutAction?.Invoke();
+                        Cleanup();
+                    }
+                    else
+                        fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+                }
+            }
+            else
+            {
+                maleButton.Update(0u);
+                femaleButton.Update(0u);
+                leftButton.Update(0u);
+                rightButton.Update(0u);
+                okButton.Update(0u);
+                nameInput.Update();
+            }
         }
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
+            if (fadeIn || fadeOut)
+                return;
+
             if (TextInput.FocusedInput == nameInput)
             {
                 nameInput.KeyDown(key);
@@ -291,6 +345,9 @@ namespace Ambermoon.UI
 
         public void OnKeyChar(char keyChar)
         {
+            if (fadeIn || fadeOut)
+                return;
+
             if (TextInput.FocusedInput == nameInput)
             {
                 nameInput.KeyChar(keyChar);
@@ -300,6 +357,9 @@ namespace Ambermoon.UI
 
         public void OnMouseUp(Position position, MouseButtons buttons)
         {
+            if (fadeIn || fadeOut)
+                return;
+
             if (buttons == MouseButtons.Left)
             {
                 position = renderView.ScreenToGame(position);
@@ -313,6 +373,9 @@ namespace Ambermoon.UI
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
+            if (fadeIn || fadeOut)
+                return;
+
             position = renderView.ScreenToGame(position);
 
             if (nameInput.MouseDown(position, buttons))
@@ -330,6 +393,9 @@ namespace Ambermoon.UI
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
         {
+            if (fadeIn || fadeOut)
+                return;
+
             if (yScroll != 0)
             {
                 if (yScroll > 0) // up
