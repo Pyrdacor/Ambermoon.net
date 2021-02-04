@@ -8,9 +8,7 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run on Windows and Linu
 
 Version | Windows 64bit | Linux 64bit | Windows 32bit
 --- | --- | --- | ---
-0.2.2 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.2beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.2beta/Ambermoon.net-Windows32Bit.zip)
-0.2.1 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.1beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.1beta/Ambermoon.net-Windows32Bit.zip)
-0.2.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.0beta/Ambermoon.net-Windows32Bit.zip)
+0.2.3 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Windows32Bit.zip)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
 

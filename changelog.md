@@ -1,5 +1,6 @@
 # Changelog
 
+- Version [0.2.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.3beta): Added cheats / console commands, bugfixing
 - Version [0.2.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.2beta): Added main menu, character creator, bugfixing
 - Version [0.2.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.1beta): Added save menu and option menu, resolution etc can now be changed ingame
 - Version [0.2.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.0beta): Added builtin game versions and version selector, improved configuration, bugfixing
