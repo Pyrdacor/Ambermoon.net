@@ -21,16 +21,16 @@ namespace Ambermoon
 
             switch (@event.Type)
             {
-                case EventType.MapChange:
+                case EventType.Teleport:
                 {
                     if (trigger != EventTrigger.Move &&
                         trigger != EventTrigger.Always)
                         return null;
 
-                    if (!(@event is MapChangeEvent mapChangeEvent))
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid map change event.");
+                    if (!(@event is TeleportEvent teleportEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid teleport event.");
 
-                    game.Teleport(mapChangeEvent);
+                    game.Teleport(teleportEvent);
                     break;
                 }
                 case EventType.Chest:

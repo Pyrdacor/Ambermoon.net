@@ -2664,11 +2664,11 @@ namespace Ambermoon
             return true;
         }
 
-        internal void Teleport(MapChangeEvent mapChangeEvent)
+        internal void Teleport(TeleportEvent teleportEvent)
         {
             Fade(() =>
             {
-                Teleport(mapChangeEvent.MapIndex, mapChangeEvent.X, mapChangeEvent.Y, mapChangeEvent.Direction);
+                Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction);
             });
         }
 

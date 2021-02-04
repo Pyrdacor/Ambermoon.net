@@ -75,7 +75,7 @@ namespace Ambermoon.Render
                         {
                             static bool HasTeleportEvent(Event ev)
                             {
-                                if (ev.Type == EventType.MapChange)
+                                if (ev.Type == EventType.Teleport)
                                     return true;
 
                                 return ev.Next != null && HasTeleportEvent(ev.Next);

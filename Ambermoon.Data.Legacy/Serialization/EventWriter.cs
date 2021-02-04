@@ -29,7 +29,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             switch (@event.Type)
             {
-                case EventType.MapChange:
+                case EventType.Teleport:
                 {
                     // 1. byte is the x coordinate
                     // 2. byte is the y coordinate
@@ -38,14 +38,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // Then 1 byte for the transtion type (0-5)
                     // Then a word for the map index
                     // Then 2 unknown bytes (seem to be 00 FF)
-                    var mapChangeEvent = @event as MapChangeEvent;
-                    dataWriter.Write((byte)mapChangeEvent.X);
-                    dataWriter.Write((byte)mapChangeEvent.Y);
-                    dataWriter.WriteEnumAsByte(mapChangeEvent.Direction);
-                    dataWriter.Write(mapChangeEvent.Unknown1);
-                    dataWriter.Write((byte)mapChangeEvent.Transition);
-                    dataWriter.Write((ushort)mapChangeEvent.MapIndex);
-                    dataWriter.Write(mapChangeEvent.Unknown2);
+                    var teleportEvent = @event as TeleportEvent;
+                    dataWriter.Write((byte)teleportEvent.X);
+                    dataWriter.Write((byte)teleportEvent.Y);
+                    dataWriter.WriteEnumAsByte(teleportEvent.Direction);
+                    dataWriter.Write(teleportEvent.Unknown1);
+                    dataWriter.Write((byte)teleportEvent.Transition);
+                    dataWriter.Write((ushort)teleportEvent.MapIndex);
+                    dataWriter.Write(teleportEvent.Unknown2);
                     break;
                 }
                 case EventType.Door:

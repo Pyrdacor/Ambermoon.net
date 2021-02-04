@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
 
@@ -66,7 +67,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             switch (type)
             {
-                case EventType.MapChange:
+                case EventType.Teleport:
                 {
                     // 1. byte is the x coordinate
                     // 2. byte is the y coordinate
@@ -79,10 +80,10 @@ namespace Ambermoon.Data.Legacy.Serialization
                     uint y = dataReader.ReadByte();
                     var direction = (CharacterDirection)dataReader.ReadByte();
                     var unknown1 = dataReader.ReadByte();
-                    var transition = (MapChangeEvent.TransitionType)dataReader.ReadByte();
+                    var transition = (TeleportEvent.TransitionType)dataReader.ReadByte();
                     uint mapIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(2);
-                    @event = new MapChangeEvent
+                    @event = new TeleportEvent
                     {
                         MapIndex = mapIndex,
                         X = x,
@@ -271,26 +272,29 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.EnterPlace:
                 {
-                    // 2 unknown bytes
+                    // map text index when closed (0xff is default message)
+                    // place type (see PlaceType)
                     // opening hour
                     // closing hour
-                    // 1 unknown byte
+                    // text index for leaving
                     // place index (1-based, word)
                     // 2 unknown bytes
-                    var unknown1 = dataReader.ReadBytes(2);
+                    var textIndexWhenClosed = dataReader.ReadByte();
+                    var placeType = (PlaceType)dataReader.ReadByte();
                     var openingHour = dataReader.ReadByte();
                     var closingHour = dataReader.ReadByte();
-                    var unknown2 = dataReader.ReadByte();
+                    var endTextIndex = dataReader.ReadByte();
                     var placeIndex = dataReader.ReadWord();
-                    var unknown3 = dataReader.ReadBytes(2);
+                    var unknown = dataReader.ReadBytes(2);
                     @event = new EnterPlaceEvent
                     {
+                        ClosedTextIndex = textIndexWhenClosed,
+                        PlaceType = placeType,
                         OpeningHour = openingHour,
                         ClosingHour = closingHour,
                         PlaceIndex = placeIndex,
-                        Unknown1 = unknown1,
-                        Unknown2 = unknown2,
-                        Unknown3 = unknown3
+                        EndTextIndex = endTextIndex,
+                        Unknown = unknown
                     };
                     break;
                 }
