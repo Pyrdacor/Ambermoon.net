@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
 
 namespace Ambermoon.Data
@@ -38,6 +39,10 @@ namespace Ambermoon.Data
         public class Healer : Place
         {
             // TODO
+            // Most likely 11 words for the costs of all healable ailments
+            // starting at Lamed to DeadDust, then Crazy, Blind, Drugged.
+            // Then one word for the cost to heal 1 LP.
+            // And then maybe a word for the price of removing a curse?
         }
 
         public class Sage : Place
@@ -74,7 +79,11 @@ namespace Ambermoon.Data
 
         public class ShipDealer : Place
         {
-            // TODO
+            public int Cost => GetWord(0);
+            public int SpawnX => GetWord(2);
+            public int SpawnY => GetWord(4);
+            public int SpawnMapIndex => GetWord(6);
+            public StationaryImage StationaryImage => (StationaryImage)GetWord(8);
         }
 
         public class HorseDealer : Place

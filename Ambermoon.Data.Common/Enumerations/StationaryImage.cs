@@ -4,11 +4,11 @@ namespace Ambermoon.Data.Enumerations
 {
     public enum StationaryImage
     {
-        Horse,
-        Raft,
-        Boat,
-        SandLizard,
-        SandShip
+        Horse = 0x01,
+        Raft = 0x02,
+        Boat = 0x04,
+        SandLizard = 0x08,
+        SandShip = 0x10
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
