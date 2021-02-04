@@ -10,7 +10,8 @@ Version | Windows 64bit | Linux 64bit | Windows 32bit
 --- | --- | --- | ---
 0.2.3 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Windows32Bit.zip)
 
-Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow.
+Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow. \
+An up-to-date overview for planned releases and features can be found [here](https://github.com/Pyrdacor/Ambermoon.net/issues/63).
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
