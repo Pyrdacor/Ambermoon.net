@@ -521,10 +521,19 @@ namespace Ambermoon
                     mainMenu?.Destroy();
                     mainMenu = null;
                     gameCreator = null;
+
+                    // Show cheat info
+                    Console.WriteLine("***** Ambermoon Cheat Console *****");
+                    Console.WriteLine("Type 'help' for more information.");
                 }
             }
             else if (Game != null)
+            {
                 Game.Update(delta);
+
+                if (Console.KeyAvailable)
+                    Cheats.ProcessInput(Console.ReadKey(true), Game);
+            }
         }
 
         void Window_Resize(System.Drawing.Size size)

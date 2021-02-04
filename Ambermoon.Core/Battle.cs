@@ -1352,7 +1352,8 @@ namespace Ambermoon
                     ShowBattleFieldDamage((int)tile, damage);
                     if (target.Ailments.HasFlag(Ailment.Sleep))
                         game.RemoveAilment(Ailment.Sleep, target);
-                    target.Damage(damage);
+                    if (!game.Godmode || target is Monster)
+                        target.Damage(damage);
                     return;
                 }
                 default:
@@ -1852,7 +1853,8 @@ namespace Ambermoon
                         }
                         if (target.Ailments.HasFlag(Ailment.Sleep))
                             RemoveAilment(Ailment.Sleep, target);
-                        target.Damage(damage);
+                        if (!game.Godmode || target is Monster)
+                            target.Damage(damage);
                         EndHurt();
                     }
                 );
@@ -2703,15 +2705,13 @@ namespace Ambermoon
         int CalculatePhysicalDamage(Character attacker, Character target)
         {
             // TODO: how is damage calculated?
-            return attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense)); ;
+            return Math.Min((int)target.HitPoints.TotalCurrentValue, attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense)));
         }
 
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
         {
-            // TODO: how is magic damage calculated?
-            // TODO: does INT affect damage?
             // Note: In contrast to physical attacks this should always deal at least 1 damage
-            return baseDamage + (uint)game.RandomInt(0, (int)variableDamage); // TODO
+            return Math.Min(target.HitPoints.TotalCurrentValue, baseDamage + (uint)game.RandomInt(0, (int)variableDamage));
         }
     }
 

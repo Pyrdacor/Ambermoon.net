@@ -174,6 +174,11 @@ namespace Ambermoon
         public FloatPosition ViewportOffset { get; private set; } = null;
         readonly bool legacyMode = false;
         public event Action QuitRequested;
+        public bool Godmode
+        {
+            get;
+            set;
+        } = false;
         bool ingame = false;
         bool is3D = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
@@ -198,9 +203,9 @@ namespace Ambermoon
         readonly Layout layout;
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly Dictionary<CharacterInfo, Panel> characterInfoPanels = new Dictionary<CharacterInfo, Panel>();
-        internal IMapManager MapManager { get; }
-        internal IItemManager ItemManager { get; }
-        internal ICharacterManager CharacterManager { get; }
+        public IMapManager MapManager { get; }
+        public IItemManager ItemManager { get; }
+        public ICharacterManager CharacterManager { get; }
         readonly Places places;
         readonly IRenderView renderView;
         internal ISavegameManager SavegameManager { get; }
@@ -1885,7 +1890,7 @@ namespace Ambermoon
             }
         }
 
-        internal IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
+        public IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
             .Select(i => GetPartyMember(i)).Where(p => p != null);
         internal PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
         internal Chest GetChest(uint index) => CurrentSavegame.Chests[(int)index];
@@ -2622,35 +2627,48 @@ namespace Ambermoon
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
+        /// <summary>
+        /// This is used by external triggers like a cheat engine.
+        /// </summary>
+        public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction)
+        {
+            if (WindowActive || BattleActive || layout.PopupActive || !ingame)
+                return false;
+
+            var newMap = MapManager.GetMap(mapIndex);
+            bool mapChange = newMap.Index != Map.Index;
+            var player = is3D ? (IRenderPlayer)player3D : player2D;
+            bool mapTypeChanged = Map.Type != newMap.Type;
+
+            // The position (x, y) is 1-based in the data so we subtract 1.
+            // Moreover the players position is 1 tile below its drawing position
+            // in non-world 2D so subtract another 1 from y.
+            player.MoveTo(newMap, x - 1,
+                y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
+                CurrentTicks, true, direction);
+            this.player.Position.X = RenderPlayer.Position.X;
+            this.player.Position.Y = RenderPlayer.Position.Y;
+
+            if (!mapTypeChanged)
+            {
+                // Trigger events after map transition
+                TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
+                    (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
+
+                PlayerMoved(mapChange);
+            }
+
+            if (mapChange)
+                UpdateMapName();
+
+            return true;
+        }
+
         internal void Teleport(MapChangeEvent mapChangeEvent)
         {
             Fade(() =>
             {
-                var newMap = MapManager.GetMap(mapChangeEvent.MapIndex);
-                bool mapChange = newMap.Index != Map.Index;
-                var player = is3D ? (IRenderPlayer)player3D : player2D;
-                bool mapTypeChanged = Map.Type != newMap.Type;
-
-                // The position (x, y) is 1-based in the data so we subtract 1.
-                // Moreover the players position is 1 tile below its drawing position
-                // in non-world 2D so subtract another 1 from y.
-                player.MoveTo(newMap, mapChangeEvent.X - 1,
-                    mapChangeEvent.Y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
-                    CurrentTicks, true, mapChangeEvent.Direction);
-                this.player.Position.X = RenderPlayer.Position.X;
-                this.player.Position.Y = RenderPlayer.Position.Y;
-
-                if (!mapTypeChanged)
-                {
-                    // Trigger events after map transition
-                    TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
-                        (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
-
-                    PlayerMoved(mapChange);
-                }
-
-                if (mapChange)
-                    UpdateMapName();
+                Teleport(mapChangeEvent.MapIndex, mapChangeEvent.X, mapChangeEvent.Y, mapChangeEvent.Direction);
             });
         }
 
@@ -2793,10 +2811,13 @@ namespace Ambermoon
                     if (damage != 0)
                     {
                         // TODO: show damage splash
-                        partyMember.Damage(damage);
+                        if (!Godmode)
+                        {
+                            partyMember.Damage(damage);
 
-                        if (partyMember.Alive) // update HP etc if not died already
-                            layout.SetCharacter(i, partyMember);
+                            if (partyMember.Alive) // update HP etc if not died already
+                                layout.SetCharacter(i, partyMember);
+                        }
                     }
                 }
             }
@@ -3187,6 +3208,22 @@ namespace Ambermoon
 
                 // TODO
             });
+        }
+
+        /// <summary>
+        /// This is used by external triggers like a cheat engine.
+        /// 
+        /// Returns false if the current game state does not allow
+        /// to start a fight.
+        /// </summary>
+        public bool StartBattle(uint monsterGroupIndex)
+        {
+            if (WindowActive || BattleActive || layout.PopupActive ||
+                allInputDisabled || !inputEnable || !ingame)
+                return false;
+
+            StartBattle(monsterGroupIndex, false, null);
+            return true;
         }
 
         /// <summary>

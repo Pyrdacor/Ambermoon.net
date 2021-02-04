@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -12,5 +13,6 @@ namespace Ambermoon.Data.Legacy
         }
 
         public Item GetItem(uint index) => items[index];
+        public IReadOnlyList<Item> Items => items.Values.ToList();
     }
 }
