@@ -88,7 +88,11 @@ namespace Ambermoon.Data
 
         public class HorseDealer : Place
         {
-            // TODO
+            public int Cost => GetWord(0);
+            public int SpawnX => GetWord(2);
+            public int SpawnY => GetWord(4);
+            public int SpawnMapIndex => GetWord(6);
+            public StationaryImage StationaryImage => (StationaryImage)GetWord(8);
         }
 
         public class Blacksmith : Place
