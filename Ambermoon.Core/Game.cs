@@ -2630,8 +2630,10 @@ namespace Ambermoon
         /// <summary>
         /// This is used by external triggers like a cheat engine.
         /// </summary>
-        public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction)
+        public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked)
         {
+            blocked = false;
+
             if (WindowActive || BattleActive || layout.PopupActive || !ingame)
                 return false;
 
@@ -2643,9 +2645,34 @@ namespace Ambermoon
             // The position (x, y) is 1-based in the data so we subtract 1.
             // Moreover the players position is 1 tile below its drawing position
             // in non-world 2D so subtract another 1 from y.
-            player.MoveTo(newMap, x - 1,
-                y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u),
-                CurrentTicks, true, direction);
+            uint newX = x - 1;
+            uint newY = y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u);
+
+            if (newMap.Type == MapType.Map2D)
+            {
+                uint testY = newMap.IsWorldMap ? newY : newY + 1;
+
+                if (!newMap.Tiles[newX, testY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType.Walk))
+                {
+                    blocked = true;
+                    return false;
+                }
+            }
+            else
+            {
+                if (newMap.Blocks[newX, newY].BlocksPlayer(MapManager.GetLabdataForMap(newMap)))
+                {
+                    blocked = true;
+                    return false;
+                }
+            }
+
+            if (!mapChange && !is3D)
+            {
+                player2D.PostSameMapTeleport(Map, newX, newY);
+            }
+
+            player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction);
             this.player.Position.X = RenderPlayer.Position.X;
             this.player.Position.Y = RenderPlayer.Position.Y;
 
@@ -2668,7 +2695,7 @@ namespace Ambermoon
         {
             Fade(() =>
             {
-                Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction);
+                Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _);
             });
         }
 

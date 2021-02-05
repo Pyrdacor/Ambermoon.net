@@ -90,6 +90,30 @@ namespace Ambermoon.Data
             /// This block is not drawn at all.
             /// </summary>
             public bool MapBorder { get; set; }
+
+            public bool BlocksPlayer(Labdata labdata)
+            {
+                if (MapBorder)
+                    return true;
+
+                if (WallIndex != 0)
+                    return labdata.Walls[((int)WallIndex - 1) % labdata.Walls.Count].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
+
+                if (ObjectIndex != 0)
+                {
+                    var obj = labdata.Objects[((int)ObjectIndex - 1) % labdata.Objects.Count];
+
+                    // TODO: maybe header contains movement blocking bit?
+
+                    foreach (var subObject in obj.SubObjects)
+                    {
+                        if (subObject.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
+                            return true;
+                    }
+                }
+
+                return false;
+            }
         }
 
         public class CharacterReference

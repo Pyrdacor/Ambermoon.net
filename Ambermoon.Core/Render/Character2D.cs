@@ -115,6 +115,12 @@ namespace Ambermoon.Render
                 Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
         }
 
+        public void PostSameMapTeleport(Map map, uint newX, uint newY)
+        {
+            Map.ScrollTo((uint)Util.Limit(0, (int)newX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
+                (uint)Util.Limit(0, (int)newY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
+        }
+
         public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
             if (map != Map.Map)

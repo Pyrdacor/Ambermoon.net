@@ -7,6 +7,8 @@ namespace Ambermoon
 {
     class Cheats
     {
+        static readonly System.Random random = new System.Random(DateTime.Now.Millisecond);
+
         static Dictionary<string, KeyValuePair<string, Action<Game, string[]>>> cheats =
             new Dictionary<string, KeyValuePair<string, Action<Game, string[]>>>
         {
@@ -409,18 +411,53 @@ namespace Ambermoon
             }
 
             var map = game.MapManager.Maps.Single(m => m.Index == mapIndex);
-            var random = new Random();
-            uint x = args.Length > 1 && uint.TryParse(args[1], out uint ax) ? ax : 1u + random.Next() % (uint)map.Width;
-            uint y = args.Length > 2 && uint.TryParse(args[2], out uint ay) ? ay : 1u + random.Next() % (uint)map.Height;
+            uint? x = args.Length > 1 && uint.TryParse(args[1], out uint ax) ? ax : (uint?)null;
+            uint? y = args.Length > 2 && uint.TryParse(args[2], out uint ay) ? ay : (uint?)null;
             var direction = (args.Length > 3 ? ParseDirection(args[3]) : null) ?? (CharacterDirection)(random.Next() % 4);
+            bool randomPosition = x == null || y == null;
 
-            if (!game.Teleport(mapIndex, x, y, direction))
+            if (x == null)
+                x = 1u + (uint)random.Next() % (uint)map.Width;
+            if (y == null)
+                y = 1u + (uint)random.Next() % (uint)map.Height;
+
+            while (true)
             {
-                Console.WriteLine("Unable to teleport in current game state.");
-                Console.WriteLine("Try to use the command when no ingame window is open.");
-                Console.WriteLine();
-                return;
+                if (x < 1 || x > map.Width || y < 1 || y > map.Height)
+                {
+                    if (!randomPosition)
+                    {
+                        Console.WriteLine($"Teleport to position ({x}, {y}) on map {mapIndex} is not possible.");
+                        Console.WriteLine();
+                        return;
+                    }
+                }
+                else if (!game.Teleport(mapIndex, x.Value, y.Value, direction, out bool blocked))
+                {
+                    if (!randomPosition)
+                    {
+                        if (blocked)
+                        {
+                            Console.WriteLine($"Teleport to position ({x}, {y}) on map {mapIndex} is not possible.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Unable to teleport in current game state.");
+                            Console.WriteLine("Try to use the command when no ingame window is open.");
+                        }
+                        Console.WriteLine();
+                        return;
+                    }
+                }
+                else
+                    break;
+
+                x = 1u + (uint)random.Next() % (uint)map.Width;
+                y = 1u + (uint)random.Next() % (uint)map.Height;
             }
+
+            Console.WriteLine($"Teleported to map {mapIndex} ({x}, {y})");
+            Console.WriteLine();
         }
 
         static void ShowMonsters(Game game, string[] args)
