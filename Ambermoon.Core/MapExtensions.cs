@@ -26,8 +26,7 @@ namespace Ambermoon
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
             uint x, uint y, uint ticks, Savegame savegame)
         {
-            return TriggerEvents(map, game, trigger, x, y, ticks, savegame,
-                out bool _, false);
+            return TriggerEvents(map, game, trigger, x, y, ticks, savegame, out _);
         }
 
         public static Event GetEvent(this Map map, uint x, uint y, Savegame savegame)
@@ -43,7 +42,7 @@ namespace Ambermoon
 
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
             uint x, uint y, uint ticks, Savegame savegame,
-            out bool hasMapEvent, bool noIndexReset = false)
+            out bool hasMapEvent)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
@@ -52,19 +51,24 @@ namespace Ambermoon
             if (!hasMapEvent)
                 return false;
 
-            if (trigger == EventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
-                return false;
+            var @event = map.EventList[(int)mapEventId - 1];
 
-            if (!noIndexReset || mapEventId != 0)
+            if (trigger == EventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
             {
-                LastMapEventIndexMap = map.Index;
-                LastMapEventIndex = mapEventId;
+                // avoid triggering the same event twice, but only for some events
+                if (@event.Type != EventType.Chest &&
+                    @event.Type != EventType.Door &&
+                    @event.Type != EventType.EnterPlace &&
+                    @event.Type != EventType.Riddlemouth)
+                {
+                    return false;
+                }
             }
 
-            if (mapEventId == 0)
-                return false; // no map events at this position
+            LastMapEventIndexMap = map.Index;
+            LastMapEventIndex = mapEventId;
 
-            return map.TriggerEventChain(game, trigger, x, y, ticks, map.EventList[(int)mapEventId - 1]);
+            return map.TriggerEventChain(game, trigger, x, y, ticks, @event);
         }
 
         public static void ClearLastEvent(this Map map)

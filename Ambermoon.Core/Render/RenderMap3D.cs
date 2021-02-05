@@ -1123,8 +1123,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            return Map.TriggerEvents(game, trigger, x, y, ticks, savegame,
-                out bool _, false);
+            return Map.TriggerEvents(game, trigger, x, y, ticks, savegame, out _);
         }
     }
 }

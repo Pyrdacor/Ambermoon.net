@@ -70,8 +70,8 @@ namespace Ambermoon
             }
 
             static uint GetTickDivider3D(bool legacyMode) => legacyMode ? 8u : 60u;
-            static float GetMoveSpeed3D(bool legacyMode) => legacyMode ? 0.25f : 0.0625f;
-            static float GetTurnSpeed3D(bool legacyMode) => legacyMode ? 15.0f : 3.00f;
+            static float GetMoveSpeed3D(bool legacyMode) => legacyMode ? 0.25f : 0.04f;
+            static float GetTurnSpeed3D(bool legacyMode) => legacyMode ? 15.0f : 2.0f;
         }
 
         class TimedGameEvent
@@ -1111,33 +1111,33 @@ namespace Ambermoon
                     case CursorType.ArrowTurnLeft:
                         player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
                         if (!fromNumpadButton)
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         break;
                     case CursorType.ArrowTurnRight:
                         player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
                         if (!fromNumpadButton)
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         break;
                     case CursorType.ArrowRotateLeft:
                         if (fromNumpadButton)
                         {
-                            PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 75);
+                            PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 65);
                         }
                         else
                         {
                             player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         }
                         break;
                     case CursorType.ArrowRotateRight:
                         if (fromNumpadButton)
                         {
-                            PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 75);
+                            PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 65);
                         }
                         else
                         {
                             player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         }
                         break;
                     default:
@@ -1529,16 +1529,16 @@ namespace Ambermoon
                             switch (CursorType)
                             {
                                 case CursorType.ArrowTurnLeft:
-                                    PlayTimedSequence(6, () => player3D.TurnLeft(15.0f), 75);
+                                    PlayTimedSequence(6, () => player3D.TurnLeft(15.0f), 65);
                                     return;
                                 case CursorType.ArrowTurnRight:
-                                    PlayTimedSequence(6, () => player3D.TurnRight(15.0f), 75);
+                                    PlayTimedSequence(6, () => player3D.TurnRight(15.0f), 65);
                                     return;
                                 case CursorType.ArrowRotateLeft:
-                                    PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 75);
+                                    PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 65);
                                     return;
                                 case CursorType.ArrowRotateRight:
-                                    PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 75);
+                                    PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 65);
                                     return;
                                 case CursorType.Wait:
                                     CursorType = CursorType.Target;
@@ -2693,10 +2693,15 @@ namespace Ambermoon
 
         internal void Teleport(TeleportEvent teleportEvent)
         {
-            Fade(() =>
+            void RunTransition()
             {
                 Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _);
-            });
+            }
+
+            if (teleportEvent.Transition == TeleportEvent.TransitionType.Teleporter)
+                RunTransition();
+            else // TODO: levitating, falling, etc
+                Fade(RunTransition);
         }
 
         internal void ToggleTransport()
@@ -4895,6 +4900,25 @@ namespace Ambermoon
         void GameOver()
         {
             // TODO
+        }
+
+        internal void EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)
+        {
+            if (WindowActive)
+                return;
+
+            int openingHour = enterPlaceEvent.OpeningHour;
+            int closingHour = enterPlaceEvent.ClosingHour == 0 ? 24 : enterPlaceEvent.ClosingHour;
+
+            if (GameTime.Hour >= openingHour && GameTime.Hour < closingHour)
+            {
+                // TODO
+            }
+            else if (enterPlaceEvent.ClosedTextIndex != 255)
+            {
+                string closedText = map.Texts[enterPlaceEvent.ClosedTextIndex];
+                ShowTextPopup(ProcessText(closedText), null);
+            }
         }
 
         internal void StartBattle(StartBattleEvent battleEvent, Event nextEvent, uint? combatBackgroundIndex = null)

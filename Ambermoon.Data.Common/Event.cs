@@ -344,12 +344,12 @@ namespace Ambermoon.Data
         /// The text is taken from the map texts.
         /// 0xff means to use some default text.
         /// </summary>
-        public byte EndTextIndex { get; set; }
+        public byte UsePlaceTextIndex { get; set; }
         public byte[] Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{PlaceType}: Place index {PlaceIndex}, Open {OpeningHour:00}-{ClosingHour:00}, TextIndexWhenClosed {ClosedTextIndex}, EndTextIndex {EndTextIndex}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            return $"{PlaceType}: Place index {PlaceIndex}, Open {OpeningHour:00}-{ClosingHour:00}, TextIndexWhenClosed {ClosedTextIndex}, EndTextIndex {UsePlaceTextIndex}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 

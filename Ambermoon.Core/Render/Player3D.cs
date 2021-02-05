@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.Render
 {
@@ -116,11 +117,44 @@ namespace Ambermoon.Render
 
         delegate void PositionProvider(float distance, out float newX, out float newY, bool noX, bool noZ);
 
-        void Move(float distance, uint ticks, PositionProvider positionProvider, Action<float, bool, bool> mover)
+        void Move(float distance, uint ticks, PositionProvider positionProvider, Action<float, bool, bool> mover, bool turning = false)
         {
+            bool TriggerEvents(List<Position> touchedPositions, float oldX, float oldY, float newX, float newY)
+            {
+                bool anyEventTriggered = false;
+
+                foreach (var touchedPosition in touchedPositions)
+                {
+                    Geometry.BlockToCameraPosition(map.Map, touchedPosition, out float touchX, out float touchY);
+                    if (Math.Sign(newX - oldX) == Math.Sign(-touchX - oldX) &&
+                        Math.Sign(newY - oldY) == Math.Sign(touchY - oldY))
+                    {
+                        var oldMapIndex = map.Map.Index;
+                        map.Map.TriggerEvents(game, EventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y,
+                            ticks, game.CurrentSavegame, out bool hasEvent);
+                        anyEventTriggered = anyEventTriggered || hasEvent;
+
+                        if (oldMapIndex != game.Map.Index)
+                        {
+                            // TODO: There are also teleports to same map
+                            game.PlayerMoved(true);
+                            break; // map changed
+                        }
+                    }
+                }
+
+                if (!anyEventTriggered)
+                    map.Map.ClearLastEvent();
+
+                return anyEventTriggered;
+            }
+
             void Move(bool noX, bool noZ)
             {
+                float oldX = Camera.X;
+                float oldY = Camera.Z;
                 mover(distance, noX, noZ);
+
                 var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
                 Position = touchedPositions[0];
 
@@ -132,78 +166,83 @@ namespace Ambermoon.Render
                     game.GameTime.MoveTick(map.Map, TravelType.Walk);
                 }
 
-                bool anyEventTriggered = false;
+                TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Y);
+            }
+
+            bool TestMoveStop(float newX, float newY)
+            {
+                var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
 
                 foreach (var touchedPosition in touchedPositions)
                 {
-                    var oldMapIndex = map.Map.Index;
-                    map.Map.TriggerEvents(game, EventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y,
-                        ticks, game.CurrentSavegame, out bool hasEvent, true);
-                    anyEventTriggered = anyEventTriggered || hasEvent;
-
-                    if (oldMapIndex != game.Map.Index)
+                    if (map.Map.StopMovingTowards(touchedPosition.X, touchedPosition.Y))
                     {
-                        // TODO: There are also teleports to same map
-                        game.PlayerMoved(true);
-                        break; // map changed
+                        if (TriggerEvents(touchedPositions, Camera.X, Camera.Y, newX, newY))
+                            return true;
                     }
                 }
 
-                if (!anyEventTriggered)
-                    map.Map.ClearLastEvent();
+                return false;
             }
 
             Geometry.CameraToWorldPosition(map.Map, Camera.X, Camera.Z, out float cameraMapX, out float cameraMapY);
-            positionProvider(distance * 2f, out float newX, out float newY, false, false);
+            float collisionTestDistance = distance + (turning ? 0.334f : 0.2f) * Global.DistancePerBlock;
+            positionProvider(collisionTestDistance, out float newX, out float newY, false, false);
 
             if (TestCollision(newX, newY, cameraMapX, cameraMapY))
             {
-                // If collision is detected try to move only in x direction
-                positionProvider(distance * 2f, out newX, out newY, false, true);
-
-                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in x direction
+                if (!TestMoveStop(newX, newY))
                 {
-                    Move(false, true);
-                    return;
+                    // If collision is detected try to move only in x direction
+                    positionProvider(collisionTestDistance, out newX, out newY, false, true);
+
+                    if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in x direction
+                    {
+                        if (!TestMoveStop(newX, newY))
+                            Move(false, true);
+                        return;
+                    }
+
+                    // If collision is detected in x direction too, try to move only in z direction
+                    positionProvider(collisionTestDistance, out newX, out newY, true, false);
+
+                    if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in z direction
+                    {
+                        if (!TestMoveStop(newX, newY))
+                            Move(true, false);
+                        return;
+                    }
+
+                    // If we are here, we can't move at all
+                    game.DisplayOuch();
                 }
-
-                // If collision is detected in x direction too, try to move only in z direction
-                positionProvider(distance * 2f, out newX, out newY, true, false);
-
-                if (!TestCollision(newX, newY, cameraMapX, cameraMapY)) // we can move in z direction
-                {
-                    Move(true, false);
-                    return;
-                }
-
-                // If we are here, we can't move at all
-                game.DisplayOuch();
             }
             else
             {
                 // We can move freely
-                Move(false, false);
+                if (!TestMoveStop(newX, newY))
+                    Move(false, false);
             }
         }
 
-        public void MoveForward(float distance, uint ticks)
+        public void MoveForward(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetForwardPosition, Camera.MoveForward);
+            Move(distance, ticks, Camera.GetForwardPosition, Camera.MoveForward, turning);
         }
 
-        public void MoveBackward(float distance, uint ticks)
+        public void MoveBackward(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetBackwardPosition, Camera.MoveBackward);
+            Move(distance, ticks, Camera.GetBackwardPosition, Camera.MoveBackward, turning);
         }
 
-        public void MoveLeft(float distance, uint ticks)
+        public void MoveLeft(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetLeftPosition, Camera.MoveLeft);
+            Move(distance, ticks, Camera.GetLeftPosition, Camera.MoveLeft, turning);
         }
 
-        public void MoveRight(float distance, uint ticks)
+        public void MoveRight(float distance, uint ticks, bool turning = false)
         {
-            Move(distance, ticks, Camera.GetRightPosition, Camera.MoveRight);
+            Move(distance, ticks, Camera.GetRightPosition, Camera.MoveRight, turning);
         }
 
         public void TurnLeft(float angle) // in degrees

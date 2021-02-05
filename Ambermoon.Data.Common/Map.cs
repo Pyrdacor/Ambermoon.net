@@ -333,5 +333,22 @@ namespace Ambermoon.Data
             }
             Tiles[x, y].Type = TileTypeFromTile(Tiles[x, y], tileset);
         }
+
+        public bool StopMovingTowards(int x, int y)
+        {
+            uint mapEventId = (Type == MapType.Map2D) ? Tiles[x, y].MapEventId : Blocks[x, y].MapEventId;
+
+            if (mapEventId == 0)
+                return false;
+
+            return EventList[(int)mapEventId - 1].Type switch
+            {
+                EventType.Chest => true,
+                EventType.Door => true,
+                EventType.EnterPlace => true,
+                EventType.Riddlemouth => true,
+                _ => false
+            };
+        }
     }
 }

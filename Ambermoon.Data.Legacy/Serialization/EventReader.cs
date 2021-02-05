@@ -276,14 +276,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // place type (see PlaceType)
                     // opening hour
                     // closing hour
-                    // text index for leaving
+                    // text index for using the place (sleep, train, buy, etc)
                     // place index (1-based, word)
                     // 2 unknown bytes
                     var textIndexWhenClosed = dataReader.ReadByte();
                     var placeType = (PlaceType)dataReader.ReadByte();
                     var openingHour = dataReader.ReadByte();
                     var closingHour = dataReader.ReadByte();
-                    var endTextIndex = dataReader.ReadByte();
+                    var usePlaceTextIndex = dataReader.ReadByte();
                     var placeIndex = dataReader.ReadWord();
                     var unknown = dataReader.ReadBytes(2);
                     @event = new EnterPlaceEvent
@@ -293,7 +293,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         OpeningHour = openingHour,
                         ClosingHour = closingHour,
                         PlaceIndex = placeIndex,
-                        EndTextIndex = endTextIndex,
+                        UsePlaceTextIndex = usePlaceTextIndex,
                         Unknown = unknown
                     };
                     break;
