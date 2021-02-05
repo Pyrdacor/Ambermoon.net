@@ -131,6 +131,13 @@ namespace Ambermoon
                     }
                     else
                     {
+                        // TODO: REMOVE LATER
+                        if (i == 2) // Intro
+                        {
+                            mainMenuTexts[i].Value.ColorIndex = 7; // Gray
+                            continue;
+                        }
+
                         mainMenuTexts[i].Value.ColorIndex = 2; // White
                     }
                 }
@@ -181,6 +188,10 @@ namespace Ambermoon
             {
                 if (mainMenuTexts[i].Key.Contains(position))
                 {
+                    // TODO: REMOVE LATER
+                    if (i == 2) // Intro
+                        continue;
+
                     if (hoveredTextIndex != i)
                     {
                         hoveredTextIndex = i;
