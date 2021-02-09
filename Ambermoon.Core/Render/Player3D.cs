@@ -64,7 +64,7 @@ namespace Ambermoon.Render
                 }
                 else
                 {
-                    this.map.SetMap(map, x, y, newDirection.Value);
+                    this.map.SetMap(map, x, y, newDirection.Value, game.CurrentPartyMember?.Race ?? Race.Human);
                     var oldMapIndex = map.Index;
                     SetPosition((int)x, (int)y, ticks, false);
                     game.PlayerMoved(oldMapIndex != game.Map.Index);
@@ -122,12 +122,23 @@ namespace Ambermoon.Render
             bool TriggerEvents(List<Position> touchedPositions, float oldX, float oldY, float newX, float newY)
             {
                 bool anyEventTriggered = false;
+                Position currentPosition = touchedPositions[0];
 
                 foreach (var touchedPosition in touchedPositions)
                 {
-                    Geometry.BlockToCameraPosition(map.Map, touchedPosition, out float touchX, out float touchY);
-                    if (Math.Sign(newX - oldX) == Math.Sign(-touchX - oldX) &&
-                        Math.Sign(newY - oldY) == Math.Sign(touchY - oldY))
+                    bool considerPosition = touchedPosition == currentPosition;
+
+                    if (!considerPosition)
+                    {
+                        Geometry.BlockToCameraPosition(map.Map, touchedPosition, out float touchX, out float touchY);
+                        bool sameXDirection = Math.Sign(newX - oldX) == Math.Sign(-touchX - oldX);
+                        bool sameYDirection = Math.Sign(newY - oldY) == Math.Sign(touchY - oldY);
+
+                        considerPosition = (sameXDirection && (sameYDirection || Math.Abs(touchY - oldY) < 0.5f * Global.DistancePerBlock)) ||
+                            (sameYDirection && Math.Abs(-touchX - oldX) < 0.5f * Global.DistancePerBlock);
+                    }
+
+                    if (considerPosition)
                     {
                         var oldMapIndex = map.Map.Index;
                         map.Map.TriggerEvents(game, EventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y,
@@ -136,7 +147,7 @@ namespace Ambermoon.Render
 
                         if (oldMapIndex != game.Map.Index)
                         {
-                            // TODO: There are also teleports to same map
+                            // TODO: There are also teleports to the same map
                             game.PlayerMoved(true);
                             break; // map changed
                         }
@@ -166,7 +177,7 @@ namespace Ambermoon.Render
                     game.GameTime.MoveTick(map.Map, TravelType.Walk);
                 }
 
-                TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Y);
+                TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z);
             }
 
             bool TestMoveStop(float newX, float newY)
@@ -177,7 +188,7 @@ namespace Ambermoon.Render
                 {
                     if (map.Map.StopMovingTowards(touchedPosition.X, touchedPosition.Y))
                     {
-                        if (TriggerEvents(touchedPositions, Camera.X, Camera.Y, newX, newY))
+                        if (TriggerEvents(touchedPositions, Camera.X, Camera.Z, newX, newY))
                             return true;
                     }
                 }

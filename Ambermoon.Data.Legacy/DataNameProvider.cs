@@ -116,7 +116,6 @@
         public string WaitHowManyHours => executableData.Messages.GetEntry(Messages.Index.WaitHowManyHours);
         public string CannotWaitBecauseOfNearbyMonsters => executableData.Messages.GetEntry(Messages.Index.WaitingIsTooDangerous);
 
-
         #region Battle messages
 
         public string BattleMessageAttacksWith => executableData.Messages.GetEntry(Messages.Index.AttacksWith);

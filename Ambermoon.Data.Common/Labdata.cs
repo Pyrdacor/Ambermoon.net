@@ -9,9 +9,9 @@ namespace Ambermoon.Data
     {
         public struct ObjectPosition
         {
-            public float X;
-            public float Y;
-            public float Z;
+            public short X;
+            public short Y;
+            public short Z;
             public ObjectInfo Object;
         }
 

@@ -212,7 +212,7 @@ namespace Ambermoon
         readonly ISavegameSerializer savegameSerializer;
         Player player;
         internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
-        PartyMember CurrentPartyMember { get; set; } = null;
+        internal PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
@@ -784,7 +784,7 @@ namespace Ambermoon
             is3D = true;
             TravelType = TravelType.Walk;
             renderMap2D.Destroy();
-            renderMap3D.SetMap(map, playerX, playerY, direction);
+            renderMap3D.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human);
             renderView.SetLight(GetLight3D());
             player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
             if (player2D != null)
@@ -5411,6 +5411,9 @@ namespace Ambermoon
                     pickingNewLeader = false;
                     layout.ClosePopup(true, true);
                 }
+
+                if (is3D)
+                    renderMap3D?.SetCameraHeight(partyMember.Race);
             }
         }
 

@@ -507,8 +507,8 @@ namespace Ambermoon.Render
         public const int FloorTextureHeight = 64;
         public const int TextureWidth = 128;
         public const int TextureHeight = 80;
-        public const float BlockSize = 500.0f;
-        public const float ReferenceWallHeight = 320.0f;
+        public const float BlockSize = 512.0f;
+        public const float ReferenceWallHeight = 341.0f; // 2/3 of block size -> 512
         readonly Game game;
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
@@ -535,8 +535,7 @@ namespace Ambermoon.Render
         ///  This is the height for the renderer. It is expressed in relation
         ///  to the block size (e.g. wall is 2/3 as height as a block is wide).
         /// </summary>
-        float WallHeight => FullWallHeight * labdata.WallHeight / ReferenceWallHeight;
-        float FullWallHeight => (ReferenceWallHeight / BlockSize) * 0.75f * Global.DistancePerBlock;
+        float WallHeight => labdata.WallHeight * Global.DistancePerBlock / BlockSize;
         public event Action<Map> MapChanged;
 
         public static void Reset() => MapCharacter.Reset();
@@ -551,10 +550,10 @@ namespace Ambermoon.Render
             EnsureLabBackgroundGraphics(renderView.GraphicProvider);
 
             if (map != null)
-                SetMap(map, playerX, playerY, playerDirection);
+                SetMap(map, playerX, playerY, playerDirection, game.CurrentPartyMember?.Race ?? Race.Human);
         }
 
-        public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection)
+        public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection, Race race)
         {
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Tried to load a 2D map into a 3D render map.");
@@ -570,13 +569,34 @@ namespace Ambermoon.Render
                 UpdateSurfaces();
                 AddCharacters();
 
-                camera.GroundY = -0.5f * FullWallHeight; // TODO: Does labdata.Unknown1 contain an offset?
+                SetCameraHeight(race);
 
                 MapChanged?.Invoke(map);
             }
 
             camera.SetPosition(playerX * Global.DistancePerBlock, (map.Height - playerY) * Global.DistancePerBlock);
             camera.TurnTowards((float)playerDirection * 90.0f);
+        }
+
+        public void SetCameraHeight(Race race)
+        {
+            // Race-dependent additional height
+            // in relation to a full wall height.
+            float add = race switch
+            {
+                Race.Human => -0.04f,
+                Race.Elf => 0.0f,
+                Race.Dwarf => -0.125f,
+                Race.Gnome => -0.125f,
+                Race.HalfElf => 0.01f,
+                Race.Sylphe => 0.25f,
+                Race.Felinic => 0.0f,
+                Race.Thalionic => -0.04f,
+                _ => 0.0f
+            };
+
+            camera.GroundY = (-0.5f - add) * ReferenceWallHeight / BlockSize;
+            camera.UpdatePosition();
         }
 
         public void Destroy()
@@ -713,27 +733,33 @@ namespace Ambermoon.Render
                 character.Value.Resume();
         }
 
+        void GetObjectPosition(Labdata.ObjectPosition objectPosition, float baseX, float baseY, out float x, out float y, out float z,
+            bool floorObject, uint extrudeOffset)
+        {
+            baseY = -Map.Height * Global.DistancePerBlock + baseY;
+            x = baseX + objectPosition.X * Global.DistancePerBlock / BlockSize;
+            y = floorObject ? (float)extrudeOffset * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize) :
+                (objectPosition.Z + objectPosition.Object.MappedTextureHeight) * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
+            z = baseY + Global.DistancePerBlock - Global.DistancePerBlock * objectPosition.Y / BlockSize;
+        }
+
         void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition, uint extrudeOffset)
         {
-            float baseX = position.X;
-            float baseY = -Map.Height * Global.DistancePerBlock + position.Y;
-            surface.X = baseX + (objectPosition.X / BlockSize) * Global.DistancePerBlock;
-            surface.Y = surface.Type == SurfaceType.BillboardFloor
-                ? (float)extrudeOffset / labdata.WallHeight
-                : WallHeight * (objectPosition.Z / 400.0f + objectPosition.Object.MappedTextureHeight / ReferenceWallHeight);
-            surface.Z = baseY + Global.DistancePerBlock - (objectPosition.Y / BlockSize) * Global.DistancePerBlock;
+            GetObjectPosition(objectPosition, position.X, position.Y, out float x, out float y, out float z,
+                surface.Type == SurfaceType.BillboardFloor, extrudeOffset);
+            surface.X = x;
+            surface.Y = y;
+            surface.Z = z;
         }
 
         void UpdateCharacterSurfaceCoordinates(Position position, ISurface3D surface, Labdata.ObjectPosition objectPosition,
             uint extrudeOffset, float xOffset = 0.0f, float yOffset = 0.0f)
         {
-            float baseX = position.X * Global.DistancePerBlock;
-            float baseY = (-Map.Height + position.Y) * Global.DistancePerBlock;
-            surface.X = baseX + (objectPosition.X / BlockSize) * Global.DistancePerBlock + xOffset;
-            surface.Y = surface.Type == SurfaceType.BillboardFloor
-                ? (float)extrudeOffset / labdata.WallHeight
-                : WallHeight * (objectPosition.Z / 400.0f + objectPosition.Object.MappedTextureHeight / ReferenceWallHeight);
-            surface.Z = baseY + Global.DistancePerBlock - (objectPosition.Y / BlockSize) * Global.DistancePerBlock + yOffset;
+            GetObjectPosition(objectPosition, position.X * Global.DistancePerBlock, position.Y * Global.DistancePerBlock,
+                out float x, out float y, out float z, surface.Type == SurfaceType.BillboardFloor, extrudeOffset);
+            surface.X = x + xOffset;
+            surface.Y = y;
+            surface.Z = z + yOffset;
         }
 
         MapCharacter CreateMapCharacter(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint characterIndex,
@@ -782,8 +808,6 @@ namespace Ambermoon.Render
         {
             uint blockIndex = mapX + mapY * (uint)Map.Width;
             blockCollisionBodies.Add(blockIndex, new List<ICollisionBody>(8));
-            float baseX = mapX * Global.DistancePerBlock;
-            float baseY = (-Map.Height + mapY) * Global.DistancePerBlock;
 
             // TODO: animations
 
@@ -808,9 +832,11 @@ namespace Ambermoon.Render
                         objectInfo.ExtrudeOffset / BlockSize);
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-                mapObject.X = baseX + (subObject.X / BlockSize) * Global.DistancePerBlock;
-                mapObject.Y = floorObject ? (float)objectInfo.ExtrudeOffset / labdata.WallHeight : wallHeight * (subObject.Z / 400.0f + objectInfo.MappedTextureHeight / ReferenceWallHeight);
-                mapObject.Z = baseY + Global.DistancePerBlock - (subObject.Y / BlockSize) * Global.DistancePerBlock;
+                GetObjectPosition(subObject, mapX * Global.DistancePerBlock, mapY * Global.DistancePerBlock,
+                    out float x, out float y, out float z, floorObject, objectInfo.ExtrudeOffset);
+                mapObject.X = x;
+                mapObject.Y = y;
+                mapObject.Z = z;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
                 objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex, objectInfo.NumAnimationFrames, 4.0f)); // TODO: fps?

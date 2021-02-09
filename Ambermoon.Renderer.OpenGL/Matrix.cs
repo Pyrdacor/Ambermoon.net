@@ -56,37 +56,47 @@ namespace Ambermoon.Renderer
 
         public static Matrix4 CreatePerspective(float fovY, float aspect, float near, float far)
         {
-            if (aspect <= float.Epsilon)
+            if (fovY <= 0.0f || fovY >= 180.0f)
+                throw new ArgumentException("The field of view y-angle was outside the valid range of 0 < fovAngle < 180.");
+
+            if (Math.Abs(aspect) <= float.Epsilon)
                 throw new ArgumentException("Aspect is 0 which is not allowed.");
 
             if (near <= float.Epsilon)
-                throw new ArgumentException("Near z value is 0 which is not allowed.");
+                throw new ArgumentException("Near z value is 0 or smaller which is not allowed.");
+
+            if (far < near)
+                throw new ArgumentException("Far z value is smaller than near z value which is not allowed.");
 
             if (far - near <= float.Epsilon)
                 throw new ArgumentException("Near z value equals far z value or far is smaller than near which is not allowed.");
 
-            var scale = /*near * */0.5 * Math.PI * fovY / 180.0;
-            var cos = Math.Cos(scale);
-            var sin = Math.Sin(scale);
+            var scale = near * Math.Tan(0.5 * fovY/*0.5 * Math.PI * fovY / 180.0*/);
 
-            if (sin <= double.Epsilon)
-                throw new ArgumentException("Sinus of the given field of view y-angle is 0 which is not allowed.");
-
-            scale = cos / sin; // = tan
-
-            float r = aspect * (float)scale; // right
-            float l = -r; // left
             float t = (float)scale; // top
             float b = -t; // bottom
+            float r = aspect * t; // right
+            float l = -r; // left
             float w = r - l; // width
             float h = t - b; // height
 
+            // Ambermoon uses a scaling factor of 256/(256+distance).
+            // This can be expressed as 1/(1+distance/256).
+            // We scale the 256 down to the near value so that
+            // we end up with near/(near+distance*near/256).
+            // We do so to avoid clipping through walls.
+            // As x, y and z all use the same scaled units which is
+            // Global.DistancePerBlock we don't need to care about
+            // the scaling of the distance. So we can just use
+            // near/(near+distance) in the projection matrix.
+            // This projection matrix exactly scales x and y by
+            // 256/(256+distance) with the given FOV applied.
             return new Matrix4(new float[16]
             {
-                2.0f * near / w,    0.0f,               (r + l) / w,                0.0f,
-                0.0f,               2.0f * near / h,    (t + b) / h,                0.0f,
-                0.0f,               0.0f,               -(near+far)/(far-near),     -(2.0f*near*far)/(far-near),
-                0.0f,               0.0f,               -1.0f,                      0.0f
+                2.0f * near / w,    0.0f,               (r + l) / w,                    0.0f,
+                0.0f,               2.0f * near / h,    (t + b) / h,                    0.0f,
+                0.0f,               0.0f,               -(2.0f*near+far)/(far-near),   -(2.0f*near*(far+near))/(far-near)-near,
+                0.0f,               0.0f,               -1.0f,                          near
             });
         }
 

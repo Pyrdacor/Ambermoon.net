@@ -22,18 +22,18 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             labdata.Objects.Clear();
             int numObjects = dataReader.ReadWord();
-            var objects = new List<Tuple<ushort, List<Tuple<float, float, float, int>>>>(numObjects);
+            var objects = new List<Tuple<ushort, List<Tuple<short, short, short, int>>>>(numObjects);
 
             for (int i = 0; i < numObjects; ++i)
             {
-                var obj = Tuple.Create(dataReader.ReadWord(), new List<Tuple<float, float, float, int>>(8));
+                var obj = Tuple.Create(dataReader.ReadWord(), new List<Tuple<short, short, short, int>>(8));
 
                 for (int n = 0; n < 8; ++n) // 8 sub entries (a map object can consist of up to 8 sub objects)
                 {
                     obj.Item2.Add(Tuple.Create(
-                        (float)(short)dataReader.ReadWord(),
-                        (float)(short)dataReader.ReadWord(),
-                        (float)(short)dataReader.ReadWord(),
+                        (short)dataReader.ReadWord(),
+                        (short)dataReader.ReadWord(),
+                        (short)dataReader.ReadWord(),
                         (int)dataReader.ReadWord()));
                 }
 

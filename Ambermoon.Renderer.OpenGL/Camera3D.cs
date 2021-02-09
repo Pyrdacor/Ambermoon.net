@@ -111,6 +111,14 @@ namespace Ambermoon.Renderer.OpenGL
             Move(noX ? 0.0f : (float)currentPerpendicularAngleCos * distance, 0.0f, noZ ? 0.0f : (float)currentPerpendicularAngleSin * distance);
         }
 
+        public void UpdatePosition()
+        {
+            Y = GroundY;
+            translateMatrix = Matrix4.CreateTranslationMatrix(X, Y, Z);
+            TurnTowards(currentAngle);
+            UpdateMatrix();
+        }
+
         /// <summary>
         /// <inheritdoc/>
         /// </summary>

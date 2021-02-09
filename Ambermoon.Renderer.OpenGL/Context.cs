@@ -30,6 +30,7 @@ namespace Ambermoon.Renderer
         int height = -1;
         Rotation rotation = Rotation.None;
         Matrix4 modelViewMatrix = Matrix4.Identity;
+        static readonly float FovY3D = (float)Math.PI * 0.2f;
         State State { get; }
 
         public Context(State state, int width, int height)
@@ -57,7 +58,7 @@ namespace Ambermoon.Renderer
         public void Resize(int width, int height)
         {
             State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, Global.VirtualScreenWidth, 0, Global.VirtualScreenHeight, 0, 1);
-            State.ProjectionMatrix3D = Matrix4.CreatePerspective(165.0f, 1.25f, 0.5f, 200.0f);
+            State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, 1.0f, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
 
             State.ClearMatrices();
             State.PushModelViewMatrix(Matrix4.Identity);
