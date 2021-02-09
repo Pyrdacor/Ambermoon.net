@@ -71,9 +71,9 @@ namespace Ambermoon.Renderer
             if (far - near <= float.Epsilon)
                 throw new ArgumentException("Near z value equals far z value or far is smaller than near which is not allowed.");
 
-            var scale = near * Math.Tan(0.5 * fovY/*0.5 * Math.PI * fovY / 180.0*/);
+            float scale = near * (float)Math.Tan(0.5 * fovY);
 
-            float t = (float)scale; // top
+            float t = scale; // top
             float b = -t; // bottom
             float r = aspect * t; // right
             float l = -r; // left
@@ -95,7 +95,7 @@ namespace Ambermoon.Renderer
             {
                 2.0f * near / w,    0.0f,               (r + l) / w,                    0.0f,
                 0.0f,               2.0f * near / h,    (t + b) / h,                    0.0f,
-                0.0f,               0.0f,               -(2.0f*near+far)/(far-near),   -(2.0f*near*(far+near))/(far-near)-near,
+                0.0f,               0.0f,               -(2.0f*near+far)/(far-near),    -(2.0f*near*(far+near))/(far-near)-near,
                 0.0f,               0.0f,               -1.0f,                          near
             });
         }

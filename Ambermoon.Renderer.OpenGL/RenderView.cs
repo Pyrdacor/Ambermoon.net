@@ -65,17 +65,14 @@ namespace Ambermoon.Renderer.OpenGL
         public Size MaxScreenSize { get; set; }
 
         public ISpriteFactory SpriteFactory => spriteFactory;
-
         public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
-
         public ISurface3DFactory Surface3DFactory => surface3DFactory;
         public IRenderTextFactory RenderTextFactory => renderTextFactory;
-
         public ICamera3D Camera3D => camera3D;
-
         public IGameData GameData { get; }
         public IGraphicProvider GraphicProvider { get; }
         public ITextProcessor TextProcessor { get; }
+        public Action<float> AspectProcessor { get; }
 
         #region Coordinate transformations
 
@@ -109,6 +106,7 @@ namespace Ambermoon.Renderer.OpenGL
             OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
+            AspectProcessor = UpdateAspect;
             GameData = gameData;
             GraphicProvider = graphicProvider;
             TextProcessor = textProcessor;
@@ -122,7 +120,7 @@ namespace Ambermoon.Renderer.OpenGL
 
             Resize(windowWidth, windowHeight);
 
-            context = new Context(State, virtualScreenDisplay.Width, virtualScreenDisplay.Height);
+            context = new Context(State, virtualScreenDisplay.Width, virtualScreenDisplay.Height, 1.0f);
 
             // factories
             var visibleArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
@@ -158,6 +156,11 @@ namespace Ambermoon.Renderer.OpenGL
                     throw new AmbermoonException(ExceptionScope.Render, $"Unable to create layer '{layer}': {ex.Message}");
                 }
             }
+        }
+
+        void UpdateAspect(float aspect)
+        {
+            context?.UpdateAspect(aspect);
         }
 
         public void Close()

@@ -571,6 +571,8 @@ namespace Ambermoon.Render
 
                 SetCameraHeight(race);
 
+                renderView.AspectProcessor?.Invoke(ReferenceWallHeight / labdata.WallHeight);
+
                 MapChanged?.Invoke(map);
             }
 

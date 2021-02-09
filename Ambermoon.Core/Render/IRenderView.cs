@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using System;
 
 namespace Ambermoon.Render
 {
@@ -51,6 +52,7 @@ namespace Ambermoon.Render
         IRenderTextFactory RenderTextFactory { get; }
         ITextProcessor TextProcessor { get; }
         ICamera3D Camera3D { get; }
+        Action<float> AspectProcessor { get; }
         void SetLight(float light);
 
         IGameData GameData { get; }

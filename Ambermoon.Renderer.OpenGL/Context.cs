@@ -33,7 +33,7 @@ namespace Ambermoon.Renderer
         static readonly float FovY3D = (float)Math.PI * 0.2f;
         State State { get; }
 
-        public Context(State state, int width, int height)
+        public Context(State state, int width, int height, float aspect)
         {
             State = state;
 
@@ -52,13 +52,13 @@ namespace Ambermoon.Renderer
             State.Gl.BlendEquationSeparate(BlendEquationModeEXT.FuncAdd, BlendEquationModeEXT.FuncAdd);
             State.Gl.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.Zero);
 
-            Resize(width, height);
+            Resize(width, height, aspect);
         }
 
-        public void Resize(int width, int height)
+        public void Resize(int width, int height, float aspect)
         {
             State.ProjectionMatrix2D = Matrix4.CreateOrtho2D(0, Global.VirtualScreenWidth, 0, Global.VirtualScreenHeight, 0, 1);
-            State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, 1.0f, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
+            State.ProjectionMatrix3D = Matrix4.CreatePerspective(FovY3D, aspect, 0.1f, 40.0f * Global.DistancePerBlock); // Max 3D map dimension is 41
 
             State.ClearMatrices();
             State.PushModelViewMatrix(Matrix4.Identity);
@@ -68,6 +68,11 @@ namespace Ambermoon.Renderer
             this.height = height;
 
             SetRotation(rotation, true);
+        }
+
+        public void UpdateAspect(float aspect)
+        {
+            Resize(width, height, aspect);
         }
 
         public void SetRotation(Rotation rotation, bool forceUpdate = false)
