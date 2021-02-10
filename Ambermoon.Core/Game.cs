@@ -227,7 +227,7 @@ namespace Ambermoon
         Battle currentBattle = null;
         internal bool BattleActive => currentBattle != null;
         internal bool BattleRoundActive => currentBattle?.RoundActive == true;
-        internal UIText ChestText { get; set; } = null;
+        internal Button QuestionYesButton = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
@@ -287,7 +287,6 @@ namespace Ambermoon
                 }
             }
         }
-        bool leftMouseDown = false;
         bool clickMoveActive = false;
         Rect trapMouseArea = null;
         bool mouseTrappingActive = false;
@@ -826,7 +825,6 @@ namespace Ambermoon
 
             for (int i = 0; i < keys.Length; ++i)
                 keys[i] = false;
-            leftMouseDown = false;
             clickMoveActive = false;
             UntrapMouse();
             InputEnable = false;
@@ -1302,7 +1300,8 @@ namespace Ambermoon
 
             if (!WindowActive && !layout.PopupActive)
                 Move();
-            else if (currentWindow.Window == Window.BattlePositions && battlePositionDragging)
+            else if ((currentWindow.Window == Window.BattlePositions && battlePositionDragging) ||
+                currentWindow.Window == Window.Merchant)
                 return;
 
             switch (key)
@@ -1475,7 +1474,6 @@ namespace Ambermoon
 
             if (buttons.HasFlag(MouseButtons.Left))
             {
-                leftMouseDown = false;
                 clickMoveActive = false;
 
                 layout.LeftMouseUp(position, out CursorType? cursorType, CurrentTicks);
@@ -1511,9 +1509,6 @@ namespace Ambermoon
             }
 
             position = GetMousePosition(position);
-
-            if (buttons.HasFlag(MouseButtons.Left))
-                leftMouseDown = true;
 
             if (ingame)
             {
@@ -1665,7 +1660,7 @@ namespace Ambermoon
                     else if (layout.Type == LayoutType.Event ||
                         (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true) ||
                         currentBattle?.WaitForClick == true ||
-                        ChestText?.WithScrolling == true ||
+                        layout.ChestText?.WithScrolling == true ||
                         layout.InventoryMessageWaitsForClick)
                         CursorType = CursorType.Click;
                     else
@@ -2401,8 +2396,9 @@ namespace Ambermoon
                 characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
                     string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), TextColor.White, TextAlign.Center));
+                var displayGold = OpenStorage is Merchant ? 0 : character.Gold;
                 characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
-                    string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food),
+                    string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, displayGold, character.Food),
                     TextColor.White, TextAlign.Center));
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
                 characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
@@ -4902,6 +4898,123 @@ namespace Ambermoon
             // TODO
         }
 
+        void OpenMerchant(uint merchantIndex, string buyText)
+        {
+            var merchant = GetMerchant(merchantIndex);
+
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Merchant, merchantIndex, buyText);
+                ShowMerchantWindow(merchant, DataNameProvider.WelcomeMerchant, buyText, Picture80x80.Merchant1);
+            });
+        }
+
+        void ShowMerchantWindow(Merchant merchant, string initialText, string buyText, Picture80x80 picture)
+        {
+            OpenStorage = merchant;
+            layout.SetLayout(LayoutType.Items);
+            layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+            var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, merchant.Slots.ToList(),
+                false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+            layout.AddItemGrid(itemGrid);
+            layout.Set80x80Picture(picture);
+            var itemArea = new Rect(16, 139, 151, 53);
+            int mode = 0; // buy, sell, examine (= button index)
+
+            // Buy button
+            layout.AttachEventToButton(0, () =>
+            {
+                mode = 0;
+                layout.ShowChestMessage(DataNameProvider.BuyWhichItem, TextAlign.Center);
+                CursorType = CursorType.Sword;
+                TrapMouse(itemArea);
+                FillItems(true);
+            });
+            // Sell button
+            layout.AttachEventToButton(3, () =>
+            {
+                mode = 3;
+                layout.ShowChestMessage(DataNameProvider.SellWhichItem, TextAlign.Left);
+                CursorType = CursorType.Sword;
+                TrapMouse(itemArea);
+                FillItems(false);
+            });
+            // Examine button
+            layout.AttachEventToButton(4, () =>
+            {
+                mode = 4;
+                layout.ShowChestMessage(DataNameProvider.ExamineWhichItemMerchant, TextAlign.Left);
+                CursorType = CursorType.Sword;
+                TrapMouse(itemArea);
+                FillItems(true);
+            });
+            // Exit button
+            layout.AttachEventToButton(2, () =>
+            {
+                CloseWindow();
+                // TODO: ask for leaving without items, etc
+                // TODO: At the end all the gold is distributed back to the party members
+                //       regardless the amount they had beforehand.
+            });
+
+            void FillItems(bool fromMerchant)
+            {
+                for (int y = 0; y < 2; ++y)
+                {
+                    for (int x = 0; x < 6; ++x)
+                    {
+                        itemGrid.SetItem(x + y * 6, fromMerchant
+                            ? merchant.Slots[x, y]
+                            : CurrentPartyMember.Inventory.Slots[x + y * 6]);
+                    }
+                }
+            }
+
+            itemGrid.DisableDrag = true;
+            itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+            {
+                UntrapMouse();
+
+                int column = slotIndex % Merchant.SlotsPerRow;
+                int row = slotIndex / Merchant.SlotsPerRow;
+
+                if (mode == 0) // buy
+                {
+                    layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ThisWillCost}{100}{DataNameProvider.AgreeOnPrice}"), answer => // TODO: price
+                    {
+                        // TODO
+                    }, TextAlign.Left);
+                }
+                else if (mode == 3) // sell
+                {
+                    // TODO
+                }
+                else if (mode == 4) // examine
+                {
+                    // TODO
+                }
+                else
+                {
+                    throw new AmbermoonException(ExceptionScope.Application, "Invalid merchant mode.");
+                }
+            };
+
+            // Put all gold on the table!
+            merchant.AvailableGold = (uint)PartyMembers.Sum(p => p.Gold);
+
+            ShowTextPanel(CharacterInfo.ChestGold, true,
+                $"{DataNameProvider.GoldName}^{merchant.AvailableGold}", new Rect(111, 104, 43, 15));
+
+            if (initialText != null)
+            {
+                layout.ShowClickChestMessage(initialText, null, false);
+            }
+        }
+
         internal void EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)
         {
             if (WindowActive)
@@ -4912,7 +5025,29 @@ namespace Ambermoon
 
             if (GameTime.Hour >= openingHour && GameTime.Hour < closingHour)
             {
-                // TODO
+                switch (enterPlaceEvent.PlaceType)
+                {
+                    case PlaceType.Trainer:
+                    case PlaceType.Healer:
+                    case PlaceType.Sage:
+                    case PlaceType.Enchanter:
+                    case PlaceType.Inn:
+                        // TODO
+                        break;
+                    case PlaceType.Merchant:
+                        OpenMerchant(enterPlaceEvent.MerchantDataIndex,
+                            enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                        break;
+                    case PlaceType.FoodDealer:
+                    case PlaceType.Library:
+                    case PlaceType.ShipDealer:
+                    case PlaceType.HorseDealer:
+                    case PlaceType.Blacksmith:
+                        // TODO
+                        break;
+                    default:
+                        throw new AmbermoonException(ExceptionScope.Data, "Unknown place type.");
+                }
             }
             else if (enterPlaceEvent.ClosedTextIndex != 255)
             {

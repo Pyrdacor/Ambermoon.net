@@ -146,6 +146,40 @@
 
         #endregion
 
+        #region Places
+
+        string WelcomeAttackTrainer { get; }
+        string WelcomeBlacksmith { get; }
+        string WelcomeCriticalHitTrainer { get; }
+        string WelcomeDisarmTrapTrainer { get; }
+        string WelcomeFindTrapTrainer { get; }
+        string WelcomeFoodDealer { get; }
+        string WelcomeHealer { get; }
+        string WelcomeHorseSeller { get; }
+        string WelcomeInnkeeper { get; }
+        string WelcomeLockPickingTrainer { get; }
+        string WelcomeMagician { get; }
+        string WelcomeMerchant { get; }
+        string WelcomeParryTrainer { get; }
+        string WelcomeRaftSeller { get; }
+        string WelcomeReadMagicTrainer { get; }
+        string WelcomeRecharger { get; }
+        string WelcomeSage { get; }
+        string WelcomeSearchTrainer { get; }
+        string WelcomeShipSeller { get; }
+        string WelcomeSwimTrainer { get; }
+        string WelcomeUseMagicTrainer { get; }
+        string BuyWhichItem { get; }
+        string SellWhichItem { get; }
+        string ExamineWhichItem { get; }
+        string ExamineWhichItemMerchant { get; }
+        string ExamineWhichItemSage { get; }
+        string ThisWillCost { get; }
+        string AgreeOnPrice { get; }
+        string AgreeOnFoodPrice { get; }
+
+        #endregion
+
         // TODO
     }
 }

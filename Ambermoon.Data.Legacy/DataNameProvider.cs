@@ -167,5 +167,39 @@
         public string BattleMessageUseItOnWhom => executableData.Messages.GetEntry(Messages.Index.UseItOnWhom);
 
         #endregion
+
+        #region Places
+
+        public string WelcomeAttackTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeAttackTrainer);
+        public string WelcomeBlacksmith => executableData.Messages.GetEntry(Messages.Index.WelcomeBlacksmith);
+        public string WelcomeCriticalHitTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeCriticalHitTrainer);
+        public string WelcomeDisarmTrapTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeDisarmTrapTrainer);
+        public string WelcomeFindTrapTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeFindTrapTrainer);
+        public string WelcomeFoodDealer => executableData.Messages.GetEntry(Messages.Index.WelcomeFoodDealer);
+        public string WelcomeHealer => executableData.Messages.GetEntry(Messages.Index.WelcomeHealer);
+        public string WelcomeHorseSeller => executableData.Messages.GetEntry(Messages.Index.WelcomeHorseSeller);
+        public string WelcomeInnkeeper => executableData.Messages.GetEntry(Messages.Index.WelcomeInnkeeper);
+        public string WelcomeLockPickingTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeLockPickingTrainer);
+        public string WelcomeMagician => executableData.Messages.GetEntry(Messages.Index.WelcomeMagician);
+        public string WelcomeMerchant => executableData.Messages.GetEntry(Messages.Index.WelcomeMerchant);
+        public string WelcomeParryTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeParryTrainer);
+        public string WelcomeRaftSeller => executableData.Messages.GetEntry(Messages.Index.WelcomeRaftSeller);
+        public string WelcomeReadMagicTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeReadMagicTrainer);
+        public string WelcomeRecharger => executableData.Messages.GetEntry(Messages.Index.WelcomeRecharger);
+        public string WelcomeSage => executableData.Messages.GetEntry(Messages.Index.WelcomeSage);
+        public string WelcomeSearchTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeSearchTrainer);
+        public string WelcomeShipSeller => executableData.Messages.GetEntry(Messages.Index.WelcomeShipSeller);
+        public string WelcomeSwimTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeSwimTrainer);
+        public string WelcomeUseMagicTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeUseMagicTrainer);
+        public string BuyWhichItem => executableData.Messages.GetEntry(Messages.Index.WhichItemToBuy);
+        public string SellWhichItem => executableData.Messages.GetEntry(Messages.Index.WhichItemToSell);
+        public string ExamineWhichItem => executableData.Messages.GetEntry(Messages.Index.WhichItemToExamine);
+        public string ExamineWhichItemMerchant => executableData.Messages.GetEntry(Messages.Index.WhichMerchantItemToExamine);
+        public string ExamineWhichItemSage => executableData.Messages.GetEntry(Messages.Index.WhichItemToExamineSage);
+        public string ThisWillCost => executableData.Messages.GetEntry(Messages.Index.ThisWillCost);
+        public string AgreeOnPrice => executableData.Messages.GetEntry(Messages.Index.AgreeOnPrice);
+        public string AgreeOnFoodPrice => executableData.Messages.GetEntry(Messages.Index.AgreeOnFoodPrice);
+
+        #endregion
     }
 }

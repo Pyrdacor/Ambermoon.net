@@ -407,6 +407,9 @@ namespace Ambermoon.UI
         readonly List<MonsterCombatGraphic> monsterCombatGraphics = new List<MonsterCombatGraphic>();
         PortraitAnimation portraitAnimation = null;
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
+        internal UIText ChestText { get; private set; } = null;
+        Button questionYesButton = null;
+        Button questionNoButton = null;
         DraggedItem draggedItem = null;
         uint draggedGold = 0;
         uint draggedFood = 0;
@@ -1128,11 +1131,11 @@ namespace Ambermoon.UI
                     {
                         buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem,
                             false, game.DataNameProvider.WhichItemToDropMessage), false);
-                        buttonGrid.SetButton(4, ButtonType.DropGold, game.CurrentInventory?.Gold == 0, DropGold, false);
+                        buttonGrid.SetButton(4, ButtonType.DropGold, game.OpenStorage is Merchant || game.CurrentInventory?.Gold == 0, DropGold, false);
                         buttonGrid.SetButton(5, ButtonType.DropFood, game.CurrentInventory?.Food == 0, DropFood, false);
                     }
                     buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
-                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.CurrentInventory?.Gold == 0, () => GiveGold(null), false);
+                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.OpenStorage is Merchant || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false);
                     buttonGrid.SetButton(8, ButtonType.GiveFood, game.CurrentInventory?.Food == 0, () => GiveFood(null), false);
                     break;
                 case LayoutType.Stats:
@@ -1148,7 +1151,6 @@ namespace Ambermoon.UI
                     break;
                 case LayoutType.Items:
                 {
-                    // TODO: this is only for open chests now
                     if (game.OpenStorage is Chest chest)
                     {
                         void CloseChest()
@@ -1173,6 +1175,18 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
                         buttonGrid.SetButton(7, ButtonType.GiveGold, chest.Gold == 0, () => GiveGold(chest), false);
                         buttonGrid.SetButton(8, ButtonType.GiveFood, chest.Food == 0, () => GiveFood(chest), false);
+                    }
+                    else if (game.OpenStorage is Merchant merchant)
+                    {
+                        buttonGrid.SetButton(0, ButtonType.BuyItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(3, ButtonType.SellItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(4, ButtonType.ViewItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                     }
                     break;
                 }
@@ -1295,8 +1309,16 @@ namespace Ambermoon.UI
             var okButton = activePopup.AddButton(new Position(192, 127));
             okButton.ButtonType = ButtonType.Ok;
             okButton.DisplayLayer = 200;
-            okButton.LeftClickAction = () => submitAction?.Invoke(input.Value);
-            activePopup.ReturnAction = () => submitAction?.Invoke(input.Value);
+            okButton.LeftClickAction = Submit;
+            activePopup.ReturnAction = Submit;
+
+            void Submit()
+            {
+                if (input.Value == 0)
+                    ClosePopup(false);
+                else
+                    submitAction?.Invoke(input.Value);
+            }
 
             void ChangeInputValueTo(long amount)
             {
@@ -1576,27 +1598,27 @@ namespace Ambermoon.UI
         internal void ShowChestMessage(string message, TextAlign textAlign = TextAlign.Center)
         {
             var bounds = new Rect(114, 46, 189, 48);
-            game.ChestText?.Destroy();
-            game.ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            ChestText?.Destroy();
+            ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
         }
 
         internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = true)
         {
             var bounds = new Rect(114, 46, 189, 48);
-            game.ChestText?.Destroy();
-            game.ChestText = AddScrollableText(bounds, game.ProcessText(message, bounds));
-            game.ChestText.Clicked += scrolledToEnd =>
+            ChestText?.Destroy();
+            ChestText = AddScrollableText(bounds, game.ProcessText(message, bounds));
+            ChestText.Clicked += scrolledToEnd =>
             {
                 if (scrolledToEnd)
                 {
                     if (remainAfterClick)
                     {
-                        game.ChestText.WithScrolling = false;
+                        ChestText.WithScrolling = false;
                     }
                     else
                     {
-                        game.ChestText?.Destroy();
-                        game.ChestText = null;
+                        ChestText?.Destroy();
+                        ChestText = null;
                     }
                     game.InputEnable = true;
                     game.CursorType = CursorType.Sword;
@@ -1605,6 +1627,36 @@ namespace Ambermoon.UI
             };
             game.CursorType = CursorType.Click;
             game.InputEnable = false;
+        }
+
+        internal void ShowMerchantQuestion(string message, Action<bool> answerEvent, TextAlign textAlign = TextAlign.Center)
+        {
+            SetActiveTooltip(null, null);
+            var bounds = new Rect(114, 46, 189, 28);
+            ChestText?.Destroy();
+            ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            questionYesButton = new Button(RenderView, new Position(223, 75));
+            questionNoButton = new Button(RenderView, new Position(223 + Button.Width, 75));
+            questionYesButton.ButtonType = ButtonType.Yes;
+            questionNoButton.ButtonType = ButtonType.No;
+            questionYesButton.Disabled = false;
+            questionNoButton.Disabled = false;
+            questionYesButton.LeftClickAction = () => Answer(true);
+            questionNoButton.LeftClickAction = () => Answer(false);
+            game.CursorType = CursorType.Click;
+            game.InputEnable = false;
+
+            void Answer(bool answer)
+            {
+                questionYesButton?.Destroy();
+                questionNoButton?.Destroy();
+                ChestText?.Destroy();
+                questionYesButton = null;
+                questionNoButton = null;
+                ChestText = null;
+                answerEvent?.Invoke(answer);
+                game.InputEnable = true;
+            }
         }
 
         void DropGold()
@@ -1828,6 +1880,12 @@ namespace Ambermoon.UI
             specialItemTexts.Clear(); // texts are destroyed above
             monsterCombatGraphics.ForEach(g => { g.Animation?.Destroy(); g.BattleFieldSprite?.Delete(); RemoveTooltip(g.Tooltip); });
             monsterCombatGraphics.Clear();
+            ChestText?.Destroy();
+            ChestText = null;
+            questionYesButton?.Destroy();
+            questionYesButton = null;
+            questionNoButton?.Destroy();
+            questionNoButton = null;
 
             // Note: Don't remove fadeEffects or bars here.
         }
@@ -2360,8 +2418,8 @@ namespace Ambermoon.UI
 
             if (game.OpenStorage is Chest)
             {
-                game.ChestText?.Destroy();
-                game.ChestText = null;
+                ChestText?.Destroy();
+                ChestText = null;
             }
             else
                 SetInventoryMessage(null);
@@ -2606,6 +2664,14 @@ namespace Ambermoon.UI
                 return;
             }
 
+            if (questionYesButton != null || questionNoButton != null)
+            {
+                // If those buttons are existing, only react to those buttons.
+                questionYesButton?.LeftMouseUp(position, currentTicks);
+                questionNoButton?.LeftMouseUp(position, currentTicks);
+                return;
+            }
+
             buttonGrid.MouseUp(position, MouseButtons.Left, out CursorType? cursorType, currentTicks);
 
             if (cursorType != null)
@@ -2669,13 +2735,19 @@ namespace Ambermoon.UI
                     }
                     return true;
                 }
-                else if (game.ChestText != null)
+                else if (questionYesButton != null || questionNoButton != null)
+                {
+                    // If those buttons are existing, only react to those buttons.
+                    return questionYesButton?.LeftMouseDown(position, currentTicks) == true ||
+                           questionNoButton?.LeftMouseDown(position, currentTicks) == true;
+                }
+                else if (ChestText != null)
                 {
                     if (buttons == MouseButtons.Left)
                     {
-                        if (game.ChestText.Click(position))
+                        if (ChestText.Click(position))
                         {
-                            cursorType = game.ChestText?.WithScrolling == true ? CursorType.Click : CursorType.Sword;
+                            cursorType = ChestText?.WithScrolling == true ? CursorType.Click : CursorType.Sword;
                             return true;
                         }
                     }

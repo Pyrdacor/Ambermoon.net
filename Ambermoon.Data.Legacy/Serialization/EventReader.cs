@@ -285,7 +285,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var closingHour = dataReader.ReadByte();
                     var usePlaceTextIndex = dataReader.ReadByte();
                     var placeIndex = dataReader.ReadWord();
-                    var unknown = dataReader.ReadBytes(2);
+                    var merchantIndex = dataReader.ReadWord();
                     @event = new EnterPlaceEvent
                     {
                         ClosedTextIndex = textIndexWhenClosed,
@@ -294,7 +294,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         ClosingHour = closingHour,
                         PlaceIndex = placeIndex,
                         UsePlaceTextIndex = usePlaceTextIndex,
-                        Unknown = unknown
+                        MerchantDataIndex = merchantIndex
                     };
                     break;
                 }

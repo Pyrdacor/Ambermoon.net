@@ -9,6 +9,7 @@ namespace Ambermoon.Data
 
         public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
         public bool AllowsItemDrop { get; set; } = false;
+        public uint AvailableGold { get; set; } = 0;
 
         private Merchant()
         {

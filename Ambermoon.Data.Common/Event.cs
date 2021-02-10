@@ -345,11 +345,15 @@ namespace Ambermoon.Data
         /// 0xff means to use some default text.
         /// </summary>
         public byte UsePlaceTextIndex { get; set; }
-        public byte[] Unknown { get; set; }
+        public uint MerchantDataIndex { get; set; }
 
         public override string ToString()
         {
-            return $"{PlaceType}: Place index {PlaceIndex}, Open {OpeningHour:00}-{ClosingHour:00}, TextIndexWhenClosed {ClosedTextIndex}, EndTextIndex {UsePlaceTextIndex}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            string index = PlaceType == PlaceType.Merchant
+                ? $"Merchant index {MerchantDataIndex}" : PlaceType == PlaceType.Library
+                ? $"Libary merchant index {MerchantDataIndex}" : $"Place index {PlaceIndex}";
+
+            return $"{PlaceType}: {index}, Open {OpeningHour:00}-{ClosingHour:00}, TextIndexWhenClosed {ClosedTextIndex}, UseTextIndex {UsePlaceTextIndex}";
         }
     }
 
