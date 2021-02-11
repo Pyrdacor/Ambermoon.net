@@ -4934,15 +4934,22 @@ namespace Ambermoon
                 CursorType = CursorType.Sword;
                 TrapMouse(itemArea);
                 FillItems(true);
+                itemGrid.Disabled = false;
             });
             // Sell button
             layout.AttachEventToButton(3, () =>
             {
+                if (!merchant.HasEmptySlots())
+                {
+                    layout.ShowClickChestMessage(DataNameProvider.MerchantFull, null, false);
+                    return;
+                }
                 mode = 3;
                 layout.ShowChestMessage(DataNameProvider.SellWhichItem, TextAlign.Left);
                 CursorType = CursorType.Sword;
                 TrapMouse(itemArea);
                 FillItems(false);
+                itemGrid.Disabled = false;
             });
             // Examine button
             layout.AttachEventToButton(4, () =>
@@ -4952,6 +4959,7 @@ namespace Ambermoon
                 CursorType = CursorType.Sword;
                 TrapMouse(itemArea);
                 FillItems(true);
+                itemGrid.Disabled = false;
             });
             // Exit button
             layout.AttachEventToButton(2, () =>
@@ -4975,27 +4983,49 @@ namespace Ambermoon
                 }
             }
 
+            uint CalculatePrice(uint price)
+            {
+                var charisma = CurrentPartyMember.Attributes[Attribute.Charisma].TotalCurrentValue;
+                var basePrice = price / 3;
+                var bonus = (uint)Util.Floor(Util.Floor(charisma / 10) * (price / 100.0f));
+                return basePrice + bonus;
+            }
+
             itemGrid.DisableDrag = true;
             itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
             {
                 UntrapMouse();
 
+                // TODO: select amount
+                uint amount = 1;
                 int column = slotIndex % Merchant.SlotsPerRow;
                 int row = slotIndex / Merchant.SlotsPerRow;
+                var item = ItemManager.GetItem(itemSlot.ItemIndex);
 
                 if (mode == 0) // buy
                 {
-                    layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ThisWillCost}{100}{DataNameProvider.AgreeOnPrice}"), answer => // TODO: price
+                    itemGrid.HideTooltip();
+                    layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ThisWillCost}{amount * item.Price}{DataNameProvider.AgreeOnPrice}"), answer =>
                     {
-                        // TODO
+                        if (answer) // yes
+                        {
+                            merchant.TakeItems(column, row, amount);
+                            itemGrid.SetItem(slotIndex, merchant.Slots[column, row]);
+                            // TODO
+                        }
                     }, TextAlign.Left);
                 }
                 else if (mode == 3) // sell
                 {
-                    // TODO
+                    itemGrid.HideTooltip();
+                    layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ForThisIllGiveYou}{amount * CalculatePrice(item.Price)}{DataNameProvider.AgreeOnPrice}"), answer =>
+                    {
+                        // TODO
+                    }, TextAlign.Left);
                 }
                 else if (mode == 4) // examine
                 {
+                    itemGrid.HideTooltip();
                     // TODO
                 }
                 else

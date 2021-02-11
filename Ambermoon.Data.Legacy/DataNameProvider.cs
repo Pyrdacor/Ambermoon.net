@@ -197,8 +197,10 @@
         public string ExamineWhichItemMerchant => executableData.Messages.GetEntry(Messages.Index.WhichMerchantItemToExamine);
         public string ExamineWhichItemSage => executableData.Messages.GetEntry(Messages.Index.WhichItemToExamineSage);
         public string ThisWillCost => executableData.Messages.GetEntry(Messages.Index.ThisWillCost);
+        public string ForThisIllGiveYou => executableData.Messages.GetEntry(Messages.Index.ForThisIllGiveYou);
         public string AgreeOnPrice => executableData.Messages.GetEntry(Messages.Index.AgreeOnPrice);
         public string AgreeOnFoodPrice => executableData.Messages.GetEntry(Messages.Index.AgreeOnFoodPrice);
+        public string MerchantFull => executableData.Messages.GetEntry(Messages.Index.CannotBuyAnymore);
 
         #endregion
     }

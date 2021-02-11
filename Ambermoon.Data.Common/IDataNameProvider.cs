@@ -175,8 +175,10 @@
         string ExamineWhichItemMerchant { get; }
         string ExamineWhichItemSage { get; }
         string ThisWillCost { get; }
+        string ForThisIllGiveYou { get; }
         string AgreeOnPrice { get; }
         string AgreeOnFoodPrice { get; }
+        string MerchantFull { get; }
 
         #endregion
 

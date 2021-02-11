@@ -340,8 +340,6 @@ namespace Ambermoon.UI
         {
             if (scrollbar != null && !scrollbar.Disabled)
             {
-                int scrollOffset = scrollbar.ScrollOffset;
-
                 if (down)
                 {
                     ScrollDown();
@@ -563,6 +561,12 @@ namespace Ambermoon.UI
             return true;
         }
 
+        public void HideTooltip()
+        {
+            hoveredItemName?.Delete();
+            hoveredItemName = null;
+        }
+
         public bool Hover(Position position)
         {
             var slot = SlotFromPosition(position);
@@ -570,8 +574,7 @@ namespace Ambermoon.UI
             if (disabled || slot == null || items[slot.Value]?.Visible != true ||
                 items[slot.Value]?.Item?.Empty == true || items[slot.Value]?.Item.ItemIndex == 0)
             {
-                hoveredItemName?.Delete();
-                hoveredItemName = null;
+                HideTooltip();
                 return slot != null;
             }
             else

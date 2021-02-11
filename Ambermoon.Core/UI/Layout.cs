@@ -1631,7 +1631,6 @@ namespace Ambermoon.UI
 
         internal void ShowMerchantQuestion(string message, Action<bool> answerEvent, TextAlign textAlign = TextAlign.Center)
         {
-            SetActiveTooltip(null, null);
             var bounds = new Rect(114, 46, 189, 28);
             ChestText?.Destroy();
             ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);

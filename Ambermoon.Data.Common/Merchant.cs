@@ -1,4 +1,6 @@
 ﻿using Ambermoon.Data.Serialization;
+using System;
+using System.Linq;
 
 namespace Ambermoon.Data
 {
@@ -35,5 +37,63 @@ namespace Ambermoon.Data
         }
 
         public ItemSlot GetSlot(int slot) => Slots[slot % SlotsPerRow, slot / SlotsPerRow];
+
+        public void AddItems(IItemManager itemManager, uint itemIndex, uint amount)
+        {
+            if (amount == 0)
+                return;
+
+            var item = itemManager.GetItem(itemIndex);
+            var slots = Slots.ToList();
+            uint remainingAmount = amount;
+
+            if (item.Flags.HasFlag(ItemFlags.Stackable))
+            {
+                foreach (var slot in slots.Where(s => s.ItemIndex == itemIndex))
+                {
+                    if (slot.Amount > 99) // unlimited stack slot
+                        return;
+                    else
+                    {
+                        remainingAmount -= (uint)Math.Min((int)remainingAmount, 99 - slot.Amount);
+
+                        if (remainingAmount == 0)
+                            return;
+                    }
+                }
+
+                if (remainingAmount > 99)
+                    throw new AmbermoonException(ExceptionScope.Application, "Cannot add more than 99 items at once to a merchant.");
+
+                var emptySlot = slots.FirstOrDefault(s => s.Empty);
+
+                if (emptySlot == null)
+                    throw new AmbermoonException(ExceptionScope.Application, "Tried to add item to a full merchant.");
+
+                emptySlot.ItemIndex = itemIndex;
+                emptySlot.Amount = (int)remainingAmount;
+                // TODO: flags like curse, charges, etc?
+            }
+        }
+
+        public void TakeItems(int column, int row, uint amount)
+        {
+            if (amount == 0)
+                return;
+
+            var slot = Slots[column, row];
+
+            if (slot == null || slot.Amount < amount)
+                throw new AmbermoonException(ExceptionScope.Application, "Taking more items from a merchant slot than he has.");
+
+            slot.Amount -= (int)amount;
+
+            if (slot.Amount == 0)
+            {
+                slot.ItemIndex = 0;
+                slot.Flags = 0;
+                slot.NumRemainingCharges = 0;
+            }
+        }
     }
 }
