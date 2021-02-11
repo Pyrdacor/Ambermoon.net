@@ -8,12 +8,30 @@ namespace Ambermoon.Data
         public enum TileFlags
         {
             None = 0,
-            Background = 0x04,
-            Transparency = 0x08, // TODO: Is this also true for 2D?
-            UseBackgroundTileFlags = 0x20,
-            BringToFront = 0x40,
-            BlockAllMovement = 0x80,
-            PlayerInvisible = 0x04000000
+            BlockSight = 0x00000002, // TODO: not sure
+            Background = 0x00000004,
+            Floor = 0x00000008, // TODO: Is this also true for 2D?
+            UseBackgroundTileFlags = 0x00000020,
+            BringToFront = 0x00000040,
+            BlockAllMovement = 0x00000080,
+            AllowMovementWalk = 0x00000100,
+            AllowMovementHorse = 0x00000200, // TODO: Seems to have some different meaning for 3D objects
+            AllowMovementRaft = 0x00000400,
+            AllowMovementShip = 0x00000800,
+            AllowMovementMagicalDisc = 0x00001000,
+            AllowMovementEagle = 0x00002000,
+            AllowMovementFly = 0x00004000,
+            AllowMovementSwim = 0x00008000,
+            AllowMovementWitchBroom = 0x00010000,
+            AllowMovementSandLizard = 0x00020000,
+            AllowMovementSandShip = 0x00040000,
+            AllowMovementUnused12 = 0x00080000,
+            AllowMovementUnused13 = 0x00100000,
+            AllowMovementUnused14 = 0x00200000,
+            AllowMovementUnused15 = 0x00400000,
+            AllowMovementUnused16 = 0x00800000,
+            PlayerInvisible = 0x04000000,
+            Transparency = Floor
         }
 
         public class Tile

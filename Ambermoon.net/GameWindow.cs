@@ -296,38 +296,46 @@ namespace Ambermoon
             ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
                 introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
             {
+                cursor.Type = Data.CursorType.None;
                 mainMenu.FadeOutAndDestroy();
                 Task.Run(() =>
                 {
-                    var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
-                    var savegameSerializer = new SavegameSerializer();
-                    var dataNameProvider = new DataNameProvider(executableData);
-                    var characterManager = new CharacterManager(gameData, graphicProvider);
-                    var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
-
-                    gameCreator = () =>
+                    try
                     {
-                        var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
-                            characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places, cursor);
-                        game.QuitRequested += window.Close;
-                        game.MouseTrappedChanged += (bool trapped, Position position) =>
-                        {
-                            this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+                        var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
+                        var savegameSerializer = new SavegameSerializer();
+                        var dataNameProvider = new DataNameProvider(executableData);
+                        var characterManager = new CharacterManager(gameData, graphicProvider);
+                        var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
 
-                            if (!trapped) // Let the mouse stay at the current position when untrapping.
-                                mouse.Position = new System.Drawing.PointF(position.X, position.Y);
-                        };
-                        game.ConfigurationChanged += (configuration, windowChange) =>
+                        gameCreator = () =>
                         {
-                            if (windowChange)
+                            var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
+                                characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places, cursor);
+                            game.QuitRequested += window.Close;
+                            game.MouseTrappedChanged += (bool trapped, Position position) =>
                             {
-                                UpdateWindow(configuration);
-                                Fullscreen = configuration.Fullscreen;
-                            }
+                                this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+
+                                if (!trapped) // Let the mouse stay at the current position when untrapping.
+                                    mouse.Position = new System.Drawing.PointF(position.X, position.Y);
+                            };
+                            game.ConfigurationChanged += (configuration, windowChange) =>
+                            {
+                                if (windowChange)
+                                {
+                                    UpdateWindow(configuration);
+                                    Fullscreen = configuration.Fullscreen;
+                                }
+                            };
+                            game.Run(continueGame, mouse.Position.Round());
+                            return game;
                         };
-                        game.Run(continueGame, mouse.Position.Round());
-                        return game;
-                    };
+                    }
+                    catch (Exception ex)
+                    {
+                        gameCreator = () => throw ex;
+                    }
                 });
             });
         }
@@ -517,7 +525,16 @@ namespace Ambermoon
                 if (gameCreator != null)
                 {
                     // Create game
-                    Game = gameCreator();
+                    try
+                    {
+                        Game = gameCreator();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Error creating game: " + ex.Message);
+                        window.Close();
+                        return;
+                    }
                     mainMenu?.Destroy();
                     mainMenu = null;
                     gameCreator = null;

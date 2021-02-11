@@ -47,10 +47,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 var objectInfo = new Labdata.ObjectInfo
                 {
-                    CollisionRadius = dataReader.ReadByte(),
-                    Unknown1 = dataReader.ReadByte(),
-                    ExtrudeOffset = dataReader.ReadByte(),
-                    Flags = (Labdata.ObjectFlags)dataReader.ReadByte(),
+                    Flags = (Tileset.TileFlags)dataReader.ReadDword(),
                     TextureIndex = dataReader.ReadWord(),
                     NumAnimationFrames = dataReader.ReadByte(),
                     Unknown2 = dataReader.ReadByte(),
@@ -95,8 +92,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             {
                 var wallData = new Labdata.WallData
                 {
-                    Unknown1 = dataReader.ReadBytes(3), // TODO: Collision info for all 3 axes?
-                    Flags = (Labdata.WallFlags)dataReader.ReadByte(),
+                    Flags = (Tileset.TileFlags)dataReader.ReadDword(),
                     TextureIndex = dataReader.ReadByte(),
                     AutomapType = (AutomapType)dataReader.ReadByte(),
                     Unknown2 = dataReader.ReadByte()
@@ -163,7 +159,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             foreach (var wall in labdata.Walls)
             {
                 var wallGraphic = ReadGraphic(graphicReader, wallTextureFiles[(int)wall.TextureIndex],
-                    128, 80, wall.Flags.HasFlag(Labdata.WallFlags.Transparency), true, true);
+                    128, 80, wall.Flags.HasFlag(Tileset.TileFlags.Transparency), true, true);
 
                 labdata.WallGraphics.Add(wallGraphic);
 

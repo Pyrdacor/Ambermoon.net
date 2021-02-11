@@ -430,6 +430,7 @@ namespace Ambermoon
             layout.ShowPortraitArea(false);
 
             lastMousePosition = new Position(startCursorPosition);
+            cursor.Type = Data.CursorType.Sword;
             UpdateCursor(lastMousePosition, MouseButtons.None);
 
             if (continueGame)
@@ -2944,12 +2945,12 @@ namespace Ambermoon
             }
         }
 
-        internal void UpdateMapTile(ChangeTileEvent changeTileEvent)
+        internal void UpdateMapTile(ChangeTileEvent changeTileEvent, uint? currentX = null, uint? currentY = null)
         {
             bool sameMap = changeTileEvent.MapIndex == 0 || changeTileEvent.MapIndex == Map.Index;
             var map = sameMap ? Map : MapManager.GetMap(changeTileEvent.MapIndex);
-            uint x = changeTileEvent.X - 1;
-            uint y = changeTileEvent.Y - 1;
+            uint x = changeTileEvent.X == 0 ? (currentX ?? throw new AmbermoonException(ExceptionScope.Data, "No change tile position given")) : changeTileEvent.X - 1;
+            uint y = changeTileEvent.Y == 0 ? (currentY ?? throw new AmbermoonException(ExceptionScope.Data, "No change tile position given")) : changeTileEvent.Y - 1;
 
             if (is3D)
             {

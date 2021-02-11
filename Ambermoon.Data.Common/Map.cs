@@ -97,7 +97,10 @@ namespace Ambermoon.Data
                     return true;
 
                 if (WallIndex != 0)
-                    return labdata.Walls[((int)WallIndex - 1) % labdata.Walls.Count].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
+                {
+                    var wallFlags = labdata.Walls[((int)WallIndex - 1) % labdata.Walls.Count].Flags;
+                    return wallFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wallFlags.HasFlag(Tileset.TileFlags.AllowMovementWalk);
+                }
 
                 if (ObjectIndex != 0)
                 {
@@ -107,7 +110,9 @@ namespace Ambermoon.Data
 
                     foreach (var subObject in obj.SubObjects)
                     {
-                        if (subObject.Object.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
+                        var objectFlags = subObject.Object.Flags;
+
+                        if (objectFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectFlags.HasFlag(Tileset.TileFlags.AllowMovementWalk))
                             return true;
                     }
                 }

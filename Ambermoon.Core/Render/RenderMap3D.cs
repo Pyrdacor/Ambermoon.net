@@ -75,7 +75,6 @@ namespace Ambermoon.Render
             readonly uint ticksPerFrame;
             readonly Map.CharacterReference characterReference;
             readonly uint textureIndex;
-            readonly uint extrudeOffset;
             readonly Labdata.ObjectPosition objectPosition;
             bool active = true;
             DateTime lastInteractionTime = DateTime.MinValue;
@@ -91,7 +90,7 @@ namespace Ambermoon.Render
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
                 Labdata.ObjectPosition objectPosition, uint textureIndex, MapCharacter parent,
-                uint extrudeOffset, uint numFrames, float fps = 1.0f)
+                uint numFrames, float fps = 1.0f)
             {
                 this.game = game;
                 this.surface = surface;
@@ -101,7 +100,6 @@ namespace Ambermoon.Render
                 ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
                 this.characterReference = characterReference;
                 this.textureIndex = textureIndex;
-                this.extrudeOffset = extrudeOffset;
                 this.objectPosition = objectPosition;
                 this.parent = parent;
                 if (parent != null)
@@ -121,7 +119,7 @@ namespace Ambermoon.Render
                 {
                     CenterX = surface.X,
                     CenterZ = -surface.Z,
-                    Radius = objectPosition.Object.CollisionRadius / BlockSize
+                    Radius = Global.DistancePerBlock * objectPosition.Object.MappedTextureWidth / BlockSize
                 };
             }
 
@@ -210,7 +208,12 @@ namespace Ambermoon.Render
                         // Turn the player towards the monster.
                         var player3D = game.RenderPlayer as Player3D;
                         player3D.TurnTowards(character3D.RealPosition);
-                        surface.Extrude = -1.0f;
+                        float extrude = surface.Extrude = -0.5f * Global.DistancePerBlock;
+                        children.ForEach(c =>
+                        {
+                            extrude -= ExtrudeStep;
+                            c.surface.Extrude = extrude;
+                        });
 
                         void StartBattle(bool failedEscape)
                         {
@@ -231,7 +234,12 @@ namespace Ambermoon.Render
 
                         game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
                         {
-                            surface.Extrude = 0.0f;
+                            float extrude = surface.Extrude = 8.0f * ExtrudeStep;
+                            children.ForEach(c =>
+                            {
+                                extrude -= ExtrudeStep;
+                                c.surface.Extrude = extrude;
+                            });
 
                             if (response == PopupTextEvent.Response.Yes)
                             {
@@ -353,7 +361,7 @@ namespace Ambermoon.Render
 
             void UpdatePosition()
             {
-                map.UpdateCharacterSurfaceCoordinates(character3D.RealPosition, surface, objectPosition, extrudeOffset);
+                map.UpdateCharacterSurfaceCoordinates(character3D.RealPosition, surface, objectPosition);
             }
 
             void UpdateCurrentMovement(uint ticks)
@@ -411,9 +419,6 @@ namespace Ambermoon.Render
 
             bool TestPossibleMovement(FloatPosition position)
             {
-                //if (!TestPathCollision(position, map.characterBlockingBlocks))
-                //    return true;
-
                 var collisionInfo = map.GetCollisionDetectionInfoFromPositions
                 (
                     Position,
@@ -425,7 +430,8 @@ namespace Ambermoon.Render
                 var newX = position.X;
                 var newY = map.Map.Height * Global.DistancePerBlock - position.Y;
 
-                return !collisionInfo.TestCollision(lastX, lastY, newX, newY, 0.5f * Global.DistancePerBlock);
+                // 0.734375f = 256/512 + 120/512 = 3/4 block size - 1/64
+                return !collisionInfo.TestCollision(lastX, lastY, newX, newY, 0.734375f * Global.DistancePerBlock);
             }
 
             // TODO: Sometimes a monster is in a spot where it shouldn't be and the MoveRandom will never find a
@@ -468,6 +474,7 @@ namespace Ambermoon.Render
                 var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
                 var distanceToPlayer = game.RenderPlayer.Position - Position;
 
+                // TODO: Use collision detection similar to TestPossibleMovement
                 if (distanceToPlayer.X == 0 && distanceToPlayer.Y == 0)
                 {
                     if (characterReference.Type == CharacterType.Monster)
@@ -509,6 +516,8 @@ namespace Ambermoon.Render
         public const int TextureHeight = 80;
         public const float BlockSize = 512.0f;
         public const float ReferenceWallHeight = 341.0f; // 2/3 of block size -> 512
+        // Each of the 8 subobjects is sorted in Z (the first has an extrude of 5% of the block size, the rest is lower).
+        const float ExtrudeStep = 0.05f * Global.DistancePerBlock * 0.125f;
         readonly Game game;
         readonly ICamera3D camera = null;
         readonly IMapManager mapManager = null;
@@ -523,7 +532,7 @@ namespace Ambermoon.Render
         readonly Dictionary<uint, List<ISurface3D>> walls = new Dictionary<uint, List<ISurface3D>>();
         readonly Dictionary<uint, List<MapObject>> objects = new Dictionary<uint, List<MapObject>>();
         readonly Dictionary<uint, MapCharacter> mapCharacters = new Dictionary<uint, MapCharacter>();
-        static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (walls, objects and overlays)
+        static readonly Dictionary<uint, ITextureAtlas> labdataTextures = new Dictionary<uint, ITextureAtlas>(); // contains all textures for a labdata (floor, walls, objects and overlays)
         static Graphic[] labBackgroundGraphics = null;
         public uint CombatBackgroundIndex => labdata.CombatBackground;
         /// <summary>
@@ -735,41 +744,54 @@ namespace Ambermoon.Render
                 character.Value.Resume();
         }
 
-        void GetObjectPosition(Labdata.ObjectPosition objectPosition, float baseX, float baseY, out float x, out float y, out float z,
-            bool floorObject, uint extrudeOffset)
+        void GetObjectPosition(Labdata.ObjectPosition objectPosition, float baseX, float baseY, out float x, out float y, out float z, bool floorObject)
         {
             baseY = -Map.Height * Global.DistancePerBlock + baseY;
             x = baseX + objectPosition.X * Global.DistancePerBlock / BlockSize;
-            y = floorObject ? (float)extrudeOffset * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize) :
-                (objectPosition.Z + objectPosition.Object.MappedTextureHeight) * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
             z = baseY + Global.DistancePerBlock - Global.DistancePerBlock * objectPosition.Y / BlockSize;
+
+            if (floorObject)
+            {
+                // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
+                y = objectPosition.Z * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
+            }
+            else
+            {
+                // TODO: This works quiet well but not in all cased. For example the teleporters on map 367 (position next to 4, 15).
+                y = objectPosition.Z + objectPosition.Object.MappedTextureHeight;
+                if (((uint)objectPosition.Object.Flags & 0x200) != 0)
+                    y = objectPosition.Z + 3 * objectPosition.Object.TextureHeight;
+                y *= labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
+                //(objectPosition.Z + objectPosition.Object.MappedTextureHeight) * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
+            }
         }
 
-        void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition, uint extrudeOffset)
+        void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition)
         {
             GetObjectPosition(objectPosition, position.X, position.Y, out float x, out float y, out float z,
-                surface.Type == SurfaceType.BillboardFloor, extrudeOffset);
+                surface.Type == SurfaceType.BillboardFloor);
             surface.X = x;
             surface.Y = y;
             surface.Z = z;
         }
 
         void UpdateCharacterSurfaceCoordinates(Position position, ISurface3D surface, Labdata.ObjectPosition objectPosition,
-            uint extrudeOffset, float xOffset = 0.0f, float yOffset = 0.0f)
+            float xOffset = 0.0f, float yOffset = 0.0f)
         {
             GetObjectPosition(objectPosition, position.X * Global.DistancePerBlock, position.Y * Global.DistancePerBlock,
-                out float x, out float y, out float z, surface.Type == SurfaceType.BillboardFloor, extrudeOffset);
+                out float x, out float y, out float z, surface.Type == SurfaceType.BillboardFloor);
             surface.X = x + xOffset;
             surface.Y = y;
             surface.Z = z + yOffset;
         }
 
         MapCharacter CreateMapCharacter(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint characterIndex,
-            Labdata.ObjectPosition objectPosition, Map.CharacterReference characterReference, MapCharacter parent)
+            Labdata.ObjectPosition objectPosition, Map.CharacterReference characterReference, MapCharacter parent,
+            float extrude)
         {
             float wallHeight = WallHeight;
             var objectInfo = objectPosition.Object;
-            bool floorObject = objectInfo.Flags.HasFlag(Labdata.ObjectFlags.FloorObject);
+            bool floorObject = objectInfo.Flags.HasFlag(Tileset.TileFlags.Floor);
             var mapObject = floorObject
                 ? surfaceFactory.Create(SurfaceType.BillboardFloor,
                     Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
@@ -782,13 +804,13 @@ namespace Ambermoon.Render
                     wallHeight * objectInfo.MappedTextureHeight / ReferenceWallHeight,
                     objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
                     objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
-                    objectInfo.ExtrudeOffset / BlockSize);
+                    extrude);
             mapObject.Layer = layer;
             mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-            UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, objectPosition, objectInfo.ExtrudeOffset);
+            UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, objectPosition);
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
-                objectPosition, objectInfo.TextureIndex, parent, objectInfo.ExtrudeOffset, objectInfo.NumAnimationFrames, 4.0f); // TODO: fps?
+                objectPosition, objectInfo.TextureIndex, parent, objectInfo.NumAnimationFrames, 4.0f); // TODO: fps?
             mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
             if (mapCharacter.Active)
                 mapObject.Visible = true;
@@ -798,11 +820,15 @@ namespace Ambermoon.Render
         void AddMapCharacter(ISurface3DFactory surfaceFactory, IRenderLayer layer, uint characterIndex,
             Map.CharacterReference characterReference)
         {
+            float extrude = 8.0f * ExtrudeStep;
             var obj = labdata.Objects[(int)characterReference.GraphicIndex - 1];
             var subObject = obj.SubObjects[0];
-            var mapCharacter = CreateMapCharacter(surfaceFactory, layer, characterIndex, subObject, characterReference, null);
+            var mapCharacter = CreateMapCharacter(surfaceFactory, layer, characterIndex, subObject, characterReference, null, extrude);
             for (int i = 1; i < obj.SubObjects.Count; ++i)
-                mapCharacter.AddChild(CreateMapCharacter(surfaceFactory, layer, characterIndex, obj.SubObjects[i], characterReference, mapCharacter));
+            {
+                extrude -= ExtrudeStep;
+                mapCharacter.AddChild(CreateMapCharacter(surfaceFactory, layer, characterIndex, obj.SubObjects[i], characterReference, mapCharacter, extrude));
+            }
             mapCharacters.Add(characterIndex, mapCharacter);
         }
 
@@ -814,11 +840,12 @@ namespace Ambermoon.Render
             // TODO: animations
 
             float wallHeight = WallHeight;
+            float extrude = 8.0f * ExtrudeStep;
 
             foreach (var subObject in obj.SubObjects)
             {
                 var objectInfo = subObject.Object;
-                bool floorObject = objectInfo.Flags.HasFlag(Labdata.ObjectFlags.FloorObject);
+                bool floorObject = objectInfo.Flags.HasFlag(Tileset.TileFlags.Floor);
                 var mapObject = floorObject
                     ? surfaceFactory.Create(SurfaceType.BillboardFloor,
                         Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
@@ -831,11 +858,12 @@ namespace Ambermoon.Render
                         wallHeight * objectInfo.MappedTextureHeight / ReferenceWallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
                         objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
-                        objectInfo.ExtrudeOffset / BlockSize);
+                        extrude);
+                extrude -= ExtrudeStep;
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 GetObjectPosition(subObject, mapX * Global.DistancePerBlock, mapY * Global.DistancePerBlock,
-                    out float x, out float y, out float z, floorObject, objectInfo.ExtrudeOffset);
+                    out float x, out float y, out float z, floorObject);
                 mapObject.X = x;
                 mapObject.Y = y;
                 mapObject.Z = z;
@@ -843,14 +871,14 @@ namespace Ambermoon.Render
                 mapObject.Visible = true; // TODO: not all objects should be always visible
                 objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex, objectInfo.NumAnimationFrames, 4.0f)); // TODO: fps?
 
-                if (objectInfo.Flags.HasFlag(Labdata.ObjectFlags.BlockMovement))
+                if (objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk))
                 {
                     // TODO: floor objects
                     blockCollisionBodies[blockIndex].Add(new CollisionSphere3D
                     {
                         CenterX = mapObject.X,
                         CenterZ = -mapObject.Z,
-                        Radius = objectInfo.CollisionRadius / BlockSize
+                        Radius = Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize
                     });
                     if (!characterBlockingBlocks.Contains(blockIndex))
                         characterBlockingBlocks.Add(blockIndex);
@@ -866,11 +894,12 @@ namespace Ambermoon.Render
             blockCollisionBodies.Add(blockIndex, new List<ICollisionBody>(4));
             float wallHeight = WallHeight;
             var wallTextureOffset = GetWallTextureOffset(wallIndex);
-            bool alpha = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.Transparency);
-            bool blocksMovement = labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.BlockMovement);
+            var wallFlags = labdata.Walls[(int)wallIndex].Flags;
+            bool alpha = wallFlags.HasFlag(Tileset.TileFlags.Transparency);
+            bool blocksMovement = wallFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wallFlags.HasFlag(Tileset.TileFlags.AllowMovementWalk);
 
             if (!characterBlockingBlocks.Contains(blockIndex) &&
-                (blocksMovement || labdata.Walls[(int)wallIndex].Flags.HasFlag(Labdata.WallFlags.BlockSight)))
+                (blocksMovement || wallFlags.HasFlag(Tileset.TileFlags.BlockSight)))
             {
                 // Note: Doors will also block characters
                 characterBlockingBlocks.Add(blockIndex);
@@ -891,8 +920,8 @@ namespace Ambermoon.Render
 
                 var wall = labdata.Walls[((int)block.WallIndex - 1) % labdata.Walls.Count];
 
-                return wall.Flags.HasFlag(Labdata.WallFlags.Transparency) ||
-                    !wall.Flags.HasFlag(Labdata.WallFlags.BlockMovement) ||
+                return wall.Flags.HasFlag(Tileset.TileFlags.Transparency) ||
+                    !(wall.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wall.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk)) ||
                     labdataChangeableBlocks[Map.TilesetOrLabdataIndex].Contains(Map.PositionToTileIndex(mapX, mapY));
             }
 

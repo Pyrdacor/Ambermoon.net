@@ -18,18 +18,25 @@ namespace Ambermoon.Data.Legacy.Serialization
             int ppp = pixelsPerPlane ?? graphicInfo.Width;
             int calcWidth = ToNextBoundary(ppp);
             int planeSize = (calcWidth + 7) / 8;
-            int sizeToRead = (ToNextBoundary(graphic.Width) * planes * graphic.Height + 7) / 8;
+            int scanLine = ToNextBoundary(graphic.Width);
+            int sizeToRead = (scanLine * planes * graphic.Height + 7) / 8;
             var data = dataReader.ReadBytes(sizeToRead);
             int bitIndex = 0;
             int byteIndex = 0;
             int offset = 0;
+            int planeBytes = (graphic.Width + ppp - 1) / ppp;
 
             for (int y = 0; y < graphic.Height; ++y)
             {
-                for (int n = 0; n < graphic.Width / ppp; ++n)
+                for (int n = 0; n < planeBytes; ++n)
                 {
                     for (int x = 0; x < ppp; ++x)
                     {
+                        int mx = n * ppp + x;
+
+                        if (mx >= graphic.Width)
+                            break;
+
                         byte paletteIndex = 0;
 
                         for (int p = 0; p < planes; ++p)
@@ -41,9 +48,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                         paletteIndex += graphicInfo.PaletteOffset;
 
                         if (graphicInfo.Alpha && paletteIndex == graphicInfo.PaletteOffset)
-                            graphic.Data[n * ppp + x + y * graphic.Width] = 0;
+                            graphic.Data[mx + y * graphic.Width] = 0;
                         else
-                            graphic.Data[n * ppp + x + y * graphic.Width] = paletteIndex;
+                            graphic.Data[mx + y * graphic.Width] = paletteIndex;
 
                         if (++bitIndex == 8)
                         {

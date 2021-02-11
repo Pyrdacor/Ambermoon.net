@@ -125,7 +125,7 @@ namespace Ambermoon
                     if (!(@event is ChangeTileEvent changeTileEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
-                    game.UpdateMapTile(changeTileEvent);
+                    game.UpdateMapTile(changeTileEvent, x, y);
                     break;
                 }
                 // TODO ...

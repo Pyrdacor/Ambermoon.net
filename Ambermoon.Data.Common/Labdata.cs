@@ -2,6 +2,7 @@
 using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
+using static Ambermoon.Data.Tileset;
 
 namespace Ambermoon.Data
 {
@@ -17,13 +18,10 @@ namespace Ambermoon.Data
 
         public struct ObjectInfo
         {
-            public uint CollisionRadius; // in x/z direction 
-            public byte Unknown1;
-            public uint ExtrudeOffset; // Move this amount to viewer (or up if floor object)
-            public ObjectFlags Flags;
+            public TileFlags Flags;
             public uint TextureIndex;
             public uint NumAnimationFrames;
-            public byte Unknown2;
+            public byte Unknown2; // TODO: decode this (is this even used in Ambermoon?)
             public uint TextureWidth;
             public uint TextureHeight;
             public uint MappedTextureWidth;
@@ -46,29 +44,9 @@ namespace Ambermoon.Data
             public uint TextureHeight;
         }
 
-        [Flags]
-        public enum WallFlags
-        {
-            // Note: Only the mentioned 3 bits/flags are used in Ambermoon.
-            None = 0,
-            BlockSight = 0x02, // Not sure but beside walls this is also used by non-bocking doors or exits
-            Transparency = 0x08,
-            BlockMovement = 0x80,
-        }
-
-        [Flags]
-        public enum ObjectFlags
-        {
-            None = 0,
-            FloorObject = 0x08, // like holes in the ground
-            BlockMovement = 0x80,
-            // TODO
-        }
-
         public struct WallData
         {
-            public byte[] Unknown1;
-            public WallFlags Flags;
+            public TileFlags Flags;
             public uint TextureIndex;
             public AutomapType AutomapType;
             public byte Unknown2;
@@ -76,7 +54,7 @@ namespace Ambermoon.Data
 
             public override string ToString()
             {
-                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x2}), Texture: {TextureIndex}, AutomapType: {AutomapType}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}";
+                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x8}), Texture: {TextureIndex}, AutomapType: {AutomapType}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}";
 
                 if (Overlays != null && Overlays.Length != 0)
                 {

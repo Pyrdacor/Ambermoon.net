@@ -448,6 +448,13 @@ namespace Ambermoon
                         Console.WriteLine();
                         return;
                     }
+                    else if (!blocked)
+                    {
+                        Console.WriteLine("Unable to teleport in current game state.");
+                        Console.WriteLine("Try to use the command when no ingame window is open.");
+                        Console.WriteLine();
+                        return;
+                    }
                 }
                 else
                     break;
