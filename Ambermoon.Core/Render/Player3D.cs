@@ -14,6 +14,9 @@ namespace Ambermoon.Render
         readonly RenderMap3D map;
         readonly Player player;
         float angle = 0.0f;
+        // Original uses 120/512 but it feels bad.
+        public const float CollisionRadius = 72.0f * Global.DistancePerBlock / RenderMap3D.BlockSize;
+        public const float TriggerEventRadius = 88.0f * Global.DistancePerBlock / RenderMap3D.BlockSize; // TODO: use this
 
         Position lastPosition;
         public Position Position { get; private set; }
@@ -112,7 +115,7 @@ namespace Ambermoon.Render
             // This contains all collision bodies in a 3x3 area around the current position.
             var collisionDetectionInfo = map.GetCollisionDetectionInfo(Position);
 
-            return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, 0.15f * Global.DistancePerBlock);
+            return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, CollisionRadius);
         }
 
         delegate void PositionProvider(float distance, out float newX, out float newY, bool noX, bool noZ);

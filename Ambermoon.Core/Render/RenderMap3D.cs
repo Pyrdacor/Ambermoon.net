@@ -205,16 +205,34 @@ namespace Ambermoon.Render
                         lastInteractionTime = DateTime.MaxValue;
                         interacting = true;
 
+                        float GetDistance(float x1, float y1, float x2, float y2)
+                        {
+                            float diffX = x2 - x1;
+                            float diffY = y2 - y1;
+                            return (float)Math.Sqrt(diffX * diffX + diffY * diffY);
+                        }
+
                         // Turn the player towards the monster.
                         var player3D = game.RenderPlayer as Player3D;
                         player3D.TurnTowards(character3D.RealPosition);
-                        float extrude = surface.Extrude = -0.5f * Global.DistancePerBlock;
+                        Geometry.Geometry.CameraToWorldPosition(map.Map,
+                            player3D.Camera.X, player3D.Camera.Z, out float playerX, out float playerY);
+                        var distance = GetDistance(playerX, playerY, character3D.RealPosition.X, character3D.RealPosition.Y);
+                        float extrude = surface.Extrude = -Math.Max(0.0f, 52.0f - distance) * Global.DistancePerBlock / BlockSize;
                         children.ForEach(c =>
                         {
                             extrude -= ExtrudeStep;
                             c.surface.Extrude = extrude;
                         });
-
+                        void RestoreExtrude()
+                        {
+                            float extrude = surface.Extrude = 8.0f * ExtrudeStep;
+                            children.ForEach(c =>
+                            {
+                                extrude -= ExtrudeStep;
+                                c.surface.Extrude = extrude;
+                            });
+                        }
                         void StartBattle(bool failedEscape)
                         {
                             game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
@@ -228,19 +246,14 @@ namespace Ambermoon.Render
                                     game.CurrentSavegame.SetCharacterBit(map.Map.Index, characterIndex, true);
                                 }
                                 else
+                                {
+                                    RestoreExtrude();
                                     character3D.ResetMovementTimer();
+                                }
                             }, characterReference.CombatBackgroundIndex);
                         }
-
                         game.ShowDecisionPopup(game.DataNameProvider.WantToFightMessage, response =>
                         {
-                            float extrude = surface.Extrude = 8.0f * ExtrudeStep;
-                            children.ForEach(c =>
-                            {
-                                extrude -= ExtrudeStep;
-                                c.surface.Extrude = extrude;
-                            });
-
                             if (response == PopupTextEvent.Response.Yes)
                             {
                                 StartBattle(false);
@@ -255,6 +268,7 @@ namespace Ambermoon.Render
                                 else
                                 {
                                     // successfully fled
+                                    RestoreExtrude();
                                     lastInteractionTime = DateTime.Now;
                                     interacting = false;
                                     character3D.ResetMovementTimer();
@@ -430,8 +444,7 @@ namespace Ambermoon.Render
                 var newX = position.X;
                 var newY = map.Map.Height * Global.DistancePerBlock - position.Y;
 
-                // 0.734375f = 256/512 + 120/512 = 3/4 block size - 1/64
-                return !collisionInfo.TestCollision(lastX, lastY, newX, newY, 0.734375f * Global.DistancePerBlock);
+                return !collisionInfo.TestCollision(lastX, lastY, newX, newY, Player3D.CollisionRadius);
             }
 
             // TODO: Sometimes a monster is in a spot where it shouldn't be and the MoveRandom will never find a
@@ -744,8 +757,10 @@ namespace Ambermoon.Render
                 character.Value.Resume();
         }
 
-        void GetObjectPosition(Labdata.ObjectPosition objectPosition, float baseX, float baseY, out float x, out float y, out float z, bool floorObject)
+        void GetObjectPosition(Labdata.ObjectPosition objectPosition, float baseX, float baseY, out float x, out float y, out float z,
+            bool floorObject, out Size size)
         {
+            size = new Size((int)objectPosition.Object.MappedTextureWidth, (int)objectPosition.Object.MappedTextureHeight);
             baseY = -Map.Height * Global.DistancePerBlock + baseY;
             x = baseX + objectPosition.X * Global.DistancePerBlock / BlockSize;
             z = baseY + Global.DistancePerBlock - Global.DistancePerBlock * objectPosition.Y / BlockSize;
@@ -753,14 +768,20 @@ namespace Ambermoon.Render
             if (floorObject)
             {
                 // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
-                y = objectPosition.Z * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
+                y = Util.Limit(1, objectPosition.Z, ReferenceWallHeight - 1) * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
             }
             else
             {
-                // TODO: This works quiet well but not in all cased. For example the teleporters on map 367 (position next to 4, 15).
+                // TODO: This works quiet well but not in all cases. For example the hanging stuff in grandfather's cellar are
+                //       a bit too small. Is scaled by 1/3 but should be 2/3 when comparing with original.
                 y = objectPosition.Z + objectPosition.Object.MappedTextureHeight;
-                if (((uint)objectPosition.Object.Flags & 0x200) != 0)
-                    y = objectPosition.Z + 3 * objectPosition.Object.TextureHeight;
+                if (y > 341)
+                {
+                    size.Height = 341 - objectPosition.Z;
+                    float factor = (float)size.Height / objectPosition.Object.MappedTextureHeight;
+                    size.Width = Util.Round(factor * objectPosition.Object.MappedTextureWidth);
+                    y = 341;
+                }
                 y *= labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
                 //(objectPosition.Z + objectPosition.Object.MappedTextureHeight) * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
             }
@@ -769,7 +790,7 @@ namespace Ambermoon.Render
         void UpdateCharacterSurfaceCoordinates(FloatPosition position, ISurface3D surface, Labdata.ObjectPosition objectPosition)
         {
             GetObjectPosition(objectPosition, position.X, position.Y, out float x, out float y, out float z,
-                surface.Type == SurfaceType.BillboardFloor);
+                surface.Type == SurfaceType.BillboardFloor, out _);
             surface.X = x;
             surface.Y = y;
             surface.Z = z;
@@ -779,7 +800,7 @@ namespace Ambermoon.Render
             float xOffset = 0.0f, float yOffset = 0.0f)
         {
             GetObjectPosition(objectPosition, position.X * Global.DistancePerBlock, position.Y * Global.DistancePerBlock,
-                out float x, out float y, out float z, surface.Type == SurfaceType.BillboardFloor);
+                out float x, out float y, out float z, surface.Type == SurfaceType.BillboardFloor, out _);
             surface.X = x + xOffset;
             surface.Y = y;
             surface.Z = z + yOffset;
@@ -846,24 +867,24 @@ namespace Ambermoon.Render
             {
                 var objectInfo = subObject.Object;
                 bool floorObject = objectInfo.Flags.HasFlag(Tileset.TileFlags.Floor);
+                GetObjectPosition(subObject, mapX * Global.DistancePerBlock, mapY * Global.DistancePerBlock,
+                    out float x, out float y, out float z, floorObject, out Size size);
                 var mapObject = floorObject
                     ? surfaceFactory.Create(SurfaceType.BillboardFloor,
-                        Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
-                        Global.DistancePerBlock * objectInfo.MappedTextureHeight / BlockSize,
+                        Global.DistancePerBlock * size.Width / BlockSize,
+                        Global.DistancePerBlock * size.Height / BlockSize,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
                         objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
-                        0.7075f * Global.DistancePerBlock) // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
+                        extrude/*0.7075f * Global.DistancePerBlock*/) // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
                     : surfaceFactory.Create(SurfaceType.Billboard,
-                        Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
-                        wallHeight * objectInfo.MappedTextureHeight / ReferenceWallHeight,
+                        Global.DistancePerBlock * size.Width / BlockSize,
+                        wallHeight * size.Height / ReferenceWallHeight,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
                         objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
                         extrude);
                 extrude -= ExtrudeStep;
                 mapObject.Layer = layer;
                 mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-                GetObjectPosition(subObject, mapX * Global.DistancePerBlock, mapY * Global.DistancePerBlock,
-                    out float x, out float y, out float z, floorObject);
                 mapObject.X = x;
                 mapObject.Y = y;
                 mapObject.Z = z;
@@ -878,7 +899,7 @@ namespace Ambermoon.Render
                     {
                         CenterX = mapObject.X,
                         CenterZ = -mapObject.Z,
-                        Radius = Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize
+                        Radius = 0.5f * Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize
                     });
                     if (!characterBlockingBlocks.Contains(blockIndex))
                         characterBlockingBlocks.Add(blockIndex);

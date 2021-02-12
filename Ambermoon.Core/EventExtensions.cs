@@ -7,7 +7,7 @@ namespace Ambermoon
     internal static class EventExtensions
     {
         public static Event ExecuteEvent(this Event @event, Map map, Game game,
-            EventTrigger trigger, uint x, uint y, uint ticks, ref bool lastEventStatus,
+            ref EventTrigger trigger, uint x, uint y, uint ticks, ref bool lastEventStatus,
             out bool aborted, IConversationPartner conversationPartner = null)
         {
             // Note: Aborted means that an event is not even executed. It does not mean that a decision
@@ -256,6 +256,8 @@ namespace Ambermoon
                         // TODO ...
                     }
 
+                    trigger = EventTrigger.Always; // following events should not dependent on the trigger anymore
+
                     break;
                 }
                 case EventType.Action:
@@ -367,7 +369,7 @@ namespace Ambermoon
 
             while (mapEvent != null)
             {
-                mapEvent = mapEvent.ExecuteEvent(map, game, trigger, x, y, ticks, ref lastEventStatus, out bool aborted);
+                mapEvent = mapEvent.ExecuteEvent(map, game, ref trigger, x, y, ticks, ref lastEventStatus, out bool aborted);
 
                 if (aborted)
                     return false;

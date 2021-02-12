@@ -11,7 +11,7 @@ namespace Ambermoon
                 uint x = (uint)game.RenderPlayer.Position.X;
                 uint y = (uint)game.RenderPlayer.Position.Y; // TODO: adjust?
                 bool lastEventStatus = false;
-                @event.ExecuteEvent(game.Map, game, trigger, x, y, game.CurrentTicks,
+                @event.ExecuteEvent(game.Map, game, ref trigger, x, y, game.CurrentTicks,
                     ref lastEventStatus, out bool _, conversationPartner);
             }
         }

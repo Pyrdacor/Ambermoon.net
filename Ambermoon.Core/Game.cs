@@ -3210,8 +3210,8 @@ namespace Ambermoon
                 }
 
                 // TODO: handle Create events as we need to take the items before progressing!
-
-                conversationEvent = conversationEvent.ExecuteEvent(Map, this, EventTrigger.Always, 0, 0, // TODO: do we care about x and y here?
+                var trigger = EventTrigger.Always;
+                conversationEvent = conversationEvent.ExecuteEvent(Map, this, ref trigger, 0, 0, // TODO: do we care about x and y here?
                     CurrentTicks, ref lastEventStatus, out aborted, conversationPartner);
                 SetWindow(Window.Conversation, conversationPartner, conversationEvent);
             }

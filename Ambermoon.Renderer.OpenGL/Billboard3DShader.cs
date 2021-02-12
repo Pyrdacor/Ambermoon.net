@@ -37,7 +37,6 @@ namespace Ambermoon.Renderer
             $"flat in float palIndex;",
             $"flat in vec2 textureEndCoord;",
             $"flat in vec2 textureSize;",
-            $"flat in float depth;",
             $"",
             $"void main()",
             $"{{",
@@ -53,11 +52,12 @@ namespace Ambermoon.Renderer
             $"        discard;",
             $"    else",
             $"        {DefaultFragmentOutColorName} = vec4({DefaultLightName} * pixelColor.rg, min(1.0f, 0.25f + {DefaultLightName}) * pixelColor.b, pixelColor.a);",
-            $"     gl_FragDepth = 0.5 * depth + 0.5;",
             $"}}"
         };
         // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).
         // If the depth range is changed, this formula has to be adjusted accordingly!
+
+        static readonly string BlockFactor = (Global.DistancePerBlock / 512.0f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "f";
 
         static string[] Billboard3DVertexShader(State state) => new string[]
         {
@@ -77,32 +77,25 @@ namespace Ambermoon.Renderer
             $"flat out float palIndex;",
             $"flat out vec2 textureEndCoord;",
             $"flat out vec2 textureSize;",
-            $"flat out float depth;",
             $"",
             $"void main()",
             $"{{",
             $"    vec3 offset = ({DefaultPositionName} - {DefaultBillboardCenterName});",
             $"    vec4 localPos = {DefaultModelViewMatrixName} * vec4({DefaultBillboardCenterName}, 1);",
-            $"    if ({DefaultBillboardOrientationName} == 1u) // floor",
-            $"        localPos += vec4(offset.x, 0, offset.z, 0);",
-            $"    else // normal",
+            $"    if ({DefaultBillboardOrientationName} == 0u) // floor or ceiling billboard",
+            $"    {{",
             $"        localPos += vec4(offset.xy, {DefaultExtrudeName}, 0);",
+            $"    }}",
+            $"    else",
+            $"    {{",
+            $"        localPos += vec4(offset.x, 0, offset.y + {DefaultExtrudeName}, 0);",
+            $"    }}",
             $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
             $"    textureEndCoord = atlasFactor * vec2({DefaultTexEndCoordName}.x, {DefaultTexEndCoordName}.y);",
             $"    textureSize = atlasFactor * vec2({DefaultTexSizeName}.x, {DefaultTexSizeName}.y);",
             $"    gl_Position = {DefaultProjectionMatrixName} * localPos;",
-            $"    if ({DefaultBillboardOrientationName} == 1u) // floor",
-            $"    {{",
-            $"        localPos.z += {DefaultExtrudeName};",
-            $"        vec4 adjustedFloorPos = {DefaultProjectionMatrixName} * localPos;",
-            $"        depth = adjustedFloorPos.z / adjustedFloorPos.w;",
-            $"    }}",
-            $"    else // normal",
-            $"    {{",
-            $"        depth = gl_Position.z / gl_Position.w;",
-            $"    }}",
             $"}}"
         };
 

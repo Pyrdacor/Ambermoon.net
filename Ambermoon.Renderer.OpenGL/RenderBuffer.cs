@@ -409,7 +409,7 @@ namespace Ambermoon.Renderer
             int index = surface.Type switch
             {
                 Ambermoon.Render.SurfaceType.Billboard => vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y, surface.Z),
-                Ambermoon.Render.SurfaceType.BillboardFloor => vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y, surface.Z + 0.5f * surface.Height),
+                Ambermoon.Render.SurfaceType.BillboardFloor => vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y + 0.5f * surface.Height, surface.Z),
                 _ => vectorBuffer.Add(surface.X, surface.Y, surface.Z)
             };
 
@@ -456,10 +456,12 @@ namespace Ambermoon.Renderer
                     vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y - surface.Height, surface.Z);
                     break;
                 case Ambermoon.Render.SurfaceType.BillboardFloor:
-                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y, surface.Z + 0.5f * surface.Height);
-                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y, surface.Z - 0.5f * surface.Height);
-                    vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y, surface.Z - 0.5f * surface.Height);
+                {
+                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y + 0.5f * surface.Height, surface.Z);
+                    vectorBuffer.Add(surface.X + 0.5f * surface.Width, surface.Y - 0.5f * surface.Height, surface.Z);
+                    vectorBuffer.Add(surface.X - 0.5f * surface.Width, surface.Y - 0.5f * surface.Height, surface.Z);
                     break;
+                }
             }
 
             indexBuffer.InsertQuad(index / 4);
@@ -669,12 +671,11 @@ namespace Ambermoon.Renderer
             else if (surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor)
             {
                 float x = surface.X - surface.Width * 0.5f;
-                float z = surface.Z + surface.Height * 0.5f;
 
-                vectorBuffer.Update(index, x, surface.Y, z);
-                vectorBuffer.Update(index + 1, x + surface.Width, surface.Y, z);
-                vectorBuffer.Update(index + 2, x + surface.Width, surface.Y, z - surface.Height);
-                vectorBuffer.Update(index + 3, x, surface.Y, z - surface.Height);
+                vectorBuffer.Update(index, x, surface.Y + 0.5f * surface.Height, surface.Z);
+                vectorBuffer.Update(index + 1, x + surface.Width, surface.Y + 0.5f * surface.Height, surface.Z);
+                vectorBuffer.Update(index + 2, x + surface.Width, surface.Y - 0.5f * surface.Height, surface.Z);
+                vectorBuffer.Update(index + 3, x, surface.Y - 0.5f * surface.Height, surface.Z);
 
                 if (billboardCenterBuffer != null)
                 {
