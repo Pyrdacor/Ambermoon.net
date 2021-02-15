@@ -120,5 +120,17 @@ namespace Ambermoon.Data
             TotalWeight -= (uint)(Food - newFood) * 250;
             Food = newFood;
         }
+
+        public void SetGold(uint gold)
+        {
+            RemoveGold(Gold);
+            AddGold(gold);
+        }
+
+        public void SetFood(uint food)
+        {
+            RemoveFood(Food);
+            AddFood(food);
+        }
     }
 }

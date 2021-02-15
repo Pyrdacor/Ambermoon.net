@@ -182,6 +182,7 @@
         string SellHowMuchItems { get; }
         string NotEnoughMoneyToBuy { get; }
         string NotInterestedInItemMerchant { get; }
+        string WantToGoWithoutItemsMerchant { get; }
 
         #endregion
 

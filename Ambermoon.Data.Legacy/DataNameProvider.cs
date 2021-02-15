@@ -205,6 +205,7 @@
         public string SellHowMuchItems => executableData.Messages.GetEntry(Messages.Index.SellHowMany);
         public string NotEnoughMoneyToBuy => executableData.Messages.GetEntry(Messages.Index.NotEnoughMoney);
         public string NotInterestedInItemMerchant => executableData.Messages.GetEntry(Messages.Index.NotInterestedInTrinket);
+        public string WantToGoWithoutItemsMerchant => executableData.Messages.GetEntry(Messages.Index.LeaveBoughtGoods);
 
         #endregion
     }

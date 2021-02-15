@@ -2418,13 +2418,19 @@ namespace Ambermoon.UI
         {
             draggedItem = null;
 
-            if (game.OpenStorage is Chest)
+            if (game.OpenStorage is Chest ||
+                game.OpenStorage is Merchant)
             {
                 ChestText?.Destroy();
                 ChestText = null;
             }
             else
+            {
                 SetInventoryMessage(null);
+            }
+
+            // Remove hand icons and set current status icons
+            game.PartyMembers.ToList().ForEach(p => UpdateCharacterStatus(p));
         }
 
         bool IsInventory => Type == LayoutType.Inventory;

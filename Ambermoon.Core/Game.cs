@@ -4984,10 +4984,30 @@ namespace Ambermoon
             // Exit button
             layout.AttachEventToButton(2, () =>
             {
-                CloseWindow();
-                // TODO: ask for leaving without items, etc
-                // TODO: At the end all the gold is distributed back to the party members
-                //       regardless the amount they had beforehand.
+                void Exit()
+                {
+                    CloseWindow();
+
+                    // Distribute the gold
+                    var partyMembers = PartyMembers.ToList();
+                    int goldPerPartyMember = (int)merchant.AvailableGold / partyMembers.Count;
+                    int restGold = (int)merchant.AvailableGold % partyMembers.Count;
+
+                    for (int i = 0; i < partyMembers.Count; ++i)
+                    {
+                        int gold = goldPerPartyMember + (i < restGold ? 1 : 0);
+                        partyMembers[i].SetGold((uint)gold);
+                    }
+                }
+
+                if (boughtItems.Any(item => item != null && !item.Empty))
+                {
+                    layout.OpenYesNoPopup(ProcessText(DataNameProvider.WantToGoWithoutItemsMerchant), Exit, ClosePopup, ClosePopup, 2);
+                }
+                else
+                {
+                    Exit();
+                }
             });
 
             void UpdateButtons()
@@ -5021,7 +5041,6 @@ namespace Ambermoon
                 var bonus = (uint)Util.Floor(Util.Floor(charisma / 10) * (price / 100.0f));
                 return basePrice + bonus;
             }
-
             itemGrid.DisableDrag = false;
             itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
             {
@@ -5032,11 +5051,16 @@ namespace Ambermoon
                 boughtItems[slotIndex].Remove(amount);
                 layout.EnableButton(0, boughtItems.Any(slot => slot == null || slot.Empty) && merchant.AvailableGold > 0);
             };
+            itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+            {
+                if (mode == -1)
+                {
+                    foreach (var partyMember in PartyMembers)
+                        layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value);
+                }
+            };
             itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
             {
-                nextClickHandler = null;
-                UntrapMouse();
-
                 var item = ItemManager.GetItem(itemSlot.ItemIndex);
 
                 if (mode == -1) // show bought items
@@ -5053,6 +5077,9 @@ namespace Ambermoon
                         layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoneyToBuy, null, false);
                         return;
                     }
+
+                    nextClickHandler = null;
+                    UntrapMouse();
 
                     uint GetMaxItemsToBuy(uint itemIndex)
                     {
@@ -5162,6 +5189,9 @@ namespace Ambermoon
                         layout.ShowClickChestMessage(DataNameProvider.NotInterestedInItemMerchant, null, false);
                         return;
                     }
+
+                    nextClickHandler = null;
+                    UntrapMouse();
 
                     uint GetMaxItemsToSell(uint itemIndex)
                     {
@@ -5387,7 +5417,6 @@ namespace Ambermoon
         {
             void Show()
             {
-                // TODO: important items should not be left -> Item.IsImportant
                 InputEnable = true;
                 layout.Reset();
                 ShowLoot(storage, expReceivingPartyMembers == null ? null : string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>

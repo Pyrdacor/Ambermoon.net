@@ -58,7 +58,7 @@ namespace Ambermoon.Data
                 {
                     var item = itemManager.GetItem(slot.ItemIndex);
 
-                    if (!item.Flags.HasFlag(ItemFlags.Sellable))
+                    if (item.IsImportant)
                         return true;
                 }
             }
