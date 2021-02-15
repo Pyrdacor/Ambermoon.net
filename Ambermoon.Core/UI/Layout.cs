@@ -1257,7 +1257,7 @@ namespace Ambermoon.UI
             FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, displayLayer);
         }
 
-        Popup OpenAmountInputBox(string message, uint imageIndex, string name, uint maxAmount,
+        internal Popup OpenAmountInputBox(string message, uint imageIndex, string name, uint maxAmount,
             Action<uint> submitAction)
         {
             ClosePopup(false);
@@ -1599,7 +1599,10 @@ namespace Ambermoon.UI
         {
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
-            ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            if (message != null)
+                ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            else
+                ChestText = null;
         }
 
         internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = true)
@@ -2990,7 +2993,7 @@ namespace Ambermoon.UI
                 }
             }
 
-            if (game.OpenStorage is Chest)
+            if (game.OpenStorage is Chest || game.OpenStorage is Merchant)
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
             else
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);

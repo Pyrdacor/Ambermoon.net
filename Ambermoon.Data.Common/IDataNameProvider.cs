@@ -93,7 +93,6 @@
         string WaitHowManyHours { get; }
         string CannotWaitBecauseOfNearbyMonsters { get; }
 
-
         #region Battle messages
 
         string BattleMessageAttacksWith { get; }
@@ -179,6 +178,10 @@
         string AgreeOnPrice { get; }
         string AgreeOnFoodPrice { get; }
         string MerchantFull { get; }
+        string BuyHowMuchItems { get; }
+        string SellHowMuchItems { get; }
+        string NotEnoughMoneyToBuy { get; }
+        string NotInterestedInItemMerchant { get; }
 
         #endregion
 

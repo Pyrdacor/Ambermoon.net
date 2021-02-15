@@ -102,6 +102,32 @@ namespace Ambermoon
             return max;
         }
 
+        public static uint Min(uint firstValue, uint secondValue, params uint[] values)
+        {
+            uint min = Math.Min(firstValue, secondValue);
+
+            foreach (var value in values)
+            {
+                if (value < min)
+                    min = value;
+            }
+
+            return min;
+        }
+
+        public static uint Max(uint firstValue, uint secondValue, params uint[] values)
+        {
+            uint max = Math.Max(firstValue, secondValue);
+
+            foreach (var value in values)
+            {
+                if (value > max)
+                    max = value;
+            }
+
+            return max;
+        }
+
         public static float Square(float value) => value * value;
 
         public static string BytesToHexString(string separator, params byte[] bytes) =>

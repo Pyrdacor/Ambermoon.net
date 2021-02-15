@@ -88,10 +88,6 @@ namespace Ambermoon.Data
 
         }
 
-        float GetPriceFactor(PartyMember character) => 2.92f + character.Attributes[Data.Attribute.Charisma].TotalCurrentValue * 0.16f / 100.0f;
-        public uint GetBuyPrice(PartyMember buyer) => (uint)Util.Round(Price / GetPriceFactor(buyer));
-        public uint GetSellPrice(PartyMember seller) => (uint)Util.Round(0.5f * Price * GetPriceFactor(seller));
-
         public bool IsUsable
         {
             get
@@ -100,6 +96,8 @@ namespace Ambermoon.Data
                     Type == ItemType.TextScroll || Type == ItemType.Tool || Type == ItemType.Transportation;
             }
         }
+
+        public bool IsImportant => !Flags.HasFlag(ItemFlags.Sellable) && !Flags.HasFlag(ItemFlags.Dropable);
 
         public static Item Load(uint index, IItemReader itemReader, IDataReader dataReader)
         {

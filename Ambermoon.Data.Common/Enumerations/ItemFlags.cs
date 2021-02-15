@@ -13,11 +13,10 @@ namespace Ambermoon.Data
         /// </summary>
         Accursed = 0x01,
         /// <summary>
-        /// Item is not important and therefore can be dropped,
-        /// sold, etc. Items without that flag can not be left
-        /// after battles, in conversations or at merchants.
+        /// Item is not important and therefore can be sold. Items without this flag and the Dropable
+        /// flag can not be left after battles, in conversations or at merchants.
         /// </summary>
-        NotImportant = 0x02,
+        Sellable = 0x02,
         Stackable = 0x04,
         /// <summary>
         /// Mostly used for armor but also for some other
@@ -29,6 +28,10 @@ namespace Ambermoon.Data
         /// Text popup when item is viewed.
         /// </summary>
         Readable = 0x20,
-        Unknown64 = 0x40 // TODO
+        /// <summary>
+        /// Item is not important and therefore can be dropped. Items without this flag and the Sellable
+        /// flag can not be left after battles, in conversations or at merchants.
+        /// </summary>
+        Dropable = 0x40
     }
 }

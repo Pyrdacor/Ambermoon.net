@@ -10,6 +10,7 @@ namespace Ambermoon.UI
         IRenderText amountDisplay;
         readonly IRenderView renderView;
         readonly IItemManager itemManager;
+        readonly bool merchantItem;
 
         public bool Dragged
         {
@@ -23,11 +24,12 @@ namespace Ambermoon.UI
             }
         }
 
-        public UIItem(IRenderView renderView, IItemManager itemManager, ItemSlot item)
+        public UIItem(IRenderView renderView, IItemManager itemManager, ItemSlot item, bool merchantItem)
         {
             this.renderView = renderView;
             this.itemManager = itemManager;
             Item = item;
+            this.merchantItem = merchantItem;
             sprite = renderView.SpriteFactory.Create(16, 16, true) as ILayerSprite;
             sprite.Layer = renderView.GetLayer(Layer.Items);
             sprite.PaletteIndex = 49;
@@ -37,7 +39,7 @@ namespace Ambermoon.UI
 
         public UIItem Clone()
         {
-            return new UIItem(renderView, itemManager, Item.Copy());
+            return new UIItem(renderView, itemManager, Item.Copy(), merchantItem);
         }
 
         public void SetItem(ItemSlot item)
@@ -60,9 +62,8 @@ namespace Ambermoon.UI
                 else
                 {
                     var itemInfo = itemManager.GetItem(Item.ItemIndex);
-
                     sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(itemInfo.GraphicIndex);
-                    bool stackable = itemInfo.Flags.HasFlag(ItemFlags.Stackable);
+                    bool stackable = merchantItem || itemInfo.Flags.HasFlag(ItemFlags.Stackable);
 
                     if (amountDisplay == null && stackable)
                     {

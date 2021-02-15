@@ -23,6 +23,7 @@ namespace Ambermoon.UI
         readonly UIItem[] items;
         readonly ILayerSprite[] slotBackgrounds;
         IRenderText hoveredItemName;
+        IRenderText hoveredItemPrice;
         readonly bool allowExternalDrop;
         readonly Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction;
         readonly int slotsPerPage;
@@ -31,6 +32,8 @@ namespace Ambermoon.UI
         Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
         bool disabled;
         Func<Position, Item, int?> dropSlotProvider = null;
+        bool showPrice = false;
+        readonly Func<uint> availableGoldProvider = null;
 
         internal enum ItemAction
         {
@@ -74,10 +77,28 @@ namespace Ambermoon.UI
         }
         public bool DisableDrag { get; set; } = false;
 
+        public bool ShowPrice
+        {
+            get => showPrice;
+            set
+            {
+                if (showPrice == value)
+                    return;
+
+                showPrice = value;
+
+                if (!showPrice && hoveredItemPrice != null)
+                {
+                    hoveredItemPrice?.Delete();
+                    hoveredItemPrice = null;
+                }
+            }
+        }
+
         private ItemGrid(Game game, Layout layout, IRenderView renderView, IItemManager itemManager, List<Position> slotPositions,
             List<ItemSlot> slots, bool allowExternalDrop, Action<ItemGrid, int, UIItem, Action<Layout.DraggedItem, int>, bool> pickupAction,
             int slotsPerPage, int slotsPerScroll, int numTotalSlots, Rect scrollbarArea = null, Size scrollbarSize = null,
-            ScrollbarType? scrollbarType = null)
+            ScrollbarType? scrollbarType = null, bool showPrice = false, Func<uint> availableGoldProvider = null)
         {
             this.game = game;
             this.renderView = renderView;
@@ -96,6 +117,8 @@ namespace Ambermoon.UI
                 scrollbarSize.Width, scrollbarSize.Height, (numTotalSlots - slotsPerPage) / slotsPerScroll);
             if (scrollbar != null)
                 scrollbar.Scrolled += Scrollbar_Scrolled;
+            this.showPrice = showPrice;
+            this.availableGoldProvider = availableGoldProvider;
         }
 
         void CreateSlotBackgrounds()
@@ -225,12 +248,13 @@ namespace Ambermoon.UI
 
         public static ItemGrid Create(Game game, Layout layout, IRenderView renderView, IItemManager itemManager,
             List<Position> slotPositions, List<ItemSlot> slots, bool allowExternalDrop, int slotsPerPage,
-            int slotsPerScroll, int numTotalSlots, Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType)
+            int slotsPerScroll, int numTotalSlots, Rect scrollbarArea, Size scrollbarSize, ScrollbarType scrollbarType,
+            bool showPrice = false, Func<uint>availableGoldProvider = null)
         {
             var grid =  new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, allowExternalDrop,
                 (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
                     layout.DragItems(item, takeAll, dragAction, () => Layout.DraggedItem.FromExternal(itemGrid, slot, item)),
-                    slotsPerPage, slotsPerScroll, numTotalSlots, scrollbarArea, scrollbarSize, scrollbarType);
+                    slotsPerPage, slotsPerScroll, numTotalSlots, scrollbarArea, scrollbarSize, scrollbarType, showPrice, availableGoldProvider);
             grid.dropSlotProvider = (position, _) => grid.SlotFromPosition(position);
             return grid;
         }
@@ -245,6 +269,8 @@ namespace Ambermoon.UI
 
             hoveredItemName?.Delete();
             hoveredItemName = null;
+            hoveredItemPrice?.Delete();
+            hoveredItemPrice = null;
 
             scrollbar?.Destroy();
             scrollbar = null;
@@ -252,7 +278,27 @@ namespace Ambermoon.UI
             dragScrollItem = null;
         }
 
-        public void SetItem(int slot, ItemSlot item)
+        public void Initialize(List<ItemSlot> newSlots, bool merchantItems)
+        {
+            ScrollToBegin();
+
+            for (int i = 0; i < slots.Count; ++i)
+            {
+                slots[i] = newSlots[i];
+                items[i]?.Destroy();
+                items[i] = null;
+                if (slots[i] != null && !slots[i].Empty)
+                {
+                    var newItem = items[i] = new UIItem(renderView, itemManager, slots[i], merchantItems);
+                    bool visible = SlotVisible(i);
+                    newItem.Visible = visible;
+                    if (visible)
+                        newItem.Position = slotPositions[i];
+                }
+            }
+        }
+
+        public void SetItem(int slot, ItemSlot item, bool merchantItem = false)
         {
             items[slot]?.Destroy();
 
@@ -261,7 +307,7 @@ namespace Ambermoon.UI
             else
             {
                 slots[slot].Replace(item);
-                var newItem = items[slot] = new UIItem(renderView, itemManager, slots[slot]);
+                var newItem = items[slot] = new UIItem(renderView, itemManager, slots[slot], merchantItem);
                 bool visible = SlotVisible(slot);
                 newItem.Visible = visible;
                 if (visible)
@@ -441,7 +487,7 @@ namespace Ambermoon.UI
 
         public bool Drag(Position position)
         {
-            if (disabled || DisableDrag)
+            if (disabled)
                 return false;
 
             if (scrollbar?.Drag(position) == true)
@@ -565,6 +611,8 @@ namespace Ambermoon.UI
         {
             hoveredItemName?.Delete();
             hoveredItemName = null;
+            hoveredItemPrice?.Delete();
+            hoveredItemPrice = null;
         }
 
         public bool Hover(Position position)
@@ -598,6 +646,33 @@ namespace Ambermoon.UI
                 hoveredItemName.X = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
                 hoveredItemName.Y = position.Y - Global.GlyphLineHeight - 1;
                 hoveredItemName.Visible = true;
+
+                if (showPrice)
+                {
+                    var itemPriceText = renderView.TextProcessor.CreateText(item.Price.ToString());
+                    textWidth = itemPriceText.MaxLineSize * Global.GlyphWidth;
+                    var color = availableGoldProvider != null && availableGoldProvider() < item.Price ? TextColor.Red : TextColor.White;
+
+                    if (hoveredItemPrice == null)
+                    {
+                        hoveredItemPrice = renderView.RenderTextFactory.Create
+                        (
+                            renderView.GetLayer(Layer.Text),
+                            itemPriceText,
+                            color, true
+                        );
+                    }
+                    else
+                    {
+                        hoveredItemPrice.TextColor = color;
+                        hoveredItemPrice.Text = itemPriceText;
+                    }
+
+                    hoveredItemPrice.DisplayLayer = 2;
+                    hoveredItemPrice.X = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
+                    hoveredItemPrice.Y = position.Y - 2 * Global.GlyphLineHeight - 1;
+                    hoveredItemPrice.Visible = true;
+                }
 
                 return true;
             }

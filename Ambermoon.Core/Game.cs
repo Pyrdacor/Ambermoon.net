@@ -248,7 +248,7 @@ namespace Ambermoon
         bool allInputDisabled = false;
         bool inputEnable = true;
         bool paused = false;
-        Action nextClickHandler = null;
+        Func<MouseButtons, bool> nextClickHandler = null;
         /// <summary>
         /// The 3x3 buttons will always be enabled!
         /// </summary>
@@ -1504,9 +1504,11 @@ namespace Ambermoon
 
             if (nextClickHandler != null)
             {
-                nextClickHandler?.Invoke();
-                nextClickHandler = null;
-                return;
+                if (nextClickHandler(buttons))
+                {
+                    nextClickHandler = null;
+                    return;
+                }
             }
 
             position = GetMousePosition(position);
@@ -4454,13 +4456,14 @@ namespace Ambermoon
 
                 if (followAction != null)
                 {
-                    void Follow()
+                    bool Follow(MouseButtons _)
                     {
                         layout.SetBattleMessage(null);
                         InputEnable = true;
                         currentBattle.WaitForClick = false;
                         CursorType = CursorType.Sword;
                         followAction?.Invoke();
+                        return true;
                     }
 
                     nextClickHandler = Follow;
@@ -4899,7 +4902,7 @@ namespace Ambermoon
             // TODO
         }
 
-        void OpenMerchant(uint merchantIndex, string buyText)
+        void OpenMerchant(uint merchantIndex, string buyText, bool showWelcome = true)
         {
             var merchant = GetMerchant(merchantIndex);
 
@@ -4908,7 +4911,7 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Merchant, merchantIndex, buyText);
-                ShowMerchantWindow(merchant, DataNameProvider.WelcomeMerchant, buyText, Picture80x80.Merchant1);
+                ShowMerchantWindow(merchant, showWelcome ? DataNameProvider.WelcomeMerchant : null, buyText, Picture80x80.Merchant1);
             });
         }
 
@@ -4920,47 +4923,64 @@ namespace Ambermoon
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
             var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, merchant.Slots.ToList(),
-                false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+                false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical, false,
+                () => merchant.AvailableGold);
+            itemGrid.Disabled = false;
             layout.AddItemGrid(itemGrid);
             layout.Set80x80Picture(picture);
             var itemArea = new Rect(16, 139, 151, 53);
-            int mode = 0; // buy, sell, examine (= button index)
+            int mode = -1; // -1: show bought items, 0: buy, 3: sell, 4: examine (= button index)
+            var boughtItems = Enumerable.Repeat(new ItemSlot(), 24).ToArray();
+
+            void SetupRightClickAbort()
+            {
+                nextClickHandler = buttons =>
+                {
+                    if (buttons == MouseButtons.Right)
+                    {
+                        itemGrid.HideTooltip();
+                        layout.ShowChestMessage(null);
+                        UntrapMouse();
+                        ShowBoughtItems();
+                        return true;
+                    }
+
+                    return false;
+                };
+            }
+
+            void AssignButton(int index, bool merchantItems, string messageText, TextAlign textAlign, Func<bool> checker)
+            {
+                layout.AttachEventToButton(index, () =>
+                {
+                    if (checker?.Invoke() == false)
+                        return;
+
+                    mode = index;
+                    itemGrid.DisableDrag = true;
+                    layout.ShowChestMessage(messageText, textAlign);
+                    CursorType = CursorType.Sword;
+                    TrapMouse(itemArea);
+                    FillItems(merchantItems);
+                    itemGrid.ShowPrice = mode == 0; // buy
+                    SetupRightClickAbort();
+                });
+            }
 
             // Buy button
-            layout.AttachEventToButton(0, () =>
-            {
-                mode = 0;
-                layout.ShowChestMessage(DataNameProvider.BuyWhichItem, TextAlign.Center);
-                CursorType = CursorType.Sword;
-                TrapMouse(itemArea);
-                FillItems(true);
-                itemGrid.Disabled = false;
-            });
+            AssignButton(0, true, DataNameProvider.BuyWhichItem, TextAlign.Center, null);
             // Sell button
-            layout.AttachEventToButton(3, () =>
+            AssignButton(3, false, DataNameProvider.SellWhichItem, TextAlign.Left, () =>
             {
                 if (!merchant.HasEmptySlots())
                 {
                     layout.ShowClickChestMessage(DataNameProvider.MerchantFull, null, false);
-                    return;
+                    return false;
                 }
-                mode = 3;
-                layout.ShowChestMessage(DataNameProvider.SellWhichItem, TextAlign.Left);
-                CursorType = CursorType.Sword;
-                TrapMouse(itemArea);
-                FillItems(false);
-                itemGrid.Disabled = false;
+                return true;
             });
             // Examine button
-            layout.AttachEventToButton(4, () =>
-            {
-                mode = 4;
-                layout.ShowChestMessage(DataNameProvider.ExamineWhichItemMerchant, TextAlign.Left);
-                CursorType = CursorType.Sword;
-                TrapMouse(itemArea);
-                FillItems(true);
-                itemGrid.Disabled = false;
-            });
+            AssignButton(4, true, DataNameProvider.ExamineWhichItemMerchant, TextAlign.Left, null);
             // Exit button
             layout.AttachEventToButton(2, () =>
             {
@@ -4970,17 +4990,28 @@ namespace Ambermoon
                 //       regardless the amount they had beforehand.
             });
 
+            void UpdateButtons()
+            {
+                // Note: Disabling the buy button if no slot is free in bought items grid might be bad in rare
+                // cases because you still might buy some stackable items like arrows. But this is very rare cause
+                // you would have to buy some of this items before.
+                layout.EnableButton(0, boughtItems.Any(slot => slot == null || slot.Empty) && merchant.AvailableGold > 0);
+                bool anyItemsToSell = merchant.Slots.ToList().Any(s => !s.Empty);
+                layout.EnableButton(3, anyItemsToSell);
+                layout.EnableButton(4, anyItemsToSell);
+            }
+
             void FillItems(bool fromMerchant)
             {
-                for (int y = 0; y < 2; ++y)
-                {
-                    for (int x = 0; x < 6; ++x)
-                    {
-                        itemGrid.SetItem(x + y * 6, fromMerchant
-                            ? merchant.Slots[x, y]
-                            : CurrentPartyMember.Inventory.Slots[x + y * 6]);
-                    }
-                }
+                itemGrid.Initialize(fromMerchant ? merchant.Slots.ToList() : CurrentPartyMember.Inventory.Slots.ToList(), fromMerchant);
+            }
+
+            void ShowBoughtItems()
+            {
+                mode = -1;
+                itemGrid.DisableDrag = false;
+                itemGrid.ShowPrice = false;
+                itemGrid.Initialize(boughtItems.ToList(), false);
             }
 
             uint CalculatePrice(uint price)
@@ -4991,37 +5022,200 @@ namespace Ambermoon
                 return basePrice + bonus;
             }
 
-            itemGrid.DisableDrag = true;
+            itemGrid.DisableDrag = false;
+            itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+            {
+                // This can only happen for bought items but we check for safety here
+                if (mode != -1)
+                    throw new AmbermoonException(ExceptionScope.Application, "Non-bought items should not be draggable.");
+
+                boughtItems[slotIndex].Remove(amount);
+                layout.EnableButton(0, boughtItems.Any(slot => slot == null || slot.Empty) && merchant.AvailableGold > 0);
+            };
             itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
             {
+                nextClickHandler = null;
                 UntrapMouse();
 
-                // TODO: select amount
-                uint amount = 1;
-                int column = slotIndex % Merchant.SlotsPerRow;
-                int row = slotIndex / Merchant.SlotsPerRow;
                 var item = ItemManager.GetItem(itemSlot.ItemIndex);
 
-                if (mode == 0) // buy
+                if (mode == -1) // show bought items
+                {
+                    // No interaction
+                    return;
+                }
+                else if (mode == 0) // buy
                 {
                     itemGrid.HideTooltip();
-                    layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ThisWillCost}{amount * item.Price}{DataNameProvider.AgreeOnPrice}"), answer =>
+
+                    if (merchant.AvailableGold < item.Price)
                     {
-                        if (answer) // yes
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoneyToBuy, null, false);
+                        return;
+                    }
+
+                    uint GetMaxItemsToBuy(uint itemIndex)
+                    {
+                        var item = ItemManager.GetItem(itemIndex);
+
+                        if (item.Flags.HasFlag(ItemFlags.Stackable))
                         {
-                            merchant.TakeItems(column, row, amount);
-                            itemGrid.SetItem(slotIndex, merchant.Slots[column, row]);
-                            // TODO
+                            if (boughtItems.Any(slot => slot == null || slot.Empty))
+                                return 99;
+
+                            var slotWithItem = boughtItems.FirstOrDefault(slot => slot.ItemIndex == itemIndex && slot.Amount < 99);
+
+                            return slotWithItem == null ? 0 : 99u - (uint)slotWithItem.Amount;
                         }
-                    }, TextAlign.Left);
+                        else
+                        {
+                            return (uint)boughtItems.Count(slot => slot == null || slot.Empty);
+                        }
+                    }
+
+                    void Buy(uint amount)
+                    {
+                        ClosePopup();
+                        layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ThisWillCost}{amount * item.Price}{DataNameProvider.AgreeOnPrice}"), answer =>
+                        {
+                            if (answer) // yes
+                            {
+                                int column = slotIndex % Merchant.SlotsPerRow;
+                                int row = slotIndex / Merchant.SlotsPerRow;
+                                merchant.TakeItems(column, row, amount);
+                                itemGrid.SetItem(slotIndex, merchant.Slots[column, row], true);
+                                merchant.AvailableGold -= amount * item.Price;
+                                UpdateGoldDisplay();
+                                if (item.Flags.HasFlag(ItemFlags.Stackable))
+                                {
+                                    for (int i = 0; i < boughtItems.Length; ++i)
+                                    {
+                                        if (boughtItems[i] != null && boughtItems[i].ItemIndex == item.Index &&
+                                            boughtItems[i].Amount < 99)
+                                        {
+                                            int space = 99 - boughtItems[i].Amount;
+                                            int add = Math.Min(space, (int)amount);
+                                            boughtItems[i].Amount += add;
+                                            amount -= (uint)add;
+                                            if (amount == 0)
+                                                break;
+                                        }
+                                    }
+                                    if (amount != 0)
+                                    {
+                                        for (int i = 0; i < boughtItems.Length; ++i)
+                                        {
+                                            if (boughtItems[i] == null || boughtItems[i].Empty)
+                                            {
+                                                boughtItems[i] = new ItemSlot
+                                                {
+                                                    ItemIndex = item.Index,
+                                                    Amount = (int)amount
+                                                    // TODO: flags, charges, etc
+                                                };
+                                                amount = 0;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    for (int i = 0; i < boughtItems.Length; ++i)
+                                    {
+                                        if (boughtItems[i] == null || boughtItems[i].Empty)
+                                        {
+                                            boughtItems[i] = new ItemSlot
+                                            {
+                                                ItemIndex = item.Index,
+                                                Amount = 1
+                                                // TODO: flags, charges, etc
+                                            };
+                                            if (--amount == 0)
+                                                break;
+                                        }
+                                    }
+                                }
+                                UpdateButtons();
+                            }
+
+                            ShowBoughtItems();
+                        }, TextAlign.Left);
+                    }
+
+                    if (itemSlot.Amount > 1)
+                    {
+                        layout.OpenAmountInputBox(DataNameProvider.BuyHowMuchItems,
+                            item.GraphicIndex, item.Name, Util.Min((uint)itemSlot.Amount, merchant.AvailableGold / item.Price, GetMaxItemsToBuy(item.Index)), Buy);
+                    }
+                    else
+                    {
+                        Buy(1);
+                    }
                 }
                 else if (mode == 3) // sell
                 {
                     itemGrid.HideTooltip();
-                    layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ForThisIllGiveYou}{amount * CalculatePrice(item.Price)}{DataNameProvider.AgreeOnPrice}"), answer =>
+
+                    if (!item.Flags.HasFlag(ItemFlags.Sellable) || item.Price < 9) // TODO: Don't know if this is right
                     {
-                        // TODO
-                    }, TextAlign.Left);
+                        layout.ShowClickChestMessage(DataNameProvider.NotInterestedInItemMerchant, null, false);
+                        return;
+                    }
+
+                    uint GetMaxItemsToSell(uint itemIndex)
+                    {
+                        var item = ItemManager.GetItem(itemIndex);
+
+                        if (item.Flags.HasFlag(ItemFlags.Stackable))
+                        {
+                            var slots = merchant.Slots.ToList();
+
+                            if (slots.Any(slot => slot == null || slot.Empty))
+                                return 99;
+
+                            var slotWithItem = slots.FirstOrDefault(slot => slot.ItemIndex == itemIndex && slot.Amount < 99);
+
+                            return slotWithItem == null ? 0 : 99u - (uint)slotWithItem.Amount;
+                        }
+                        else
+                        {
+                            return 1;
+                        }
+                    }
+
+                    void Sell(uint amount)
+                    {
+                        ClosePopup();
+                        var sellPrice = amount * CalculatePrice(item.Price);
+                        layout.ShowMerchantQuestion(string.Format($"{DataNameProvider.ForThisIllGiveYou}{sellPrice}{DataNameProvider.AgreeOnPrice}"), answer =>
+                        {
+                            if (answer) // yes
+                            {
+                                merchant.AddItems(ItemManager, item.Index, amount);
+                                CurrentPartyMember.Inventory.Slots[slotIndex].Remove((int)amount);
+                                itemGrid.SetItem(slotIndex, CurrentPartyMember.Inventory.Slots[slotIndex], true);
+                                merchant.AvailableGold += sellPrice;
+                                UpdateGoldDisplay();
+                                UpdateButtons();
+                            }
+
+                            if (!merchant.Slots.ToList().Any(s => s.Empty))
+                                ShowBoughtItems();
+                            else
+                                SetupRightClickAbort();
+                        }, TextAlign.Left);
+                    }
+
+                    if (itemSlot.Amount > 1)
+                    {
+                        layout.OpenAmountInputBox(DataNameProvider.SellHowMuchItems,
+                            item.GraphicIndex, item.Name, Util.Min((uint)itemSlot.Amount, GetMaxItemsToSell(item.Index)), Sell);
+                    }
+                    else
+                    {
+                        Sell(1);
+                    }
                 }
                 else if (mode == 4) // examine
                 {
@@ -5040,10 +5234,15 @@ namespace Ambermoon
             ShowTextPanel(CharacterInfo.ChestGold, true,
                 $"{DataNameProvider.GoldName}^{merchant.AvailableGold}", new Rect(111, 104, 43, 15));
 
+            UpdateButtons();
+
             if (initialText != null)
             {
                 layout.ShowClickChestMessage(initialText, null, false);
             }
+
+            void UpdateGoldDisplay()
+                => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
         }
 
         internal void EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)
@@ -5188,6 +5387,7 @@ namespace Ambermoon
         {
             void Show()
             {
+                // TODO: important items should not be left -> Item.IsImportant
                 InputEnable = true;
                 layout.Reset();
                 ShowLoot(storage, expReceivingPartyMembers == null ? null : string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
@@ -5797,7 +5997,9 @@ namespace Ambermoon
                 }
                 case Window.Merchant:
                 {
-                    // TODO
+                    uint merchantIndex = (uint)currentWindow.WindowParameters[0];
+                    string buyText = (string)currentWindow.WindowParameters[1];
+                    OpenMerchant(merchantIndex, buyText, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
