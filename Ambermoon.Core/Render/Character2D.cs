@@ -184,7 +184,7 @@ namespace Ambermoon.Render
             else
             {
                 var animationInfo = CurrentAnimationInfo;
-                var tileType = Map[x, y + 1].Type;
+                var tileType = Map[x, y].Type;
                 sprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight);
                 CurrentState = animationInfo.IgnoreTileType ? State.Stand : tileType switch
                 {
@@ -225,7 +225,7 @@ namespace Ambermoon.Render
                 }
                 var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
                 sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
-                sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+                sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y + RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight;
                 sprite.PaletteIndex = (byte)paletteIndexProvider();
                 sprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
                 if (sprite.Visible && tileType == Data.Map.TileType.Invisible)

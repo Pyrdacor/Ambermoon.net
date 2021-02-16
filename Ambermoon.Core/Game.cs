@@ -220,7 +220,7 @@ namespace Ambermoon
         internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
-        public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position + new Position(0, !is3D && !Map.IsWorldMap ? 1 : 0);
+        public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         internal bool MonsterSeesPlayer { get; set; } = false;
         bool monstersCanMoveImmediately = false; // this is set when the player just moved so that monsters who see the player can instantly move (2D only)
         Position lastPlayerPosition = null;
@@ -919,11 +919,9 @@ namespace Ambermoon
             if (is3D)
                 Start3D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection, true);
             else
-                Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection, true);
+                Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1, savegame.CharacterDirection, true);
             player.Position.X = (int)savegame.CurrentMapX - 1;
             player.Position.Y = (int)savegame.CurrentMapY - 1;
-            if (!is3D && !Map.IsWorldMap)
-                --player.Position.Y;
             TravelType = savegame.TravelType; // Yes this is necessary twice.
 
             ShowMap(true);
@@ -2645,16 +2643,12 @@ namespace Ambermoon
             bool mapTypeChanged = Map.Type != newMap.Type;
 
             // The position (x, y) is 1-based in the data so we subtract 1.
-            // Moreover the players position is 1 tile below its drawing position
-            // in non-world 2D so subtract another 1 from y.
             uint newX = x - 1;
-            uint newY = y - (newMap.Type == MapType.Map2D && !newMap.IsWorldMap ? 2u : 1u);
+            uint newY = y - 1;
 
             if (newMap.Type == MapType.Map2D)
             {
-                uint testY = newMap.IsWorldMap ? newY : newY + 1;
-
-                if (!newMap.Tiles[newX, testY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType.Walk))
+                if (!newMap.Tiles[newX, newY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType.Walk))
                 {
                     blocked = true;
                     return false;
@@ -2682,7 +2676,7 @@ namespace Ambermoon
             {
                 // Trigger events after map transition
                 TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
-                    (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
+                    (uint)player.Position.Y);
 
                 PlayerMoved(mapChange);
             }
@@ -2865,7 +2859,7 @@ namespace Ambermoon
                 var map = is3D ? Map : renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y);
                 CurrentSavegame.CurrentMapIndex = map.Index;
                 CurrentSavegame.CurrentMapX = 1u + (uint)player.Position.X;
-                CurrentSavegame.CurrentMapY = 1u + (uint)player.Position.Y + ((!is3D && !map.IsWorldMap) ? 1u : 0u);
+                CurrentSavegame.CurrentMapY = 1u + (uint)player.Position.Y;
                 CurrentSavegame.CharacterDirection = player.Direction;
             }
 
@@ -5386,10 +5380,10 @@ namespace Ambermoon
             }
         }
 
-        internal void EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)
+        internal bool EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)
         {
             if (WindowActive)
-                return;
+                return false;
 
             int openingHour = enterPlaceEvent.OpeningHour;
             int closingHour = enterPlaceEvent.ClosingHour == 0 ? 24 : enterPlaceEvent.ClosingHour;
@@ -5404,19 +5398,21 @@ namespace Ambermoon
                     case PlaceType.Enchanter:
                     case PlaceType.Inn:
                         // TODO
-                        break;
+                        ShowMessagePopup("Not implemented yet.");
+                        return true;
                     case PlaceType.Merchant:
                     case PlaceType.Library:
                         OpenMerchant(enterPlaceEvent.MerchantDataIndex, places.Entries[(int)enterPlaceEvent.PlaceIndex - 1].Name,
                             enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex],
                             enterPlaceEvent.PlaceType == PlaceType.Library);
-                        break;
+                        return true;
                     case PlaceType.FoodDealer:
                     case PlaceType.ShipDealer:
                     case PlaceType.HorseDealer:
                     case PlaceType.Blacksmith:
                         // TODO
-                        break;
+                        ShowMessagePopup("Not implemented yet.");
+                        return true;
                     default:
                         throw new AmbermoonException(ExceptionScope.Data, "Unknown place type.");
                 }
@@ -5425,6 +5421,11 @@ namespace Ambermoon
             {
                 string closedText = map.Texts[enterPlaceEvent.ClosedTextIndex];
                 ShowTextPopup(ProcessText(closedText), null);
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 

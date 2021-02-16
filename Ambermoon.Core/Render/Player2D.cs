@@ -37,13 +37,10 @@ namespace Ambermoon.Render
             if (!map.IsWorldMap)
             {
                 // Don't leave the map.
-                // Note that the player is 2 tiles tall in non-world maps
-                // and the position is the upper tile so he is allowed to
-                // move up to y = -1 and only down to y = map.Height - 1.
-                if (newX < 0 || newY < -1 || newX >= map.Width || newY >= map.Height - 1)
+                if (newX < 0 || newY < 0 || newX >= map.Width || newY >= map.Height)
                     canMove = false;
                 else
-                    tile = Map[(uint)newX, (uint)newY + 1];
+                    tile = Map[(uint)newX, (uint)newY];
             }
             else
             {
@@ -68,7 +65,7 @@ namespace Ambermoon.Render
                         canMove = false;
                     else if (travelType.BlockedByTeleport())
                     {
-                        // check if there is a teleport at the new position
+                        // check if there is a teleport event at the new position
                         var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
 
                         if (mapEventId > 0)
@@ -85,6 +82,34 @@ namespace Ambermoon.Render
 
                             if (HasTeleportEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
                                 canMove = false;
+                        }
+                    }
+
+                    if (canMove)
+                    {
+                        // check if there is a place event at the new position
+                        var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
+
+                        if (mapEventId > 0)
+                        {
+                            static bool HasPlaceEvent(Event ev)
+                            {
+                                if (ev.Type == EventType.EnterPlace)
+                                    return true;
+
+                                return ev.Next != null && HasPlaceEvent(ev.Next);
+                            }
+
+                            var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
+
+                            if (HasPlaceEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                            {
+                                if (EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
+                                    mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                                    return false;
+                                else
+                                    canMove = false;
+                            }
                         }
                     }
                 }
@@ -131,10 +156,8 @@ namespace Ambermoon.Render
 
                     if (travelType == TravelType.Walk)
                     {
-                        // We trigger with our lower half so add 1 to y in non-world maps.
                         Map.TriggerEvents(this, EventTrigger.Move, (uint)newX,
-                            (uint)newY + (oldMap.IsWorldMap ? 0u : 1u), mapManager, ticks,
-                            game.CurrentSavegame);
+                            (uint)newY, mapManager, ticks, game.CurrentSavegame);
                     }
 
                     if (oldMap == Map.Map) // might have changed by map change events
@@ -145,7 +168,7 @@ namespace Ambermoon.Render
                         player.Position.X = Position.X;
                         player.Position.Y = Position.Y;
 
-                        tile = Map[(uint)player.Position.X, (uint)player.Position.Y + (Map.Map.IsWorldMap ? 0u : 1u)];
+                        tile = Map[(uint)player.Position.X, (uint)player.Position.Y];
                         Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
 
                         game.PlayerMoved(false, lastPlayerPosition);
@@ -161,8 +184,7 @@ namespace Ambermoon.Render
                     if (travelType == TravelType.Walk)
                     {
                         Map.TriggerEvents(this, EventTrigger.Move, (uint)position.X,
-                            (uint)position.Y + (Map.Map.IsWorldMap ? 0u : 1u), mapManager, ticks,
-                            game.CurrentSavegame);
+                            (uint)position.Y, mapManager, ticks, game.CurrentSavegame);
                     }
 
                     if (Map.Map.Type == MapType.Map2D)
@@ -172,7 +194,7 @@ namespace Ambermoon.Render
 
                         // Note: For 3D maps the game/3D map will handle player position updating.
 
-                        tile = Map[(uint)player.Position.X, (uint)player.Position.Y + (Map.Map.IsWorldMap ? 0u : 1u)];
+                        tile = Map[(uint)player.Position.X, (uint)player.Position.Y];
                         Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
 
                         game.PlayerMoved(true);

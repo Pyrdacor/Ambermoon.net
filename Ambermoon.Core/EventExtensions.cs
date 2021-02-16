@@ -134,7 +134,8 @@ namespace Ambermoon
                     if (!(@event is EnterPlaceEvent enterPlaceEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid place event.");
 
-                    game.EnterPlace(map, enterPlaceEvent);
+                    if (!game.EnterPlace(map, enterPlaceEvent))
+                        aborted = true;
                     return null;
                 }
                 case EventType.Condition:

@@ -36,7 +36,7 @@ namespace Ambermoon
         public uint DayOfMonth { get; private set; }
         public uint Hour { get; private set; }
         public uint Minute { get; private set; }
-        public uint TimeSlot => Minute / 5;
+        public uint TimeSlot => (Hour * 60 + Minute) / 5;
 
         public Time()
         {
@@ -133,7 +133,7 @@ namespace Ambermoon
         public uint DayOfMonth => savegame.DayOfMonth;
         public uint Hour => savegame.Hour;
         public uint Minute => savegame.Minute;
-        public uint TimeSlot => savegame.Minute / 5;
+        public uint TimeSlot => (savegame.Hour * 60 + savegame.Minute) / 5;
 
         public SavegameTime(Savegame savegame)
         {

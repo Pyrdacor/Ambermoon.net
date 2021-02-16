@@ -132,7 +132,7 @@ namespace Ambermoon.Render
             if (position == mapCharacter.Position)
                 return true;
 
-            return cursor && mapCharacter.IsRealCharacter && position == new Position(mapCharacter.Position.X, mapCharacter.Position.Y + 1);
+            return cursor && mapCharacter.IsRealCharacter && position == new Position(mapCharacter.Position.X, mapCharacter.Position.Y - 1);
         }
 
         public bool TriggerEvents(IRenderPlayer player, EventTrigger trigger,
@@ -146,7 +146,7 @@ namespace Ambermoon.Render
                 {
                     if (TestCharacterInteraction(mapCharacter.Value, trigger != EventTrigger.Move, position) &&
                         mapCharacter.Value.Interact(trigger, this[(uint)mapCharacter.Value.Position.X,
-                            (uint)mapCharacter.Value.Position.Y + (mapCharacter.Value.IsRealCharacter ? 1u : 0u)].Type == Map.TileType.Bed))
+                            (uint)mapCharacter.Value.Position.Y].Type == Map.TileType.Bed))
                         return true;
                 }
             }
@@ -167,8 +167,6 @@ namespace Ambermoon.Render
             }
             else
             {
-                if (!Map.IsWorldMap)
-                    ++y;
                 return Map.TriggerEvents(game, trigger, x, y, ticks, savegame);
             }
         }

@@ -8,7 +8,7 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run on Windows and Linu
 
 Version | Windows 64bit | Linux 64bit | Windows 32bit
 --- | --- | --- | ---
-0.2.3 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.2.3beta/Ambermoon.net-Windows32Bit.zip)
+0.3.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.3.0beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.3.0beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.3.0beta/Ambermoon.net-Windows32Bit.zip)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow. \
 An up-to-date overview for planned releases and features can be found [here](https://github.com/Pyrdacor/Ambermoon.net/issues/63).
@@ -43,6 +43,7 @@ I also created another github project called [Ambermoon](https://github.com/Pyrd
 ![Main menu](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png "Main menu")
 ![Character creation](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/CharacterCreator.png "Character creation")
 ![Options](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Options.png "Options")
+![Map effects](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapEffects.png "Map effects")
 
 
 ## Controls

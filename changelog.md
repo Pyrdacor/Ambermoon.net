@@ -1,9 +1,15 @@
 # Changelog
 
+## 0.3.x beta - Places
+- Version [0.3.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.0beta): Added merchants and libraries
+
+## 0.2.x beta - Improve game testing
 - Version [0.2.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.3beta): Added cheats / console commands, bugfixing
 - Version [0.2.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.2beta): Added main menu, character creator, bugfixing
 - Version [0.2.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.1beta): Added save menu and option menu, resolution etc can now be changed ingame
 - Version [0.2.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.2.0beta): Added builtin game versions and version selector, improved configuration, bugfixing
+
+## 0.1.x beta - Battles
 - Version [0.1.8 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.8beta): Fixed combat backgrounds, added waiting functionality, bugfixing
 - Version [0.1.7 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.7beta): Added 2D monster interaction, bugfixing
 - Version [0.1.6 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.6beta): Added crosshair cursor functionality, 3D corner right-click functionality, bugfixing
@@ -14,8 +20,7 @@
 - Version [0.1.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.1beta): Fixed end battle crash, fixed monster death animation, added firepillar spell
 - Version [0.1.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.1.0beta): Many improvements to battles and UI, some spells do damage or have effects now
 
-The following versions are pre-beta versions:
-
+## Pre-beta versions:
 - Version [1.1.21](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.21): Added spell list, many additions and fixed regarding chests, inventory and battles, bugfixing
 - Version [1.1.20](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.20): Improved battle animations, added first test spell, fix flee logic
 - Version [1.1.19](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.19): Improvements, additions and fixes for battles

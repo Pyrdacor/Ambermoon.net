@@ -60,8 +60,7 @@ namespace Ambermoon.Render
             var position = characterReference.Positions[0];
 
             // The positions are stored 1-based.
-            // For 2-tile-height characters we go 1 up to draw it correctly.
-            return new Position(position.X - 1, position.Y - 1 - (characterReference.CharacterFlags.HasFlag(Flags.UseTileset) ? 0: 1));
+            return new Position(position.X - 1, position.Y - 1);
         }
 
         static Character2DAnimationInfo AnimationProvider(Game game, Map map, IMapManager mapManager, Map.CharacterReference characterReference)
@@ -135,15 +134,12 @@ namespace Ambermoon.Render
                 if (position == Position)
                     return false;
 
-                var collisionPosition = new Position(position.X, position.Y + (IsRealCharacter ? 1 : 0));
+                var collisionPosition = new Position(position.X, position.Y);
 
                 if (collisionPosition.X < 0 || collisionPosition.X >= map.Width)
                     return false;
 
-                if (collisionPosition.Y < 0)
-                    return false;
-
-                if (collisionPosition.Y >= map.Height - (IsRealCharacter ? 1 : 0))
+                if (collisionPosition.Y < 0 || collisionPosition.Y >= map.Height)
                     return false;
 
                 // TODO: is there a flag to block only NPC/Monster movement?
@@ -256,9 +252,6 @@ namespace Ambermoon.Render
                     // Walk a given path every day time slot
                     newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
                     newPosition.Offset(-1, -1); // positions are 1-based
-
-                    if (newPosition.Y != -1 && IsRealCharacter)
-                        --newPosition.Y;
                 }
             }
 
@@ -311,7 +304,7 @@ namespace Ambermoon.Render
             {
                 if (trigger == EventTrigger.Eye)
                 {
-                    game.ShowTextPopup(game.ProcessText(conversationPartner.Texts[0]), null);
+                    game.ShowMessagePopup(conversationPartner.Texts[0], null);
                     return true;
                 }
                 else if (trigger == EventTrigger.Mouth)
@@ -398,7 +391,7 @@ namespace Ambermoon.Render
 
         void ShowPopup(string text)
         {
-            game.ShowTextPopup(game.ProcessText(text), null);
+            game.ShowMessagePopup(text, null);
         }
     }
 }
