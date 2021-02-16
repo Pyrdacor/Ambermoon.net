@@ -2882,23 +2882,36 @@ namespace Ambermoon.UI
                             }
                             else
                             {
-                                if (!partyMember.CanTakeItems(itemManager, draggedItem.Item.Item) ||
-                                    game.HasPartyMemberFled(partyMember))
-                                    return false;
+                                bool droppedOnce = false;
 
-                                int remaining = game.DropItem(i, null, draggedItem.Item.Item);
-
-                                if (remaining == 0)
+                                while (true)
                                 {
-                                    draggedItem.Item.Destroy();
+                                    if (!partyMember.CanTakeItems(itemManager, draggedItem.Item.Item) ||
+                                        game.HasPartyMemberFled(partyMember))
+                                    {
+                                        if (droppedOnce)
+                                            break;
+                                        else
+                                            return false;
+                                    }
 
-                                    if (draggedItem.SourcePlayer == null && game.OpenStorage != null)
-                                        game.ItemRemovedFromStorage();
+                                    int remaining = game.DropItem(i, null, draggedItem.Item.Item);
 
-                                    DropItem();
+                                    if (remaining == 0)
+                                    {
+                                        draggedItem.Item.Destroy();
+
+                                        if (draggedItem.SourcePlayer == null && game.OpenStorage != null)
+                                            game.ItemRemovedFromStorage();
+
+                                        DropItem();
+                                        break;
+                                    }
+                                    else
+                                        draggedItem.Item.Update(false);
+
+                                    droppedOnce = true;
                                 }
-                                else
-                                    draggedItem.Item.Update(false);
                             }
                         }
                         else if (buttons == MouseButtons.Right)
