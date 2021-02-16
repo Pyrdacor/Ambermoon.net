@@ -13,6 +13,8 @@
         string GetLanguageName(Language language);
         string GetAilmentName(Ailment ailment);
         string GetSpellname(Spell spell);
+        string GetWorldName(World world);
+        string GetItemTypeName(ItemType itemType);
         string CharacterInfoHitPointsString { get; }
         string CharacterInfoSpellPointsString { get; }
         string CharacterInfoSpellLearningPointsString { get; }
@@ -25,7 +27,6 @@
         string CharacterInfoWeightString { get; }
         string CharacterInfoDamageString { get; }
         string CharacterInfoDefenseString { get; }
-        string GetWorldName(World world);
         string InventoryTitleString { get; }
         string AttributesHeaderString { get; }
         string AbilitiesHeaderString { get; }
@@ -35,6 +36,8 @@
         string GetAttributeUIName(Attribute attribute);
         string GetAbilityUIName(Ability ability);
         string OptionsHeader { get; }
+        string ClassesHeaderString { get; }
+        string GenderHeaderString { get; }
         string ChooseCharacter { get; }
         string ConfirmCharacter { get; }
         string LoadWhichSavegame { get; }
@@ -92,6 +95,11 @@
         string ChooseBattlePositions { get; }
         string WaitHowManyHours { get; }
         string CannotWaitBecauseOfNearbyMonsters { get; }
+        string ItemWeightDisplay { get; }
+        string ItemHandsDisplay { get; }
+        string ItemFingersDisplay { get; }
+        string ItemDamageDisplay { get; }
+        string ItemDefenseDisplay { get; }
 
         #region Battle messages
 

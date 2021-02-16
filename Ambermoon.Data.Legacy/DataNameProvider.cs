@@ -46,6 +46,7 @@
         public string GetRaceName(Race race) => executableData.RaceNames.Entries[race];
         public string GetSpellname(Spell spell) => executableData.SpellNames.Entries[spell];
         public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
+        public string GetItemTypeName(ItemType itemType) => executableData.ItemTypeNames.Entries[itemType];
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
         public string AbilitiesHeaderString => executableData.UITexts.Entries[UITextIndex.Abilities];
@@ -55,6 +56,8 @@
         public string GetAttributeUIName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
         public string GetAbilityUIName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
         public string OptionsHeader => executableData.Messages.GetEntry(Messages.Index.Options);
+        public string ClassesHeaderString => executableData.UITexts.Entries[UITextIndex.ClassHeader];
+        public string GenderHeaderString => executableData.UITexts.Entries[UITextIndex.Sex];
         public string ChooseCharacter => executableData.UITexts.Entries[UITextIndex.ChooseCharacter];
         public string ConfirmCharacter => executableData.Messages.GetEntry(Messages.Index.HappyWithCharacter);
         public string LoadWhichSavegame => executableData.Messages.GetEntry(Messages.Index.LoadWhichSavegame);
@@ -115,6 +118,11 @@
         public string ChooseBattlePositions => executableData.Messages.GetEntry(Messages.Index.EnterBattlePositions);
         public string WaitHowManyHours => executableData.Messages.GetEntry(Messages.Index.WaitHowManyHours);
         public string CannotWaitBecauseOfNearbyMonsters => executableData.Messages.GetEntry(Messages.Index.WaitingIsTooDangerous);
+        public string ItemWeightDisplay => executableData.UITexts.Entries[UITextIndex.WeightGramDisplay];
+        public string ItemHandsDisplay => executableData.UITexts.Entries[UITextIndex.HandsDisplay];
+        public string ItemFingersDisplay => executableData.UITexts.Entries[UITextIndex.FingersDisplay];
+        public string ItemDamageDisplay => executableData.UITexts.Entries[UITextIndex.DamageDisplay];
+        public string ItemDefenseDisplay => executableData.UITexts.Entries[UITextIndex.DefenseDisplay];
 
         #region Battle messages
 

@@ -1258,7 +1258,7 @@ namespace Ambermoon.UI
         }
 
         internal Popup OpenAmountInputBox(string message, uint imageIndex, string name, uint maxAmount,
-            Action<uint> submitAction)
+            Action<uint> submitAction, Action abortAction = null)
         {
             ClosePopup(false);
             activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
@@ -1315,7 +1315,11 @@ namespace Ambermoon.UI
             void Submit()
             {
                 if (input.Value == 0)
+                {
+                    if (abortAction != null)
+                        abortAction();
                     ClosePopup(false);
+                }
                 else
                     submitAction?.Invoke(input.Value);
             }
@@ -1656,8 +1660,8 @@ namespace Ambermoon.UI
                 questionYesButton = null;
                 questionNoButton = null;
                 ChestText = null;
-                answerEvent?.Invoke(answer);
                 game.InputEnable = true;
+                answerEvent?.Invoke(answer);
             }
         }
 

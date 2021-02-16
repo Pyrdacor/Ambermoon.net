@@ -5074,7 +5074,11 @@ namespace Ambermoon
 
                     if (merchant.AvailableGold < item.Price)
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoneyToBuy, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoneyToBuy, () =>
+                        {
+                            TrapMouse(itemArea);
+                            SetupRightClickAbort();
+                        }, false);
                         return;
                     }
 
@@ -5173,7 +5177,13 @@ namespace Ambermoon
                     if (itemSlot.Amount > 1)
                     {
                         layout.OpenAmountInputBox(DataNameProvider.BuyHowMuchItems,
-                            item.GraphicIndex, item.Name, Util.Min((uint)itemSlot.Amount, merchant.AvailableGold / item.Price, GetMaxItemsToBuy(item.Index)), Buy);
+                            item.GraphicIndex, item.Name, Util.Min((uint)itemSlot.Amount, merchant.AvailableGold / item.Price, GetMaxItemsToBuy(item.Index)), Buy,
+                            () =>
+                            {
+                                TrapMouse(itemArea);
+                                SetupRightClickAbort();
+                            }
+                        );
                     }
                     else
                     {
@@ -5186,7 +5196,11 @@ namespace Ambermoon
 
                     if (!item.Flags.HasFlag(ItemFlags.Sellable) || item.Price < 9) // TODO: Don't know if this is right
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.NotInterestedInItemMerchant, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.NotInterestedInItemMerchant, () =>
+                        {
+                            TrapMouse(itemArea);
+                            SetupRightClickAbort();
+                        }, false);
                         return;
                     }
 
@@ -5233,14 +5247,23 @@ namespace Ambermoon
                             if (!merchant.Slots.ToList().Any(s => s.Empty))
                                 ShowBoughtItems();
                             else
+                            {
+                                TrapMouse(itemArea);
                                 SetupRightClickAbort();
+                            }
                         }, TextAlign.Left);
                     }
 
                     if (itemSlot.Amount > 1)
                     {
                         layout.OpenAmountInputBox(DataNameProvider.SellHowMuchItems,
-                            item.GraphicIndex, item.Name, Util.Min((uint)itemSlot.Amount, GetMaxItemsToSell(item.Index)), Sell);
+                            item.GraphicIndex, item.Name, Util.Min((uint)itemSlot.Amount, GetMaxItemsToSell(item.Index)), Sell,
+                            () =>
+                            {
+                                TrapMouse(itemArea);
+                                SetupRightClickAbort();
+                            }
+                        );
                     }
                     else
                     {
@@ -5250,7 +5273,13 @@ namespace Ambermoon
                 else if (mode == 4) // examine
                 {
                     itemGrid.HideTooltip();
-                    // TODO
+                    nextClickHandler = null;
+                    UntrapMouse();
+                    ShowItemPopup(itemSlot, () =>
+                    {
+                        TrapMouse(itemArea);
+                        SetupRightClickAbort();
+                    });
                 }
                 else
                 {
@@ -5273,6 +5302,65 @@ namespace Ambermoon
 
             void UpdateGoldDisplay()
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
+        }
+
+        void ShowItemPopup(ItemSlot itemSlot, Action closeAction)
+        {
+            var item = ItemManager.GetItem(itemSlot.ItemIndex);
+            var popup = layout.OpenPopup(new Position(16, 84), 18, 6, true, false);
+            var itemArea = new Rect(31, 99, 18, 18);
+            popup.AddSunkenBox(itemArea);
+            popup.AddItemImage(itemArea.CreateModified(1, 1, -2, -2), item.GraphicIndex);
+            popup.AddText(new Position(51, 101), item.Name, TextColor.White);
+            popup.AddText(new Position(51, 109), DataNameProvider.GetItemTypeName(item.Type), TextColor.White);
+            popup.AddText(new Position(32, 120), string.Format(DataNameProvider.ItemWeightDisplay.Replace("{0:00000}", " {0:0}"), item.Weight), TextColor.White);
+            popup.AddText(new Position(32, 130), string.Format(DataNameProvider.ItemHandsDisplay, item.NumberOfHands), TextColor.White);
+            popup.AddText(new Position(32, 138), string.Format(DataNameProvider.ItemFingersDisplay, item.NumberOfFingers), TextColor.White);
+            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+0;-#")), TextColor.White);
+            popup.AddText(new Position(32, 154), string.Format(DataNameProvider.ItemDefenseDisplay.Replace("000", "0"), item.Defense), TextColor.White);
+
+            popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, TextColor.LightGray);
+            int column = 0;
+            int row = 0;
+            foreach (var @class in Enum.GetValues<Class>())
+            {
+                var classFlag = (ClassFlag)(1 << (int)@class);
+
+                if (item.Classes.HasFlag(classFlag))
+                {
+                    popup.AddText(new Position(177 + column * 54, 107 + row * Global.GlyphLineHeight), DataNameProvider.GetClassName(@class), TextColor.White);
+
+                    if (++row == 5)
+                    {
+                        ++column;
+                        row = 0;
+                    }
+                }
+            }
+            popup.AddText(new Position(177, 146), DataNameProvider.GenderHeaderString, TextColor.LightGray);
+            popup.AddText(new Position(177, 154), DataNameProvider.GetGenderName(item.Genders), TextColor.White);
+
+            // This can only be closed with right click
+            nextClickHandler = button =>
+            {
+                if (button == MouseButtons.Right)
+                {
+                    ClosePopup();
+                    // Note: If we call closeAction directly any new nextClickAction
+                    // assignment will be lost when we return true below because the
+                    // nextClickHandler processing will set it to null then afterwards.
+                    // With a timed event of 1 ms it will executed in the next update
+                    // cycle after nextClickAction was nulled.
+                    AddTimedEvent(TimeSpan.FromMilliseconds(1), closeAction);
+                    return true;
+                }
+                return false;
+            };
+
+            if (itemSlot.Flags.HasFlag(ItemSlotFlags.Identified))
+            {
+                // TODO: Show eye button
+            }
         }
 
         internal void EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)
