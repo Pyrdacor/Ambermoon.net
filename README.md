@@ -44,6 +44,7 @@ I also created another github project called [Ambermoon](https://github.com/Pyrd
 ![Character creation](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/CharacterCreator.png "Character creation")
 ![Options](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Options.png "Options")
 ![Map effects](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapEffects.png "Map effects")
+![Merchant](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Merchant.png "Merchant")
 
 
 ## Controls
