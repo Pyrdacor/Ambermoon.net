@@ -84,6 +84,9 @@ namespace Ambermoon.Data
             if (slot == null || slot.Amount < amount)
                 throw new AmbermoonException(ExceptionScope.Application, "Taking more items from a merchant slot than he has.");
 
+            if (slot.Amount > 99) // unlimited item slot
+                return;
+
             slot.Amount -= (int)amount;
 
             if (slot.Amount == 0)
