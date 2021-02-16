@@ -4911,7 +4911,13 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Merchant, merchantIndex, buyText);
-                ShowMerchantWindow(merchant, showWelcome ? DataNameProvider.WelcomeMerchant : null, buyText, Picture80x80.Merchant1);
+                ShowMerchantWindow(merchant, showWelcome ? DataNameProvider.WelcomeMerchant : null, buyText, Map.World switch
+                {
+                    World.Lyramion => Picture80x80.Merchant,
+                    World.ForestMoon => Picture80x80.DwarfMerchant,
+                    World.Morag => Picture80x80.MoragMerchant,
+                    _ => Picture80x80.Merchant
+                });
             });
         }
 
