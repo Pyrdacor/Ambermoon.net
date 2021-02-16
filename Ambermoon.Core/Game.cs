@@ -61,6 +61,7 @@ namespace Ambermoon
                     4, // Magical disc
                     16, // Eagle
                     8, // Fly
+                    4, // Swim
                     10, // Witch broom
                     8, // Sand lizard
                     8  // Sand ship
@@ -219,7 +220,7 @@ namespace Ambermoon
         internal int? CurrentInventoryIndex { get; private set; } = null;
         PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
-        public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
+        public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position + new Position(0, !is3D && !Map.IsWorldMap ? 1 : 0);
         internal bool MonsterSeesPlayer { get; set; } = false;
         bool monstersCanMoveImmediately = false; // this is set when the player just moved so that monsters who see the player can instantly move (2D only)
         Position lastPlayerPosition = null;
@@ -921,6 +922,8 @@ namespace Ambermoon
                 Start2D(map, savegame.CurrentMapX - 1, savegame.CurrentMapY - 1 - (map.IsWorldMap ? 0u : 1u), savegame.CharacterDirection, true);
             player.Position.X = (int)savegame.CurrentMapX - 1;
             player.Position.Y = (int)savegame.CurrentMapY - 1;
+            if (!is3D && !Map.IsWorldMap)
+                --player.Position.Y;
             TravelType = savegame.TravelType; // Yes this is necessary twice.
 
             ShowMap(true);
@@ -931,7 +934,7 @@ namespace Ambermoon
 
             // Trigger events after game load
             TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
-                (uint)player.Position.Y + (Map.IsWorldMap || is3D ? 0u : 1u));
+                (uint)player.Position.Y);
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
@@ -2841,7 +2844,8 @@ namespace Ambermoon
 
                     if (damage != 0)
                     {
-                        // TODO: show damage splash
+                        ShowPlayerDamage(i, damage);
+
                         if (!Godmode)
                         {
                             partyMember.Damage(damage);
@@ -4902,7 +4906,7 @@ namespace Ambermoon
             // TODO
         }
 
-        void OpenMerchant(uint merchantIndex, string buyText, bool showWelcome = true)
+        void OpenMerchant(uint merchantIndex, string placeName, string buyText, bool isLibrary, bool showWelcome = true)
         {
             var merchant = GetMerchant(merchantIndex);
 
@@ -4910,21 +4914,27 @@ namespace Ambermoon
             {
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Merchant, merchantIndex, buyText);
-                ShowMerchantWindow(merchant, showWelcome ? DataNameProvider.WelcomeMerchant : null, buyText, Map.World switch
-                {
-                    World.Lyramion => Picture80x80.Merchant,
-                    World.ForestMoon => Picture80x80.DwarfMerchant,
-                    World.Morag => Picture80x80.MoragMerchant,
-                    _ => Picture80x80.Merchant
-                });
+                SetWindow(Window.Merchant, merchantIndex, placeName, buyText, isLibrary);
+                ShowMerchantWindow(merchant, placeName, showWelcome ? isLibrary ? DataNameProvider.WelcomeMagician :
+                    DataNameProvider.WelcomeMerchant : null, buyText,
+                    isLibrary ? Picture80x80.Librarian : Map.World switch
+                    {
+                        World.Lyramion => Picture80x80.Merchant,
+                        World.ForestMoon => Picture80x80.DwarfMerchant,
+                        World.Morag => Picture80x80.MoragMerchant,
+                        _ => Picture80x80.Merchant
+                    },
+                !isLibrary);
             });
         }
 
-        void ShowMerchantWindow(Merchant merchant, string initialText, string buyText, Picture80x80 picture)
+        void ShowMerchantWindow(Merchant merchant, string placeName, string initialText,
+            string buyText, Picture80x80 picture, bool buysGoods)
         {
             OpenStorage = merchant;
             layout.SetLayout(LayoutType.Items);
+            layout.AddText(new Rect(120, 37, 29 * Global.GlyphWidth, Global.GlyphLineHeight),
+                renderView.TextProcessor.CreateText(placeName), TextColor.White);
             layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
@@ -4976,15 +4986,22 @@ namespace Ambermoon
             // Buy button
             AssignButton(0, true, DataNameProvider.BuyWhichItem, TextAlign.Center, null);
             // Sell button
-            AssignButton(3, false, DataNameProvider.SellWhichItem, TextAlign.Left, () =>
+            if (buysGoods)
             {
-                if (!merchant.HasEmptySlots())
+                AssignButton(3, false, DataNameProvider.SellWhichItem, TextAlign.Left, () =>
                 {
-                    layout.ShowClickChestMessage(DataNameProvider.MerchantFull, null, false);
-                    return false;
-                }
-                return true;
-            });
+                    if (!merchant.HasEmptySlots())
+                    {
+                        layout.ShowClickChestMessage(DataNameProvider.MerchantFull, null, false);
+                        return false;
+                    }
+                    return true;
+                });
+            }
+            else
+            {
+                layout.EnableButton(3, false);
+            }
             // Examine button
             AssignButton(4, true, DataNameProvider.ExamineWhichItemMerchant, TextAlign.Left, null);
             // Exit button
@@ -5023,7 +5040,7 @@ namespace Ambermoon
                 // you would have to buy some of this items before.
                 layout.EnableButton(0, boughtItems.Any(slot => slot == null || slot.Empty) && merchant.AvailableGold > 0);
                 bool anyItemsToSell = merchant.Slots.ToList().Any(s => !s.Empty);
-                layout.EnableButton(3, anyItemsToSell);
+                layout.EnableButton(3, anyItemsToSell && buysGoods);
                 layout.EnableButton(4, anyItemsToSell);
             }
 
@@ -5389,11 +5406,12 @@ namespace Ambermoon
                         // TODO
                         break;
                     case PlaceType.Merchant:
-                        OpenMerchant(enterPlaceEvent.MerchantDataIndex,
-                            enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                    case PlaceType.Library:
+                        OpenMerchant(enterPlaceEvent.MerchantDataIndex, places.Entries[(int)enterPlaceEvent.PlaceIndex - 1].Name,
+                            enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex],
+                            enterPlaceEvent.PlaceType == PlaceType.Library);
                         break;
                     case PlaceType.FoodDealer:
-                    case PlaceType.Library:
                     case PlaceType.ShipDealer:
                     case PlaceType.HorseDealer:
                     case PlaceType.Blacksmith:
@@ -6121,8 +6139,10 @@ namespace Ambermoon
                 case Window.Merchant:
                 {
                     uint merchantIndex = (uint)currentWindow.WindowParameters[0];
-                    string buyText = (string)currentWindow.WindowParameters[1];
-                    OpenMerchant(merchantIndex, buyText, false);
+                    string placeName = (string)currentWindow.WindowParameters[1];
+                    string buyText = (string)currentWindow.WindowParameters[2];
+                    bool isLibrary = (bool)currentWindow.WindowParameters[3];
+                    OpenMerchant(merchantIndex, placeName, buyText, isLibrary, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

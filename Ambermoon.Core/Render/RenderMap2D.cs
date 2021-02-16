@@ -141,7 +141,7 @@ namespace Ambermoon.Render
             if (trigger != EventTrigger.Always)
             {
                 // First check character interaction
-                var position = new Position((int)x, trigger == EventTrigger.Move && !Map.IsWorldMap ? (int)y - 1 : (int)y);
+                var position = new Position((int)x, (int)y);
                 foreach (var mapCharacter in mapCharacters.ToList())
                 {
                     if (TestCharacterInteraction(mapCharacter.Value, trigger != EventTrigger.Move, position) &&
@@ -167,6 +167,8 @@ namespace Ambermoon.Render
             }
             else
             {
+                if (!Map.IsWorldMap)
+                    ++y;
                 return Map.TriggerEvents(game, trigger, x, y, ticks, savegame);
             }
         }
