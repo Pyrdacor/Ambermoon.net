@@ -191,6 +191,11 @@
         string NotEnoughMoneyToBuy { get; }
         string NotInterestedInItemMerchant { get; }
         string WantToGoWithoutItemsMerchant { get; }
+        string TrainHowOften { get; }
+        string PriceForTraining { get; }
+        string IncreasedAfterTraining { get; }
+        string NotEnoughTrainingPoints { get; }
+        string NotEnoughMoney { get; }
 
         #endregion
 

@@ -1,10 +1,11 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Linq;
 
 namespace Ambermoon.Data
 {
-    public class Merchant : IItemStorage
+    public class Merchant : IItemStorage, IPlace
     {
         public const int SlotsPerRow = 6;
         public const int SlotRows = 4;
@@ -12,8 +13,9 @@ namespace Ambermoon.Data
         public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
         public bool AllowsItemDrop { get; set; } = false;
         public uint AvailableGold { get; set; } = 0;
+        public PlaceType PlaceType { get; set; } = PlaceType.Merchant;
 
-        private Merchant()
+        public Merchant()
         {
 
         }

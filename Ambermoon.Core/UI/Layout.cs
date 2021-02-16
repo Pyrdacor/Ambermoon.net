@@ -1178,15 +1178,35 @@ namespace Ambermoon.UI
                     }
                     else if (game.OpenStorage is Merchant merchant)
                     {
-                        buttonGrid.SetButton(0, ButtonType.BuyItem, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(3, ButtonType.SellItem, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(4, ButtonType.ViewItem, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                        switch (merchant.PlaceType)
+                        {
+                            case PlaceType.Merchant:
+                            case PlaceType.Library:
+                                buttonGrid.SetButton(0, ButtonType.BuyItem, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.SellItem, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.ViewItem, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                                break;
+                            case PlaceType.Trainer:
+                                buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.Train, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                                break;
+                            default:
+                                // TODO
+                                break;
+                        }
                     }
                     break;
                 }
@@ -1257,7 +1277,7 @@ namespace Ambermoon.UI
             FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, displayLayer);
         }
 
-        internal Popup OpenAmountInputBox(string message, uint imageIndex, string name, uint maxAmount,
+        internal Popup OpenAmountInputBox(string message, uint? imageIndex, string name, uint maxAmount,
             Action<uint> submitAction, Action abortAction = null)
         {
             ClosePopup(false);
@@ -1266,14 +1286,20 @@ namespace Ambermoon.UI
                 DisableButtons = true,
                 CloseOnClick = false
             };
-            // Item display (also gold or food)
-            var itemArea = new Rect(79, 79, 18, 18);
-            activePopup.AddSunkenBox(itemArea);
-            activePopup.AddItemImage(itemArea.CreateModified(1, 1, -2, -2), imageIndex);
-            // Item name display (also gold or food)
-            var itemNameArea = new Rect(99, 82, 125, 10);
-            activePopup.AddSunkenBox(itemNameArea);
-            activePopup.AddText(itemNameArea.CreateModified(1, 2, -1, -3), name, TextColor.Red, TextAlign.Center);
+            if (imageIndex != null)
+            {
+                // Item display (also gold or food)
+                var itemArea = new Rect(79, 79, 18, 18);
+                activePopup.AddSunkenBox(itemArea);
+                activePopup.AddItemImage(itemArea.CreateModified(1, 1, -2, -2), imageIndex.Value);
+            }
+            if (name != null)
+            {
+                // Item name display (also gold or food)
+                var itemNameArea = new Rect(99, 82, 125, 10);
+                activePopup.AddSunkenBox(itemNameArea);
+                activePopup.AddText(itemNameArea.CreateModified(1, 2, -1, -3), name, TextColor.Red, TextAlign.Center);
+            }
             // Message display
             var messageArea = new Rect(79, 98, 145, 10);
             activePopup.AddSunkenBox(messageArea);
@@ -1636,7 +1662,7 @@ namespace Ambermoon.UI
             game.InputEnable = false;
         }
 
-        internal void ShowMerchantQuestion(string message, Action<bool> answerEvent, TextAlign textAlign = TextAlign.Center)
+        internal void ShowPlaceQuestion(string message, Action<bool> answerEvent, TextAlign textAlign = TextAlign.Center)
         {
             var bounds = new Rect(114, 46, 189, 28);
             ChestText?.Destroy();

@@ -214,6 +214,11 @@
         public string NotEnoughMoneyToBuy => executableData.Messages.GetEntry(Messages.Index.NotEnoughMoney);
         public string NotInterestedInItemMerchant => executableData.Messages.GetEntry(Messages.Index.NotInterestedInTrinket);
         public string WantToGoWithoutItemsMerchant => executableData.Messages.GetEntry(Messages.Index.LeaveBoughtGoods);
+        public string TrainHowOften => executableData.Messages.GetEntry(Messages.Index.TrainHowOften);
+        public string PriceForTraining => executableData.Messages.GetEntry(Messages.Index.PriceForTraining);
+        public string IncreasedAfterTraining => executableData.Messages.GetEntry(Messages.Index.IncreasedAfterTraining);
+        public string NotEnoughTrainingPoints => executableData.Messages.GetEntry(Messages.Index.NotEnoughTrainingPoints);
+        public string NotEnoughMoney => executableData.Messages.GetEntry(Messages.Index.NotEnoughMoney);
 
         #endregion
     }

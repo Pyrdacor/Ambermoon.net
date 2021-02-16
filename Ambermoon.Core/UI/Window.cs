@@ -15,6 +15,7 @@ namespace Ambermoon.UI
         Battle,
         BattleLoot,
         BattlePositions,
+        Trainer,
         // TODO ...
     }
 
