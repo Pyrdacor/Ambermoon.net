@@ -4,10 +4,36 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data
 {
-    public interface IPlace
+    public interface IPlace : IItemStorage
     {
+        string Name { get; }
         uint AvailableGold { get; set; }
-        PlaceType PlaceType { get; set; }
+        PlaceType PlaceType { get; }
+    }
+
+    public abstract class NonItemPlace : IPlace
+    {
+        readonly Place place;
+
+        protected NonItemPlace(Place place)
+        {
+            this.place = place;
+        }
+
+        public void ResetItem(int slot, ItemSlot item) { }
+        public ItemSlot GetSlot(int slot) => null;
+        private protected int GetWord(int offset) => place.GetWord(offset);
+
+        public ItemSlot[,] Slots { get; } = new ItemSlot[6, 2];
+        public bool AllowsItemDrop
+        {
+            get => false;
+            set { }
+        }
+
+        public string Name => place.Name;
+        public uint AvailableGold { get; set; }
+        public abstract PlaceType PlaceType { get; }
     }
 
     public class Place
@@ -15,7 +41,7 @@ namespace Ambermoon.Data
         public byte[] Data { get; set; } // 32 bytes
         public string Name { get; set; }
 
-        protected int GetWord(int offset) => (Data[offset] << 8) | Data[offset + 1];
+        internal int GetWord(int offset) => (Data[offset] << 8) | Data[offset + 1];
     }
 
     public class Places
@@ -36,25 +62,28 @@ namespace Ambermoon.Data
             return places;
         }
 
-        public class Trainer : Place
+        public class Trainer : NonItemPlace
         {
             public Trainer(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
+            public override PlaceType PlaceType => PlaceType.Trainer;
             public Ability Ability => (Ability)GetWord(0);
             public int Cost => GetWord(2);
         }
 
-        public class Healer : Place
+        public class Healer : NonItemPlace
         {
             public Healer(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
+
+            public override PlaceType PlaceType => PlaceType.Healer;
 
             // TODO
             // Most likely 11 words for the costs of all healable ailments
@@ -63,82 +92,71 @@ namespace Ambermoon.Data
             // And then maybe a word for the price of removing a curse?
         }
 
-        public class Sage : Place
+        public class Sage : NonItemPlace
         {
             public Sage(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
+            public override PlaceType PlaceType => PlaceType.Sage;
             public int Cost => GetWord(0);
         }
 
-        public class Enchanter : Place
+        public class Enchanter : NonItemPlace
         {
             public Enchanter(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
+            public override PlaceType PlaceType => PlaceType.Enchanter;
             public int Cost => GetWord(0);
         }
 
-        public class Inn : Place
+        public class Inn : NonItemPlace
         {
             public Inn(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
             // TODO
+            public override PlaceType PlaceType => PlaceType.Inn;
             public int Cost => GetWord(0);
             public int Healing => GetWord(8); // in percent
         }
 
-        public class Merchant : Place
-        {
-            public Merchant(Place place)
-            {
-                Data = place.Data;
-                Name = place.Name;
-            }
-
-            // No data
-        }
-
-        public class FoodDealer : Place
+        public class FoodDealer : NonItemPlace
         {
             public FoodDealer(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
+            public uint AvailableFood { get; set; }
+            public override PlaceType PlaceType => PlaceType.FoodDealer;
             public int Cost => GetWord(0);
         }
 
-        public class Library : Place
+        public class Library : Merchant
         {
-            public Library(Place place)
-            {
-                Data = place.Data;
-                Name = place.Name;
-            }
-
-            // No data
+            public override PlaceType PlaceType => PlaceType.Library;
         }
 
-        public class ShipDealer : Place
+        public class ShipDealer : NonItemPlace
         {
             public ShipDealer(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
+            public override PlaceType PlaceType => PlaceType.ShipDealer;
             public int Cost => GetWord(0);
             public int SpawnX => GetWord(2);
             public int SpawnY => GetWord(4);
@@ -146,14 +164,15 @@ namespace Ambermoon.Data
             public StationaryImage StationaryImage => (StationaryImage)GetWord(8);
         }
 
-        public class HorseDealer : Place
+        public class HorseDealer : NonItemPlace
         {
             public HorseDealer(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
+            public override PlaceType PlaceType => PlaceType.HorseDealer;
             public int Cost => GetWord(0);
             public int SpawnX => GetWord(2);
             public int SpawnY => GetWord(4);
@@ -161,14 +180,15 @@ namespace Ambermoon.Data
             public StationaryImage StationaryImage => (StationaryImage)GetWord(8);
         }
 
-        public class Blacksmith : Place
+        public class Blacksmith : NonItemPlace
         {
             public Blacksmith(Place place)
+                : base(place)
             {
-                Data = place.Data;
-                Name = place.Name;
+
             }
 
+            public override PlaceType PlaceType => PlaceType.Blacksmith;
             public int Cost => GetWord(0);
         }
     }

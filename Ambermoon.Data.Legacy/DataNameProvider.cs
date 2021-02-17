@@ -88,6 +88,7 @@
         public string ItemCannotBeUsedHere => executableData.Messages.GetEntry(Messages.Index.ItemCannotBeUsedHere);
         public string CannotUseBrokenItems => executableData.Messages.GetEntry(Messages.Index.CannotUseBrokenItems);
         public string WhichItemToUseMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToUse);
+        public string WhichItemToExamineMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToExamine);
         public string WhichItemToDropMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToDrop);
         public string WhichItemToStoreMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToPutInChest);
         public string GoldName => executableData.UITexts.Entries[UITextIndex.Gold];
@@ -207,7 +208,7 @@
         public string ThisWillCost => executableData.Messages.GetEntry(Messages.Index.ThisWillCost);
         public string ForThisIllGiveYou => executableData.Messages.GetEntry(Messages.Index.ForThisIllGiveYou);
         public string AgreeOnPrice => executableData.Messages.GetEntry(Messages.Index.AgreeOnPrice);
-        public string AgreeOnFoodPrice => executableData.Messages.GetEntry(Messages.Index.AgreeOnFoodPrice);
+        public string OneFoodCosts => executableData.Messages.GetEntry(Messages.Index.AgreeOnFoodPrice);
         public string MerchantFull => executableData.Messages.GetEntry(Messages.Index.CannotBuyAnymore);
         public string BuyHowMuchItems => executableData.Messages.GetEntry(Messages.Index.BuyHowMany);
         public string SellHowMuchItems => executableData.Messages.GetEntry(Messages.Index.SellHowMany);
@@ -219,6 +220,11 @@
         public string IncreasedAfterTraining => executableData.Messages.GetEntry(Messages.Index.IncreasedAfterTraining);
         public string NotEnoughTrainingPoints => executableData.Messages.GetEntry(Messages.Index.NotEnoughTrainingPoints);
         public string NotEnoughMoney => executableData.Messages.GetEntry(Messages.Index.NotEnoughMoney);
+        public string BuyHowMuchFood => executableData.Messages.GetEntry(Messages.Index.BuyHowMuchFood);
+        public string FoodDividedEqually => executableData.Messages.GetEntry(Messages.Index.FoodDividedEqually);
+        public string FoodLeftAfterDividing => executableData.Messages.GetEntry(Messages.Index.FoodLeftAfterDividing);
+        public string WantToLeaveRestOfFood => executableData.Messages.GetEntry(Messages.Index.WantToLeaveRestOfFood);
+        public string PriceOfFood => executableData.Messages.GetEntry(Messages.Index.PriceOfFood);
 
         #endregion
     }

@@ -2401,7 +2401,7 @@ namespace Ambermoon
                 characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
                     string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), TextColor.White, TextAlign.Center));
-                var displayGold = OpenStorage is Merchant ? 0 : character.Gold;
+                var displayGold = OpenStorage is IPlace ? 0 : character.Gold;
                 characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, displayGold, character.Food),
                     TextColor.White, TextAlign.Center));
@@ -4901,9 +4901,149 @@ namespace Ambermoon
             // TODO
         }
 
-        void OpenTrainer(string placeName, uint price, Ability ability, bool showWelcome = true)
+        internal uint DistributeFood(uint food)
         {
-            var trainer = new Merchant { PlaceType = PlaceType.Trainer };
+            var partyMembers = PartyMembers.ToList();
+
+            while (food != 0)
+            {
+                int numTargetPlayers = partyMembers.Count;
+                uint foodPerPlayer = food / (uint)numTargetPlayers;
+                bool anyCouldTake = false;
+
+                if (foodPerPlayer == 0)
+                {
+                    numTargetPlayers = (int)food;
+                    foodPerPlayer = 1;
+                }
+
+                foreach (var partyMember in partyMembers)
+                {
+                    uint foodToTake = Math.Min(partyMember.MaxFoodToTake, foodPerPlayer);
+                    food -= foodToTake;
+                    partyMember.Food += (ushort)foodToTake;
+                    partyMember.TotalWeight += foodToTake * 250;
+
+                    if (foodToTake != 0)
+                    {
+                        anyCouldTake = true;
+
+                        if (--numTargetPlayers == 0)
+                            break;
+                    }
+                }
+
+                if (!anyCouldTake)
+                    return food;
+            }
+
+            return food;
+        }
+
+        void OpenFoodDealer(Places.FoodDealer foodDealer, bool showWelcome = true)
+        {
+            Action updatePartyGold = null;
+
+            void SetupFoodDealer(Action updateGold)
+            {
+                updatePartyGold = updateGold;
+            }
+
+            void UpdateButtons()
+            {
+                layout.EnableButton(3, foodDealer.AvailableGold >= foodDealer.Cost);
+                layout.EnableButton(4, foodDealer.AvailableFood > 0);
+                layout.EnableButton(5, foodDealer.AvailableFood > 0);
+            }
+
+            void ShowDefaultMessage()
+            {
+                layout.ShowChestMessage(string.Format(DataNameProvider.OneFoodCosts, foodDealer.Cost), TextAlign.Center);
+            }
+
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.FoodDealer, foodDealer);
+                ShowPlaceWindow(foodDealer.Name, showWelcome ? DataNameProvider.WelcomeFoodDealer : null,
+                    Map.World switch
+                    {
+                        World.Lyramion => Picture80x80.Merchant,
+                        World.ForestMoon => Picture80x80.DwarfMerchant,
+                        World.Morag => Picture80x80.MoragMerchant,
+                        _ => Picture80x80.Merchant
+                    }, foodDealer, SetupFoodDealer, null,
+                    () => foodDealer.AvailableFood == 0 ? null : DataNameProvider.WantToLeaveRestOfFood,
+                    () => InputEnable = true);
+                // Buy food button
+                layout.AttachEventToButton(3, () =>
+                {
+                    layout.OpenAmountInputBox(DataNameProvider.BuyHowMuchFood, 109, DataNameProvider.FoodName,
+                        Math.Min(99, foodDealer.AvailableGold / (uint)foodDealer.Cost), amount =>
+                    {
+                        ClosePopup();
+                        layout.ShowPlaceQuestion($"{DataNameProvider.PriceOfFood}{amount * foodDealer.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                        {
+                            if (answer) // yes
+                            {
+                                foodDealer.AvailableGold -= amount * (uint)foodDealer.Cost;
+                                foodDealer.AvailableFood += amount;
+                                updatePartyGold?.Invoke();
+                                UpdateFoodDisplay();
+                                UpdateButtons();
+                            }
+                            ShowDefaultMessage();
+                        }, TextAlign.Left);
+                    }, () => { ClosePopup(); ShowDefaultMessage(); });
+                });
+                // Distribute food button
+                layout.AttachEventToButton(4, () =>
+                {
+                    foodDealer.AvailableFood = DistributeFood(foodDealer.AvailableFood);
+                    UpdateFoodDisplay();
+                    UpdateButtons();
+
+                    layout.ShowClickChestMessage(foodDealer.AvailableFood == 0
+                        ? DataNameProvider.FoodDividedEqually : DataNameProvider.FoodLeftAfterDividing,
+                        ShowDefaultMessage, false);
+                });
+                // Give food button
+                layout.AttachEventToButton(5, () =>
+                {
+                    layout.GiveFood(foodDealer.AvailableFood, food =>
+                    {
+                        foodDealer.AvailableFood -= food;
+                        UpdateFoodDisplay();
+                        UpdateButtons();
+                        UntrapMouse();
+                        ExecuteNextUpdateCycle(ShowDefaultMessage);
+                    }, () => layout.ShowChestMessage(DataNameProvider.GiveToWhom), ShowDefaultMessage);
+                });
+                void UpdateFoodDisplay()
+                {
+                    if (foodDealer.AvailableFood > 0)
+                    {
+                        ShowTextPanel(CharacterInfo.ChestFood, true,
+                            $"{DataNameProvider.FoodName}^{foodDealer.AvailableFood}", new Rect(260, 104, 43, 15));
+                    }
+                    else
+                    {
+                        HideTextPanel(CharacterInfo.ChestFood);
+                    }
+                }
+                UpdateButtons();
+                ShowDefaultMessage();
+            });
+        }
+
+        void ExecuteNextUpdateCycle(Action action)
+        {
+            AddTimedEvent(TimeSpan.FromMilliseconds(0), action);
+        }
+
+        void OpenTrainer(Places.Trainer trainer, bool showWelcome = true)
+        {
             Action updatePartyGold = null;
 
             void SetupTrainer(Action updateGold)
@@ -4913,13 +5053,13 @@ namespace Ambermoon
 
             void Train(uint times)
             {
-                layout.ShowPlaceQuestion($"{DataNameProvider.PriceForTraining}{times * price}{DataNameProvider.AgreeOnPrice}", answer =>
+                layout.ShowPlaceQuestion($"{DataNameProvider.PriceForTraining}{times * trainer.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
                 {
                     if (answer) // yes
                     {
-                        trainer.AvailableGold -= times * price;
+                        trainer.AvailableGold -= times * (uint)trainer.Cost;
                         updatePartyGold?.Invoke();
-                        CurrentPartyMember.Abilities[ability].CurrentValue += times;
+                        CurrentPartyMember.Abilities[trainer.Ability].CurrentValue += times;
                         CurrentPartyMember.TrainingPoints -= (ushort)times;
                         PlayerSwitched();
                         layout.ShowClickChestMessage(DataNameProvider.IncreasedAfterTraining, null, false);
@@ -4929,19 +5069,19 @@ namespace Ambermoon
 
             void PlayerSwitched()
             {
-                layout.EnableButton(3, CurrentPartyMember.Abilities[ability].CurrentValue < CurrentPartyMember.Abilities[ability].MaxValue);
+                layout.EnableButton(3, CurrentPartyMember.Abilities[trainer.Ability].CurrentValue < CurrentPartyMember.Abilities[trainer.Ability].MaxValue);
             }
 
-            uint GetMaxTrains() => Math.Max(0, Util.Min(trainer.AvailableGold / price, CurrentPartyMember.TrainingPoints,
-                CurrentPartyMember.Abilities[ability].MaxValue - CurrentPartyMember.Abilities[ability].CurrentValue));
+            uint GetMaxTrains() => Math.Max(0, Util.Min(trainer.AvailableGold / (uint)trainer.Cost, CurrentPartyMember.TrainingPoints,
+                CurrentPartyMember.Abilities[trainer.Ability].MaxValue - CurrentPartyMember.Abilities[trainer.Ability].CurrentValue));
 
             Fade(() =>
             {
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Trainer, placeName, price, ability);
-                ShowPlaceWindow(placeName, showWelcome ?
-                    ability switch
+                SetWindow(Window.Trainer, trainer);
+                ShowPlaceWindow(trainer.Name, showWelcome ?
+                    trainer.Ability switch
                     {
                         Ability.Attack => DataNameProvider.WelcomeAttackTrainer,
                         Ability.Parry => DataNameProvider.WelcomeParryTrainer,
@@ -4955,7 +5095,7 @@ namespace Ambermoon
                         Ability.UseMagic => DataNameProvider.WelcomeUseMagicTrainer,
                         _ => throw new AmbermoonException(ExceptionScope.Data, "Invalid ability for trainer")
                     } : null,
-                    ability switch
+                    trainer.Ability switch
                     {
                         Ability.Attack => Picture80x80.Knight,
                         Ability.Parry => Picture80x80.Knight,
@@ -4973,7 +5113,7 @@ namespace Ambermoon
                 // train button
                 layout.AttachEventToButton(3, () =>
                 {
-                    if (trainer.AvailableGold < price)
+                    if (trainer.AvailableGold < trainer.Cost)
                     {
                         layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
                         return;
@@ -4995,8 +5135,8 @@ namespace Ambermoon
             });
         }
 
-        void ShowPlaceWindow(string placeName, string welcomeText, Picture80x80 picture, Merchant place, Action<Action> placeSetup,
-            Action activePlayerSwitchedHandler)
+        void ShowPlaceWindow(string placeName, string welcomeText, Picture80x80 picture, IPlace place, Action<Action> placeSetup,
+            Action activePlayerSwitchedHandler, Func<string> exitChecker = null, Action closeAction = null)
         {
             OpenStorage = place;
             layout.SetLayout(LayoutType.Items);
@@ -5031,18 +5171,34 @@ namespace Ambermoon
             // exit button
             layout.AttachEventToButton(2, () =>
             {
-                ActivePlayerChanged -= activePlayerSwitchedHandler;
-                CloseWindow();
+                var exitQuestion = exitChecker?.Invoke();
 
-                // Distribute the gold
-                var partyMembers = PartyMembers.ToList();
-                int goldPerPartyMember = (int)place.AvailableGold / partyMembers.Count;
-                int restGold = (int)place.AvailableGold % partyMembers.Count;
-
-                for (int i = 0; i < partyMembers.Count; ++i)
+                if (exitQuestion != null)
                 {
-                    int gold = goldPerPartyMember + (i < restGold ? 1 : 0);
-                    partyMembers[i].SetGold((uint)gold);
+                    layout.OpenYesNoPopup(ProcessText(exitQuestion), Exit, ClosePopup, ClosePopup, 2);
+                }
+                else
+                {
+                    Exit();
+                }
+
+                void Exit()
+                {
+                    ActivePlayerChanged -= activePlayerSwitchedHandler;
+                    CloseWindow();
+
+                    // Distribute the gold
+                    var partyMembers = PartyMembers.ToList();
+                    int goldPerPartyMember = (int)place.AvailableGold / partyMembers.Count;
+                    int restGold = (int)place.AvailableGold % partyMembers.Count;
+
+                    for (int i = 0; i < partyMembers.Count; ++i)
+                    {
+                        int gold = goldPerPartyMember + (i < restGold ? 1 : 0);
+                        partyMembers[i].SetGold((uint)gold);
+                    }
+
+                    closeAction?.Invoke();
                 }
             });
         }
@@ -5050,6 +5206,7 @@ namespace Ambermoon
         void OpenMerchant(uint merchantIndex, string placeName, string buyText, bool isLibrary, bool showWelcome = true)
         {
             var merchant = GetMerchant(merchantIndex);
+            merchant.Name = placeName;
 
             Fade(() =>
             {
@@ -5470,7 +5627,7 @@ namespace Ambermoon
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
         }
 
-        void ShowItemPopup(ItemSlot itemSlot, Action closeAction)
+        internal void ShowItemPopup(ItemSlot itemSlot, Action closeAction)
         {
             var item = ItemManager.GetItem(itemSlot.ItemIndex);
             var popup = layout.OpenPopup(new Position(16, 84), 18, 6, true, false);
@@ -5515,9 +5672,7 @@ namespace Ambermoon
                     // Note: If we call closeAction directly any new nextClickAction
                     // assignment will be lost when we return true below because the
                     // nextClickHandler processing will set it to null then afterwards.
-                    // With a timed event of 1 ms it will executed in the next update
-                    // cycle after nextClickAction was nulled.
-                    AddTimedEvent(TimeSpan.FromMilliseconds(1), closeAction);
+                    ExecuteNextUpdateCycle(closeAction);
                     return true;
                 }
                 return false;
@@ -5544,7 +5699,7 @@ namespace Ambermoon
                     case PlaceType.Trainer:
                     {
                         var trainerData = new Places.Trainer(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
-                        OpenTrainer(trainerData.Name, (uint)trainerData.Cost, trainerData.Ability);
+                        OpenTrainer(trainerData);
                         return true;
                     }
                     case PlaceType.Healer:
@@ -5561,6 +5716,11 @@ namespace Ambermoon
                             enterPlaceEvent.PlaceType == PlaceType.Library);
                         return true;
                     case PlaceType.FoodDealer:
+                    {
+                        var foodDealerData = new Places.FoodDealer(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenFoodDealer(foodDealerData);
+                        return true;
+                    }
                     case PlaceType.ShipDealer:
                     case PlaceType.HorseDealer:
                     case PlaceType.Blacksmith:
@@ -6350,10 +6510,16 @@ namespace Ambermoon
                 }
                 case Window.Trainer:
                 {
-                    string placeName = (string)currentWindow.WindowParameters[0];
-                    uint price = (uint)currentWindow.WindowParameters[1];
-                    Ability ability = (Ability)currentWindow.WindowParameters[2];
-                    OpenTrainer(placeName, price, ability, false);
+                    var trainer = (Places.Trainer)currentWindow.WindowParameters[0];
+                    OpenTrainer(trainer, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.FoodDealer:
+                {
+                    var foodDealer = (Places.FoodDealer)currentWindow.WindowParameters[0];
+                    OpenFoodDealer(foodDealer, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

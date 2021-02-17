@@ -65,6 +65,7 @@
         string ItemCannotBeUsedHere { get; }
         string CannotUseBrokenItems { get; }
         string WhichItemToUseMessage { get; }
+        string WhichItemToExamineMessage { get; }
         string WhichItemToDropMessage { get; }
         string WhichItemToStoreMessage { get; }
         string GoldName { get; }
@@ -184,7 +185,7 @@
         string ThisWillCost { get; }
         string ForThisIllGiveYou { get; }
         string AgreeOnPrice { get; }
-        string AgreeOnFoodPrice { get; }
+        string OneFoodCosts { get; }
         string MerchantFull { get; }
         string BuyHowMuchItems { get; }
         string SellHowMuchItems { get; }
@@ -196,6 +197,11 @@
         string IncreasedAfterTraining { get; }
         string NotEnoughTrainingPoints { get; }
         string NotEnoughMoney { get; }
+        string BuyHowMuchFood { get; }
+        string FoodDividedEqually { get; }
+        string FoodLeftAfterDividing { get; }
+        string WantToLeaveRestOfFood { get; }
+        string PriceOfFood { get; }
 
         #endregion
 

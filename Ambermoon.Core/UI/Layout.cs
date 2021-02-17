@@ -1131,11 +1131,12 @@ namespace Ambermoon.UI
                     {
                         buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem,
                             false, game.DataNameProvider.WhichItemToDropMessage), false);
-                        buttonGrid.SetButton(4, ButtonType.DropGold, game.OpenStorage is Merchant || game.CurrentInventory?.Gold == 0, DropGold, false);
+                        buttonGrid.SetButton(4, ButtonType.DropGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, DropGold, false);
                         buttonGrid.SetButton(5, ButtonType.DropFood, game.CurrentInventory?.Food == 0, DropFood, false);
                     }
-                    buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
-                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.OpenStorage is Merchant || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false);
+                    buttonGrid.SetButton(6, ButtonType.ViewItem, false, () => PickInventoryItemForAction(ViewItem,
+                        true, game.DataNameProvider.WhichItemToExamineMessage), false);
+                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false);
                     buttonGrid.SetButton(8, ButtonType.GiveFood, game.CurrentInventory?.Food == 0, () => GiveFood(null), false);
                     break;
                 case LayoutType.Stats:
@@ -1178,20 +1179,20 @@ namespace Ambermoon.UI
                     }
                     else if (game.OpenStorage is Merchant merchant)
                     {
-                        switch (merchant.PlaceType)
+                        buttonGrid.SetButton(0, ButtonType.BuyItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(3, ButtonType.SellItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(4, ButtonType.ViewItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                    }
+                    else if (game.OpenStorage is NonItemPlace place)
+                    {
+                        switch (place.PlaceType)
                         {
-                            case PlaceType.Merchant:
-                            case PlaceType.Library:
-                                buttonGrid.SetButton(0, ButtonType.BuyItem, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.SellItem, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(4, ButtonType.ViewItem, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
-                                break;
                             case PlaceType.Trainer:
                                 buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
@@ -1199,6 +1200,17 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(3, ButtonType.Train, false, null, false); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                                break;
+                            case PlaceType.FoodDealer:
+                                buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.BuyFood, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.DistributeFood, true, null, false); // this is set later manually
+                                buttonGrid.SetButton(5, ButtonType.GiveFood, true, null, false); // this is set later manually
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
@@ -1513,40 +1525,8 @@ namespace Ambermoon.UI
 
         void DistributeFood(Chest chest)
         {
-            var partyMembers = game.PartyMembers.ToList();
             var initialFood = chest.Food;
-
-            while (chest.Food != 0)
-            {
-                int numTargetPlayers = partyMembers.Count;
-                uint foodPerPlayer = chest.Food / (uint)numTargetPlayers;
-                bool anyCouldTake = false;
-
-                if (foodPerPlayer == 0)
-                {
-                    numTargetPlayers = (int)chest.Food;
-                    foodPerPlayer = 1;
-                }
-
-                foreach (var partyMember in partyMembers)
-                {
-                    uint foodToTake = Math.Min(partyMember.MaxFoodToTake, foodPerPlayer);
-                    chest.Food -= foodToTake;
-                    partyMember.Food += (ushort)foodToTake;
-                    partyMember.TotalWeight += foodToTake * 250;
-
-                    if (foodToTake != 0)
-                    {
-                        anyCouldTake = true;
-
-                        if (--numTargetPlayers == 0)
-                            break;
-                    }
-                }
-
-                if (!anyCouldTake)
-                    return;
-            }
+            chest.Food = game.DistributeFood(chest.Food);
 
             if (chest.Food != initialFood)
             {
@@ -1592,10 +1572,20 @@ namespace Ambermoon.UI
 
         void GiveFood(Chest chest)
         {
+            GiveFood(chest == null ? game.CurrentInventory.Food : chest.Food,
+                chest == null
+                    ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
+                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); },
+                chest == null
+                    ? (Action)(() => SetInventoryMessage(game.DataNameProvider.GiveToWhom))
+                    : () => ShowChestMessage(game.DataNameProvider.GiveToWhom));
+        }
+
+        internal void GiveFood(uint food, Action<uint> foodRemover, Action setup, Action abortAction = null)
+        {
             // Note: 109 is the object icon index for food.
             OpenAmountInputBox(game.DataNameProvider.GiveHowMuchFoodMessage,
-                109, game.DataNameProvider.FoodName, chest == null ? game.CurrentInventory.Food : chest.Food,
-                GiveAmount);
+                109, game.DataNameProvider.FoodName, food, GiveAmount, abortAction);
 
             void GiveAmount(uint amount)
             {
@@ -1604,13 +1594,8 @@ namespace Ambermoon.UI
                 draggedFood = amount;
                 game.CursorType = CursorType.Food;
                 game.TrapMouse(Global.PartyMemberPortraitArea);
-                draggedGoldOrFoodRemover = chest == null
-                    ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
-                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };
-                if (chest != null)
-                    ShowChestMessage(game.DataNameProvider.GiveToWhom);
-                else
-                    SetInventoryMessage(game.DataNameProvider.GiveToWhom);
+                draggedGoldOrFoodRemover = foodRemover;
+                setup?.Invoke();
 
                 for (int i = 0; i < Game.MaxPartyMembers; ++i)
                 {
@@ -1715,6 +1700,12 @@ namespace Ambermoon.UI
             {
                 Ask(game.DataNameProvider.DropFoodQuestion, () => game.DropFood(amount));
             }
+        }
+
+        void ViewItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
+        {
+            itemGrid.HideTooltip();
+            game.ShowItemPopup(itemSlot, game.UpdateCursor);
         }
 
         void DropItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
@@ -2449,7 +2440,8 @@ namespace Ambermoon.UI
             draggedItem = null;
 
             if (game.OpenStorage is Chest ||
-                game.OpenStorage is Merchant)
+                game.OpenStorage is Merchant ||
+                game.OpenStorage is NonItemPlace)
             {
                 ChestText?.Destroy();
                 ChestText = null;
@@ -2980,6 +2972,7 @@ namespace Ambermoon.UI
                         }
                         else if (buttons == MouseButtons.Right)
                         {
+                            draggedGoldOrFoodRemover?.Invoke(0);
                             CancelDrag();
                             game.CursorType = CursorType.Sword;
                         }
@@ -3002,6 +2995,7 @@ namespace Ambermoon.UI
                         }
                         else if (buttons == MouseButtons.Right)
                         {
+                            draggedGoldOrFoodRemover?.Invoke(0);
                             CancelDrag();
                             game.CursorType = CursorType.Sword;
                         }

@@ -13,9 +13,10 @@ namespace Ambermoon.Data
         public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
         public bool AllowsItemDrop { get; set; } = false;
         public uint AvailableGold { get; set; } = 0;
-        public PlaceType PlaceType { get; set; } = PlaceType.Merchant;
+        public virtual PlaceType PlaceType => PlaceType.Merchant;
+        public string Name { get; set; }
 
-        public Merchant()
+        private protected Merchant()
         {
 
         }
