@@ -85,11 +85,19 @@ namespace Ambermoon.Data
 
             public override PlaceType PlaceType => PlaceType.Healer;
 
-            // TODO
-            // Most likely 11 words for the costs of all healable ailments
-            // starting at Lamed to DeadDust, then Crazy, Blind, Drugged.
-            // Then one word for the cost to heal 1 LP.
-            // And then maybe a word for the price of removing a curse?
+            public int HealLamedCost => GetWord(0);
+            public int HealPoisonedCost => GetWord(2);
+            public int HealPetrifiedCost => GetWord(4);
+            public int HealDiseasedCost => GetWord(6);
+            public int HealAgingCost => GetWord(8);
+            public int HealDeadCorpseCost => GetWord(10);
+            public int HealDeadAshesCost => GetWord(12);
+            public int HealDeadDustCost => GetWord(14);
+            public int HealCrazyCost => GetWord(16);
+            public int HealBlindCost => GetWord(18);
+            public int HealDruggedCost => GetWord(20);
+            public int HealLPCost => GetWord(22);
+            public int RemoveCurseCost => GetWord(24); // TODO: not sure
         }
 
         public class Sage : NonItemPlace

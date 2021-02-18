@@ -225,6 +225,12 @@
         public string FoodLeftAfterDividing => executableData.Messages.GetEntry(Messages.Index.FoodLeftAfterDividing);
         public string WantToLeaveRestOfFood => executableData.Messages.GetEntry(Messages.Index.WantToLeaveRestOfFood);
         public string PriceOfFood => executableData.Messages.GetEntry(Messages.Index.PriceOfFood);
+        public string PriceForHealing => executableData.Messages.GetEntry(Messages.Index.PriceForHealing);
+        public string PriceForHealingCondition => executableData.Messages.GetEntry(Messages.Index.PriceForHealingCondition);
+        public string PriceForRemovingCurses => executableData.Messages.GetEntry(Messages.Index.PriceForRemovingCurses);
+        public string HowManyLP => executableData.Messages.GetEntry(Messages.Index.HowManyLP);
+        public string WhichConditionToHeal => executableData.Messages.GetEntry(Messages.Index.WhichConditionToHeal);
+        public string WhichItemAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichItemAsTarget);
 
         #endregion
     }

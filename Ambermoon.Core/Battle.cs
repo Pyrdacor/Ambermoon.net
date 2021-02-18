@@ -977,7 +977,7 @@ namespace Ambermoon
                         battleAction.Character.SpellPoints.CurrentValue = Math.Max(0, battleAction.Character.SpellPoints.CurrentValue - spellInfo.SP);
 
                         if (battleAction.Character is PartyMember partyMember)
-                            layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                            layout.FillCharacterBars(partyMember);
                     }
 
                     if (!CheckSpellCast(battleAction.Character, spellInfo))
@@ -1320,7 +1320,7 @@ namespace Ambermoon
                         else
                         {
                             if (target is PartyMember partyMember)
-                                layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                                layout.FillCharacterBars(partyMember);
                             ActionFinished(false);
                         }
                     }
@@ -1785,7 +1785,7 @@ namespace Ambermoon
                     caster.HitPoints.CurrentValue = Math.Min(caster.HitPoints.MaxValue, caster.HitPoints.CurrentValue +
                         Math.Min(caster.Level, caster.HitPoints.MaxValue - caster.HitPoints.CurrentValue));
                     if (caster is PartyMember castingMember)
-                        layout.FillCharacterBars(game.SlotFromPartyMember(castingMember).Value, castingMember);
+                        layout.FillCharacterBars(castingMember);
                     return;
                 }
                 case Spell.SPStealer:
@@ -1793,9 +1793,9 @@ namespace Ambermoon
                     target.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)target.SpellPoints.CurrentValue - caster.Level);
                     caster.SpellPoints.CurrentValue += Math.Min(caster.Level, caster.SpellPoints.MaxValue - caster.SpellPoints.CurrentValue);
                     if (target is PartyMember targetMember)
-                        layout.FillCharacterBars(game.SlotFromPartyMember(targetMember).Value, targetMember);
+                        layout.FillCharacterBars(targetMember);
                     else if (caster is PartyMember castingMember)
-                        layout.FillCharacterBars(game.SlotFromPartyMember(castingMember).Value, castingMember);
+                        layout.FillCharacterBars(castingMember);
                     break;
                 case Spell.MonsterKnowledge:
                 {
@@ -1837,7 +1837,7 @@ namespace Ambermoon
                     else
                     {
                         if (target is PartyMember partyMember)
-                            layout.FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+                            layout.FillCharacterBars(partyMember);
                         finishAction?.Invoke();
                     }
                 }

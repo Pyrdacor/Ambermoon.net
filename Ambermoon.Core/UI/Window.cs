@@ -16,7 +16,8 @@ namespace Ambermoon.UI
         BattleLoot,
         BattlePositions,
         Trainer,
-        FoodDealer
+        FoodDealer,
+        Healer
         // TODO ...
     }
 

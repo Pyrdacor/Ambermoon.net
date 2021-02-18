@@ -319,6 +319,8 @@ namespace Ambermoon.UI
 
         public ItemSlot GetItem(int slot) => slots[slot];
 
+        public Position GetSlotPosition(int slot) => slotPositions[slot - ScrollOffset];
+
         public int? SlotFromPosition(Position position)
         {
             int slot = 0;
@@ -332,6 +334,11 @@ namespace Ambermoon.UI
             }
 
             return null;
+        }
+
+        public int SlotFromItemSlot(ItemSlot itemSlot)
+        {
+            return slots.IndexOf(itemSlot);
         }
 
         public int DropItem(int slot, Layout.DraggedItem item)

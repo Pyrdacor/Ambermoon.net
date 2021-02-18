@@ -193,6 +193,7 @@ namespace Ambermoon
         internal uint CurrentTicks { get; private set; } = 0;
         internal uint CurrentBattleTicks { get; private set; } = 0;
         internal uint CurrentPopupTicks { get; private set; } = 0;
+        internal uint CurrentAnimationTicks { get; private set; } = 0;
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
         readonly TimedGameEvent ouchEvent = new TimedGameEvent();
@@ -233,6 +234,8 @@ namespace Ambermoon
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
         PartyMember currentPickingActionMember = null;
+        PartyMember currentHealerMember = null;
+        SpellAnimation currentAnimation = null;
         Spell pickedSpell = Spell.None;
         uint? spellItemSlotIndex = null;
         bool? spellItemIsEquipped = null;
@@ -246,6 +249,7 @@ namespace Ambermoon
         bool blinkingHighlight = false;
         FilledArea buttonGridBackground;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
+        bool allInputWasDisabled = false;
         bool allInputDisabled = false;
         bool inputEnable = true;
         bool paused = false;
@@ -486,6 +490,18 @@ namespace Ambermoon
                 renderMap2D.Resume();
         }
 
+        uint UpdateTicks(uint ticks, double deltaTime)
+        {
+            uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
+
+            if (ticks <= uint.MaxValue - add)
+                ticks += add;
+            else
+                ticks = (uint)(((long)ticks + add) % uint.MaxValue);
+
+            return ticks;
+        }
+
         public void Update(double deltaTime)
         {
             if (characterCreator != null)
@@ -505,17 +521,17 @@ namespace Ambermoon
 
             if (ingame)
             {
+                CurrentAnimationTicks = UpdateTicks(CurrentAnimationTicks, deltaTime);
+
+                if (currentAnimation != null)
+                    currentAnimation.Update(CurrentAnimationTicks);
+
                 if (!paused)
                 {
                     GameTime?.Update();
                     MonsterSeesPlayer = false; // Will be set by the monsters Update methods eventually
 
-                    uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
-
-                    if (CurrentTicks <= uint.MaxValue - add)
-                        CurrentTicks += add;
-                    else
-                        CurrentTicks = (uint)(((long)CurrentTicks + add) % uint.MaxValue);
+                    CurrentTicks = UpdateTicks(CurrentTicks, deltaTime);
 
                     var animationTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
 
@@ -559,14 +575,7 @@ namespace Ambermoon
                 }
 
                 if (layout.PopupActive)
-                {
-                    uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
-
-                    if (CurrentPopupTicks <= uint.MaxValue - add)
-                        CurrentPopupTicks += add;
-                    else
-                        CurrentPopupTicks = (uint)(((long)CurrentPopupTicks + add) % uint.MaxValue);
-                }
+                    CurrentPopupTicks = UpdateTicks(CurrentPopupTicks, deltaTime);
                 else
                     CurrentPopupTicks = CurrentTicks;
 
@@ -574,13 +583,7 @@ namespace Ambermoon
                 {
                     if (!layout.OptionMenuOpen)
                     {
-                        uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
-
-                        if (CurrentBattleTicks <= uint.MaxValue - add)
-                            CurrentBattleTicks += add;
-                        else
-                            CurrentBattleTicks = (uint)(((long)CurrentBattleTicks + add) % uint.MaxValue);
-
+                        CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime);
                         UpdateBattle();
                     }
                 }
@@ -1063,16 +1066,19 @@ namespace Ambermoon
             }
         }
 
-        void StartSequence()
+        internal void StartSequence()
         {
+            allInputWasDisabled = allInputDisabled;
             layout.ReleaseButtons();
             allInputDisabled = true;
             clickMoveActive = false;
         }
 
-        void EndSequence()
+        internal void EndSequence()
         {
-            allInputDisabled = false;
+            if (!allInputWasDisabled)
+                allInputDisabled = false;
+            allInputWasDisabled = false;
         }
 
         void PlayTimedSequence(int steps, Action stepAction, int stepTimeInMs)
@@ -2102,7 +2108,8 @@ namespace Ambermoon
             }
         }
 
-        internal void OpenPartyMember(int slot, bool inventory)
+        internal void OpenPartyMember(int slot, bool inventory, Action openedAction = null,
+            bool changeInputEnableStateWhileFading = true)
         {
             if (CurrentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return;
@@ -2132,6 +2139,10 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Inventory, slot);
                 layout.SetLayout(LayoutType.Inventory);
+
+                // As the inventory can be opened from the healer (which displays the healing symbol)
+                // we will update the portraits here to hide it.
+                SetActivePartyMember(SlotFromPartyMember(CurrentPartyMember).Value, false);
 
                 windowTitle.Text = renderView.TextProcessor.CreateText(DataNameProvider.InventoryTitleString);
                 windowTitle.TextColor = TextColor.White;
@@ -2275,6 +2286,10 @@ namespace Ambermoon
                 layout.EnableButton(0, canAccessInventory);
                 layout.FillArea(new Rect(16, 49, 176, 145), Color.LightGray, false);
 
+                // As the stats can be opened from the healer (which displays the healing symbol)
+                // we will update the portraits here to hide it.
+                SetActivePartyMember(SlotFromPartyMember(CurrentPartyMember).Value, false);
+
                 windowTitle.Visible = false;
 
                 CurrentInventoryIndex = slot;
@@ -2359,13 +2374,22 @@ namespace Ambermoon
                 #endregion
             }
 
-            Action openAction = inventory ? (Action)OpenInventory: OpenCharacterStats;
+            Action openAction = inventory ? (Action)OpenInventory : OpenCharacterStats;
 
             if ((currentWindow.Window == Window.Inventory && inventory) ||
                 (currentWindow.Window == Window.Stats && !inventory))
+            {
                 openAction();
+                openedAction?.Invoke();
+            }
             else
-                Fade(openAction);
+            {
+                Fade(() =>
+                {
+                    openAction();
+                    openedAction?.Invoke();
+                }, changeInputEnableStateWhileFading);
+            }
         }
 
         void DisplayCharacterInfo(Character character, bool conversation)
@@ -2620,12 +2644,14 @@ namespace Ambermoon
             Shake();
         }
 
-        void Fade(Action midFadeAction)
+        void Fade(Action midFadeAction, bool changeInputEnableState = true)
         {
-            allInputDisabled = true;
+            if (changeInputEnableState)
+                allInputDisabled = true;
             layout.AddFadeEffect(new Rect(0, 36, Global.VirtualScreenWidth, Global.VirtualScreenHeight - 36), Color.Black, FadeEffectType.FadeInAndOut, FadeTime);
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), midFadeAction);
-            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
+            if (changeInputEnableState)
+                AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
         /// <summary>
@@ -3994,7 +4020,7 @@ namespace Ambermoon
                 target.Heal(amount);
 
                 if (target is PartyMember partyMember)
-                    layout.FillCharacterBars(SlotFromPartyMember(partyMember).Value, partyMember);
+                    layout.FillCharacterBars(partyMember);
             }
         }
 
@@ -4940,6 +4966,125 @@ namespace Ambermoon
             return food;
         }
 
+        void PlayHealAnimation(PartyMember partyMember, Action finishAction = null)
+        {
+            currentAnimation?.Destroy();
+            currentAnimation = new SpellAnimation(this, layout);
+            currentAnimation.CastOn(Spell.SmallHealing, partyMember, () =>
+            {
+                currentAnimation.Destroy();
+                currentAnimation = null;
+                finishAction?.Invoke();
+            });
+        }
+
+        void OpenHealer(Places.Healer healer, bool showWelcome = true)
+        {
+            Action updatePartyGold = null;
+
+            void SetupHealer(Action updateGold)
+            {
+                updatePartyGold = updateGold;
+            }
+
+            void Heal(uint lp)
+            {
+                layout.ShowPlaceQuestion($"{DataNameProvider.PriceForHealing}{lp * healer.HealLPCost}{DataNameProvider.AgreeOnPrice}", answer =>
+                {
+                    if (answer) // yes
+                    {
+                        healer.AvailableGold -= lp * (uint)healer.HealLPCost;
+                        updatePartyGold?.Invoke();
+                        currentHealerMember.HitPoints.CurrentValue += lp;
+                        PlayerSwitched();
+                        PlayHealAnimation(currentHealerMember, () => layout.FillCharacterBars(currentHealerMember));
+                    }
+                }, TextAlign.Left);
+            }
+
+            void PlayerSwitched()
+            {
+                var healableAilments = Ailment.Lamed | Ailment.Poisoned | Ailment.Petrified | Ailment.Diseased |
+                    Ailment.Aging | Ailment.DeadCorpse | Ailment.DeadAshes | Ailment.DeadDust | Ailment.Crazy |
+                    Ailment.Blind | Ailment.Drugged;
+                layout.EnableButton(0, currentHealerMember.HitPoints.TotalCurrentValue < currentHealerMember.HitPoints.MaxValue);
+                layout.EnableButton(3, currentHealerMember.Equipment.Slots.Any(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
+                layout.EnableButton(6, ((uint)currentHealerMember.Ailments & (uint)healableAilments) != 0);
+            }
+
+            uint GetMaxLPHealing() => Math.Max(0, Util.Min(healer.AvailableGold / (uint)healer.HealLPCost,
+                currentHealerMember.HitPoints.MaxValue - currentHealerMember.HitPoints.CurrentValue));
+
+            Fade(() =>
+            {
+                if (showWelcome)
+                    currentHealerMember = CurrentPartyMember;
+
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Healer, healer);
+                ShowPlaceWindow(healer.Name, showWelcome ? DataNameProvider.WelcomeHealer : null,
+                    Picture80x80.Healer, healer, SetupHealer, PlayerSwitched);
+                // This will show the healing symbol on top of the portrait.
+                SetActivePartyMember(SlotFromPartyMember(currentHealerMember).Value);
+                // Heal LP button
+                layout.AttachEventToButton(0, () =>
+                {
+                    if (healer.AvailableGold < healer.HealLPCost)
+                    {
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
+                        return;
+                    }
+
+                    layout.OpenAmountInputBox(DataNameProvider.HowManyLP, null, null, GetMaxLPHealing(), lp =>
+                    {
+                        ClosePopup();
+                        Heal(lp);
+                    }, ClosePopup);
+                });
+                // Remove curse button
+                layout.AttachEventToButton(3, () =>
+                {
+                    if (healer.AvailableGold < healer.RemoveCurseCost)
+                    {
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
+                        return;
+                    }
+
+                    int maxCursesToRemove = Math.Min((int)healer.AvailableGold / healer.RemoveCurseCost,
+                        currentHealerMember.Equipment.Slots.Count(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
+
+                    layout.ShowPlaceQuestion($"{DataNameProvider.PriceForRemovingCurses}{maxCursesToRemove * healer.RemoveCurseCost}{DataNameProvider.AgreeOnPrice}", answer =>
+                    {
+                        if (answer) // yes
+                        {
+                            healer.AvailableGold -= (uint)(maxCursesToRemove * healer.RemoveCurseCost);
+                            updatePartyGold?.Invoke();
+                            PlayerSwitched();
+                            allInputDisabled = true;
+                            OpenPartyMember(SlotFromPartyMember(currentHealerMember).Value, true, () =>
+                            {
+                                var equipSlots = currentHealerMember.Equipment.Slots.ToList();
+
+                                for (int i = 0; i < maxCursesToRemove; ++i)
+                                {
+                                    var cursedItemSlot = equipSlots.First(s => s.Value.Flags.HasFlag(ItemSlotFlags.Cursed));
+                                    layout.DestroyItem(cursedItemSlot.Value, true);
+                                }
+
+                                AddTimedEvent(TimeSpan.FromSeconds(2), () =>
+                                {
+                                    CloseWindow();
+                                    allInputDisabled = false;
+                                });
+                            }, false);
+                        }
+                    }, TextAlign.Left);
+                });
+                PlayerSwitched();
+            });
+        }
+
         void OpenFoodDealer(Places.FoodDealer foodDealer, bool showWelcome = true)
         {
             Action updatePartyGold = null;
@@ -5703,6 +5848,11 @@ namespace Ambermoon
                         return true;
                     }
                     case PlaceType.Healer:
+                    {
+                        var healerData = new Places.Healer(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenHealer(healerData);
+                        return true;
+                    }
                     case PlaceType.Sage:
                     case PlaceType.Enchanter:
                     case PlaceType.Inn:
@@ -6216,26 +6366,35 @@ namespace Ambermoon
         {
             var partyMember = GetPartyMember(index);
 
-            if (partyMember != null && partyMember.Ailments.CanSelect())
+            if (partyMember != null && (partyMember.Ailments.CanSelect() || currentWindow.Window == Window.Healer))
             {
-                if (HasPartyMemberFled(partyMember))
-                    return;
-
-                CurrentSavegame.ActivePartyMemberSlot = index;
-                currentPickingActionMember = CurrentPartyMember = partyMember;
-                layout.SetActiveCharacter(index, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToList());
-
-                if (currentBattle != null && updateBattlePosition && layout.Type == LayoutType.Battle)
-                    BattlePlayerSwitched();
-
-                if (pickingNewLeader)
+                if (currentWindow.Window == Window.Healer)
                 {
-                    pickingNewLeader = false;
-                    layout.ClosePopup(true, true);
+                    currentHealerMember = partyMember;
+                    layout.SetCharacterHealSymbol(index);
                 }
+                else
+                {
+                    if (HasPartyMemberFled(partyMember))
+                        return;
 
-                if (is3D)
-                    renderMap3D?.SetCameraHeight(partyMember.Race);
+                    CurrentSavegame.ActivePartyMemberSlot = index;
+                    currentPickingActionMember = CurrentPartyMember = partyMember;
+                    layout.SetActiveCharacter(index, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToList());
+                    layout.SetCharacterHealSymbol(null);
+
+                    if (currentBattle != null && updateBattlePosition && layout.Type == LayoutType.Battle)
+                        BattlePlayerSwitched();
+
+                    if (pickingNewLeader)
+                    {
+                        pickingNewLeader = false;
+                        layout.ClosePopup(true, true);
+                    }
+
+                    if (is3D)
+                        renderMap3D?.SetCameraHeight(partyMember.Race);
+                }
 
                 ActivePlayerChanged?.Invoke();
             }
@@ -6520,6 +6679,14 @@ namespace Ambermoon
                 {
                     var foodDealer = (Places.FoodDealer)currentWindow.WindowParameters[0];
                     OpenFoodDealer(foodDealer, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Healer:
+                {
+                    var healer = (Places.Healer)currentWindow.WindowParameters[0];
+                    OpenHealer(healer, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

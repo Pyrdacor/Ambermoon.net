@@ -7,7 +7,7 @@
         Door,
         ChestOpenEmpty,
         Enchantress,
-        Enchanter,
+        Healer,
         Horse,
         Innkeeper,
         Librarian,

@@ -202,6 +202,12 @@
         string FoodLeftAfterDividing { get; }
         string WantToLeaveRestOfFood { get; }
         string PriceOfFood { get; }
+        string PriceForHealing { get; }
+        string PriceForHealingCondition { get; }
+        string PriceForRemovingCurses { get; }
+        string HowManyLP { get; }
+        string WhichConditionToHeal { get; }
+        string WhichItemAsTarget { get; }
 
         #endregion
 

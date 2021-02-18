@@ -37,6 +37,15 @@ namespace Ambermoon.Render
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
         }
 
+        public SpellAnimation(Game game, Layout layout)
+        {
+            this.game = game;
+            this.layout = layout;
+            renderView = layout.RenderView;
+            fromMonster = false;
+            textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
+        }
+
         void ShowOverlay(Color color)
         {
             colorOverlay?.Delete();
@@ -178,7 +187,7 @@ namespace Ambermoon.Render
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
             animation.SetStartFrame(textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(graphicIndex)), frameSize,
                 area.Position + startOffset, 1.0f, false, frameSize, BattleAnimation.HorizontalAnchor.Left, BattleAnimation.VerticalAnchor.Top);
-            var ticks = battle != null ? game.CurrentBattleTicks : game.CurrentTicks;
+            var ticks = battle != null ? game.CurrentBattleTicks : game.CurrentAnimationTicks;
             animation.Play(Enumerable.Range(0, frameCount).ToArray(), duration / (uint)frameCount, ticks, area.Position + endOffset);
             animations.Add(animation);
             return animation;
@@ -517,7 +526,6 @@ namespace Ambermoon.Render
                 case Spell.Hurry:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
-                // TODO ...
             }
         }
 

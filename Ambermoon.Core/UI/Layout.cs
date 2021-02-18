@@ -393,6 +393,7 @@ namespace Ambermoon.UI
         readonly ISprite[] portraitBackgrounds = new ISprite[Game.MaxPartyMembers];
         readonly ILayerSprite[] portraitBarBackgrounds = new ILayerSprite[Game.MaxPartyMembers];
         readonly ISprite[] portraits = new ISprite[Game.MaxPartyMembers];
+        readonly ILayerSprite healerSymbol = null;
         readonly IRenderText[] portraitNames = new IRenderText[Game.MaxPartyMembers];
         readonly PartyMemberPortaitState[] portraitStates = new PartyMemberPortaitState[Game.MaxPartyMembers];
         readonly ILayerSprite[] characterStatusIcons = new ILayerSprite[Game.MaxPartyMembers];
@@ -462,6 +463,15 @@ namespace Ambermoon.UI
             buttonGrid = new ButtonGrid(renderView);
             buttonGrid.RightMouseClicked += ButtonGrid_RightMouseClicked;
 
+            healerSymbol = RenderView.SpriteFactory.Create(32, 29, true) as ILayerSprite;
+            healerSymbol.Layer = renderLayer;
+            healerSymbol.X = 0;
+            healerSymbol.Y = 0;
+            healerSymbol.DisplayLayer = 10;
+            healerSymbol.PaletteIndex = 49;
+            healerSymbol.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Talisman));
+            healerSymbol.Visible = false;
+
             SetLayout(LayoutType.None);
         }
 
@@ -469,7 +479,19 @@ namespace Ambermoon.UI
         {
             portraitBorders.ForEach(b => b.Visible = show);
             portraitBarBackgrounds.ToList().ForEach(b => b.Visible = show);
-            characterBars.ToList().ForEach(b => b.Visible = show);
+
+            for (int i = 0; i < Game.MaxPartyMembers; ++i)
+            {
+                bool showBar = show;
+
+                if (game.CurrentSavegame == null)
+                    showBar = false;
+                else if (showBar)
+                    showBar = game.GetPartyMember(i)?.Alive == true;
+
+                for (int n = 0; n < 4; ++n)
+                    characterBars[i * 4 + n].Visible = showBar;
+            }
         }
 
         void ButtonGrid_RightMouseClicked()
@@ -1212,6 +1234,17 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(4, ButtonType.DistributeFood, true, null, false); // this is set later manually
                                 buttonGrid.SetButton(5, ButtonType.GiveFood, true, null, false); // this is set later manually
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                                break;
+                            case PlaceType.Healer:
+                                buttonGrid.SetButton(0, ButtonType.HealPerson, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.RemoveCurse, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(6, ButtonType.HealAilment, false, null, false); // this is set later manually
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
@@ -1996,6 +2029,127 @@ namespace Ambermoon.UI
         }
 
         /// <summary>
+        /// While at a healer there is a golden symbol on the active portrait.
+        /// </summary>
+        public void SetCharacterHealSymbol(int? slot)
+        {
+            if (slot == null)
+            {
+                healerSymbol.Visible = false;
+            }
+            else
+            {
+                var area = Global.PartyMemberPortraitAreas[slot.Value];
+                healerSymbol.X = area.X + 1;
+                healerSymbol.Y = area.Y + 1;
+                healerSymbol.Visible = true;
+            }
+        }
+
+        static readonly int[][] DestroyAnimationPositions = new int[][]
+        {
+            new [] { 0, -1, 1, -1, 1, -1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0 },
+            new [] { 0, -1, 1, -1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0 },
+            new [] { 1, -1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 },
+            new [] { 1, -1, 1, -1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0 },
+            new [] { 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0 },
+            new [] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 },
+            new [] { 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 },
+            new [] { 0, -1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }
+        };
+
+        void PlayItemDestroyAnimation(Position position, Item item, Action finishAction)
+        {
+            game.StartSequence();
+            var sprites = new ISprite[64];
+            var animationPositionIndices = new int[64];
+            var offset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(item.GraphicIndex);
+
+            for (int y = 0; y < 8; ++y)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    var sprite = sprites[x + y * 8] = RenderView.SpriteFactory.Create(1, 1, true, 255);
+                    sprite.TextureAtlasOffset = offset + new Position(x * 2 + y % 2, y * 2 + x % 2);
+                    sprite.Layer = RenderView.GetLayer(Layer.Items);
+                    sprite.PaletteIndex = 49;
+                    sprite.X = position.X + x * 2 + y % 2;
+                    sprite.Y = position.Y + y * 2 + x % 2;
+                    sprite.Visible = true;
+                    animationPositionIndices[x + y * 8] = game.RandomInt(0, DestroyAnimationPositions.Length - 1);
+                }
+            }
+
+            int numAnimationFrames = 8;
+
+            void Animate()
+            {
+                if (--numAnimationFrames < 0)
+                {
+                    for (int i = 0; i < 64; ++i)
+                        sprites[i]?.Delete();
+
+                    game.EndSequence();
+                    finishAction?.Invoke();
+                }
+                else
+                {
+                    int frame = 7 - numAnimationFrames;
+
+                    for (int i = 0; i < 64; ++i)
+                    {
+                        var animationPositionIndex = animationPositionIndices[i];
+                        int centerX = position.X + 8;
+                        int xFactor = sprites[i].X < centerX ? -1 : 1;
+                        int x = DestroyAnimationPositions[animationPositionIndex][frame * 2];
+                        int y = DestroyAnimationPositions[animationPositionIndex][frame * 2 + 1];
+                        if (x == 0 && y == 0)
+                        {
+                            sprites[i].Visible = false;
+                        }
+                        else
+                        {
+                            sprites[i].X += 3 * xFactor * x;
+                            sprites[i].Y += 4 * y;
+                        }
+                    }
+
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
+                }
+            }
+
+            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
+        }
+
+        public void DestroyItem(ItemSlot itemSlot, bool equipment)
+        {
+            var itemGrid = itemGrids[equipment ? 1 : 0];
+            int slotIndex = itemGrid.SlotFromItemSlot(itemSlot);
+
+            if (slotIndex == -1)
+                throw new AmbermoonException(ExceptionScope.Application, "Invalid item slot");
+
+            // Scroll inventory into view if item is not visible
+            if (!equipment && !itemGrid.SlotVisible(slotIndex))
+            {
+                int scrollOffset = slotIndex;
+
+                if (scrollOffset % Inventory.VisibleWidth != 0)
+                    scrollOffset -= scrollOffset % Inventory.VisibleWidth;
+
+                itemGrid.ScrollTo(scrollOffset);
+            }
+
+            game.AddTimedEvent(TimeSpan.FromMilliseconds(800), () =>
+            {
+                var itemIndex = itemSlot.ItemIndex;
+                itemSlot.Remove(1);
+                itemGrid.SetItem(slotIndex, itemSlot);
+                PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null);
+            });
+        }
+
+        /// <summary>
         /// Set portait to 0 to remove the portrait.
         /// </summary>
         public void SetCharacter(int slot, PartyMember partyMember, bool initialize = false)
@@ -2106,10 +2260,14 @@ namespace Ambermoon.UI
             }
         }
 
+        public void FillCharacterBars(PartyMember partyMember) => FillCharacterBars(game.SlotFromPartyMember(partyMember).Value, partyMember);
+
         public void FillCharacterBars(int slot, PartyMember partyMember)
         {
-            float lpPercentage = partyMember == null ? 0.0f : Math.Min(1.0f, (float)partyMember.HitPoints.TotalCurrentValue / partyMember.HitPoints.MaxValue);
-            float spPercentage = partyMember == null ? 0.0f : Math.Min(1.0f, (float)partyMember.SpellPoints.TotalCurrentValue / partyMember.SpellPoints.MaxValue);
+            float lpPercentage = partyMember == null || !partyMember.Alive ? 0.0f
+                : Math.Min(1.0f, (float)partyMember.HitPoints.TotalCurrentValue / partyMember.HitPoints.MaxValue);
+            float spPercentage = partyMember == null || !partyMember.Alive ? 0.0f
+                : Math.Min(1.0f, (float)partyMember.SpellPoints.TotalCurrentValue / partyMember.SpellPoints.MaxValue);
 
             characterBars[slot * 4 + 0].Fill(lpPercentage);
             characterBars[slot * 4 + 1].Fill(lpPercentage);
