@@ -6013,7 +6013,24 @@ namespace Ambermoon
 
                     void UseSpell(Spell spell)
                     {
-                        // TODO
+                        var spellInfo = SpellInfos.Entries[spell];
+
+                        switch (spellInfo.Target)
+                        {
+                            case SpellTarget.SingleFriend:
+                                // TODO
+                                break;
+                            case SpellTarget.FriendRow:
+                                throw new AmbermoonException(ExceptionScope.Application, $"Friend row spells are not implemented as there are none in Ambermoon.");
+                            case SpellTarget.AllFriends:
+                                // TODO
+                                break;
+                            case SpellTarget.Item:
+                                // TODO
+                                break;
+                            default:
+                                throw new AmbermoonException(ExceptionScope.Application, $"Spells with target {spellInfo.Target} should not be usable in camps.");
+                        }
                     }
                 });
 
@@ -6094,7 +6111,9 @@ namespace Ambermoon
                         }
                         else
                         {
-                            if (true || RollDice100() < CurrentPartyMember.Abilities[Ability.ReadMagic].TotalCurrentValue)
+                            CurrentPartyMember.SpellLearningPoints -= spellInfo.SLP;
+
+                            if (RollDice100() < CurrentPartyMember.Abilities[Ability.ReadMagic].TotalCurrentValue)
                             {
                                 // Learned spell
                                 Error(DataNameProvider.ManagedToLearnSpell, () =>
@@ -6102,7 +6121,6 @@ namespace Ambermoon
                                     CurrentPartyMember.AddSpell(item.Spell);
                                     layout.DestroyItem(itemSlot, false, TimeSpan.FromMilliseconds(50), true);
                                 });
-
                             }
                             else
                             {
