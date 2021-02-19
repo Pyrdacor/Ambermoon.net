@@ -24,44 +24,44 @@ I also created another github project called [Ambermoon](https://github.com/Pyrd
 ## Screenshots
 
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png" width="480" alt="Indoor map" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png" width="480" alt="World map" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering1.png" width="400" alt="Indoor map" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png" width="400" alt="World map" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering3.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering3.png" width="480" alt="Morag" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D.png" width="480" alt="3D map" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering3.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering3.png" width="400" alt="Morag" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D.png" width="400" alt="3D map" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Battle.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Battle.png" width="480" alt="Battles" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Spells.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Spells.png" width="480" alt="Spells" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Battle.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Battle.png" width="400" alt="Battles" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Spells.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Spells.png" width="400" alt="Spells" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattleLoot.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattleLoot.png" width="480" alt="Battle loot" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattlePositions.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattlePositions.png" width="480" alt="Battle positions" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattleLoot.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattleLoot.png" width="400" alt="Battle loot" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattlePositions.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/BattlePositions.png" width="400" alt="Battle positions" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png" width="480" alt="Chests" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png" width="480" alt="Inventory" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Chests.png" width="400" alt="Chests" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Inventory.png" width="400" alt="Inventory" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Merchant.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Merchant.png" width="480" alt="Merchant" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Healer.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Healer.png" width="480" alt="Healer" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Merchant.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Merchant.png" width="400" alt="Merchant" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Healer.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Healer.png" width="400" alt="Healer" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Conversation.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Conversation.png" width="480" alt="Conversations" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/EventBox.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/EventBox.png" width="480" alt="Events" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Conversation.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Conversation.png" width="400" alt="Conversations" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/EventBox.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/EventBox.png" width="400" alt="Events" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Monsters3D.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Monsters3D.png" width="480" alt="Monsters" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapEffects.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapEffects.png" width="480" alt="Map effects" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Monsters3D.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Monsters3D.png" width="400" alt="Monsters" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapEffects.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapEffects.png" width="400" alt="Map effects" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png" width="480" alt="Main menu" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/CharacterCreator.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/CharacterCreator.png" width="480" alt="Character creation" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png" width="400" alt="Main menu" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/CharacterCreator.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/CharacterCreator.png" width="400" alt="Character creation" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/VersionSelector.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/VersionSelector.png" width="480" alt="Version selector" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Options.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Options.png" width="480" alt="Options" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/VersionSelector.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/VersionSelector.png" width="400" alt="Version selector" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Options.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Options.png" width="400" alt="Options" /></a>
 </p>
 
 
