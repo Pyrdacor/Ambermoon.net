@@ -534,7 +534,7 @@ namespace Ambermoon.Render
             var partyMembers = game.PartyMembers.Where(p => p.Alive).ToList();
 
             for (int i = 0; i < partyMembers.Count; ++i)
-                CastOn(spell, partyMembers[i], i == partyMembers.Count - 1 ? finishAction : null);
+                PlayHealingAnimation(partyMembers[i], i == partyMembers.Count - 1 ? finishAction : null);
         }
 
         /// <summary>

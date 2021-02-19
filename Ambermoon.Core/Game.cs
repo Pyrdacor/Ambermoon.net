@@ -2713,7 +2713,7 @@ namespace Ambermoon
         {
             blocked = false;
 
-            if (WindowActive || BattleActive || layout.PopupActive || !ingame)
+            if (WindowActive || BattleActive || layout.PopupActive || !ingame || layout.OptionMenuOpen)
                 return false;
 
             var newMap = MapManager.GetMap(mapIndex);
