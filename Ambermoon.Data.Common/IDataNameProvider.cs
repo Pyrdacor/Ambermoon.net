@@ -117,6 +117,7 @@
         string UseSpellOnlyInCitiesOrDungeons { get; }
         string SleepUntilDawn { get; }
         string WhichScrollToRead { get; }
+        string RestingTooDangerous { get; }
 
         #region Battle messages
 

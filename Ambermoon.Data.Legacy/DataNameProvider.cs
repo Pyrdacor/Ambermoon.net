@@ -140,6 +140,7 @@
         public string UseSpellOnlyInCitiesOrDungeons => executableData.Messages.GetEntry(Messages.Index.UseSpellOnlyInCitiesOrDungeons);
         public string SleepUntilDawn => executableData.Messages.GetEntry(Messages.Index.SleepUntilDawn);
         public string WhichScrollToRead => executableData.Messages.GetEntry(Messages.Index.WhichScrollToRead);
+        public string RestingTooDangerous => executableData.Messages.GetEntry(Messages.Index.RestingTooDangerous);
 
         #region Battle messages
 

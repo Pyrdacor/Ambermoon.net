@@ -5995,6 +5995,12 @@ namespace Ambermoon
 
         internal void OpenCamp(bool inn)
         {
+            if (MonsterSeesPlayer)
+            {
+                ShowMessagePopup(DataNameProvider.RestingTooDangerous);
+                return;
+            }
+
             Fade(() =>
             {
                 layout.Reset();
