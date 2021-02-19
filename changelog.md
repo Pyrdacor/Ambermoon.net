@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.3.x beta - Places
+- Version [0.3.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.1beta): Added trainers, healers and food merchants
 - Version [0.3.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.0beta): Added merchants and libraries
 
 ## 0.2.x beta - Improve game testing
