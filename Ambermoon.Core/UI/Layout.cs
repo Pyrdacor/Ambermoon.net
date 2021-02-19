@@ -1107,7 +1107,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, () => CursorType.Mouth);
                         buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false);
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
-                        buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
+                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
@@ -1134,7 +1134,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, () => game.TriggerMapEvents(EventTrigger.Mouth), true);
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
                         buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
-                        buttonGrid.SetButton(5, ButtonType.Camp, true, null, false); // TODO: camp
+                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
@@ -1255,6 +1255,18 @@ namespace Ambermoon.UI
                                 // TODO
                                 break;
                         }
+                    }
+                    else // Camp window
+                    {
+                        buttonGrid.SetButton(0, ButtonType.Spells, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(3, ButtonType.ReadScroll, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(6, ButtonType.Sleep, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                        buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                     }
                     break;
                 }
@@ -2077,8 +2089,10 @@ namespace Ambermoon.UI
             new [] { 0, -1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }
         };
 
-        void PlayItemDestroyAnimation(Position position, Item item, Action finishAction)
+        void PlayItemDestroyAnimation(Position position, Item item, Action finishAction, bool consumed)
         {
+            // TODO: if consumed play the white orb animation!
+
             game.StartSequence();
             var sprites = new ISprite[64];
             var animationPositionIndices = new int[64];
@@ -2133,14 +2147,14 @@ namespace Ambermoon.UI
                         }
                     }
 
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(65), Animate);
                 }
             }
 
-            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
+            Animate();
         }
 
-        public void DestroyItem(ItemSlot itemSlot, bool equipment)
+        public void DestroyItem(ItemSlot itemSlot, bool equipment, TimeSpan initialDelay, bool consumed = false)
         {
             var itemGrid = itemGrids[equipment ? 1 : 0];
             int slotIndex = itemGrid.SlotFromItemSlot(itemSlot);
@@ -2159,12 +2173,12 @@ namespace Ambermoon.UI
                 itemGrid.ScrollTo(scrollOffset);
             }
 
-            game.AddTimedEvent(TimeSpan.FromMilliseconds(800), () =>
+            game.AddTimedEvent(initialDelay, () =>
             {
                 var itemIndex = itemSlot.ItemIndex;
                 itemSlot.Remove(1);
                 itemGrid.SetItem(slotIndex, itemSlot);
-                PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null);
+                PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null, consumed);
             });
         }
 

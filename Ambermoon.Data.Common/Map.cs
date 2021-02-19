@@ -355,5 +355,10 @@ namespace Ambermoon.Data
                 _ => false
             };
         }
+
+        public bool CanCamp => // TODO: is this right?
+            Flags.HasFlag(MapFlags.WorldSurface) ||
+            Flags.HasFlag(MapFlags.Dungeon) ||
+            (Type == MapType.Map3D && Flags.HasFlag(MapFlags.Indoor));
     }
 }

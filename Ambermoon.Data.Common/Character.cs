@@ -141,6 +141,58 @@ namespace Ambermoon.Data
             LearnedAlchemisticSpells != 0 ||
             LearnedMysticSpells != 0 ||
             LearnedDestructionSpells != 0;
+
+        public bool HasSpell(Spell spell)
+        {
+            int school = ((int)spell - 1) / 30;
+
+            if (school > 3) // Only spells of the 4 main schools can be learned
+                return false;
+
+            int spellIndex = (int)spell - school * 30;
+            uint spellBit = 1u << spellIndex;
+
+            switch (school)
+            {
+                case 0: // healing
+                    return (LearnedHealingSpells & spellBit) != 0;
+                case 1: // alchemistic
+                    return (LearnedAlchemisticSpells & spellBit) != 0;
+                case 2: // mystic
+                    return (LearnedMysticSpells & spellBit) != 0;
+                case 3: // destruction
+                    return (LearnedDestructionSpells & spellBit) != 0;
+                default:
+                    return false;
+            }
+        }
+
+        public void AddSpell(Spell spell)
+        {
+            int school = ((int)spell - 1) / 30;
+
+            if (school > 3) // Only spells of the 4 main schools can be learned
+                return;
+
+            int spellIndex = (int)spell - school * 30;
+
+            switch (school)
+            {
+                case 0: // healing
+                    LearnedHealingSpells |= 1u << spellIndex;
+                    break;
+                case 1: // alchemistic
+                    LearnedAlchemisticSpells|= 1u << spellIndex;
+                    break;
+                case 2: // mystic
+                    LearnedMysticSpells |= 1u << spellIndex;
+                    break;
+                case 3: // destruction
+                    LearnedDestructionSpells |= 1u << spellIndex;
+                    break;
+            }
+        }
+
         public List<Spell> LearnedSpells
         {
             get

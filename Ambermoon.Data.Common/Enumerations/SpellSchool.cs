@@ -13,6 +13,21 @@ namespace Ambermoon.Data
         Function // lockpicking, call eagle, play elf harp etc
     }
 
+    public static class SpellSchoolExtensions
+    {
+        public static SpellSchool? ToSpellSchool(this Class @class) => @class switch
+        {
+            Class.Adventurer => SpellSchool.Alchemistic,
+            Class.Paladin => SpellSchool.Healing,
+            Class.Ranger => SpellSchool.Mystic,
+            Class.Healer => SpellSchool.Healing,
+            Class.Alchemist => SpellSchool.Alchemistic,
+            Class.Mystic => SpellSchool.Mystic,
+            Class.Mage => SpellSchool.Destruction,
+            _ => null
+        };
+    }
+
     [Flags]
     public enum SpellTypeMastery
     {

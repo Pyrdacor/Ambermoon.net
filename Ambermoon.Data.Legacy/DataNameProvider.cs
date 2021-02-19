@@ -74,6 +74,7 @@
         public string DropFoodQuestion => executableData.Messages.GetEntry(Messages.Index.ReallyDropFood);
         public string NotEnoughSP => executableData.Messages.GetEntry(Messages.Index.NotEnoughSP);
         public string WrongArea => executableData.Messages.GetEntry(Messages.Index.WrongArea);
+        public string WrongWorld => executableData.Messages.GetEntry(Messages.Index.WrongWorld);
         public string WrongClassToUseItem => executableData.Messages.GetEntry(Messages.Index.WrongClassToUseItem);
         public string WrongPlaceToUseItem => executableData.Messages.GetEntry(Messages.Index.WrongPlaceToUseItem);
         public string WrongWorldToUseItem => executableData.Messages.GetEntry(Messages.Index.WrongWorldToUseItem);
@@ -127,6 +128,18 @@
         public string ReviveMessage => executableData.Messages.GetEntry(Messages.Index.ReviveMessage);
         public string DustChangedToAshes => executableData.Messages.GetEntry(Messages.Index.DustChangedToAshes);
         public string AshesChangedToBody => executableData.Messages.GetEntry(Messages.Index.AshesChangedToBody);
+        public string YouDontKnowAnySpellsYet => executableData.Messages.GetEntry(Messages.Index.YouDontKnowAnySpellsYet);
+        public string CantLearnSpellsOfType => executableData.Messages.GetEntry(Messages.Index.CantLearnSpellsOfType);
+        public string AlreadyKnowsSpell => executableData.Messages.GetEntry(Messages.Index.AlreadyKnowsSpell);
+        public string FailedToLearnSpell => executableData.Messages.GetEntry(Messages.Index.FailedToLearnSpell);
+        public string SpellFailed => executableData.Messages.GetEntry(Messages.Index.SpellFailed);
+        public string ThatsNotASpellScroll => executableData.Messages.GetEntry(Messages.Index.ThatsNotASpellScroll);
+        public string NotEnoughSpellLearningPoints => executableData.Messages.GetEntry(Messages.Index.NotEnoughSpellLearningPoints);
+        public string ManagedToLearnSpell => executableData.Messages.GetEntry(Messages.Index.ManagedToLearnSpell);
+        public string TheSpellFailed => executableData.Messages.GetEntry(Messages.Index.TheSpellFailed);
+        public string UseSpellOnlyInCitiesOrDungeons => executableData.Messages.GetEntry(Messages.Index.UseSpellOnlyInCitiesOrDungeons);
+        public string SleepUntilDawn => executableData.Messages.GetEntry(Messages.Index.SleepUntilDawn);
+        public string WhichScrollToRead => executableData.Messages.GetEntry(Messages.Index.WhichScrollToRead);
 
         #region Battle messages
 
@@ -164,17 +177,14 @@
         public string BattleMessageWhichMonsterAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichMonsterAsTarget);
         public string BattleMessageWhichPartyMemberRowAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichPartyMemberRowAsTarget);
         public string BattleMessageWhichMonsterRowAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichMonsterRowAsTarget);
-        public string BattleMessageSpellFailed => executableData.Messages.GetEntry(Messages.Index.SpellFailed);
         public string BattleMessageDeflectedSpell => executableData.Messages.GetEntry(Messages.Index.DeflectedSpell);
         public string BattleMessageImmuneToSpellType => executableData.Messages.GetEntry(Messages.Index.ImmuneToSpellType);
-        public string BattleMessageTheSpellFailed => executableData.Messages.GetEntry(Messages.Index.TheSpellFailed);
         public string BattleMessageCannotDamagePetrifiedMonsters => executableData.Messages.GetEntry(Messages.Index.CannotDamagePetrifiedMonsters);
         public string BattleMessageImmuneToSpell => executableData.Messages.GetEntry(Messages.Index.ImmuneToSpell);
         public string BattleMessageWhereToBlinkTo => executableData.Messages.GetEntry(Messages.Index.WhereToBlinkTo);
         public string BattleMessageHasBlinked => executableData.Messages.GetEntry(Messages.Index.HasBlinked);
         public string BattleMessageCannotBlink => executableData.Messages.GetEntry(Messages.Index.CannotBlink);
         public string BattleMessageCannotCastCauseIrritation => executableData.Messages.GetEntry(Messages.Index.CannotCastCauseIrritation);
-        public string BattleMessageYouDontKnowAnySpellsYet => executableData.Messages.GetEntry(Messages.Index.YouDontKnowAnySpellsYet);
         public string BattleMessageCannotParry => executableData.Messages.GetEntry(Messages.Index.CannotParry);
         public string BattleMessageUseItOnWhom => executableData.Messages.GetEntry(Messages.Index.UseItOnWhom);
 
@@ -234,6 +244,7 @@
         public string HowManyLP => executableData.Messages.GetEntry(Messages.Index.HowManyLP);
         public string WhichConditionToHeal => executableData.Messages.GetEntry(Messages.Index.WhichConditionToHeal);
         public string WhichItemAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichItemAsTarget);
+        public string InnkeeperGoodSleepWish => executableData.Messages.GetEntry(Messages.Index.InnkeeperGoodSleepWish);
 
         #endregion
     }

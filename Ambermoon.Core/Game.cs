@@ -2974,6 +2974,8 @@ namespace Ambermoon
             {
                 monstersCanMoveImmediately = false;
                 ResetMoveKeys();
+                if (layout.ButtonGridPage != 0)
+                    layout.UpdateLayoutButtons();
             }
             else
             {
@@ -3717,23 +3719,35 @@ namespace Ambermoon
             // Use magic button
             layout.AttachEventToButton(8, () =>
             {
-                OpenSpellList(CurrentPartyMember,
-                    spell =>
-                    {
-                        var spellInfo = SpellInfos.Entries[spell];
+                if (!CurrentPartyMember.HasAnySpell())
+                {
+                    ShowMessagePopup(DataNameProvider.YouDontKnowAnySpellsYet);
+                }
+                else
+                {
+                    OpenSpellList(CurrentPartyMember,
+                        spell =>
+                        {
+                            var spellInfo = SpellInfos.Entries[spell];
 
-                        if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle))
-                            return DataNameProvider.WrongArea;
+                            if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle))
+                                return DataNameProvider.WrongArea;
 
-                        if (spellInfo.SP > CurrentPartyMember.SpellPoints.TotalCurrentValue)
-                            return DataNameProvider.NotEnoughSP;
+                            // TODO: The spell info in original might have a "available world" flag.
+                            // The ice/water spells are not usable on Morag.
+                            if (Map.World == World.Morag && spell >= Spell.Waterfall && spell <= Spell.Iceshower)
+                                return DataNameProvider.WrongWorld;
 
-                        // TODO: Is there more to check? Irritated?
+                            if (spellInfo.SP > CurrentPartyMember.SpellPoints.TotalCurrentValue)
+                                return DataNameProvider.NotEnoughSP;
 
-                        return null;
-                    },
-                    spell => PickBattleSpell(spell)
-                );
+                            // TODO: Is there more to check? Irritated?
+
+                            return null;
+                        },
+                        spell => PickBattleSpell(spell)
+                    );
+                }
             });
             if (currentBattle != null)
                 BattlePlayerSwitched();
@@ -5116,7 +5130,7 @@ namespace Ambermoon
                                 for (int i = 0; i < maxCursesToRemove; ++i)
                                 {
                                     var cursedItemSlot = equipSlots.First(s => s.Value.Flags.HasFlag(ItemSlotFlags.Cursed));
-                                    layout.DestroyItem(cursedItemSlot.Value, true);
+                                    layout.DestroyItem(cursedItemSlot.Value, true, TimeSpan.FromMilliseconds(800));
                                 }
 
                                 AddTimedEvent(TimeSpan.FromSeconds(2), () =>
@@ -5925,6 +5939,183 @@ namespace Ambermoon
 
             void UpdateGoldDisplay()
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
+        }
+
+        internal void OpenCamp(bool inn)
+        {
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Camp, inn);
+                layout.SetLayout(LayoutType.Items);
+                layout.Set80x80Picture(inn ? Picture80x80.RestInn : Map.Flags.HasFlag(MapFlags.Outdoor) ? Picture80x80.RestOutdoor : Picture80x80.RestDungeon);
+                layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+                var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+                itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+                var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, 12).ToList(),
+                    false, 12, 6, 12, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+                itemGrid.Disabled = true;
+                layout.AddItemGrid(itemGrid);
+                var itemArea = new Rect(16, 139, 151, 53);
+
+                void PlayerSwitched()
+                {
+                    itemGrid.HideTooltip();
+                    itemGrid.Disabled = true;
+                    layout.ShowChestMessage(null);
+                    UntrapMouse();
+                    CursorType = CursorType.Sword;
+                    inputEnable = true;
+
+                    layout.EnableButton(0, CurrentPartyMember.Class != Class.Warrior && CurrentPartyMember.Class != Class.Thief);
+                    layout.EnableButton(3, CurrentPartyMember.Class != Class.Warrior && CurrentPartyMember.Class != Class.Thief);
+                }
+
+                ActivePlayerChanged += PlayerSwitched;
+
+                void Exit()
+                {
+                    ActivePlayerChanged -= PlayerSwitched;
+                    CloseWindow();
+                }
+
+                // exit button
+                layout.AttachEventToButton(2, Exit);
+
+                // use magic button
+                layout.AttachEventToButton(0, () =>
+                {
+                    if (!CurrentPartyMember.HasAnySpell())
+                    {
+                        ShowMessagePopup(DataNameProvider.YouDontKnowAnySpellsYet);
+                    }
+                    else
+                    {
+                        OpenSpellList(CurrentPartyMember,
+                            spell =>
+                            {
+                                var spellInfo = SpellInfos.Entries[spell];
+
+                                if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Camp))
+                                    return DataNameProvider.WrongArea;
+
+                                if (spellInfo.SP > CurrentPartyMember.SpellPoints.TotalCurrentValue)
+                                    return DataNameProvider.NotEnoughSP;
+
+                                // TODO: Is there more to check? Irritated?
+
+                                return null;
+                            },
+                            spell => UseSpell(spell)
+                        );
+                    }
+
+                    void UseSpell(Spell spell)
+                    {
+                        // TODO
+                    }
+                });
+
+                void SetupRightClickAbort()
+                {
+                    nextClickHandler = buttons =>
+                    {
+                        if (buttons == MouseButtons.Right)
+                        {
+                            itemGrid.HideTooltip();
+                            itemGrid.Disabled = true;
+                            layout.ShowChestMessage(null);
+                            UntrapMouse();
+                            CursorType = CursorType.Sword;
+                            inputEnable = true;
+                            return true;
+                        }
+
+                        return false;
+                    };
+                }
+
+                // read magic button
+                layout.AttachEventToButton(3, () =>
+                {
+                    layout.ShowChestMessage(DataNameProvider.WhichScrollToRead, TextAlign.Left);
+                    itemGrid.Disabled = false;
+                    itemGrid.DisableDrag = true;
+                    CursorType = CursorType.Sword;
+                    TrapMouse(itemArea);
+                    itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                    SetupRightClickAbort();
+                });
+
+                // sleep button
+                layout.AttachEventToButton(6, () =>
+                {
+                    // TODO
+                });
+
+                itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                {
+                    itemGrid.HideTooltip();
+
+                    void Error(string message, Action additionalAction = null)
+                    {
+                        layout.ShowClickChestMessage(message, () =>
+                        {
+                            layout.ShowChestMessage(DataNameProvider.WhichScrollToRead);
+                            additionalAction?.Invoke();
+                            TrapMouse(itemArea);
+                            SetupRightClickAbort();
+                        }, false);
+                    }
+
+                    // This is only used in "read magic".
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                    if (item.Type != ItemType.SpellScroll || item.Spell == Spell.None)
+                    {
+                        Error(DataNameProvider.ThatsNotASpellScroll);
+                    }
+                    else if (item.SpellSchool != CurrentPartyMember.Class.ToSpellSchool())
+                    {
+                        Error(DataNameProvider.CantLearnSpellsOfType);
+                    }
+                    else if (CurrentPartyMember.HasSpell(item.Spell))
+                    {
+                        Error(DataNameProvider.AlreadyKnowsSpell);
+                    }
+                    else
+                    {
+                        var spellInfo = SpellInfos.Entries[item.Spell];
+
+                        if (CurrentPartyMember.SpellLearningPoints < spellInfo.SLP)
+                        {
+                            Error(DataNameProvider.NotEnoughSpellLearningPoints);
+                        }
+                        else
+                        {
+                            if (true || RollDice100() < CurrentPartyMember.Abilities[Ability.ReadMagic].TotalCurrentValue)
+                            {
+                                // Learned spell
+                                Error(DataNameProvider.ManagedToLearnSpell, () =>
+                                {
+                                    CurrentPartyMember.AddSpell(item.Spell);
+                                    layout.DestroyItem(itemSlot, false, TimeSpan.FromMilliseconds(50), true);
+                                });
+
+                            }
+                            else
+                            {
+                                // Failed to learn the spell
+                                Error(DataNameProvider.FailedToLearnSpell, () =>
+                                {
+                                    layout.DestroyItem(itemSlot, false, TimeSpan.FromMilliseconds(50));
+                                });
+                            }
+                        }
+                    }
+                };
+            });
         }
 
         internal void ShowItemPopup(ItemSlot itemSlot, Action closeAction)
@@ -6842,6 +7033,14 @@ namespace Ambermoon
                 {
                     var healer = (Places.Healer)currentWindow.WindowParameters[0];
                     OpenHealer(healer, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Camp:
+                {
+                    bool inn = (bool)currentWindow.WindowParameters[0];
+                    OpenCamp(inn);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

@@ -51,6 +51,7 @@
         string DropFoodQuestion { get; }
         string NotEnoughSP { get; }
         string WrongArea { get; }
+        string WrongWorld { get; }
         string WrongClassToUseItem { get; }
         string WrongPlaceToUseItem { get; }
         string WrongWorldToUseItem { get; }
@@ -104,6 +105,18 @@
         string ReviveMessage { get; }
         string DustChangedToAshes { get; }
         string AshesChangedToBody { get; }
+        string YouDontKnowAnySpellsYet { get; }
+        string CantLearnSpellsOfType { get; }
+        string AlreadyKnowsSpell { get; }
+        string FailedToLearnSpell { get; }
+        string SpellFailed { get; }
+        string ThatsNotASpellScroll { get; }
+        string NotEnoughSpellLearningPoints { get; }
+        string ManagedToLearnSpell { get; }
+        string TheSpellFailed { get; }
+        string UseSpellOnlyInCitiesOrDungeons { get; }
+        string SleepUntilDawn { get; }
+        string WhichScrollToRead { get; }
 
         #region Battle messages
 
@@ -141,17 +154,14 @@
         string BattleMessageWhichMonsterAsTarget { get; }
         string BattleMessageWhichPartyMemberRowAsTarget { get; }
         string BattleMessageWhichMonsterRowAsTarget { get; }
-        string BattleMessageSpellFailed { get; }
         string BattleMessageDeflectedSpell { get; }
         string BattleMessageImmuneToSpellType { get; }
-        string BattleMessageTheSpellFailed { get; }
         string BattleMessageCannotDamagePetrifiedMonsters { get; }
         string BattleMessageImmuneToSpell { get; }
         string BattleMessageWhereToBlinkTo { get; }
         string BattleMessageHasBlinked { get; }
         string BattleMessageCannotBlink { get; }
         string BattleMessageCannotCastCauseIrritation { get; }
-        string BattleMessageYouDontKnowAnySpellsYet { get; }
         string BattleMessageCannotParry { get; }
         string BattleMessageUseItOnWhom { get; }
 
@@ -211,6 +221,7 @@
         string HowManyLP { get; }
         string WhichConditionToHeal { get; }
         string WhichItemAsTarget { get; }
+        string InnkeeperGoodSleepWish { get; }
 
         #endregion
 

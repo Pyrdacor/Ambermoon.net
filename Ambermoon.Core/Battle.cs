@@ -1434,7 +1434,7 @@ namespace Ambermoon
         {
             if (game.RollDice100() >= caster.Abilities[Ability.UseMagic].TotalCurrentValue)
             {
-                layout.SetBattleMessage(caster.Name + game.DataNameProvider.BattleMessageSpellFailed,
+                layout.SetBattleMessage(caster.Name + game.DataNameProvider.SpellFailed,
                     caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
                 return false;
             }
