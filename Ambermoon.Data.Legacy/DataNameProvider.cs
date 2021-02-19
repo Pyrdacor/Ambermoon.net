@@ -124,6 +124,9 @@
         public string ItemFingersDisplay => executableData.UITexts.Entries[UITextIndex.FingersDisplay];
         public string ItemDamageDisplay => executableData.UITexts.Entries[UITextIndex.DamageDisplay];
         public string ItemDefenseDisplay => executableData.UITexts.Entries[UITextIndex.DefenseDisplay];
+        public string ReviveMessage => executableData.Messages.GetEntry(Messages.Index.ReviveMessage);
+        public string DustChangedToAshes => executableData.Messages.GetEntry(Messages.Index.DustChangedToAshes);
+        public string AshesChangedToBody => executableData.Messages.GetEntry(Messages.Index.AshesChangedToBody);
 
         #region Battle messages
 

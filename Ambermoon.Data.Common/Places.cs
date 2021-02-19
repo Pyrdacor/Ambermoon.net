@@ -98,6 +98,25 @@ namespace Ambermoon.Data
             public int HealDruggedCost => GetWord(20);
             public int HealLPCost => GetWord(22);
             public int RemoveCurseCost => GetWord(24); // TODO: not sure
+
+            public int GetCostForHealingAilment(Ailment ailment)
+            {
+                return ailment switch
+                {
+                    Ailment.Crazy => HealCrazyCost,
+                    Ailment.Blind => HealBlindCost,
+                    Ailment.Drugged => HealDruggedCost,
+                    Ailment.Lamed => HealLamedCost,
+                    Ailment.Poisoned => HealPoisonedCost,
+                    Ailment.Petrified => HealPetrifiedCost,
+                    Ailment.Diseased => HealDiseasedCost,
+                    Ailment.Aging => HealAgingCost,
+                    Ailment.DeadCorpse => HealDeadCorpseCost,
+                    Ailment.DeadAshes => HealDeadAshesCost,
+                    Ailment.DeadDust => HealDeadDustCost,
+                    _ => 0
+                };
+            }
         }
 
         public class Sage : NonItemPlace

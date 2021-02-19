@@ -101,6 +101,9 @@
         string ItemFingersDisplay { get; }
         string ItemDamageDisplay { get; }
         string ItemDefenseDisplay { get; }
+        string ReviveMessage { get; }
+        string DustChangedToAshes { get; }
+        string AshesChangedToBody { get; }
 
         #region Battle messages
 

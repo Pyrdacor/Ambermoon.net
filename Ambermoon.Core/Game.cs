@@ -21,6 +21,8 @@ namespace Ambermoon
                 this.game = game;
             }
 
+            PartyMember subject => game.currentWindow.Window == Window.Healer ? game.currentlyHealedMember : game.CurrentPartyMember;
+
             /// <inheritdoc />
             public string LeadName => game.CurrentPartyMember?.Name ?? "";
             /// <inheritdoc />
@@ -30,11 +32,11 @@ namespace Ambermoon
             /// <inheritdoc />
             public string InvnName => game.CurrentInventory?.Name ?? LeadName;
             /// <inheritdoc />
-            public string SubjName => LeadName; // TODO
+            public string SubjName => subject?.Name; // TODO
             /// <inheritdoc />
-            public string Sex1Name => game.CurrentPartyMember?.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
+            public string Sex1Name => subject?.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
             /// <inheritdoc />
-            public string Sex2Name => game.CurrentPartyMember?.Gender == Gender.Male ? game.DataNameProvider.His : game.DataNameProvider.Her;
+            public string Sex2Name => subject?.Gender == Gender.Male ? game.DataNameProvider.His : game.DataNameProvider.Her;
         }
 
         class Movement
@@ -234,7 +236,7 @@ namespace Ambermoon
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
         PartyMember currentPickingActionMember = null;
-        PartyMember currentHealerMember = null;
+        PartyMember currentlyHealedMember = null;
         SpellAnimation currentAnimation = null;
         Spell pickedSpell = Spell.None;
         uint? spellItemSlotIndex = null;
@@ -848,9 +850,17 @@ namespace Ambermoon
                 layout.SetCharacter(slot.Value, member);
         }
 
-        void PartyMemberRevived(Character partyMember)
+        void PartyMemberRevived(PartyMember partyMember)
         {
-            // TODO
+            layout.UpdateCharacter(partyMember, () =>
+            {
+                if (currentWindow.Window == Window.Healer)
+                {
+                    layout.ShowClickChestMessage(DataNameProvider.ReviveMessage, null, false);
+                }
+
+                // TODO: camp, etc
+            });
         }
 
         void AddPartyMember(int slot, PartyMember partyMember)
@@ -4981,10 +4991,12 @@ namespace Ambermoon
         void OpenHealer(Places.Healer healer, bool showWelcome = true)
         {
             Action updatePartyGold = null;
+            ItemGrid conditionGrid = null;
 
-            void SetupHealer(Action updateGold)
+            void SetupHealer(Action updateGold, ItemGrid itemGrid)
             {
                 updatePartyGold = updateGold;
+                conditionGrid = itemGrid;
             }
 
             void Heal(uint lp)
@@ -4995,30 +5007,61 @@ namespace Ambermoon
                     {
                         healer.AvailableGold -= lp * (uint)healer.HealLPCost;
                         updatePartyGold?.Invoke();
-                        currentHealerMember.HitPoints.CurrentValue += lp;
+                        currentlyHealedMember.HitPoints.CurrentValue += lp;
                         PlayerSwitched();
-                        PlayHealAnimation(currentHealerMember, () => layout.FillCharacterBars(currentHealerMember));
+                        PlayHealAnimation(currentlyHealedMember, () => layout.FillCharacterBars(currentlyHealedMember));
                     }
                 }, TextAlign.Left);
             }
 
+            void HealAilment(Ailment ailment, Action<bool> healedHandler)
+            {
+                // TODO: At the moment DeadAshes and DeadDust will be healed fully so that the
+                // character is alive afterwards. As this is bugged in original I don't know how
+                // it was supposed to be. Either reviving completely or transform to next stage
+                // like dust to ashes and ashes to body first.
+
+                var cost = (uint)healer.GetCostForHealingAilment(ailment);
+
+                layout.ShowPlaceQuestion($"{DataNameProvider.PriceForHealingCondition}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                {
+                    if (answer) // yes
+                    {
+                        healer.AvailableGold -= cost;
+                        updatePartyGold?.Invoke();
+                        RemoveAilment(ailment, currentlyHealedMember);
+                        PlayerSwitched();
+                        PlayHealAnimation(currentlyHealedMember);
+                        layout.UpdateCharacterStatus(currentlyHealedMember);
+                        healedHandler?.Invoke(true);
+                        if (ailment >= Ailment.DeadCorpse) // dead
+                            PartyMemberRevived(currentlyHealedMember);
+                    }
+                    else
+                    {
+                        healedHandler?.Invoke(false);
+                    }
+                }, TextAlign.Left);
+            }
+
+            var healableAilments = Ailment.Lamed | Ailment.Poisoned | Ailment.Petrified | Ailment.Diseased |
+                Ailment.Aging | Ailment.DeadCorpse | Ailment.DeadAshes | Ailment.DeadDust | Ailment.Crazy |
+                Ailment.Blind | Ailment.Drugged;
+
             void PlayerSwitched()
             {
-                var healableAilments = Ailment.Lamed | Ailment.Poisoned | Ailment.Petrified | Ailment.Diseased |
-                    Ailment.Aging | Ailment.DeadCorpse | Ailment.DeadAshes | Ailment.DeadDust | Ailment.Crazy |
-                    Ailment.Blind | Ailment.Drugged;
-                layout.EnableButton(0, currentHealerMember.HitPoints.TotalCurrentValue < currentHealerMember.HitPoints.MaxValue);
-                layout.EnableButton(3, currentHealerMember.Equipment.Slots.Any(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
-                layout.EnableButton(6, ((uint)currentHealerMember.Ailments & (uint)healableAilments) != 0);
+                layout.EnableButton(0, currentlyHealedMember.HitPoints.TotalCurrentValue < currentlyHealedMember.HitPoints.MaxValue);
+                layout.EnableButton(3, currentlyHealedMember.Equipment.Slots.Any(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
+                layout.EnableButton(6, ((uint)currentlyHealedMember.Ailments & (uint)healableAilments) != 0);
             }
 
             uint GetMaxLPHealing() => Math.Max(0, Util.Min(healer.AvailableGold / (uint)healer.HealLPCost,
-                currentHealerMember.HitPoints.MaxValue - currentHealerMember.HitPoints.CurrentValue));
+                currentlyHealedMember.HitPoints.MaxValue - currentlyHealedMember.HitPoints.CurrentValue));
 
             Fade(() =>
             {
                 if (showWelcome)
-                    currentHealerMember = CurrentPartyMember;
+                    currentlyHealedMember = CurrentPartyMember;
 
                 layout.Reset();
                 ShowMap(false);
@@ -5026,10 +5069,12 @@ namespace Ambermoon
                 ShowPlaceWindow(healer.Name, showWelcome ? DataNameProvider.WelcomeHealer : null,
                     Picture80x80.Healer, healer, SetupHealer, PlayerSwitched);
                 // This will show the healing symbol on top of the portrait.
-                SetActivePartyMember(SlotFromPartyMember(currentHealerMember).Value);
+                SetActivePartyMember(SlotFromPartyMember(currentlyHealedMember).Value);
                 // Heal LP button
                 layout.AttachEventToButton(0, () =>
                 {
+                    conditionGrid.Disabled = true;
+
                     if (healer.AvailableGold < healer.HealLPCost)
                     {
                         layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
@@ -5045,6 +5090,8 @@ namespace Ambermoon
                 // Remove curse button
                 layout.AttachEventToButton(3, () =>
                 {
+                    conditionGrid.Disabled = true;
+
                     if (healer.AvailableGold < healer.RemoveCurseCost)
                     {
                         layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
@@ -5052,7 +5099,7 @@ namespace Ambermoon
                     }
 
                     int maxCursesToRemove = Math.Min((int)healer.AvailableGold / healer.RemoveCurseCost,
-                        currentHealerMember.Equipment.Slots.Count(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
+                        currentlyHealedMember.Equipment.Slots.Count(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
 
                     layout.ShowPlaceQuestion($"{DataNameProvider.PriceForRemovingCurses}{maxCursesToRemove * healer.RemoveCurseCost}{DataNameProvider.AgreeOnPrice}", answer =>
                     {
@@ -5062,9 +5109,9 @@ namespace Ambermoon
                             updatePartyGold?.Invoke();
                             PlayerSwitched();
                             allInputDisabled = true;
-                            OpenPartyMember(SlotFromPartyMember(currentHealerMember).Value, true, () =>
+                            OpenPartyMember(SlotFromPartyMember(currentlyHealedMember).Value, true, () =>
                             {
-                                var equipSlots = currentHealerMember.Equipment.Slots.ToList();
+                                var equipSlots = currentlyHealedMember.Equipment.Slots.ToList();
 
                                 for (int i = 0; i < maxCursesToRemove; ++i)
                                 {
@@ -5081,6 +5128,114 @@ namespace Ambermoon
                         }
                     }, TextAlign.Left);
                 });
+                layout.AttachEventToButton(6, () =>
+                {
+                    conditionGrid.Disabled = false;
+                    conditionGrid.DisableDrag = true;
+                    layout.ShowChestMessage(DataNameProvider.WhichConditionToHeal, TextAlign.Left);
+                    CursorType = CursorType.Sword;
+                    var itemArea = new Rect(16, 139, 151, 53);
+                    TrapMouse(itemArea);
+                    var slots = new List<ItemSlot>(12);
+                    var slotAilments = new List<Ailment>(12);
+                    // Ensure that only one dead state is present
+                    if (currentlyHealedMember.Ailments.HasFlag(Ailment.DeadDust))
+                        currentlyHealedMember.Ailments = Ailment.DeadDust;
+                    else if (currentlyHealedMember.Ailments.HasFlag(Ailment.DeadAshes))
+                        currentlyHealedMember.Ailments = Ailment.DeadAshes;
+                    else if (currentlyHealedMember.Ailments.HasFlag(Ailment.DeadCorpse))
+                        currentlyHealedMember.Ailments = Ailment.DeadCorpse;
+                    for (int i = 0; i < 16; ++i)
+                    {
+                        if (((uint)healableAilments & (1u << i)) != 0)
+                        {
+                            var ailment = (Ailment)(1 << i);
+
+                            if (currentlyHealedMember.Ailments.HasFlag(ailment))
+                            {
+                                slots.Add(new ItemSlot
+                                {
+                                    ItemIndex = ailment switch
+                                    {
+                                        Ailment.Lamed => 1,
+                                        Ailment.Poisoned => 2,
+                                        Ailment.Petrified => 3,
+                                        Ailment.Diseased => 4,
+                                        Ailment.Aging => 5,
+                                        Ailment.Crazy => 7,
+                                        Ailment.Blind => 8,
+                                        Ailment.Drugged => 9,
+                                        _ => 6 // dead states
+                                    },
+                                    Amount = 1
+                                });
+                                slotAilments.Add(ailment);
+                            }
+                        }
+                    }
+                    while (slots.Count < 12)
+                        slots.Add(new ItemSlot());
+                    conditionGrid.Initialize(slots, false);
+                    void SetupRightClickAbort()
+                    {
+                        nextClickHandler = buttons =>
+                        {
+                            if (buttons == MouseButtons.Right)
+                            {
+                                conditionGrid.HideTooltip();
+                                conditionGrid.Disabled = true;
+                                layout.ShowChestMessage(null);
+                                UntrapMouse();
+                                return true;
+                            }
+
+                            return false;
+                        };
+                    }
+                    SetupRightClickAbort();
+                    conditionGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                    {
+                        if (slotIndex < slotAilments.Count)
+                        {
+                            conditionGrid.HideTooltip();
+
+                            if (healer.AvailableGold < healer.GetCostForHealingAilment(slotAilments[slotIndex]))
+                            {
+                                layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, () =>
+                                {
+                                    TrapMouse(itemArea);
+                                    SetupRightClickAbort();
+                                }, false);
+                                return;
+                            }
+
+                            nextClickHandler = null;
+                            UntrapMouse();
+
+                            HealAilment(slotAilments[slotIndex], healed =>
+                            {
+                                if (healed)
+                                {
+                                    if (currentlyHealedMember.Ailments != Ailment.None)
+                                    {
+                                        conditionGrid.SetItem(slotIndex, null);
+                                        TrapMouse(itemArea);
+                                        SetupRightClickAbort();
+                                        layout.ShowChestMessage(DataNameProvider.WhichConditionToHeal, TextAlign.Left);
+                                    }
+                                    else
+                                        conditionGrid.Disabled = true;
+                                }
+                                else
+                                {
+                                    TrapMouse(itemArea);
+                                    SetupRightClickAbort();
+                                    layout.ShowChestMessage(DataNameProvider.WhichConditionToHeal, TextAlign.Left);
+                                }
+                            });
+                        }
+                    };
+                });
                 PlayerSwitched();
             });
         }
@@ -5089,7 +5244,7 @@ namespace Ambermoon
         {
             Action updatePartyGold = null;
 
-            void SetupFoodDealer(Action updateGold)
+            void SetupFoodDealer(Action updateGold, ItemGrid _)
             {
                 updatePartyGold = updateGold;
             }
@@ -5191,7 +5346,7 @@ namespace Ambermoon
         {
             Action updatePartyGold = null;
 
-            void SetupTrainer(Action updateGold)
+            void SetupTrainer(Action updateGold, ItemGrid _)
             {
                 updatePartyGold = updateGold;
             }
@@ -5280,7 +5435,7 @@ namespace Ambermoon
             });
         }
 
-        void ShowPlaceWindow(string placeName, string welcomeText, Picture80x80 picture, IPlace place, Action<Action> placeSetup,
+        void ShowPlaceWindow(string placeName, string welcomeText, Picture80x80 picture, IPlace place, Action<Action, ItemGrid> placeSetup,
             Action activePlayerSwitchedHandler, Func<string> exitChecker = null, Action closeAction = null)
         {
             OpenStorage = place;
@@ -5310,7 +5465,7 @@ namespace Ambermoon
             void UpdateGoldDisplay()
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{place.AvailableGold}"));
 
-            placeSetup?.Invoke(UpdateGoldDisplay);
+            placeSetup?.Invoke(UpdateGoldDisplay, itemGrid);
             ActivePlayerChanged += activePlayerSwitchedHandler;
 
             // exit button
@@ -6370,7 +6525,7 @@ namespace Ambermoon
             {
                 if (currentWindow.Window == Window.Healer)
                 {
-                    currentHealerMember = partyMember;
+                    currentlyHealedMember = partyMember;
                     layout.SetCharacterHealSymbol(index);
                 }
                 else

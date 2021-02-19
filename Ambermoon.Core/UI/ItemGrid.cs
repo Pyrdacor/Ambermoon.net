@@ -61,7 +61,7 @@ namespace Ambermoon.UI
                 disabled = value;
 
                 if (scrollbar != null)
-                    scrollbar.Disabled = disabled;
+                    scrollbar.Disabled = disabled || items.Length <= slotsPerPage;
 
                 if (disabled)
                 {
@@ -116,7 +116,12 @@ namespace Ambermoon.UI
                 new Scrollbar(layout, scrollbarType ?? ScrollbarType.SmallVertical, scrollbarArea,
                 scrollbarSize.Width, scrollbarSize.Height, (numTotalSlots - slotsPerPage) / slotsPerScroll);
             if (scrollbar != null)
-                scrollbar.Scrolled += Scrollbar_Scrolled;
+            {
+                if (items.Length <= slotsPerPage)
+                    scrollbar.Disabled = true;
+                else
+                    scrollbar.Scrolled += Scrollbar_Scrolled;
+            }
             this.showPrice = showPrice;
             this.availableGoldProvider = availableGoldProvider;
         }
@@ -527,7 +532,8 @@ namespace Ambermoon.UI
             if (disabled)
                 return false;
 
-            if (mouseButtons == MouseButtons.Left && scrollbar?.LeftClick(position) == true)
+            if (mouseButtons == MouseButtons.Left && scrollbar != null &&
+                !scrollbar.Disabled && scrollbar.LeftClick(position))
             {
                 if (draggedItem != null)
                 {

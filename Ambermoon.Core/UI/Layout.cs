@@ -365,6 +365,9 @@ namespace Ambermoon.UI
             public int Offset;
             public ISprite PrimarySprite;
             public ISprite SecondarySprite;
+            public event Action Finished;
+
+            public void OnFinished() => Finished?.Invoke();
         }
 
         enum PartyMemberPortaitState
@@ -1685,6 +1688,8 @@ namespace Ambermoon.UI
             var bounds = new Rect(114, 46, 189, 28);
             ChestText?.Destroy();
             ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            questionYesButton?.Destroy();
+            questionNoButton?.Destroy();
             questionYesButton = new Button(RenderView, new Position(223, 75));
             questionNoButton = new Button(RenderView, new Position(223 + Button.Width, 75));
             questionYesButton.ButtonType = ButtonType.Yes;
@@ -1699,10 +1704,10 @@ namespace Ambermoon.UI
             void Answer(bool answer)
             {
                 questionYesButton?.Destroy();
-                questionNoButton?.Destroy();
-                ChestText?.Destroy();
                 questionYesButton = null;
+                questionNoButton?.Destroy();
                 questionNoButton = null;
+                ChestText?.Destroy();
                 ChestText = null;
                 game.InputEnable = true;
                 answerEvent?.Invoke(answer);
@@ -1982,13 +1987,16 @@ namespace Ambermoon.UI
             }
         }
 
-        void PlayPortraitAnimation(int slot, PartyMember partyMember)
+        void PlayPortraitAnimation(int slot, PartyMember partyMember, Action finishAction = null)
         {
             var newState = partyMember == null ? PartyMemberPortaitState.Empty
                 : partyMember.Alive ? PartyMemberPortaitState.Normal : PartyMemberPortaitState.Dead;
 
             if (portraitStates[slot] == newState)
+            {
+                finishAction?.Invoke();
                 return;
+            }
 
             bool animation = portraitStates[slot] != PartyMemberPortaitState.None;
 
@@ -2016,15 +2024,26 @@ namespace Ambermoon.UI
 
                 portraitAnimation = new PortraitAnimation
                 {
-                    StartTicks = game.BattleActive ? game.CurrentBattleTicks : game.CurrentTicks,
+                    StartTicks = game.BattleActive ? game.CurrentBattleTicks : game.CurrentAnimationTicks,
                     Offset = yOffset,
                     PrimarySprite = sprite,
                     SecondarySprite = overlaySprite
                 };
+
+                if (finishAction != null)
+                {
+                    void Finished()
+                    {
+                        portraitAnimation.Finished -= Finished;
+                        finishAction?.Invoke();
+                    }
+                    portraitAnimation.Finished += Finished;
+                }
             }
             else
             {
                 portraits[slot].TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
+                finishAction?.Invoke();
             }
         }
 
@@ -2149,10 +2168,21 @@ namespace Ambermoon.UI
             });
         }
 
+        public void UpdateCharacter(PartyMember partyMember, Action portraitAnimationFinishedHandler = null)
+        {
+            SetCharacter(game.SlotFromPartyMember(partyMember).Value, partyMember, false, portraitAnimationFinishedHandler);
+        }
+
+        public void UpdateCharacter(int slot, Action portraitAnimationFinishedHandler = null)
+        {
+            SetCharacter(slot, game.GetPartyMember(slot), false, portraitAnimationFinishedHandler);
+        }
+
         /// <summary>
         /// Set portait to 0 to remove the portrait.
         /// </summary>
-        public void SetCharacter(int slot, PartyMember partyMember, bool initialize = false)
+        public void SetCharacter(int slot, PartyMember partyMember, bool initialize = false,
+            Action portraitAnimationFinishedHandler = null)
         {
             var sprite = portraits[slot] ??= RenderView.SpriteFactory.Create(32, 34, true, 2);
             sprite.Layer = renderLayer;
@@ -2166,7 +2196,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                PlayPortraitAnimation(slot, partyMember);
+                PlayPortraitAnimation(slot, partyMember, portraitAnimationFinishedHandler);
             }
             sprite.PaletteIndex = 49;
             sprite.Visible = true;
@@ -2213,6 +2243,9 @@ namespace Ambermoon.UI
             }
 
             FillCharacterBars(slot, partyMember);
+
+            if (initialize)
+                portraitAnimationFinishedHandler?.Invoke();
         }
 
         internal void UpdateCharacterStatus(int slot, UIGraphic? graphicIndex = null)
@@ -2720,12 +2753,13 @@ namespace Ambermoon.UI
 
             if (portraitAnimation != null)
             {
-                uint elapsed = (game.BattleActive ? game.CurrentBattleTicks : currentTicks) - portraitAnimation.StartTicks;
+                uint elapsed = (game.BattleActive ? game.CurrentBattleTicks : game.CurrentAnimationTicks) - portraitAnimation.StartTicks;
 
                 if (elapsed > Game.TicksPerSecond)
                 {
                     portraitAnimation.PrimarySprite.Y = 1;
                     portraitAnimation.SecondarySprite.Delete();
+                    portraitAnimation.OnFinished();
                     portraitAnimation = null;
                 }
                 else
