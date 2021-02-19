@@ -218,6 +218,8 @@ namespace Ambermoon
         internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
         internal PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
+        bool pickingTargetInventory = false;
+        event Action<ItemGrid, int, ItemSlot> targetItemPicked;
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
@@ -740,7 +742,7 @@ namespace Ambermoon
                 }
                 if (yOffset < 0)
                 {
-                    map = MapManager.GetMap(map.DownMapIndex.Value);
+                    map = MapManager.GetMap(map.UpMapIndex.Value);
                     yOffset += map.Height;
                     playerY += (uint)map.Height;
                 }
@@ -1064,7 +1066,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled || pickingNewLeader)
+            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled || pickingNewLeader || pickingTargetInventory)
             {
                 clickMoveActive = false;
                 return;
@@ -1231,7 +1233,7 @@ namespace Ambermoon
 
         void Move()
         {
-            if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader)
+            if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetInventory)
                 return;
 
             bool left = keys[(int)Key.Left] || keys[(int)Key.A];
@@ -1285,6 +1287,36 @@ namespace Ambermoon
             }
         }
 
+        void PickTargetInventory()
+        {
+            pickingTargetInventory = true;
+            CursorType = CursorType.Sword;
+            TrapMouse(Global.PartyMemberPortraitArea);
+        }
+
+        internal void FinishPickingTargetInventory(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
+        {
+            if (currentWindow.Window == Window.Inventory)
+                CloseWindow();
+
+            pickingTargetInventory = false;
+            layout.ShowChestMessage(null);
+            UntrapMouse();
+
+            targetItemPicked?.Invoke(itemGrid, slotIndex, itemSlot);
+        }
+
+        internal void AbortPickingTargetInventory()
+        {
+            if (currentWindow.Window == Window.Inventory)
+                CloseWindow();
+
+            pickingTargetInventory = false;
+            layout.ShowChestMessage(null);
+            UntrapMouse();
+            targetItemPicked?.Invoke(null, 0, null);
+        }
+
         public void OnKeyDown(Key key, KeyModifiers modifiers)
         {
             if (characterCreator != null)
@@ -1313,6 +1345,14 @@ namespace Ambermoon
 
                 if (key != Key.Escape && !(key >= Key.Num1 && key <= Key.Num9))
                     return;
+            }
+
+            if (pickingTargetInventory)
+            {
+                if (key != Key.Escape)
+                    return;
+
+                AbortPickingTargetInventory();
             }
 
             keys[(int)key] = true;
@@ -1404,7 +1444,7 @@ namespace Ambermoon
 
         public void OnKeyUp(Key key, KeyModifiers modifiers)
         {
-            if (characterCreator != null || allInputDisabled)
+            if (characterCreator != null || allInputDisabled || pickingTargetInventory)
                 return;
 
             if (!InputEnable || pickingNewLeader)
@@ -1445,7 +1485,7 @@ namespace Ambermoon
                 return;
             }
 
-            if (allInputDisabled)
+            if (allInputDisabled || pickingTargetInventory)
                 return;
 
             if (!pickingNewLeader && layout.KeyChar(keyChar))
@@ -1535,7 +1575,8 @@ namespace Ambermoon
             {
                 var relativePosition = renderView.ScreenToGame(position);
 
-                if (!WindowActive && !layout.PopupActive && InputEnable && !pickingNewLeader && mapViewArea.Contains(relativePosition))
+                if (!WindowActive && !layout.PopupActive && InputEnable && !pickingNewLeader &&
+                    !pickingTargetInventory && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
                     if (buttons == MouseButtons.Right)
@@ -1623,10 +1664,10 @@ namespace Ambermoon
                     }
 
                     var cursorType = CursorType.Sword;
-                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader);
+                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetInventory);
                     CursorType = cursorType;
 
-                    if (InputEnable && !pickingNewLeader)
+                    if (InputEnable && !pickingNewLeader && !pickingTargetInventory)
                     {
                         layout.Hover(relativePosition, ref cursorType); // Update cursor
                         if (cursor.Type != CursorType.None)
@@ -2125,7 +2166,8 @@ namespace Ambermoon
                 return;
 
             bool switchedFromOtherPartyMember = CurrentInventory != null;
-            bool canAccessInventory = !HasPartyMemberFled(GetPartyMember(slot));
+            var partyMember = GetPartyMember(slot);
+            bool canAccessInventory = !HasPartyMemberFled(partyMember) && partyMember.Ailments.CanOpenInventory();
 
             if (inventory && !canAccessInventory)
             {
@@ -3868,8 +3910,8 @@ namespace Ambermoon
                 ApplySpellEffect(spell, caster);
             else if (target is Character character)
                 ApplySpellEffect(spell, caster, character);
-            else if (target is Item item)
-                ApplySpellEffect(spell, caster, item);
+            else if (target is ItemSlot itemSlot)
+                ApplySpellEffect(spell, caster, itemSlot);
             else
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid spell target type: {target.GetType()}");
         }
@@ -3960,15 +4002,25 @@ namespace Ambermoon
             }
         }
 
-        void ApplySpellEffect(Spell spell, Character caster, Item item)
+        void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action finishAction = null)
         {
             switch (spell)
             {
                 case Spell.ChargeItem:
+                    // TODO
+                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
+                    break;
                 case Spell.RepairItem:
+                    // TODO
+                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
+                    break;
                 case Spell.DuplicateItem:
+                    // TODO
+                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
+                    break;
                 case Spell.RemoveCurses:
                     // TODO
+                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no item-targeted spell.");
@@ -5953,8 +6005,8 @@ namespace Ambermoon
                 layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
                 itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-                var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, 12).ToList(),
-                    false, 12, 6, 12, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+                var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, 24).ToList(),
+                    false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
                 itemGrid.Disabled = true;
                 layout.AddItemGrid(itemGrid);
                 var itemArea = new Rect(16, 139, 151, 53);
@@ -6018,15 +6070,56 @@ namespace Ambermoon
                         switch (spellInfo.Target)
                         {
                             case SpellTarget.SingleFriend:
-                                // TODO
+                            {
+                                var target = PartyMembers.First(); // TODO: Pick target
+                                currentAnimation?.Destroy();
+                                currentAnimation = new SpellAnimation(this, layout);
+                                currentAnimation.CastOn(spell, target, () =>
+                                {
+                                    currentAnimation.Destroy();
+                                    currentAnimation = null;
+                                    ApplySpellEffect(spell, CurrentPartyMember, target);
+                                });
                                 break;
+                            }
                             case SpellTarget.FriendRow:
                                 throw new AmbermoonException(ExceptionScope.Application, $"Friend row spells are not implemented as there are none in Ambermoon.");
                             case SpellTarget.AllFriends:
-                                // TODO
+                            {
+                                currentAnimation?.Destroy();
+                                currentAnimation = new SpellAnimation(this, layout);
+                                currentAnimation.CastOnAllPartyMembers(spell, () =>
+                                {
+                                    currentAnimation.Destroy();
+                                    currentAnimation = null;
+
+                                    foreach (var partyMember in PartyMembers.Where(p => p.Alive))
+                                        ApplySpellEffect(spell, CurrentPartyMember, partyMember);
+                                });
                                 break;
+                            }
                             case SpellTarget.Item:
-                                // TODO
+                                layout.ShowChestMessage(DataNameProvider.WhichInventoryAsTarget);
+                                PickTargetInventory();
+                                targetItemPicked += (ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot) =>
+                                {
+                                    if (itemSlot != null)
+                                    {
+                                        StartSequence();
+                                        ApplySpellEffect(spell, CurrentPartyMember, itemSlot, () =>
+                                        {
+                                            EndSequence();
+                                            layout.ShowChestMessage(null);
+                                        });
+                                    }
+                                    else
+                                    {
+                                        layout.ShowChestMessage(null);
+                                    }
+                                };
+                                break;
+                            case SpellTarget.None:
+                                ApplySpellEffect(spell, CurrentPartyMember);
                                 break;
                             default:
                                 throw new AmbermoonException(ExceptionScope.Application, $"Spells with target {spellInfo.Target} should not be usable in camps.");
@@ -6111,7 +6204,7 @@ namespace Ambermoon
                         }
                         else
                         {
-                            CurrentPartyMember.SpellLearningPoints -= spellInfo.SLP;
+                            CurrentPartyMember.SpellLearningPoints -= (ushort)spellInfo.SLP;
 
                             if (RollDice100() < CurrentPartyMember.Abilities[Ability.ReadMagic].TotalCurrentValue)
                             {

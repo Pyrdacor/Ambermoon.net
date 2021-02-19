@@ -221,6 +221,7 @@
         string HowManyLP { get; }
         string WhichConditionToHeal { get; }
         string WhichItemAsTarget { get; }
+        string WhichInventoryAsTarget { get; }
         string InnkeeperGoodSleepWish { get; }
 
         #endregion

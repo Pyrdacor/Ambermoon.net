@@ -2173,13 +2173,58 @@ namespace Ambermoon.UI
                 itemGrid.ScrollTo(scrollOffset);
             }
 
-            game.AddTimedEvent(initialDelay, () =>
+            if (consumed)
             {
-                var itemIndex = itemSlot.ItemIndex;
-                itemSlot.Remove(1);
-                itemGrid.SetItem(slotIndex, itemSlot);
-                PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null, consumed);
-            });
+                uint effectGraphicIndex = 10; // TODO
+                int numFrames = 1; // TODO
+                PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, effectGraphicIndex, numFrames);
+            }
+            else
+            {
+                game.AddTimedEvent(initialDelay, () =>
+                {
+                    var itemIndex = itemSlot.ItemIndex;
+                    itemSlot.Remove(1);
+                    itemGrid.SetItem(slotIndex, itemSlot);
+                    PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null, consumed);
+                });
+            }
+        }
+
+        public void PlayItemEffect(ItemSlot itemSlot, TimeSpan initialDelay,
+            uint graphicIndex, int numFrames)
+        {
+            var itemGrid = itemGrids[0];
+            int slotIndex = itemGrids[0].SlotFromItemSlot(itemSlot);
+
+            if (slotIndex == -1)
+            {
+                itemGrid = itemGrids[1];
+                slotIndex = itemGrids[1].SlotFromItemSlot(itemSlot);
+            }
+
+            if (slotIndex == -1)
+                throw new AmbermoonException(ExceptionScope.Application, "Invalid item slot");
+
+            PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, graphicIndex, numFrames);
+        }
+
+        public void PlayItemEffect(ItemSlot itemSlot, bool equipment, TimeSpan initialDelay,
+            uint graphicIndex, int numFrames)
+        {
+            var itemGrid = itemGrids[equipment ? 1 : 0];
+            int slotIndex = itemGrid.SlotFromItemSlot(itemSlot);
+
+            if (slotIndex == -1)
+                throw new AmbermoonException(ExceptionScope.Application, "Invalid item slot");
+
+            PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, graphicIndex, numFrames);
+        }
+
+        void PlayItemEffect(ItemGrid itemGrid, ItemSlot itemSlot, int slotIndex, TimeSpan initialDelay,
+            uint graphicIndex, int numFrames)
+        {
+            // TODO
         }
 
         public void UpdateCharacter(PartyMember partyMember, Action portraitAnimationFinishedHandler = null)
@@ -2956,9 +3001,23 @@ namespace Ambermoon.UI
         }
 
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
-            uint currentTicks, bool pickingNewLeader = false)
+            uint currentTicks, bool pickingNewLeader = false, bool pickingTargetInventory = false)
         {
-            if (!pickingNewLeader)
+            if (pickingTargetInventory && Type == LayoutType.Inventory)
+            {
+                if (buttons == MouseButtons.Left)
+                {
+                    foreach (var itemGrid in itemGrids)
+                    {
+                        if (itemGrid.Click(position, draggedItem, out ItemGrid.ItemAction _,
+                            buttons, ref cursorType, null))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            else if (!pickingNewLeader)
             {
                 if (Type == LayoutType.Event)
                 {
@@ -3085,7 +3144,11 @@ namespace Ambermoon.UI
                 }
             }
             else if (buttons != MouseButtons.Left)
+            {
+                if (pickingTargetInventory && buttons == MouseButtons.Right)
+                    game.AbortPickingTargetInventory();
                 return false;
+            }
 
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
@@ -3210,6 +3273,23 @@ namespace Ambermoon.UI
                     }
                     else
                     {
+                        if (pickingTargetInventory)
+                        {
+                            if (partyMember.Ailments.CanOpenInventory())
+                            {
+                                game.OpenPartyMember(i, true, () =>
+                                {
+                                    SetInventoryMessage(game.DataNameProvider.WhichItemAsTarget);
+                                    game.TrapMouse(Global.InventoryAndEquipTrapArea);
+                                    itemGrids[0].DisableDrag = true;
+                                    itemGrids[1].DisableDrag = true;
+                                    itemGrids[0].ItemClicked += game.FinishPickingTargetInventory;
+                                    itemGrids[1].ItemClicked += game.FinishPickingTargetInventory;
+                                });
+                            }
+                            return true;
+                        }
+
                         if (buttons == MouseButtons.Left)
                             game.SetActivePartyMember(i);
                         else if (buttons == MouseButtons.Right)

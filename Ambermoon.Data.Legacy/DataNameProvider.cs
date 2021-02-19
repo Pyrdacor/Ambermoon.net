@@ -243,6 +243,7 @@
         public string PriceForRemovingCurses => executableData.Messages.GetEntry(Messages.Index.PriceForRemovingCurses);
         public string HowManyLP => executableData.Messages.GetEntry(Messages.Index.HowManyLP);
         public string WhichConditionToHeal => executableData.Messages.GetEntry(Messages.Index.WhichConditionToHeal);
+        public string WhichInventoryAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichInventoryAsTarget);
         public string WhichItemAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichItemAsTarget);
         public string InnkeeperGoodSleepWish => executableData.Messages.GetEntry(Messages.Index.InnkeeperGoodSleepWish);
 

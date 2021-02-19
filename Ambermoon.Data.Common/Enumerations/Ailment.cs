@@ -55,6 +55,15 @@ namespace Ambermoon.Data
                 !ailment.HasFlag(Ailment.DeadDust);
         }
 
+        public static bool CanOpenInventory(this Ailment ailment)
+        {
+            // TODO
+            return
+                !ailment.HasFlag(Ailment.Crazy) &&
+                !ailment.HasFlag(Ailment.Panic) &&
+                !ailment.HasFlag(Ailment.Petrified);
+        }
+
         public static bool CanMove(this Ailment ailment)
         {
             return
