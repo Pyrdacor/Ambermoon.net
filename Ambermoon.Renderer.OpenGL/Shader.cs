@@ -26,6 +26,10 @@ namespace Ambermoon.Renderer
 {
     internal class Shader : IDisposable
     {
+        // Note: We use this inside the shader code texts so this is a string.
+        // This included the game data palettes, some extra added ones and the intro palettes.
+        public const string PaletteCount = "62.0f";
+
         public enum Type
         {
             Fragment,

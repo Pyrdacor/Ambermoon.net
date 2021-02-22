@@ -2089,10 +2089,8 @@ namespace Ambermoon.UI
             new [] { 0, -1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }
         };
 
-        void PlayItemDestroyAnimation(Position position, Item item, Action finishAction, bool consumed)
+        void PlayItemDestroyAnimation(Position position, Item item, Action finishAction)
         {
-            // TODO: if consumed play the white orb animation!
-
             game.StartSequence();
             var sprites = new ISprite[64];
             var animationPositionIndices = new int[64];
@@ -2175,9 +2173,12 @@ namespace Ambermoon.UI
 
             if (consumed)
             {
-                uint effectGraphicIndex = 10; // TODO
-                int numFrames = 1; // TODO
-                PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, effectGraphicIndex, numFrames);
+                PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume), 11, 50, null);
+                game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
+                {
+                    itemSlot.Remove(1);
+                    itemGrid.SetItem(slotIndex, itemSlot);
+                });
             }
             else
             {
@@ -2186,13 +2187,13 @@ namespace Ambermoon.UI
                     var itemIndex = itemSlot.ItemIndex;
                     itemSlot.Remove(1);
                     itemGrid.SetItem(slotIndex, itemSlot);
-                    PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null, consumed);
+                    PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null);
                 });
             }
         }
 
         public void PlayItemEffect(ItemSlot itemSlot, TimeSpan initialDelay,
-            uint graphicIndex, int numFrames)
+            uint graphicIndex, int numFrames, int timePerFrame, Action finishAction = null)
         {
             var itemGrid = itemGrids[0];
             int slotIndex = itemGrids[0].SlotFromItemSlot(itemSlot);
@@ -2206,11 +2207,11 @@ namespace Ambermoon.UI
             if (slotIndex == -1)
                 throw new AmbermoonException(ExceptionScope.Application, "Invalid item slot");
 
-            PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, graphicIndex, numFrames);
+            PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, graphicIndex, numFrames, timePerFrame, finishAction);
         }
 
         public void PlayItemEffect(ItemSlot itemSlot, bool equipment, TimeSpan initialDelay,
-            uint graphicIndex, int numFrames)
+            uint graphicIndex, int numFrames, int timePerFrame, Action finishAction = null)
         {
             var itemGrid = itemGrids[equipment ? 1 : 0];
             int slotIndex = itemGrid.SlotFromItemSlot(itemSlot);
@@ -2218,13 +2219,43 @@ namespace Ambermoon.UI
             if (slotIndex == -1)
                 throw new AmbermoonException(ExceptionScope.Application, "Invalid item slot");
 
-            PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, graphicIndex, numFrames);
+            PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, graphicIndex, numFrames, timePerFrame, finishAction);
         }
 
         void PlayItemEffect(ItemGrid itemGrid, ItemSlot itemSlot, int slotIndex, TimeSpan initialDelay,
-            uint graphicIndex, int numFrames)
+            uint graphicIndex, int numFrames, int timePerFrame, Action finishAction)
         {
-            // TODO
+            game.AddTimedEvent(initialDelay, () =>
+            {
+                game.StartSequence();
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+                var offset = textureAtlas.GetOffset(graphicIndex);
+                var position = itemGrid.GetSlotPosition(slotIndex);
+                var sprite = RenderView.SpriteFactory.Create(16, 16, true, 255);
+                sprite.TextureAtlasOffset = offset;
+                sprite.Layer = renderLayer;
+                sprite.PaletteIndex = 49;
+                sprite.X = position.X;
+                sprite.Y = position.Y;
+                sprite.Visible = true;
+
+                void Animate()
+                {
+                    if (--numFrames <= 0)
+                    {
+                        sprite?.Delete();
+                        game.EndSequence();
+                        finishAction?.Invoke();
+                    }
+                    else
+                    {
+                        sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + 16, sprite.TextureAtlasOffset.Y);
+                        game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
+                    }
+                }
+
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
+            });
         }
 
         public void UpdateCharacter(PartyMember partyMember, Action portraitAnimationFinishedHandler = null)

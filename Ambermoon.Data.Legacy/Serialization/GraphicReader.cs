@@ -24,11 +24,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             int bitIndex = 0;
             int byteIndex = 0;
             int offset = 0;
-            int planeBytes = (graphic.Width + ppp - 1) / ppp;
+            int planeCycles = ppp == graphicInfo.Width ? 1 : (graphic.Width + ppp - 1) / ppp;
 
             for (int y = 0; y < graphic.Height; ++y)
             {
-                for (int n = 0; n < planeBytes; ++n)
+                for (int n = 0; n < planeCycles; ++n)
                 {
                     for (int x = 0; x < ppp; ++x)
                     {

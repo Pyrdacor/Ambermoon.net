@@ -28,7 +28,8 @@ namespace Ambermoon.Data
         NPC,
         CombatBackground,
         CombatGraphics,
-        BattleFieldIcons
+        BattleFieldIcons,
+        AutomapGraphics
         // TODO ...
     }
 

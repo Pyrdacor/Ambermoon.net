@@ -381,6 +381,7 @@ namespace Ambermoon.Data
         /// </summary>
         public uint ObjectIndex { get; set; } // 0 = no variable needed
         public uint Value { get; set; }
+        public uint Count { get; set; }
         /// <summary>
         /// Next map event to continue with if the condition was met.
         /// 0xffff means continue with next map event from the list.
@@ -399,7 +400,7 @@ namespace Ambermoon.Data
                 ConditionType.EventBit => $"{Type}: Event bit {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.CharacterBit => $"{Type}: Character bit {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.PartyMember => $"{Type}: Has party member {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.ItemOwned => $"{Type}: Own item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.ItemOwned => $"{Type}: Own item {Count}x {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Success => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",

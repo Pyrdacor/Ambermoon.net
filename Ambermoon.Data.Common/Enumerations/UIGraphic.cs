@@ -65,9 +65,9 @@
         Defense, // 16x9
         Skull,
         EmptyCharacterSlot,
-        OpeningPortal, // or smoke?, 11 frames with 16x16 pixels
+        ItemConsume, // 11 frames with 16x16 pixels
         Talisman, // golden symbol / talisman
-        Diagonals, // 4 diagonals? 64x9 (each is 16x9 inside it)
-        BorderWithTriangles, // 8x85 border-like image with triangles
+        UnknownChain, // unsure what this is
+        BorderWithTriangles // two 8x42 border-like images with triangles in it
     }
 }

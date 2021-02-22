@@ -5,8 +5,104 @@ namespace Ambermoon.Data.Legacy
 {
     public static class UIElementProvider
     {
+        class Star
+        {
+            public Position Position;
+            public int Frame;
+        }
+
         public static List<Graphic> Create()
         {
+            // This is used by the healing animation (falling stars)
+            // and the magic item animation (blinking stars).
+            // There are 3 frames.
+            byte[] redStarFrameData = new byte[]
+            {
+                // Transparency: 25
+                // Red: 20 (CC4433)
+                // Orange: 21 (EE6633)
+                // Yellow: 16 (FFCC00)
+                // White: 1 (EEDDCC)
+                // -----------------------
+                // 1st frame: Big star
+                25, 25, 25, 20, 25, 25, 25,
+                25, 25, 25, 21, 25, 25, 25,
+                25, 25, 20, 16, 20, 25, 25,
+                20, 21, 16,  1, 16, 21, 20,
+                25, 25, 20, 16, 20, 25, 25,
+                25, 25, 25, 21, 25, 25, 25,
+                25, 25, 25, 20, 25, 25, 25,
+                // 2nd frame: Small star
+                25, 25, 25, 25, 25, 25, 25,
+                25, 25, 25, 20, 25, 25, 25,
+                25, 25, 25, 21, 25, 25, 25,
+                25, 20, 21, 16, 21, 20, 25,
+                25, 25, 25, 21, 25, 25, 25,
+                25, 25, 25, 20, 25, 25, 25,
+                25, 25, 25, 25, 25, 25, 25,
+                // 3rd frame: Single orange pixel
+                25, 25, 25, 25, 25, 25, 25,
+                25, 25, 25, 25, 25, 25, 25,
+                25, 25, 25, 25, 25, 25, 25,
+                25, 25, 25, 21, 25, 25, 25,
+                25, 25, 25, 25, 25, 25, 25,
+                25, 25, 25, 25, 25, 25, 25,
+                25, 25, 25, 25, 25, 25, 25
+            };
+
+            Graphic GetRedStarFrame(int frame)
+            {
+                return new Graphic
+                {
+                    Width = 7,
+                    Height = 7,
+                    Data = redStarFrameData.Skip(frame * 49).Take(49).ToArray(),
+                    IndexedGraphic = true
+                };
+            }
+
+            Graphic CreateBlinkingStars()
+            {
+                var stars = new List<Star>();
+                var addAmountsPerFrame = new int[] { 1, 1, 0, 1, 0, 0, 0, 0 };
+                var random = new Random(); // always use a new random to produce the same effect
+                var animation = new Graphic(8 * 16, 16, 0); // 11 frames with 16x16
+
+                for (int i = 0; i < 8; ++i) // 8 frames in total
+                {
+                    // in each frame we have several stars in specific states (star frame)
+                    var frame = new Graphic(16, 16, 0);
+
+                    // first update exising stars
+                    for (int s = stars.Count - 1; s >= 0; --s)
+                    {
+                        var star = stars[s];
+
+                        if (++star.Frame == 5)
+                            stars.RemoveAt(s);
+                        else
+                            frame.AddOverlay((uint)star.Position.X, (uint)star.Position.Y, GetRedStarFrame(star.Frame > 1 ? star.Frame - 2 : 2 - star.Frame));
+                    }
+                    // then add new stars
+                    for (int a = 0; a < addAmountsPerFrame[i]; ++a)
+                    {
+                        var star = new Star
+                        {
+                            Position = new Position((int)random.Next() % 10, (int)random.Next() % 10),
+                            Frame = 0
+                        };
+                        stars.Add(star);
+                        frame.AddOverlay((uint)star.Position.X, (uint)star.Position.Y, GetRedStarFrame(0));
+                    }
+
+                    animation.AddOverlay((uint)i * 16, 0, frame);
+                }
+
+                animation.ReplaceColor(0, 25);
+
+                return animation;
+            }
+
             // See UIElementGraphic
             return new List<Graphic>
             {
@@ -175,39 +271,7 @@ namespace Ambermoon.Data.Legacy
                 .Build(),
 
                 // HealingStarAnimation (3 frames of a redish star)
-                Graphic.FromIndexedData(7 * 3, 7, new byte[7 * 7 * 3]
-                {
-                    // Transparency: 25
-                    // Red: 20 (CC4433)
-                    // Orange: 21 (EE6633)
-                    // Yellow: 16 (FFCC00)
-                    // White: 1 (EEDDCC)
-                    // -----------------------
-                    // 1st frame: Big star
-                    25, 25, 25, 20, 25, 25, 25,
-                    25, 25, 25, 21, 25, 25, 25,
-                    25, 25, 20, 16, 20, 25, 25,
-                    20, 21, 16,  1, 16, 21, 20,
-                    25, 25, 20, 16, 20, 25, 25,
-                    25, 25, 25, 21, 25, 25, 25,
-                    25, 25, 25, 20, 25, 25, 25,
-                    // 2nd frame: Small star
-                    25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 20, 25, 25, 25,
-                    25, 25, 25, 21, 25, 25, 25,
-                    25, 20, 21, 16, 21, 20, 25,
-                    25, 25, 25, 21, 25, 25, 25,
-                    25, 25, 25, 20, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25,
-                    // 3rd frame: Single orange pixel
-                    25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 21, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25
-                }),
+                Graphic.FromIndexedData(7 * 3, 7, redStarFrameData),
 
                 // BattleFieldBlockedMovementCursor
                 Graphic.FromIndexedData(14, 11, new byte[14 * 11]
@@ -226,7 +290,10 @@ namespace Ambermoon.Data.Legacy
                     11, 11, 11, 11,  0,  0,  0,  0,  0,  0, 11, 11, 11, 11,
                     11, 11, 11, 11,  0,  0,  0,  0,  0,  0,  0, 11, 11,  0,
                      0, 11, 11,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
-                })
+                }),
+
+                // ItemMagicAnimation
+                CreateBlinkingStars()
             };
         }
     }

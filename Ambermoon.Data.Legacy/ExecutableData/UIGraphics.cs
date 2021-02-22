@@ -35,6 +35,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 return graphic;
             }
 
+            // Note: First 156 bytes seem to be some offsets etc.
+
             dataReader.Position = 156;
             entries.Add(UIGraphic.DisabledOverlay16x6, ReadGraphic(dataReader));
             graphicInfo.Height = 16;
@@ -97,6 +99,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.Day, ReadGraphic(dataReader));
             entries.Add(UIGraphic.Dawn, ReadGraphic(dataReader));
 
+            // TODO: reading previous graphics end in position 0x2860
+            // so it reads two bytes too much. Don't know why yet.
             dataReader.Position = 0x285C; // start at base button shape
 
             graphicInfo.Height = 17;
@@ -121,24 +125,24 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.Width = 16;
             graphicInfo.Height = 16;
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
-            graphicInfo.PaletteOffset = 24;
+            graphicInfo.PaletteOffset = 0;
             var compoundGraphic = new Graphic(176, 16, 0);
             for (uint i = 0; i < 11; ++i)
                 compoundGraphic.AddOverlay(i * 16u, 0u, ReadGraphic(dataReader), false);
-            entries.Add(UIGraphic.OpeningPortal, compoundGraphic);
+            compoundGraphic.ReplaceColor(0, 25);
+            entries.Add(UIGraphic.ItemConsume, compoundGraphic);
             graphicInfo.Width = 32;
             graphicInfo.Height = 29;
             graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
             graphicInfo.PaletteOffset = 0;
             entries.Add(UIGraphic.Talisman, ReadGraphic(dataReader, 25));
-            dataReader.Position += 64; // Unknown 64 bytes
-            graphicInfo.Width = 64;
-            graphicInfo.Height = 11;
+            graphicInfo.Width = 16;
+            graphicInfo.Height = 47;
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
             graphicInfo.PaletteOffset = 24;
-            entries.Add(UIGraphic.Diagonals, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.UnknownChain, ReadGraphic(dataReader));
             graphicInfo.Width = 8;
-            graphicInfo.Height = 85;
+            graphicInfo.Height = 84;
             entries.Add(UIGraphic.BorderWithTriangles, ReadGraphic(dataReader));
         }
     }

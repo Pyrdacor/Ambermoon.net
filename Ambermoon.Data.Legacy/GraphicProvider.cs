@@ -57,17 +57,17 @@ namespace Ambermoon.Data.Legacy
                     0xcb, 0x43, 0x32, 0xff, 0xed, 0x65, 0x32, 0xff, 0xa9, 0xa9, 0x43, 0xff, 0x54, 0x76, 0x32, 0xff,
                     0x21, 0x54, 0x43, 0xff, 0x00, 0x10, 0x00, 0xff, 0x21, 0x21, 0x21, 0xff, 0x43, 0x43, 0x32, 0xff,
                     0x65, 0x65, 0x54, 0xff, 0x87, 0x87, 0x76, 0xff, 0xa9, 0xa9, 0x98, 0xff, 0xcb, 0xcb, 0xba, 0xff*/
-                    0x00, 0x00, 0x00, 0xff, 0xEE, 0xDD, 0xCC, 0xff, 0xFF, 0xFF, 0xEE, 0xff, 0xBB, 0xBB, 0xCC, 0xff,
-                    0x88, 0x99, 0xAA, 0xff, 0x55, 0x77, 0x88, 0xff, 0x22, 0x55, 0x66, 0xff, 0x00, 0x33, 0x44, 0xff,
-                    0xFF, 0xCC, 0x99, 0xff, 0xEE, 0xAA, 0x77, 0xff, 0xCC, 0x88, 0x55, 0xff, 0xAA, 0x66, 0x33, 0xff,
-                    0x88, 0x44, 0x22, 0xff, 0x55, 0x22, 0x11, 0xff, 0xBB, 0x88, 0x00, 0xff, 0xDD, 0xAA, 0x00, 0xff,
+                    0x00, 0x00, 0x00, 0xff, 0xee, 0xdd, 0xcc, 0xff, 0xff, 0xff, 0xee, 0xff, 0xbb, 0xbb, 0xcc, 0xff,
+                    0x88, 0x99, 0xaa, 0xff, 0x55, 0x77, 0x88, 0xff, 0x22, 0x55, 0x66, 0xff, 0x00, 0x33, 0x44, 0xff,
+                    0xff, 0xcc, 0x99, 0xff, 0xee, 0xaa, 0x77, 0xff, 0xcc, 0x88, 0x55, 0xff, 0xaa, 0x66, 0x33, 0xff,
+                    0x88, 0x44, 0x22, 0xff, 0x55, 0x22, 0x11, 0xff, 0xbb, 0x88, 0x00, 0xff, 0xdd, 0xaa, 0x00, 0xff,
 
-                    0xFF, 0xCC, 0x00, 0xff, 0xFF, 0x99, 0x00, 0xff, 0xCC, 0x66, 0x00, 0xff, 0x88, 0x11, 0x22, 0xff,
-                    0xCC, 0x44, 0x33, 0xff, 0xEE, 0x66, 0x33, 0xff, 0xAA, 0xAA, 0x44, 0xff, 0x55, 0x77, 0x33, 0xff,
+                    0xff, 0xcc, 0x00, 0xff, 0xff, 0x99, 0x00, 0xff, 0xcc, 0x66, 0x00, 0xff, 0x88, 0x11, 0x22, 0xff,
+                    0xcc, 0x44, 0x33, 0xff, 0xee, 0x66, 0x33, 0xff, 0xaa, 0xaa, 0x44, 0xff, 0x55, 0x77, 0x33, 0xff,
                     /*0x44, 0x99, 0xdd, 0xff, 0x22, 0x55, 0x99, 0xff, 0x22, 0x11, 0x00, 0xff, 0x44, 0x33, 0x11, 0xff,
-                    0x66, 0x55, 0x33, 0xff, 0x88, 0x77, 0x55, 0xff, 0xaa, 0x99, 0x77, 0xff, 0xCC, 0xbb, 0x99, 0xff*/
+                    0x66, 0x55, 0x33, 0xff, 0x88, 0x77, 0x55, 0xff, 0xaa, 0x99, 0x77, 0xff, 0xcc, 0xbb, 0x99, 0xff*/
                     0x22, 0x55, 0x44, 0xff, 0x55, 0x00, 0x99, 0xff, 0x22, 0x22, 0x22, 0xff, 0x44, 0x44, 0x33, 0xff,
-                    0x66, 0x66, 0x55, 0xff, 0x88, 0x88, 0x77, 0xff, 0xAA, 0xAA, 0x99, 0xff, 0xCC, 0xCC, 0xBB, 0xff
+                    0x66, 0x66, 0x55, 0xff, 0x88, 0x88, 0x77, 0xff, 0xaa, 0xaa, 0x99, 0xff, 0xcc, 0xcc, 0xbb, 0xff
                 }
             });
             // We also use another palette for text rendering. It has transparent, black, white, gray, red, yellow etc.
@@ -124,17 +124,35 @@ namespace Ambermoon.Data.Legacy
                     0x00, 0x11, 0xcc, 0xff, 0x00, 0x11, 0xdd, 0xff, 0x00, 0x11, 0xee, 0xff, 0x00, 0x11, 0xff, 0xff,
                     // some UI colors (TODO: character with ailment?)
                     0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x66, 0x66, 0x55, 0xff, 0x44, 0x44, 0x33, 0xff,
-                    0x22, 0x22, 0x22, 0xff, 0x88, 0x88, 0x77, 0xff, 0xAA, 0xAA, 0x99, 0xff, 0xCC, 0xCC, 0xBB, 0xff
+                    0x22, 0x22, 0x22, 0xff, 0x88, 0x88, 0x77, 0xff, 0xaa, 0xaa, 0x99, 0xff, 0xcc, 0xcc, 0xbb, 0xff
+                }
+            });
+            // We add the palette for the automap (second from the executable data).
+            Palettes.Add(53, new Graphic
+            {
+                Width = 32,
+                Height = 1,
+                IndexedGraphic = false,
+                Data = new byte[]
+                {
+                    0x00, 0x00, 0x00, 0x00, 0xff, 0xdd, 0xcc, 0xff, 0xee, 0xbb, 0x99, 0xff, 0xcc, 0x99, 0x66, 0xff,
+                    0x44, 0x11, 0x00, 0xff, 0x88, 0x55, 0x11, 0xff, 0xaa, 0x77, 0x44, 0xff, 0x66, 0x33, 0x00, 0xff,
+                    0xff, 0x66, 0x00, 0xff, 0xdd, 0x33, 0x00, 0xff, 0x99, 0x00, 0x00, 0xff, 0xff, 0xcc, 0x00, 0xff,
+                    0xbb, 0x99, 0x00, 0xff, 0x88, 0x66, 0x00, 0xff, 0x99, 0xaa, 0x33, 0xff, 0x55, 0x77, 0x00, 0xff,
+                    0x22, 0x44, 0x00, 0xff, 0x88, 0xbb, 0xee, 0xff, 0x33, 0x88, 0xcc, 0xff, 0x00, 0x44, 0x88, 0xff,
+                    0xcc, 0x88, 0xdd, 0xff, 0xaa, 0x66, 0x99, 0xff, 0x88, 0x33, 0x66, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    0x77, 0x99, 0xdd, 0xff, 0x11, 0x66, 0xaa, 0xff, 0x22, 0x11, 0x11, 0xff, 0x44, 0x33, 0x22, 0xff,
+                    0x66, 0x55, 0x44, 0xff, 0x88, 0x77, 0x66, 0xff, 0xaa, 0x99, 0x88, 0xff, 0xcc, 0xbb, 0xaa, 0xff
                 }
             });
 
             int introPaletteCount = introData == null ? 0 : Math.Min(9, introData.IntroPalettes.Count);
             int p = 0;
             for (; p < introPaletteCount; ++p)
-                Palettes.Add(53 + p, introData.IntroPalettes[p]);
+                Palettes.Add(54 + p, introData.IntroPalettes[p]);
             for (; p < 9; ++p)
             {
-                Palettes.Add(53 + p, new Graphic
+                Palettes.Add(54 + p, new Graphic
                 {
                     Width = 32,
                     Height = 1,
@@ -143,16 +161,19 @@ namespace Ambermoon.Data.Legacy
                 });
             }
 
-            // TODO: The following bytes were extracted from AM2_CPU (behind cursors).
+            // The following bytes were extracted from AM2_CPU (behind cursors).
             // These are 3 palettes.
 
-            // The first one is the one for portraits and items. One of the others might be for texts. Maybe two text color and UI versions.
-            /* 00 00 0E DC 0F FE 0B BC 08 9A 05 78 02 56 00 34 0F C9 0E A7 0C 85 0A 63 08 42 05 21 0B 80 0D A0
+            /* The first one is the one for portraits and items. One of the others might be for texts. Maybe two text color and UI versions.
+             * 00 00 0E DC 0F FE 0B BC 08 9A 05 78 02 56 00 34 0F C9 0E A7 0C 85 0A 63 08 42 05 21 0B 80 0D A0
              * 0F C0 0F 90 0C 60 08 12 0C 43 0E 63 0A A4 05 73 02 54 05 09 02 22 04 43 06 65 08 87 0A A9 0C CB
-             * 
+             *
+             * The second one is used for automap graphics including the map itself.
              * 00 00 0F DC 0E B9 0C 96 04 10 08 51 0A 74 06 30 0F 60 0D 30 09 00 0F C0 0B 90 08 60 09 A3 05 70
              * 02 40 08 BE 03 8C 00 48 0C 8D 0A 69 08 36 0F FF 07 9D 01 6A 02 11 04 32 06 54 08 76 0A 98 0C BA
              * 
+             * The third one seems to be a slightly modified version of the first one.
+             * It seems to contain some but not all of the text colors.
              * 00 00 0E DC 0F FE 0B BC 08 9A 05 78 02 56 00 34 0F C9 0E A7 0C 85 0A 63 08 42 05 21 0B 80 0D A0
              * 0F C0 0F 90 0C 60 08 12 0C 43 0E 63 0A A4 05 73 04 9D 02 59 02 10 04 31 06 53 08 75 0A 97 0C B9
              */
@@ -279,6 +300,94 @@ namespace Ambermoon.Data.Legacy
                 else if (type == GraphicType.BattleFieldIcons)
                 {
                     // Do nothing. This is filled when processing GraphicType.CombatGraphics.
+                }
+                else if (type == GraphicType.AutomapGraphics)
+                {
+                    var automapGraphics = new List<Graphic>(43);
+                    var reader = gameData.Files["Automap_graphics"].Files[1];
+                    reader.Position = 0x100; // TODO: maybe decode the bytes before that later
+
+                    void ReadAndAddGraphics(int amount, int width, int height, GraphicFormat graphicFormat,
+                        int frames = 1, bool alpha = false)
+                    {
+                        var graphicInfo = new GraphicInfo
+                        {
+                            Width = width,
+                            Height = height,
+                            GraphicFormat = graphicFormat,
+                            Alpha = alpha,
+                            PaletteOffset = 0
+                        };
+                        for (int i = 0; i < amount; ++i)
+                        {
+                            Graphic graphic = new Graphic();
+                            if (frames == 1)
+                            {
+                                graphicReader.ReadGraphic(graphic, reader, graphicInfo);
+                            }
+                            else
+                            {
+                                var compoundGraphic = new Graphic(frames * width, height, 0);
+
+                                for (int f = 0; f < frames; ++f)
+                                {
+                                    graphicReader.ReadGraphic(graphic, reader, graphicInfo);
+                                    compoundGraphic.AddOverlay((uint)(f * width), 0, graphic, false);
+                                }
+
+                                graphic = compoundGraphic;
+                            }
+                            automapGraphics.Add(graphic);
+                        }
+                    }
+                    // Map corners
+                    ReadAndAddGraphics(4, 32, 32, GraphicFormat.Palette3Bit);
+                    // Top map border
+                    ReadAndAddGraphics(4, 16, 32, GraphicFormat.Palette3Bit);
+                    // Right map border
+                    ReadAndAddGraphics(2, 32, 32, GraphicFormat.Palette3Bit);
+                    // Bottom map border
+                    ReadAndAddGraphics(4, 16, 32, GraphicFormat.Palette3Bit);
+                    // Left map border
+                    ReadAndAddGraphics(2, 32, 32, GraphicFormat.Palette3Bit);
+                    // 10 pin graphics
+                    ReadAndAddGraphics(10, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Riddlemouth (4 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 4, true);
+                    // Teleport (4 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 4, true);
+                    // Spinner (4 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 4, true);
+                    // Trap (4 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 4, true);
+                    // Trapdoor (4 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 4, true);
+                    // Special (4 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 4, true);
+                    // Monster (4 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 4, true);
+                    // Door closed (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Door open (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Merchant (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Inn (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Chest closed (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Exit (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Chest open (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Pile (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Person (1 frame)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 1, true);
+                    // Goto point (7 frames)
+                    ReadAndAddGraphics(1, 16, 16, GraphicFormat.Palette5Bit, 7, true);
+
+                    graphics[type] = automapGraphics;
                 }
                 else
                 {

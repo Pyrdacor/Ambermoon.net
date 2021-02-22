@@ -48,7 +48,7 @@ namespace Ambermoon
 
             background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
             background.Layer = renderView.GetLayer(Layer.IntroGraphics);
-            background.PaletteIndex = (byte)(52 + paletteIndices[IntroGraphic.MainMenuBackground]);
+            background.PaletteIndex = (byte)(53 + paletteIndices[IntroGraphic.MainMenuBackground]);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
             background.X = 0;
             background.Y = 0;

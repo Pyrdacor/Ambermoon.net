@@ -219,7 +219,7 @@ namespace Ambermoon
         internal PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
         bool pickingTargetInventory = false;
-        event Action<ItemGrid, int, ItemSlot> targetItemPicked;
+        event Func<ItemGrid, int, ItemSlot, bool> targetItemPicked;
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
@@ -1296,25 +1296,28 @@ namespace Ambermoon
 
         internal void FinishPickingTargetInventory(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
         {
-            if (currentWindow.Window == Window.Inventory)
-                CloseWindow();
-
             pickingTargetInventory = false;
-            layout.ShowChestMessage(null);
-            UntrapMouse();
 
-            targetItemPicked?.Invoke(itemGrid, slotIndex, itemSlot);
+            if (targetItemPicked?.Invoke(itemGrid, slotIndex, itemSlot) != false)
+            {
+                if (currentWindow.Window == Window.Inventory)
+                    CloseWindow();
+
+                layout.ShowChestMessage(null);
+                UntrapMouse();
+            }
         }
 
         internal void AbortPickingTargetInventory()
         {
-            if (currentWindow.Window == Window.Inventory)
-                CloseWindow();
+            if (targetItemPicked?.Invoke(null, 0, null) != false)
+            {
+                if (currentWindow.Window == Window.Inventory)
+                    CloseWindow();
 
-            pickingTargetInventory = false;
-            layout.ShowChestMessage(null);
-            UntrapMouse();
-            targetItemPicked?.Invoke(null, 0, null);
+                layout.ShowChestMessage(null);
+                UntrapMouse();
+            }
         }
 
         public void OnKeyDown(Key key, KeyModifiers modifiers)
@@ -3904,14 +3907,15 @@ namespace Ambermoon
         /// <param name="spell">Spell</param>
         /// <param name="caster">Casting party member or monster.</param>
         /// <param name="target">Party member or item or null.</param>
-        internal void ApplySpellEffect(Spell spell, Character caster, object target)
+        /// <param name="finishAction">Action to call after effect was applied.</param>
+        internal void ApplySpellEffect(Spell spell, Character caster, object target, Action finishAction = null)
         {
             if (target == null)
-                ApplySpellEffect(spell, caster);
+                ApplySpellEffect(spell, caster, finishAction);
             else if (target is Character character)
-                ApplySpellEffect(spell, caster, character);
+                ApplySpellEffect(spell, caster, character, finishAction);
             else if (target is ItemSlot itemSlot)
-                ApplySpellEffect(spell, caster, itemSlot);
+                ApplySpellEffect(spell, caster, itemSlot, finishAction);
             else
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid spell target type: {target.GetType()}");
         }
@@ -4004,23 +4008,29 @@ namespace Ambermoon
 
         void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action finishAction = null)
         {
+            void PlayItemMagicAnimation()
+            {
+                layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50),
+                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemMagicAnimation), 8, 110, finishAction);
+            }
+
             switch (spell)
             {
                 case Spell.ChargeItem:
                     // TODO
-                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
+                    PlayItemMagicAnimation();
                     break;
                 case Spell.RepairItem:
                     // TODO
-                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
+                    PlayItemMagicAnimation();
                     break;
                 case Spell.DuplicateItem:
                     // TODO
-                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
+                    PlayItemMagicAnimation();
                     break;
                 case Spell.RemoveCurses:
                     // TODO
-                    layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50), 0, 1); // TODO
+                    PlayItemMagicAnimation();
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no item-targeted spell.");
@@ -6114,13 +6124,17 @@ namespace Ambermoon
                                         StartSequence();
                                         ApplySpellEffect(spell, CurrentPartyMember, itemSlot, () =>
                                         {
+                                            CloseWindow();
+                                            UntrapMouse();
                                             EndSequence();
                                             layout.ShowChestMessage(null);
                                         });
+                                        return false; // manual window closing etc
                                     }
                                     else
                                     {
                                         layout.ShowChestMessage(null);
+                                        return true; // auto-close window and cleanup
                                     }
                                 };
                                 break;
