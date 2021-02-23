@@ -316,8 +316,8 @@ namespace Ambermoon
 
             foreach (var partyMember in game.PartyMembers)
             {
-                partyMember.HitPoints.CurrentValue = partyMember.HitPoints.MaxValue;
-                partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.MaxValue;
+                partyMember.HitPoints.CurrentValue = partyMember.HitPoints.TotalMaxValue;
+                partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.TotalMaxValue;
 
                 foreach (var attribute in Enum.GetValues<Data.Attribute>())
                 {

@@ -252,7 +252,7 @@ namespace Ambermoon.Data
 
         public void Heal(uint amount)
         {
-            HitPoints.CurrentValue = Math.Min(HitPoints.MaxValue, HitPoints.CurrentValue + amount);
+            HitPoints.CurrentValue = Math.Min(HitPoints.TotalMaxValue, HitPoints.CurrentValue + amount);
         }
 
         public Inventory Inventory { get; } = new Inventory();

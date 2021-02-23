@@ -2152,7 +2152,13 @@ namespace Ambermoon.UI
             Animate();
         }
 
-        public void DestroyItem(ItemSlot itemSlot, bool equipment, TimeSpan initialDelay, bool consumed = false)
+        public void DestroyItem(ItemSlot itemSlot, TimeSpan initialDelay, bool consumed = false, Action finishAction = null)
+        {
+            bool equipment = Type == LayoutType.Inventory && itemGrids[1].SlotFromItemSlot(itemSlot) != -1;
+            DestroyItem(itemSlot, equipment, initialDelay, consumed, finishAction);
+        }
+
+        public void DestroyItem(ItemSlot itemSlot, bool equipment, TimeSpan initialDelay, bool consumed = false, Action finishAction = null)
         {
             var itemGrid = itemGrids[equipment ? 1 : 0];
             int slotIndex = itemGrid.SlotFromItemSlot(itemSlot);
@@ -2173,7 +2179,7 @@ namespace Ambermoon.UI
 
             if (consumed)
             {
-                PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume), 11, 50, null);
+                PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume), 11, 50, finishAction);
                 game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
                 {
                     itemSlot.Remove(1);
@@ -2187,7 +2193,7 @@ namespace Ambermoon.UI
                     var itemIndex = itemSlot.ItemIndex;
                     itemSlot.Remove(1);
                     itemGrid.SetItem(slotIndex, itemSlot);
-                    PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), null);
+                    PlayItemDestroyAnimation(itemGrid.GetSlotPosition(slotIndex), itemManager.GetItem(itemIndex), finishAction);
                 });
             }
         }
@@ -2388,9 +2394,9 @@ namespace Ambermoon.UI
         public void FillCharacterBars(int slot, PartyMember partyMember)
         {
             float lpPercentage = partyMember == null || !partyMember.Alive ? 0.0f
-                : Math.Min(1.0f, (float)partyMember.HitPoints.TotalCurrentValue / partyMember.HitPoints.MaxValue);
+                : Math.Min(1.0f, (float)partyMember.HitPoints.CurrentValue / partyMember.HitPoints.TotalMaxValue);
             float spPercentage = partyMember == null || !partyMember.Alive ? 0.0f
-                : Math.Min(1.0f, (float)partyMember.SpellPoints.TotalCurrentValue / partyMember.SpellPoints.MaxValue);
+                : Math.Min(1.0f, (float)partyMember.SpellPoints.CurrentValue / partyMember.SpellPoints.TotalMaxValue);
 
             characterBars[slot * 4 + 0].Fill(lpPercentage);
             characterBars[slot * 4 + 1].Fill(lpPercentage);
@@ -2818,6 +2824,20 @@ namespace Ambermoon.UI
             }
         }
 
+        public void UpdateItemSlot(ItemSlot itemSlot)
+        {
+            foreach (var itemGrid in itemGrids)
+            {
+                int slotIndex = itemGrid.SlotFromItemSlot(itemSlot);
+
+                if (slotIndex != -1)
+                {
+                    itemGrid.SetItem(slotIndex, itemSlot);
+                    break;
+                }
+            }
+        }
+
         public void Update(uint currentTicks)
         {
             buttonGrid.Update(currentTicks);
@@ -3192,6 +3212,13 @@ namespace Ambermoon.UI
                 return false;
             }
 
+            void FinishPickingTargetInventory(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
+            {
+                itemGrids[0].ItemClicked -= FinishPickingTargetInventory;
+                itemGrids[1].ItemClicked -= FinishPickingTargetInventory;
+                game.FinishPickingTargetInventory(itemGrid, slotIndex, itemSlot);
+            }
+
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
                 var partyMember = game.GetPartyMember(i);
@@ -3325,8 +3352,8 @@ namespace Ambermoon.UI
                                     game.TrapMouse(Global.InventoryAndEquipTrapArea);
                                     itemGrids[0].DisableDrag = true;
                                     itemGrids[1].DisableDrag = true;
-                                    itemGrids[0].ItemClicked += game.FinishPickingTargetInventory;
-                                    itemGrids[1].ItemClicked += game.FinishPickingTargetInventory;
+                                    itemGrids[0].ItemClicked += FinishPickingTargetInventory;
+                                    itemGrids[1].ItemClicked += FinishPickingTargetInventory;
                                 });
                             }
                             return true;

@@ -27,6 +27,7 @@ namespace Ambermoon.Data
         /// </summary>
         public uint StoredValue { get; set; }
         public uint TotalCurrentValue => Math.Max(0, CurrentValue + BonusValue);
+        public uint TotalMaxValue => Math.Max(0, MaxValue + BonusValue);
     }
 
     [Serializable]

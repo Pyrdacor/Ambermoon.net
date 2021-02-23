@@ -435,7 +435,7 @@ namespace Ambermoon
                     foreach (var monster in Monsters)
                     {
                         layout.GetMonsterBattleFieldTooltip(monster).Text =
-                            $"{monster.HitPoints.TotalCurrentValue}/{monster.HitPoints.MaxValue}^{monster.Name}";
+                            $"{monster.HitPoints.CurrentValue}/{monster.HitPoints.TotalMaxValue}^{monster.Name}";
                     }
                 }
                 RoundFinished?.Invoke();
@@ -1328,7 +1328,7 @@ namespace Ambermoon
                     if (target is PartyMember partyMember)
                     {
                         PlayBattleEffectAnimation(BattleEffect.HurtPlayer, tile, battleTicks, EndHurt);
-                        game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
+                        game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, Math.Min(damage, partyMember.HitPoints.CurrentValue));
                     }
                     else if (target is Monster monster)
                     {
@@ -1617,8 +1617,8 @@ namespace Ambermoon
                 game.DataNameProvider.DataHeaderString, TextColor.DarkGray, TextAlign.Center);
             position.Y += Global.GlyphLineHeight + 1;
             popup.AddText(position,
-                string.Format(game.DataNameProvider.CharacterInfoHitPointsString, monster.HitPoints.CurrentValue, monster.HitPoints.MaxValue) + " " +
-                string.Format(game.DataNameProvider.CharacterInfoSpellPointsString, monster.SpellPoints.CurrentValue, monster.SpellPoints.MaxValue),
+                string.Format(game.DataNameProvider.CharacterInfoHitPointsString, monster.HitPoints.CurrentValue, monster.HitPoints.TotalMaxValue) + " " +
+                string.Format(game.DataNameProvider.CharacterInfoSpellPointsString, monster.SpellPoints.CurrentValue, monster.SpellPoints.TotalMaxValue),
                 TextColor.Gray);
             position.Y += Global.GlyphLineHeight;
             popup.AddText(position,
@@ -1782,8 +1782,8 @@ namespace Ambermoon
                 case Spell.LPStealer:
                 {
                     DealDamage(caster.Level, 0);
-                    caster.HitPoints.CurrentValue = Math.Min(caster.HitPoints.MaxValue, caster.HitPoints.CurrentValue +
-                        Math.Min(caster.Level, caster.HitPoints.MaxValue - caster.HitPoints.CurrentValue));
+                    caster.HitPoints.CurrentValue = Math.Min(caster.HitPoints.TotalMaxValue, caster.HitPoints.CurrentValue +
+                        Math.Min(caster.Level, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue));
                     if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(castingMember);
                     return;
@@ -1791,7 +1791,7 @@ namespace Ambermoon
                 case Spell.SPStealer:
                     // TODO: what happens if a monster wants to cast a spell afterwards but has not enough SP through SP stealer anymore?
                     target.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)target.SpellPoints.CurrentValue - caster.Level);
-                    caster.SpellPoints.CurrentValue += Math.Min(caster.Level, caster.SpellPoints.MaxValue - caster.SpellPoints.CurrentValue);
+                    caster.SpellPoints.CurrentValue += Math.Min(caster.Level, caster.SpellPoints.TotalMaxValue - caster.SpellPoints.CurrentValue);
                     if (target is PartyMember targetMember)
                         layout.FillCharacterBars(targetMember);
                     else if (caster is PartyMember castingMember)
@@ -1813,7 +1813,7 @@ namespace Ambermoon
                         foreach (var monster in Monsters)
                         {
                             layout.GetMonsterBattleFieldTooltip(monster).Text =
-                                $"{monster.HitPoints.TotalCurrentValue}/{monster.HitPoints.MaxValue}^{monster.Name}";
+                                $"{monster.HitPoints.CurrentValue}/{monster.HitPoints.TotalMaxValue}^{monster.Name}";
                         }
                         showMonsterLP = true;
                     }
@@ -1849,7 +1849,7 @@ namespace Ambermoon
                         if (target is PartyMember partyMember)
                         {
                             game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
-                                Math.Min(damage, partyMember.HitPoints.TotalCurrentValue));
+                                Math.Min(damage, partyMember.HitPoints.CurrentValue));
                         }
                         if (target.Ailments.HasFlag(Ailment.Sleep))
                             RemoveAilment(Ailment.Sleep, target);
@@ -2035,7 +2035,7 @@ namespace Ambermoon
         bool CanCastSpell(Monster monster)
         {
             // First check the spells the monster has enough SP for.
-            var sp = monster.SpellPoints.TotalCurrentValue;
+            var sp = monster.SpellPoints.CurrentValue;
             var possibleSpells = monster.LearnedSpells.Where(s =>
             {
                 if (!s.IsCastableByMonster())
@@ -2051,7 +2051,7 @@ namespace Ambermoon
                 return false;
 
             bool monsterNeedsHealing = battleField.Where(c => c?.Type == CharacterType.Monster)
-                .Any(m => m.HitPoints.TotalCurrentValue < m.HitPoints.MaxValue / 2);
+                .Any(m => m.HitPoints.CurrentValue < m.HitPoints.TotalMaxValue / 2);
 
             if (monsterNeedsHealing)
             {
@@ -2376,8 +2376,8 @@ namespace Ambermoon
 
             // TODO
             return !monster.MonsterFlags.HasFlag(MonsterFlags.Boss) &&
-                monster.HitPoints.TotalCurrentValue < monster.HitPoints.MaxValue / 2 &&
-                game.RollDice100() < (monster.HitPoints.MaxValue - monster.HitPoints.TotalCurrentValue) * 100 / monster.HitPoints.MaxValue;
+                monster.HitPoints.CurrentValue < monster.HitPoints.TotalMaxValue / 2 &&
+                game.RollDice100() < (monster.HitPoints.TotalMaxValue - monster.HitPoints.CurrentValue) * 100 / monster.HitPoints.TotalMaxValue;
         }
 
         uint GetBestAttackSpot(int characterPosition, Character character)
@@ -2454,7 +2454,7 @@ namespace Ambermoon
                 }
             case BattleActionType.CastSpell:
                 {
-                    var sp = monster.SpellPoints.TotalCurrentValue;
+                    var sp = monster.SpellPoints.CurrentValue;
                     var possibleSpells = monster.LearnedSpells.Where(s =>
                     {
                         if (!s.IsCastableByMonster())
@@ -2466,7 +2466,7 @@ namespace Ambermoon
 
                     }).ToList();
                     bool monsterNeedsHealing = battleField.Where(c => c?.Type == CharacterType.Monster)
-                        .Any(m => m.HitPoints.TotalCurrentValue < m.HitPoints.MaxValue / 2);
+                        .Any(m => m.HitPoints.CurrentValue < m.HitPoints.TotalMaxValue / 2);
                     Spell spell = Spell.None;
 
                     if (monsterNeedsHealing &&
@@ -2684,7 +2684,7 @@ namespace Ambermoon
             {
                 if (!(target is Monster monster) || !monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
                 {
-                    damage = (int)target.HitPoints.TotalCurrentValue;
+                    damage = (int)target.HitPoints.CurrentValue;
                     return AttackResult.CirticalHit;
                 }
             }
@@ -2705,13 +2705,13 @@ namespace Ambermoon
         int CalculatePhysicalDamage(Character attacker, Character target)
         {
             // TODO: how is damage calculated?
-            return Math.Min((int)target.HitPoints.TotalCurrentValue, attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense)));
+            return Math.Min((int)target.HitPoints.CurrentValue, attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense)));
         }
 
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
         {
             // Note: In contrast to physical attacks this should always deal at least 1 damage
-            return Math.Min(target.HitPoints.TotalCurrentValue, baseDamage + (uint)game.RandomInt(0, (int)variableDamage));
+            return Math.Min(target.HitPoints.CurrentValue, baseDamage + (uint)game.RandomInt(0, (int)variableDamage));
         }
     }
 

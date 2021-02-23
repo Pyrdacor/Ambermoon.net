@@ -2481,11 +2481,11 @@ namespace Ambermoon
                     character.ExperiencePoints)));
                 characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoHitPointsString,
-                    character.HitPoints.CurrentValue, character.HitPoints.MaxValue),
+                    character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue),
                     TextColor.White, TextAlign.Center));
                 characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                    character.SpellPoints.CurrentValue, character.SpellPoints.MaxValue),
+                    character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue),
                     TextColor.White, TextAlign.Center));
                 characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
@@ -2550,9 +2550,9 @@ namespace Ambermoon
             UpdateText(CharacterInfo.EP, () => string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                 character.ExperiencePoints));
             UpdateText(CharacterInfo.LP, () => string.Format(DataNameProvider.CharacterInfoHitPointsString,
-                character.HitPoints.CurrentValue, character.HitPoints.MaxValue));
+                character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue));
             UpdateText(CharacterInfo.SP, () => string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                character.SpellPoints.CurrentValue, character.SpellPoints.MaxValue));
+                character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue));
             UpdateText(CharacterInfo.SLPAndTP, () =>
                 string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
                 string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints));
@@ -3718,7 +3718,7 @@ namespace Ambermoon
                         Global.BattleFieldSlotWidth,
                         Global.BattleFieldSlotHeight + 1
                     ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, (byte)(3 + battleRow),
-                    $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}",
+                    $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}",
                     partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.PaleGray, null, out partyMemberBattleFieldTooltips[i]);
                 }
             }
@@ -3793,7 +3793,7 @@ namespace Ambermoon
                             if (Map.World == World.Morag && spell >= Spell.Waterfall && spell <= Spell.Iceshower)
                                 return DataNameProvider.WrongWorld;
 
-                            if (spellInfo.SP > CurrentPartyMember.SpellPoints.TotalCurrentValue)
+                            if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
                                 return DataNameProvider.NotEnoughSP;
 
                             // TODO: Is there more to check? Irritated?
@@ -4030,6 +4030,15 @@ namespace Ambermoon
                 ShowMessagePopup(message, finishAction);
             }
 
+            void TrySpell(Action successAction, Action failAction)
+            {
+                // TODO: REMOVE false
+                if (false && RollDice100() < CurrentPartyMember.Abilities[Ability.UseMagic].TotalCurrentValue)
+                    successAction?.Invoke();
+                else
+                    failAction?.Invoke();
+            }
+
             switch (spell)
             {
                 case Spell.ChargeItem:
@@ -4043,7 +4052,19 @@ namespace Ambermoon
                         Error(DataNameProvider.ItemIsNotBroken);
                         return;
                     }
-                    PlayItemMagicAnimation();
+                    TrySpell(() =>
+                    {
+                        itemSlot.Flags &= ~ItemSlotFlags.Broken;
+                        layout.UpdateItemSlot(itemSlot);
+                        PlayItemMagicAnimation();
+                    }, () =>
+                    {
+                        EndSequence();
+                        ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
+                        {
+                            layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), false, finishAction);
+                        });
+                    });
                     break;
                 }
                 case Spell.DuplicateItem:
@@ -4084,17 +4105,17 @@ namespace Ambermoon
                     RemoveAilment(Ailment.Poisoned, target);
                     break;
                 case Spell.HealingHand:
-                    Heal(target.HitPoints.MaxValue / 10); // 10%
+                    Heal(target.HitPoints.TotalMaxValue / 10); // 10%
                     break;
                 case Spell.SmallHealing:
                 case Spell.MassHealing:
-                    Heal(target.HitPoints.MaxValue / 4); // 25%
+                    Heal(target.HitPoints.TotalMaxValue / 4); // 25%
                     break;
                 case Spell.MediumHealing:
-                    Heal(target.HitPoints.MaxValue / 2); // 50%
+                    Heal(target.HitPoints.TotalMaxValue / 2); // 50%
                     break;
                 case Spell.GreatHealing:
-                    Heal(target.HitPoints.MaxValue * 3 / 4); // 75%
+                    Heal(target.HitPoints.TotalMaxValue * 3 / 4); // 75%
                     break;
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
@@ -4187,7 +4208,7 @@ namespace Ambermoon
                             var partyMember = GetPartyMember(i);
 
                             partyMemberBattleFieldTooltips[i].Text =
-                                $"{partyMember.HitPoints.TotalCurrentValue}/{partyMember.HitPoints.MaxValue}^{partyMember.Name}";
+                                $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}";
                         }
                     }
                     UpdateActiveBattleSpells();
@@ -4338,7 +4359,7 @@ namespace Ambermoon
 
             static void AdjustMonsterValue(Game game, CharacterValue characterValue)
             {
-                characterValue.CurrentValue = (uint)Math.Min(100, game.RandomInt(95, 104)) * characterValue.MaxValue / 100u;
+                characterValue.CurrentValue = (uint)Math.Min(100, game.RandomInt(95, 104)) * characterValue.TotalMaxValue / 100u;
             }
 
             static void FixValue(Game game, CharacterValue characterValue)
@@ -5166,13 +5187,13 @@ namespace Ambermoon
 
             void PlayerSwitched()
             {
-                layout.EnableButton(0, currentlyHealedMember.HitPoints.TotalCurrentValue < currentlyHealedMember.HitPoints.MaxValue);
+                layout.EnableButton(0, currentlyHealedMember.HitPoints.CurrentValue < currentlyHealedMember.HitPoints.TotalMaxValue);
                 layout.EnableButton(3, currentlyHealedMember.Equipment.Slots.Any(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
                 layout.EnableButton(6, ((uint)currentlyHealedMember.Ailments & (uint)healableAilments) != 0);
             }
 
             uint GetMaxLPHealing() => Math.Max(0, Util.Min(healer.AvailableGold / (uint)healer.HealLPCost,
-                currentlyHealedMember.HitPoints.MaxValue - currentlyHealedMember.HitPoints.CurrentValue));
+                currentlyHealedMember.HitPoints.TotalMaxValue - currentlyHealedMember.HitPoints.CurrentValue));
 
             Fade(() =>
             {
@@ -6108,7 +6129,7 @@ namespace Ambermoon
                                 if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Camp))
                                     return DataNameProvider.WrongArea;
 
-                                if (spellInfo.SP > CurrentPartyMember.SpellPoints.TotalCurrentValue)
+                                if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
                                     return DataNameProvider.NotEnoughSP;
 
                                 // TODO: Is there more to check? Irritated?
@@ -6122,6 +6143,12 @@ namespace Ambermoon
                     void UseSpell(Spell spell)
                     {
                         var spellInfo = SpellInfos.Entries[spell];
+
+                        void ConsumeSP()
+                        {
+                            CurrentPartyMember.SpellPoints.CurrentValue -= spellInfo.SP;
+                            layout.FillCharacterBars(CurrentPartyMember);
+                        }
 
                         switch (spellInfo.Target)
                         {
@@ -6157,12 +6184,14 @@ namespace Ambermoon
                             case SpellTarget.Item:
                                 layout.ShowChestMessage(DataNameProvider.WhichInventoryAsTarget);
                                 PickTargetInventory();
-                                targetItemPicked += (ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot) =>
+                                bool TargetItemPicked(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
                                 {
+                                    targetItemPicked -= TargetItemPicked;
                                     itemGrid.HideTooltip();
                                     layout.SetInventoryMessage(null);
                                     if (itemSlot != null)
                                     {
+                                        ConsumeSP();
                                         StartSequence();
                                         ApplySpellEffect(spell, CurrentPartyMember, itemSlot, () =>
                                         {
@@ -6178,7 +6207,8 @@ namespace Ambermoon
                                         layout.ShowChestMessage(null);
                                         return true; // auto-close window and cleanup
                                     }
-                                };
+                                }
+                                targetItemPicked += TargetItemPicked;
                                 break;
                             case SpellTarget.None:
                                 ApplySpellEffect(spell, CurrentPartyMember);

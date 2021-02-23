@@ -302,6 +302,11 @@ namespace Ambermoon.UI
             }
         }
 
+        public void UpdateItem(int slot)
+        {
+            items[slot]?.Update(false);
+        }
+
         public void SetItem(int slot, ItemSlot item, bool merchantItem = false)
         {
             items[slot]?.Destroy();
