@@ -119,6 +119,7 @@
         string WhichScrollToRead { get; }
         string RestingTooDangerous { get; }
         string ItemIsNotBroken { get; }
+        string ItemIsBroken { get; }
 
         #region Battle messages
 

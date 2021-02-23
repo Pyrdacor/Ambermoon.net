@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 
 namespace Ambermoon.UI
@@ -7,6 +8,7 @@ namespace Ambermoon.UI
     {
         public ItemSlot Item { get; private set; }
         ILayerSprite sprite;
+        ILayerSprite brokenOverlay;
         IRenderText amountDisplay;
         readonly IRenderView renderView;
         readonly IItemManager itemManager;
@@ -19,8 +21,11 @@ namespace Ambermoon.UI
             {
                 sprite.DisplayLayer = (byte)(value ? 100 : 0);
 
+                if (brokenOverlay != null)
+                    brokenOverlay.DisplayLayer = (byte)(sprite.DisplayLayer + 1);
+
                 if (amountDisplay != null)
-                    amountDisplay.DisplayLayer = sprite.DisplayLayer;
+                    amountDisplay.DisplayLayer = (byte)(sprite.DisplayLayer + 2);
             }
         }
 
@@ -39,6 +44,12 @@ namespace Ambermoon.UI
 
         public UIItem Clone()
         {
+            if (brokenOverlay != null)
+            {
+                brokenOverlay?.Delete();
+                brokenOverlay = null;
+            }
+
             return new UIItem(renderView, itemManager, Item.Copy(), merchantItem);
         }
 
@@ -63,7 +74,7 @@ namespace Ambermoon.UI
                 {
                     var itemInfo = itemManager.GetItem(Item.ItemIndex);
                     sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(itemInfo.GraphicIndex);
-                    bool stackable = merchantItem || itemInfo.Flags.HasFlag(ItemFlags.Stackable);
+                    bool stackable = merchantItem || Item.Stacked;
 
                     if (amountDisplay == null && stackable)
                     {
@@ -87,12 +98,37 @@ namespace Ambermoon.UI
                     amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
                 amountDisplay.Visible = Item.Stacked;
             }
+
+            if (Item.ItemIndex != 0 && Item.Amount != 0 && Item.Flags.HasFlag(ItemSlotFlags.Broken))
+            {
+                if (brokenOverlay == null)
+                {
+                    brokenOverlay = renderView.SpriteFactory.Create(16, 16, true, (byte)(sprite?.DisplayLayer ?? 0 + 1)) as ILayerSprite;
+                    brokenOverlay.Layer = renderView.GetLayer(Layer.UI);
+                    brokenOverlay.PaletteIndex = 49;
+                    brokenOverlay.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)
+                        .GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BrokenItemOverlay)); ;
+                }
+
+                brokenOverlay.X = sprite.X;
+                brokenOverlay.Y = sprite.Y;
+                brokenOverlay.DisplayLayer = (byte)(sprite.DisplayLayer + 1);
+                brokenOverlay.Visible = true;
+            }
+            else
+            {
+                brokenOverlay?.Delete();
+                brokenOverlay = null;
+            }
         }
 
         public void Destroy()
         {
             sprite?.Delete();
             sprite = null;
+
+            brokenOverlay?.Delete();
+            brokenOverlay = null;
 
             amountDisplay?.Delete();
             amountDisplay = null;
@@ -107,6 +143,9 @@ namespace Ambermoon.UI
                     return;
 
                 sprite.Visible = value;
+
+                if (brokenOverlay != null)
+                    brokenOverlay.Visible = value;
 
                 if (amountDisplay != null)
                     amountDisplay.Visible = value && Item.Stacked;
@@ -123,6 +162,12 @@ namespace Ambermoon.UI
 
                 sprite.X = value.X;
                 sprite.Y = value.Y;
+
+                if (brokenOverlay != null)
+                {
+                    brokenOverlay.X = sprite.X;
+                    brokenOverlay.Y = sprite.Y;
+                }
 
                 if (amountDisplay != null)
                 {

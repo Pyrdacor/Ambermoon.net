@@ -142,6 +142,7 @@
         public string WhichScrollToRead => executableData.Messages.GetEntry(Messages.Index.WhichScrollToRead);
         public string RestingTooDangerous => executableData.Messages.GetEntry(Messages.Index.RestingTooDangerous);
         public string ItemIsNotBroken => executableData.Messages.GetEntry(Messages.Index.ItemIsNotBroken);
+        public string ItemIsBroken => executableData.Messages.GetEntry(Messages.Index.ItemIsBroken);
 
         #region Battle messages
 

@@ -2221,7 +2221,12 @@ namespace Ambermoon
                 for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
                 {
                     if (!partyMember.Inventory.Slots[i].Empty)
+                    {
+                        if (partyMember.Inventory.Slots[i].ItemIndex == 0) // Item index 0 but amount is not 0 -> not allowed for inventory
+                            partyMember.Inventory.Slots[i].Amount = 0;
+
                         inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
+                    }
                 }
                 var equipmentGrid = ItemGrid.CreateEquipment(this, layout, slot, renderView, ItemManager,
                     equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList(), itemSlot =>
@@ -2236,14 +2241,19 @@ namespace Ambermoon
                                 return false;
                             }
                         }
-
                         return true;
                     });
                 layout.AddItemGrid(equipmentGrid);
                 foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
                 {
                     if (!partyMember.Equipment.Slots[equipmentSlot].Empty)
+                    {
+                        if (equipmentSlot != EquipmentSlot.LeftHand &&
+                            partyMember.Equipment.Slots[equipmentSlot].ItemIndex == 0) // Item index 0 but amount is not 0 -> only allowed for left hand
+                            partyMember.Equipment.Slots[equipmentSlot].Amount = 0;
+
                         equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
+                    }
                 }
                 void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {

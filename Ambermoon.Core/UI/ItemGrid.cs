@@ -22,7 +22,6 @@ namespace Ambermoon.UI
         readonly List<ItemSlot> slots;
         readonly UIItem[] items;
         readonly ILayerSprite[] slotBackgrounds;
-        readonly ILayerSprite[] slotBrokenOverlay;
         IRenderText hoveredItemName;
         IRenderText hoveredItemPrice;
         readonly bool allowExternalDrop;
@@ -32,7 +31,7 @@ namespace Ambermoon.UI
         Scrollbar scrollbar;
         Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
         bool disabled;
-        Func<Position, Item, int?> dropSlotProvider = null;
+        Func<Position, bool, Item, int?> dropSlotProvider = null;
         bool showPrice = false;
         readonly Func<uint> availableGoldProvider = null;
 
@@ -111,7 +110,6 @@ namespace Ambermoon.UI
             this.slotsPerPage = slotsPerPage;
             this.slotsPerScroll = slotsPerScroll;
             slotBackgrounds = new ILayerSprite[slotPositions.Count];
-            slotBrokenOverlay = new ILayerSprite[slotPositions.Count];
             CreateSlotBackgrounds();
             items = new UIItem[numTotalSlots];
             scrollbar = slotsPerScroll == 0 ? null :
@@ -143,19 +141,6 @@ namespace Ambermoon.UI
                 background.Y = slotPositions[i].Y;
                 background.Visible = true;
             }
-
-            texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BrokenItemOverlay));
-
-            for (int i = 0; i < slotBrokenOverlay.Length; ++i)
-            {
-                var overlay = slotBrokenOverlay[i] = renderView.SpriteFactory.Create(16, 16, true, 5) as ILayerSprite;
-                overlay.Layer = layer;
-                overlay.PaletteIndex = 49;
-                overlay.TextureAtlasOffset = texCoords;
-                overlay.X = slotPositions[i].X;
-                overlay.Y = slotPositions[i].Y;
-                overlay.Visible = false;
-            }
         }
 
         public static ItemGrid CreateInventory(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
@@ -166,7 +151,7 @@ namespace Ambermoon.UI
                     layout.DragItems(item, takeAll, dragAction,
                     () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false)),
                 12, 3, 24, new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
-            grid.dropSlotProvider = (position, _) => grid.SlotFromPosition(position);
+            grid.dropSlotProvider = (position, broken, _) => grid.SlotFromPosition(position);
             return grid;
         }
 
@@ -182,11 +167,16 @@ namespace Ambermoon.UI
                             () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true));
                     }
                 }, 9, 0, 9);
-            grid.dropSlotProvider = (position, item) =>
+            grid.dropSlotProvider = (position, broken, item) =>
             {
                 if (!new Rect(19, 71, 82, 122).Contains(position))
                     return null;
 
+                if (broken)
+                {
+                    layout.SetInventoryMessage(game.DataNameProvider.ItemIsBroken, true);
+                    return null;
+                }
                 if (!item.Classes.Contains(game.CurrentInventory.Class))
                 {
                     layout.SetInventoryMessage(game.DataNameProvider.WrongClassToEquipItem, true);
@@ -275,7 +265,7 @@ namespace Ambermoon.UI
                 (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
                     layout.DragItems(item, takeAll, dragAction, () => Layout.DraggedItem.FromExternal(itemGrid, slot, item)),
                     slotsPerPage, slotsPerScroll, numTotalSlots, scrollbarArea, scrollbarSize, scrollbarType, showPrice, availableGoldProvider);
-            grid.dropSlotProvider = (position, _) => grid.SlotFromPosition(position);
+            grid.dropSlotProvider = (position, broken, _) => grid.SlotFromPosition(position);
             return grid;
         }
 
@@ -286,8 +276,6 @@ namespace Ambermoon.UI
 
             foreach (var background in slotBackgrounds)
                 background?.Delete();
-            foreach (var brokenOverlay in slotBrokenOverlay)
-                brokenOverlay?.Delete();
 
             hoveredItemName?.Delete();
             hoveredItemName = null;
@@ -310,13 +298,7 @@ namespace Ambermoon.UI
                 items[i]?.Destroy();
                 items[i] = null;
                 if (slots[i] != null && !slots[i].Empty)
-                {
-                    var newItem = items[i] = new UIItem(renderView, itemManager, slots[i], merchantItems);
-                    bool visible = SlotVisible(i);
-                    newItem.Visible = visible;
-                    if (visible)
-                        newItem.Position = slotPositions[i];
-                }
+                    SetItem(i, slots[i], merchantItems);
             }
         }
 
@@ -327,9 +309,6 @@ namespace Ambermoon.UI
             if (item == null || item.Empty)
             {
                 items[slot] = null;
-
-                if (SlotVisible(slot))
-                    slotBrokenOverlay[slot - ScrollOffset].Visible = false;
             }
             else
             {
@@ -338,10 +317,7 @@ namespace Ambermoon.UI
                 bool visible = SlotVisible(slot);
                 newItem.Visible = visible;
                 if (visible)
-                {
                     newItem.Position = slotPositions[slot - ScrollOffset];
-                    slotBrokenOverlay[slot - ScrollOffset].Visible = item.Flags.HasFlag(ItemSlotFlags.Broken);
-                }
             }
         }
 
@@ -582,7 +558,8 @@ namespace Ambermoon.UI
                 if (!allowExternalDrop && draggedItem.SourceGrid != this)
                     return false;
 
-                var slot = dropSlotProvider?.Invoke(position, itemManager.GetItem(draggedItem.Item.Item.ItemIndex));
+                var slot = dropSlotProvider?.Invoke(position, draggedItem.Item.Item.Flags.HasFlag(ItemSlotFlags.Broken),
+                    itemManager.GetItem(draggedItem.Item.Item.ItemIndex));
 
                 if (slot == null)
                     return false;
