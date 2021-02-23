@@ -118,6 +118,7 @@
         string SleepUntilDawn { get; }
         string WhichScrollToRead { get; }
         string RestingTooDangerous { get; }
+        string ItemIsNotBroken { get; }
 
         #region Battle messages
 

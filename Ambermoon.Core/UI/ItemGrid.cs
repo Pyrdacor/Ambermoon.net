@@ -22,6 +22,7 @@ namespace Ambermoon.UI
         readonly List<ItemSlot> slots;
         readonly UIItem[] items;
         readonly ILayerSprite[] slotBackgrounds;
+        readonly ILayerSprite[] slotBrokenOverlay;
         IRenderText hoveredItemName;
         IRenderText hoveredItemPrice;
         readonly bool allowExternalDrop;
@@ -69,8 +70,8 @@ namespace Ambermoon.UI
                         item?.Destroy();
                 }
 
-                var slotTexCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset +
-                    (disabled ? (uint)UICustomGraphic.ItemSlotDisabled : (uint)UICustomGraphic.ItemSlotBackground));
+                var slotTexCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(
+                    Graphics.GetCustomUIGraphicIndex(disabled ? UICustomGraphic.ItemSlotDisabled : UICustomGraphic.ItemSlotBackground));
                 foreach (var background in slotBackgrounds)
                     background.TextureAtlasOffset = slotTexCoords;
             }
@@ -110,6 +111,7 @@ namespace Ambermoon.UI
             this.slotsPerPage = slotsPerPage;
             this.slotsPerScroll = slotsPerScroll;
             slotBackgrounds = new ILayerSprite[slotPositions.Count];
+            slotBrokenOverlay = new ILayerSprite[slotPositions.Count];
             CreateSlotBackgrounds();
             items = new UIItem[numTotalSlots];
             scrollbar = slotsPerScroll == 0 ? null :
@@ -129,7 +131,7 @@ namespace Ambermoon.UI
         void CreateSlotBackgrounds()
         {
             var layer = renderView.GetLayer(Layer.UI);
-            var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.ItemSlotBackground);
+            var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemSlotBackground));
 
             for (int i = 0; i < slotBackgrounds.Length; ++i)
             {
@@ -140,6 +142,19 @@ namespace Ambermoon.UI
                 background.X = slotPositions[i].X;
                 background.Y = slotPositions[i].Y;
                 background.Visible = true;
+            }
+
+            texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BrokenItemOverlay));
+
+            for (int i = 0; i < slotBrokenOverlay.Length; ++i)
+            {
+                var overlay = slotBrokenOverlay[i] = renderView.SpriteFactory.Create(16, 16, true, 5) as ILayerSprite;
+                overlay.Layer = layer;
+                overlay.PaletteIndex = 49;
+                overlay.TextureAtlasOffset = texCoords;
+                overlay.X = slotPositions[i].X;
+                overlay.Y = slotPositions[i].Y;
+                overlay.Visible = false;
             }
         }
 
@@ -271,6 +286,8 @@ namespace Ambermoon.UI
 
             foreach (var background in slotBackgrounds)
                 background?.Delete();
+            foreach (var brokenOverlay in slotBrokenOverlay)
+                brokenOverlay?.Delete();
 
             hoveredItemName?.Delete();
             hoveredItemName = null;
@@ -308,7 +325,12 @@ namespace Ambermoon.UI
             items[slot]?.Destroy();
 
             if (item == null || item.Empty)
+            {
                 items[slot] = null;
+
+                if (SlotVisible(slot))
+                    slotBrokenOverlay[slot - ScrollOffset].Visible = false;
+            }
             else
             {
                 slots[slot].Replace(item);
@@ -316,7 +338,10 @@ namespace Ambermoon.UI
                 bool visible = SlotVisible(slot);
                 newItem.Visible = visible;
                 if (visible)
+                {
                     newItem.Position = slotPositions[slot - ScrollOffset];
+                    slotBrokenOverlay[slot - ScrollOffset].Visible = item.Flags.HasFlag(ItemSlotFlags.Broken);
+                }
             }
         }
 
@@ -655,7 +680,7 @@ namespace Ambermoon.UI
                 }
                 else
                     hoveredItemName.Text = itemNameText;
-                hoveredItemName.DisplayLayer = 2;
+                hoveredItemName.DisplayLayer = 10;
                 hoveredItemName.X = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
                 hoveredItemName.Y = position.Y - Global.GlyphLineHeight - 1;
                 hoveredItemName.Visible = true;

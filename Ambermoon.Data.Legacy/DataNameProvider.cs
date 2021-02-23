@@ -141,6 +141,7 @@
         public string SleepUntilDawn => executableData.Messages.GetEntry(Messages.Index.SleepUntilDawn);
         public string WhichScrollToRead => executableData.Messages.GetEntry(Messages.Index.WhichScrollToRead);
         public string RestingTooDangerous => executableData.Messages.GetEntry(Messages.Index.RestingTooDangerous);
+        public string ItemIsNotBroken => executableData.Messages.GetEntry(Messages.Index.ItemIsNotBroken);
 
         #region Battle messages
 

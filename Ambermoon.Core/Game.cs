@@ -4014,6 +4014,12 @@ namespace Ambermoon
                     Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemMagicAnimation), 8, 110, finishAction);
             }
 
+            void Error(string message)
+            {
+                EndSequence();
+                ShowMessagePopup(message, finishAction);
+            }
+
             switch (spell)
             {
                 case Spell.ChargeItem:
@@ -4021,9 +4027,15 @@ namespace Ambermoon
                     PlayItemMagicAnimation();
                     break;
                 case Spell.RepairItem:
-                    // TODO
+                {
+                    if (!itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
+                    {
+                        Error(DataNameProvider.ItemIsNotBroken);
+                        return;
+                    }
                     PlayItemMagicAnimation();
                     break;
+                }
                 case Spell.DuplicateItem:
                     // TODO
                     PlayItemMagicAnimation();
@@ -6137,6 +6149,8 @@ namespace Ambermoon
                                 PickTargetInventory();
                                 targetItemPicked += (ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot) =>
                                 {
+                                    itemGrid.HideTooltip();
+                                    layout.SetInventoryMessage(null);
                                     if (itemSlot != null)
                                     {
                                         StartSequence();

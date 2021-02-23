@@ -29,6 +29,7 @@
         BattleFieldGreenHighlight,
         HealingStarAnimation, // 7x7, 3 frames
         BattleFieldBlockedMovementCursor, // Blinking red cross (14x11)
-        ItemMagicAnimation // 16x16, 8 frames (some blinking stars)
+        ItemMagicAnimation, // 16x16, 8 frames (some blinking stars)
+        BrokenItemOverlay // 16x16
     }
 }
