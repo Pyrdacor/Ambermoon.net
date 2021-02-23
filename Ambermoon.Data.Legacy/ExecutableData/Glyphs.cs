@@ -4,7 +4,6 @@ using System.Collections.Generic;
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
     // German 1.05: 0x51e8
-    // Note: at 0x4315 to 0x4346 has the small digits (4 msb in each byte are the 4 pixels of each of the 5 lines of a digit)
     public class Glyphs
     {
         public const int Count = 94;

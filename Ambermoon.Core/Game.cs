@@ -4119,7 +4119,7 @@ namespace Ambermoon
                 // Note: Create clones so we can change the values in battle for each monster.
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
                 foreach (var monster in monsterGroup.Monsters)
-                    InitializeMonster(monster);
+                    InitializeMonster(this, monster);
                 var monsterBattleAnimations = new Dictionary<int, BattleAnimation>(24);
                 // Add animated monster combat graphics and battle field sprites
                 for (int row = 0; row < 3; ++row)
@@ -4136,7 +4136,7 @@ namespace Ambermoon
                     }
                 }
                 currentBattle = new Battle(this, layout, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
-                    monsterGroup, monsterBattleAnimations, true); // TODO: make last param dependent on game options
+                    monsterGroup, monsterBattleAnimations, true); // TODO: make last param depend on game options
                 foreach (var monsterBattleAnimation in monsterBattleAnimations)
                     currentBattle.SetMonsterDisplayLayer(monsterBattleAnimation.Value, currentBattle.GetCharacterAt(monsterBattleAnimation.Key) as Monster);
                 currentBattle.RoundFinished += () =>
@@ -4314,28 +4314,28 @@ namespace Ambermoon
             if (monster == null)
                 return;
 
-            static void AdjustMonsterValue(CharacterValue characterValue)
+            static void AdjustMonsterValue(Game game, CharacterValue characterValue)
             {
                 characterValue.CurrentValue = (uint)Math.Min(100, game.RandomInt(95, 104)) * characterValue.MaxValue / 100u;
             }
 
-            static void FixValue(CharacterValue characterValue)
+            static void FixValue(Game game, CharacterValue characterValue)
             {
                 if (characterValue.CurrentValue < characterValue.MaxValue && characterValue.MaxValue % 99 == 0)
                     characterValue.MaxValue = characterValue.CurrentValue;
-                AdjustMonsterValue(characterValue);
+                AdjustMonsterValue(game, characterValue);
             }
 
             // Attributes, abilities, LP and SP is special for monsters.
             foreach (var attribute in Enum.GetValues<Attribute>())
-                FixValue(monster.Attributes[attribute]);
+                FixValue(game, monster.Attributes[attribute]);
             foreach (var ability in Enum.GetValues<Ability>())
-                FixValue(monster.Abilities[ability]);
+                FixValue(game, monster.Abilities[ability]);
             // TODO: the given max value might be used for something else
             monster.HitPoints.MaxValue = monster.HitPoints.CurrentValue;
             monster.SpellPoints.MaxValue = monster.SpellPoints.CurrentValue;
-            AdjustMonsterValue(monster.HitPoints);
-            AdjustMonsterValue(monster.SpellPoints);
+            AdjustMonsterValue(game, monster.HitPoints);
+            AdjustMonsterValue(game, monster.SpellPoints);
         }
 
         internal void MoveBattleActorTo(uint column, uint row, Character character)
@@ -4609,13 +4609,27 @@ namespace Ambermoon
             });
         }
 
-        void BattleFieldSlotClicked(int column, int row)
+        void BattleFieldSlotClicked(int column, int row, MouseButtons mouseButtons)
         {
             if (currentBattle.SkipNextBattleFieldClick)
                 return;
 
             if (row < 0 || row > 4 ||
                 column < 0 || column > 5)
+                return;
+
+            if (mouseButtons == MouseButtons.Right)
+            {
+                var character = currentBattle.GetCharacterAt(column, row);
+
+                if (character is PartyMember partyMember)
+                {
+                    OpenPartyMember(SlotFromPartyMember(partyMember).Value, true);
+                }
+
+                return;
+            }
+            else if (mouseButtons != MouseButtons.Left)
                 return;
 
             switch (currentPlayerBattleAction)

@@ -57,8 +57,6 @@ namespace Ambermoon.Renderer
         // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).
         // If the depth range is changed, this formula has to be adjusted accordingly!
 
-        static readonly string BlockFactor = (Global.DistancePerBlock / 512.0f).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "f";
-
         static string[] Billboard3DVertexShader(State state) => new string[]
         {
             GetVertexShaderHeader(state),

@@ -176,7 +176,7 @@ namespace Ambermoon.Render
 
             public void ResetPosition(ITime gameTime)
             {
-                var position = characterReference.Positions[0];
+                var position = new Position(characterReference.Positions[0]);
                 position.Offset(-1, -1); // positions are 1-based
                 Position = position;
                 ResetFrame();

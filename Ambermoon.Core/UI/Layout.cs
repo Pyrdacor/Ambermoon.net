@@ -443,7 +443,7 @@ namespace Ambermoon.UI
         uint? ticksPerMovement = null;
         internal IRenderView RenderView { get; }
         public bool TransportEnabled { get; set; } = false;
-        public event Action<int, int> BattleFieldSlotClicked;
+        public event Action<int, int, MouseButtons> BattleFieldSlotClicked;
 
         public Layout(Game game, IRenderView renderView, IItemManager itemManager)
         {
@@ -3005,7 +3005,7 @@ namespace Ambermoon.UI
                     int slotColumn = (position.X - Global.BattleFieldX) / Global.BattleFieldSlotWidth;
                     int slotRow = (position.Y - Global.BattleFieldY) / Global.BattleFieldSlotHeight;
 
-                    BattleFieldSlotClicked?.Invoke(slotColumn, slotRow);
+                    BattleFieldSlotClicked?.Invoke(slotColumn, slotRow, MouseButtons.Left);
                 }
             }
         }
@@ -3029,6 +3029,17 @@ namespace Ambermoon.UI
 
             if (!game.InputEnable)
                 return;
+
+            if (Type == LayoutType.Battle)
+            {
+                if (Global.BattleFieldArea.Contains(position))
+                {
+                    int slotColumn = (position.X - Global.BattleFieldX) / Global.BattleFieldSlotWidth;
+                    int slotRow = (position.Y - Global.BattleFieldY) / Global.BattleFieldSlotHeight;
+
+                    BattleFieldSlotClicked?.Invoke(slotColumn, slotRow, MouseButtons.Right);
+                }
+            }
         }
 
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
