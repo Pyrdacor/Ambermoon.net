@@ -4309,17 +4309,21 @@ namespace Ambermoon
         // Note: In original the max hitpoints are often much higher
         // than the current hitpoints. It seems like the max hitpoints
         // are often a multiple of 99 like 99, 198, 297, etc.
-        // I assume that the max hitpoints should be the same
-        // as current hit points.
-        static void InitializeMonster(Monster monster)
+        static void InitializeMonster(Game game, Monster monster)
         {
             if (monster == null)
                 return;
+
+            static void AdjustMonsterValue(CharacterValue characterValue)
+            {
+                characterValue.CurrentValue = (uint)Math.Min(100, game.RandomInt(95, 104)) * characterValue.MaxValue / 100u;
+            }
 
             static void FixValue(CharacterValue characterValue)
             {
                 if (characterValue.CurrentValue < characterValue.MaxValue && characterValue.MaxValue % 99 == 0)
                     characterValue.MaxValue = characterValue.CurrentValue;
+                AdjustMonsterValue(characterValue);
             }
 
             // Attributes, abilities, LP and SP is special for monsters.
@@ -4330,8 +4334,8 @@ namespace Ambermoon
             // TODO: the given max value might be used for something else
             monster.HitPoints.MaxValue = monster.HitPoints.CurrentValue;
             monster.SpellPoints.MaxValue = monster.SpellPoints.CurrentValue;
-
-            // TODO: some values seem to be a bit different (use monster knowledge on skeleton for examples)
+            AdjustMonsterValue(monster.HitPoints);
+            AdjustMonsterValue(monster.SpellPoints);
         }
 
         internal void MoveBattleActorTo(uint column, uint row, Character character)
