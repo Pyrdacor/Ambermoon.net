@@ -6901,9 +6901,22 @@ namespace Ambermoon
             TrapMouse(new Rect(popupArea.Left + 16, popupArea.Top + 16, popupArea.Width - 32, popupArea.Height - 32));
             var popup = layout.OpenPopup(popupArea.Position, columns, rows, true, false);
             var spells = partyMember.LearnedSpells.Select(spell => new KeyValuePair<Spell, string>(spell, spellAvailableChecker(spell))).ToList();
+            string GetSpellEntry(Spell spell, bool available)
+            {
+                var spellInfo = SpellInfos.Entries[spell];
+                string entry = DataNameProvider.GetSpellname(spell);
+
+                if (available)
+                {
+                    // append usage amount
+                    entry = entry.PadRight(21) + $"({Math.Min(99, partyMember.SpellPoints.CurrentValue / spellInfo.SP)})";
+                }
+
+                return entry;
+            }
             var spellList = popup.AddSpellListBox(spells.Select(spell => new KeyValuePair<string, Action<int, string>>
             (
-                DataNameProvider.GetSpellname(spell.Key), spell.Value != null ? null : (Action<int, string>)((int index, string _) =>
+                GetSpellEntry(spell.Key, spell.Value == null), spell.Value != null ? null : (Action<int, string>)((int index, string _) =>
                 {
                     UntrapMouse();
                     layout.ClosePopup(false);
