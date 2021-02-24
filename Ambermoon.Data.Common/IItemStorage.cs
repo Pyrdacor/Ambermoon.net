@@ -30,7 +30,7 @@ namespace Ambermoon.Data
                 {
                     var item = itemManager.GetItem(slot.ItemIndex);
 
-                    if (!item.Flags.HasFlag(ItemFlags.Sellable))
+                    if (!item.Flags.HasFlag(ItemFlags.NotImportant))
                         yield return slot;
                 }
             }
@@ -44,7 +44,7 @@ namespace Ambermoon.Data
                 {
                     var item = itemManager.GetItem(slot.ItemIndex);
 
-                    if (!item.Flags.HasFlag(ItemFlags.Sellable))
+                    if (!item.Flags.HasFlag(ItemFlags.NotImportant))
                         yield return item.Name;
                 }
             }

@@ -97,7 +97,7 @@ namespace Ambermoon.Data
             }
         }
 
-        public bool IsImportant => !Flags.HasFlag(ItemFlags.Sellable) && !Flags.HasFlag(ItemFlags.Dropable);
+        public bool IsImportant => !Flags.HasFlag(ItemFlags.NotImportant) && !Flags.HasFlag(ItemFlags.Clonable);
 
         public static Item Load(uint index, IItemReader itemReader, IDataReader dataReader)
         {

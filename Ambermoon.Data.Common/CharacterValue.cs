@@ -21,13 +21,13 @@ namespace Ambermoon.Data
         /// <summary>
         /// Bonus from equipment.
         /// </summary>
-        public uint BonusValue { get; set; }
+        public int BonusValue { get; set; } // can be negative if item is cursed
         /// <summary>
         /// This stores the actual value while exhaustion is active.
         /// </summary>
         public uint StoredValue { get; set; }
-        public uint TotalCurrentValue => Math.Max(0, CurrentValue + BonusValue);
-        public uint TotalMaxValue => Math.Max(0, MaxValue + BonusValue);
+        public uint TotalCurrentValue => Math.Max(0, (uint)(CurrentValue + BonusValue));
+        public uint TotalMaxValue => Math.Max(0, (uint)(MaxValue + BonusValue));
     }
 
     [Serializable]

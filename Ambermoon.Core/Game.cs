@@ -219,6 +219,7 @@ namespace Ambermoon
         internal PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
         bool pickingTargetInventory = false;
+        event Func<int, bool> targetInventoryPicked;
         event Func<ItemGrid, int, ItemSlot, bool> targetItemPicked;
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
@@ -1294,6 +1295,24 @@ namespace Ambermoon
             TrapMouse(Global.PartyMemberPortraitArea);
         }
 
+        internal bool FinishPickingTargetInventory(int characterSlot)
+        {
+            bool result = targetInventoryPicked?.Invoke(characterSlot) ?? true;
+
+            if (!result)
+            {
+                pickingTargetInventory = false;
+
+                if (currentWindow.Window == Window.Inventory)
+                    CloseWindow();
+
+                layout.ShowChestMessage(null);
+                UntrapMouse();
+            }
+
+            return result;
+        }
+
         internal void FinishPickingTargetInventory(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
         {
             pickingTargetInventory = false;
@@ -1310,13 +1329,19 @@ namespace Ambermoon
 
         internal void AbortPickingTargetInventory()
         {
-            if (targetItemPicked?.Invoke(null, 0, null) != false)
-            {
-                if (currentWindow.Window == Window.Inventory)
-                    CloseWindow();
+            pickingTargetInventory = false;
 
-                layout.ShowChestMessage(null);
-                UntrapMouse();
+            if (targetInventoryPicked?.Invoke(-1) != false)
+            {
+                if (targetItemPicked?.Invoke(null, 0, null) != false)
+                {
+                    if (currentWindow.Window == Window.Inventory)
+                        CloseWindow();
+
+                    layout.ShowChestMessage(null);
+                    EndSequence();
+                    UntrapMouse();
+                }
             }
         }
 
@@ -2162,11 +2187,11 @@ namespace Ambermoon
             }
         }
 
-        internal void OpenPartyMember(int slot, bool inventory, Action openedAction = null,
+        internal bool OpenPartyMember(int slot, bool inventory, Action openedAction = null,
             bool changeInputEnableStateWhileFading = true)
         {
             if (CurrentSavegame.CurrentPartyMemberIndices[slot] == 0)
-                return;
+                return false;
 
             bool switchedFromOtherPartyMember = CurrentInventory != null;
             var partyMember = GetPartyMember(slot);
@@ -2180,7 +2205,7 @@ namespace Ambermoon
                 // you open the character with F1-F6 or right click
                 // you will enter the stats window instead.
                 if (switchedFromOtherPartyMember)
-                    return;
+                    return false;
                 else
                     inventory = false;
             }
@@ -2231,6 +2256,12 @@ namespace Ambermoon
                 var equipmentGrid = ItemGrid.CreateEquipment(this, layout, slot, renderView, ItemManager,
                     equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList(), itemSlot =>
                     {
+                        if (itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed))
+                        {
+                            layout.SetInventoryMessage(DataNameProvider.ItemIsCursed, true);
+                            return false;
+                        }
+
                         if (currentBattle != null)
                         {
                             var item = ItemManager.GetItem(itemSlot.ItemIndex);
@@ -2259,7 +2290,7 @@ namespace Ambermoon
                 {
                     RecheckUsedBattleItem(CurrentInventoryIndex.Value, slotIndex, true);
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                    EquipmentRemoved(item, amount);
+                    EquipmentRemoved(item, amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
 
                     if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
                     {
@@ -2273,7 +2304,7 @@ namespace Ambermoon
                 void AddEquipment(int slotIndex, ItemSlot itemSlot)
                 {
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                    EquipmentAdded(item, itemSlot.Amount);
+                    EquipmentAdded(item, itemSlot.Amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
 
                     if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
                     {
@@ -2455,6 +2486,8 @@ namespace Ambermoon
                     openedAction?.Invoke();
                 }, changeInputEnableStateWhileFading);
             }
+
+            return true;
         }
 
         void DisplayCharacterInfo(Character character, bool conversation)
@@ -2633,7 +2666,7 @@ namespace Ambermoon
             InventoryItemRemoved(ItemManager.GetItem(itemIndex), amount);
         }
 
-        void EquipmentAdded(Item item, int amount, PartyMember partyMember = null)
+        void EquipmentAdded(Item item, int amount, bool cursed, PartyMember partyMember = null)
         {
             partyMember ??= CurrentInventory;
 
@@ -2641,16 +2674,27 @@ namespace Ambermoon
             // influenced by the amount but not the damage/defense etc.
             partyMember.BaseAttack = (short)(partyMember.BaseAttack + item.Damage);
             partyMember.BaseDefense = (short)(partyMember.BaseDefense + item.Defense);
+            partyMember.MagicAttack = (short)(partyMember.MagicAttack + item.MagicAttackLevel);
+            partyMember.MagicDefense = (short)(partyMember.MagicDefense + item.MagicArmorLevel);
+            partyMember.HitPoints.BonusValue += (cursed ? -1 : 1) * item.HitPoints;
+            partyMember.SpellPoints.BonusValue += (cursed ? -1 : 1) * item.SpellPoints;
+            if (partyMember.HitPoints.CurrentValue > partyMember.HitPoints.TotalMaxValue)
+                partyMember.HitPoints.CurrentValue = partyMember.HitPoints.TotalMaxValue;
+            if (partyMember.SpellPoints.CurrentValue > partyMember.SpellPoints.TotalMaxValue)
+                partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.TotalMaxValue;
+            if (item.Attribute != null)
+                partyMember.Attributes[item.Attribute.Value].BonusValue += (cursed ? -1 : 1) * item.AttributeValue;
+            if (item.Ability != null)
+                partyMember.Abilities[item.Ability.Value].BonusValue += (cursed ? -1 : 1) * item.AbilityValue;
             partyMember.TotalWeight += (uint)amount * item.Weight;
-            // TODO ...
         }
 
-        internal void EquipmentAdded(uint itemIndex, int amount, PartyMember partyMember)
+        internal void EquipmentAdded(uint itemIndex, int amount, bool cursed, PartyMember partyMember)
         {
-            EquipmentAdded(ItemManager.GetItem(itemIndex), amount, partyMember);
+            EquipmentAdded(ItemManager.GetItem(itemIndex), amount, cursed, partyMember);
         }
 
-        void EquipmentRemoved(Item item, int amount)
+        void EquipmentRemoved(Item item, int amount, bool cursed)
         {
             var partyMember = CurrentInventory;
 
@@ -2658,13 +2702,24 @@ namespace Ambermoon
             // influenced by the amount but not the damage/defense etc.
             partyMember.BaseAttack = (short)(partyMember.BaseAttack - item.Damage);
             partyMember.BaseDefense = (short)(partyMember.BaseDefense - item.Defense);
+            partyMember.MagicAttack = (short)(partyMember.MagicAttack - item.MagicAttackLevel);
+            partyMember.MagicDefense = (short)(partyMember.MagicDefense - item.MagicArmorLevel);
+            partyMember.HitPoints.BonusValue -= (cursed ? -1 : 1) * item.HitPoints;
+            partyMember.SpellPoints.BonusValue -= (cursed ? -1 : 1) * item.SpellPoints;
+            if (partyMember.HitPoints.CurrentValue > partyMember.HitPoints.TotalMaxValue)
+                partyMember.HitPoints.CurrentValue = partyMember.HitPoints.TotalMaxValue;
+            if (partyMember.SpellPoints.CurrentValue > partyMember.SpellPoints.TotalMaxValue)
+                partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.TotalMaxValue;
+            if (item.Attribute != null)
+                partyMember.Attributes[item.Attribute.Value].BonusValue -= (cursed ? -1 : 1) * item.AttributeValue;
+            if (item.Ability != null)
+                partyMember.Abilities[item.Ability.Value].BonusValue -= (cursed ? -1 : 1) * item.AbilityValue;
             partyMember.TotalWeight -= (uint)amount * item.Weight;
-            // TODO ...
         }
 
-        internal void EquipmentRemoved(uint itemIndex, int amount)
+        internal void EquipmentRemoved(uint itemIndex, int amount, bool cursed)
         {
-            EquipmentRemoved(ItemManager.GetItem(itemIndex), amount);
+            EquipmentRemoved(ItemManager.GetItem(itemIndex), amount, cursed);
         }
 
         void RenewTimedEvent(TimedGameEvent timedGameEvent, TimeSpan delay)
@@ -4018,10 +4073,10 @@ namespace Ambermoon
 
         void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action finishAction = null)
         {
-            void PlayItemMagicAnimation()
+            void PlayItemMagicAnimation(Action animationFinishAction = null)
             {
                 layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50),
-                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemMagicAnimation), 8, 110, finishAction);
+                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemMagicAnimation), 8, 110, animationFinishAction ?? finishAction);
             }
 
             void Error(string message)
@@ -4032,8 +4087,7 @@ namespace Ambermoon
 
             void TrySpell(Action successAction, Action failAction)
             {
-                // TODO: REMOVE false
-                if (false && RollDice100() < CurrentPartyMember.Abilities[Ability.UseMagic].TotalCurrentValue)
+                if (RollDice100() < CurrentPartyMember.Abilities[Ability.UseMagic].TotalCurrentValue)
                     successAction?.Invoke();
                 else
                     failAction?.Invoke();
@@ -4043,6 +4097,7 @@ namespace Ambermoon
             {
                 case Spell.ChargeItem:
                     // TODO
+                    // TODO: Fail on cursed items so that a failed ChargeItem spell can't destroy cursed items
                     PlayItemMagicAnimation();
                     break;
                 case Spell.RepairItem:
@@ -4069,12 +4124,37 @@ namespace Ambermoon
                 }
                 case Spell.DuplicateItem:
                     // TODO
+                    // TODO: Fail on cursed items so that a failed DuplicateItem spell can't destroy cursed items
                     PlayItemMagicAnimation();
                     break;
                 case Spell.RemoveCurses:
-                    // TODO
-                    PlayItemMagicAnimation();
+                {
+                    void Fail()
+                    {
+                        EndSequence();
+                        ShowMessagePopup(DataNameProvider.TheSpellFailed, finishAction);
+                    }
+
+                    TrySpell(() =>
+                    {
+                        if (!itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed))
+                        {
+                            Fail();
+                        }
+                        else
+                        {
+                            PlayItemMagicAnimation(() =>
+                            {
+                                layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(10), false, () =>
+                                {
+                                    EndSequence();
+                                    finishAction?.Invoke();
+                                });
+                            });
+                        }
+                    }, Fail);
                     break;
+                }
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no item-targeted spell.");
             }
@@ -5954,7 +6034,7 @@ namespace Ambermoon
                 {
                     itemGrid.HideTooltip();
 
-                    if (!item.Flags.HasFlag(ItemFlags.Sellable) || item.Price < 9) // TODO: Don't know if this is right
+                    if (!item.Flags.HasFlag(ItemFlags.NotImportant) || item.Price < 9) // TODO: Don't know if this is right
                     {
                         layout.ShowClickChestMessage(DataNameProvider.NotInterestedInItemMerchant, () =>
                         {
@@ -6182,12 +6262,45 @@ namespace Ambermoon
                                 break;
                             }
                             case SpellTarget.Item:
-                                layout.ShowChestMessage(DataNameProvider.WhichInventoryAsTarget);
+                                layout.ShowChestMessage(spell == Spell.RemoveCurses ? DataNameProvider.BattleMessageWhichPartyMemberAsTarget
+                                    : DataNameProvider.WhichInventoryAsTarget);
                                 PickTargetInventory();
+                                bool TargetInventoryPicked(int characterSlot)
+                                {
+                                    targetInventoryPicked -= TargetInventoryPicked;
+
+                                    if (characterSlot == -1)
+                                        return true; // abort, TargetItemPicked is called and will cleanup
+
+                                    if (spell == Spell.RemoveCurses)
+                                    {
+                                        var target = GetPartyMember(characterSlot);
+                                        var firstCursedItem = target.Equipment.Slots.Values.FirstOrDefault(s => s.Flags.HasFlag(ItemSlotFlags.Cursed));
+
+                                        if (firstCursedItem == null)
+                                        {
+                                            void CleanUp()
+                                            {
+                                                itemGrid.HideTooltip();
+                                                layout.SetInventoryMessage(null);
+                                                UntrapMouse();
+                                                EndSequence();
+                                                layout.ShowChestMessage(null);
+                                            }
+
+                                            ConsumeSP();
+                                            EndSequence();
+                                            ShowMessagePopup(DataNameProvider.NoCursedItemFound, CleanUp);
+                                            return false; // no item selection
+                                        }
+                                    }
+
+                                    return true; // move forward to item selection
+                                }
                                 bool TargetItemPicked(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
                                 {
                                     targetItemPicked -= TargetItemPicked;
-                                    itemGrid.HideTooltip();
+                                    itemGrid?.HideTooltip();
                                     layout.SetInventoryMessage(null);
                                     if (itemSlot != null)
                                     {
@@ -6208,6 +6321,7 @@ namespace Ambermoon
                                         return true; // auto-close window and cleanup
                                     }
                                 }
+                                targetInventoryPicked += TargetInventoryPicked;
                                 targetItemPicked += TargetItemPicked;
                                 break;
                             case SpellTarget.None:

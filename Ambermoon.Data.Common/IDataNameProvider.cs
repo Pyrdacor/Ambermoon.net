@@ -120,6 +120,9 @@
         string RestingTooDangerous { get; }
         string ItemIsNotBroken { get; }
         string ItemIsBroken { get; }
+        string NoCursedItemFound { get;  }
+        string ItemIsCursed { get; }
+
 
         #region Battle messages
 
@@ -169,6 +172,7 @@
         string BattleMessageUseItOnWhom { get; }
 
         #endregion
+
 
         #region Places
 

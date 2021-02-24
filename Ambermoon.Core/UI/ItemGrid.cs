@@ -216,11 +216,18 @@ namespace Ambermoon.UI
                         }
                     }
 
+                    var rightFingerItemSlot = grid.GetItem(rightFingerSlot);
+
                     // place on first free finger starting at right one
-                    if (grid.GetItem(rightFingerSlot)?.Empty ?? true)
+                    if (rightFingerItemSlot?.Empty ?? true && rightFingerItemSlot?.Flags.HasFlag(ItemSlotFlags.Cursed) != true)
                         return rightFingerSlot;
-                    else
+                    else if (grid.GetItem(rightFingerSlot + 2)?.Flags.HasFlag(ItemSlotFlags.Cursed) != true)
                         return rightFingerSlot + 2; // left finger
+                    else
+                    {
+                        layout.SetInventoryMessage(game.DataNameProvider.ItemIsCursed, true);
+                        return null;
+                    }
                 }
 
                 if (equipmentSlot == EquipmentSlot.RightHand ||
@@ -236,7 +243,22 @@ namespace Ambermoon.UI
                             layout.SetInventoryMessage(game.DataNameProvider.NotEnoughFreeHands, true);
                             return null;
                         }
+
+                        if (grid.GetItem((int)EquipmentSlot.RightHand - 1)?.Flags.HasFlag(ItemSlotFlags.Cursed) == true ||
+                            grid.GetItem((int)EquipmentSlot.LeftHand - 1)?.Flags.HasFlag(ItemSlotFlags.Cursed) == true)
+                        {
+                            layout.SetInventoryMessage(game.DataNameProvider.ItemIsCursed, true);
+                            return null;
+                        }
                     }
+                }
+
+                var targetSlot = grid.GetItem((int)item.EquipmentSlot - 1);
+
+                if (targetSlot?.Flags.HasFlag(ItemSlotFlags.Cursed) == true)
+                {
+                    layout.SetInventoryMessage(game.DataNameProvider.ItemIsCursed, true);
+                    return null;
                 }
 
                 if (game.BattleActive)

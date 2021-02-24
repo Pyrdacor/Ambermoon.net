@@ -143,6 +143,9 @@
         public string RestingTooDangerous => executableData.Messages.GetEntry(Messages.Index.RestingTooDangerous);
         public string ItemIsNotBroken => executableData.Messages.GetEntry(Messages.Index.ItemIsNotBroken);
         public string ItemIsBroken => executableData.Messages.GetEntry(Messages.Index.ItemIsBroken);
+        public string NoCursedItemFound => executableData.Messages.GetEntry(Messages.Index.NoCursedItemFound);
+        public string ItemIsCursed => executableData.Messages.GetEntry(Messages.Index.ThisItemIsCursed);
+
 
         #region Battle messages
 
@@ -192,6 +195,7 @@
         public string BattleMessageUseItOnWhom => executableData.Messages.GetEntry(Messages.Index.UseItOnWhom);
 
         #endregion
+
 
         #region Places
 
