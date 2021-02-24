@@ -4105,8 +4105,12 @@ namespace Ambermoon
                     TrySpell(() =>
                     {
                         itemSlot.Flags |= ItemSlotFlags.Identified;
-                        PlayItemMagicAnimation();
-                        // TODO: Immediately open the item info box
+                        PlayItemMagicAnimation(() =>
+                        {
+                            EndSequence();
+                            UntrapMouse();
+                            ShowItemPopup(itemSlot, finishAction);
+                        });
                     }, () =>
                     {
                         EndSequence();
