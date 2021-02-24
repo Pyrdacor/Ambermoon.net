@@ -127,6 +127,8 @@
         string ThisIsNotAMagicalItem { get; }
         string ItemAlreadyFullyCharged { get; }
         string ItemAlreadyIdentified { get; }
+        string CannotBeDuplicated { get; }
+        string NoRoomForItem { get; }
         string MaxLPDisplay { get; }
         string MaxSPDisplay { get; }
         string MBWDisplay { get; }
@@ -243,6 +245,8 @@
         string WhichItemAsTarget { get; }
         string WhichInventoryAsTarget { get; }
         string InnkeeperGoodSleepWish { get; }
+        string CannotRepairUnbreakableItem { get; }
+        string CannotEnchantOrdinaryItem { get; }
 
         #endregion
 

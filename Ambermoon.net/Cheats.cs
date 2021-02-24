@@ -329,24 +329,26 @@ namespace Ambermoon
                     partyMember.Abilities[ability].CurrentValue = partyMember.Abilities[ability].MaxValue;
                 }
 
+                game.UpdateCharacterBars();
+
                 partyMember.SpokenLanguages = (Language)0xff;
 
                 switch (partyMember.Class)
                 {
                     case Class.Adventurer:
                     case Class.Alchemist:
-                        partyMember.LearnedAlchemisticSpells = 0xffff;
+                        partyMember.LearnedAlchemisticSpells = 0xffffffff;
                         break;
                     case Class.Healer:
                     case Class.Paladin:
-                        partyMember.LearnedHealingSpells = 0xffff;
+                        partyMember.LearnedHealingSpells = 0xffffffff;
                         break;
                     case Class.Ranger:
                     case Class.Mystic:
-                        partyMember.LearnedMysticSpells = 0xffff;
+                        partyMember.LearnedMysticSpells = 0xffffffff;
                         break;
                     case Class.Mage:
-                        partyMember.LearnedDestructionSpells = 0xffff;
+                        partyMember.LearnedDestructionSpells = 0xffffffff;
                         break;
                 }
             }

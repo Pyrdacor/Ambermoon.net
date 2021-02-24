@@ -97,7 +97,9 @@ namespace Ambermoon.Data
             {
                 ItemIndex = ItemIndex,
                 Amount = Amount,
-                Flags = Flags
+                Flags = Flags,
+                NumRemainingCharges = NumRemainingCharges,
+                Unknown = Unknown
             };
         }
     }

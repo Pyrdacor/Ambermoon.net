@@ -150,6 +150,8 @@
         public string ThisIsNotAMagicalItem => executableData.Messages.GetEntry(Messages.Index.ThisIsNotAMagicalItem);
         public string ItemAlreadyFullyCharged => executableData.Messages.GetEntry(Messages.Index.ItemAlreadyFullyCharged);
         public string ItemAlreadyIdentified => executableData.Messages.GetEntry(Messages.Index.ItemAlreadyIdentified);
+        public string CannotBeDuplicated => executableData.Messages.GetEntry(Messages.Index.CannotBeDuplicated);
+        public string NoRoomForItem => executableData.Messages.GetEntry(Messages.Index.NoRoomForItem);
         public string MaxLPDisplay => executableData.UITexts.Entries[UITextIndex.MaxLPDisplay];
         public string MaxSPDisplay => executableData.UITexts.Entries[UITextIndex.MaxSPDisplay];
         public string MBWDisplay => executableData.UITexts.Entries[UITextIndex.MBWDisplay];
@@ -266,6 +268,8 @@
         public string WhichInventoryAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichInventoryAsTarget);
         public string WhichItemAsTarget => executableData.Messages.GetEntry(Messages.Index.WhichItemAsTarget);
         public string InnkeeperGoodSleepWish => executableData.Messages.GetEntry(Messages.Index.InnkeeperGoodSleepWish);
+        public string CannotRepairUnbreakableItem => executableData.Messages.GetEntry(Messages.Index.CannotRepairUnbreakableItem);
+        public string CannotEnchantOrdinaryItem => executableData.Messages.GetEntry(Messages.Index.CannotEnchantOrdinaryItem);
 
         #endregion
     }

@@ -2413,10 +2413,10 @@ namespace Ambermoon.UI
             float spPercentage = partyMember == null || !partyMember.Alive ? 0.0f
                 : Math.Min(1.0f, (float)partyMember.SpellPoints.CurrentValue / partyMember.SpellPoints.TotalMaxValue);
 
-            characterBars[slot * 4 + 0].Fill(lpPercentage);
-            characterBars[slot * 4 + 1].Fill(lpPercentage);
-            characterBars[slot * 4 + 2].Fill(spPercentage);
-            characterBars[slot * 4 + 3].Fill(spPercentage);
+            characterBars[slot * 4 + 0]?.Fill(lpPercentage);
+            characterBars[slot * 4 + 1]?.Fill(lpPercentage);
+            characterBars[slot * 4 + 2]?.Fill(spPercentage);
+            characterBars[slot * 4 + 3]?.Fill(spPercentage);
         }
 
         public void AddActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell, bool battle)

@@ -2124,11 +2124,22 @@ namespace Ambermoon
             return false;
         }
 
+        public void UpdateCharacterBars()
+        {
+            if (!ingame || layout == null || CurrentSavegame == null)
+                return;
+
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                layout.FillCharacterBars(i, GetPartyMember(i));
+            }
+        }
+
         void UpdateMapName()
         {
             string mapName = Map.IsWorldMap
-                    ? DataNameProvider.GetWorldName(Map.World)
-                    : Map.Name;
+                ? DataNameProvider.GetWorldName(Map.World)
+                : Map.Name;
             windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
             windowTitle.TextColor = TextColor.Gray;
         }
@@ -4082,7 +4093,7 @@ namespace Ambermoon
             void Error(string message)
             {
                 EndSequence();
-                ShowMessagePopup(message, finishAction);
+                ShowMessagePopup(message, finishAction, TextAlign.Left);
             }
 
             void TrySpell(Action successAction, Action failAction)
@@ -4172,10 +4183,72 @@ namespace Ambermoon
                     break;
                 }
                 case Spell.DuplicateItem:
-                    // TODO
-                    // TODO: Fail on cursed items so that a failed DuplicateItem spell can't destroy cursed items
-                    PlayItemMagicAnimation();
+                {
+                    // Note: Even broken items can be duplicated. The broken state is also duplicated.
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
+                    if (!item.Flags.HasFlag(ItemFlags.Clonable))
+                    {
+                        Error(DataNameProvider.CannotBeDuplicated);
+                        return;
+                    }
+                    TrySpell(() =>
+                    {
+                        PlayItemMagicAnimation(() =>
+                        {
+                            bool couldDuplicate = false;
+                            var inventorySlots = CurrentInventory.Inventory.Slots;
+
+                            if (item.Flags.HasFlag(ItemFlags.Stackable))
+                            {
+                                // Look for slots with free stacks
+                                var freeSlot = inventorySlots.FirstOrDefault(s => s.ItemIndex == item.Index && s.Amount < 99);
+
+                                if (freeSlot != null)
+                                {
+                                    ++freeSlot.Amount;
+                                    layout.UpdateItemSlot(freeSlot);
+                                    couldDuplicate = true;
+                                }
+                            }
+
+                            if (!couldDuplicate)
+                            {
+                                // Look for empty slots
+                                var freeSlot = inventorySlots.FirstOrDefault(s => s.Empty);
+
+                                if (freeSlot != null)
+                                {
+                                    var copy = itemSlot.Copy();
+                                    copy.Amount = 1;
+                                    freeSlot.Replace(copy);
+                                    layout.UpdateItemSlot(freeSlot);
+                                    couldDuplicate = true;
+                                }
+                            }
+
+                            if (!couldDuplicate)
+                            {
+                                EndSequence();
+                                ShowMessagePopup(DataNameProvider.NoRoomForItem, finishAction);
+                            }
+                            else
+                            {
+                                finishAction?.Invoke();
+                            }
+                        });
+                    }, () =>
+                    {
+                        EndSequence();
+                        ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
+                        {
+                            if (!itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed)) // Don't destroy cursed items via failed duplicating
+                                layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), false, finishAction);
+                            else
+                                finishAction?.Invoke();
+                        });
+                    });
                     break;
+                }
                 case Spell.RemoveCurses:
                 {
                     void Fail()
@@ -7007,7 +7080,7 @@ namespace Ambermoon
             };
         }
 
-        internal void ShowMessagePopup(string text, Action closeAction = null)
+        internal void ShowMessagePopup(string text, Action closeAction = null, TextAlign textAlign = TextAlign.Center)
         {
             Pause();
             InputEnable = false;
@@ -7018,7 +7091,7 @@ namespace Ambermoon
                 Resume();
                 ResetCursor();
                 closeAction?.Invoke();
-            }, true, true, false, TextAlign.Center);
+            }, true, true, false, textAlign);
             CursorType = CursorType.Click;
             TrapMouse(popup.ContentArea);
         }
