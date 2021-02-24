@@ -1106,7 +1106,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(1, ButtonType.Hand, false, null, false, () => CursorType.Hand);
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, () => CursorType.Mouth);
                         buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false);
-                        buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
+                        buttonGrid.SetButton(4, ButtonType.Spells, false, () => game.CastSpell(false), false);
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
@@ -1133,7 +1133,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(EventTrigger.Hand), true);
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, () => game.TriggerMapEvents(EventTrigger.Mouth), true);
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
-                        buttonGrid.SetButton(4, ButtonType.Spells, true, null, false); // TODO: spells
+                        buttonGrid.SetButton(4, ButtonType.Spells, false, () => game.CastSpell(false), false);
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);

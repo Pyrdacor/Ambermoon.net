@@ -2790,6 +2790,8 @@ namespace Ambermoon
         /// </summary>
         public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked)
         {
+            // TODO: sometimes scroll offset  is wrong (e.g. when teleporting manually to a world map).
+
             blocked = false;
 
             if (WindowActive || BattleActive || layout.PopupActive || !ingame || layout.OptionMenuOpen)
@@ -3854,9 +3856,9 @@ namespace Ambermoon
                             if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle))
                                 return DataNameProvider.WrongArea;
 
-                            // TODO: The spell info in original might have a "available world" flag.
-                            // The ice/water spells are not usable on Morag.
-                            if (Map.World == World.Morag && spell >= Spell.Waterfall && spell <= Spell.Iceshower)
+                            var worldFlag = (WorldFlag)(1 << (int)Map.World);
+
+                            if (!spellInfo.Worlds.HasFlag(worldFlag))
                                 return DataNameProvider.WrongWorld;
 
                             if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
@@ -6266,6 +6268,166 @@ namespace Ambermoon
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
         }
 
+        /// <summary>
+        /// Cast a spell on the map or in a camp.
+        /// </summary>
+        /// <param name="camp"></param>
+        internal void CastSpell(bool camp, ItemGrid itemGrid = null)
+        {
+            if (!CurrentPartyMember.HasAnySpell())
+            {
+                ShowMessagePopup(DataNameProvider.YouDontKnowAnySpellsYet);
+            }
+            else
+            {
+                OpenSpellList(CurrentPartyMember,
+                    spell =>
+                    {
+                        var spellInfo = SpellInfos.Entries[spell];
+
+                        if (camp && !spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Camp))
+                            return DataNameProvider.WrongArea;
+
+                        if (!camp)
+                        {
+                            if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.AnyMap))
+                            {
+                                if (Map.IsWorldMap && !spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.WorldMapOnly))
+                                    return DataNameProvider.WrongArea;
+                                if (Map.Flags.HasFlag(MapFlags.Dungeon) && !spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly))
+                                    return DataNameProvider.WrongArea;
+                            }
+                        }
+
+                        var worldFlag = (WorldFlag)(1 << (int)Map.World);
+
+                        if (!spellInfo.Worlds.HasFlag(worldFlag))
+                            return DataNameProvider.WrongWorld;
+
+                        if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
+                            return DataNameProvider.NotEnoughSP;
+
+                        // TODO: Is there more to check? Irritated?
+
+                        return null;
+                    },
+                    spell => UseSpell(spell)
+                );
+            }
+
+            void UseSpell(Spell spell)
+            {
+                var spellInfo = SpellInfos.Entries[spell];
+
+                void ConsumeSP()
+                {
+                    CurrentPartyMember.SpellPoints.CurrentValue -= spellInfo.SP;
+                    layout.FillCharacterBars(CurrentPartyMember);
+                }
+
+                switch (spellInfo.Target)
+                {
+                    case SpellTarget.SingleFriend:
+                    {
+                        var target = PartyMembers.First(); // TODO: Pick target
+                        currentAnimation?.Destroy();
+                        currentAnimation = new SpellAnimation(this, layout);
+                        currentAnimation.CastOn(spell, target, () =>
+                        {
+                            currentAnimation.Destroy();
+                            currentAnimation = null;
+                            ApplySpellEffect(spell, CurrentPartyMember, target);
+                        });
+                        break;
+                    }
+                    case SpellTarget.FriendRow:
+                        throw new AmbermoonException(ExceptionScope.Application, $"Friend row spells are not implemented as there are none in Ambermoon.");
+                    case SpellTarget.AllFriends:
+                    {
+                        currentAnimation?.Destroy();
+                        currentAnimation = new SpellAnimation(this, layout);
+                        currentAnimation.CastOnAllPartyMembers(spell, () =>
+                        {
+                            currentAnimation.Destroy();
+                            currentAnimation = null;
+
+                            foreach (var partyMember in PartyMembers.Where(p => p.Alive))
+                                ApplySpellEffect(spell, CurrentPartyMember, partyMember);
+                        });
+                        break;
+                    }
+                    case SpellTarget.Item:
+                        layout.ShowChestMessage(spell == Spell.RemoveCurses ? DataNameProvider.BattleMessageWhichPartyMemberAsTarget
+                            : DataNameProvider.WhichInventoryAsTarget);
+                        PickTargetInventory();
+                        bool TargetInventoryPicked(int characterSlot)
+                        {
+                            targetInventoryPicked -= TargetInventoryPicked;
+
+                            if (characterSlot == -1)
+                                return true; // abort, TargetItemPicked is called and will cleanup
+
+                            if (spell == Spell.RemoveCurses)
+                            {
+                                var target = GetPartyMember(characterSlot);
+                                var firstCursedItem = target.Equipment.Slots.Values.FirstOrDefault(s => s.Flags.HasFlag(ItemSlotFlags.Cursed));
+
+                                if (firstCursedItem == null)
+                                {
+                                    void CleanUp()
+                                    {
+                                        itemGrid?.HideTooltip();
+                                        layout.SetInventoryMessage(null);
+                                        UntrapMouse();
+                                        EndSequence();
+                                        layout.ShowChestMessage(null);
+                                    }
+
+                                    ConsumeSP();
+                                    EndSequence();
+                                    ShowMessagePopup(DataNameProvider.NoCursedItemFound, CleanUp);
+                                    return false; // no item selection
+                                }
+                            }
+
+                            return true; // move forward to item selection
+                        }
+                        bool TargetItemPicked(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
+                        {
+                            targetItemPicked -= TargetItemPicked;
+                            itemGrid?.HideTooltip();
+                            layout.SetInventoryMessage(null);
+                            if (itemSlot != null)
+                            {
+                                ConsumeSP();
+                                StartSequence();
+                                ApplySpellEffect(spell, CurrentPartyMember, itemSlot, () =>
+                                {
+                                    CloseWindow();
+                                    UntrapMouse();
+                                    EndSequence();
+                                    layout.ShowChestMessage(null);
+                                });
+                                return false; // manual window closing etc
+                            }
+                            else
+                            {
+                                layout.ShowChestMessage(null);
+                                return true; // auto-close window and cleanup
+                            }
+                        }
+                        targetInventoryPicked += TargetInventoryPicked;
+                        targetItemPicked += TargetItemPicked;
+                        break;
+                    case SpellTarget.None:
+                        ApplySpellEffect(spell, CurrentPartyMember);
+                        break;
+                    default:
+                        throw new AmbermoonException(ExceptionScope.Application, $"Spells with target {spellInfo.Target} should not be usable in camps.");
+                }
+            }
+        }
+
         internal void OpenCamp(bool inn)
         {
             if (MonsterSeesPlayer)
@@ -6315,145 +6477,7 @@ namespace Ambermoon
                 layout.AttachEventToButton(2, Exit);
 
                 // use magic button
-                layout.AttachEventToButton(0, () =>
-                {
-                    if (!CurrentPartyMember.HasAnySpell())
-                    {
-                        ShowMessagePopup(DataNameProvider.YouDontKnowAnySpellsYet);
-                    }
-                    else
-                    {
-                        OpenSpellList(CurrentPartyMember,
-                            spell =>
-                            {
-                                var spellInfo = SpellInfos.Entries[spell];
-
-                                if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Camp))
-                                    return DataNameProvider.WrongArea;
-
-                                if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
-                                    return DataNameProvider.NotEnoughSP;
-
-                                // TODO: Is there more to check? Irritated?
-
-                                return null;
-                            },
-                            spell => UseSpell(spell)
-                        );
-                    }
-
-                    void UseSpell(Spell spell)
-                    {
-                        var spellInfo = SpellInfos.Entries[spell];
-
-                        void ConsumeSP()
-                        {
-                            CurrentPartyMember.SpellPoints.CurrentValue -= spellInfo.SP;
-                            layout.FillCharacterBars(CurrentPartyMember);
-                        }
-
-                        switch (spellInfo.Target)
-                        {
-                            case SpellTarget.SingleFriend:
-                            {
-                                var target = PartyMembers.First(); // TODO: Pick target
-                                currentAnimation?.Destroy();
-                                currentAnimation = new SpellAnimation(this, layout);
-                                currentAnimation.CastOn(spell, target, () =>
-                                {
-                                    currentAnimation.Destroy();
-                                    currentAnimation = null;
-                                    ApplySpellEffect(spell, CurrentPartyMember, target);
-                                });
-                                break;
-                            }
-                            case SpellTarget.FriendRow:
-                                throw new AmbermoonException(ExceptionScope.Application, $"Friend row spells are not implemented as there are none in Ambermoon.");
-                            case SpellTarget.AllFriends:
-                            {
-                                currentAnimation?.Destroy();
-                                currentAnimation = new SpellAnimation(this, layout);
-                                currentAnimation.CastOnAllPartyMembers(spell, () =>
-                                {
-                                    currentAnimation.Destroy();
-                                    currentAnimation = null;
-
-                                    foreach (var partyMember in PartyMembers.Where(p => p.Alive))
-                                        ApplySpellEffect(spell, CurrentPartyMember, partyMember);
-                                });
-                                break;
-                            }
-                            case SpellTarget.Item:
-                                layout.ShowChestMessage(spell == Spell.RemoveCurses ? DataNameProvider.BattleMessageWhichPartyMemberAsTarget
-                                    : DataNameProvider.WhichInventoryAsTarget);
-                                PickTargetInventory();
-                                bool TargetInventoryPicked(int characterSlot)
-                                {
-                                    targetInventoryPicked -= TargetInventoryPicked;
-
-                                    if (characterSlot == -1)
-                                        return true; // abort, TargetItemPicked is called and will cleanup
-
-                                    if (spell == Spell.RemoveCurses)
-                                    {
-                                        var target = GetPartyMember(characterSlot);
-                                        var firstCursedItem = target.Equipment.Slots.Values.FirstOrDefault(s => s.Flags.HasFlag(ItemSlotFlags.Cursed));
-
-                                        if (firstCursedItem == null)
-                                        {
-                                            void CleanUp()
-                                            {
-                                                itemGrid.HideTooltip();
-                                                layout.SetInventoryMessage(null);
-                                                UntrapMouse();
-                                                EndSequence();
-                                                layout.ShowChestMessage(null);
-                                            }
-
-                                            ConsumeSP();
-                                            EndSequence();
-                                            ShowMessagePopup(DataNameProvider.NoCursedItemFound, CleanUp);
-                                            return false; // no item selection
-                                        }
-                                    }
-
-                                    return true; // move forward to item selection
-                                }
-                                bool TargetItemPicked(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
-                                {
-                                    targetItemPicked -= TargetItemPicked;
-                                    itemGrid?.HideTooltip();
-                                    layout.SetInventoryMessage(null);
-                                    if (itemSlot != null)
-                                    {
-                                        ConsumeSP();
-                                        StartSequence();
-                                        ApplySpellEffect(spell, CurrentPartyMember, itemSlot, () =>
-                                        {
-                                            CloseWindow();
-                                            UntrapMouse();
-                                            EndSequence();
-                                            layout.ShowChestMessage(null);
-                                        });
-                                        return false; // manual window closing etc
-                                    }
-                                    else
-                                    {
-                                        layout.ShowChestMessage(null);
-                                        return true; // auto-close window and cleanup
-                                    }
-                                }
-                                targetInventoryPicked += TargetInventoryPicked;
-                                targetItemPicked += TargetItemPicked;
-                                break;
-                            case SpellTarget.None:
-                                ApplySpellEffect(spell, CurrentPartyMember);
-                                break;
-                            default:
-                                throw new AmbermoonException(ExceptionScope.Application, $"Spells with target {spellInfo.Target} should not be usable in camps.");
-                        }
-                    }
-                });
+                layout.AttachEventToButton(0, () => CastSpell(true, itemGrid));
 
                 void SetupRightClickAbort()
                 {
@@ -6951,7 +6975,7 @@ namespace Ambermoon
             });
         }
 
-        internal uint GetPlayerPaletteIndex() => Map.PaletteIndex;
+        internal uint GetPlayerPaletteIndex() => Map.IsWorldMap ? 1 : Map.PaletteIndex;
 
         internal Position GetPlayerDrawOffset()
         {

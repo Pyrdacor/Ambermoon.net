@@ -423,7 +423,10 @@ namespace Ambermoon
             if (y == null)
                 y = 1u + (uint)random.Next() % (uint)map.Height;
 
-            while (true)
+            const int MaxTries = 20;
+            int tries = 0;
+
+            while (tries++ < MaxTries)
             {
                 if (x < 1 || x > map.Width || y < 1 || y > map.Height)
                 {
@@ -459,13 +462,17 @@ namespace Ambermoon
                     }
                 }
                 else
-                    break;
+                {
+                    Console.WriteLine($"Teleported to map {mapIndex} ({x}, {y})");
+                    Console.WriteLine();
+                    return;
+                }
 
                 x = 1u + (uint)random.Next() % (uint)map.Width;
                 y = 1u + (uint)random.Next() % (uint)map.Height;
             }
 
-            Console.WriteLine($"Teleported to map {mapIndex} ({x}, {y})");
+            Console.WriteLine($"Teleport failed after testing {MaxTries} random positions.");
             Console.WriteLine();
         }
 
