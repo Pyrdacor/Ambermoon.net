@@ -66,6 +66,16 @@ namespace Ambermoon.Data
             return partyMember;
         }
 
+        public override bool CanMove()
+        {
+            return TotalWeight <= MaxWeight && base.CanMove();
+        }
+
+        public override bool CanFlee()
+        {
+            return TotalWeight <= MaxWeight && base.CanFlee();
+        }
+
         public bool HasAmmunition(IItemManager itemManager, AmmunitionType ammunitionType)
         {
             var ammunitionSlot = Equipment.Slots[EquipmentSlot.LeftHand];

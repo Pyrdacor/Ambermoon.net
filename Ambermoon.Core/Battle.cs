@@ -782,7 +782,7 @@ namespace Ambermoon
                     }
 
                     bool moveFailed = false;
-                    if (!battleAction.Character.Ailments.CanMove())
+                    if (!battleAction.Character.CanMove())
                     {
                         // TODO: is this right or is the action just skipped?
                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotMove,
@@ -1919,11 +1919,11 @@ namespace Ambermoon
         {
             var position = GetCharacterPosition(partyMember);
 
-            if (position >= 24 && partyMember.Ailments.CanFlee())
+            if (position >= 24 && partyMember.CanFlee())
             {
                 playerBattleAction.BattleAction = BattleActionType.Flee;
             }
-            else if (position < 24 && partyMember.Ailments.CanMove() && MoveSpotAvailable(position, partyMember, true, forbiddenMoveSpots))
+            else if (position < 24 && partyMember.CanMove() && MoveSpotAvailable(position, partyMember, true, forbiddenMoveSpots))
             {
                 playerBattleAction.BattleAction = BattleActionType.Move;
                 int playerColumn = position % 6;
@@ -1971,11 +1971,11 @@ namespace Ambermoon
             var position = GetCharacterPosition(partyMember);
             List<BattleActionType> possibleActions = new List<BattleActionType>();
 
-            if (position >= 24 && partyMember.Ailments.CanFlee() && game.RollDice100() < 10) // TODO
+            if (position >= 24 && partyMember.CanFlee() && game.RollDice100() < 10) // TODO
                 possibleActions.Add(BattleActionType.Flee);
             if (partyMember.BaseAttack > 0 && partyMember.Ailments.CanAttack() && AttackSpotAvailable(position, partyMember))
                 possibleActions.Add(BattleActionType.Attack);
-            if (partyMember.Ailments.CanMove() && MoveSpotAvailable(position, partyMember, false, forbiddenMoveSpots))
+            if (partyMember.CanMove() && MoveSpotAvailable(position, partyMember, false, forbiddenMoveSpots))
                 possibleActions.Add(BattleActionType.Move);
             if (partyMember.Ailments.CanParry())
                 possibleActions.Add(BattleActionType.Parry);
@@ -2003,14 +2003,14 @@ namespace Ambermoon
             var position = GetCharacterPosition(monster);
             List<BattleActionType> possibleActions = new List<BattleActionType>();
 
-            if (position < 6 && wantsToFlee && monster.Ailments.CanFlee())
+            if (position < 6 && wantsToFlee && monster.CanFlee())
             {
                 return BattleActionType.Flee;
             }
-            bool willFlee = wantsToFlee && monster.Ailments.CanMove();
+            bool willFlee = wantsToFlee && monster.CanMove();
             if (!willFlee && monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster))
                 possibleActions.Add(BattleActionType.Attack);
-            if ((wantsToFlee || !possibleActions.Contains(BattleActionType.Attack)) && monster.Ailments.CanMove()) // TODO: small chance to move even if the monster could attack?
+            if ((wantsToFlee || !possibleActions.Contains(BattleActionType.Attack)) && monster.CanMove()) // TODO: small chance to move even if the monster could attack?
             {
                 // Only move if there is nobody to attack
                 if (MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))

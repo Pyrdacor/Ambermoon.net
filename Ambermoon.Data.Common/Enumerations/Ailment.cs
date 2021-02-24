@@ -68,7 +68,6 @@ namespace Ambermoon.Data
         {
             return
                 !ailment.HasFlag(Ailment.Sleep) &&
-                !ailment.HasFlag(Ailment.Exhausted) &&
                 !ailment.HasFlag(Ailment.Lamed) &&
                 !ailment.HasFlag(Ailment.Petrified) &&
                 !ailment.HasFlag(Ailment.DeadCorpse) &&
@@ -80,7 +79,6 @@ namespace Ambermoon.Data
         {
             return
                 !ailment.HasFlag(Ailment.Sleep) &&
-                !ailment.HasFlag(Ailment.Exhausted) &&
                 !ailment.HasFlag(Ailment.Lamed) &&
                 !ailment.HasFlag(Ailment.Petrified) &&
                 !ailment.HasFlag(Ailment.DeadCorpse) &&

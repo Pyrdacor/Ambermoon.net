@@ -909,6 +909,8 @@ namespace Ambermoon
             ingame = true;
             CurrentSavegame = savegame;
             GameTime = new SavegameTime(savegame);
+            GameTime.GotTired += GameTime_GotTired;
+            GameTime.GotExhausted += GameTime_GotExhausted;
             currentBattle = null;
 
             ClearPartyMembers();
@@ -950,6 +952,133 @@ namespace Ambermoon
             // Trigger events after game load
             TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
                 (uint)player.Position.Y);
+        }
+
+        void Sleep(bool inn)
+        {
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                var partyMember = GetPartyMember(i);
+
+                if (partyMember != null && partyMember.Alive)
+                {
+                    if (partyMember.Ailments.HasFlag(Ailment.Exhausted))
+                    {
+                        partyMember.Ailments &= ~Ailment.Exhausted;
+                        RemoveExhaustion(partyMember);
+                        layout.UpdateCharacterStatus(partyMember);
+                    }
+                }
+            }
+
+            void Start(bool toDawn)
+            {
+                // Set this first to avoid tired/exhausted warning when increasing the game time.
+                GameTime.HoursWithoutSleep = 0;
+                uint hoursToAdd = 8;
+                uint minutesToAdd = 0;
+
+                if (toDawn)
+                {
+                    if (GameTime.Hour >= 20) // move to next day
+                    {
+                        hoursToAdd = 7 + 24 - GameTime.Hour - 1;
+                        minutesToAdd = 60 - GameTime.Minute % 60;
+                    }
+                    else
+                    {
+                        hoursToAdd = 7 - GameTime.Hour - 1;
+                        minutesToAdd = 60 - GameTime.Minute % 60;
+                    }
+                }
+
+                GameTime.Wait(hoursToAdd);
+
+                while (minutesToAdd > 0)
+                {
+                    minutesToAdd -= 5;
+                    GameTime.Tick();
+                }
+
+                // Set this again to reset it after game time was increased.
+                GameTime.HoursWithoutSleep = 0; // This also resets it inside the savegame.
+
+                // Recovery and food consumption
+                void Recover(int slot)
+                {
+                    void Next() => Recover(slot + 1);
+
+                    if (slot < MaxPartyMembers)
+                    {
+                        var partyMember = GetPartyMember(slot);
+
+                        if (partyMember != null && partyMember.Alive)
+                        {
+                            if (!inn && partyMember.Food == 0)
+                            {
+                                layout.ShowClickChestMessage(partyMember.Name + DataNameProvider.HasNoMoreFood, Next, false);
+                            }
+                            else
+                            {
+                                int lpRecovered = Math.Max(0, (int)partyMember.HitPoints.TotalMaxValue - (int)partyMember.HitPoints.CurrentValue);
+                                partyMember.HitPoints.CurrentValue = partyMember.HitPoints.TotalMaxValue;
+                                int spRecovered = Math.Max(0, (int)partyMember.SpellPoints.TotalMaxValue - (int)partyMember.SpellPoints.CurrentValue);
+                                partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.TotalMaxValue;
+                                layout.FillCharacterBars(partyMember);
+
+                                if (!inn)
+                                    --partyMember.Food;
+
+                                if (partyMember.Class != Class.Warrior && partyMember.Class != Class.Thief) // Has SP
+                                {
+                                    layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLPAndSP, lpRecovered, spRecovered), Next, false);
+                                }
+                                else
+                                {
+                                    layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLP, lpRecovered), Next, false);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Next();
+                        }
+                    }
+                }
+                Recover(0);
+            }
+
+            if (!inn && !Map.Flags.HasFlag(MapFlags.NoSleepUntilDawn) &&
+                (GameTime.Hour >= 20 || GameTime.Hour < 4)) // Sleep until dawn
+            {
+                layout.ShowClickChestMessage(DataNameProvider.SleepUntilDawn, () => Start(true));
+            }
+            else // sleep 8 hours
+            {
+                layout.ShowClickChestMessage(DataNameProvider.Sleep8Hours, () => Start(false));
+            }
+        }
+
+        void GameTime_GotExhausted()
+        {
+            for (int i = 0; i < MaxPartyMembers; ++i)
+            {
+                var partyMember = GetPartyMember(i);
+
+                if (partyMember != null && partyMember.Alive)
+                {
+                    partyMember.Ailments |= Ailment.Exhausted;
+                    AddExhaustion(partyMember);
+                    layout.UpdateCharacterStatus(partyMember);
+                }
+            }
+
+            ShowMessagePopup(DataNameProvider.ExhaustedMessage);
+        }
+
+        void GameTime_GotTired()
+        {
+            ShowMessagePopup(DataNameProvider.TiredMessage);
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
@@ -3976,6 +4105,27 @@ namespace Ambermoon
                 if (BattleActive)
                     UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+
+                if (ailment == Ailment.Exhausted)
+                    RemoveExhaustion(partyMember);
+            }
+        }
+
+        void AddExhaustion(PartyMember partyMember)
+        {
+            foreach (var attribute in Enum.GetValues<Attribute>())
+            {
+                partyMember.Attributes[attribute].StoredValue = partyMember.Attributes[attribute].CurrentValue;
+                partyMember.Attributes[attribute].CurrentValue /= 2;
+            }
+        }
+
+        void RemoveExhaustion(PartyMember partyMember)
+        {
+            foreach (var attribute in Enum.GetValues<Attribute>())
+            {
+                partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].StoredValue;
+                partyMember.Attributes[attribute].StoredValue = 0;
             }
         }
 
@@ -4639,8 +4789,8 @@ namespace Ambermoon
                 layout.UpdateCharacterStatus(partyMemberSlot, CurrentPartyMember.Ailments.CanSelect() ? (UIGraphic?)null : GetDisabledStatusGraphic(CurrentPartyMember));
             }
 
-            layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.Ailments.CanFlee()); // flee button, only enable in last row
-            layout.EnableButton(3, CurrentPartyMember.Ailments.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
+            layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.CanFlee()); // flee button, only enable in last row
+            layout.EnableButton(3, CurrentPartyMember.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
             layout.EnableButton(4, currentBattle.CanMoveForward);
             layout.EnableButton(6, CurrentPartyMember.BaseAttack > 0 && CurrentPartyMember.Ailments.CanAttack());
             layout.EnableButton(7, CurrentPartyMember.Ailments.CanParry());
@@ -4924,7 +5074,7 @@ namespace Ambermoon
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.Gray);
                             return;
                         }
-                        if (!currentPickingActionMember.Ailments.CanMove())
+                        if (!currentPickingActionMember.CanMove())
                         {
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove, TextColor.Gray);
                             return;
@@ -4948,7 +5098,7 @@ namespace Ambermoon
                     var target = currentBattle.GetCharacterAt(column, row);
                     if (target != null && target.Type == CharacterType.PartyMember)
                     {
-                        if (!target.Ailments.CanMove())
+                        if (!target.CanMove())
                         {
                             CancelSpecificPlayerAction();
                             // TODO: Test this later. Is CanMove equal to CanBlink?
@@ -6513,7 +6663,14 @@ namespace Ambermoon
                 // sleep button
                 layout.AttachEventToButton(6, () =>
                 {
-                    // TODO
+                    if (CurrentSavegame.HoursWithoutSleep < 8)
+                    {
+                        layout.ShowChestMessage(DataNameProvider.RestingWouldHaveNoEffect, TextAlign.Left);
+                    }
+                    else
+                    {
+                        Sleep(inn);
+                    }
                 });
 
                 itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>

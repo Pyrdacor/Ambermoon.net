@@ -255,6 +255,16 @@ namespace Ambermoon.Data
             HitPoints.CurrentValue = Math.Min(HitPoints.TotalMaxValue, HitPoints.CurrentValue + amount);
         }
 
+        public virtual bool CanMove()
+        {
+            return Ailments.CanMove();
+        }
+
+        public virtual bool CanFlee()
+        {
+            return Ailments.CanFlee();
+        }
+
         public Inventory Inventory { get; } = new Inventory();
         public Equipment Equipment { get; } = new Equipment();
 

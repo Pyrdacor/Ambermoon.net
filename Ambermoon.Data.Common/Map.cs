@@ -61,13 +61,6 @@ namespace Ambermoon.Data
                     return true;
                 }
 
-                /*bool allowBack = BackTileIndex == 0 || tileset.Tiles[BackTileIndex - 1].AllowMovement(travelType);
-                bool allowFront = FrontTileIndex == 0 || tileset.Tiles[FrontTileIndex - 1].AllowMovement(travelType);
-
-                if (FrontTileIndex != 0 && !tileset.Tiles[FrontTileIndex - 1].BringToFront)
-                    allowBack = allowFront;
-
-                return allowBack && allowFront;*/
                 return tileset.AllowMovement(BackTileIndex, FrontTileIndex, travelType);
             }
             public bool BlocksSight(Tileset tileset)

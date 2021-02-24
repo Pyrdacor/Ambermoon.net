@@ -2410,7 +2410,7 @@ namespace Ambermoon.UI
         {
             float lpPercentage = partyMember == null || !partyMember.Alive ? 0.0f
                 : Math.Min(1.0f, (float)partyMember.HitPoints.CurrentValue / partyMember.HitPoints.TotalMaxValue);
-            float spPercentage = partyMember == null || !partyMember.Alive ? 0.0f
+            float spPercentage = partyMember == null || !partyMember.Alive || partyMember.Class == Class.Warrior || partyMember.Class == Class.Thief ? 0.0f
                 : Math.Min(1.0f, (float)partyMember.SpellPoints.CurrentValue / partyMember.SpellPoints.TotalMaxValue);
 
             characterBars[slot * 4 + 0]?.Fill(lpPercentage);

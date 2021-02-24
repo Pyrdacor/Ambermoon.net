@@ -134,6 +134,11 @@ namespace Ambermoon
         public uint Hour => savegame.Hour;
         public uint Minute => savegame.Minute;
         public uint TimeSlot => (savegame.Hour * 60 + savegame.Minute) / 5;
+        public uint HoursWithoutSleep
+        {
+            get => savegame.HoursWithoutSleep;
+            set => savegame.HoursWithoutSleep = value;
+        }
 
         public SavegameTime(Savegame savegame)
         {
@@ -159,6 +164,7 @@ namespace Ambermoon
             {
                 savegame.Minute = 0;
                 ++savegame.Hour;
+                ++savegame.HoursWithoutSleep;
                 PostIncreaseUpdate();
             }
 
@@ -204,8 +210,13 @@ namespace Ambermoon
             }
         }
 
+        public event Action GotTired;
+        public event Action GotExhausted;
+        public event Action NewYear;
+
         public void Wait(uint hours)
         {
+            savegame.HoursWithoutSleep += hours;
             savegame.Hour += hours;
             PostIncreaseUpdate();
             ResetTickTimer();
@@ -228,12 +239,18 @@ namespace Ambermoon
                     {
                         savegame.Month = 1;
                         ++savegame.Year;
+                        NewYear?.Invoke();
 
                         if (savegame.Year > 0xffff)
                             savegame.Year = 0;
                     }
                 }
             }
+
+            if (savegame.HoursWithoutSleep >= 36)
+                GotExhausted?.Invoke();
+            else if (savegame.HoursWithoutSleep >=24)
+                GotTired?.Invoke();
         }
 
         void HandleTimePassed(uint passedHours, uint passedMinutes)

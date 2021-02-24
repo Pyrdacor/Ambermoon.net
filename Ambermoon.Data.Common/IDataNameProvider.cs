@@ -117,7 +117,6 @@
         string ManagedToLearnSpell { get; }
         string TheSpellFailed { get; }
         string UseSpellOnlyInCitiesOrDungeons { get; }
-        string SleepUntilDawn { get; }
         string WhichScrollToRead { get; }
         string RestingTooDangerous { get; }
         string ItemIsNotBroken { get; }
@@ -137,6 +136,16 @@
         string AbilityHeader { get; }
         string FunctionHeader { get; }
         string Cursed { get; }
+        string TiredMessage { get; }
+        string ExhaustedMessage { get; }
+        string SleepUntilDawn { get; }
+        string Sleep8Hours { get; }
+        string RestingWouldHaveNoEffect { get; }
+        string HasNoMoreFood { get; }
+        string RecoveredLP { get; }
+        string RecoveredLPAndSP { get; }
+        string HasAged { get; }
+        string HasDiedOfAge { get; }
 
 
         #region Battle messages

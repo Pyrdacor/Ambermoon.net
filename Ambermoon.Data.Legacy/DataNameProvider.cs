@@ -140,7 +140,6 @@
         public string ManagedToLearnSpell => executableData.Messages.GetEntry(Messages.Index.ManagedToLearnSpell);
         public string TheSpellFailed => executableData.Messages.GetEntry(Messages.Index.TheSpellFailed);
         public string UseSpellOnlyInCitiesOrDungeons => executableData.Messages.GetEntry(Messages.Index.UseSpellOnlyInCitiesOrDungeons);
-        public string SleepUntilDawn => executableData.Messages.GetEntry(Messages.Index.SleepUntilDawn);
         public string WhichScrollToRead => executableData.Messages.GetEntry(Messages.Index.WhichScrollToRead);
         public string RestingTooDangerous => executableData.Messages.GetEntry(Messages.Index.RestingTooDangerous);
         public string ItemIsNotBroken => executableData.Messages.GetEntry(Messages.Index.ItemIsNotBroken);
@@ -160,6 +159,16 @@
         public string AbilityHeader => executableData.UITexts.Entries[UITextIndex.Ability];
         public string FunctionHeader => executableData.SpellTypeNames.Entries[SpellSchool.Function];
         public string Cursed => executableData.UITexts.Entries[UITextIndex.Cursed];
+        public string TiredMessage => executableData.Messages.GetEntry(Messages.Index.GettingTired);
+        public string ExhaustedMessage => executableData.Messages.GetEntry(Messages.Index.CompletelyExhausted);
+        public string SleepUntilDawn => executableData.Messages.GetEntry(Messages.Index.SleepUntilDawn);
+        public string Sleep8Hours => executableData.Messages.GetEntry(Messages.Index.PartyRestsFor8Hours);
+        public string RestingWouldHaveNoEffect => executableData.Messages.GetEntry(Messages.Index.RestingWouldHaveNoEffect);
+        public string HasNoMoreFood => executableData.Messages.GetEntry(Messages.Index.HasNoMoreFood);
+        public string RecoveredLP => executableData.Messages.GetEntry(Messages.Index.RegainsLP);
+        public string RecoveredLPAndSP => executableData.Messages.GetEntry(Messages.Index.RegainsLPAndSP);
+        public string HasAged => executableData.Messages.GetEntry(Messages.Index.HasAged);
+        public string HasDiedOfAge => executableData.Messages.GetEntry(Messages.Index.HasDiedOfAge);
 
 
         #region Battle messages
