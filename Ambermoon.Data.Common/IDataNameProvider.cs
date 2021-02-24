@@ -33,8 +33,10 @@
         string LanguagesHeaderString { get; }
         string AilmentsHeaderString { get; }
         string DataHeaderString { get; }
-        string GetAttributeUIName(Attribute attribute);
-        string GetAbilityUIName(Ability ability);
+        string GetAttributeShortName(Attribute attribute);
+        string GetAbilityShortName(Ability ability);
+        string GetAttributeName(Attribute attribute);
+        string GetAbilityName(Ability ability);
         string OptionsHeader { get; }
         string ClassesHeaderString { get; }
         string GenderHeaderString { get; }
@@ -125,6 +127,14 @@
         string ThisIsNotAMagicalItem { get; }
         string ItemAlreadyFullyCharged { get; }
         string ItemAlreadyIdentified { get; }
+        string MaxLPDisplay { get; }
+        string MaxSPDisplay { get; }
+        string MBWDisplay { get; }
+        string MBRDisplay { get; }
+        string AttributeHeader { get; }
+        string AbilityHeader { get; }
+        string FunctionHeader { get; }
+        string Cursed { get; }
 
 
         #region Battle messages

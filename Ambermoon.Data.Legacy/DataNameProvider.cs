@@ -53,8 +53,10 @@
         public string LanguagesHeaderString => executableData.UITexts.Entries[UITextIndex.Languages];
         public string AilmentsHeaderString => executableData.UITexts.Entries[UITextIndex.Ailments];
         public string DataHeaderString => executableData.UITexts.Entries[UITextIndex.DataHeader];
-        public string GetAttributeUIName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
-        public string GetAbilityUIName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
+        public string GetAttributeShortName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
+        public string GetAbilityShortName(Ability ability) => executableData.AbilityNames.ShortNames[ability];
+        public string GetAttributeName(Attribute attribute) => executableData.AttributeNames.Entries[attribute];
+        public string GetAbilityName(Ability ability) => executableData.AbilityNames.Entries[ability];
         public string OptionsHeader => executableData.Messages.GetEntry(Messages.Index.Options);
         public string ClassesHeaderString => executableData.UITexts.Entries[UITextIndex.ClassHeader];
         public string GenderHeaderString => executableData.UITexts.Entries[UITextIndex.Sex];
@@ -148,7 +150,14 @@
         public string ThisIsNotAMagicalItem => executableData.Messages.GetEntry(Messages.Index.ThisIsNotAMagicalItem);
         public string ItemAlreadyFullyCharged => executableData.Messages.GetEntry(Messages.Index.ItemAlreadyFullyCharged);
         public string ItemAlreadyIdentified => executableData.Messages.GetEntry(Messages.Index.ItemAlreadyIdentified);
-
+        public string MaxLPDisplay => executableData.UITexts.Entries[UITextIndex.MaxLPDisplay];
+        public string MaxSPDisplay => executableData.UITexts.Entries[UITextIndex.MaxSPDisplay];
+        public string MBWDisplay => executableData.UITexts.Entries[UITextIndex.MBWDisplay];
+        public string MBRDisplay => executableData.UITexts.Entries[UITextIndex.MBRDisplay];
+        public string AttributeHeader => executableData.UITexts.Entries[UITextIndex.Attribute];
+        public string AbilityHeader => executableData.UITexts.Entries[UITextIndex.Ability];
+        public string FunctionHeader => executableData.SpellTypeNames.Entries[SpellSchool.Function];
+        public string Cursed => executableData.UITexts.Entries[UITextIndex.Cursed];
 
 
         #region Battle messages

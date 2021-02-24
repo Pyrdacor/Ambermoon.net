@@ -2405,7 +2405,7 @@ namespace Ambermoon
 
                     int y = 57 + index++ * Global.GlyphLineHeight;
                     var attributeValues = partyMember.Attributes[attribute];
-                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAttributeUIName(attribute));
+                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAttributeShortName(attribute));
                     layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                         (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
                 }
@@ -2417,7 +2417,7 @@ namespace Ambermoon
                 {
                     int y = 122 + index++ * Global.GlyphLineHeight;
                     var abilityValues = partyMember.Abilities[ability];
-                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityUIName(ability));
+                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityShortName(ability));
                     layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                         (abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%");
                 }
@@ -2440,7 +2440,7 @@ namespace Ambermoon
                 {
                     int y = 122 + index++ * Global.GlyphLineHeight;
                     var abilityValues = partyMember.Abilities[ability];
-                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityUIName(ability));
+                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityShortName(ability));
                     layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                         (abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%");
                 }
@@ -4106,6 +4106,7 @@ namespace Ambermoon
                     {
                         itemSlot.Flags |= ItemSlotFlags.Identified;
                         PlayItemMagicAnimation();
+                        // TODO: Immediately open the item info box
                     }, () =>
                     {
                         EndSequence();
@@ -6491,8 +6492,8 @@ namespace Ambermoon
             popup.AddText(new Position(32, 120), string.Format(DataNameProvider.ItemWeightDisplay.Replace("{0:00000}", " {0:0}"), item.Weight), TextColor.White);
             popup.AddText(new Position(32, 130), string.Format(DataNameProvider.ItemHandsDisplay, item.NumberOfHands), TextColor.White);
             popup.AddText(new Position(32, 138), string.Format(DataNameProvider.ItemFingersDisplay, item.NumberOfFingers), TextColor.White);
-            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+0;-#")), TextColor.White);
-            popup.AddText(new Position(32, 154), string.Format(DataNameProvider.ItemDefenseDisplay.Replace("000", "0"), item.Defense), TextColor.White);
+            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+#;-#; 0")), TextColor.White);
+            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace(" {0:000}", item.Defense.ToString("+#;-#; 0")), TextColor.White);
 
             popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, TextColor.LightGray);
             int column = 0;
@@ -6569,7 +6570,66 @@ namespace Ambermoon
 
         void ShowItemDetails(Popup itemPopup, ItemSlot itemSlot)
         {
+            var item = ItemManager.GetItem(itemSlot.ItemIndex);
+            bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) || item.Flags.HasFlag(ItemFlags.Accursed);
+            int factor = cursed ? -1 : 1;
             var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, 6);
+
+            void AddValueDisplay(Position position, string formatString, int value)
+            {
+                detailsPopup.AddText(position, formatString.Replace("000", "00")
+                    .Replace(" {0:00}", value.ToString("+#;-#; 0")), TextColor.White);
+            }
+
+            AddValueDisplay(new Position(48, 68), DataNameProvider.MaxLPDisplay, factor * item.HitPoints);
+            AddValueDisplay(new Position(128, 68), DataNameProvider.MaxSPDisplay, factor * item.SpellPoints);
+            AddValueDisplay(new Position(48, 75), DataNameProvider.MBWDisplay, item.MagicAttackLevel);
+            AddValueDisplay(new Position(128, 75), DataNameProvider.MBRDisplay, item.MagicArmorLevel);
+            detailsPopup.AddText(new Position(48, 82), DataNameProvider.AttributeHeader, TextColor.LightOrange);
+            if (item.Attribute != null && item.AttributeValue != 0)
+            {
+                detailsPopup.AddText(new Position(48, 89), DataNameProvider.GetAttributeName(item.Attribute.Value), TextColor.White);
+                detailsPopup.AddText(new Position(170, 89), (factor * item.AttributeValue).ToString("+#;-#; 0"), TextColor.White);
+            }
+            detailsPopup.AddText(new Position(48, 96), DataNameProvider.AbilitiesHeaderString, TextColor.LightOrange);
+            if (item.Ability != null && item.AbilityValue != 0)
+            {
+                detailsPopup.AddText(new Position(48, 103), DataNameProvider.GetAbilityName(item.Ability.Value), TextColor.White);
+                detailsPopup.AddText(new Position(170, 103), (factor * item.AbilityValue).ToString("+#;-#; 0"), TextColor.White);
+            }
+            detailsPopup.AddText(new Position(48, 110), DataNameProvider.FunctionHeader, TextColor.LightOrange);
+            if (item.Spell != Spell.None && item.SpellUsageCount != 0)
+            {
+                detailsPopup.AddText(new Position(48, 117),
+                    $"{DataNameProvider.GetSpellname(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",
+                    TextColor.White);
+            }
+            if (cursed)
+            {
+                int textColorIndex = 0;
+                var textColors = new TextColor[]
+                {
+                    TextColor.Orange,
+                    TextColor.Yellow,
+                    TextColor.White,
+                    TextColor.Yellow,
+                    TextColor.Orange,
+                    TextColor.Red
+                };
+                var contentArea = detailsPopup.ContentArea;
+                var curseText = detailsPopup.AddText(new Rect(contentArea.X, 124, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed, textColors[0], TextAlign.Center);
+                void AnimateCurseText()
+                {
+                    if (layout.PopupActive && itemPopup?.HasChildPopup == true)
+                    {
+                        curseText.SetTextColor(textColors[textColorIndex]);
+                        textColorIndex = (textColorIndex + 1) % textColors.Length;
+                        AddTimedEvent(TimeSpan.FromMilliseconds(50), AnimateCurseText);
+                    }
+                }
+
+                AnimateCurseText();
+            }
         }
 
         internal bool EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)

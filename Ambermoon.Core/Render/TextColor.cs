@@ -17,6 +17,7 @@
         PaleRed,
         PaleYellow,
         Azure,
-        LightGray
+        LightGray,
+        LightOrange
     }
 }

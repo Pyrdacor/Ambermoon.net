@@ -1593,7 +1593,7 @@ namespace Ambermoon
 
                 var attributeValues = monster.Attributes[attribute];
                 popup.AddText(position,
-                    $"{game.DataNameProvider.GetAttributeUIName(attribute)}  {(attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}"}",
+                    $"{game.DataNameProvider.GetAttributeShortName(attribute)}  {(attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}"}",
                     TextColor.Gray);
                 position.Y += Global.GlyphLineHeight;
             }
@@ -1606,7 +1606,7 @@ namespace Ambermoon
             {
                 var abilityValues = monster.Abilities[ability];
                 popup.AddText(position,
-                    $"{game.DataNameProvider.GetAbilityUIName(ability)}  {(abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%"}",
+                    $"{game.DataNameProvider.GetAbilityShortName(ability)}  {(abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%"}",
                     TextColor.Gray);
                 position.Y += Global.GlyphLineHeight - 1;
             }
