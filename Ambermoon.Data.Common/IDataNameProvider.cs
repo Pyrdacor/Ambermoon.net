@@ -122,6 +122,9 @@
         string ItemIsBroken { get; }
         string NoCursedItemFound { get;  }
         string ItemIsCursed { get; }
+        string ThisIsNotAMagicalItem { get; }
+        string ItemAlreadyFullyCharged { get; }
+        string ItemAlreadyIdentified { get; }
 
 
         #region Battle messages

@@ -145,6 +145,10 @@
         public string ItemIsBroken => executableData.Messages.GetEntry(Messages.Index.ItemIsBroken);
         public string NoCursedItemFound => executableData.Messages.GetEntry(Messages.Index.NoCursedItemFound);
         public string ItemIsCursed => executableData.Messages.GetEntry(Messages.Index.ThisItemIsCursed);
+        public string ThisIsNotAMagicalItem => executableData.Messages.GetEntry(Messages.Index.ThisIsNotAMagicalItem);
+        public string ItemAlreadyFullyCharged => executableData.Messages.GetEntry(Messages.Index.ItemAlreadyFullyCharged);
+        public string ItemAlreadyIdentified => executableData.Messages.GetEntry(Messages.Index.ItemAlreadyIdentified);
+
 
 
         #region Battle messages

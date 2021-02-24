@@ -222,7 +222,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             LastTimeEnchanting,
             HowManyCharges,
             WhichItemToExamineSage,
-            ItemAlreadyExamined,
+            ItemAlreadyIdentified,
             PriceForExamining,
             HowManyLP,
             PriceForHealing,

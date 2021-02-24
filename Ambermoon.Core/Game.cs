@@ -4095,11 +4095,55 @@ namespace Ambermoon
 
             switch (spell)
             {
-                case Spell.ChargeItem:
-                    // TODO
-                    // TODO: Fail on cursed items so that a failed ChargeItem spell can't destroy cursed items
-                    PlayItemMagicAnimation();
+                case Spell.Identification:
+                {
+                    if (itemSlot.Flags.HasFlag(ItemSlotFlags.Identified))
+                    {
+                        Error(DataNameProvider.ItemAlreadyIdentified);
+                        return;
+                    }
+                    TrySpell(() =>
+                    {
+                        itemSlot.Flags |= ItemSlotFlags.Identified;
+                        PlayItemMagicAnimation();
+                    }, () =>
+                    {
+                        EndSequence();
+                        ShowMessagePopup(DataNameProvider.TheSpellFailed, finishAction);
+                    });
                     break;
+                }
+                case Spell.ChargeItem:
+                {
+                    // Note: Even broken items can be charged.
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
+                    if (item.Spell == Spell.None || item.SpellUsageCount == 0)
+                    {
+                        Error(DataNameProvider.ThisIsNotAMagicalItem);
+                        return;
+                    }
+                    if (itemSlot.NumRemainingCharges >= item.SpellUsageCount)
+                    {
+                        Error(DataNameProvider.ItemAlreadyFullyCharged);
+                        return;
+                    }
+                    TrySpell(() =>
+                    {
+                        ++itemSlot.NumRemainingCharges;
+                        PlayItemMagicAnimation();
+                    }, () =>
+                    {
+                        EndSequence();
+                        ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
+                        {
+                            if (!itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed)) // Don't destroy cursed items via failed charging
+                                layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), false, finishAction);
+                            else
+                                finishAction?.Invoke();
+                        });
+                    });
+                    break;
+                }
                 case Spell.RepairItem:
                 {
                     if (!itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
@@ -6471,25 +6515,61 @@ namespace Ambermoon
             popup.AddText(new Position(177, 146), DataNameProvider.GenderHeaderString, TextColor.LightGray);
             popup.AddText(new Position(177, 154), DataNameProvider.GetGenderName(item.Genders), TextColor.White);
 
-            // This can only be closed with right click
-            nextClickHandler = button =>
+            void Close()
             {
-                if (button == MouseButtons.Right)
+                ClosePopup();
+                // Note: If we call closeAction directly any new nextClickAction
+                // assignment will be lost when we return true below because the
+                // nextClickHandler processing will set it to null then afterwards.
+                ExecuteNextUpdateCycle(closeAction);
+            }
+
+            void HandleRightClick()
+            {
+                if (!popup.HasChildPopup)
                 {
-                    ClosePopup();
-                    // Note: If we call closeAction directly any new nextClickAction
-                    // assignment will be lost when we return true below because the
-                    // nextClickHandler processing will set it to null then afterwards.
-                    ExecuteNextUpdateCycle(closeAction);
-                    return true;
+                    Close();
                 }
-                return false;
-            };
+                else
+                {
+                    ExecuteNextUpdateCycle(() =>
+                    {
+                        popup.CloseChildPopup();
+                        SetupRightClickHandler();
+                    });
+                }
+            }
+
+            void SetupRightClickHandler()
+            {
+                nextClickHandler = button =>
+                {
+                    if (button == MouseButtons.Right)
+                    {
+                        HandleRightClick();
+                        return true;
+                    }
+                    return false;
+                };
+            }
+
+            // This can only be closed with right click
+            SetupRightClickHandler();
 
             if (itemSlot.Flags.HasFlag(ItemSlotFlags.Identified))
             {
-                // TODO: Show eye button
+                var eyeButton = popup.AddButton(new Position(popup.ContentArea.Right - Button.Width + 1, popup.ContentArea.Bottom - Button.Height + 1));
+                eyeButton.ButtonType = ButtonType.Eye;
+                eyeButton.Disabled = false;
+                eyeButton.LeftClickAction += () => ShowItemDetails(popup, itemSlot);
+                eyeButton.RightClickAction += Close;
+                eyeButton.Visible = true;
             }
+        }
+
+        void ShowItemDetails(Popup itemPopup, ItemSlot itemSlot)
+        {
+            var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, 6);
         }
 
         internal bool EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)

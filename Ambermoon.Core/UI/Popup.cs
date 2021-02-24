@@ -21,9 +21,11 @@ namespace Ambermoon.UI
         readonly List<TextInput> inputs = new List<TextInput>();
         ListBox listBox = null;
         Scrollbar scrollbar = null;
+        Popup popup = null;
         public Rect ContentArea { get; }
         public Action ReturnAction { get; set; } = null;
         public byte DisplayLayer { get; private set; }
+        public bool HasChildPopup => popup != null;
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows, bool transparent,
             byte displayLayerOffset = 0)
@@ -121,6 +123,15 @@ namespace Ambermoon.UI
 
             scrollbar?.Destroy();
             scrollbar = null;
+
+            popup?.Destroy();
+            popup = null;
+        }
+
+        public void CloseChildPopup()
+        {
+            popup?.Destroy();
+            popup = null;
         }
 
         public IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
@@ -213,6 +224,11 @@ namespace Ambermoon.UI
             FillArea(new Rect(area.Right - 1, area.Y + 1, 1, area.Height - 2), brightBorderColor, displayLayer);
             // lower bright border
             FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, displayLayer);
+        }
+
+        public Popup AddPopup(Position position, int columns, int rows)
+        {
+            return popup = new Popup(game, renderView, position, columns, rows, false, (byte)(Math.Min(250, DisplayLayer + 50)));
         }
 
         public Button AddButton(Position position)
@@ -422,6 +438,12 @@ namespace Ambermoon.UI
 
         public void LeftMouseUp(Position position)
         {
+            if (popup != null)
+            {
+                CloseChildPopup();
+                return;
+            }
+
             if (scrollbar != null && !scrollbar.Disabled)
             {
                 scrollbar.LeftMouseUp();
@@ -445,6 +467,12 @@ namespace Ambermoon.UI
 
         public void RightMouseUp(Position position)
         {
+            if (popup != null)
+            {
+                CloseChildPopup();
+                return;
+            }
+
             // Note: RightMouseUp may remove buttons or close the popup.
             for (int i = buttons.Count - 1; i >= 0; --i)
             {
