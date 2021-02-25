@@ -19,7 +19,10 @@ namespace Ambermoon.UI
         FoodDealer,
         Healer,
         Camp,
-        Inn
+        Inn,
+        HorseSalesman,
+        RaftSalesman,
+        ShipSalesman
         // TODO ...
     }
 

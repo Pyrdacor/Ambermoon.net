@@ -10,7 +10,7 @@
         Merchant,
         FoodDealer,
         Library,
-        Unused, // TODO: What is this? Maybe used in Amberstar only? Guilds?
+        RaftDealer, // Not used in Ambermoon
         ShipDealer,
         HorseDealer,
         Blacksmith

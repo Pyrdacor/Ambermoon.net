@@ -178,15 +178,14 @@ namespace Ambermoon.Data
             public override PlaceType PlaceType => PlaceType.Library;
         }
 
-        public class ShipDealer : NonItemPlace
+        public abstract class Salesman : NonItemPlace
         {
-            public ShipDealer(Place place)
+            public Salesman(Place place)
                 : base(place)
             {
 
             }
 
-            public override PlaceType PlaceType => PlaceType.ShipDealer;
             public int Cost => GetWord(0);
             public int SpawnX => GetWord(2);
             public int SpawnY => GetWord(4);
@@ -194,20 +193,37 @@ namespace Ambermoon.Data
             public StationaryImage StationaryImage => (StationaryImage)GetWord(8);
         }
 
-        public class HorseDealer : NonItemPlace
+        public class RaftSalesman : Salesman
         {
-            public HorseDealer(Place place)
+            public RaftSalesman(Place place)
+                : base(place)
+            {
+
+            }
+
+            public override PlaceType PlaceType => PlaceType.RaftDealer;
+        }
+
+        public class ShipSalesman : Salesman
+        {
+            public ShipSalesman(Place place)
+                : base(place)
+            {
+
+            }
+
+            public override PlaceType PlaceType => PlaceType.ShipDealer;
+        }
+
+        public class HorseSalesman : Salesman
+        {
+            public HorseSalesman(Place place)
                 : base(place)
             {
 
             }
 
             public override PlaceType PlaceType => PlaceType.HorseDealer;
-            public int Cost => GetWord(0);
-            public int SpawnX => GetWord(2);
-            public int SpawnY => GetWord(4);
-            public int SpawnMapIndex => GetWord(6);
-            public StationaryImage StationaryImage => (StationaryImage)GetWord(8);
         }
 
         public class Blacksmith : NonItemPlace

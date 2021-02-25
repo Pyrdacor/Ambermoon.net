@@ -169,7 +169,6 @@
         public string RecoveredLPAndSP => executableData.Messages.GetEntry(Messages.Index.RegainsLPAndSP);
         public string HasAged => executableData.Messages.GetEntry(Messages.Index.HasAged);
         public string HasDiedOfAge => executableData.Messages.GetEntry(Messages.Index.HasDiedOfAge);
-        public string StayWillCost => executableData.Messages.GetEntry(Messages.Index.StayWillCost);
 
 
         #region Battle messages
@@ -280,6 +279,10 @@
         public string InnkeeperGoodSleepWish => executableData.Messages.GetEntry(Messages.Index.InnkeeperGoodSleepWish);
         public string CannotRepairUnbreakableItem => executableData.Messages.GetEntry(Messages.Index.CannotRepairUnbreakableItem);
         public string CannotEnchantOrdinaryItem => executableData.Messages.GetEntry(Messages.Index.CannotEnchantOrdinaryItem);
+        public string StayWillCost => executableData.Messages.GetEntry(Messages.Index.StayWillCost);
+        public string PriceForHorse => executableData.Messages.GetEntry(Messages.Index.PriceForHorse);
+        public string PriceForRaft => executableData.Messages.GetEntry(Messages.Index.PriceForRaft);
+        public string PriceForShip => executableData.Messages.GetEntry(Messages.Index.PriceForShip);
 
         #endregion
     }

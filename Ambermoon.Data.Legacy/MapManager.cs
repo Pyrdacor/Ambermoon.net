@@ -44,7 +44,7 @@ namespace Ambermoon.Data.Legacy
             }
         }
 
-        public Map GetMap(uint index) => maps[index];
+        public Map GetMap(uint index) => maps.TryGetValue(index, out var map) ? map : null;
         public Tileset GetTilesetForMap(Map map) => tilesets[map.TilesetOrLabdataIndex];
         public Labdata GetLabdataForMap(Map map) => labdatas[map.TilesetOrLabdataIndex];
     }

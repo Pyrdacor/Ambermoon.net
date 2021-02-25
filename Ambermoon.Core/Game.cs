@@ -5869,6 +5869,136 @@ namespace Ambermoon
             });
         }
 
+        void OpenHorseSalesman(Places.HorseSalesman horseSalesman, string buyText, bool showWelcome = true)
+        {
+            OpenTransportSalesman(horseSalesman, buyText, TravelType.Horse, Window.HorseSalesman,
+                Picture80x80.Horse, showWelcome ? DataNameProvider.WelcomeHorseSeller : null);
+        }
+
+        void OpenRaftSalesman(Places.RaftSalesman raftSalesman, string buyText, bool showWelcome = true)
+        {
+            OpenTransportSalesman(raftSalesman, buyText, TravelType.Raft, Window.RaftSalesman,
+                Picture80x80.Merchant, showWelcome ? DataNameProvider.WelcomeRaftSeller : null);
+        }
+
+        void OpenShipSalesman(Places.ShipSalesman shipSalesman, string buyText, bool showWelcome = true)
+        {
+            OpenTransportSalesman(shipSalesman, buyText, TravelType.Ship, Window.ShipSalesman,
+                Picture80x80.Captain, showWelcome ? DataNameProvider.WelcomeShipSeller : null);
+        }
+
+        void OpenTransportSalesman(Places.Salesman salesman, string buyText, TravelType travelType,
+            Window window, Picture80x80 picture80X80, string welcomeMessage)
+        {
+            Action updatePartyGold = null;
+
+            void SetupSalesman(Action updateGold, ItemGrid _)
+            {
+                updatePartyGold = updateGold;
+            }
+
+            bool EnableBuying()
+            {
+                // Buying is enabled if on the target location isn't already
+                // the given transport. Invalid data always disallows buying.
+
+                if (salesman.SpawnMapIndex <= 0 || salesman.SpawnX <= 0 || salesman.SpawnY <= 0)
+                    return false;
+
+                var map = MapManager.GetMap((uint)salesman.SpawnMapIndex);
+
+                if (map == null || map.Type == MapType.Map3D || !map.IsWorldMap || // Should not happen but never allow buying in these cases
+                    salesman.SpawnX > map.Width || salesman.SpawnY > map.Height)
+                    return false;
+
+                var tile = map.Tiles[salesman.SpawnX - 1, salesman.SpawnY - 1];
+                var tileset = MapManager.GetTilesetForMap(map);
+
+                if (!tile.AllowMovement(tileset, travelType)) // Can't be placed there
+                    return false;
+
+                if (CurrentSavegame.TransportLocations.Any(t => t != null && t.MapIndex == map.Index &&
+                    t.Position.X == salesman.SpawnX - 1 && t.Position.Y == salesman.SpawnY - 1))
+                    return false;
+
+                // TODO: Maybe change later
+                // Allow 12 ships, 10 rafts and 10 horses
+                int allowedCount = travelType == TravelType.Ship ? 12 : 10;
+                return CurrentSavegame.TransportLocations.Count(t => t?.TravelType == travelType) < allowedCount;
+            }
+
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(window, salesman, buyText);
+                ShowPlaceWindow(salesman.Name, welcomeMessage, picture80X80,
+                    salesman, SetupSalesman, null, null, () => InputEnable = true);
+                if (!EnableBuying())
+                {
+                    layout.EnableButton(3, false);
+                }
+                else
+                {
+                    // Buy transport button
+                    layout.AttachEventToButton(3, () =>
+                    {
+                        int totalCost = (salesman.PlaceType == PlaceType.HorseDealer ? PartyMembers.Where(p => p.Alive).Count() : 1) * salesman.Cost;
+                        if (salesman.AvailableGold < totalCost)
+                        {
+                            layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
+                            return;
+                        }
+                        string costText = salesman.PlaceType switch
+                        {
+                            PlaceType.HorseDealer => DataNameProvider.PriceForHorse,
+                            PlaceType.RaftDealer => DataNameProvider.PriceForRaft,
+                            PlaceType.ShipDealer => DataNameProvider.PriceForShip,
+                            _ => throw new AmbermoonException(ExceptionScope.Application, $"Invalid salesman place type: {salesman.PlaceType}")
+                        };
+                        layout.ShowPlaceQuestion($"{costText}{totalCost}{DataNameProvider.AgreeOnPrice}", answer =>
+                        {
+                            if (answer) // yes
+                            {
+                                salesman.AvailableGold -= (uint)totalCost;
+                                updatePartyGold?.Invoke();
+                                void Buy()
+                                {
+                                    for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
+                                    {
+                                        if (CurrentSavegame.TransportLocations[i] == null)
+                                        {
+                                            CurrentSavegame.TransportLocations[i] = new TransportLocation
+                                            {
+                                                TravelType = travelType,
+                                                MapIndex = (uint)salesman.SpawnMapIndex,
+                                                Position = new Position(salesman.SpawnX, salesman.SpawnY)
+                                            };
+                                        }
+                                        else if (CurrentSavegame.TransportLocations[i].TravelType == TravelType.Walk)
+                                        {
+                                            CurrentSavegame.TransportLocations[i].TravelType = travelType;
+                                            CurrentSavegame.TransportLocations[i].MapIndex = (uint)salesman.SpawnMapIndex;
+                                            CurrentSavegame.TransportLocations[i].Position = new Position(salesman.SpawnX, salesman.SpawnY);
+                                        }
+                                    }
+                                    layout.EnableButton(3, false);
+                                }
+                                if (string.IsNullOrWhiteSpace(buyText))
+                                {
+                                    Buy();
+                                }
+                                else
+                                {
+                                    layout.ShowClickChestMessage(buyText, Buy);
+                                }
+                            }
+                        }, TextAlign.Left);
+                    });
+                }
+            });
+        }
+
         void OpenFoodDealer(Places.FoodDealer foodDealer, bool showWelcome = true)
         {
             Action updatePartyGold = null;
@@ -7075,8 +7205,24 @@ namespace Ambermoon
                         OpenFoodDealer(foodDealerData);
                         return true;
                     }
-                    case PlaceType.ShipDealer:
                     case PlaceType.HorseDealer:
+                    {
+                        var horseDealerData = new Places.HorseSalesman(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenHorseSalesman(horseDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                        return true;
+                    }
+                    case PlaceType.RaftDealer:
+                    {
+                        var raftDealerData = new Places.RaftSalesman(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenRaftSalesman(raftDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                        return true;
+                    }
+                    case PlaceType.ShipDealer:
+                    {
+                        var shipDealerData = new Places.ShipSalesman(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenShipSalesman(shipDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                        return true;
+                    }
                     case PlaceType.Blacksmith:
                         // TODO
                         ShowMessagePopup("Not implemented yet.");
@@ -7920,6 +8066,33 @@ namespace Ambermoon
                 {
                     var inn = (Places.Inn)currentWindow.WindowParameters[0];
                     OpenInn(inn, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.HorseSalesman:
+                {
+                    var salesman = (Places.HorseSalesman)currentWindow.WindowParameters[0];
+                    var buyText = (string)currentWindow.WindowParameters[1];
+                    OpenHorseSalesman(salesman, buyText, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.RaftSalesman:
+                {
+                    var salesman = (Places.RaftSalesman)currentWindow.WindowParameters[0];
+                    var buyText = (string)currentWindow.WindowParameters[1];
+                    OpenRaftSalesman(salesman, buyText, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.ShipSalesman:
+                {
+                    var salesman = (Places.ShipSalesman)currentWindow.WindowParameters[0];
+                    var buyText = (string)currentWindow.WindowParameters[1];
+                    OpenShipSalesman(salesman, buyText, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

@@ -146,7 +146,6 @@
         string RecoveredLPAndSP { get; }
         string HasAged { get; }
         string HasDiedOfAge { get; }
-        string StayWillCost { get; }
 
 
         #region Battle messages
@@ -257,6 +256,10 @@
         string InnkeeperGoodSleepWish { get; }
         string CannotRepairUnbreakableItem { get; }
         string CannotEnchantOrdinaryItem { get; }
+        string StayWillCost { get; }
+        string PriceForHorse { get; }
+        string PriceForRaft { get; }
+        string PriceForShip { get; }
 
         #endregion
 
