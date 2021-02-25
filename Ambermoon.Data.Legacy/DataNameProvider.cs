@@ -284,6 +284,8 @@
         public string PriceForRaft => executableData.Messages.GetEntry(Messages.Index.PriceForRaft);
         public string PriceForShip => executableData.Messages.GetEntry(Messages.Index.PriceForShip);
         public string PriceForExamining => executableData.Messages.GetEntry(Messages.Index.PriceForExamining);
+        public string PriceForRepair => executableData.Messages.GetEntry(Messages.Index.PriceForRepair);
+        public string WhichItemToRepair => executableData.Messages.GetEntry(Messages.Index.WhichItemToRepair);
 
         #endregion
     }

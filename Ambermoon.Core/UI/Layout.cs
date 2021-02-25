@@ -1303,6 +1303,17 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
+                            case PlaceType.Blacksmith:
+                                buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.RepairItem, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                                break;
                             default:
                                 // TODO
                                 break;

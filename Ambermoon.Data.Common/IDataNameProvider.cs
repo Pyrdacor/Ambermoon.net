@@ -261,6 +261,8 @@
         string PriceForRaft { get; }
         string PriceForShip { get; }
         string PriceForExamining { get; }
+        string PriceForRepair { get; }
+        string WhichItemToRepair { get; }
 
         #endregion
     }

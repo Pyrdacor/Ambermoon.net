@@ -5592,7 +5592,7 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Sage, sage);
                 ShowPlaceWindow(sage.Name, showWelcome ? DataNameProvider.WelcomeSage : null,
-                    Picture80x80.Sage, sage, SetupSage, null);
+                    Picture80x80.Sage, sage, SetupSage, null, null, null, 24);
                 void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.ExamineWhichItemSage, TextAlign.Left);
                 void ShowItems(bool equipment)
                 {
@@ -5629,7 +5629,6 @@ namespace Ambermoon
                         {
                             layout.ShowClickChestMessage(message, () =>
                             {
-                                layout.ShowChestMessage(DataNameProvider.WhichScrollToRead);
                                 if (!abort)
                                 {
                                     TrapMouse(itemArea);
@@ -5924,6 +5923,105 @@ namespace Ambermoon
                     };
                 });
                 PlayerSwitched();
+            });
+        }
+
+        void OpenBlacksmith(Places.Blacksmith blacksmith, bool showWelcome = true)
+        {
+            // Note: The blacksmith uses the same 80x80 image as the sage.
+            Action updatePartyGold = null;
+            ItemGrid itemsGrid = null;
+
+            void SetupBlacksmith(Action updateGold, ItemGrid itemGrid)
+            {
+                updatePartyGold = updateGold;
+                itemsGrid = itemGrid;
+            }
+
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Blacksmith, blacksmith);
+                ShowPlaceWindow(blacksmith.Name, showWelcome ? DataNameProvider.WelcomeBlacksmith : null,
+                    Picture80x80.Sage, blacksmith, SetupBlacksmith, null, null, null, 24);
+                void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.WhichItemToRepair, TextAlign.Left);
+                // Repair item button
+                layout.AttachEventToButton(3, () =>
+                {
+                    itemsGrid.Disabled = false;
+                    itemsGrid.DisableDrag = true;
+                    ShowDefaultMessage();
+                    CursorType = CursorType.Sword;
+                    var itemArea = new Rect(16, 139, 151, 53);
+                    TrapMouse(itemArea);
+                    itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                    void SetupRightClickAbort()
+                    {
+                        nextClickHandler = buttons =>
+                        {
+                            if (buttons == MouseButtons.Right)
+                            {
+                                itemsGrid.HideTooltip();
+                                itemsGrid.Disabled = true;
+                                layout.ShowChestMessage(null);
+                                UntrapMouse();
+                                return true;
+                            }
+
+                            return false;
+                        };
+                    }
+                    SetupRightClickAbort();
+                    itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                    {
+                        itemsGrid.HideTooltip();
+
+                        void Error(string message, bool abort)
+                        {
+                            layout.ShowClickChestMessage(message, () =>
+                            {
+                                if (!abort)
+                                {
+                                    TrapMouse(itemArea);
+                                    SetupRightClickAbort();
+                                    ShowDefaultMessage();
+                                }
+                            });
+                        }
+
+                        if (!itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
+                        {
+                            Error(DataNameProvider.CannotRepairUnbreakableItem, false);
+                            return;
+                        }
+
+                        var item = ItemManager.GetItem(itemSlot.ItemIndex);
+                        uint cost = (uint)blacksmith.Cost * item.Price / 100u;
+
+                        if (blacksmith.AvailableGold < cost)
+                        {
+                            Error(DataNameProvider.NotEnoughMoney, true);
+                            return;
+                        }
+
+                        layout.ShowPlaceQuestion($"{DataNameProvider.PriceForRepair}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                        {
+                            nextClickHandler = null;
+                            EndSequence();
+                            UntrapMouse();
+                            layout.ShowChestMessage(null);
+
+                            if (answer) // yes
+                            {
+                                blacksmith.AvailableGold -= cost;
+                                itemSlot.Flags &= ~ItemSlotFlags.Broken;
+                            }
+
+                            itemsGrid.Disabled = true;
+                        }, TextAlign.Left);
+                    };
+                });
             });
         }
 
@@ -6298,7 +6396,7 @@ namespace Ambermoon
         }
 
         void ShowPlaceWindow(string placeName, string welcomeText, Picture80x80 picture, IPlace place, Action<Action, ItemGrid> placeSetup,
-            Action activePlayerSwitchedHandler, Func<string> exitChecker = null, Action closeAction = null)
+            Action activePlayerSwitchedHandler, Func<string> exitChecker = null, Action closeAction = null, int numItemSlots = 12)
         {
             OpenStorage = place;
             layout.SetLayout(LayoutType.Items);
@@ -6307,8 +6405,8 @@ namespace Ambermoon
             layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
-            var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, 12).ToList(),
-                false, 12, 6, 12, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+            var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, numItemSlots).ToList(),
+                false, 12, 6, numItemSlots, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
             itemGrid.Disabled = true;
             layout.AddItemGrid(itemGrid);
             layout.Set80x80Picture(picture);
@@ -7332,9 +7430,11 @@ namespace Ambermoon
                         return true;
                     }
                     case PlaceType.Blacksmith:
-                        // TODO
-                        ShowMessagePopup("Not implemented yet.");
+                    {
+                        var blacksmithData = new Places.Blacksmith(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenBlacksmith(blacksmithData);
                         return true;
+                    }
                     default:
                         throw new AmbermoonException(ExceptionScope.Data, "Unknown place type.");
                 }
@@ -8209,6 +8309,14 @@ namespace Ambermoon
                 {
                     var sage = (Places.Sage)currentWindow.WindowParameters[0];
                     OpenSage(sage, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Blacksmith:
+                {
+                    var blacksmith = (Places.Blacksmith)currentWindow.WindowParameters[0];
+                    OpenBlacksmith(blacksmith, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
