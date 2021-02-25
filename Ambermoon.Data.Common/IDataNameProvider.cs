@@ -146,6 +146,7 @@
         string RecoveredLPAndSP { get; }
         string HasAged { get; }
         string HasDiedOfAge { get; }
+        string StayWillCost { get; }
 
 
         #region Battle messages

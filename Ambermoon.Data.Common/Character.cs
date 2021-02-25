@@ -255,7 +255,7 @@ namespace Ambermoon.Data
             HitPoints.CurrentValue = Math.Min(HitPoints.TotalMaxValue, HitPoints.CurrentValue + amount);
         }
 
-        public virtual bool CanMove()
+        public virtual bool CanMove(bool battle = true)
         {
             return Ailments.CanMove();
         }

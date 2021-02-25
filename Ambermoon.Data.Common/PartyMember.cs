@@ -66,9 +66,9 @@ namespace Ambermoon.Data
             return partyMember;
         }
 
-        public override bool CanMove()
+        public override bool CanMove(bool battle = true)
         {
-            return TotalWeight <= MaxWeight && base.CanMove();
+            return TotalWeight <= MaxWeight && (!battle || base.CanMove(true));
         }
 
         public override bool CanFlee()

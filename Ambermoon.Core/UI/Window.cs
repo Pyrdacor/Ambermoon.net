@@ -18,7 +18,8 @@ namespace Ambermoon.UI
         Trainer,
         FoodDealer,
         Healer,
-        Camp
+        Camp,
+        Inn
         // TODO ...
     }
 

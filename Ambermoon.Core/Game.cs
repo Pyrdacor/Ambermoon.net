@@ -859,7 +859,7 @@ namespace Ambermoon
             {
                 if (currentWindow.Window == Window.Healer)
                 {
-                    layout.ShowClickChestMessage(DataNameProvider.ReviveMessage, null, false);
+                    layout.ShowClickChestMessage(DataNameProvider.ReviveMessage);
                 }
 
                 // TODO: camp, etc
@@ -1016,7 +1016,7 @@ namespace Ambermoon
                         {
                             if (!inn && partyMember.Food == 0)
                             {
-                                layout.ShowClickChestMessage(partyMember.Name + DataNameProvider.HasNoMoreFood, Next, false);
+                                layout.ShowClickChestMessage(partyMember.Name + DataNameProvider.HasNoMoreFood, Next);
                             }
                             else
                             {
@@ -1031,11 +1031,11 @@ namespace Ambermoon
 
                                 if (partyMember.Class != Class.Warrior && partyMember.Class != Class.Thief) // Has SP
                                 {
-                                    layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLPAndSP, lpRecovered, spRecovered), Next, false);
+                                    layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLPAndSP, lpRecovered, spRecovered), Next);
                                 }
                                 else
                                 {
-                                    layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLP, lpRecovered), Next, false);
+                                    layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLP, lpRecovered), Next);
                                 }
                             }
                         }
@@ -1243,29 +1243,42 @@ namespace Ambermoon
         {
             if (is3D)
             {
+                // TODO: Uncomment but also fix wrong weight values first
+                bool CanMove() => true;// !PartyMembers.Any(p => !p.CanMove(false));
+
                 switch (cursorType)
                 {
                     case CursorType.ArrowForward:
-                        player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                        if (CanMove())
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowBackward:
-                        player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                        if (CanMove())
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowStrafeLeft:
-                        player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                        if (CanMove())
+                            player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowStrafeRight:
-                        player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                        if (CanMove())
+                            player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowTurnLeft:
-                        player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                        if (!fromNumpadButton)
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        if (CanMove())
+                        {
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                            if (!fromNumpadButton)
+                                player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        }
                         break;
                     case CursorType.ArrowTurnRight:
-                        player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                        if (!fromNumpadButton)
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        if (CanMove())
+                        {
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                            if (!fromNumpadButton)
+                                player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        }
                         break;
                     case CursorType.ArrowRotateLeft:
                         if (fromNumpadButton)
@@ -1274,8 +1287,11 @@ namespace Ambermoon
                         }
                         else
                         {
-                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            if (CanMove())
+                            {
+                                player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                                player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            }
                         }
                         break;
                     case CursorType.ArrowRotateRight:
@@ -1285,8 +1301,11 @@ namespace Ambermoon
                         }
                         else
                         {
-                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            if (CanMove())
+                            {
+                                player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                                player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            }
                         }
                         break;
                     default:
@@ -1335,6 +1354,11 @@ namespace Ambermoon
 
         bool Move2D(int x, int y)
         {
+            // TODO: Uncomment but also fix wrong weight values first
+            // TODO: Also add the overweight status and show it
+            /*if (PartyMembers.Any(p => !p.CanMove(false)))
+                return false;*/
+
             bool Move()
             {
                 bool diagonal = x != 0 && y != 0;
@@ -2917,13 +2941,13 @@ namespace Ambermoon
         /// <summary>
         /// This is used by external triggers like a cheat engine.
         /// </summary>
-        public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked)
+        public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked, bool force = false)
         {
-            // TODO: sometimes scroll offset  is wrong (e.g. when teleporting manually to a world map).
+            // TODO: sometimes scroll offset is wrong (e.g. when teleporting manually to a world map).
 
             blocked = false;
 
-            if (WindowActive || BattleActive || layout.PopupActive || !ingame || layout.OptionMenuOpen)
+            if (!ingame || layout.OptionMenuOpen || BattleActive || (!force && (WindowActive || layout.PopupActive)))
                 return false;
 
             var newMap = MapManager.GetMap(mapIndex);
@@ -2937,7 +2961,10 @@ namespace Ambermoon
 
             if (newMap.Type == MapType.Map2D)
             {
-                if (!newMap.Tiles[newX, newY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType.Walk))
+                // Note: There are cases where teleporting onto a blocking tile is performed and allowed.
+                // One example is the Inn in Newlake where you are teleported on top of a table.
+                // In this case we force the teleport.
+                if (!force && !newMap.Tiles[newX, newY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType.Walk))
                 {
                     blocked = true;
                     return false;
@@ -2945,6 +2972,8 @@ namespace Ambermoon
             }
             else
             {
+                // Note: We won't force teleport to a blocking 3D block as the player would
+                // stuck in the wall.
                 if (newMap.Blocks[newX, newY].BlocksPlayer(MapManager.GetLabdataForMap(newMap)))
                 {
                     blocked = true;
@@ -2963,14 +2992,17 @@ namespace Ambermoon
 
             if (!mapTypeChanged)
             {
-                // Trigger events after map transition
-                TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
-                    (uint)player.Position.Y);
+                if (!WindowActive && !layout.PopupActive)
+                {
+                    // Trigger events after map transition
+                    TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
+                        (uint)player.Position.Y);
+                }
 
                 PlayerMoved(mapChange);
             }
 
-            if (mapChange)
+            if (mapChange && !WindowActive)
                 UpdateMapName();
 
             return true;
@@ -3226,7 +3258,7 @@ namespace Ambermoon
             {
                 monstersCanMoveImmediately = false;
                 ResetMoveKeys();
-                if (layout.ButtonGridPage != 0)
+                if (!WindowActive && layout.ButtonGridPage != 0)
                     layout.UpdateLayoutButtons();
             }
             else
@@ -3439,7 +3471,7 @@ namespace Ambermoon
 
                 if (initialText != null)
                 {
-                    layout.ShowClickChestMessage(initialText, initialTextClosedEvent);
+                    layout.ShowClickChestMessage(initialText, initialTextClosedEvent, true);
                 }
             }
         }
@@ -5568,7 +5600,7 @@ namespace Ambermoon
 
                     if (healer.AvailableGold < healer.HealLPCost)
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
                         return;
                     }
 
@@ -5585,7 +5617,7 @@ namespace Ambermoon
 
                     if (healer.AvailableGold < healer.RemoveCurseCost)
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
                         return;
                     }
 
@@ -5696,7 +5728,7 @@ namespace Ambermoon
                                 {
                                     TrapMouse(itemArea);
                                     SetupRightClickAbort();
-                                }, false);
+                                });
                                 return;
                             }
 
@@ -5728,6 +5760,51 @@ namespace Ambermoon
                     };
                 });
                 PlayerSwitched();
+            });
+        }
+
+        void OpenInn(Places.Inn inn, bool showWelcome = true)
+        {
+            Action updatePartyGold = null;
+
+            void SetupInn(Action updateGold, ItemGrid _)
+            {
+                updatePartyGold = updateGold;
+            }
+
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Inn, inn);
+                ShowPlaceWindow(inn.Name, showWelcome ? DataNameProvider.WelcomeInnkeeper : null, Picture80x80.Innkeeper,
+                    inn, SetupInn, null, null, () => InputEnable = true);
+                // Rest button
+                layout.AttachEventToButton(3, () =>
+                {
+                    int totalCost = PartyMembers.Where(p => p.Alive).Count() * inn.Cost;
+                    if (inn.AvailableGold < totalCost)
+                    {
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
+                        return;
+                    }
+                    layout.ShowPlaceQuestion($"{DataNameProvider.StayWillCost}{totalCost}{DataNameProvider.AgreeOnPrice}", answer =>
+                    {
+                        if (answer) // yes
+                        {
+                            inn.AvailableGold -= (uint)totalCost;
+                            updatePartyGold?.Invoke();
+                            layout.ShowClickChestMessage(DataNameProvider.InnkeeperGoodSleepWish, () =>
+                            {
+                                OpenStorage = null;
+                                currentWindow.Window = Window.MapView; // This way closing the camp will return to map and not the Inn
+                                Teleport((uint)inn.BedroomMapIndex, (uint)inn.BedroomX,
+                                    (uint)inn.BedroomY, player.Direction, out _, true);
+                                OpenCamp(true);
+                            });
+                        }
+                    }, TextAlign.Left);
+                });
             });
         }
 
@@ -5797,7 +5874,7 @@ namespace Ambermoon
 
                     layout.ShowClickChestMessage(foodDealer.AvailableFood == 0
                         ? DataNameProvider.FoodDividedEqually : DataNameProvider.FoodLeftAfterDividing,
-                        ShowDefaultMessage, false);
+                        ShowDefaultMessage);
                 });
                 // Give food button
                 layout.AttachEventToButton(5, () =>
@@ -5853,7 +5930,7 @@ namespace Ambermoon
                         CurrentPartyMember.Abilities[trainer.Ability].CurrentValue += times;
                         CurrentPartyMember.TrainingPoints -= (ushort)times;
                         PlayerSwitched();
-                        layout.ShowClickChestMessage(DataNameProvider.IncreasedAfterTraining, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.IncreasedAfterTraining);
                     }
                 }, TextAlign.Left);
             }
@@ -5906,13 +5983,13 @@ namespace Ambermoon
                 {
                     if (trainer.AvailableGold < trainer.Cost)
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
                         return;
                     }
 
                     if (CurrentPartyMember.TrainingPoints == 0)
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughTrainingPoints, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.NotEnoughTrainingPoints);
                         return;
                     }
 
@@ -5950,7 +6027,7 @@ namespace Ambermoon
 
             if (welcomeText != null)
             {
-                layout.ShowClickChestMessage(welcomeText, null, false);
+                layout.ShowClickChestMessage(welcomeText);
             }
 
             void UpdateGoldDisplay()
@@ -6083,7 +6160,7 @@ namespace Ambermoon
                 {
                     if (!merchant.HasEmptySlots())
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.MerchantFull, null, false);
+                        layout.ShowClickChestMessage(DataNameProvider.MerchantFull);
                         return false;
                     }
                     return true;
@@ -6192,7 +6269,7 @@ namespace Ambermoon
                         {
                             TrapMouse(itemArea);
                             SetupRightClickAbort();
-                        }, false);
+                        });
                         return;
                     }
 
@@ -6314,7 +6391,7 @@ namespace Ambermoon
                         {
                             TrapMouse(itemArea);
                             SetupRightClickAbort();
-                        }, false);
+                        });
                         return;
                     }
 
@@ -6411,7 +6488,7 @@ namespace Ambermoon
 
             if (initialText != null)
             {
-                layout.ShowClickChestMessage(initialText, null, false);
+                layout.ShowClickChestMessage(initialText);
             }
 
             void UpdateGoldDisplay()
@@ -6580,7 +6657,7 @@ namespace Ambermoon
 
         internal void OpenCamp(bool inn)
         {
-            if (MonsterSeesPlayer)
+            if (!inn && MonsterSeesPlayer)
             {
                 ShowMessagePopup(DataNameProvider.RestingTooDangerous);
                 return;
@@ -6665,7 +6742,7 @@ namespace Ambermoon
                 {
                     if (CurrentSavegame.HoursWithoutSleep < 8)
                     {
-                        layout.ShowChestMessage(DataNameProvider.RestingWouldHaveNoEffect, TextAlign.Left);
+                        layout.ShowClickChestMessage(DataNameProvider.RestingWouldHaveNoEffect);
                     }
                     else
                     {
@@ -6685,7 +6762,7 @@ namespace Ambermoon
                             additionalAction?.Invoke();
                             TrapMouse(itemArea);
                             SetupRightClickAbort();
-                        }, false);
+                        });
                     }
 
                     // This is only used in "read magic".
@@ -6916,10 +6993,15 @@ namespace Ambermoon
                     }
                     case PlaceType.Sage:
                     case PlaceType.Enchanter:
-                    case PlaceType.Inn:
                         // TODO
                         ShowMessagePopup("Not implemented yet.");
                         return true;
+                    case PlaceType.Inn:
+                    {
+                        var innData = new Places.Inn(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenInn(innData);
+                        return true;
+                    }
                     case PlaceType.Merchant:
                     case PlaceType.Library:
                         OpenMerchant(enterPlaceEvent.MerchantDataIndex, places.Entries[(int)enterPlaceEvent.PlaceIndex - 1].Name,
@@ -7769,6 +7851,14 @@ namespace Ambermoon
                 {
                     bool inn = (bool)currentWindow.WindowParameters[0];
                     OpenCamp(inn);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Inn:
+                {
+                    var inn = (Places.Inn)currentWindow.WindowParameters[0];
+                    OpenInn(inn, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

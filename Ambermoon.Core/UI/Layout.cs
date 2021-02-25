@@ -1186,7 +1186,7 @@ namespace Ambermoon.UI
                                 if (chest.HasAnyImportantItem(itemManager))
                                 {
                                     ShowClickChestMessage(game.DataNameProvider.DontForgetItems +
-                                        string.Join(", ", chest.GetImportantItemNames(itemManager)) + ".");
+                                        string.Join(", ", chest.GetImportantItemNames(itemManager)) + ".", null, true);
                                     return;
                                 }
                             }
@@ -1248,6 +1248,17 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(6, ButtonType.HealAilment, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                                break;
+                            case PlaceType.Inn:
+                                buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.Camp, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
@@ -1668,7 +1679,7 @@ namespace Ambermoon.UI
                 ChestText = null;
         }
 
-        internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = true)
+        internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = false)
         {
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();

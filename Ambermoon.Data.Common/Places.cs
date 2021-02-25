@@ -97,7 +97,7 @@ namespace Ambermoon.Data
             public int HealBlindCost => GetWord(18);
             public int HealDruggedCost => GetWord(20);
             public int HealLPCost => GetWord(22);
-            public int RemoveCurseCost => GetWord(24); // TODO: not sure
+            public int RemoveCurseCost => GetWord(24);
 
             public int GetCostForHealingAilment(Ailment ailment)
             {
@@ -151,9 +151,12 @@ namespace Ambermoon.Data
 
             }
 
-            // TODO
             public override PlaceType PlaceType => PlaceType.Inn;
             public int Cost => GetWord(0);
+            public int BedroomX => GetWord(2);
+            public int BedroomY => GetWord(4);
+            public int BedroomMapIndex => GetWord(6);
+
             public int Healing => GetWord(8); // in percent
         }
 

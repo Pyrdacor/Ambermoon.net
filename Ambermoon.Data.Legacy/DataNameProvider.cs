@@ -169,6 +169,7 @@
         public string RecoveredLPAndSP => executableData.Messages.GetEntry(Messages.Index.RegainsLPAndSP);
         public string HasAged => executableData.Messages.GetEntry(Messages.Index.HasAged);
         public string HasDiedOfAge => executableData.Messages.GetEntry(Messages.Index.HasDiedOfAge);
+        public string StayWillCost => executableData.Messages.GetEntry(Messages.Index.StayWillCost);
 
 
         #region Battle messages
