@@ -14,7 +14,7 @@
         Magician,
         Merchant,
         ChestOpenFull,
-        Blacksmith,
+        Sage,
         Captain,
         Thief,
         Treasure,

@@ -1601,8 +1601,11 @@ namespace Ambermoon
 
             if (!WindowActive && !layout.PopupActive)
                 Move();
-            else if ((currentWindow.Window == Window.BattlePositions && battlePositionDragging) ||
-                currentWindow.Window == Window.Merchant)
+            else if (currentWindow.Window == Window.BattlePositions && battlePositionDragging)
+                return;
+            else if (trapMouseArea != null && (currentWindow.Window == Window.Merchant ||
+                currentWindow.Window == Window.Healer || currentWindow.Window == Window.Sage ||
+                currentWindow.Window == Window.Blacksmith || currentWindow.Window == Window.Enchanter))
                 return;
 
             switch (key)
@@ -5572,6 +5575,106 @@ namespace Ambermoon
             });
         }
 
+        void OpenSage(Places.Sage sage, bool showWelcome = true)
+        {
+            Action updatePartyGold = null;
+            ItemGrid itemsGrid = null;
+
+            void SetupSage(Action updateGold, ItemGrid itemGrid)
+            {
+                updatePartyGold = updateGold;
+                itemsGrid = itemGrid;
+            }
+
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Sage, sage);
+                ShowPlaceWindow(sage.Name, showWelcome ? DataNameProvider.WelcomeSage : null,
+                    Picture80x80.Sage, sage, SetupSage, null);
+                void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.ExamineWhichItemSage, TextAlign.Left);
+                void ShowItems(bool equipment)
+                {
+                    itemsGrid.Disabled = false;
+                    itemsGrid.DisableDrag = true;
+                    ShowDefaultMessage();
+                    CursorType = CursorType.Sword;
+                    var itemArea = new Rect(16, 139, 151, 53);
+                    TrapMouse(itemArea);
+                    itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Select(s => s.Value).ToList()
+                        : CurrentPartyMember.Inventory.Slots.ToList(), false);
+                    void SetupRightClickAbort()
+                    {
+                        nextClickHandler = buttons =>
+                        {
+                            if (buttons == MouseButtons.Right)
+                            {
+                                itemsGrid.HideTooltip();
+                                itemsGrid.Disabled = true;
+                                layout.ShowChestMessage(null);
+                                UntrapMouse();
+                                return true;
+                            }
+
+                            return false;
+                        };
+                    }
+                    SetupRightClickAbort();
+                    itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                    {
+                        itemsGrid.HideTooltip();
+
+                        void Error(string message, bool abort)
+                        {
+                            layout.ShowClickChestMessage(message, () =>
+                            {
+                                layout.ShowChestMessage(DataNameProvider.WhichScrollToRead);
+                                if (!abort)
+                                {
+                                    TrapMouse(itemArea);
+                                    SetupRightClickAbort();
+                                    ShowDefaultMessage();
+                                }
+                            });
+                        }
+
+                        if (itemSlot.Flags.HasFlag(ItemSlotFlags.Identified))
+                        {
+                            Error(DataNameProvider.ItemAlreadyIdentified, false);
+                            return;
+                        }
+
+                        if (sage.AvailableGold < sage.Cost)
+                        {
+                            Error(DataNameProvider.NotEnoughMoney, true);
+                            return;
+                        }
+
+                        layout.ShowPlaceQuestion($"{DataNameProvider.PriceForExamining}{sage.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                        {
+                            nextClickHandler = null;
+                            EndSequence();
+                            UntrapMouse();
+                            itemsGrid.Disabled = true;
+                            layout.ShowChestMessage(null);
+
+                            if (answer) // yes
+                            {
+                                sage.AvailableGold -= (uint)sage.Cost;
+                                itemSlot.Flags |= ItemSlotFlags.Identified;
+                                ShowItemPopup(itemSlot, null);
+                            }
+                        }, TextAlign.Left);
+                    };
+                }
+                // Examine equipment button
+                layout.AttachEventToButton(0, () => ShowItems(true));
+                // Examine inventory item button
+                layout.AttachEventToButton(3, () => ShowItems(false));
+            });
+        }
+
         void OpenHealer(Places.Healer healer, bool showWelcome = true)
         {
             Action updatePartyGold = null;
@@ -7183,6 +7286,11 @@ namespace Ambermoon
                         return true;
                     }
                     case PlaceType.Sage:
+                    {
+                        var sageData = new Places.Sage(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenSage(sageData);
+                        return true;
+                    }
                     case PlaceType.Enchanter:
                         // TODO
                         ShowMessagePopup("Not implemented yet.");
@@ -8093,6 +8201,14 @@ namespace Ambermoon
                     var salesman = (Places.ShipSalesman)currentWindow.WindowParameters[0];
                     var buyText = (string)currentWindow.WindowParameters[1];
                     OpenShipSalesman(salesman, buyText, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Sage:
+                {
+                    var sage = (Places.Sage)currentWindow.WindowParameters[0];
+                    OpenSage(sage, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

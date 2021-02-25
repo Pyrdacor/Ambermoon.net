@@ -316,7 +316,7 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < slots.Count; ++i)
             {
-                slots[i] = newSlots[i];
+                slots[i] = i < newSlots.Count ? newSlots[i] : null;
                 items[i]?.Destroy();
                 items[i] = null;
                 if (slots[i] != null && !slots[i].Empty)

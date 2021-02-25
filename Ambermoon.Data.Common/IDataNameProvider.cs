@@ -260,9 +260,8 @@
         string PriceForHorse { get; }
         string PriceForRaft { get; }
         string PriceForShip { get; }
+        string PriceForExamining { get; }
 
         #endregion
-
-        // TODO
     }
 }

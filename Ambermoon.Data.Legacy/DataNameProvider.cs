@@ -283,6 +283,7 @@
         public string PriceForHorse => executableData.Messages.GetEntry(Messages.Index.PriceForHorse);
         public string PriceForRaft => executableData.Messages.GetEntry(Messages.Index.PriceForRaft);
         public string PriceForShip => executableData.Messages.GetEntry(Messages.Index.PriceForShip);
+        public string PriceForExamining => executableData.Messages.GetEntry(Messages.Index.PriceForExamining);
 
         #endregion
     }

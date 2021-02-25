@@ -22,7 +22,10 @@ namespace Ambermoon.UI
         Inn,
         HorseSalesman,
         RaftSalesman,
-        ShipSalesman
+        ShipSalesman,
+        Sage,
+        Blacksmith,
+        Enchanter
         // TODO ...
     }
 
