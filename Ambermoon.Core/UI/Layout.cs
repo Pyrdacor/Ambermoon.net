@@ -492,8 +492,19 @@ namespace Ambermoon.UI
                 else if (showBar)
                     showBar = game.GetPartyMember(i)?.Alive == true;
 
-                for (int n = 0; n < 4; ++n)
+                for (int n = 0; n < 2; ++n)
                     characterBars[i * 4 + n].Visible = showBar;
+
+                if (showBar)
+                {
+                    var partyMember = game.GetPartyMember(i);
+
+                    if (partyMember.Class == Class.Warrior || partyMember.Class == Class.Thief)
+                        showBar = false;
+                }
+
+                for (int n = 0; n < 2; ++n)
+                    characterBars[i * 4 + 2 + n].Visible = showBar;
             }
         }
 
