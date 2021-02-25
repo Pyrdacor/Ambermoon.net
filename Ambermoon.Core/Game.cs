@@ -4388,12 +4388,12 @@ namespace Ambermoon
                 {
                     // Note: Even broken items can be charged.
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                    if (item.Spell == Spell.None || item.SpellUsageCount == 0)
+                    if (item.Spell == Spell.None || item.InitialCharges == 0)
                     {
                         Error(DataNameProvider.ThisIsNotAMagicalItem);
                         return;
                     }
-                    if (itemSlot.NumRemainingCharges >= item.SpellUsageCount)
+                    if (itemSlot.NumRemainingCharges >= item.InitialCharges)
                     {
                         Error(DataNameProvider.ItemAlreadyFullyCharged);
                         return;
@@ -5579,6 +5579,131 @@ namespace Ambermoon
                 currentAnimation.Destroy();
                 currentAnimation = null;
                 finishAction?.Invoke();
+            });
+        }
+
+        void OpenEnchanter(Places.Enchanter enchanter, bool showWelcome = true)
+        {
+            Action updatePartyGold = null;
+            ItemGrid itemsGrid = null;
+
+            void SetupEnchanter(Action updateGold, ItemGrid itemGrid)
+            {
+                updatePartyGold = updateGold;
+                itemsGrid = itemGrid;
+            }
+
+            Fade(() =>
+            {
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Enchanter, enchanter);
+                ShowPlaceWindow(enchanter.Name, showWelcome ? DataNameProvider.WelcomeEnchanter : null,
+                    Picture80x80.Enchantress, enchanter, SetupEnchanter, null, null, null, 24);
+                void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.WhichItemToEnchant, TextAlign.Left);
+                // Enchant item button
+                layout.AttachEventToButton(3, () =>
+                {
+                    itemsGrid.Disabled = false;
+                    itemsGrid.DisableDrag = true;
+                    ShowDefaultMessage();
+                    CursorType = CursorType.Sword;
+                    var itemArea = new Rect(16, 139, 151, 53);
+                    TrapMouse(itemArea);
+                    itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                    void SetupRightClickAbort()
+                    {
+                        nextClickHandler = buttons =>
+                        {
+                            if (buttons == MouseButtons.Right)
+                            {
+                                itemsGrid.HideTooltip();
+                                itemsGrid.Disabled = true;
+                                layout.ShowChestMessage(null);
+                                UntrapMouse();
+                                return true;
+                            }
+
+                            return false;
+                        };
+                    }
+                    SetupRightClickAbort();
+                    itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                    {
+                        itemsGrid.HideTooltip();
+
+                        void Error(string message, bool abort)
+                        {
+                            layout.ShowClickChestMessage(message, () =>
+                            {
+                                if (!abort)
+                                {
+                                    TrapMouse(itemArea);
+                                    SetupRightClickAbort();
+                                    ShowDefaultMessage();
+                                }
+                            });
+                        }
+
+                        var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                        if (item.Spell == Spell.None || item.InitialCharges == 0)
+                        {
+                            Error(DataNameProvider.CannotEnchantOrdinaryItem, false);
+                            return;
+                        }
+
+                        // TODO: last time enchanting?
+
+                        int numMissingCharges = itemSlot.NumRemainingCharges >= item.MaxCharges ? 0 : item.MaxCharges - itemSlot.NumRemainingCharges;
+
+                        if (numMissingCharges == 0)
+                        {
+                            Error(DataNameProvider.AlreadyFullyCharged, false);
+                            return;
+                        }
+
+                        if (enchanter.AvailableGold < enchanter.Cost)
+                        {
+                            Error(DataNameProvider.NotEnoughMoney, true);
+                            return;
+                        }
+
+                        void Enchant(uint charges)
+                        {
+                            ClosePopup();
+                            uint cost = charges * (uint)enchanter.Cost;
+
+                            layout.ShowPlaceQuestion($"{DataNameProvider.PriceForEnchanting}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                            {
+                                nextClickHandler = null;
+                                EndSequence();
+                                UntrapMouse();
+                                layout.ShowChestMessage(null);
+
+                                if (answer) // yes
+                                {
+                                    enchanter.AvailableGold -= cost;
+                                    itemSlot.NumRemainingCharges += (int)charges;
+                                }
+
+                                itemsGrid.Disabled = true;
+                            }, TextAlign.Left);
+                        }
+
+                        nextClickHandler = null;
+                        UntrapMouse();
+
+                        layout.OpenAmountInputBox(DataNameProvider.HowManyCharges,
+                            item.GraphicIndex, item.Name, (uint)Util.Min(enchanter.AvailableGold / enchanter.Cost, numMissingCharges), Enchant,
+                            () =>
+                            {
+                                TrapMouse(itemArea);
+                                SetupRightClickAbort();
+                            }
+                        );
+                    };
+                });
             });
         }
 
@@ -7332,7 +7457,7 @@ namespace Ambermoon
                 detailsPopup.AddText(new Position(170, 103), (factor * item.AbilityValue).ToString("+#;-#; 0"), TextColor.White);
             }
             detailsPopup.AddText(new Position(48, 110), DataNameProvider.FunctionHeader, TextColor.LightOrange);
-            if (item.Spell != Spell.None && item.SpellUsageCount != 0)
+            if (item.Spell != Spell.None && item.InitialCharges != 0)
             {
                 detailsPopup.AddText(new Position(48, 117),
                     $"{DataNameProvider.GetSpellname(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",
@@ -7397,9 +7522,11 @@ namespace Ambermoon
                         return true;
                     }
                     case PlaceType.Enchanter:
-                        // TODO
-                        ShowMessagePopup("Not implemented yet.");
+                    {
+                        var enchanterData = new Places.Enchanter(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
+                        OpenEnchanter(enchanterData);
                         return true;
+                    }
                     case PlaceType.Inn:
                     {
                         var innData = new Places.Inn(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
@@ -8324,6 +8451,14 @@ namespace Ambermoon
                 {
                     var blacksmith = (Places.Blacksmith)currentWindow.WindowParameters[0];
                     OpenBlacksmith(blacksmith, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Enchanter:
+                {
+                    var enchanter = (Places.Enchanter)currentWindow.WindowParameters[0];
+                    OpenEnchanter(enchanter, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

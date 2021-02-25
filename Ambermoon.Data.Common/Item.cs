@@ -40,8 +40,10 @@ namespace Ambermoon.Data
         public byte TextSubIndex { get; set; }
         public SpellSchool SpellSchool { get; set; }
         public byte SpellIndex { get; set; }
-        public byte SpellUsageCount { get; set; } // 255 = infinite
-        public byte[] UnknownBytes26To29 { get; set; } // 4
+        public byte InitialCharges { get; set; } // 255 = infinite
+        public byte[] UnknownBytes26To27 { get; set; } // 2, has something to do with charges
+        public byte MaxCharges { get; set; }
+        public byte UnknownByte29 { get; set; } // has something to do with charges
         public int MagicArmorLevel { get; set; } // M-B-R
         public int MagicAttackLevel { get; set; } // M-B-W
         public ItemFlags Flags { get; set; }

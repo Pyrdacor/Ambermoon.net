@@ -1314,9 +1314,19 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
-                            default:
-                                // TODO
+                            case PlaceType.Enchanter:
+                                buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.RechargeItem, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                                buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
+                            default:
+                                throw new AmbermoonException(ExceptionScope.Data, "Invalid place type.");
                         }
                     }
                     else // Camp window
@@ -1733,6 +1743,7 @@ namespace Ambermoon.UI
 
         internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = false)
         {
+            // TODO: Right-clicking will stop following mouse clicks
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
             ChestText = AddScrollableText(bounds, game.ProcessText(message, bounds));

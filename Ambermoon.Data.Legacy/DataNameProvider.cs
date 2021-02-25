@@ -238,7 +238,7 @@
         public string WelcomeParryTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeParryTrainer);
         public string WelcomeRaftSeller => executableData.Messages.GetEntry(Messages.Index.WelcomeRaftSeller);
         public string WelcomeReadMagicTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeReadMagicTrainer);
-        public string WelcomeRecharger => executableData.Messages.GetEntry(Messages.Index.WelcomeRecharger);
+        public string WelcomeEnchanter => executableData.Messages.GetEntry(Messages.Index.WelcomeRecharger);
         public string WelcomeSage => executableData.Messages.GetEntry(Messages.Index.WelcomeSage);
         public string WelcomeSearchTrainer => executableData.Messages.GetEntry(Messages.Index.WelcomeSearchTrainer);
         public string WelcomeShipSeller => executableData.Messages.GetEntry(Messages.Index.WelcomeShipSeller);
@@ -286,6 +286,11 @@
         public string PriceForExamining => executableData.Messages.GetEntry(Messages.Index.PriceForExamining);
         public string PriceForRepair => executableData.Messages.GetEntry(Messages.Index.PriceForRepair);
         public string WhichItemToRepair => executableData.Messages.GetEntry(Messages.Index.WhichItemToRepair);
+        public string WhichItemToEnchant => executableData.Messages.GetEntry(Messages.Index.WhichItemToEnchant);
+        public string HowManyCharges => executableData.Messages.GetEntry(Messages.Index.HowManyCharges);
+        public string AlreadyFullyCharged => executableData.Messages.GetEntry(Messages.Index.AlreadyFullyCharged);
+        public string PriceForEnchanting => executableData.Messages.GetEntry(Messages.Index.PriceForEnchanting);
+        public string LastTimeEnchanting => executableData.Messages.GetEntry(Messages.Index.LastTimeEnchanting);
 
         #endregion
     }

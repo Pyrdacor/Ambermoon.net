@@ -215,7 +215,7 @@
         string WelcomeParryTrainer { get; }
         string WelcomeRaftSeller { get; }
         string WelcomeReadMagicTrainer { get; }
-        string WelcomeRecharger { get; }
+        string WelcomeEnchanter { get; }
         string WelcomeSage { get; }
         string WelcomeSearchTrainer { get; }
         string WelcomeShipSeller { get; }
@@ -263,6 +263,11 @@
         string PriceForExamining { get; }
         string PriceForRepair { get; }
         string WhichItemToRepair { get; }
+        string WhichItemToEnchant { get; }
+        string HowManyCharges { get; }
+        string AlreadyFullyCharged { get; }
+        string PriceForEnchanting { get; }
+        string LastTimeEnchanting { get; }
 
         #endregion
     }
