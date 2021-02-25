@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.3.x beta - Places
+- Version [0.3.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.3beta): Added all remaining places (sage, horse/ship seller, enchanter and blacksmith)
 - Version [0.3.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.2beta): Added inns, camp fire, sleeping, aging, spell learning and all item-targeted spells
 - Version [0.3.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.1beta): Added trainers, healers and food merchants
 - Version [0.3.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.0beta): Added merchants and libraries
