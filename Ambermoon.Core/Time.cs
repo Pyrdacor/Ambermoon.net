@@ -212,6 +212,7 @@ namespace Ambermoon
 
         public event Action GotTired;
         public event Action GotExhausted;
+        public event Action NewDay;
         public event Action NewYear;
 
         public void Wait(uint hours)
@@ -229,6 +230,7 @@ namespace Ambermoon
             {
                 savegame.Hour -= 24;
                 ++savegame.DayOfMonth;
+                NewDay?.Invoke();
 
                 if (savegame.DayOfMonth > 31)
                 {

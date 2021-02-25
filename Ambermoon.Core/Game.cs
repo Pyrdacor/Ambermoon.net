@@ -911,6 +911,8 @@ namespace Ambermoon
             GameTime = new SavegameTime(savegame);
             GameTime.GotTired += GameTime_GotTired;
             GameTime.GotExhausted += GameTime_GotExhausted;
+            GameTime.NewDay += GameTime_NewDay;
+            GameTime.NewYear += GameTime_NewYear;
             currentBattle = null;
 
             ClearPartyMembers();
@@ -1079,6 +1081,65 @@ namespace Ambermoon
         void GameTime_GotTired()
         {
             ShowMessagePopup(DataNameProvider.TiredMessage);
+        }
+
+        void AgePlayer(PartyMember partyMember, Action finishAction)
+        {
+            if (++partyMember.Attributes[Attribute.Age].CurrentValue >= partyMember.Attributes[Attribute.Age].MaxValue)
+            {
+                ShowMessagePopup(partyMember.Name + DataNameProvider.HasDiedOfAge, () =>
+                {
+                    partyMember.Die();
+                    finishAction?.Invoke();
+                });
+            }
+            else
+            {
+                ShowMessagePopup(partyMember.Name + DataNameProvider.HasAged, finishAction);
+            }
+        }
+
+        /// <summary>
+        /// Runs an action for each party member. In contrast to a normal foreach loop
+        /// the action can contain blocking calls for each party member like popups.
+        /// The next party member is processed after an action is finished for the
+        /// previous member.
+        /// </summary>
+        /// <param name="action">Action to perform. Second parameter is the finish handler the action must call.</param>
+        /// <param name="condition">Condition to filter affected party members.</param>
+        void ForeachPartyMember(Action<PartyMember, Action> action, Func<PartyMember, bool> condition = null)
+        {
+            void Run(int index)
+            {
+                if (index == MaxPartyMembers)
+                    return;
+
+                var partyMember = GetPartyMember(index);
+
+                if (partyMember == null || condition?.Invoke(partyMember) == false)
+                {
+                    Run(index + 1);
+                }
+                else
+                {
+                    action(partyMember, () => Run(index + 1));
+                }
+            }
+
+            Run(0);
+        }
+
+        void GameTime_NewDay()
+        {
+            ForeachPartyMember(AgePlayer, partyMember =>
+                partyMember.Alive && partyMember.Ailments.HasFlag(Ailment.Aging) &&
+                    !partyMember.Ailments.HasFlag(Ailment.Petrified));
+        }
+
+        void GameTime_NewYear()
+        {
+            ForeachPartyMember(AgePlayer, partyMember =>
+                partyMember.Alive && !partyMember.Ailments.HasFlag(Ailment.Petrified));
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)
