@@ -330,6 +330,7 @@ namespace Ambermoon
             Global.Map3DViewWidth, Global.Map3DViewHeight);
         internal int PlayerAngle => is3D ? Util.Round(player3D.Angle) : (int)player2D.Direction.ToAngle();
         bool targetMode2DActive = false;
+        bool disableUntrapping = false;
         internal CursorType CursorType
         {
             get => cursor.Type;
@@ -360,7 +361,7 @@ namespace Ambermoon
                     int yOffset = Map.IsWorldMap ? 12 : 0;
                     TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25 - yOffset, 65, 65));
                 }
-                else
+                else if (!disableUntrapping)
                 {
                     UntrapMouse();
                 }
@@ -1782,10 +1783,15 @@ namespace Ambermoon
 
                 layout.LeftMouseUp(position, out CursorType? cursorType, CurrentTicks);
 
+                if (trapMouseArea != null)
+                    disableUntrapping = true;
+
                 if (cursorType != null && cursorType != CursorType.None)
                     CursorType = cursorType.Value;
                 else
                     UpdateCursor(GetMousePosition(cursorPosition), MouseButtons.None);
+
+                disableUntrapping = false;
             }
 
             if (TextInput.FocusedInput != null)
@@ -1910,6 +1916,7 @@ namespace Ambermoon
 
                     var cursorType = CursorType.Sword;
                     layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetInventory);
+                    disableUntrapping = true;
                     CursorType = cursorType;
 
                     if (InputEnable && !pickingNewLeader && !pickingTargetInventory)
@@ -1919,7 +1926,7 @@ namespace Ambermoon
                             CursorType = cursorType;
                     }
 
-                    // TODO: check for other clicks
+                    disableUntrapping = false;
                 }
             }
             else
