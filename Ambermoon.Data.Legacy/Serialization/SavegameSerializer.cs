@@ -99,7 +99,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             Buffer.BlockCopy(dataReader.ReadBytes(15), 0, savegame.DictionaryWords, 0, 15);
 
             dataReader.Position = 0x35a4;
-            savegame.ChestUnlockStates = dataReader.ReadBytes(64); // 64 * 8 bits = 512 bits (1 for each chest, possible chest indices 0 to 511)
+            savegame.ChestUnlockStates = dataReader.ReadBytes(32); // 32 * 8 bits = 256 bits (1 for each chest, possible chest indices 0 to 255)
+            savegame.DoorUnlockStates = dataReader.ReadBytes(32); // 32 * 8 bits = 256 bits (1 for each door, possible door indices 0 to 255)
 
             dataReader.Position = 0x35e4;
             Buffer.BlockCopy(dataReader.ReadBytes(6), 0, savegame.BattlePositions, 0, 6);
@@ -206,6 +207,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.Write(Enumerable.Repeat((byte)0, unknownBytes).ToArray());
 
             dataWriter.Write(savegame.ChestUnlockStates);
+            dataWriter.Write(savegame.DoorUnlockStates);
 
             unknownBytes = 0x35e4 - dataWriter.Position;
             dataWriter.Write(Enumerable.Repeat((byte)0, unknownBytes).ToArray());

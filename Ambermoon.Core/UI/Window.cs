@@ -7,6 +7,7 @@ namespace Ambermoon.UI
         MapView,
         Inventory,
         Stats,
+        Door,
         Chest,
         Merchant,
         Event,

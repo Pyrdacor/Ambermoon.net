@@ -1329,17 +1329,32 @@ namespace Ambermoon.UI
                                 throw new AmbermoonException(ExceptionScope.Data, "Invalid place type.");
                         }
                     }
-                    else // Camp window
+                    else // Camp window or Locked screen
                     {
-                        buttonGrid.SetButton(0, ButtonType.Spells, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(3, ButtonType.ReadScroll, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(6, ButtonType.Sleep, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                        if (game.CurrentWindow.Window == Window.Camp)
+                        {
+                            buttonGrid.SetButton(0, ButtonType.Spells, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
+                            buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(3, ButtonType.ReadScroll, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                            buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                            buttonGrid.SetButton(6, ButtonType.Sleep, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                            buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                        }
+                        else
+                        {
+                            buttonGrid.SetButton(0, ButtonType.Lockpick, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(1, ButtonType.UseItem, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                            buttonGrid.SetButton(3, ButtonType.FindTrap, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
+                            buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
+                            buttonGrid.SetButton(6, ButtonType.DisarmTrap, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
+                            buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+                        }
                     }
                     break;
                 }
@@ -2266,7 +2281,7 @@ namespace Ambermoon.UI
 
             if (consumed)
             {
-                PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume), 11, 50, finishAction);
+                PlayItemEffect(itemGrid, itemSlot, slotIndex, initialDelay, Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume), 11, 60, finishAction);
                 game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
                 {
                     ApplyItemRemoveEffects();

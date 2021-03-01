@@ -50,14 +50,18 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Door:
                 {
-                    // 1. byte is unknown (maybe the lock flags like for chests?)
-                    // 2. byte is unknown
-                    // 3. byte is unknown
+                    // 1. byte is a lockpicking chance reduction (0: already open, 100: can't open via lockpicking)
+                    // 2. byte is the door index (used for unlock bits in savegame)
+                    // 3. byte is an optional text index (0xff = no text)
                     // 4. byte is unknown
                     // 5. byte is unknown
                     // word at position 6 is the key index if a key must unlock it
                     // last word is the event index (0-based) of the event that is called when unlocking fails
                     var doorEvent = @event as DoorEvent;
+                    dataWriter.Write((byte)doorEvent.LockpickingChanceReduction);
+                    dataWriter.Write(doorEvent.DoorIndex);
+                    dataWriter.Write((byte)doorEvent.TextIndex);
+                    dataWriter.Write((byte)doorEvent.UnlockTextIndex);
                     dataWriter.Write(doorEvent.Unknown);
                     dataWriter.Write((ushort)doorEvent.KeyIndex);
                     dataWriter.Write((ushort)doorEvent.UnlockFailedEventIndex);
@@ -65,16 +69,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Chest:
                 {
-                    // 1. byte are the lock flags
+                    // 1. byte is a lockpicking chance reduction (0: already open, 100: can't open via lockpicking)
                     // 2. byte is unknown (always 0 except for one chest with 20 blue discs which has 0x32 and lock flags of 0x00)
-                    // 3. byte is unknown (0xff for unlocked chests)
+                    // 3. byte is an optional text index (0xff = no text)
                     // 4. byte is the chest index (0-based)
                     // 5. byte (0 = chest, 1 = pile/removable loot or item) or "remove if empty"
                     // word at position 6 is the key index if a key must unlock it
                     // last word is the event index (0-based) of the event that is called when unlocking fails
                     var chestEvent = @event as ChestEvent;
-                    dataWriter.WriteEnumAsByte(chestEvent.Lock);
+                    dataWriter.Write((byte)chestEvent.LockpickingChanceReduction);
                     dataWriter.Write(chestEvent.Unknown);
+                    dataWriter.Write((byte)chestEvent.TextIndex);
                     dataWriter.Write((byte)chestEvent.ChestIndex);
                     dataWriter.Write((ushort)chestEvent.KeyIndex);
                     dataWriter.Write((ushort)chestEvent.UnlockFailedEventIndex);

@@ -69,51 +69,24 @@ namespace Ambermoon.Data
 
     public class DoorEvent : Event
     {
-        public byte[] Unknown { get; set; }
+        public uint LockpickingChanceReduction { get; set; }
+        public byte DoorIndex { get; set; }
+        public uint TextIndex { get; set; }
+        public uint UnlockTextIndex { get; set; }
+        public byte Unknown { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Unknown {string.Join(" ", Unknown.Select(b => b.ToString("x2")))}";
+            string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
+            return $"{Type}: Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Lock=[{lockType}], Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, UnlockText {(UnlockTextIndex == 0xff ? "none" : UnlockTextIndex.ToString())}, Door Index {DoorIndex}, Unknown {Unknown:x2}";
         }
     }
 
     public class ChestEvent : Event
     {
-        [Flags]
-        public enum LockFlags
-        {
-            // This only gives the initial state. The savegame has
-            // it's one bits to decide if a chest is locker or not.
-            // It is used to say if a chest is initial open, locked
-            // with a lockpick or with a key.
-            //
-            // Seen these hex values only:
-            // 01, 05, 0A, 0F, 14, 19, 1E, 32, 37, 4B, 55, 63, 64
-            // In binary:
-            // 0000 0001
-            // 0000 0101
-            // 0000 1010
-            // 0000 1111
-            // 0001 0100
-            // 0001 1001
-            // 0001 1110
-            // 0011 0010
-            // 0011 0111
-            // 0100 1011
-            // 0101 0101
-            // 0110 0011
-            // 0110 0100
-            // ---------
-            // 0x01 is a locked chest that can be opened with a lockpick.
-            // 0x64 could be a locked chest that needs a special key.
-            Open = 0,
-            Lockpick = 0x01, // these also have a trap attached
-            KeyLocked = 0x64 // locked with a special key
-        }
-
-        public LockFlags Lock { get; set; }
+        public uint LockpickingChanceReduction { get; set; }
         public uint TextIndex { get; set; } // 255 = none
         /// <summary>
         /// Note: This is 0-based but the files might by 1-based.
@@ -126,7 +99,8 @@ namespace Ambermoon.Data
 
         public override string ToString()
         {
-            return $"{Type}: Chest {ChestIndex}, Lock=[{Lock}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Unknown: {Unknown:x2}";
+            string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Unknown: {Unknown:x2}";
         }
     }
 

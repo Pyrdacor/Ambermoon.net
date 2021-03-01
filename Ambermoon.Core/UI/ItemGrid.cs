@@ -719,5 +719,127 @@ namespace Ambermoon.UI
                 return true;
             }
         }
+
+        public void ResetAnimation(ItemSlot itemSlot)
+        {
+            int slotIndex = SlotFromItemSlot(itemSlot);
+            var item = items[slotIndex];
+            item.Position = GetSlotPosition(slotIndex);
+            item.Dragged = false;
+        }
+
+        public void PlayMoveAnimation(ItemSlot itemSlot, Position targetPosition, Action finishAction)
+        {
+            var slotPosition = GetSlotPosition(SlotFromItemSlot(itemSlot));
+            int slotIndex = SlotFromItemSlot(itemSlot);
+            var item = items[slotIndex];
+            targetPosition ??= slotPosition;
+            const int pixelsPerSecond = 300;
+            const int timePerFrame = 10;
+            int distPerFrame = pixelsPerSecond * timePerFrame / 1000;
+            var dist = targetPosition - item.Position;
+            int moved = 0;
+            var startPosition = item.Position;
+            float length = (float)Math.Sqrt(dist.X * dist.X + dist.Y * dist.Y);
+            int maxMove = Util.Ceiling(length);
+
+            void Animate()
+            {
+                moved += distPerFrame;
+                if (moved > maxMove)
+                    moved = maxMove;
+                float factor = moved / length;
+                item.Position = startPosition + new Position(Util.Round(factor * dist.X), Util.Round(factor * dist.Y));
+
+                if (moved == maxMove)
+                {
+                    item.Dragged = false;
+                    finishAction?.Invoke();
+                }
+                else
+                {
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
+                }
+            }
+            item.Dragged = true;
+            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
+        }
+
+        public void PlayConsumeAnimation(ItemSlot itemSlot, Position position, Action finishAction)
+        {
+            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), () =>
+            {
+                int slotIndex = SlotFromItemSlot(itemSlot);
+                var item = items[slotIndex];
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+                var offset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume));
+                var sprite = renderView.SpriteFactory.Create(16, 16, true, 255);
+                sprite.TextureAtlasOffset = offset;
+                sprite.Layer = renderView.GetLayer(Layer.UI);
+                sprite.PaletteIndex = 49;
+                sprite.X = position.X;
+                sprite.Y = position.Y;
+                sprite.Visible = true;
+                int numFrames = 11;
+                const int timePerFrame = 60;
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(240), () => item.Visible = false);
+
+                void Animate()
+                {
+                    if (--numFrames <= 0)
+                    {
+                        sprite?.Delete();
+                        finishAction?.Invoke();
+                    }
+                    else
+                    {
+                        sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + 16, sprite.TextureAtlasOffset.Y);
+                        game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
+                    }
+                }
+
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
+            });
+        }
+
+        public void PlayShakeAnimation(ItemSlot itemSlot, Action finishAction)
+        {
+            int slotIndex = SlotFromItemSlot(itemSlot);
+            var item = items[slotIndex];
+            int minX = item.Position.X - 1;
+            int maxX = item.Position.X + 1;
+            bool right = true;
+            int runs = 7;
+
+            void Animate()
+            {
+                if (right)
+                {
+                    item.Position = new Position(item.Position.X + 1, item.Position.Y);
+
+                    if (item.Position.X == maxX)
+                        right = false;
+                }
+                else
+                {
+                    item.Position = new Position(item.Position.X - 1, item.Position.Y);
+
+                    if (item.Position.X == minX)
+                    {
+                        right = true;
+
+                        if (--runs < 0)
+                        {
+                            finishAction?.Invoke();
+                            return;
+                        }
+                    }
+                }
+
+                game.AddTimedEvent(TimeSpan.FromMilliseconds(6), Animate);
+            }
+
+            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
+        }
     }
 }

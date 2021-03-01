@@ -41,8 +41,7 @@ namespace Ambermoon
         }
 
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
-            uint x, uint y, uint ticks, Savegame savegame,
-            out bool hasMapEvent)
+            uint x, uint y, uint ticks, Savegame savegame, out bool hasMapEvent)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 

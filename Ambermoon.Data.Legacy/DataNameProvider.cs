@@ -169,6 +169,21 @@
         public string RecoveredLPAndSP => executableData.Messages.GetEntry(Messages.Index.RegainsLPAndSP);
         public string HasAged => executableData.Messages.GetEntry(Messages.Index.HasAged);
         public string HasDiedOfAge => executableData.Messages.GetEntry(Messages.Index.HasDiedOfAge);
+        public string LockpickBreaks => executableData.Messages.GetEntry(Messages.Index.LockpickBreaks);
+        public string UnableToPickTheLock => executableData.Messages.GetEntry(Messages.Index.UnableToPickTheLock);
+        public string UnlockedChestWithLockpick => executableData.Messages.GetEntry(Messages.Index.UnlockedChestWithLockpick);
+        public string UnlockedDoorWithLockpick => executableData.Messages.GetEntry(Messages.Index.UnlockedDoorWithLockpick);
+        public string YouNoticeATrap => executableData.Messages.GetEntry(Messages.Index.YouNoticeATrap);
+        public string DisarmTrap => executableData.Messages.GetEntry(Messages.Index.DisarmTrap);
+        public string DiscoverTrap => executableData.Messages.GetEntry(Messages.Index.DiscoverTrap);
+        public string DoesNotDiscoverTraps => executableData.Messages.GetEntry(Messages.Index.DoesNotDiscoverTraps);
+        public string EscapedTheTrap => executableData.Messages.GetEntry(Messages.Index.EscapedTheTrap);
+        public string WhichItemToOpenChest => executableData.Messages.GetEntry(Messages.Index.WhichItemToOpenChest);
+        public string WhichItemToOpenDoor => executableData.Messages.GetEntry(Messages.Index.WhichItemToOpenDoor);
+        public string HasOpenedChest => executableData.Messages.GetEntry(Messages.Index.HasOpenedChest);
+        public string HasOpenedDoor => executableData.Messages.GetEntry(Messages.Index.HasOpenedDoor);
+        public string ThisItemDoesNotOpenChest => executableData.Messages.GetEntry(Messages.Index.ThisItemDoesNotOpenChest);
+        public string ThisItemDoesNotOpenDoor => executableData.Messages.GetEntry(Messages.Index.ThisItemDoesNotOpenDoor);
 
 
         #region Battle messages

@@ -144,9 +144,8 @@ namespace Ambermoon.Render
                     if (considerPosition)
                     {
                         var oldMapIndex = map.Map.Index;
-                        map.Map.TriggerEvents(game, EventTrigger.Move, (uint)touchedPosition.X, (uint)touchedPosition.Y,
-                            ticks, game.CurrentSavegame, out bool hasEvent);
-                        anyEventTriggered = anyEventTriggered || hasEvent;
+                        anyEventTriggered = anyEventTriggered || map.Map.TriggerEvents(game, EventTrigger.Move,
+                            (uint)touchedPosition.X, (uint)touchedPosition.Y, ticks, game.CurrentSavegame, out _);
 
                         if (oldMapIndex != game.Map.Index)
                         {

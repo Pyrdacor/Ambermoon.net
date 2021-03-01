@@ -21,6 +21,7 @@ namespace Ambermoon
 
             switch (@event.Type)
             {
+                // TODO ...
                 case EventType.Teleport:
                 {
                     if (trigger != EventTrigger.Move &&
@@ -33,12 +34,21 @@ namespace Ambermoon
                     game.Teleport(teleportEvent);
                     break;
                 }
+                case EventType.Door:
+                {
+                    if (!(@event is DoorEvent doorEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid door event.");
+
+                    if (!game.ShowDoor(doorEvent, false, map))
+                        aborted = true;
+                    return null;
+                }
                 case EventType.Chest:
                 {
-                    if (!(@event is ChestEvent chestMapEvent))
+                    if (!(@event is ChestEvent chestEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
-                    game.ShowChest(chestMapEvent, map);
+                    game.ShowChest(chestEvent, false, map);
                     return null;
                 }
                 case EventType.PopupText:
@@ -78,6 +88,7 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
+                // TODO ...
                 case EventType.Riddlemouth:
                 {
                     if (trigger != EventTrigger.Always &&
@@ -96,29 +107,6 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
-                case EventType.Decision:
-                {
-                    if (!(@event is DecisionEvent decisionEvent))
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid decision event.");
-
-                    game.ShowDecisionPopup(map, decisionEvent, response =>
-                    {
-                        if (response == PopupTextEvent.Response.Yes)
-                        {
-                            map.TriggerEventChain(game, EventTrigger.Always,
-                                x, y, game.CurrentTicks, @event.Next, true);
-                        }
-                        else // Close and No have the same meaning here
-                        {
-                            if (decisionEvent.NoEventIndex != 0xffff)
-                            {
-                                map.TriggerEventChain(game, EventTrigger.Always,
-                                    x, y, game.CurrentTicks, map.Events[(int)decisionEvent.NoEventIndex], false);
-                            }
-                        }
-                    });
-                    return null; // next event is only executed after popup response
-                }
                 case EventType.ChangeTile:
                 {
                     // TODO: add those to the savegame as well!
@@ -128,7 +116,14 @@ namespace Ambermoon
                     game.UpdateMapTile(changeTileEvent, x, y);
                     break;
                 }
-                // TODO ...
+                case EventType.StartBattle:
+                {
+                    if (!(@event is StartBattleEvent battleEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid battle event.");
+
+                    game.StartBattle(battleEvent, battleEvent.Next, game.GetCombatBackgroundIndex(map, x, y));
+                    return null;
+                }
                 case EventType.EnterPlace:
                 {
                     if (!(@event is EnterPlaceEvent enterPlaceEvent))
@@ -292,14 +287,6 @@ namespace Ambermoon
                     lastEventStatus = game.RollDice100() < diceEvent.Chance;
                     return lastEventStatus ? diceEvent.Next : mapEventIfFalse;
                 }
-                case EventType.StartBattle:
-                {
-                    if (!(@event is StartBattleEvent battleEvent))
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid battle event.");
-
-                    game.StartBattle(battleEvent, battleEvent.Next, game.GetCombatBackgroundIndex(map, x, y));
-                    return null;
-                }
                 case EventType.Conversation:
                 {
                     if (!(@event is ConversationEvent conversationEvent))
@@ -347,6 +334,30 @@ namespace Ambermoon
                     // Note: This is only used by conversations and is handled by game.ShowConversation.
                     // So we don't need to do anything here.
                     return printTextEvent.Next;
+                }
+                // TODO ...
+                case EventType.Decision:
+                {
+                    if (!(@event is DecisionEvent decisionEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid decision event.");
+
+                    game.ShowDecisionPopup(map, decisionEvent, response =>
+                    {
+                        if (response == PopupTextEvent.Response.Yes)
+                        {
+                            map.TriggerEventChain(game, EventTrigger.Always,
+                                x, y, game.CurrentTicks, @event.Next, true);
+                        }
+                        else // Close and No have the same meaning here
+                        {
+                            if (decisionEvent.NoEventIndex != 0xffff)
+                            {
+                                map.TriggerEventChain(game, EventTrigger.Always,
+                                    x, y, game.CurrentTicks, map.Events[(int)decisionEvent.NoEventIndex], false);
+                            }
+                        }
+                    });
+                    return null; // next event is only executed after popup response
                 }
                 // TODO ...
             }

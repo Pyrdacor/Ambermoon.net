@@ -146,6 +146,21 @@
         string RecoveredLPAndSP { get; }
         string HasAged { get; }
         string HasDiedOfAge { get; }
+        string LockpickBreaks { get; }
+        string UnableToPickTheLock { get; }
+        string UnlockedChestWithLockpick { get; }
+        string UnlockedDoorWithLockpick { get; }
+        string YouNoticeATrap { get; }
+        string DisarmTrap { get; }
+        string DiscoverTrap { get; }
+        string DoesNotDiscoverTraps { get; }
+        string EscapedTheTrap { get; }
+        string WhichItemToOpenChest { get; }
+        string WhichItemToOpenDoor { get; }
+        string HasOpenedChest { get; }
+        string HasOpenedDoor { get; }
+        string ThisItemDoesNotOpenChest { get; }
+        string ThisItemDoesNotOpenDoor { get; }
 
 
         #region Battle messages

@@ -188,6 +188,7 @@ namespace Ambermoon
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
         WindowInfo lastWindow = DefaultWindow;
+        internal WindowInfo CurrentWindow => currentWindow;
         Action closeWindowHandler = null;
         // Note: These are not meant for ingame stuff but for fade effects etc that use real time.
         readonly List<TimedGameEvent> timedEvents = new List<TimedGameEvent>();
@@ -1606,7 +1607,8 @@ namespace Ambermoon
                 return;
             else if (trapMouseArea != null && (currentWindow.Window == Window.Merchant ||
                 currentWindow.Window == Window.Healer || currentWindow.Window == Window.Sage ||
-                currentWindow.Window == Window.Blacksmith || currentWindow.Window == Window.Enchanter))
+                currentWindow.Window == Window.Blacksmith || currentWindow.Window == Window.Enchanter ||
+                currentWindow.Window == Window.Door || (currentWindow.Window == Window.Chest && OpenStorage == null)))
                 return;
 
             switch (key)
@@ -1919,7 +1921,7 @@ namespace Ambermoon
                     disableUntrapping = true;
                     CursorType = cursorType;
 
-                    if (InputEnable && !pickingNewLeader && !pickingTargetInventory)
+                    if (!allInputDisabled && InputEnable && !pickingNewLeader && !pickingTargetInventory)
                     {
                         layout.Hover(relativePosition, ref cursorType); // Update cursor
                         if (cursor.Type != CursorType.None)
@@ -2074,7 +2076,7 @@ namespace Ambermoon
                 }
                 else
                 {
-                    if (buttons == MouseButtons.None)
+                    if (buttons == MouseButtons.None && !allInputDisabled)
                     {
                         var cursorType = cursor.Type;
                         layout.Hover(relativePosition, ref cursorType);
@@ -3473,10 +3475,10 @@ namespace Ambermoon
             }
         }
 
-        void ShowLoot(ITreasureStorage storage, string initialText, Action initialTextClosedEvent, ChestEvent chestMapEvent = null)
+        void ShowLoot(ITreasureStorage storage, string initialText, Action initialTextClosedEvent, ChestEvent chestEvent = null)
         {
             OpenStorage = storage;
-            OpenStorage.AllowsItemDrop = chestMapEvent == null ? false : !chestMapEvent.RemoveWhenEmpty;
+            OpenStorage.AllowsItemDrop = chestEvent == null ? false : !chestEvent.RemoveWhenEmpty;
             layout.SetLayout(LayoutType.Items);
             layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
@@ -3485,83 +3487,285 @@ namespace Ambermoon
                 OpenStorage.AllowsItemDrop, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
             layout.AddItemGrid(itemGrid);
 
-            if (chestMapEvent != null && chestMapEvent.Lock != ChestEvent.LockFlags.Open && CurrentSavegame.IsChestLocked(chestMapEvent.ChestIndex))
+            if (storage.IsBattleLoot)
             {
-                layout.Set80x80Picture(Picture80x80.ChestClosed);
-                itemGrid.Disabled = true;
+                layout.Set80x80Picture(Picture80x80.Treasure);
+            }
+            else if (storage.Empty)
+            {
+                layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
             }
             else
             {
-                if (storage.IsBattleLoot)
+                layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+            }
+
+            for (int y = 0; y < 2; ++y)
+            {
+                for (int x = 0; x < 6; ++x)
                 {
-                    layout.Set80x80Picture(Picture80x80.Treasure);
+                    var slot = storage.Slots[x, y];
+
+                    if (!slot.Empty)
+                        itemGrid.SetItem(x + y * 6, slot);
                 }
-                else if (storage.Empty)
-                {
-                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
-                }
-                else
-                {
+            }
+
+            itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+            {
+                int column = slotIndex % Chest.SlotsPerRow;
+                int row = slotIndex / Chest.SlotsPerRow;
+                storage.Slots[column, row].Remove(amount);
+            };
+            itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+            {
+                if (!storage.IsBattleLoot)
                     layout.Set80x80Picture(Picture80x80.ChestOpenFull);
-                }
+            };
 
-                for (int y = 0; y < 2; ++y)
-                {
-                    for (int x = 0; x < 6; ++x)
-                    {
-                        var slot = storage.Slots[x, y];
+            if (storage.Gold > 0)
+            {
+                ShowTextPanel(CharacterInfo.ChestGold, true,
+                    $"{DataNameProvider.GoldName}^{storage.Gold}", new Rect(111, 104, 43, 15));
+            }
 
-                        if (!slot.Empty)
-                            itemGrid.SetItem(x + y * 6, slot);
-                    }
-                }
+            if (storage.Food > 0)
+            {
+                ShowTextPanel(CharacterInfo.ChestFood, true,
+                    $"{DataNameProvider.FoodName}^{storage.Food}", new Rect(260, 104, 43, 15));
+            }
 
-                itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
-                {
-                    int column = slotIndex % Chest.SlotsPerRow;
-                    int row = slotIndex / Chest.SlotsPerRow;
-                    storage.Slots[column, row].Remove(amount);
-                };
-                itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
-                {
-                    if (!storage.IsBattleLoot)
-                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
-                };
-
-                if (storage.Gold > 0)
-                {
-                    ShowTextPanel(CharacterInfo.ChestGold, true,
-                        $"{DataNameProvider.GoldName}^{storage.Gold}", new Rect(111, 104, 43, 15));
-                }
-
-                if (storage.Food > 0)
-                {
-                    ShowTextPanel(CharacterInfo.ChestFood, true,
-                        $"{DataNameProvider.FoodName}^{storage.Food}", new Rect(260, 104, 43, 15));
-                }
-
-                if (initialText != null)
-                {
-                    layout.ShowClickChestMessage(initialText, initialTextClosedEvent, true);
-                }
+            if (initialText != null)
+            {
+                layout.ShowClickChestMessage(initialText, initialTextClosedEvent, true);
             }
         }
 
-        internal void ShowChest(ChestEvent chestMapEvent, Map map = null)
+        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, Map map)
         {
-            var chest = GetChest(chestMapEvent.ChestIndex);
+            var chest = GetChest(chestEvent.ChestIndex);
 
-            if (chestMapEvent.RemoveWhenEmpty && chest.Empty)
+            if (chestEvent.RemoveWhenEmpty && chest.Empty)
                 return;
 
             Fade(() =>
             {
-                string initialText = map != null && chestMapEvent.TextIndex != 255 ?
-                    map.Texts[(int)chestMapEvent.TextIndex] : null;
+                string initialText = map != null && chestEvent.TextIndex != 255 ?
+                    map.Texts[(int)chestEvent.TextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Chest, chestMapEvent);
-                ShowLoot(chest, initialText, null, chestMapEvent);
+                SetWindow(Window.Chest, chestEvent, foundTrap, map);
+
+                if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.ChestIndex))
+                {
+                    ShowLocked(Picture80x80.ChestClosed, withLockpick =>
+                    {
+                        CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
+                        layout.ShowClickChestMessage(withLockpick ? DataNameProvider.UnlockedChestWithLockpick
+                            : DataNameProvider.HasOpenedChest, () =>
+                        {
+                            currentWindow.Window = Window.MapView; // This avoids returning to locked screen when closing chest window.
+                            ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, map));
+                        });
+                    }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap,
+                    chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
+                    (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
+                }
+                else
+                {
+                    ShowLoot(chest, initialText, null, chestEvent);
+                }
+            });
+        }
+
+        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, Map map)
+        {
+            if (!CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
+                return false;
+
+            Fade(() =>
+            {
+                string initialText = doorEvent.TextIndex != 255 ?
+                    map.Texts[(int)doorEvent.TextIndex] : null;
+                layout.Reset();
+                ShowMap(false);
+                SetWindow(Window.Door, doorEvent, foundTrap, map);
+                ShowLocked(Picture80x80.Door, withLockpick =>
+                {
+                    CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
+                    layout.ShowClickChestMessage(withLockpick ? DataNameProvider.UnlockedDoorWithLockpick
+                        : DataNameProvider.HasOpenedDoor, () =>
+                    {
+                        CloseWindow();
+                        if (doorEvent.Next != null)
+                        {
+                            EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
+                                (uint)player.Position.Y, CurrentTicks, doorEvent.Next, true);
+                        }
+                    });
+                }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap,
+                doorEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
+                    (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)doorEvent.UnlockFailedEventIndex], true));
+            });
+
+            return true;
+        }
+
+        void ShowLocked(Picture80x80 picture80X80, Action<bool> openedAction, string initialMessage,
+            uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, Action failedAction)
+        {
+            layout.SetLayout(LayoutType.Items);
+            layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+            var itemArea = new Rect(16, 139, 151, 53);
+            var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+            itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+            var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat((ItemSlot)null, 24).ToList(),
+                false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+            layout.AddItemGrid(itemGrid);
+            itemGrid.Disabled = true;
+            layout.Set80x80Picture(picture80X80);
+            bool hasTrap = failedAction != null;
+            bool chest = picture80X80 == Picture80x80.ChestClosed;
+            const uint LockpickItemIndex = 138;
+
+            // TODO: switching player, update after item was used and was destroyed without opening the lock -> maybe do not disable at all?
+            layout.EnableButton(1, CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false));
+            layout.EnableButton(6, foundTrap);
+
+            void StartUseItems()
+            {
+                if (chest)
+                    layout.ShowChestMessage(DataNameProvider.WhichItemToOpenChest, TextAlign.Left);
+                else
+                    layout.ShowChestMessage(DataNameProvider.WhichItemToOpenDoor, TextAlign.Left);
+
+                itemGrid.Disabled = false;
+                itemGrid.DisableDrag = true;
+                itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                TrapMouse(itemArea);
+                SetupRightClickAbort();
+            }
+
+            void SetupRightClickAbort()
+            {
+                nextClickHandler = buttons =>
+                {
+                    if (buttons == MouseButtons.Right)
+                    {
+                        itemGrid.HideTooltip();
+                        itemGrid.Disabled = true;
+                        layout.ShowChestMessage(null);
+                        UntrapMouse();
+                        return true;
+                    }
+
+                    return false;
+                };
+            }
+
+            itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+            {
+                UntrapMouse();
+                nextClickHandler = null;
+                layout.ShowChestMessage(null);
+                StartSequence();
+                itemGrid.HideTooltip();
+                var targetPosition = chest ? new Position(28, 76) : new Position(73, 102);
+                itemGrid.PlayMoveAnimation(itemSlot, targetPosition, () =>
+                {
+                    bool canOpen = keyIndex == itemSlot.ItemIndex || (keyIndex == 0 && itemSlot.ItemIndex == LockpickItemIndex);
+
+                    if (canOpen)
+                    {
+                        itemGrid.PlayConsumeAnimation(itemSlot, targetPosition, () =>
+                        {
+                            itemGrid.ResetAnimation(itemSlot);
+                            itemSlot.Remove(1);
+                            EndSequence();
+                            openedAction?.Invoke(itemSlot.ItemIndex == LockpickItemIndex);
+                        });
+                    }
+                    else
+                    {
+                        itemGrid.PlayShakeAnimation(itemSlot, () =>
+                        {
+                            EndSequence();
+                            if (itemSlot.ItemIndex == LockpickItemIndex) // Lockpick
+                            {
+                                // TODO: Play destroy animation
+                                itemSlot.Remove(1);
+                                layout.ShowClickChestMessage(DataNameProvider.LockpickBreaks, () =>
+                                {
+                                    StartSequence();
+                                    itemGrid.HideTooltip();
+                                    itemGrid.PlayMoveAnimation(itemSlot, null, () =>
+                                    {
+                                        itemGrid.ResetAnimation(itemSlot);
+                                        EndSequence();
+                                        StartUseItems();
+                                    });
+                                });
+                            }
+                            else
+                            {
+                                layout.ShowClickChestMessage(chest ? DataNameProvider.ThisItemDoesNotOpenChest : DataNameProvider.ThisItemDoesNotOpenDoor, () =>
+                                {
+                                    StartSequence();
+                                    itemGrid.HideTooltip();
+                                    itemGrid.PlayMoveAnimation(itemSlot, null, () =>
+                                    {
+                                        itemGrid.ResetAnimation(itemSlot);
+                                        EndSequence();
+                                        StartUseItems();
+                                    });
+                                });
+                            }
+                        });
+                    }
+                });
+            };
+
+            // Lockpick button
+            layout.AttachEventToButton(0, () =>
+            {
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Ability.LockPicking].TotalCurrentValue, 100) - (int)lockpickingChanceReduction;
+
+                if (chance <= 0 || RollDice100() >= chance)
+                {
+                    // Failed
+                    // Note: The trap is triggered by the follow-up event (if given) but only if a dice roll against DEX fails.
+                    if (failedAction != null && RollDice100() >= CurrentPartyMember.Attributes[Attribute.Dexterity].TotalCurrentValue)
+                    {
+                        CloseWindow();
+                        failedAction?.Invoke();
+                    }
+                    else
+                    {
+                        layout.ShowClickChestMessage(DataNameProvider.UnableToPickTheLock);
+                    }
+                }
+                else
+                {
+                    // Success
+                    openedAction?.Invoke(false);
+                }
+            });
+            // Use item button
+            layout.AttachEventToButton(1, StartUseItems);
+            // Find trap button
+            layout.AttachEventToButton(3, () =>
+            {
+                if (RollDice100() < CurrentPartyMember.Abilities[Ability.FindTraps].TotalCurrentValue)
+                {
+                    // TODO
+                    currentWindow.WindowParameters[1] = true; // Found trap flag
+                    layout.EnableButton(6, true);
+                }
+            });
+            // Disarm trap button
+            layout.AttachEventToButton(6, () =>
+            {
+                // TODO
             });
         }
 
@@ -5601,6 +5805,7 @@ namespace Ambermoon
                 ShowPlaceWindow(enchanter.Name, showWelcome ? DataNameProvider.WelcomeEnchanter : null,
                     Picture80x80.Enchantress, enchanter, SetupEnchanter, null, null, null, 24);
                 void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.WhichItemToEnchant, TextAlign.Left);
+                var itemArea = new Rect(16, 139, 151, 53);
                 // Enchant item button
                 layout.AttachEventToButton(3, () =>
                 {
@@ -5608,102 +5813,101 @@ namespace Ambermoon
                     itemsGrid.DisableDrag = true;
                     ShowDefaultMessage();
                     CursorType = CursorType.Sword;
-                    var itemArea = new Rect(16, 139, 151, 53);
                     TrapMouse(itemArea);
                     itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
-                    void SetupRightClickAbort()
-                    {
-                        nextClickHandler = buttons =>
-                        {
-                            if (buttons == MouseButtons.Right)
-                            {
-                                itemsGrid.HideTooltip();
-                                itemsGrid.Disabled = true;
-                                layout.ShowChestMessage(null);
-                                UntrapMouse();
-                                return true;
-                            }
-
-                            return false;
-                        };
-                    }
                     SetupRightClickAbort();
-                    itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                });
+                void SetupRightClickAbort()
+                {
+                    nextClickHandler = buttons =>
                     {
-                        itemsGrid.HideTooltip();
-
-                        void Error(string message, bool abort)
+                        if (buttons == MouseButtons.Right)
                         {
-                            layout.ShowClickChestMessage(message, () =>
-                            {
-                                if (!abort)
-                                {
-                                    TrapMouse(itemArea);
-                                    SetupRightClickAbort();
-                                    ShowDefaultMessage();
-                                }
-                            });
+                            itemsGrid.HideTooltip();
+                            itemsGrid.Disabled = true;
+                            layout.ShowChestMessage(null);
+                            UntrapMouse();
+                            return true;
                         }
 
-                        var item = ItemManager.GetItem(itemSlot.ItemIndex);
+                        return false;
+                    };
+                }
+                itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                {
+                    itemsGrid.HideTooltip();
 
-                        if (item.Spell == Spell.None || item.InitialCharges == 0)
+                    void Error(string message, bool abort)
+                    {
+                        layout.ShowClickChestMessage(message, () =>
                         {
-                            Error(DataNameProvider.CannotEnchantOrdinaryItem, false);
-                            return;
-                        }
-
-                        // TODO: last time enchanting?
-
-                        int numMissingCharges = itemSlot.NumRemainingCharges >= item.MaxCharges ? 0 : item.MaxCharges - itemSlot.NumRemainingCharges;
-
-                        if (numMissingCharges == 0)
-                        {
-                            Error(DataNameProvider.AlreadyFullyCharged, false);
-                            return;
-                        }
-
-                        if (enchanter.AvailableGold < enchanter.Cost)
-                        {
-                            Error(DataNameProvider.NotEnoughMoney, true);
-                            return;
-                        }
-
-                        void Enchant(uint charges)
-                        {
-                            ClosePopup();
-                            uint cost = charges * (uint)enchanter.Cost;
-
-                            layout.ShowPlaceQuestion($"{DataNameProvider.PriceForEnchanting}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
-                            {
-                                nextClickHandler = null;
-                                EndSequence();
-                                UntrapMouse();
-                                layout.ShowChestMessage(null);
-
-                                if (answer) // yes
-                                {
-                                    enchanter.AvailableGold -= cost;
-                                    itemSlot.NumRemainingCharges += (int)charges;
-                                }
-
-                                itemsGrid.Disabled = true;
-                            }, TextAlign.Left);
-                        }
-
-                        nextClickHandler = null;
-                        UntrapMouse();
-
-                        layout.OpenAmountInputBox(DataNameProvider.HowManyCharges,
-                            item.GraphicIndex, item.Name, (uint)Util.Min(enchanter.AvailableGold / enchanter.Cost, numMissingCharges), Enchant,
-                            () =>
+                            if (!abort)
                             {
                                 TrapMouse(itemArea);
                                 SetupRightClickAbort();
+                                ShowDefaultMessage();
                             }
-                        );
-                    };
-                });
+                        });
+                    }
+
+                    var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                    if (item.Spell == Spell.None || item.InitialCharges == 0)
+                    {
+                        Error(DataNameProvider.CannotEnchantOrdinaryItem, false);
+                        return;
+                    }
+
+                    // TODO: last time enchanting?
+
+                    int numMissingCharges = itemSlot.NumRemainingCharges >= item.MaxCharges ? 0 : item.MaxCharges - itemSlot.NumRemainingCharges;
+
+                    if (numMissingCharges == 0)
+                    {
+                        Error(DataNameProvider.AlreadyFullyCharged, false);
+                        return;
+                    }
+
+                    if (enchanter.AvailableGold < enchanter.Cost)
+                    {
+                        Error(DataNameProvider.NotEnoughMoney, true);
+                        return;
+                    }
+
+                    void Enchant(uint charges)
+                    {
+                        ClosePopup();
+                        uint cost = charges * (uint)enchanter.Cost;
+
+                        layout.ShowPlaceQuestion($"{DataNameProvider.PriceForEnchanting}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
+                        {
+                            nextClickHandler = null;
+                            EndSequence();
+                            UntrapMouse();
+                            layout.ShowChestMessage(null);
+
+                            if (answer) // yes
+                            {
+                                enchanter.AvailableGold -= cost;
+                                itemSlot.NumRemainingCharges += (int)charges;
+                            }
+
+                            itemsGrid.Disabled = true;
+                        }, TextAlign.Left);
+                    }
+
+                    nextClickHandler = null;
+                    UntrapMouse();
+
+                    layout.OpenAmountInputBox(DataNameProvider.HowManyCharges,
+                        item.GraphicIndex, item.Name, (uint)Util.Min(enchanter.AvailableGold / enchanter.Cost, numMissingCharges), Enchant,
+                        () =>
+                        {
+                            TrapMouse(itemArea);
+                            SetupRightClickAbort();
+                        }
+                    );
+                };
             });
         }
 
@@ -8311,8 +8515,21 @@ namespace Ambermoon
                 case Window.Chest:
                 {
                     var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
+                    bool trapFound = (bool)currentWindow.WindowParameters[1];
+                    var map = (Map)currentWindow.WindowParameters[2];
                     currentWindow = DefaultWindow;
-                    ShowChest(chestEvent);
+                    ShowChest(chestEvent, trapFound, map);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Door:
+                {
+                    var doorEvent = (DoorEvent)currentWindow.WindowParameters[0];
+                    bool trapFound = (bool)currentWindow.WindowParameters[1];
+                    var map = (Map)currentWindow.WindowParameters[2];
+                    currentWindow = DefaultWindow;
+                    ShowDoor(doorEvent, trapFound, map);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

@@ -97,18 +97,26 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Door:
                 {
-                    // 1. byte is unknown (maybe the lock flags like for chests?)
-                    // 2. byte is unknown
-                    // 3. byte is unknown
-                    // 4. byte is unknown
-                    // 5. byte is unknown
+                    // 1. byte is a lockpicking chance reduction (0: already open, 100: can't open via lockpicking)
+                    // 2. byte is the door index (used for unlock bits in savegame)
+                    // 3. byte is an optional text index that is shown initially (0xff = no text)
+                    // 4. byte is an optional text index if the door was unlocked (0xff = no text)
+                    // 5. byte is unknown (always 0)
                     // word at position 6 is the key index if a key must unlock it
                     // last word is the event index (0-based) of the event that is called when unlocking fails
-                    var unknown = dataReader.ReadBytes(5); // Unknown
+                    var lockpickingChanceReduction = dataReader.ReadByte();
+                    var doorIndex = dataReader.ReadByte();
+                    var textIndex = dataReader.ReadByte();
+                    var unlockTextIndex = dataReader.ReadByte();
+                    var unknown = dataReader.ReadByte(); // Unknown
                     uint keyIndex = dataReader.ReadWord();
                     var unlockFailEventIndex = dataReader.ReadWord();
                     @event = new DoorEvent
                     {
+                        LockpickingChanceReduction = lockpickingChanceReduction,
+                        DoorIndex = doorIndex,
+                        TextIndex = textIndex,
+                        UnlockTextIndex = unlockTextIndex,
                         Unknown = unknown,
                         KeyIndex = keyIndex,
                         UnlockFailedEventIndex = unlockFailEventIndex
@@ -117,14 +125,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Chest:
                 {
-                    // 1. byte are the lock flags
-                    // 2. byte is unknown (always 0 except for one chest with 20 blue discs which has 0x32 and lock flags of 0x00)
+                    // 1. byte is a lockpicking chance reduction (0: already open, 100: can't open via lockpicking)
+                    // 2. byte is unknown (always 0 except for one chest with 20 blue discs which has 0x32 and lockpick reduction of 0x00)
                     // 3. byte is an optional text index (0xff = no text)
                     // 4. byte is the chest index (0-based)
                     // 5. byte (0 = chest, 1 = pile/removable loot or item) or "remove if empty"
                     // word at position 6 is the key index if a key must unlock it
                     // last word is the event index (0-based) of the event that is called when unlocking fails
-                    var lockType = (ChestEvent.LockFlags)dataReader.ReadByte();
+                    var lockpickingChanceReduction = dataReader.ReadByte();
                     var unknown = dataReader.ReadByte();
                     var textIndex = dataReader.ReadByte();
                     uint chestIndex = dataReader.ReadByte();
@@ -133,9 +141,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unlockFailEventIndex = dataReader.ReadWord();
                     @event = new ChestEvent
                     {
+                        LockpickingChanceReduction = lockpickingChanceReduction,
                         Unknown = unknown,
                         TextIndex = textIndex,
-                        Lock = lockType,
                         ChestIndex = chestIndex,
                         RemoveWhenEmpty = removeWhenEmpty,
                         KeyIndex = keyIndex,
