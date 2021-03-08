@@ -1851,6 +1851,7 @@ namespace Ambermoon.UI
         {
             if (itemSlot.Amount > 1)
             {
+                itemGrid.HideTooltip();
                 var item = itemManager.GetItem(itemSlot.ItemIndex);
                 OpenAmountInputBox(game.DataNameProvider.DropHowMuchItemsMessage,
                     item.GraphicIndex, item.Name, (uint)itemSlot.Amount, DropAmount);
@@ -1874,6 +1875,7 @@ namespace Ambermoon.UI
                     game.UpdateCharacterInfo();
                 }
 
+                itemGrid.HideTooltip();
                 Ask(game.DataNameProvider.DropItemQuestion, DropIt);
             }
         }

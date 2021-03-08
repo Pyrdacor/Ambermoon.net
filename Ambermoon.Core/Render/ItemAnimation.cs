@@ -24,13 +24,13 @@ namespace Ambermoon.Render
         static readonly int[][] DestroyAnimationPositions = new int[][]
         {
             new [] { 0, -1, 1, -1, 1, -1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0 },
-            new [] { 0, -1, 1, -1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0 },
+            new [] { 0, -1, 1, -1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0 },
             new [] { 1, -1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 },
-            new [] { 1, -1, 1, -1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0 },
+            new [] { 1, -1, 1, -1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0 },
             new [] { 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0 },
             new [] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 },
             new [] { 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0 },
-            new [] { 0, -1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 }
+            new [] { 0, -1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0 }
         };
 
         static Item GetItem(Game game, uint? itemIndex) => itemIndex == null ? null : game.ItemManager.GetItem(itemIndex.Value);
@@ -44,22 +44,26 @@ namespace Ambermoon.Render
 
         static void PlayItemDestroyAnimation(Game game, IRenderView renderView, Position position, uint graphicIndex, Action finishAction)
         {
-            var sprites = new ISprite[64];
-            var animationPositionIndices = new int[64];
+            var sprites = new ISprite[128];
+            var animationPositionIndices = new int[128];
             var offset = TextureAtlasManager.Instance.GetOrCreate(Layer.Items).GetOffset(graphicIndex);
 
             for (int y = 0; y < 8; ++y)
             {
                 for (int x = 0; x < 8; ++x)
                 {
-                    var sprite = sprites[x + y * 8] = renderView.SpriteFactory.Create(1, 1, true, 255);
-                    sprite.TextureAtlasOffset = offset + new Position(x * 2 + y % 2, y * 2 + x % 2);
-                    sprite.Layer = renderView.GetLayer(Layer.Items);
-                    sprite.PaletteIndex = 49;
-                    sprite.X = position.X + x * 2 + y % 2;
-                    sprite.Y = position.Y + y * 2 + x % 2;
-                    sprite.Visible = true;
-                    animationPositionIndices[x + y * 8] = game.RandomInt(0, DestroyAnimationPositions.Length - 1);
+                    for (int i = 0; i < 2; ++i)
+                    {
+                        int index = i * 64 + x + y * 8;
+                        var sprite = sprites[index] = renderView.SpriteFactory.Create(1, 1, true, 255);
+                        sprite.TextureAtlasOffset = offset + new Position(x * 2 + y % 2, y * 2 + x % 2);
+                        sprite.Layer = renderView.GetLayer(Layer.Items);
+                        sprite.PaletteIndex = 49;
+                        sprite.X = position.X + x * 2 + y % 2;
+                        sprite.Y = position.Y + y * 2 + x % 2;
+                        sprite.Visible = true;
+                        animationPositionIndices[index] = game.RandomInt(0, DestroyAnimationPositions.Length - 1);
+                    }
                 }
             }
 
@@ -69,7 +73,7 @@ namespace Ambermoon.Render
             {
                 if (--numAnimationFrames < 0)
                 {
-                    for (int i = 0; i < 64; ++i)
+                    for (int i = 0; i < 128; ++i)
                         sprites[i]?.Delete();
 
                     game.EndSequence();
@@ -79,13 +83,14 @@ namespace Ambermoon.Render
                 {
                     int frame = 7 - numAnimationFrames;
 
-                    for (int i = 0; i < 64; ++i)
+                    for (int i = 0; i < 128; ++i)
                     {
+                        int amplitude = i < 64 ? 1 : 2;
                         var animationPositionIndex = animationPositionIndices[i];
                         int centerX = position.X + 8;
                         int xFactor = sprites[i].X < centerX ? -1 : 1;
-                        int x = DestroyAnimationPositions[animationPositionIndex][frame * 2];
-                        int y = DestroyAnimationPositions[animationPositionIndex][frame * 2 + 1];
+                        int x = DestroyAnimationPositions[animationPositionIndex][frame * 2] * amplitude;
+                        int y = DestroyAnimationPositions[animationPositionIndex][frame * 2 + 1] * amplitude;
                         if (x == 0 && y == 0)
                         {
                             sprites[i].Visible = false;

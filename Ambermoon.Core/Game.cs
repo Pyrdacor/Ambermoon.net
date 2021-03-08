@@ -3558,16 +3558,12 @@ namespace Ambermoon
 
                 if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.ChestIndex))
                 {
-                    ShowLocked(Picture80x80.ChestClosed, withLockpick =>
+                    ShowLocked(Picture80x80.ChestClosed, () =>
                     {
                         CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
-                        layout.ShowClickChestMessage(withLockpick ? DataNameProvider.UnlockedChestWithLockpick
-                            : DataNameProvider.HasOpenedChest, () =>
-                        {
-                            currentWindow.Window = Window.MapView; // This avoids returning to locked screen when closing chest window.
-                            ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map));
-                        });
-                    }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
+                        currentWindow.Window = Window.MapView; // This avoids returning to locked screen when closing chest window.
+                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map));
+                     }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
                 }
@@ -3590,19 +3586,15 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map);
-                ShowLocked(Picture80x80.Door, withLockpick =>
+                ShowLocked(Picture80x80.Door, () =>
                 {
                     CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
-                    layout.ShowClickChestMessage(withLockpick ? DataNameProvider.UnlockedDoorWithLockpick
-                        : DataNameProvider.HasOpenedDoor, () =>
+                    CloseWindow();
+                    if (doorEvent.Next != null)
                     {
-                        CloseWindow();
-                        if (doorEvent.Next != null)
-                        {
-                            EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
-                                (uint)player.Position.Y, CurrentTicks, doorEvent.Next, true);
-                        }
-                    });
+                        EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
+                            (uint)player.Position.Y, CurrentTicks, doorEvent.Next, true);
+                    }
                 }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 doorEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)doorEvent.UnlockFailedEventIndex], true));
@@ -3611,7 +3603,7 @@ namespace Ambermoon
             return true;
         }
 
-        void ShowLocked(Picture80x80 picture80X80, Action<bool> openedAction, string initialMessage,
+        void ShowLocked(Picture80x80 picture80X80, Action openedAction, string initialMessage,
             uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action failedAction)
         {
             layout.SetLayout(LayoutType.Items);
@@ -3682,6 +3674,12 @@ namespace Ambermoon
                 };
             }
 
+            void Unlocked(bool withLockpick, Action finishAction)
+            {
+                layout.ShowClickChestMessage(withLockpick ? (chest ? DataNameProvider.UnlockedChestWithLockpick : DataNameProvider.UnlockedDoorWithLockpick)
+                    : (chest ? DataNameProvider.HasOpenedChest : DataNameProvider.HasOpenedDoor), finishAction);
+            }
+
             itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
             {
                 UntrapMouse();
@@ -3696,38 +3694,46 @@ namespace Ambermoon
                     var item = layout.GetItem(itemSlot);
                     item.ShowItemAmount = false;
 
-                    if (canOpen)
+                    itemGrid.PlayShakeAnimation(itemSlot, () =>
                     {
-                        ItemAnimation.Play(this, renderView, ItemAnimation.Type.Consume, targetPosition, () =>
+                        EndSequence();
+                        if (canOpen)
                         {
-                            itemGrid.ResetAnimation(itemSlot);
-                            item.ShowItemAmount = true;
-                            EndSequence();
-                            openedAction?.Invoke(itemSlot.ItemIndex == LockpickItemIndex);
-                        }, TimeSpan.FromMilliseconds(50));
-                        AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
+                            Unlocked(itemSlot.ItemIndex == LockpickItemIndex, () =>
+                            {
+                                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Consume, targetPosition, () =>
+                                {
+                                    AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
+                                    {
+                                        itemGrid.ResetAnimation(itemSlot);
+                                        item.ShowItemAmount = false;
+                                        item.Visible = false;
+                                        EndSequence();
+                                        openedAction?.Invoke();
+                                    });
+                                }, TimeSpan.FromMilliseconds(50));
+                                AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
+                                {
+                                    item.Visible = false;
+                                    itemSlot.Remove(1);
+                                });
+                            });
+                        }
+                        else
                         {
-                            itemSlot.Remove(1);
-                        });
-                    }
-                    else
-                    {
-                        itemGrid.PlayShakeAnimation(itemSlot, () =>
-                        {
-                            EndSequence();
                             if (itemSlot.ItemIndex == LockpickItemIndex) // Lockpick
                             {
-                                layout.ShowClickChestMessage(DataNameProvider.LockpickBreaks, () =>
+                                AddTimedEvent(TimeSpan.FromMilliseconds(50), () => item.Visible = false);
+                                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Destroy, targetPosition, () =>
                                 {
-                                    AddTimedEvent(TimeSpan.FromMilliseconds(50), () => item.Visible = false);
-                                    ItemAnimation.Play(this, renderView, ItemAnimation.Type.Destroy, targetPosition, () =>
+                                    layout.ShowClickChestMessage(DataNameProvider.LockpickBreaks, () =>
                                     {
                                         itemSlot.Remove(1);
                                         if (itemSlot.Amount > 0)
                                         {
                                             StartSequence();
                                             itemGrid.HideTooltip();
-                                            itemGrid.PlayMoveAnimation(itemSlot, null, () =>
+                                            itemGrid.PlayMoveAnimation(itemSlot, itemGrid.GetSlotPosition(itemGrid.SlotFromItemSlot(itemSlot)), () =>
                                             {
                                                 itemGrid.ResetAnimation(itemSlot);
                                                 EndSequence();
@@ -3755,8 +3761,8 @@ namespace Ambermoon
                                                 StartUseItems();
                                             }
                                         }
-                                    }, TimeSpan.FromMilliseconds(50), null, item);
-                                });
+                                    });
+                                }, TimeSpan.FromMilliseconds(50), null, item);
                             }
                             else
                             {
@@ -3772,8 +3778,8 @@ namespace Ambermoon
                                     });
                                 });
                             }
-                        });
-                    }
+                        }
+                    });
                 });
             };
 
@@ -3788,11 +3794,10 @@ namespace Ambermoon
                 {
                     // Failed
                     // Note: The trap is triggered by the follow-up event (if given) but only if a dice roll against DEX fails.
-                    bool trapDisarmed = (bool)currentWindow.WindowParameters[2]; // Don't use the parameter as we could have disarmed it just now.
+                    bool trapDisarmed = (bool)currentWindow.WindowParameters[2]; // Don't use the parameter as we could have disarmed it just yet.
                     if (hasTrap && !trapDisarmed && RollDice100() >= CurrentPartyMember.Attributes[Attribute.Dexterity].TotalCurrentValue)
                     {
-                        CloseWindow();
-                        failedAction?.Invoke();
+                        CloseWindow(failedAction);
                     }
                     else
                     {
@@ -3802,7 +3807,7 @@ namespace Ambermoon
                 else
                 {
                     // Success
-                    openedAction?.Invoke(false);
+                    Unlocked(false, openedAction);
                 }
             });
             // Use item button
@@ -3833,12 +3838,11 @@ namespace Ambermoon
                 {
                     if (RollDice100() >= CurrentPartyMember.Attributes[Attribute.Dexterity].TotalCurrentValue)
                     {
-                        CloseWindow();
-                        failedAction?.Invoke();
+                        CloseWindow(failedAction);
                     }
                     else
                     {
-                        layout.ShowClickChestMessage(DataNameProvider.UnableToPickTheLock);
+                        layout.ShowClickChestMessage(DataNameProvider.UnableToDisarmTrap);
                     }
                 }
                 else

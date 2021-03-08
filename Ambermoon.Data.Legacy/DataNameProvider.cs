@@ -177,6 +177,7 @@
         public string DisarmTrap => executableData.Messages.GetEntry(Messages.Index.DisarmTrap);
         public string FindTrap => executableData.Messages.GetEntry(Messages.Index.DiscoverTrap);
         public string DoesNotFindTrap => executableData.Messages.GetEntry(Messages.Index.DoesNotDiscoverTraps);
+        public string UnableToDisarmTrap => executableData.Messages.GetEntry(Messages.Index.HearStrangeSound);
         public string EscapedTheTrap => executableData.Messages.GetEntry(Messages.Index.EscapedTheTrap);
         public string WhichItemToOpenChest => executableData.Messages.GetEntry(Messages.Index.WhichItemToOpenChest);
         public string WhichItemToOpenDoor => executableData.Messages.GetEntry(Messages.Index.WhichItemToOpenDoor);
