@@ -3548,7 +3548,7 @@ namespace Ambermoon
             if (chestEvent.RemoveWhenEmpty && chest.Empty)
                 return;
 
-            Fade(() =>
+            void OpenChest()
             {
                 string initialText = map != null && chestEvent.TextIndex != 255 ?
                     map.Texts[(int)chestEvent.TextIndex] : null;
@@ -3561,9 +3561,9 @@ namespace Ambermoon
                     ShowLocked(Picture80x80.ChestClosed, () =>
                     {
                         CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
-                        currentWindow.Window = Window.MapView; // This avoids returning to locked screen when closing chest window.
+                        currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
                         ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map));
-                     }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
+                    }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
                 }
@@ -3571,7 +3571,12 @@ namespace Ambermoon
                 {
                     ShowLoot(chest, initialText, null, chestEvent);
                 }
-            });
+            }
+
+            if (CurrentWindow.Window == Window.Chest)
+                OpenChest();
+            else
+                Fade(OpenChest);
         }
 
         internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map)
