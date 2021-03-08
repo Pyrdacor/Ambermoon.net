@@ -45,6 +45,12 @@ namespace Ambermoon
                 }
                 case EventType.Chest:
                 {
+                    if (trigger == EventTrigger.Mouth)
+                    {
+                        aborted = true;
+                        return null;
+                    }
+
                     if (!(@event is ChestEvent chestEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
