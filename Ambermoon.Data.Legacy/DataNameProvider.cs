@@ -175,8 +175,8 @@
         public string UnlockedDoorWithLockpick => executableData.Messages.GetEntry(Messages.Index.UnlockedDoorWithLockpick);
         public string YouNoticeATrap => executableData.Messages.GetEntry(Messages.Index.YouNoticeATrap);
         public string DisarmTrap => executableData.Messages.GetEntry(Messages.Index.DisarmTrap);
-        public string DiscoverTrap => executableData.Messages.GetEntry(Messages.Index.DiscoverTrap);
-        public string DoesNotDiscoverTraps => executableData.Messages.GetEntry(Messages.Index.DoesNotDiscoverTraps);
+        public string FindTrap => executableData.Messages.GetEntry(Messages.Index.DiscoverTrap);
+        public string DoesNotFindTrap => executableData.Messages.GetEntry(Messages.Index.DoesNotDiscoverTraps);
         public string EscapedTheTrap => executableData.Messages.GetEntry(Messages.Index.EscapedTheTrap);
         public string WhichItemToOpenChest => executableData.Messages.GetEntry(Messages.Index.WhichItemToOpenChest);
         public string WhichItemToOpenDoor => executableData.Messages.GetEntry(Messages.Index.WhichItemToOpenDoor);

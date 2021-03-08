@@ -1347,7 +1347,7 @@ namespace Ambermoon.UI
                         {
                             buttonGrid.SetButton(0, ButtonType.Lockpick, false, null, false); // this is set later manually
                             buttonGrid.SetButton(1, ButtonType.UseItem, false, null, false); // this is set later manually
-                            buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                            buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
                             buttonGrid.SetButton(3, ButtonType.FindTrap, false, null, false); // this is set later manually
                             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);

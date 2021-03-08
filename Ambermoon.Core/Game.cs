@@ -3541,7 +3541,7 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, Map map)
+        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map)
         {
             var chest = GetChest(chestEvent.ChestIndex);
 
@@ -3554,7 +3554,7 @@ namespace Ambermoon
                     map.Texts[(int)chestEvent.TextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Chest, chestEvent, foundTrap, map);
+                SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map);
 
                 if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.ChestIndex))
                 {
@@ -3565,9 +3565,9 @@ namespace Ambermoon
                             : DataNameProvider.HasOpenedChest, () =>
                         {
                             currentWindow.Window = Window.MapView; // This avoids returning to locked screen when closing chest window.
-                            ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, map));
+                            ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map));
                         });
-                    }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap,
+                    }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
                 }
@@ -3578,7 +3578,7 @@ namespace Ambermoon
             });
         }
 
-        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, Map map)
+        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map)
         {
             if (!CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
                 return false;
@@ -3589,7 +3589,7 @@ namespace Ambermoon
                     map.Texts[(int)doorEvent.TextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Door, doorEvent, foundTrap, map);
+                SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map);
                 ShowLocked(Picture80x80.Door, withLockpick =>
                 {
                     CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
@@ -3603,7 +3603,7 @@ namespace Ambermoon
                                 (uint)player.Position.Y, CurrentTicks, doorEvent.Next, true);
                         }
                     });
-                }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap,
+                }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 doorEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)doorEvent.UnlockFailedEventIndex], true));
             });
@@ -3612,7 +3612,7 @@ namespace Ambermoon
         }
 
         void ShowLocked(Picture80x80 picture80X80, Action<bool> openedAction, string initialMessage,
-            uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, Action failedAction)
+            uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action failedAction)
         {
             layout.SetLayout(LayoutType.Items);
             layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
@@ -3628,9 +3628,28 @@ namespace Ambermoon
             bool chest = picture80X80 == Picture80x80.ChestClosed;
             const uint LockpickItemIndex = 138;
 
-            // TODO: switching player, update after item was used and was destroyed without opening the lock -> maybe do not disable at all?
             layout.EnableButton(1, CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false));
-            layout.EnableButton(6, foundTrap);
+            layout.EnableButton(3, !foundTrap);
+            layout.EnableButton(6, foundTrap && !disarmedTrap);
+
+            void PlayerSwitched()
+            {
+                itemGrid.HideTooltip();
+                itemGrid.Disabled = true;
+                layout.ShowChestMessage(null);
+                UntrapMouse();
+                CursorType = CursorType.Sword;
+                inputEnable = true;
+                layout.EnableButton(1, CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false));
+            }
+
+            ActivePlayerChanged += PlayerSwitched;
+
+            void Exit()
+            {
+                ActivePlayerChanged -= PlayerSwitched;
+                CloseWindow();
+            }
 
             void StartUseItems()
             {
@@ -3717,10 +3736,24 @@ namespace Ambermoon
                                         }
                                         else
                                         {
-                                            itemGrid.ResetAnimation(itemSlot);
-                                            item.ShowItemAmount = true;
-                                            item.Visible = true;
-                                            StartUseItems();
+                                            // This is the only case where an item is removed and the lock is not opened.
+                                            // We have to check if this was the last item and the player is still able to
+                                            // use items.
+                                            if (!CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false))
+                                            {
+                                                layout.EnableButton(1, false);
+                                                itemGrid.HideTooltip();
+                                                itemGrid.Disabled = true;
+                                                layout.ShowChestMessage(null);
+                                                UntrapMouse();
+                                            }
+                                            else
+                                            {
+                                                itemGrid.ResetAnimation(itemSlot);
+                                                item.ShowItemAmount = true;
+                                                item.Visible = true;
+                                                StartUseItems();
+                                            }
                                         }
                                     }, TimeSpan.FromMilliseconds(50), null, item);
                                 });
@@ -3747,13 +3780,16 @@ namespace Ambermoon
             // Lockpick button
             layout.AttachEventToButton(0, () =>
             {
+                // TODO: Can locks theoretically be lockpicked if they need a key? I guess in Ambermoon all locks with key have a lockpickingChanceReduction of 100%.
+                //       But what would happen if this value was below 100% for such doors? For now we allow lockpicking those doors as we don't check for key index.
                 int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Ability.LockPicking].TotalCurrentValue, 100) - (int)lockpickingChanceReduction;
 
                 if (chance <= 0 || RollDice100() >= chance)
                 {
                     // Failed
                     // Note: The trap is triggered by the follow-up event (if given) but only if a dice roll against DEX fails.
-                    if (failedAction != null && RollDice100() >= CurrentPartyMember.Attributes[Attribute.Dexterity].TotalCurrentValue)
+                    bool trapDisarmed = (bool)currentWindow.WindowParameters[2]; // Don't use the parameter as we could have disarmed it just now.
+                    if (hasTrap && !trapDisarmed && RollDice100() >= CurrentPartyMember.Attributes[Attribute.Dexterity].TotalCurrentValue)
                     {
                         CloseWindow();
                         failedAction?.Invoke();
@@ -3774,18 +3810,47 @@ namespace Ambermoon
             // Find trap button
             layout.AttachEventToButton(3, () =>
             {
-                if (RollDice100() < CurrentPartyMember.Abilities[Ability.FindTraps].TotalCurrentValue)
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Ability.FindTraps].TotalCurrentValue, 100);
+
+                if (hasTrap && chance > 0 && RollDice100() < chance)
                 {
-                    // TODO
+                    layout.ShowClickChestMessage(DataNameProvider.FindTrap);
                     currentWindow.WindowParameters[1] = true; // Found trap flag
+                    layout.EnableButton(3, false);
                     layout.EnableButton(6, true);
+                }
+                else
+                {
+                    layout.ShowClickChestMessage(DataNameProvider.DoesNotFindTrap);
                 }
             });
             // Disarm trap button
             layout.AttachEventToButton(6, () =>
             {
-                // TODO
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Ability.DisarmTraps].TotalCurrentValue, 100); // TODO: Is there a "find trap" reduction as well?
+
+                if (chance <= 0 || RollDice100() >= chance)
+                {
+                    if (RollDice100() >= CurrentPartyMember.Attributes[Attribute.Dexterity].TotalCurrentValue)
+                    {
+                        CloseWindow();
+                        failedAction?.Invoke();
+                    }
+                    else
+                    {
+                        layout.ShowClickChestMessage(DataNameProvider.UnableToPickTheLock);
+                    }
+                }
+                else
+                {
+                    // Trap was disarmed
+                    layout.ShowClickChestMessage(DataNameProvider.DisarmTrap);
+                    currentWindow.WindowParameters[2] = true; // Disarmed trap flag
+                    layout.EnableButton(6, false);
+                }
             });
+            // Exit button
+            layout.AttachEventToButton(2, Exit);
         }
 
         /// <summary>
@@ -8535,9 +8600,10 @@ namespace Ambermoon
                 {
                     var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
                     bool trapFound = (bool)currentWindow.WindowParameters[1];
-                    var map = (Map)currentWindow.WindowParameters[2];
+                    bool trapDisarmed = (bool)currentWindow.WindowParameters[2];
+                    var map = (Map)currentWindow.WindowParameters[3];
                     currentWindow = DefaultWindow;
-                    ShowChest(chestEvent, trapFound, map);
+                    ShowChest(chestEvent, trapFound, trapDisarmed, map);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
@@ -8546,9 +8612,10 @@ namespace Ambermoon
                 {
                     var doorEvent = (DoorEvent)currentWindow.WindowParameters[0];
                     bool trapFound = (bool)currentWindow.WindowParameters[1];
-                    var map = (Map)currentWindow.WindowParameters[2];
+                    bool trapDisarmed = (bool)currentWindow.WindowParameters[2];
+                    var map = (Map)currentWindow.WindowParameters[3];
                     currentWindow = DefaultWindow;
-                    ShowDoor(doorEvent, trapFound, map);
+                    ShowDoor(doorEvent, trapFound, trapDisarmed, map);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

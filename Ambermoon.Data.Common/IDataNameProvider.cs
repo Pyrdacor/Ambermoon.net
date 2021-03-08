@@ -152,8 +152,8 @@
         string UnlockedDoorWithLockpick { get; }
         string YouNoticeATrap { get; }
         string DisarmTrap { get; }
-        string DiscoverTrap { get; }
-        string DoesNotDiscoverTraps { get; }
+        string FindTrap { get; }
+        string DoesNotFindTrap { get; }
         string EscapedTheTrap { get; }
         string WhichItemToOpenChest { get; }
         string WhichItemToOpenDoor { get; }

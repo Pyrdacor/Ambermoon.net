@@ -39,7 +39,7 @@ namespace Ambermoon
                     if (!(@event is DoorEvent doorEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid door event.");
 
-                    if (!game.ShowDoor(doorEvent, false, map))
+                    if (!game.ShowDoor(doorEvent, false, false, map))
                         aborted = true;
                     return null;
                 }
