@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.x beta - Locks and Level-Up
+- Version [0.4.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.4.0beta): Added screen for opening locks (doors/chests)
+
 ## 0.3.x beta - Places
 - Version [0.3.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.3beta): Added all remaining places (sage, horse/ship seller, enchanter and blacksmith)
 - Version [0.3.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.3.2beta): Added inns, camp fire, sleeping, aging, spell learning and all item-targeted spells
