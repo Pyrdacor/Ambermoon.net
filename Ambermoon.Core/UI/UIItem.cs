@@ -13,6 +13,7 @@ namespace Ambermoon.UI
         readonly IRenderView renderView;
         readonly IItemManager itemManager;
         readonly bool merchantItem;
+        bool showItemAmount = true;
 
         public bool Dragged
         {
@@ -26,6 +27,19 @@ namespace Ambermoon.UI
 
                 if (amountDisplay != null)
                     amountDisplay.DisplayLayer = (byte)(sprite.DisplayLayer + 2);
+            }
+        }
+
+        public bool ShowItemAmount
+        {
+            get => showItemAmount;
+            set
+            {
+                if (showItemAmount == value)
+                    return;
+
+                showItemAmount = value;
+                Update(false);
             }
         }
 
@@ -83,12 +97,19 @@ namespace Ambermoon.UI
                         amountDisplay.TextColor = TextColor.White;
                         amountDisplay.Shadow = true;
                         amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
-                        amountDisplay.Visible = true;
+                        amountDisplay.Visible = ShowItemAmount;
                     }
-                    else if (amountDisplay != null && !stackable)
+                    else if (amountDisplay != null)
                     {
-                        amountDisplay.Delete();
-                        amountDisplay = null;
+                        if (!stackable)
+                        {
+                            amountDisplay.Delete();
+                            amountDisplay = null;
+                        }
+                        else
+                        {
+                            amountDisplay.Visible = ShowItemAmount;
+                        }
                     }
                 }
             }
@@ -96,7 +117,7 @@ namespace Ambermoon.UI
             {
                 if (Item.Stacked)
                     amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
-                amountDisplay.Visible = Item.Stacked;
+                amountDisplay.Visible = Item.Stacked && ShowItemAmount;
             }
 
             if (Item.ItemIndex != 0 && Item.Amount != 0 && Item.Flags.HasFlag(ItemSlotFlags.Broken))

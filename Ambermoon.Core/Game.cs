@@ -1279,9 +1279,9 @@ namespace Ambermoon
             clickMoveActive = false;
         }
 
-        internal void EndSequence()
+        internal void EndSequence(bool force = true)
         {
-            if (!allInputWasDisabled)
+            if (force || !allInputWasDisabled)
                 allInputDisabled = false;
             allInputWasDisabled = false;
         }
@@ -3674,15 +3674,21 @@ namespace Ambermoon
                 itemGrid.PlayMoveAnimation(itemSlot, targetPosition, () =>
                 {
                     bool canOpen = keyIndex == itemSlot.ItemIndex || (keyIndex == 0 && itemSlot.ItemIndex == LockpickItemIndex);
+                    var item = layout.GetItem(itemSlot);
+                    item.ShowItemAmount = false;
 
                     if (canOpen)
                     {
-                        itemGrid.PlayConsumeAnimation(itemSlot, targetPosition, () =>
+                        ItemAnimation.Play(this, renderView, ItemAnimation.Type.Consume, targetPosition, () =>
                         {
                             itemGrid.ResetAnimation(itemSlot);
-                            itemSlot.Remove(1);
+                            item.ShowItemAmount = true;
                             EndSequence();
                             openedAction?.Invoke(itemSlot.ItemIndex == LockpickItemIndex);
+                        }, TimeSpan.FromMilliseconds(50));
+                        AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
+                        {
+                            itemSlot.Remove(1);
                         });
                     }
                     else
@@ -3692,18 +3698,31 @@ namespace Ambermoon
                             EndSequence();
                             if (itemSlot.ItemIndex == LockpickItemIndex) // Lockpick
                             {
-                                // TODO: Play destroy animation
-                                itemSlot.Remove(1);
                                 layout.ShowClickChestMessage(DataNameProvider.LockpickBreaks, () =>
                                 {
-                                    StartSequence();
-                                    itemGrid.HideTooltip();
-                                    itemGrid.PlayMoveAnimation(itemSlot, null, () =>
+                                    AddTimedEvent(TimeSpan.FromMilliseconds(50), () => item.Visible = false);
+                                    ItemAnimation.Play(this, renderView, ItemAnimation.Type.Destroy, targetPosition, () =>
                                     {
-                                        itemGrid.ResetAnimation(itemSlot);
-                                        EndSequence();
-                                        StartUseItems();
-                                    });
+                                        itemSlot.Remove(1);
+                                        if (itemSlot.Amount > 0)
+                                        {
+                                            StartSequence();
+                                            itemGrid.HideTooltip();
+                                            itemGrid.PlayMoveAnimation(itemSlot, null, () =>
+                                            {
+                                                itemGrid.ResetAnimation(itemSlot);
+                                                EndSequence();
+                                                StartUseItems();
+                                            });
+                                        }
+                                        else
+                                        {
+                                            itemGrid.ResetAnimation(itemSlot);
+                                            item.ShowItemAmount = true;
+                                            item.Visible = true;
+                                            StartUseItems();
+                                        }
+                                    }, TimeSpan.FromMilliseconds(50), null, item);
                                 });
                             }
                             else
@@ -4545,8 +4564,8 @@ namespace Ambermoon
         {
             void PlayItemMagicAnimation(Action animationFinishAction = null)
             {
-                layout.PlayItemEffect(itemSlot, TimeSpan.FromMilliseconds(50),
-                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemMagicAnimation), 8, 110, animationFinishAction ?? finishAction);
+                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot),
+                    animationFinishAction ?? finishAction, TimeSpan.FromMilliseconds(50));
             }
 
             void Error(string message)
@@ -6138,7 +6157,7 @@ namespace Ambermoon
                                 for (int i = 0; i < maxCursesToRemove; ++i)
                                 {
                                     var cursedItemSlot = equipSlots.First(s => s.Value.Flags.HasFlag(ItemSlotFlags.Cursed));
-                                    layout.DestroyItem(cursedItemSlot.Value, true, TimeSpan.FromMilliseconds(800));
+                                    layout.DestroyItem(cursedItemSlot.Value, TimeSpan.FromMilliseconds(800));
                                 }
 
                                 AddTimedEvent(TimeSpan.FromSeconds(2), () =>
@@ -7526,7 +7545,7 @@ namespace Ambermoon
                                 Error(DataNameProvider.ManagedToLearnSpell, () =>
                                 {
                                     CurrentPartyMember.AddSpell(item.Spell);
-                                    layout.DestroyItem(itemSlot, false, TimeSpan.FromMilliseconds(50), true);
+                                    layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true);
                                 });
                             }
                             else
@@ -7534,7 +7553,7 @@ namespace Ambermoon
                                 // Failed to learn the spell
                                 Error(DataNameProvider.FailedToLearnSpell, () =>
                                 {
-                                    layout.DestroyItem(itemSlot, false, TimeSpan.FromMilliseconds(50));
+                                    layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50));
                                 });
                             }
                         }

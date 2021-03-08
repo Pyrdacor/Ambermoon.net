@@ -208,20 +208,20 @@ namespace Ambermoon.UI
 
                     if (item.NumberOfFingers == 2)
                     {
-                        if (grid.GetItem(rightFingerSlot)?.Empty == false &&
-                            grid.GetItem(rightFingerSlot + 2)?.Empty == false)
+                        if (grid.GetItemSlot(rightFingerSlot)?.Empty == false &&
+                            grid.GetItemSlot(rightFingerSlot + 2)?.Empty == false)
                         {
                             layout.SetInventoryMessage(game.DataNameProvider.NotEnoughFreeFingers, true);
                             return null;
                         }
                     }
 
-                    var rightFingerItemSlot = grid.GetItem(rightFingerSlot);
+                    var rightFingerItemSlot = grid.GetItemSlot(rightFingerSlot);
 
                     // place on first free finger starting at right one
                     if (rightFingerItemSlot?.Empty ?? true && rightFingerItemSlot?.Flags.HasFlag(ItemSlotFlags.Cursed) != true)
                         return rightFingerSlot;
-                    else if (grid.GetItem(rightFingerSlot + 2)?.Flags.HasFlag(ItemSlotFlags.Cursed) != true)
+                    else if (grid.GetItemSlot(rightFingerSlot + 2)?.Flags.HasFlag(ItemSlotFlags.Cursed) != true)
                         return rightFingerSlot + 2; // left finger
                     else
                     {
@@ -235,17 +235,17 @@ namespace Ambermoon.UI
                 {
                     if (item.NumberOfHands == 2)
                     {
-                        var leftHandSlot = grid.GetItem((int)(EquipmentSlot.LeftHand - 1));
+                        var leftHandSlot = grid.GetItemSlot((int)(EquipmentSlot.LeftHand - 1));
 
-                        if (grid.GetItem((int)(EquipmentSlot.RightHand - 1))?.Empty == false &&
+                        if (grid.GetItemSlot((int)(EquipmentSlot.RightHand - 1))?.Empty == false &&
                             leftHandSlot?.Empty == false && (leftHandSlot?.ItemIndex ?? 0) != 0)
                         {
                             layout.SetInventoryMessage(game.DataNameProvider.NotEnoughFreeHands, true);
                             return null;
                         }
 
-                        if (grid.GetItem((int)EquipmentSlot.RightHand - 1)?.Flags.HasFlag(ItemSlotFlags.Cursed) == true ||
-                            grid.GetItem((int)EquipmentSlot.LeftHand - 1)?.Flags.HasFlag(ItemSlotFlags.Cursed) == true)
+                        if (grid.GetItemSlot((int)EquipmentSlot.RightHand - 1)?.Flags.HasFlag(ItemSlotFlags.Cursed) == true ||
+                            grid.GetItemSlot((int)EquipmentSlot.LeftHand - 1)?.Flags.HasFlag(ItemSlotFlags.Cursed) == true)
                         {
                             layout.SetInventoryMessage(game.DataNameProvider.ItemIsCursed, true);
                             return null;
@@ -253,7 +253,7 @@ namespace Ambermoon.UI
                     }
                 }
 
-                var targetSlot = grid.GetItem((int)item.EquipmentSlot - 1);
+                var targetSlot = grid.GetItemSlot((int)item.EquipmentSlot - 1);
 
                 if (targetSlot?.Flags.HasFlag(ItemSlotFlags.Cursed) == true)
                 {
@@ -263,7 +263,7 @@ namespace Ambermoon.UI
 
                 if (game.BattleActive)
                 {
-                    var itemIndexAtDestinationSlot = grid.GetItem((int)equipmentSlot - 1)?.ItemIndex;
+                    var itemIndexAtDestinationSlot = grid.GetItemSlot((int)equipmentSlot - 1)?.ItemIndex;
                     var itemAtDestinationSlot = (itemIndexAtDestinationSlot ?? 0) == 0 ? null : itemManager.GetItem(itemIndexAtDestinationSlot.Value);
 
                     if (itemAtDestinationSlot != null && !itemAtDestinationSlot.Flags.HasFlag(ItemFlags.RemovableDuringFight))
@@ -350,7 +350,9 @@ namespace Ambermoon.UI
 
         public bool SlotVisible(int slot) => slot >= ScrollOffset && slot < ScrollOffset + slotsPerPage;
 
-        public ItemSlot GetItem(int slot) => slots[slot];
+        public UIItem GetItem(int slot) => items[slot];
+
+        public ItemSlot GetItemSlot(int slot) => slots[slot];
 
         public Position GetSlotPosition(int slot) => slotPositions[slot - ScrollOffset];
 
@@ -724,8 +726,13 @@ namespace Ambermoon.UI
         {
             int slotIndex = SlotFromItemSlot(itemSlot);
             var item = items[slotIndex];
-            item.Position = GetSlotPosition(slotIndex);
-            item.Dragged = false;
+
+            if (item != null)
+            {
+                item.Position = GetSlotPosition(slotIndex);
+                item.Dragged = false;
+                item.ShowItemAmount = true;
+            }
         }
 
         public void PlayMoveAnimation(ItemSlot itemSlot, Position targetPosition, Action finishAction)
@@ -734,112 +741,26 @@ namespace Ambermoon.UI
             int slotIndex = SlotFromItemSlot(itemSlot);
             var item = items[slotIndex];
             targetPosition ??= slotPosition;
-            const int pixelsPerSecond = 300;
-            const int timePerFrame = 10;
-            int distPerFrame = pixelsPerSecond * timePerFrame / 1000;
-            var dist = targetPosition - item.Position;
-            int moved = 0;
             var startPosition = item.Position;
-            float length = (float)Math.Sqrt(dist.X * dist.X + dist.Y * dist.Y);
-            int maxMove = Util.Ceiling(length);
 
-            void Animate()
+            void MoveFinished()
             {
-                moved += distPerFrame;
-                if (moved > maxMove)
-                    moved = maxMove;
-                float factor = moved / length;
-                item.Position = startPosition + new Position(Util.Round(factor * dist.X), Util.Round(factor * dist.Y));
-
-                if (moved == maxMove)
-                {
-                    item.Dragged = false;
-                    finishAction?.Invoke();
-                }
-                else
-                {
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
-                }
+                item.Dragged = false;
+                item.ShowItemAmount = true;
+                finishAction?.Invoke();
             }
+
             item.Dragged = true;
-            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
-        }
+            item.ShowItemAmount = false;
 
-        public void PlayConsumeAnimation(ItemSlot itemSlot, Position position, Action finishAction)
-        {
-            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), () =>
-            {
-                int slotIndex = SlotFromItemSlot(itemSlot);
-                var item = items[slotIndex];
-                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
-                var offset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.ItemConsume));
-                var sprite = renderView.SpriteFactory.Create(16, 16, true, 255);
-                sprite.TextureAtlasOffset = offset;
-                sprite.Layer = renderView.GetLayer(Layer.UI);
-                sprite.PaletteIndex = 49;
-                sprite.X = position.X;
-                sprite.Y = position.Y;
-                sprite.Visible = true;
-                int numFrames = 11;
-                const int timePerFrame = 60;
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(240), () => item.Visible = false);
-
-                void Animate()
-                {
-                    if (--numFrames <= 0)
-                    {
-                        sprite?.Delete();
-                        finishAction?.Invoke();
-                    }
-                    else
-                    {
-                        sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + 16, sprite.TextureAtlasOffset.Y);
-                        game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
-                    }
-                }
-
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), Animate);
-            });
+            ItemAnimation.Play(game, renderView, ItemAnimation.Type.Move, startPosition, MoveFinished,
+                TimeSpan.FromMilliseconds(50), targetPosition, item);
         }
 
         public void PlayShakeAnimation(ItemSlot itemSlot, Action finishAction)
         {
-            int slotIndex = SlotFromItemSlot(itemSlot);
-            var item = items[slotIndex];
-            int minX = item.Position.X - 1;
-            int maxX = item.Position.X + 1;
-            bool right = true;
-            int runs = 7;
-
-            void Animate()
-            {
-                if (right)
-                {
-                    item.Position = new Position(item.Position.X + 1, item.Position.Y);
-
-                    if (item.Position.X == maxX)
-                        right = false;
-                }
-                else
-                {
-                    item.Position = new Position(item.Position.X - 1, item.Position.Y);
-
-                    if (item.Position.X == minX)
-                    {
-                        right = true;
-
-                        if (--runs < 0)
-                        {
-                            finishAction?.Invoke();
-                            return;
-                        }
-                    }
-                }
-
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(6), Animate);
-            }
-
-            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), Animate);
+            ItemAnimation.Play(game, renderView, ItemAnimation.Type.Shake, null, finishAction, TimeSpan.FromMilliseconds(50),
+                null, items[SlotFromItemSlot(itemSlot)]);
         }
     }
 }
