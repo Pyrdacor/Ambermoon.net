@@ -2746,6 +2746,7 @@ namespace Ambermoon
             layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.Red : TextColor.Yellow, TextAlign.Center);
             if (!conversation)
             {
+                bool magicClass = character.Class != Class.Warrior && character.Class != Class.Thief;
                 characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
                     string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                     character.ExperiencePoints)));
@@ -2753,12 +2754,15 @@ namespace Ambermoon
                     string.Format(DataNameProvider.CharacterInfoHitPointsString,
                     character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue),
                     TextColor.White, TextAlign.Center));
-                characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
-                    string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                    character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue),
-                    TextColor.White, TextAlign.Center));
+                if (magicClass)
+                {
+                    characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
+                        string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                        character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue),
+                        TextColor.White, TextAlign.Center));
+                }
                 characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
-                    string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
+                    (magicClass ? string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) : new string(' ', 7)) + " " +
                     string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), TextColor.White, TextAlign.Center));
                 var displayGold = OpenStorage is IPlace ? 0 : character.Gold;
                 characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
@@ -7914,10 +7918,50 @@ namespace Ambermoon
 
         void AddExperience(PartyMember partyMember, uint amount, Action finishedEvent)
         {
-            // TODO: Add exp and check for level up.
-            // If level up, display level up window.
-            // Call finishedEvent if no window or after window is closed.
-            finishedEvent?.Invoke();
+            if (partyMember.AddExperiencePoints(amount))
+            {
+                // Level-up
+                ShowLevelUpWindow(partyMember, finishedEvent);
+            }
+            else
+            {
+                finishedEvent?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Starts playing a specific music. If none is given
+        /// the current map music is played instead.
+        /// 
+        /// Returns the currently played song.
+        /// </summary>
+        Song PlayMusic(Song? song)
+        {
+            if (!Configuration.Music)
+                return Song.Default;
+
+            if (song == null || song == Song.Default)
+            {
+                // TODO
+                return PlayMusic((Song)Map.MusicIndex);
+            }
+
+            // TODO ...
+            return Song.Default;
+        }
+
+        void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)
+        {
+            var previousSong = PlayMusic(Song.StairwayToLevel50);
+            var popup = layout.OpenPopup(new Position(), 3, 3);
+
+            // TODO ...
+
+            popup.Closed += () =>
+            {
+                PlayMusic(previousSong);
+                finishedEvent?.Invoke();
+            };
         }
 
         internal void ShowBattleLoot(BattleEndInfo battleEndInfo, Action closeAction)

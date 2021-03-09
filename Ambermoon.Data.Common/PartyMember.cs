@@ -142,5 +142,31 @@ namespace Ambermoon.Data
             RemoveFood(Food);
             AddFood(food);
         }
+
+        /// <summary>
+        /// Adds the given amount of experience points to the
+        /// party member. Returns true if the party members
+        /// gained at least one level up.
+        /// </summary>
+        public bool AddExperiencePoints(uint amount)
+        {
+            ExperiencePoints += amount;
+
+            uint nextLevel = Level + 1u;
+            uint nextLevelExperiencePoints = Class.GetExpFactor() * (nextLevel * (nextLevel + 1) / 2);
+
+            if (ExperiencePoints < nextLevelExperiencePoints || Level == 50)
+                return false;
+
+            do
+            {
+                ++Level;
+                ++nextLevel;
+                nextLevelExperiencePoints = Class.GetExpFactor() * (nextLevel * (nextLevel + 1) / 2);
+            }
+            while (ExperiencePoints >= nextLevelExperiencePoints && Level < 50);
+
+            return true;
+        }
     }
 }

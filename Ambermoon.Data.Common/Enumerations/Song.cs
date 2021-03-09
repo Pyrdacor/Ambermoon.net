@@ -3,6 +3,7 @@
     // Note: Menu and Intro songs are not part of this.
     public enum Song
     {
+        Default,
         /// <summary>
         /// Gnome mine
         /// </summary>

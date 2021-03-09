@@ -13,7 +13,7 @@ namespace Ambermoon.Data
         Alchemist,
         Mystic,
         Mage,
-        Animal, // only Necros the cat NPC on Nera's isle
+        Animal, // only Necros the cat NPC on Nera's isle (I guess a cat party member was planned)
         Monster // monsters who use none of the above classes
         // Note: Don't add the unknown class types here which were mentioned below.
         //       Data loading will break otherwise!
@@ -52,5 +52,20 @@ namespace Ambermoon.Data
     public static class ClassExtensions
     {
         public static bool Contains(this ClassFlag classes, Class @class) => classes.HasFlag((ClassFlag)(1 << (int)@class));
+
+        // TODO: This is stored in AM2_CPU (slothsoft said at 0x451F0, I guess in v1.05 german)
+        public static uint GetExpFactor(this Class @class) => @class switch
+        {
+            Class.Adventurer => 75,
+            Class.Warrior => 150,
+            Class.Paladin => 180,
+            Class.Thief => 100,
+            Class.Ranger => 125,
+            Class.Healer => 90,
+            Class.Alchemist => 90,
+            Class.Mystic => 90,
+            Class.Mage => 95,
+            _ => 32767
+        };
     }
 }
