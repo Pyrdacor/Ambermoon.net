@@ -194,7 +194,13 @@
         public string TPAreNow => executableData.Messages.GetEntry(Messages.Index.TPAreNow);
         public string APRAreNow => executableData.Messages.GetEntry(Messages.Index.APRAreNow);
         public string EP => executableData.UITexts.Entries[UITextIndex.EP];
-
+        public string SpecialItemActivated => executableData.Messages.GetEntry(Messages.Index.ThisItemFulfillsSpecialPurpose);
+        public string SpecialItemAlreadyInUse => executableData.Messages.GetEntry(Messages.Index.SameItemAlreadyInUse);
+        public string NoChargesLeft => executableData.Messages.GetEntry(Messages.Index.NoChargesLeft);
+        public string CannotCallEagleIfNotOnFoot => executableData.Messages.GetEntry(Messages.Index.CannotCallEagleIfNotOnFoot);
+        public string BlowsTheFlute => executableData.Messages.GetEntry(Messages.Index.BlowsTheFlute);
+        public string CannotUseItHere => executableData.Messages.GetEntry(Messages.Index.CannotUseItHere);
+        public string CannotUseMagicDiscHere => executableData.Messages.GetEntry(Messages.Index.CannotUseMagicDiscHere);
 
         #region Battle messages
 

@@ -162,8 +162,9 @@ namespace Ambermoon.UI
             texts.Add(uiText);
             if (scrolling)
             {
+                bool closeAfterScroll = CloseOnClick;
                 CloseOnClick = false;
-                uiText.Scrolled += scrolledToEnd => CloseOnClick = scrolledToEnd;
+                uiText.Scrolled += scrolledToEnd => CloseOnClick = closeAfterScroll && scrolledToEnd;
             }
             return uiText;
         }

@@ -171,7 +171,13 @@
         string TPAreNow { get; }
         string APRAreNow { get; }
         string EP { get; }
-
+        string SpecialItemActivated { get; }
+        string SpecialItemAlreadyInUse { get; }
+        string NoChargesLeft { get; }
+        string CannotCallEagleIfNotOnFoot { get; }
+        string BlowsTheFlute { get; }
+        string CannotUseItHere { get; }
+        string CannotUseMagicDiscHere { get; }
 
         #region Battle messages
 

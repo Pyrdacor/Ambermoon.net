@@ -1538,6 +1538,27 @@ namespace Ambermoon.UI
             game.CursorType = CursorType.Sword;
         }
 
+        bool ShowTextItem(uint index, uint subIndex)
+        {
+            var text = game.ItemManager.GetText(index, subIndex);
+
+            if (text == null)
+                return false;
+
+            game.Pause();
+            game.InputEnable = false;
+            
+            OpenTextPopup(game.ProcessText(text), new Position(16, 52), 256, 112, true, true, false, TextColor.Gray, () =>
+            {
+                game.InputEnable = true;
+                game.Resume();
+                game.ResetCursor();
+            });
+            game.CursorType = CursorType.Click;
+
+            return true;
+        }
+
         void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
             if (itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
@@ -1546,9 +1567,17 @@ namespace Ambermoon.UI
                 return;
             }
 
-            // TODO: cannot use it here, wrong place, wrong world
             var user = game.CurrentInventory;
             var item = itemManager.GetItem(itemSlot.ItemIndex);
+
+            if (!game.BattleActive && game.TestUseItemMapEvent(itemSlot.ItemIndex))
+            {
+                ReduceItemCharge(itemSlot);
+                game.CloseWindow(() => game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex)));
+                return;
+            }
+
+            // TODO: cannot use it here, wrong place, wrong world
 
             if (!item.IsUsable)
             {
@@ -1557,11 +1586,37 @@ namespace Ambermoon.UI
                 return;
             }
 
-            // TODO: check available charges
-
             if (!item.Classes.Contains(user.Class))
             {
                 SetInventoryMessage(game.DataNameProvider.WrongClassToUseItem, true);
+                return;
+            }
+
+            void PlayConsume(Action finishAction)
+            {
+                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, itemGrid.GetSlotPosition(slot), finishAction);
+            }
+
+            if (item.Flags.HasFlag(ItemFlags.Readable) && item.TextIndex != 0)
+            {
+                if (!ShowTextItem(item.TextIndex, item.TextSubIndex))
+                    throw new AmbermoonException(ExceptionScope.Data, $"Invalid text index for item '{item.Name}'");
+                return;
+            }
+            else if (item.Type == ItemType.SpecialItem)
+            {
+                if (game.CurrentSavegame.IsSpecialItemActive(item.SpecialItemPurpose))
+                {
+                    SetInventoryMessage(game.DataNameProvider.SpecialItemAlreadyInUse, true);
+                }
+                else
+                {
+                    PlayConsume(() =>
+                    {
+                        game.CurrentSavegame.ActivateSpecialItem(item.SpecialItemPurpose);
+                        SetInventoryMessage(game.DataNameProvider.SpecialItemActivated, true);
+                    });
+                }
                 return;
             }
 
@@ -1575,21 +1630,120 @@ namespace Ambermoon.UI
                         return;
                     }
 
+                    if (itemSlot.NumRemainingCharges == 0)
+                    {
+                        SetInventoryMessage(game.DataNameProvider.NoChargesLeft, true);
+                        return;
+                    }
+
                     // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
                     bool equipped = itemGrid == itemGrids[1];
                     var caster = game.CurrentInventory;
                     game.CloseWindow(() => game.PickBattleSpell(item.Spell, (uint)slot, equipped, caster));
+                    return;
                 }
-            }
-            else if (game.TestUseItemMapEvent(itemSlot.ItemIndex))
-            {
-                ReduceItemCharge(itemSlot);
-                game.CloseWindow(() => game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex)));
+                else
+                {
+                    SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                    return;
+                }
             }
             else
             {
-                // do other things
-                // TODO: item has no effect here (only if it does nothing else, e.g. torches can be used on spider webs and without them)
+                if (item.Spell != Spell.None)
+                {
+                    bool wrongPlace = false;
+
+                    if (game.LastWindow.Window == Window.Camp)
+                    {
+                        wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Camp);
+                    }
+                    else if (game.LastWindow.Window == Window.MapView)
+                    {
+                        if (!SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.AnyMap))
+                        {
+                            if (game.Map.IsWorldMap)
+                                wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.WorldMapOnly);
+                            else if (game.Map.Flags.HasFlag(MapFlags.Dungeon))
+                                wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly);
+                            else
+                                wrongPlace = true;
+                        }
+                    }
+                    else
+                    {
+                        wrongPlace = true;
+                    }
+
+                    if (wrongPlace)
+                    {
+                        SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                        return;
+                    }
+
+                    if (itemSlot.NumRemainingCharges == 0)
+                    {
+                        SetInventoryMessage(game.DataNameProvider.NoChargesLeft, true);
+                        return;
+                    }
+
+                    if (item.Spell == Spell.CallEagle && game.TravelType == TravelType.Walk)
+                    {
+                        itemGrid.HideTooltip();
+                        ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), () =>
+                            game.UseSpell(game.CurrentInventory, item.Spell, itemGrid));
+                    }
+                    else
+                    {
+                        // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
+                        bool equipped = itemGrid == itemGrids[1];
+                        game.UseSpell(game.CurrentInventory, item.Spell, itemGrid);
+                    }
+                }
+                else if (item.Type == ItemType.Transportation)
+                {
+                    if (game.LastWindow.Window != Window.MapView || !game.Map.IsWorldMap)
+                    {
+                        SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                        return;
+                    }
+
+                    // TODO: Can they be used on Morag?
+                    switch (item.Transportation)
+                    {
+                        case Transportation.FlyingDisc:
+                            if (game.TravelType != TravelType.Walk)
+                            {
+                                SetInventoryMessage(game.DataNameProvider.CannotUseMagicDiscHere, true);
+                                return;
+                            }
+                            game.CloseWindow(() =>
+                            {
+                                game.PlayMusic(Song.CompactDisc);
+                                game.TravelType = TravelType.MagicalDisc;
+                            });
+                            break;
+                        case Transportation.WitchBroom:
+                            if (game.TravelType != TravelType.Walk)
+                            {
+                                SetInventoryMessage(game.DataNameProvider.CannotUseItHere, true);
+                                return;
+                            }
+                            game.CloseWindow(() =>
+                            {
+                                game.PlayMusic(Song.BurnBabyBurn);
+                                game.TravelType = TravelType.WitchBroom;
+                            });
+                            break;
+                        default:
+                            throw new AmbermoonException(ExceptionScope.Data, $"Unexpected transport type from item '{item.Name}': {item.Transportation}");
+                    }
+                }
+                else
+                {
+                    SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                    return;
+                }
             }
         }
 

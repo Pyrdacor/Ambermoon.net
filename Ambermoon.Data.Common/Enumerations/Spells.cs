@@ -322,6 +322,8 @@
                 spellInfo.SpellSchool > SpellSchool.Destruction)
                 return false;
 
+            // TODO: Monsters can't use healing spells in Ambermoon.
+
             return
                 spell != Spell.DispellUndead &&
                 spell != Spell.DestroyUndead &&

@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
 
 namespace Ambermoon
 {
@@ -277,6 +278,8 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, introData);
             var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
             var fontProvider = new FontProvider(executableData);
+            foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
+                executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
 
             // Create render view
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
@@ -408,6 +411,8 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             var fontProvider = new FontProvider(executableData);
+            foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
+                executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
             {
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);

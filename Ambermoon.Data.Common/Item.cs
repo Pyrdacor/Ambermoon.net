@@ -95,7 +95,7 @@ namespace Ambermoon.Data
             get
             {
                 return Spell != Spell.None || Type == ItemType.Potion || Type == ItemType.SpecialItem || Type == ItemType.SpellScroll ||
-                    Type == ItemType.TextScroll || Type == ItemType.Tool || Type == ItemType.Transportation;
+                    Type == ItemType.TextScroll || Type == ItemType.Tool || Type == ItemType.Transportation || Flags.HasFlag(ItemFlags.Readable);
             }
         }
 

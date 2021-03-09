@@ -6,5 +6,6 @@ namespace Ambermoon.Data
     {
         IReadOnlyList<Item> Items { get; }
         Item GetItem(uint index);
+        string GetText(uint index, uint subIndex);
     }
 }
