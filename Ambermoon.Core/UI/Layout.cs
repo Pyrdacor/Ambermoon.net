@@ -1721,6 +1721,9 @@ namespace Ambermoon.UI
                             {
                                 game.PlayMusic(Song.CompactDisc);
                                 game.TravelType = TravelType.MagicalDisc;
+                                TransportEnabled = true;
+                                if (ButtonGridPage == 1)
+                                    EnableButton(3, true);
                             });
                             break;
                         case Transportation.WitchBroom:
@@ -1733,6 +1736,9 @@ namespace Ambermoon.UI
                             {
                                 game.PlayMusic(Song.BurnBabyBurn);
                                 game.TravelType = TravelType.WitchBroom;
+                                TransportEnabled = true;
+                                if (ButtonGridPage == 1)
+                                    EnableButton(3, true);
                             });
                             break;
                         default:
