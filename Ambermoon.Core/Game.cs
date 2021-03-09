@@ -1033,7 +1033,7 @@ namespace Ambermoon
                                 if (!inn)
                                     --partyMember.Food;
 
-                                if (partyMember.Class != Class.Warrior && partyMember.Class != Class.Thief) // Has SP
+                                if (partyMember.Class.IsMagic()) // Has SP
                                 {
                                     layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLPAndSP, lpRecovered, spRecovered), Next);
                                 }
@@ -2740,13 +2740,13 @@ namespace Ambermoon
             layout.AddText(new Rect(242, offsetY + 56, 62, 7), DataNameProvider.GetGenderName(character.Gender));
             characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
                 string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
-                character.Attributes[Data.Attribute.Age].CurrentValue)));
+                character.Attributes[Attribute.Age].CurrentValue)));
             characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
                 $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
             layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.Red : TextColor.Yellow, TextAlign.Center);
             if (!conversation)
             {
-                bool magicClass = character.Class != Class.Warrior && character.Class != Class.Thief;
+                bool magicClass = character.Class.IsMagic();
                 characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
                     string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                     character.ExperiencePoints)));
@@ -4517,6 +4517,8 @@ namespace Ambermoon
 
         void AddExhaustion(PartyMember partyMember)
         {
+            // TODO: damage
+
             foreach (var attribute in Enum.GetValues<Attribute>())
             {
                 partyMember.Attributes[attribute].StoredValue = partyMember.Attributes[attribute].CurrentValue;
@@ -7512,9 +7514,9 @@ namespace Ambermoon
                     UntrapMouse();
                     CursorType = CursorType.Sword;
                     inputEnable = true;
-
-                    layout.EnableButton(0, CurrentPartyMember.Class != Class.Warrior && CurrentPartyMember.Class != Class.Thief);
-                    layout.EnableButton(3, CurrentPartyMember.Class != Class.Warrior && CurrentPartyMember.Class != Class.Thief);
+                    bool magicClass = CurrentPartyMember.Class.IsMagic();
+                    layout.EnableButton(0, magicClass);
+                    layout.EnableButton(3, magicClass);
                 }
 
                 ActivePlayerChanged += PlayerSwitched;
@@ -7918,7 +7920,7 @@ namespace Ambermoon
 
         void AddExperience(PartyMember partyMember, uint amount, Action finishedEvent)
         {
-            if (partyMember.AddExperiencePoints(amount))
+            if (partyMember.AddExperiencePoints(amount, RandomInt))
             {
                 // Level-up
                 ShowLevelUpWindow(partyMember, finishedEvent);
@@ -7953,9 +7955,30 @@ namespace Ambermoon
         void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)
         {
             var previousSong = PlayMusic(Song.StairwayToLevel50);
-            var popup = layout.OpenPopup(new Position(), 3, 3);
+            var popup = layout.OpenPopup(new Position(16, 62), 18, 6);
+            bool magicClass = partyMember.Class.IsMagic();
 
-            // TODO ...
+            void AddValueText<T>(int y, string text, T value, T? maxValue = null, string unit = "") where T : struct
+            {
+                popup.AddText(new Position(32, y), text, TextColor.Gray);
+                popup.AddText(new Position(212, y), maxValue == null ? $"{value}{unit}" : $"{value}/{maxValue}{unit}", TextColor.Gray);
+            }
+
+            popup.AddText(new Rect(32, 78, 256, Global.GlyphLineHeight), partyMember.Name + string.Format(DataNameProvider.HasReachedLevel, partyMember.Level), TextColor.Gray, TextAlign.Center);
+
+            AddValueText(92, DataNameProvider.LPAreNow, partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue);
+            if (magicClass)
+            {
+                AddValueText(99, DataNameProvider.SPAreNow, partyMember.SpellPoints.CurrentValue, partyMember.SpellPoints.MaxValue);
+                AddValueText(106, DataNameProvider.SLPAreNow, partyMember.SpellLearningPoints);
+            }
+            AddValueText(113, DataNameProvider.TPAreNow, partyMember.TrainingPoints);
+            AddValueText(120, DataNameProvider.APRAreNow, partyMember.AttacksPerRound);
+
+            if (partyMember.Level >= 50)
+                popup.AddText(new Position(32, 134), DataNameProvider.MaxLevelReached, TextColor.Gray);
+            else
+                AddValueText(134, DataNameProvider.NextLevelAt, partyMember.GetNextLevelExperiencePoints(), null, " " + DataNameProvider.EP);
 
             popup.Closed += () =>
             {

@@ -162,6 +162,15 @@
         string HasOpenedDoor { get; }
         string ThisItemDoesNotOpenChest { get; }
         string ThisItemDoesNotOpenDoor { get; }
+        string HasReachedLevel { get; }
+        string MaxLevelReached { get; }
+        string NextLevelAt { get; }
+        string LPAreNow { get; }
+        string SPAreNow { get; }
+        string SLPAreNow { get; }
+        string TPAreNow { get; }
+        string APRAreNow { get; }
+        string EP { get; }
 
 
         #region Battle messages

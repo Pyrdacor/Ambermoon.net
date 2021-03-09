@@ -143,17 +143,22 @@ namespace Ambermoon.Data
             AddFood(food);
         }
 
+        public uint GetNextLevelExperiencePoints()
+        {
+            uint nextLevel = Level + 1u;
+            return Class.GetExpFactor() * (nextLevel * (nextLevel + 1) / 2);
+        }
+
         /// <summary>
         /// Adds the given amount of experience points to the
         /// party member. Returns true if the party members
         /// gained at least one level up.
         /// </summary>
-        public bool AddExperiencePoints(uint amount)
+        public bool AddExperiencePoints(uint amount, Func<int, int, int> random)
         {
             ExperiencePoints += amount;
 
-            uint nextLevel = Level + 1u;
-            uint nextLevelExperiencePoints = Class.GetExpFactor() * (nextLevel * (nextLevel + 1) / 2);
+            uint nextLevelExperiencePoints = GetNextLevelExperiencePoints();
 
             if (ExperiencePoints < nextLevelExperiencePoints || Level == 50)
                 return false;
@@ -161,12 +166,34 @@ namespace Ambermoon.Data
             do
             {
                 ++Level;
-                ++nextLevel;
-                nextLevelExperiencePoints = Class.GetExpFactor() * (nextLevel * (nextLevel + 1) / 2);
+                nextLevelExperiencePoints = GetNextLevelExperiencePoints();
+                AddLevelUpEffects(random);
             }
             while (ExperiencePoints >= nextLevelExperiencePoints && Level < 50);
 
             return true;
+        }
+
+        void AddLevelUpEffects(Func<int, int, int> random)
+        {
+            // Note: Original only uses base value but I find it better to use bonus values as well.
+            var intelligence = Attributes[Attribute.Intelligence].TotalCurrentValue;
+            bool magicClass = Class.IsMagic();
+            uint lpAdd = HitPointsPerLevel * (uint)random(50, 100) / 100;
+            uint spAdd = magicClass ? SpellPointsPerLevel * (uint)random(50, 100) / 100 + intelligence / 25 : 0;
+            uint slpAdd = magicClass ? SpellLearningPointsPerLevel * (uint)random(50, 100) / 100 + intelligence / 25 : 0;
+            uint tpAdd = TrainingPointsPerLevel * (uint)random(50, 100) / 100;
+
+            HitPoints.MaxValue += lpAdd;
+            HitPoints.CurrentValue += lpAdd;
+            if (magicClass)
+            {
+                SpellPoints.MaxValue += spAdd;
+                SpellPoints.CurrentValue += spAdd;
+                SpellLearningPoints = (ushort)Math.Min(ushort.MaxValue, SpellLearningPoints + slpAdd);
+            }
+            TrainingPoints = (ushort)Math.Min(ushort.MaxValue, TrainingPoints + tpAdd);
+            AttacksPerRound = (byte)(AttacksPerRoundIncreaseLevels == 0 ? 1 : Util.Limit(1, Level / AttacksPerRoundIncreaseLevels, 255));
         }
     }
 }

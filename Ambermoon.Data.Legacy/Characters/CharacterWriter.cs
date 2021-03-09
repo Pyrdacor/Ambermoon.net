@@ -61,7 +61,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write((ushort)character.BaseAttack);
             dataWriter.Write((ushort)character.MagicAttack);
             dataWriter.Write((ushort)character.MagicDefense);
-            dataWriter.Write(character.AttacksPerRoundPerLevel);
+            dataWriter.Write(character.AttacksPerRoundIncreaseLevels);
             dataWriter.Write(character.HitPointsPerLevel);
             dataWriter.Write(character.SpellPointsPerLevel);
             dataWriter.Write(character.SpellLearningPointsPerLevel);

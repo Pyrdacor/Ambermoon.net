@@ -67,7 +67,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.BaseAttack = (short)dataReader.ReadWord();
             character.MagicAttack = (short)dataReader.ReadWord();
             character.MagicDefense = (short)dataReader.ReadWord();
-            character.AttacksPerRoundPerLevel = dataReader.ReadWord();
+            character.AttacksPerRoundIncreaseLevels = dataReader.ReadWord();
             character.HitPointsPerLevel = dataReader.ReadWord();
             character.SpellPointsPerLevel = dataReader.ReadWord();
             character.SpellLearningPointsPerLevel = dataReader.ReadWord();

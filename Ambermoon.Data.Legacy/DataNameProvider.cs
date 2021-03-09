@@ -185,6 +185,15 @@
         public string HasOpenedDoor => executableData.Messages.GetEntry(Messages.Index.HasOpenedDoor);
         public string ThisItemDoesNotOpenChest => executableData.Messages.GetEntry(Messages.Index.ThisItemDoesNotOpenChest);
         public string ThisItemDoesNotOpenDoor => executableData.Messages.GetEntry(Messages.Index.ThisItemDoesNotOpenDoor);
+        public string HasReachedLevel => executableData.Messages.GetEntry(Messages.Index.HasReachedLevel);
+        public string MaxLevelReached => executableData.Messages.GetEntry(Messages.Index.MaxLevelReached);
+        public string NextLevelAt => executableData.Messages.GetEntry(Messages.Index.NextLevelAt);
+        public string LPAreNow => executableData.Messages.GetEntry(Messages.Index.LPAreNow);
+        public string SPAreNow => executableData.Messages.GetEntry(Messages.Index.SPAreNow);
+        public string SLPAreNow => executableData.Messages.GetEntry(Messages.Index.SLPAreNow);
+        public string TPAreNow => executableData.Messages.GetEntry(Messages.Index.TPAreNow);
+        public string APRAreNow => executableData.Messages.GetEntry(Messages.Index.APRAreNow);
+        public string EP => executableData.UITexts.Entries[UITextIndex.EP];
 
 
         #region Battle messages

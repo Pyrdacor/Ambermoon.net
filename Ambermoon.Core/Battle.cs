@@ -1540,7 +1540,7 @@ namespace Ambermoon
         static float GetMonsterDeathScale(Monster monster)
         {
             // 59 is the normal frame height
-            return monster.MappedFrameHeight / 59.0f;
+            return Math.Max(monster.MappedFrameWidth, monster.MappedFrameHeight) / 59.0f;
         }
 
         void HandleCharacterDeath(Character attacker, Character target, Action finishAction)

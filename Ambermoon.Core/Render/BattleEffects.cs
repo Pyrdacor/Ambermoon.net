@@ -94,11 +94,19 @@ namespace Ambermoon.Render
         }
 
         static BattleEffectInfo CreateSimpleEffect(IRenderView renderView, uint tile, CombatGraphicIndex graphicIndex,
-            Character[] battleField, uint duration, Func<bool, int> yOffsetProvider = null, float scale = 1.0f)
+            Character[] battleField, uint duration, Func<bool, int> yOffsetProvider = null, float scale = 1.0f, bool ground = false)
         {
             var info = renderView.GraphicProvider.GetCombatGraphicInfo(graphicIndex);
             var position = GetCenterPosition(renderView, tile, battleField, yOffsetProvider?.Invoke(battleField[tile] is Monster) ?? 0);
             scale *= GetScaleFromRow(renderView, tile, battleField);
+
+            if (ground && battleField[tile] is Monster)
+            {
+                var offsetY = yOffsetProvider?.Invoke(true) ?? 0;
+                var groundPositionY = Layout.GetMonsterCombatGroundPosition(renderView, (int)tile).Y + offsetY;
+                int effectHeight = Util.Round(scale * info.GraphicInfo.Height);
+                position.Y = groundPositionY - effectHeight / 2;
+            }
 
             return new BattleEffectInfo
             {
@@ -179,7 +187,7 @@ namespace Ambermoon.Render
                 BattleEffect.SlingstoneAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.Slingstone, battleField)),
                 BattleEffect.SlingdaggerAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.Slingdagger, battleField)),
                 BattleEffect.SickleAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.FlyingSickle, battleField, 1.5f)),
-                BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, battleField, Game.TicksPerSecond * 5 / 4, null, scale)),
+                BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, battleField, Game.TicksPerSecond * 5 / 4, null, scale, true)),
                 BattleEffect.BlockSpell => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.SpellBlock, battleField, Game.TicksPerSecond / 2, monster => monster ? -32 : -46)),
                 BattleEffect.PlayerAtack => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackSword, battleField, Game.TicksPerSecond / 4, _ => -10)),
                 _ => null

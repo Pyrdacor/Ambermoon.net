@@ -67,5 +67,7 @@ namespace Ambermoon.Data
             Class.Mage => 95,
             _ => 32767
         };
+
+        public static bool IsMagic(this Class @class) => @class != Class.Warrior && @class != Class.Thief && @class < Class.Animal;
     }
 }

@@ -46,7 +46,7 @@ namespace Ambermoon.Data
         public short VariableDefense { get; set; }
         public short MagicAttack { get; set; }
         public short MagicDefense { get; set; }
-        public ushort AttacksPerRoundPerLevel { get; set; }
+        public ushort AttacksPerRoundIncreaseLevels { get; set; }
         public ushort HitPointsPerLevel { get; set; }
         public ushort SpellPointsPerLevel { get; set; }
         public ushort SpellLearningPointsPerLevel { get; set; }
