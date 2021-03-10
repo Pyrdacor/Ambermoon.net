@@ -20,7 +20,7 @@ jobs:
   - task: VSBuild@1
     inputs:
       solution: '**\*.sln'
-    condition: contains(variables['build.sourceBranch'], 'refs/heads/main')
+    condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
   - powershell: publish.ps1
     env:
       isWindows: false
@@ -37,7 +37,7 @@ jobs:
   - task: VSBuild@1
     inputs:
       solution: '**\*.sln'
-    condition: contains(variables['build.sourceBranch'], 'refs/heads/main')
+    condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
   - powershell: publish.ps1
     env:
       isWindows: true
