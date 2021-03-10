@@ -24,6 +24,20 @@ jobs:
     env:
       isWindows: false
     condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+  - task: GitHubRelease@1
+    displayName: 'Create Linux GitHub Release'      
+    inputs:
+      gitHubConnection: AmbermoonNetGitHub
+      repositoryName: Pyrdacor/Ambermoon.net
+      releaseTitle: 'Release $(tagName)'
+      tagSource: gitTag
+      tag: $(tagName)
+      action: create
+      assets: |
+        $(Build.ArtifactStagingDirectory)/Ambermoon.net-Linux.tar.gz
+      isDraft: true
+      isPreRelease: true
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
 - job: Windows
   pool:
     vmImage: 'windows-latest'
@@ -46,4 +60,19 @@ jobs:
   - powershell: nuget.ps1
     env:
       isWindows: true
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+  - task: GitHubRelease@1
+    displayName: 'Create Windows GitHub Release'      
+    inputs:
+      gitHubConnection: AmbermoonNetGitHub
+      repositoryName: Pyrdacor/Ambermoon.net
+      releaseTitle: 'Release $(tagName)'
+      tagSource: gitTag
+      tag: $(tagName)
+      action: create
+      assets: |
+        $(Build.ArtifactStagingDirectory)/Ambermoon.net-Windows.zip
+        $(Build.ArtifactStagingDirectory)/Ambermoon.net-Windows32Bit.zip
+      isDraft: true
+      isPreRelease: true
     condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')

@@ -5,6 +5,9 @@ environment:
 
 platform: Any CPU
 configuration: Release
+branches:
+  only:
+    - appveyor_disabled_for_now # We use azure pipelines now
 
 before_build:
   - dotnet restore Ambermoon.net.sln --verbosity normal
