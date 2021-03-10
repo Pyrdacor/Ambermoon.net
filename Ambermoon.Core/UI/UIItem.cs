@@ -96,6 +96,8 @@ namespace Ambermoon.UI
                         amountDisplay.Layer = renderView.GetLayer(Layer.Text);
                         amountDisplay.TextColor = TextColor.White;
                         amountDisplay.Shadow = true;
+                        amountDisplay.X = Item.Amount < 10 ? sprite.X + 5 : sprite.X + 2;
+                        amountDisplay.Y = sprite.Y + 17;
                         amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
                         amountDisplay.Visible = ShowItemAmount;
                     }
@@ -108,6 +110,7 @@ namespace Ambermoon.UI
                         }
                         else
                         {
+                            amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
                             amountDisplay.Visible = ShowItemAmount;
                         }
                     }

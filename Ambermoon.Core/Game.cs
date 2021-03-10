@@ -217,7 +217,7 @@ namespace Ambermoon
         readonly ISavegameSerializer savegameSerializer;
         Player player;
         internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
-        internal PartyMember CurrentPartyMember { get; private set; } = null;
+        public PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
         bool pickingTargetInventory = false;
         event Func<int, bool> targetInventoryPicked;
@@ -2203,7 +2203,7 @@ namespace Ambermoon
 
         public IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
             .Select(i => GetPartyMember(i)).Where(p => p != null);
-        internal PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
+        public PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
         internal Chest GetChest(uint index) => CurrentSavegame.Chests[(int)index];
         internal Merchant GetMerchant(uint index) => CurrentSavegame.Merchants[(int)index];
 
@@ -2421,6 +2421,15 @@ namespace Ambermoon
                     if (CurrentSavegame.ActiveSpells[(int)activeSpell] != null)
                         layout.AddActiveSpell(activeSpell, CurrentSavegame.ActiveSpells[(int)activeSpell], false);
                 }
+            }
+        }
+
+        public void UpdateInventory()
+        {
+            if (CurrentWindow.Window == Window.Inventory)
+            {
+                layout.UpdateItemGrids();
+                UpdateCharacterInfo();
             }
         }
 

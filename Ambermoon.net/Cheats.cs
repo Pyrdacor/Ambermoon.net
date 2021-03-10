@@ -67,6 +67,22 @@ namespace Ambermoon
                     "Usage: fight <monster_group_id>",
                     StartBattle
                 )
+            },
+            { "items",
+                Create
+                (
+                    "Shows a list of all available items." + Environment.NewLine +
+                    "Usage: items",
+                    ShowItems
+                )
+            },
+            { "give",
+                Create
+                (
+                    "Gives an item to a party member." + Environment.NewLine +
+                    "Usage: give <item_index> [amount] [party_member_index]",
+                    GiveItem
+                )
             }
         };
 
@@ -523,6 +539,118 @@ namespace Ambermoon
                 Console.WriteLine("Try to use the command when no ingame window is open.");
                 Console.WriteLine();
                 return;
+            }
+        }
+
+        static void ShowItems(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            foreach (var item in game.ItemManager.Items)
+            {
+                Console.WriteLine($"{item.Index:000}: {item.Name}");
+            }
+        }
+
+        static void GiveItem(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            if (args.Length == 0 || !uint.TryParse(args[0], out uint itemIndex) ||
+                !game.ItemManager.Items.Any(item => item.Index == itemIndex))
+            {
+                Console.WriteLine("Invalid item index.");
+                Console.WriteLine("Type 'items' to see a list of items.");
+                Console.WriteLine();
+                return;
+            }
+
+            int amount = args.Length < 2 ? 1 : int.TryParse(args[1], out int n) ? n : -1;
+
+            if (amount < 1)
+            {
+                Console.WriteLine("Item amount was invalid or below 1.");
+                Console.WriteLine();
+                return;
+            }
+
+            if (amount > 99)
+            {
+                Console.WriteLine("Item amount must not be greater than 99.");
+                Console.WriteLine();
+                return;
+            }
+
+            int? partyMemberIndex = args.Length < 3 ? (int?)null : int.TryParse(args[2], out int i) ? i : -1;
+
+            if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers))
+            {
+                Console.WriteLine("Party member index was invalid or outside the range 1~6.");
+                Console.WriteLine();
+                return;
+            }
+
+            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value);
+
+            if (partyMember == null)
+            {
+                Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
+                Console.WriteLine();
+                return;
+            }
+
+            var inventorySlots = partyMember.Inventory.Slots;
+            var item = game.ItemManager.GetItem(itemIndex);
+            int remainingAmount = amount;
+            bool stackable = false;
+
+            if (item.Flags.HasFlag(ItemFlags.Stackable))
+            {
+                stackable = true;
+
+                foreach (var slot in inventorySlots.Where(s => s.ItemIndex == itemIndex && s.Amount < 99))
+                {
+                    int addAmount = Math.Min(remainingAmount, 99 - slot.Amount);
+                    slot.Amount += addAmount;
+                    remainingAmount -= addAmount;
+                    partyMember.TotalWeight += (uint)addAmount * item.Weight;
+
+                    if (remainingAmount == 0)
+                        break;
+                }
+            }
+
+            foreach (var slot in inventorySlots.Where(s => s.Empty))
+            {
+                int addAmount = Math.Min(remainingAmount, stackable ? 99 : 1);
+                slot.ItemIndex = itemIndex;
+                slot.Amount = addAmount;
+                remainingAmount -= addAmount;
+                partyMember.TotalWeight += (uint)addAmount * item.Weight;
+
+                if (remainingAmount == 0)
+                    break;
+            }
+
+            if (remainingAmount == amount)
+            {
+                Console.WriteLine("There was no space to add the items.");
+                Console.WriteLine();
+            }
+            else if (remainingAmount != 0)
+            {
+                game.UpdateInventory();
+                Console.WriteLine($"Only {amount - remainingAmount}/{amount} items could be added.");
+                Console.WriteLine();
+            }
+            else
+            {
+                game.UpdateInventory();
+                if (amount == 1)
+                    Console.WriteLine("The item was added successfully.");
+                else
+                    Console.WriteLine($"All {amount} items were added successfully.");
+                Console.WriteLine();
             }
         }
     }

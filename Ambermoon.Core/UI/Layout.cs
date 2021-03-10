@@ -2980,6 +2980,14 @@ namespace Ambermoon.UI
             }
         }
 
+        public void UpdateItemGrids()
+        {
+            foreach (var itemGrid in itemGrids)
+            {
+                itemGrid.Refresh();
+            }
+        }
+
         public void UpdateItemSlot(ItemSlot itemSlot)
         {
             foreach (var itemGrid in itemGrids)

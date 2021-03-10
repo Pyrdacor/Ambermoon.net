@@ -329,6 +329,22 @@ namespace Ambermoon.UI
             items[slot]?.Update(false);
         }
 
+        public void Refresh(bool merchantItem = false)
+        {
+            for (int i = 0; i < items.Length; ++i)
+            {
+                if (items[i] == null)
+                {
+                    if (slots[i]?.Empty == false)
+                        SetItem(i, slots[i], merchantItem);
+                }
+                else
+                {
+                    items[i].Update(true);
+                }
+            }
+        }
+
         public void SetItem(int slot, ItemSlot item, bool merchantItem = false)
         {
             items[slot]?.Destroy();
