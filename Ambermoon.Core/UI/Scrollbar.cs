@@ -101,11 +101,12 @@ namespace Ambermoon.UI
             sprite.Y = vertical ? Util.Limit(scrollArea.Top, position.Y, scrollArea.Bottom - barSize) : position.Y;
         }
 
-        public void SetScrollPosition(int position, bool raiseEvent = false)
+        public void SetScrollPosition(int position, bool raiseEvent = false, bool force = false)
         {
-            if (ScrollOffset == position)
+            if (!force && ScrollOffset == position)
                 return;
 
+            bool scrolled = ScrollOffset != position;
             ScrollOffset = position;
 
             if (vertical)
@@ -117,7 +118,7 @@ namespace Ambermoon.UI
                 SetBarPosition(new Position(scrollArea.Left + Util.Round((float)position * (scrollArea.Width - barSize) / ScrollRange), this.position.Y));
             }
 
-            if (raiseEvent)
+            if (scrolled && raiseEvent)
                 Scrolled?.Invoke(ScrollOffset);
         }
 
@@ -195,7 +196,26 @@ namespace Ambermoon.UI
         public bool LeftClick(Position position)
         {
             if (!BarArea.Contains(position))
-                return false;
+            {
+                int scrollAmount = Util.Limit(1, ScrollRange / 2, 2);
+
+                if (position.Y > BarArea.Y)
+                {
+                    if (ScrollOffset < ScrollRange)
+                        SetScrollPosition(Math.Min(ScrollRange, ScrollOffset + scrollAmount), true);
+                    else // The bar might be positioned in-between
+                        SetScrollPosition(ScrollRange, true, true);
+                }
+                else if (position.Y < BarArea.Y)
+                {
+                    if (ScrollOffset > 0)
+                        SetScrollPosition(Math.Max(0, ScrollOffset - scrollAmount), true);
+                    else // The bar might be positioned in-between
+                        SetScrollPosition(0, true, true);
+                }
+
+                return true;
+            }
 
             Scrolling = true;
             scrollStartPosition = ScrollOffset;
