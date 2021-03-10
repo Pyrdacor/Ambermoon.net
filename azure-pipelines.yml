@@ -17,9 +17,8 @@ jobs:
   - task: NuGetCommand@2
     inputs:
       restoreSolution: '$(solution)'
-  - task: VSBuild@1
-    inputs:
-      solution: '**/*.sln'
+  - script: |
+      dotnet build -c Release '**/*.sln'
     condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
   - powershell: publish.ps1
     env:
@@ -36,7 +35,9 @@ jobs:
       restoreSolution: '$(solution)'
   - task: VSBuild@1
     inputs:
-      solution: '**\*.sln'
+      solution: '**/*.sln'
+      platform: 'Any CPU'
+      configuration: 'Release'
     condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
   - powershell: publish.ps1
     env:
