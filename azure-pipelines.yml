@@ -1,0 +1,48 @@
+trigger:
+- master
+- refs/tags/v*
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'WindowsRelease'
+
+jobs:
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - script: echo Running Linux build
+  - task: NuGetToolInstaller@1
+  - task: NuGetCommand@2
+    inputs:
+      restoreSolution: '$(solution)'
+  - task: VSBuild@1
+    inputs:
+      solution: '**\*.sln'
+    condition: contains(variables['build.sourceBranch'], 'refs/heads/main')
+  - powershell: publish.ps1
+    env:
+      isWindows: false
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+- job: Windows
+  pool:
+    vmImage: 'windows-latest'
+  steps:
+  - script: echo Running Win64 build
+  - task: NuGetToolInstaller@1
+  - task: NuGetCommand@2
+    inputs:
+      restoreSolution: '$(solution)'
+  - task: VSBuild@1
+    inputs:
+      solution: '**\*.sln'
+    condition: contains(variables['build.sourceBranch'], 'refs/heads/main')
+  - powershell: publish.ps1
+    env:
+      isWindows: true
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+  - powershell: nuget.ps1
+    env:
+      isWindows: true
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
