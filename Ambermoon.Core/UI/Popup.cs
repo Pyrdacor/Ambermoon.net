@@ -164,7 +164,11 @@ namespace Ambermoon.UI
             {
                 bool closeAfterScroll = CloseOnClick;
                 CloseOnClick = false;
-                uiText.Scrolled += scrolledToEnd => CloseOnClick = closeAfterScroll && scrolledToEnd;
+                uiText.Scrolled += scrolledToEnd =>
+                {
+                    if (closeAfterScroll && scrolledToEnd)
+                        game.ClosePopup();
+                };
             }
             return uiText;
         }

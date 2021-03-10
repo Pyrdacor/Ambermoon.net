@@ -1561,6 +1561,8 @@ namespace Ambermoon.UI
 
         void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
+            itemGrid.HideTooltip();
+
             if (itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
             {
                 SetInventoryMessage(game.DataNameProvider.CannotUseBrokenItems, true);
@@ -1592,11 +1594,6 @@ namespace Ambermoon.UI
                 return;
             }
 
-            void PlayConsume(Action finishAction)
-            {
-                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, itemGrid.GetSlotPosition(slot), finishAction);
-            }
-
             if (item.Flags.HasFlag(ItemFlags.Readable) && item.TextIndex != 0)
             {
                 if (!ShowTextItem(item.TextIndex, item.TextSubIndex))
@@ -1611,8 +1608,10 @@ namespace Ambermoon.UI
                 }
                 else
                 {
-                    PlayConsume(() =>
+                    game.StartSequence();
+                    DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
                     {
+                        game.EndSequence();
                         game.CurrentSavegame.ActivateSpecialItem(item.SpecialItemPurpose);
                         SetInventoryMessage(game.DataNameProvider.SpecialItemActivated, true);
                     });
@@ -2076,6 +2075,8 @@ namespace Ambermoon.UI
             {
                 if (waitForClick)
                 {
+                    foreach (var itemGrid in itemGrids)
+                        itemGrid.HideTooltip();
                     inventoryMessage?.Destroy();
                     game.CursorType = CursorType.Click;
                     inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 14), game.ProcessText(message));
@@ -2351,6 +2352,9 @@ namespace Ambermoon.UI
                 {
                     game.EquipmentRemoved(itemSlot.ItemIndex, itemSlot.Amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                 }
+
+                if (game.CurrentWindow.Window == Window.Inventory)
+                    game.UpdateCharacterInfo();
             }
 
             if (consumed)
