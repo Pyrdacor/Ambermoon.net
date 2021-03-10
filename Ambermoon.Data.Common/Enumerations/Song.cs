@@ -9,7 +9,7 @@
         /// </summary>
         WhoSaidHiHo,
         /// <summary>
-        /// Morag world map
+        /// Morag places and sand lizard
         /// </summary>
         MellowCamelFunk,
         /// <summary>
@@ -57,7 +57,7 @@
         /// </summary>
         Capital,
         /// <summary>
-        /// Lyramion world map
+        /// World map
         /// </summary>
         PloddingAlong,
         /// <summary>
@@ -65,7 +65,7 @@
         /// </summary>
         CompactDisc,
         /// <summary>
-        /// Melancholic music
+        /// Raft
         /// </summary>
         RiversideTravellingBlues,
         /// <summary>
@@ -89,7 +89,7 @@
         /// </summary>
         BarBrawlin,
         /// <summary>
-        /// Morag temples?
+        /// Sand ship
         /// </summary>
         PsychedelicDuneGroove,
         /// <summary>

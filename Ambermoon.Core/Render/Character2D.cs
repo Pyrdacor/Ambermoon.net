@@ -111,8 +111,9 @@ namespace Ambermoon.Render
         void UpdateBaseline()
         {
             var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
-            sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y +
-                Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT);
+            bool groundBased = !(this is Player2D) || !Map.Map.IsWorldMap;
+            sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (!groundBased ? CurrentAnimationInfo.FrameHeight :
+                Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT));
         }
 
         public void PostSameMapTeleport(Map map, uint newX, uint newY)
@@ -224,8 +225,9 @@ namespace Ambermoon.Render
                     Position.Y = (int)y;
                 }
                 var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+                bool groundBased = !(this is Player2D) || !Map.Map.IsWorldMap;
                 sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
-                sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y + RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight;
+                sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y + (groundBased ? RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight : 0);
                 sprite.PaletteIndex = (byte)paletteIndexProvider();
                 sprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
                 if (sprite.Visible && tileType == Data.Map.TileType.Invisible)

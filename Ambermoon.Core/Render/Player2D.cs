@@ -10,7 +10,7 @@ namespace Ambermoon.Render
         readonly IMapManager mapManager;
 
         public Player2D(Game game, IRenderLayer layer, Player player, RenderMap2D map,
-            ISpriteFactory spriteFactory, IGameData gameData, Position startPosition,
+            ISpriteFactory spriteFactory, Position startPosition,
             IMapManager mapManager)
             : base(game, layer, TextureAtlasManager.Instance.GetOrCreate(Layer.Characters),
                   spriteFactory, game.GetPlayerAnimationInfo, map, startPosition,

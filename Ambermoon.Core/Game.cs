@@ -764,7 +764,7 @@ namespace Ambermoon
             if (player2D == null)
             {
                 player2D = new Player2D(this, renderView.GetLayer(Layer.Characters), player, renderMap2D,
-                    renderView.SpriteFactory, renderView.GameData, new Position(0, 0), MapManager);
+                    renderView.SpriteFactory, new Position(0, 0), MapManager);
             }
 
             player2D.Visible = true;
@@ -3107,6 +3107,35 @@ namespace Ambermoon
                 Fade(RunTransition);
         }
 
+        public bool ActivateTransport(TravelType travelType)
+        {
+            if (travelType == TravelType.Walk ||
+                travelType == TravelType.Swim)
+                throw new AmbermoonException(ExceptionScope.Application, "Walking and swimming should not be set via ActivateTransport");
+
+            if (!Map.IsWorldMap)
+                return false;
+
+            if (TravelType != TravelType.Walk)
+                return false;
+
+            void Activate()
+            {
+                PlayMusic(travelType.TravelSong());
+                TravelType = travelType;
+                layout.TransportEnabled = true;
+                if (layout.ButtonGridPage == 1)
+                    layout.EnableButton(3, true);
+            }
+
+            if (WindowActive)
+                CloseWindow(Activate);
+            else
+                Activate();
+
+            return true;
+        }
+
         internal void ToggleTransport()
         {
             uint x = (uint)player.Position.X;
@@ -3143,10 +3172,14 @@ namespace Ambermoon
 
                 var tile = renderMap2D[player.Position];
 
-                if (tile.Type == Map.TileType.Water)
+                if (tile.Type == Map.TileType.Water &&
+                    (!TravelType.UsesMapObject() ||
+                    !TravelType.CanStandOn()))
                     StartSwimming();
                 else
                     TravelType = TravelType.Walk;
+
+                PlayMusic(Song.Default);
 
                 Map.TriggerEvents(this, EventTrigger.Move, x, y, CurrentTicks, CurrentSavegame);
             }
@@ -3154,7 +3187,7 @@ namespace Ambermoon
             {
                 CurrentSavegame.TransportLocations[index.Value] = null;
                 renderMap2D.RemoveTransportAt(mapIndex, x, y);
-                TravelType = transport.TravelType;
+                ActivateTransport(transport.TravelType);
             }
         }
 
@@ -3182,7 +3215,7 @@ namespace Ambermoon
             return null;
         }
 
-        List<TransportLocation> GetTransportsInVisibleArea(out int? transportAtPlayerIndex)
+        List<TransportLocation> GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex)
         {
             transportAtPlayerIndex = null;
             var transports = new List<TransportLocation>();
@@ -3203,7 +3236,7 @@ namespace Ambermoon
                     transports.Add(transport);
 
                     if (transport.MapIndex == mapIndex && transport.Position == position)
-                        transportAtPlayerIndex = i;
+                        transportAtPlayerIndex = transport;
                 }
             }
 
@@ -3286,19 +3319,23 @@ namespace Ambermoon
 
                 if (Map.IsWorldMap)
                 {
+                    var transports = GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
                     var tile = renderMap2D[player.Position];
+                    var tileType = tile.Type;
 
-                    if (tile.Type == Map.TileType.Water)
+                    if (tileType == Map.TileType.Water && transportAtPlayerIndex != null &&
+                        transportAtPlayerIndex.TravelType.CanStandOn())
+                        tileType = Map.TileType.Normal;
+
+                    if (tileType == Map.TileType.Water)
                     {
                         if (TravelType == TravelType.Walk)
                             StartSwimming();
                         else if (TravelType == TravelType.Swim)
                             DoSwimDamage();
                     }
-                    else if (tile.Type != Map.TileType.Water && TravelType == TravelType.Swim)
+                    else if (tileType != Map.TileType.Water && TravelType == TravelType.Swim)
                         TravelType = TravelType.Walk;
-
-                    var transports = GetTransportsInVisibleArea(out int? transportAtPlayerIndex);
 
                     foreach (var transport in transports)
                     {
@@ -3317,7 +3354,7 @@ namespace Ambermoon
                     {
                         EnableTransport();
                     }
-                    else if (TravelType.IsStoppable())
+                    else if (TravelType.IsStoppable() && transportAtPlayerIndex == null)
                     {
                         if (TravelType == TravelType.MagicalDisc ||
                             TravelType == TravelType.Raft ||
@@ -4965,6 +5002,7 @@ namespace Ambermoon
         {
             Fade(() =>
             {
+                PlayMusic(Song.SapphireFireballsOfPureLove);
                 roundPlayerBattleActions.Clear();
                 ShowBattleWindow(nextEvent, combatBackgroundIndex);
                 // Note: Create clones so we can change the values in battle for each monster.
@@ -5049,6 +5087,7 @@ namespace Ambermoon
                         }
                         roundPlayerBattleActions.Clear();
                         UpdateBattleStatus();
+                        PlayMusic(Song.Default);
                         currentBattleInfo.EndBattle(battleEndInfo);
                         currentBattleInfo = null;
                     }
@@ -7986,20 +8025,19 @@ namespace Ambermoon
         }
 
         /// <summary>
-        /// Starts playing a specific music. If none is given
+        /// Starts playing a specific music. If Song.Default is given
         /// the current map music is played instead.
         /// 
-        /// Returns the currently played song.
+        /// Returns the previously played song.
         /// </summary>
-        internal Song PlayMusic(Song? song)
+        internal Song PlayMusic(Song song)
         {
             if (!Configuration.Music)
                 return Song.Default;
 
-            if (song == null || song == Song.Default)
+            if (song == Song.Default)
             {
-                // TODO
-                return PlayMusic((Song)Map.MusicIndex);
+                return PlayMusic(Map.MusicIndex == 0 ? Song.PloddingAlong : (Song)Map.MusicIndex);
             }
 
             // TODO ...

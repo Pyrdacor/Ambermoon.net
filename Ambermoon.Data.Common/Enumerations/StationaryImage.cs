@@ -14,17 +14,24 @@ namespace Ambermoon.Data.Enumerations
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class StationaryImageExtensions
     {
-        public static StationaryImage ToStationaryImage(this TravelType travelType)
+        public static StationaryImage ToStationaryImage(this TravelType travelType) => travelType switch
         {
-            return travelType switch
-            {
-                TravelType.Horse => StationaryImage.Horse,
-                TravelType.Raft => StationaryImage.Raft,
-                TravelType.Ship => StationaryImage.Boat,
-                TravelType.SandLizard => StationaryImage.SandLizard,
-                TravelType.SandShip => StationaryImage.SandShip,
-                _ => throw new AmbermoonException(ExceptionScope.Application, $"Travel type {travelType} does not use a stationary image.")
-            };
-        }
+            TravelType.Horse => StationaryImage.Horse,
+            TravelType.Raft => StationaryImage.Raft,
+            TravelType.Ship => StationaryImage.Boat,
+            TravelType.SandLizard => StationaryImage.SandLizard,
+            TravelType.SandShip => StationaryImage.SandShip,
+            _ => throw new AmbermoonException(ExceptionScope.Application, $"Travel type {travelType} does not use a stationary image.")
+        };
+
+        public static uint AsIndex(this StationaryImage stationaryImage) => stationaryImage switch
+        {
+            StationaryImage.Horse => 0,
+            StationaryImage.Raft => 1,
+            StationaryImage.Boat => 2,
+            StationaryImage.SandLizard => 3,
+            StationaryImage.SandShip => 4,
+            _ => throw new AmbermoonException(ExceptionScope.Application, $"Stationary image {stationaryImage} does not exist.")
+        };
     }
 }

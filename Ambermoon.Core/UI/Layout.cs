@@ -1708,38 +1708,21 @@ namespace Ambermoon.UI
                         return;
                     }
 
-                    // TODO: Can they be used on Morag?
+                    if (game.TravelType != TravelType.Walk)
+                    {
+                        // Note: There is a message especially for the flying disc but
+                        // it is not used in this case. Don't know yet where it is actually used.
+                        SetInventoryMessage(game.DataNameProvider.CannotUseItHere, true);
+                        return;
+                    }
+
                     switch (item.Transportation)
                     {
                         case Transportation.FlyingDisc:
-                            if (game.TravelType != TravelType.Walk)
-                            {
-                                SetInventoryMessage(game.DataNameProvider.CannotUseMagicDiscHere, true);
-                                return;
-                            }
-                            game.CloseWindow(() =>
-                            {
-                                game.PlayMusic(Song.CompactDisc);
-                                game.TravelType = TravelType.MagicalDisc;
-                                TransportEnabled = true;
-                                if (ButtonGridPage == 1)
-                                    EnableButton(3, true);
-                            });
+                            game.ActivateTransport(TravelType.MagicalDisc);
                             break;
                         case Transportation.WitchBroom:
-                            if (game.TravelType != TravelType.Walk)
-                            {
-                                SetInventoryMessage(game.DataNameProvider.CannotUseItHere, true);
-                                return;
-                            }
-                            game.CloseWindow(() =>
-                            {
-                                game.PlayMusic(Song.BurnBabyBurn);
-                                game.TravelType = TravelType.WitchBroom;
-                                TransportEnabled = true;
-                                if (ButtonGridPage == 1)
-                                    EnableButton(3, true);
-                            });
+                            game.ActivateTransport(TravelType.WitchBroom);
                             break;
                         default:
                             throw new AmbermoonException(ExceptionScope.Data, $"Unexpected transport type from item '{item.Name}': {item.Transportation}");

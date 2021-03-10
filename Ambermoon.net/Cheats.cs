@@ -83,6 +83,14 @@ namespace Ambermoon
                     "Usage: give <item_index> [amount] [party_member_index]",
                     GiveItem
                 )
+            },
+            { "fly",
+                Create
+                (
+                    "Let the party fly on world maps." + Environment.NewLine +
+                    "Usage: fly",
+                    Fly
+                )
             }
         };
 
@@ -546,10 +554,22 @@ namespace Ambermoon
         {
             Console.WriteLine();
 
-            foreach (var item in game.ItemManager.Items)
+            var items = new List<Item>(game.ItemManager.Items);
+            items.Sort((a, b) => a.Index.CompareTo(b.Index));
+            int halfCount = items.Count / 2;
+            int secondRowOffset = halfCount;
+
+            if (items.Count % 2 == 1)
+                ++secondRowOffset;
+
+            for (int i = 0; i < halfCount; ++i)
             {
-                Console.WriteLine($"{item.Index:000}: {item.Name}");
+                Console.Write($"{items[i].Index:000}: {items[i].Name}".PadRight(30));
+                Console.WriteLine($"{items[secondRowOffset + i].Index:000}: {items[secondRowOffset + i].Name}");
             }
+
+            if (secondRowOffset > halfCount)
+                Console.WriteLine($"{items[secondRowOffset - 1].Index:000}: {items[secondRowOffset - 1].Name}");
         }
 
         static void GiveItem(Game game, string[] args)
@@ -652,6 +672,22 @@ namespace Ambermoon
                     Console.WriteLine($"All {amount} items were added successfully.");
                 Console.WriteLine();
             }
+        }
+
+        static void Fly(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            if (game.ActivateTransport(Data.Enumerations.TravelType.Fly))
+            {
+                Console.WriteLine("You are now flying! Awesome!");
+            }
+            else
+            {
+                Console.WriteLine("You can't fly now.");
+            }
+
+            Console.WriteLine();
         }
     }
 }

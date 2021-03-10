@@ -34,11 +34,18 @@ namespace Ambermoon.Data.Enumerations
             _ => false
         };
 
+        public static bool CanStandOn(this TravelType travelType) => travelType switch
+        {
+            TravelType.Raft => true,
+            TravelType.Ship => true,
+            TravelType.SandShip => true,
+            _ => false
+        };
+
         public static bool IsStoppable(this TravelType travelType) => travelType switch
         {
             TravelType.Walk => false,
             TravelType.Swim => false,
-            TravelType.Fly => false,
             _ => true
         };
 
@@ -55,6 +62,22 @@ namespace Ambermoon.Data.Enumerations
             TravelType.MagicalDisc => true,
             TravelType.SandLizard => true,
             _ => false
+        };
+
+        public static Song TravelSong(this TravelType travelType) => travelType switch
+        {
+            TravelType.Walk => Song.Default,
+            TravelType.Horse => Song.HorseIsNoDisgrace,
+            TravelType.Raft => Song.RiversideTravellingBlues,
+            TravelType.Ship => Song.Ship,
+            TravelType.MagicalDisc => Song.CompactDisc,
+            TravelType.Eagle => Song.WholeLottaDove,
+            TravelType.Fly => Song.WholeLottaDove,
+            TravelType.Swim => Song.Default,
+            TravelType.WitchBroom => Song.BurnBabyBurn,
+            TravelType.SandLizard => Song.MellowCamelFunk,
+            TravelType.SandShip => Song.PsychedelicDuneGroove,
+            _ => Song.Default
         };
     }
 }
