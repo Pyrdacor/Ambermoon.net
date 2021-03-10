@@ -29,7 +29,7 @@ jobs:
     inputs:
       gitHubConnection: AmbermoonNetGitHub
       repositoryName: Pyrdacor/Ambermoon.net
-      releaseTitle: 'Release $(tagName)'
+      title: 'Release $(tagName)'
       tagSource: gitTag
       tag: $(tagName)
       action: create
@@ -66,7 +66,7 @@ jobs:
     inputs:
       gitHubConnection: AmbermoonNetGitHub
       repositoryName: Pyrdacor/Ambermoon.net
-      releaseTitle: 'Release $(tagName)'
+      title: 'Release $(tagName)'
       tagSource: gitTag
       tag: $(tagName)
       action: create
