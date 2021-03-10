@@ -1,6 +1,6 @@
-$ErrorActionPreference = 'Stop';
+param ([switch] $winbuild)
 
-if ($isWindows) {
+if ($winbuild) {
   Write-Host Copy nuget packages
   mkdir "nuget"
   xcopy /Y /I "Ambermoon.Common\bin\Release\*.nupkg" "nuget\*"

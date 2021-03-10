@@ -3,76 +3,87 @@ trigger:
 - refs/tags/v*
 
 variables:
-  solution: '**/*.sln'
   buildPlatform: 'Any CPU'
-  buildConfiguration: 'WindowsRelease'
+  buildConfiguration: 'Release'
 
 jobs:
 - job: Linux
   pool:
     vmImage: 'ubuntu-latest'
+  variables:
+    solution: './Ambermoon.net.sln'
   steps:
   - script: echo Running Linux build
   - task: NuGetToolInstaller@1
-  - task: NuGetCommand@2
-    inputs:
-      restoreSolution: '$(solution)'
   - script: |
-      dotnet build -c Release '**/*.sln'
+      dotnet restore '$(solution)' --verbosity normal -r linux-x64
+  - script: |
+      dotnet build -c Release '$(solution)'
     condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
-  - powershell: publish.ps1
-    env:
-      isWindows: false
-    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+  - task: PowerShell@2
+    inputs:
+      filePath: ./publish.ps1
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v')
+    displayName: Pack Linux stuff
   - task: GitHubRelease@1
     displayName: 'Create Linux GitHub Release'      
     inputs:
-      gitHubConnection: AmbermoonNetGitHub
+      gitHubConnection: github.com_Pyrdacor
       repositoryName: Pyrdacor/Ambermoon.net
-      title: 'Release $(tagName)'
       tagSource: gitTag
-      tag: $(tagName)
+      tag: $(Build.SourceBranchName)
+      title: 'Release $(Build.SourceBranchName)'
       action: create
+      addChangeLog: false
       assets: |
         $(Build.ArtifactStagingDirectory)/Ambermoon.net-Linux.tar.gz
       isDraft: true
       isPreRelease: true
-    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v')
 - job: Windows
   pool:
     vmImage: 'windows-latest'
+  variables:
+    solution: '$(Build.SourcesDirectory)\Ambermoon.net.sln'
   steps:
   - script: echo Running Win64 build
   - task: NuGetToolInstaller@1
-  - task: NuGetCommand@2
-    inputs:
-      restoreSolution: '$(solution)'
+  - script: |
+      cd '$(Build.SourcesDirectory'
+      dotnet restore
   - task: VSBuild@1
     inputs:
-      solution: '**/*.sln'
+      solution: '$(solution)'
       platform: 'Any CPU'
       configuration: 'Release'
     condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
-  - powershell: publish.ps1
-    env:
-      isWindows: true
-    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
-  - powershell: nuget.ps1
-    env:
-      isWindows: true
-    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+  - task: PowerShell@2
+    inputs:
+      filePath: ./publish.ps1
+      arguments: >
+        -winbuild
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v')
+    displayName: Pack Windows stuff
+  - task: PowerShell@2
+    inputs:
+      filePath: ./nuget.ps1
+      arguments: >
+        -winbuild
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v')
+    displayName: Pack nuget packages
   - task: GitHubRelease@1
     displayName: 'Create Windows GitHub Release'      
     inputs:
-      gitHubConnection: AmbermoonNetGitHub
+      gitHubConnection: github.com_Pyrdacor
       repositoryName: Pyrdacor/Ambermoon.net
-      title: 'Release $(tagName)'
       tagSource: gitTag
-      tag: $(tagName)
+      tag: $(Build.SourceBranchName)
+      title: 'Release $(Build.SourceBranchName)'
       action: create
+      addChangeLog: false
       assets: |
         $(Build.ArtifactStagingDirectory)/Ambermoon.net-Windows.zip
         $(Build.ArtifactStagingDirectory)/Ambermoon.net-Windows32Bit.zip
       isDraft: true
       isPreRelease: true
-    condition: contains(variables['build.sourceBranch'], 'refs/tags/v*')
+    condition: contains(variables['build.sourceBranch'], 'refs/tags/v')
