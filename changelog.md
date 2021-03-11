@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.4.x beta - Locks and Level-Up
+- Version [0.4.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.4.1beta): Added level up window/logic, added using many items, usability improvements
 - Version [0.4.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.4.0beta): Added screen for opening locks (doors/chests)
 
 ## 0.3.x beta - Places
