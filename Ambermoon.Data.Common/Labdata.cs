@@ -30,7 +30,7 @@ namespace Ambermoon.Data
 
         public struct Object
         {
-            public ushort Header; // TODO: decode this
+            public AutomapType AutomapType;
             public List<ObjectPosition> SubObjects;
         }
 

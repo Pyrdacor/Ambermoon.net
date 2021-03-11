@@ -1,4 +1,6 @@
-﻿namespace Ambermoon.Data
+﻿using Ambermoon.Data.Enumerations;
+
+namespace Ambermoon.Data
 {
     public interface IDataNameProvider
     {
@@ -178,6 +180,16 @@
         string BlowsTheFlute { get; }
         string CannotUseItHere { get; }
         string CannotUseMagicDiscHere { get; }
+
+
+        #region Automap
+
+        string LegendHeader { get; }
+        string GetAutomapName(AutomapType automapType);
+        string Location { get; }
+
+        #endregion
+
 
         #region Battle messages
 

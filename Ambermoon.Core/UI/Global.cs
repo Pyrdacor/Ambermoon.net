@@ -53,5 +53,6 @@ namespace Ambermoon
             BattleFieldSlotWidth, BattleFieldSlotHeight
         );
         public static Rect BattleFieldSlotArea(int index) => BattleFieldSlotArea(index % 6, index / 6);
+        public static readonly Rect AutomapArea = new Rect(0, 37, 208, 163);
     }
 }

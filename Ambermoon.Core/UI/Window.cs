@@ -26,7 +26,8 @@ namespace Ambermoon.UI
         ShipSalesman,
         Sage,
         Blacksmith,
-        Enchanter
+        Enchanter,
+        Automap
         // TODO ...
     }
 

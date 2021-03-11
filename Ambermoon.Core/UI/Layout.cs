@@ -601,10 +601,11 @@ namespace Ambermoon.UI
             else
             {
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.LayoutOffset + (uint)(layoutType - 1));
+                sprite.DisplayLayer = (byte)(layoutType == LayoutType.Automap ? 10 : 1);
                 sprite.Visible = true;
             }
 
-            buttonGrid.Visible = layoutType != LayoutType.None && layoutType != LayoutType.Event;
+            buttonGrid.Visible = layoutType != LayoutType.None && layoutType != LayoutType.Event && layoutType != LayoutType.Automap;
 
             UpdateLayoutButtons(ticksPerMovement);
         }
@@ -1116,7 +1117,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false);
                         buttonGrid.SetButton(4, ButtonType.Spells, false, () => game.CastSpell(false), false);
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
-                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
+                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false);
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
                     }
@@ -1143,7 +1144,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
                         buttonGrid.SetButton(4, ButtonType.Spells, false, () => game.CastSpell(false), false);
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
-                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false); // TODO: map
+                        buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false); // TODO: is this disabled in some cases?
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
                     }

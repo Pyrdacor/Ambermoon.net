@@ -20,6 +20,7 @@ namespace Ambermoon.Render
         public const uint CombatBackgroundOffset = 2000u;
         public const uint CombatGraphicOffset = 2500u;
         public const uint BattleFieldIconOffset = 3000u;
+        public const uint AutomapOffset = 3200u;
 
         // We load 3 things into the same layer -> GraphicType.UIElements
         // 1. Our own UI elements like scrollbars, etc (see UICustomGraphic)
@@ -54,5 +55,6 @@ namespace Ambermoon.Render
             _ => null
         };
         public static uint GetAilmentGraphicIndex(Ailment ailment) => GetUIGraphicIndex(GetAilmentGraphic(ailment).Value);
+        public static uint GetAutomapGraphicIndex(AutomapGraphic automapGraphic) => AutomapOffset + (uint)automapGraphic;
     }
 }

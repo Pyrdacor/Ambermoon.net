@@ -82,17 +82,12 @@ namespace Ambermoon.UI
 
         public void SetBounds(Rect bounds)
         {
-            if (renderText.Width != bounds.Width || renderText.Height != bounds.Height)
-                renderText.Resize(bounds.Width, bounds.Height);
-
-            renderText.X = bounds.X;
-            renderText.Y = bounds.Y;
+            renderText.Place(bounds, renderText.TextAlign);
         }
 
         public void SetPosition(Position position)
         {
-            renderText.X = position.X;
-            renderText.Y = position.Y;
+            renderText.Place(position.X, position.Y);
         }
 
         public bool Click(Position position)

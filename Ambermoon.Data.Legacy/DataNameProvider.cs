@@ -1,5 +1,6 @@
 ﻿namespace Ambermoon.Data.Legacy
 {
+    using Ambermoon.Data.Enumerations;
     using ExecutableData;
 
     public class DataNameProvider : IDataNameProvider
@@ -201,6 +202,16 @@
         public string BlowsTheFlute => executableData.Messages.GetEntry(Messages.Index.BlowsTheFlute);
         public string CannotUseItHere => executableData.Messages.GetEntry(Messages.Index.CannotUseItHere);
         public string CannotUseMagicDiscHere => executableData.Messages.GetEntry(Messages.Index.CannotUseMagicDiscHere);
+
+
+        #region Automap
+
+        public string LegendHeader => executableData.UITexts.Entries[UITextIndex.Legend];
+        public string GetAutomapName(AutomapType automapType) => executableData.AutomapNames.Entries[automapType];
+        public string Location => executableData.UITexts.Entries[UITextIndex.Location];
+
+        #endregion
+
 
         #region Battle messages
 

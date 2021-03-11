@@ -153,13 +153,13 @@ namespace Ambermoon.Renderer
 
         protected abstract void OnClipAreaChanged(bool onScreen, bool needUpdate);
 
-        bool CheckOnScreen()
+        private protected bool CheckOnScreen(Rect bounds)
         {
             bool oldNotOnScreen = notOnScreen;
             bool oldVisible = Visible;
             var area = clipArea ?? virtualScreen;
 
-            notOnScreen = !area.IntersectsWith(new Rect(X, Y, Width, Height));
+            notOnScreen = !area.IntersectsWith(bounds);
 
             if (oldNotOnScreen != notOnScreen)
             {
@@ -171,6 +171,11 @@ namespace Ambermoon.Renderer
             }
 
             return false;
+        }
+
+        private protected virtual bool CheckOnScreen()
+        {
+            return CheckOnScreen(new Rect(X, Y, Width, Height));
         }
 
         public void Delete()

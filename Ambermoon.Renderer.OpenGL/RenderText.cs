@@ -159,6 +159,11 @@ namespace Ambermoon.Renderer
             }
         }
 
+        private protected override bool CheckOnScreen()
+        {
+            return CheckOnScreen(bounds);
+        }
+
         void UpdateDisplayLayer()
         {
             byte textDisplayLayer = (byte)Util.Min(255, DisplayLayer + 2); // draw above shadow a bit

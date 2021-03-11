@@ -323,6 +323,15 @@ namespace Ambermoon.Render
 
             #endregion
 
+            #region Automap graphics
+
+            var automapGraphics = graphicProvider.GetGraphics(GraphicType.AutomapGraphics);
+
+            for (int i = 0; i < automapGraphics.Count; ++i)
+                AddTexture(Layer.UI, Graphics.AutomapOffset + (uint)i, automapGraphics[i]);
+
+            #endregion
+
             #region Intro Text
 
             foreach (var introTextGlyph in introTextGlyphs)

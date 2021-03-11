@@ -80,7 +80,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                 labdata.Objects.Add(new Labdata.Object
                 {
-                    Header = obj.Item1,
+                    AutomapType = (AutomapType)obj.Item1,
                     SubObjects = subObjects
                 });
             }

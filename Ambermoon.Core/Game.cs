@@ -8162,6 +8162,377 @@ namespace Ambermoon
                 Show();
         }
 
+        internal void ShowAutomap()
+        {
+            Fade(() =>
+            {
+                // Note: Each tile is displayed as 8x8.
+                //       The automap type icons are 16x16 but the lower-left 8x8 area is placed on a tile.
+                //       The player pin is 16x32 at the lower-left 8x8 is placed on the tile.
+                //       Each horizontal map background tile is 16 pixels wide and can contain 2 map tiles/blocks.
+                //       Each vertical map background tile is 32 pixels height and can contain 4 map tiles/blocks.
+                //       Fill inner map area with AA7744 (index 6). Lines (like walls) are drawn with 663300 (index 7).
+                //       Palette is 53 (1-based) and so 52 (0-based).
+                const byte PaletteIndex = 52;
+                var backgroundColor = GetPaletteColor(53, 6);
+                var foregroundColor = GetPaletteColor(53, 7);
+                var labdata = MapManager.GetLabdataForMap(Map);
+                int legendPage = 0;
+                ILayerSprite[] legendSprites = new ILayerSprite[8];
+                UIText[] legendTexts = new UIText[8];
+                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+                int scrollOffsetX = 0; // in 16 pixel chunks
+                int scrollOffsetY = 0; // in 16 pixel chunks
+
+                InputEnable = true;
+                ShowMap(false);
+                SetWindow(Window.Automap);
+                layout.Reset();
+                layout.SetLayout(LayoutType.Automap);
+
+                var sprites = new List<ISprite>();
+                // key: tile index, value: true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
+                var walls = new Dictionary<int, bool?>();
+
+                #region Legend
+                layout.FillArea(new Rect(208, 37, Global.VirtualScreenWidth - 208, Global.VirtualScreenHeight - 37), Color.Black, 9);
+                // Legend panels
+                var headerArea = new Rect(217, 46, 86, 8);
+                layout.AddPanel(headerArea, 11);
+                layout.AddText(headerArea.CreateModified(0, 1, 0, -1), DataNameProvider.LegendHeader, TextColor.White, TextAlign.Center, 15);
+                var legendArea = new Rect(217, 56, 86, 108);
+                layout.AddPanel(legendArea, 11);
+                for (int i = 0; i < 8; ++i)
+                {
+                    legendSprites[i] = layout.AddSprite(new Rect(legendArea.X + 2, legendArea.Y + 4 + i * 13 + Global.GlyphLineHeight - 16, 16, 16), 0u, PaletteIndex, (byte)(15 + i));
+                    legendTexts[i] = layout.AddText(new Rect(legendArea.X + 18, legendArea.Y + 4 + i * 13, 68, Global.GlyphLineHeight), "", TextColor.White, TextAlign.Left, 15);
+                }
+                void ShowLegendPage(int page)
+                {
+                    legendPage = page;
+                    AddTimedEvent(TimeSpan.FromSeconds(4), ToggleLegendPage);
+
+                    void SetLegendEntry(int index, AutomapType? automapType)
+                    {
+                        if (automapType == null)
+                        {
+                            legendSprites[index].Visible = false;
+                            legendTexts[index].Visible = false;
+                        }
+                        else
+                        {
+                            legendSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAutomapGraphicIndex(automapType.Value.ToGraphic().Value));
+                            legendTexts[index].SetText(renderView.TextProcessor.CreateText(DataNameProvider.GetAutomapName(automapType.Value)));
+                            legendSprites[index].Visible = true;
+                            legendTexts[index].Visible = true;
+                        }
+                    }
+
+                    if (page == 0)
+                    {
+                        SetLegendEntry(0, AutomapType.Riddlemouth);
+                        SetLegendEntry(1, AutomapType.Teleporter);
+                        SetLegendEntry(2, AutomapType.Door);
+                        SetLegendEntry(3, AutomapType.Chest);
+                        SetLegendEntry(4, AutomapType.Spinner);
+                        SetLegendEntry(5, AutomapType.Merchant);
+                        SetLegendEntry(6, AutomapType.Tavern);
+                        SetLegendEntry(7, AutomapType.Special);
+                    }
+                    else
+                    {
+                        SetLegendEntry(0, AutomapType.Exit);
+                        SetLegendEntry(1, AutomapType.Pile);
+                        SetLegendEntry(2, AutomapType.Trap);
+                        SetLegendEntry(3, AutomapType.Trapdoor);
+                        SetLegendEntry(4, AutomapType.Monster);
+                        SetLegendEntry(5, AutomapType.Person);
+                        SetLegendEntry(6, AutomapType.GotoPoint);
+                        SetLegendEntry(7, null);
+                    }
+                }
+                void ToggleLegendPage()
+                {
+                    ShowLegendPage(1 - legendPage);
+                }
+                ShowLegendPage(0);
+                var locationArea = new Rect(217, 166, 86, 22);
+                layout.AddPanel(locationArea, 11);
+                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
+                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X,-2} Y:{player3D.Position.Y}", TextColor.White, TextAlign.Left, 15);
+                DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16);
+                #endregion
+
+                #region Map
+
+                void DrawPin(int x, int y, byte displayLayer, bool onMap = false)
+                {
+                    var pinHead = !CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.Compass)
+                        ? AutomapGraphic.PinUpperHalf
+                        : AutomapGraphic.PinDirectionUp + (int)player3D.PreciseDirection;
+                    var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), PaletteIndex, displayLayer);
+                    var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), PaletteIndex, displayLayer);
+
+                    if (onMap)
+                    {
+                        sprites.Add(upperSprite);
+                        sprites.Add(lowerSprite);
+                    }
+                }
+
+                var displayLayers = new Dictionary<int, byte>();
+
+                void AddGraphic(int x, int y, AutomapGraphic automapGraphic, int width, int height, byte displayLayer = 2)
+                {
+                    var sprite = layout.AddSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic), PaletteIndex, displayLayer);
+                    sprite.ClipArea = Global.AutomapArea;
+                    sprites.Add(sprite);
+                }
+
+                void AddWall(int x, int y)
+                {
+                    // TODO
+                }
+
+                void AddAutomapType(int x, int y, AutomapType automapType)
+                {
+                    var graphic = automapType.ToGraphic();
+
+                    if (graphic != null)
+                    {
+                        byte displayLayer = 2;
+
+                        if (x < Map.Width)
+                        {
+                            if (y > 0)
+                            {
+                                if (displayLayers.ContainsKey(x + 1 + (y - 1) * Map.Width))
+                                    displayLayer = (byte)Math.Min(255, displayLayers[x + 1 + (y - 1) * Map.Width] + 1);
+                                else if (displayLayers.ContainsKey(x + (y - 1) * Map.Width))
+                                    displayLayer = (byte)Math.Min(255, displayLayers[x + (y - 1) * Map.Width] + 1);
+                            }
+
+                            if (displayLayer == 2 && displayLayers.ContainsKey(x + 1 + y * Map.Width))
+                                displayLayer = (byte)Math.Min(255, displayLayers[x + 1 + y * Map.Width] + 1);
+                        }
+                        else if (y > 0)
+                        {
+                            if (displayLayers.ContainsKey(x + (y - 1) * Map.Width))
+                                displayLayer = (byte)Math.Min(255, displayLayers[x + (y - 1) * Map.Width] + 1);
+                        }
+
+                        AddGraphic(x, y - 8, graphic.Value, 16, 16, displayLayer);
+                        displayLayers.Add(x + y * Map.Width, displayLayer);
+                    }
+                }
+
+                void AddTile(int tx, int ty, int x, int y)
+                {
+                    // Note: Maps are always 3D
+                    var block = Map.Blocks[tx, ty];
+
+                    if (block.MapBorder)
+                    {
+                        // draw nothing
+                        return;
+                    }
+                    if (block.MapEventId != 0)
+                    {
+                        var ev = Map.EventList[(int)block.MapEventId - 1];
+                        var automapType = ev.ToAutomapType(CurrentSavegame);
+
+                        if (automapType != AutomapType.None)
+                        {
+                            AddAutomapType(x, y, automapType);
+                            return;
+                        }
+                    }
+                
+                    if (block.ObjectIndex != 0)
+                    {
+                        var obj = labdata.Objects[(int)block.ObjectIndex - 1];
+                        AddAutomapType(x, y, obj.AutomapType);
+                    }
+                    else if (block.WallIndex != 0)
+                    {
+                        var wall = labdata.Walls[(int)block.WallIndex - 1];
+                        AddAutomapType(x, y, wall.AutomapType);
+
+                        if (wall.AutomapType.ToGraphic() == null)
+                            walls.Add(tx + ty * Map.Width, null);
+                        else
+                            walls.Add(tx + ty * Map.Width, block.BlocksPlayer(labdata));
+                    }
+
+                    // TODO: goto points, persons, monsters and specials
+                }
+
+                int x = Global.AutomapArea.X;
+                int y = Global.AutomapArea.Y;
+                int xParts = (Map.Width + 1) / 2;
+                int yParts = (Map.Height + 3) / 4;
+                var totalArea = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y, 64 + xParts * 16, 64 + yParts * 32);
+                var mapNameBounds = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y + 32, totalArea.Width, Global.GlyphLineHeight);
+                var mapName = layout.AddText(mapNameBounds, Map.Name, TextColor.White, TextAlign.Center, 3);
+
+                // Fill background black
+                layout.FillArea(Global.AutomapArea, Color.Black, 0);
+
+                #region Upper border
+                AddGraphic(x, y, AutomapGraphic.MapUpperLeft, 32, 32);
+                x += 32;
+                for (int tx = 0; tx < xParts; ++tx)
+                {
+                    AddGraphic(x, y, AutomapGraphic.MapBorderTop1 + tx % 4, 16, 32);
+                    x += 16;
+                }
+                AddGraphic(x, y, AutomapGraphic.MapUpperRight, 32, 32);
+                x = Global.AutomapArea.X;
+                y += 32;
+                #endregion
+
+                #region Map content
+                FilledArea mapFill = null;
+                void FillMap()
+                {
+                    mapFill?.Destroy();
+                    var fillArea = new Rect(Global.AutomapArea.X + 32 - scrollOffsetX * 16, Global.AutomapArea.Y + 32 - scrollOffsetY * 16, xParts * 16, yParts * 32);
+                    var clipArea = new Rect(Global.AutomapArea);
+                    int maxScrollX = (totalArea.Width - 208) / 16;
+                    int maxScrollY = (totalArea.Height - 160) / 16;
+                    if (scrollOffsetX >= maxScrollX - 1)
+                        clipArea = clipArea.SetWidth(clipArea.Width - (2 - (maxScrollX - scrollOffsetX)) * 16);
+                    if (scrollOffsetY >= maxScrollY - 1)
+                        clipArea = clipArea.SetHeight(clipArea.Height - (2 - (maxScrollY - scrollOffsetY)) * 16);
+                    fillArea.Clip(clipArea);
+                    mapFill = layout.FillArea(fillArea, backgroundColor, 1);
+                }
+                FillMap();
+                for (int ty = 0; ty < Map.Height; ++ty)
+                {
+                    if (ty % 4 == 0)
+                    {
+                        AddGraphic(Global.AutomapArea.X, y, AutomapGraphic.MapBorderLeft1 + (ty % 8) / 4, 32, 32);
+                    }
+
+                    x = Global.AutomapArea.X + 32;
+
+                    for (int tx = 0; tx < Map.Width; ++tx)
+                    {
+                        AddTile(tx, ty, x, y);
+                        x += 8;
+                    }
+
+                    if (ty % 4 == 0)
+                    {
+                        if (Map.Width % 2 != 0)
+                            x += 8;
+                        AddGraphic(x, y, AutomapGraphic.MapBorderRight1 + (ty % 8) / 4, 32, 32);
+                    }
+
+                    y += 8;
+                }
+                #endregion
+
+                #region Lower border
+                x = Global.AutomapArea.X;
+                while ((y - Global.AutomapArea.Y) % 32 != 0)
+                    y += 8;
+                AddGraphic(x, y, AutomapGraphic.MapLowerLeft, 32, 32);
+                x += 32;
+                for (int tx = 0; tx < xParts; ++tx)
+                {
+                    AddGraphic(x, y, AutomapGraphic.MapBorderBottom1 + tx % 4, 16, 32);
+                    x += 16;
+                }
+                AddGraphic(x, y, AutomapGraphic.MapLowerRight, 32, 32);
+                #endregion
+
+                // Add all walls
+                foreach (var wall in walls)
+                {
+                    // TODO
+                }
+
+                void Scroll(int x, int y)
+                {
+                    // The automap screen is 208x163 but we use 208x160 so they are both dividable by 16.
+                    // If scrolled to the left there is the 32 pixel wide border so you can see max 22 tiles (208 - 32) / 8 = 22.
+                    // Scrolling right is possible unless the 32 pixel wide border on the right is fully visible.
+                    // The total automap width is 64 + xParts * 16. So max scroll offset X in tiles is (64 + xParts * 16 - 208) / 16.
+                    // We will always scroll by 2 tiles (16 pixel chunks) in both directions.
+
+                    int maxScrollX = (totalArea.Width - 208) / 16;
+                    int maxScrollY = (totalArea.Height - 160) / 16;
+                    int newX = Util.Limit(0, scrollOffsetX + x, maxScrollX);
+                    int newY = Util.Limit(0, scrollOffsetY + y, maxScrollY);
+
+                    if (scrollOffsetX != newX || scrollOffsetY != newY)
+                    {
+                        int diffX = (newX - scrollOffsetX) * 16;
+                        int diffY = (newY - scrollOffsetY) * 16;
+                        scrollOffsetX = newX;
+                        scrollOffsetY = newY;
+
+                        mapName.SetBounds(mapNameBounds.CreateOffset(-newX * 16, -newY * 16));
+                        mapName.Clip(Global.AutomapArea);
+                        FillMap();
+
+                        foreach (var sprite in sprites)
+                        {
+                            sprite.X -= diffX;
+                            sprite.Y -= diffY;
+                        }
+
+                        // TODO: also adjust wall positions
+                    }
+                }
+
+                TrapMouse(Global.AutomapArea);
+                nextClickHandler = buttons =>
+                {
+                    if (buttons == MouseButtons.Right)
+                    {
+                        Exit();
+                        return true;
+                    }
+
+                    return false;
+                };
+
+                #endregion
+
+                bool closed = false;
+
+                void Exit()
+                {
+                    closed = true;
+                    UntrapMouse();
+                    CloseWindow();
+                }
+
+                void CheckScroll()
+                {
+                    if (!closed)
+                    {
+                        AddTimedEvent(TimeSpan.FromMilliseconds(100), () =>
+                        {
+                            var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+                            int x = position.X < 4 ? -1 : position.X > 204 ? 1 : 0;
+                            int y = position.Y < 41 ? -1 : position.Y > 196 ? 1 : 0;
+
+                            if (x != 0 || y != 0)
+                                Scroll(x, y);
+
+                            CheckScroll();
+                        });
+                    }
+                }
+
+                CheckScroll();
+            });
+        }
+
         internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler, bool showRiddle = true)
         {
             Fade(() =>
@@ -8930,6 +9301,13 @@ namespace Ambermoon
                 {
                     var enchanter = (Places.Enchanter)currentWindow.WindowParameters[0];
                     OpenEnchanter(enchanter, false);
+                    if (finishAction != null)
+                        AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
+                    break;
+                }
+                case Window.Automap:
+                {
+                    ShowAutomap();
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
