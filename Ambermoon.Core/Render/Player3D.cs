@@ -166,6 +166,7 @@ namespace Ambermoon.Render
 
                 var touchedPositions = Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, 0.75f * Global.DistancePerBlock);
                 Position = touchedPositions[0];
+                bool moved = false;
 
                 if (Position != lastPosition)
                 {
@@ -173,9 +174,11 @@ namespace Ambermoon.Render
                     player.Position.Y = Position.Y;
                     lastPosition = new Position(Position);
                     game.GameTime.MoveTick(map.Map, TravelType.Walk);
+                    moved = true;
                 }
 
-                TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z);
+                if (!TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z) && moved)
+                    game.PlayerMoved(false, lastPosition);
             }
 
             bool TestMoveStop(float newX, float newY)

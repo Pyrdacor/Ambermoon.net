@@ -132,6 +132,19 @@ namespace Ambermoon.Data
                 CharacterBits[mapIndex - 1] &= ~bitValue;
         }
 
+        /// <summary>
+        /// x and y are 1-based.
+        /// </summary>
+        public bool IsGotoPointActive(uint mapIndex, uint x, uint y) => true; // TODO
+
+        /// <summary>
+        /// x and y are 1-based.
+        /// </summary>
+        public void ActivateGotoPoint(uint mapIndex, uint x, uint y)
+        {
+            // TODO
+        }
+
         #endregion
 
         #region Party

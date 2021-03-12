@@ -3390,6 +3390,20 @@ namespace Ambermoon
                 this.lastPlayerPosition = lastPlayerPosition;
                 monstersCanMoveImmediately = Map.Type == MapType.Map2D && !Map.IsWorldMap;
             }
+
+            if (Map.Type == MapType.Map3D)
+            {
+                uint testX = 1u + (uint)player.Position.X;
+                uint testY = 1u + (uint)player.Position.Y;
+                if (Map.GotoPoints.Any(p => p.X == testX && p.Y == testY))
+                {
+                    if (!CurrentSavegame.IsGotoPointActive(Map.Index, testX, testY))
+                    {
+                        CurrentSavegame.ActivateGotoPoint(Map.Index, testX, testY);
+                        ShowMessagePopup(DataNameProvider.GotoPointSaved, null, TextAlign.Left);
+                    }
+                }
+            }
         }
 
         internal void UpdateMapTile(ChangeTileEvent changeTileEvent, uint? currentX = null, uint? currentY = null)
@@ -8215,6 +8229,9 @@ namespace Ambermoon
                 var animatedSprites = new List<IAnimatedLayerSprite>();
                 // key = tile index, value = tileX, tileY, drawX, drawY, boolean -> true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
                 var walls = new Dictionary<int, Tuple<int, int, int, int, bool?>>();
+                var gotoPoints = new List<KeyValuePair<Map.GotoPoint, Tooltip>>();
+                var automapIcons = new Dictionary<int, ISprite>();
+                bool animationsPaused = false;
 
                 #region Legend
                 layout.FillArea(new Rect(208, 37, Global.VirtualScreenWidth - 208, Global.VirtualScreenHeight - 37), Color.Black, 9);
@@ -8286,7 +8303,6 @@ namespace Ambermoon
                 #endregion
 
                 #region Map
-
                 var automap = CurrentSavegame.Automaps.TryGetValue(Map.Index, out var a) ? a : null;
                 void DrawPin(int x, int y, byte upperDisplayLayer, byte lowerDisplayLayer, bool onMap)
                 {
@@ -8302,10 +8318,8 @@ namespace Ambermoon
                         sprites.Add(lowerSprite);
                     }
                 }
-
                 var displayLayers = new Dictionary<int, byte>();
-
-                void AddGraphic(int x, int y, AutomapGraphic automapGraphic, int width, int height, byte displayLayer = 2)
+                ILayerSprite AddGraphic(int x, int y, AutomapGraphic automapGraphic, int width, int height, byte displayLayer = 2)
                 {
                     ILayerSprite sprite;
 
@@ -8333,34 +8347,44 @@ namespace Ambermoon
 
                     sprite.ClipArea = Global.AutomapArea;
                     sprites.Add(sprite);
+                    return sprite;
                 }
-                void AddAutomapType(int x, int y, AutomapType automapType, byte displayLayer = 5) // 5: above walls, fake wall overlays and player pin lower half (2, 3 and 4)
+                void AddAutomapType(int tx, int ty, int x, int y, AutomapType automapType,
+                    byte displayLayer = 5) // 5: above walls, fake wall overlays and player pin lower half (2, 3 and 4)
                 {
                     var graphic = automapType.ToGraphic();
 
                     if (graphic != null)
                     {
-                        if (x < Map.Width)
+                        if (tx < Map.Width)
                         {
-                            if (y > 0)
+                            if (ty > 0)
                             {
-                                if (displayLayers.ContainsKey(x + 1 + (y - 1) * Map.Width))
-                                    displayLayer = (byte)Math.Min(255, displayLayers[x + 1 + (y - 1) * Map.Width] + 1);
-                                else if (displayLayers.ContainsKey(x + (y - 1) * Map.Width))
-                                    displayLayer = (byte)Math.Min(255, displayLayers[x + (y - 1) * Map.Width] + 1);
+                                if (displayLayers.ContainsKey(tx + 1 + (ty - 1) * Map.Width))
+                                    displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + (ty - 1) * Map.Width] + 1);
+                                else if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
+                                    displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
                             }
 
-                            if (displayLayer == 2 && displayLayers.ContainsKey(x + 1 + y * Map.Width))
-                                displayLayer = (byte)Math.Min(255, displayLayers[x + 1 + y * Map.Width] + 1);
+                            if (displayLayer == 2 && displayLayers.ContainsKey(tx + 1 + ty * Map.Width))
+                                displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + ty * Map.Width] + 1);
                         }
-                        else if (y > 0)
+                        else if (ty > 0)
                         {
-                            if (displayLayers.ContainsKey(x + (y - 1) * Map.Width))
-                                displayLayer = (byte)Math.Min(255, displayLayers[x + (y - 1) * Map.Width] + 1);
+                            if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
+                                displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
                         }
 
-                        AddGraphic(x, y - 8, graphic.Value, 16, 16, displayLayer);
-                        displayLayers.Add(x + y * Map.Width, displayLayer);
+                        int tileIndex = tx + ty * Map.Width;
+
+                        if (automapIcons.ContainsKey(tileIndex))
+                        {
+                            // Already an automap icon there -> remove it
+                            automapIcons[tileIndex]?.Delete();
+                        }
+
+                        automapIcons[tileIndex] = AddGraphic(x, y - 8, graphic.Value, 16, 16, displayLayer);
+                        displayLayers[tileIndex] = displayLayer;
                     }
                 }
                 void AddTile(int tx, int ty, int x, int y)
@@ -8370,12 +8394,12 @@ namespace Ambermoon
                     if (characterType == CharacterType.Monster)
                     {
                         if (automapOptions.MonstersVisible)
-                            AddAutomapType(x, y, AutomapType.Monster, 6);
+                            AddAutomapType(tx, ty, x, y, AutomapType.Monster, 6);
                     }
                     else if (characterType == CharacterType.PartyMember || characterType == CharacterType.NPC)
                     {
                         if (automapOptions.PersonsVisible)
-                            AddAutomapType(x, y, AutomapType.Person, 6);
+                            AddAutomapType(tx, ty, x, y, AutomapType.Person, 6);
                     }
 
                     if (automap != null && !automap.IsBlockExplored(Map, (uint)tx, (uint)ty))
@@ -8390,6 +8414,13 @@ namespace Ambermoon
                         // draw nothing
                         return;
                     }
+                    var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == tx + 1 && p.Y == ty + 1); // positions of goto points are 1-based
+                    if (gotoPoint != null && CurrentSavegame.IsGotoPointActive(Map.Index, (uint)tx + 1, (uint)ty + 1))
+                    {
+                        AddAutomapType(tx, ty, x, y, AutomapType.GotoPoint);
+                        gotoPoints.Add(KeyValuePair.Create(gotoPoint,
+                            layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
+                    }
                     if (block.MapEventId != 0)
                     {
                         var ev = Map.EventList[(int)block.MapEventId - 1];
@@ -8400,7 +8431,7 @@ namespace Ambermoon
                             // Only add the event automap icon if the event is active
                             if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
                             {
-                                AddAutomapType(x, y, automapType);
+                                AddAutomapType(tx, ty, x, y, automapType);
 
                                 // Note: In case of tavern or merchant the wall has to be drawn as well so
                                 // don't return here in that case so that the wall can be added below.
@@ -8421,7 +8452,7 @@ namespace Ambermoon
                     if (block.ObjectIndex != 0)
                     {
                         var obj = labdata.Objects[(int)block.ObjectIndex - 1];
-                        AddAutomapType(x, y, obj.AutomapType);
+                        AddAutomapType(tx, ty, x, y, obj.AutomapType);
                     }
                     else if (block.WallIndex != 0)
                     {
@@ -8430,7 +8461,7 @@ namespace Ambermoon
                         bool blockingWall = block.BlocksPlayer(labdata);
 
                         if (!tavernOrMerchant) // The wall might have DoorOpen automap type but we don't want to show it in that case
-                            AddAutomapType(x, y, wall.AutomapType);
+                            AddAutomapType(tx, ty, x, y, wall.AutomapType);
                         else
                             automapGraphic = null; // Show normal wall for taverns and merchants
 
@@ -8443,8 +8474,6 @@ namespace Ambermoon
                                 automapGraphic != null ? (bool?)null : blockingWall));
                         }
                     }
-
-                    // TODO: goto points and specials
                 }
 
                 int x = Global.AutomapArea.X;
@@ -8653,7 +8682,7 @@ namespace Ambermoon
                 // Animate automap icons
                 void Animate()
                 {
-                    if (CurrentWindow.Window == Window.Automap)
+                    if (CurrentWindow.Window == Window.Automap && !animationsPaused)
                     {
                         foreach (var animatedSprite in animatedSprites)
                             ++animatedSprite.CurrentFrame;
@@ -8663,7 +8692,9 @@ namespace Ambermoon
                 }
                 Animate();
                 // Draw player pin
-                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 255, 4, true);
+                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 248,
+                    (byte)(automapIcons.ContainsKey(RenderPlayer.Position.X + RenderPlayer.Position.Y * Map.Width) ? 248 : 4), true);
+                // Note: Display layer 248 is just below the goto point tooltip layer (= 250).
                 #endregion
 
                 #region Lower border
@@ -8710,31 +8741,90 @@ namespace Ambermoon
                             sprite.Y -= diffY;
                         }
 
-                        // TODO: also adjust wall positions
+                        foreach (var gotoPoint in gotoPoints)
+                        {
+                            gotoPoint.Value.Area.Position.X -= diffX;
+                            gotoPoint.Value.Area.Position.Y -= diffY;
+                        }
+
+                        // Update active tooltips
+                        CursorType cursorType = CursorType.None;
+                        layout.Hover(GetMousePosition(lastMousePosition), ref cursorType);
                     }
                 }
 
                 TrapMouse(Global.AutomapArea);
-                nextClickHandler = buttons =>
+                void SetupClickHandlers()
                 {
-                    if (buttons == MouseButtons.Right)
+                    nextClickHandler = buttons =>
                     {
-                        Exit();
-                        return true;
-                    }
+                        if (buttons == MouseButtons.Right)
+                        {
+                            Exit();
+                            return true;
+                        }
+                        else if (buttons == MouseButtons.Left && gotoPoints.Count != 0)
+                        {
+                            var mousePosition = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
 
-                    return false;
-                };
+                            foreach (var gotoPoint in gotoPoints)
+                            {
+                                if (gotoPoint.Value.Area.Contains(mousePosition))
+                                {
+                                    void AbortGoto()
+                                    {
+                                        animationsPaused = false;
+                                        Animate();
+                                        SetupClickHandlers();
+                                    }
+
+                                    layout.HideTooltip();
+                                    animationsPaused = true;
+                                    nextClickHandler = null;
+                                    if (MonsterSeesPlayer)
+                                    {
+                                        ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left);
+                                    }
+                                    else
+                                    {
+                                        ShowDecisionPopup(DataNameProvider.ReallyWantToGoThere, response =>
+                                        {
+                                            if (response == PopupTextEvent.Response.Yes)
+                                            {
+                                                if (player3D.Position.X + 1 == gotoPoint.Key.X && player3D.Position.Y + 1 == gotoPoint.Key.Y)
+                                                {
+                                                    ShowMessagePopup(DataNameProvider.AlreadyAtGotoPoint, AbortGoto, TextAlign.Center);
+                                                }
+                                                else
+                                                {
+                                                    Exit(() => Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, player.Direction, out _, true));
+                                                }
+                                            }
+                                            else
+                                            {
+                                                AbortGoto();
+                                            }
+                                        }, 1);
+                                    }
+                                    return false;
+                                }
+                            }
+                        }
+
+                        return false;
+                    };
+                }
+                SetupClickHandlers();
 
                 #endregion
 
                 bool closed = false;
 
-                void Exit()
+                void Exit(Action followAction = null)
                 {
                     closed = true;
                     UntrapMouse();
-                    CloseWindow();
+                    CloseWindow(followAction);
                 }
 
                 void CheckScroll()

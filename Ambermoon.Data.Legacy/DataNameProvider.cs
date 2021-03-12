@@ -209,6 +209,10 @@
         public string LegendHeader => executableData.UITexts.Entries[UITextIndex.Legend];
         public string GetAutomapName(AutomapType automapType) => executableData.AutomapNames.Entries[automapType];
         public string Location => executableData.UITexts.Entries[UITextIndex.Location];
+        public string AlreadyAtGotoPoint => executableData.Messages.GetEntry(Messages.Index.AlreadyAtGotoPoint);
+        public string GotoPointSaved => executableData.Messages.GetEntry(Messages.Index.GotoPointSaved);
+        public string WayBackTooDangerous => executableData.Messages.GetEntry(Messages.Index.WayBackTooDangerous);
+        public string ReallyWantToGoThere => executableData.Messages.GetEntry(Messages.Index.ReallyWantToGoThere);
 
         #endregion
 

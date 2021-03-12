@@ -40,7 +40,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var gfxIndex = dataReader.ReadWord();
                 var tileFlags = dataReader.ReadDword();
 
-                map.CharacterReferences[i] = index == 0 || type == 0 ? null : new Map.CharacterReference
+                map.CharacterReferences[i] = index == 0 ? null : new Map.CharacterReference
                 {
                     Index = index,
                     OnlyMoveWhenSeePlayer = onlyMoveWhenSeePlayer,
@@ -137,12 +137,19 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
             }
 
-            // TODO
+            uint gotoPointCount = dataReader.ReadWord();
 
-            //if (dataReader.ReadWord() != 0) // 00 00 -> end of map
-                //throw new AmbermoonException(ExceptionScope.Data, "Invalid map format");
-
-            // Remaining bytes unknown
+            for (uint i = 0; i < gotoPointCount; ++i)
+            {
+                map.GotoPoints.Add(new Map.GotoPoint
+                {
+                    X = dataReader.ReadByte(),
+                    Y = dataReader.ReadByte(),
+                    Unknown1 = dataReader.ReadByte(),
+                    Unknown2 = dataReader.ReadByte(),
+                    Name = dataReader.ReadString(16).Trim('\0', ' ')
+                });
+            }
         }
     }
 }

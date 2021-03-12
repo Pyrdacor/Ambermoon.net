@@ -196,7 +196,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             ReallyWantToGoThere,
             Flees,
             AlreadyAtGotoPoint,
-            AbleToReturnToGotoPoint,
+            GotoPointSaved,
             CannotBuyAnymore,
             WhichItemToBuy,
             BuyHowMany,

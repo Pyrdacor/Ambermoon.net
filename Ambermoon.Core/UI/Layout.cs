@@ -2749,7 +2749,7 @@ namespace Ambermoon.UI
             return sprite;
         }
 
-        Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
+        internal Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
         {
             var toolTip = new Tooltip
             {
@@ -2766,8 +2766,10 @@ namespace Ambermoon.UI
             tooltips.Remove(tooltip);
 
             if (activeTooltip == tooltip)
-                SetActiveTooltip(null, null);
+                HideTooltip();
         }
+
+        internal void HideTooltip() => SetActiveTooltip(null, null);
 
         void SetActiveTooltip(Position cursorPosition, Tooltip tooltip)
         {

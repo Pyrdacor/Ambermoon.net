@@ -145,6 +145,15 @@ namespace Ambermoon.Data
             public List<Position> Positions { get; } = new List<Position>(288);
         }
 
+        public class GotoPoint
+        {
+            public uint X { get; set; }
+            public uint Y { get; set; }
+            public byte Unknown1 { get; set; } // TODO
+            public byte Unknown2 { get; set; } // TODO
+            public string Name { get; set; }
+        }
+
         public uint Index { get; private set; }
         public string Name => IsWorldMap ? $"{World}{Index:000}" : Texts[0]; // TODO: use correct language later?
         public MapFlags Flags { get; set; }
@@ -183,6 +192,7 @@ namespace Ambermoon.Data
         public List<Event> EventList { get; } = new List<Event>();
         public List<string> Texts { get; set; } = new List<string>();
         public CharacterReference[] CharacterReferences { get; } = new CharacterReference[32];
+        public List<GotoPoint> GotoPoints { get; set; } = new List<GotoPoint>();
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;

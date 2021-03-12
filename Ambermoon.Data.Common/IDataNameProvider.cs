@@ -187,6 +187,10 @@ namespace Ambermoon.Data
         string LegendHeader { get; }
         string GetAutomapName(AutomapType automapType);
         string Location { get; }
+        string AlreadyAtGotoPoint { get; }
+        string GotoPointSaved { get; }
+        string WayBackTooDangerous { get; }
+        string ReallyWantToGoThere { get; }
 
         #endregion
 
