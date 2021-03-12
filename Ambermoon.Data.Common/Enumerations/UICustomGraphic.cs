@@ -31,6 +31,7 @@
         BattleFieldBlockedMovementCursor, // Blinking red cross (14x11)
         ItemMagicAnimation, // 16x16, 8 frames (some blinking stars)
         BrokenItemOverlay, // 16x16
-        AutomapWallFrames // 8x8, 16 frames
+        AutomapWallFrames, // 8x8, 16 frames
+        FakeWallOverlay // 8x8
     }
 }

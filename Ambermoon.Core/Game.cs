@@ -8162,7 +8162,27 @@ namespace Ambermoon
                 Show();
         }
 
+        internal struct AutomapOptions
+        {
+            public bool SecretDoorsVisible;
+            public bool MonstersVisible;
+            public bool PersonsVisible;
+            public bool TrapsVisible;
+        }
+
         internal void ShowAutomap()
+        {
+            bool showAll = CurrentSavegame.ActiveSpells.Any(s => s?.Type == ActiveSpellType.MysticMap && s?.Duration > 0);
+            ShowAutomap(new AutomapOptions
+            {
+                SecretDoorsVisible = showAll,
+                MonstersVisible = showAll,
+                PersonsVisible = showAll,
+                TrapsVisible = showAll
+            });
+        }
+
+        internal void ShowAutomap(AutomapOptions automapOptions)
         {
             Fade(() =>
             {
@@ -8295,7 +8315,7 @@ namespace Ambermoon
 
                     if (graphic != null)
                     {
-                        byte displayLayer = 3;
+                        byte displayLayer = 4; // above walls and fake wall overlays (2 and 3)
 
                         if (x < Map.Width)
                         {
@@ -8572,6 +8592,13 @@ namespace Ambermoon
                         sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + wallGraphicType * 8, sprite.TextureAtlasOffset.Y);
                         sprite.ClipArea = Global.AutomapArea;
                         sprites.Add(sprite);
+
+                        if (type == false && automapOptions.SecretDoorsVisible) // fake wall
+                        {
+                            sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.FakeWallOverlay), PaletteIndex, 3);
+                            sprite.ClipArea = Global.AutomapArea;
+                            sprites.Add(sprite);
+                        }
                     }
                 }
                 #endregion
