@@ -8352,6 +8352,7 @@ namespace Ambermoon
                 void AddAutomapType(int tx, int ty, int x, int y, AutomapType automapType,
                     byte displayLayer = 5) // 5: above walls, fake wall overlays and player pin lower half (2, 3 and 4)
                 {
+                    byte baseDisplayLayer = displayLayer;
                     var graphic = automapType.ToGraphic();
 
                     if (graphic != null)
@@ -8364,15 +8365,19 @@ namespace Ambermoon
                                     displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + (ty - 1) * Map.Width] + 1);
                                 else if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
                                     displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
+                                else if (tx >0 && displayLayers.ContainsKey(tx - 1 + (ty - 1) * Map.Width))
+                                    displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + (ty - 1) * Map.Width] + 1);
                             }
 
-                            if (displayLayer == 2 && displayLayers.ContainsKey(tx + 1 + ty * Map.Width))
+                            if (displayLayer == baseDisplayLayer && displayLayers.ContainsKey(tx + 1 + ty * Map.Width))
                                 displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + ty * Map.Width] + 1);
                         }
                         else if (ty > 0)
                         {
                             if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
                                 displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
+                            else if (tx > 0 && displayLayers.ContainsKey(tx - 1 + (ty - 1) * Map.Width))
+                                displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + (ty - 1) * Map.Width] + 1);
                         }
 
                         int tileIndex = tx + ty * Map.Width;
