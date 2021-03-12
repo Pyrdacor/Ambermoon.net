@@ -149,8 +149,8 @@ namespace Ambermoon.Data
         {
             public uint X { get; set; }
             public uint Y { get; set; }
-            public byte Unknown1 { get; set; } // TODO
-            public byte Unknown2 { get; set; } // TODO
+            public byte Unknown { get; set; } // TODO
+            public uint Index { get; set; }
             public string Name { get; set; }
         }
 

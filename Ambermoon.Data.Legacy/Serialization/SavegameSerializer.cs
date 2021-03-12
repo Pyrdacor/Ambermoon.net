@@ -98,11 +98,15 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             Buffer.BlockCopy(dataReader.ReadBytes(15), 0, savegame.DictionaryWords, 0, 15);
 
-            dataReader.Position = 0x35a4;
+            // TODO: From start of dictionary words to goto points there are 128 bytes.
+            // The dictionary words need at least 15 bytes but most likely they also
+            // use 32 bytes or maybe even more.
+            dataReader.Position = 0x3584;
+
+            savegame.GotoPointBits = dataReader.ReadBytes(32); // 32 bytes for goto points (256 bits). Each goto point stores the bit index (0-based).
             savegame.ChestUnlockStates = dataReader.ReadBytes(32); // 32 * 8 bits = 256 bits (1 for each chest, possible chest indices 0 to 255)
             savegame.DoorUnlockStates = dataReader.ReadBytes(32); // 32 * 8 bits = 256 bits (1 for each door, possible door indices 0 to 255)
 
-            dataReader.Position = 0x35e4;
             Buffer.BlockCopy(dataReader.ReadBytes(6), 0, savegame.BattlePositions, 0, 6);
 
             savegame.TileChangeEvents.Clear();

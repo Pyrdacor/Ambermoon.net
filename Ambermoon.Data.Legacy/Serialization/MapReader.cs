@@ -145,8 +145,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     X = dataReader.ReadByte(),
                     Y = dataReader.ReadByte(),
-                    Unknown1 = dataReader.ReadByte(),
-                    Unknown2 = dataReader.ReadByte(),
+                    Unknown = dataReader.ReadByte(),
+                    Index = dataReader.ReadByte(),
                     Name = dataReader.ReadString(16).Trim('\0', ' ')
                 });
             }

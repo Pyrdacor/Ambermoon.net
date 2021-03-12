@@ -3408,11 +3408,12 @@ namespace Ambermoon
                 // Save goto points
                 uint testX = 1u + (uint)player.Position.X;
                 uint testY = 1u + (uint)player.Position.Y;
-                if (Map.GotoPoints.Any(p => p.X == testX && p.Y == testY))
+                var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == testX && p.Y == testY);
+                if (gotoPoint != null)
                 {
-                    if (!CurrentSavegame.IsGotoPointActive(Map.Index, testX, testY))
+                    if (!CurrentSavegame.IsGotoPointActive(gotoPoint.Index))
                     {
-                        CurrentSavegame.ActivateGotoPoint(Map.Index, testX, testY);
+                        CurrentSavegame.ActivateGotoPoint(gotoPoint.Index);
                         ShowMessagePopup(DataNameProvider.GotoPointSaved, null, TextAlign.Left);
                     }
                 }
@@ -8435,7 +8436,7 @@ namespace Ambermoon
                         return;
                     }
                     var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == tx + 1 && p.Y == ty + 1); // positions of goto points are 1-based
-                    if (gotoPoint != null && CurrentSavegame.IsGotoPointActive(Map.Index, (uint)tx + 1, (uint)ty + 1))
+                    if (gotoPoint != null && CurrentSavegame.IsGotoPointActive(gotoPoint.Index))
                     {
                         AddAutomapType(tx, ty, x, y, AutomapType.GotoPoint);
                         gotoPoints.Add(KeyValuePair.Create(gotoPoint,
