@@ -45,7 +45,6 @@ namespace Ambermoon.Render
 
         void ResetCameraPosition()
         {
-            Angle = 0.0f;
             lastPosition = new Position(Position);
             Geometry.BlockToCameraPosition(map.Map, Position, out float x, out float z);
             Camera.SetPosition(x, z);
@@ -93,9 +92,6 @@ namespace Ambermoon.Render
             player.Position.Y = Position.Y;
         }
 
-        /// <summary>
-        /// This will reset the view angle to up
-        /// </summary>
         public void SetPosition(int x, int y, uint ticks, bool triggerEvents)
         {
             Position = new Position(x, y);

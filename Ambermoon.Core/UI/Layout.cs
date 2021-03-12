@@ -2733,6 +2733,22 @@ namespace Ambermoon.UI
             return AddSprite(rect, textureIndex, paletteIndex, displayLayer, tooltip, tooltipTextColor, layer, out _, visible);
         }
 
+        public IAnimatedLayerSprite AddAnimatedSprite(Rect rect, uint textureIndex, byte paletteIndex,
+            uint numFrames, byte displayLayer = 2, Layer? layer = null, bool visible = true)
+        {
+            var textureAtlas = layer == null ? this.textureAtlas : TextureAtlasManager.Instance.GetOrCreate(layer.Value);
+            var sprite = RenderView.SpriteFactory.CreateAnimated(rect.Width, rect.Height, textureAtlas.Texture.Width, numFrames, true, displayLayer) as IAnimatedLayerSprite;
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(textureIndex);
+            sprite.DisplayLayer = displayLayer;
+            sprite.X = rect.Left;
+            sprite.Y = rect.Top;
+            sprite.PaletteIndex = paletteIndex;
+            sprite.Layer = layer == null ? renderLayer : RenderView.GetLayer(layer.Value);
+            sprite.Visible = visible;
+            additionalSprites.Add(sprite);
+            return sprite;
+        }
+
         Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
         {
             var toolTip = new Tooltip

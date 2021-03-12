@@ -799,6 +799,7 @@ namespace Ambermoon
             renderMap3D.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human);
             renderView.SetLight(GetLight3D());
             player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
+            player3D.TurnTowards((int)direction * 90.0f);
             if (player2D != null)
                 player2D.Visible = false;
             player.Position.X = (int)playerX;
@@ -8211,6 +8212,7 @@ namespace Ambermoon
                 layout.SetLayout(LayoutType.Automap);
 
                 var sprites = new List<ISprite>();
+                var animatedSprites = new List<IAnimatedLayerSprite>();
                 // key = tile index, value = tileX, tileY, drawX, drawY, boolean -> true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
                 var walls = new Dictionary<int, Tuple<int, int, int, int, bool?>>();
 
@@ -8280,19 +8282,19 @@ namespace Ambermoon
                 layout.AddPanel(locationArea, 11);
                 layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
                 layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X,-2} Y:{player3D.Position.Y}", TextColor.White, TextAlign.Left, 15);
-                DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16);
+                DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16, 16, false);
                 #endregion
 
                 #region Map
 
                 var automap = CurrentSavegame.Automaps.TryGetValue(Map.Index, out var a) ? a : null;
-                void DrawPin(int x, int y, byte displayLayer, bool onMap = false)
+                void DrawPin(int x, int y, byte upperDisplayLayer, byte lowerDisplayLayer, bool onMap)
                 {
                     var pinHead = !CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.Compass)
                         ? AutomapGraphic.PinUpperHalf
                         : AutomapGraphic.PinDirectionUp + (int)player3D.PreciseDirection;
-                    var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), PaletteIndex, displayLayer);
-                    var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), PaletteIndex, displayLayer);
+                    var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), PaletteIndex, upperDisplayLayer);
+                    var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), PaletteIndex, lowerDisplayLayer);
 
                     if (onMap)
                     {
@@ -8305,18 +8307,39 @@ namespace Ambermoon
 
                 void AddGraphic(int x, int y, AutomapGraphic automapGraphic, int width, int height, byte displayLayer = 2)
                 {
-                    var sprite = layout.AddSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic), PaletteIndex, displayLayer);
+                    ILayerSprite sprite;
+
+                    switch (automapGraphic)
+                    {
+                        case AutomapGraphic.Riddlemouth:
+                        case AutomapGraphic.Teleport:
+                        case AutomapGraphic.Spinner:
+                        case AutomapGraphic.Trap:
+                        case AutomapGraphic.TrapDoor:
+                        case AutomapGraphic.Special:
+                        case AutomapGraphic.Monster: // this and all above have 4 frames
+                        case AutomapGraphic.GotoPoint: // this has 7 frames
+                        {
+                            var animatedSprite = layout.AddAnimatedSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic),
+                                PaletteIndex, automapGraphic == AutomapGraphic.GotoPoint ? 7u : 4u, displayLayer);
+                            animatedSprites.Add(animatedSprite);
+                            sprite = animatedSprite;
+                            break;
+                        }
+                        default:
+                            sprite = layout.AddSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic), PaletteIndex, displayLayer);
+                            break;
+                    }
+
                     sprite.ClipArea = Global.AutomapArea;
                     sprites.Add(sprite);
                 }
-                void AddAutomapType(int x, int y, AutomapType automapType)
+                void AddAutomapType(int x, int y, AutomapType automapType, byte displayLayer = 5) // 5: above walls, fake wall overlays and player pin lower half (2, 3 and 4)
                 {
                     var graphic = automapType.ToGraphic();
 
                     if (graphic != null)
                     {
-                        byte displayLayer = 4; // above walls and fake wall overlays (2 and 3)
-
                         if (x < Map.Width)
                         {
                             if (y > 0)
@@ -8342,11 +8365,25 @@ namespace Ambermoon
                 }
                 void AddTile(int tx, int ty, int x, int y)
                 {
+                    var characterType = renderMap3D.CharacterTypeFromBlock((uint)tx, (uint)ty);
+
+                    if (characterType == CharacterType.Monster)
+                    {
+                        if (automapOptions.MonstersVisible)
+                            AddAutomapType(x, y, AutomapType.Monster, 6);
+                    }
+                    else if (characterType == CharacterType.PartyMember || characterType == CharacterType.NPC)
+                    {
+                        if (automapOptions.PersonsVisible)
+                            AddAutomapType(x, y, AutomapType.Person, 6);
+                    }
+
                     if (automap != null && !automap.IsBlockExplored(Map, (uint)tx, (uint)ty))
                         return;
 
                     // Note: Maps are always 3D
                     var block = Map.Blocks[tx, ty];
+                    bool tavernOrMerchant = false;
 
                     if (block.MapBorder)
                     {
@@ -8363,11 +8400,20 @@ namespace Ambermoon
                             // Only add the event automap icon if the event is active
                             if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
                             {
-                                if (block.WallIndex != 0)
-                                    walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
-
                                 AddAutomapType(x, y, automapType);
-                                return;
+
+                                // Note: In case of tavern or merchant the wall has to be drawn as well so
+                                // don't return here in that case so that the wall can be added below.
+                                if (automapType != AutomapType.Tavern && automapType != AutomapType.Merchant)
+                                {
+                                    if (block.WallIndex != 0)
+                                        walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
+                                    return;
+                                }
+                                else
+                                {
+                                    tavernOrMerchant = true;
+                                }
                             }
                         }
                     }
@@ -8380,9 +8426,13 @@ namespace Ambermoon
                     else if (block.WallIndex != 0)
                     {
                         var wall = labdata.Walls[(int)block.WallIndex - 1];
-                        AddAutomapType(x, y, wall.AutomapType);
-
+                        var automapGraphic = wall.AutomapType.ToGraphic();
                         bool blockingWall = block.BlocksPlayer(labdata);
+
+                        if (!tavernOrMerchant) // The wall might have DoorOpen automap type but we don't want to show it in that case
+                            AddAutomapType(x, y, wall.AutomapType);
+                        else
+                            automapGraphic = null; // Show normal wall for taverns and merchants
 
                         // Walls that don't block and use transparency are not considered walls
                         // nor fake walls. For example a destroyed cobweb uses this.
@@ -8390,11 +8440,11 @@ namespace Ambermoon
                         if (blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
                         {
                             walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y,
-                                wall.AutomapType.ToGraphic() != null ? (bool?)null : blockingWall));
+                                automapGraphic != null ? (bool?)null : blockingWall));
                         }
                     }
 
-                    // TODO: goto points, persons, monsters and specials
+                    // TODO: goto points and specials
                 }
 
                 int x = Global.AutomapArea.X;
@@ -8465,7 +8515,6 @@ namespace Ambermoon
                 // Draw walls
                 foreach (var wall in walls)
                 {
-                    // TODO: fake walls
                     int tx = wall.Value.Item1;
                     int ty = wall.Value.Item2;
                     int dx = wall.Value.Item3;
@@ -8601,6 +8650,20 @@ namespace Ambermoon
                         }
                     }
                 }
+                // Animate automap icons
+                void Animate()
+                {
+                    if (CurrentWindow.Window == Window.Automap)
+                    {
+                        foreach (var animatedSprite in animatedSprites)
+                            ++animatedSprite.CurrentFrame;
+
+                        AddTimedEvent(TimeSpan.FromMilliseconds(100), Animate);
+                    }
+                }
+                Animate();
+                // Draw player pin
+                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 255, 4, true);
                 #endregion
 
                 #region Lower border
@@ -8616,12 +8679,6 @@ namespace Ambermoon
                 }
                 AddGraphic(x, y, AutomapGraphic.MapLowerRight, 32, 32);
                 #endregion
-
-                // Add all walls
-                foreach (var wall in walls)
-                {
-                    // TODO
-                }
 
                 void Scroll(int x, int y)
                 {

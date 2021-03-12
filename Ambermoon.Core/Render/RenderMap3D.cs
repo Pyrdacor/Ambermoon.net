@@ -84,6 +84,7 @@ namespace Ambermoon.Render
             readonly List<MapCharacter> children = new List<MapCharacter>(7);
             readonly MapCharacter parent = null;
             public Tileset.TileFlags TileFlags => characterReference?.TileFlags ?? Tileset.TileFlags.None;
+            public CharacterType? Type => characterReference?.Type;
 
             public static void Reset() => interacting = false;
 
@@ -561,6 +562,11 @@ namespace Ambermoon.Render
         public event Action<Map> MapChanged;
 
         public static void Reset() => MapCharacter.Reset();
+
+        public CharacterType? CharacterTypeFromBlock(uint x, uint y)
+        {
+            return mapCharacters.Values.FirstOrDefault(c => c.Active && c.Position.X == x && c.Position.Y == y)?.Type;
+        }
 
         public RenderMap3D(Game game, Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
