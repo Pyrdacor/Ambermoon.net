@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data
 {
@@ -143,6 +144,20 @@ namespace Ambermoon.Data
                     // algorithm is like we do already with palette index 0.
                 }
             }
+        }
+
+        public static Graphic Concat(params Graphic[] graphics)
+        {
+            var concatGraphic = new Graphic(graphics.Sum(g => g.Width), graphics.Max(g => g.Height), 0);
+            uint x = 0;
+
+            foreach (var graphic in graphics)
+            {
+                concatGraphic.AddOverlay(x, 0, graphic, false);
+                x += (uint)graphic.Width;
+            }
+
+            return concatGraphic;
         }
 
         public static Graphic FromIndexedData(int width, int height, byte[] data)

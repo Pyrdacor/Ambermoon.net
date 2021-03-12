@@ -8191,8 +8191,8 @@ namespace Ambermoon
                 layout.SetLayout(LayoutType.Automap);
 
                 var sprites = new List<ISprite>();
-                // key: tile index, value: true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
-                var walls = new Dictionary<int, bool?>();
+                // key = tile index, value = tileX, tileY, drawX, drawY, boolean -> true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
+                var walls = new Dictionary<int, Tuple<int, int, int, int, bool?>>();
 
                 #region Legend
                 layout.FillArea(new Rect(208, 37, Global.VirtualScreenWidth - 208, Global.VirtualScreenHeight - 37), Color.Black, 9);
@@ -8289,19 +8289,13 @@ namespace Ambermoon
                     sprite.ClipArea = Global.AutomapArea;
                     sprites.Add(sprite);
                 }
-
-                void AddWall(int x, int y)
-                {
-                    // TODO
-                }
-
                 void AddAutomapType(int x, int y, AutomapType automapType)
                 {
                     var graphic = automapType.ToGraphic();
 
                     if (graphic != null)
                     {
-                        byte displayLayer = 2;
+                        byte displayLayer = 3;
 
                         if (x < Map.Width)
                         {
@@ -8326,7 +8320,6 @@ namespace Ambermoon
                         displayLayers.Add(x + y * Map.Width, displayLayer);
                     }
                 }
-
                 void AddTile(int tx, int ty, int x, int y)
                 {
                     if (automap != null && !automap.IsBlockExplored(Map, (uint)tx, (uint)ty))
@@ -8340,15 +8333,22 @@ namespace Ambermoon
                         // draw nothing
                         return;
                     }
-                    if (block.MapEventId != 0 && !CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
+                    if (block.MapEventId != 0)
                     {
                         var ev = Map.EventList[(int)block.MapEventId - 1];
                         var automapType = ev.ToAutomapType(CurrentSavegame);
 
                         if (automapType != AutomapType.None)
                         {
-                            AddAutomapType(x, y, automapType);
-                            return;
+                            // Only add the event automap icon if the event is active
+                            if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
+                            {
+                                if (block.WallIndex != 0)
+                                    walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
+
+                                AddAutomapType(x, y, automapType);
+                                return;
+                            }
                         }
                     }
                 
@@ -8362,10 +8362,16 @@ namespace Ambermoon
                         var wall = labdata.Walls[(int)block.WallIndex - 1];
                         AddAutomapType(x, y, wall.AutomapType);
 
-                        if (wall.AutomapType.ToGraphic() == null)
-                            walls.Add(tx + ty * Map.Width, null);
-                        else
-                            walls.Add(tx + ty * Map.Width, block.BlocksPlayer(labdata));
+                        bool blockingWall = block.BlocksPlayer(labdata);
+
+                        // Walls that don't block and use transparency are not considered walls
+                        // nor fake walls. For example a destroyed cobweb uses this.
+                        // Fake walls on the other hand won't block but are not transparent.
+                        if (blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
+                        {
+                            walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y,
+                                wall.AutomapType.ToGraphic() != null ? (bool?)null : blockingWall));
+                        }
                     }
 
                     // TODO: goto points, persons, monsters and specials
@@ -8435,6 +8441,138 @@ namespace Ambermoon
                     }
 
                     y += 8;
+                }
+                // Draw walls
+                foreach (var wall in walls)
+                {
+                    // TODO: fake walls
+                    int tx = wall.Value.Item1;
+                    int ty = wall.Value.Item2;
+                    int dx = wall.Value.Item3;
+                    int dy = wall.Value.Item4;
+                    bool? type = wall.Value.Item5;
+
+                    if (type != null)
+                    {
+                        bool hasWallLeft = tx > 0 && walls.ContainsKey(tx - 1 + ty * Map.Width);
+                        bool hasWallUp = ty > 0 && walls.ContainsKey(tx + (ty - 1) * Map.Width);
+                        bool hasWallRight = tx < Map.Width - 1 && walls.ContainsKey(tx + 1 + ty * Map.Width);
+                        bool hasWallDown = ty < Map.Height - 1 && walls.ContainsKey(tx + (ty + 1) * Map.Width);
+                        int wallGraphicType = 15; // closed
+
+                        if (hasWallLeft)
+                        {
+                            if (hasWallRight)
+                            {
+                                if (hasWallUp)
+                                {
+                                    if (hasWallDown)
+                                    {
+                                        // all directions open (+ crossing)
+                                        wallGraphicType = 12;
+                                    }
+                                    else
+                                    {
+                                        // left, right and top open (T crossing)
+                                        wallGraphicType = 8;
+                                    }
+                                }
+                                else if (hasWallDown)
+                                {
+                                    // left, right and bottom open (T crossing)
+                                    wallGraphicType = 10;
+                                }
+                                else
+                                {
+                                    // left and right open
+                                    wallGraphicType = 14;
+                                }
+                            }
+                            else
+                            {
+                                if (hasWallUp)
+                                {
+                                    if (hasWallDown)
+                                    {
+                                        // left, top and bottom open (T crossing)
+                                        wallGraphicType = 11;
+                                    }
+                                    else
+                                    {
+                                        // left and top open (corner)
+                                        wallGraphicType = 7;
+                                    }
+                                }
+                                else if (hasWallDown)
+                                {
+                                    // left and bottom open (corner)
+                                    wallGraphicType = 5;
+                                }
+                                else
+                                {
+                                    // only left open
+                                    wallGraphicType = 3;
+                                }
+                            }
+                        }
+                        else if (hasWallRight)
+                        {
+                            if (hasWallUp)
+                            {
+                                if (hasWallDown)
+                                {
+                                    // right, top and bottom open (T crossing)
+                                    wallGraphicType = 9;
+                                }
+                                else
+                                {
+                                    // right and top open
+                                    wallGraphicType = 6;
+                                }
+                            }
+                            else if (hasWallDown)
+                            {
+                                // right and bottom open (corner)
+                                wallGraphicType = 4;
+                            }
+                            else
+                            {
+                                // only right open
+                                wallGraphicType = 1;
+                            }
+                        }
+                        else
+                        {
+                            if (hasWallUp)
+                            {
+                                if (hasWallDown)
+                                {
+                                    // top and bottom open
+                                    wallGraphicType = 13;
+                                }
+                                else
+                                {
+                                    // only top open
+                                    wallGraphicType = 0;
+                                }
+                            }
+                            else if (hasWallDown)
+                            {
+                                // only bottom open
+                                wallGraphicType = 2;
+                            }
+                            else
+                            {
+                                // closed single wall
+                                wallGraphicType = 15;
+                            }
+                        }
+
+                        var sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.AutomapWallFrames), PaletteIndex, 2);
+                        sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + wallGraphicType * 8, sprite.TextureAtlasOffset.Y);
+                        sprite.ClipArea = Global.AutomapArea;
+                        sprites.Add(sprite);
+                    }
                 }
                 #endregion
 
