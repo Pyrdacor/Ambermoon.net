@@ -8312,7 +8312,7 @@ namespace Ambermoon
                 var locationArea = new Rect(217, 166, 86, 22);
                 layout.AddPanel(locationArea, 11);
                 layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
-                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X,-2} Y:{player3D.Position.Y}", TextColor.White, TextAlign.Left, 15);
+                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
                 DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16, 16, false);
                 #endregion
 
@@ -8335,6 +8335,7 @@ namespace Ambermoon
                     }
                 }
                 var displayLayers = new Dictionary<int, byte>();
+                displayLayers[RenderPlayer.Position.X + RenderPlayer.Position.Y * Map.Width] = 100;
                 ILayerSprite AddGraphic(int x, int y, AutomapGraphic automapGraphic, int width, int height, byte displayLayer = 2)
                 {
                     ILayerSprite sprite;
@@ -8373,27 +8374,26 @@ namespace Ambermoon
 
                     if (graphic != null)
                     {
-                        if (tx < Map.Width)
+                        if (tx > 0)
                         {
-                            if (ty > 0)
+                            if (displayLayers.ContainsKey(tx - 1 + ty * Map.Width))
+                                displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + ty * Map.Width] + 1);
+                            else if (ty > 0)
                             {
-                                if (displayLayers.ContainsKey(tx + 1 + (ty - 1) * Map.Width))
+                                if (tx < Map.Width - 1 && displayLayers.ContainsKey(tx + 1 + (ty - 1) * Map.Width))
                                     displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + (ty - 1) * Map.Width] + 1);
                                 else if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
                                     displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
-                                else if (tx >0 && displayLayers.ContainsKey(tx - 1 + (ty - 1) * Map.Width))
+                                else if (tx > 0 && displayLayers.ContainsKey(tx - 1 + (ty - 1) * Map.Width))
                                     displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + (ty - 1) * Map.Width] + 1);
                             }
-
-                            if (displayLayer == baseDisplayLayer && displayLayers.ContainsKey(tx + 1 + ty * Map.Width))
-                                displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + ty * Map.Width] + 1);
                         }
                         else if (ty > 0)
                         {
-                            if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
+                            if (tx < Map.Width - 1 && displayLayers.ContainsKey(tx + 1 + (ty - 1) * Map.Width))
+                                displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + (ty - 1) * Map.Width] + 1);
+                            else if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
                                 displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
-                            else if (tx > 0 && displayLayers.ContainsKey(tx - 1 + (ty - 1) * Map.Width))
-                                displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + (ty - 1) * Map.Width] + 1);
                         }
 
                         int tileIndex = tx + ty * Map.Width;
@@ -8405,7 +8405,8 @@ namespace Ambermoon
                         }
 
                         automapIcons[tileIndex] = AddGraphic(x, y - 8, graphic.Value, 16, 16, displayLayer);
-                        displayLayers[tileIndex] = displayLayer;
+                        if (!displayLayers.ContainsKey(tileIndex) || displayLayers[tileIndex] < displayLayer)
+                            displayLayers[tileIndex] = displayLayer;
                     }
                 }
                 void AddTile(int tx, int ty, int x, int y)
@@ -8452,19 +8453,23 @@ namespace Ambermoon
                             // Only add the event automap icon if the event is active
                             if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
                             {
-                                AddAutomapType(tx, ty, x, y, automapType);
+                                if (automapType != AutomapType.Exit || block.WallIndex == 0 ||
+                                    labdata.Walls[(int)block.WallIndex - 1].AutomapType <= AutomapType.Wall)
+                                {
+                                    AddAutomapType(tx, ty, x, y, automapType); // Exits might be displayed by wall automap icons like doors
 
-                                // Note: In case of tavern or merchant the wall has to be drawn as well so
-                                // don't return here in that case so that the wall can be added below.
-                                if (automapType != AutomapType.Tavern && automapType != AutomapType.Merchant)
-                                {
-                                    if (block.WallIndex != 0)
-                                        walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
-                                    return;
-                                }
-                                else
-                                {
-                                    tavernOrMerchant = true;
+                                    // Note: In case of tavern or merchant the wall has to be drawn as well so
+                                    // don't return here in that case so that the wall can be added below.
+                                    if (automapType != AutomapType.Tavern && automapType != AutomapType.Merchant)
+                                    {
+                                        if (block.WallIndex != 0)
+                                            walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        tavernOrMerchant = true;
+                                    }
                                 }
                             }
                         }
@@ -8489,7 +8494,7 @@ namespace Ambermoon
                         // Walls that don't block and use transparency are not considered walls
                         // nor fake walls. For example a destroyed cobweb uses this.
                         // Fake walls on the other hand won't block but are not transparent.
-                        if (blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
+                        if (wall.AutomapType == AutomapType.Wall || blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
                         {
                             walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y,
                                 automapGraphic != null ? (bool?)null : blockingWall));
@@ -8713,8 +8718,7 @@ namespace Ambermoon
                 }
                 Animate();
                 // Draw player pin
-                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 200,
-                    (byte)(automapIcons.ContainsKey(RenderPlayer.Position.X + RenderPlayer.Position.Y * Map.Width) ? 200 : 4), true);
+                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 100, 100, true);
                 #endregion
 
                 #region Lower border
@@ -8825,7 +8829,7 @@ namespace Ambermoon
                                             {
                                                 AbortGoto();
                                             }
-                                        }, 1, 202);
+                                        }, 1, 202, TextAlign.Center);
                                     }
                                     return true;
                                 }
@@ -9126,7 +9130,7 @@ namespace Ambermoon
         }
 
         internal void ShowDecisionPopup(string text, Action<PopupTextEvent.Response> responseHandler,
-            int minLines = 3, byte displayLayerOffset = 0)
+            int minLines = 3, byte displayLayerOffset = 0, TextAlign textAlign = TextAlign.Left)
         {
             layout.OpenYesNoPopup
             (
@@ -9150,7 +9154,7 @@ namespace Ambermoon
                     InputEnable = true;
                     Resume();
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
-                }, minLines, displayLayerOffset
+                }, minLines, displayLayerOffset, textAlign
             );
             Pause();
             InputEnable = false;

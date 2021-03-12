@@ -832,7 +832,8 @@ namespace Ambermoon.UI
         }
 
         internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction,
-            Action closeAction, int minLines = 3, byte displayLayerOffset = 0)
+            Action closeAction, int minLines = 3, byte displayLayerOffset = 0,
+            TextAlign textAlign = TextAlign.Left)
         {
             ClosePopup(false);
             const int maxTextWidth = 192;
@@ -841,7 +842,7 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
-                processedText, TextColor.Gray, true, textBounds);
+                processedText, TextColor.Gray, true, textBounds, textAlign);
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 31) / 16);
             activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false, displayLayerOffset)
             {
