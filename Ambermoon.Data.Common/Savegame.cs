@@ -26,7 +26,7 @@ namespace Ambermoon.Data
     {
         #region Map
 
-        public List<Automap> Automaps { get; } = new List<Automap>();
+        public Dictionary<uint, Automap> Automaps { get; } = new Dictionary<uint, Automap>();
         public uint CurrentMapIndex { get; set; }
         public uint CurrentMapX { get; set; }
         public uint CurrentMapY { get; set; }

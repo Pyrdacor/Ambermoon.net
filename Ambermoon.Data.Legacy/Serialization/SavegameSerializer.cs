@@ -268,7 +268,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             foreach (var automapDataReader in files.AutomapDataReaders.Files)
             {
                 automapDataReader.Value.Position = 0;
-                savegame.Automaps.Add(Automap.Load(automapReader, automapDataReader.Value));
+                savegame.Automaps.Add((uint)automapDataReader.Key, Automap.Load(automapReader, automapDataReader.Value));
             }
 
             files.SaveDataReader.Position = 0;
@@ -295,10 +295,22 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return container;
             }
 
+            Dictionary<int, IDataWriter> WriteIndexedContainer<T>(Dictionary<uint, T> collection, Action<IDataWriter, T> writer)
+            {
+                var container = new Dictionary<int, IDataWriter>(collection.Count);
+                foreach (var item in collection)
+                {
+                    var valueWriter = new DataWriter();
+                    writer(valueWriter, item.Value);
+                    container.Add((int)item.Key, valueWriter);
+                }
+                return container;
+            }
+
             files.PartyMemberDataWriters = WriteContainer(savegame.PartyMembers, (w, p) => partyMemberWriter.WritePartyMember(p, w));
             files.ChestDataWriters = WriteContainer(savegame.Chests, (w, c) => chestWriter.WriteChest(c, w));
             files.MerchantDataWriters = WriteContainer(savegame.Merchants, (w, m) => merchantWriter.WriteMerchant(m, w));
-            files.AutomapDataWriters = WriteContainer(savegame.Automaps, (w, a) => automapWriter.WriteAutomap(a, w));
+            files.AutomapDataWriters = WriteIndexedContainer(savegame.Automaps, (w, a) => automapWriter.WriteAutomap(a, w));
             files.SaveDataWriter = new DataWriter();
             WriteSaveData(savegame, files.SaveDataWriter);
 

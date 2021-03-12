@@ -8265,6 +8265,7 @@ namespace Ambermoon
 
                 #region Map
 
+                var automap = CurrentSavegame.Automaps.TryGetValue(Map.Index, out var a) ? a : null;
                 void DrawPin(int x, int y, byte displayLayer, bool onMap = false)
                 {
                     var pinHead = !CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.Compass)
@@ -8328,6 +8329,9 @@ namespace Ambermoon
 
                 void AddTile(int tx, int ty, int x, int y)
                 {
+                    if (automap != null && !automap.IsBlockExplored(Map, (uint)tx, (uint)ty))
+                        return;
+
                     // Note: Maps are always 3D
                     var block = Map.Blocks[tx, ty];
 
@@ -8336,7 +8340,7 @@ namespace Ambermoon
                         // draw nothing
                         return;
                     }
-                    if (block.MapEventId != 0)
+                    if (block.MapEventId != 0 && !CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
                     {
                         var ev = Map.EventList[(int)block.MapEventId - 1];
                         var automapType = ev.ToAutomapType(CurrentSavegame);
