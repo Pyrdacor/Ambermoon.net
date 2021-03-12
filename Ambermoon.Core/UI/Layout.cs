@@ -690,7 +690,8 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
             bool disableButtons = true, bool closeOnClick = true, bool transparent = false,
-            TextColor textColor = TextColor.Gray, Action closeAction = null, TextAlign textAlign = TextAlign.Left)
+            TextColor textColor = TextColor.Gray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
+            byte displayLayerOffset = 0)
         {
             ClosePopup(false);
             var processedText = RenderView.TextProcessor.WrapText(text,
@@ -701,7 +702,7 @@ namespace Ambermoon.UI
             int popupRows = Math.Max(4, transparent ? maxTextHeight / Global.GlyphLineHeight : 2 + (textBounds.Height + 15) / 16);
             if (!transparent)
                 textBounds.Position.Y += ((popupRows - 2) * 16 - textBounds.Height) / 2;
-            activePopup = new Popup(game, RenderView, position, transparent ? maxWidth / Global.GlyphWidth : 18, popupRows, transparent)
+            activePopup = new Popup(game, RenderView, position, transparent ? maxWidth / Global.GlyphWidth : 18, popupRows, transparent, displayLayerOffset)
             {
                 DisableButtons = disableButtons,
                 CloseOnClick = closeOnClick
@@ -714,12 +715,13 @@ namespace Ambermoon.UI
         }
 
         internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false,
-            bool closeOnClick = true, bool transparent = false, TextAlign textAlign = TextAlign.Left)
+            bool closeOnClick = true, bool transparent = false, TextAlign textAlign = TextAlign.Left,
+            byte displayLayerOffset = 0)
         {
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
             var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons,
-                closeOnClick, transparent, TextColor.Gray, closeAction, textAlign);
+                closeOnClick, transparent, TextColor.Gray, closeAction, textAlign, displayLayerOffset);
             return popup;
         }
 
@@ -829,7 +831,8 @@ namespace Ambermoon.UI
             return popup;
         }
 
-        internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction, Action closeAction, int minLines = 3)
+        internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction,
+            Action closeAction, int minLines = 3, byte displayLayerOffset = 0)
         {
             ClosePopup(false);
             const int maxTextWidth = 192;
@@ -840,7 +843,7 @@ namespace Ambermoon.UI
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
                 processedText, TextColor.Gray, true, textBounds);
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 31) / 16);
-            activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false)
+            activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false, displayLayerOffset)
             {
                 DisableButtons = true,
                 CloseOnClick = false
@@ -851,8 +854,8 @@ namespace Ambermoon.UI
             var yesButton = activePopup.AddButton(new Position(111, 41 + popupRows * 16));
             var noButton = activePopup.AddButton(new Position(143, 41 + popupRows * 16));
 
-            yesButton.DisplayLayer = 200;
-            noButton.DisplayLayer = 210;
+            yesButton.DisplayLayer = (byte)Util.Limit(200, yesButton.DisplayLayer, 253);
+            noButton.DisplayLayer = (byte)Math.Min(254, Util.Max(noButton.DisplayLayer, 210, yesButton.DisplayLayer + 10));
 
             yesButton.ButtonType = ButtonType.Yes;
             noButton.ButtonType = ButtonType.No;

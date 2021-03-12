@@ -26,7 +26,8 @@ namespace Ambermoon.UI
         uint? continuousActionDelayInTicks = null;
         uint? initialContinuousActionDelayInTicks = null;
 
-        public Button(IRenderView renderView, Position position, TextureAtlasManager textureAtlasManager = null)
+        public Button(IRenderView renderView, Position position,
+            TextureAtlasManager textureAtlasManager = null)
         {
             Area = new Rect(position, new Size(Width, Height));
 
@@ -65,9 +66,9 @@ namespace Ambermoon.UI
             get => (byte)(frameSprite.DisplayLayer - 3);
             set
             {
-                frameSprite.DisplayLayer = (byte)(value + 3);
-                iconSprite.DisplayLayer = (byte)(value + 4);
-                disableOverlay.DisplayLayer = (byte)(value + 5);
+                frameSprite.DisplayLayer = (byte)Math.Min(255, value + 3);
+                iconSprite.DisplayLayer = (byte)Math.Min(255, value + 4);
+                disableOverlay.DisplayLayer = (byte)Math.Min(255, value + 5);
             }
         }
 

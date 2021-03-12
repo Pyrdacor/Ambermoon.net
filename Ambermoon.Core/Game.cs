@@ -3393,6 +3393,19 @@ namespace Ambermoon
 
             if (Map.Type == MapType.Map3D)
             {
+                // Explore
+                if (CurrentSavegame.Automaps.TryGetValue(Map.Index, out var automap))
+                {
+                    for (int y = Math.Max(0, player3D.Position.Y - 2); y <= Math.Min(Map.Height - 1, player3D.Position.Y + 2); ++y)
+                    {
+                        for (int x = Math.Max(0, player3D.Position.X - 2); x <= Math.Min(Map.Width - 1, player3D.Position.X + 2); ++x)
+                        {
+                            automap.ExploreBlock(Map, (uint)x, (uint)y);
+                        }
+                    }
+                }
+
+                // Save goto points
                 uint testX = 1u + (uint)player.Position.X;
                 uint testY = 1u + (uint)player.Position.Y;
                 if (Map.GotoPoints.Any(p => p.X == testX && p.Y == testY))
@@ -8314,6 +8327,8 @@ namespace Ambermoon
 
                     if (onMap)
                     {
+                        upperSprite.ClipArea = Global.AutomapArea;
+                        lowerSprite.ClipArea = Global.AutomapArea;
                         sprites.Add(upperSprite);
                         sprites.Add(lowerSprite);
                     }
@@ -8697,9 +8712,8 @@ namespace Ambermoon
                 }
                 Animate();
                 // Draw player pin
-                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 248,
-                    (byte)(automapIcons.ContainsKey(RenderPlayer.Position.X + RenderPlayer.Position.Y * Map.Width) ? 248 : 4), true);
-                // Note: Display layer 248 is just below the goto point tooltip layer (= 250).
+                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 200,
+                    (byte)(automapIcons.ContainsKey(RenderPlayer.Position.X + RenderPlayer.Position.Y * Map.Width) ? 200 : 4), true);
                 #endregion
 
                 #region Lower border
@@ -8780,15 +8794,16 @@ namespace Ambermoon
                                     {
                                         animationsPaused = false;
                                         Animate();
+                                        TrapMouse(Global.AutomapArea);
                                         SetupClickHandlers();
                                     }
 
                                     layout.HideTooltip();
+                                    UntrapMouse();
                                     animationsPaused = true;
-                                    nextClickHandler = null;
                                     if (MonsterSeesPlayer)
                                     {
-                                        ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left);
+                                        ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left, 202);
                                     }
                                     else
                                     {
@@ -8798,7 +8813,7 @@ namespace Ambermoon
                                             {
                                                 if (player3D.Position.X + 1 == gotoPoint.Key.X && player3D.Position.Y + 1 == gotoPoint.Key.Y)
                                                 {
-                                                    ShowMessagePopup(DataNameProvider.AlreadyAtGotoPoint, AbortGoto, TextAlign.Center);
+                                                    ShowMessagePopup(DataNameProvider.AlreadyAtGotoPoint, AbortGoto, TextAlign.Center, 202);
                                                 }
                                                 else
                                                 {
@@ -8809,9 +8824,9 @@ namespace Ambermoon
                                             {
                                                 AbortGoto();
                                             }
-                                        }, 1);
+                                        }, 1, 202);
                                     }
-                                    return false;
+                                    return true;
                                 }
                             }
                         }
@@ -8838,12 +8853,15 @@ namespace Ambermoon
                     {
                         AddTimedEvent(TimeSpan.FromMilliseconds(100), () =>
                         {
-                            var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
-                            int x = position.X < 4 ? -1 : position.X > 204 ? 1 : 0;
-                            int y = position.Y < 41 ? -1 : position.Y > 196 ? 1 : 0;
+                            if (InputEnable)
+                            {
+                                var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+                                int x = position.X < 4 ? -1 : position.X > 204 ? 1 : 0;
+                                int y = position.Y < 41 ? -1 : position.Y > 196 ? 1 : 0;
 
-                            if (x != 0 || y != 0)
-                                Scroll(x, y);
+                                if (x != 0 || y != 0)
+                                    Scroll(x, y);
+                            }
 
                             CheckScroll();
                         });
@@ -9040,7 +9058,8 @@ namespace Ambermoon
             };
         }
 
-        internal void ShowMessagePopup(string text, Action closeAction = null, TextAlign textAlign = TextAlign.Center)
+        internal void ShowMessagePopup(string text, Action closeAction = null,
+            TextAlign textAlign = TextAlign.Center, byte displayLayerOffset = 0)
         {
             Pause();
             InputEnable = false;
@@ -9051,12 +9070,12 @@ namespace Ambermoon
                 Resume();
                 ResetCursor();
                 closeAction?.Invoke();
-            }, true, true, false, textAlign);
+            }, true, true, false, textAlign, displayLayerOffset);
             CursorType = CursorType.Click;
             TrapMouse(popup.ContentArea);
         }
 
-        internal void ShowTextPopup(IText text, Action<PopupTextEvent.Response> responseHandler)
+        internal void ShowTextPopup(IText text, Action<PopupTextEvent.Response> responseHandler, byte displayLayer = 0)
         {
             Pause();
             InputEnable = false;
@@ -9105,7 +9124,8 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowDecisionPopup(string text, Action<PopupTextEvent.Response> responseHandler, int minLines = 3)
+        internal void ShowDecisionPopup(string text, Action<PopupTextEvent.Response> responseHandler,
+            int minLines = 3, byte displayLayerOffset = 0)
         {
             layout.OpenYesNoPopup
             (
@@ -9129,7 +9149,7 @@ namespace Ambermoon
                     InputEnable = true;
                     Resume();
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
-                }, minLines
+                }, minLines, displayLayerOffset
             );
             Pause();
             InputEnable = false;
