@@ -8594,7 +8594,7 @@ namespace Ambermoon
             });
         }
 
-        internal uint GetPlayerPaletteIndex() => Map.IsWorldMap ? 1 : Map.PaletteIndex;
+        internal uint GetPlayerPaletteIndex() => Math.Max(1, Map.PaletteIndex) - 1;
 
         internal Position GetPlayerDrawOffset()
         {

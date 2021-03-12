@@ -33,6 +33,7 @@ namespace Ambermoon.Data.Legacy
         readonly GameData gameData;
         readonly ExecutableData.ExecutableData executableData;
         public Dictionary<int, Graphic> Palettes { get; }
+        public Dictionary<int, int> NPCGraphicOffsets { get; } = new Dictionary<int, int>();
 
         public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData, IntroData introData)
         {
@@ -222,6 +223,7 @@ namespace Ambermoon.Data.Legacy
                     var graphic = new Graphic();
                     foreach (var file in gameData.Files["NPC_gfx.amb"].Files)
                     {
+                        NPCGraphicOffsets.Add(file.Key, npcGraphics.Count);
                         var reader = file.Value;
                         reader.Position = 0;
 

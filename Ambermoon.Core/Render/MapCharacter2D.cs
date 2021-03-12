@@ -43,9 +43,9 @@ namespace Ambermoon.Render
         private MapCharacter2D(Game game, IRenderView renderView, Layer layer, IMapManager mapManager,
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
             : base(game, renderView.GetLayer(layer), TextureAtlasManager.Instance.GetOrCreate(layer),
-                renderView.SpriteFactory, () => AnimationProvider(game, map.Map, mapManager, characterReference),
-                map, GetStartPosition(characterReference), () => GetPaletteIndex(game, map.Map, characterReference),
-                () => NullOffset)
+                renderView.SpriteFactory, () => AnimationProvider(game, map.Map, mapManager,
+                    characterReference, renderView.GraphicProvider), map, GetStartPosition(characterReference),
+                () => Math.Max(1, map.Map.PaletteIndex) - 1, () => NullOffset)
         {
             this.game = game;
             this.map = map.Map;
@@ -63,7 +63,8 @@ namespace Ambermoon.Render
             return new Position(position.X - 1, position.Y - 1);
         }
 
-        static Character2DAnimationInfo AnimationProvider(Game game, Map map, IMapManager mapManager, Map.CharacterReference characterReference)
+        static Character2DAnimationInfo AnimationProvider(Game game, Map map, IMapManager mapManager,
+            Map.CharacterReference characterReference, IGraphicProvider graphicProvider)
         {
             bool usesTileset = characterReference.CharacterFlags.HasFlag(Flags.UseTileset);
 
@@ -94,10 +95,10 @@ namespace Ambermoon.Render
                 {
                     FrameWidth = 16, // NPC width
                     FrameHeight = 32, // NPC height
-                    StandFrameIndex = Graphics.NPCGraphicOffset + characterReference.GraphicIndex,
+                    StandFrameIndex = Graphics.GetNPCGraphicIndex(map.NPCGfxIndex, characterReference.GraphicIndex, graphicProvider),
                     SitFrameIndex = playerAnimationInfo.SitFrameIndex,
                     SleepFrameIndex = playerAnimationInfo.SleepFrameIndex,
-                    NumStandFrames = NumNPCFrames[characterReference.GraphicIndex],
+                    NumStandFrames = NumNPCFrames[(graphicProvider.NPCGraphicOffsets.TryGetValue((int)map.NPCGfxIndex, out int offset) ? offset : 0) + characterReference.GraphicIndex],
                     NumSitFrames = playerAnimationInfo.NumSitFrames,
                     NumSleepFrames = playerAnimationInfo.NumSleepFrames,
                     TicksPerFrame = map.TicksPerAnimationFrame * 2,
@@ -105,12 +106,6 @@ namespace Ambermoon.Render
                     IgnoreTileType = false
                 };
             }
-        }
-
-        static uint GetPaletteIndex(Game game, Map map, Map.CharacterReference characterReference)
-        {
-            return characterReference.CharacterFlags.HasFlag(Flags.UseTileset)
-                ? map.PaletteIndex : game.GetPlayerPaletteIndex();
         }
 
         public static MapCharacter2D Create(Game game, IRenderView renderView, IMapManager mapManager,
