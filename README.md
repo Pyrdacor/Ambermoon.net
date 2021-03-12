@@ -8,7 +8,7 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 Version | Windows 64bit | Linux 64bit | Windows 32bit
 --- | --- | --- | ---
-0.4.1 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.4.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.4.1beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.4.1beta/Ambermoon.net-Windows32Bit.zip)
+0.5.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows32Bit.zip)
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow. \
 An up-to-date overview for planned releases and features can be found [here](https://github.com/Pyrdacor/Ambermoon.net/issues/63).
@@ -61,6 +61,10 @@ Thank you very much.
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Doors.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Doors.png" width="400" alt="Locked doors" /></a>
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/LevelUp.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/LevelUp.png" width="400" alt="Level Up" /></a>
+</p>
+<p float="left">
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png" width="400" alt="Automap" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/GotoPoints.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/GotoPoints.png" width="400" alt="Goto points" /></a>
 </p>
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png" width="400" alt="Main menu" /></a>
