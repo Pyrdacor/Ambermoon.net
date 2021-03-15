@@ -49,7 +49,8 @@ namespace Ambermoon.Data
             public TileFlags Flags;
             public uint TextureIndex;
             public AutomapType AutomapType;
-            public byte Unknown2;
+            public AutomapType AlternativeAutomapType
+                ;
             public OverlayData[] Overlays;
 
             public override string ToString()

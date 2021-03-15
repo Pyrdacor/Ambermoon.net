@@ -8453,8 +8453,10 @@ namespace Ambermoon
                             // Only add the event automap icon if the event is active
                             if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
                             {
+                                var wall = labdata.Walls[(int)block.WallIndex - 1];
+
                                 if (automapType != AutomapType.Exit || block.WallIndex == 0 ||
-                                    labdata.Walls[(int)block.WallIndex - 1].AutomapType <= AutomapType.Wall)
+                                    wall.AutomapType == AutomapType.None || wall.AlternativeAutomapType == automapType)
                                 {
                                     AddAutomapType(tx, ty, x, y, automapType); // Exits might be displayed by wall automap icons like doors
 
@@ -8474,7 +8476,7 @@ namespace Ambermoon
                             }
                         }
                     }
-                
+
                     if (block.ObjectIndex != 0)
                     {
                         var obj = labdata.Objects[(int)block.ObjectIndex - 1];

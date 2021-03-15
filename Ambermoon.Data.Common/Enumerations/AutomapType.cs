@@ -15,12 +15,13 @@
         DoorOpen,  // not in legend / no text
         Merchant,
         Tavern,
-        Chest, // Treasure
+        Chest, // closed
         Exit,
-        ChestOpened, // not in legend / no text (I guessed opened chest)
+        ChestOpened, // not in legend / no text
         Pile,
         Person,
-        GotoPoint
+        GotoPoint,
+        Invalid = 0xffff // this seems to be used by map objects that are characters and the type should be determined by character type
     }
 
     public static class AutomapExtensions
