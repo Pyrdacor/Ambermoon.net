@@ -124,6 +124,9 @@ namespace Ambermoon.Render
 
         public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
+            if (newDirection == CharacterDirection.Random)
+                newDirection = (CharacterDirection)game.RandomInt(0, 4);
+
             if (map != Map.Map)
             {
                 if (newDirection == null)

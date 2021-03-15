@@ -52,6 +52,9 @@ namespace Ambermoon.Render
 
         public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
+            if (newDirection == CharacterDirection.Random)
+                newDirection = (CharacterDirection)game.RandomInt(0, 4);
+
             lastPosition = new Position(Position);
             Position = new Position((int)x, (int)y);
 

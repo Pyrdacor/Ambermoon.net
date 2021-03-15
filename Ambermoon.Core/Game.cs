@@ -8824,7 +8824,7 @@ namespace Ambermoon
                                                 }
                                                 else
                                                 {
-                                                    Exit(() => Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, player.Direction, out _, true));
+                                                    Exit(() => Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, gotoPoint.Key.Direction, out _, true));
                                                 }
                                             }
                                             else
