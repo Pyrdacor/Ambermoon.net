@@ -1648,7 +1648,7 @@ namespace Ambermoon.UI
                 }
                 else
                 {
-                    SetInventoryMessage(game.DataNameProvider.WrongPlaceToUseItem, true);
+                    SetInventoryMessage(game.DataNameProvider.ItemHasNoEffectHere, true);
                     return;
                 }
             }
@@ -1656,6 +1656,14 @@ namespace Ambermoon.UI
             {
                 if (item.Spell != Spell.None)
                 {
+                    var worldFlag = (WorldFlag)(1 << (int)game.Map.World);
+
+                    if (!SpellInfos.Entries[item.Spell].Worlds.HasFlag(worldFlag))
+                    {
+                        SetInventoryMessage(game.DataNameProvider.WrongWorldToUseItem, true);
+                        return;
+                    }
+
                     bool wrongPlace = false;
 
                     if (game.LastWindow.Window == Window.Camp)
