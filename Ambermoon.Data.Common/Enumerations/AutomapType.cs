@@ -47,5 +47,8 @@
             AutomapType.GotoPoint => AutomapGraphic.GotoPoint,
             _ => null
         };
+
+        public static AutomapType GetEventAutomapType(this Map map, uint eventIndex)
+            => eventIndex >= map.EventAutomapTypes.Count ? AutomapType.None : map.EventAutomapTypes[(int)eventIndex];
     }
 }

@@ -8445,33 +8445,26 @@ namespace Ambermoon
                     }
                     if (block.MapEventId != 0)
                     {
-                        var ev = Map.EventList[(int)block.MapEventId - 1];
-                        var automapType = ev.ToAutomapType(CurrentSavegame);
-
-                        if (automapType != AutomapType.None)
+                        // Only add the event automap icon if the event is active
+                        if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
                         {
-                            // Only add the event automap icon if the event is active
-                            if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
+                            var automapType = Map.GetEventAutomapType(block.MapEventId - 1);
+
+                            if (automapType != AutomapType.None)
                             {
-                                var wall = labdata.Walls[(int)block.WallIndex - 1];
+                                AddAutomapType(tx, ty, x, y, automapType);
 
-                                if (automapType != AutomapType.Exit || block.WallIndex == 0 ||
-                                    wall.AutomapType == AutomapType.None || wall.AlternativeAutomapType == automapType)
+                                // Note: In case of tavern or merchant the wall has to be drawn as well so
+                                // don't return here in that case so that the wall can be added below.
+                                if (automapType != AutomapType.Tavern && automapType != AutomapType.Merchant)
                                 {
-                                    AddAutomapType(tx, ty, x, y, automapType); // Exits might be displayed by wall automap icons like doors
-
-                                    // Note: In case of tavern or merchant the wall has to be drawn as well so
-                                    // don't return here in that case so that the wall can be added below.
-                                    if (automapType != AutomapType.Tavern && automapType != AutomapType.Merchant)
-                                    {
-                                        if (block.WallIndex != 0)
-                                            walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
-                                        return;
-                                    }
-                                    else
-                                    {
-                                        tavernOrMerchant = true;
-                                    }
+                                    if (block.WallIndex != 0)
+                                        walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
+                                    return;
+                                }
+                                else
+                                {
+                                    tavernOrMerchant = true;
                                 }
                             }
                         }
@@ -8479,8 +8472,11 @@ namespace Ambermoon
 
                     if (block.ObjectIndex != 0)
                     {
-                        var obj = labdata.Objects[(int)block.ObjectIndex - 1];
-                        AddAutomapType(tx, ty, x, y, obj.AutomapType);
+                        if (!tavernOrMerchant)
+                        {
+                            var obj = labdata.Objects[(int)block.ObjectIndex - 1];
+                            AddAutomapType(tx, ty, x, y, obj.AutomapType);
+                        }
                     }
                     else if (block.WallIndex != 0)
                     {

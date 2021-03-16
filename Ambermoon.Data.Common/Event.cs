@@ -33,50 +33,6 @@ namespace Ambermoon.Data
         Nop // null / no operation
     }
 
-    public static class EventExtensions
-    {
-        public static AutomapType ToAutomapType(this Event @event, Savegame savegame)
-        {
-            switch (@event.Type)
-            {
-                case EventType.Teleport:
-                {
-                    var teleportEvent = @event as TeleportEvent;
-                    return teleportEvent.Transition switch
-                    {
-                        TeleportEvent.TransitionType.Teleporter => AutomapType.Teleporter,
-                        TeleportEvent.TransitionType.MapChange => AutomapType.Exit,
-                        TeleportEvent.TransitionType.Falling => AutomapType.Trapdoor,
-                        _ => AutomapType.None
-                    };
-                }
-                case EventType.Door:
-                {
-                    var doorEvent = @event as DoorEvent;
-                    return savegame.IsDoorLocked(doorEvent.DoorIndex) ? AutomapType.Door : AutomapType.DoorOpen;
-                }
-                case EventType.Chest:
-                {
-                    var chestEvent = @event as ChestEvent;
-                    return chestEvent.RemoveWhenEmpty ? AutomapType.Pile : savegame.IsChestLocked(chestEvent.ChestIndex) ? AutomapType.Chest : AutomapType.ChestOpened;
-                }
-                case EventType.Spinner:
-                    return AutomapType.Spinner;
-                case EventType.Trap:
-                    return AutomapType.Trap;
-                case EventType.Riddlemouth:
-                    return AutomapType.Riddlemouth;
-                case EventType.EnterPlace:
-                {
-                    var placeEvent = @event as EnterPlaceEvent;
-                    return placeEvent.PlaceType == PlaceType.Inn ? AutomapType.Tavern : AutomapType.Merchant;
-                }
-                default:
-                    return AutomapType.None;
-            }
-        }
-    }
-
     public class Event
     {
         public uint Index { get; set; }

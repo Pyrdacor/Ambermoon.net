@@ -193,6 +193,7 @@ namespace Ambermoon.Data
         public List<string> Texts { get; set; } = new List<string>();
         public CharacterReference[] CharacterReferences { get; } = new CharacterReference[32];
         public List<GotoPoint> GotoPoints { get; set; } = new List<GotoPoint>();
+        public List<AutomapType> EventAutomapTypes { get; set; } = new List<AutomapType>();
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;

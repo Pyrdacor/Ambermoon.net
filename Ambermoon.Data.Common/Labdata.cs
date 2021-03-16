@@ -49,13 +49,12 @@ namespace Ambermoon.Data
             public TileFlags Flags;
             public uint TextureIndex;
             public AutomapType AutomapType;
-            public AutomapType AlternativeAutomapType
-                ;
+            public byte Unknown;
             public OverlayData[] Overlays;
 
             public override string ToString()
             {
-                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x8}), Texture: {TextureIndex}, AutomapType: {AutomapType}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}";
+                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x8}), Texture: {TextureIndex}, AutomapType: {AutomapType}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}, Unknown {Unknown:x2}";
 
                 if (Overlays != null && Overlays.Length != 0)
                 {

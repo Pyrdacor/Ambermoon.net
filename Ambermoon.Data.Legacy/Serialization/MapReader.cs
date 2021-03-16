@@ -1,6 +1,8 @@
-﻿using Ambermoon.Data.Serialization;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -149,6 +151,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                     Index = dataReader.ReadByte(),
                     Name = dataReader.ReadString(16).Trim('\0', ' ')
                 });
+            }
+
+            if (map.Type == MapType.Map3D)
+            {
+                map.EventAutomapTypes = dataReader.ReadBytes(map.EventList.Count).Select(a => (AutomapType)a).ToList();
             }
         }
     }
