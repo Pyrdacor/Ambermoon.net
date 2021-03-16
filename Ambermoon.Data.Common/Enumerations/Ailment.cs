@@ -30,7 +30,6 @@ namespace Ambermoon.Data
     {
         public static Ailment WithoutBattleOnlyAilments(this Ailment ailments)
         {
-            // TODO: Is madness also battle-only?
             return (Ailment)((int)ailments & 0xfff2);
         }
 
@@ -119,6 +118,7 @@ namespace Ambermoon.Data
                 !ailment.HasFlag(Ailment.Panic) &&
                 !ailment.HasFlag(Ailment.Drugged) &&
                 !ailment.HasFlag(Ailment.Petrified) &&
+                !ailment.HasFlag(Ailment.Unused) && // the original code states that this disables casting as well
                 !ailment.HasFlag(Ailment.DeadCorpse) &&
                 !ailment.HasFlag(Ailment.DeadAshes) &&
                 !ailment.HasFlag(Ailment.DeadDust);

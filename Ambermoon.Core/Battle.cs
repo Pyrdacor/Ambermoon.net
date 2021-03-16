@@ -11,6 +11,17 @@ namespace Ambermoon
 {
     internal static class CharacterBattleExtensions
     {
+        public static bool HasLongRangedWeapon(this Character character, IItemManager itemManager)
+        {
+            var itemIndex = character.Equipment?.Slots[EquipmentSlot.RightHand]?.ItemIndex;
+
+            if (itemIndex == null || itemIndex == 0)
+                return false;
+
+            var weapon = itemManager.GetItem(itemIndex.Value);
+            return weapon.Type == ItemType.LongRangeWeapon;
+        }
+
         public static bool HasLongRangedAttack(this Character character, IItemManager itemManager, out bool hasAmmo)
         {
             hasAmmo = false;
@@ -32,7 +43,8 @@ namespace Ambermoon
                 }
 
                 var ammoSlot = character.Equipment.Slots[EquipmentSlot.LeftHand];
-                hasAmmo = ammoSlot?.ItemIndex != null && ammoSlot?.ItemIndex != 0 && ammoSlot?.Amount > 0;
+                hasAmmo = ammoSlot?.ItemIndex != null && ammoSlot.ItemIndex != 0 && ammoSlot.Amount > 0 &&
+                    itemManager.GetItem(ammoSlot.ItemIndex).AmmunitionType == weapon.UsedAmmunitionType;
 
                 // I guess for monsters it's fine if the monster has the ammo in inventory
                 if (!hasAmmo && character is Monster)
@@ -143,7 +155,11 @@ namespace Ambermoon
             /// It is added for every  attack action but might be
             /// skipped if attack misses etc.
             /// </summary>
-            Hurt
+            Hurt,
+            WeaponBreak,
+            ArmorBreak,
+            LastAmmo,
+            DropWeapon
         }
 
         /*
@@ -202,6 +218,12 @@ namespace Ambermoon
         readonly Dictionary<ActiveSpellType, ILayerSprite> activeSpellSprites = new Dictionary<ActiveSpellType, ILayerSprite>();
         readonly Dictionary<ActiveSpellType, IColoredRect> activeSpellDurationBackgrounds = new Dictionary<ActiveSpellType, IColoredRect>();
         readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
+        readonly List<KeyValuePair<uint, ItemSlotFlags>> brokenItems = new List<KeyValuePair<uint, ItemSlotFlags>>();
+        readonly List<Monster> droppedWeaponMonsters = new List<Monster>();
+        /// <summary>
+        /// Those affect monsters decision making. Only physical damage and dissolve victim spell damage counts!
+        /// </summary>
+        readonly uint[] lastPlayerDamage = new uint[Game.MaxPartyMembers];
         bool showMonsterLP = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
@@ -496,6 +518,21 @@ namespace Ambermoon
             parryingPlayers.Clear();
             bool monstersAdvance = false;
 
+            foreach (var droppedWeaponMonster in droppedWeaponMonsters)
+            {
+                if (roundActors.Contains(droppedWeaponMonster))
+                {
+                    roundBattleActions.Enqueue(new BattleAction
+                    {
+                        Character = droppedWeaponMonster,
+                        Action = BattleActionType.DropWeapon,
+                        ActionParameter = 0
+                    });
+                }
+            }
+
+            droppedWeaponMonsters.Clear();
+
             // This is added in addition to normal monster actions directly
             // TODO: removed for now, check later when this is used (it seems awkward at the moment, maybe only later in battle?)
             /*if (CanMoveForward)
@@ -571,6 +608,24 @@ namespace Ambermoon
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
+                                Action = BattleActionType.WeaponBreak,
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                            });
+                            roundBattleActions.Enqueue(new BattleAction
+                            {
+                                Character = partyMember,
+                                Action = BattleActionType.ArmorBreak,
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                            });
+                            roundBattleActions.Enqueue(new BattleAction
+                            {
+                                Character = partyMember,
+                                Action = BattleActionType.LastAmmo,
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                            });
+                            roundBattleActions.Enqueue(new BattleAction
+                            {
+                                Character = partyMember,
                                 Action = BattleActionType.Hurt,
                                 ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
                             });
@@ -604,12 +659,27 @@ namespace Ambermoon
                 monstersAdvance = false;
             }
 
-            var action = PickMonsterAction(monster, wantsToFlee, forbiddenMonsterMoveSpots);
+            BattleActionType action;
+            uint actionParameter;
+            bool canCast = true;
 
-            if (action == BattleActionType.None) // do nothing
-                return;
+            while (true)
+            {
+                action = PickMonsterAction(monster, wantsToFlee, forbiddenMonsterMoveSpots, canCast);
 
-            var actionParameter = PickActionParameter(action, monster, wantsToFlee, forbiddenMonsterMoveSpots);
+                if (action == BattleActionType.None) // do nothing
+                    return;
+
+                actionParameter = PickActionParameter(action, monster, wantsToFlee, forbiddenMonsterMoveSpots);
+
+                if (action == BattleActionType.CastSpell && actionParameter == 0)
+                {
+                    canCast = false;
+                    continue;
+                }
+
+                break;
+            }
 
             int numActions = action == BattleActionType.Attack
                 ? monster.AttacksPerRound : 1;
@@ -633,6 +703,24 @@ namespace Ambermoon
                     roundBattleActions.Enqueue(new BattleAction
                     {
                         Character = monster,
+                        Action = BattleActionType.WeaponBreak,
+                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(actionParameter))
+                    });
+                    roundBattleActions.Enqueue(new BattleAction
+                    {
+                        Character = monster,
+                        Action = BattleActionType.ArmorBreak,
+                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(actionParameter))
+                    });
+                    roundBattleActions.Enqueue(new BattleAction
+                    {
+                        Character = monster,
+                        Action = BattleActionType.LastAmmo,
+                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(actionParameter))
+                    });
+                    roundBattleActions.Enqueue(new BattleAction
+                    {
+                        Character = monster,
                         Action = BattleActionType.Hurt,
                         ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(actionParameter))
                     });
@@ -652,7 +740,8 @@ namespace Ambermoon
                     MonstersDefeated = true,
                     KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList(),
                     FledPartyMembers = fledCharacters.Where(c => c?.Type == CharacterType.PartyMember).Cast<PartyMember>().ToList(),
-                    TotalExperience = initialMonsters.Sum(m => m.DefeatExperience)
+                    TotalExperience = initialMonsters.Sum(m => m.DefeatExperience),
+                    BrokenItems = brokenItems
                 });
             }
         }
@@ -687,7 +776,6 @@ namespace Ambermoon
 
         void RunBattleAction(BattleAction battleAction, uint battleTicks)
         {
-            layout.SetBattleMessage(null);
             game.CursorType = CursorType.Sword;
 
             void ActionFinished(bool needClickAfterwards = true)
@@ -700,6 +788,12 @@ namespace Ambermoon
 
             switch (battleAction.Action)
             {
+                case BattleActionType.DropWeapon:
+                {
+                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageHasDroppedWeapon, TextColor.Gray);
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => ActionFinished());
+                    return;
+                }
                 case BattleActionType.DisplayActionText:
                 {
                     var next = roundBattleActions.Peek();
@@ -720,7 +814,6 @@ namespace Ambermoon
                             break;
                         case BattleActionType.Attack:
                         {
-                            // TODO: handle dropping weapon / no ammunition
                             GetAttackInformation(next.ActionParameter, out uint targetTile, out uint weaponIndex, out uint _);
                             var weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
                             var target = battleField[targetTile];
@@ -766,14 +859,13 @@ namespace Ambermoon
                             break;
                     }
                     layout.SetBattleMessage(text, next.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                    {
-                        ActionFinished();
-                    });
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => ActionFinished());
                     return;
                 }
                 case BattleActionType.Move:
                 {
+                    layout.SetBattleMessage(null);
+
                     void EndMove()
                     {
                         MoveCharacterTo(battleAction.ActionParameter, battleAction.Character);
@@ -847,70 +939,147 @@ namespace Ambermoon
                 }
                 case BattleActionType.MoveGroupForward:
                     // No parameter
+                    layout.SetBattleMessage(null);
                     // TODO
                     break;
                 case BattleActionType.Attack:
                 {
-                    // TODO: first check if the weapon breaks. If so add a message which states it.
-                    // After a click this attack action should follow.
                     GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
-                    var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort, out bool loseTarget);
+                    var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort);
                     var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
-                    // Next action is a hurt action
-                    var hurtAction = roundBattleActions.Peek();
-                    if (attackResult != AttackResult.Damage && attackResult != AttackResult.CirticalHit)
+                    var target = GetCharacterAt((int)targetTile);
+                    if (abort)
                     {
-                        hurtAction.Skip = true;
-
-                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                        {
-                            switch (attackResult)
-                            {
-                                case AttackResult.Failed:
-                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackFailed, textColor);
-                                    break;
-                                case AttackResult.NoDamage:
-                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, textColor);
-                                    break;
-                                case AttackResult.Missed:
-                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget, textColor);
-                                    break;
-                                case AttackResult.Blocked:
-                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried, textColor);
-                                    break;
-                                case AttackResult.Protected:
-                                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotPenetrateMagicalAura, textColor);
-                                    break;
-                                case AttackResult.Petrified:
-                                    layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, textColor);
-                                    break;
-                            }
-                        });
-
-                        if (abort)
-                        {
-                            foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
-                                action.Skip = true;
-                        }
-
-                        if (loseTarget && battleAction.Character is PartyMember partyMember)
-                            PlayerLostTarget?.Invoke(partyMember);
+                        foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
+                            action.Skip = true;
                     }
-                    else
-                    {
-                        hurtAction.ActionParameter = UpdateHurtParameter(hurtAction.ActionParameter, (uint)damage);
-                        if (attackResult == AttackResult.CirticalHit)
-                        {
-                            layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMadeCriticalHit,
-                                textColor);
-                        }
-                        else
-                        {
-                            layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage),
-                                textColor);
-                        }
-                    }
+                    if (attackResult == AttackResult.Missed && battleAction.Character is PartyMember attackingPlayer)
+                        PlayerLostTarget?.Invoke(attackingPlayer);
+                    var followAction = roundBattleActions.Peek();
+                    followAction.ActionParameter = UpdateHurtParameter(followAction.ActionParameter, (uint)damage, attackResult);
                     Item weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
+                    Item ammo = ammoIndex == 0 ? null : game.ItemManager.GetItem(ammoIndex);
+                    if (attackResult == AttackResult.Petrified)
+                    {
+                        if (target.Type == CharacterType.Monster)
+                            layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, textColor);
+                        else
+                            layout.SetBattleMessage(null);
+                        ActionFinished(true);
+                        return;
+                    }
+                    // Memorize last damage for players
+                    if (damage != 0 && battleAction.Character is PartyMember partyMember)
+                        lastPlayerDamage[partyMembers.ToList().IndexOf(partyMember)] = (uint)damage; // TODO: Is this set to 0 if attack failed?
+                    // Check for last ammunition consumption
+                    if (weapon?.Type == ItemType.LongRangeWeapon)
+                    {
+                        void LastAmmoUsed()
+                        {
+                            followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.LastAmmo);
+
+                            // skip all following attacks
+                            bool foundNextDisplayAction = false;
+                            foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
+                            {
+                                if (!foundNextDisplayAction)
+                                {
+                                    if (action.Action == BattleActionType.DisplayActionText)
+                                    {
+                                        foundNextDisplayAction = true;
+                                        action.Skip = true;
+                                    }
+                                }
+                                else
+                                {
+                                    action.Skip = true;
+                                }
+                            }
+                        }
+                        var attacker = battleAction.Character;
+                        if (weapon.UsedAmmunitionType != AmmunitionType.None)
+                        {
+                            var slot = attacker.Inventory.Slots.FirstOrDefault(slot => slot.ItemIndex == ammoIndex && slot.Amount > 0);
+
+                            if (slot != null)
+                            {
+                                slot.Remove(1);
+
+                                if (slot.Amount == 0)
+                                {
+                                    // Do we have more in inventory?
+                                    if (!attacker.Inventory.Slots.Any(slot => slot.ItemIndex == ammoIndex && slot.Amount > 0))
+                                    {
+                                        var ammoSlot = attacker.Equipment.Slots[EquipmentSlot.LeftHand];
+
+                                        if (ammoSlot.ItemIndex != ammoIndex || ammoSlot.Amount <= 0)
+                                        {
+                                            // Monsters might only have the ammo in inventory
+                                            LastAmmoUsed();
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                var ammoSlot = attacker.Equipment.Slots[EquipmentSlot.LeftHand];
+
+                                if (ammoSlot.ItemIndex != ammoIndex || ammoSlot.Amount <= 0) // This should not happen!
+                                    throw new AmbermoonException(ExceptionScope.Application, "Character used long ranged weapon without needed ammo.");
+
+                                ammoSlot.Remove(1);
+
+                                if (ammoSlot.Amount == 0)
+                                {
+                                    LastAmmoUsed();
+                                }
+                            }
+                        }
+                    }
+                    // Check weapon or armor breakage
+                    if (attackResult != AttackResult.Missed)
+                    {
+                        if (weapon != null && game.RollDice100() < weapon.BreakChance)
+                            followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakWeapon);
+
+                        var enemyArmorIndex = target.Equipment.Slots[EquipmentSlot.Body].ItemIndex;
+
+                        if (enemyArmorIndex != 0)
+                        {
+                            var enemyArmor = game.ItemManager.GetItem(enemyArmorIndex);
+
+                            if (game.RollDice100() < enemyArmor.BreakChance)
+                                followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakArmor);
+                        }
+                    }
+                    void ShowAttackMessage()
+                    {
+                        switch (attackResult)
+                        {
+                            case AttackResult.Failed:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackFailed, textColor);
+                                break;
+                            case AttackResult.NoDamage:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackDidNoDamage, textColor);
+                                break;
+                            case AttackResult.Missed:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget, textColor);
+                                break;
+                            case AttackResult.Blocked:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageAttackWasParried, textColor);
+                                break;
+                            case AttackResult.Protected:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotPenetrateMagicalAura, textColor);
+                                break;
+                            case AttackResult.CriticalHit:
+                                layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMadeCriticalHit, textColor);
+                                break;
+                            case AttackResult.Damage:
+                                layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage), textColor);
+                                break;
+                        }
+                        ActionFinished(true);
+                    }
                     if (battleAction.Character is Monster monster)
                     {
                         var animation = layout.GetMonsterBattleAnimation(monster);
@@ -919,7 +1088,7 @@ namespace Ambermoon
                         {
                             animation.AnimationFinished -= AttackAnimationFinished;
                             if (weapon == null || weapon.Type != ItemType.LongRangeWeapon) // in this case the ammunition effect calls it
-                                ActionFinished();
+                                ShowAttackMessage();
                             currentBattleAnimation = null;
                             currentlyAnimatedMonster = null;
                         }
@@ -933,7 +1102,7 @@ namespace Ambermoon
                                 AmmunitionType.Arrow => BattleEffect.MonsterArrowAttack,
                                 AmmunitionType.Bolt => BattleEffect.MonsterBoltAttack,
                                 _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid ammunition type for monster.")
-                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, () => ActionFinished(true));
+                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, ShowAttackMessage);
                         }
 
                         animation.AnimationFinished += AttackAnimationFinished;
@@ -954,17 +1123,18 @@ namespace Ambermoon
                                 AmmunitionType.Bolt => BattleEffect.PlayerBoltAttack,
                                 AmmunitionType.Slingdagger => BattleEffect.SlingdaggerAttack,
                                 _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid ammunition type for player.")
-                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, () => ActionFinished(true));
+                            }, (uint)GetCharacterPosition(battleAction.Character), targetTile, battleTicks, ShowAttackMessage);
                         }
                         else
                         {
-                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, targetTile, battleTicks, () => ActionFinished(true));
+                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, targetTile, battleTicks, ShowAttackMessage);
                         }
                     }
                     return;
                 }
                 case BattleActionType.CastSpell:
                 {
+                    layout.SetBattleMessage(null);
                     GetCastSpellInformation(battleAction.ActionParameter, out uint targetRowOrTile, out Spell spell,
                         out var itemSlotIndex, out bool equippedItem);
 
@@ -1049,10 +1219,17 @@ namespace Ambermoon
 
                         int position = GetCharacterPosition(target);
                         bool failed = false;
+                        bool spellBlocked = false;
                         // Note: Some spells like Fireball or Whirlwind move to the target.
                         currentSpellAnimation.MoveTo(position, (ticks, playHurt, finish) =>
                         {
-                            if (playHurt || finish)
+                            if (finish && spellBlocked)
+                            {
+                                ShowSpellFailMessage(battleAction.Character, spellInfo, target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? finishAction : null);
+                                PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : finishAction);
+                                return;
+                            }
+                            else if (playHurt || finish)
                             {
                                 if (failed)
                                 {
@@ -1060,11 +1237,13 @@ namespace Ambermoon
                                         finishAction?.Invoke();
                                     return;
                                 }
-                                else if (!CheckSpell(battleAction.Character, target, spell, () =>
+                                else if (!CheckSpell(battleAction.Character, target, spell, blocked =>
                                 {
                                     if (finish)
                                         finishAction?.Invoke();
-                                }))
+                                    else if (blocked)
+                                        spellBlocked = true;
+                                }, finish))
                                 {
                                     failed = true;
                                     // Note: The finishAction is called automatically if CheckSpell returns false.
@@ -1250,6 +1429,7 @@ namespace Ambermoon
                 }
                 case BattleActionType.Flee:
                 {
+                    layout.SetBattleMessage(null);
                     void EndFlee()
                     {
                         fledCharacters.Add(battleAction.Character);
@@ -1265,7 +1445,8 @@ namespace Ambermoon
                                 MonstersDefeated = true,
                                 KilledMonsters = initialMonsters.Where(m => !fledCharacters.Contains(m)).ToList(),
                                 FledPartyMembers = fledCharacters.Where(c => c?.Type == CharacterType.PartyMember).Cast<PartyMember>().ToList(),
-                                TotalExperience = initialMonsters.Sum(m => m.DefeatExperience)
+                                TotalExperience = initialMonsters.Sum(m => m.DefeatExperience),
+                                BrokenItems = brokenItems
                             });
                             return;
                         }
@@ -1305,17 +1486,90 @@ namespace Ambermoon
                     }
                     return;
                 }
+                case BattleActionType.WeaponBreak:
+                {
+                    GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out _, out var flags);
+                    var nextAction = roundBattleActions.Peek();
+                    nextAction.ActionParameter = battleAction.ActionParameter;
+                    if (flags.HasFlag(AttackActionFlags.BreakWeapon))
+                    {
+                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                        var weaponSlot = battleAction.Character.Equipment.Slots[EquipmentSlot.RightHand];
+                        var itemIndex = weaponSlot.ItemIndex;
+                        if (battleAction.Character is PartyMember partyMember)
+                            game.EquipmentRemoved(partyMember, itemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                        // TODO: decrease monster attack
+                        brokenItems.Add(KeyValuePair.Create(itemIndex, weaponSlot.Flags));
+                        weaponSlot.Clear();
+                        layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
+                        ActionFinished(true);
+                    }
+                    else
+                    {
+                        ActionFinished(false);
+                    }
+                    return;
+                }
+                case BattleActionType.ArmorBreak:
+                {
+                    GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out _, out var flags);
+                    var target = GetCharacterAt((int)tile);
+                    var nextAction = roundBattleActions.Peek();
+                    nextAction.ActionParameter = battleAction.ActionParameter;
+                    if (flags.HasFlag(AttackActionFlags.BreakArmor))
+                    {
+                        var textColor = battleAction.Character.Type == CharacterType.PartyMember ? TextColor.Orange : TextColor.White;
+                        var armorSlot = target.Equipment.Slots[EquipmentSlot.Body];
+                        var itemIndex = armorSlot.ItemIndex;
+                        if (target is PartyMember partyMember)
+                            game.EquipmentRemoved(partyMember, itemIndex, 1, armorSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                        // TODO: decrease monster armor
+                        brokenItems.Add(KeyValuePair.Create(itemIndex, armorSlot.Flags));
+                        armorSlot.Clear();
+                        layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
+                        ActionFinished(true);
+                    }
+                    else
+                    {
+                        ActionFinished(false);
+                    }
+                    return;
+                }
+                case BattleActionType.LastAmmo:
+                {
+                    GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out _, out var flags);
+                    var nextAction = roundBattleActions.Peek();
+                    nextAction.ActionParameter = battleAction.ActionParameter;
+                    if (flags.HasFlag(AttackActionFlags.LastAmmo))
+                    {
+                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                        layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageUsedLastAmmunition, textColor);
+                        if (battleAction.Character is Monster monster)
+                            droppedWeaponMonsters.Add(monster);
+                        ActionFinished(true);
+                    }
+                    else
+                    {
+                        ActionFinished(false);
+                    }
+                    return;
+                }
                 case BattleActionType.Hurt:
                 {
-                    GetHurtInformation(battleAction.ActionParameter, out uint tile, out uint damage);
-
+                    layout.SetBattleMessage(null);
+                    var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                    GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out var attackResult, out var flags);
                     var target = GetCharacterAt((int)tile);
-
+                    if(attackResult != AttackResult.Damage && attackResult != AttackResult.CriticalHit)
+                    {
+                        ActionFinished(false);
+                        return;
+                    }
                     void EndHurt()
                     {
                         if (!target.Alive)
                         {
-                            HandleCharacterDeath(battleAction.Character, target, () => ActionFinished());
+                            HandleCharacterDeath(battleAction.Character, target, () => ActionFinished(false));
                         }
                         else
                         {
@@ -1339,15 +1593,16 @@ namespace Ambermoon
                             animation.AnimationFinished -= HurtAnimationFinished;
                             currentBattleAnimation = null;
                             currentlyAnimatedMonster = null;
+                            EndHurt();
                         }
 
                         animation.AnimationFinished += HurtAnimationFinished;
-                        animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt), Game.TicksPerSecond / 3,
-                            battleTicks);
+                        var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
+                        animation.Play(frames, (Game.TicksPerSecond / 2) / (uint)frames.Length, battleTicks);
                         currentBattleAnimation = animation;
                         currentlyAnimatedMonster = monster;
 
-                        PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, EndHurt);
+                        PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, null);
                     }
                     ShowBattleFieldDamage((int)tile, damage);
                     if (target.Ailments.HasFlag(Ailment.Sleep))
@@ -1442,44 +1697,46 @@ namespace Ambermoon
             return true;
         }
 
-        bool CheckSpell(Character caster, Character target, Spell spell, Action failAction)
+        void ShowSpellFailMessage(Character caster, SpellInfo spellInfo, string message, Action finishAction)
+        {
+            var color = caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+            var delay = TimeSpan.FromMilliseconds(700);
+
+            if (needsClickForNextAction && !spellInfo.Target.TargetsMultipleEnemies())
+            {
+                game.SetBattleMessageWithClick(message, color, finishAction, delay);
+            }
+            else
+            {
+                layout.SetBattleMessage(message, color);
+                game.AddTimedEvent(delay, () =>
+                {
+                    layout.SetBattleMessage(null);
+                    finishAction?.Invoke();
+                });
+            }
+        }
+
+        bool CheckSpell(Character caster, Character target, Spell spell, Action<bool> failAction, bool playBlocked)
         {
             var spellInfo = SpellInfos.Entries[spell];
-
-            void ShowFailMessage(string message, Action finishAction)
-            {
-                var color = caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
-                var delay = TimeSpan.FromMilliseconds(700);
-
-                if (needsClickForNextAction && !spellInfo.Target.TargetsMultipleEnemies())
-                {
-                    game.SetBattleMessageWithClick(message, color, finishAction, delay);
-                }
-                else
-                {
-                    layout.SetBattleMessage(message, color);
-                    game.AddTimedEvent(delay, () =>
-                    {
-                        layout.SetBattleMessage(null);
-                        finishAction?.Invoke();
-                    });
-                }
-            }
+            void Fail() => failAction?.Invoke(false);
+            void ShowFailMessage(string message, Action finishAction) => ShowSpellFailMessage(caster, spellInfo, message, finishAction);
 
             if (target.Type != caster.Type)
             {
                 if (target.SpellTypeImmunity.HasFlag((SpellTypeImmunity)spellInfo.SpellType))
                 {
-                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType, failAction);
+                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType, Fail);
                     return false;
                 }
 
                 if (target.IsImmuneToSpell(spell, out bool silent))
                 {
                     if (silent)
-                        failAction?.Invoke();
+                        Fail();
                     else
-                        ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell, failAction);
+                        ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell, Fail);
                     return false;
                 }
 
@@ -1488,9 +1745,17 @@ namespace Ambermoon
 
                 if (game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
                 {
+                    Action blockedAction = () => failAction?.Invoke(true);
                     // Blocked
-                    ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? failAction : null);
-                    PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : failAction);
+                    if (playBlocked)
+                    {
+                        ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? blockedAction : null);
+                        PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : blockedAction);
+                    }
+                    else
+                    {
+                        blockedAction();
+                    }
                     return false;
                 }
             }
@@ -1499,7 +1764,7 @@ namespace Ambermoon
             {
                 // Note: In original there is no message in this case but I think
                 //       it's better to show the reason.
-                ShowFailMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, failAction);
+                ShowFailMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, Fail);
                 return false;
             }
 
@@ -1560,6 +1825,10 @@ namespace Ambermoon
                     currentBattleAnimation?.Destroy();
                     currentBattleAnimation = null;
                     currentlyAnimatedMonster = null;
+                }
+                else
+                {
+                    layout.GetMonsterBattleAnimation(target as Monster)?.Destroy();
                 }
                 PlayBattleEffectAnimation(BattleEffect.Death, (uint)slot, game.CurrentBattleTicks, () =>
                 {
@@ -1673,7 +1942,11 @@ namespace Ambermoon
                 case Spell.HolyWord:
                     RemoveCharacterFromBattleField(target);
                     if (caster is PartyMember partyMember)
+                    {
+                        if (spell == Spell.DissolveVictim)
+                            lastPlayerDamage[partyMembers.ToList().IndexOf(partyMember)] = target.HitPoints.MaxValue;
                         KillMonster(partyMember, target);
+                    }
                     else
                         KillPlayer(target);
                     break;
@@ -1998,7 +2271,7 @@ namespace Ambermoon
                 playerBattleAction.BattleAction.ToStatusGraphic(playerBattleAction.Parameter, game.ItemManager));
         }
 
-        BattleActionType PickMonsterAction(Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots)
+        BattleActionType PickMonsterAction(Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots, bool canCast)
         {
             var position = GetCharacterPosition(monster);
             List<BattleActionType> possibleActions = new List<BattleActionType>();
@@ -2007,69 +2280,105 @@ namespace Ambermoon
             {
                 return BattleActionType.Flee;
             }
-            bool willFlee = wantsToFlee && monster.CanMove();
-            if (!willFlee && monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster))
-                possibleActions.Add(BattleActionType.Attack);
-            if ((wantsToFlee || !possibleActions.Contains(BattleActionType.Attack)) && monster.CanMove()) // TODO: small chance to move even if the monster could attack?
+            if (wantsToFlee && monster.CanMove())
             {
-                // Only move if there is nobody to attack
+                // In this case always retreat if possible
                 if (MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
+                    return BattleActionType.Move;
+            }
+            bool canAttackRanged = true;
+            bool canAttackMelee = true;
+
+            while (true)
+            {
+                int rand = game.RandomInt(0, 15);
+
+                if (rand < 8)
                 {
-                    if (wantsToFlee)
-                        return BattleActionType.Move;
-                    else
-                        possibleActions.Add(BattleActionType.Move);
+                    if (canCast && monster.HasAnySpell() && monster.Ailments.CanCastSpell() && CanCastAnySpell(monster))
+                        return BattleActionType.CastSpell;
+
+                    canCast = false;
+                }
+                else if (rand < 14)
+                {
+                    if (canAttackRanged)
+                    {
+                        if (!monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo))
+                        {
+                            canAttackRanged = false;
+                            continue;
+                        }
+                        else if (!hasAmmo)
+                        {
+                            // TODO: throw weapon away and switch to melee weapon
+                        }
+                        return AttackOrMove();
+                    }
+                }
+                else
+                {
+                    if (canAttackMelee)
+                    {
+                        if (monster.HasLongRangedWeapon(game.ItemManager))
+                        {
+                            canAttackMelee = false;
+                            continue;
+                        }
+                        return AttackOrMove();
+                    }
                 }
             }
-            if (monster.HasAnySpell() && monster.Ailments.CanCastSpell() && CanCastSpell(monster))
-                possibleActions.Add(BattleActionType.CastSpell);
-            if (possibleActions.Count == 0)
-                return BattleActionType.None;
-            if (possibleActions.Count == 1)
-                return possibleActions[0];
-
-            // TODO: maybe prioritize some actions? dependent on what?
-            return possibleActions[game.RandomInt(0, possibleActions.Count - 1)];
+            BattleActionType AttackOrMove()
+            {
+                if (monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster))
+                    return BattleActionType.Attack;
+                else if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
+                    return BattleActionType.Move;
+                else
+                    return BattleActionType.None;
+            }
         }
 
-        bool CanCastSpell(Monster monster)
+        List<Spell> GetAvailableSpells(Character caster, Func<Spell, bool> checker)
         {
-            // First check the spells the monster has enough SP for.
-            var sp = monster.SpellPoints.CurrentValue;
-            var possibleSpells = monster.LearnedSpells.Where(s =>
+            var sp = caster.SpellPoints.CurrentValue;
+
+            if (sp == 0)
+                return new List<Spell>();
+
+            return caster.LearnedSpells.Where(spell =>
             {
-                if (!s.IsCastableByMonster())
-                    return false;
-                var spellInfo = SpellInfos.Entries[s];
-                return spellInfo.SP <= sp &&
+                var spellInfo = SpellInfos.Entries[spell];
+                return sp >= spellInfo.SP &&
                     spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle) &&
-                    spellInfo.Target != SpellTarget.Item;
+                    checker(spell);
 
             }).ToList();
+        }
 
-            if (possibleSpells.Count == 0)
-                return false;
-
-            bool monsterNeedsHealing = battleField.Where(c => c?.Type == CharacterType.Monster)
-                .Any(m => m.HitPoints.CurrentValue < m.HitPoints.TotalMaxValue / 2);
-
-            if (monsterNeedsHealing)
+        List<Spell> GetAvailableMonsterSpells(Monster monster)
+        {
+            return GetAvailableSpells(monster, spell =>
             {
-                // if the monster can heal, do so
-                if (possibleSpells.Contains(Spell.SmallHealing) ||
-                    possibleSpells.Contains(Spell.MediumHealing) ||
-                    possibleSpells.Contains(Spell.GreatHealing) ||
-                    possibleSpells.Contains(Spell.MassHealing) ||
-                    possibleSpells.Contains(Spell.HealingHand))
-                    return true;
-            }
+                return spell.IsCastableByMonster() &&
+                       SpellInfos.Entries[spell].Target.TargetsEnemy();
+            });
+        }
 
-            return possibleSpells.Any(s => SpellInfos.Entries[s].Target.TargetsEnemy());
+        bool CanCastAnySpell(Monster monster)
+        {
+            return GetAvailableMonsterSpells(monster).Count != 0;
+        }
+
+        int GetMoveRange(Character character)
+        {
+            return Util.Limit(1, (int)character.Attributes[Attribute.Speed].TotalCurrentValue / 40, 3);
         }
 
         bool MoveSpotAvailable(int characterPosition, Character character, bool wantsToFlee, List<int> forbiddenMoveSpots = null)
         {
-            int moveRange = character.Type == CharacterType.Monster && character.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
+            int moveRange = GetMoveRange(character);
 
             if (!GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY,
                 moveRange, RangeType.Move, wantsToFlee))
@@ -2404,31 +2713,20 @@ namespace Ambermoon
         {
             var spellInfo = SpellInfos.Entries[spell];
 
-            if (spellInfo.Target.TargetsEnemy())
+            if (spellInfo.Target == SpellTarget.EnemyRow)
             {
-                if (spellInfo.Target == SpellTarget.EnemyRow)
-                {
-                    // TODO: maybe pick the row with most players for some clever monsters?
-                    bool RowEmpty(int row) => !battleField.Skip(row * 6).Take(6).Any(c => c?.Type == CharacterType.PartyMember);
-                    if (RowEmpty(3))
-                        return 4;
-                    else if (RowEmpty(4))
-                        return 3;
-                    else
-                        return (uint)game.RandomInt(3, 4);
-                }
+                // TODO: maybe pick the row with most players for some clever monsters?
+                bool RowEmpty(int row) => !battleField.Skip(row * 6).Take(6).Any(c => c?.Type == CharacterType.PartyMember);
+                if (RowEmpty(3))
+                    return 4;
+                else if (RowEmpty(4))
+                    return 3;
                 else
-                {
-                    var positions = partyMembers.Where(p => p?.Alive == true)
-                        .Select(p => GetCharacterPosition(p)).ToArray();
-                    return (uint)positions[game.RandomInt(0, positions.Length - 1)];
-                }
+                    return (uint)game.RandomInt(3, 4);
             }
             else
             {
-                // Note: Friend spells can only target single targets or all.
-                // For all no target has to be selected so here only a single target is selected.
-                var positions = Monsters.Where(m => m?.Alive == true)
+                var positions = partyMembers.Where(p => p?.Alive == true)
                     .Select(p => GetCharacterPosition(p)).ToArray();
                 return (uint)positions[game.RandomInt(0, positions.Length - 1)];
             }
@@ -2454,45 +2752,44 @@ namespace Ambermoon
                 }
             case BattleActionType.CastSpell:
                 {
-                    var sp = monster.SpellPoints.CurrentValue;
-                    var possibleSpells = monster.LearnedSpells.Where(s =>
+                    var maxPlayerDamage = lastPlayerDamage.Max();
+                    uint getPrio(uint damage) => maxPlayerDamage == 0 ? 100 : damage * 100 / maxPlayerDamage;
+                    var maxDamagePlayers = lastPlayerDamage.Select((d, i) => new { Damage = d, Player = partyMembers[i] })
+                        .Where(x => x.Damage == maxPlayerDamage && x.Player?.Alive == true)
+                        .Select(x => new { x.Player, Prio = getPrio(x.Damage), Row = GetCharacterPosition(x.Player) / 6 });
+                    var averagePrio = maxDamagePlayers.Average(x => x.Prio);
+                    var spells = GetAvailableMonsterSpells(monster);
+                    uint targetTileOrRow = 0;
+                    void PickBestTargetTile()
                     {
-                        if (!s.IsCastableByMonster())
-                            return false;
-                        var spellInfo = SpellInfos.Entries[s];
-                        return spellInfo.SP <= sp &&
-                            spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Battle) &&
-                            spellInfo.Target != SpellTarget.Item;
-
-                    }).ToList();
-                    bool monsterNeedsHealing = battleField.Where(c => c?.Type == CharacterType.Monster)
-                        .Any(m => m.HitPoints.CurrentValue < m.HitPoints.TotalMaxValue / 2);
-                    Spell spell = Spell.None;
-
-                    if (monsterNeedsHealing &&
-                        (possibleSpells.Contains(Spell.SmallHealing) ||
-                        possibleSpells.Contains(Spell.MediumHealing) ||
-                        possibleSpells.Contains(Spell.GreatHealing) ||
-                        possibleSpells.Contains(Spell.MassHealing) ||
-                        possibleSpells.Contains(Spell.HealingHand)))
-                    {
-                        if (!possibleSpells.Any(s => SpellInfos.Entries[s].Target.TargetsEnemy()) || game.RollDice100() < 50)
-                        {
-                            var healingSpells = possibleSpells.Where(s => s.ToString().ToLower().Contains("healing")).ToArray();
-                            spell = healingSpells.Length == 1 ? healingSpells[0] : healingSpells[game.RandomInt(0, healingSpells.Length - 1)];
-                        }
+                        var players = maxDamagePlayers.ToList();
+                        targetTileOrRow = (uint)GetCharacterPosition(players[game.RandomInt(0, players.Count - 1)].Player);
                     }
-
-                    if (spell == Spell.None)
+                    void PickBestTargetRow()
                     {
-                        var spells = possibleSpells.ToArray();
-                        spell = spells.Length == 1 ? spells[0] : spells[game.RandomInt(0, spells.Length - 1)];
+                        var rows = maxDamagePlayers.GroupBy(x => x.Row).Select(g => new { Row = g.Key, Prio = g.Average(x => x.Prio) });
+                        var maxRowPrio = rows.Max(r => r.Prio);
+                        targetTileOrRow = (uint)rows.First(row => row.Prio == maxRowPrio).Row;
                     }
-
-                    uint targetSpot = SpellInfos.Entries[spell].Target.GetTargetType() == SpellTargetType.HalfBattleField
-                        ? 0 : GetBestSpellSpotOrRow(monster, spell);
-
-                    return CreateCastSpellParameter(targetSpot, spell);
+                    if (averagePrio >= 75 && spells.Any(s => SpellInfos.Entries[s].Target == SpellTarget.AllEnemies))
+                    {
+                        spells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.AllEnemies).ToList();
+                    }
+                    else if (averagePrio >= 50 && spells.Any(s => SpellInfos.Entries[s].Target == SpellTarget.EnemyRow))
+                    {
+                        PickBestTargetRow();
+                        spells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.EnemyRow).ToList();
+                    }
+                    else // single target spell
+                    {
+                        PickBestTargetTile();
+                        spells = spells.Where(s => SpellInfos.Entries[s].Target == SpellTarget.SingleEnemy).ToList();
+                    }
+                    // This might happen if the monster only has All or Row spells and the prio forces to use a Single or Row spell.
+                    if (spells.Count == 0)
+                        return 0; // This will abort casting and disallow casting in this round.
+                    var spell = spells[game.RandomInt(0, spells.Count - 1)];
+                    return CreateCastSpellParameter(targetTileOrRow, spell);
                 }
             default:
                 return 0;
@@ -2593,11 +2890,20 @@ namespace Ambermoon
             bool? equippedItem = null, uint blinkCharacterPosition = 0) =>
             (targetTileOrRow & 0x1f) | (((itemSlotIndex ?? 0x1f) & 0x1f) << 5) | ((equippedItem == true) ? 0x400u : 0) |
             (((uint)spell & 0xffff) << 11) | ((blinkCharacterPosition & 0x1f) << 27);
+        [Flags]
+        enum AttackActionFlags : uint
+        {
+            BreakWeapon = 0x10000000,
+            BreakArmor = 0x20000000,
+            LastAmmo = 0x40000000
+        }
         // Lowest 5 bits: Tile index (0-29) where a character is hurt
         // Rest: Damage
-        public static uint CreateHurtParameter(uint targetTile) => targetTile & 0x1f;
-        static uint UpdateHurtParameter(uint hurtParameter, uint damage) =>
-            (hurtParameter & 0x1f) | ((damage & 0x7ffffff) << 5);
+        public static uint CreateHurtParameter(uint targetTile) => (targetTile & 0x1f);
+        static uint UpdateHurtParameter(uint hurtParameter, uint damage, AttackResult attackResult) =>
+            (hurtParameter & 0xe000001f) | ((damage & 0x000fffff) << 8) | ((uint)attackResult << 5);
+        static uint UpdateAttackFollowActionParameter(uint parameter, AttackActionFlags additionalFlags) =>
+            parameter | (uint)additionalFlags;
         public static uint GetTargetTileOrRowFromParameter(uint actionParameter) => actionParameter & 0x1f;
         static void GetAttackInformation(uint actionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex)
         {
@@ -2632,10 +2938,13 @@ namespace Ambermoon
                 GetTargetTileOrRowFromParameter(actionParameter) == GetSlotFromCharacter(caster);
         public static bool IsCastFromItem(uint actionParameter) => GetCastItemSlot(actionParameter) != 0x1f;
         public static uint GetCastItemSlot(uint actionParameter) => (actionParameter >> 5) & 0x1f;
-        static void GetHurtInformation(uint actionParameter, out uint targetTile, out uint damage)
+        static void GetAttackFollowUpInformation(uint actionParameter, out uint targetTile, out uint damage,
+            out AttackResult attackResult, out AttackActionFlags flags)
         {
-            damage = (actionParameter >> 5) & 0x7ffffff;
+            damage = (actionParameter >> 8) & 0x000fffff;
             targetTile = actionParameter & 0x1f;
+            attackResult = (AttackResult)((actionParameter >> 5) & 0x7);
+            flags = (AttackActionFlags)(actionParameter & 0xf0000000);
         }
 
         enum AttackResult
@@ -2647,19 +2956,17 @@ namespace Ambermoon
             Blocked, // Parry
             Protected, // Magic protection level
             Petrified, // Petrified monsters can't be damaged
-            CirticalHit
+            CriticalHit
         }
 
-        AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking, out bool loseTarget)
+        AttackResult ProcessAttack(Character attacker, int attackedSlot, out int damage, out bool abortAttacking)
         {
             damage = 0;
             abortAttacking = false;
-            loseTarget = false;
 
             if (battleField[attackedSlot] == null)
             {
                 abortAttacking = true;
-                loseTarget = true;
                 return AttackResult.Missed;
             }
 
@@ -2685,7 +2992,7 @@ namespace Ambermoon
                 if (!(target is Monster monster) || !monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
                 {
                     damage = (int)target.HitPoints.CurrentValue;
-                    return AttackResult.CirticalHit;
+                    return AttackResult.CriticalHit;
                 }
             }
 

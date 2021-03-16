@@ -105,6 +105,10 @@ namespace Ambermoon
             /// Partymembers who fled.
             /// </summary>
             public List<PartyMember> FledPartyMembers;
+            /// <summary>
+            /// List of broken items.
+            /// </summary>
+            public List<KeyValuePair<uint, ItemSlotFlags>> BrokenItems;
         }
 
         class BattleInfo
@@ -2945,10 +2949,8 @@ namespace Ambermoon
             EquipmentAdded(ItemManager.GetItem(itemIndex), amount, cursed, partyMember);
         }
 
-        void EquipmentRemoved(Item item, int amount, bool cursed)
+        void EquipmentRemoved(PartyMember partyMember, Item item, int amount, bool cursed)
         {
-            var partyMember = CurrentInventory;
-
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
             partyMember.BaseAttack = (short)(partyMember.BaseAttack - item.Damage);
@@ -2968,9 +2970,19 @@ namespace Ambermoon
             partyMember.TotalWeight -= (uint)amount * item.Weight;
         }
 
+        void EquipmentRemoved(Item item, int amount, bool cursed)
+        {
+            EquipmentRemoved(CurrentInventory, item, amount, cursed);
+        }
+
         internal void EquipmentRemoved(uint itemIndex, int amount, bool cursed)
         {
             EquipmentRemoved(ItemManager.GetItem(itemIndex), amount, cursed);
+        }
+
+        internal void EquipmentRemoved(PartyMember partyMember, uint itemIndex, int amount, bool cursed)
+        {
+            EquipmentRemoved(partyMember, ItemManager.GetItem(itemIndex), amount, cursed);
         }
 
         void RenewTimedEvent(TimedGameEvent timedGameEvent, TimeSpan delay)
@@ -8175,6 +8187,15 @@ namespace Ambermoon
                 int row = slot / 6;
                 ++slot;
                 loot.Slots[column, row].Replace(item);
+            }
+            foreach (var brokenItem in battleEndInfo.BrokenItems)
+            {
+                int column = slot % 6;
+                int row = slot / 6;
+                ++slot;
+                loot.Slots[column, row].ItemIndex = brokenItem.Key;
+                loot.Slots[column, row].Amount = 1;
+                loot.Slots[column, row].Flags = brokenItem.Value | ItemSlotFlags.Broken;
             }
             var expReceivingPartyMembers = PartyMembers.Where(m => m.Alive && !battleEndInfo.FledPartyMembers.Contains(m)).ToList();
             int expPerPartyMember = battleEndInfo.TotalExperience / expReceivingPartyMembers.Count;
