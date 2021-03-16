@@ -2710,6 +2710,20 @@ namespace Ambermoon.UI
                     game.ProcessText($"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}"));
         }
 
+        public ISprite AddMapCharacterSprite(Rect rect, uint textureIndex, int baseLineOffset)
+        {
+            var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, false);
+            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters).GetOffset(textureIndex);
+            sprite.BaseLineOffset = baseLineOffset;
+            sprite.X = rect.Left;
+            sprite.Y = rect.Top;
+            sprite.PaletteIndex = (byte)(game.Map.PaletteIndex - 1);
+            sprite.Layer = RenderView.GetLayer(Layer.Characters);
+            sprite.Visible = true;
+            additionalSprites.Add(sprite);
+            return sprite;
+        }
+
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer,
             string tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip createdTooltip, bool visible = true)
         {

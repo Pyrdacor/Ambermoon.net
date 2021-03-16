@@ -4722,9 +4722,44 @@ namespace Ambermoon
                     {
                         ShowMessagePopup(DataNameProvider.BlowsTheFlute, () =>
                         {
-                            // TODO: eagle should fly from left screen border and pick up the party
-                            TravelType = TravelType.Eagle;
-                            CloseWindow();
+                            CloseWindow(() =>
+                            {
+                                StartSequence();
+                                var travelInfoEagle = renderView.GameData.GetTravelGraphicInfo(TravelType.Eagle, CharacterDirection.Right);
+                                var currentTravelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, player.Direction);
+                                int diffX = (int)travelInfoEagle.OffsetX - (int)currentTravelInfo.OffsetX;
+                                int diffY = (int)travelInfoEagle.OffsetY - (int)currentTravelInfo.OffsetY;
+                                var targetPosition = player2D.DisplayArea.Position + new Position(diffX, diffY);
+                                var position = new Position(Global.Map2DViewX - (int)travelInfoEagle.Width, targetPosition.Y - (int)travelInfoEagle.Height);
+                                var eagle = layout.AddMapCharacterSprite(new Rect(position, new Size((int)travelInfoEagle.Width, (int)travelInfoEagle.Height)),
+                                    3 * 17 + (uint)TravelType.Eagle * 4 + 1, ushort.MaxValue);
+                                eagle.ClipArea = Map2DViewArea;
+                                AddTimedEvent(TimeSpan.FromMilliseconds(200), AnimateEagle);
+                                void AnimateEagle()
+                                {
+                                    if (position.X < targetPosition.X)
+                                        position.X = Math.Min(targetPosition.X, position.X + 12);
+                                    if (position.Y < targetPosition.Y)
+                                        position.Y = Math.Min(targetPosition.Y, position.Y + 5);
+
+                                    eagle.X = position.X;
+                                    eagle.Y = position.Y;
+
+                                    if (position == targetPosition)
+                                    {
+                                        EndSequence();
+                                        eagle.Delete();
+                                        TravelType = TravelType.Eagle;
+                                        // Update direction to right
+                                        player.Direction = CharacterDirection.Right; // Set this before player2D.MoveTo!
+                                        player2D.MoveTo(Map, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
+                                    }
+                                    else
+                                    {
+                                        AddTimedEvent(TimeSpan.FromMilliseconds(40), AnimateEagle);
+                                    }
+                                }
+                            });
                         }, TextAlign.Left);
                     }
                     break;

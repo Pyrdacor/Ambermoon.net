@@ -347,7 +347,7 @@ namespace Ambermoon.Renderer
                 if (sizeTransformation != null)
                     baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
 
-                ushort baseLine = (ushort)(position.Y + size.Height + baseLineOffsetSize.Height);
+                ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
 
                 int baseLineBufferIndex = baseLineBuffer.Add(baseLine);
 
@@ -632,7 +632,7 @@ namespace Ambermoon.Renderer
                 if (sizeTransformation != null)
                     baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
 
-                ushort baseLine = (ushort)(position.Y + size.Height + baseLineOffsetSize.Height);
+                ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
 
                 baseLineBuffer.Update(index, baseLine);
                 baseLineBuffer.Update(index + 1, baseLine);
