@@ -195,7 +195,15 @@ namespace Ambermoon.UI
 
         public bool LeftClick(Position position)
         {
-            if (!BarArea.Contains(position))
+            if (BarArea.Contains(position))
+            {
+                Scrolling = true;
+                scrollStartPosition = ScrollOffset;
+                sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)baseType + 1u);
+
+                return true;
+            }
+            else if (scrollArea.Contains(position))
             {
                 int scrollAmount = Util.Limit(1, ScrollRange / 2, 2);
 
@@ -217,11 +225,7 @@ namespace Ambermoon.UI
                 return true;
             }
 
-            Scrolling = true;
-            scrollStartPosition = ScrollOffset;
-            sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)baseType + 1u);
-
-            return true;
+            return false;
         }
     }
 }
