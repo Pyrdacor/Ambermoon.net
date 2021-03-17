@@ -71,7 +71,6 @@ namespace Ambermoon
     }
 
     // TODO: Check reset later (e.g. when loading while in battle)
-    // TODO: monsters should not pick a move spot where another monster is going to
     internal class Battle
     {
         internal enum BattleActionType
@@ -2765,24 +2764,32 @@ namespace Ambermoon
             return false;
         }
 
-        uint GetBestAttackSpot(int characterPosition, Character character)
+        uint GetBestAttackSpot(int characterPosition, Monster monster)
         {
-            int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? 6 : 1;
-            GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy);
-            var possiblePositions = new List<int>();
+            int range = monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? 6 : 1;
+            GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy);
+            var possiblePositions = new Dictionary<int, uint>();
 
             for (int y = minY; y <= maxY; ++y)
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
                     int position = x + y * 6;
-                    if (battleField[position] != null && battleField[position].Type != character.Type)
-                        possiblePositions.Add(position);
+                    if (battleField[position]?.Type == CharacterType.PartyMember)
+                        possiblePositions.Add(position, lastPlayerDamage[partyMembers.ToList().IndexOf(battleField[position] as PartyMember)]);
                 }
             }
 
-            // TODO: prioritize weaker players? dependent on what?
-            return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
+            if (possiblePositions.Count == 1)
+                return (uint)possiblePositions.Single().Key;
+
+            var maxDamage = possiblePositions.Max(p => p.Value);
+            var maxDamagePositions = possiblePositions.Where(p => p.Value == maxDamage).Select(p => p.Key).ToList();
+
+            if (maxDamagePositions.Count == 1)
+                return (uint)maxDamagePositions[0];
+
+            return (uint)maxDamagePositions[game.RandomInt(0, maxDamagePositions.Count - 1)];
         }
 
         uint GetBestSpellSpotOrRow(Monster monster, Spell spell)
