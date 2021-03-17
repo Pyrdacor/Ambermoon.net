@@ -44,6 +44,8 @@ namespace Ambermoon.Data
                 ItemIndex = item.ItemIndex;
                 Amount = amountToAdd;
                 Flags = item.Flags;
+                NumRemainingCharges = item.NumRemainingCharges;
+                Unknown = item.Unknown;
                 item.Amount -= amountToAdd;
                 return item.Amount;
             }
@@ -67,21 +69,29 @@ namespace Ambermoon.Data
             ItemIndex = 0;
             Amount = 0;
             Flags = ItemSlotFlags.None;
+            NumRemainingCharges = 0;
+            Unknown = 0;
         }
 
         public void Exchange(ItemSlot item)
         {
-            uint itemIndex = ItemIndex;
-            int amount = Amount;
+            var itemIndex = ItemIndex;
+            var amount = Amount;
             var flags = Flags;
+            var numRemainingCharges = NumRemainingCharges;
+            var unknown = Unknown;
 
             ItemIndex = item.ItemIndex;
             Amount = item.Amount;
             Flags = item.Flags;
+            NumRemainingCharges = item.NumRemainingCharges;
+            Unknown = item.Unknown;
 
             item.ItemIndex = itemIndex;
             item.Amount = amount;
             item.Flags = flags;
+            item.NumRemainingCharges = numRemainingCharges;
+            item.Unknown = unknown;
         }
 
         public void Replace(ItemSlot item)
@@ -89,6 +99,8 @@ namespace Ambermoon.Data
             ItemIndex = item.ItemIndex;
             Amount = item.Amount;
             Flags = item.Flags;
+            NumRemainingCharges = item.NumRemainingCharges;
+            Unknown = item.Unknown;
         }
 
         public ItemSlot Copy()

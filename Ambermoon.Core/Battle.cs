@@ -790,6 +790,7 @@ namespace Ambermoon
             {
                 case BattleActionType.DropWeapon:
                 {
+                    // Note: This only displays the message. The PickMonsterAction method will drop/switch ranged weapons automatically.
                     layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageHasDroppedWeapon, TextColor.Gray);
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => ActionFinished());
                     return;
@@ -971,30 +972,32 @@ namespace Ambermoon
                     // Memorize last damage for players
                     if (damage != 0 && battleAction.Character is PartyMember partyMember)
                         lastPlayerDamage[partyMembers.ToList().IndexOf(partyMember)] = (uint)damage; // TODO: Is this set to 0 if attack failed?
+                    void SkipAllFollowingAttacks()
+                    {
+                        bool foundNextDisplayAction = false;
+                        foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
+                        {
+                            if (!foundNextDisplayAction)
+                            {
+                                if (action.Action == BattleActionType.DisplayActionText)
+                                {
+                                    foundNextDisplayAction = true;
+                                    action.Skip = true;
+                                }
+                            }
+                            else
+                            {
+                                action.Skip = true;
+                            }
+                        }
+                    }
                     // Check for last ammunition consumption
                     if (weapon?.Type == ItemType.LongRangeWeapon)
                     {
                         void LastAmmoUsed()
                         {
                             followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.LastAmmo);
-
-                            // skip all following attacks
-                            bool foundNextDisplayAction = false;
-                            foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
-                            {
-                                if (!foundNextDisplayAction)
-                                {
-                                    if (action.Action == BattleActionType.DisplayActionText)
-                                    {
-                                        foundNextDisplayAction = true;
-                                        action.Skip = true;
-                                    }
-                                }
-                                else
-                                {
-                                    action.Skip = true;
-                                }
-                            }
+                            SkipAllFollowingAttacks();
                         }
                         var attacker = battleAction.Character;
                         if (weapon.UsedAmmunitionType != AmmunitionType.None)
@@ -1036,11 +1039,15 @@ namespace Ambermoon
                             }
                         }
                     }
+                    // TODO: they break quiet often at the moment
                     // Check weapon or armor breakage
                     if (attackResult != AttackResult.Missed)
                     {
                         if (weapon != null && game.RollDice100() < weapon.BreakChance)
+                        {
                             followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakWeapon);
+                            SkipAllFollowingAttacks();
+                        }
 
                         var enemyArmorIndex = target.Equipment.Slots[EquipmentSlot.Body].ItemIndex;
 
@@ -1496,12 +1503,26 @@ namespace Ambermoon
                         var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
                         var weaponSlot = battleAction.Character.Equipment.Slots[EquipmentSlot.RightHand];
                         var itemIndex = weaponSlot.ItemIndex;
-                        if (battleAction.Character is PartyMember partyMember)
-                            game.EquipmentRemoved(partyMember, itemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
-                        // TODO: decrease monster attack
+                        game.EquipmentRemoved(battleAction.Character, itemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                         brokenItems.Add(KeyValuePair.Create(itemIndex, weaponSlot.Flags));
                         weaponSlot.Clear();
-                        layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
+                        var weapon = game.ItemManager.GetItem(itemIndex);
+                        layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, weapon.Name), textColor);
+                        if (battleAction.Character is PartyMember partyMember)
+                        {
+                            PlayerWeaponBroke?.Invoke(partyMember);
+                        }
+                        else // monster
+                        {
+                            if (weapon.Type == ItemType.LongRangeWeapon)
+                            {
+                                // Switch to melee weapon if available
+                                bool IsMeleeWeapon(uint itemIndex) => game.ItemManager.GetItem(itemIndex).Type == ItemType.CloseRangeWeapon;
+                                var meleeWeaponSlot = battleAction.Character.Inventory.Slots.FirstOrDefault(s => !s.Empty && IsMeleeWeapon(s.ItemIndex));
+                                if (meleeWeaponSlot != null)
+                                    weaponSlot.Exchange(meleeWeaponSlot);
+                            }
+                        }
                         ActionFinished(true);
                     }
                     else
@@ -1521,9 +1542,7 @@ namespace Ambermoon
                         var textColor = battleAction.Character.Type == CharacterType.PartyMember ? TextColor.Orange : TextColor.White;
                         var armorSlot = target.Equipment.Slots[EquipmentSlot.Body];
                         var itemIndex = armorSlot.ItemIndex;
-                        if (target is PartyMember partyMember)
-                            game.EquipmentRemoved(partyMember, itemIndex, 1, armorSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
-                        // TODO: decrease monster armor
+                        game.EquipmentRemoved(target, itemIndex, 1, armorSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                         brokenItems.Add(KeyValuePair.Create(itemIndex, armorSlot.Flags));
                         armorSlot.Clear();
                         layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
@@ -2311,7 +2330,22 @@ namespace Ambermoon
                         }
                         else if (!hasAmmo)
                         {
-                            // TODO: throw weapon away and switch to melee weapon
+                            bool IsMeleeWeapon(uint itemIndex) => game.ItemManager.GetItem(itemIndex).Type == ItemType.CloseRangeWeapon;
+                            var weaponSlot = monster.Equipment.Slots[EquipmentSlot.RightHand];
+                            var meleeWeaponSlot = monster.Inventory.Slots.FirstOrDefault(s => !s.Empty && IsMeleeWeapon(s.ItemIndex));
+                            if (meleeWeaponSlot != null)
+                            {
+                                // Switch weapons
+                                weaponSlot.Exchange(meleeWeaponSlot);
+                            }
+                            else
+                            {
+                                // Just drop the ranged weapon
+                                var emptyInventorySlot = monster.Inventory.Slots.FirstOrDefault(s => s.Empty);
+                                if (emptyInventorySlot != null)
+                                    emptyInventorySlot.Replace(weaponSlot);
+                                weaponSlot.Clear();
+                            }
                         }
                         return AttackOrMove();
                     }
