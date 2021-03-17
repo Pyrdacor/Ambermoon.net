@@ -20,6 +20,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.PortraitIndex);
             dataWriter.Write(GetIfMonster<ushort>(character, monster => (ushort)monster.CombatGraphicIndex, 0));
             dataWriter.Write(character.UnknownBytes13); // Unknown
+            dataWriter.Write(GetIfMonster<byte>(character, monster => (byte)monster.Morale, 0));
             dataWriter.WriteEnumAsByte(character.SpellTypeImmunity);
             dataWriter.Write(character.AttacksPerRound);
             dataWriter.Write(GetIfMonster<byte>(character, monster => (byte)monster.MonsterFlags, 0));

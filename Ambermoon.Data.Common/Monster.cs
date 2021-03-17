@@ -11,6 +11,7 @@ namespace Ambermoon.Data
     public class Monster : Character
     {
         public MonsterGraphicIndex CombatGraphicIndex { get; set; }
+        public uint Morale { get; set; }
         public MonsterFlags MonsterFlags { get; set; }
         public ushort DefeatExperience { get; set; }
         public Animation[] Animations { get; } = new Animation[8];

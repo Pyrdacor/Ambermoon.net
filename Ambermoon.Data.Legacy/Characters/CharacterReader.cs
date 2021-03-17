@@ -24,7 +24,8 @@ namespace Ambermoon.Data.Legacy.Characters
             character.SpokenLanguages = (Language)dataReader.ReadByte();
             character.PortraitIndex = dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.CombatGraphicIndex = (MonsterGraphicIndex)value);
-            character.UnknownBytes13 = dataReader.ReadBytes(3); // Unknown
+            character.UnknownBytes13 = dataReader.ReadBytes(2); // Unknown
+            ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.Morale = value);
             character.SpellTypeImmunity = (SpellTypeImmunity)dataReader.ReadByte();
             character.AttacksPerRound = dataReader.ReadByte();
             ProcessIfMonster(dataReader, character, (Monster monster, byte value) => monster.MonsterFlags = (MonsterFlags)value);

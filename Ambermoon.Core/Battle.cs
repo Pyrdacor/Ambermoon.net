@@ -224,6 +224,9 @@ namespace Ambermoon
         /// Those affect monsters decision making. Only physical damage and dissolve victim spell damage counts!
         /// </summary>
         readonly uint[] lastPlayerDamage = new uint[Game.MaxPartyMembers];
+        readonly List<uint> totalMonsterDamage = new List<uint>();
+        readonly List<uint> numSuccessfulMonsterHits = new List<uint>();
+        uint relativeDamageEfficiency = 0;
         bool showMonsterLP = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
@@ -281,6 +284,8 @@ namespace Ambermoon
                         battleField[index] = monster;
                         monsterBattleAnimations[index].AnimationFinished += () => MonsterAnimationFinished(monster);
                         initialMonsters.Add(monster);
+                        totalMonsterDamage.Add(0);
+                        numSuccessfulMonsterHits.Add(0);
                         monsterSizes.Add((int)monster.MappedFrameWidth);
                     }
                 }
@@ -511,9 +516,12 @@ namespace Ambermoon
         /// <param name="battleTicks">Battle ticks when starting the round.</param>
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
+            var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Sum(x => x), 0x7fff);
+            var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
+            relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
             var roundActors = battleField
                 .Where(f => f != null)
-                .OrderByDescending(c => c.Attributes[Data.Attribute.Speed].TotalCurrentValue)
+                .OrderByDescending(c => c.Attributes[Attribute.Speed].TotalCurrentValue)
                 .ToList();
             parryingPlayers.Clear();
             bool monstersAdvance = false;
@@ -774,6 +782,13 @@ namespace Ambermoon
             }
         }
 
+        void TrackMonsterHit(Monster monster, uint damage)
+        {
+            int index = initialMonsters.IndexOf(monster);
+            totalMonsterDamage[index] += damage;
+            ++numSuccessfulMonsterHits[index];
+        }
+
         void RunBattleAction(BattleAction battleAction, uint battleTicks)
         {
             game.CursorType = CursorType.Sword;
@@ -969,9 +984,14 @@ namespace Ambermoon
                         ActionFinished(true);
                         return;
                     }
-                    // Memorize last damage for players
-                    if (damage != 0 && battleAction.Character is PartyMember partyMember)
-                        lastPlayerDamage[partyMembers.ToList().IndexOf(partyMember)] = (uint)damage; // TODO: Is this set to 0 if attack failed?
+                    if (damage != 0)
+                    {
+                        // Update damage statistics
+                        if (battleAction.Character is PartyMember partyMember) // Memorize last damage for players
+                            lastPlayerDamage[partyMembers.ToList().IndexOf(partyMember)] = (uint)damage; // TODO: Is this set to 0 if attack failed?
+                        else if (battleAction.Character is Monster attackingMonster) // Memorize monster damage stats
+                            TrackMonsterHit(attackingMonster, (uint)damage);
+                    }
                     void SkipAllFollowingAttacks()
                     {
                         bool foundNextDisplayAction = false;
@@ -1967,7 +1987,9 @@ namespace Ambermoon
                         KillMonster(partyMember, target);
                     }
                     else
+                    {
                         KillPlayer(target);
+                    }
                     break;
                 case Spell.Lame:
                     AddAilment(Ailment.Lamed, target);
@@ -2134,6 +2156,10 @@ namespace Ambermoon
                     }
                 }
                 uint damage = CalculateSpellDamage(caster, target, baseDamage, variableDamage);
+                if (caster is Monster monster)
+                {
+                    TrackMonsterHit(monster, damage);
+                }
                 uint position = (uint)GetSlotFromCharacter(target);
                 PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
                     position, ticks, () =>
@@ -2714,13 +2740,29 @@ namespace Ambermoon
 
         bool MonsterWantsToFlee(Monster monster)
         {
+            if (monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
+                return false;
+
             if (monster.Ailments.HasFlag(Ailment.Panic))
                 return true;
 
-            // TODO
-            return !monster.MonsterFlags.HasFlag(MonsterFlags.Boss) &&
-                monster.HitPoints.CurrentValue < monster.HitPoints.TotalMaxValue / 2 &&
-                game.RollDice100() < (monster.HitPoints.TotalMaxValue - monster.HitPoints.CurrentValue) * 100 / monster.HitPoints.TotalMaxValue;
+            int baseCourage = (int)(monster.HitPoints.CurrentValue * 75 / monster.HitPoints.TotalMaxValue);
+            int rdeEffect = ((int)relativeDamageEfficiency - 50) / 4;
+            int monsterAllyEffect = 0;
+
+            if (initialMonsters.Count > 1)
+                monsterAllyEffect = (Monsters.Count() - 1) * 40 / (initialMonsters.Count - 1) - 25;
+
+            int totalCourage = Util.Limit(0, baseCourage - rdeEffect - monsterAllyEffect, 100);
+            int fear = 100 - totalCourage;
+
+            if (fear > monster.Morale)
+            {
+                int fleeChance = Math.Min(fear - (int)monster.Morale, 100);
+                return game.RollDice100() < fleeChance;
+            }
+
+            return false;
         }
 
         uint GetBestAttackSpot(int characterPosition, Character character)
@@ -3033,7 +3075,10 @@ namespace Ambermoon
             damage = CalculatePhysicalDamage(attacker, target);
 
             if (damage <= 0)
+            {
+                damage = 0;
                 return AttackResult.NoDamage;
+            }
 
             // TODO: can monsters parry?
             if (target is PartyMember partyMember && parryingPlayers.Contains(partyMember) &&
