@@ -196,11 +196,9 @@ namespace Ambermoon.Data.Legacy
         {
             void WriteFile(string name, IDataWriter writer)
             {
-                var output = new DataWriter();
                 var fullPath = Path.Combine(path, name);
-                FileWriter.WriteContainer(output, new Dictionary<uint, byte[]> { { 1u, writer.ToArray() } }, FileType.AMBR);
                 Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-                File.WriteAllBytes(fullPath, output.ToArray());
+                File.WriteAllBytes(fullPath, writer.ToArray());
             }
 
             void WriteFiles(string name, Dictionary<int, IDataWriter> writers)

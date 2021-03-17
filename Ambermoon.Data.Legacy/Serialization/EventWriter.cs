@@ -81,6 +81,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(chestEvent.Unknown);
                     dataWriter.Write((byte)chestEvent.TextIndex);
                     dataWriter.Write((byte)chestEvent.ChestIndex);
+                    dataWriter.Write((byte)(chestEvent.RemoveWhenEmpty ? 1 : 0));
                     dataWriter.Write((ushort)chestEvent.KeyIndex);
                     dataWriter.Write((ushort)chestEvent.UnlockFailedEventIndex);
                     break;
@@ -167,11 +168,24 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(startBattleEvent.Unknown2);
                     break;
                 }
+                case EventType.EnterPlace:
+                {
+                    var enterPlaceEvent = @event as EnterPlaceEvent;
+                    dataWriter.Write(enterPlaceEvent.ClosedTextIndex);
+                    dataWriter.WriteEnumAsByte(enterPlaceEvent.PlaceType);
+                    dataWriter.Write(enterPlaceEvent.OpeningHour);
+                    dataWriter.Write(enterPlaceEvent.ClosingHour);
+                    dataWriter.Write(enterPlaceEvent.UsePlaceTextIndex);
+                    dataWriter.Write((ushort)enterPlaceEvent.PlaceIndex);
+                    dataWriter.Write((ushort)enterPlaceEvent.MerchantDataIndex);
+                    break;
+                }
                 case EventType.Condition:
                 {
                     var conditionEvent = @event as ConditionEvent;
                     dataWriter.WriteEnumAsByte(conditionEvent.TypeOfCondition);
                     dataWriter.Write((byte)conditionEvent.Value);
+                    dataWriter.Write((byte)conditionEvent.Count);
                     dataWriter.Write(conditionEvent.Unknown1);
                     dataWriter.Write((ushort)conditionEvent.ObjectIndex);
                     dataWriter.Write((ushort)conditionEvent.ContinueIfFalseWithMapEventIndex);
@@ -224,7 +238,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var musicEvent = @event as ChangeMusicEvent;
                     dataWriter.Write((ushort)musicEvent.MusicIndex);
                     dataWriter.Write(musicEvent.Volume);
-                    dataWriter.Write(musicEvent.Unknown1);                    
+                    dataWriter.Write(musicEvent.Unknown1);
                     break;
                 }
                 case EventType.Exit:
