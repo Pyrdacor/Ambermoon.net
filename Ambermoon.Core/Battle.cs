@@ -225,7 +225,7 @@ namespace Ambermoon
         readonly uint[] lastPlayerDamage = new uint[Game.MaxPartyMembers];
         readonly List<uint> totalMonsterDamage = new List<uint>();
         readonly List<uint> numSuccessfulMonsterHits = new List<uint>();
-        uint relativeDamageEfficiency = 0;
+        uint relativeDamageEfficiency = uint.MaxValue;
         bool showMonsterLP = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
@@ -464,6 +464,10 @@ namespace Ambermoon
                             $"{monster.HitPoints.CurrentValue}/{monster.HitPoints.TotalMaxValue}^{monster.Name}";
                     }
                 }
+                // Update the RDE after each round
+                var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Sum(x => x), 0x7fff);
+                var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
+                relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
                 RoundFinished?.Invoke();
                 return;
             }
@@ -515,9 +519,6 @@ namespace Ambermoon
         /// <param name="battleTicks">Battle ticks when starting the round.</param>
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
-            var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Sum(x => x), 0x7fff);
-            var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
-            relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
             var roundActors = battleField
                 .Where(f => f != null)
                 .OrderByDescending(c => c.Attributes[Attribute.Speed].TotalCurrentValue)
@@ -2739,6 +2740,9 @@ namespace Ambermoon
 
         bool MonsterWantsToFlee(Monster monster)
         {
+            if (relativeDamageEfficiency == uint.MaxValue) // first round, RDE not set
+                return false;
+
             if (monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
                 return false;
 
