@@ -9240,6 +9240,7 @@ namespace Ambermoon
         /// <param name="choiceHandler">Handler which receives the selected spell.</param>
         internal void OpenSpellList(PartyMember partyMember, Func<Spell, string> spellAvailableChecker, Action<Spell> choiceHandler)
         {
+            Pause();
             const int columns = 13;
             const int rows = 10;
             var popupArea = new Rect(32, 40, columns * 16, rows * 16);
@@ -9265,12 +9266,17 @@ namespace Ambermoon
                 {
                     UntrapMouse();
                     layout.ClosePopup(false);
+                    Resume();
                     choiceHandler?.Invoke(spells[index].Key);
                 })
             )).ToList());
             popup.AddSunkenBox(new Rect(48, 173, 174, 10));
             var spellMessage = popup.AddText(new Rect(49, 175, 172, 6), "", TextColor.White, TextAlign.Center, true, 2);
-            popup.Closed += UntrapMouse;
+            popup.Closed += () =>
+            {
+                UntrapMouse();
+                Resume();
+            };
             spellList.HoverItem += index =>
             {
                 var message = index == -1 ? null : spells[index].Value;
