@@ -95,7 +95,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     Flags = (Tileset.TileFlags)dataReader.ReadDword(),
                     TextureIndex = dataReader.ReadByte(),
                     AutomapType = (AutomapType)dataReader.ReadByte(),
-                    Unknown = dataReader.ReadByte()
+                    ColorIndex = dataReader.ReadByte()
                 };
                 int numOverlays = dataReader.ReadByte();
                 if (numOverlays != 0)

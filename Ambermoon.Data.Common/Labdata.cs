@@ -1,6 +1,5 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
-using System;
 using System.Collections.Generic;
 using static Ambermoon.Data.Tileset;
 
@@ -49,12 +48,12 @@ namespace Ambermoon.Data
             public TileFlags Flags;
             public uint TextureIndex;
             public AutomapType AutomapType;
-            public byte Unknown;
+            public byte ColorIndex;
             public OverlayData[] Overlays;
 
             public override string ToString()
             {
-                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x8}), Texture: {TextureIndex}, AutomapType: {AutomapType}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}, Unknown {Unknown:x2}";
+                string content = $"Flags: {Flags.ToString().Replace(", ", "|")}(0x{(uint)Flags:x8}), Texture: {TextureIndex}, AutomapType: {AutomapType}, Overlays: {(Overlays == null ? 0 : Overlays.Length)}, ColorIndex {ColorIndex}";
 
                 if (Overlays != null && Overlays.Length != 0)
                 {

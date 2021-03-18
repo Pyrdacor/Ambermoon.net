@@ -4800,7 +4800,7 @@ namespace Ambermoon
                     CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
                     break;
                 case Spell.MapView:
-                    // TODO
+                    OpenMiniMap();
                     break;
                 case Spell.MagicalCompass:
                 {
@@ -8437,6 +8437,134 @@ namespace Ambermoon
             public bool MonstersVisible;
             public bool PersonsVisible;
             public bool TrapsVisible;
+        }
+
+        void OpenMiniMap()
+        {
+            Pause();
+            var popup = layout.OpenPopup(Map2DViewArea.Position, 11, 9, true, false);
+            TrapMouse(popup.ContentArea);
+            const int numVisibleTilesX = 72; // (11 - 2) * 16 / 2
+            const int numVisibleTilesY = 56; // (9 - 2) * 16 / 2
+            int displayWidth = Map.IsWorldMap ? numVisibleTilesX : Math.Min(numVisibleTilesX, Map.Width);
+            int displayHeight = Map.IsWorldMap ? numVisibleTilesY : Math.Min(numVisibleTilesY, Map.Height);
+            var baseX = popup.ContentArea.Position.X + (numVisibleTilesX - displayWidth); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
+            var baseY = popup.ContentArea.Position.Y + (numVisibleTilesY - displayHeight); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
+            var backgroundFill = layout.FillArea(popup.ContentArea, Color.Black, 90);
+            var filledAreas = new List<FilledArea>();
+            int drawX = baseX;
+            int drawY = baseY;
+
+            var rightMap = Map.IsWorldMap ? MapManager.GetMap(Map.RightMapIndex.Value) : null;
+            var downMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownMapIndex.Value) : null;
+            var downRightMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownRightMapIndex.Value) : null;
+            Func<Map, int, int, KeyValuePair<int, int?>> tileColorProvider = null;
+
+            if (is3D)
+            {
+                var labdata = MapManager.GetLabdataForMap(Map);
+                tileColorProvider = (map, x, y) =>
+                {
+                    // TODO: Is color index 1 also used for something special?
+                    if (map.Blocks[x, y].MapBorder)
+                        return KeyValuePair.Create(2, (int?)null); // TODO: is this always color index 2?
+                    else if (map.Blocks[x, y].WallIndex == 0)
+                        return KeyValuePair.Create(0, (int?)null); // TODO: is this always color index 0?
+                    else
+                        return KeyValuePair.Create((int)labdata.Walls[(int)map.Blocks[x, y].WallIndex - 1].ColorIndex, (int?)null);
+                };
+            }
+            else // 2D
+            {
+                // Possible adjacent maps should use the same tileset so don't bother to provide 4 tilesets here.
+                var tileset = MapManager.GetTilesetForMap(Map);
+                tileColorProvider = (map, x, y) =>
+                {
+                    var backTileIndex = map.Tiles[x, y].BackTileIndex;
+                    var frontTileIndex = map.Tiles[x, y].FrontTileIndex;
+                    int backColorIndex = tileset.Tiles[backTileIndex - 1].ColorIndex;
+                    int? frontColorIndex = frontTileIndex == 0 ? (int?)null : tileset.Tiles[frontTileIndex - 1].ColorIndex;
+                    return KeyValuePair.Create(backColorIndex, frontColorIndex);
+                };
+            }
+
+            void DrawTile(Map map, int x, int y)
+            {
+                var tileColors = tileColorProvider(Map, x, y);
+                filledAreas.Add(layout.FillArea(new Rect(drawX, drawY, 2, 2), GetPaletteColor((int)Map.PaletteIndex, tileColors.Key), 100));
+                if (tileColors.Value != null)
+                {
+                    var color = GetPaletteColor((int)Map.PaletteIndex, tileColors.Value.Value);
+                    filledAreas.Add(layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110));
+                    filledAreas.Add(layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110));
+                }
+            }
+
+            for (int y = 0; y < Map.Height; ++y)
+            {
+                drawX = baseX;
+
+                for (int x = 0; x < Map.Width; ++x)
+                {
+                    DrawTile(Map, x, y);
+                    drawX += 2;
+                }
+
+                if (rightMap != null)
+                {
+                    for (int x = 0; x < rightMap.Width; ++x)
+                    {
+                        DrawTile(rightMap, x, y);
+                        drawX += 2;
+                    }
+                }
+
+                drawY += 2;
+            }
+
+            if (downMap != null)
+            {
+                for (int y = 0; y < downMap.Height; ++y)
+                {
+                    drawX = baseX;
+
+                    for (int x = 0; x < downMap.Width; ++x)
+                    {
+                        DrawTile(downMap, x, y);
+                        drawX += 2;
+                    }
+
+                    if (downRightMap != null)
+                    {
+                        for (int x = 0; x < downRightMap.Width; ++x)
+                        {
+                            DrawTile(downRightMap, x, y);
+                            drawX += 2;
+                        }
+                    }
+
+                    drawY += 2;
+                }
+            }
+            // TODO: scroll
+            // TODO: blinking grey cross (UI graphic) at the player position
+            popup.Closed += () =>
+            {
+                backgroundFill.Destroy();
+                filledAreas.ForEach(area => area.Destroy());
+                UntrapMouse();
+                Resume();
+            };
+            nextClickHandler = buttons =>
+            {
+                if (buttons == MouseButtons.Right)
+                {
+                    ClosePopup();
+                    return true;
+                }
+
+                return false;
+            };
         }
 
         internal void ShowAutomap()

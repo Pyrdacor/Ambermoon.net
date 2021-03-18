@@ -57,7 +57,11 @@ namespace Ambermoon.Data
             }
             public ushort AllowedTravelTypes { get; set; }
             public uint CombatBackgroundIndex { get; set; }
-            public byte Unknown { get; set; }
+            /// <summary>
+            /// This is used for magic map drawer. Each pixel is represented by a color
+            /// and this is the 0-based color index inside the map's palette.
+            /// </summary>
+            public byte ColorIndex { get; set; }
 
             public bool AllowMovement(TravelType travelType) => !Flags.HasFlag(TileFlags.BlockAllMovement) && (AllowedTravelTypes & (1 << (int)travelType)) != 0;
 
