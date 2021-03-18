@@ -8460,6 +8460,13 @@ namespace Ambermoon
             var downRightMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownRightMapIndex.Value) : null;
             Func<Map, int, int, KeyValuePair<int, int?>> tileColorProvider = null;
 
+            // found this at 0x12CE in data1 hunk of AM2_CPU (1.05 german) - at least works for lyramion world map
+            var mapping = new int[32]
+            {
+                0x00, 0x01, 0x1F, 0x12, 0x1C, 0x14, 0x15, 0x06, 0x08, 0x0A, 0x04, 0x02, 0x0E, 0x0C, 0x13, 0x10,
+                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+            };
+
             if (is3D)
             {
                 var labdata = MapManager.GetLabdataForMap(Map);
@@ -8482,21 +8489,28 @@ namespace Ambermoon
                 {
                     var backTileIndex = map.Tiles[x, y].BackTileIndex;
                     var frontTileIndex = map.Tiles[x, y].FrontTileIndex;
-                    int backColorIndex = tileset.Tiles[backTileIndex - 1].ColorIndex;
-                    int? frontColorIndex = frontTileIndex == 0 ? (int?)null : tileset.Tiles[frontTileIndex - 1].ColorIndex;
+                    int backColorIndex = mapping[tileset.Tiles[backTileIndex - 1].ColorIndex % 32];
+                    int? frontColorIndex = frontTileIndex == 0 ? (int?)null : mapping[tileset.Tiles[frontTileIndex - 1].ColorIndex % 32];
                     return KeyValuePair.Create(backColorIndex, frontColorIndex);
                 };
             }
 
             void DrawTile(Map map, int x, int y)
             {
-                var tileColors = tileColorProvider(Map, x, y);
-                filledAreas.Add(layout.FillArea(new Rect(drawX, drawY, 2, 2), GetPaletteColor((int)Map.PaletteIndex, tileColors.Key), 100));
+                bool visible = popup.ContentArea.Contains(drawX + 1, drawY + 1);
+                var tileColors = tileColorProvider(map, x, y);
+                var backArea = layout.FillArea(new Rect(drawX, drawY, 2, 2), GetPaletteColor((int)map.PaletteIndex, tileColors.Key), 100);
+                filledAreas.Add(backArea);
+                backArea.Visible = visible;
                 if (tileColors.Value != null)
                 {
-                    var color = GetPaletteColor((int)Map.PaletteIndex, tileColors.Value.Value);
-                    filledAreas.Add(layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110));
-                    filledAreas.Add(layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110));
+                    var color = GetPaletteColor((int)map.PaletteIndex, tileColors.Value.Value);
+                    var upperRightArea = layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110);
+                    var lowerLeftArea = layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110);
+                    filledAreas.Add(upperRightArea);
+                    filledAreas.Add(lowerLeftArea);
+                    upperRightArea.Visible = visible;
+                    lowerLeftArea.Visible = visible;
                 }
             }
 
@@ -8546,10 +8560,29 @@ namespace Ambermoon
                     drawY += 2;
                 }
             }
-            // TODO: scroll
-            // TODO: blinking grey cross (UI graphic) at the player position
+            bool animate = true;
+            // 16x10 pixels per frame, stored as one image of 16x40 pixels
+            // The real position inside each frame has an offset of 7,4
+            var positionMarkerGraphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.PlusBlinkAnimation);
+            var positionMarker = popup.AddImage(new Rect(baseX + player.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
+                positionMarkerGraphicIndex, Layer.UI, 120, 0);
+            var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(positionMarkerGraphicIndex);
+            int positionMarkerFrame = 0;
+            void AnimatePosition()
+            {
+                if (animate)
+                {
+                    positionMarker.TextureAtlasOffset = positionMarkerBaseTextureOffset + new Position(0, positionMarkerFrame * 10);
+                    positionMarkerFrame = (positionMarkerFrame + 1) % 4; // 4 frames in total
+                    AddTimedEvent(TimeSpan.FromMilliseconds(75), AnimatePosition);
+                }
+            }
+            AnimatePosition();
+            // TODO: scrolling world map
             popup.Closed += () =>
             {
+                animate = false;
+                positionMarker.Delete();
                 backgroundFill.Destroy();
                 filledAreas.ForEach(area => area.Destroy());
                 UntrapMouse();

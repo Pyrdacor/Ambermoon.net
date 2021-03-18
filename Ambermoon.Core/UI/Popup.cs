@@ -194,7 +194,7 @@ namespace Ambermoon.UI
             return filledArea;
         }
 
-        public void AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer = 1, byte paletteIndex = 49)
+        public ILayerSprite AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer = 1, byte paletteIndex = 49)
         {
             var sprite = renderView.SpriteFactory.Create(area.Width, area.Height, true,
                 (byte)Util.Min(255, this.DisplayLayer + displayLayer)) as ILayerSprite;
@@ -205,6 +205,7 @@ namespace Ambermoon.UI
             sprite.Y = area.Y;
             sprite.Visible = true;
             sprites.Add(sprite);
+            return sprite;
         }
 
         public void AddItemImage(Rect area, uint imageIndex, byte displayLayer = 1)
