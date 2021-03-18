@@ -225,7 +225,7 @@ namespace Ambermoon
         readonly uint[] lastPlayerDamage = new uint[Game.MaxPartyMembers];
         readonly List<uint> totalMonsterDamage = new List<uint>();
         readonly List<uint> numSuccessfulMonsterHits = new List<uint>();
-        uint relativeDamageEfficiency = uint.MaxValue;
+        uint relativeDamageEfficiency = 0;
         bool showMonsterLP = false;
         readonly bool needsClickForNextAction;
         public bool ReadyForNextAction { get; private set; } = false;
@@ -464,10 +464,6 @@ namespace Ambermoon
                             $"{monster.HitPoints.CurrentValue}/{monster.HitPoints.TotalMaxValue}^{monster.Name}";
                     }
                 }
-                // Update the RDE after each round
-                var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Sum(x => x), 0x7fff);
-                var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
-                relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
                 RoundFinished?.Invoke();
                 return;
             }
@@ -519,6 +515,11 @@ namespace Ambermoon
         /// <param name="battleTicks">Battle ticks when starting the round.</param>
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
+            // Recalculate the RDE value each round
+            var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Sum(x => x), 0x7fff);
+            var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
+            relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
+
             var roundActors = battleField
                 .Where(f => f != null)
                 .OrderByDescending(c => c.Attributes[Attribute.Speed].TotalCurrentValue)
@@ -2740,24 +2741,20 @@ namespace Ambermoon
 
         bool MonsterWantsToFlee(Monster monster)
         {
-            if (relativeDamageEfficiency == uint.MaxValue) // first round, RDE not set
-                return false;
-
             if (monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
                 return false;
 
             if (monster.Ailments.HasFlag(Ailment.Panic))
                 return true;
 
-            int baseCourage = (int)(monster.HitPoints.CurrentValue * 75 / monster.HitPoints.TotalMaxValue);
+            int lowLPEffect = (int)((monster.HitPoints.TotalMaxValue - monster.HitPoints.CurrentValue) * 75 / monster.HitPoints.TotalMaxValue);
             int rdeEffect = ((int)relativeDamageEfficiency - 50) / 4;
             int monsterAllyEffect = 0;
 
             if (initialMonsters.Count > 1)
                 monsterAllyEffect = (Monsters.Count() - 1) * 40 / (initialMonsters.Count - 1) - 25;
 
-            int totalCourage = Util.Limit(0, baseCourage - rdeEffect - monsterAllyEffect, 100);
-            int fear = 100 - totalCourage;
+            int fear = Util.Limit(0, lowLPEffect + rdeEffect - monsterAllyEffect, 100);
 
             if (fear > monster.Morale)
             {
