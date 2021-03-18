@@ -4800,9 +4800,23 @@ namespace Ambermoon
                     CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
                     break;
                 case Spell.MapView:
-                case Spell.MagicalCompass:
                     // TODO
                     break;
+                case Spell.MagicalCompass:
+                {
+                    Pause();
+                    var popup = layout.OpenPopup(new Position(48, 64), 4, 4);
+                    TrapMouse(popup.ContentArea);
+                    popup.AddImage(new Rect(64, 80, 32, 32), Graphics.GetUIGraphicIndex(UIGraphic.Compass), Layer.UI);
+                    var text = popup.AddText(new Rect(59, 93, 42, 7), layout.GetCompassString(), TextColor.Gray);
+                    text.Clip(new Rect(64, 93, 32, 7));
+                    popup.Closed += () =>
+                    {
+                        UntrapMouse();
+                        Resume();
+                    };
+                    break;
+                }
                 case Spell.FindTraps:
                     ShowAutomap(new AutomapOptions
                     {

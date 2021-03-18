@@ -2613,7 +2613,7 @@ namespace Ambermoon.UI
             }
         }
 
-        string GetCompassString()
+        internal string GetCompassString()
         {
             /// This contains all of theidrection starting with W (West) and going
             /// clock-wise until W again and then additional N-W and N again.
