@@ -2659,9 +2659,24 @@ namespace Ambermoon
 
                     int y = 57 + index++ * Global.GlyphLineHeight;
                     var attributeValues = partyMember.Attributes[attribute];
-                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAttributeShortName(attribute));
-                    layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
-                        (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
+                    if (attribute == Attribute.AntiMagic && CurrentSavegame.IsSpellActive(ActiveSpellType.AntiMagic))
+                    {
+                        uint bonus = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
+                        void AddAnimatedText(Rect area, string text)
+                        {
+                            this.AddAnimatedText((area, text, color, align) => layout.AddText(area, text, color, align), area, text, TextAlign.Left,
+                                () => CurrentWindow.Window == Window.Stats, 100, true);
+                        }
+                        AddAnimatedText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAttributeShortName(attribute));
+                        AddAnimatedText(new Rect(52, y, 42, Global.GlyphLineHeight),
+                            (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue+bonus:000}") + $"/{attributeValues.MaxValue:000}");
+                    }
+                    else
+                    {
+                        layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAttributeShortName(attribute));
+                        layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
+                            (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
+                    }
                 }
                 #endregion
                 #region Abilities
@@ -2786,13 +2801,35 @@ namespace Ambermoon
                     string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, displayGold, character.Food),
                     TextColor.White, TextAlign.Center));
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
-                characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack)),
-                    TextColor.White, TextAlign.Left));
+                if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
+                {
+                    int attack = character.BaseAttack;
+                    if (attack > 0)
+                        attack = Util.Round(attack * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack) / 100.0f));
+                    string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack));
+                    characterInfoTexts.Add(CharacterInfo.Attack, AddAnimatedText((area, text, color, align) => layout.AddText(area, text, color, align),
+                        new Rect(220, 122, 30, 7), attackString, TextAlign.Left, () => CurrentWindow.Window == Window.Inventory, 100, true));
+                }
+                else
+                {
+                    string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack));
+                    characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7), attackString, TextColor.White, TextAlign.Left));
+                }
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
-                characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7),
-                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)),
-                    TextColor.White, TextAlign.Left));
+                if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
+                {
+                    int defense = character.BaseDefense;
+                    if (defense > 0)
+                        defense = Util.Round(defense * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection) / 100.0f));
+                    string defenseString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense));
+                    characterInfoTexts.Add(CharacterInfo.Defense, AddAnimatedText((area, text, color, align) => layout.AddText(area, text, color, align),
+                        new Rect(268, 122, 30, 7), defenseString, TextAlign.Left, () => CurrentWindow.Window == Window.Inventory, 100, true));
+                }
+                else
+                {
+                    string defenseString = string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense));
+                    characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7), defenseString, TextColor.White, TextAlign.Left));
+                }
             }
             else
             {
@@ -2849,10 +2886,32 @@ namespace Ambermoon
                 string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints));
             UpdateText(CharacterInfo.GoldAndFood, () =>
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
-            UpdateText(CharacterInfo.Attack, () =>
-                string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack)));
-            UpdateText(CharacterInfo.Defense, () =>
-                string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)));
+            if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
+            {
+                int attack = character.BaseAttack;
+                if (attack > 0)
+                    attack = Util.Round(attack * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack) / 100.0f));
+                UpdateText(CharacterInfo.Attack, () =>
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack)));
+            }
+            else
+            {
+                UpdateText(CharacterInfo.Attack, () =>
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack)));
+            }
+            if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
+            {
+                int defense = character.BaseDefense;
+                if (defense > 0)
+                    defense = Util.Round(defense * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection) / 100.0f));
+                UpdateText(CharacterInfo.Defense, () =>
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)));
+            }
+            else
+            {
+                UpdateText(CharacterInfo.Defense, () =>
+                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)));
+            }
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
                 Util.Round(character.TotalWeight / 1000.0f), (character as PartyMember).MaxWeight / 1000));
             if (npc != null)
@@ -8026,8 +8085,32 @@ namespace Ambermoon
             }
             if (cursed)
             {
-                int textColorIndex = 0;
-                var textColors = new TextColor[]
+                var contentArea = detailsPopup.ContentArea;
+                AddAnimatedText((area, text, color, align) => detailsPopup.AddText(area, text, color, align),
+                    new Rect(contentArea.X, 124, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed,
+                    TextAlign.Center, () => layout.PopupActive && itemPopup?.HasChildPopup == true, 50, false);
+            }
+        }
+
+        UIText AddAnimatedText(Func<Rect, string, TextColor, TextAlign, UIText> textAdder, Rect area,
+            string text, TextAlign textAlign, Func<bool> continueChecker, int timePerFrame, bool grey)
+        {
+            int textColorIndex = 0;
+            var textColors = grey
+                ? new TextColor[]
+                {
+                    TextColor.White,
+                    TextColor.PaleGray,
+                    TextColor.BluishGray,
+                    TextColor.LightDarkBlue,
+                    TextColor.DarkBlue,
+                    TextColor.LightDarkBlue,
+                    TextColor.BluishGray,
+                    TextColor.PaleGray,
+                    TextColor.White,
+                    TextColor.White
+                }
+                : new TextColor[]
                 {
                     TextColor.Orange,
                     TextColor.Yellow,
@@ -8036,20 +8119,18 @@ namespace Ambermoon
                     TextColor.Orange,
                     TextColor.Red
                 };
-                var contentArea = detailsPopup.ContentArea;
-                var curseText = detailsPopup.AddText(new Rect(contentArea.X, 124, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed, textColors[0], TextAlign.Center);
-                void AnimateCurseText()
+            var animatedText = textAdder(area, text, textColors[0], textAlign);
+            void AnimateText()
+            {
+                if (continueChecker?.Invoke() == true)
                 {
-                    if (layout.PopupActive && itemPopup?.HasChildPopup == true)
-                    {
-                        curseText.SetTextColor(textColors[textColorIndex]);
-                        textColorIndex = (textColorIndex + 1) % textColors.Length;
-                        AddTimedEvent(TimeSpan.FromMilliseconds(50), AnimateCurseText);
-                    }
+                    animatedText.SetTextColor(textColors[textColorIndex]);
+                    textColorIndex = (textColorIndex + 1) % textColors.Length;
+                    AddTimedEvent(TimeSpan.FromMilliseconds(timePerFrame), AnimateText);
                 }
-
-                AnimateCurseText();
             }
+            AnimateText();
+            return animatedText;
         }
 
         internal bool EnterPlace(Map map, EnterPlaceEvent enterPlaceEvent)
@@ -8346,7 +8427,7 @@ namespace Ambermoon
 
         internal void ShowAutomap()
         {
-            bool showAll = CurrentSavegame.ActiveSpells.Any(s => s?.Type == ActiveSpellType.MysticMap && s?.Duration > 0);
+            bool showAll = CurrentSavegame.IsSpellActive(ActiveSpellType.MysticMap);
             ShowAutomap(new AutomapOptions
             {
                 SecretDoorsVisible = showAll,

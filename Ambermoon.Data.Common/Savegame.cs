@@ -2,6 +2,7 @@
 using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data
 {
@@ -201,6 +202,14 @@ namespace Ambermoon.Data
                         activeSpell.Duration -= elapsedSinceLastUpdate;
                 }
             }
+        }
+        public bool IsSpellActive(ActiveSpellType activeSpellType)
+        {
+            return ActiveSpells.Any(s => s?.Type == activeSpellType && s?.Duration > 0);
+        }
+        public uint GetActiveSpellLevel(ActiveSpellType activeSpellType)
+        {
+            return ActiveSpells.Where(s => s?.Type == activeSpellType && s?.Duration > 0).Select(s => s.Level).DefaultIfEmpty(0u).Max();
         }
         /// <summary>
         /// 14 * 8 bits + 3 bits = 115 bits.

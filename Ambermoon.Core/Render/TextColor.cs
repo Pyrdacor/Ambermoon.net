@@ -18,6 +18,9 @@
         PaleYellow,
         Azure,
         LightGray,
-        LightOrange
+        LightOrange,
+        DarkBlue,
+        LightDarkBlue,
+        BluishGray
     }
 }

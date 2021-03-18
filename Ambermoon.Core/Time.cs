@@ -257,7 +257,7 @@ namespace Ambermoon
 
         void HandleTimePassed(uint passedHours, uint passedMinutes)
         {
-            uint passed5MinuteChunks = passedHours / 12 + passedMinutes / 5;
+            uint passed5MinuteChunks = passedHours * 12 + passedMinutes / 5;
 
             foreach (var activeSpellType in Enum.GetValues<ActiveSpellType>())
             {

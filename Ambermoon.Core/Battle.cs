@@ -1780,8 +1780,7 @@ namespace Ambermoon
                     return false;
                 }
 
-                var antiMagicBuff = game.CurrentSavegame.ActiveSpells.FirstOrDefault(s => s?.Type == ActiveSpellType.AntiMagic && s?.Duration > 0);
-                uint antiMagicBuffValue = antiMagicBuff?.Level ?? 0;
+                uint antiMagicBuffValue = game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
 
                 if (game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
                 {
