@@ -897,6 +897,8 @@ namespace Ambermoon.UI
             ClosePopup(popup, raiseEvent);
         }
 
+        internal void ClearLeftUpIgnoring() => ignoreNextMouseUp = false;
+
         void OpenLoadMenu()
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
@@ -3668,7 +3670,7 @@ namespace Ambermoon.UI
                 draggedItem.Item.Position = position;
                 cursorType = CursorType.SmallArrow;
             }
-            else if (cursorType == CursorType.None || cursorType >= CursorType.ArrowUp && cursorType <= CursorType.Wait)
+            else if (cursorType == CursorType.None || (cursorType >= CursorType.ArrowUp && cursorType <= CursorType.Wait))
             {
                 cursorType = CursorType.Sword;
             }

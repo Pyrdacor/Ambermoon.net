@@ -1764,7 +1764,10 @@ namespace Ambermoon
             lastMousePosition = new Position(cursorPosition);
 
             if (allInputDisabled)
+            {
+                layout.ClearLeftUpIgnoring();
                 return;
+            }
 
             var position = renderView.ScreenToGame(GetMousePosition(cursorPosition));
 
@@ -4721,6 +4724,91 @@ namespace Ambermoon
                     CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
                     CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
                     CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
+                    break;
+                case Spell.Knowledge:
+                    // Duration: 30 (150 minutes = 2h30m)
+                    // TODO: level?
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 1);
+                    break;
+                case Spell.Clairvoyance:
+                    // Duration: 90 (450 minutes = 7h30m)
+                    // TODO: level?
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 1);
+                    break;
+                case Spell.SeeTheTruth:
+                    // Duration: 180 (900 minutes = 15h)
+                    // TODO: level?
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
+                    break;
+                case Spell.MapView:
+                case Spell.MagicalCompass:
+                    // TODO
+                    break;
+                case Spell.FindTraps:
+                    ShowAutomap(new AutomapOptions
+                    {
+                        SecretDoorsVisible = false,
+                        MonstersVisible = false,
+                        PersonsVisible = false,
+                        TrapsVisible = true
+                    });
+                    break;
+                case Spell.FindMonsters:
+                    ShowAutomap(new AutomapOptions
+                    {
+                        SecretDoorsVisible = false,
+                        MonstersVisible = true,
+                        PersonsVisible = false,
+                        TrapsVisible = false
+                    });
+                    break;
+                case Spell.FindPersons:
+                    ShowAutomap(new AutomapOptions
+                    {
+                        SecretDoorsVisible = false,
+                        MonstersVisible = false,
+                        PersonsVisible = true,
+                        TrapsVisible = false
+                    });
+                    break;
+                case Spell.FindSecretDoors:
+                    ShowAutomap(new AutomapOptions
+                    {
+                        SecretDoorsVisible = true,
+                        MonstersVisible = false,
+                        PersonsVisible = false,
+                        TrapsVisible = false
+                    });
+                    break;
+                case Spell.MysticalMapping:
+                    ShowAutomap(new AutomapOptions
+                    {
+                        SecretDoorsVisible = true,
+                        MonstersVisible = true,
+                        PersonsVisible = true,
+                        TrapsVisible = true
+                    });
+                    break;
+                case Spell.MysticalMapI:
+                    // Duration: 32 (160 minutes = 2h40m)
+                    // TODO: level?
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 32, 1);
+                    break;
+                case Spell.MysticalMapII:
+                    // Duration: 60 (300 minutes = 5h)
+                    // TODO: level?
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 60, 1);
+                    break;
+                case Spell.MysticalMapIII:
+                    // Duration: 90 (450 minutes = 7h30m)
+                    // TODO: level?
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 90, 1);
+                    break;
+                case Spell.MysticalGlobe:
+                    // Duration: 180 (900 minutes = 15h)
+                    // TODO: level?
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
+                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 180, 1);
                     break;
                 case Spell.Lockpicking:
                     // TODO: Do nothing? Can be used by Thief/Ranger but has it an effect in Ambermoon? Maybe only when door screen is active?
@@ -8295,6 +8383,7 @@ namespace Ambermoon
                 SetWindow(Window.Automap);
                 layout.Reset();
                 layout.SetLayout(LayoutType.Automap);
+                CursorType = CursorType.Sword;
 
                 var sprites = new List<ISprite>();
                 var animatedSprites = new List<IAnimatedLayerSprite>();
