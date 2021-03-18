@@ -207,9 +207,10 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             dataWriter.Write(savegame.DictionaryWords);
 
-            int unknownBytes = 0x35a4 - dataWriter.Position;
+            int unknownBytes = 0x3584 - dataWriter.Position;
             dataWriter.Write(Enumerable.Repeat((byte)0, unknownBytes).ToArray());
 
+            dataWriter.Write(savegame.GotoPointBits);
             dataWriter.Write(savegame.ChestUnlockStates);
             dataWriter.Write(savegame.DoorUnlockStates);
 
