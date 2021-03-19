@@ -50,5 +50,6 @@ namespace Ambermoon.Data
         CombatBackgroundInfo Get3DCombatBackground(uint index);
         CombatGraphicInfo GetCombatGraphicInfo(CombatGraphicIndex index);
         float GetMonsterRowImageScaleFactor(MonsterRow row);
+        byte PaletteIndexFromColorIndex(Map map, byte colorIndex);
     }
 }

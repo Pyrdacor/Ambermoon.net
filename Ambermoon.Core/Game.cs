@@ -8458,27 +8458,19 @@ namespace Ambermoon
             var rightMap = Map.IsWorldMap ? MapManager.GetMap(Map.RightMapIndex.Value) : null;
             var downMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownMapIndex.Value) : null;
             var downRightMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownRightMapIndex.Value) : null;
-            Func<Map, int, int, KeyValuePair<int, int?>> tileColorProvider = null;
-
-            // found this at 0x12CE in data1 hunk of AM2_CPU (1.05 german) - at least works for lyramion world map
-            var mapping = new int[32]
-            {
-                0x00, 0x01, 0x1F, 0x12, 0x1C, 0x14, 0x15, 0x06, 0x08, 0x0A, 0x04, 0x02, 0x0E, 0x0C, 0x13, 0x10,
-                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
-            };
+            Func<Map, int, int, KeyValuePair<byte, byte?>> tileColorProvider = null;
 
             if (is3D)
             {
                 var labdata = MapManager.GetLabdataForMap(Map);
                 tileColorProvider = (map, x, y) =>
                 {
-                    // TODO: Is color index 1 also used for something special?
-                    if (map.Blocks[x, y].MapBorder)
-                        return KeyValuePair.Create(2, (int?)null); // TODO: is this always color index 2?
-                    else if (map.Blocks[x, y].WallIndex == 0)
-                        return KeyValuePair.Create(0, (int?)null); // TODO: is this always color index 0?
+                    // Note: In original this seems bugged. The map border is drawn in different colors depending on savegame and who knows what.
+                    // We just skip map border drawing at all by using color index 0 if there is no wall.
+                    if (map.Blocks[x, y].WallIndex == 0)
+                        return KeyValuePair.Create((byte)0, (byte?)null);
                     else
-                        return KeyValuePair.Create((int)labdata.Walls[(int)map.Blocks[x, y].WallIndex - 1].ColorIndex, (int?)null);
+                        return KeyValuePair.Create(labdata.Walls[(int)map.Blocks[x, y].WallIndex - 1].ColorIndex, (byte?)null);
                 };
             }
             else // 2D
@@ -8489,8 +8481,8 @@ namespace Ambermoon
                 {
                     var backTileIndex = map.Tiles[x, y].BackTileIndex;
                     var frontTileIndex = map.Tiles[x, y].FrontTileIndex;
-                    int backColorIndex = mapping[tileset.Tiles[backTileIndex - 1].ColorIndex % 32];
-                    int? frontColorIndex = frontTileIndex == 0 ? (int?)null : mapping[tileset.Tiles[frontTileIndex - 1].ColorIndex % 32];
+                    byte backColorIndex = tileset.Tiles[backTileIndex - 1].ColorIndex;
+                    byte? frontColorIndex = frontTileIndex == 0 ? (byte?)null : tileset.Tiles[frontTileIndex - 1].ColorIndex;
                     return KeyValuePair.Create(backColorIndex, frontColorIndex);
                 };
             }
@@ -8499,12 +8491,13 @@ namespace Ambermoon
             {
                 bool visible = popup.ContentArea.Contains(drawX + 1, drawY + 1);
                 var tileColors = tileColorProvider(map, x, y);
-                var backArea = layout.FillArea(new Rect(drawX, drawY, 2, 2), GetPaletteColor((int)map.PaletteIndex, tileColors.Key), 100);
+                var backArea = layout.FillArea(new Rect(drawX, drawY, 2, 2),
+                    GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Key)), 100);
                 filledAreas.Add(backArea);
                 backArea.Visible = visible;
                 if (tileColors.Value != null)
                 {
-                    var color = GetPaletteColor((int)map.PaletteIndex, tileColors.Value.Value);
+                    var color = GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Value.Value));
                     var upperRightArea = layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110);
                     var lowerLeftArea = layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110);
                     filledAreas.Add(upperRightArea);

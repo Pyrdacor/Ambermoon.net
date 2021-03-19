@@ -20,7 +20,7 @@ namespace Ambermoon.Data
             public TileFlags Flags;
             public uint TextureIndex;
             public uint NumAnimationFrames;
-            public byte Unknown2; // TODO: decode this (is this even used in Ambermoon?)
+            public byte ColorIndex; // not 100% sure
             public uint TextureWidth;
             public uint TextureHeight;
             public uint MappedTextureWidth;

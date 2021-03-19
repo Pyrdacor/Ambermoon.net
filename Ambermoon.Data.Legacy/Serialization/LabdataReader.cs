@@ -50,7 +50,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     Flags = (Tileset.TileFlags)dataReader.ReadDword(),
                     TextureIndex = dataReader.ReadWord(),
                     NumAnimationFrames = dataReader.ReadByte(),
-                    Unknown2 = dataReader.ReadByte(),
+                    ColorIndex = dataReader.ReadByte(),
                     TextureWidth = dataReader.ReadByte(),
                     TextureHeight = dataReader.ReadByte(),
                     MappedTextureWidth = dataReader.ReadWord(),
