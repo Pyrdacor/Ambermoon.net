@@ -227,11 +227,7 @@ namespace Ambermoon.Renderer
 
             if (layerBuffer != null)
             {
-                int layerBufferIndex = layerBuffer.Add(coloredRect.DisplayLayer);
-
-                if (layerBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int layerBufferIndex = layerBuffer.Add(coloredRect.DisplayLayer, index);
                 layerBuffer.Add(coloredRect.DisplayLayer, layerBufferIndex + 1);
                 layerBuffer.Add(coloredRect.DisplayLayer, layerBufferIndex + 2);
                 layerBuffer.Add(coloredRect.DisplayLayer, layerBufferIndex + 3);
@@ -241,11 +237,7 @@ namespace Ambermoon.Renderer
             {
                 var color = coloredRect.Color;
 
-                int colorBufferIndex = colorBuffer.Add(color);
-
-                if (colorBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int colorBufferIndex = colorBuffer.Add(color, index);
                 colorBuffer.Add(color, colorBufferIndex + 1);
                 colorBuffer.Add(color, colorBufferIndex + 2);
                 colorBuffer.Add(color, colorBufferIndex + 3);
@@ -304,11 +296,7 @@ namespace Ambermoon.Renderer
 
             if (paletteIndexBuffer != null)
             {
-                int paletteIndexBufferIndex = paletteIndexBuffer.Add(sprite.PaletteIndex);
-
-                if (paletteIndexBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int paletteIndexBufferIndex = paletteIndexBuffer.Add(sprite.PaletteIndex, index);
                 paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 1);
                 paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 2);
                 paletteIndexBuffer.Add(sprite.PaletteIndex, paletteIndexBufferIndex + 3);
@@ -318,22 +306,14 @@ namespace Ambermoon.Renderer
             {
                 if (sprite.MirrorX)
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y);
-
-                    if (textureAtlasOffsetBufferIndex != index)
-                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, index);
                     textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
                     textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
                     textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
                 }
                 else
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y);
-
-                    if (textureAtlasOffsetBufferIndex != index)
-                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)textureAtlasOffset.Y, index);
                     textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)textureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
                     textureAtlasOffsetBuffer.Add((short)(textureAtlasOffset.X + textureSize.Width), (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 2);
                     textureAtlasOffsetBuffer.Add((short)textureAtlasOffset.X, (short)(textureAtlasOffset.Y + textureSize.Height), textureAtlasOffsetBufferIndex + 3);
@@ -349,11 +329,7 @@ namespace Ambermoon.Renderer
 
                 ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
 
-                int baseLineBufferIndex = baseLineBuffer.Add(baseLine);
-
-                if (baseLineBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int baseLineBufferIndex = baseLineBuffer.Add(baseLine, index);
                 baseLineBuffer.Add(baseLine, baseLineBufferIndex + 1);
                 baseLineBuffer.Add(baseLine, baseLineBufferIndex + 2);
                 baseLineBuffer.Add(baseLine, baseLineBufferIndex + 3);
@@ -363,11 +339,7 @@ namespace Ambermoon.Renderer
             {
                 byte layer = sprite is Render.ILayerSprite layerSprite ? layerSprite.DisplayLayer : (byte)0;
 
-                int layerBufferIndex = layerBuffer.Add(layer);
-
-                if (layerBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int layerBufferIndex = layerBuffer.Add(layer, index);
                 layerBuffer.Add(layer, layerBufferIndex + 1);
                 layerBuffer.Add(layer, layerBufferIndex + 2);
                 layerBuffer.Add(layer, layerBufferIndex + 3);
@@ -376,11 +348,7 @@ namespace Ambermoon.Renderer
             if (colorBuffer != null)
             {
                 byte color = sprite.MaskColor ?? 0;
-                int maskColorBufferIndex = colorBuffer.Add(color);
-
-                if (maskColorBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int maskColorBufferIndex = colorBuffer.Add(color, index);
                 colorBuffer.Add(color, maskColorBufferIndex + 1);
                 colorBuffer.Add(color, maskColorBufferIndex + 2);
                 colorBuffer.Add(color, maskColorBufferIndex + 3);
@@ -391,11 +359,7 @@ namespace Ambermoon.Renderer
                 if (textColorIndex == null)
                     throw new AmbermoonException(ExceptionScope.Render, "No text color index given but text color index buffer is active.");
 
-                int textColorIndexBufferIndex = textColorIndexBuffer.Add(textColorIndex.Value);
-
-                if (textColorIndexBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int textColorIndexBufferIndex = textColorIndexBuffer.Add(textColorIndex.Value, index);
                 textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 1);
                 textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 2);
                 textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 3);
@@ -468,24 +432,16 @@ namespace Ambermoon.Renderer
 
             if (paletteIndexBuffer != null)
             {
-                int paletteIndexBufferIndex = paletteIndexBuffer.Add((byte)surface.PaletteIndex);
-
-                if (paletteIndexBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
-                paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 1);
-                paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 2);
-                paletteIndexBuffer.Add((byte)surface.PaletteIndex, paletteIndexBufferIndex + 3);
+                int paletteIndexBufferIndex = paletteIndexBuffer.Add(surface.PaletteIndex, index);
+                paletteIndexBuffer.Add(surface.PaletteIndex, paletteIndexBufferIndex + 1);
+                paletteIndexBuffer.Add(surface.PaletteIndex, paletteIndexBufferIndex + 2);
+                paletteIndexBuffer.Add(surface.PaletteIndex, paletteIndexBufferIndex + 3);
             }
 
             if (alphaBuffer != null)
             {
                 byte alpha = (byte)(surface.Alpha ? 1 : 0);
-                int alphaBufferIndex = alphaBuffer.Add(alpha);
-
-                if (alphaBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int alphaBufferIndex = alphaBuffer.Add(alpha, index);
                 alphaBuffer.Add(alpha, alphaBufferIndex + 1);
                 alphaBuffer.Add(alpha, alphaBufferIndex + 2);
                 alphaBuffer.Add(alpha, alphaBufferIndex + 3);
@@ -495,44 +451,28 @@ namespace Ambermoon.Renderer
             {
                 if (surface.Type == Ambermoon.Render.SurfaceType.Floor)
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight));
-
-                    if (textureAtlasOffsetBufferIndex != index)
-                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), index);
                     textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 2);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 3);
                 }
                 else if (surface.Type == Ambermoon.Render.SurfaceType.Ceiling)
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
-
-                    if (textureAtlasOffsetBufferIndex != index)
-                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, index);
                     textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 1);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 2);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 3);
                 }
                 else if (surface.Type == Ambermoon.Render.SurfaceType.Billboard || surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor)
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y);
-
-                    if (textureAtlasOffsetBufferIndex != index)
-                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, index);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 2);
                     textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 3);
                 }
                 else if (surface.Type == Ambermoon.Render.SurfaceType.Wall)
                 {
-                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y);
-
-                    if (textureAtlasOffsetBufferIndex != index)
-                        throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                    int textureAtlasOffsetBufferIndex = textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)surface.TextureAtlasOffset.Y, index);
                     textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)surface.TextureAtlasOffset.Y, textureAtlasOffsetBufferIndex + 1);
                     textureAtlasOffsetBuffer.Add((short)surface.TextureAtlasOffset.X, (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 2);
                     textureAtlasOffsetBuffer.Add((short)(surface.TextureAtlasOffset.X + surface.MappedTextureWidth), (short)(surface.TextureAtlasOffset.Y + surface.MappedTextureHeight), textureAtlasOffsetBufferIndex + 3);
@@ -543,11 +483,7 @@ namespace Ambermoon.Renderer
             {
                 short endX = (short)(surface.TextureAtlasOffset.X + surface.FrameCount * surface.TextureWidth);
                 short endY = (short)(surface.TextureAtlasOffset.Y + surface.TextureHeight);
-                int textureEndCoordBufferIndex = textureEndCoordBuffer.Add(endX, endY);
-
-                if (textureEndCoordBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int textureEndCoordBufferIndex = textureEndCoordBuffer.Add(endX, endY, index);
                 textureEndCoordBuffer.Add(endX, endY, textureEndCoordBufferIndex + 1);
                 textureEndCoordBuffer.Add(endX, endY, textureEndCoordBufferIndex + 2);
                 textureEndCoordBuffer.Add(endX, endY, textureEndCoordBufferIndex + 3);
@@ -555,11 +491,7 @@ namespace Ambermoon.Renderer
 
             if (textureSizeBuffer != null)
             {
-                int textureSizeBufferIndex = textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight);
-
-                if (textureSizeBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int textureSizeBufferIndex = textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, index);
                 textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, textureSizeBufferIndex + 1);
                 textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, textureSizeBufferIndex + 2);
                 textureSizeBuffer.Add((short)surface.TextureWidth, (short)surface.TextureHeight, textureSizeBufferIndex + 3);
@@ -567,11 +499,7 @@ namespace Ambermoon.Renderer
 
             if (billboardCenterBuffer != null)
             {
-                int billboardCenterBufferIndex = billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z);
-
-                if (billboardCenterBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int billboardCenterBufferIndex = billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, index);
                 billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, billboardCenterBufferIndex + 1);
                 billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, billboardCenterBufferIndex + 2);
                 billboardCenterBuffer.Add(surface.X, surface.Y, surface.Z, billboardCenterBufferIndex + 3);
@@ -580,11 +508,7 @@ namespace Ambermoon.Renderer
             if (billboardOrientationBuffer != null)
             {
                 byte floor = surface.Type == Ambermoon.Render.SurfaceType.BillboardFloor ? (byte)1 : (byte)0;
-                int billboardOrientationBufferIndex = billboardOrientationBuffer.Add(floor);
-
-                if (billboardOrientationBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int billboardOrientationBufferIndex = billboardOrientationBuffer.Add(floor, index);
                 billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 1);
                 billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 2);
                 billboardOrientationBuffer.Add(floor, billboardOrientationBufferIndex + 3);
@@ -592,11 +516,7 @@ namespace Ambermoon.Renderer
 
             if (extrudeBuffer != null)
             {
-                int extrudeBufferIndex = extrudeBuffer.Add(surface.Extrude);
-
-                if (extrudeBufferIndex != index)
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid index");
-
+                int extrudeBufferIndex = extrudeBuffer.Add(surface.Extrude, index);
                 extrudeBuffer.Add(surface.Extrude, extrudeBufferIndex + 1);
                 extrudeBuffer.Add(surface.Extrude, extrudeBufferIndex + 2);
                 extrudeBuffer.Add(surface.Extrude, extrudeBufferIndex + 3);
@@ -904,117 +824,79 @@ namespace Ambermoon.Renderer
                 }
             }*/
 
-            if (positionBuffer != null)
+            for (int i = 3; i >= 0; --i)
             {
-                for (int i = 0; i < 4; ++i)
+
+                if (positionBuffer != null)
                 {
                     positionBuffer.Update(index + i, short.MaxValue, short.MaxValue); // ensure it is not visible
                     positionBuffer.Remove(index + i);
                 }
-            }
-            else if (vectorBuffer != null)
-            {
-                for (int i = 0; i < 4; ++i)
+                else if (vectorBuffer != null)
                 {
                     vectorBuffer.Update(index + i, float.MaxValue, float.MaxValue, float.MaxValue); // ensure it is not visible
                     vectorBuffer.Remove(index + i);
                 }
-            }
 
-            if (paletteIndexBuffer != null)
-            {
-                paletteIndexBuffer.Remove(index);
-                paletteIndexBuffer.Remove(index + 1);
-                paletteIndexBuffer.Remove(index + 2);
-                paletteIndexBuffer.Remove(index + 3);
-            }
+                if (paletteIndexBuffer != null)
+                {
+                    paletteIndexBuffer.Remove(index + i);
+                }
 
-            if (textureAtlasOffsetBuffer != null)
-            {
-                textureAtlasOffsetBuffer.Remove(index);
-                textureAtlasOffsetBuffer.Remove(index + 1);
-                textureAtlasOffsetBuffer.Remove(index + 2);
-                textureAtlasOffsetBuffer.Remove(index + 3);
-            }
+                if (textureAtlasOffsetBuffer != null)
+                {
+                    textureAtlasOffsetBuffer.Remove(index + i);
+                }
 
-            if (baseLineBuffer != null)
-            {
-                baseLineBuffer.Remove(index);
-                baseLineBuffer.Remove(index + 1);
-                baseLineBuffer.Remove(index + 2);
-                baseLineBuffer.Remove(index + 3);
-            }
+                if (baseLineBuffer != null)
+                {
+                    baseLineBuffer.Remove(index + i);
+                }
 
-            if (colorBuffer != null)
-            {
-                colorBuffer.Remove(index);
-                colorBuffer.Remove(index + 1);
-                colorBuffer.Remove(index + 2);
-                colorBuffer.Remove(index + 3);
-            }
+                if (colorBuffer != null)
+                {
+                    colorBuffer.Remove(index + i);
+                }
 
-            if (layerBuffer != null)
-            {
-                layerBuffer.Remove(index);
-                layerBuffer.Remove(index + 1);
-                layerBuffer.Remove(index + 2);
-                layerBuffer.Remove(index + 3);
-            }
+                if (layerBuffer != null)
+                {
+                    layerBuffer.Remove(index + i);
+                }
 
-            if (textColorIndexBuffer != null)
-            {
-                textColorIndexBuffer.Remove(index);
-                textColorIndexBuffer.Remove(index + 1);
-                textColorIndexBuffer.Remove(index + 2);
-                textColorIndexBuffer.Remove(index + 3);
-            }
+                if (textColorIndexBuffer != null)
+                {
+                    textColorIndexBuffer.Remove(index + i);
+                }
 
-            if (alphaBuffer != null)
-            {
-                alphaBuffer.Remove(index);
-                alphaBuffer.Remove(index + 1);
-                alphaBuffer.Remove(index + 2);
-                alphaBuffer.Remove(index + 3);
-            }
+                if (alphaBuffer != null)
+                {
+                    alphaBuffer.Remove(index + i);
+                }
 
-            if (billboardCenterBuffer != null)
-            {
-                billboardCenterBuffer.Remove(index);
-                billboardCenterBuffer.Remove(index + 1);
-                billboardCenterBuffer.Remove(index + 2);
-                billboardCenterBuffer.Remove(index + 3);
-            }
+                if (billboardCenterBuffer != null)
+                {
+                    billboardCenterBuffer.Remove(index + i);
+                }
 
-            if (textureSizeBuffer != null)
-            {
-                textureSizeBuffer.Remove(index);
-                textureSizeBuffer.Remove(index + 1);
-                textureSizeBuffer.Remove(index + 2);
-                textureSizeBuffer.Remove(index + 3);
-            }
+                if (textureSizeBuffer != null)
+                {
+                    textureSizeBuffer.Remove(index + i);
+                }
 
-            if (textureEndCoordBuffer != null)
-            {
-                textureEndCoordBuffer.Remove(index);
-                textureEndCoordBuffer.Remove(index + 1);
-                textureEndCoordBuffer.Remove(index + 2);
-                textureEndCoordBuffer.Remove(index + 3);
-            }
+                if (textureEndCoordBuffer != null)
+                {
+                    textureEndCoordBuffer.Remove(index + i);
+                }
 
-            if (billboardOrientationBuffer != null)
-            {
-                billboardOrientationBuffer.Remove(index);
-                billboardOrientationBuffer.Remove(index + 1);
-                billboardOrientationBuffer.Remove(index + 2);
-                billboardOrientationBuffer.Remove(index + 3);
-            }
+                if (billboardOrientationBuffer != null)
+                {
+                    billboardOrientationBuffer.Remove(index + i);
+                }
 
-            if (extrudeBuffer != null)
-            {
-                extrudeBuffer.Remove(index);
-                extrudeBuffer.Remove(index + 1);
-                extrudeBuffer.Remove(index + 2);
-                extrudeBuffer.Remove(index + 3);
+                if (extrudeBuffer != null)
+                {
+                    extrudeBuffer.Remove(index + i);
+                }
             }
             
             // TODO: this code causes problems. commented out for now

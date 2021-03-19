@@ -30,13 +30,14 @@ namespace Ambermoon.Renderer
 
         public int AssignNextFreeIndex(out bool reused)
         {
-            if (releasedIndices.Count > 0)
+            if (releasedIndices.Count != 0)
             {
                 reused = true;
 
-                int index = releasedIndices[0];
+                int index = releasedIndices[^1];
 
-                releasedIndices.RemoveAt(0);
+                // Remove last has O(1) while remove first has O(n)!
+                releasedIndices.RemoveAt(releasedIndices.Count - 1);
 
                 return index;
             }
@@ -58,10 +59,19 @@ namespace Ambermoon.Renderer
 
         public bool AssignIndex(int index)
         {
-            if (releasedIndices.Contains(index))
+            // The logic should prefer the last index so that this is much faster.
+            if (releasedIndices.Count != 0)
             {
-                releasedIndices.Remove(index);
-                return true;
+                if (releasedIndices[^1] == index)
+                {
+                    releasedIndices.RemoveAt(releasedIndices.Count - 1);
+                    return true;
+                }
+                else if (releasedIndices.Contains(index))
+                {
+                    releasedIndices.Remove(index);
+                    return true;
+                }
             }
 
             if (index == firstFree)
