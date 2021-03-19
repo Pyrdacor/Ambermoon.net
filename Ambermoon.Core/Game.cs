@@ -7649,6 +7649,13 @@ namespace Ambermoon
 
         internal void UseSpell(PartyMember caster, Spell spell, ItemGrid itemGrid = null)
         {
+            // Some special care for the mystic map spells
+            if (!is3D && spell >= Spell.FindTraps && spell <= Spell.MysticalMapping)
+            {
+                ShowMessagePopup(DataNameProvider.UseSpellOnlyInCitiesOrDungeons);
+                return;
+            }
+
             var spellInfo = SpellInfos.Entries[spell];
 
             void ConsumeSP()
@@ -8443,7 +8450,8 @@ namespace Ambermoon
         {
             Pause();
             var popup = layout.OpenPopup(Map2DViewArea.Position, 11, 9, true, false);
-            TrapMouse(popup.ContentArea);
+            var contentArea = popup.ContentArea;
+            TrapMouse(contentArea);
             const int numVisibleTilesX = 72; // (11 - 2) * 16 / 2
             const int numVisibleTilesY = 56; // (9 - 2) * 16 / 2
             int displayWidth = Map.IsWorldMap ? numVisibleTilesX : Math.Min(numVisibleTilesX, Map.Width);
@@ -8486,7 +8494,6 @@ namespace Ambermoon
                     return KeyValuePair.Create(backColorIndex, frontColorIndex);
                 };
             }
-
             void DrawTile(Map map, int x, int y)
             {
                 bool visible = popup.ContentArea.Contains(drawX + 1, drawY + 1);
@@ -8506,7 +8513,6 @@ namespace Ambermoon
                     lowerLeftArea.Visible = visible;
                 }
             }
-
             for (int y = 0; y < Map.Height; ++y)
             {
                 drawX = baseX;
@@ -8528,7 +8534,6 @@ namespace Ambermoon
 
                 drawY += 2;
             }
-
             if (downMap != null)
             {
                 for (int y = 0; y < downMap.Height; ++y)
@@ -8553,17 +8558,18 @@ namespace Ambermoon
                     drawY += 2;
                 }
             }
-            bool animate = true;
+            bool closed = false;
             // 16x10 pixels per frame, stored as one image of 16x40 pixels
             // The real position inside each frame has an offset of 7,4
             var positionMarkerGraphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.PlusBlinkAnimation);
             var positionMarker = popup.AddImage(new Rect(baseX + player.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
                 positionMarkerGraphicIndex, Layer.UI, 120, 0);
+            positionMarker.ClipArea = contentArea;
             var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(positionMarkerGraphicIndex);
             int positionMarkerFrame = 0;
             void AnimatePosition()
             {
-                if (animate)
+                if (!closed)
                 {
                     positionMarker.TextureAtlasOffset = positionMarkerBaseTextureOffset + new Position(0, positionMarkerFrame * 10);
                     positionMarkerFrame = (positionMarkerFrame + 1) % 4; // 4 frames in total
@@ -8571,10 +8577,9 @@ namespace Ambermoon
                 }
             }
             AnimatePosition();
-            // TODO: scrolling world map
             popup.Closed += () =>
             {
-                animate = false;
+                closed = true;
                 positionMarker.Delete();
                 backgroundFill.Destroy();
                 filledAreas.ForEach(area => area.Destroy());
@@ -8591,6 +8596,67 @@ namespace Ambermoon
 
                 return false;
             };
+            if (Map.IsWorldMap)
+            {
+                // Only world maps can be scrolled.
+                // We assume that every map has a size of 50x50.
+                // Each scrolling will scroll at least 4 tiles.
+                const int tilesPerScroll = 4;
+                const int maxScrollX = (100 - numVisibleTilesX) / tilesPerScroll; // 7
+                const int maxScrollY = (100 - numVisibleTilesY) / tilesPerScroll; // 11
+                int scrollOffsetX = 0; // in 4 pixel chunks
+                int scrollOffsetY = 0; // in 4 pixel chunks
+
+                void Scroll(int x, int y)
+                {
+                    int newX = Util.Limit(0, scrollOffsetX + x, maxScrollX);
+                    int newY = Util.Limit(0, scrollOffsetY + y, maxScrollY);
+
+                    if (scrollOffsetX != newX || scrollOffsetY != newY)
+                    {
+                        int diffX = (newX - scrollOffsetX) * tilesPerScroll;
+                        int diffY = (newY - scrollOffsetY) * tilesPerScroll;
+                        scrollOffsetX = newX;
+                        scrollOffsetY = newY;
+                        var diff = new Position(diffX, diffY);
+
+                        foreach (var area in filledAreas)
+                        {
+                            if (area?.Position != null)
+                            {
+                                area.Position -= diff;
+                                area.Visible = contentArea.Contains(area.Position.X + 1, area.Position.Y + 1);
+                            }
+                        }
+
+                        positionMarker.X -= diffX;
+                        positionMarker.Y -= diffY;
+                    }
+                }
+
+                void CheckScroll()
+                {
+                    if (!closed)
+                    {
+                        AddTimedEvent(TimeSpan.FromMilliseconds(50), () =>
+                        {
+                            if (InputEnable)
+                            {
+                                var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+                                int x = position.X < contentArea.Left + 4 ? -1 : position.X > contentArea.Right - 4 ? 1 : 0;
+                                int y = position.Y < contentArea.Top + 4 ? -1 : position.Y > contentArea.Bottom - 4 ? 1 : 0;
+
+                                if (x != 0 || y != 0)
+                                    Scroll(x, y);
+                            }
+
+                            CheckScroll();
+                        });
+                    }
+                }
+
+                CheckScroll();
+            }
         }
 
         internal void ShowAutomap()
