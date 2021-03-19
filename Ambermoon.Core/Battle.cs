@@ -516,8 +516,9 @@ namespace Ambermoon
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
             // Recalculate the RDE value each round
-            var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Sum(x => x), 0x7fff);
-            var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
+            var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Where((d, i) => battleField.Contains(partyMembers[i])).Sum(x => x), 0x7fff);
+            var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Where((d, i) => battleField.Contains(initialMonsters[i]))
+                .Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
             relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
 
             var roundActors = battleField
@@ -985,7 +986,7 @@ namespace Ambermoon
                         ActionFinished(true);
                         return;
                     }
-                    if (damage != 0)
+                    if (damage != 0 || attackResult == AttackResult.NoDamage) // 0 damage hits also count
                     {
                         // Update damage statistics
                         if (battleAction.Character is PartyMember partyMember) // Memorize last damage for players
