@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.5.x beta - Automap, spinners and traps
+- Version [0.5.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.5.1beta): Added mystic map spells, minimap, improved battle logic and improved render performance
 - Version [0.5.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.5.0beta): Added automap with legend and all features, added 3D map exploration
 
 ## 0.4.x beta - Locks and Level-Up

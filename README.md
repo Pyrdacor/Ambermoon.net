@@ -6,9 +6,13 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version | Windows 64bit | Linux 64bit | Windows 32bit
---- | --- | --- | ---
-0.5.0 beta | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows32Bit.zip)
+Version | Normal | Standalone
+--- | --- | --- 
+**0.5.1 beta** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows-Standalone.zip)
+**0.5.1 beta** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Linux-Standalone.tar.gz)
+**0.5.1 beta** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.5.0beta/Ambermoon.net-Windows32Bit-Standalone.zip)
+
+The standalone versions should work without .NET installed but are larger in size.
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow. \
 An up-to-date overview for planned releases and features can be found [here](https://github.com/Pyrdacor/Ambermoon.net/issues/63).
@@ -64,7 +68,7 @@ Thank you very much.
 </p>
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png" width="400" alt="Automap" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/GotoPoints.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/GotoPoints.png" width="400" alt="Goto points" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Minimap.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Minimap.png" width="400" alt="Minimap" /></a>
 </p>
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MainMenu.png" width="400" alt="Main menu" /></a>
