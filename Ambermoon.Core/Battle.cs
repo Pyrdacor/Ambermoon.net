@@ -999,11 +999,12 @@ namespace Ambermoon
                     }
                     if (damage != 0)
                     {
+                        uint trackDamage = attackResult == AttackResult.CriticalHit ? target.HitPoints.TotalMaxValue : (uint)damage;
                         // Update damage statistics
                         if (battleAction.Character is PartyMember partyMember) // Memorize last damage for players
-                            TrackPlayerHit(partyMember, (uint)damage);
+                            TrackPlayerHit(partyMember, trackDamage);
                         else if (battleAction.Character is Monster attackingMonster) // Memorize monster damage stats
-                            TrackMonsterHit(attackingMonster, (uint)damage);
+                            TrackMonsterHit(attackingMonster, trackDamage);
                     }
                     void SkipAllFollowingAttacks()
                     {
