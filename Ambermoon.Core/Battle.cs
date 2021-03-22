@@ -2303,33 +2303,62 @@ namespace Ambermoon
 
         void PickMadAction(PartyMember partyMember, PlayerBattleAction playerBattleAction, List<int> forbiddenMoveSpots)
         {
-            // Mad players can attack, move, flee or parry.
+            // Mad players can only attack and move.
             var position = GetCharacterPosition(partyMember);
-            List<BattleActionType> possibleActions = new List<BattleActionType>();
 
-            if (position >= 24 && partyMember.CanFlee() && game.RollDice100() < 10) // TODO
-                possibleActions.Add(BattleActionType.Flee);
-            if (partyMember.BaseAttack > 0 && partyMember.Ailments.CanAttack() && AttackSpotAvailable(position, partyMember))
-                possibleActions.Add(BattleActionType.Attack);
-            if (partyMember.CanMove() && MoveSpotAvailable(position, partyMember, false, forbiddenMoveSpots))
-                possibleActions.Add(BattleActionType.Move);
-            if (partyMember.Ailments.CanParry())
-                possibleActions.Add(BattleActionType.Parry);
-            playerBattleAction.BattleAction = possibleActions.Count == 0 ? BattleActionType.None
-                : possibleActions.Count == 1 ? possibleActions[0] : possibleActions[game.RandomInt(0, possibleActions.Count - 1)];
-            switch (playerBattleAction.BattleAction)
+            bool TryAttack()
             {
-                case BattleActionType.Move:
+                if (partyMember.Ailments.CanAttack() &&
+                    !partyMember.HasLongRangedWeapon(game.ItemManager) &&
+                    AttackSpotAvailable(position, partyMember, true))
                 {
+                    playerBattleAction.BattleAction = BattleActionType.Attack;
+                    playerBattleAction.Parameter = CreateAttackParameter(GetRandomAttackSpot(position, partyMember), partyMember, game.ItemManager);
+                    return true;
+                }
+
+                return false;
+            }
+
+            bool TryMove()
+            {
+                if (partyMember.CanMove() && MoveSpotAvailable(position, partyMember, false, forbiddenMoveSpots))
+                {
+                    playerBattleAction.BattleAction = BattleActionType.Move;
                     uint moveSpot = GetRandomMoveSpot(position, partyMember, forbiddenMoveSpots);
                     playerBattleAction.Parameter = CreateMoveParameter(moveSpot);
                     forbiddenMoveSpots.Add((int)moveSpot);
-                    break;
+                    return true;
                 }
-                case BattleActionType.Attack:
-                    playerBattleAction.Parameter = CreateAttackParameter(GetRandomAttackSpot(position, partyMember), partyMember, game.ItemManager);
-                    break;
+
+                return false;
             }
+
+            bool done;
+
+            // Try attack first?
+            if (game.RandomInt(0, 0xffff) < 40000)
+            {
+                done = TryAttack();
+
+                if (!done)
+                    done = TryMove();
+            }
+            // Otherwise try move first
+            else
+            {
+                done = TryMove();
+
+                if (!done)
+                    done = TryAttack();
+            }
+
+            if (!done)
+            {
+                playerBattleAction.BattleAction = BattleActionType.None;
+                playerBattleAction.Parameter = 0;
+            }
+
             layout.UpdateCharacterStatus(game.SlotFromPartyMember(partyMember).Value,
                 playerBattleAction.BattleAction.ToStatusGraphic(playerBattleAction.Parameter, game.ItemManager));
         }
@@ -2348,6 +2377,10 @@ namespace Ambermoon
                 // In this case always retreat if possible
                 if (MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
                     return BattleActionType.Move;
+            }
+            if (monster.Ailments.HasFlag(Ailment.Crazy))
+            {
+                return AttackOrMove(true);
             }
             bool canAttackRanged = true;
             bool canAttackMelee = true;
@@ -2412,14 +2445,41 @@ namespace Ambermoon
                     }
                 }
             }
-            BattleActionType AttackOrMove()
+            BattleActionType AttackOrMove(bool mad = false)
             {
-                if (monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster))
-                    return BattleActionType.Attack;
-                else if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
-                    return BattleActionType.Move;
-                else
+                if (mad)
+                {
+                    bool TryAttack() =>
+                        monster.Ailments.CanAttack() &&
+                        !monster.HasLongRangedWeapon(game.ItemManager) &&
+                        AttackSpotAvailable(position, monster, false);
+                    bool TryMove() =>
+                        monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots);
+                    if (game.RandomInt(0, 0xffff) < 40000)
+                    {
+                        if (TryAttack())
+                            return BattleActionType.Attack;
+                        if (TryMove())
+                            return BattleActionType.Move;
+                    }
+                    else
+                    {
+                        if (TryMove())
+                            return BattleActionType.Move;
+                        if (TryAttack())
+                            return BattleActionType.Attack;
+                    }
                     return BattleActionType.None;
+                }
+                else
+                {
+                    if (monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster, false))
+                        return BattleActionType.Attack;
+                    else if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
+                        return BattleActionType.Move;
+                    else
+                        return BattleActionType.None;
+                }
             }
         }
 
@@ -2503,19 +2563,23 @@ namespace Ambermoon
             return false;
         }
 
-        bool AttackSpotAvailable(int characterPosition, Character character)
+        bool AttackSpotAvailable(int characterPosition, Character character, bool mad)
         {
             int range = character.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? 6 : 1;
 
             if (!GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy))
                 return false;
 
+            var targetCheck = mad
+                ? (Func<Character, bool>)(c => c != null && c != character)
+                : (Func<Character, bool>)(c => c != null && c.Type != character.Type);
+
             for (int y = minY; y <= maxY; ++y)
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
                     int position = x + y * 6;
-                    if (battleField[position] != null && battleField[position].Type != character.Type)
+                    if (targetCheck(battleField[position]))
                         return true;
                 }
             }
@@ -2603,6 +2667,7 @@ namespace Ambermoon
 
         uint GetRandomAttackSpot(int characterPosition, Character character)
         {
+            // Note: This is only used for mad players, so the target can be of any kind.
             GetRangeMinMaxValues(characterPosition, character, out int minX, out int maxX, out int minY, out int maxY, 1, RangeType.Enemy);
             var possiblePositions = new List<int>();
             for (int y = minY; y <= maxY; ++y)
@@ -2611,7 +2676,7 @@ namespace Ambermoon
                 {
                     int position = x + y * 6;
 
-                    if (battleField[position] != null && battleField[position].Type != character.Type)
+                    if (battleField[position] != null)
                         possiblePositions.Add(position);
                 }
             }
@@ -2769,6 +2834,9 @@ namespace Ambermoon
             if (monster.Ailments.HasFlag(Ailment.Panic))
                 return true;
 
+            if (monster.Ailments.HasFlag(Ailment.Crazy))
+                return false;
+
             int lowLPEffect = (int)((monster.HitPoints.TotalMaxValue - monster.HitPoints.CurrentValue) * 75 / monster.HitPoints.TotalMaxValue);
             int rdeEffect = ((int)relativeDamageEfficiency - 50) / 4;
             int monsterAllyEffect = 0;
@@ -2793,27 +2861,36 @@ namespace Ambermoon
             int range = monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? 6 : 1;
             GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy);
             var possiblePositions = new Dictionary<int, uint>();
+            bool mad = monster.Ailments.HasFlag(Ailment.Crazy);
+            var targetCheck = mad
+                ? (Func<Character, bool>)(c => c != null && c != monster)
+                : (Func<Character, bool>)(c => c != null && c.Type == CharacterType.PartyMember);
 
             for (int y = minY; y <= maxY; ++y)
             {
                 for (int x = minX; x <= maxX; ++x)
                 {
                     int position = x + y * 6;
-                    if (battleField[position]?.Type == CharacterType.PartyMember)
-                        possiblePositions.Add(position, averagePlayerDamage[partyMembers.ToList().IndexOf(battleField[position] as PartyMember)]);
+                    if (targetCheck(battleField[position]))
+                        possiblePositions.Add(position, mad ? 0 : averagePlayerDamage[partyMembers.ToList().IndexOf(battleField[position] as PartyMember)]);
                 }
             }
 
             if (possiblePositions.Count == 1)
                 return (uint)possiblePositions.Single().Key;
 
-            var maxDamage = possiblePositions.Max(p => p.Value);
-            var maxDamagePositions = possiblePositions.Where(p => p.Value == maxDamage).Select(p => p.Key).ToList();
+            if (!mad)
+            {
+                var maxDamage = possiblePositions.Max(p => p.Value);
+                var maxDamagePositions = possiblePositions.Where(p => p.Value == maxDamage).Select(p => p.Key).ToList();
 
-            if (maxDamagePositions.Count == 1)
-                return (uint)maxDamagePositions[0];
+                if (maxDamagePositions.Count == 1)
+                    return (uint)maxDamagePositions[0];
 
-            return (uint)maxDamagePositions[game.RandomInt(0, maxDamagePositions.Count - 1)];
+                return (uint)maxDamagePositions[game.RandomInt(0, maxDamagePositions.Count - 1)];
+            }
+
+            return (uint)possiblePositions[game.RandomInt(0, possiblePositions.Count - 1)];
         }
 
         uint GetBestSpellSpotOrRow(Monster monster, Spell spell)
@@ -2971,9 +3048,9 @@ namespace Ambermoon
         // Next 11 bits: Optional ammunition item index
         public static uint CreateAttackParameter(uint targetTile, uint weaponIndex = 0, uint ammoIndex = 0) =>
             (targetTile & 0x1f) | ((weaponIndex & 0x7ff) << 5) | ((ammoIndex & 0x7ff) << 16);
-        public static uint CreateAttackParameter(uint targetTile, PartyMember partyMember, IItemManager itemManager)
+        public static uint CreateAttackParameter(uint targetTile, Character character, IItemManager itemManager)
         {
-            uint weaponIndex = partyMember.Equipment.Slots[EquipmentSlot.RightHand]?.ItemIndex ?? 0;
+            uint weaponIndex = character.Equipment.Slots[EquipmentSlot.RightHand]?.ItemIndex ?? 0;
             uint ammoIndex = 0;
 
             if (weaponIndex != 0)
@@ -2982,7 +3059,7 @@ namespace Ambermoon
 
                 if (weapon.Type == ItemType.LongRangeWeapon && weapon.UsedAmmunitionType != AmmunitionType.None)
                 {
-                    ammoIndex = partyMember.Equipment.Slots[EquipmentSlot.LeftHand]?.ItemIndex ?? 0;
+                    ammoIndex = character.Equipment.Slots[EquipmentSlot.LeftHand]?.ItemIndex ?? 0;
                 }
             }
 
