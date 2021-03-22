@@ -2818,7 +2818,7 @@ namespace Ambermoon
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
                 {
-                    int defense = character.BaseDefense;
+                    int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                     if (defense > 0)
                         defense = Util.Round(defense * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection) / 100.0f));
                     string defenseString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense));
@@ -2901,7 +2901,7 @@ namespace Ambermoon
             }
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
             {
-                int defense = character.BaseDefense;
+                int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                 if (defense > 0)
                     defense = Util.Round(defense * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection) / 100.0f));
                 UpdateText(CharacterInfo.Defense, () =>

@@ -3198,8 +3198,9 @@ namespace Ambermoon
 
         int CalculatePhysicalDamage(Character attacker, Character target)
         {
-            // TODO: how is damage calculated?
-            return Math.Min((int)target.HitPoints.CurrentValue, attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) - (target.BaseDefense + game.RandomInt(0, target.VariableDefense)));
+            return Math.Min((int)target.HitPoints.CurrentValue,
+                attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack)
+                - (target.BaseDefense + game.RandomInt(0, target.VariableDefense) + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25));
         }
 
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
