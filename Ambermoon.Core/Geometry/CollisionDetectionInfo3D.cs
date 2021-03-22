@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Geometry
 {
     public interface ICollisionBody
     {
-        bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius);
+        bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius, bool player);
     }
 
     public class CollisionLine3D : ICollisionBody
@@ -16,9 +15,13 @@ namespace Ambermoon.Geometry
         public float Z { get; set; }
         public float Length { get; set; }
         public bool Horizontal { get; set; }
+        public bool PlayerCanPass { get; set; }
 
-        public bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius)
+        public bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius, bool player)
         {
+            if (player && PlayerCanPass)
+                return false;
+
             if (Horizontal)
             {
                 if (z < Z == lastZ < Z && Math.Abs(z - Z) >= bodyRadius)
@@ -49,9 +52,13 @@ namespace Ambermoon.Geometry
         public float CenterX { get; set; }
         public float CenterZ { get; set; }
         public float Radius { get; set; }
+        public bool PlayerCanPass { get; set; }
 
-        public bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius)
+        public bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius, bool player)
         {
+            if (player && PlayerCanPass)
+                return false;
+
             float xDist = Math.Abs(x - CenterX) - bodyRadius;
             float zDist = Math.Abs(z - CenterZ) - bodyRadius;
             float safeDist = Radius;
@@ -71,9 +78,9 @@ namespace Ambermoon.Geometry
     {
         public List<ICollisionBody> CollisionBodies { get; } = new List<ICollisionBody>();
         
-        public bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius)
+        public bool TestCollision(float lastX, float lastZ, float x, float z, float bodyRadius, bool player)
         {
-            return CollisionBodies.Any(b => b.TestCollision(lastX, lastZ, x, z, bodyRadius));
+            return CollisionBodies.Any(b => b.TestCollision(lastX, lastZ, x, z, bodyRadius, player));
         }
     }
 }

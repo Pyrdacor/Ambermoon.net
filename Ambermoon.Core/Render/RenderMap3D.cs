@@ -109,7 +109,7 @@ namespace Ambermoon.Render
                 {
                     character3D = new Character3D(game);
                     character3D.RandomMovementRequested += MoveRandom;
-                    character3D.MoveRequested += TestPossibleMovement;
+                    character3D.MoveRequested += TestPossibleCharacterMovement;
                     ResetPosition(game.GameTime);
                 }
             }
@@ -432,8 +432,9 @@ namespace Ambermoon.Render
                 return !TestPathCollision(position, map.monsterBlockSightBlocks);
             }
 
-            bool TestPossibleMovement(FloatPosition position)
+            bool TestPossibleCharacterMovement(FloatPosition position)
             {
+                // Note: This is only used for non-player characters.
                 var collisionInfo = map.GetCollisionDetectionInfoFromPositions
                 (
                     Position,
@@ -445,7 +446,7 @@ namespace Ambermoon.Render
                 var newX = position.X;
                 var newY = map.Map.Height * Global.DistancePerBlock - position.Y;
 
-                return !collisionInfo.TestCollision(lastX, lastY, newX, newY, Player3D.CollisionRadius);
+                return !collisionInfo.TestCollision(lastX, lastY, newX, newY, Player3D.CollisionRadius, false);
             }
 
             // TODO: Sometimes a monster is in a spot where it shouldn't be and the MoveRandom will never find a
@@ -905,7 +906,8 @@ namespace Ambermoon.Render
                     {
                         CenterX = mapObject.X,
                         CenterZ = -mapObject.Z,
-                        Radius = 0.5f * Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize
+                        Radius = 0.5f * Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
+                        PlayerCanPass = false
                     });
                     if (!characterBlockingBlocks.Contains(blockIndex))
                         characterBlockingBlocks.Add(blockIndex);
@@ -965,16 +967,14 @@ namespace Ambermoon.Render
                 wall.Visible = true; // TODO: not all walls should be always visible
                 walls.SafeAdd(blockIndex, wall);
 
-                if (blocksMovement)
+                blockCollisionBodies[blockIndex].Add(new CollisionLine3D
                 {
-                    blockCollisionBodies[blockIndex].Add(new CollisionLine3D
-                    {
-                        X = wallOrientation == WallOrientation.Rotated180 ? x - Global.DistancePerBlock : x,
-                        Z = -(wallOrientation == WallOrientation.Rotated270 ? z - Global.DistancePerBlock : z),
-                        Horizontal = wallOrientation == WallOrientation.Normal || wallOrientation == WallOrientation.Rotated180,
-                        Length = Global.DistancePerBlock
-                    });
-                }
+                    X = wallOrientation == WallOrientation.Rotated180 ? x - Global.DistancePerBlock : x,
+                    Z = -(wallOrientation == WallOrientation.Rotated270 ? z - Global.DistancePerBlock : z),
+                    Horizontal = wallOrientation == WallOrientation.Normal || wallOrientation == WallOrientation.Rotated180,
+                    Length = Global.DistancePerBlock,
+                    PlayerCanPass = !blocksMovement
+                });
             }
 
             float baseX = mapX * Global.DistancePerBlock;

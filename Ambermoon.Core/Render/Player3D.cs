@@ -114,7 +114,7 @@ namespace Ambermoon.Render
             // This contains all collision bodies in a 3x3 area around the current position.
             var collisionDetectionInfo = map.GetCollisionDetectionInfo(Position);
 
-            return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, CollisionRadius);
+            return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, CollisionRadius, true);
         }
 
         delegate void PositionProvider(float distance, out float newX, out float newY, bool noX, bool noZ);
