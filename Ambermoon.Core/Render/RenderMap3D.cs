@@ -1055,7 +1055,8 @@ namespace Ambermoon.Render
                         {
                             // Recreate the adjacent wall
                             uint adjacentIndex = (uint)(blockX + blockY * Map.Width);
-                            walls[adjacentIndex]?.ForEach(wall => wall?.Delete());
+                            if (walls.ContainsKey(adjacentIndex))
+                                walls[adjacentIndex]?.ForEach(wall => wall?.Delete());
                             walls.Remove(adjacentIndex);
                             if (blockCollisionBodies.ContainsKey(adjacentIndex))
                                 blockCollisionBodies.Remove(adjacentIndex);

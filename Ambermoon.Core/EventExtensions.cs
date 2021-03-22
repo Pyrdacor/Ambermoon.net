@@ -94,6 +94,18 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
+                case EventType.Spinner:
+                {
+                    if (trigger != EventTrigger.Move &&
+                        trigger != EventTrigger.Always)
+                        return null;
+
+                    if (!(@event is SpinnerEvent spinnerEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid spinner event.");
+
+                    game.Spin(spinnerEvent.Direction, spinnerEvent.Next);
+                    break;
+                }
                 // TODO ...
                 case EventType.Riddlemouth:
                 {

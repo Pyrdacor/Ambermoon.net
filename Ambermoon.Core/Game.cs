@@ -1291,7 +1291,7 @@ namespace Ambermoon
             allInputWasDisabled = false;
         }
 
-        void PlayTimedSequence(int steps, Action stepAction, int stepTimeInMs)
+        void PlayTimedSequence(int steps, Action stepAction, int stepTimeInMs, Action followUpAction = null)
         {
             if (steps == 0)
                 return;
@@ -1299,7 +1299,12 @@ namespace Ambermoon
             StartSequence();
             for (int i = 0; i < steps - 1; ++i)
                 AddTimedEvent(TimeSpan.FromMilliseconds(i * stepTimeInMs), stepAction);
-            AddTimedEvent(TimeSpan.FromMilliseconds((steps - 1) * stepTimeInMs), () => { stepAction?.Invoke(); EndSequence(); });
+            AddTimedEvent(TimeSpan.FromMilliseconds((steps - 1) * stepTimeInMs), () =>
+            {
+                stepAction?.Invoke();
+                EndSequence();
+                followUpAction?.Invoke();
+            });
         }
 
         internal void Wait(uint hours)
@@ -3099,6 +3104,58 @@ namespace Ambermoon
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
+        internal void Spin(CharacterDirection direction, Event nextEvent)
+        {
+            if (!is3D || WindowActive)
+                return; // Should not happen
+
+            if (direction == CharacterDirection.Random)
+                direction = (CharacterDirection)RandomInt(0, 3);
+
+            // Spin at least for 180°
+            float currentAngle = player3D.Angle;
+            while (currentAngle < 360.0f)
+                currentAngle += 360.0f;
+            while (currentAngle >= 360.0f)
+                currentAngle -= 360.0f;
+            float targetAngle = (float)direction * 90.0f;
+            bool right = true;
+            if (targetAngle <= currentAngle)
+            {
+                if (currentAngle - targetAngle < 180.0f)
+                    targetAngle += 360.0f;
+                else
+                    right = false;
+            }
+            else if (targetAngle - currentAngle < 180.0f)
+            {
+                currentAngle += 360.0f;
+                right = false;
+            }
+            float dist = targetAngle - currentAngle;
+            float stepSize = right ? 15.0f : -15.0f;
+            int fullSteps = Math.Max(180 / 15, Util.Round(dist / stepSize));
+            float halfStepSize = dist % 15.0f;
+            int stepIndex = 0;
+
+            void Step()
+            {
+                if (stepIndex++ < fullSteps)
+                    player3D.TurnRight(stepSize);
+                else
+                    player3D.TurnRight(halfStepSize);
+            }
+
+            PlayTimedSequence(fullSteps + 1, Step, 65, () =>
+            {
+                if (nextEvent != null)
+                {
+                    EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
+                        (uint)player3D.Position.X, (uint)player.Position.Y, CurrentTicks, nextEvent, true);
+                }
+            });
+        }
+
         /// <summary>
         /// This is used by external triggers like a cheat engine.
         /// </summary>
@@ -3133,9 +3190,10 @@ namespace Ambermoon
             }
             else
             {
-                // Note: We won't force teleport to a blocking 3D block as the player would
-                // stuck in the wall.
-                if (newMap.Blocks[newX, newY].BlocksPlayer(MapManager.GetLabdataForMap(newMap)))
+                // Note: Normally we won't force teleport to a blocking 3D block as the player would
+                // stuck in the wall. But the game logic might use change tile events to remove walls.
+                // So we hope that the game only teleports to blocking tiles if it is removed on map enter.
+                if (!force && newMap.Blocks[newX, newY].BlocksPlayer(MapManager.GetLabdataForMap(newMap)))
                 {
                     blocked = true;
                     return false;
@@ -3173,7 +3231,7 @@ namespace Ambermoon
         {
             void RunTransition()
             {
-                Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _);
+                Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _, true);
             }
 
             if (teleportEvent.Transition == TeleportEvent.TransitionType.Teleporter)

@@ -60,7 +60,7 @@ namespace Ambermoon
                     @event.Type != EventType.EnterPlace &&
                     @event.Type != EventType.Riddlemouth)
                 {
-                    return false;
+                    return true;
                 }
             }
 
