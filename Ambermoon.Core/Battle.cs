@@ -2173,10 +2173,11 @@ namespace Ambermoon
                     }
                 }
                 uint damage = CalculateSpellDamage(caster, target, baseDamage, variableDamage);
+                uint trackDamage = spell == Spell.DissolveVictim ? target.HitPoints.TotalMaxValue : damage;
                 if (caster is Monster monster)
-                    TrackMonsterHit(monster, damage);
+                    TrackMonsterHit(monster, trackDamage);
                 else if (caster is PartyMember partyMember)
-                    TrackPlayerHit(partyMember, damage);
+                    TrackPlayerHit(partyMember, trackDamage);
                 uint position = (uint)GetSlotFromCharacter(target);
                 PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
                     position, ticks, () =>
