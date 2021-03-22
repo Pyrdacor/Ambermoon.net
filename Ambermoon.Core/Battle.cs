@@ -219,12 +219,13 @@ namespace Ambermoon
         readonly Dictionary<ActiveSpellType, Bar> activeSpellDurationBars = new Dictionary<ActiveSpellType, Bar>();
         readonly List<KeyValuePair<uint, ItemSlotFlags>> brokenItems = new List<KeyValuePair<uint, ItemSlotFlags>>();
         readonly List<Monster> droppedWeaponMonsters = new List<Monster>();
-        /// <summary>
-        /// Those affect monsters decision making. Only physical damage and dissolve victim spell damage counts!
-        /// </summary>
-        readonly uint[] lastPlayerDamage = new uint[Game.MaxPartyMembers];
+        readonly uint[] totalPlayerDamage = new uint[Game.MaxPartyMembers];
+        readonly uint[] numSuccessfulPlayerHits = new uint[Game.MaxPartyMembers];
+        readonly uint[] averagePlayerDamage = new uint[Game.MaxPartyMembers];
+        readonly List<uint> monsterMorale = new List<uint>();
         readonly List<uint> totalMonsterDamage = new List<uint>();
         readonly List<uint> numSuccessfulMonsterHits = new List<uint>();
+        readonly List<uint> averageMonsterDamage = new List<uint>();
         uint relativeDamageEfficiency = 0;
         bool showMonsterLP = false;
         readonly bool needsClickForNextAction;
@@ -285,6 +286,8 @@ namespace Ambermoon
                         initialMonsters.Add(monster);
                         totalMonsterDamage.Add(0);
                         numSuccessfulMonsterHits.Add(0);
+                        averageMonsterDamage.Add(0);
+                        monsterMorale.Add(monster.Morale);
                         monsterSizes.Add((int)monster.MappedFrameWidth);
                     }
                 }
@@ -516,9 +519,8 @@ namespace Ambermoon
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
             // Recalculate the RDE value each round
-            var partyDamage = Util.Limit(1, (uint)lastPlayerDamage.Where((d, i) => battleField.Contains(partyMembers[i])).Sum(x => x), 0x7fff);
-            var monsterDamage = Util.Limit(1, (uint)totalMonsterDamage.Where((d, i) => battleField.Contains(initialMonsters[i]))
-                .Select((d, i) => numSuccessfulMonsterHits[i] == 0 ? 0 : d / numSuccessfulMonsterHits[i]).Sum(x => x), 0x7fff);
+            var partyDamage = Util.Limit(1, (uint)averagePlayerDamage.Where((d, i) => partyMembers[i] != null && battleField.Contains(partyMembers[i])).Sum(x => x), 0x7fff);
+            var monsterDamage = Util.Limit(1, (uint)averageMonsterDamage.Where((d, i) => battleField.Contains(initialMonsters[i])).Sum(x => x), 0x7fff);
             relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
 
             var roundActors = battleField
@@ -784,11 +786,20 @@ namespace Ambermoon
             }
         }
 
+        void TrackPlayerHit(PartyMember partyMember, uint damage)
+        {
+            int index = partyMembers.ToList().IndexOf(partyMember);
+            totalPlayerDamage[index] += damage;
+            ++numSuccessfulPlayerHits[index];
+            averagePlayerDamage[index] = totalPlayerDamage[index] / numSuccessfulPlayerHits[index];
+        }
+
         void TrackMonsterHit(Monster monster, uint damage)
         {
             int index = initialMonsters.IndexOf(monster);
             totalMonsterDamage[index] += damage;
             ++numSuccessfulMonsterHits[index];
+            averageMonsterDamage[index] = totalMonsterDamage[index] / numSuccessfulMonsterHits[index];
         }
 
         void RunBattleAction(BattleAction battleAction, uint battleTicks)
@@ -986,11 +997,11 @@ namespace Ambermoon
                         ActionFinished(true);
                         return;
                     }
-                    if (damage != 0 || attackResult == AttackResult.NoDamage) // 0 damage hits also count
+                    if (damage != 0)
                     {
                         // Update damage statistics
                         if (battleAction.Character is PartyMember partyMember) // Memorize last damage for players
-                            lastPlayerDamage[partyMembers.ToList().IndexOf(partyMember)] = (uint)damage; // TODO: Is this set to 0 if attack failed?
+                            TrackPlayerHit(partyMember, (uint)damage);
                         else if (battleAction.Character is Monster attackingMonster) // Memorize monster damage stats
                             TrackMonsterHit(attackingMonster, (uint)damage);
                     }
@@ -1983,8 +1994,6 @@ namespace Ambermoon
                     RemoveCharacterFromBattleField(target);
                     if (caster is PartyMember partyMember)
                     {
-                        if (spell == Spell.DissolveVictim)
-                            lastPlayerDamage[partyMembers.ToList().IndexOf(partyMember)] = target.HitPoints.MaxValue;
                         KillMonster(partyMember, target);
                     }
                     else
@@ -2158,9 +2167,9 @@ namespace Ambermoon
                 }
                 uint damage = CalculateSpellDamage(caster, target, baseDamage, variableDamage);
                 if (caster is Monster monster)
-                {
                     TrackMonsterHit(monster, damage);
-                }
+                else if (caster is PartyMember partyMember)
+                    TrackPlayerHit(partyMember, damage);
                 uint position = (uint)GetSlotFromCharacter(target);
                 PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
                     position, ticks, () =>
@@ -2777,7 +2786,7 @@ namespace Ambermoon
                 {
                     int position = x + y * 6;
                     if (battleField[position]?.Type == CharacterType.PartyMember)
-                        possiblePositions.Add(position, lastPlayerDamage[partyMembers.ToList().IndexOf(battleField[position] as PartyMember)]);
+                        possiblePositions.Add(position, averagePlayerDamage[partyMembers.ToList().IndexOf(battleField[position] as PartyMember)]);
                 }
             }
 
@@ -2836,9 +2845,9 @@ namespace Ambermoon
                 }
             case BattleActionType.CastSpell:
                 {
-                    var maxPlayerDamage = lastPlayerDamage.Max();
+                    var maxPlayerDamage = averagePlayerDamage.Max();
                     uint getPrio(uint damage) => maxPlayerDamage == 0 ? 100 : damage * 100 / maxPlayerDamage;
-                    var maxDamagePlayers = lastPlayerDamage.Select((d, i) => new { Damage = d, Player = partyMembers[i] })
+                    var maxDamagePlayers = averagePlayerDamage.Select((d, i) => new { Damage = d, Player = partyMembers[i] })
                         .Where(x => x.Damage == maxPlayerDamage && x.Player?.Alive == true)
                         .Select(x => new { x.Player, Prio = getPrio(x.Damage), Row = GetCharacterPosition(x.Player) / 6 });
                     var averagePrio = maxDamagePlayers.Average(x => x.Prio);
