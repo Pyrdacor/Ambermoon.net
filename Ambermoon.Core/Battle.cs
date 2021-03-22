@@ -1545,7 +1545,7 @@ namespace Ambermoon
                         {
                             PlayerWeaponBroke?.Invoke(partyMember);
                         }
-                        else // monster
+                        else if (battleAction.Character is Monster monster)
                         {
                             if (weapon.Type == ItemType.LongRangeWeapon)
                             {
@@ -1553,8 +1553,14 @@ namespace Ambermoon
                                 bool IsMeleeWeapon(uint itemIndex) => game.ItemManager.GetItem(itemIndex).Type == ItemType.CloseRangeWeapon;
                                 var meleeWeaponSlot = battleAction.Character.Inventory.Slots.FirstOrDefault(s => !s.Empty && IsMeleeWeapon(s.ItemIndex));
                                 if (meleeWeaponSlot != null)
+                                {
                                     weaponSlot.Exchange(meleeWeaponSlot);
+                                    game.EquipmentAdded(weaponSlot.ItemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed), monster);
+                                }
                             }
+
+                            if (monster.BaseAttack == 0)
+                                monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                         }
                         ActionFinished(true);
                     }
@@ -2368,11 +2374,13 @@ namespace Ambermoon
                         {
                             bool IsMeleeWeapon(uint itemIndex) => game.ItemManager.GetItem(itemIndex).Type == ItemType.CloseRangeWeapon;
                             var weaponSlot = monster.Equipment.Slots[EquipmentSlot.RightHand];
+                            game.EquipmentRemoved(monster, weaponSlot.ItemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                             var meleeWeaponSlot = monster.Inventory.Slots.FirstOrDefault(s => !s.Empty && IsMeleeWeapon(s.ItemIndex));
                             if (meleeWeaponSlot != null)
                             {
                                 // Switch weapons
                                 weaponSlot.Exchange(meleeWeaponSlot);
+                                game.EquipmentAdded(weaponSlot.ItemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed), monster);
                             }
                             else
                             {
@@ -2381,6 +2389,9 @@ namespace Ambermoon
                                 if (emptyInventorySlot != null)
                                     emptyInventorySlot.Replace(weaponSlot);
                                 weaponSlot.Clear();
+
+                                if (monster.BaseAttack == 0)
+                                    monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                             }
                         }
                         return AttackOrMove();
@@ -2764,10 +2775,11 @@ namespace Ambermoon
                 monsterAllyEffect = (Monsters.Count() - 1) * 40 / (initialMonsters.Count - 1) - 25;
 
             int fear = Util.Limit(0, lowLPEffect + rdeEffect - monsterAllyEffect, 100);
+            int morale = (int)monsterMorale[initialMonsters.IndexOf(monster)];
 
-            if (fear > monster.Morale)
+            if (fear > morale)
             {
-                int fleeChance = Math.Min(fear - (int)monster.Morale, 100);
+                int fleeChance = Math.Min(fear - (int)morale, 100);
                 return game.RollDice100() < fleeChance;
             }
 

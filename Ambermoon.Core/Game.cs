@@ -2983,32 +2983,32 @@ namespace Ambermoon
             InventoryItemRemoved(ItemManager.GetItem(itemIndex), amount);
         }
 
-        void EquipmentAdded(Item item, int amount, bool cursed, PartyMember partyMember = null)
+        void EquipmentAdded(Item item, int amount, bool cursed, Character character = null)
         {
-            partyMember ??= CurrentInventory;
+            character ??= CurrentInventory;
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            partyMember.BaseAttack = (short)(partyMember.BaseAttack + item.Damage);
-            partyMember.BaseDefense = (short)(partyMember.BaseDefense + item.Defense);
-            partyMember.MagicAttack = (short)(partyMember.MagicAttack + item.MagicAttackLevel);
-            partyMember.MagicDefense = (short)(partyMember.MagicDefense + item.MagicArmorLevel);
-            partyMember.HitPoints.BonusValue += (cursed ? -1 : 1) * item.HitPoints;
-            partyMember.SpellPoints.BonusValue += (cursed ? -1 : 1) * item.SpellPoints;
-            if (partyMember.HitPoints.CurrentValue > partyMember.HitPoints.TotalMaxValue)
-                partyMember.HitPoints.CurrentValue = partyMember.HitPoints.TotalMaxValue;
-            if (partyMember.SpellPoints.CurrentValue > partyMember.SpellPoints.TotalMaxValue)
-                partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.TotalMaxValue;
+            character.BaseAttack = (short)(character.BaseAttack + item.Damage);
+            character.BaseDefense = (short)(character.BaseDefense + item.Defense);
+            character.MagicAttack = (short)(character.MagicAttack + item.MagicAttackLevel);
+            character.MagicDefense = (short)(character.MagicDefense + item.MagicArmorLevel);
+            character.HitPoints.BonusValue += (cursed ? -1 : 1) * item.HitPoints;
+            character.SpellPoints.BonusValue += (cursed ? -1 : 1) * item.SpellPoints;
+            if (character.HitPoints.CurrentValue > character.HitPoints.TotalMaxValue)
+                character.HitPoints.CurrentValue = character.HitPoints.TotalMaxValue;
+            if (character.SpellPoints.CurrentValue > character.SpellPoints.TotalMaxValue)
+                character.SpellPoints.CurrentValue = character.SpellPoints.TotalMaxValue;
             if (item.Attribute != null)
-                partyMember.Attributes[item.Attribute.Value].BonusValue += (cursed ? -1 : 1) * item.AttributeValue;
+                character.Attributes[item.Attribute.Value].BonusValue += (cursed ? -1 : 1) * item.AttributeValue;
             if (item.Ability != null)
-                partyMember.Abilities[item.Ability.Value].BonusValue += (cursed ? -1 : 1) * item.AbilityValue;
-            partyMember.TotalWeight += (uint)amount * item.Weight;
+                character.Abilities[item.Ability.Value].BonusValue += (cursed ? -1 : 1) * item.AbilityValue;
+            character.TotalWeight += (uint)amount * item.Weight;
         }
 
-        internal void EquipmentAdded(uint itemIndex, int amount, bool cursed, PartyMember partyMember)
+        internal void EquipmentAdded(uint itemIndex, int amount, bool cursed, Character character)
         {
-            EquipmentAdded(ItemManager.GetItem(itemIndex), amount, cursed, partyMember);
+            EquipmentAdded(ItemManager.GetItem(itemIndex), amount, cursed, character);
         }
 
         void EquipmentRemoved(Character character, Item item, int amount, bool cursed)
