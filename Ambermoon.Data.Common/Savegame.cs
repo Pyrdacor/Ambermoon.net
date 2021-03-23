@@ -181,7 +181,7 @@ namespace Ambermoon.Data
 
                 if (activeSpell.Level < level)
                     activeSpell.Level = level;
-                activeSpell.Duration = Math.Min(200u, activeSpell.Duration + duration);
+                activeSpell.Duration = Util.Limit(activeSpell.Duration, duration, 200u);
             }
         }
         /// <summary>
