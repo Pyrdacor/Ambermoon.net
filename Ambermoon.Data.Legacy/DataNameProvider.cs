@@ -203,6 +203,9 @@
         public string CannotUseItHere => executableData.Messages.GetEntry(Messages.Index.CannotUseItHere);
         public string CannotUseMagicDiscHere => executableData.Messages.GetEntry(Messages.Index.CannotUseMagicDiscHere);
         public string CannotJumpThroughWalls => executableData.Messages.GetEntry(Messages.Index.CannotJumpThroughWalls);
+        public string MarksPosition => executableData.Messages.GetEntry(Messages.Index.MarksPosition);
+        public string HasntMarkedAPosition => executableData.Messages.GetEntry(Messages.Index.HasntMarkedAPosition);
+        public string ReturnToMarkedPosition => executableData.Messages.GetEntry(Messages.Index.ReturnToMarkedPosition);
 
 
         #region Automap

@@ -229,7 +229,7 @@ namespace Ambermoon
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
-        PartyMember CurrentCaster { get; set; } = null;
+        internal PartyMember CurrentCaster { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         internal bool MonsterSeesPlayer { get; set; } = false;
@@ -4842,10 +4842,45 @@ namespace Ambermoon
                     Jump();
                     break;
                 case Spell.Flight:
-                case Spell.WordOfMarking:
-                case Spell.WordOfReturning:
                     // TODO
                     break;
+                case Spell.WordOfMarking:
+                {
+                    if (caster is PartyMember partyMember)
+                    {
+                        partyMember.MarkOfReturnMapIndex = (ushort)(Map.IsWorldMap ?
+                            renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index : Map.Index);
+                        partyMember.MarkOfReturnX = (ushort)(player.Position.X + 1); // stored 1-based
+                        partyMember.MarkOfReturnY = (ushort)(player.Position.Y + 1); // stored 1-based
+                        ShowMessagePopup(DataNameProvider.MarksPosition);
+                    }
+                    break;
+                }
+                case Spell.WordOfReturning:
+                {
+                    if (caster is PartyMember partyMember)
+                    {
+                        if (partyMember.MarkOfReturnMapIndex == 0)
+                        {
+                            ShowMessagePopup(DataNameProvider.HasntMarkedAPosition);
+                        }
+                        else
+                        {
+                            void Return() => Teleport(partyMember.MarkOfReturnMapIndex, partyMember.MarkOfReturnX, partyMember.MarkOfReturnY, player.Direction, out _, true);
+                            ShowMessagePopup(DataNameProvider.ReturnToMarkedPosition, () =>
+                            {
+                                var targetMap = MapManager.GetMap(partyMember.MarkOfReturnMapIndex);
+                                // Note: The original fades always if the map index does not match.
+                                // But we improve it here a bit so that moving inside the same world map won't fade.
+                                if (targetMap.Index == Map.Index || (targetMap.IsWorldMap && Map.IsWorldMap && targetMap.World == Map.World))
+                                    Return();
+                                else
+                                    Fade(Return);
+                            });
+                        }
+                    }
+                    break;
+                }
                 case Spell.MagicalShield:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 10 (10% defense increase)
@@ -7761,6 +7796,8 @@ namespace Ambermoon
 
         internal void UseSpell(PartyMember caster, Spell spell, ItemGrid itemGrid = null)
         {
+            CurrentCaster = caster;
+
             // Some special care for the mystic map spells
             if (!is3D && spell >= Spell.FindTraps && spell <= Spell.MysticalMapping)
             {

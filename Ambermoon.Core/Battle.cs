@@ -1183,12 +1183,15 @@ namespace Ambermoon
 
                     var spellInfo = SpellInfos.Entries[spell];
 
+                    if (battleAction.Character is PartyMember partyMember)
+                        game.CurrentCaster = partyMember;
+
                     if (itemSlotIndex == null)
                     {
                         battleAction.Character.SpellPoints.CurrentValue = Math.Max(0, battleAction.Character.SpellPoints.CurrentValue - spellInfo.SP);
 
-                        if (battleAction.Character is PartyMember partyMember)
-                            layout.FillCharacterBars(partyMember);
+                        if (battleAction.Character is PartyMember castingPartyMember)
+                            layout.FillCharacterBars(castingPartyMember);
                     }
 
                     if (!CheckSpellCast(battleAction.Character, spellInfo))

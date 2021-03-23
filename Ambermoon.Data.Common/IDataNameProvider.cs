@@ -181,6 +181,9 @@ namespace Ambermoon.Data
         string CannotUseItHere { get; }
         string CannotUseMagicDiscHere { get; }
         string CannotJumpThroughWalls { get; }
+        string MarksPosition { get; }
+        string HasntMarkedAPosition { get; }
+        string ReturnToMarkedPosition { get; }
 
 
         #region Automap
