@@ -47,7 +47,7 @@ namespace Ambermoon.Data
             MapChange, // with black fading
             Teleporter, // without black fading
             WindGate, // you need the wind chain to use it
-            Levitating, // moving up (levitating or climbing up)
+            Climbing, // moving up (levitating or climbing up)
             Outro, // teleport to outro sequence
             Falling // moving down (falling or climbing down)
         }
@@ -104,6 +104,18 @@ namespace Ambermoon.Data
         }
     }
 
+    /// <summary>
+    /// This is used for text popups and traps.
+    /// </summary>
+    [Flags]
+    public enum EventTrigger
+    {
+        None = 0,
+        Move = 0x01,
+        EyeCursor = 0x02,
+        Always = Move | EyeCursor
+    }
+
     public class PopupTextEvent : Event
     {
         public enum Response
@@ -113,24 +125,15 @@ namespace Ambermoon.Data
             No
         }
 
-        [Flags]
-        public enum Trigger
-        {
-            None = 0,
-            Move = 0x01,
-            EyeCursor = 0x02,
-            Always = Move | EyeCursor
-        }
-
         public uint TextIndex { get; set; }
         /// <summary>
         /// From event_pix (0-based). 0xff -> no image.
         /// </summary>
         public uint EventImageIndex { get; set; }
         public bool HasImage => EventImageIndex != 0xff;
-        public Trigger PopupTrigger { get; set; }
-        public bool CanTriggerByMoving => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.Move);
-        public bool CanTriggerByCursor => PopupTrigger == Trigger.None || PopupTrigger.HasFlag(Trigger.EyeCursor);
+        public EventTrigger PopupTrigger { get; set; }
+        public bool CanTriggerByMoving => PopupTrigger.HasFlag(EventTrigger.Move);
+        public bool CanTriggerByCursor => PopupTrigger.HasFlag(EventTrigger.EyeCursor);
         public byte Unknown1 { get; set; }
         public byte[] Unknown2 { get; set; }
 
@@ -174,15 +177,14 @@ namespace Ambermoon.Data
         /// Base damage. Sometimes direct value but maybe in percentage of max health for other TrapType than 0?
         /// </summary>
         public byte BaseDamage { get; set; }
-        /// <summary>
-        /// Most of the times 3. Big water vortex has 150 and Value 0.
-        /// </summary>
-        public byte Unknown { get; set; }
+        public EventTrigger TrapTrigger { get; set; }
         public byte[] Unused { get; set; } // 5 bytes
+        public bool CanTriggerByMoving => TrapTrigger.HasFlag(EventTrigger.Move);
+        public bool CanTriggerByCursor => TrapTrigger.HasFlag(EventTrigger.EyeCursor);
 
         public override string ToString()
         {
-            return $"{Type}: {BaseDamage} {TypeOfTrap} on {Target} Unknown {Unknown:x2}";
+            return $"{Type}: {BaseDamage} {TypeOfTrap} on {Target}, Trigger {TrapTrigger}";
         }
     }
 
@@ -343,6 +345,7 @@ namespace Ambermoon.Data
             UseItem = 0x07,
             Success = 0x09, // treasure fully looted, battle won, etc
             Hand = 0x0e,
+            Levitating = 0x11,
             Eye = 0x14,
             // TODO
         }
@@ -374,10 +377,11 @@ namespace Ambermoon.Data
                 ConditionType.EventBit => $"{Type}: Event bit {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.CharacterBit => $"{Type}: Character bit {ObjectIndex} = {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.PartyMember => $"{Type}: Has party member {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.ItemOwned => $"{Type}: Own item {Count}x {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.ItemOwned => $"{Type}: {(Value == 0 ? $"Not own item" : $"Own item {Math.Max(1, Count)}x")} {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Success => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.Levitating => $"{Type}: Levitating, {falseHandling}",
                 ConditionType.Eye => $"{Type}: Eye cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
             };

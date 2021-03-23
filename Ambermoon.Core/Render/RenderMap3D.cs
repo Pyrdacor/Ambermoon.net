@@ -282,7 +282,7 @@ namespace Ambermoon.Render
                         return true;
                     }
                 }
-                else if (trigger != EventTrigger.Move)
+                else
                 {
                     if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
                     {
@@ -296,6 +296,8 @@ namespace Ambermoon.Render
                             ShowPopup(map.Map.Texts[(int)characterReference.Index]);
                             return true;
                         }
+
+                        return false;
                     }
 
                     bool HandleConversation(IConversationPartner conversationPartner)
@@ -361,8 +363,7 @@ namespace Ambermoon.Render
                                     }
                                 }
                                 var position = game.RenderPlayer.Position;
-                                EventExtensions.TriggerEventChain(map.Map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
-                                return true;
+                                return EventExtensions.TriggerEventChain(map.Map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
                             }
                             break;
                     }
@@ -610,6 +611,12 @@ namespace Ambermoon.Render
             camera.SetPosition(playerX * Global.DistancePerBlock, (map.Height - playerY) * Global.DistancePerBlock);
             camera.TurnTowards((float)playerDirection * 90.0f);
         }
+
+        public float GetFloorY() => -0.25f * ReferenceWallHeight / BlockSize;
+
+        public float GetLevitatingY() => -0.75f * ReferenceWallHeight / BlockSize;
+
+        public float GetLevitatingStepSize() => ReferenceWallHeight / (BlockSize * 40.0f);
 
         public void SetCameraHeight(Race race)
         {

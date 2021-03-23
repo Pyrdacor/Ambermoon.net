@@ -102,6 +102,13 @@ namespace Ambermoon
                 }
                 case EventType.Spinner:
                 {
+                    if (trigger == EventTrigger.Eye)
+                    {
+                        game.ShowMessagePopup(game.DataNameProvider.SeeRoundDiskInFloor);
+                        aborted = true;
+                        return null;
+                    }
+
                     if (trigger != EventTrigger.Move &&
                         trigger != EventTrigger.Always)
                         return null;
@@ -111,6 +118,37 @@ namespace Ambermoon
 
                     game.Spin(spinnerEvent.Direction, spinnerEvent.Next);
                     break;
+                }
+                case EventType.Trap:
+                {
+                    if (!(@event is TrapEvent trapEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid trap event.");
+
+                    switch (trigger)
+                    {
+                        case EventTrigger.Move:
+                            if (!trapEvent.CanTriggerByMoving)
+                            {
+                                aborted = true;
+                                return null;
+                            }
+                            break;
+                        case EventTrigger.Eye:
+                            if (trapEvent.CanTriggerByCursor)
+                            {
+                                // Note: Eye will only detect the trap, not trigger it!
+                                game.ShowMessagePopup(game.DataNameProvider.YouNoticeATrap);
+                            }
+                            aborted = true;
+                            return null;
+                        case EventTrigger.Always:
+                            break;
+                        default:
+                            aborted = true;
+                            return null;
+                    }
+                    game.TriggerTrap(trapEvent);
+                    return null; // next event is only executed after trap effect
                 }
                 // TODO ...
                 case EventType.Riddlemouth:
@@ -264,7 +302,13 @@ namespace Ambermoon
                                 }
                             }
 
-                            if (totalCount != conditionEvent.Value)
+                            if (conditionEvent.Value == 0 && totalCount != 0)
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            else if (conditionEvent.Value == 1 && totalCount == 0 || totalCount < conditionEvent.Count)
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;

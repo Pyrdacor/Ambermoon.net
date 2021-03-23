@@ -32,7 +32,7 @@ namespace Ambermoon.Render
         /// <summary>
         /// This will reset the view angle to up
         /// </summary>
-        void SetPosition(float x, float z);
+        void SetPosition(float x, float z, float? y = null);
         void MoveForward(float distance, bool noX, bool noZ);
         void MoveBackward(float distance, bool noX, bool noZ);
         void MoveLeft(float distance, bool noX, bool noZ);

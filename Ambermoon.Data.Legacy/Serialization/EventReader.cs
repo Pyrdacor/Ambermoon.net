@@ -159,7 +159,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // map text index as word
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
-                    var popupTrigger = (PopupTextEvent.Trigger)dataReader.ReadByte();
+                    var popupTrigger = (EventTrigger)dataReader.ReadByte();
                     var unknown1 = dataReader.ReadByte();
                     var textIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(4);
@@ -188,14 +188,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var trapType = (TrapEvent.TrapType)dataReader.ReadByte();
                     var target = (TrapEvent.TrapTarget)dataReader.ReadByte();
-                    var unknown = dataReader.ReadByte();
+                    var trapTrigger = (EventTrigger)dataReader.ReadByte();
                     var baseDamage = dataReader.ReadByte();
                     var unused = dataReader.ReadBytes(5); // unused
                     @event = new TrapEvent
                     {
                         TypeOfTrap = trapType,
                         Target = target,
-                        Unknown = unknown,
+                        TrapTrigger = trapTrigger,
                         BaseDamage = baseDamage,
                         Unused = unused
                     };

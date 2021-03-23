@@ -1331,8 +1331,7 @@ namespace Ambermoon
         {
             if (is3D)
             {
-                // TODO: Uncomment but also fix wrong weight values first
-                bool CanMove() => true;// !PartyMembers.Any(p => !p.CanMove(false));
+                bool CanMove() => !PartyMembers.Any(p => !p.CanMove(false));
 
                 switch (cursorType)
                 {
@@ -2669,7 +2668,7 @@ namespace Ambermoon
                 layout.AddText(weightArea.CreateModified(0, 1, 0, 0), DataNameProvider.CharacterInfoWeightHeaderString,
                     TextColor.White, TextAlign.Center, 5);
                 characterInfoTexts.Add(CharacterInfo.Weight, layout.AddText(weightArea.CreateModified(0, 8, 0, 0),
-                    string.Format(DataNameProvider.CharacterInfoWeightString, Util.Round(partyMember.TotalWeight / 1000.0f),
+                    string.Format(DataNameProvider.CharacterInfoWeightString, partyMember.TotalWeight / 1000,
                     partyMember.MaxWeight / 1000), TextColor.White, TextAlign.Center, 5));
                 #endregion
             }
@@ -2960,7 +2959,7 @@ namespace Ambermoon
                     string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)));
             }
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
-                Util.Round(character.TotalWeight / 1000.0f), (character as PartyMember).MaxWeight / 1000));
+                character.TotalWeight / 1000, (character as PartyMember).MaxWeight / 1000));
             if (npc != null)
             {
                 ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
@@ -3146,9 +3145,53 @@ namespace Ambermoon
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
-        void Levitate()
+        internal void TriggerTrap(TrapEvent trapEvent)
         {
             // TODO
+            if (trapEvent.Next != null)
+            {
+                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
+                    (uint)player.Position.Y, CurrentTicks, trapEvent.Next, true);
+            }
+        }
+
+        void Levitate()
+        {
+            MoveVertically(true, false);
+            // TODO: This also works with no exit in the ceiling
+            // but if there is one we should trigger the map change event.
+            // Moreover if there is no exit, the player should fall back to ground afterwards!
+        }
+
+        void Climb(Action finishAction = null)
+        {
+            MoveVertically(true, false, finishAction);
+        }
+
+        void Fall(Action finishAction = null)
+        {
+            MoveVertically(false, false, finishAction);
+        }
+
+        void MoveVertically(bool up, bool mapChange, Action finishAction = null)
+        {
+            if (!is3D || WindowActive)
+                return;
+
+            var sourceY = !mapChange ? camera3D.GroundY : (up ? renderMap3D.GetFloorY() : renderMap3D.GetLevitatingY());
+            player3D.SetY(sourceY);
+            var targetY = mapChange ? camera3D.GroundY : (up ? renderMap3D.GetLevitatingY() : renderMap3D.GetFloorY());
+            float stepSize = renderMap3D.GetLevitatingStepSize();
+            float dist = Math.Abs(targetY - camera3D.Y);
+            int steps = Math.Max(1, Util.Round(dist / stepSize));
+
+            PlayTimedSequence(steps, () =>
+            {
+                if (up)
+                    camera3D.LevitateUp(stepSize);
+                else
+                    camera3D.LevitateDown(stepSize);
+            }, 75, finishAction);
         }
 
         /// <summary>
@@ -3271,8 +3314,9 @@ namespace Ambermoon
             bool mapTypeChanged = Map.Type != newMap.Type;
 
             // The position (x, y) is 1-based in the data so we subtract 1.
-            uint newX = x - 1;
-            uint newY = y - 1;
+            // If the position is 0,0 the current position should be used.
+            uint newX = x == 0 ? (uint)player.Position.X : x - 1;
+            uint newY = y == 0 ? (uint)player.Position.Y : y - 1;
 
             if (newMap.Type == MapType.Map2D)
             {
@@ -3331,10 +3375,32 @@ namespace Ambermoon
                 Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _, true);
             }
 
-            if (teleportEvent.Transition == TeleportEvent.TransitionType.Teleporter)
-                RunTransition();
-            else // TODO: levitating, falling, etc
-                Fade(RunTransition);
+            switch (teleportEvent.Transition)
+            {
+                case TeleportEvent.TransitionType.Teleporter:
+                case TeleportEvent.TransitionType.WindGate:
+                    RunTransition();
+                    break;
+                case TeleportEvent.TransitionType.Falling:
+                    Pause();
+                    Fall(() => Fade(() =>
+                    {
+                        RunTransition();
+                        MoveVertically(false, true, Resume);
+                    }));
+                    break;
+                case TeleportEvent.TransitionType.Climbing:
+                    Pause();
+                    Climb(() => Fade(() =>
+                    {
+                        RunTransition();
+                        MoveVertically(true, true, Resume);
+                    }));
+                    break;
+                default:
+                    Fade(RunTransition);
+                    break;
+            }
         }
 
         public bool ActivateTransport(TravelType travelType)
@@ -9337,6 +9403,10 @@ namespace Ambermoon
                 void AddAutomapType(int tx, int ty, int x, int y, AutomapType automapType,
                     byte displayLayer = 5) // 5: above walls, fake wall overlays and player pin lower half (2, 3 and 4)
                 {
+                    if (!automapOptions.TrapsVisible && (automapType == AutomapType.Trap ||
+                        automapType == AutomapType.Trapdoor || automapType == AutomapType.Spinner))
+                        return;
+
                     byte baseDisplayLayer = displayLayer;
                     var graphic = automapType.ToGraphic();
 

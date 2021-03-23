@@ -212,6 +212,7 @@
         public string MarksPosition => executableData.Messages.GetEntry(Messages.Index.MarksPosition);
         public string HasntMarkedAPosition => executableData.Messages.GetEntry(Messages.Index.HasntMarkedAPosition);
         public string ReturnToMarkedPosition => executableData.Messages.GetEntry(Messages.Index.ReturnToMarkedPosition);
+        public string SeeRoundDiskInFloor => executableData.Messages.GetEntry(Messages.Index.SeeRoundDiskInFloor);
 
 
         #region Automap

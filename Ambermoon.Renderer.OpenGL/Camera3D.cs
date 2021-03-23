@@ -83,12 +83,12 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void LevitateDown(float distance)
         {
-            Move(0.0f, -distance, 0.0f);
+            Move(0.0f, distance, 0.0f);
         }
 
         public void LevitateUp(float distance)
         {
-            Move(0.0f, distance, 0.0f);
+            Move(0.0f, -distance, 0.0f);
         }
 
         public void MoveBackward(float distance, bool noX, bool noZ)
@@ -122,10 +122,10 @@ namespace Ambermoon.Renderer.OpenGL
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void SetPosition(float x, float z)
+        public void SetPosition(float x, float z, float? y = null)
         {
             X = -x;
-            Y = GroundY;
+            Y = y ?? GroundY;
             Z = z;
             translateMatrix = Matrix4.CreateTranslationMatrix(X, Y, Z);
             UpdateMatrix();

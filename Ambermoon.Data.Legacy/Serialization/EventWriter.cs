@@ -113,7 +113,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var trapEvent = @event as TrapEvent;
                     dataWriter.WriteEnumAsByte(trapEvent.TypeOfTrap);
                     dataWriter.WriteEnumAsByte(trapEvent.Target);
-                    dataWriter.Write(trapEvent.Unknown);
+                    dataWriter.WriteEnumAsByte(trapEvent.TrapTrigger);
                     dataWriter.Write(trapEvent.BaseDamage);
                     dataWriter.Write(trapEvent.Unused);
                     break;

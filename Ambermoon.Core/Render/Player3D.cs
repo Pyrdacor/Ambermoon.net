@@ -50,6 +50,11 @@ namespace Ambermoon.Render
             Camera.SetPosition(x, z);
         }
 
+        public void SetY(float y)
+        {
+            Camera.SetPosition(-Camera.X, Camera.Z, y);
+        }
+
         public void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
             if (newDirection == CharacterDirection.Random)

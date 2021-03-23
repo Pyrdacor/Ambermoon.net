@@ -13,7 +13,7 @@ namespace Ambermoon.Data
         public List<string> Texts { get; set; }
         public List<Event> Events { get; } = new List<Event>();
         public List<Event> EventList { get; } = new List<Event>();
-        public uint MaxWeight => Attributes[Attribute.Strength].TotalCurrentValue * 1000;
+        public uint MaxWeight => 999 + Attributes[Attribute.Strength].TotalCurrentValue * 1000;
         public uint MaxGoldToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Gold, ((int)MaxWeight - (int)TotalWeight) / 5));
         public uint MaxFoodToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Food, ((int)MaxWeight - (int)TotalWeight) / 250));
         public bool CanTakeItems(IItemManager itemManager, ItemSlot itemSlot)
