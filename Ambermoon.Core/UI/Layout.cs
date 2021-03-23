@@ -1711,7 +1711,15 @@ namespace Ambermoon.UI
                     {
                         // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
                         bool equipped = itemGrid == itemGrids[1];
-                        game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
+
+                        void ConsumeItem(Action effectHandler)
+                        {
+                            if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage) && itemSlot.NumRemainingCharges <= 1)
+                                DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, effectHandler);
+                            else
+                                effectHandler?.Invoke();
+                        }
+                        game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true, ConsumeItem);
                     }
                 }
                 else if (item.Type == ItemType.Transportation)
@@ -3061,9 +3069,10 @@ namespace Ambermoon.UI
 
             if (portraitAnimation != null)
             {
+                const int animationTime = (int)Game.TicksPerSecond / 2;
                 uint elapsed = (game.BattleActive ? game.CurrentBattleTicks : game.CurrentAnimationTicks) - portraitAnimation.StartTicks;
 
-                if (elapsed > Game.TicksPerSecond)
+                if (elapsed > animationTime)
                 {
                     portraitAnimation.PrimarySprite.Y = 1;
                     portraitAnimation.SecondarySprite.Delete();
@@ -3076,12 +3085,12 @@ namespace Ambermoon.UI
 
                     if (portraitAnimation.Offset < 0)
                     {
-                        portraitAnimation.Offset = Math.Min(0, -34 + (int)elapsed * 34 / (int)Game.TicksPerSecond);
+                        portraitAnimation.Offset = Math.Min(0, -34 + (int)elapsed * 34 / animationTime);
                         diff = 34;
                     }
                     else
                     {
-                        portraitAnimation.Offset = Math.Max(0, 34 - (int)elapsed * 34 / (int)Game.TicksPerSecond);
+                        portraitAnimation.Offset = Math.Max(0, 34 - (int)elapsed * 34 / animationTime);
                         diff = -34;
                     }
 

@@ -525,6 +525,20 @@ namespace Ambermoon.Render
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
                 case Spell.WakeTheDead:
+                case Spell.SpellPointsI:
+                case Spell.SpellPointsII:
+                case Spell.SpellPointsIII:
+                case Spell.SpellPointsIV:
+                case Spell.SpellPointsV:
+                case Spell.AllHealing:
+                case Spell.AddStrength:
+                case Spell.AddIntelligence:
+                case Spell.AddDexterity:
+                case Spell.AddSpeed:
+                case Spell.AddStamina:
+                case Spell.AddCharisma:
+                case Spell.AddLuck:
+                case Spell.AddAntiMagic:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
             }
