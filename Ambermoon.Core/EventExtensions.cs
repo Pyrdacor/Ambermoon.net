@@ -54,6 +54,12 @@ namespace Ambermoon
                     if (!(@event is ChestEvent chestEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
+                    if (chestEvent.MinSearchAbility > game.CurrentPartyMember.Abilities[Ability.Searching].TotalCurrentValue)
+                    {
+                        aborted = true;
+                        return null;
+                    }
+
                     game.ShowChest(chestEvent, false, false, map);
                     return null;
                 }

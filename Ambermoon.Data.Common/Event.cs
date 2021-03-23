@@ -95,12 +95,12 @@ namespace Ambermoon.Data
         public bool RemoveWhenEmpty { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
-        public byte Unknown { get; set; }
+        public byte MinSearchAbility { get; set; }
 
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
-            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Unknown: {Unknown:x2}";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, MinSearchAbility: {MinSearchAbility}";
         }
     }
 
