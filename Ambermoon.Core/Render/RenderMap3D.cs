@@ -261,8 +261,10 @@ namespace Ambermoon.Render
                             }
                             else
                             {
-                                // TODO: chance
-                                if (game.RollDice100() < 50)
+                                var attributes = game.CurrentPartyMember.Attributes;
+                                var dex = attributes[Data.Attribute.Dexterity].TotalCurrentValue;
+                                var luk = attributes[Data.Attribute.Luck].TotalCurrentValue;
+                                if (game.RandomInt(0, 149) >= dex + luk)
                                 {
                                     StartBattle(true);
                                 }
