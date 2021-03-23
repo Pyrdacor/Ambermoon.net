@@ -22,6 +22,7 @@ An up-to-date overview for planned releases and features can be found [here](htt
 I appreciate all kind of support for this project. If you want to donate to help increase my motivation and allow me to spend more time developing this Ambermoon project and similar projects like a 3rd part of the trilogy or map and character editors, you can do so here. \
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=76DV5MK5GNEMS&source=url) [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software) \
 You want to donate using a different method? Please tell me about it. You can email me at <trobt@web.de>. \
+You can also become my patron at patreon.com/Pyrdacor2 with some benefits. I will post some dev progress there as well. \
 Thank you very much.
 
 ## Screenshots
@@ -100,7 +101,7 @@ F1-F6 | Open inventory of party member 1-6
 - On buttons in map view will toggle between move arrows and actions.
 - In 2D map view will show a crosshair cursor which can be used for interactions. Or it aborts an already active action cursor.
 - In 3D map view:
-  - On the corners (turn arrows) it will perform 90° or 180° rotations.
+  - On the corners (turn arrows) it will perform 90Â° or 180Â° rotations.
   - On the center (Zzz) it will trigger interactions with a nearby map object.
 - On item it will pickup all the items without asking for the amount.
 - When dragging an item it will reset the item back to its source slot.
