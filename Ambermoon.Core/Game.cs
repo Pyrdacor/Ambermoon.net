@@ -223,7 +223,9 @@ namespace Ambermoon
         internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
         public PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
+        bool pickingTargetPlayer = false;
         bool pickingTargetInventory = false;
+        event Action<int> targetPlayerPicked;
         event Func<int, bool> targetInventoryPicked;
         event Func<ItemGrid, int, ItemSlot, bool> targetItemPicked;
         bool advancing = false; // party or monsters are advancing
@@ -1264,7 +1266,7 @@ namespace Ambermoon
 
         void HandleClickMovement()
         {
-            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled || pickingNewLeader || pickingTargetInventory)
+            if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory)
             {
                 clickMoveActive = false;
                 return;
@@ -1460,7 +1462,7 @@ namespace Ambermoon
 
         void Move()
         {
-            if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetInventory)
+            if (paused || WindowActive || !InputEnable || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory)
                 return;
 
             bool left = keys[(int)Key.Left] || keys[(int)Key.A];
@@ -1514,11 +1516,31 @@ namespace Ambermoon
             }
         }
 
+        void PickTargetPlayer()
+        {
+            pickingTargetPlayer = true;
+            CursorType = CursorType.Sword;
+            TrapMouse(Global.PartyMemberPortraitArea);
+        }
+
         void PickTargetInventory()
         {
             pickingTargetInventory = true;
             CursorType = CursorType.Sword;
             TrapMouse(Global.PartyMemberPortraitArea);
+        }
+
+        internal void FinishPickingTargetPlayer(int characterSlot)
+        {
+            targetPlayerPicked?.Invoke(characterSlot);
+            pickingTargetPlayer = false;
+            UntrapMouse();
+        }
+
+        internal void AbortPickingTargetPlayer()
+        {
+            pickingTargetPlayer = false;
+            targetPlayerPicked?.Invoke(-1);
         }
 
         internal bool FinishPickingTargetInventory(int characterSlot)
@@ -1601,6 +1623,13 @@ namespace Ambermoon
                     return;
             }
 
+            if (pickingTargetPlayer)
+            {
+                if (key != Key.Escape)
+                    return;
+
+                AbortPickingTargetPlayer();
+            }
             if (pickingTargetInventory)
             {
                 if (key != Key.Escape)
@@ -1702,7 +1731,7 @@ namespace Ambermoon
 
         public void OnKeyUp(Key key, KeyModifiers modifiers)
         {
-            if (characterCreator != null || allInputDisabled || pickingTargetInventory)
+            if (characterCreator != null || allInputDisabled || pickingTargetPlayer || pickingTargetInventory)
                 return;
 
             if (!InputEnable || pickingNewLeader)
@@ -1743,7 +1772,7 @@ namespace Ambermoon
                 return;
             }
 
-            if (allInputDisabled || pickingTargetInventory)
+            if (allInputDisabled || pickingTargetPlayer || pickingTargetInventory)
                 return;
 
             if (!pickingNewLeader && layout.KeyChar(keyChar))
@@ -1842,7 +1871,7 @@ namespace Ambermoon
                 var relativePosition = renderView.ScreenToGame(position);
 
                 if (!WindowActive && !layout.PopupActive && InputEnable && !pickingNewLeader &&
-                    !pickingTargetInventory && mapViewArea.Contains(relativePosition))
+                    !pickingTargetPlayer && !pickingTargetInventory && mapViewArea.Contains(relativePosition))
                 {
                     // click into the map area
                     if (buttons == MouseButtons.Right)
@@ -1930,11 +1959,11 @@ namespace Ambermoon
                     }
 
                     var cursorType = CursorType.Sword;
-                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetInventory);
+                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetPlayer, pickingTargetInventory);
                     disableUntrapping = true;
                     CursorType = cursorType;
 
-                    if (!allInputDisabled && InputEnable && !pickingNewLeader && !pickingTargetInventory)
+                    if (!allInputDisabled && InputEnable && !pickingNewLeader && !pickingTargetPlayer && !pickingTargetInventory)
                     {
                         layout.Hover(relativePosition, ref cursorType); // Update cursor
                         if (cursor.Type != CursorType.None)
@@ -3102,6 +3131,11 @@ namespace Ambermoon
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), midFadeAction);
             if (changeInputEnableState)
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
+        }
+
+        void Levitate()
+        {
+            // TODO
         }
 
         /// <summary>
@@ -4799,239 +4833,260 @@ namespace Ambermoon
         /// <param name="caster">Casting party member or monster.</param>
         /// <param name="target">Party member or item or null.</param>
         /// <param name="finishAction">Action to call after effect was applied.</param>
-        internal void ApplySpellEffect(Spell spell, Character caster, object target, Action finishAction = null)
+        /// <param name="checkFail">If true check if the spell cast fails.</param>
+        internal void ApplySpellEffect(Spell spell, Character caster, object target, Action finishAction = null, bool checkFail = true)
         {
             if (target == null)
-                ApplySpellEffect(spell, caster, finishAction);
+                ApplySpellEffect(spell, caster, finishAction, checkFail);
             else if (target is Character character)
-                ApplySpellEffect(spell, caster, character, finishAction);
+                ApplySpellEffect(spell, caster, character, finishAction, checkFail);
             else if (target is ItemSlot itemSlot)
-                ApplySpellEffect(spell, caster, itemSlot, finishAction);
+                ApplySpellEffect(spell, caster, itemSlot, finishAction, checkFail);
             else
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid spell target type: {target.GetType()}");
         }
 
-        void ApplySpellEffect(Spell spell, Character caster)
+        void ApplySpellEffect(Spell spell, Character caster, Action finishAction, bool checkFail)
         {
+            void Cast(Action action)
+            {
+                if (checkFail)
+                    TrySpell(action);
+                else
+                    action?.Invoke();
+            }
+
             switch (spell)
             {
                 case Spell.Light:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 1 (Light radius 1)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 30, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 30, 1));
                     break;
                 case Spell.MagicalTorch:
                     // Duration: 60 (300 minutes = 5h)
                     // Level: 1 (Light radius 1)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 60, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 60, 1));
                     break;
                 case Spell.MagicalLantern:
                     // Duration: 120 (600 minutes = 10h)
                     // Level: 2 (Light radius 2)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 2);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 2));
                     break;
                 case Spell.MagicalSun:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 3 (Light radius 3)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3);
-                    break;
-                case Spell.CreateFood:
-                    // TODO
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3));
                     break;
                 case Spell.Jump:
-                    Jump();
+                    Cast(Jump);
                     break;
                 case Spell.Flight:
                     // TODO
                     break;
                 case Spell.WordOfMarking:
                 {
-                    if (caster is PartyMember partyMember)
+                    Cast(() =>
                     {
-                        partyMember.MarkOfReturnMapIndex = (ushort)(Map.IsWorldMap ?
-                            renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index : Map.Index);
-                        partyMember.MarkOfReturnX = (ushort)(player.Position.X + 1); // stored 1-based
-                        partyMember.MarkOfReturnY = (ushort)(player.Position.Y + 1); // stored 1-based
-                        ShowMessagePopup(DataNameProvider.MarksPosition);
-                    }
+                        if (caster is PartyMember partyMember)
+                        {
+                            partyMember.MarkOfReturnMapIndex = (ushort)(Map.IsWorldMap ?
+                                renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index : Map.Index);
+                            partyMember.MarkOfReturnX = (ushort)(player.Position.X + 1); // stored 1-based
+                            partyMember.MarkOfReturnY = (ushort)(player.Position.Y + 1); // stored 1-based
+                            ShowMessagePopup(DataNameProvider.MarksPosition);
+                        }
+                    });
                     break;
                 }
                 case Spell.WordOfReturning:
                 {
-                    if (caster is PartyMember partyMember)
+                    Cast(() =>
                     {
-                        if (partyMember.MarkOfReturnMapIndex == 0)
+                        if (caster is PartyMember partyMember)
                         {
-                            ShowMessagePopup(DataNameProvider.HasntMarkedAPosition);
-                        }
-                        else
-                        {
-                            void Return() => Teleport(partyMember.MarkOfReturnMapIndex, partyMember.MarkOfReturnX, partyMember.MarkOfReturnY, player.Direction, out _, true);
-                            ShowMessagePopup(DataNameProvider.ReturnToMarkedPosition, () =>
+                            if (partyMember.MarkOfReturnMapIndex == 0)
                             {
-                                var targetMap = MapManager.GetMap(partyMember.MarkOfReturnMapIndex);
-                                // Note: The original fades always if the map index does not match.
-                                // But we improve it here a bit so that moving inside the same world map won't fade.
-                                if (targetMap.Index == Map.Index || (targetMap.IsWorldMap && Map.IsWorldMap && targetMap.World == Map.World))
-                                    Return();
-                                else
-                                    Fade(Return);
-                            });
+                                ShowMessagePopup(DataNameProvider.HasntMarkedAPosition);
+                            }
+                            else
+                            {
+                                void Return() => Teleport(partyMember.MarkOfReturnMapIndex, partyMember.MarkOfReturnX, partyMember.MarkOfReturnY, player.Direction, out _, true);
+                                ShowMessagePopup(DataNameProvider.ReturnToMarkedPosition, () =>
+                                {
+                                    var targetMap = MapManager.GetMap(partyMember.MarkOfReturnMapIndex);
+                                    // Note: The original fades always if the map index does not match.
+                                    // But we improve it here a bit so that moving inside the same world map won't fade.
+                                    if (targetMap.Index == Map.Index || (targetMap.IsWorldMap && Map.IsWorldMap && targetMap.World == Map.World))
+                                        Return();
+                                    else
+                                        Fade(Return);
+                                });
+                            }
                         }
-                    }
+                    });
                     break;
                 }
                 case Spell.MagicalShield:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 10 (10% defense increase)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 30, 10);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 30, 10));
                     break;
                 case Spell.MagicalWall:
                     // Duration: 90 (450 minutes = 7h30m)
                     // Level: 20 (20% defense increase)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 90, 20);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 90, 20));
                     break;
                 case Spell.MagicalBarrier:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 30 (30% defense increase)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30));
                     break;
                 case Spell.MagicalWeapon:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 10 (10% damage increase)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 30, 10);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 30, 10));
                     break;
                 case Spell.MagicalAssault:
                     // Duration: 90 (450 minutes = 7h30m)
                     // Level: 20 (20% damage increase)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 90, 20);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 90, 20));
                     break;
                 case Spell.MagicalAttack:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 30 (30% damage increase)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30));
                     break;
                 case Spell.Levitation:
-                    // TODO
+                    Cast(Levitate);
                     break;
                 case Spell.AntiMagicWall:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 15 (15% anti-magic protection)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 30, 15);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 30, 15));
                     break;
                 case Spell.AntiMagicSphere:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 25 (25% anti-magic protection)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25));
                     break;
                 case Spell.AlchemisticGlobe:
                     // Duration: 180 (900 minutes = 15h)
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3);
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
+                    Cast(() =>
+                    {
+                        CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3);
+                        CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
+                        CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
+                        CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
+                    });
                     break;
                 case Spell.Knowledge:
                     // Duration: 30 (150 minutes = 2h30m)
                     // TODO: level?
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 1));
                     break;
                 case Spell.Clairvoyance:
                     // Duration: 90 (450 minutes = 7h30m)
                     // TODO: level?
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 1));
                     break;
                 case Spell.SeeTheTruth:
                     // Duration: 180 (900 minutes = 15h)
                     // TODO: level?
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1));
                     break;
                 case Spell.MapView:
-                    OpenMiniMap();
+                    Cast(OpenMiniMap);
                     break;
                 case Spell.MagicalCompass:
                 {
-                    Pause();
-                    var popup = layout.OpenPopup(new Position(48, 64), 4, 4);
-                    TrapMouse(popup.ContentArea);
-                    popup.AddImage(new Rect(64, 80, 32, 32), Graphics.GetUIGraphicIndex(UIGraphic.Compass), Layer.UI);
-                    var text = popup.AddText(new Rect(59, 93, 42, 7), layout.GetCompassString(), TextColor.Gray);
-                    text.Clip(new Rect(64, 93, 32, 7));
-                    popup.Closed += () =>
+                    Cast(() =>
                     {
-                        UntrapMouse();
-                        Resume();
-                    };
+                        Pause();
+                        var popup = layout.OpenPopup(new Position(48, 64), 4, 4);
+                        TrapMouse(popup.ContentArea);
+                        popup.AddImage(new Rect(64, 80, 32, 32), Graphics.GetUIGraphicIndex(UIGraphic.Compass), Layer.UI);
+                        var text = popup.AddText(new Rect(59, 93, 42, 7), layout.GetCompassString(), TextColor.Gray);
+                        text.Clip(new Rect(64, 93, 32, 7));
+                        popup.Closed += () =>
+                        {
+                            UntrapMouse();
+                            Resume();
+                        };
+                    });
                     break;
                 }
                 case Spell.FindTraps:
-                    ShowAutomap(new AutomapOptions
+                    Cast(() => ShowAutomap(new AutomapOptions
                     {
                         SecretDoorsVisible = false,
                         MonstersVisible = false,
                         PersonsVisible = false,
                         TrapsVisible = true
-                    });
+                    }));
                     break;
                 case Spell.FindMonsters:
-                    ShowAutomap(new AutomapOptions
+                    Cast(() => ShowAutomap(new AutomapOptions
                     {
                         SecretDoorsVisible = false,
                         MonstersVisible = true,
                         PersonsVisible = false,
                         TrapsVisible = false
-                    });
+                    }));
                     break;
                 case Spell.FindPersons:
-                    ShowAutomap(new AutomapOptions
+                    Cast(() => ShowAutomap(new AutomapOptions
                     {
                         SecretDoorsVisible = false,
                         MonstersVisible = false,
                         PersonsVisible = true,
                         TrapsVisible = false
-                    });
+                    }));
                     break;
                 case Spell.FindSecretDoors:
-                    ShowAutomap(new AutomapOptions
+                    Cast(() => ShowAutomap(new AutomapOptions
                     {
                         SecretDoorsVisible = true,
                         MonstersVisible = false,
                         PersonsVisible = false,
                         TrapsVisible = false
-                    });
+                    }));
                     break;
                 case Spell.MysticalMapping:
-                    ShowAutomap(new AutomapOptions
+                    Cast(() => ShowAutomap(new AutomapOptions
                     {
                         SecretDoorsVisible = true,
                         MonstersVisible = true,
                         PersonsVisible = true,
                         TrapsVisible = true
-                    });
+                    }));
                     break;
                 case Spell.MysticalMapI:
                     // Duration: 32 (160 minutes = 2h40m)
                     // TODO: level?
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 32, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 32, 1));
                     break;
                 case Spell.MysticalMapII:
                     // Duration: 60 (300 minutes = 5h)
                     // TODO: level?
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 60, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 60, 1));
                     break;
                 case Spell.MysticalMapIII:
                     // Duration: 90 (450 minutes = 7h30m)
                     // TODO: level?
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 90, 1);
+                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 90, 1));
                     break;
                 case Spell.MysticalGlobe:
                     // Duration: 180 (900 minutes = 15h)
                     // TODO: level?
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
-                    CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 180, 1);
+                    Cast(() =>
+                    {
+                        CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
+                        CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 180, 1);
+                    });
                     break;
                 case Spell.Lockpicking:
-                    // TODO: Do nothing? Can be used by Thief/Ranger but has it an effect in Ambermoon? Maybe only when door screen is active?
+                    // Do nothing. Can be used by Thief/Ranger but has no effect in Ambermoon.
                     break;
                 case Spell.CallEagle:
                     if (TravelType != TravelType.Walk)
@@ -5109,7 +5164,20 @@ namespace Ambermoon
             }
         }
 
-        void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action finishAction = null)
+        void TrySpell(Action successAction, Action failAction)
+        {
+            if (RollDice100() < CurrentPartyMember.Abilities[Ability.UseMagic].TotalCurrentValue)
+                successAction?.Invoke();
+            else
+                failAction?.Invoke();
+        }
+
+        void TrySpell(Action successAction)
+        {
+            TrySpell(successAction, () => ShowMessagePopup(DataNameProvider.TheSpellFailed));
+        }
+
+        void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action finishAction, bool checkFail)
         {
             void PlayItemMagicAnimation(Action animationFinishAction = null)
             {
@@ -5123,12 +5191,12 @@ namespace Ambermoon
                 ShowMessagePopup(message, finishAction, TextAlign.Left);
             }
 
-            void TrySpell(Action successAction, Action failAction)
+            void Cast(Action successAction, Action failAction)
             {
-                if (RollDice100() < CurrentPartyMember.Abilities[Ability.UseMagic].TotalCurrentValue)
-                    successAction?.Invoke();
+                if (checkFail)
+                    TrySpell(successAction, failAction);
                 else
-                    failAction?.Invoke();
+                    successAction?.Invoke();
             }
 
             switch (spell)
@@ -5140,7 +5208,7 @@ namespace Ambermoon
                         Error(DataNameProvider.ItemAlreadyIdentified);
                         return;
                     }
-                    TrySpell(() =>
+                    Cast(() =>
                     {
                         itemSlot.Flags |= ItemSlotFlags.Identified;
                         PlayItemMagicAnimation(() =>
@@ -5170,7 +5238,7 @@ namespace Ambermoon
                         Error(DataNameProvider.ItemAlreadyFullyCharged);
                         return;
                     }
-                    TrySpell(() =>
+                    Cast(() =>
                     {
                         ++itemSlot.NumRemainingCharges;
                         PlayItemMagicAnimation();
@@ -5194,7 +5262,7 @@ namespace Ambermoon
                         Error(DataNameProvider.ItemIsNotBroken);
                         return;
                     }
-                    TrySpell(() =>
+                    Cast(() =>
                     {
                         itemSlot.Flags &= ~ItemSlotFlags.Broken;
                         layout.UpdateItemSlot(itemSlot);
@@ -5218,7 +5286,7 @@ namespace Ambermoon
                         Error(DataNameProvider.CannotBeDuplicated);
                         return;
                     }
-                    TrySpell(() =>
+                    Cast(() =>
                     {
                         PlayItemMagicAnimation(() =>
                         {
@@ -5284,7 +5352,7 @@ namespace Ambermoon
                         ShowMessagePopup(DataNameProvider.TheSpellFailed, finishAction);
                     }
 
-                    TrySpell(() =>
+                    Cast(() =>
                     {
                         if (!itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed))
                         {
@@ -5309,8 +5377,16 @@ namespace Ambermoon
             }
         }
 
-        void ApplySpellEffect(Spell spell, Character caster, Character target)
+        void ApplySpellEffect(Spell spell, Character caster, Character target, Action finishAction, bool checkFail)
         {
+            void Cast(Action action)
+            {
+                if (checkFail)
+                    TrySpell(action);
+                else
+                    action?.Invoke();
+            }
+
             switch (spell)
             {
                 case Spell.Hurry:
@@ -5319,55 +5395,58 @@ namespace Ambermoon
                     break;
                 case Spell.RemoveFear:
                 case Spell.RemovePanic:
-                    RemoveAilment(Ailment.Panic, target);
+                    Cast(() => RemoveAilment(Ailment.Panic, target));
                     break;
                 case Spell.RemoveShadows:
                 case Spell.RemoveBlindness:
-                    RemoveAilment(Ailment.Blind, target);
+                    Cast(() => RemoveAilment(Ailment.Blind, target));
                     break;
                 case Spell.RemovePain:
                 case Spell.RemoveDisease:
-                    RemoveAilment(Ailment.Diseased, target);
+                    Cast(() => RemoveAilment(Ailment.Diseased, target));
                     break;
                 case Spell.RemovePoison:
                 case Spell.NeutralizePoison:
-                    RemoveAilment(Ailment.Poisoned, target);
+                    Cast(() => RemoveAilment(Ailment.Poisoned, target));
                     break;
                 case Spell.HealingHand:
-                    Heal(target.HitPoints.TotalMaxValue / 10); // 10%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 10)); // 10%
                     break;
                 case Spell.SmallHealing:
                 case Spell.MassHealing:
-                    Heal(target.HitPoints.TotalMaxValue / 4); // 25%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 4)); // 25%
                     break;
                 case Spell.MediumHealing:
-                    Heal(target.HitPoints.TotalMaxValue / 2); // 50%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue / 2)); // 50%
                     break;
                 case Spell.GreatHealing:
-                    Heal(target.HitPoints.TotalMaxValue * 3 / 4); // 75%
+                    Cast(() => Heal(target.HitPoints.TotalMaxValue * 3 / 4)); // 75%
                     break;
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
-                    RemoveAilment(Ailment.Lamed, target);
+                    Cast(() => RemoveAilment(Ailment.Lamed, target));
                     break;
                 case Spell.HealAging:
                 case Spell.StopAging:
-                    RemoveAilment(Ailment.Aging, target);
+                    Cast(() => RemoveAilment(Ailment.Aging, target));
                     break;
                 case Spell.WakeUp:
-                    RemoveAilment(Ailment.Sleep, target);
+                    Cast(() => RemoveAilment(Ailment.Sleep, target));
                     break;
                 case Spell.RemoveIrritation:
-                    RemoveAilment(Ailment.Irritated, target);
+                    Cast(() => RemoveAilment(Ailment.Irritated, target));
                     break;
                 case Spell.RemoveDrugged:
-                    RemoveAilment(Ailment.Drugged, target);
+                    Cast(() => RemoveAilment(Ailment.Drugged, target));
                     break;
                 case Spell.RemoveMadness:
-                    RemoveAilment(Ailment.Crazy, target);
+                    Cast(() => RemoveAilment(Ailment.Crazy, target));
                     break;
                 case Spell.RestoreStamina:
-                    RemoveAilment(Ailment.Exhausted, target);
+                    Cast(() => RemoveAilment(Ailment.Exhausted, target));
+                    break;
+                case Spell.CreateFood:
+                    Cast(() => ++target.Food);
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
@@ -7809,27 +7888,52 @@ namespace Ambermoon
 
             void ConsumeSP()
             {
-                if (itemGrid != null) // Item spells won't consume SP
+                if (itemGrid == null) // Item spells won't consume SP
                 {
                     caster.SpellPoints.CurrentValue -= spellInfo.SP;
                     layout.FillCharacterBars(caster);
                 }
             }
 
+            bool checkFail = itemGrid == null; // Item spells can't fail
+
             switch (spellInfo.Target)
             {
                 case SpellTarget.SingleFriend:
                 {
-                    ConsumeSP();
-                    var target = PartyMembers.First(); // TODO: Pick target
-                    currentAnimation?.Destroy();
-                    currentAnimation = new SpellAnimation(this, layout);
-                    currentAnimation.CastOn(spell, target, () =>
+                    layout.OpenTextPopup(ProcessText(DataNameProvider.BattleMessageWhichPartyMemberAsTarget), null, true, false, false, TextAlign.Center);
+                    PickTargetPlayer();
+                    void TargetPlayerPicked(int characterSlot)
                     {
-                        currentAnimation.Destroy();
-                        currentAnimation = null;
-                        ApplySpellEffect(spell, caster, target);
-                    });
+                        targetPlayerPicked -= TargetPlayerPicked;
+                        ClosePopup();
+                        UntrapMouse();
+
+                        if (characterSlot != -1)
+                        {
+                            ConsumeSP();
+                            void Cast()
+                            {
+                                var target = GetPartyMember(characterSlot);
+                                if (target?.Alive == true)
+                                {
+                                    currentAnimation?.Destroy();
+                                    currentAnimation = new SpellAnimation(this, layout);
+                                    currentAnimation.CastOn(spell, target, () =>
+                                    {
+                                        currentAnimation.Destroy();
+                                        currentAnimation = null;
+                                        ApplySpellEffect(spell, caster, target, null, false);
+                                    });
+                                }
+                            }
+                            if (checkFail)
+                                TrySpell(Cast);
+                            else
+                                Cast();
+                        }
+                    }
+                    targetPlayerPicked += TargetPlayerPicked;
                     break;
                 }
                 case SpellTarget.FriendRow:
@@ -7837,16 +7941,23 @@ namespace Ambermoon
                 case SpellTarget.AllFriends:
                 {
                     ConsumeSP();
-                    currentAnimation?.Destroy();
-                    currentAnimation = new SpellAnimation(this, layout);
-                    currentAnimation.CastOnAllPartyMembers(spell, () =>
+                    void Cast()
                     {
-                        currentAnimation.Destroy();
-                        currentAnimation = null;
+                        currentAnimation?.Destroy();
+                        currentAnimation = new SpellAnimation(this, layout);
+                        currentAnimation.CastOnAllPartyMembers(spell, () =>
+                        {
+                            currentAnimation.Destroy();
+                            currentAnimation = null;
 
-                        foreach (var partyMember in PartyMembers.Where(p => p.Alive))
-                            ApplySpellEffect(spell, caster, partyMember);
-                    });
+                            foreach (var partyMember in PartyMembers.Where(p => p.Alive))
+                                ApplySpellEffect(spell, caster, partyMember, null, false);
+                        });
+                    }
+                    if (checkFail)
+                        TrySpell(Cast);
+                    else
+                        Cast();
                     break;
                 }
                 case SpellTarget.Item:
@@ -7900,7 +8011,7 @@ namespace Ambermoon
                                 UntrapMouse();
                                 EndSequence();
                                 layout.ShowChestMessage(null);
-                            });
+                            }, checkFail);
                             return false; // manual window closing etc
                         }
                         else
@@ -7914,7 +8025,7 @@ namespace Ambermoon
                     break;
                 case SpellTarget.None:
                     ConsumeSP();
-                    ApplySpellEffect(spell, caster);
+                    ApplySpellEffect(spell, caster, null, checkFail);
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"Spells with target {spellInfo.Target} should not be usable in camps.");

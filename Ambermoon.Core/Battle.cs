@@ -2154,7 +2154,7 @@ namespace Ambermoon
                     break;
                 }
                 default:
-                    game.ApplySpellEffect(spell, caster, target);
+                    game.ApplySpellEffect(spell, caster, target, null, false);
                     break;
             }
 

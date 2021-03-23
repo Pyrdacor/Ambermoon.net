@@ -3261,9 +3261,18 @@ namespace Ambermoon.UI
         }
 
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
-            uint currentTicks, bool pickingNewLeader = false, bool pickingTargetInventory = false)
+            uint currentTicks, bool pickingNewLeader = false, bool pickingTargetPlayer = false,
+            bool pickingTargetInventory = false)
         {
-            if (pickingTargetInventory)
+            if (pickingTargetPlayer)
+            {
+                if (buttons == MouseButtons.Right)
+                {
+                    game.AbortPickingTargetPlayer();
+                    return true;
+                }
+            }
+            else if (pickingTargetInventory)
             {
                 if (Type == LayoutType.Inventory && buttons == MouseButtons.Left)
                 {
@@ -3544,28 +3553,35 @@ namespace Ambermoon.UI
                     }
                     else
                     {
-                        if (pickingTargetInventory && buttons == MouseButtons.Left)
-                        {
-                            if (game.FinishPickingTargetInventory(i))
-                            {
-                                if (partyMember.Ailments.CanOpenInventory())
-                                {
-                                    game.OpenPartyMember(i, true, () =>
-                                    {
-                                        SetInventoryMessage(game.DataNameProvider.WhichItemAsTarget);
-                                        game.TrapMouse(Global.InventoryAndEquipTrapArea);
-                                        itemGrids[0].DisableDrag = true;
-                                        itemGrids[1].DisableDrag = true;
-                                        itemGrids[0].ItemClicked += FinishPickingTargetItem;
-                                        itemGrids[1].ItemClicked += FinishPickingTargetItem;
-                                    });
-                                }
-                            }
-                            return true;
-                        }
-
                         if (buttons == MouseButtons.Left)
+                        {
+                            if (pickingTargetPlayer)
+                            {
+                                game.FinishPickingTargetPlayer(i);
+                                return true;
+                            }
+                            else if (pickingTargetInventory)
+                            {
+                                if (game.FinishPickingTargetInventory(i))
+                                {
+                                    if (partyMember.Ailments.CanOpenInventory())
+                                    {
+                                        game.OpenPartyMember(i, true, () =>
+                                        {
+                                            SetInventoryMessage(game.DataNameProvider.WhichItemAsTarget);
+                                            game.TrapMouse(Global.InventoryAndEquipTrapArea);
+                                            itemGrids[0].DisableDrag = true;
+                                            itemGrids[1].DisableDrag = true;
+                                            itemGrids[0].ItemClicked += FinishPickingTargetItem;
+                                            itemGrids[1].ItemClicked += FinishPickingTargetItem;
+                                        });
+                                    }
+                                }
+                                return true;
+                            }
+
                             game.SetActivePartyMember(i);
+                        }
                         else if (buttons == MouseButtons.Right)
                             game.OpenPartyMember(i, Type != LayoutType.Stats);
 
