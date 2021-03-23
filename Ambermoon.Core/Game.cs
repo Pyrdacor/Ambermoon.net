@@ -3104,6 +3104,56 @@ namespace Ambermoon
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
+        /// <summary>
+        /// Immediately moves 2 blocks forward.
+        /// Can not pass walls.
+        /// </summary>
+        void Jump()
+        {
+            if (!is3D || WindowActive)
+                return; // Should not happen
+
+            // Note: Even if the player looks diagonal (e.g. south west)
+            // the jump is always performed into one of the 4 main directions.
+            Position targetPosition = new Position(player3D.Position);
+
+            switch (player3D.Direction)
+            {
+                default:
+                case CharacterDirection.Up:
+                    targetPosition.Y -= 2;
+                    break;
+                case CharacterDirection.Right:
+                    targetPosition.X += 2;
+                    break;
+                case CharacterDirection.Down:
+                    targetPosition.Y += 2;
+                    break;
+                case CharacterDirection.Left:
+                    targetPosition.X -= 2;
+                    break;
+            }
+
+            var labdata = MapManager.GetLabdataForMap(Map);
+            var checkPosition = new Position(player3D.Position);
+
+            for (int i = 0; i < 2; ++i)
+            {
+                checkPosition.X += Math.Sign(targetPosition.X - checkPosition.X);
+                checkPosition.Y += Math.Sign(targetPosition.Y - checkPosition.Y);
+
+                if (Map.Blocks[(uint)checkPosition.X, (uint)checkPosition.Y].BlocksPlayer(labdata, true))
+                {
+                    ShowMessagePopup(DataNameProvider.CannotJumpThroughWalls);
+                    return;
+                }
+            }
+
+            player3D.SetPosition(targetPosition.X, targetPosition.Y, CurrentTicks, true);
+            player3D.TurnTowards((float)player3D.Direction * 90.0f);
+            camera3D.MoveBackward(0.35f * Global.DistancePerBlock, false, false);
+        }
+
         internal void Spin(CharacterDirection direction, Event nextEvent)
         {
             if (!is3D || WindowActive)
@@ -4786,7 +4836,11 @@ namespace Ambermoon
                     CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3);
                     break;
                 case Spell.CreateFood:
+                    // TODO
+                    break;
                 case Spell.Jump:
+                    Jump();
+                    break;
                 case Spell.Flight:
                 case Spell.WordOfMarking:
                 case Spell.WordOfReturning:

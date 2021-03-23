@@ -84,7 +84,7 @@ namespace Ambermoon.Data
             /// </summary>
             public bool MapBorder { get; set; }
 
-            public bool BlocksPlayer(Labdata labdata)
+            public bool BlocksPlayer(Labdata labdata, bool wallsOnly = false)
             {
                 if (MapBorder)
                     return true;
@@ -95,7 +95,7 @@ namespace Ambermoon.Data
                     return wallFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wallFlags.HasFlag(Tileset.TileFlags.AllowMovementWalk);
                 }
 
-                if (ObjectIndex != 0)
+                if (!wallsOnly && ObjectIndex != 0)
                 {
                     var obj = labdata.Objects[((int)ObjectIndex - 1) % labdata.Objects.Count];
 

@@ -202,6 +202,7 @@
         public string BlowsTheFlute => executableData.Messages.GetEntry(Messages.Index.BlowsTheFlute);
         public string CannotUseItHere => executableData.Messages.GetEntry(Messages.Index.CannotUseItHere);
         public string CannotUseMagicDiscHere => executableData.Messages.GetEntry(Messages.Index.CannotUseMagicDiscHere);
+        public string CannotJumpThroughWalls => executableData.Messages.GetEntry(Messages.Index.CannotJumpThroughWalls);
 
 
         #region Automap

@@ -180,6 +180,7 @@ namespace Ambermoon.Data
         string BlowsTheFlute { get; }
         string CannotUseItHere { get; }
         string CannotUseMagicDiscHere { get; }
+        string CannotJumpThroughWalls { get; }
 
 
         #region Automap
