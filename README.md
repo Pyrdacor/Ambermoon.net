@@ -23,7 +23,7 @@ I appreciate all kind of support for this project. If you want to donate to help
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=76DV5MK5GNEMS&source=url) [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software) \
 You want to donate using a different method? Please tell me about it. You can email me at <trobt@web.de>.
 
-You can also become my patron at https://patreon.com/Pyrdacor2 with some benefits. I will post some dev progress there as well. \
+You can also become my patron at https://patreon.com/Pyrdacor with some benefits. I will post some dev progress there as well. \
 Thank you very much.
 
 ## Screenshots
