@@ -3157,10 +3157,46 @@ namespace Ambermoon
 
         void Levitate()
         {
-            MoveVertically(true, false);
-            // TODO: This also works with no exit in the ceiling
-            // but if there is one we should trigger the map change event.
-            // Moreover if there is no exit, the player should fall back to ground afterwards!
+            Pause();
+            Climb(() =>
+            {
+                ConditionEvent climbEvent = null;
+                bool HasClimbEvent(uint x, uint y)
+                {
+                    var mapEventId = Map.Blocks[x, y].MapEventId;
+
+                    if (mapEventId == 0)
+                        return false;
+
+                    var @event = Map.EventList[(int)mapEventId - 1];
+
+                    if (!(@event is ConditionEvent conditionEvent))
+                        return false;
+
+                    climbEvent = conditionEvent;
+
+                    return conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.Levitating;
+                }
+                if (!HasClimbEvent((uint)player.Position.X, (uint)player.Position.Y))
+                {
+                    // Also try forward position
+                    camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
+                    var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
+
+                    if (position == player.Position ||
+                        position.X < 0 || position.X >= Map.Width ||
+                        position.Y < 0 || position.Y >= Map.Height ||
+                        !HasClimbEvent((uint)position.X, (uint)position.Y))
+                    {
+                        ShowMessagePopup(DataNameProvider.YouLevitate, () =>
+                        {
+                            MoveVertically(false, true, Resume);
+                        });
+                        return;
+                    }
+                }
+                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true);
+            });
         }
 
         void Climb(Action finishAction = null)
@@ -5082,8 +5118,12 @@ namespace Ambermoon
                             }
                         }
                         // If we are here, we can climb!
-                        CloseWindow(() => Climb(() =>
-                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true)));
+                        CloseWindow(() =>
+                        {
+                            Pause();
+                            Climb(() =>
+                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true));
+                        });
                     }
                     break;
                 }
