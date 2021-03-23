@@ -1678,8 +1678,16 @@ namespace Ambermoon.UI
                         {
                             if (game.Map.IsWorldMap)
                                 wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.WorldMapOnly);
-                            else if (game.Map.Flags.HasFlag(MapFlags.Dungeon))
-                                wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly);
+                            else if (game.Map.Type == MapType.Map3D)
+                            {
+                                if (!SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Maps3DOnly))
+                                {
+                                    if (game.Map.Flags.HasFlag(MapFlags.Dungeon))
+                                        wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly);
+                                    else
+                                        wrongPlace = true;
+                                }
+                            }
                             else
                                 wrongPlace = true;
                         }

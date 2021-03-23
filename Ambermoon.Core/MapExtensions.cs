@@ -1,5 +1,4 @@
 ﻿using Ambermoon.Data;
-using Ambermoon.Render;
 
 namespace Ambermoon
 {
@@ -10,6 +9,7 @@ namespace Ambermoon
         Hand,
         Eye,
         Mouth,
+        Levitating,
         /// <summary>
         /// If a specific item is needed for triggering use Item0 + ItemIndex
         /// </summary>

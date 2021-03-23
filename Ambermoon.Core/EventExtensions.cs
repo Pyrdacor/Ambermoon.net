@@ -317,6 +317,14 @@ namespace Ambermoon
 
                             break;
                         }
+                        case ConditionEvent.ConditionType.Levitating:
+                            if (trigger != EventTrigger.Levitating)
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
                         // TODO ...
                     }
 

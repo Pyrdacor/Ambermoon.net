@@ -191,6 +191,7 @@ namespace Ambermoon.Data
         string HasntMarkedAPosition { get; }
         string ReturnToMarkedPosition { get; }
         string SeeRoundDiskInFloor { get; }
+        string CannotClimbHere { get; }
 
 
         #region Automap

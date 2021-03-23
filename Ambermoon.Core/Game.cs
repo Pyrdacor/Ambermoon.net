@@ -3178,7 +3178,7 @@ namespace Ambermoon
             if (!is3D || WindowActive)
                 return;
 
-            var sourceY = !mapChange ? camera3D.GroundY : (up ? renderMap3D.GetFloorY() : renderMap3D.GetLevitatingY());
+            var sourceY = !mapChange ? camera3D.Y : (up ? renderMap3D.GetFloorY() : renderMap3D.GetLevitatingY());
             player3D.SetY(sourceY);
             var targetY = mapChange ? camera3D.GroundY : (up ? renderMap3D.GetLevitatingY() : renderMap3D.GetFloorY());
             float stepSize = renderMap3D.GetLevitatingStepSize();
@@ -5041,6 +5041,52 @@ namespace Ambermoon
                 case Spell.Levitation:
                     Cast(Levitate);
                     break;
+                case Spell.Rope:
+                {
+                    if (!is3D)
+                    {
+                        ShowMessagePopup(DataNameProvider.CannotClimbHere);
+                    }
+                    else
+                    {
+                        ConditionEvent climbEvent = null;
+                        bool HasClimbEvent(uint x, uint y)
+                        {
+                            var mapEventId = Map.Blocks[x, y].MapEventId;
+
+                            if (mapEventId == 0)
+                                return false;
+
+                            var @event = Map.EventList[(int)mapEventId - 1];
+
+                            if (!(@event is ConditionEvent conditionEvent))
+                                return false;
+
+                            climbEvent = conditionEvent;
+
+                            return conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.Levitating;
+                        }
+                        if (!HasClimbEvent((uint)player.Position.X, (uint)player.Position.Y))
+                        {
+                            // Also try forward position
+                            camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
+                            var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
+
+                            if (position == player.Position ||
+                                position.X < 0 || position.X >= Map.Width ||
+                                position.Y < 0 || position.Y >= Map.Height ||
+                                !HasClimbEvent((uint)position.X, (uint)position.Y))
+                            {
+                                ShowMessagePopup(DataNameProvider.CannotClimbHere);
+                                return;
+                            }
+                        }
+                        // If we are here, we can climb!
+                        CloseWindow(() => Climb(() =>
+                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true)));
+                    }
+                    break;
+                }
                 case Spell.AntiMagicWall:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 15 (15% anti-magic protection)
@@ -5219,24 +5265,8 @@ namespace Ambermoon
                         }, TextAlign.Left);
                     }
                     break;
-                case Spell.DecreaseAge:
                 case Spell.PlayElfHarp:
-                case Spell.SpellPointsI:
-                case Spell.SpellPointsII:
-                case Spell.SpellPointsIII:
-                case Spell.SpellPointsIV:
-                case Spell.SpellPointsV:
-                case Spell.AllHealing:
                 case Spell.MagicalMap:
-                case Spell.AddStrength:
-                case Spell.AddIntelligence:
-                case Spell.AddDexterity:
-                case Spell.AddSpeed:
-                case Spell.AddStamina:
-                case Spell.AddCharisma:
-                case Spell.AddLuck:
-                case Spell.AddAntiMagic:
-                case Spell.Rope:
                 case Spell.Drugs:
                     // TODO
                     break;
@@ -5714,6 +5744,10 @@ namespace Ambermoon
                     break;
                 case Spell.AddAntiMagic:
                     IncreaseAttribute(Attribute.AntiMagic);
+                    break;
+                case Spell.DecreaseAge:
+                    if (target.Alive) // TODO: Is this limited?
+                        target.Attributes[Attribute.Age].CurrentValue = (uint)Math.Max(17, (int)target.Attributes[Attribute.Age].CurrentValue - 1);
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
