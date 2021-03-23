@@ -131,6 +131,12 @@
         public string ReviveMessage => executableData.Messages.GetEntry(Messages.Index.ReviveMessage);
         public string DustChangedToAshes => executableData.Messages.GetEntry(Messages.Index.DustChangedToAshes);
         public string AshesChangedToBody => executableData.Messages.GetEntry(Messages.Index.AshesChangedToBody);
+        public string BodyBurnsUp => executableData.Messages.GetEntry(Messages.Index.BodyBurnsUp);
+        public string AshesFallToDust => executableData.Messages.GetEntry(Messages.Index.AshesFallToDust);
+        public string IsNotDead => executableData.Messages.GetEntry(Messages.Index.IsNotDead);
+        public string IsNotAsh => executableData.Messages.GetEntry(Messages.Index.IsNotAsh);
+        public string IsNotDust => executableData.Messages.GetEntry(Messages.Index.IsNotDust);
+        public string CannotBeResurrected => executableData.Messages.GetEntry(Messages.Index.CannotBeResurrected);
         public string YouDontKnowAnySpellsYet => executableData.Messages.GetEntry(Messages.Index.YouDontKnowAnySpellsYet);
         public string CantLearnSpellsOfType => executableData.Messages.GetEntry(Messages.Index.CantLearnSpellsOfType);
         public string AlreadyKnowsSpell => executableData.Messages.GetEntry(Messages.Index.AlreadyKnowsSpell);

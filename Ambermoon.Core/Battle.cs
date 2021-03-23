@@ -1261,6 +1261,7 @@ namespace Ambermoon
                             return;
                         }
 
+                        game.CurrentSpellTarget = target;
                         int position = GetCharacterPosition(target);
                         bool failed = false;
                         bool spellBlocked = false;

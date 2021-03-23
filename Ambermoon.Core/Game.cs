@@ -21,7 +21,7 @@ namespace Ambermoon
                 this.game = game;
             }
 
-            PartyMember subject => game.currentWindow.Window == Window.Healer ? game.currentlyHealedMember : game.CurrentPartyMember;
+            Character Subject => game.currentWindow.Window == Window.Healer ? game.currentlyHealedMember : game.CurrentSpellTarget ?? game.CurrentPartyMember;
 
             /// <inheritdoc />
             public string LeadName => game.CurrentPartyMember?.Name ?? "";
@@ -32,11 +32,11 @@ namespace Ambermoon
             /// <inheritdoc />
             public string InvnName => game.CurrentInventory?.Name ?? LeadName;
             /// <inheritdoc />
-            public string SubjName => subject?.Name; // TODO
+            public string SubjName => Subject?.Name; // TODO
             /// <inheritdoc />
-            public string Sex1Name => subject?.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
+            public string Sex1Name => Subject?.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
             /// <inheritdoc />
-            public string Sex2Name => subject?.Gender == Gender.Male ? game.DataNameProvider.His : game.DataNameProvider.Her;
+            public string Sex2Name => Subject?.Gender == Gender.Male ? game.DataNameProvider.His : game.DataNameProvider.Her;
         }
 
         class Movement
@@ -231,7 +231,8 @@ namespace Ambermoon
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
-        internal PartyMember CurrentCaster { get; set; } = null;
+        internal Character CurrentCaster { get; set; } = null;
+        internal Character CurrentSpellTarget { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
         public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
         internal bool MonsterSeesPlayer { get; set; } = false;
@@ -4848,6 +4849,8 @@ namespace Ambermoon
 
         void ApplySpellEffect(Spell spell, Character caster, Action finishAction, bool checkFail)
         {
+            CurrentSpellTarget = null;
+
             void Cast(Action action)
             {
                 if (checkFail)
@@ -5179,6 +5182,8 @@ namespace Ambermoon
 
         void ApplySpellEffect(Spell spell, Character caster, ItemSlot itemSlot, Action finishAction, bool checkFail)
         {
+            CurrentSpellTarget = null;
+
             void PlayItemMagicAnimation(Action animationFinishAction = null)
             {
                 ItemAnimation.Play(this, renderView, ItemAnimation.Type.Enchant, layout.GetItemSlotPosition(itemSlot),
@@ -5379,6 +5384,8 @@ namespace Ambermoon
 
         void ApplySpellEffect(Spell spell, Character caster, Character target, Action finishAction, bool checkFail)
         {
+            CurrentSpellTarget = target;
+
             void Cast(Action action)
             {
                 if (checkFail)
@@ -5448,6 +5455,133 @@ namespace Ambermoon
                 case Spell.CreateFood:
                     Cast(() => ++target.Food);
                     break;
+                case Spell.WakeTheDead:
+                {
+                    if (!(target is PartyMember targetPlayer))
+                    {
+                        // Should not happen
+                        return;
+                    }
+                    void Revive()
+                    {
+                        if (!target.Ailments.HasFlag(Ailment.DeadCorpse) ||
+                            target.Ailments.HasFlag(Ailment.DeadAshes) ||
+                            target.Ailments.HasFlag(Ailment.DeadDust))
+                        {
+                            if (target.Alive)
+                                ShowMessagePopup(DataNameProvider.IsNotDead, finishAction);
+                            else
+                                ShowMessagePopup(DataNameProvider.CannotBeResurrected, finishAction);
+                            return;
+                        }
+                        target.Ailments &= ~Ailment.DeadCorpse;
+                        ShowMessagePopup(DataNameProvider.ReviveMessage, () =>
+                        {
+                            layout.SetCharacter(SlotFromPartyMember(targetPlayer).Value, targetPlayer, false, finishAction);
+                            currentAnimation?.Destroy();
+                            currentAnimation = new SpellAnimation(this, layout);
+                            currentAnimation.CastOn(spell, targetPlayer, () =>
+                            {
+                                currentAnimation.Destroy();
+                                currentAnimation = null;
+                            });
+                        });
+                    }
+                    if (checkFail)
+                    {
+                        TrySpell(Revive, () =>
+                        {
+                            EndSequence();
+                            ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
+                            {
+                                if (target.Ailments.HasFlag(Ailment.DeadCorpse))
+                                {
+                                    target.Ailments &= ~Ailment.DeadCorpse;
+                                    target.Ailments |= Ailment.DeadAshes;
+                                    ShowMessagePopup(DataNameProvider.BodyBurnsUp, finishAction);
+                                }
+                            });
+                        });
+                    }
+                    else
+                    {
+                        Revive();
+                    }
+                    break;
+                }
+                case Spell.ChangeAshes:
+                {
+                    if (!(target is PartyMember targetPlayer))
+                    {
+                        // Should not happen
+                        return;
+                    }
+                    void TransformToBody()
+                    {
+                        if (!target.Ailments.HasFlag(Ailment.DeadAshes) ||
+                            target.Ailments.HasFlag(Ailment.DeadDust))
+                        {
+                            ShowMessagePopup(DataNameProvider.IsNotAsh, finishAction);
+                            return;
+                        }
+                        target.Ailments &= ~Ailment.DeadAshes;
+                        target.Ailments |= Ailment.DeadCorpse;
+                        ShowMessagePopup(DataNameProvider.AshesChangedToBody, finishAction);
+                    }
+                    if (checkFail)
+                    {
+                        TrySpell(TransformToBody, () =>
+                        {
+                            EndSequence();
+                            ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
+                            {
+                                if (target.Ailments.HasFlag(Ailment.DeadAshes))
+                                {
+                                    target.Ailments &= ~Ailment.DeadAshes;
+                                    target.Ailments |= Ailment.DeadDust;
+                                    ShowMessagePopup(DataNameProvider.AshesFallToDust, finishAction);
+                                }
+                            });
+                        });
+                    }
+                    else
+                    {
+                        TransformToBody();
+                    }
+                    break;
+                }
+                case Spell.ChangeDust:
+                {
+                    if (!(target is PartyMember targetPlayer))
+                    {
+                        // Should not happen
+                        return;
+                    }
+                    void TransformToAshes()
+                    {
+                        if (!target.Ailments.HasFlag(Ailment.DeadDust))
+                        {
+                            ShowMessagePopup(DataNameProvider.IsNotDust, finishAction);
+                            return;
+                        }
+                        target.Ailments &= ~Ailment.DeadDust;
+                        target.Ailments |= Ailment.DeadAshes;
+                        ShowMessagePopup(DataNameProvider.DustChangedToAshes, finishAction);
+                    }
+                    if (checkFail)
+                    {
+                        TrySpell(TransformToAshes, () =>
+                        {
+                            EndSequence();
+                            ShowMessagePopup(DataNameProvider.TheSpellFailed, finishAction);
+                        });
+                    }
+                    else
+                    {
+                        TransformToAshes();
+                    }
+                    break;
+                }
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
             }
@@ -7873,9 +8007,10 @@ namespace Ambermoon
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
         }
 
-        internal void UseSpell(PartyMember caster, Spell spell, ItemGrid itemGrid = null)
+        internal void UseSpell(PartyMember caster, Spell spell, ItemGrid itemGrid, bool fromItem)
         {
             CurrentCaster = caster;
+            CurrentSpellTarget = null;
 
             // Some special care for the mystic map spells
             if (!is3D && spell >= Spell.FindTraps && spell <= Spell.MysticalMapping)
@@ -7888,14 +8023,14 @@ namespace Ambermoon
 
             void ConsumeSP()
             {
-                if (itemGrid == null) // Item spells won't consume SP
+                if (!fromItem) // Item spells won't consume SP
                 {
                     caster.SpellPoints.CurrentValue -= spellInfo.SP;
                     layout.FillCharacterBars(caster);
                 }
             }
 
-            bool checkFail = itemGrid == null; // Item spells can't fail
+            bool checkFail = !fromItem; // Item spells can't fail
 
             switch (spellInfo.Target)
             {
@@ -7912,22 +8047,28 @@ namespace Ambermoon
                         if (characterSlot != -1)
                         {
                             ConsumeSP();
+                            bool reviveSpell = spell >= Spell.WakeTheDead && spell <= Spell.ChangeDust;
                             void Cast()
                             {
                                 var target = GetPartyMember(characterSlot);
-                                if (target?.Alive == true)
+                                if (target != null && (reviveSpell || target.Alive))
                                 {
-                                    currentAnimation?.Destroy();
-                                    currentAnimation = new SpellAnimation(this, layout);
-                                    currentAnimation.CastOn(spell, target, () =>
+                                    if (reviveSpell)
+                                        ApplySpellEffect(spell, caster, target, null, true);
+                                    else
                                     {
-                                        currentAnimation.Destroy();
-                                        currentAnimation = null;
-                                        ApplySpellEffect(spell, caster, target, null, false);
-                                    });
+                                        currentAnimation?.Destroy();
+                                        currentAnimation = new SpellAnimation(this, layout);
+                                        currentAnimation.CastOn(spell, target, () =>
+                                        {
+                                            currentAnimation.Destroy();
+                                            currentAnimation = null;
+                                            ApplySpellEffect(spell, caster, target, null, false);
+                                        });
+                                    }
                                 }
                             }
-                            if (checkFail)
+                            if (!reviveSpell && checkFail)
                                 TrySpell(Cast);
                             else
                                 Cast();
@@ -8075,7 +8216,7 @@ namespace Ambermoon
 
                         return null;
                     },
-                    spell => UseSpell(CurrentPartyMember, spell, itemGrid)
+                    spell => UseSpell(CurrentPartyMember, spell, itemGrid, false)
                 );
             }
         }

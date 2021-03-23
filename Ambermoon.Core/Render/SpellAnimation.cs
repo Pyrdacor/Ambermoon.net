@@ -524,6 +524,7 @@ namespace Ambermoon.Render
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
+                case Spell.WakeTheDead:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
             }

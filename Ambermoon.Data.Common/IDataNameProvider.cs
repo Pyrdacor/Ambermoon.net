@@ -109,6 +109,12 @@ namespace Ambermoon.Data
         string ReviveMessage { get; }
         string DustChangedToAshes { get; }
         string AshesChangedToBody { get; }
+        string BodyBurnsUp { get; }
+        string AshesFallToDust { get; }
+        string IsNotDead { get; }
+        string IsNotAsh { get; }
+        string IsNotDust { get; }
+        string CannotBeResurrected { get; }
         string YouDontKnowAnySpellsYet { get; }
         string CantLearnSpellsOfType { get; }
         string AlreadyKnowsSpell { get; }

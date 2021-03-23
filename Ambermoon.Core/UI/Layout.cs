@@ -1705,13 +1705,13 @@ namespace Ambermoon.UI
                     {
                         itemGrid.HideTooltip();
                         ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), () =>
-                            game.UseSpell(game.CurrentInventory, item.Spell, itemGrid));
+                            game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true));
                     }
                     else
                     {
                         // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
                         bool equipped = itemGrid == itemGrids[1];
-                        game.UseSpell(game.CurrentInventory, item.Spell, itemGrid);
+                        game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
                     }
                 }
                 else if (item.Type == ItemType.Transportation)
