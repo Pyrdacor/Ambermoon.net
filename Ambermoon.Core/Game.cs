@@ -5389,19 +5389,19 @@ namespace Ambermoon
                 {
                     // Note: Even broken items can be charged.
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                    if (item.Spell == Spell.None || item.InitialCharges == 0)
+                    if (item.Spell == Spell.None || item.MaxCharges == 0)
                     {
                         Error(DataNameProvider.ThisIsNotAMagicalItem);
                         return;
                     }
-                    if (itemSlot.NumRemainingCharges >= item.InitialCharges)
+                    if (itemSlot.NumRemainingCharges >= item.MaxCharges)
                     {
                         Error(DataNameProvider.ItemAlreadyFullyCharged);
                         return;
                     }
                     Cast(() =>
                     {
-                        ++itemSlot.NumRemainingCharges;
+                        itemSlot.NumRemainingCharges += RandomInt(1, Math.Min(item.MaxCharges - itemSlot.NumRemainingCharges, caster.Level));
                         PlayItemMagicAnimation();
                     }, () =>
                     {

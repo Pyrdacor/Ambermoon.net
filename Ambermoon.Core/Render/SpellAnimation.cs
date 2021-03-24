@@ -229,7 +229,7 @@ namespace Ambermoon.Render
                 case Spell.RemoveIrritation:
                 case Spell.RestoreStamina:
                 case Spell.Blink:
-                case Spell.Flight:
+                case Spell.Escape:
                 case Spell.MagicalShield:
                 case Spell.MagicalWall:
                 case Spell.MagicalBarrier:
@@ -350,7 +350,7 @@ namespace Ambermoon.Render
                 case Spell.ShowMonsterLP:
                 case Spell.Earthquake:
                 case Spell.Blink:
-                case Spell.Flight:
+                case Spell.Escape:
                     // Those spells have no target position. They are just visible on portraits or not at all.
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
@@ -692,7 +692,7 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Blink:
-                case Spell.Flight:
+                case Spell.Escape:
                     // Blink and Flight have no spell animations at all.
                     this.finishAction?.Invoke();
                     break;
@@ -1401,7 +1401,7 @@ namespace Ambermoon.Render
                     break;
                 }
                 case Spell.Blink:
-                case Spell.Flight:
+                case Spell.Escape:
                     // Blink and Flight have no spell animations at all.
                     this.finishAction?.Invoke();
                     break;

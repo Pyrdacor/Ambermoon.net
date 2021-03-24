@@ -144,7 +144,7 @@ namespace Ambermoon.Data
             { Spell.RemoveCurses, new SpellInfo { SP = 100, SLP = 20, Target = SpellTarget.Item, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
             { Spell.Blink, new SpellInfo { SP = 20, SLP = 5, Target = SpellTarget.BattleField, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.Jump, new SpellInfo { SP = 50, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.DungeonOnly, Worlds = WorldFlag.All } },
-            { Spell.Flight, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
+            { Spell.Escape, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.WordOfMarking, new SpellInfo { SP = 150, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.Lyramion } },
             { Spell.WordOfReturning, new SpellInfo { SP = 250, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.Lyramion } }, // TODO: castable on other worlds?
             { Spell.MagicalShield, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },

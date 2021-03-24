@@ -43,7 +43,7 @@
         RemoveCurses,
         Blink,
         Jump,
-        Flight,
+        Escape,
         WordOfMarking,
         WordOfReturning,
         MagicalShield,
