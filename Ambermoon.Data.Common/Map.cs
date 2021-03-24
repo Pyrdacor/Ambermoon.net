@@ -188,6 +188,8 @@ namespace Ambermoon.Data
         public World World { get; set; }
         public Tile[,] Tiles { get; set; }
         public Block[,] Blocks { get; set; }
+        public Tile[,] InitialTiles { get; set; }
+        public Block[,] InitialBlocks { get; set; }
         public List<Event> Events { get; } = new List<Event>();
         public List<Event> EventList { get; } = new List<Event>();
         public List<string> Texts { get; set; } = new List<string>();
@@ -302,6 +304,48 @@ namespace Ambermoon.Data
             mapReader.ReadMap(map, dataReader, textDataReader, tilesets);
 
             return map;
+        }
+
+        public void Reset()
+        {
+            if (InitialTiles != null)
+            {
+                Tiles = new Tile[Width, Height];
+
+                for (int y = 0; y < Height; ++y)
+                {
+                    for (int x = 0; x < Width; ++x)
+                    {
+                        var initialTile = InitialTiles[x, y];
+                        Tiles[x, y] = new Tile
+                        {
+                            BackTileIndex = initialTile.BackTileIndex,
+                            FrontTileIndex = initialTile.FrontTileIndex,
+                            MapEventId = initialTile.MapEventId,
+                            Type = initialTile.Type
+                        };
+                    }
+                }
+            }
+            else if (InitialBlocks != null)
+            {
+                Blocks = new Block[Width, Height];
+
+                for (int y = 0; y < Height; ++y)
+                {
+                    for (int x = 0; x < Width; ++x)
+                    {
+                        var initialBlock = InitialBlocks[x, y];
+                        Blocks[x, y] = new Block
+                        {
+                            MapBorder = initialBlock.MapBorder,
+                            ObjectIndex = initialBlock.ObjectIndex,
+                            WallIndex = initialBlock.WallIndex,
+                            MapEventId = initialBlock.MapEventId
+                        };
+                    }
+                }
+            }
         }
 
         public static TileType TileTypeFromTile(Tile tile, Tileset tileset)

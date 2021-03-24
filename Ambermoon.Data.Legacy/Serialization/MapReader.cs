@@ -74,6 +74,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             if (map.Type == MapType.Map2D)
             {
+                map.InitialTiles = new Map.Tile[map.Width, map.Height];
+                map.InitialBlocks = null;
                 map.Tiles = new Map.Tile[map.Width, map.Height];
                 map.Blocks = null;
                 var tileset = tilesets[map.TilesetOrLabdataIndex];
@@ -83,18 +85,26 @@ namespace Ambermoon.Data.Legacy.Serialization
                     for (int x = 0; x < map.Width; ++x)
                     {
                         var tileData = dataReader.ReadBytes(4);
+                        map.InitialTiles[x, y] = new Map.Tile
+                        {
+                            BackTileIndex = tileData[0],
+                            FrontTileIndex = (uint)(tileData[2] << 8) | tileData[3],
+                            MapEventId = tileData[1]
+                        };
                         map.Tiles[x, y] = new Map.Tile
                         {
                             BackTileIndex = tileData[0],
                             FrontTileIndex = (uint)(tileData[2] << 8) | tileData[3],
                             MapEventId = tileData[1]
                         };
-                        map.Tiles[x, y].Type = Map.TileTypeFromTile(map.Tiles[x, y], tileset);
+                        map.InitialTiles[x, y].Type = map.Tiles[x, y].Type = Map.TileTypeFromTile(map.InitialTiles[x, y], tileset);
                     }
                 }
             }
             else
             {
+                map.InitialBlocks = new Map.Block[map.Width, map.Height];
+                map.InitialTiles = null;
                 map.Blocks = new Map.Block[map.Width, map.Height];
                 map.Tiles = null;
 
@@ -103,6 +113,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                     for (int x = 0; x < map.Width; ++x)
                     {
                         var blockData = dataReader.ReadBytes(2);
+                        map.InitialBlocks[x, y] = new Map.Block
+                        {
+                            ObjectIndex = blockData[0] <= 100 ? (uint)blockData[0] : 0,
+                            WallIndex = blockData[0] >= 101 && blockData[0] < 255 ? (uint)blockData[0] - 100 : 0,
+                            MapEventId = blockData[1],
+                            MapBorder = blockData[0] == 255
+                        };
                         map.Blocks[x, y] = new Map.Block
                         {
                             ObjectIndex = blockData[0] <= 100 ? (uint)blockData[0] : 0,

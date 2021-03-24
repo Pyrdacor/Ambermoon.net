@@ -171,6 +171,7 @@ namespace Ambermoon
         CharacterCreator characterCreator = null;
         readonly Random random = new Random();
         internal SavegameTime GameTime { get; private set; } = null;
+        readonly List<uint> changedMaps = new List<uint>();
         const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         internal const uint TicksPerSecond = 60;
@@ -927,6 +928,13 @@ namespace Ambermoon
             allInputDisabled = true;
             layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Color.Black, FadeEffectType.FadeOut, FadeTime / 2);
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () => allInputDisabled = false);
+
+            // Reset all maps
+            foreach (var changedMap in changedMaps)
+            {
+                MapManager.GetMap(changedMap).Reset();
+            }
+            changedMaps.Clear();
 
             ingame = true;
             CurrentSavegame = savegame;
@@ -3757,6 +3765,9 @@ namespace Ambermoon
             var map = sameMap ? Map : MapManager.GetMap(changeTileEvent.MapIndex);
             uint x = changeTileEvent.X == 0 ? (currentX ?? throw new AmbermoonException(ExceptionScope.Data, "No change tile position given")) : changeTileEvent.X - 1;
             uint y = changeTileEvent.Y == 0 ? (currentY ?? throw new AmbermoonException(ExceptionScope.Data, "No change tile position given")) : changeTileEvent.Y - 1;
+
+            if (!changedMaps.Contains(map.Index))
+                changedMaps.Add(map.Index);
 
             if (is3D)
             {
