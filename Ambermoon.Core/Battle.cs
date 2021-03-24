@@ -1998,6 +1998,15 @@ namespace Ambermoon
                     game.SetBattleMessageWithClick(target.Name + game.DataNameProvider.BattleMessageHasBlinked, TextColor.White,
                         () => { MoveCharacterTo(targetField.Value, target); finishAction?.Invoke(); });
                     return;
+                case Spell.Flight:
+                    // Note: In Ambermoon it was marked as it only can be used outside of battles
+                    // but the spell code was only available in battle. This is a bug in the original.
+                    EndBattleCleanup();
+                    BattleEnded?.Invoke(new Game.BattleEndInfo
+                    {
+                        MonstersDefeated = false
+                    });
+                    return;
                 case Spell.DissolveVictim:
                 case Spell.DispellUndead:
                 case Spell.DestroyUndead:

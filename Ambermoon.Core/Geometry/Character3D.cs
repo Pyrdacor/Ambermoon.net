@@ -54,7 +54,7 @@ namespace Ambermoon.Geometry
             direction = null;
             currentState = State.IdleOnTile;
             lastMoveTicks = game.CurrentTicks;
-            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 12;
+            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 288;
         }
 
         public void MoveToTile(uint x, uint y)
@@ -125,14 +125,14 @@ namespace Ambermoon.Geometry
                 break;
             }
 
-            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 12;
+            NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 288;
             lastMoveTicks = game.CurrentTicks;
             movedTicks = 0;
         }
 
         public void ResetMovementTimer()
         {
-            NextMoveTimeSlot = (game.GameTime.TimeSlot + 1) % 12;
+            NextMoveTimeSlot = (game.GameTime.TimeSlot + 1) % 288;
         }
 
         public void Update(uint ticks, FloatPosition playerPosition, bool moveRandom, bool canSeePlayer,

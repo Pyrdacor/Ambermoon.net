@@ -4998,9 +4998,6 @@ namespace Ambermoon
                 case Spell.Jump:
                     Cast(Jump);
                     break;
-                case Spell.Flight:
-                    // TODO
-                    break;
                 case Spell.WordOfMarking:
                 {
                     Cast(() =>
