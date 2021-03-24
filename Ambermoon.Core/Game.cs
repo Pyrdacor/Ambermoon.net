@@ -9403,21 +9403,43 @@ namespace Ambermoon
                         SetLegendEntry(1, AutomapType.Teleporter);
                         SetLegendEntry(2, AutomapType.Door);
                         SetLegendEntry(3, AutomapType.Chest);
-                        SetLegendEntry(4, AutomapType.Spinner);
-                        SetLegendEntry(5, AutomapType.Merchant);
-                        SetLegendEntry(6, AutomapType.Tavern);
-                        SetLegendEntry(7, AutomapType.Special);
+                        if (automapOptions.TrapsVisible)
+                        {
+                            SetLegendEntry(4, AutomapType.Spinner);
+                            SetLegendEntry(5, AutomapType.Merchant);
+                            SetLegendEntry(6, AutomapType.Tavern);
+                            SetLegendEntry(7, AutomapType.Special);
+                        }
+                        else
+                        {
+                            SetLegendEntry(4, AutomapType.Merchant);
+                            SetLegendEntry(5, AutomapType.Tavern);
+                            SetLegendEntry(6, AutomapType.Special);
+                            SetLegendEntry(7, null);
+                        }
                     }
                     else
                     {
                         SetLegendEntry(0, AutomapType.Exit);
                         SetLegendEntry(1, AutomapType.Pile);
-                        SetLegendEntry(2, AutomapType.Trap);
-                        SetLegendEntry(3, AutomapType.Trapdoor);
-                        SetLegendEntry(4, AutomapType.Monster);
-                        SetLegendEntry(5, AutomapType.Person);
-                        SetLegendEntry(6, AutomapType.GotoPoint);
-                        SetLegendEntry(7, null);
+                        int index = 2;
+                        if (automapOptions.TrapsVisible)
+                        {
+                            SetLegendEntry(2, AutomapType.Trap);
+                            SetLegendEntry(3, AutomapType.Trapdoor);
+                            index = 4;
+                        }
+                        if (automapOptions.MonstersVisible)
+                        {
+                            SetLegendEntry(index++, AutomapType.Monster);
+                        }
+                        if (automapOptions.PersonsVisible)
+                        {
+                            SetLegendEntry(index++, AutomapType.Person);
+                        }
+                        SetLegendEntry(index++, AutomapType.GotoPoint);
+                        while (index < 8)
+                            SetLegendEntry(index++, null);
                     }
                 }
                 void ToggleLegendPage()
