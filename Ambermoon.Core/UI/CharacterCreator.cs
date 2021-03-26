@@ -116,6 +116,7 @@ namespace Ambermoon.UI
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
+                nameInput.Submit();
                 afterFadeOutAction = () => selectHandler?.Invoke(nameInput.Text, isFemale, portraitIndex);
                 DestroyAndFadeOut();
             };
@@ -155,8 +156,9 @@ namespace Ambermoon.UI
             nameInput = new TextInput(renderView, new Position(windowArea.Center.X - inputWidth / 2, offset.Y + 32 + 40),
                 15, 2, TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort, TextAlign.Left);
             nameInput.AllowEmpty = true;
+            nameInput.AutoSubmit = true;
             nameInput.SetText("Thalion");
-            nameInput.InputSubmitted += text => { okButton.Disabled = string.IsNullOrWhiteSpace(text); };
+            nameInput.InputChanged += text => { okButton.Disabled = string.IsNullOrWhiteSpace(text); };
             AddSunkenBox(game, new Rect(windowArea.Center.X - inputWidth / 2 - 2, offset.Y + 32 + 38, inputWidth + 6, Global.GlyphLineHeight + 3));
 
             string headerText = game.DataNameProvider.ChooseCharacter.Trim();

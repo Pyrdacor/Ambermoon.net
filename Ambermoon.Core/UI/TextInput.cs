@@ -35,6 +35,7 @@ namespace Ambermoon.UI
 
         public event Action<string> InputSubmitted;
         public event Action Aborted;
+        public event Action<string> InputChanged;
 
         public bool ReactToGlobalClicks
         {
@@ -72,6 +73,15 @@ namespace Ambermoon.UI
             set;
         } = false;
 
+        /// <summary>
+        /// If true losing focus will also submit the current input.
+        /// </summary>
+        public bool AutoSubmit
+        {
+            get;
+            set;
+        } = false;
+
         public void SetText(string text)
         {
             currentInput = text;
@@ -99,6 +109,10 @@ namespace Ambermoon.UI
             get;
             set;
         } = false;
+
+        public bool Empty => string.IsNullOrEmpty(currentInput);
+
+        public bool Whitespace => string.IsNullOrWhiteSpace(currentInput);
 
         public static TextInput FocusedInput { get; private set; } = null;
 
@@ -208,6 +222,9 @@ namespace Ambermoon.UI
                 FocusedInput = null;
                 blinkingCursor.Visible = false;
                 text.SetTextAlign(textAlign);
+
+                if (AutoSubmit)
+                    Submit();
             }
 
         }
@@ -235,8 +252,10 @@ namespace Ambermoon.UI
 
         void UpdateText()
         {
-            text.SetText(renderView.TextProcessor.CreateText(FocusedInput == this ? currentInput : Text));
+            string currentText = FocusedInput == this ? currentInput : Text;
+            text.SetText(renderView.TextProcessor.CreateText(currentText));
             blinkingCursor.X = area.X + currentInput.Length * Global.GlyphWidth;
+            InputChanged?.Invoke(currentText);
         }
 
         public bool MouseDown(Position position, MouseButtons mouseButtons)
