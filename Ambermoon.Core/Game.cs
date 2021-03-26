@@ -8553,10 +8553,25 @@ namespace Ambermoon
                         {
                             if (!spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.AnyMap))
                             {
-                                if (Map.IsWorldMap && !spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.WorldMapOnly))
+                                if (spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.WorldMapOnly))
+                                {
+                                    if (!Map.IsWorldMap)
+                                        return DataNameProvider.WrongArea;
+                                }
+                                else if (spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Maps3DOnly))
+                                {
+                                    if (Map.Type != MapType.Map3D)
+                                        return DataNameProvider.WrongArea;
+                                }
+                                else if (spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly))
+                                {
+                                    if (!Map.Flags.HasFlag(MapFlags.Dungeon))
+                                        return DataNameProvider.WrongArea;
+                                }
+                                else
+                                {
                                     return DataNameProvider.WrongArea;
-                                if (Map.Flags.HasFlag(MapFlags.Dungeon) && !spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly))
-                                    return DataNameProvider.WrongArea;
+                                }
                             }
                         }
 
