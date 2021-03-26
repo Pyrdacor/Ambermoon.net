@@ -226,6 +226,7 @@ namespace Ambermoon
         bool pickingNewLeader = false;
         bool pickingTargetPlayer = false;
         bool pickingTargetInventory = false;
+        event Action<int> newLeaderPicked;
         event Action<int> targetPlayerPicked;
         event Func<int, bool> targetInventoryPicked;
         event Func<ItemGrid, int, ItemSlot, bool> targetItemPicked;
@@ -1137,12 +1138,17 @@ namespace Ambermoon
         /// </summary>
         /// <param name="action">Action to perform. Second parameter is the finish handler the action must call.</param>
         /// <param name="condition">Condition to filter affected party members.</param>
-        void ForeachPartyMember(Action<PartyMember, Action> action, Func<PartyMember, bool> condition = null)
+        /// <param name="followUpAction">Action to trigger after all party members were processed.</param>
+        void ForeachPartyMember(Action<PartyMember, Action> action, Func<PartyMember, bool> condition = null,
+            Action followUpAction = null)
         {
             void Run(int index)
             {
                 if (index == MaxPartyMembers)
+                {
+                    followUpAction?.Invoke();
                     return;
+                }
 
                 var partyMember = GetPartyMember(index);
 
@@ -3153,13 +3159,130 @@ namespace Ambermoon
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
+        void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
+            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null)
+        {
+            // In original all players are damage one after the other
+            // without showing the damage splash immediately. If a character
+            // dies the skull is shown. If this was the active character
+            // the "new leader" logic kicks in. Only after that the next
+            // party member is checked.
+            // At the end all affected living characters will show the damage splash.
+            List<PartyMember> damagedPlayers = new List<PartyMember>();
+            ForeachPartyMember(Damage, p => p.Alive && !p.Ailments.HasFlag(Ailment.Petrified), () =>
+            {
+                ForeachPartyMember(ShowDamageSplash, p => damagedPlayers.Contains(p), followAction);
+            });
+
+            void Damage(PartyMember partyMember, Action finished)
+            {
+                if (affectChecker?.Invoke(partyMember) == false)
+                {
+                    if (notAffectedHandler == null)
+                        finished?.Invoke();
+                    else
+                        notAffectedHandler?.Invoke(partyMember, finished);
+                    return;
+                }
+
+                var damage = Godmode ? 0 : damageProvider?.Invoke(partyMember) ?? 0;
+
+                if (damage > 0)
+                {
+                    partyMember.Damage(damage);
+
+                    if (partyMember.Alive) // update HP etc if not died already
+                    {
+                        damagedPlayers.Add(partyMember);
+                        finished?.Invoke();
+                    }
+                    else
+                    {
+                        if (CurrentPartyMember == partyMember && currentBattle == null)
+                        {
+                            newLeaderPicked += NewLeaderPicked;
+                            RecheckActivePartyMember();
+
+                            void NewLeaderPicked(int index)
+                            {
+                                newLeaderPicked -= NewLeaderPicked;
+                                finished?.Invoke();
+                            }
+                        }
+                        else
+                        {
+                            layout.AttachToPortraitAnimationEvent(finished);
+                        }
+                    }
+                }
+                else
+                {
+                    finished?.Invoke();
+                }
+            }
+            void ShowDamageSplash(PartyMember partyMember, Action finished)
+            {
+                int slot = SlotFromPartyMember(partyMember).Value;
+                layout.SetCharacter(slot, partyMember);
+                ShowPlayerDamage(slot, damageProvider?.Invoke(partyMember) ?? 0);
+                finished?.Invoke();
+            }
+        }
+
+        void DamageAllPartyMembers(uint damage, Func<PartyMember, bool> affectChecker = null,
+            Action < PartyMember, Action> notAffectedHandler = null, Action followAction = null)
+        {
+            DamageAllPartyMembers(_ => damage, affectChecker, notAffectedHandler, followAction);
+        }
+
         internal void TriggerTrap(TrapEvent trapEvent)
         {
-            // TODO
-            if (trapEvent.Next != null)
+            Func<PartyMember, bool> filter = null;
+
+            switch (trapEvent.Target)
             {
-                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
-                    (uint)player.Position.Y, CurrentTicks, trapEvent.Next, true);
+                case TrapEvent.TrapTarget.ActivePlayer:
+                    filter = p => p == CurrentPartyMember;
+                    break;
+                default:
+                    // TODO: are there more like random?
+                    break;
+            }
+
+            void Damage(uint damage)
+            {
+                DamageAllPartyMembers(damage, p =>
+                {
+                    return filter?.Invoke(p) != false && RollDice100() >= p.Attributes[Attribute.Luck].TotalCurrentValue;
+                }, (p, finish) =>
+                {
+                    if (filter?.Invoke(p) != false)
+                        ShowMessagePopup(p.Name + DataNameProvider.EscapedTheTrap, finish);
+                    else
+                        finish?.Invoke();
+                }, Finished);
+            }
+
+            switch (trapEvent.TypeOfTrap)
+            {
+                case TrapEvent.TrapType.Damage:
+                {
+                    Damage(trapEvent.BaseDamage);
+                    break;
+                }
+                default:
+                    // TODO
+                    Finished();
+                    break;
+            }
+
+            void Finished()
+            {
+                if (trapEvent.Next != null)
+                {
+                    EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
+                        (uint)player.Position.Y, CurrentTicks, trapEvent.Next, true);
+                }
             }
         }
 
@@ -3608,28 +3731,7 @@ namespace Ambermoon
                 return (uint)Math.Max(2, Util.Round(factor * baseValue)) - 1;
             }
 
-            for (int i = 0; i < MaxPartyMembers; ++i)
-            {
-                var partyMember = GetPartyMember(i);
-
-                if (partyMember != null)
-                {
-                    var damage = CalculateDamage(partyMember);
-
-                    if (damage != 0)
-                    {
-                        ShowPlayerDamage(i, damage);
-
-                        if (!Godmode)
-                        {
-                            partyMember.Damage(damage);
-
-                            if (partyMember.Alive) // update HP etc if not died already
-                                layout.SetCharacter(i, partyMember);
-                        }
-                    }
-                }
-            }
+            DamageAllPartyMembers(CalculateDamage);
         }
 
         internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true)
@@ -10356,7 +10458,7 @@ namespace Ambermoon
 
         bool RecheckActivePartyMember()
         {
-            if (!CurrentPartyMember.Ailments.CanSelect() || currentBattle.GetSlotFromCharacter(CurrentPartyMember) == -1)
+            if (!CurrentPartyMember.Ailments.CanSelect() || currentBattle?.GetSlotFromCharacter(CurrentPartyMember) == -1)
             {
                 layout.ClearBattleFieldSlotColors();
                 Pause();
@@ -10364,7 +10466,8 @@ namespace Ambermoon
                 var popup = layout.OpenTextPopup(ProcessText(DataNameProvider.SelectNewLeaderMessage), () =>
                 {
                     UntrapMouse();
-                    Resume();
+                    if (currentBattle == null && !WindowActive)
+                        Resume();
                     ResetCursor();
                 }, true, false);
                 popup.CanAbort = false;
@@ -10414,6 +10517,7 @@ namespace Ambermoon
                     {
                         pickingNewLeader = false;
                         layout.ClosePopup(true, true);
+                        newLeaderPicked?.Invoke(index);
                     }
 
                     if (is3D)

@@ -2262,6 +2262,21 @@ namespace Ambermoon.UI
             }
         }
 
+        internal void AttachToPortraitAnimationEvent(Action finishAction)
+        {
+            if (portraitAnimation == null)
+                finishAction?.Invoke();
+            else
+            {
+                void Finished()
+                {
+                    portraitAnimation.Finished -= Finished;
+                    finishAction?.Invoke();
+                }
+                portraitAnimation.Finished += Finished;
+            }
+        }
+
         void PlayPortraitAnimation(int slot, PartyMember partyMember, Action finishAction = null)
         {
             var newState = partyMember == null ? PartyMemberPortaitState.Empty
