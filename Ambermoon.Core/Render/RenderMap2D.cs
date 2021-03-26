@@ -385,6 +385,7 @@ namespace Ambermoon.Render
                 var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
                 var offset = new Position((TILE_WIDTH - info.Width) / 2 - 2, (TILE_HEIGHT - info.Height) / 2 - 2);
                 sprite.Layer = renderView.GetLayer(Layer.Characters);
+                sprite.ClipArea = Game.Map2DViewArea;
                 sprite.BaseLineOffset = TILE_HEIGHT / 2;
                 sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + stationaryImage.AsIndex());
