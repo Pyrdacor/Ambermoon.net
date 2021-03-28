@@ -3734,17 +3734,15 @@ namespace Ambermoon
             // This is now called on each movement in water.
             // But it also has to be called each 5 minutes (but not twice if also moving).
 
-            // TODO: Not sure about the damage formula
             static uint CalculateDamage(PartyMember partyMember)
             {
                 var swimAbility = partyMember.Abilities[Ability.Swim].TotalCurrentValue;
 
-                if (swimAbility >= 99)
+                if (swimAbility >= 100)
                     return 0;
 
-                uint baseValue = partyMember.HitPoints.CurrentValue / 2;
-                float factor = 0.99f - partyMember.Abilities[Ability.Swim].TotalCurrentValue / 100.0f;
-                return (uint)Math.Max(2, Util.Round(factor * baseValue)) - 1;
+                var factor = ((100 - swimAbility) / 2) / 100;
+                return Math.Max(1, factor * partyMember.HitPoints.CurrentValue);
             }
 
             DamageAllPartyMembers(CalculateDamage);

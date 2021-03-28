@@ -70,7 +70,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.Chest:
                 {
                     // 1. byte is a lockpicking chance reduction (0: already open, 100: can't open via lockpicking)
-                    // 2. byte is the minimum search ability to find/open the treasure
+                    // 2. byte are the chest flags
                     // 3. byte is an optional text index (0xff = no text)
                     // 4. byte is the chest index (0-based)
                     // 5. byte (0 = chest, 1 = pile/removable loot or item) or "remove if empty"
@@ -78,7 +78,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // last word is the event index (0-based) of the event that is called when unlocking fails
                     var chestEvent = @event as ChestEvent;
                     dataWriter.Write((byte)chestEvent.LockpickingChanceReduction);
-                    dataWriter.Write(chestEvent.MinSearchAbility);
+                    dataWriter.WriteEnumAsByte(chestEvent.Flags);
                     dataWriter.Write((byte)chestEvent.TextIndex);
                     dataWriter.Write((byte)chestEvent.ChestIndex);
                     dataWriter.Write((byte)(chestEvent.RemoveWhenEmpty ? 1 : 0));

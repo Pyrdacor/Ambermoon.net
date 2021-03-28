@@ -86,6 +86,18 @@ namespace Ambermoon.Data
 
     public class ChestEvent : Event
     {
+        [Flags]
+        public enum ChestFlags : byte
+        {
+            None = 0,
+            Unknown0 = 0x01,
+            SearchSkillCheck = 0x02,
+            Unknown2 = 0x04,
+            Unknown3 = 0x08,
+            Unknown4 = 0x10,
+            Unknown5 = 0x20
+        }
+
         public uint LockpickingChanceReduction { get; set; }
         public uint TextIndex { get; set; } // 255 = none
         /// <summary>
@@ -95,12 +107,19 @@ namespace Ambermoon.Data
         public bool RemoveWhenEmpty { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
-        public byte MinSearchAbility { get; set; }
+        /// <summary>
+        /// Only 1 chest uses this and it has the following bits set:
+        /// - SearchSkillCheck
+        /// - Unknown4
+        /// - Unknown5
+        /// So at least the lowest 6 bits seem to have some meaning.
+        /// </summary>
+        public ChestFlags Flags { get; set; }
 
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
-            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, MinSearchAbility: {MinSearchAbility}";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Flags: {Flags}";
         }
     }
 
