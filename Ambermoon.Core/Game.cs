@@ -3741,8 +3741,8 @@ namespace Ambermoon
                 if (swimAbility >= 100)
                     return 0;
 
-                var factor = ((100 - swimAbility) / 2) / 100;
-                return Math.Max(1, factor * partyMember.HitPoints.CurrentValue);
+                var factor = (100 - swimAbility) / 2;
+                return Math.Max(1, factor * partyMember.HitPoints.CurrentValue / 100);
             }
 
             DamageAllPartyMembers(CalculateDamage);
