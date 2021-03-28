@@ -58,7 +58,8 @@ namespace Ambermoon
                 if (@event.Type != EventType.Chest &&
                     @event.Type != EventType.Door &&
                     @event.Type != EventType.EnterPlace &&
-                    @event.Type != EventType.Riddlemouth)
+                    @event.Type != EventType.Riddlemouth &&
+                    (map.Type == MapType.Map3D || @event.Type != EventType.Trap))
                 {
                     return true;
                 }

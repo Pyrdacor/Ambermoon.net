@@ -3210,6 +3210,12 @@ namespace Ambermoon
                     {
                         if (CurrentPartyMember == partyMember && currentBattle == null)
                         {
+                            if (!PartyMembers.Any(p => p.Alive && p.Ailments.CanSelect()))
+                            {
+                                GameOver();
+                                return;
+                            }
+
                             newLeaderPicked += NewLeaderPicked;
                             RecheckActivePartyMember();
 
@@ -6859,6 +6865,25 @@ namespace Ambermoon
         void GameOver()
         {
             // TODO
+            ShowMessagePopup("Game over screen not implemented yet. Instead default save is loaded now.", () =>
+            {
+                ClosePopup();
+                CloseWindow();
+                try
+                {
+                    LoadGame(0);
+                }
+                catch
+                {
+                    var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+
+                    initialSavegame.PartyMembers[0].Name = CurrentSavegame.PartyMembers[0].Name;
+                    initialSavegame.PartyMembers[0].Gender = CurrentSavegame.PartyMembers[0].Gender;
+                    initialSavegame.PartyMembers[0].PortraitIndex = CurrentSavegame.PartyMembers[0].PortraitIndex;
+
+                    Start(initialSavegame);
+                }
+            });
         }
 
         internal uint DistributeFood(uint food)
