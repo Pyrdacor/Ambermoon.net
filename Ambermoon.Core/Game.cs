@@ -3181,7 +3181,11 @@ namespace Ambermoon
             List<PartyMember> damagedPlayers = new List<PartyMember>();
             ForeachPartyMember(Damage, p => p.Alive && !p.Ailments.HasFlag(Ailment.Petrified), () =>
             {
-                ForeachPartyMember(ShowDamageSplash, p => damagedPlayers.Contains(p), followAction);
+                ForeachPartyMember(ShowDamageSplash, p => damagedPlayers.Contains(p), () =>
+                {
+                    layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+                    followAction?.Invoke();
+                });
             });
 
             void Damage(PartyMember partyMember, Action finished)
