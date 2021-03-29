@@ -20,8 +20,9 @@ An up-to-date overview for planned releases and features can be found [here](htt
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
 I appreciate all kind of support for this project. If you want to donate to help increase my motivation and allow me to spend more time developing this Ambermoon project and similar projects like a 3rd part of the trilogy or map and character editors, you can do so here. \
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=76DV5MK5GNEMS&source=url) [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software) <a href="https://www.patreon.com/bePatron?u=44764566" data-patreon-widget-type="become-patron-button">Become a Patron!</a><script async src="https://c6.patreon.com/becomePatronButton.bundle.js"></script>
-<a href="https://github.com/sponsors/Pyrdacor"><iframe src="https://github.com/sponsors/Pyrdacor/button" title="Sponsor Pyrdacor"/></a> \
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=76DV5MK5GNEMS&source=url) [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=Pyrdacor&url=https://github.com/Pyrdacor/Ambermoon.net&title=Ambermoon.net&language=C#&tags=github&category=software)
+[Become a patreon](https://www.patreon.com/bePatron?u=44764566)
+[Sponsor](https://github.com/sponsors/Pyrdacor) \
 Thank you very much.
 
 ## Screenshots
