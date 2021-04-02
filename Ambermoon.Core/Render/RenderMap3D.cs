@@ -783,7 +783,6 @@ namespace Ambermoon.Render
 
             if (floorObject)
             {
-                // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
                 y = Util.Limit(1, objectPosition.Z, ReferenceWallHeight - 1) * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
             }
             else
@@ -891,7 +890,7 @@ namespace Ambermoon.Render
                         Global.DistancePerBlock * size.Height / BlockSize,
                         objectInfo.TextureWidth, objectInfo.TextureHeight, objectInfo.TextureWidth,
                         objectInfo.TextureHeight, true, Math.Max(1, (int)objectInfo.NumAnimationFrames),
-                        extrude/*0.7075f * Global.DistancePerBlock*/) // This ensures drawing over the surrounding floor. It is a bit higher than half the diagonal -> sqrt(2) / 2.
+                        extrude)
                     : surfaceFactory.Create(SurfaceType.Billboard,
                         Global.DistancePerBlock * size.Width / BlockSize,
                         wallHeight * size.Height / ReferenceWallHeight,

@@ -900,8 +900,44 @@ namespace Ambermoon
             }
         }
 
+        void FixPartyMember(PartyMember partyMember)
+        {
+            // The original has some bugs where bonus values are not right.
+            // We set the bonus values here dependent on equipment.
+            partyMember.HitPoints.BonusValue = 0;
+            partyMember.SpellPoints.BonusValue = 0;
+
+            foreach (var attribute in Enum.GetValues<Attribute>())
+            {
+                partyMember.Attributes[attribute].BonusValue = 0;
+            }
+
+            foreach (var ability in Enum.GetValues<Ability>())
+            {
+                partyMember.Abilities[ability].BonusValue = 0;
+            }
+
+            foreach (var itemSlot in partyMember.Equipment.Slots)
+            {
+                if (itemSlot.Value.ItemIndex != 0)
+                {
+                    var item = ItemManager.GetItem(itemSlot.Value.ItemIndex);
+                    int factor = itemSlot.Value.Flags.HasFlag(ItemSlotFlags.Cursed) ? -1 : 1;
+
+                    partyMember.HitPoints.BonusValue += factor * item.HitPoints;
+                    partyMember.SpellPoints.BonusValue += factor * item.SpellPoints;
+
+                    if (item.Attribute != null)
+                        partyMember.Attributes[item.Attribute.Value].BonusValue += factor * item.AttributeValue;
+                    if (item.Ability != null)
+                        partyMember.Abilities[item.Ability.Value].BonusValue += factor * item.AbilityValue;
+                }
+            }
+        }
+
         void AddPartyMember(int slot, PartyMember partyMember)
         {
+            FixPartyMember(partyMember);
             partyMember.Died += PartyMemberDied;
             layout.SetCharacter(slot, partyMember);
         }
