@@ -1586,8 +1586,6 @@ namespace Ambermoon.UI
                 return;
             }
 
-            // TODO: cannot use it here, wrong place, wrong world
-
             if (!item.IsUsable)
             {
                 // TODO: correct message?
@@ -3455,13 +3453,6 @@ namespace Ambermoon.UI
                 return false;
             }
 
-            void FinishPickingTargetItem(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
-            {
-                itemGrids[0].ItemClicked -= FinishPickingTargetItem;
-                itemGrids[1].ItemClicked -= FinishPickingTargetItem;
-                game.FinishPickingTargetInventory(itemGrid, slotIndex, itemSlot);
-            }
-
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
                 var partyMember = game.GetPartyMember(i);
@@ -3594,21 +3585,7 @@ namespace Ambermoon.UI
                             }
                             else if (pickingTargetInventory)
                             {
-                                if (game.FinishPickingTargetInventory(i))
-                                {
-                                    if (partyMember.Ailments.CanOpenInventory())
-                                    {
-                                        game.OpenPartyMember(i, true, () =>
-                                        {
-                                            SetInventoryMessage(game.DataNameProvider.WhichItemAsTarget);
-                                            game.TrapMouse(Global.InventoryAndEquipTrapArea);
-                                            itemGrids[0].DisableDrag = true;
-                                            itemGrids[1].DisableDrag = true;
-                                            itemGrids[0].ItemClicked += FinishPickingTargetItem;
-                                            itemGrids[1].ItemClicked += FinishPickingTargetItem;
-                                        });
-                                    }
-                                }
+                                TargetInventoryPlayerSelected(i, partyMember);
                                 return true;
                             }
 
@@ -3629,6 +3606,32 @@ namespace Ambermoon.UI
             }
 
             return false;
+        }
+
+        internal void TargetInventoryPlayerSelected(int slot, PartyMember partyMember)
+        {
+            void FinishPickingTargetItem(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
+            {
+                itemGrids[0].ItemClicked -= FinishPickingTargetItem;
+                itemGrids[1].ItemClicked -= FinishPickingTargetItem;
+                game.FinishPickingTargetInventory(itemGrid, slotIndex, itemSlot);
+            }
+
+            if (game.FinishPickingTargetInventory(slot))
+            {
+                if (partyMember.Ailments.CanOpenInventory())
+                {
+                    game.OpenPartyMember(slot, true, () =>
+                    {
+                        SetInventoryMessage(game.DataNameProvider.WhichItemAsTarget);
+                        game.TrapMouse(Global.InventoryAndEquipTrapArea);
+                        itemGrids[0].DisableDrag = true;
+                        itemGrids[1].DisableDrag = true;
+                        itemGrids[0].ItemClicked += FinishPickingTargetItem;
+                        itemGrids[1].ItemClicked += FinishPickingTargetItem;
+                    });
+                }
+            }
         }
 
         void PostItemDrag()

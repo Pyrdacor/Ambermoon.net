@@ -320,8 +320,7 @@ namespace Ambermoon
                             {
                                 this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
 
-                                if (!trapped) // Let the mouse stay at the current position when untrapping.
-                                    mouse.Position = new System.Drawing.PointF(position.X, position.Y);
+                                mouse.Position = new System.Drawing.PointF(position.X, position.Y);
                             };
                             game.ConfigurationChanged += (configuration, windowChange) =>
                             {

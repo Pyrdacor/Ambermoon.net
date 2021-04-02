@@ -653,31 +653,21 @@ namespace Ambermoon
                 if (trapMouseArea == newTrapArea)
                     return;
                 trapMouseArea = newTrapArea;
-                if (trapMouseArea.Contains(lastMousePosition))
-                {
-                    trappedMousePositionOffset.X = 0;
-                    trappedMousePositionOffset.Y = 0;
-                }
-                else
+                trappedMousePositionOffset.X = 0;
+                trappedMousePositionOffset.Y = 0;
+                if (!trapMouseArea.Contains(lastMousePosition))
                 {
                     bool keepX = lastMousePosition.X >= trapMouseArea.Left && lastMousePosition.X <= trapMouseArea.Right;
                     bool keepY = lastMousePosition.Y >= trapMouseArea.Top && lastMousePosition.Y <= trapMouseArea.Bottom;
-                    bool right = lastMousePosition.X > trapMouseArea.Right;
-                    bool down = lastMousePosition.Y > trapMouseArea.Bottom;
-                    trappedMousePositionOffset.X = keepX ? 0 : right ? trapMouseArea.Right - lastMousePosition.X : trapMouseArea.Left - lastMousePosition.X;
-                    trappedMousePositionOffset.Y = keepY ? 0 : down ? trapMouseArea.Bottom - lastMousePosition.Y : trapMouseArea.Top - lastMousePosition.Y;
-                    var newPosition = new Position(trapMouseArea.Position);
-                    if (keepX)
-                        newPosition.X = lastMousePosition.X;
-                    else if (right)
-                        newPosition.X = trapMouseArea.Right;
-                    if (keepY)
-                        newPosition.Y = lastMousePosition.Y;
-                    else if (down)
-                        newPosition.Y = trapMouseArea.Bottom;
-                    UpdateCursor(newPosition, MouseButtons.None);
+                    trappedMousePositionOffset.X = 0;
+                    trappedMousePositionOffset.Y = 0;
+                    if (!keepX)
+                        lastMousePosition.X = lastMousePosition.X > trapMouseArea.Right ? trapMouseArea.Right : trapMouseArea.Left;
+                    if (!keepY)
+                        lastMousePosition.Y = lastMousePosition.Y > trapMouseArea.Bottom ? trapMouseArea.Bottom : trapMouseArea.Top;
+                    UpdateCursor(lastMousePosition, MouseButtons.None);
                 }
-                MouseTrappedChanged?.Invoke(true, GetMousePosition(lastMousePosition));
+                MouseTrappedChanged?.Invoke(true, lastMousePosition);
             }
             finally
             {
@@ -1591,7 +1581,9 @@ namespace Ambermoon
         void PickTargetPlayer()
         {
             pickingTargetPlayer = true;
+            disableUntrapping = true;
             CursorType = CursorType.Sword;
+            disableUntrapping = false;
             TrapMouse(Global.PartyMemberPortraitArea);
         }
 
@@ -1697,17 +1689,15 @@ namespace Ambermoon
 
             if (pickingTargetPlayer)
             {
-                if (key != Key.Escape)
-                    return;
-
-                AbortPickingTargetPlayer();
+                if (key == Key.Escape)
+                    AbortPickingTargetPlayer();
+                return;
             }
             if (pickingTargetInventory)
             {
-                if (key != Key.Escape)
-                    return;
-
-                AbortPickingTargetInventory();
+                if (key == Key.Escape)
+                    AbortPickingTargetInventory();                
+                return;
             }
 
             keys[(int)key] = true;
@@ -1844,8 +1834,24 @@ namespace Ambermoon
                 return;
             }
 
-            if (allInputDisabled || pickingTargetPlayer || pickingTargetInventory)
+            if (allInputDisabled)
                 return;
+
+            if (keyChar >= '1' && keyChar <= '6')
+            {
+                if (pickingTargetPlayer)
+                {
+                    FinishPickingTargetPlayer((int)(keyChar - '1'));
+                    return;
+                }
+                if (pickingTargetInventory)
+                {
+                    int slot = (int)(keyChar - '1');
+                    var partyMember = GetPartyMember(slot);
+                    layout.TargetInventoryPlayerSelected(slot, partyMember);
+                    return;
+                }
+            }
 
             if (!pickingNewLeader && layout.KeyChar(keyChar))
                 return;
@@ -1904,8 +1910,8 @@ namespace Ambermoon
 
                 if (cursorType != null && cursorType != CursorType.None)
                     CursorType = cursorType.Value;
-                else
-                    UpdateCursor(GetMousePosition(cursorPosition), MouseButtons.None);
+                else // Note: Don't use cursorPosition here as trapping might have updated it
+                    UpdateCursor(GetMousePosition(lastMousePosition), MouseButtons.None);
 
                 disableUntrapping = false;
             }
