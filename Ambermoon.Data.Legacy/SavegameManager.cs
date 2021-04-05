@@ -41,6 +41,15 @@ namespace Ambermoon.Data.Legacy
             SavegameSerializer.WriteSavegameName(gameData, slot, ref name);
         }
 
+        static readonly string[] SaveFileNames = new string[5]
+        {
+            "Party_data.sav",
+            "Party_char.amb",
+            "Chest_data.amb",
+            "Merchant_data.amb",
+            "Automap.amb"
+        };
+
         public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
         {
             if (!transferredFolderSaves && File.Exists(savesPath))
@@ -52,18 +61,28 @@ namespace Ambermoon.Data.Legacy
                 {
                     folderSaveData.Load(path);
 
-                    void TransferFile(string name)
+                    KeyValuePair<string, IFileContainer>? TransferFile(string name)
                     {
-                        gameData.Files[name] = folderSaveData.Files[name];
+                        if (folderSaveData.Files.ContainsKey(name))
+                            return KeyValuePair.Create(name, folderSaveData.Files[name]);
+                        return null;
                     }
 
                     for (int i = 1; i <= 10; ++i)
                     {
-                        TransferFile($"Save.{saveSlot:00}/Party_data.sav");
-                        TransferFile($"Save.{saveSlot:00}/Party_char.amb");
-                        TransferFile($"Save.{saveSlot:00}/Chest_data.amb");
-                        TransferFile($"Save.{saveSlot:00}/Merchant_data.amb");
-                        TransferFile($"Save.{saveSlot:00}/Automap.amb");
+                        var saveFiles = new List<KeyValuePair<string, IFileContainer>>(5);
+                        foreach (var saveFileName in SaveFileNames)
+                        {
+                            var file = TransferFile($"Save.{i:00}/{saveFileName}");
+                            if (file == null)
+                                break;
+                            saveFiles.Add(file.Value);
+                        }
+                        if (saveFiles.Count == 5)
+                        {
+                            foreach (var saveFile in saveFiles)
+                                gameData.Files[saveFile.Key] = saveFile.Value;
+                        }
                     }
 
                     TransferFile("Saves");
