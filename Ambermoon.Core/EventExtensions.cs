@@ -125,29 +125,19 @@ namespace Ambermoon
                     if (!(@event is TrapEvent trapEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid trap event.");
 
-                    switch (trigger)
+                    if (trigger == EventTrigger.Eye)
                     {
-                        case EventTrigger.Move:
-                            if (!trapEvent.CanTriggerByMoving)
-                            {
-                                aborted = true;
-                                return null;
-                            }
-                            break;
-                        case EventTrigger.Eye:
-                            if (trapEvent.CanTriggerByCursor)
-                            {
-                                // Note: Eye will only detect the trap, not trigger it!
-                                game.ShowMessagePopup(game.DataNameProvider.YouNoticeATrap);
-                            }
-                            aborted = true;
-                            return null;
-                        case EventTrigger.Always:
-                            break;
-                        default:
-                            aborted = true;
-                            return null;
+                        // Note: Eye will only detect the trap, not trigger it!
+                        game.ShowMessagePopup(game.DataNameProvider.YouNoticeATrap);
+                        aborted = true;
+                        return null;
                     }
+                    else if (trigger != EventTrigger.Move && trigger != EventTrigger.Always)
+                    {
+                        aborted = true;
+                        return null;
+                    }
+
                     game.TriggerTrap(trapEvent);
                     return null; // next event is only executed after trap effect
                 }

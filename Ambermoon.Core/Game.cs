@@ -497,6 +497,8 @@ namespace Ambermoon
 
             paused = true;
 
+            GameTime.Pause();
+
             if (is3D)
                 renderMap3D.Pause();
             else
@@ -509,6 +511,8 @@ namespace Ambermoon
                 return;
 
             paused = false;
+
+            GameTime.Resume();
 
             if (is3D)
                 renderMap3D.Resume();
@@ -1319,7 +1323,7 @@ namespace Ambermoon
             hurtPlayerSprites[slot].X = area.X;
             hurtPlayerSprites[slot].Y = area.Y + 1;
             hurtPlayerSprites[slot].Visible = true;
-            hurtPlayerDamageTexts[slot].Text = renderView.TextProcessor.CreateText(amount.ToString());
+            hurtPlayerDamageTexts[slot].Text = renderView.TextProcessor.CreateText(amount > 99 ? "**" : amount.ToString());
             area.Position.Y += 11;
             hurtPlayerDamageTexts[slot].Place(area, TextAlign.Center);
             hurtPlayerDamageTexts[slot].Visible = amount != 0;
@@ -3212,9 +3216,9 @@ namespace Ambermoon
         }
 
         void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
-            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null)
+            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Ailment inflictAilment = Ailment.None)
         {
-            // In original all players are damage one after the other
+            // In original all players are damaged one after the other
             // without showing the damage splash immediately. If a character
             // dies the skull is shown. If this was the active character
             // the "new leader" logic kicks in. Only after that the next
@@ -3243,13 +3247,25 @@ namespace Ambermoon
 
                 var damage = Godmode ? 0 : damageProvider?.Invoke(partyMember) ?? 0;
 
-                if (damage > 0)
+                if (damage > 0 || inflictAilment != Ailment.None)
                 {
                     partyMember.Damage(damage);
+
+                    if (partyMember.Alive && inflictAilment >= Ailment.DeadCorpse)
+                    {
+                        partyMember.Die(inflictAilment);
+                    }
 
                     if (partyMember.Alive) // update HP etc if not died already
                     {
                         damagedPlayers.Add(partyMember);
+
+                        if (inflictAilment != Ailment.None && inflictAilment < Ailment.DeadCorpse)
+                            partyMember.Ailments |= inflictAilment;
+                    }
+
+                    if (partyMember.Alive && partyMember.Ailments.CanSelect())
+                    {
                         finished?.Invoke();
                     }
                     else
@@ -3299,44 +3315,47 @@ namespace Ambermoon
 
         internal void TriggerTrap(TrapEvent trapEvent)
         {
-            Func<PartyMember, bool> filter = null;
+            Func<PartyMember, bool> targetFilter = null;
+            Func<PartyMember, bool> genderFilter = null;
+
+            if (trapEvent.AffectedGenders != GenderFlag.None && trapEvent.AffectedGenders != GenderFlag.Both)
+            {
+                genderFilter = p =>
+                {
+                    var genderFlag = (GenderFlag)(1 << (int)p.Gender);
+                    return trapEvent.AffectedGenders.HasFlag(genderFlag);
+                };
+            }
 
             switch (trapEvent.Target)
             {
                 case TrapEvent.TrapTarget.ActivePlayer:
-                    filter = p => p == CurrentPartyMember;
+                    targetFilter = p => p == CurrentPartyMember;
                     break;
                 default:
                     // TODO: are there more like random?
                     break;
             }
 
-            void Damage(uint damage)
+            uint GetDamage(PartyMember _)
             {
-                DamageAllPartyMembers(damage, p =>
-                {
-                    return filter?.Invoke(p) != false && RollDice100() >= p.Attributes[Attribute.Luck].TotalCurrentValue;
-                }, (p, finish) =>
-                {
-                    if (filter?.Invoke(p) != false)
-                        ShowMessagePopup(p.Name + DataNameProvider.EscapedTheTrap, finish);
-                    else
-                        finish?.Invoke();
-                }, Finished);
+                if (trapEvent.BaseDamage == 0)
+                    return 0;
+
+                return trapEvent.BaseDamage + (uint)RandomInt(0, (trapEvent.BaseDamage / 2) - 1);
             }
 
-            switch (trapEvent.TypeOfTrap)
+            DamageAllPartyMembers(GetDamage, p =>
             {
-                case TrapEvent.TrapType.Damage:
-                {
-                    Damage(trapEvent.BaseDamage);
-                    break;
-                }
-                default:
-                    // TODO
-                    Finished();
-                    break;
-            }
+                return targetFilter?.Invoke(p) != false && genderFilter?.Invoke(p) != false &&
+                    RollDice100() >= p.Attributes[Attribute.Luck].TotalCurrentValue;
+            }, (p, finish) =>
+            {
+                if (targetFilter?.Invoke(p) != false)
+                    ShowMessagePopup(p.Name + DataNameProvider.EscapedTheTrap, finish);
+                else
+                    finish?.Invoke();
+            }, Finished, trapEvent.GetAilment());
 
             void Finished()
             {
@@ -3916,7 +3935,34 @@ namespace Ambermoon
                     {
                         CurrentSavegame.ActivateGotoPoint(gotoPoint.Index);
                         ShowMessagePopup(DataNameProvider.GotoPointSaved, null, TextAlign.Left);
+                        return;
                     }
+                }
+
+                // Clairvoyance
+                if (CurrentSavegame.IsSpellActive(ActiveSpellType.Clairvoyance))
+                {
+                    bool trapFound = false;
+                    bool spinnerFound = false;
+                    var labdata = MapManager.GetLabdataForMap(Map);
+
+                    foreach (var touchedPosition in player3D.GetTouchedPositions(1.45f * Global.DistancePerBlock))
+                    {
+                        var type = renderMap3D.AutomapTypeFromBlock((uint)touchedPosition.X, (uint)touchedPosition.Y);
+                        if (type == AutomapType.Trapdoor)
+                        {
+                            // TODO: It seems that only trap doors are detected and not traps.
+                            trapFound = true;
+                            break;
+                        }
+                        else if (type == AutomapType.Spinner)
+                            spinnerFound = true;
+                    }
+
+                    if (trapFound)
+                        ShowMessagePopup(DataNameProvider.YouNoticeATrap);
+                    else if (spinnerFound)
+                        ShowMessagePopup(DataNameProvider.SeeRoundDiskInFloor);
                 }
             }
         }
@@ -9767,7 +9813,6 @@ namespace Ambermoon
 
                     // Note: Maps are always 3D
                     var block = Map.Blocks[tx, ty];
-                    bool tavernOrMerchant = false;
 
                     if (block.MapBorder)
                     {
@@ -9781,59 +9826,24 @@ namespace Ambermoon
                         gotoPoints.Add(KeyValuePair.Create(gotoPoint,
                             layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
                     }
-                    if (block.MapEventId != 0)
-                    {
-                        // Only add the event automap icon if the event is active
-                        if (!CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
-                        {
-                            var automapType = Map.GetEventAutomapType(block.MapEventId - 1);
-
-                            if (automapType != AutomapType.None)
-                            {
-                                AddAutomapType(tx, ty, x, y, automapType);
-
-                                // Note: In case of tavern or merchant the wall has to be drawn as well so
-                                // don't return here in that case so that the wall can be added below.
-                                if (automapType != AutomapType.Tavern && automapType != AutomapType.Merchant)
-                                {
-                                    if (block.WallIndex != 0)
-                                        walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y, (bool?)null));
-                                    return;
-                                }
-                                else
-                                {
-                                    tavernOrMerchant = true;
-                                }
-                            }
-                        }
-                    }
-
-                    if (block.ObjectIndex != 0)
-                    {
-                        if (!tavernOrMerchant)
-                        {
-                            var obj = labdata.Objects[(int)block.ObjectIndex - 1];
-                            AddAutomapType(tx, ty, x, y, obj.AutomapType);
-                        }
-                    }
-                    else if (block.WallIndex != 0)
+                    var automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
+                    if (automapType != AutomapType.None)
+                        AddAutomapType(tx, ty, x, y, automapType);
+                    if (block.WallIndex != 0)
                     {
                         var wall = labdata.Walls[(int)block.WallIndex - 1];
-                        var automapGraphic = wall.AutomapType.ToGraphic();
                         bool blockingWall = block.BlocksPlayer(labdata);
-
-                        if (!tavernOrMerchant) // The wall might have DoorOpen automap type but we don't want to show it in that case
-                            AddAutomapType(tx, ty, x, y, wall.AutomapType);
-                        else
-                            automapGraphic = null; // Show normal wall for taverns and merchants
 
                         // Walls that don't block and use transparency are not considered walls
                         // nor fake walls. For example a destroyed cobweb uses this.
                         // Fake walls on the other hand won't block but are not transparent.
                         if (wall.AutomapType == AutomapType.Wall || blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
                         {
+                            bool draw = automapType == AutomapType.None || wall.AutomapType == AutomapType.Wall ||
+                                automapType == AutomapType.Tavern || automapType == AutomapType.Merchant;
+
                             walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y,
-                                automapGraphic != null ? (bool?)null : blockingWall));
+                                draw ? blockingWall : (bool?)null));
                         }
                     }
                 }

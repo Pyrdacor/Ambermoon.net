@@ -175,12 +175,18 @@ namespace Ambermoon.Data
 
     public class TrapEvent : Event
     {
-        public enum TrapType
+        public enum TrapAilment
         {
-            Damage
-            // TODO ...
-            // 5 seems to be used for green slime, stinking stuff
-            // "Gauners Keller" has many traps with many values for this
+            None,
+            Crazy,
+            Blind,
+            Stoned,
+            Paralyzed,
+            Poisoned,
+            Petrified,
+            Diseased,
+            Aging,
+            Dead
         }
 
         public enum TrapTarget
@@ -190,30 +196,45 @@ namespace Ambermoon.Data
             // TODO: RandomPlayer? Hero?
         }
 
-        public TrapType TypeOfTrap { get; set; }
+        public TrapAilment Ailment { get; set; }
         public TrapTarget Target { get; set; }
         /// <summary>
         /// Base damage. Sometimes direct value but maybe in percentage of max health for other TrapType than 0?
         /// </summary>
         public byte BaseDamage { get; set; }
-        public EventTrigger TrapTrigger { get; set; }
+        public GenderFlag AffectedGenders { get; set; }
         public byte[] Unused { get; set; } // 5 bytes
-        public bool CanTriggerByMoving => TrapTrigger.HasFlag(EventTrigger.Move);
-        public bool CanTriggerByCursor => TrapTrigger.HasFlag(EventTrigger.EyeCursor);
+        public Ailment GetAilment() => Ailment switch
+        {
+            TrapAilment.Crazy => Data.Ailment.Crazy,
+            TrapAilment.Blind => Data.Ailment.Blind,
+            TrapAilment.Stoned => Data.Ailment.Drugged,
+            TrapAilment.Paralyzed => Data.Ailment.Lamed,
+            TrapAilment.Poisoned => Data.Ailment.Poisoned,
+            TrapAilment.Petrified => Data.Ailment.Petrified,
+            TrapAilment.Diseased => Data.Ailment.Diseased,
+            TrapAilment.Aging => Data.Ailment.Aging,
+            TrapAilment.Dead => Data.Ailment.DeadCorpse,
+            _ => Data.Ailment.None
+        };
 
         public override string ToString()
         {
-            return $"{Type}: {BaseDamage} {TypeOfTrap} on {Target}, Trigger {TrapTrigger}";
+            return $"{Type}: {BaseDamage} damage with ailment {Ailment} on {Target}, Affected genders {AffectedGenders}";
         }
     }
 
     public class RemoveBuffsEvent : Event
     {
+        /// <summary>
+        /// null means all.
+        /// </summary>
+        public ActiveSpellType? AffectedBuff { get; set; }
         public byte[] Unused { get; set; } // TODO: Maybe some byte is used but was 0 in test case?
 
         public override string ToString()
         {
-            return $"{Type}: Unused {string.Join(" ", Unused.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Affected buff {(AffectedBuff == null ? "all" : AffectedBuff.ToString())}, Unused {string.Join(" ", Unused.Select(u => u.ToString("x2")))}";
         }
     }
 

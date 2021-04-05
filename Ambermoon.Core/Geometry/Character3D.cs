@@ -151,13 +151,13 @@ namespace Ambermoon.Geometry
                         movedTicks = 0;
                         MoveTowardsPlayer(playerPosition);
                     }
-                    else if (moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
+                    else if (moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
                     {
                         ResetMovementTimer();
                         RandomMovementRequested?.Invoke();
                     }
                 }
-                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
+                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
                 {
                     ResetMovementTimer();
                     RandomMovementRequested?.Invoke();
@@ -171,13 +171,13 @@ namespace Ambermoon.Geometry
                         movedTicks = 0;
                         MoveTowardsPlayer(playerPosition);
                     }
-                    else if (moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
+                    else if (moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
                     {
                         ResetMovementTimer();
                         MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);
                     }
                 }
-                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot == NextMoveTimeSlot)
+                else if (!onlyMoveWhenSeePlayer && moveRandom && game.GameTime.TimeSlot >= NextMoveTimeSlot)
                 {
                     ResetMovementTimer();
                     MoveToTile((uint)targetTilePosition.X, (uint)targetTilePosition.Y);

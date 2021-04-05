@@ -21,6 +21,7 @@
 
 using Ambermoon;
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Geometry;
 using System;
 using System.Collections.Generic;
@@ -85,6 +86,7 @@ namespace Ambermoon.Render
             readonly MapCharacter parent = null;
             public Tileset.TileFlags TileFlags => characterReference?.TileFlags ?? Tileset.TileFlags.None;
             public CharacterType? Type => characterReference?.Type;
+            public uint EventId => characterReference?.EventIndex ?? 0;
 
             public static void Reset() => interacting = false;
 
@@ -190,6 +192,13 @@ namespace Ambermoon.Render
                     new Position((int)(frame * surface.TextureWidth), 0);
             }
 
+            float GetDistance(float x1, float y1, float x2, float y2)
+            {
+                float diffX = x2 - x1;
+                float diffY = y2 - y1;
+                return (float)Math.Sqrt(diffX * diffX + diffY * diffY);
+            }
+
             public bool Interact(EventTrigger trigger, bool bed)
             {
                 if (parent != null)
@@ -206,20 +215,13 @@ namespace Ambermoon.Render
                         lastInteractionTime = DateTime.MaxValue;
                         interacting = true;
 
-                        float GetDistance(float x1, float y1, float x2, float y2)
-                        {
-                            float diffX = x2 - x1;
-                            float diffY = y2 - y1;
-                            return (float)Math.Sqrt(diffX * diffX + diffY * diffY);
-                        }
-
                         // Turn the player towards the monster.
                         var player3D = game.RenderPlayer as Player3D;
                         player3D.TurnTowards(character3D.RealPosition);
-                        Geometry.Geometry.CameraToWorldPosition(map.Map,
-                            player3D.Camera.X, player3D.Camera.Z, out float playerX, out float playerY);
-                        var distance = GetDistance(playerX, playerY, character3D.RealPosition.X, character3D.RealPosition.Y);
-                        float extrude = surface.Extrude = -Math.Max(0.0f, 52.0f - distance) * Global.DistancePerBlock / BlockSize;
+                        Geometry.Geometry.CameraToMapPosition(map.Map, player3D.Camera.X, player3D.Camera.Z, out float mapX, out float mapY);
+                        var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
+                        var distance = GetDistance(playerPosition.X, playerPosition.Y, character3D.RealPosition.X, character3D.RealPosition.Y);
+                        float extrude = surface.Extrude = (-BlockSize / 10.0f) * Math.Max(0.0f, 1.0f - distance) * Global.DistancePerBlock / BlockSize;
                         children.ForEach(c =>
                         {
                             extrude -= ExtrudeStep;
@@ -490,10 +492,12 @@ namespace Ambermoon.Render
                 var camera = (game.RenderPlayer as Player3D).Camera;
                 Geometry.Geometry.CameraToMapPosition(map.Map, camera.X, camera.Z, out float mapX, out float mapY);
                 var playerPosition = new FloatPosition(mapX - 0.5f * Global.DistancePerBlock, mapY - 0.5f * Global.DistancePerBlock);
-                var distanceToPlayer = game.RenderPlayer.Position - Position;
+                var distance = GetDistance(playerPosition.X, playerPosition.Y, character3D.RealPosition.X, character3D.RealPosition.Y) / Global.DistancePerBlock;
+                var obj = map.labdata.Objects[(int)characterReference.GraphicIndex - 1];
+                var subObject = obj.SubObjects[0];
+                var monsterRadius = 0.5f * subObject.Object.MappedTextureWidth / BlockSize;
 
-                // TODO: Use collision detection similar to TestPossibleMovement
-                if (distanceToPlayer.X == 0 && distanceToPlayer.Y == 0)
+                if (distance - monsterRadius < 0.5f)
                 {
                     if (characterReference.Type == CharacterType.Monster)
                     {
@@ -771,6 +775,36 @@ namespace Ambermoon.Render
         {
             foreach (var character in mapCharacters)
                 character.Value.Resume();
+        }
+
+        public AutomapType AutomapTypeFromBlock(uint x, uint y)
+        {
+            var characterEventId = mapCharacters.Select(c => c.Value).FirstOrDefault(c => c.Active && c.Position.X == x && c.Position.Y == y)?.EventId ?? 0;
+
+            if (characterEventId != 0)
+            {
+                var type = Map.EventAutomapTypes[(int)characterEventId - 1];
+
+                if (type != AutomapType.None)
+                    return type;
+            }
+
+            var block = Map.Blocks[x, y];
+
+            if (block.MapEventId != 0 && !game.CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
+            {
+                var type = Map.EventAutomapTypes[(int)block.MapEventId - 1];
+
+                if (type != AutomapType.None)
+                    return type;
+            }
+
+            if (block.WallIndex != 0)
+                return labdata.Walls[((int)block.WallIndex - 1) % labdata.Walls.Count].AutomapType;
+            else if (block.ObjectIndex != 0)
+                return labdata.Objects[((int)block.ObjectIndex - 1) % labdata.Objects.Count].AutomapType;
+
+            return AutomapType.None;
         }
 
         void GetObjectPosition(Labdata.ObjectPosition objectPosition, float baseX, float baseY, out float x, out float y, out float z,

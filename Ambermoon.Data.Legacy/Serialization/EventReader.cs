@@ -186,16 +186,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Trap:
                 {
-                    var trapType = (TrapEvent.TrapType)dataReader.ReadByte();
+                    var trapType = (TrapEvent.TrapAilment)dataReader.ReadByte();
                     var target = (TrapEvent.TrapTarget)dataReader.ReadByte();
-                    var trapTrigger = (EventTrigger)dataReader.ReadByte();
+                    var affectedGenders = (GenderFlag)dataReader.ReadByte();
                     var baseDamage = dataReader.ReadByte();
                     var unused = dataReader.ReadBytes(5); // unused
                     @event = new TrapEvent
                     {
-                        TypeOfTrap = trapType,
+                        Ailment = trapType,
                         Target = target,
-                        TrapTrigger = trapTrigger,
+                        AffectedGenders = affectedGenders,
                         BaseDamage = baseDamage,
                         Unused = unused
                     };
@@ -203,9 +203,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.RemoveBuffs:
                 {
-                    var unused = dataReader.ReadBytes(9);
+                    byte affectedBuffs = dataReader.ReadByte();
+                    var unused = dataReader.ReadBytes(8);
                     @event = new RemoveBuffsEvent
                     {
+                        AffectedBuff = affectedBuffs == 0 ? (ActiveSpellType?)null: (ActiveSpellType)(affectedBuffs - 1),
                         Unused = unused
                     };
                     break;

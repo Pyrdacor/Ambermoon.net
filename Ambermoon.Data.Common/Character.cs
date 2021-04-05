@@ -238,7 +238,7 @@ namespace Ambermoon.Data
 
         public void Die(Ailment deadAilment = Ailment.DeadCorpse)
         {
-            Ailments |= deadAilment;
+            Ailments = deadAilment;
             Died?.Invoke(this);
         }
 

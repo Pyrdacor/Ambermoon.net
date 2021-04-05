@@ -11,7 +11,7 @@ namespace Ambermoon.Geometry
         /// </summary>
         public static void BlockToCameraPosition(Map map, Position blockPosition, out float x, out float z)
         {
-            x = blockPosition.X * Global.DistancePerBlock + 0.5f * Global.DistancePerBlock;
+            x = -blockPosition.X * Global.DistancePerBlock - 0.5f * Global.DistancePerBlock;
             z = (map.Height - blockPosition.Y) * Global.DistancePerBlock - 0.5f * Global.DistancePerBlock;
         }
 

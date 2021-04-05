@@ -2266,12 +2266,13 @@ namespace Ambermoon.UI
                 finishAction?.Invoke();
             else
             {
+                var tempAnimation = portraitAnimation;
                 void Finished()
                 {
-                    portraitAnimation.Finished -= Finished;
+                    tempAnimation.Finished -= Finished;
                     finishAction?.Invoke();
                 }
-                portraitAnimation.Finished += Finished;
+                tempAnimation.Finished += Finished;
             }
         }
 
@@ -3097,8 +3098,9 @@ namespace Ambermoon.UI
                 {
                     portraitAnimation.PrimarySprite.Y = 1;
                     portraitAnimation.SecondarySprite.Delete();
-                    portraitAnimation.OnFinished();
+                    var tempAnimation = portraitAnimation;
                     portraitAnimation = null;
+                    tempAnimation.OnFinished();
                 }
                 else
                 {

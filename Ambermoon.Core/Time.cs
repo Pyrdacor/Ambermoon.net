@@ -126,6 +126,7 @@ namespace Ambermoon
     {
         readonly Savegame savegame;
         DateTime lastTickTime = DateTime.Now;
+        DateTime? pauseTime = null;
         uint currentMoveTicks = 0;
 
         public uint Year => savegame.Year;
@@ -143,6 +144,23 @@ namespace Ambermoon
         public SavegameTime(Savegame savegame)
         {
             this.savegame = savegame;
+        }
+
+        public void Pause()
+        {
+            pauseTime = DateTime.Now;
+        }
+
+        public void Resume()
+        {
+            if (pauseTime != null)
+            {
+                var now = DateTime.Now;
+                var elapsed = now - lastTickTime;
+                var paused = now - pauseTime;
+                lastTickTime = now - (elapsed - paused.Value);
+                pauseTime = null;
+            }
         }
 
         public void Update()

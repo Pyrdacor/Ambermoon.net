@@ -111,9 +111,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.Trap:
                 {
                     var trapEvent = @event as TrapEvent;
-                    dataWriter.WriteEnumAsByte(trapEvent.TypeOfTrap);
+                    dataWriter.WriteEnumAsByte(trapEvent.Ailment);
                     dataWriter.WriteEnumAsByte(trapEvent.Target);
-                    dataWriter.WriteEnumAsByte(trapEvent.TrapTrigger);
+                    dataWriter.WriteEnumAsByte(trapEvent.AffectedGenders);
                     dataWriter.Write(trapEvent.BaseDamage);
                     dataWriter.Write(trapEvent.Unused);
                     break;
@@ -121,6 +121,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.RemoveBuffs:
                 {
                     var removeBuffsEvent = @event as RemoveBuffsEvent;
+                    dataWriter.Write(removeBuffsEvent.AffectedBuff == null ? (byte)0 : (byte)removeBuffsEvent.AffectedBuff.Value);
                     dataWriter.Write(removeBuffsEvent.Unused);
                     break;
                 }

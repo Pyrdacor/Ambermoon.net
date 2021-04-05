@@ -47,7 +47,7 @@ namespace Ambermoon.Render
         {
             lastPosition = new Position(Position);
             Geometry.BlockToCameraPosition(map.Map, Position, out float x, out float z);
-            Camera.SetPosition(x, z);
+            Camera.SetPosition(-x, z);
         }
 
         public void SetY(float y)
@@ -77,6 +77,8 @@ namespace Ambermoon.Render
                     this.map.SetMap(map, x, y, newDirection.Value, game.CurrentPartyMember?.Race ?? Race.Human);
                     var oldMapIndex = map.Index;
                     SetPosition((int)x, (int)y, ticks, false);
+                    player.Position.X = Position.X;
+                    player.Position.Y = Position.Y;
                     game.PlayerMoved(oldMapIndex != game.Map.Index);
 
                     if (newDirection != null)
@@ -122,6 +124,9 @@ namespace Ambermoon.Render
             return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, CollisionRadius, true);
         }
 
+        public List<Position> GetTouchedPositions(float radius)
+            => Geometry.CameraToTouchedBlockPositions(map.Map, Camera.X, Camera.Z, radius);
+
         delegate void PositionProvider(float distance, out float newX, out float newY, bool noX, bool noZ);
 
         void Move(float distance, uint ticks, PositionProvider positionProvider, Action<float, bool, bool> mover, bool turning = false)
@@ -138,11 +143,11 @@ namespace Ambermoon.Render
                     if (!considerPosition)
                     {
                         Geometry.BlockToCameraPosition(map.Map, touchedPosition, out float touchX, out float touchY);
-                        bool sameXDirection = Math.Sign(newX - oldX) == Math.Sign(-touchX - oldX);
+                        bool sameXDirection = Math.Sign(newX - oldX) == Math.Sign(touchX - oldX);
                         bool sameYDirection = Math.Sign(newY - oldY) == Math.Sign(touchY - oldY);
 
                         considerPosition = (sameXDirection && (sameYDirection || Math.Abs(touchY - oldY) < 0.5f * Global.DistancePerBlock)) ||
-                            (sameYDirection && Math.Abs(-touchX - oldX) < 0.5f * Global.DistancePerBlock);
+                            (sameYDirection && Math.Abs(touchX - oldX) < 0.5f * Global.DistancePerBlock);
                     }
 
                     if (considerPosition)
