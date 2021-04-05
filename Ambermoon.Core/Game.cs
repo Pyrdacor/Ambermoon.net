@@ -1585,9 +1585,7 @@ namespace Ambermoon
         void PickTargetPlayer()
         {
             pickingTargetPlayer = true;
-            disableUntrapping = true;
             CursorType = CursorType.Sword;
-            disableUntrapping = false;
             TrapMouse(Global.PartyMemberPortraitArea);
         }
 

@@ -55,7 +55,8 @@ namespace Ambermoon
             if (trigger == EventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
             {
                 // avoid triggering the same event twice, but only for some events
-                if (@event.Type != EventType.Chest &&
+                if (@event.Type != EventType.Teleport &&
+                    @event.Type != EventType.Chest &&
                     @event.Type != EventType.Door &&
                     @event.Type != EventType.EnterPlace &&
                     @event.Type != EventType.Riddlemouth &&
