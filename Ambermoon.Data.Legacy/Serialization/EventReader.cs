@@ -331,7 +331,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var actionType = (ActionEvent.ActionType)dataReader.ReadByte();
                     var value = dataReader.ReadByte();
-                    var unknown1 = dataReader.ReadBytes(3);
+                    var count = dataReader.ReadByte();
+                    var unknown1 = dataReader.ReadBytes(2);
                     var objectIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(2);
                     @event = new ActionEvent
