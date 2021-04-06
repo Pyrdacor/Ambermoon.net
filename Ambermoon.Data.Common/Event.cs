@@ -387,12 +387,17 @@ namespace Ambermoon.Data
             UseItem = 0x07,
             KnowsKeyword = 0x08, // TODO: needs testing
             Success = 0x09, // treasure fully looted, battle won, etc
+            Unknown1 = 0x0a,
+            CanSee = 0x0b,
+            Unknown2 = 0x0c,
+            HasAilment = 0x0d,
             Hand = 0x0e,
             SayWord = 0x0f, // it also pops up the dictionary to say something
             EnterNumber = 0x10, // enter number popup with correct number
             Levitating = 0x11,
-            Eye = 0x14,
-            // TODO
+            HasGold = 0x12,
+            HasFood = 0x13,
+            Eye = 0x14
         }
 
         public ConditionType TypeOfCondition { get; set; }
@@ -428,10 +433,14 @@ namespace Ambermoon.Data
                 ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.KnowsKeyword => $"{Type}: {(Value == 0 ? "Not know" : "Know")} keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Success => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.CanSee => $"{Type}: {(Value == 0 ? "Can't see" : "Can see")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.HasAilment => $"{Type}: {(Value == 0 ? "Has not" : "Has")} ailment {(Ailment)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.SayWord => $"{Type}: Say keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.EnterNumber => $"{Type}: Enter number {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Levitating => $"{Type}: Levitating, {falseHandling}",
+                ConditionType.HasGold => $"{Type}: Gold {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
+                ConditionType.HasFood => $"{Type}: Food {(Value == 0 ? "<" : ">=")} {ObjectIndex}, {falseHandling}",
                 ConditionType.Eye => $"{Type}: Eye cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 _ => $"{Type}: Unknown ({TypeOfCondition}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
             };
