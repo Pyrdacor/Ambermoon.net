@@ -145,7 +145,29 @@ namespace Ambermoon
                     game.TriggerTrap(trapEvent);
                     return null; // next event is only executed after trap effect
                 }
-                // TODO ...
+                case EventType.RemoveBuffs:
+                {
+                    if (!(@event is RemoveBuffsEvent removeBuffsEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid remove buffs event.");
+
+                    if (removeBuffsEvent.AffectedBuff == null) // all
+                    {
+                        for (int i = 0; i < 6; ++i)
+                        {
+                            game.CurrentSavegame.ActiveSpells[i] = null;
+                        }
+                    }
+                    else
+                    {
+                        int index = (int)removeBuffsEvent.AffectedBuff;
+
+                        if (index < 6)
+                        {
+                            game.CurrentSavegame.ActiveSpells[index] = null;
+                        }
+                    }
+                    break;
+                }
                 case EventType.Riddlemouth:
                 {
                     if (trigger != EventTrigger.Always &&

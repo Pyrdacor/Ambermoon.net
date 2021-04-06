@@ -59,6 +59,7 @@ namespace Ambermoon
                     @event.Type != EventType.Chest &&
                     @event.Type != EventType.Door &&
                     @event.Type != EventType.EnterPlace &&
+                    @event.Type != EventType.RemoveBuffs &&
                     @event.Type != EventType.Riddlemouth &&
                     (map.Type == MapType.Map3D || @event.Type != EventType.Trap))
                 {
