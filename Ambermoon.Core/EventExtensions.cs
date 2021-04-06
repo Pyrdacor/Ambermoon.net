@@ -40,7 +40,11 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid door event.");
 
                     if (!game.ShowDoor(doorEvent, false, false, map))
-                        aborted = true;
+                    {
+                        // already unlocked
+                        lastEventStatus = true;
+                        return doorEvent.Next;
+                    }
                     return null;
                 }
                 case EventType.Chest:
@@ -212,6 +216,14 @@ namespace Ambermoon
                                 return mapEventIfFalse;
                             }
                             break;
+                        case ConditionEvent.ConditionType.DoorOpen:
+                            if (game.CurrentSavegame.IsDoorLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
                         case ConditionEvent.ConditionType.CharacterBit:
                             if (game.CurrentSavegame.GetCharacterBit(conditionEvent.ObjectIndex >> 5, conditionEvent.ObjectIndex & 0x1f) != (conditionEvent.Value != 0))
                             {
@@ -335,6 +347,18 @@ namespace Ambermoon
                             break;
                         case ActionEvent.ActionType.SetEventBit:
                             game.SetMapEventBit(actionEvent.ObjectIndex >> 6, actionEvent.ObjectIndex & 0x3f, actionEvent.Value != 0);
+                            break;
+                        case ActionEvent.ActionType.LockDoor:
+                            if (actionEvent.Value == 0)
+                                game.CurrentSavegame.UnlockDoor(actionEvent.ObjectIndex);
+                            else
+                                game.CurrentSavegame.LockDoor(actionEvent.ObjectIndex);
+                            break;
+                        case ActionEvent.ActionType.LockChest:
+                            if (actionEvent.Value == 0)
+                                game.CurrentSavegame.UnlockChest(actionEvent.ObjectIndex);
+                            else
+                                game.CurrentSavegame.LockChest(actionEvent.ObjectIndex);
                             break;
                         case ActionEvent.ActionType.SetCharacterBit:
                             game.SetMapCharacterBit(actionEvent.ObjectIndex >> 5, actionEvent.ObjectIndex & 0x1f, actionEvent.Value != 0);

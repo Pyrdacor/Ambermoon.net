@@ -186,14 +186,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Trap:
                 {
-                    var trapType = (TrapEvent.TrapAilment)dataReader.ReadByte();
+                    var ailment = (TrapEvent.TrapAilment)dataReader.ReadByte();
                     var target = (TrapEvent.TrapTarget)dataReader.ReadByte();
                     var affectedGenders = (GenderFlag)dataReader.ReadByte();
                     var baseDamage = dataReader.ReadByte();
                     var unused = dataReader.ReadBytes(5); // unused
                     @event = new TrapEvent
                     {
-                        Ailment = trapType,
+                        Ailment = ailment,
                         Target = target,
                         AffectedGenders = affectedGenders,
                         BaseDamage = baseDamage,

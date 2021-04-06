@@ -240,6 +240,13 @@ namespace Ambermoon.Data
 
             return (ChestUnlockStates[chestIndex / 8] & (1 << ((int)chestIndex % 8))) == 0;
         }
+        public void LockChest(uint chestIndex)
+        {
+            if (chestIndex > 255)
+                throw new IndexOutOfRangeException($"Chest index must be 0..255 but was {chestIndex}.");
+
+            ChestUnlockStates[chestIndex / 8] &= (byte)~(1 << ((int)chestIndex % 8));
+        }
         public void UnlockChest(uint chestIndex)
         {
             if (chestIndex > 255)
@@ -253,6 +260,13 @@ namespace Ambermoon.Data
                 throw new IndexOutOfRangeException($"Door index must be 0..255 but was {doorIndex}.");
 
             return (DoorUnlockStates[doorIndex / 8] & (1 << ((int)doorIndex % 8))) == 0;
+        }
+        public void LockDoor(uint doorIndex)
+        {
+            if (doorIndex > 255)
+                throw new IndexOutOfRangeException($"Door index must be 0..255 but was {doorIndex}.");
+
+            DoorUnlockStates[doorIndex / 8] &= (byte)~(1 << ((int)doorIndex % 8));
         }
         public void UnlockDoor(uint doorIndex)
         {

@@ -456,6 +456,8 @@ namespace Ambermoon.Data
             /// Sets an event (event list entry) to active or inactive.
             /// </summary>
             SetEventBit = 0x01,
+            LockDoor = 0x02,
+            LockChest = 0x03,
             /// <summary>
             /// As event status can be set by SetEvent I guess
             /// this is used for more complex non-boolean values
