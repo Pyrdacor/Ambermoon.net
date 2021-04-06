@@ -791,7 +791,7 @@ namespace Ambermoon.Render
 
             var block = Map.Blocks[x, y];
 
-            if (block.MapEventId != 0 && !game.CurrentSavegame.GetEventBit(Map.Index, block.MapEventId - 1))
+            if (block.MapEventId != 0 && game.CurrentSavegame.IsEventActive(Map.Index, block.MapEventId - 1))
             {
                 var type = Map.EventAutomapTypes[(int)block.MapEventId - 1];
 

@@ -205,7 +205,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.EventBit:
-                            if (game.CurrentSavegame.GetEventBit(map.Index, conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame.GetEventBit(conditionEvent.ObjectIndex >> 6, conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -213,7 +213,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.CharacterBit:
-                            if (game.CurrentSavegame.GetCharacterBit(map.Index, conditionEvent.ObjectIndex & 0x1f) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame.GetCharacterBit(conditionEvent.ObjectIndex >> 5, conditionEvent.ObjectIndex & 0x1f) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -334,10 +334,10 @@ namespace Ambermoon
                             game.CurrentSavegame.SetGlobalVariable(actionEvent.ObjectIndex, actionEvent.Value != 0);
                             break;
                         case ActionEvent.ActionType.SetEventBit:
-                            game.SetMapEventBit(map.Index, actionEvent.ObjectIndex & 0x3fu, actionEvent.Value != 0);
+                            game.SetMapEventBit(actionEvent.ObjectIndex >> 6, actionEvent.ObjectIndex & 0x3f, actionEvent.Value != 0);
                             break;
                         case ActionEvent.ActionType.SetCharacterBit:
-                            game.SetMapCharacterBit(map.Index, actionEvent.ObjectIndex & 0x1f, actionEvent.Value != 0);
+                            game.SetMapCharacterBit(actionEvent.ObjectIndex >> 5, actionEvent.ObjectIndex & 0x1f, actionEvent.Value != 0);
                             break;
                             // TODO ...
                     }

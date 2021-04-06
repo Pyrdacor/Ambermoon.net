@@ -1581,8 +1581,10 @@ namespace Ambermoon.UI
 
             if (!game.BattleActive && game.TestUseItemMapEvent(itemSlot.ItemIndex))
             {
-                ReduceItemCharge(itemSlot);
-                game.CloseWindow(() => game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex)));
+                ReduceItemCharge(itemSlot, true, () =>
+                {
+                    game.CloseWindow(() => game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex)));
+                });
                 return;
             }
 
@@ -1764,7 +1766,7 @@ namespace Ambermoon.UI
             }
         }
 
-        internal void ReduceItemCharge(ItemSlot itemSlot, bool slotVisible = true)
+        internal void ReduceItemCharge(ItemSlot itemSlot, bool slotVisible = true, Action followAction = null)
         {
             itemSlot.NumRemainingCharges = Math.Max(0, itemSlot.NumRemainingCharges - 1);
 
@@ -1774,14 +1776,26 @@ namespace Ambermoon.UI
 
                 if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage))
                 {
-                    itemSlot.Remove(1);
-
                     if (slotVisible)
                     {
-                        // TODO: play destroy animation
+                        foreach (var itemGrid in itemGrids)
+                            itemGrid.HideTooltip();
+                        game.InputEnable = false;
+                        DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, () =>
+                        {
+                            game.InputEnable = true;
+                            game.AddTimedEvent(TimeSpan.FromMilliseconds(50), followAction);
+                        });
+                        return;
+                    }
+                    else
+                    {
+                        itemSlot.Remove(1);
                     }
                 }
             }
+
+            followAction?.Invoke();
         }
 
         void DistributeGold(Chest chest)

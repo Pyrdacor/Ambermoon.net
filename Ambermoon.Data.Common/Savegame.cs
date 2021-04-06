@@ -70,6 +70,7 @@ namespace Ambermoon.Data
         /// The bit index corresponds to the event list index (0 to 63).
         /// </summary>
         public ulong[] MapEventBits { get; } = new ulong[1024]; // valid maps are 1 to 528, but these bits allow for maps 1 to 1024
+        public bool IsEventActive(uint mapIndex, uint eventIndex) => !GetEventBit(mapIndex, eventIndex);
         public bool GetEventBit(uint mapIndex, uint eventIndex)
         {
             if (mapIndex < 1 || mapIndex > 1024)

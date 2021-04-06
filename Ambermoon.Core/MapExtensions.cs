@@ -32,7 +32,7 @@ namespace Ambermoon
         public static Event GetEvent(this Map map, uint x, uint y, Savegame savegame)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
-            bool hasMapEvent = mapEventId != 0 && !savegame.GetEventBit(map.Index, mapEventId - 1);
+            bool hasMapEvent = mapEventId != 0 && savegame.IsEventActive(map.Index, mapEventId - 1);
 
             if (!hasMapEvent)
                 return null;
@@ -45,7 +45,7 @@ namespace Ambermoon
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
-            hasMapEvent = mapEventId != 0 && !savegame.GetEventBit(map.Index, mapEventId - 1);
+            hasMapEvent = mapEventId != 0 && savegame.IsEventActive(map.Index, mapEventId - 1);
 
             if (!hasMapEvent)
                 return false;
