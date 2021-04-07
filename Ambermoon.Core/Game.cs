@@ -1179,7 +1179,7 @@ namespace Ambermoon
         /// <param name="action">Action to perform. Second parameter is the finish handler the action must call.</param>
         /// <param name="condition">Condition to filter affected party members.</param>
         /// <param name="followUpAction">Action to trigger after all party members were processed.</param>
-        void ForeachPartyMember(Action<PartyMember, Action> action, Func<PartyMember, bool> condition = null,
+        internal void ForeachPartyMember(Action<PartyMember, Action> action, Func<PartyMember, bool> condition = null,
             Action followUpAction = null)
         {
             void Run(int index)
@@ -3213,7 +3213,7 @@ namespace Ambermoon
                 AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), () => allInputDisabled = false);
         }
 
-        void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
+        internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
             Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Ailment inflictAilment = Ailment.None)
         {
             // In original all players are damaged one after the other
@@ -3362,6 +3362,130 @@ namespace Ambermoon
                     EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
                         (uint)player.Position.Y, CurrentTicks, trapEvent.Next, true);
                 }
+            }
+        }
+
+        internal void AwardPlayer(PartyMember partyMember, AwardEvent awardEvent, Action followAction)
+        {
+            int Change(CharacterValue characterValue, int amount, bool percentage, bool lpLike)
+            {
+                uint max = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
+
+                if (percentage)
+                    amount = amount * (int)max / 100;
+
+                uint newValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
+                int change = (int)newValue - (int)characterValue.CurrentValue;
+
+                characterValue.CurrentValue = newValue;
+
+                return change;
+            }
+
+            int AwardValue(CharacterValue characterValue, bool lpLike)
+            {
+                switch (awardEvent.Operation)
+                {
+                    case AwardEvent.AwardOperation.Increase:
+                        return Change(characterValue, (int)awardEvent.Value, false, lpLike);
+                    case AwardEvent.AwardOperation.Decrease:
+                        return Change(characterValue, -(int)awardEvent.Value, false, lpLike);
+                    case AwardEvent.AwardOperation.IncreasePercentage:
+                        return Change(characterValue, (int)awardEvent.Value, true, lpLike);
+                    case AwardEvent.AwardOperation.DecreasePercentage:
+                        return Change(characterValue, -(int)awardEvent.Value, true, lpLike);
+                    case AwardEvent.AwardOperation.Fill:
+                    {
+                        uint max = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
+                        int change = (int)(max - characterValue.CurrentValue);
+                        characterValue.CurrentValue = max;
+                        return change;
+                    }
+                }
+
+                return 0;
+            }
+
+            switch (awardEvent.TypeOfAward)
+            {
+                case AwardEvent.AwardType.Attribute:
+                    AwardValue(partyMember.Attributes[awardEvent.Attribute.Value], false);
+                    break;
+                case AwardEvent.AwardType.Ability:
+                    AwardValue(partyMember.Abilities[awardEvent.Ability.Value], false);
+                    break;
+                case AwardEvent.AwardType.HitPoints:
+                {
+                    int change = AwardValue(partyMember.HitPoints, true);
+                    if (change < 0)
+                        ShowPlayerDamage(SlotFromPartyMember(partyMember).Value, (uint)-change);
+                    if (partyMember.Alive && partyMember.HitPoints.CurrentValue == 0)
+                        partyMember.Die();
+                    else
+                        layout.UpdateCharacter(partyMember);
+                    break;
+                }
+                case AwardEvent.AwardType.SpellPoints:
+                    AwardValue(partyMember.SpellPoints, true);
+                    layout.UpdateCharacter(partyMember);
+                    break;
+                case AwardEvent.AwardType.SpellLearningPoints:
+                {
+                    switch (awardEvent.Operation)
+                    {
+                        case AwardEvent.AwardOperation.Increase:
+                            partyMember.SpellLearningPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.SpellLearningPoints + awardEvent.Value);
+                            break;
+                        case AwardEvent.AwardOperation.Decrease:
+                            partyMember.SpellLearningPoints = (ushort)Util.Max(0, (int)partyMember.SpellLearningPoints - (int)awardEvent.Value);
+                            break;
+                    }
+                    break;
+                }
+                case AwardEvent.AwardType.TrainingPoints:
+                {
+                    switch (awardEvent.Operation)
+                    {
+                        case AwardEvent.AwardOperation.Increase:
+                            partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + awardEvent.Value);
+                            break;
+                        case AwardEvent.AwardOperation.Decrease:
+                            partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)awardEvent.Value);
+                            break;
+                    }
+                    break;
+                }
+                // TODO: 6
+                case AwardEvent.AwardType.Languages:
+                {
+                    switch (awardEvent.Operation)
+                    {
+                        case AwardEvent.AwardOperation.Add:
+                            partyMember.SpokenLanguages |= awardEvent.Languages.Value;
+                            break;
+                        case AwardEvent.AwardOperation.Remove:
+                            partyMember.SpokenLanguages &= ~awardEvent.Languages.Value;
+                            break;
+                        case AwardEvent.AwardOperation.Toggle:
+                            partyMember.SpokenLanguages ^= awardEvent.Languages.Value;
+                            break;
+                    }
+                    break;
+                }
+                case AwardEvent.AwardType.Experience:
+                {
+                    switch (awardEvent.Operation)
+                    {
+                        case AwardEvent.AwardOperation.Increase:
+                            partyMember.ExperiencePoints = (uint)Util.Min(uint.MaxValue, (long)partyMember.ExperiencePoints + awardEvent.Value);
+                            break;
+                        case AwardEvent.AwardOperation.Decrease:
+                            partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - awardEvent.Value);
+                            break;
+                    }
+                    break;
+                }
+                // TODO ?
             }
         }
 

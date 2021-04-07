@@ -269,8 +269,13 @@ namespace Ambermoon.Data
         public enum AwardOperation
         {
             Increase,
-            Fill = 4
-            // TODO: Decrease?, ... 
+            Decrease,
+            IncreasePercentage,
+            DecreasePercentage,
+            Fill,
+            Remove, // Clear bit
+            Add, // Set bit
+            Toggle // Toggle bit
         }
 
         public enum AwardTarget
@@ -290,7 +295,7 @@ namespace Ambermoon.Data
         public ushort AwardTypeValue { get; set; }
         public Attribute? Attribute => TypeOfAward == AwardType.Attribute ? (Attribute)AwardTypeValue : (Attribute?)null;
         public Ability? Ability => TypeOfAward == AwardType.Ability ? (Ability)AwardTypeValue : (Ability?)null;
-        public Language? Languages => TypeOfAward == AwardType.Languages ? (Language)AwardTypeValue : (Language?)null;
+        public Language? Languages => TypeOfAward == AwardType.Languages ? (Language)(1 << AwardTypeValue) : (Language?)null;
         public uint Value { get; set; }
         public byte Unknown { get; set; }
 

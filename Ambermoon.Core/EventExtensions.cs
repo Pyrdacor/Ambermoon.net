@@ -186,6 +186,41 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
+                case EventType.Award:
+                {
+                    if (!(@event is AwardEvent awardEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid award event.");
+                    void Award(PartyMember partyMember, Action followAction) => game.AwardPlayer(partyMember, awardEvent, followAction);
+                    void Done()
+                    {
+                        if (awardEvent.Next != null)
+                            TriggerEventChain(map, game, EventTrigger.Always, x, y, game.CurrentTicks, awardEvent.Next, true);
+                    }
+                    switch (awardEvent.Target)
+                    {
+                        case AwardEvent.AwardTarget.ActivePlayer:
+                            Award(game.CurrentPartyMember, Done);
+                            break;
+                        case AwardEvent.AwardTarget.All:
+                            if (awardEvent.TypeOfAward == AwardEvent.AwardType.HitPoints &&
+                                (awardEvent.Operation == AwardEvent.AwardOperation.Decrease ||
+                                awardEvent.Operation == AwardEvent.AwardOperation.DecreasePercentage))
+                            {
+                                Func<PartyMember, uint> damageProvider = awardEvent.Operation == AwardEvent.AwardOperation.Decrease
+                                    ? (Func<PartyMember, uint>)(_ => awardEvent.Value) : p => awardEvent.Value * p.HitPoints.TotalMaxValue / 100;
+
+                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done);
+                            }
+                            else
+                            {
+                                game.ForeachPartyMember(Award, p => p.Alive, Done);
+                            }
+                            break;
+                        default:
+                            return awardEvent.Next;
+                    }
+                    return null;
+                }
                 case EventType.ChangeTile:
                 {
                     // TODO: add those to the savegame as well!
@@ -240,6 +275,14 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.DoorOpen:
                             if (game.CurrentSavegame.IsDoorLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.ChestOpen:
+                            if (game.CurrentSavegame.IsChestLocked(conditionEvent.ObjectIndex) != (conditionEvent.Value == 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
