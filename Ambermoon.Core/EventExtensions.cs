@@ -209,7 +209,8 @@ namespace Ambermoon
                                 Func<PartyMember, uint> damageProvider = awardEvent.Operation == AwardEvent.AwardOperation.Decrease
                                     ? (Func<PartyMember, uint>)(_ => awardEvent.Value) : p => awardEvent.Value * p.HitPoints.TotalMaxValue / 100;
 
-                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done);
+                                // Note: Awards damage silently.
+                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done, Ailment.None, false);
                             }
                             else
                             {

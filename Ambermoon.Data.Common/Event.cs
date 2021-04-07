@@ -261,10 +261,11 @@ namespace Ambermoon.Data
             HitPoints = 0x02,
             SpellPoints = 0x03,
             SpellLearningPoints = 0x04,
-            TrainingPoints = 0x05,
+            Ailments = 0x05,
+            UsableSpellTypes = 0x06,
             Languages = 0x07,
-            Experience = 0x08
-            // TODO
+            Experience = 0x08,
+            TrainingPoints = 0x09
         }
 
         public enum AwardOperation
@@ -279,11 +280,11 @@ namespace Ambermoon.Data
             Toggle // Toggle bit
         }
 
+        // Note: This is actually a bool so there are only those two targets.
         public enum AwardTarget
         {
             ActivePlayer,
             All
-            // TODO: RandomPlayer? Hero?
         }
 
         public AwardType TypeOfAward { get; set; }
@@ -297,6 +298,8 @@ namespace Ambermoon.Data
         public Attribute? Attribute => TypeOfAward == AwardType.Attribute ? (Attribute)AwardTypeValue : (Attribute?)null;
         public Ability? Ability => TypeOfAward == AwardType.Ability ? (Ability)AwardTypeValue : (Ability?)null;
         public Language? Languages => TypeOfAward == AwardType.Languages ? (Language)(1 << AwardTypeValue) : (Language?)null;
+        public Ailment? Ailments => TypeOfAward == AwardType.Ailments ? (Ailment)(1 << AwardTypeValue) : (Ailment?)null;
+        public SpellTypeMastery? UsableSpellTypes => TypeOfAward == AwardType.UsableSpellTypes ? (SpellTypeMastery)(1 << AwardTypeValue) : (SpellTypeMastery?)null;
         public uint Value { get; set; }
         public byte Unknown { get; set; }
 

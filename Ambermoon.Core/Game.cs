@@ -3214,7 +3214,8 @@ namespace Ambermoon
         }
 
         internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
-            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Ailment inflictAilment = Ailment.None)
+            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Ailment inflictAilment = Ailment.None,
+            bool showDamageSplash = true)
         {
             // In original all players are damaged one after the other
             // without showing the damage splash immediately. If a character
@@ -3225,11 +3226,19 @@ namespace Ambermoon
             List<PartyMember> damagedPlayers = new List<PartyMember>();
             ForeachPartyMember(Damage, p => p.Alive && !p.Ailments.HasFlag(Ailment.Petrified), () =>
             {
-                ForeachPartyMember(ShowDamageSplash, p => damagedPlayers.Contains(p), () =>
+                if (showDamageSplash)
+                {
+                    ForeachPartyMember(ShowDamageSplash, p => damagedPlayers.Contains(p), () =>
+                    {
+                        layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+                        followAction?.Invoke();
+                    });
+                }
+                else
                 {
                     layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
                     followAction?.Invoke();
-                });
+                }
             });
 
             void Damage(PartyMember partyMember, Action finished)
@@ -3367,58 +3376,64 @@ namespace Ambermoon
 
         internal void AwardPlayer(PartyMember partyMember, AwardEvent awardEvent, Action followAction)
         {
-            int Change(CharacterValue characterValue, int amount, bool percentage, bool lpLike)
+            void Change(CharacterValue characterValue, int amount, bool percentage, bool lpLike)
             {
                 uint max = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
 
                 if (percentage)
                     amount = amount * (int)max / 100;
 
-                uint newValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
-                int change = (int)newValue - (int)characterValue.CurrentValue;
-
-                characterValue.CurrentValue = newValue;
-
-                return change;
+                characterValue.CurrentValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
             }
 
-            int AwardValue(CharacterValue characterValue, bool lpLike)
+            void AwardValue(CharacterValue characterValue, bool lpLike)
             {
                 switch (awardEvent.Operation)
                 {
                     case AwardEvent.AwardOperation.Increase:
-                        return Change(characterValue, (int)awardEvent.Value, false, lpLike);
+                        Change(characterValue, (int)awardEvent.Value, false, lpLike);
+                        break;
                     case AwardEvent.AwardOperation.Decrease:
-                        return Change(characterValue, -(int)awardEvent.Value, false, lpLike);
+                        Change(characterValue, -(int)awardEvent.Value, false, lpLike);
+                        break;
                     case AwardEvent.AwardOperation.IncreasePercentage:
-                        return Change(characterValue, (int)awardEvent.Value, true, lpLike);
+                        Change(characterValue, (int)awardEvent.Value, true, lpLike);
+                        break;
                     case AwardEvent.AwardOperation.DecreasePercentage:
-                        return Change(characterValue, -(int)awardEvent.Value, true, lpLike);
+                        Change(characterValue, -(int)awardEvent.Value, true, lpLike);
+                        break;
                     case AwardEvent.AwardOperation.Fill:
-                    {
-                        uint max = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
-                        int change = (int)(max - characterValue.CurrentValue);
-                        characterValue.CurrentValue = max;
-                        return change;
-                    }
+                        characterValue.CurrentValue = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
+                        break;
                 }
-
-                return 0;
             }
 
             switch (awardEvent.TypeOfAward)
             {
                 case AwardEvent.AwardType.Attribute:
-                    AwardValue(partyMember.Attributes[awardEvent.Attribute.Value], false);
+                    if (awardEvent.Attribute != null && awardEvent.Attribute < Attribute.Age)
+                        AwardValue(partyMember.Attributes[awardEvent.Attribute.Value], false);
+                    else
+                    {
+                        ShowMessagePopup($"ERROR: Invalid award event attribute type.", followAction);
+                        return;
+                    }
                     break;
                 case AwardEvent.AwardType.Ability:
-                    AwardValue(partyMember.Abilities[awardEvent.Ability.Value], false);
+                    if (awardEvent.Ability != null)
+                        AwardValue(partyMember.Abilities[awardEvent.Ability.Value], false);
+                    else
+                    {
+                        ShowMessagePopup($"ERROR: Invalid award event ability type.", followAction);
+                        return;
+                    }
                     break;
                 case AwardEvent.AwardType.HitPoints:
                 {
-                    int change = AwardValue(partyMember.HitPoints, true);
-                    if (change < 0)
-                        ShowPlayerDamage(SlotFromPartyMember(partyMember).Value, (uint)-change);
+                    // Note: Awards happen silently so there is no damage splash.
+                    // Looking at the original code there isn't even a die handling
+                    // when a negative award would leave the LP at 0 but we do so here.
+                    AwardValue(partyMember.HitPoints, true);
                     if (partyMember.Alive && partyMember.HitPoints.CurrentValue == 0)
                         partyMember.Die();
                     else
@@ -3442,22 +3457,58 @@ namespace Ambermoon
                     }
                     break;
                 }
-                case AwardEvent.AwardType.TrainingPoints:
+                case AwardEvent.AwardType.Ailments:
                 {
+                    if (awardEvent.Ailments == null)
+                    {
+                        ShowMessagePopup($"ERROR: Invalid award event ailment.", followAction);
+                        return;
+                    }
+
                     switch (awardEvent.Operation)
                     {
-                        case AwardEvent.AwardOperation.Increase:
-                            partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + awardEvent.Value);
+                        case AwardEvent.AwardOperation.Add:
+                            partyMember.Ailments |= awardEvent.Ailments.Value;
                             break;
-                        case AwardEvent.AwardOperation.Decrease:
-                            partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)awardEvent.Value);
+                        case AwardEvent.AwardOperation.Remove:
+                            partyMember.Ailments &= ~awardEvent.Ailments.Value;
+                            break;
+                        case AwardEvent.AwardOperation.Toggle:
+                            partyMember.Ailments ^= awardEvent.Ailments.Value;
                             break;
                     }
                     break;
                 }
-                // TODO: 6
+                case AwardEvent.AwardType.UsableSpellTypes:
+                {
+                    if (awardEvent.UsableSpellTypes == null)
+                    {
+                        ShowMessagePopup($"ERROR: Invalid award event spell mastery.", followAction);
+                        return;
+                    }
+
+                    switch (awardEvent.Operation)
+                    {
+                        case AwardEvent.AwardOperation.Add:
+                            partyMember.SpellMastery |= awardEvent.UsableSpellTypes.Value;
+                            break;
+                        case AwardEvent.AwardOperation.Remove:
+                            partyMember.SpellMastery &= ~awardEvent.UsableSpellTypes.Value;
+                            break;
+                        case AwardEvent.AwardOperation.Toggle:
+                            partyMember.SpellMastery ^= awardEvent.UsableSpellTypes.Value;
+                            break;
+                    }
+                    break;
+                }
                 case AwardEvent.AwardType.Languages:
                 {
+                    if (awardEvent.Languages == null)
+                    {
+                        ShowMessagePopup($"ERROR: Invalid award event language.", followAction);
+                        return;
+                    }
+
                     switch (awardEvent.Operation)
                     {
                         case AwardEvent.AwardOperation.Add:
@@ -3485,8 +3536,22 @@ namespace Ambermoon
                     }
                     break;
                 }
-                // TODO ?
+                case AwardEvent.AwardType.TrainingPoints:
+                {
+                    switch (awardEvent.Operation)
+                    {
+                        case AwardEvent.AwardOperation.Increase:
+                            partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + awardEvent.Value);
+                            break;
+                        case AwardEvent.AwardOperation.Decrease:
+                            partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)awardEvent.Value);
+                            break;
+                    }
+                    break;
+                }
             }
+
+            followAction?.Invoke();
         }
 
         void Levitate()
