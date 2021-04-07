@@ -7,14 +7,14 @@ namespace Ambermoon.Data
 {
     public enum EventType
     {
-        Unknown,
+        Invalid,
         Teleport, // open doors, exits, teleporters, etc
         Door, // locked doors
         Chest, // all kinds of lootable map objects
         PopupText, // events with text popup
         Spinner, // rotates the player to a random direction
         Trap, // the burning fire places in grandfathers house, chest/door traps etc
-        RemoveBuffs, // this removes mystic map, light and clairvoyance in lebabs tower 4
+        RemoveBuffs, // this removes all active buffs in lebabs tower 4
         Riddlemouth,
         Award,
         ChangeTile,
@@ -25,12 +25,13 @@ namespace Ambermoon.Data
         Dice100Roll,
         Conversation,
         PrintText,
-        Create,
+        Create, // conversation only
         Decision, // yes/no popup with text
         ChangeMusic,
-        Exit,
-        Spawn,
-        Nop // null / no operation
+        Exit, // conversation only
+        Spawn, // TODO: correct?
+        Interact, // conversation only, executes conversation actions like giving the item/gold/food or join/leave the party
+        Unknown
     }
 
     public class Event
@@ -539,7 +540,8 @@ namespace Ambermoon.Data
             Keyword = 0,
             ShowItem = 1,
             GiveItem = 2,
-            // TODO: give gold, give food
+            GiveGold = 3,
+            GiveFood = 4,
             JoinParty = 5,
             LeaveParty = 6,
             Talk = 7,
@@ -644,8 +646,10 @@ namespace Ambermoon.Data
         }
     }
 
-    public class NopEvent : Event
+    public class InteractEvent : Event
     {
+        public byte[] Unused { get; set; }
+
         public override string ToString()
         {
             return $"{Type}";

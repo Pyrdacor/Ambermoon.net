@@ -236,7 +236,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unknown = dataReader.ReadByte();
                     var awardTypeValue = dataReader.ReadWord();
                     var value = dataReader.ReadWord();
-
                     @event = new AwardEvent
                     {
                         TypeOfAward = awardType,
@@ -413,6 +412,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.Exit:
                 {
                     @event = new ExitEvent
+                    {
+                        Unused = dataReader.ReadBytes(9)
+                    };
+                    break;
+                }
+                case EventType.Interact:
+                {
+                    @event = new InteractEvent
                     {
                         Unused = dataReader.ReadBytes(9)
                     };

@@ -248,6 +248,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(exitEvent.Unused);
                     break;
                 }
+                case EventType.Interact:
+                {
+                    var interactEvent = @event as InteractEvent;
+                    dataWriter.Write(interactEvent.Unused);
+                    break;
+                }
                 default:
                 {
                     var debugEvent = @event as DebugEvent;
