@@ -29,7 +29,8 @@ namespace Ambermoon.Data
         /// Used if this is a long-ranged weapon with ammunition.
         /// </summary>
         public AmmunitionType UsedAmmunitionType { get; set; }
-        public byte[] UnknownBytes17To20 { get; set; } // 4
+        public uint AttackReduction { get; set; }
+        public uint ParryReduction { get; set; }
         /// <summary>
         /// This value is used for:
         /// - Special item purposes like clock, compass, etc (<see cref="SpecialItemPurpose"/>)

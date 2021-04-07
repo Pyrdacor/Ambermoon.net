@@ -33,7 +33,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             item.Damage = (sbyte)dataReader.ReadByte();
             item.AmmunitionType = (AmmunitionType)dataReader.ReadByte();
             item.UsedAmmunitionType = (AmmunitionType)dataReader.ReadByte();
-            item.UnknownBytes17To20 = dataReader.ReadBytes(4);
+            var reduction = dataReader.ReadBytes(4);
+            item.AttackReduction = reduction[0] == 0 ? 0u : reduction[2];
+            item.ParryReduction = reduction[1] == 0 ? 0u : reduction[3];
             item.SpecialValue = dataReader.ReadByte();
             item.TextSubIndex = dataReader.ReadByte();
             item.SpellSchool = (SpellSchool)dataReader.ReadByte();
