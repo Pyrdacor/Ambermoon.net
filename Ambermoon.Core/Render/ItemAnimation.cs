@@ -58,7 +58,7 @@ namespace Ambermoon.Render
                         var sprite = sprites[index] = renderView.SpriteFactory.Create(1, 1, true, 255);
                         sprite.TextureAtlasOffset = offset + new Position(x * 2 + y % 2, y * 2 + x % 2);
                         sprite.Layer = renderView.GetLayer(Layer.Items);
-                        sprite.PaletteIndex = 49;
+                        sprite.PaletteIndex = game.UIPaletteIndex;
                         sprite.X = position.X + x * 2 + y % 2;
                         sprite.Y = position.Y + y * 2 + x % 2;
                         sprite.Visible = true;
@@ -157,7 +157,7 @@ namespace Ambermoon.Render
                         var sprite = renderView.SpriteFactory.Create(16, 16, true, 255);
                         sprite.TextureAtlasOffset = offset;
                         sprite.Layer = renderView.GetLayer(layer);
-                        sprite.PaletteIndex = 49;
+                        sprite.PaletteIndex = game.UIPaletteIndex;
                         sprite.X = startPosition.X;
                         sprite.Y = startPosition.Y;
                         sprite.Visible = true;

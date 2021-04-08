@@ -31,7 +31,6 @@ namespace Ambermoon.Data.Legacy
         };
 
         readonly GameData gameData;
-        readonly ExecutableData.ExecutableData executableData;
         public Dictionary<int, Graphic> Palettes { get; }
         public Dictionary<int, int> NPCGraphicOffsets { get; } = new Dictionary<int, int>();
 
@@ -55,84 +54,33 @@ namespace Ambermoon.Data.Legacy
             return ColorIndexMapping[offset + colorIndex % 16];
         }
 
+        public byte PrimaryUIPaletteIndex { get; } = 50;
+        public byte SecondaryUIPaletteIndex { get; } = 52;
+        public byte AutomapPaletteIndex { get; } = 51;
+        public byte FirstIntroPaletteIndex { get; } = 54;
+
         public GraphicProvider(GameData gameData, ExecutableData.ExecutableData executableData, IntroData introData)
         {
             this.gameData = gameData;
-            this.executableData = executableData;
             var graphicReader = new GraphicReader();
             Palettes = gameData.Files[paletteFile].Files.ToDictionary(f => f.Key, f => ReadPalette(graphicReader, f.Value));
 
-            // There is a special palette used for items and portraits.
-            Palettes.Add(50, new Graphic
-            {
-                Width = 32,
-                Height = 1,
-                IndexedGraphic = false,
-                Data = new byte[]
-                {
-                    /*0x00, 0x00, 0x00, 0xff, 0xed, 0xdc, 0xcb, 0xff, 0xfe, 0xfe, 0xed, 0xff, 0xba, 0xba, 0xcb, 0xff,
-                    0x87, 0x98, 0xa9, 0xff, 0x54, 0x76, 0x87, 0xff, 0x21, 0x54, 0x65, 0xff, 0x00, 0x32, 0x43, 0xff,
-                    0xfe, 0xcb, 0x98, 0xff, 0xed, 0xa9, 0x76, 0xff, 0xcb, 0x87, 0x54, 0xff, 0xa9, 0x65, 0x32, 0xff,
-                    0x87, 0x43, 0x21, 0xff, 0x54, 0x21, 0x10, 0xff, 0xba, 0x87, 0x00, 0xff, 0xdc, 0xa9, 0x00, 0xff,
-                    0xfe, 0xcb, 0x00, 0xff, 0xfe, 0x98, 0x00, 0xff, 0xcb, 0x65, 0x00, 0xff, 0x87, 0x10, 0x21, 0xff,
-                    0xcb, 0x43, 0x32, 0xff, 0xed, 0x65, 0x32, 0xff, 0xa9, 0xa9, 0x43, 0xff, 0x54, 0x76, 0x32, 0xff,
-                    0x21, 0x54, 0x43, 0xff, 0x00, 0x10, 0x00, 0xff, 0x21, 0x21, 0x21, 0xff, 0x43, 0x43, 0x32, 0xff,
-                    0x65, 0x65, 0x54, 0xff, 0x87, 0x87, 0x76, 0xff, 0xa9, 0xa9, 0x98, 0xff, 0xcb, 0xcb, 0xba, 0xff*/
-                    0x00, 0x00, 0x00, 0xff, 0xee, 0xdd, 0xcc, 0xff, 0xff, 0xff, 0xee, 0xff, 0xbb, 0xbb, 0xcc, 0xff,
-                    0x88, 0x99, 0xaa, 0xff, 0x55, 0x77, 0x88, 0xff, 0x22, 0x55, 0x66, 0xff, 0x00, 0x33, 0x44, 0xff,
-                    0xff, 0xcc, 0x99, 0xff, 0xee, 0xaa, 0x77, 0xff, 0xcc, 0x88, 0x55, 0xff, 0xaa, 0x66, 0x33, 0xff,
-                    0x88, 0x44, 0x22, 0xff, 0x55, 0x22, 0x11, 0xff, 0xbb, 0x88, 0x00, 0xff, 0xdd, 0xaa, 0x00, 0xff,
+            // Add builtin palettes
+            for (int i = 0; i < 3; ++i)
+                Palettes.Add(50 + i, executableData.BuiltinPalettes[i]);
 
-                    0xff, 0xcc, 0x00, 0xff, 0xff, 0x99, 0x00, 0xff, 0xcc, 0x66, 0x00, 0xff, 0x88, 0x11, 0x22, 0xff,
-                    0xcc, 0x44, 0x33, 0xff, 0xee, 0x66, 0x33, 0xff, 0xaa, 0xaa, 0x44, 0xff, 0x55, 0x77, 0x33, 0xff,
-                    /*0x44, 0x99, 0xdd, 0xff, 0x22, 0x55, 0x99, 0xff, 0x22, 0x11, 0x00, 0xff, 0x44, 0x33, 0x11, 0xff,
-                    0x66, 0x55, 0x33, 0xff, 0x88, 0x77, 0x55, 0xff, 0xaa, 0x99, 0x77, 0xff, 0xcc, 0xbb, 0x99, 0xff*/
-                    0x22, 0x55, 0x44, 0xff, 0x55, 0x00, 0x99, 0xff, 0x22, 0x22, 0x22, 0xff, 0x44, 0x44, 0x33, 0xff,
-                    0x66, 0x66, 0x55, 0xff, 0x88, 0x88, 0x77, 0xff, 0xaa, 0xaa, 0x99, 0xff, 0xcc, 0xcc, 0xbb, 0xff
-                }
-            });
-            // We also use another palette for text rendering. It has transparent, black, white, gray, red, yellow etc.
-            // Note: If a text is hovered (e.g. when choosing something to say) the color is inverted (e.g. yellow
-            // background and text is just transparent to show the gray background).
-            // We also add some other colors like the blue gradient for portrait backgrounds.
-            Palettes.Add(51, new Graphic
-            {
-                Width = 32,
-                Height = 1,
-                IndexedGraphic = false,
-                Data = new byte[]
-                {
-                    // transparent, black (shadow), white, gray
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xee, 0xff, 0xcc, 0xcc, 0xbb, 0xff,
-                    // red (character), yellow (active character), orange (battle text), blueish gray (dead character)
-                    0xcc, 0x44, 0x33, 0xff, 0xff, 0xcc, 0x00, 0xff, 0xdd, 0x66, 0x33, 0xff, 0x88, 0x99, 0xaa, 0xff,
-                    // green (stat UI headers), disabled text, dark gray, red (move blocked cross)
-                    0xaa, 0xaa, 0x44, 0xff, 0x66, 0x55, 0x44, 0xff, 0x88, 0x77, 0x66, 0xff, 0x88, 0x11, 0x22, 0xff,
-                    // pale red (wait hour message outdoor), pale yellow (wait hour message indoor),
-                    // azure (wait hour message 3D), light gray (item info headers)
-                    0xbb, 0x77, 0x55, 0xff, 0xcc, 0xaa, 0x44, 0xff, 0x00, 0xcc, 0xff, 0xff, 0xaa, 0xaa, 0x99, 0xff,
-                    // light orange (item details headers), 3 blue tones (buff text animation)
-                    0xff, 0x99, 0x00, 0xff, 0x00, 0x33, 0x44, 0xff, 0x22, 0x55, 0x66, 0xff, 0x55, 0x77, 0x88, 0xff,
-                    // rest unused
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                }
-            });
             // And another palette for some UI graphics.
             // The portraits have a blue gradient as background. It is also 32x34 pixels in size and the gradient
             // is in y-direction. All colors have R=0x00 and G=0x11. The blue component is increased by 0x11
             // every 2 pixels starting at y=4 (first 4 pixel rows have B=0x00, next 2 have B=0x11, etc).
             // Last 2 rows have B=0xff.
-            Palettes.Add(52, new Graphic
+            Palettes.Add(53, new Graphic
             {
                 Width = 32,
                 Height = 1,
                 IndexedGraphic = false,
                 Data = new byte[]
                 {
-                    // NOTE: Color 25 (0-based) is treated as the color key (tansparent color) index so don't use it
-                    // as a normal color!
                     // The first colors are used for spells which use a materialize animation (earth and wind spells, waterfall, etc).
                     // The animation uses black, dark red, light purple, dark purple, dark beige, light beige in that order.
                     // We start with these color at offset 1. We leave the first color as fully transparent.
@@ -149,24 +97,7 @@ namespace Ambermoon.Data.Legacy
                     0x22, 0x22, 0x22, 0xff, 0x88, 0x88, 0x77, 0xff, 0xaa, 0xaa, 0x99, 0xff, 0xcc, 0xcc, 0xbb, 0xff
                 }
             });
-            // We add the palette for the automap (second from the executable data).
-            Palettes.Add(53, new Graphic
-            {
-                Width = 32,
-                Height = 1,
-                IndexedGraphic = false,
-                Data = new byte[]
-                {
-                    0x00, 0x00, 0x00, 0x00, 0xff, 0xdd, 0xcc, 0xff, 0xee, 0xbb, 0x99, 0xff, 0xcc, 0x99, 0x66, 0xff,
-                    0x44, 0x11, 0x00, 0xff, 0x88, 0x55, 0x11, 0xff, 0xaa, 0x77, 0x44, 0xff, 0x66, 0x33, 0x00, 0xff,
-                    0xff, 0x66, 0x00, 0xff, 0xdd, 0x33, 0x00, 0xff, 0x99, 0x00, 0x00, 0xff, 0xff, 0xcc, 0x00, 0xff,
-                    0xbb, 0x99, 0x00, 0xff, 0x88, 0x66, 0x00, 0xff, 0x99, 0xaa, 0x33, 0xff, 0x55, 0x77, 0x00, 0xff,
-                    0x22, 0x44, 0x00, 0xff, 0x88, 0xbb, 0xee, 0xff, 0x33, 0x88, 0xcc, 0xff, 0x00, 0x44, 0x88, 0xff,
-                    0xcc, 0x88, 0xdd, 0xff, 0xaa, 0x66, 0x99, 0xff, 0x88, 0x33, 0x66, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0x77, 0x99, 0xdd, 0xff, 0x11, 0x66, 0xaa, 0xff, 0x22, 0x11, 0x11, 0xff, 0x44, 0x33, 0x22, 0xff,
-                    0x66, 0x55, 0x44, 0xff, 0x88, 0x77, 0x66, 0xff, 0xaa, 0x99, 0x88, 0xff, 0xcc, 0xbb, 0xaa, 0xff
-                }
-            });
+            
 
             int introPaletteCount = introData == null ? 0 : Math.Min(9, introData.IntroPalettes.Count);
             int p = 0;
@@ -182,23 +113,6 @@ namespace Ambermoon.Data.Legacy
                     Data = new byte[32 * 4]
                 });
             }
-
-            // The following bytes were extracted from AM2_CPU (behind cursors).
-            // These are 3 palettes.
-
-            /* The first one is the one for portraits and items. One of the others might be for texts. Maybe two text color and UI versions.
-             * 00 00 0E DC 0F FE 0B BC 08 9A 05 78 02 56 00 34 0F C9 0E A7 0C 85 0A 63 08 42 05 21 0B 80 0D A0
-             * 0F C0 0F 90 0C 60 08 12 0C 43 0E 63 0A A4 05 73 02 54 05 09 02 22 04 43 06 65 08 87 0A A9 0C CB
-             *
-             * The second one is used for automap graphics including the map itself.
-             * 00 00 0F DC 0E B9 0C 96 04 10 08 51 0A 74 06 30 0F 60 0D 30 09 00 0F C0 0B 90 08 60 09 A3 05 70
-             * 02 40 08 BE 03 8C 00 48 0C 8D 0A 69 08 36 0F FF 07 9D 01 6A 02 11 04 32 06 54 08 76 0A 98 0C BA
-             * 
-             * The third one seems to be a slightly modified version of the first one.
-             * It seems to contain some but not all of the text colors.
-             * 00 00 0E DC 0F FE 0B BC 08 9A 05 78 02 56 00 34 0F C9 0E A7 0C 85 0A 63 08 42 05 21 0B 80 0D A0
-             * 0F C0 0F 90 0C 60 08 12 0C 43 0E 63 0A A4 05 73 04 9D 02 59 02 10 04 31 06 53 08 75 0A 97 0C B9
-             */
 
             foreach (var type in Enum.GetValues<GraphicType>())
             {
@@ -427,6 +341,14 @@ namespace Ambermoon.Data.Legacy
             return paletteGraphic;
         }
 
+        internal static Graphic ReadPalette(IDataReader reader)
+        {
+            var graphicReader = new GraphicReader();
+            var paletteGraphic = new Graphic();
+            graphicReader.ReadGraphic(paletteGraphic, reader, paletteGraphicInfo);
+            return paletteGraphic;
+        }
+
         static GraphicInfo paletteGraphicInfo = new GraphicInfo
         {
             Width = 32,
@@ -476,14 +398,14 @@ namespace Ambermoon.Data.Legacy
                 var info = GraphicInfoFromType(type);
                 var graphicList = graphics[type];
 
-                void LoadGraphic(IDataReader graphicDataReader)
+                void LoadGraphic(IDataReader graphicDataReader, byte maskColor = 0)
                 {
                     graphicDataReader.Position = 0;
                     int end = graphicDataReader.Size - info.DataSize;
                     while (graphicDataReader.Position <= end)
                     {
                         var graphic = new Graphic();
-                        reader.ReadGraphic(graphic, graphicDataReader, info);
+                        reader.ReadGraphic(graphic, graphicDataReader, info, maskColor);
                         graphicList.Add(graphic);
                     }
                 }
@@ -512,7 +434,7 @@ namespace Ambermoon.Data.Legacy
 
                 foreach (var file in allFiles)
                 {
-                    LoadGraphic(file.Value);
+                    LoadGraphic(file.Value, (byte)(type == GraphicType.Portrait ? 25 : 0));
                 }
             }
         }

@@ -48,7 +48,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         paletteIndex += graphicInfo.PaletteOffset;
 
                         if (graphicInfo.Alpha && paletteIndex == graphicInfo.PaletteOffset)
-                            graphic.Data[mx + y * graphic.Width] = 0;
+                            graphic.Data[mx + y * graphic.Width] = graphicInfo.ColorKey;
                         else
                             graphic.Data[mx + y * graphic.Width] = paletteIndex;
 
@@ -66,7 +66,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
 
-        public void ReadGraphic(Graphic graphic, IDataReader dataReader, GraphicInfo? graphicInfo)
+        public void ReadGraphic(Graphic graphic, IDataReader dataReader, GraphicInfo? graphicInfo, byte maskColor = 0)
         {
             // Legacy graphics need the graphicInfo.
             if (graphicInfo == null)
@@ -127,6 +127,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                     break;
                 default:
                     throw new Exception("Invalid legacy graphic format.");
+            }
+
+            if (maskColor != 0)
+            {
+                graphic.ReplaceColor(0, 32);
+                graphic.ReplaceColor(maskColor, 0);
             }
         }
     }

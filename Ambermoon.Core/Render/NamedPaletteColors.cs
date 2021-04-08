@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Render
 {
-    // They all use palette 49!
+    // They all use an UI palette!
     public enum NamedPaletteColors
     {
         LPBar = 6,

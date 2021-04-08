@@ -21,9 +21,9 @@
 
 using Ambermoon.Data;
 using Ambermoon.Render;
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.Renderer
 {
@@ -32,9 +32,10 @@ namespace Ambermoon.Renderer
         const int CharacterWidth = 6;
         const int CharacterHeight = 6;
         const int LineHeight = 7;
-        const byte ShadowColorIndex = 1;
+        const byte ShadowColorIndex = (byte)TextColor.Black;
         protected int drawIndex = -1;
         byte displayLayer = 0;
+        byte paletteIndex = 49;
         TextColor textColor;
         bool shadow;
         IText text;
@@ -97,6 +98,20 @@ namespace Ambermoon.Renderer
                 displayLayer = value;
 
                 UpdateDisplayLayer();
+            }
+        }
+
+        public byte PaletteIndex
+        {
+            get => paletteIndex;
+            set
+            {
+                if (paletteIndex == value)
+                    return;
+
+                paletteIndex = value;
+
+                UpdatePaletteIndex();
             }
         }
 
@@ -170,6 +185,12 @@ namespace Ambermoon.Renderer
 
             characterSprites.ForEach(s => s.DisplayLayer = textDisplayLayer);
             characterShadowSprites.ForEach(s => s.DisplayLayer = DisplayLayer);
+        }
+
+        void UpdatePaletteIndex()
+        {
+            characterSprites.ForEach(s => s.PaletteIndex = PaletteIndex);
+            characterShadowSprites.ForEach(s => s.PaletteIndex = PaletteIndex);
         }
 
         bool UpdateCharacterPositions()
@@ -343,7 +364,7 @@ namespace Ambermoon.Renderer
                     X = position.X,
                     Y = position.Y,
                     Layer = Layer,
-                    PaletteIndex = 50,
+                    PaletteIndex = PaletteIndex,
                     Visible = Visible
                 };
                 sprite.ClipArea = ClipArea;
@@ -363,7 +384,7 @@ namespace Ambermoon.Renderer
                         X = characterSprite.X + 1,
                         Y = characterSprite.Y + 1,
                         Layer = Layer,
-                        PaletteIndex = 50,                        
+                        PaletteIndex = PaletteIndex,                        
                         Visible = Visible
                     };
                     shadowSprite.ClipArea = ClipArea;

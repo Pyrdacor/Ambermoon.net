@@ -3,6 +3,7 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
@@ -23,7 +24,7 @@ namespace Ambermoon.UI
         readonly ILayerSprite portrait = null;
         readonly TextInput nameInput = null;
         readonly List<IColoredRect> portraitBorders = new List<IColoredRect>(4);
-        readonly List<IColoredRect> sunkenBoxParts = new List<IColoredRect>(5);
+        readonly List<IColoredRect> sunkenBoxParts = new List<IColoredRect>(30);
         IColoredRect fadeArea;
         const int FadeTime = 250;
         DateTime? fadeInStartTime = null;
@@ -90,29 +91,29 @@ namespace Ambermoon.UI
                 AddBorder(PopupFrame.FrameRight, windowSize.Width - 1, i + 1);
             }
             backgroundFill = FillArea(new Rect(windowArea.X + 16, windowArea.Y + 16,
-                windowSize.Width * 16 - 32, windowSize.Height * 16 - 32), game.GetPaletteColor(50, 28), 0);
+                windowSize.Width * 16 - 32, windowSize.Height * 16 - 32), game.GetUIColor(28), 0);
             #endregion
 
             #region Buttons
             var offset = windowArea.Position;
-            maleButton = CreateButton(offset + new Position(16, 26));
-            maleButton.ButtonType = Data.Enumerations.ButtonType.Male;
+            maleButton = CreateButton(game, offset + new Position(16, 26));
+            maleButton.ButtonType = ButtonType.Male;
             maleButton.Visible = true;
             maleButton.LeftClickAction = () => ChangeMale(false);
-            femaleButton = CreateButton(offset + new Position(16, 45));
-            femaleButton.ButtonType = Data.Enumerations.ButtonType.Female;
+            femaleButton = CreateButton(game, offset + new Position(16, 45));
+            femaleButton.ButtonType = ButtonType.Female;
             femaleButton.Visible = true;
             femaleButton.LeftClickAction = () => ChangeMale(true);
-            leftButton = CreateButton(offset + new Position(64, 35));
-            leftButton.ButtonType = Data.Enumerations.ButtonType.MoveLeft;
+            leftButton = CreateButton(game, offset + new Position(64, 35));
+            leftButton.ButtonType = ButtonType.MoveLeft;
             leftButton.Visible = true;
             leftButton.LeftClickAction = () => SwapPortrait(-1);
-            rightButton = CreateButton(offset + new Position(160, 35));
-            rightButton.ButtonType = Data.Enumerations.ButtonType.MoveRight;
+            rightButton = CreateButton(game, offset + new Position(160, 35));
+            rightButton.ButtonType = ButtonType.MoveRight;
             rightButton.Visible = true;
             rightButton.LeftClickAction = () => SwapPortrait(1);
-            okButton = CreateButton(new Position(windowArea.Right - 16 - 32, windowArea.Bottom - 16 - 17));
-            okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
+            okButton = CreateButton(game, new Position(windowArea.Right - 16 - 32, windowArea.Bottom - 16 - 17));
+            okButton.ButtonType = ButtonType.Ok;
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
@@ -127,7 +128,7 @@ namespace Ambermoon.UI
             portraitBackground.X = offset.X + 112;
             portraitBackground.Y = offset.Y + 32;
             portraitBackground.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-            portraitBackground.PaletteIndex = 51;
+            portraitBackground.PaletteIndex = 52;
             portraitBackground.Visible = true;
 
             portrait = spriteFactory.Create(32, 34, true, 2) as ILayerSprite;
@@ -135,14 +136,14 @@ namespace Ambermoon.UI
             portrait.X = portraitBackground.X;
             portrait.Y = portraitBackground.Y;
             portrait.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.PortraitOffset + (uint)portraitIndex - 1);
-            portrait.PaletteIndex = 49;
+            portrait.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             portrait.Visible = true;
 
             // draw border around portrait
             var area = new Rect(portraitBackground.X - 1, portraitBackground.Y - 1, 34, 36);
             // TODO: use named palette colors
-            var darkBorderColor = game.GetPaletteColor(50, 26);
-            var brightBorderColor = game.GetPaletteColor(50, 31);
+            var darkBorderColor = game.GetUIColor(26);
+            var brightBorderColor = game.GetUIColor(31);
             // upper dark border
             portraitBorders.Add(FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, 1));
             // left dark border
@@ -153,7 +154,7 @@ namespace Ambermoon.UI
             portraitBorders.Add(FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, 1));
 
             const int inputWidth = 16 * Global.GlyphWidth - 2;
-            nameInput = new TextInput(renderView, new Position(windowArea.Center.X - inputWidth / 2, offset.Y + 32 + 40),
+            nameInput = new TextInput(null, renderView, new Position(windowArea.Center.X - inputWidth / 2, offset.Y + 32 + 40),
                 15, 2, TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort, TextAlign.Left);
             nameInput.AllowEmpty = true;
             nameInput.AutoSubmit = true;
@@ -164,9 +165,9 @@ namespace Ambermoon.UI
             string headerText = game.DataNameProvider.ChooseCharacter.Trim();
             int textWidth = headerText.Length * Global.GlyphWidth;
             int textOffset = (windowArea.Width - textWidth) / 2;
-            header = AddText(offset + new Position(textOffset, 16), headerText, TextColor.Gray);
+            header = AddText(offset + new Position(textOffset, 16), headerText, TextColor.BrightGray);
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);
             fadeArea.X = 0;
             fadeArea.Y = 0;
@@ -178,7 +179,7 @@ namespace Ambermoon.UI
         {
             fadeOutStartTime = DateTime.Now;
             fadeOut = true;
-            fadeArea.Color = Color.Transparent;
+            fadeArea.Color = Render.Color.Transparent;
             fadeArea.Visible = true;
         }
 
@@ -226,19 +227,20 @@ namespace Ambermoon.UI
             portrait.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.PortraitOffset + (uint)portraitIndex - 1);
         }
 
-        Button CreateButton(Position position)
+        Button CreateButton(Game game, Position position)
         {
+            AddSunkenBox(game, new Rect(position.X - 1, position.Y - 1, Button.Width + 2, Button.Height + 2), 2, 0);
             var button = new Button(renderView, position);
             button.Disabled = false;
             button.DisplayLayer = 1;
             return button;
         }
 
-        void AddSunkenBox(Game game, Rect area, byte displayLayer = 1)
+        void AddSunkenBox(Game game, Rect area, byte displayLayer = 1, byte fillColorIndex = 27)
         {
-            var darkBorderColor = game.GetPaletteColor(50, 26);
-            var brightBorderColor = game.GetPaletteColor(50, 31);
-            var fillColor = game.GetPaletteColor(50, 27);
+            var darkBorderColor = game.GetUIColor(26);
+            var brightBorderColor = game.GetUIColor(31);
+            var fillColor = game.GetUIColor(fillColorIndex);
 
             // upper dark border
             sunkenBoxParts.Add(FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, displayLayer));
@@ -253,7 +255,7 @@ namespace Ambermoon.UI
         }
 
 
-        IColoredRect FillArea(Rect area, Color color, byte displayLayer = 1)
+        IColoredRect FillArea(Rect area, Render.Color color, byte displayLayer = 1)
         {
             var filledArea = renderView.ColoredRectFactory.Create(area.Width, area.Height, color, displayLayer);
             filledArea.Layer = renderView.GetLayer(Layer.UI);
@@ -287,7 +289,7 @@ namespace Ambermoon.UI
                     fadeIn = false;
                 }
                 else
-                    fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+                    fadeArea.Color = new Render.Color(0, 0, 0, Util.Round(blackness * 255));
             }
             else if (fadeOut)
             {
@@ -301,7 +303,7 @@ namespace Ambermoon.UI
                         Cleanup();
                     }
                     else
-                        fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+                        fadeArea.Color = new Render.Color(0, 0, 0, Util.Round(blackness * 255));
                 }
             }
             else

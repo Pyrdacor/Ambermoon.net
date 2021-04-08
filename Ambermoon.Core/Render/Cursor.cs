@@ -67,7 +67,7 @@ namespace Ambermoon.Render
             }
         }
 
-        public void UpdatePosition(Position screenPosition)
+        public void UpdatePosition(Position screenPosition, Game game)
         {
             var viewPosition = renderView.ScreenToGame(screenPosition);
 
@@ -75,6 +75,7 @@ namespace Ambermoon.Render
             {
                 lock (sprite)
                 {
+                    sprite.PaletteIndex = game?.UIPaletteIndex ?? 0;
                     sprite.X = viewPosition.X - Hotspot.X;
                     sprite.Y = viewPosition.Y - Hotspot.Y;
                     sprite.Visible = Type != CursorType.None;

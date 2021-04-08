@@ -1,6 +1,6 @@
 ﻿using Ambermoon.Data;
-using System;
 using System.Collections.Generic;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.Render
 {
@@ -13,6 +13,7 @@ namespace Ambermoon.Render
         bool Shadow { get; set; }
         IText Text { get; set; }
         byte DisplayLayer { get; set; }
+        byte PaletteIndex { get; set; }
     }
 
     public interface IRenderTextFactory

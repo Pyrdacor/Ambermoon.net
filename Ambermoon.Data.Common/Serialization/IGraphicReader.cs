@@ -2,6 +2,6 @@
 {
     public interface IGraphicReader
     {
-        void ReadGraphic(Graphic graphic, IDataReader dataReader, GraphicInfo? graphicInfo);
+        void ReadGraphic(Graphic graphic, IDataReader dataReader, GraphicInfo? graphicInfo, byte maskColor = 0);
     }
 }

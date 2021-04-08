@@ -2,6 +2,7 @@
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon
 {
@@ -27,14 +28,14 @@ namespace Ambermoon
         DateTime? fadeOutStartTime = null;
         static readonly byte[] hoveredColorIndices = new byte[]
         {
-            2, // White
-            5, // Yellow
-            6, // Orange
-            4, // Red
-            11, // Dark red
-            4, // Red
-            6, // Orange
-            5 // Yellow
+            (byte)TextColor.White,
+            (byte)TextColor.LightYellow,
+            (byte)TextColor.LightRed,
+            (byte)TextColor.Red,
+            (byte)TextColor.Pink,
+            (byte)TextColor.Red,
+            (byte)TextColor.LightRed,
+            (byte)TextColor.LightYellow
         };
         bool closed = false;
         public event Action<CloseAction> Closed;
@@ -48,7 +49,7 @@ namespace Ambermoon
 
             background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
             background.Layer = renderView.GetLayer(Layer.IntroGraphics);
-            background.PaletteIndex = (byte)(53 + paletteIndices[IntroGraphic.MainMenuBackground]);
+            background.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.MainMenuBackground]);
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
             background.X = 0;
             background.Y = 0;
@@ -134,11 +135,11 @@ namespace Ambermoon
                         // TODO: REMOVE LATER
                         if (i == 2) // Intro
                         {
-                            mainMenuTexts[i].Value.ColorIndex = 7; // Gray
+                            mainMenuTexts[i].Value.ColorIndex = (byte)TextColor.Gray;
                             continue;
                         }
 
-                        mainMenuTexts[i].Value.ColorIndex = 2; // White
+                        mainMenuTexts[i].Value.ColorIndex = (byte)TextColor.White;
                     }
                 }
             }
@@ -177,7 +178,7 @@ namespace Ambermoon
             if (closed)
                 return;
 
-            cursor.UpdatePosition(position);
+            cursor.UpdatePosition(position, null);
 
             if (fadeOutStartTime != null)
                 return;

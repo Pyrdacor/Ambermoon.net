@@ -291,7 +291,7 @@ namespace Ambermoon
             });
             InitGlyphs();
             var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
-            cursor.UpdatePosition(mouse.Position.Round());
+            cursor.UpdatePosition(mouse.Position.Round(), null);
             var savegameManager = new SavegameManager(savePath);
             savegameManager.GetSavegameNames(gameData, out int currentSavegame);
             bool canContinue = currentSavegame != 0;

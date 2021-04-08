@@ -18,11 +18,11 @@ namespace Ambermoon.UI
         public Panel(Game game, Rect fillArea, List<IColoredRect> layoutFilledAreas, Layout layout, byte displayLayer)
         {
             // right and bottom border
-            filledAreas[0] = new FilledArea(layoutFilledAreas, layout.CreateArea(fillArea.CreateModified(0, 0, 1, 1), game.GetPaletteColor(50, 26), displayLayer));
+            filledAreas[0] = new FilledArea(layoutFilledAreas, layout.CreateArea(fillArea.CreateModified(0, 0, 1, 1), game.GetUIColor(26), displayLayer));
             // left and top border
-            filledAreas[1] = new FilledArea(layoutFilledAreas, layout.CreateArea(fillArea.CreateModified(-1, -1, 1, 1), game.GetPaletteColor(50, 31), (byte)(displayLayer + 1)));
+            filledAreas[1] = new FilledArea(layoutFilledAreas, layout.CreateArea(fillArea.CreateModified(-1, -1, 1, 1), game.GetUIColor(31), (byte)(displayLayer + 1)));
             // fill area
-            filledAreas[2] = new FilledArea(layoutFilledAreas, layout.CreateArea(fillArea, game.GetPaletteColor(50, 28), (byte)(displayLayer + 2)));
+            filledAreas[2] = new FilledArea(layoutFilledAreas, layout.CreateArea(fillArea, game.GetUIColor(28), (byte)(displayLayer + 2)));
         }
 
         public void Destroy()

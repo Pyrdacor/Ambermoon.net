@@ -53,7 +53,7 @@ namespace Ambermoon.UI
             }
         }
 
-        public Scrollbar(Layout layout, ScrollbarType type, Rect scrollArea, int width, int height, int scrollRange, byte displayLayer = 1)
+        public Scrollbar(Game game, Layout layout, ScrollbarType type, Rect scrollArea, int width, int height, int scrollRange, byte displayLayer = 1)
         {
             this.scrollArea = scrollArea;
             vertical = type == ScrollbarType.SmallVertical || type == ScrollbarType.LargeVertical; // TODO: are there even horizontal ones?
@@ -71,7 +71,7 @@ namespace Ambermoon.UI
                 _ => throw new AmbermoonException(ExceptionScope.Application, "Invalid scrollbar type.")
             });
             backgroundSprite.DisplayLayer = displayLayer;
-            backgroundSprite.PaletteIndex = 49;
+            backgroundSprite.PaletteIndex = game.UIPaletteIndex;
             backgroundSprite.X = scrollArea.X;
             backgroundSprite.Y = scrollArea.Y;
             backgroundSprite.Visible = true;
@@ -81,7 +81,7 @@ namespace Ambermoon.UI
             sprite.Layer = layout.RenderView.GetLayer(Layer.UI);
             sprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.UICustomGraphicOffset + (uint)type);
             sprite.DisplayLayer = (byte)Math.Min(255, displayLayer + 2);
-            sprite.PaletteIndex = 49;
+            sprite.PaletteIndex = game.UIPaletteIndex;
             sprite.X = position.X;
             sprite.Y = position.Y;
             sprite.Visible = true;

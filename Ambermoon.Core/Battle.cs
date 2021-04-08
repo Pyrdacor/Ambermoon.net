@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Attribute = Ambermoon.Data.Attribute;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon
 {
@@ -819,7 +820,7 @@ namespace Ambermoon
                 case BattleActionType.DropWeapon:
                 {
                     // Note: This only displays the message. The PickMonsterAction method will drop/switch ranged weapons automatically.
-                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageHasDroppedWeapon, TextColor.Gray);
+                    layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageHasDroppedWeapon, TextColor.BrightGray);
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => ActionFinished());
                     return;
                 }
@@ -887,7 +888,7 @@ namespace Ambermoon
                             text = null;
                             break;
                     }
-                    layout.SetBattleMessage(text, next.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                    layout.SetBattleMessage(text, next.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                     game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => ActionFinished());
                     return;
                 }
@@ -907,13 +908,13 @@ namespace Ambermoon
                     {
                         // TODO: is this right or is the action just skipped?
                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageCannotMove,
-                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                            battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                         moveFailed = true;
                     }
                     else if (battleField[battleAction.ActionParameter & 0x1f] != null)
                     {
                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageWayWasBlocked,
-                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                            battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                         moveFailed = true;
                     }
 
@@ -975,7 +976,7 @@ namespace Ambermoon
                 {
                     GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
                     var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort);
-                    var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                    var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
                     var target = GetCharacterAt((int)targetTile);
                     if (abort)
                     {
@@ -1232,7 +1233,7 @@ namespace Ambermoon
                             if (GetCharacterAt((int)targetRowOrTile) == null)
                             {
                                 layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
-                                    battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                                    battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                                 game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                                 {
                                     EndCast();
@@ -1431,7 +1432,7 @@ namespace Ambermoon
                                     if (!Enumerable.Range((int)targetRowOrTile * 6, 6).Any(p => GetCharacterAt(p)?.Type == enemyType))
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
-                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                                         game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => EndCast());
                                         return;
                                     }
@@ -1443,7 +1444,7 @@ namespace Ambermoon
                                     if (!Enumerable.Range((int)targetRowOrTile * 6, 6).Any(p => GetCharacterAt(p)?.Type == battleAction.Character.Type))
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
-                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                                         game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => EndCast());
                                         return;
                                     }
@@ -1456,7 +1457,7 @@ namespace Ambermoon
                                     if (character == null)
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
-                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                                            battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                                         game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                                         {
                                             EndCast();
@@ -1538,7 +1539,7 @@ namespace Ambermoon
                     nextAction.ActionParameter = battleAction.ActionParameter;
                     if (flags.HasFlag(AttackActionFlags.BreakWeapon))
                     {
-                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
                         var weaponSlot = battleAction.Character.Equipment.Slots[EquipmentSlot.RightHand];
                         var itemIndex = weaponSlot.ItemIndex;
                         game.EquipmentRemoved(battleAction.Character, itemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
@@ -1583,7 +1584,7 @@ namespace Ambermoon
                     nextAction.ActionParameter = battleAction.ActionParameter;
                     if (flags.HasFlag(AttackActionFlags.BreakArmor))
                     {
-                        var textColor = battleAction.Character.Type == CharacterType.PartyMember ? TextColor.Orange : TextColor.White;
+                        var textColor = battleAction.Character.Type == CharacterType.PartyMember ? TextColor.BattleMonster : TextColor.BattlePlayer;
                         var armorSlot = target.Equipment.Slots[EquipmentSlot.Body];
                         var itemIndex = armorSlot.ItemIndex;
                         game.EquipmentRemoved(target, itemIndex, 1, armorSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
@@ -1605,7 +1606,7 @@ namespace Ambermoon
                     nextAction.ActionParameter = battleAction.ActionParameter;
                     if (flags.HasFlag(AttackActionFlags.LastAmmo))
                     {
-                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                        var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageUsedLastAmmunition, textColor);
                         if (battleAction.Character is Monster monster)
                             droppedWeaponMonsters.Add(monster);
@@ -1620,7 +1621,7 @@ namespace Ambermoon
                 case BattleActionType.Hurt:
                 {
                     layout.SetBattleMessage(null);
-                    var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+                    var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
                     GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out var attackResult, out var flags);
                     var target = GetCharacterAt((int)tile);
                     if(attackResult != AttackResult.Damage && attackResult != AttackResult.CriticalHit)
@@ -1696,15 +1697,8 @@ namespace Ambermoon
             var text = layout.RenderView.TextProcessor.CreateText(damage > 999 ? "***" : $"{damage:000}");
             var area = Global.BattleFieldSlotArea(tile).CreateModified(-5, 9, 12, 0);
             var damageText = layout.RenderView.RenderTextFactory.CreateDigits(layer, text, TextColor.Red, false, area, TextAlign.Center);
-            TextColor[] colors = new TextColor[]
-            {
-                TextColor.Orange,
-                TextColor.Yellow,
-                TextColor.White,
-                TextColor.Yellow,
-                TextColor.Orange,
-                TextColor.Red
-            };
+            damageText.PaletteIndex = game.UIPaletteIndex;
+            var colors = TextColors.TextAnimationColors;
             int colorCycle = 0;
             int colorIndex = -1;
             const int numColorCycles = 3;
@@ -1753,7 +1747,7 @@ namespace Ambermoon
             if (game.RollDice100() >= caster.Abilities[Ability.UseMagic].TotalCurrentValue)
             {
                 layout.SetBattleMessage(caster.Name + game.DataNameProvider.SpellFailed,
-                    caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White);
+                    caster.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
                 return false;
             }
 
@@ -1762,7 +1756,7 @@ namespace Ambermoon
 
         void ShowSpellFailMessage(Character caster, SpellInfo spellInfo, string message, Action finishAction)
         {
-            var color = caster.Type == CharacterType.Monster ? TextColor.Orange : TextColor.White;
+            var color = caster.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
             var delay = TimeSpan.FromMilliseconds(700);
 
             if (needsClickForNextAction && !spellInfo.Target.TargetsMultipleEnemies())
@@ -1915,7 +1909,7 @@ namespace Ambermoon
             int panelWidth = 12 * Global.GlyphWidth;
             // Attributes
             popup.AddText(new Rect(area.Position, new Size(panelWidth, Global.GlyphLineHeight)),
-                game.DataNameProvider.AttributesHeaderString, TextColor.DarkGray, TextAlign.Center);
+                game.DataNameProvider.AttributesHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
             var position = new Position(area.Position.X, area.Position.Y + Global.GlyphLineHeight + 1);
             foreach (var attribute in Enum.GetValues<Attribute>())
             {
@@ -1924,56 +1918,57 @@ namespace Ambermoon
 
                 var attributeValues = monster.Attributes[attribute];
                 popup.AddText(position,
-                    $"{game.DataNameProvider.GetAttributeShortName(attribute)}  {(attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}"}",
-                    TextColor.Gray);
+                    $"{game.DataNameProvider.GetAttributeShortName(attribute)}  {((attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}")}",
+                    TextColor.BrightGray);
                 position.Y += Global.GlyphLineHeight;
             }
             // Abilities
             position = area.Position + new Position(panelWidth + Global.GlyphWidth, 0);
             popup.AddText(new Rect(position, new Size(panelWidth, Global.GlyphLineHeight)),
-                game.DataNameProvider.AbilitiesHeaderString, TextColor.DarkGray, TextAlign.Center);
+                game.DataNameProvider.AbilitiesHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
             position.Y += Global.GlyphLineHeight + 1;
             foreach (var ability in Enum.GetValues<Ability>())
             {
                 var abilityValues = monster.Abilities[ability];
                 popup.AddText(position,
-                    $"{game.DataNameProvider.GetAbilityShortName(ability)}  {(abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%"}",
-                    TextColor.Gray);
+                    $"{game.DataNameProvider.GetAbilityShortName(ability)}  {((abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%")}",
+                    TextColor.BrightGray);
                 position.Y += Global.GlyphLineHeight - 1;
             }
             // Data
             position.X = area.X;
             position.Y += 3;
             popup.AddText(new Rect(position, new Size(area.Width, Global.GlyphLineHeight)),
-                game.DataNameProvider.DataHeaderString, TextColor.DarkGray, TextAlign.Center);
+                game.DataNameProvider.DataHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
             position.Y += Global.GlyphLineHeight + 1;
             popup.AddText(position,
                 string.Format(game.DataNameProvider.CharacterInfoHitPointsString, monster.HitPoints.CurrentValue, monster.HitPoints.TotalMaxValue) + " " +
                 string.Format(game.DataNameProvider.CharacterInfoSpellPointsString, monster.SpellPoints.CurrentValue, monster.SpellPoints.TotalMaxValue),
-                TextColor.Gray);
+                TextColor.BrightGray);
             position.Y += Global.GlyphLineHeight;
             popup.AddText(position,
                 string.Format(game.DataNameProvider.CharacterInfoGoldAndFoodString.Replace(" ", "      "), monster.Gold, monster.Food),
-                TextColor.Gray);
+                TextColor.BrightGray);
             position.Y += Global.GlyphLineHeight;
-            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, 0);
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, game.UIPaletteIndex);
             popup.AddText(position + new Position(6, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDamageString.Replace(' ', monster.BaseAttack < 0 ? '-' : '+'), Math.Abs(monster.BaseAttack)),
-                TextColor.Gray);
+                TextColor.BrightGray);
             position.X = area.X + panelWidth + Global.GlyphWidth;
-            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, 0);
+            popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, game.UIPaletteIndex);
             popup.AddText(position + new Position(7, 2),
                 string.Format(game.DataNameProvider.CharacterInfoDefenseString.Replace(' ', monster.BaseDefense < 0 ? '-' : '+'), Math.Abs(monster.BaseDefense)),
-                TextColor.Gray);
+                TextColor.BrightGray);
             position.X = area.X;
             position.Y += Global.GlyphLineHeight + 4;
-            popup.AddText(position, $"{game.DataNameProvider.CharacterInfoAPRString.TrimEnd()}{monster.AttacksPerRound}", TextColor.Gray);
+            popup.AddText(position, $"{game.DataNameProvider.CharacterInfoAPRString.TrimEnd()}{monster.AttacksPerRound}", TextColor.BrightGray);
             // Icon and level
             --position.X;
             position.Y += Global.GlyphLineHeight;
             popup.AddSunkenBox(new Rect(position, new Size(18, 18)));
-            popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1, Layer.UI, 2);
-            popup.AddText(position + new Position(21, 5), $"{monster.Name} {monster.Level}", TextColor.Gray);
+            popup.AddImage(new Rect(position.X + 1, position.Y + 2, 16, 14), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
+                Layer.UI, 2, game.PrimaryUIPaletteIndex);
+            popup.AddText(position + new Position(21, 5), $"{monster.Name} {monster.Level}", TextColor.BrightGray);
             // Closing
             game.TrapMouse(area);
             popup.Closed += () =>
@@ -1995,7 +1990,7 @@ namespace Ambermoon
                     DealDamage(25, 0);
                     return;
                 case Spell.Blink:
-                    game.SetBattleMessageWithClick(target.Name + game.DataNameProvider.BattleMessageHasBlinked, TextColor.White,
+                    game.SetBattleMessageWithClick(target.Name + game.DataNameProvider.BattleMessageHasBlinked, TextColor.BattlePlayer,
                         () => { MoveCharacterTo(targetField.Value, target); finishAction?.Invoke(); });
                     return;
                 case Spell.Escape:
