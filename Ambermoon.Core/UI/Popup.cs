@@ -246,6 +246,7 @@ namespace Ambermoon.UI
             FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, 1);
             FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);            
             var button = new Button(renderView, position, null);
+            button.PaletteIndex = game.GetUIPaletteIndex();
             button.DisplayLayer = (byte)Util.Min(255, DisplayLayer + 3);
             buttons.Add(button);
             return button;

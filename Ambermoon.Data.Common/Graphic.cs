@@ -21,6 +21,7 @@ namespace Ambermoon.Data
         public int Height;
         public bool Alpha;
         public byte PaletteOffset;
+        public byte ColorKey;
 
         public int BitsPerPixel => GraphicFormat switch
         {

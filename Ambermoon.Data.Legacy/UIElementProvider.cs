@@ -219,10 +219,7 @@ namespace Ambermoon.Data.Legacy
                     28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 28, 28, 28
                 }),
 
-                // Disabled button overlay (palette 51 -> 0 = transparent, 26 = dark gray)
-                Graphic.FromIndexedData(24, 11, Enumerable.Range(0, 24 * 11).Select(i => (byte)((i + i / 24) % 2 == 0 ? 0 : 26)).ToArray()),
-
-                // Map disable overlay (palette 50 -> 0 = black, 25 = transparent)
+                // Map disable overlay (UI palette-> 0 = black, 25 = transparent)
                 Graphic.FromIndexedData(320, 144, Enumerable.Range(0, 320 * 144).Select(i => (byte)((i + i / 320) % 2 == 0 ? 25 : 0)).ToArray()),
 
                 // Ambermoon info box (shown over the map when opening option menu)

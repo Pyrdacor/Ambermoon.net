@@ -329,6 +329,9 @@ namespace Ambermoon
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
         readonly IRenderText windowTitle = null;
+        internal byte PrimaryUIPaletteIndex { get; }
+        internal byte SecondaryUIPaletteIndex { get; }
+        internal byte AutomapPaletteIndex { get; }
         /// <summary>
         /// Open chest which can be used to store items.
         /// </summary>
@@ -383,6 +386,10 @@ namespace Ambermoon
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
             Places places, Cursor cursor)
         {
+            PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+            SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
+            AutomapPaletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
+
             Configuration = configuration;
             GameLanguage = gameLanguage;
             this.cursor = cursor;
@@ -416,7 +423,7 @@ namespace Ambermoon
             {
                 hurtPlayerSprites[i] = renderView.SpriteFactory.Create(32, 26, true, 200) as ILayerSprite;
                 hurtPlayerSprites[i].Layer = renderView.GetLayer(Layer.UI);
-                hurtPlayerSprites[i].PaletteIndex = 49;
+                hurtPlayerSprites[i].PaletteIndex = PrimaryUIPaletteIndex;
                 hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Explosion));
                 hurtPlayerSprites[i].Visible = false;
                 hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create();
@@ -437,7 +444,7 @@ namespace Ambermoon
             };
             battleRoundActiveSprite = renderView.SpriteFactory.Create(32, 36, true) as ILayerSprite;
             battleRoundActiveSprite.Layer = renderView.GetLayer(Layer.UI);
-            battleRoundActiveSprite.PaletteIndex = 0;
+            battleRoundActiveSprite.PaletteIndex = PrimaryUIPaletteIndex;
             battleRoundActiveSprite.DisplayLayer = 2;
             battleRoundActiveSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset((uint)Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace);
             battleRoundActiveSprite.X = 240;
@@ -452,6 +459,21 @@ namespace Ambermoon
             renderView.GetLayer(Layer.BattleMonsterRow).Texture = monsterGraphicAtlas.Texture;
 
             layout.ShowPortraitArea(false);
+        }
+
+        internal byte GetUIPaletteIndex()
+        {
+            if (Map == null)
+                return PrimaryUIPaletteIndex;
+
+            if (is3D)
+            {
+                return Map.Flags.HasFlag(MapFlags.SecondaryUI3D) ? SecondaryUIPaletteIndex : PrimaryUIPaletteIndex;
+            }
+            else
+            {
+                return Map.Flags.HasFlag(MapFlags.SecondaryUI2D) ? SecondaryUIPaletteIndex : PrimaryUIPaletteIndex;
+            }
         }
 
         /// <summary>
@@ -721,6 +743,8 @@ namespace Ambermoon
                 paletteData[colorIndex * 4 + 3]
             );
         }
+
+        public Color GetUIColor(int colorIndex) => GetPaletteColor(1 + GetUIPaletteIndex(), colorIndex);
 
         float GetLight3D()
         {
@@ -2085,7 +2109,7 @@ namespace Ambermoon
         {
             lock (cursor)
             {
-                cursor.UpdatePosition(cursorPosition);
+                cursor.UpdatePosition(cursorPosition, this);
 
                 if (!InputEnable)
                 {
@@ -2529,7 +2553,7 @@ namespace Ambermoon
             if (show)
             {
                 layout.Reset();
-                layout.FillArea(new Rect(208, 49, 96, 80), GetPaletteColor(50, 28), false);
+                layout.FillArea(new Rect(208, 49, 96, 80), GetUIColor(28), false);
                 SetWindow(Window.MapView);
 
                 foreach (var specialItem in Enum.GetValues<SpecialItemPurpose>())
@@ -3560,7 +3584,15 @@ namespace Ambermoon
 
         internal void SayWord(Map map, uint x, uint y, List<Event> events, ConditionEvent conditionEvent)
         {
-
+            OpenDictionary(word =>
+            {
+                bool match = string.Compare(textDictionary.Entries[(int)conditionEvent.ObjectIndex], word, true) == 0;
+                var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
+                    ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
+                var @event = match ? conditionEvent.Next : mapEventIfFalse;
+                if (@event != null)
+                    EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, CurrentTicks, @event, true);
+            });
         }
 
         internal void EnterNumber(Map map, uint x, uint y, List<Event> events, ConditionEvent conditionEvent)
@@ -3633,7 +3665,10 @@ namespace Ambermoon
         void MoveVertically(bool up, bool mapChange, Action finishAction = null)
         {
             if (!is3D || WindowActive)
+            {
+                finishAction?.Invoke();
                 return;
+            }
 
             var sourceY = !mapChange ? camera3D.Y : (up ? renderMap3D.GetFloorY() : renderMap3D.GetLevitatingY());
             player3D.SetY(sourceY);
@@ -4113,6 +4148,7 @@ namespace Ambermoon
                 ResetMoveKeys();
                 if (!WindowActive && layout.ButtonGridPage != 0)
                     layout.UpdateLayoutButtons();
+                layout.UpdateUIPalette(GetUIPaletteIndex());
             }
             else
             {
@@ -6246,6 +6282,7 @@ namespace Ambermoon
         {
             Fade(() =>
             {
+                battleRoundActiveSprite.PaletteIndex = GetUIPaletteIndex();
                 PlayMusic(Song.SapphireFireballsOfPureLove);
                 roundPlayerBattleActions.Clear();
                 ShowBattleWindow(nextEvent, combatBackgroundIndex);

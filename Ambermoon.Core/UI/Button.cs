@@ -30,9 +30,10 @@ namespace Ambermoon.UI
             TextureAtlasManager textureAtlasManager = null)
         {
             Area = new Rect(position, new Size(Width, Height));
+            byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
 
             frameSprite = renderView.SpriteFactory.Create(Width, Height, true, 3) as ILayerSprite;
-            disableOverlay = renderView.SpriteFactory.Create(Width - 8, Height - 6, true, 5) as ILayerSprite;
+            disableOverlay = renderView.SpriteFactory.Create(Width, Height - 6, true, 5) as ILayerSprite;
             iconSprite = renderView.SpriteFactory.Create(Width, Height - 4, true, 4) as ILayerSprite;
 
             var layer = renderView.GetLayer(Layer.UI);
@@ -42,16 +43,16 @@ namespace Ambermoon.UI
 
             textureAtlas = (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.UI);
             frameSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.ButtonFrame));
-            disableOverlay.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ButtonDisableOverlay));
+            disableOverlay.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.ButtonDisabledOverlay));
             iconSprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetButtonGraphicIndex(ButtonType.Empty));
 
-            frameSprite.PaletteIndex = 51;
-            disableOverlay.PaletteIndex = 51;
-            iconSprite.PaletteIndex = 0;
+            frameSprite.PaletteIndex = paletteIndex;
+            disableOverlay.PaletteIndex = paletteIndex;
+            iconSprite.PaletteIndex = paletteIndex;
 
             frameSprite.X = position.X;
             frameSprite.Y = position.Y;
-            disableOverlay.X = position.X + 4;
+            disableOverlay.X = position.X;
             disableOverlay.Y = position.Y + 3;
             iconSprite.X = position.X;
             iconSprite.Y = position.Y + 2;
@@ -196,6 +197,17 @@ namespace Ambermoon.UI
                 frameSprite.Visible = visible;
                 iconSprite.Visible = visible;
                 disableOverlay.Visible = visible && disabled;
+            }
+        }
+
+        public byte PaletteIndex
+        {
+            get => frameSprite.PaletteIndex;
+            set
+            {
+                frameSprite.PaletteIndex = value;
+                disableOverlay.PaletteIndex = value;
+                iconSprite.PaletteIndex = value;
             }
         }
 

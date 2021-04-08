@@ -123,5 +123,15 @@ namespace Ambermoon.UI
                     button.Visible = visible;
             }
         }
+
+        public byte PaletteIndex
+        {
+            get => buttons[0].PaletteIndex;
+            set
+            {
+                foreach (var button in buttons)
+                    button.PaletteIndex = value;
+            }
+        }
     }
 }

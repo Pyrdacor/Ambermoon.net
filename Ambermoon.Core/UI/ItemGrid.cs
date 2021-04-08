@@ -130,12 +130,13 @@ namespace Ambermoon.UI
         {
             var layer = renderView.GetLayer(Layer.UI);
             var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemSlotBackground));
+            byte paletteIndex = game.GetUIPaletteIndex();
 
             for (int i = 0; i < slotBackgrounds.Length; ++i)
             {
                 var background = slotBackgrounds[i] = renderView.SpriteFactory.Create(16, 24, true) as ILayerSprite;
                 background.Layer = layer;
-                background.PaletteIndex = 49;
+                background.PaletteIndex = paletteIndex;
                 background.TextureAtlasOffset = texCoords;
                 background.X = slotPositions[i].X;
                 background.Y = slotPositions[i].Y;

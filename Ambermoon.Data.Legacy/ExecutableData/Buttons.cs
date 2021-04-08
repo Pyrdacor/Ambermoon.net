@@ -25,7 +25,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 Height = 13,
                 Alpha = true,
                 GraphicFormat = GraphicFormat.Palette3Bit,
-                PaletteOffset = 24
+                PaletteOffset = 24,
+                ColorKey = 25
             };
             var graphicReader = new GraphicReader();
 

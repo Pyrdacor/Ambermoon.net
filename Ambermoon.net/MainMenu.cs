@@ -177,7 +177,7 @@ namespace Ambermoon
             if (closed)
                 return;
 
-            cursor.UpdatePosition(position);
+            cursor.UpdatePosition(position, null);
 
             if (fadeOutStartTime != null)
                 return;

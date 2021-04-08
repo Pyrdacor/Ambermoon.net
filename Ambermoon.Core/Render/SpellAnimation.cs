@@ -170,7 +170,7 @@ namespace Ambermoon.Render
             var sprite = renderView.SpriteFactory.Create(frameSize.Width, frameSize.Height, true, 200) as ILayerSprite;
             sprite.ClipArea = area;
             sprite.Layer = renderView.GetLayer(Layer.UI);
-            sprite.PaletteIndex = 49;
+            sprite.PaletteIndex = game.GetUIPaletteIndex();
             sprite.TextureSize = frameSize;
             sprite.Visible = true;
             var animation = new BattleAnimation(sprite);

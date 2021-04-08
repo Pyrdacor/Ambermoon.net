@@ -1097,6 +1097,13 @@ namespace Ambermoon.UI
             buttonGrid.SetButtonAction(index, action);
         }
 
+        public void UpdateUIPalette(byte palette)
+        {
+            buttonGrid.PaletteIndex = palette;
+            sprite.PaletteIndex = palette;
+            // TODO?
+        }
+
         internal void UpdateLayoutButtons(uint? ticksPerMovement = null)
         {
             switch (Type)
@@ -1971,10 +1978,12 @@ namespace Ambermoon.UI
             var bounds = new Rect(114, 46, 189, 28);
             ChestText?.Destroy();
             ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            var buttonPanel = AddPanel(new Rect(223, 75, 2 * Button.Width, Button.Height), 2);
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
             questionYesButton = new Button(RenderView, new Position(223, 75));
             questionNoButton = new Button(RenderView, new Position(223 + Button.Width, 75));
+            questionYesButton.PaletteIndex = questionNoButton.PaletteIndex = game.GetUIPaletteIndex();
             questionYesButton.ButtonType = ButtonType.Yes;
             questionNoButton.ButtonType = ButtonType.No;
             questionYesButton.Disabled = false;
@@ -1986,6 +1995,7 @@ namespace Ambermoon.UI
 
             void Answer(bool answer)
             {
+                buttonPanel?.Destroy();
                 questionYesButton?.Destroy();
                 questionYesButton = null;
                 questionNoButton?.Destroy();
@@ -2320,7 +2330,7 @@ namespace Ambermoon.UI
                 overlaySprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
                 overlaySprite.ClipArea = Global.PartyMemberPortraitAreas[slot].CreateModified(1, 1, -2, -2);
                 overlaySprite.TextureAtlasOffset = sprite.TextureAtlasOffset;
-                overlaySprite.PaletteIndex = 49;
+                overlaySprite.PaletteIndex = game.GetUIPaletteIndex();
                 overlaySprite.Visible = true;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset;
@@ -2496,7 +2506,7 @@ namespace Ambermoon.UI
             {
                 PlayPortraitAnimation(slot, partyMember, portraitAnimationFinishedHandler);
             }
-            sprite.PaletteIndex = 49;
+            sprite.PaletteIndex = game.GetUIPaletteIndex();
             sprite.Visible = true;
 
             if (partyMember == null)
@@ -2519,7 +2529,7 @@ namespace Ambermoon.UI
                 sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 1;
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground);
-                sprite.PaletteIndex = 51;
+                sprite.PaletteIndex = 52;
                 sprite.Visible = true;
 
                 var text = portraitNames[slot];

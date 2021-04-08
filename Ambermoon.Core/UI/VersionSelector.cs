@@ -331,7 +331,7 @@ namespace Ambermoon.UI
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
-            cursor.UpdatePosition(position);
+            cursor.UpdatePosition(position, null);
 
             position = renderView.ScreenToGame(position);
 

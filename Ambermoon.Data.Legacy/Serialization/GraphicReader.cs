@@ -48,7 +48,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         paletteIndex += graphicInfo.PaletteOffset;
 
                         if (graphicInfo.Alpha && paletteIndex == graphicInfo.PaletteOffset)
-                            graphic.Data[mx + y * graphic.Width] = 0;
+                            graphic.Data[mx + y * graphic.Width] = graphicInfo.ColorKey;
                         else
                             graphic.Data[mx + y * graphic.Width] = paletteIndex;
 

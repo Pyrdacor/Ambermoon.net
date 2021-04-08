@@ -20,7 +20,6 @@
         ItemSlotDisabled, // locked chests
         PortraitBackground, // black to blue gradient
         PortraitBorder, // thin 1-pixel border for top and bottom of portraits
-        ButtonDisableOverlay, // 28x13 pixel gray dotted overlay
         MapDisableOverlay, // 320x144 (2D maps use 176x144, 3D maps use only 144x144, battle use 320x95)
         AmbermoonInfoBox, // 128x19
         BiggerInfoBox, // 144x26

@@ -30,7 +30,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 graphicReader.ReadGraphic(graphic, dataReader, graphicInfo);
 
                 if (colorKeyIndex != 0)
+                {
+                    graphic.ReplaceColor(colorKeyIndex, 255);
                     graphic.ReplaceColor(0, colorKeyIndex);
+                    graphic.ReplaceColor(255, 0);
+                }
 
                 return graphic;
             }
@@ -66,7 +70,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.PaletteOffset = 0;
             entries.Add(UIGraphic.Eagle, ReadGraphic(dataReader)); // Palette of the map (e.g. 1)
             graphicInfo.Height = 26;
-            entries.Add(UIGraphic.Explosion, ReadGraphic(dataReader, 25)); // Palette 50 (items)
+            entries.Add(UIGraphic.Explosion, ReadGraphic(dataReader, 25)); // UI palette
             graphicInfo.Height = 23;
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
             graphicInfo.PaletteOffset = 24;
@@ -99,18 +103,26 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.Day, ReadGraphic(dataReader));
             entries.Add(UIGraphic.Dawn, ReadGraphic(dataReader));
 
-            // TODO: reading previous graphics end in position 0x2860
-            // so it reads two bytes too much. Don't know why yet.
-            dataReader.Position = 0x285C; // start at base button shape
-
             graphicInfo.Height = 17;
-            graphicInfo.Alpha = false;
+            graphicInfo.Alpha = true;
             entries.Add(UIGraphic.ButtonFrame, ReadGraphic(dataReader));
             entries.Add(UIGraphic.ButtonFramePressed, ReadGraphic(dataReader));
-            graphicInfo.Alpha = true;
-            graphicInfo.Width = 30;
-            graphicInfo.Height = 4;
-            entries.Add(UIGraphic.ButtonDisabledOverlay, ReadGraphic(dataReader));
+            // Note: There is a 1-bit mask here where a 0 bit means transparent (keep color) and 1 means overlay.
+            // As we use this for buttons we will set the color as the button back color (28).
+            // The disable overlay is 32x11 in size.
+            var disableOverlay = new Graphic(32, 11, 25);
+            for (int y = 0; y < 11; ++y)
+            {
+                var bits = dataReader.ReadDword();
+
+                for (int x = 0; x < 32; ++x)
+                {
+                    if ((bits & 0x80000000) != 0)
+                        disableOverlay.Data[y * 32 + x] = 28;
+                    bits <<= 1;
+                }
+            }
+            entries.Add(UIGraphic.ButtonDisabledOverlay, disableOverlay);
             graphicInfo.Width = 32;
             graphicInfo.Height = 32;
             entries.Add(UIGraphic.Compass, ReadGraphic(dataReader));

@@ -343,7 +343,7 @@ namespace Ambermoon.Renderer
                     X = position.X,
                     Y = position.Y,
                     Layer = Layer,
-                    PaletteIndex = 50,
+                    PaletteIndex = 49,
                     Visible = Visible
                 };
                 sprite.ClipArea = ClipArea;
@@ -363,7 +363,7 @@ namespace Ambermoon.Renderer
                         X = characterSprite.X + 1,
                         Y = characterSprite.Y + 1,
                         Layer = Layer,
-                        PaletteIndex = 50,                        
+                        PaletteIndex = 49,                        
                         Visible = Visible
                     };
                     shadowSprite.ClipArea = ClipArea;

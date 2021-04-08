@@ -85,6 +85,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public UITexts UITexts { get; }
         public Buttons Buttons { get; }
         public ItemManager ItemManager { get; }
+        public Graphic[] BuiltinPalettes { get; } = new Graphic[3];
 
         static T Read<T>(IDataReader[] dataReaders, ref int readerIndex)
         {
@@ -150,6 +151,12 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             dataHunkReaders[1].Position = (int)glyphOffset;
             Glyphs = Read<Glyphs>(dataHunkReaders, ref dataHunkIndex);
             Cursors = Read<Cursors>(dataHunkReaders, ref dataHunkIndex);
+
+            // Here are the 3 builtin palettes for primary UI, automap and secondary UI.
+            for (int i = 0; i < 3; ++i)
+            {
+                BuiltinPalettes[i] = GraphicProvider.ReadPalette(dataHunkReaders[dataHunkIndex]);
+            }
 
             // TODO ...
 
