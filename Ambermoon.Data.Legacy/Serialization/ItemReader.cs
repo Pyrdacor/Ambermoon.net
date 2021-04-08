@@ -33,6 +33,15 @@ namespace Ambermoon.Data.Legacy.Serialization
             item.Damage = (sbyte)dataReader.ReadByte();
             item.AmmunitionType = (AmmunitionType)dataReader.ReadByte();
             item.UsedAmmunitionType = (AmmunitionType)dataReader.ReadByte();
+            // TODO: There are 4 items in Ambermoon which uses this:
+            // - Whip: 01 00 0A 00
+            // - Banded Armour: 00 00 04 00
+            // - Plate Armour: 00 00 06 00
+            // - Knight's Armour: 00 00 08 00
+            // Only the whip has an effect of -10 Attack ability
+            // as for the other 3 the first or second byte is 0.
+            // Either the data is wrong or the original code.
+            // But it's hard to reverse engineer the meaning this way.
             var reduction = dataReader.ReadBytes(4);
             item.AttackReduction = reduction[0] == 0 ? 0u : reduction[2];
             item.ParryReduction = reduction[1] == 0 ? 0u : reduction[3];

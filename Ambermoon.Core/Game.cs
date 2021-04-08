@@ -3117,6 +3117,8 @@ namespace Ambermoon
                 character.Attributes[item.Attribute.Value].BonusValue += (cursed ? -1 : 1) * item.AttributeValue;
             if (item.Ability != null)
                 character.Abilities[item.Ability.Value].BonusValue += (cursed ? -1 : 1) * item.AbilityValue;
+            character.Abilities[Ability.Attack].BonusValue -= (int)item.AttackReduction;
+            character.Abilities[Ability.Parry].BonusValue -= (int)item.ParryReduction;
             character.TotalWeight += (uint)amount * item.Weight;
         }
 
@@ -3143,6 +3145,8 @@ namespace Ambermoon
                 character.Attributes[item.Attribute.Value].BonusValue -= (cursed ? -1 : 1) * item.AttributeValue;
             if (item.Ability != null)
                 character.Abilities[item.Ability.Value].BonusValue -= (cursed ? -1 : 1) * item.AbilityValue;
+            character.Abilities[Ability.Attack].BonusValue += (int)item.AttackReduction;
+            character.Abilities[Ability.Parry].BonusValue += (int)item.ParryReduction;
             character.TotalWeight -= (uint)amount * item.Weight;
         }
 

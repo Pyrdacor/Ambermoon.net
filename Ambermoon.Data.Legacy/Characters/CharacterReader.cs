@@ -46,22 +46,22 @@ namespace Ambermoon.Data.Legacy.Characters
             {
                 attribute.CurrentValue = dataReader.ReadWord();
                 attribute.MaxValue = dataReader.ReadWord();
-                attribute.BonusValue = dataReader.ReadWord();
+                attribute.BonusValue = (short)dataReader.ReadWord();
                 attribute.StoredValue = dataReader.ReadWord();
             }
             foreach (var ability in character.Abilities)
             {
                 ability.CurrentValue = dataReader.ReadWord();
                 ability.MaxValue = dataReader.ReadWord();
-                ability.BonusValue = dataReader.ReadWord();
+                ability.BonusValue = (short)dataReader.ReadWord();
                 ability.StoredValue = dataReader.ReadWord();
             }
             character.HitPoints.CurrentValue = dataReader.ReadWord();
             character.HitPoints.MaxValue = dataReader.ReadWord();
-            character.HitPoints.BonusValue = dataReader.ReadWord();
+            character.HitPoints.BonusValue = (short)dataReader.ReadWord();
             character.SpellPoints.CurrentValue = dataReader.ReadWord();
             character.SpellPoints.MaxValue = dataReader.ReadWord();
-            character.SpellPoints.BonusValue = dataReader.ReadWord();
+            character.SpellPoints.BonusValue = (short)dataReader.ReadWord();
             character.VariableDefense = (short)dataReader.ReadWord();
             character.BaseDefense = (short)dataReader.ReadWord();
             character.VariableAttack = (short)dataReader.ReadWord();
