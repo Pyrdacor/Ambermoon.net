@@ -193,6 +193,8 @@ namespace Ambermoon.Data
         string SeeRoundDiskInFloor { get; }
         string CannotClimbHere { get; }
         string YouLevitate { get; }
+        string WhichNumber { get; }
+        string AutomapperNotWorkingHere { get; }
 
 
         #region Automap

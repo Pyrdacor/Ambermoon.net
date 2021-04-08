@@ -254,7 +254,7 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid condition event.");
 
                     var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
-                        ? null : map.Events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex]; // TODO: is this right or +/- 1?
+                        ? null : map.Events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
 
                     switch (conditionEvent.TypeOfCondition)
                     {
@@ -298,51 +298,6 @@ namespace Ambermoon
                                 return mapEventIfFalse;
                             }
                             break;
-                        case ConditionEvent.ConditionType.Hand:
-                            if (trigger != EventTrigger.Hand)
-                            {
-                                aborted = mapEventIfFalse == null;
-                                lastEventStatus = false;
-                                return mapEventIfFalse;
-                            }
-                            break;
-                        case ConditionEvent.ConditionType.Eye:
-                            if (trigger != EventTrigger.Eye)
-                            {
-                                aborted = mapEventIfFalse == null;
-                                lastEventStatus = false;
-                                return mapEventIfFalse;
-                            }
-                            break;
-                        case ConditionEvent.ConditionType.Success:
-                            if (!lastEventStatus)
-                            {
-                                aborted = mapEventIfFalse == null;
-                                lastEventStatus = false;
-                                return mapEventIfFalse;
-                            }
-                            break;
-                        case ConditionEvent.ConditionType.UseItem:
-                        {
-                            if (trigger < EventTrigger.Item0)
-                            {
-                                // no item used
-                                aborted = mapEventIfFalse == null;
-                                lastEventStatus = false;
-                                return mapEventIfFalse;
-                            }
-
-                            uint itemIndex = (uint)(trigger - EventTrigger.Item0);
-
-                            if (itemIndex != conditionEvent.ObjectIndex)
-                            {
-                                // wrong item used
-                                aborted = mapEventIfFalse == null;
-                                lastEventStatus = false;
-                                return mapEventIfFalse;
-                            }
-                            break;
-                        }
                         case ConditionEvent.ConditionType.PartyMember:
                         {
                             if (game.PartyMembers.Any(m => m.Index == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
@@ -386,6 +341,96 @@ namespace Ambermoon
 
                             break;
                         }
+                        case ConditionEvent.ConditionType.UseItem:
+                        {
+                            if (trigger < EventTrigger.Item0)
+                            {
+                                // no item used
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+
+                            uint itemIndex = (uint)(trigger - EventTrigger.Item0);
+
+                            if (itemIndex != conditionEvent.ObjectIndex)
+                            {
+                                // wrong item used
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.KnowsKeyword:
+                            if (game.CurrentSavegame.IsDictionaryWordKnown(conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.LastEventResult:
+                            if (lastEventStatus != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.Unknown1:
+                            {
+                                // TODO
+                                break;
+                            }
+                        case ConditionEvent.ConditionType.CanSee:
+                        {
+                            // TODO: are there other things to consider?
+                            bool canSee = !game.CurrentPartyMember.Ailments.HasFlag(Ailment.Blind);
+                            if (canSee != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.Unknown2:
+                        {
+                            // TODO
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.HasAilment:
+                            if (game.CurrentPartyMember.Ailments.HasFlag((Ailment)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.Hand:
+                            if (trigger != EventTrigger.Hand)
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.SayWord:
+                        {
+                            if (trigger != EventTrigger.Mouth)
+                            {
+                                aborted = true;
+                                return null;
+                            }
+                            game.SayWord(map, x, y, conditionEvent);
+                            return null;
+                        }
+                        case ConditionEvent.ConditionType.EnterNumber:
+                        {
+                            game.EnterNumber(map, x, y, conditionEvent);
+                            return null;
+                        }
                         case ConditionEvent.ConditionType.Levitating:
                             if (trigger != EventTrigger.Levitating)
                             {
@@ -394,7 +439,30 @@ namespace Ambermoon
                                 return mapEventIfFalse;
                             }
                             break;
-                        // TODO ...
+                        case ConditionEvent.ConditionType.HasGold:
+                            if ((game.CurrentPartyMember.Gold >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.HasFood:
+                            if ((game.CurrentPartyMember.Food >= conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.Eye:
+                            if (trigger != EventTrigger.Eye)
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
                     }
 
                     trigger = EventTrigger.Always; // following events should not dependent on the trigger anymore

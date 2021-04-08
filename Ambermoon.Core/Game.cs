@@ -1785,7 +1785,7 @@ namespace Ambermoon
                     break;
                 }
                 default:
-                    if (WindowActive)
+                    if (WindowActive || layout.PopupActive)
                         layout.KeyDown(key, modifiers);
                     break;
             }
@@ -3556,6 +3556,24 @@ namespace Ambermoon
             }
 
             followAction?.Invoke();
+        }
+
+        internal void SayWord(Map map, uint x, uint y, ConditionEvent conditionEvent)
+        {
+
+        }
+
+        internal void EnterNumber(Map map, uint x, uint y, ConditionEvent conditionEvent)
+        {
+            layout.OpenAmountInputBox(DataNameProvider.WhichNumber, null, null, 9999, number =>
+            {
+                var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
+                    ? null : map.Events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
+                var @event = (number == conditionEvent.ObjectIndex)
+                    ? conditionEvent.Next : mapEventIfFalse;
+                if (@event != null)
+                    EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, CurrentTicks, @event, true);
+            }, null, TextColor.Azure);
         }
 
         void Levitate()

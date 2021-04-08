@@ -215,6 +215,8 @@
         public string SeeRoundDiskInFloor => executableData.Messages.GetEntry(Messages.Index.SeeRoundDiskInFloor);
         public string CannotClimbHere => executableData.Messages.GetEntry(Messages.Index.CannotClimbHere);
         public string YouLevitate => executableData.Messages.GetEntry(Messages.Index.YouLevitate);
+        public string WhichNumber => executableData.Messages.GetEntry(Messages.Index.WhichNumber);
+        public string AutomapperNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.AutomapperNotWorkingHere);
 
 
         #region Automap

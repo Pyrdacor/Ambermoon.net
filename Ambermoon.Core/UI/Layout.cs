@@ -1430,7 +1430,7 @@ namespace Ambermoon.UI
         }
 
         internal Popup OpenAmountInputBox(string message, uint? imageIndex, string name, uint maxAmount,
-            Action<uint> submitAction, Action abortAction = null)
+            Action<uint> submitAction, Action abortAction = null, TextColor messageColor = TextColor.Orange)
         {
             ClosePopup(false);
             activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
@@ -1455,7 +1455,7 @@ namespace Ambermoon.UI
             // Message display
             var messageArea = new Rect(79, 98, 145, 10);
             activePopup.AddSunkenBox(messageArea);
-            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), message, TextColor.Orange, TextAlign.Center);
+            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), message, messageColor, TextAlign.Center);
             // Amount input
             var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
                 TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort);
