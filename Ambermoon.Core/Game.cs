@@ -475,9 +475,9 @@ namespace Ambermoon
                 {
                     var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
 
-                    initialSavegame.PartyMembers[0].Name = name;
-                    initialSavegame.PartyMembers[0].Gender = female ? Gender.Female : Gender.Male;
-                    initialSavegame.PartyMembers[0].PortraitIndex = (ushort)portraitIndex;
+                    initialSavegame.PartyMembers[1].Name = name;
+                    initialSavegame.PartyMembers[1].Gender = female ? Gender.Female : Gender.Male;
+                    initialSavegame.PartyMembers[1].PortraitIndex = (ushort)portraitIndex;
 
                     Start(initialSavegame);
                     characterCreator = null;
@@ -2326,8 +2326,8 @@ namespace Ambermoon
         public IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
             .Select(i => GetPartyMember(i)).Where(p => p != null);
         public PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
-        internal Chest GetChest(uint index) => CurrentSavegame.Chests[(int)index];
-        internal Merchant GetMerchant(uint index) => CurrentSavegame.Merchants[(int)index];
+        internal Chest GetChest(uint index) => CurrentSavegame.Chests[index];
+        internal Merchant GetMerchant(uint index) => CurrentSavegame.Merchants[index];
 
         /// <summary>
         /// Triggers map events with the given trigger and position.
@@ -3558,17 +3558,17 @@ namespace Ambermoon
             followAction?.Invoke();
         }
 
-        internal void SayWord(Map map, uint x, uint y, ConditionEvent conditionEvent)
+        internal void SayWord(Map map, uint x, uint y, List<Event> events, ConditionEvent conditionEvent)
         {
 
         }
 
-        internal void EnterNumber(Map map, uint x, uint y, ConditionEvent conditionEvent)
+        internal void EnterNumber(Map map, uint x, uint y, List<Event> events, ConditionEvent conditionEvent)
         {
             layout.OpenAmountInputBox(DataNameProvider.WhichNumber, null, null, 9999, number =>
             {
                 var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
-                    ? null : map.Events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
+                    ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
                 var @event = (number == conditionEvent.ObjectIndex)
                     ? conditionEvent.Next : mapEventIfFalse;
                 if (@event != null)
@@ -4381,7 +4381,7 @@ namespace Ambermoon
 
         internal void ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map)
         {
-            var chest = GetChest(chestEvent.ChestIndex);
+            var chest = GetChest(1 + chestEvent.ChestIndex);
 
             if (chestEvent.RemoveWhenEmpty && chest.Empty)
                 return;
@@ -4713,7 +4713,7 @@ namespace Ambermoon
         {
             // TODO: If a party member joins the party, set Character.CharacterBitIndex to the current
             // map character bit if Character.CharacterBitIndex is 0xffff. Also deactivate the character
-            // bit of the current character.
+            // bit of the current character. (this should be done be event chain I guess, right?)
             // TODO: If you leave the conversation with a party member and it is not in the party,
             // activate the character at Character.CharacterBitIndex if it is not 0xffff. Also
             // deactivate the current character in this case.
@@ -7176,9 +7176,9 @@ namespace Ambermoon
                 {
                     var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
 
-                    initialSavegame.PartyMembers[0].Name = CurrentSavegame.PartyMembers[0].Name;
-                    initialSavegame.PartyMembers[0].Gender = CurrentSavegame.PartyMembers[0].Gender;
-                    initialSavegame.PartyMembers[0].PortraitIndex = CurrentSavegame.PartyMembers[0].PortraitIndex;
+                    initialSavegame.PartyMembers[1].Name = CurrentSavegame.PartyMembers[1].Name;
+                    initialSavegame.PartyMembers[1].Gender = CurrentSavegame.PartyMembers[1].Gender;
+                    initialSavegame.PartyMembers[1].PortraitIndex = CurrentSavegame.PartyMembers[1].PortraitIndex;
 
                     Start(initialSavegame);
                 }
@@ -8251,7 +8251,7 @@ namespace Ambermoon
 
         void OpenMerchant(uint merchantIndex, string placeName, string buyText, bool isLibrary, bool showWelcome = true)
         {
-            var merchant = GetMerchant(merchantIndex);
+            var merchant = GetMerchant(1 + merchantIndex);
             merchant.Name = placeName;
 
             Fade(() =>

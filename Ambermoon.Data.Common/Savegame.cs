@@ -154,8 +154,8 @@ namespace Ambermoon.Data
 
         #region Party
 
-        public List<PartyMember> PartyMembers { get; } = new List<PartyMember>();
-        public int[] CurrentPartyMemberIndices { get; } = new int[6];
+        public Dictionary<uint, PartyMember> PartyMembers { get; } = new Dictionary<uint, PartyMember>();
+        public uint[] CurrentPartyMemberIndices { get; } = new uint[6];
         public int ActivePartyMemberSlot = 0; // 0 - 5
         public byte[] BattlePositions { get; } = new byte[6];
         public ActiveSpell[] ActiveSpells { get; } = new ActiveSpell[6];
@@ -275,8 +275,8 @@ namespace Ambermoon.Data
 
             DoorUnlockStates[doorIndex / 8] |= (byte)(1 << ((int)doorIndex % 8));
         }
-        public List<Chest> Chests { get; } = new List<Chest>();
-        public List<Merchant> Merchants { get; } = new List<Merchant>();
+        public Dictionary<uint, Chest> Chests { get; } = new Dictionary<uint, Chest>();
+        public Dictionary<uint, Merchant> Merchants { get; } = new Dictionary<uint, Merchant>();
 
         #endregion
 
@@ -344,7 +344,7 @@ namespace Ambermoon.Data
 
         // TODO: ...
 
-        public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot] - 1];
+        public PartyMember GetPartyMember(int slot) => CurrentPartyMemberIndices[slot] == 0 ? null : PartyMembers[CurrentPartyMemberIndices[slot]];
 
         public static Savegame Load(ISavegameSerializer savegameSerializer, SavegameInputFiles savegameFiles, IFileContainer partyTextsContainer)
         {

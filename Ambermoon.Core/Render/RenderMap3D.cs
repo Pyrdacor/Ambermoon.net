@@ -326,7 +326,7 @@ namespace Ambermoon.Render
                     switch (characterReference.Type)
                     {
                         case CharacterType.PartyMember:
-                            return HandleConversation(game.CurrentSavegame.PartyMembers[(int)characterReference.Index]);
+                            return HandleConversation(game.CurrentSavegame.PartyMembers[characterReference.Index]);
                         case CharacterType.NPC:
                             return HandleConversation(game.CharacterManager.GetNPC(characterReference.Index));
                         case CharacterType.MapObject:

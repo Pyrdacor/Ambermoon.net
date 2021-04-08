@@ -18,10 +18,10 @@ namespace Ambermoon
             // For example buttons use 2 events (one for Eye interaction and one for Hand interaction).
 
             aborted = false;
+            var events = conversationPartner == null ? map.Events : conversationPartner.Events;
 
             switch (@event.Type)
             {
-                // TODO ...
                 case EventType.Teleport:
                 {
                     if (trigger != EventTrigger.Move &&
@@ -254,7 +254,7 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid condition event.");
 
                     var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
-                        ? null : map.Events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
+                        ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
 
                     switch (conditionEvent.TypeOfCondition)
                     {
@@ -423,12 +423,12 @@ namespace Ambermoon
                                 aborted = true;
                                 return null;
                             }
-                            game.SayWord(map, x, y, conditionEvent);
+                            game.SayWord(map, x, y, events, conditionEvent);
                             return null;
                         }
                         case ConditionEvent.ConditionType.EnterNumber:
                         {
-                            game.EnterNumber(map, x, y, conditionEvent);
+                            game.EnterNumber(map, x, y, events, conditionEvent);
                             return null;
                         }
                         case ConditionEvent.ConditionType.Levitating:
@@ -508,7 +508,7 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid dice 100 event.");
 
                     var mapEventIfFalse = diceEvent.ContinueIfFalseWithMapEventIndex == 0xffff
-                        ? null : map.Events[(int)diceEvent.ContinueIfFalseWithMapEventIndex]; // TODO: is this right or +/- 1?
+                        ? null : events[(int)diceEvent.ContinueIfFalseWithMapEventIndex];
                     lastEventStatus = game.RollDice100() < diceEvent.Chance;
                     return lastEventStatus ? diceEvent.Next : mapEventIfFalse;
                 }
@@ -542,6 +542,18 @@ namespace Ambermoon
                             // TODO: this has to be handled by the conversation window
                             aborted = true;
                             return null;
+                        case ConversationEvent.InteractionType.GiveGold:
+                            // TODO
+                            break;
+                        case ConversationEvent.InteractionType.GiveFood:
+                            // TODO
+                            break;
+                        case ConversationEvent.InteractionType.JoinParty:
+                            // TODO
+                            break;
+                        case ConversationEvent.InteractionType.LeaveParty:
+                            // TODO
+                            break;
                         default:
                             // TODO
                             Console.WriteLine($"Found unknown conversation interaction type: {conversationEvent.Interaction}");
@@ -578,7 +590,7 @@ namespace Ambermoon
                             if (decisionEvent.NoEventIndex != 0xffff)
                             {
                                 map.TriggerEventChain(game, EventTrigger.Always,
-                                    x, y, game.CurrentTicks, map.Events[(int)decisionEvent.NoEventIndex], false);
+                                    x, y, game.CurrentTicks, events[(int)decisionEvent.NoEventIndex], false);
                             }
                         }
                     });
