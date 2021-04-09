@@ -32,7 +32,7 @@ namespace Ambermoon.Renderer
         const int CharacterWidth = 6;
         const int CharacterHeight = 6;
         const int LineHeight = 7;
-        const byte ShadowColorIndex = 1;
+        const byte ShadowColorIndex = (byte)TextColor.Black;
         protected int drawIndex = -1;
         byte displayLayer = 0;
         byte paletteIndex = 49;

@@ -117,7 +117,7 @@ namespace Ambermoon.UI
 
         public static TextInput FocusedInput { get; private set; } = null;
 
-        public TextInput(IRenderView renderView, Position position, int inputLength, byte displayLayer,
+        public TextInput(Game game, IRenderView renderView, Position position, int inputLength, byte displayLayer,
             ClickAction leftClickAction, ClickAction rightClickAction, TextAlign textAlign)
         {
             this.leftClickAction = leftClickAction;
@@ -128,10 +128,10 @@ namespace Ambermoon.UI
 
             // Note: There is always 1 char-slot more as the input length.
             area = new Rect(position.X, position.Y, (inputLength + 1) * Global.GlyphWidth - 2, Global.GlyphLineHeight);
-            text = new UIText(renderView, renderView.TextProcessor.CreateText(""), area,
-                displayLayer, TextColor.BrightGray, true, textAlign);
+            text = new UIText(renderView, game?.UIPaletteIndex ?? (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1),
+                renderView.TextProcessor.CreateText(""), area, displayLayer, TextColor.BrightGray, true, textAlign);
 
-            blinkingCursor = renderView.ColoredRectFactory.Create(5, 5, Color.LightGray, displayLayer); // TODO: named palette color?
+            blinkingCursor = renderView.ColoredRectFactory.Create(5, 5, game?.GetUIColor(28) ?? new Color(0x66, 0x66, 0x55), displayLayer);
             blinkingCursor.Layer = renderView.GetLayer(Layer.UI);
             blinkingCursor.X = position.X;
             blinkingCursor.Y = position.Y;

@@ -60,11 +60,13 @@ namespace Ambermoon.UI
 
             if (canEdit && itemTexts.Count != 0)
             {
-                editInput = new TextInput(renderView, new Position(), (itemTexts[0].Width / Global.GlyphWidth) - 1,
-                    (byte)(popup.DisplayLayer + 6), TextInput.ClickAction.Submit, TextInput.ClickAction.Abort, TextAlign.Left);
-                editInput.ClearOnNewInput = false;
-                editInput.DigitsOnly = false;
-                editInput.ReactToGlobalClicks = true;
+                editInput = new TextInput(game, renderView, new Position(), (itemTexts[0].Width / Global.GlyphWidth) - 1,
+                    (byte)(popup.DisplayLayer + 6), TextInput.ClickAction.Submit, TextInput.ClickAction.Abort, TextAlign.Left)
+                {
+                    ClearOnNewInput = false,
+                    DigitsOnly = false,
+                    ReactToGlobalClicks = true
+                };
                 editInput.InputSubmitted += _ => CommitEdit();
             }
         }

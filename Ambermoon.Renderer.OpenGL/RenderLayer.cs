@@ -213,8 +213,6 @@ namespace Ambermoon.Renderer
 
                     shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                     shader.SetZ(LayerBaseZ[(int)Layer]);
-                    // Portraits and some UI graphics use color keys.
-                    shader.SetColorKey((byte)(Layer == Layer.UI ? 25 : 0));
                 }
             }
 

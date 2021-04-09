@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Attribute = Ambermoon.Data.Attribute;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon
 {
@@ -329,6 +330,7 @@ namespace Ambermoon
         readonly ICamera3D camera3D = null;
         readonly IRenderText messageText = null;
         readonly IRenderText windowTitle = null;
+        byte currentUIPaletteIndex = 0;
         internal byte PrimaryUIPaletteIndex { get; }
         internal byte SecondaryUIPaletteIndex { get; }
         internal byte AutomapPaletteIndex { get; }
@@ -386,7 +388,7 @@ namespace Ambermoon
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
             Places places, Cursor cursor)
         {
-            PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
+            currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
             AutomapPaletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
 
@@ -408,7 +410,7 @@ namespace Ambermoon
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
             windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
-                renderView.TextProcessor.CreateText(""), Data.Enumerations.Color.BrightGray, true,
+                renderView.TextProcessor.CreateText(""), TextColor.BrightGray, true,
                 new Rect(8, 40, 192, 10), TextAlign.Center);
             windowTitle.DisplayLayer = 2;
             layout = new Layout(this, renderView, itemManager);
@@ -431,7 +433,7 @@ namespace Ambermoon
                 hurtPlayerDamageTexts[i].DisplayLayer = 201;
                 hurtPlayerDamageTexts[i].TextAlign = TextAlign.Center;
                 hurtPlayerDamageTexts[i].Shadow = true;
-                hurtPlayerDamageTexts[i].TextColor = Data.Enumerations.Color.White;
+                hurtPlayerDamageTexts[i].TextColor = TextColor.White;
                 hurtPlayerDamageTexts[i].Visible = false;
             }
             hurtPlayerEvent.Action = () =>
@@ -461,20 +463,9 @@ namespace Ambermoon
             layout.ShowPortraitArea(false);
         }
 
-        internal byte GetUIPaletteIndex()
-        {
-            if (Map == null)
-                return PrimaryUIPaletteIndex;
+        internal byte UIPaletteIndex => currentUIPaletteIndex;
 
-            if (is3D)
-            {
-                return Map.Flags.HasFlag(MapFlags.SecondaryUI3D) ? SecondaryUIPaletteIndex : PrimaryUIPaletteIndex;
-            }
-            else
-            {
-                return Map.Flags.HasFlag(MapFlags.SecondaryUI2D) ? SecondaryUIPaletteIndex : PrimaryUIPaletteIndex;
-            }
-        }
+        internal byte TextPaletteIndex => WindowActive ? UIPaletteIndex : (byte)((Map?.PaletteIndex ?? 1) - 1);
 
         /// <summary>
         /// This is called when the game starts.
@@ -728,11 +719,11 @@ namespace Ambermoon
             lastMoveTicksReset = CurrentTicks;
         }
 
-        public Render.Color GetTextColor(Data.Enumerations.Color textColor) => GetPaletteColor(51, (int)textColor);
+        public Render.Color GetTextColor(TextColor textColor) => GetUIColor((int)textColor);
 
-        public Render.Color GetNamedPaletteColor(NamedPaletteColors namedPaletteColor) => GetPaletteColor(50, (int)namedPaletteColor);
+        public Render.Color GetNamedPaletteColor(NamedPaletteColors namedPaletteColor) => GetUIColor((int)namedPaletteColor);
 
-        public Render.Color GetPaletteColor(int paletteIndex, int colorIndex)
+        Render.Color GetPaletteColor(int paletteIndex, int colorIndex)
         {
             var paletteData = renderView.GraphicProvider.Palettes[paletteIndex].Data;
             return new Render.Color
@@ -744,7 +735,7 @@ namespace Ambermoon
             );
         }
 
-        public Render.Color GetUIColor(int colorIndex) => GetPaletteColor(1 + GetUIPaletteIndex(), colorIndex);
+        public Render.Color GetUIColor(int colorIndex) => GetPaletteColor(1 + UIPaletteIndex, colorIndex);
 
         float GetLight3D()
         {
@@ -1305,9 +1296,10 @@ namespace Ambermoon
             return renderView.TextProcessor.WrapText(ProcessText(text), bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
         }
 
-        public void ShowMessage(Rect bounds, string text, Data.Enumerations.Color color, bool shadow, TextAlign textAlign = TextAlign.Left)
+        public void ShowMessage(Rect bounds, string text, TextColor color, bool shadow, TextAlign textAlign = TextAlign.Left)
         {
             messageText.Text = ProcessText(text, bounds);
+            messageText.PaletteIndex = TextPaletteIndex;
             messageText.TextColor = color;
             messageText.Shadow = shadow;
             messageText.Place(bounds, textAlign);
@@ -2513,13 +2505,30 @@ namespace Ambermoon
                 ? DataNameProvider.GetWorldName(Map.World)
                 : Map.Name;
             windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
-            windowTitle.TextColor = Data.Enumerations.Color.BrightGray;
+            windowTitle.PaletteIndex = UIPaletteIndex;
+            windowTitle.TextColor = TextColor.BrightGray;
+        }
+
+        void UpdateUIPalette(bool map)
+        {
+            if (map)
+            {
+                // TODO: MapFlags.SecondaryUI2D / MapFlags.SecondaryUI3D?
+                currentUIPaletteIndex = (byte)(Map.PaletteIndex - 1);
+            }
+            else
+            {
+                currentUIPaletteIndex = PrimaryUIPaletteIndex;
+            }
+
+            layout.UpdateUIPalette(currentUIPaletteIndex);
         }
 
         void ShowMap(bool show)
         {
             if (show)
             {
+                UpdateUIPalette(true);
                 currentBattle = null;
                 layout.CancelDrag();
                 ResetCursor();
@@ -2530,6 +2539,7 @@ namespace Ambermoon
             }
             else
             {
+                UpdateUIPalette(false);
                 Pause();
             }
 
@@ -2617,7 +2627,8 @@ namespace Ambermoon
                 SetActivePartyMember(SlotFromPartyMember(CurrentPartyMember).Value, false);
 
                 windowTitle.Text = renderView.TextProcessor.CreateText(DataNameProvider.InventoryTitleString);
-                windowTitle.TextColor = Data.Enumerations.Color.White;
+                windowTitle.PaletteIndex = UIPaletteIndex;
+                windowTitle.TextColor = TextColor.White;
                 windowTitle.Visible = true;
 
                 #region Equipment and Inventory
@@ -2758,10 +2769,10 @@ namespace Ambermoon
                 var weightArea = new Rect(27, 152, 68, 15);
                 layout.AddPanel(weightArea, 2);
                 layout.AddText(weightArea.CreateModified(0, 1, 0, 0), DataNameProvider.CharacterInfoWeightHeaderString,
-                    Data.Enumerations.Color.White, TextAlign.Center, 5);
+                    TextColor.White, TextAlign.Center, 5);
                 characterInfoTexts.Add(CharacterInfo.Weight, layout.AddText(weightArea.CreateModified(0, 8, 0, 0),
                     string.Format(DataNameProvider.CharacterInfoWeightString, partyMember.TotalWeight / 1000,
-                    partyMember.MaxWeight / 1000), Data.Enumerations.Color.White, TextAlign.Center, 5));
+                    partyMember.MaxWeight / 1000), TextColor.White, TextAlign.Center, 5));
                 #endregion
             }
 
@@ -2772,7 +2783,7 @@ namespace Ambermoon
                 SetWindow(Window.Stats, slot);
                 layout.SetLayout(LayoutType.Stats);
                 layout.EnableButton(0, canAccessInventory);
-                layout.FillArea(new Rect(16, 49, 176, 145), Render.Color.LightGray, false);
+                layout.FillArea(new Rect(16, 49, 176, 145), GetUIColor(28), false);
 
                 // As the stats can be opened from the healer (which displays the healing symbol)
                 // we will update the portraits here to hide it.
@@ -2788,7 +2799,7 @@ namespace Ambermoon
                 DisplayCharacterInfo(partyMember, false);
                 #endregion
                 #region Attributes
-                layout.AddText(new Rect(22, 50, 72, Global.GlyphLineHeight), DataNameProvider.AttributesHeaderString, Data.Enumerations.Color.LightGreen, TextAlign.Center);
+                layout.AddText(new Rect(22, 50, 72, Global.GlyphLineHeight), DataNameProvider.AttributesHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
                 foreach (var attribute in Enum.GetValues<Attribute>())
                 {
@@ -2818,7 +2829,7 @@ namespace Ambermoon
                 }
                 #endregion
                 #region Abilities
-                layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.AbilitiesHeaderString, Data.Enumerations.Color.LightGreen, TextAlign.Center);
+                layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.AbilitiesHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
                 foreach (var ability in Enum.GetValues<Ability>())
                 {
@@ -2830,7 +2841,7 @@ namespace Ambermoon
                 }
                 #endregion
                 #region Languages
-                layout.AddText(new Rect(106, 50, 72, Global.GlyphLineHeight), DataNameProvider.LanguagesHeaderString, Data.Enumerations.Color.LightGreen, TextAlign.Center);
+                layout.AddText(new Rect(106, 50, 72, Global.GlyphLineHeight), DataNameProvider.LanguagesHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
                 foreach (var language in Enum.GetValues<Language>().Skip(1)) // skip Language.None
                 {
@@ -2841,7 +2852,7 @@ namespace Ambermoon
                 }
                 #endregion
                 #region Ailments
-                layout.AddText(new Rect(106, 115, 72, Global.GlyphLineHeight), DataNameProvider.AilmentsHeaderString, Data.Enumerations.Color.LightGreen, TextAlign.Center);
+                layout.AddText(new Rect(106, 115, 72, Global.GlyphLineHeight), DataNameProvider.AilmentsHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
                 // Total space is 80 pixels wide. Each ailment icon is 16 pixels wide. So there is space for 5 ailment icons per line.
                 const int ailmentsPerRow = 5;
@@ -2859,8 +2870,8 @@ namespace Ambermoon
 
                     int x = 96 + column * 16;
                     int y = 124 + row * 17;
-                    layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), 49,
-                        2, DataNameProvider.GetAilmentName(ailment), ailment == Ailment.DeadCorpse ? Data.Enumerations.Color.DeadPartyMember : Data.Enumerations.Color.ActivePartyMember);
+                    layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), UIPaletteIndex,
+                        2, DataNameProvider.GetAilmentName(ailment), ailment == Ailment.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
                 }
                 #endregion
             }
@@ -2891,9 +2902,9 @@ namespace Ambermoon
 
             characterInfoTexts.Clear();
             characterInfoPanels.Clear();
-            layout.FillArea(new Rect(208, offsetY + 49, 96, 80), Render.Color.LightGray, false);
-            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 51, 1);
-            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.PortraitOffset + character.PortraitIndex - 1, 49, 2);
+            layout.FillArea(new Rect(208, offsetY + 49, 96, 80), GetUIColor(28), false);
+            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.UICustomGraphicOffset + (uint)UICustomGraphic.PortraitBackground, 52, 1);
+            layout.AddSprite(new Rect(208, offsetY + 49, 32, 34), Graphics.PortraitOffset + character.PortraitIndex - 1, PrimaryUIPaletteIndex, 2);
             layout.AddText(new Rect(242, offsetY + 49, 62, 7), DataNameProvider.GetRaceName(character.Race));
             layout.AddText(new Rect(242, offsetY + 56, 62, 7), DataNameProvider.GetGenderName(character.Gender));
             characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
@@ -2901,7 +2912,7 @@ namespace Ambermoon
                 character.Attributes[Attribute.Age].CurrentValue)));
             characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
                 $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
-            layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? Data.Enumerations.Color.PartyMember : Data.Enumerations.Color.ActivePartyMember, TextAlign.Center);
+            layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.PartyMember : TextColor.ActivePartyMember, TextAlign.Center);
             if (!conversation)
             {
                 bool magicClass = character.Class.IsMagic();
@@ -2911,22 +2922,22 @@ namespace Ambermoon
                 characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoHitPointsString,
                     character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue),
-                    Data.Enumerations.Color.White, TextAlign.Center));
+                    TextColor.White, TextAlign.Center));
                 if (magicClass)
                 {
                     characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
                         string.Format(DataNameProvider.CharacterInfoSpellPointsString,
                         character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue),
-                        Data.Enumerations.Color.White, TextAlign.Center));
+                        TextColor.White, TextAlign.Center));
                 }
                 characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
                     (magicClass ? string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) : new string(' ', 7)) + " " +
-                    string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), Data.Enumerations.Color.White, TextAlign.Center));
+                    string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), TextColor.White, TextAlign.Center));
                 var displayGold = OpenStorage is IPlace ? 0 : character.Gold;
                 characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, displayGold, character.Food),
-                    Data.Enumerations.Color.White, TextAlign.Center));
-                layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), 0);
+                    TextColor.White, TextAlign.Center));
+                layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
                 {
                     int attack = character.BaseAttack;
@@ -2939,9 +2950,9 @@ namespace Ambermoon
                 else
                 {
                     string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack));
-                    characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7), attackString, Data.Enumerations.Color.White, TextAlign.Left));
+                    characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7), attackString, TextColor.White, TextAlign.Left));
                 }
-                layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), 0);
+                layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), UIPaletteIndex);
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
                 {
                     int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
@@ -2954,12 +2965,12 @@ namespace Ambermoon
                 else
                 {
                     string defenseString = string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense));
-                    characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7), defenseString, Data.Enumerations.Color.White, TextAlign.Left));
+                    characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7), defenseString, TextColor.White, TextAlign.Left));
                 }
             }
             else
             {
-                layout.AddText(new Rect(208, 99, 96, 7), CurrentPartyMember.Name, Data.Enumerations.Color.ActivePartyMember, TextAlign.Center);
+                layout.AddText(new Rect(208, 99, 96, 7), CurrentPartyMember.Name, TextColor.ActivePartyMember, TextAlign.Center);
                 if (CurrentPartyMember.Gold > 0)
                 {
                     ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
@@ -3063,7 +3074,7 @@ namespace Ambermoon
                 if (!characterInfoTexts.ContainsKey(characterInfo))
                 {
                     characterInfoTexts[characterInfo] = layout.AddText(area.CreateOffset(0, 1),
-                        text, Data.Enumerations.Color.White, TextAlign.Center, 4);
+                        text, TextColor.White, TextAlign.Center, 4);
                 }
                 else
                     characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text));
@@ -4136,7 +4147,9 @@ namespace Ambermoon
                 ResetMoveKeys();
                 if (!WindowActive && layout.ButtonGridPage != 0)
                     layout.UpdateLayoutButtons();
-                layout.UpdateUIPalette(GetUIPaletteIndex());
+
+                // Update UI palette
+                UpdateUIPalette(true);
             }
             else
             {
@@ -4342,7 +4355,7 @@ namespace Ambermoon
             OpenStorage = storage;
             OpenStorage.AllowsItemDrop = chestEvent == null ? false : !chestEvent.RemoveWhenEmpty;
             layout.SetLayout(LayoutType.Items);
-            layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+            layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
             var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, storage.Slots.ToList(),
@@ -4474,7 +4487,7 @@ namespace Ambermoon
             uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action failedAction)
         {
             layout.SetLayout(LayoutType.Items);
-            layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+            layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
             var itemArea = new Rect(16, 139, 151, 53);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
@@ -4776,8 +4789,8 @@ namespace Ambermoon
                 ShowMap(false);
                 layout.Reset();
 
-                layout.FillArea(textArea, GetPaletteColor(50, 28), false);
-                layout.FillArea(new Rect(15, 136, 152, 57), GetPaletteColor(50, 28), false);
+                layout.FillArea(textArea, GetUIColor(28), false);
+                layout.FillArea(new Rect(15, 136, 152, 57), GetUIColor(28), false);
 
                 if (!(conversationPartner is Character character))
                     throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
@@ -4935,12 +4948,13 @@ namespace Ambermoon
                 layout.Reset();
 
                 // Upper box
-                var backgroundColor = GetPaletteColor(50, 25);
+                var backgroundColor = GetUIColor(25);
                 var upperBoxBounds = new Rect(14, 43, 290, 80);
-                layout.FillArea(upperBoxBounds, GetPaletteColor(50, 28), 0);
+                layout.FillArea(upperBoxBounds, GetUIColor(28), 0);
                 var positionBoxes = new Rect[12];
+                byte paletteIndex = UIPaletteIndex;
                 var portraits = PartyMembers.ToDictionary(p => SlotFromPartyMember(p),
-                    p => layout.AddSprite(new Rect(0, 0, 32, 34), Graphics.PortraitOffset + p.PortraitIndex - 1, 49, 5, p.Name, Data.Enumerations.Color.White));
+                    p => layout.AddSprite(new Rect(0, 0, 32, 34), Graphics.PortraitOffset + p.PortraitIndex - 1, paletteIndex, 5, p.Name, TextColor.White));
                 var portraitBackgrounds = PartyMembers.ToDictionary(p => SlotFromPartyMember(p), _ => (FilledArea)null);
                 var battlePositions = CurrentSavegame.BattlePositions.Select((p, i) => new { p, i }).Where(p => GetPartyMember(p.i) != null).ToDictionary(p => (int)p.p, p => p.i);
                 // Each box is 34x36 pixels in size (with border)
@@ -4967,7 +4981,7 @@ namespace Ambermoon
 
                 // Lower box
                 var lowerBoxBounds = new Rect(16, 144, 176, 48);
-                layout.FillArea(lowerBoxBounds, GetPaletteColor(50, 28), 0);
+                layout.FillArea(lowerBoxBounds, GetUIColor(28), 0);
                 layout.AddText(lowerBoxBounds, DataNameProvider.ChooseBattlePositions);
 
                 closeWindowHandler = () =>
@@ -5140,7 +5154,7 @@ namespace Ambermoon
             layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
                 (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
             layout.FillArea(new Rect(0, 132, 320, 68), Render.Color.Black, 0);
-            layout.FillArea(new Rect(5, 139, 84, 56), GetPaletteColor(50, 28), 1);
+            layout.FillArea(new Rect(5, 139, 84, 56), GetUIColor(28), 1);
 
             if (currentBattle != null)
             {
@@ -5176,9 +5190,9 @@ namespace Ambermoon
                         Global.BattleFieldY + battleRow * Global.BattleFieldSlotHeight - 1,
                         Global.BattleFieldSlotWidth,
                         Global.BattleFieldSlotHeight + 1
-                    ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, 49, (byte)(3 + battleRow),
+                    ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, PrimaryUIPaletteIndex, (byte)(3 + battleRow),
                     $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}",
-                    partyMember.Ailments.CanSelect() ? Data.Enumerations.Color.White : Data.Enumerations.Color.DeadPartyMember, null, out partyMemberBattleFieldTooltips[i]);
+                    partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.DeadPartyMember, null, out partyMemberBattleFieldTooltips[i]);
                 }
             }
             UpdateBattleStatus();
@@ -5207,7 +5221,7 @@ namespace Ambermoon
             // Move group forward button
             layout.AttachEventToButton(4, () =>
             {
-                SetBattleMessageWithClick(DataNameProvider.BattleMessagePartyAdvances, Data.Enumerations.Color.BrightGray, () =>
+                SetBattleMessageWithClick(DataNameProvider.BattleMessagePartyAdvances, TextColor.BrightGray, () =>
                 {
                     InputEnable = false;
                     currentBattle.WaitForClick = true;
@@ -5621,8 +5635,8 @@ namespace Ambermoon
                         Pause();
                         var popup = layout.OpenPopup(new Position(48, 64), 4, 4);
                         TrapMouse(popup.ContentArea);
-                        popup.AddImage(new Rect(64, 80, 32, 32), Graphics.GetUIGraphicIndex(UIGraphic.Compass), Layer.UI);
-                        var text = popup.AddText(new Rect(59, 93, 42, 7), layout.GetCompassString(), Data.Enumerations.Color.BrightGray);
+                        popup.AddImage(new Rect(64, 80, 32, 32), Graphics.GetUIGraphicIndex(UIGraphic.Compass), Layer.UI, 1, UIPaletteIndex);
+                        var text = popup.AddText(new Rect(59, 93, 42, 7), layout.GetCompassString(), TextColor.BrightGray);
                         text.Clip(new Rect(64, 93, 32, 7));
                         popup.Closed += () =>
                         {
@@ -6270,7 +6284,7 @@ namespace Ambermoon
         {
             Fade(() =>
             {
-                battleRoundActiveSprite.PaletteIndex = GetUIPaletteIndex();
+                battleRoundActiveSprite.PaletteIndex = UIPaletteIndex;
                 PlayMusic(Song.SapphireFireballsOfPureLove);
                 roundPlayerBattleActions.Clear();
                 ShowBattleWindow(nextEvent, combatBackgroundIndex);
@@ -6424,7 +6438,7 @@ namespace Ambermoon
 
                 if (surpriseAttack)
                 {
-                    SetBattleMessageWithClick(DataNameProvider.AttackEscapeFailedMessage, Data.Enumerations.Color.BrightGray, () => StartBattleRound(true));
+                    SetBattleMessageWithClick(DataNameProvider.AttackEscapeFailedMessage, TextColor.BrightGray, () => StartBattleRound(true));
                 }
             });
         }
@@ -6438,7 +6452,7 @@ namespace Ambermoon
             layout.ClearBattleFieldSlotColors();
             layout.ShowButtons(false);
             buttonGridBackground = layout.FillArea(new Rect(Global.ButtonGridX, Global.ButtonGridY, 3 * Button.Width, 3 * Button.Height),
-                GetPaletteColor(50, 28), 1);
+                GetUIColor(28), 1);
             battleRoundActiveSprite.Visible = true;
             currentBattle.StartRound
             (
@@ -6714,7 +6728,7 @@ namespace Ambermoon
             return roundPlayerBattleActions[slot];
         }
 
-        internal void SetBattleMessageWithClick(string message, Data.Enumerations.Color textColor = Data.Enumerations.Color.BattlePlayer,
+        internal void SetBattleMessageWithClick(string message, TextColor textColor = TextColor.BattlePlayer,
             Action followAction = null, TimeSpan? delay = null)
         {
             layout.SetBattleMessage(message, textColor);
@@ -6820,7 +6834,7 @@ namespace Ambermoon
                             int position = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
                             if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
                             {
-                                SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, Data.Enumerations.Color.BrightGray);
+                                SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.BrightGray);
                                 return;
                             }
                         }
@@ -6835,12 +6849,12 @@ namespace Ambermoon
                         int position = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
                         if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
                         {
-                            SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, Data.Enumerations.Color.BrightGray);
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.BrightGray);
                             return;
                         }
                         if (!currentPickingActionMember.CanMove())
                         {
-                            SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove, Data.Enumerations.Color.BrightGray);
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotMove, TextColor.BrightGray);
                             return;
                         }
                         int newPosition = column + row * 6;
@@ -6850,7 +6864,7 @@ namespace Ambermoon
                             Battle.GetTargetTileOrRowFromParameter(roundPlayerBattleActions[slot].Parameter) != newPosition) &&
                             AnyPlayerMovesTo(newPosition))
                         {
-                            SetBattleMessageWithClick(DataNameProvider.BattleMessageSomeoneAlreadyGoingThere, Data.Enumerations.Color.BrightGray);
+                            SetBattleMessageWithClick(DataNameProvider.BattleMessageSomeoneAlreadyGoingThere, TextColor.BrightGray);
                             return;
                         }
                         SetPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)(column + row * 6)));
@@ -6866,7 +6880,7 @@ namespace Ambermoon
                         {
                             CancelSpecificPlayerAction();
                             // TODO: Test this later. Is CanMove equal to CanBlink?
-                            SetBattleMessageWithClick(target.Name + DataNameProvider.BattleMessageCannotBlink, Data.Enumerations.Color.BrightGray);
+                            SetBattleMessageWithClick(target.Name + DataNameProvider.BattleMessageCannotBlink, TextColor.BrightGray);
                             return;
                         }
 
@@ -7001,14 +7015,14 @@ namespace Ambermoon
             {
                 // No ammo for ranged weapon
                 CancelSpecificPlayerAction();
-                SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, Data.Enumerations.Color.BrightGray);
+                SetBattleMessageWithClick(DataNameProvider.BattleMessageNoAmmunition, TextColor.BrightGray);
                 return false;
             }
 
             if (currentPickingActionMember.BaseAttack <= 0)
             {
                 CancelSpecificPlayerAction();
-                SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, Data.Enumerations.Color.BrightGray);
+                SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, TextColor.BrightGray);
                 return false;
             }
 
@@ -7038,7 +7052,8 @@ namespace Ambermoon
                             layout.AddSprite
                             (
                                 Global.BattleFieldSlotArea(slot),
-                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight),
+                                UIPaletteIndex
                             )
                         );
                     }
@@ -7061,7 +7076,8 @@ namespace Ambermoon
                                 layout.AddSprite
                                 (
                                     Global.BattleFieldSlotArea(column + row * 6),
-                                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight),
+                                    UIPaletteIndex
                                 )
                             );
                         }
@@ -7084,7 +7100,8 @@ namespace Ambermoon
                             layout.AddSprite
                             (
                                 Global.BattleFieldSlotArea(slot),
-                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight),
+                                UIPaletteIndex
                             )
                         );
                     }
@@ -7110,7 +7127,7 @@ namespace Ambermoon
                                 Graphics.GetCustomUIGraphicIndex
                                 (
                                     AnyPlayerMovesTo(slot) ? UICustomGraphic.BattleFieldBlockedMovementCursor : UICustomGraphic.BattleFieldGreenHighlight
-                                ), 50
+                                ), UIPaletteIndex
                             )
                         );
                     }
@@ -7132,7 +7149,7 @@ namespace Ambermoon
                                 Graphics.GetCustomUIGraphicIndex
                                 (
                                     AnyPlayerMovesTo(slot) ? UICustomGraphic.BattleFieldBlockedMovementCursor : UICustomGraphic.BattleFieldGreenHighlight
-                                ), 50
+                                ), UIPaletteIndex
                             )
                         );
                     }
@@ -7140,7 +7157,7 @@ namespace Ambermoon
                     {
                         // No movement possible
                         CancelSpecificPlayerAction();
-                        SetBattleMessageWithClick(DataNameProvider.BattleMessageNowhereToMoveTo, Data.Enumerations.Color.BrightGray);
+                        SetBattleMessageWithClick(DataNameProvider.BattleMessageNowhereToMoveTo, TextColor.BrightGray);
                     }
                     else
                     {
@@ -7165,7 +7182,8 @@ namespace Ambermoon
                             layout.AddSprite
                             (
                                 Global.BattleFieldSlotArea(slot),
-                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight), 50
+                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight),
+                                UIPaletteIndex
                             )
                         );
                     }
@@ -7173,7 +7191,7 @@ namespace Ambermoon
                     {
                         // No attack possible
                         CancelSpecificPlayerAction();
-                        SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotReachAnyone, Data.Enumerations.Color.BrightGray);
+                        SetBattleMessageWithClick(DataNameProvider.BattleMessageCannotReachAnyone, TextColor.BrightGray);
                     }
                     else
                     {
@@ -8213,8 +8231,8 @@ namespace Ambermoon
             OpenStorage = place;
             layout.SetLayout(LayoutType.Items);
             layout.AddText(new Rect(120, 37, 29 * Global.GlyphWidth, Global.GlyphLineHeight),
-                renderView.TextProcessor.CreateText(placeName), Data.Enumerations.Color.White);
-            layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+                renderView.TextProcessor.CreateText(placeName), TextColor.White);
+            layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
             var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, numItemSlots).ToList(),
@@ -8306,8 +8324,8 @@ namespace Ambermoon
             OpenStorage = merchant;
             layout.SetLayout(LayoutType.Items);
             layout.AddText(new Rect(120, 37, 29 * Global.GlyphWidth, Global.GlyphLineHeight),
-                renderView.TextProcessor.CreateText(placeName), Data.Enumerations.Color.White);
-            layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+                renderView.TextProcessor.CreateText(placeName), TextColor.White);
+            layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
             var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, merchant.Slots.ToList(),
@@ -8967,7 +8985,7 @@ namespace Ambermoon
                 SetWindow(Window.Camp, inn);
                 layout.SetLayout(LayoutType.Items);
                 layout.Set80x80Picture(inn ? Picture80x80.RestInn : Map.Flags.HasFlag(MapFlags.Outdoor) ? Picture80x80.RestOutdoor : Picture80x80.RestDungeon);
-                layout.FillArea(new Rect(110, 43, 194, 80), GetPaletteColor(50, 28), false);
+                layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
                 var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
                 itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
                 var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, 24).ToList(),
@@ -9119,15 +9137,15 @@ namespace Ambermoon
             var itemArea = new Rect(31, 99, 18, 18);
             popup.AddSunkenBox(itemArea);
             popup.AddItemImage(itemArea.CreateModified(1, 1, -2, -2), item.GraphicIndex);
-            popup.AddText(new Position(51, 101), item.Name, Data.Enumerations.Color.White);
-            popup.AddText(new Position(51, 109), DataNameProvider.GetItemTypeName(item.Type), Data.Enumerations.Color.White);
-            popup.AddText(new Position(32, 120), string.Format(DataNameProvider.ItemWeightDisplay.Replace("{0:00000}", " {0:0}"), item.Weight), Data.Enumerations.Color.White);
-            popup.AddText(new Position(32, 130), string.Format(DataNameProvider.ItemHandsDisplay, item.NumberOfHands), Data.Enumerations.Color.White);
-            popup.AddText(new Position(32, 138), string.Format(DataNameProvider.ItemFingersDisplay, item.NumberOfFingers), Data.Enumerations.Color.White);
-            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+#;-#; 0")), Data.Enumerations.Color.White);
-            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace(" {0:000}", item.Defense.ToString("+#;-#; 0")), Data.Enumerations.Color.White);
+            popup.AddText(new Position(51, 101), item.Name, TextColor.White);
+            popup.AddText(new Position(51, 109), DataNameProvider.GetItemTypeName(item.Type), TextColor.White);
+            popup.AddText(new Position(32, 120), string.Format(DataNameProvider.ItemWeightDisplay.Replace("{0:00000}", " {0:0}"), item.Weight), TextColor.White);
+            popup.AddText(new Position(32, 130), string.Format(DataNameProvider.ItemHandsDisplay, item.NumberOfHands), TextColor.White);
+            popup.AddText(new Position(32, 138), string.Format(DataNameProvider.ItemFingersDisplay, item.NumberOfFingers), TextColor.White);
+            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+#;-#; 0")), TextColor.White);
+            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace(" {0:000}", item.Defense.ToString("+#;-#; 0")), TextColor.White);
 
-            popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, Data.Enumerations.Color.LightGray);
+            popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, TextColor.LightGray);
             int column = 0;
             int row = 0;
             foreach (var @class in Enum.GetValues<Class>())
@@ -9136,7 +9154,7 @@ namespace Ambermoon
 
                 if (item.Classes.HasFlag(classFlag))
                 {
-                    popup.AddText(new Position(177 + column * 54, 107 + row * Global.GlyphLineHeight), DataNameProvider.GetClassName(@class), Data.Enumerations.Color.White);
+                    popup.AddText(new Position(177 + column * 54, 107 + row * Global.GlyphLineHeight), DataNameProvider.GetClassName(@class), TextColor.White);
 
                     if (++row == 5)
                     {
@@ -9145,8 +9163,8 @@ namespace Ambermoon
                     }
                 }
             }
-            popup.AddText(new Position(177, 146), DataNameProvider.GenderHeaderString, Data.Enumerations.Color.LightGray);
-            popup.AddText(new Position(177, 154), DataNameProvider.GetGenderName(item.Genders), Data.Enumerations.Color.White);
+            popup.AddText(new Position(177, 146), DataNameProvider.GenderHeaderString, TextColor.LightGray);
+            popup.AddText(new Position(177, 154), DataNameProvider.GetGenderName(item.Genders), TextColor.White);
 
             void Close()
             {
@@ -9210,31 +9228,31 @@ namespace Ambermoon
             void AddValueDisplay(Position position, string formatString, int value)
             {
                 detailsPopup.AddText(position, formatString.Replace("000", "00")
-                    .Replace(" {0:00}", value.ToString("+#;-#; 0")), Data.Enumerations.Color.White);
+                    .Replace(" {0:00}", value.ToString("+#;-#; 0")), TextColor.White);
             }
 
             AddValueDisplay(new Position(48, 68), DataNameProvider.MaxLPDisplay, factor * item.HitPoints);
             AddValueDisplay(new Position(128, 68), DataNameProvider.MaxSPDisplay, factor * item.SpellPoints);
             AddValueDisplay(new Position(48, 75), DataNameProvider.MBWDisplay, item.MagicAttackLevel);
             AddValueDisplay(new Position(128, 75), DataNameProvider.MBRDisplay, item.MagicArmorLevel);
-            detailsPopup.AddText(new Position(48, 82), DataNameProvider.AttributeHeader, Data.Enumerations.Color.LightOrange);
+            detailsPopup.AddText(new Position(48, 82), DataNameProvider.AttributeHeader, TextColor.LightOrange);
             if (item.Attribute != null && item.AttributeValue != 0)
             {
-                detailsPopup.AddText(new Position(48, 89), DataNameProvider.GetAttributeName(item.Attribute.Value), Data.Enumerations.Color.White);
-                detailsPopup.AddText(new Position(170, 89), (factor * item.AttributeValue).ToString("+#;-#; 0"), Data.Enumerations.Color.White);
+                detailsPopup.AddText(new Position(48, 89), DataNameProvider.GetAttributeName(item.Attribute.Value), TextColor.White);
+                detailsPopup.AddText(new Position(170, 89), (factor * item.AttributeValue).ToString("+#;-#; 0"), TextColor.White);
             }
-            detailsPopup.AddText(new Position(48, 96), DataNameProvider.AbilitiesHeaderString, Data.Enumerations.Color.LightOrange);
+            detailsPopup.AddText(new Position(48, 96), DataNameProvider.AbilitiesHeaderString, TextColor.LightOrange);
             if (item.Ability != null && item.AbilityValue != 0)
             {
-                detailsPopup.AddText(new Position(48, 103), DataNameProvider.GetAbilityName(item.Ability.Value), Data.Enumerations.Color.White);
-                detailsPopup.AddText(new Position(170, 103), (factor * item.AbilityValue).ToString("+#;-#; 0"), Data.Enumerations.Color.White);
+                detailsPopup.AddText(new Position(48, 103), DataNameProvider.GetAbilityName(item.Ability.Value), TextColor.White);
+                detailsPopup.AddText(new Position(170, 103), (factor * item.AbilityValue).ToString("+#;-#; 0"), TextColor.White);
             }
-            detailsPopup.AddText(new Position(48, 110), DataNameProvider.FunctionHeader, Data.Enumerations.Color.LightOrange);
+            detailsPopup.AddText(new Position(48, 110), DataNameProvider.FunctionHeader, TextColor.LightOrange);
             if (item.Spell != Spell.None && item.InitialCharges != 0)
             {
                 detailsPopup.AddText(new Position(48, 117),
                     $"{DataNameProvider.GetSpellname(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",
-                    Data.Enumerations.Color.White);
+                    TextColor.White);
             }
             if (cursed)
             {
@@ -9245,13 +9263,13 @@ namespace Ambermoon
             }
         }
 
-        UIText AddAnimatedText(Func<Rect, string, Data.Enumerations.Color, TextAlign, UIText> textAdder, Rect area,
+        UIText AddAnimatedText(Func<Rect, string, TextColor, TextAlign, UIText> textAdder, Rect area,
             string text, TextAlign textAlign, Func<bool> continueChecker, int timePerFrame, bool blink)
         {
             int textColorIndex = 0;
             var textColors = blink
-                ? this.GetTextBlinkColors()
-                : this.GetTextAnimationColors();
+                ? TextColors.TextBlinkColors
+                : TextColors.TextAnimationColors;
             var animatedText = textAdder(area, text, textColors[0], textAlign);
             void AnimateText()
             {
@@ -9431,11 +9449,11 @@ namespace Ambermoon
 
             void AddValueText<T>(int y, string text, T value, T? maxValue = null, string unit = "") where T : struct
             {
-                popup.AddText(new Position(32, y), text, Data.Enumerations.Color.BrightGray);
-                popup.AddText(new Position(212, y), maxValue == null ? $"{value}{unit}" : $"{value}/{maxValue}{unit}", Data.Enumerations.Color.BrightGray);
+                popup.AddText(new Position(32, y), text, TextColor.BrightGray);
+                popup.AddText(new Position(212, y), maxValue == null ? $"{value}{unit}" : $"{value}/{maxValue}{unit}", TextColor.BrightGray);
             }
 
-            popup.AddText(new Rect(32, 78, 256, Global.GlyphLineHeight), partyMember.Name + string.Format(DataNameProvider.HasReachedLevel, partyMember.Level), Data.Enumerations.Color.BrightGray, TextAlign.Center);
+            popup.AddText(new Rect(32, 78, 256, Global.GlyphLineHeight), partyMember.Name + string.Format(DataNameProvider.HasReachedLevel, partyMember.Level), TextColor.BrightGray, TextAlign.Center);
 
             AddValueText(92, DataNameProvider.LPAreNow, partyMember.HitPoints.CurrentValue, partyMember.HitPoints.MaxValue);
             if (magicClass)
@@ -9447,7 +9465,7 @@ namespace Ambermoon
             AddValueText(120, DataNameProvider.APRAreNow, partyMember.AttacksPerRound);
 
             if (partyMember.Level >= 50)
-                popup.AddText(new Position(32, 134), DataNameProvider.MaxLevelReached, Data.Enumerations.Color.BrightGray);
+                popup.AddText(new Position(32, 134), DataNameProvider.MaxLevelReached, TextColor.BrightGray);
             else
                 AddValueText(134, DataNameProvider.NextLevelAt, partyMember.GetNextLevelExperiencePoints(), null, " " + DataNameProvider.EP);
 
@@ -9675,7 +9693,7 @@ namespace Ambermoon
             // The real position inside each frame has an offset of 7,4
             var positionMarkerGraphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.PlusBlinkAnimation);
             var positionMarker = popup.AddImage(new Rect(baseX + player.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
-                positionMarkerGraphicIndex, Layer.UI, 120, 0);
+                positionMarkerGraphicIndex, Layer.UI, 120, UIPaletteIndex);
             positionMarker.ClipArea = contentArea;
             var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(positionMarkerGraphicIndex);
             int positionMarkerFrame = 0;
@@ -9793,10 +9811,9 @@ namespace Ambermoon
                 //       Each horizontal map background tile is 16 pixels wide and can contain 2 map tiles/blocks.
                 //       Each vertical map background tile is 32 pixels height and can contain 4 map tiles/blocks.
                 //       Fill inner map area with AA7744 (index 6). Lines (like walls) are drawn with 663300 (index 7).
-                //       Palette is 53 (1-based) and so 52 (0-based).
-                const byte PaletteIndex = 52;
-                var backgroundColor = GetPaletteColor(53, 6);
-                var foregroundColor = GetPaletteColor(53, 7);
+                byte paletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
+                var backgroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 6);
+                var foregroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 7);
                 var labdata = MapManager.GetLabdataForMap(Map);
                 int legendPage = 0;
                 ILayerSprite[] legendSprites = new ILayerSprite[8];
@@ -9825,13 +9842,15 @@ namespace Ambermoon
                 // Legend panels
                 var headerArea = new Rect(217, 46, 86, 8);
                 layout.AddPanel(headerArea, 11);
-                layout.AddText(headerArea.CreateModified(0, 1, 0, -1), DataNameProvider.LegendHeader, Data.Enumerations.Color.White, TextAlign.Center, 15);
+                layout.AddText(headerArea.CreateModified(0, 1, 0, -1), DataNameProvider.LegendHeader, TextColor.White, TextAlign.Center, 15);
                 var legendArea = new Rect(217, 56, 86, 108);
                 layout.AddPanel(legendArea, 11);
                 for (int i = 0; i < 8; ++i)
                 {
-                    legendSprites[i] = layout.AddSprite(new Rect(legendArea.X + 2, legendArea.Y + 4 + i * 13 + Global.GlyphLineHeight - 16, 16, 16), 0u, PaletteIndex, (byte)(15 + i));
-                    legendTexts[i] = layout.AddText(new Rect(legendArea.X + 18, legendArea.Y + 4 + i * 13, 68, Global.GlyphLineHeight), "", Data.Enumerations.Color.White, TextAlign.Left, 15);
+                    legendSprites[i] = layout.AddSprite(new Rect(legendArea.X + 2, legendArea.Y + 4 + i * 13 + Global.GlyphLineHeight - 16, 16, 16),
+                        0u, paletteIndex, (byte)(15 + i));
+                    legendTexts[i] = layout.AddText(new Rect(legendArea.X + 18, legendArea.Y + 4 + i * 13, 68, Global.GlyphLineHeight), "",
+                        TextColor.White, TextAlign.Left, 15);
                 }
                 void ShowLegendPage(int page)
                 {
@@ -9906,8 +9925,8 @@ namespace Ambermoon
                 ShowLegendPage(0);
                 var locationArea = new Rect(217, 166, 86, 22);
                 layout.AddPanel(locationArea, 11);
-                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, Data.Enumerations.Color.White, TextAlign.Left, 15);
-                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", Data.Enumerations.Color.White, TextAlign.Left, 15);
+                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
+                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
                 DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16, 16, false);
                 #endregion
 
@@ -9918,8 +9937,8 @@ namespace Ambermoon
                     var pinHead = !CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.Compass)
                         ? AutomapGraphic.PinUpperHalf
                         : AutomapGraphic.PinDirectionUp + (int)player3D.PreciseDirection;
-                    var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), PaletteIndex, upperDisplayLayer);
-                    var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), PaletteIndex, lowerDisplayLayer);
+                    var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), paletteIndex, upperDisplayLayer);
+                    var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), paletteIndex, lowerDisplayLayer);
 
                     if (onMap)
                     {
@@ -9947,13 +9966,13 @@ namespace Ambermoon
                         case AutomapGraphic.GotoPoint: // this has 7 frames
                         {
                             var animatedSprite = layout.AddAnimatedSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic),
-                                PaletteIndex, automapGraphic == AutomapGraphic.GotoPoint ? 7u : 4u, displayLayer);
+                                paletteIndex, automapGraphic == AutomapGraphic.GotoPoint ? 7u : 4u, displayLayer);
                             animatedSprites.Add(animatedSprite);
                             sprite = animatedSprite;
                             break;
                         }
                         default:
-                            sprite = layout.AddSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic), PaletteIndex, displayLayer);
+                            sprite = layout.AddSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic), paletteIndex, displayLayer);
                             break;
                     }
 
@@ -10039,7 +10058,7 @@ namespace Ambermoon
                     {
                         AddAutomapType(tx, ty, x, y, AutomapType.GotoPoint);
                         gotoPoints.Add(KeyValuePair.Create(gotoPoint,
-                            layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, Data.Enumerations.Color.White)));
+                            layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
                     }
                     var automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
                     if (automapType != AutomapType.None)
@@ -10069,7 +10088,7 @@ namespace Ambermoon
                 int yParts = (Map.Height + 3) / 4;
                 var totalArea = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y, 64 + xParts * 16, 64 + yParts * 32);
                 var mapNameBounds = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y + 32, totalArea.Width, Global.GlyphLineHeight);
-                var mapName = layout.AddText(mapNameBounds, Map.Name, Data.Enumerations.Color.White, TextAlign.Center, 3);
+                var mapName = layout.AddText(mapNameBounds, Map.Name, TextColor.White, TextAlign.Center, 3);
 
                 // Fill background black
                 layout.FillArea(Global.AutomapArea, Render.Color.Black, 0);
@@ -10253,14 +10272,14 @@ namespace Ambermoon
                             }
                         }
 
-                        var sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.AutomapWallFrames), PaletteIndex, 2);
+                        var sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.AutomapWallFrames), paletteIndex, 2);
                         sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + wallGraphicType * 8, sprite.TextureAtlasOffset.Y);
                         sprite.ClipArea = Global.AutomapArea;
                         sprites.Add(sprite);
 
                         if (type == false && automapOptions.SecretDoorsVisible) // fake wall
                         {
-                            sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.FakeWallOverlay), PaletteIndex, 3);
+                            sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.FakeWallOverlay), paletteIndex, 3);
                             sprite.ClipArea = Global.AutomapArea;
                             sprites.Add(sprite);
                         }
@@ -10447,13 +10466,13 @@ namespace Ambermoon
                 ShowMap(false);
                 layout.Reset();
                 var riddleArea = new Rect(16, 50, 176, 144);
-                layout.FillArea(riddleArea, GetPaletteColor(50, 28), false);
+                layout.FillArea(riddleArea, GetUIColor(28), false);
                 var riddleText = ProcessText(map.Texts[(int)riddlemouthEvent.RiddleTextIndex]);
                 var solutionResponseText = ProcessText(map.Texts[(int)riddlemouthEvent.SolutionTextIndex]);
                 void ShowRiddle()
                 {
                     InputEnable = false;
-                    layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, Data.Enumerations.Color.White).Closed += () =>
+                    layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
                     {
                         InputEnable = true;
                     };
@@ -10463,7 +10482,7 @@ namespace Ambermoon
                     if (string.Compare(textDictionary.Entries[(int)riddlemouthEvent.CorrectAnswerDictionaryIndex], solution, true) == 0)
                     {
                         InputEnable = false;
-                        layout.OpenTextPopup(solutionResponseText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, Data.Enumerations.Color.White, () =>
+                        layout.OpenTextPopup(solutionResponseText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White, () =>
                         {
                             Fade(() =>
                             {
@@ -10481,7 +10500,7 @@ namespace Ambermoon
                             solution = DataNameProvider.That;
                         var failedText = ProcessText(solution + DataNameProvider.WrongRiddlemouthSolutionText);
                         InputEnable = false;
-                        layout.OpenTextPopup(failedText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, Data.Enumerations.Color.White).Closed += () =>
+                        layout.OpenTextPopup(failedText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
                         {
                             InputEnable = true;
                         };
@@ -10607,7 +10626,7 @@ namespace Ambermoon
                 })
             )).ToList());
             popup.AddSunkenBox(new Rect(48, 173, 174, 10));
-            var spellMessage = popup.AddText(new Rect(49, 175, 172, 6), "", Data.Enumerations.Color.White, TextAlign.Center, true, 2);
+            var spellMessage = popup.AddText(new Rect(49, 175, 172, 6), "", TextColor.White, TextAlign.Center, true, 2);
             popup.Closed += () =>
             {
                 UntrapMouse();
@@ -10676,11 +10695,11 @@ namespace Ambermoon
                     ShowMap(false);
                     layout.Reset();
                     layout.AddEventPicture(popupTextEvent.EventImageIndex);
-                    layout.FillArea(new Rect(16, 138, 288, 55), GetPaletteColor(50, 28), false);
+                    layout.FillArea(new Rect(16, 138, 288, 55), GetUIColor(28), false);
 
                     // Position = 18,139, max 40 chars per line and 7 lines.
                     var textArea = new Rect(18, 139, 285, 49);
-                    var scrollableText = layout.AddScrollableText(textArea, text, Data.Enumerations.Color.BrightGray);
+                    var scrollableText = layout.AddScrollableText(textArea, text, TextColor.BrightGray);
                     scrollableText.Clicked += scrolledToEnd =>
                     {
                         if (scrolledToEnd)

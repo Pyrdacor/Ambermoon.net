@@ -113,7 +113,7 @@ namespace Ambermoon.UI
             CreateSlotBackgrounds();
             items = new UIItem[numTotalSlots];
             scrollbar = slotsPerScroll == 0 ? null :
-                new Scrollbar(layout, scrollbarType ?? ScrollbarType.SmallVertical, scrollbarArea,
+                new Scrollbar(game, layout, scrollbarType ?? ScrollbarType.SmallVertical, scrollbarArea,
                 scrollbarSize.Width, scrollbarSize.Height, (numTotalSlots - slotsPerPage) / slotsPerScroll);
             if (scrollbar != null)
             {
@@ -130,7 +130,7 @@ namespace Ambermoon.UI
         {
             var layer = renderView.GetLayer(Layer.UI);
             var texCoords = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.ItemSlotBackground));
-            byte paletteIndex = game.GetUIPaletteIndex();
+            byte paletteIndex = game.UIPaletteIndex;
 
             for (int i = 0; i < slotBackgrounds.Length; ++i)
             {
@@ -704,6 +704,7 @@ namespace Ambermoon.UI
                 else
                     hoveredItemName.Text = itemNameText;
                 hoveredItemName.DisplayLayer = 10;
+                hoveredItemName.PaletteIndex = game.UIPaletteIndex;
                 hoveredItemName.X = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
                 hoveredItemName.Y = position.Y - Global.GlyphLineHeight - 1;
                 hoveredItemName.Visible = true;
@@ -730,6 +731,7 @@ namespace Ambermoon.UI
                     }
 
                     hoveredItemPrice.DisplayLayer = 2;
+                    hoveredItemPrice.PaletteIndex = hoveredItemName.PaletteIndex;
                     hoveredItemPrice.X = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
                     hoveredItemPrice.Y = position.Y - 2 * Global.GlyphLineHeight - 1;
                     hoveredItemPrice.Visible = true;

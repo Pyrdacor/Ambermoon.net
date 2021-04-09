@@ -4,6 +4,7 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
@@ -229,7 +230,7 @@ namespace Ambermoon.UI
     {
         public Rect Area;
         public string Text;
-        public Data.Enumerations.Color TextColor;
+        public TextColor TextColor;
     }
 
     internal enum BattleFieldSlotColor
@@ -453,13 +454,14 @@ namespace Ambermoon.UI
             renderLayer = renderView.GetLayer(Layer.UI);
             textLayer = renderView.GetLayer(Layer.Text);
             this.itemManager = itemManager;
+            byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
 
             sprite = RenderView.SpriteFactory.Create(320, 163, true) as ILayerSprite;
             sprite.Layer = renderLayer;
             sprite.X = Global.LayoutX;
             sprite.Y = Global.LayoutY;
             sprite.DisplayLayer = 1;
-            sprite.PaletteIndex = 0;
+            sprite.PaletteIndex = paletteIndex;
 
             AddStaticSprites();
 
@@ -471,7 +473,7 @@ namespace Ambermoon.UI
             healerSymbol.X = 0;
             healerSymbol.Y = 0;
             healerSymbol.DisplayLayer = 10;
-            healerSymbol.PaletteIndex = 49;
+            healerSymbol.PaletteIndex = paletteIndex;
             healerSymbol.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Talisman));
             healerSymbol.Visible = false;
 
@@ -526,7 +528,7 @@ namespace Ambermoon.UI
             {
                 var barBackgroundSprite = portraitBarBackgrounds[i] = RenderView.SpriteFactory.Create(16, 36, true) as ILayerSprite;
                 barBackgroundSprite.Layer = renderLayer;
-                barBackgroundSprite.PaletteIndex = 49;
+                barBackgroundSprite.PaletteIndex = game.PrimaryUIPaletteIndex;
                 barBackgroundSprite.TextureAtlasOffset = barBackgroundTexCoords;
                 barBackgroundSprite.X = Global.PartyMemberPortraitAreas[i].Left + 33;
                 barBackgroundSprite.Y = Global.PartyMemberPortraitAreas[i].Top;
@@ -536,7 +538,7 @@ namespace Ambermoon.UI
             // Left portrait border
             var sprite = RenderView.SpriteFactory.Create(16, 36, true);
             sprite.Layer = renderLayer;
-            sprite.PaletteIndex = 49;
+            sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.LeftPortraitBorder));
             sprite.X = 0;
             sprite.Y = 0;
@@ -546,7 +548,7 @@ namespace Ambermoon.UI
             // Right portrait border
             sprite = RenderView.SpriteFactory.Create(16, 36, true);
             sprite.Layer = renderLayer;
-            sprite.PaletteIndex = 49;
+            sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.RightPortraitBorder));
             sprite.X = Global.VirtualScreenWidth - 16;
             sprite.Y = 0;
@@ -558,7 +560,7 @@ namespace Ambermoon.UI
             {
                 sprite = RenderView.SpriteFactory.Create(32, 1, true);
                 sprite.Layer = renderLayer;
-                sprite.PaletteIndex = 49;
+                sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
                 sprite.X = 16 + i * 48;
                 sprite.Y = 0;
@@ -567,7 +569,7 @@ namespace Ambermoon.UI
 
                 sprite = RenderView.SpriteFactory.Create(32, 1, true);
                 sprite.Layer = renderLayer;
-                sprite.PaletteIndex = 49;
+                sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetCustomUIGraphicIndex(UICustomGraphic.PortraitBorder));
                 sprite.X = 16 + i * 48;
                 sprite.Y = 35;
@@ -576,16 +578,16 @@ namespace Ambermoon.UI
 
                 // LP shadow
                 characterBars[i * 4 + 0] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 2, 19, 1, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBarShadow), 1, FilledAreaType.CharacterBar), 16, false);
+                    game.GetNamedPaletteColor(NamedPaletteColors.LPBarShadow), 1, FilledAreaType.CharacterBar), 16, false);
                 // LP fill
                 characterBars[i * 4 + 1] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 3, 19, 3, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.LPBar), 1, FilledAreaType.CharacterBar), 16, false);
+                    game.GetNamedPaletteColor(NamedPaletteColors.LPBar), 1, FilledAreaType.CharacterBar), 16, false);
                 // SP shadow
                 characterBars[i * 4 + 2] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 10, 19, 1, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBarShadow), 1, FilledAreaType.CharacterBar), 16, false);
+                    game.GetNamedPaletteColor(NamedPaletteColors.SPBarShadow), 1, FilledAreaType.CharacterBar), 16, false);
                 // SP fill
                 characterBars[i * 4 + 3] = new Bar(barAreas, CreateArea(new Rect((i + 1) * 48 + 11, 19, 3, 16),
-                    game.GetPaletteColor(50, (int)NamedPaletteColors.SPBar), 1, FilledAreaType.CharacterBar), 16, false);
+                    game.GetNamedPaletteColor(NamedPaletteColors.SPBar), 1, FilledAreaType.CharacterBar), 16, false);
             }
         }
 
@@ -622,7 +624,7 @@ namespace Ambermoon.UI
                 LayoutType.Battle => Global.CombatBackgroundArea,
                 _ => throw new AmbermoonException(ExceptionScope.Application, "Open option menu from the current window is not supported.")
             };
-            AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), 49, 1);
+            AddSprite(area, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.MapDisableOverlay), game.UIPaletteIndex, 1);
             var version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
             string versionString = $"Ambermoon.net V{version.Major}.{version.Minor}.{version.Build:00}^{game.DataNameProvider.DataVersionString}^{game.DataNameProvider.DataInfoString}";
             Rect boxArea;
@@ -637,8 +639,8 @@ namespace Ambermoon.UI
                 boxArea = new Rect(32, 82, 144, 26);
                 textArea = new Rect(32, 84, 144, 26);
             }
-            AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), 49, 2);
-            AddText(textArea, versionString, Data.Enumerations.Color.White, TextAlign.Center, 3);
+            AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), game.UIPaletteIndex, 2);
+            AddText(textArea, versionString, TextColor.White, TextAlign.Center, 3);
 
             buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false); // TODO: ask to really quit etc
             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
@@ -690,7 +692,7 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
             bool disableButtons = true, bool closeOnClick = true, bool transparent = false,
-            Data.Enumerations.Color textColor = Data.Enumerations.Color.BrightGray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
+            TextColor textColor = TextColor.BrightGray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
             byte displayLayerOffset = 0)
         {
             ClosePopup(false);
@@ -721,7 +723,7 @@ namespace Ambermoon.UI
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
             var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons,
-                closeOnClick, transparent, Data.Enumerations.Color.BrightGray, closeAction, textAlign, displayLayerOffset);
+                closeOnClick, transparent, TextColor.BrightGray, closeAction, textAlign, displayLayerOffset);
             return popup;
         }
 
@@ -743,9 +745,7 @@ namespace Ambermoon.UI
             var messageArea = new Rect(79, 98, 145, 10);
             activePopup.AddSunkenBox(messageArea);
             activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), game.DataNameProvider.WaitHowManyHours,
-                game.Map.Type == MapType.Map3D
-                ? Data.Enumerations.Color.Azure : game.Map.Flags.HasFlag(MapFlags.Outdoor)
-                ? Data.Enumerations.Color.PaleRed : Data.Enumerations.Color.PaleYellow, TextAlign.Center);
+                TextColor.LightOrange, TextAlign.Center);
             // Amount input
             var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
                 TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.LoseFocus);
@@ -842,7 +842,8 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
-                processedText, Data.Enumerations.Color.BrightGray, true, textBounds, textAlign);
+                processedText, TextColor.BrightGray, true, textBounds, textAlign);
+            renderText.PaletteIndex = game.TextPaletteIndex;
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 31) / 16);
             activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false, displayLayerOffset)
             {
@@ -903,7 +904,7 @@ namespace Ambermoon.UI
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, Data.Enumerations.Color.BrightGray, TextAlign.Center);
+            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.BrightGray, TextAlign.Center);
             activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Load(slot + 1, name))
             ).ToList(), false);
@@ -927,7 +928,7 @@ namespace Ambermoon.UI
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, Data.Enumerations.Color.BrightGray, TextAlign.Center);
+            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, TextColor.BrightGray, TextAlign.Center);
             activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Save(slot + 1, name))
             ).ToList(), true);
@@ -990,7 +991,7 @@ namespace Ambermoon.UI
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(48, 62), 14, 6, true, false);
-            activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, Data.Enumerations.Color.BrightGray, TextAlign.Center);
+            activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.BrightGray, TextAlign.Center);
             var optionNames = OptionNames[game.GameLanguage];
             bool changedConfiguration = false;
             bool windowChange = false; // an option was changed that affects the window (screen ratio, resolution, fullscreen)
@@ -1420,9 +1421,9 @@ namespace Ambermoon.UI
         public void AddSunkenBox(Rect area, byte displayLayer = 1)
         {
             // TODO: use named palette colors
-            var darkBorderColor = game.GetPaletteColor(50, 26);
-            var brightBorderColor = game.GetPaletteColor(50, 31);
-            var fillColor = game.GetPaletteColor(50, 27);
+            var darkBorderColor = game.GetUIColor(26);
+            var brightBorderColor = game.GetUIColor(31);
+            var fillColor = game.GetUIColor(27);
 
             // upper dark border
             FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, displayLayer);
@@ -1457,12 +1458,12 @@ namespace Ambermoon.UI
                 // Item name display (also gold or food)
                 var itemNameArea = new Rect(99, 82, 125, 10);
                 activePopup.AddSunkenBox(itemNameArea);
-                activePopup.AddText(itemNameArea.CreateModified(1, 2, -1, -3), name, Data.Enumerations.Color.Red, TextAlign.Center);
+                activePopup.AddText(itemNameArea.CreateModified(1, 2, -1, -3), name, TextColor.Red, TextAlign.Center);
             }
             // Message display
             var messageArea = new Rect(79, 98, 145, 10);
             activePopup.AddSunkenBox(messageArea);
-            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), message, Data.Enumerations.Color.LightOrange, TextAlign.Center);
+            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), message, TextColor.LightOrange, TextAlign.Center);
             // Amount input
             var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
                 TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort);
@@ -1562,7 +1563,7 @@ namespace Ambermoon.UI
             game.Pause();
             game.InputEnable = false;
 
-            OpenTextPopup(game.ProcessText(text), new Position(16, 52), 256, 112, true, true, false, Data.Enumerations.Color.BrightGray, () =>
+            OpenTextPopup(game.ProcessText(text), new Position(16, 52), 256, 112, true, true, false, TextColor.BrightGray, () =>
             {
                 game.InputEnable = true;
                 game.Resume();
@@ -1940,7 +1941,7 @@ namespace Ambermoon.UI
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
             if (message != null)
-                ChestText = AddText(bounds, game.ProcessText(message, bounds), Data.Enumerations.Color.White, textAlign);
+                ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
             else
                 ChestText = null;
         }
@@ -1977,13 +1978,13 @@ namespace Ambermoon.UI
         {
             var bounds = new Rect(114, 46, 189, 28);
             ChestText?.Destroy();
-            ChestText = AddText(bounds, game.ProcessText(message, bounds), Data.Enumerations.Color.White, textAlign);
+            ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
             var buttonPanel = AddPanel(new Rect(223, 75, 2 * Button.Width, Button.Height), 2);
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
             questionYesButton = new Button(RenderView, new Position(223, 75));
             questionNoButton = new Button(RenderView, new Position(223 + Button.Width, 75));
-            questionYesButton.PaletteIndex = questionNoButton.PaletteIndex = game.GetUIPaletteIndex();
+            questionYesButton.PaletteIndex = questionNoButton.PaletteIndex = game.UIPaletteIndex;
             questionYesButton.ButtonType = ButtonType.Yes;
             questionNoButton.ButtonType = ButtonType.No;
             questionYesButton.Disabled = false;
@@ -2255,13 +2256,13 @@ namespace Ambermoon.UI
                 if (portraitNames[i] != null)
                 {
                     if (i == slot)
-                        portraitNames[i].TextColor = Data.Enumerations.Color.ActivePartyMember;
+                        portraitNames[i].TextColor = TextColor.ActivePartyMember;
                     else if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
-                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
+                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
                     else if (game.HasPartyMemberFled(partyMembers[i]))
-                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
+                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
                     else
-                        portraitNames[i].TextColor = Data.Enumerations.Color.PartyMember;
+                        portraitNames[i].TextColor = TextColor.PartyMember;
                 }
             }
         }
@@ -2275,11 +2276,11 @@ namespace Ambermoon.UI
                 if (portraitNames[i] != null)
                 {
                     if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
-                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
+                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
                     else if (game.HasPartyMemberFled(partyMembers[i]))
-                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
+                        portraitNames[i].TextColor = TextColor.DeadPartyMember;
                     else
-                        portraitNames[i].TextColor = activeSlot == i ? Data.Enumerations.Color.ActivePartyMember : Data.Enumerations.Color.PartyMember;
+                        portraitNames[i].TextColor = activeSlot == i ? TextColor.ActivePartyMember : TextColor.PartyMember;
                 }
             }
         }
@@ -2330,7 +2331,7 @@ namespace Ambermoon.UI
                 overlaySprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1;
                 overlaySprite.ClipArea = Global.PartyMemberPortraitAreas[slot].CreateModified(1, 1, -2, -2);
                 overlaySprite.TextureAtlasOffset = sprite.TextureAtlasOffset;
-                overlaySprite.PaletteIndex = game.GetUIPaletteIndex();
+                overlaySprite.PaletteIndex = game.PrimaryUIPaletteIndex;
                 overlaySprite.Visible = true;
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(newGraphicIndex);
                 sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 1 + yOffset;
@@ -2506,7 +2507,7 @@ namespace Ambermoon.UI
             {
                 PlayPortraitAnimation(slot, partyMember, portraitAnimationFinishedHandler);
             }
-            sprite.PaletteIndex = game.GetUIPaletteIndex();
+            sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.Visible = true;
 
             if (partyMember == null)
@@ -2537,15 +2538,17 @@ namespace Ambermoon.UI
 
                 if (text == null)
                 {
-                    text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer,  name, Data.Enumerations.Color.PartyMember, true,
-                        new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6), TextAlign.Center);
+                    text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer, name, TextColor.PartyMember, true,
+                        new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6),
+                        TextAlign.Center);
                 }
                 else
                 {
                     text.Text = name;
                 }
                 text.DisplayLayer = 3;
-                text.TextColor = partyMember.Alive ? Data.Enumerations.Color.PartyMember : Data.Enumerations.Color.DeadPartyMember;
+                text.PaletteIndex = game.PrimaryUIPaletteIndex;
+                text.TextColor = partyMember.Alive ? TextColor.PartyMember : TextColor.DeadPartyMember;
                 text.Visible = true;
                 UpdateCharacterStatus(partyMember);
             }
@@ -2560,7 +2563,7 @@ namespace Ambermoon.UI
         {
             var sprite = characterStatusIcons[slot] ??= RenderView.SpriteFactory.Create(16, 16, true, 3) as ILayerSprite;
             sprite.Layer = renderLayer;
-            sprite.PaletteIndex = 49;
+            sprite.PaletteIndex = game.PrimaryUIPaletteIndex;
             sprite.X = Global.PartyMemberPortraitAreas[slot].Left + 33;
             sprite.Y = Global.PartyMemberPortraitAreas[slot].Top + 2;
 
@@ -2624,12 +2627,12 @@ namespace Ambermoon.UI
             var baseLocation = battle ? new Position(0, 170) : new Position(208, 106);
             int index = (int)activeSpellType;
             uint graphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.Candle + index);
-            activeSpellSprites.Add(activeSpellType, AddSprite(new Rect(baseLocation.X + index * 16, baseLocation.Y, 16, 16), graphicIndex, 49));
+            activeSpellSprites.Add(activeSpellType, AddSprite(new Rect(baseLocation.X + index * 16, baseLocation.Y, 16, 16), graphicIndex, game.UIPaletteIndex));
 
             activeSpellDurationBackgrounds.Add(activeSpellType, CreateArea(new Rect(baseLocation.X + 1 + index * 16, baseLocation.Y + 17, 14, 4),
-                game.GetPaletteColor(50, 26), 2));
+                game.GetUIColor(26), 2));
             var durationBar = new Bar(filledAreas,
-                CreateArea(new Rect(baseLocation.X + 2 + index * 16, baseLocation.Y + 18, 12, 2), game.GetPaletteColor(50, 31), 3), 12, true);
+                CreateArea(new Rect(baseLocation.X + 2 + index * 16, baseLocation.Y + 18, 12, 2), game.GetUIColor(31), 3), 12, true);
             activeSpellDurationBars.Add(activeSpellType, durationBar);
             durationBar.Fill(activeSpell.Duration / 200.0f);
         }
@@ -2714,33 +2717,44 @@ namespace Ambermoon.UI
             {
             case SpecialItemPurpose.Compass:
                 {
-                    specialItemSprites.Add(specialItem, AddSprite(new Rect(208, 73, 32, 32),
-                        Graphics.GetUIGraphicIndex(UIGraphic.Compass), 49, 3)); // Note: The display layer must be greater than the windchain layer
+                    var area = new Rect(208, 73, 32, 32);
+                    FillArea(area, Render.Color.Black, 2);
+                    specialItemSprites.Add(specialItem, AddSprite(area,
+                        Graphics.GetUIGraphicIndex(UIGraphic.Compass), game.UIPaletteIndex, 4)); // Note: The display layer must be greater than the windchain layer
                     var text = AddText(new Rect(203, 86, 42, 7),
-                        GetCompassString(), Data.Enumerations.Color.BrightGray);
+                        GetCompassString(), TextColor.BrightGray);
                     specialItemTexts.Add(SpecialItemPurpose.Compass, text);
                     text.Clip(new Rect(208, 86, 32, 7));
                     break;
                 }
             case SpecialItemPurpose.MonsterEye:
-                specialItemSprites.Add(specialItem, AddSprite(new Rect(240, 49, 32, 32),
-                    Graphics.GetUIGraphicIndex(game.MonsterSeesPlayer ? UIGraphic.MonsterEyeActive : UIGraphic.MonsterEyeInactive), 49));
-                break;
+                {
+                    var area = new Rect(240, 49, 32, 32);
+                    FillArea(area, Render.Color.Black, 2);
+                    specialItemSprites.Add(specialItem, AddSprite(area,
+                        Graphics.GetUIGraphicIndex(game.MonsterSeesPlayer ? UIGraphic.MonsterEyeActive
+                        : UIGraphic.MonsterEyeInactive), game.UIPaletteIndex, 3));
+                    break;
+                }
             case SpecialItemPurpose.DayTime:
-                specialItemSprites.Add(specialItem, AddSprite(new Rect(272, 73, 32, 32),
-                    Graphics.GetUIGraphicIndex(UIGraphic.Night + (int)game.GameTime.GetDayTime()), 49));
-                break;
+                {
+                    var area = new Rect(272, 73, 32, 32);
+                    FillArea(area, Render.Color.Black, 2);
+                    specialItemSprites.Add(specialItem, AddSprite(area,
+                        Graphics.GetUIGraphicIndex(UIGraphic.Night + (int)game.GameTime.GetDayTime()), game.UIPaletteIndex, 3));
+                    break;
+                }
             case SpecialItemPurpose.WindChain:
                 specialItemSprites.Add(specialItem, AddSprite(new Rect(240, 89, 32, 15),
-                    Graphics.GetUIGraphicIndex(UIGraphic.Windchain), 49));
+                    Graphics.GetUIGraphicIndex(UIGraphic.Windchain), game.UIPaletteIndex, 3));
                 break;
             case SpecialItemPurpose.MapLocation:
                     specialItemTexts.Add(SpecialItemPurpose.MapLocation, AddText(new Rect(210, 50, 30, 14),
-                    $"X:{game.PartyPosition.X + 1,3}^Y:{game.PartyPosition.Y + 1,3}", Data.Enumerations.Color.BrightGray));
+                    $"X:{game.PartyPosition.X + 1,3}^Y:{game.PartyPosition.Y + 1,3}", TextColor.BrightGray));
                 break;
             case SpecialItemPurpose.Clock:
                     specialItemTexts.Add(SpecialItemPurpose.Clock, AddText(new Rect(273, 54, 30, 7),
-                    $"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}", Data.Enumerations.Color.BrightGray));
+                    $"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}", TextColor.BrightGray));
                 break;
             default:
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid special item: {specialItem}");
@@ -2789,7 +2803,7 @@ namespace Ambermoon.UI
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer,
-            string tooltip, Data.Enumerations.Color? tooltipTextColor, Layer? layer, out Tooltip createdTooltip, bool visible = true)
+            string tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip createdTooltip, bool visible = true)
         {
             createdTooltip = null;
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, true) as ILayerSprite;
@@ -2804,13 +2818,13 @@ namespace Ambermoon.UI
             additionalSprites.Add(sprite);
 
             if (tooltip != null)
-                createdTooltip = AddTooltip(rect, tooltip, tooltipTextColor ?? Data.Enumerations.Color.White);
+                createdTooltip = AddTooltip(rect, tooltip, tooltipTextColor ?? TextColor.White);
 
             return sprite;
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
-            string tooltip = null, Data.Enumerations.Color? tooltipTextColor = null, Layer? layer = null, bool visible = true)
+            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null, bool visible = true)
         {
             return AddSprite(rect, textureIndex, paletteIndex, displayLayer, tooltip, tooltipTextColor, layer, out _, visible);
         }
@@ -2831,7 +2845,7 @@ namespace Ambermoon.UI
             return sprite;
         }
 
-        internal Tooltip AddTooltip(Rect rect, string tooltip, Data.Enumerations.Color tooltipTextColor)
+        internal Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
         {
             var toolTip = new Tooltip
             {
@@ -2885,21 +2899,21 @@ namespace Ambermoon.UI
             }
         }
 
-        public UIText AddText(Rect rect, string text, Data.Enumerations.Color color = Data.Enumerations.Color.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
             return AddText(rect, RenderView.TextProcessor.CreateText(text), color, textAlign, displayLayer);
         }
 
-        public UIText AddText(Rect rect, IText text, Data.Enumerations.Color color = Data.Enumerations.Color.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            var uiText = new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, false);
+            var uiText = new UIText(RenderView, game.UIPaletteIndex, text, rect, displayLayer, color, true, textAlign, false);
             texts.Add(uiText);
             return uiText;
         }
 
-        public UIText AddScrollableText(Rect rect, IText text, Data.Enumerations.Color color = Data.Enumerations.Color.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddScrollableText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            var scrollableText = new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, true);
+            var scrollableText = new UIText(RenderView, game.UIPaletteIndex, text, rect, displayLayer, color, true, textAlign, true);
             texts.Add(scrollableText);
             return scrollableText;
         }
@@ -2917,7 +2931,7 @@ namespace Ambermoon.UI
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
                 sprite.X = Global.LayoutX + 16;
                 sprite.Y = Global.LayoutY + 6;
-                sprite.PaletteIndex = 49;
+                sprite.PaletteIndex = game.UIPaletteIndex;
                 sprite.Layer = renderLayer;
                 sprite.Visible = true;
             }
@@ -3895,7 +3909,7 @@ namespace Ambermoon.UI
                     Global.BattleFieldY + row * Global.BattleFieldSlotHeight - 1,
                     Global.BattleFieldSlotWidth, Global.BattleFieldSlotHeight + 1
                 ), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
-                49, (byte)(3 + row), monster.Name, Data.Enumerations.Color.BattleMonster, Layer.UI, out Tooltip tooltip),
+                game.PrimaryUIPaletteIndex, (byte)(3 + row), monster.Name, TextColor.BattleMonster, Layer.UI, out Tooltip tooltip),
                 Tooltip = tooltip
             });
             return animation;
@@ -3995,7 +4009,7 @@ namespace Ambermoon.UI
                 {
                     battleFieldSlotMarkers.Add(index, new BattleFieldSlotMarker
                     {
-                        Sprite = AddSprite(Global.BattleFieldSlotArea(index), textureIndex, 50, 2),
+                        Sprite = AddSprite(Global.BattleFieldSlotArea(index), textureIndex, game.UIPaletteIndex, 2),
                         BlinkStartTicks = blinkStartTime,
                         ToggleColors = slotColor == BattleFieldSlotColor.Both
                     });
@@ -4030,7 +4044,7 @@ namespace Ambermoon.UI
                 battleFieldSlotMarkers.Add(exceptionSlotIndex, exceptionSlot);
         }
 
-        public void SetBattleMessage(string message, Data.Enumerations.Color textColor = Data.Enumerations.Color.White)
+        public void SetBattleMessage(string message, TextColor textColor = TextColor.White)
         {
             if (message == null)
             {

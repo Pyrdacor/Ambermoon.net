@@ -317,7 +317,6 @@ namespace Ambermoon.Render
 
             for (int i = 0; i < battleFieldIcons.Count; ++i)
             {
-                battleFieldIcons[i].ReplaceColor(0, 25); // This will make the background transparent with palette 50.
                 AddTexture(Layer.UI, Graphics.BattleFieldIconOffset + (uint)i, battleFieldIcons[i]);
             }
 

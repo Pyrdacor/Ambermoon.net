@@ -40,8 +40,9 @@ namespace Ambermoon.UI
             this.renderText = renderText;
         }
 
-        public UIText(IRenderView renderView, IText text, Rect bounds, byte displayLayer = 1,
-            TextColor textColor = TextColor.BrightGray, bool shadow = true, TextAlign textAlign = TextAlign.Left, bool allowScrolling = false)
+        public UIText(IRenderView renderView, byte paletteIndex, IText text, Rect bounds, byte displayLayer = 1,
+            TextColor textColor = TextColor.BrightGray, bool shadow = true, TextAlign textAlign = TextAlign.Left,
+            bool allowScrolling = false)
         {
             this.renderView = renderView;
             this.text = renderView.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
@@ -49,6 +50,7 @@ namespace Ambermoon.UI
             this.allowScrolling = allowScrolling;
             renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), this.text, textColor, shadow, bounds, textAlign);
             renderText.DisplayLayer = displayLayer;
+            renderText.PaletteIndex = paletteIndex;
             renderText.Visible = true;
             numVisibleLines = bounds.Height / Global.GlyphLineHeight;
             WithScrolling = allowScrolling;

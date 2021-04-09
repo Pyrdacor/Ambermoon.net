@@ -19,36 +19,36 @@ namespace Ambermoon.Data.Legacy
             // There are 3 frames.
             byte[] redStarFrameData = new byte[]
             {
-                // Transparency: 25
+                // Transparency: 0
                 // Red: 20 (CC4433)
                 // Orange: 21 (EE6633)
                 // Yellow: 16 (FFCC00)
                 // White: 1 (EEDDCC)
                 // -----------------------
                 // 1st frame: Big star
-                25, 25, 25, 20, 25, 25, 25,
-                25, 25, 25, 21, 25, 25, 25,
-                25, 25, 20, 16, 20, 25, 25,
+                 0,  0,  0, 20,  0,  0,  0,
+                 0,  0,  0, 21,  0,  0,  0,
+                 0,  0, 20, 16, 20,  0,  0,
                 20, 21, 16,  1, 16, 21, 20,
-                25, 25, 20, 16, 20, 25, 25,
-                25, 25, 25, 21, 25, 25, 25,
-                25, 25, 25, 20, 25, 25, 25,
+                 0,  0, 20, 16, 20,  0,  0,
+                 0,  0,  0, 21,  0,  0,  0,
+                 0,  0,  0, 20,  0,  0,  0,
                 // 2nd frame: Small star
-                25, 25, 25, 25, 25, 25, 25,
-                25, 25, 25, 20, 25, 25, 25,
-                25, 25, 25, 21, 25, 25, 25,
-                25, 20, 21, 16, 21, 20, 25,
-                25, 25, 25, 21, 25, 25, 25,
-                25, 25, 25, 20, 25, 25, 25,
-                25, 25, 25, 25, 25, 25, 25,
+                 0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0, 20,  0,  0,  0,
+                 0,  0,  0, 21,  0,  0,  0,
+                 0, 20, 21, 16, 21, 20,  0,
+                 0,  0,  0, 21,  0,  0,  0,
+                 0,  0,  0, 20,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0,
                 // 3rd frame: Single orange pixel
-                25, 25, 25, 25, 25, 25, 25,
-                25, 25, 25, 25, 25, 25, 25,
-                25, 25, 25, 25, 25, 25, 25,
-                25, 25, 25, 21, 25, 25, 25,
-                25, 25, 25, 25, 25, 25, 25,
-                25, 25, 25, 25, 25, 25, 25,
-                25, 25, 25, 25, 25, 25, 25
+                 0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0, 21,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0
             };
 
             Graphic GetRedStarFrame(int frame)
@@ -168,11 +168,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(6, 53)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                .AddColoredArea(new Rect(5, 0, 1, 1), (byte)0)
+                .AddColoredArea(new Rect(5, 0, 1, 1), 26)
                 .AddColoredArea(new Rect(0, 1, 1, 51), 30)
                 .AddColoredArea(new Rect(1, 1, 4, 51), 28)
                 .AddColoredArea(new Rect(5, 1, 1, 51), 26)
-                .AddColoredArea(new Rect(0, 52, 1, 1), (byte)0)
+                .AddColoredArea(new Rect(0, 52, 1, 1), 26)
                 .AddColoredArea(new Rect(1, 52, 5, 1), 26)
                 .Build(),
 
@@ -187,11 +187,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(6, 112)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                .AddColoredArea(new Rect(5, 0, 1, 1), (byte)0)
+                .AddColoredArea(new Rect(5, 0, 1, 1), 26)
                 .AddColoredArea(new Rect(0, 1, 1, 110), 30)
                 .AddColoredArea(new Rect(1, 1, 4, 110), 28)
                 .AddColoredArea(new Rect(5, 1, 1, 110), 26)
-                .AddColoredArea(new Rect(0, 111, 1, 1), (byte)0)
+                .AddColoredArea(new Rect(0, 111, 1, 1), 26)
                 .AddColoredArea(new Rect(1, 111, 5, 1), 26)
                 .Build(),
 
@@ -202,11 +202,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(16, 24)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 14, 1), 30)
-                .AddColoredArea(new Rect(15, 0, 1, 1), (byte)0)
+                .AddColoredArea(new Rect(15, 0, 1, 1), 26)
                 .AddColoredArea(new Rect(0, 1, 1, 22), 30)
                 .AddColoredArea(new Rect(1, 1, 14, 22), 28)
                 .AddColoredArea(new Rect(15, 1, 1, 22), 26)
-                .AddColoredArea(new Rect(0, 23, 1, 1), (byte)0)
+                .AddColoredArea(new Rect(0, 23, 1, 1), 26)
                 .AddColoredArea(new Rect(1, 23, 15, 1), 26)
                 .Build(),
 
@@ -221,7 +221,7 @@ namespace Ambermoon.Data.Legacy
                 }),
 
                 // Map disable overlay (UI palette-> 0 = black, 25 = transparent)
-                Graphic.FromIndexedData(320, 144, Enumerable.Range(0, 320 * 144).Select(i => (byte)((i + i / 320) % 2 == 0 ? 25 : 0)).ToArray()),
+                Graphic.FromIndexedData(320, 144, Enumerable.Range(0, 320 * 144).Select(i => (byte)((i + i / 320) % 2 == 0 ? 0 : 26)).ToArray()),
 
                 // Ambermoon info box (shown over the map when opening option menu)
                 GraphicBuilder.Create(128, 19)
@@ -296,25 +296,25 @@ namespace Ambermoon.Data.Legacy
                 // BrokenItemOverlay
                 Graphic.FromIndexedData(16, 16, new byte[16 * 16]
                 {
-                    // Transparency: 25
+                    // Transparency: 0
                     // Dark gray: 26 (222222)
                     // -----------------------
-                    25, 25, 25, 25, 25, 25, 25, 25, 25, 26, 26, 26, 26, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25, 25, 25, 26, 26, 26, 25, 25, 25, 25,
-                    25, 25, 26, 25, 25, 26, 25, 25, 26, 26, 26, 25, 25, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 26, 26, 26, 25, 25, 25, 25, 25, 25, 25,
-                    26, 26, 25, 25, 25, 25, 25, 26, 26, 25, 25, 25, 25, 25, 25, 25,
-                    26, 26, 26, 26, 25, 25, 25, 26, 26, 25, 25, 25, 25, 26, 25, 25,
-                    26, 26, 26, 26, 26, 26, 25, 26, 26, 25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 26, 26, 26, 26, 26, 26, 26, 26, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 26, 25, 26, 26, 26, 26, 26, 25, 25, 25, 26, 25, 25,
-                    25, 25, 26, 25, 25, 25, 25, 25, 25, 26, 26, 26, 26, 26, 26, 26,
-                    25, 25, 25, 25, 25, 25, 25, 25, 25, 26, 26, 26, 26, 26, 26, 25,
-                    25, 25, 25, 26, 25, 25, 25, 25, 25, 26, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25, 25, 26, 25, 25, 25, 25, 25, 25, 25,
-                    25, 25, 25, 25, 25, 25, 25, 26, 25, 25, 25, 25, 26, 25, 25, 25,
-                    25, 25, 25, 25, 25, 26, 26, 26, 25, 25, 25, 26, 25, 25, 25, 25,
-                    25, 25, 25, 26, 26, 26, 26, 25, 26, 25, 25, 26, 25, 25, 25, 25,
+                     0,  0,  0,  0,  0,  0,  0,  0,  0, 26, 26, 26, 26,  0,  0,  0,
+                     0,  0,  0,  0,  0,  0,  0,  0,  0, 26, 26, 26,  0,  0,  0,  0,
+                     0,  0, 26,  0,  0, 26,  0,  0, 26, 26, 26,  0,  0,  0,  0,  0,
+                     0,  0,  0,  0,  0,  0, 26, 26, 26,  0,  0,  0,  0,  0,  0,  0,
+                    26, 26,  0,  0,  0,  0,  0, 26, 26,  0,  0,  0,  0,  0,  0,  0,
+                    26, 26, 26, 26,  0,  0,  0, 26, 26,  0,  0,  0,  0, 26,  0,  0,
+                    26, 26, 26, 26, 26, 26,  0, 26, 26,  0,  0,  0,  0,  0,  0,  0,
+                     0,  0, 26, 26, 26, 26, 26, 26, 26, 26,  0,  0,  0,  0,  0,  0,
+                     0,  0,  0, 26,  0, 26, 26, 26, 26, 26,  0,  0,  0, 26,  0,  0,
+                     0,  0, 26,  0,  0,  0,  0,  0,  0, 26, 26, 26, 26, 26, 26, 26,
+                     0,  0,  0,  0,  0,  0,  0,  0,  0, 26, 26, 26, 26, 26, 26,  0,
+                     0,  0,  0, 26,  0,  0,  0,  0,  0, 26,  0,  0,  0,  0,  0,  0,
+                     0,  0,  0,  0,  0,  0,  0,  0, 26,  0,  0,  0,  0,  0,  0,  0,
+                     0,  0,  0,  0,  0,  0,  0, 26,  0,  0,  0,  0, 26,  0,  0,  0,
+                     0,  0,  0,  0,  0, 26, 26, 26,  0,  0,  0, 26,  0,  0,  0,  0,
+                     0,  0,  0, 26, 26, 26, 26,  0, 26,  0,  0, 26,  0,  0,  0,  0,
                 }),
 
                 // AutomapWallFrames

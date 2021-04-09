@@ -75,7 +75,7 @@ namespace Ambermoon.Render
             {
                 lock (sprite)
                 {
-                    sprite.PaletteIndex = game?.GetUIPaletteIndex() ?? 0;
+                    sprite.PaletteIndex = game?.UIPaletteIndex ?? 0;
                     sprite.X = viewPosition.X - Hotspot.X;
                     sprite.Y = viewPosition.Y - Hotspot.Y;
                     sprite.Visible = Type != CursorType.None;

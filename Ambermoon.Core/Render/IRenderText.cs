@@ -13,6 +13,7 @@ namespace Ambermoon.Render
         bool Shadow { get; set; }
         IText Text { get; set; }
         byte DisplayLayer { get; set; }
+        byte PaletteIndex { get; set; }
     }
 
     public interface IRenderTextFactory

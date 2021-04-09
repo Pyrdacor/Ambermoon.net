@@ -76,7 +76,7 @@ namespace Ambermoon.UI
                 // fill
                 // TODO: use named palette color
                 fill = renderView.ColoredRectFactory.Create((columns - 2) * 16, (rows - 2) * 16,
-                    game.GetPaletteColor(50, 28), DisplayLayer);
+                    game.GetUIColor(28), DisplayLayer);
                 fill.Layer = renderView.GetLayer(Layer.UI);
                 fill.X = position.X + 16;
                 fill.Y = position.Y + 16;
@@ -141,8 +141,9 @@ namespace Ambermoon.UI
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(text, fallbackChar), textColor, shadow);
             renderText.DisplayLayer = (byte)Util.Min(255, this.DisplayLayer + displayLayer);
+            renderText.PaletteIndex = game.UIPaletteIndex;
             renderText.X = position.X;
-            renderText.Y = position.Y;
+            renderText.Y = position.Y;            
             renderText.Visible = true;
             texts.Add(new UIText(renderText));
             return renderText;
@@ -158,7 +159,7 @@ namespace Ambermoon.UI
         public UIText AddText(Rect bounds, IText text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
             bool shadow = true, byte displayLayer = 1, bool scrolling = false)
         {
-            var uiText = new UIText(renderView, text, bounds, (byte)Util.Min(255, this.DisplayLayer + displayLayer),
+            var uiText = new UIText(renderView, game.TextPaletteIndex, text, bounds, (byte)Util.Min(255, DisplayLayer + displayLayer),
                 textColor, shadow, textAlign, scrolling);
             texts.Add(uiText);
             if (scrolling)
@@ -195,7 +196,7 @@ namespace Ambermoon.UI
             return filledArea;
         }
 
-        public ILayerSprite AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer = 1, byte paletteIndex = 49)
+        public ILayerSprite AddImage(Rect area, uint imageIndex, Layer layer, byte displayLayer, byte paletteIndex)
         {
             var sprite = renderView.SpriteFactory.Create(area.Width, area.Height, true,
                 (byte)Util.Min(255, this.DisplayLayer + displayLayer)) as ILayerSprite;
@@ -211,15 +212,15 @@ namespace Ambermoon.UI
 
         public void AddItemImage(Rect area, uint imageIndex, byte displayLayer = 1)
         {
-            AddImage(area, imageIndex, Layer.Items, displayLayer);
+            AddImage(area, imageIndex, Layer.Items, displayLayer, game.PrimaryUIPaletteIndex);
         }
 
         public void AddSunkenBox(Rect area, byte displayLayer = 1)
         {
             // TODO: use named palette colors
-            var darkBorderColor = game.GetPaletteColor(50, 26);
-            var brightBorderColor = game.GetPaletteColor(50, 31);
-            var fillColor = game.GetPaletteColor(50, 27);
+            var darkBorderColor = game.GetUIColor(26);
+            var brightBorderColor = game.GetUIColor(31);
+            var fillColor = game.GetUIColor(27);
 
             // upper dark border
             FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, displayLayer);
@@ -241,13 +242,13 @@ namespace Ambermoon.UI
         public Button AddButton(Position position)
         {
             // TODO: use named palette colors
-            var brightBorderColor = game.GetPaletteColor(50, 31);
-            var darkBorderColor = game.GetPaletteColor(50, 26);            
+            var brightBorderColor = game.GetUIColor(31);
+            var darkBorderColor = game.GetUIColor(26);            
 
             FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, 1);
             FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);            
             var button = new Button(renderView, position, null);
-            button.PaletteIndex = game.GetUIPaletteIndex();
+            button.PaletteIndex = game.UIPaletteIndex;
             button.DisplayLayer = (byte)Util.Min(255, DisplayLayer + 3);
             buttons.Add(button);
             return button;
@@ -532,7 +533,7 @@ namespace Ambermoon.UI
 
         public Scrollbar AddScrollbar(Layout layout, int scrollRange, int displayLayer = 1, int yOffset = 0)
         {
-            return scrollbar = new Scrollbar(layout, ScrollbarType.LargeVertical, new Rect(ContentArea.Right - 9, ContentArea.Top + yOffset, 6, 112),
+            return scrollbar = new Scrollbar(game, layout, ScrollbarType.LargeVertical, new Rect(ContentArea.Right - 9, ContentArea.Top + yOffset, 6, 112),
                 6, 56, scrollRange, (byte)Util.Min(255, this.DisplayLayer + displayLayer));
         }
 
@@ -542,7 +543,7 @@ namespace Ambermoon.UI
             TextInput.ClickAction leftClickAction, TextInput.ClickAction rightClickAction)
         {
             AddSunkenBox(new Rect(position, new Size((inputLength + 1) * Global.GlyphWidth + 3, 10)), 1);
-            var input = new TextInput(renderView, position + new Position(2, 2), inputLength, (byte)Math.Min(255, DisplayLayer + 2),
+            var input = new TextInput(game, renderView, position + new Position(2, 2), inputLength, (byte)Math.Min(255, DisplayLayer + 2),
                 leftClickAction, rightClickAction, textAlign);
             inputs.Add(input);
             return input;

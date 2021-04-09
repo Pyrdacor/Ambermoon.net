@@ -3,6 +3,7 @@ using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
@@ -90,7 +91,7 @@ namespace Ambermoon.UI
                 AddBorder(PopupFrame.FrameRight, windowSize.Width - 1, i + 1);
             }
             backgroundFill = FillArea(new Rect(windowArea.X + 16, windowArea.Y + 16,
-                windowSize.Width * 16 - 32, windowSize.Height * 16 - 32), game.GetPaletteColor(50, 28), 0);
+                windowSize.Width * 16 - 32, windowSize.Height * 16 - 32), game.GetUIColor(28), 0);
             #endregion
 
             #region Buttons
@@ -141,8 +142,8 @@ namespace Ambermoon.UI
             // draw border around portrait
             var area = new Rect(portraitBackground.X - 1, portraitBackground.Y - 1, 34, 36);
             // TODO: use named palette colors
-            var darkBorderColor = game.GetPaletteColor(50, 26);
-            var brightBorderColor = game.GetPaletteColor(50, 31);
+            var darkBorderColor = game.GetUIColor(26);
+            var brightBorderColor = game.GetUIColor(31);
             // upper dark border
             portraitBorders.Add(FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, 1));
             // left dark border
@@ -153,7 +154,7 @@ namespace Ambermoon.UI
             portraitBorders.Add(FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, 1));
 
             const int inputWidth = 16 * Global.GlyphWidth - 2;
-            nameInput = new TextInput(renderView, new Position(windowArea.Center.X - inputWidth / 2, offset.Y + 32 + 40),
+            nameInput = new TextInput(null, renderView, new Position(windowArea.Center.X - inputWidth / 2, offset.Y + 32 + 40),
                 15, 2, TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort, TextAlign.Left);
             nameInput.AllowEmpty = true;
             nameInput.AutoSubmit = true;
@@ -164,7 +165,7 @@ namespace Ambermoon.UI
             string headerText = game.DataNameProvider.ChooseCharacter.Trim();
             int textWidth = headerText.Length * Global.GlyphWidth;
             int textOffset = (windowArea.Width - textWidth) / 2;
-            header = AddText(offset + new Position(textOffset, 16), headerText, Data.Enumerations.Color.BrightGray);
+            header = AddText(offset + new Position(textOffset, 16), headerText, TextColor.BrightGray);
 
             fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);
@@ -264,7 +265,7 @@ namespace Ambermoon.UI
             return filledArea;
         }
 
-        IRenderText AddText(Position position, string text, Data.Enumerations.Color textColor, bool shadow = true,
+        IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
             byte displayLayer = 1, char? fallbackChar = null)
         {
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),

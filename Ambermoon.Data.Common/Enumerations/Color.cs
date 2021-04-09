@@ -199,7 +199,7 @@
         BluishGray*/
     }
 
-    public static class TextColorExtensions
+    public static class TextColors
     {
         static readonly Color[] textAnimationColors = new Color[]
         {
@@ -214,17 +214,17 @@
         {
             Color.White,
             Color.LightBlue,
-            Color.BluishGray,
-            Color.LightDarkBlue,
+            Color.Blue,
+            Color.DarkerBlue,
             Color.DarkBlue,
-            Color.LightDarkBlue,
-            Color.BluishGray,
+            Color.DarkerBlue,
+            Color.Blue,
             Color.LightBlue,
             Color.White,
             Color.White
         };
 
-        public static Color[] GetTextAnimationColors(this Game game) => textAnimationColors;
-        public static Color[] GetTextBlinkColors(this Game game) => textBlinkColors;
+        public static Color[] TextAnimationColors => textAnimationColors;
+        public static Color[] TextBlinkColors => textBlinkColors;
     }
 }
