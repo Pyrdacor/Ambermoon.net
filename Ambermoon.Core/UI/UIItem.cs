@@ -94,7 +94,7 @@ namespace Ambermoon.UI
                     {
                         amountDisplay = renderView.RenderTextFactory.Create();
                         amountDisplay.Layer = renderView.GetLayer(Layer.Text);
-                        amountDisplay.TextColor = TextColor.White;
+                        amountDisplay.TextColor = Data.Enumerations.Color.White;
                         amountDisplay.Shadow = true;
                         amountDisplay.X = Item.Amount < 10 ? sprite.X + 5 : sprite.X + 2;
                         amountDisplay.Y = sprite.Y + 17;

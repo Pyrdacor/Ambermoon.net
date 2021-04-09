@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ambermoon.Data.Enumerations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -249,6 +250,8 @@ namespace Ambermoon.Data
             coloredAreas.Add(new KeyValuePair<Rect, byte>(area, colorIndex));
             return this;
         }
+
+        public GraphicBuilder AddColoredArea(Rect area, Color color) => AddColoredArea(area, (byte)color);
 
         public Graphic Build()
         {

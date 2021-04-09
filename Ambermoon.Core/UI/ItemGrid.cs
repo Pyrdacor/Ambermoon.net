@@ -698,7 +698,7 @@ namespace Ambermoon.UI
                     (
                         renderView.GetLayer(Layer.Text),
                         itemNameText,
-                        TextColor.White, true
+                        Data.Enumerations.Color.White, true
                     );
                 }
                 else
@@ -712,7 +712,7 @@ namespace Ambermoon.UI
                 {
                     var itemPriceText = renderView.TextProcessor.CreateText(item.Price.ToString());
                     textWidth = itemPriceText.MaxLineSize * Global.GlyphWidth;
-                    var color = availableGoldProvider != null && availableGoldProvider() < item.Price ? TextColor.Red : TextColor.White;
+                    var color = availableGoldProvider != null && availableGoldProvider() < item.Price ? Data.Enumerations.Color.Red : Data.Enumerations.Color.White;
 
                     if (hoveredItemPrice == null)
                     {

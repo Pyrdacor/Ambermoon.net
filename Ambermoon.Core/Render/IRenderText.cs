@@ -1,6 +1,6 @@
 ﻿using Ambermoon.Data;
-using System;
 using System.Collections.Generic;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.Render
 {

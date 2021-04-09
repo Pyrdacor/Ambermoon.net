@@ -2,6 +2,7 @@
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
@@ -111,7 +112,7 @@ namespace Ambermoon.UI
                 versionListSize.Width,
                 versionListSize.Height
             );
-            AddText(new Position(versionListArea.X, versionListArea.Y - 12), "Select a game data version:", TextColor.Gray);
+            AddText(new Position(versionListArea.X, versionListArea.Y - 12), "Select a game data version:", TextColor.BrightGray);
             AddSunkenBox(versionListArea.CreateModified(-1, -1, 2, 2));
             for (int i = 0; i < gameVersions.Count; ++i)
             {
@@ -145,7 +146,7 @@ namespace Ambermoon.UI
             changeSaveOptionButton.Visible = false;
             changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption(savegameOptions, savegameOptionTooltips);
             var saveOptionPosition = new Position(versionListArea.X + 34, versionListArea.Bottom + 9);
-            saveOptionText = AddText(saveOptionPosition, savegameOptions[selectedSaveOption], TextColor.Gray);
+            saveOptionText = AddText(saveOptionPosition, savegameOptions[selectedSaveOption], TextColor.BrightGray);
             saveOptionText.Visible = false;
             okButton = CreateButton(new Position(versionListArea.Right - 32, versionListArea.Bottom + 3), textureAtlasManager);
             okButton.ButtonType = Data.Enumerations.ButtonType.Ok;
@@ -182,7 +183,7 @@ namespace Ambermoon.UI
         void UpdateSaveOptionTooltip(string[] savegameOptionTooltips)
         {
             saveOptionTooltip.Text = savegameOptionTooltips[selectedSaveOption];
-            saveOptionTooltip.TextColor = selectedSaveOption == 0 ? TextColor.Gray : TextColor.Orange;
+            saveOptionTooltip.TextColor = selectedSaveOption == 0 ? TextColor.BrightGray : TextColor.LightRed;
             currentTooltipText = renderView.TextProcessor.CreateText(saveOptionTooltip.Text);
             currentTooltipText = renderView.TextProcessor.WrapText(currentTooltipText,
                 new Rect(0, 0, 200, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));

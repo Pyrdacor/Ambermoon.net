@@ -164,9 +164,9 @@ namespace Ambermoon.UI
             string headerText = game.DataNameProvider.ChooseCharacter.Trim();
             int textWidth = headerText.Length * Global.GlyphWidth;
             int textOffset = (windowArea.Width - textWidth) / 2;
-            header = AddText(offset + new Position(textOffset, 16), headerText, TextColor.Gray);
+            header = AddText(offset + new Position(textOffset, 16), headerText, Data.Enumerations.Color.BrightGray);
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);
             fadeArea.X = 0;
             fadeArea.Y = 0;
@@ -178,7 +178,7 @@ namespace Ambermoon.UI
         {
             fadeOutStartTime = DateTime.Now;
             fadeOut = true;
-            fadeArea.Color = Color.Transparent;
+            fadeArea.Color = Render.Color.Transparent;
             fadeArea.Visible = true;
         }
 
@@ -254,7 +254,7 @@ namespace Ambermoon.UI
         }
 
 
-        IColoredRect FillArea(Rect area, Color color, byte displayLayer = 1)
+        IColoredRect FillArea(Rect area, Render.Color color, byte displayLayer = 1)
         {
             var filledArea = renderView.ColoredRectFactory.Create(area.Width, area.Height, color, displayLayer);
             filledArea.Layer = renderView.GetLayer(Layer.UI);
@@ -264,7 +264,7 @@ namespace Ambermoon.UI
             return filledArea;
         }
 
-        IRenderText AddText(Position position, string text, TextColor textColor, bool shadow = true,
+        IRenderText AddText(Position position, string text, Data.Enumerations.Color textColor, bool shadow = true,
             byte displayLayer = 1, char? fallbackChar = null)
         {
             var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
@@ -288,7 +288,7 @@ namespace Ambermoon.UI
                     fadeIn = false;
                 }
                 else
-                    fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+                    fadeArea.Color = new Render.Color(0, 0, 0, Util.Round(blackness * 255));
             }
             else if (fadeOut)
             {
@@ -302,7 +302,7 @@ namespace Ambermoon.UI
                         Cleanup();
                     }
                     else
-                        fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+                        fadeArea.Color = new Render.Color(0, 0, 0, Util.Round(blackness * 255));
                 }
             }
             else

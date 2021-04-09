@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
@@ -36,12 +37,12 @@ namespace Ambermoon.UI
 
             popup.AddSunkenBox(area);
             hoverBox = popup.FillArea(new Rect(itemBasePosition + relativeHoverBoxOffset, new Size(hoverBoxWidth, itemHeight)),
-                game.GetTextColor(TextColor.Gray), 3);
+                game.GetTextColor(TextColor.Bright), 3);
             hoverBox.Visible = false;
 
             for (int i = 0; i < Util.Min(maxItems, items.Count); ++i)
             {
-                var color = items[i].Value == null ? TextColor.Disabled : TextColor.Gray;
+                var color = items[i].Value == null ? TextColor.Disabled : TextColor.Bright;
 
                 if (withIndex)
                 {
@@ -111,7 +112,7 @@ namespace Ambermoon.UI
         void SetTextHovered(IRenderText text, bool hovered, bool enabled)
         {
             text.Shadow = !enabled || !hovered;
-            text.TextColor = !enabled ? TextColor.Disabled : hovered ? TextColor.Black : TextColor.Gray;
+            text.TextColor = !enabled ? TextColor.Disabled : hovered ? TextColor.Dark : TextColor.Bright;
         }
 
         void SetHoveredItem(int index)
@@ -284,7 +285,7 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < itemAreas.Count; ++i)
             {
-                var textColor = items[scrollOffset + i].Value != null ? TextColor.Gray : TextColor.Disabled;
+                var textColor = items[scrollOffset + i].Value != null ? TextColor.Bright : TextColor.Disabled;
 
                 if (withIndex)
                 {

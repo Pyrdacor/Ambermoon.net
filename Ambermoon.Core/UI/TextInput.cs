@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Render;
 using System;
 using System.Linq;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
@@ -128,7 +129,7 @@ namespace Ambermoon.UI
             // Note: There is always 1 char-slot more as the input length.
             area = new Rect(position.X, position.Y, (inputLength + 1) * Global.GlyphWidth - 2, Global.GlyphLineHeight);
             text = new UIText(renderView, renderView.TextProcessor.CreateText(""), area,
-                displayLayer, TextColor.Gray, true, textAlign);
+                displayLayer, TextColor.BrightGray, true, textAlign);
 
             blinkingCursor = renderView.ColoredRectFactory.Create(5, 5, Color.LightGray, displayLayer); // TODO: named palette color?
             blinkingCursor.Layer = renderView.GetLayer(Layer.UI);

@@ -50,7 +50,7 @@ namespace Ambermoon.UI
             this.area = area;
         }
 
-        public Color Color
+        public Render.Color Color
         {
             get => Destroyed ? null : area.Color;
             set
@@ -147,14 +147,14 @@ namespace Ambermoon.UI
 
     public class FadeEffect : FilledArea
     {
-        readonly Color startColor;
-        readonly Color endColor;
+        readonly Render.Color startColor;
+        readonly Render.Color endColor;
         readonly int duration;
         readonly DateTime startTime;
         readonly bool removeWhenFinished;
 
-        internal FadeEffect(List<IColoredRect> filledAreas, IColoredRect area, Color startColor,
-            Color endColor, int durationInMilliseconds, DateTime startTime, bool removeWhenFinished)
+        internal FadeEffect(List<IColoredRect> filledAreas, IColoredRect area, Render.Color startColor,
+            Render.Color endColor, int durationInMilliseconds, DateTime startTime, bool removeWhenFinished)
             : base(filledAreas, area)
         {
             this.startColor = startColor;
@@ -193,7 +193,7 @@ namespace Ambermoon.UI
                 if (now <= startTime)
                 {
                     // Don't draw anything before started.
-                    Color = Color.Transparent;
+                    Color = Render.Color.Transparent;
                     return;
                 }
                 else
@@ -215,7 +215,7 @@ namespace Ambermoon.UI
                     return (byte)(start - Util.Round((start - end) * percentage));
             }
 
-            Color = new Color
+            Color = new Render.Color
             (
                 CalculateColorComponent(startColor.R, endColor.R),
                 CalculateColorComponent(startColor.G, endColor.G),
@@ -229,7 +229,7 @@ namespace Ambermoon.UI
     {
         public Rect Area;
         public string Text;
-        public TextColor TextColor;
+        public Data.Enumerations.Color TextColor;
     }
 
     internal enum BattleFieldSlotColor
@@ -638,7 +638,7 @@ namespace Ambermoon.UI
                 textArea = new Rect(32, 84, 144, 26);
             }
             AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), 49, 2);
-            AddText(textArea, versionString, TextColor.White, TextAlign.Center, 3);
+            AddText(textArea, versionString, Data.Enumerations.Color.White, TextAlign.Center, 3);
 
             buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false); // TODO: ask to really quit etc
             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
@@ -690,7 +690,7 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
             bool disableButtons = true, bool closeOnClick = true, bool transparent = false,
-            TextColor textColor = TextColor.Gray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
+            Data.Enumerations.Color textColor = Data.Enumerations.Color.BrightGray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
             byte displayLayerOffset = 0)
         {
             ClosePopup(false);
@@ -721,7 +721,7 @@ namespace Ambermoon.UI
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
             var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons,
-                closeOnClick, transparent, TextColor.Gray, closeAction, textAlign, displayLayerOffset);
+                closeOnClick, transparent, Data.Enumerations.Color.BrightGray, closeAction, textAlign, displayLayerOffset);
             return popup;
         }
 
@@ -744,8 +744,8 @@ namespace Ambermoon.UI
             activePopup.AddSunkenBox(messageArea);
             activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), game.DataNameProvider.WaitHowManyHours,
                 game.Map.Type == MapType.Map3D
-                ? TextColor.Azure : game.Map.Flags.HasFlag(MapFlags.Outdoor)
-                ? TextColor.PaleRed : TextColor.PaleYellow, TextAlign.Center);
+                ? Data.Enumerations.Color.Azure : game.Map.Flags.HasFlag(MapFlags.Outdoor)
+                ? Data.Enumerations.Color.PaleRed : Data.Enumerations.Color.PaleYellow, TextAlign.Center);
             // Amount input
             var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
                 TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.LoseFocus);
@@ -842,7 +842,7 @@ namespace Ambermoon.UI
                 new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             var textBounds = new Rect(48, 95, maxTextWidth, Math.Max(minLines + 1, processedText.LineCount) * Global.GlyphLineHeight);
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
-                processedText, TextColor.Gray, true, textBounds, textAlign);
+                processedText, Data.Enumerations.Color.BrightGray, true, textBounds, textAlign);
             int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 31) / 16);
             activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false, displayLayerOffset)
             {
@@ -903,7 +903,7 @@ namespace Ambermoon.UI
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.Gray, TextAlign.Center);
+            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, Data.Enumerations.Color.BrightGray, TextAlign.Center);
             activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Load(slot + 1, name))
             ).ToList(), false);
@@ -927,7 +927,7 @@ namespace Ambermoon.UI
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, TextColor.Gray, TextAlign.Center);
+            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, Data.Enumerations.Color.BrightGray, TextAlign.Center);
             activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Save(slot + 1, name))
             ).ToList(), true);
@@ -990,7 +990,7 @@ namespace Ambermoon.UI
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(48, 62), 14, 6, true, false);
-            activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.Gray, TextAlign.Center);
+            activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, Data.Enumerations.Color.BrightGray, TextAlign.Center);
             var optionNames = OptionNames[game.GameLanguage];
             bool changedConfiguration = false;
             bool windowChange = false; // an option was changed that affects the window (screen ratio, resolution, fullscreen)
@@ -1437,7 +1437,7 @@ namespace Ambermoon.UI
         }
 
         internal Popup OpenAmountInputBox(string message, uint? imageIndex, string name, uint maxAmount,
-            Action<uint> submitAction, Action abortAction = null, TextColor messageColor = TextColor.Orange)
+            Action<uint> submitAction, Action abortAction = null)
         {
             ClosePopup(false);
             activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
@@ -1457,12 +1457,12 @@ namespace Ambermoon.UI
                 // Item name display (also gold or food)
                 var itemNameArea = new Rect(99, 82, 125, 10);
                 activePopup.AddSunkenBox(itemNameArea);
-                activePopup.AddText(itemNameArea.CreateModified(1, 2, -1, -3), name, TextColor.Red, TextAlign.Center);
+                activePopup.AddText(itemNameArea.CreateModified(1, 2, -1, -3), name, Data.Enumerations.Color.Red, TextAlign.Center);
             }
             // Message display
             var messageArea = new Rect(79, 98, 145, 10);
             activePopup.AddSunkenBox(messageArea);
-            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), message, messageColor, TextAlign.Center);
+            activePopup.AddText(messageArea.CreateModified(1, 2, -1, -3), message, Data.Enumerations.Color.LightOrange, TextAlign.Center);
             // Amount input
             var input = activePopup.AddTextInput(new Position(128, 119), 7, TextAlign.Center,
                 TextInput.ClickAction.FocusOrSubmit, TextInput.ClickAction.Abort);
@@ -1561,8 +1561,8 @@ namespace Ambermoon.UI
 
             game.Pause();
             game.InputEnable = false;
-            
-            OpenTextPopup(game.ProcessText(text), new Position(16, 52), 256, 112, true, true, false, TextColor.Gray, () =>
+
+            OpenTextPopup(game.ProcessText(text), new Position(16, 52), 256, 112, true, true, false, Data.Enumerations.Color.BrightGray, () =>
             {
                 game.InputEnable = true;
                 game.Resume();
@@ -1940,7 +1940,7 @@ namespace Ambermoon.UI
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
             if (message != null)
-                ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+                ChestText = AddText(bounds, game.ProcessText(message, bounds), Data.Enumerations.Color.White, textAlign);
             else
                 ChestText = null;
         }
@@ -1977,7 +1977,7 @@ namespace Ambermoon.UI
         {
             var bounds = new Rect(114, 46, 189, 28);
             ChestText?.Destroy();
-            ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            ChestText = AddText(bounds, game.ProcessText(message, bounds), Data.Enumerations.Color.White, textAlign);
             var buttonPanel = AddPanel(new Rect(223, 75, 2 * Button.Width, Button.Height), 2);
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
@@ -2255,13 +2255,13 @@ namespace Ambermoon.UI
                 if (portraitNames[i] != null)
                 {
                     if (i == slot)
-                        portraitNames[i].TextColor = TextColor.Yellow;
+                        portraitNames[i].TextColor = Data.Enumerations.Color.ActivePartyMember;
                     else if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
-                        portraitNames[i].TextColor = TextColor.PaleGray;
+                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
                     else if (game.HasPartyMemberFled(partyMembers[i]))
-                        portraitNames[i].TextColor = TextColor.PaleGray;
+                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
                     else
-                        portraitNames[i].TextColor = TextColor.Red;
+                        portraitNames[i].TextColor = Data.Enumerations.Color.PartyMember;
                 }
             }
         }
@@ -2275,11 +2275,11 @@ namespace Ambermoon.UI
                 if (portraitNames[i] != null)
                 {
                     if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
-                        portraitNames[i].TextColor = TextColor.PaleGray;
+                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
                     else if (game.HasPartyMemberFled(partyMembers[i]))
-                        portraitNames[i].TextColor = TextColor.PaleGray;
+                        portraitNames[i].TextColor = Data.Enumerations.Color.DeadPartyMember;
                     else
-                        portraitNames[i].TextColor = activeSlot == i ? TextColor.Yellow : TextColor.Red;
+                        portraitNames[i].TextColor = activeSlot == i ? Data.Enumerations.Color.ActivePartyMember : Data.Enumerations.Color.PartyMember;
                 }
             }
         }
@@ -2537,7 +2537,7 @@ namespace Ambermoon.UI
 
                 if (text == null)
                 {
-                    text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer,  name, TextColor.Red, true,
+                    text = portraitNames[slot] = RenderView.RenderTextFactory.Create(textLayer,  name, Data.Enumerations.Color.PartyMember, true,
                         new Rect(Global.PartyMemberPortraitAreas[slot].Left + 2, Global.PartyMemberPortraitAreas[slot].Top + 31, 30, 6), TextAlign.Center);
                 }
                 else
@@ -2545,7 +2545,7 @@ namespace Ambermoon.UI
                     text.Text = name;
                 }
                 text.DisplayLayer = 3;
-                text.TextColor = partyMember.Alive ? TextColor.Red : TextColor.PaleGray;
+                text.TextColor = partyMember.Alive ? Data.Enumerations.Color.PartyMember : Data.Enumerations.Color.DeadPartyMember;
                 text.Visible = true;
                 UpdateCharacterStatus(partyMember);
             }
@@ -2717,7 +2717,7 @@ namespace Ambermoon.UI
                     specialItemSprites.Add(specialItem, AddSprite(new Rect(208, 73, 32, 32),
                         Graphics.GetUIGraphicIndex(UIGraphic.Compass), 49, 3)); // Note: The display layer must be greater than the windchain layer
                     var text = AddText(new Rect(203, 86, 42, 7),
-                        GetCompassString(), TextColor.Gray);
+                        GetCompassString(), Data.Enumerations.Color.BrightGray);
                     specialItemTexts.Add(SpecialItemPurpose.Compass, text);
                     text.Clip(new Rect(208, 86, 32, 7));
                     break;
@@ -2735,12 +2735,12 @@ namespace Ambermoon.UI
                     Graphics.GetUIGraphicIndex(UIGraphic.Windchain), 49));
                 break;
             case SpecialItemPurpose.MapLocation:
-                specialItemTexts.Add(SpecialItemPurpose.MapLocation, AddText(new Rect(210, 50, 30, 14),
-                    $"X:{game.PartyPosition.X + 1,3}^Y:{game.PartyPosition.Y + 1,3}", TextColor.Gray));
+                    specialItemTexts.Add(SpecialItemPurpose.MapLocation, AddText(new Rect(210, 50, 30, 14),
+                    $"X:{game.PartyPosition.X + 1,3}^Y:{game.PartyPosition.Y + 1,3}", Data.Enumerations.Color.BrightGray));
                 break;
             case SpecialItemPurpose.Clock:
-                specialItemTexts.Add(SpecialItemPurpose.Clock, AddText(new Rect(273, 54, 30, 7),
-                    $"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}", TextColor.Gray));
+                    specialItemTexts.Add(SpecialItemPurpose.Clock, AddText(new Rect(273, 54, 30, 7),
+                    $"{game.GameTime.Hour,2}:{game.GameTime.Minute:00}", Data.Enumerations.Color.BrightGray));
                 break;
             default:
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid special item: {specialItem}");
@@ -2789,7 +2789,7 @@ namespace Ambermoon.UI
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer,
-            string tooltip, TextColor? tooltipTextColor, Layer? layer, out Tooltip createdTooltip, bool visible = true)
+            string tooltip, Data.Enumerations.Color? tooltipTextColor, Layer? layer, out Tooltip createdTooltip, bool visible = true)
         {
             createdTooltip = null;
             var sprite = RenderView.SpriteFactory.Create(rect.Width, rect.Height, true) as ILayerSprite;
@@ -2804,13 +2804,13 @@ namespace Ambermoon.UI
             additionalSprites.Add(sprite);
 
             if (tooltip != null)
-                createdTooltip = AddTooltip(rect, tooltip, tooltipTextColor ?? TextColor.White);
+                createdTooltip = AddTooltip(rect, tooltip, tooltipTextColor ?? Data.Enumerations.Color.White);
 
             return sprite;
         }
 
         public ILayerSprite AddSprite(Rect rect, uint textureIndex, byte paletteIndex, byte displayLayer = 2,
-            string tooltip = null, TextColor? tooltipTextColor = null, Layer? layer = null, bool visible = true)
+            string tooltip = null, Data.Enumerations.Color? tooltipTextColor = null, Layer? layer = null, bool visible = true)
         {
             return AddSprite(rect, textureIndex, paletteIndex, displayLayer, tooltip, tooltipTextColor, layer, out _, visible);
         }
@@ -2831,7 +2831,7 @@ namespace Ambermoon.UI
             return sprite;
         }
 
-        internal Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
+        internal Tooltip AddTooltip(Rect rect, string tooltip, Data.Enumerations.Color tooltipTextColor)
         {
             var toolTip = new Tooltip
             {
@@ -2885,19 +2885,19 @@ namespace Ambermoon.UI
             }
         }
 
-        public UIText AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, string text, Data.Enumerations.Color color = Data.Enumerations.Color.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
             return AddText(rect, RenderView.TextProcessor.CreateText(text), color, textAlign, displayLayer);
         }
 
-        public UIText AddText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, IText text, Data.Enumerations.Color color = Data.Enumerations.Color.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
             var uiText = new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, false);
             texts.Add(uiText);
             return uiText;
         }
 
-        public UIText AddScrollableText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddScrollableText(Rect rect, IText text, Data.Enumerations.Color color = Data.Enumerations.Color.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
             var scrollableText = new UIText(RenderView, text, rect, displayLayer, color, true, textAlign, true);
             texts.Add(scrollableText);
@@ -2995,7 +2995,7 @@ namespace Ambermoon.UI
             itemGrids.Add(itemGrid);
         }
 
-        internal IColoredRect CreateArea(Rect rect, Color color, byte displayLayer = 0, FilledAreaType type = FilledAreaType.Custom)
+        internal IColoredRect CreateArea(Rect rect, Render.Color color, byte displayLayer = 0, FilledAreaType type = FilledAreaType.Custom)
         {
             var coloredRect = RenderView.ColoredRectFactory.Create(rect.Width, rect.Height,
                 color, displayLayer);
@@ -3019,12 +3019,12 @@ namespace Ambermoon.UI
             return coloredRect;
         }
 
-        public FilledArea FillArea(Rect rect, Color color, bool topMost)
+        public FilledArea FillArea(Rect rect, Render.Color color, bool topMost)
         {
             return new FilledArea(filledAreas, CreateArea(rect, color, (byte)(topMost ? 245 : 0)));
         }
 
-        public FilledArea FillArea(Rect rect, Color color, byte displayLayer)
+        public FilledArea FillArea(Rect rect, Render.Color color, byte displayLayer)
         {
             return new FilledArea(filledAreas, CreateArea(rect, color, displayLayer));
         }
@@ -3034,35 +3034,35 @@ namespace Ambermoon.UI
             return new Panel(game, rect, filledAreas, this, displayLayer);
         }
 
-        public void AddColorFader(Rect rect, Color startColor, Color endColor,
+        public void AddColorFader(Rect rect, Render.Color startColor, Render.Color endColor,
             int durationInMilliseconds, bool removeWhenFinished, DateTime? startTime = null)
         {
             var now = DateTime.Now;
             var startingTime = startTime ?? now;
-            var initialColor = startingTime > now ? Color.Transparent : startColor;
+            var initialColor = startingTime > now ? Render.Color.Transparent : startColor;
 
             fadeEffects.Add(new FadeEffect(fadeEffectAreas, CreateArea(rect, initialColor, 255, FilledAreaType.FadeEffect), startColor,
                 endColor, durationInMilliseconds, startingTime, removeWhenFinished));
         }
 
-        public void AddFadeEffect(Rect rect, Color color, FadeEffectType fadeEffectType,
+        public void AddFadeEffect(Rect rect, Render.Color color, FadeEffectType fadeEffectType,
             int durationInMilliseconds)
         {
             switch (fadeEffectType)
             {
                 case FadeEffectType.FadeIn:
-                    AddColorFader(rect, new Color(color, 0), color, durationInMilliseconds, true);
+                    AddColorFader(rect, new Render.Color(color, 0), color, durationInMilliseconds, true);
                     break;
                 case FadeEffectType.FadeOut:
-                    AddColorFader(rect, color, new Color(color, 0), durationInMilliseconds, true);
+                    AddColorFader(rect, color, new Render.Color(color, 0), durationInMilliseconds, true);
                     break;
                 case FadeEffectType.FadeInAndOut:
                     var quarterDuration = durationInMilliseconds / 4;
                     var halfDuration = quarterDuration * 2;
-                    AddColorFader(rect, new Color(color, 0), color, quarterDuration, true);
+                    AddColorFader(rect, new Render.Color(color, 0), color, quarterDuration, true);
                     AddColorFader(rect, color, color, quarterDuration, true,
                         DateTime.Now + TimeSpan.FromMilliseconds(quarterDuration));
-                    AddColorFader(rect, color, new Color(color, 0), halfDuration, true,
+                    AddColorFader(rect, color, new Render.Color(color, 0), halfDuration, true,
                         DateTime.Now + TimeSpan.FromMilliseconds(halfDuration));
                     break;
             }
@@ -3895,7 +3895,7 @@ namespace Ambermoon.UI
                     Global.BattleFieldY + row * Global.BattleFieldSlotHeight - 1,
                     Global.BattleFieldSlotWidth, Global.BattleFieldSlotHeight + 1
                 ), Graphics.BattleFieldIconOffset + (uint)Class.Monster + (uint)monster.CombatGraphicIndex - 1,
-                49, (byte)(3 + row), monster.Name, TextColor.Orange, Layer.UI, out Tooltip tooltip),
+                49, (byte)(3 + row), monster.Name, Data.Enumerations.Color.BattleMonster, Layer.UI, out Tooltip tooltip),
                 Tooltip = tooltip
             });
             return animation;
@@ -4030,7 +4030,7 @@ namespace Ambermoon.UI
                 battleFieldSlotMarkers.Add(exceptionSlotIndex, exceptionSlot);
         }
 
-        public void SetBattleMessage(string message, TextColor textColor = TextColor.White)
+        public void SetBattleMessage(string message, Data.Enumerations.Color textColor = Data.Enumerations.Color.White)
         {
             if (message == null)
             {

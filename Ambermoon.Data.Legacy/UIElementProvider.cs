@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Ambermoon.Data.Enumerations;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy
@@ -167,11 +168,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(6, 53)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                .AddColoredArea(new Rect(5, 0, 1, 1), 0)
+                .AddColoredArea(new Rect(5, 0, 1, 1), (byte)0)
                 .AddColoredArea(new Rect(0, 1, 1, 51), 30)
                 .AddColoredArea(new Rect(1, 1, 4, 51), 28)
                 .AddColoredArea(new Rect(5, 1, 1, 51), 26)
-                .AddColoredArea(new Rect(0, 52, 1, 1), 0)
+                .AddColoredArea(new Rect(0, 52, 1, 1), (byte)0)
                 .AddColoredArea(new Rect(1, 52, 5, 1), 26)
                 .Build(),
 
@@ -186,11 +187,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(6, 112)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                .AddColoredArea(new Rect(5, 0, 1, 1), 0)
+                .AddColoredArea(new Rect(5, 0, 1, 1), (byte)0)
                 .AddColoredArea(new Rect(0, 1, 1, 110), 30)
                 .AddColoredArea(new Rect(1, 1, 4, 110), 28)
                 .AddColoredArea(new Rect(5, 1, 1, 110), 26)
-                .AddColoredArea(new Rect(0, 111, 1, 1), 0)
+                .AddColoredArea(new Rect(0, 111, 1, 1), (byte)0)
                 .AddColoredArea(new Rect(1, 111, 5, 1), 26)
                 .Build(),
 
@@ -201,11 +202,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(16, 24)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 14, 1), 30)
-                .AddColoredArea(new Rect(15, 0, 1, 1), 0)
+                .AddColoredArea(new Rect(15, 0, 1, 1), (byte)0)
                 .AddColoredArea(new Rect(0, 1, 1, 22), 30)
                 .AddColoredArea(new Rect(1, 1, 14, 22), 28)
                 .AddColoredArea(new Rect(15, 1, 1, 22), 26)
-                .AddColoredArea(new Rect(0, 23, 1, 1), 0)
+                .AddColoredArea(new Rect(0, 23, 1, 1), (byte)0)
                 .AddColoredArea(new Rect(1, 23, 15, 1), 26)
                 .Build(),
 
@@ -246,25 +247,25 @@ namespace Ambermoon.Data.Legacy
                 .AddColoredArea(new Rect(1, 25, 143, 1), 27)
                 .Build(),
 
-                // BattleFieldYellowBorder (5 in text palette = yellow)
+                // BattleFieldYellowBorder
                 GraphicBuilder.Create(16, 13)
-                .AddColoredArea(new Rect(0, 0, 16, 1), 5)
-                .AddColoredArea(new Rect(0, 1, 1, 11), 5)
-                .AddColoredArea(new Rect(15, 1, 1, 11), 5)
-                .AddColoredArea(new Rect(0, 12, 16, 1), 5)
+                .AddColoredArea(new Rect(0, 0, 16, 1), Color.ActivePartyMember)
+                .AddColoredArea(new Rect(0, 1, 1, 11), Color.ActivePartyMember)
+                .AddColoredArea(new Rect(15, 1, 1, 11), Color.ActivePartyMember)
+                .AddColoredArea(new Rect(0, 12, 16, 1), Color.ActivePartyMember)
                 .Build(),
 
-                // BattleFieldOrangeBorder (6 in text palette = orange)
+                // BattleFieldOrangeBorder
                 GraphicBuilder.Create(16, 13)
-                .AddColoredArea(new Rect(0, 0, 16, 1), 6)
-                .AddColoredArea(new Rect(0, 1, 1, 11), 6)
-                .AddColoredArea(new Rect(15, 1, 1, 11), 6)
-                .AddColoredArea(new Rect(0, 12, 16, 1), 6)
+                .AddColoredArea(new Rect(0, 0, 16, 1), Color.LightRed)
+                .AddColoredArea(new Rect(0, 1, 1, 11), Color.LightRed)
+                .AddColoredArea(new Rect(15, 1, 1, 11), Color.LightRed)
+                .AddColoredArea(new Rect(0, 12, 16, 1), Color.LightRed)
                 .Build(),
 
-                // BattleFieldGreenHighlight (8 in text palette = light green)
+                // BattleFieldGreenHighlight
                 GraphicBuilder.Create(16, 13)
-                .AddColoredArea(new Rect(1, 1, 14, 11), 8)
+                .AddColoredArea(new Rect(1, 1, 14, 11), Color.LightGreen)
                 .Build(),
 
                 // HealingStarAnimation (3 frames of a redish star)
@@ -274,19 +275,19 @@ namespace Ambermoon.Data.Legacy
                 Graphic.FromIndexedData(14, 11, new byte[14 * 11]
                 {
                     // Transparency: 0
-                    // Red: 11 (881122)
+                    // Red: 19 (881122)
                     // -----------------------
-                     0, 11, 11,  0,  0,  0,  0,  0,  0,  0, 11, 11, 11,  0,
-                    11, 11, 11, 11, 11,  0,  0,  0, 11, 11, 11, 11, 11, 11,
-                    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,  0,
-                     0,  0, 11, 11, 11, 11, 11, 11, 11, 11, 11,  0,  0,  0,
-                     0,  0,  0,  0, 11, 11, 11, 11, 11, 11,  0,  0,  0,  0,
-                     0,  0,  0, 11, 11, 11, 11, 11, 11, 11, 11,  0,  0,  0,
-                     0,  0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,  0,
-                     0, 11, 11, 11, 11,  0,  0,  0, 11, 11, 11, 11, 11, 11,
-                    11, 11, 11, 11,  0,  0,  0,  0,  0,  0, 11, 11, 11, 11,
-                    11, 11, 11, 11,  0,  0,  0,  0,  0,  0,  0, 11, 11,  0,
-                     0, 11, 11,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+                     0, 19, 19,  0,  0,  0,  0,  0,  0,  0, 19, 19, 19,  0,
+                    19, 19, 19, 19, 19,  0,  0,  0, 19, 19, 19, 19, 19, 19,
+                    19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,  0,
+                     0,  0, 19, 19, 19, 19, 19, 19, 19, 19, 19,  0,  0,  0,
+                     0,  0,  0,  0, 19, 19, 19, 19, 19, 19,  0,  0,  0,  0,
+                     0,  0,  0, 19, 19, 19, 19, 19, 19, 19, 19,  0,  0,  0,
+                     0,  0, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,  0,
+                     0, 19, 19, 19, 19,  0,  0,  0, 19, 19, 19, 19, 19, 19,
+                    19, 19, 19, 19,  0,  0,  0,  0,  0,  0, 19, 19, 19, 19,
+                    19, 19, 19, 19,  0,  0,  0,  0,  0,  0,  0, 19, 19,  0,
+                     0, 19, 19,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
                 }),
 
                 // ItemMagicAnimation
