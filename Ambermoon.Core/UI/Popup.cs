@@ -44,7 +44,7 @@ namespace Ambermoon.UI
                 var sprite = renderView.SpriteFactory.Create(16, 16, true, DisplayLayer) as ILayerSprite;
                 sprite.Layer = renderView.GetLayer(Layer.UI);
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetPopupFrameGraphicIndex(frame));
-                sprite.PaletteIndex = 0;
+                sprite.PaletteIndex = game.UIPaletteIndex;
                 sprite.X = position.X + column * 16;
                 sprite.Y = position.Y + row * 16;
                 sprite.Visible = true;

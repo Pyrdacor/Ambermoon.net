@@ -417,7 +417,7 @@ namespace Ambermoon
             layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
             ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
-            ouchSprite.PaletteIndex = 0;
+            ouchSprite.PaletteIndex = currentUIPaletteIndex;
             ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
             ouchSprite.Visible = false;
             ouchEvent.Action = () => ouchSprite.Visible = false;
@@ -2521,6 +2521,7 @@ namespace Ambermoon
                 currentUIPaletteIndex = PrimaryUIPaletteIndex;
             }
 
+            ouchSprite.PaletteIndex = currentUIPaletteIndex;
             layout.UpdateUIPalette(currentUIPaletteIndex);
         }
 
