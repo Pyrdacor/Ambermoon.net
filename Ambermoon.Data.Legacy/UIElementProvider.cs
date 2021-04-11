@@ -168,11 +168,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(6, 53)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                .AddColoredArea(new Rect(5, 0, 1, 1), 26)
+                .AddColoredArea(new Rect(5, 0, 1, 1), 32)
                 .AddColoredArea(new Rect(0, 1, 1, 51), 30)
                 .AddColoredArea(new Rect(1, 1, 4, 51), 28)
                 .AddColoredArea(new Rect(5, 1, 1, 51), 26)
-                .AddColoredArea(new Rect(0, 52, 1, 1), 26)
+                .AddColoredArea(new Rect(0, 52, 1, 1), 32)
                 .AddColoredArea(new Rect(1, 52, 5, 1), 26)
                 .Build(),
 
@@ -187,11 +187,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(6, 112)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 4, 1), 30)
-                .AddColoredArea(new Rect(5, 0, 1, 1), 26)
+                .AddColoredArea(new Rect(5, 0, 1, 1), 32)
                 .AddColoredArea(new Rect(0, 1, 1, 110), 30)
                 .AddColoredArea(new Rect(1, 1, 4, 110), 28)
                 .AddColoredArea(new Rect(5, 1, 1, 110), 26)
-                .AddColoredArea(new Rect(0, 111, 1, 1), 26)
+                .AddColoredArea(new Rect(0, 111, 1, 1), 32)
                 .AddColoredArea(new Rect(1, 111, 5, 1), 26)
                 .Build(),
 
@@ -202,11 +202,11 @@ namespace Ambermoon.Data.Legacy
                 GraphicBuilder.Create(16, 24)
                 .AddColoredArea(new Rect(0, 0, 1, 1), 31)
                 .AddColoredArea(new Rect(1, 0, 14, 1), 30)
-                .AddColoredArea(new Rect(15, 0, 1, 1), 26)
+                .AddColoredArea(new Rect(15, 0, 1, 1), 32)
                 .AddColoredArea(new Rect(0, 1, 1, 22), 30)
                 .AddColoredArea(new Rect(1, 1, 14, 22), 28)
                 .AddColoredArea(new Rect(15, 1, 1, 22), 26)
-                .AddColoredArea(new Rect(0, 23, 1, 1), 26)
+                .AddColoredArea(new Rect(0, 23, 1, 1), 32)
                 .AddColoredArea(new Rect(1, 23, 15, 1), 26)
                 .Build(),
 
@@ -220,8 +220,8 @@ namespace Ambermoon.Data.Legacy
                     28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 27, 28, 28, 28, 28
                 }),
 
-                // Map disable overlay (UI palette-> 0 = black, 25 = transparent)
-                Graphic.FromIndexedData(320, 144, Enumerable.Range(0, 320 * 144).Select(i => (byte)((i + i / 320) % 2 == 0 ? 0 : 26)).ToArray()),
+                // Map disable overlay (UI palette-> 32 = black, 0 = transparent)
+                Graphic.FromIndexedData(320, 144, Enumerable.Range(0, 320 * 144).Select(i => (byte)((i + i / 320) % 2 == 0 ? 0 : 32)).ToArray()),
 
                 // Ambermoon info box (shown over the map when opening option menu)
                 GraphicBuilder.Create(128, 19)

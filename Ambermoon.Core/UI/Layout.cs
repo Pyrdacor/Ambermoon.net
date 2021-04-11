@@ -2717,9 +2717,7 @@ namespace Ambermoon.UI
             {
             case SpecialItemPurpose.Compass:
                 {
-                    var area = new Rect(208, 73, 32, 32);
-                    FillArea(area, Render.Color.Black, 2);
-                    specialItemSprites.Add(specialItem, AddSprite(area,
+                    specialItemSprites.Add(specialItem, AddSprite(new Rect(208, 73, 32, 32),
                         Graphics.GetUIGraphicIndex(UIGraphic.Compass), game.UIPaletteIndex, 4)); // Note: The display layer must be greater than the windchain layer
                     var text = AddText(new Rect(203, 86, 42, 7),
                         GetCompassString(), TextColor.BrightGray);
@@ -2729,18 +2727,14 @@ namespace Ambermoon.UI
                 }
             case SpecialItemPurpose.MonsterEye:
                 {
-                    var area = new Rect(240, 49, 32, 32);
-                    FillArea(area, Render.Color.Black, 2);
-                    specialItemSprites.Add(specialItem, AddSprite(area,
+                    specialItemSprites.Add(specialItem, AddSprite(new Rect(240, 49, 32, 32),
                         Graphics.GetUIGraphicIndex(game.MonsterSeesPlayer ? UIGraphic.MonsterEyeActive
                         : UIGraphic.MonsterEyeInactive), game.UIPaletteIndex, 3));
                     break;
                 }
             case SpecialItemPurpose.DayTime:
                 {
-                    var area = new Rect(272, 73, 32, 32);
-                    FillArea(area, Render.Color.Black, 2);
-                    specialItemSprites.Add(specialItem, AddSprite(area,
+                    specialItemSprites.Add(specialItem, AddSprite(new Rect(272, 73, 32, 32),
                         Graphics.GetUIGraphicIndex(UIGraphic.Night + (int)game.GameTime.GetDayTime()), game.UIPaletteIndex, 3));
                     break;
                 }

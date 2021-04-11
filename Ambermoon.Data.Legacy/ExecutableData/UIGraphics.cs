@@ -32,6 +32,16 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 return graphic;
             }
 
+            Graphic ReadOpaqueGraphic(IDataReader dataReader)
+            {
+                var graphic = new Graphic();
+
+                graphicReader.ReadGraphic(graphic, dataReader, graphicInfo);
+                graphic.ReplaceColor(0, 32);
+
+                return graphic;
+            }
+
             // Note: First 156 bytes seem to be some offsets etc.
 
             dataReader.Position = 156;
@@ -80,18 +90,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.SmallBorder2, ReadGraphic(dataReader));
             graphicInfo.Height = 16;
             for (int i = (int)UIGraphic.Candle; i <= (int)UIGraphic.Map; ++i)
-                entries.Add((UIGraphic)i, ReadGraphic(dataReader));
+                entries.Add((UIGraphic)i, ReadOpaqueGraphic(dataReader));
 
             graphicInfo.Width = 32;
             graphicInfo.Height = 15;
-            entries.Add(UIGraphic.Windchain, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.Windchain, ReadOpaqueGraphic(dataReader));
             graphicInfo.Height = 32;
-            entries.Add(UIGraphic.MonsterEyeInactive, ReadGraphic(dataReader));
-            entries.Add(UIGraphic.MonsterEyeActive, ReadGraphic(dataReader));
-            entries.Add(UIGraphic.Night, ReadGraphic(dataReader));
-            entries.Add(UIGraphic.Dusk, ReadGraphic(dataReader));
-            entries.Add(UIGraphic.Day, ReadGraphic(dataReader));
-            entries.Add(UIGraphic.Dawn, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.MonsterEyeInactive, ReadOpaqueGraphic(dataReader));
+            entries.Add(UIGraphic.MonsterEyeActive, ReadOpaqueGraphic(dataReader));
+            entries.Add(UIGraphic.Night, ReadOpaqueGraphic(dataReader));
+            entries.Add(UIGraphic.Dusk, ReadOpaqueGraphic(dataReader));
+            entries.Add(UIGraphic.Day, ReadOpaqueGraphic(dataReader));
+            entries.Add(UIGraphic.Dawn, ReadOpaqueGraphic(dataReader));
 
             graphicInfo.Height = 17;
             graphicInfo.Alpha = true;
@@ -115,15 +125,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.ButtonDisabledOverlay, disableOverlay);
             graphicInfo.Width = 32;
             graphicInfo.Height = 32;
-            entries.Add(UIGraphic.Compass, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.Compass, ReadOpaqueGraphic(dataReader));
             graphicInfo.Width = 16;
             graphicInfo.Height = 9;
-            entries.Add(UIGraphic.Attack, ReadGraphic(dataReader));
-            entries.Add(UIGraphic.Defense, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.Attack, ReadOpaqueGraphic(dataReader));
+            entries.Add(UIGraphic.Defense, ReadOpaqueGraphic(dataReader));
             graphicInfo.Width = 32;
             graphicInfo.Height = 34;
             entries.Add(UIGraphic.Skull, ReadGraphic(dataReader, 25));
-            entries.Add(UIGraphic.EmptyCharacterSlot, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.EmptyCharacterSlot, ReadOpaqueGraphic(dataReader));
             graphicInfo.Width = 16;
             graphicInfo.Height = 16;
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
