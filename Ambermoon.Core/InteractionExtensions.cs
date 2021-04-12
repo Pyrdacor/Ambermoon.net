@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -6,10 +7,13 @@ namespace Ambermoon
     {
         public static void ExecuteEvents(this IConversationPartner conversationPartner, Game game, EventTrigger trigger)
         {
-            foreach (var @event in conversationPartner.EventList)
+            var @event = conversationPartner.EventList.FirstOrDefault(e => e is ConversationEvent ce &&
+                ce.Interaction == ConversationEvent.InteractionType.Talk);
+
+            if (@event != null)
             {
                 uint x = (uint)game.RenderPlayer.Position.X;
-                uint y = (uint)game.RenderPlayer.Position.Y; // TODO: adjust?
+                uint y = (uint)game.RenderPlayer.Position.Y;
                 bool lastEventStatus = false;
                 @event.ExecuteEvent(game.Map, game, ref trigger, x, y, game.CurrentTicks,
                     ref lastEventStatus, out bool _, conversationPartner);

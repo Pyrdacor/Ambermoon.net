@@ -533,7 +533,7 @@ namespace Ambermoon
                             {
                                 if (actionEvent.Value == 1) // Add
                                 {
-                                    int numberToAdd = Math.Max(1, actionEvent.Count);
+                                    int numberToAdd = Math.Max(1, (int)actionEvent.Count);
                                     foreach (var partyMember in game.PartyMembers)
                                     {
                                         numberToAdd = game.DropItem(partyMember, itemIndex, numberToAdd);
@@ -545,7 +545,7 @@ namespace Ambermoon
                                 }
                                 else if (actionEvent.Value == 0) // Remove
                                 {
-                                    int numberToRemove = Math.Max(1, actionEvent.Count);
+                                    int numberToRemove = (int)Math.Max(1, actionEvent.Count);
                                     // Prefer inventory
                                     foreach (var partyMember in game.PartyMembers)
                                     {
@@ -624,7 +624,7 @@ namespace Ambermoon
                             else if (actionEvent.Value == 0) // Remove
                             {
                                 var partyMembers = game.PartyMembers.ToArray();
-                                int totalGoldToRemove = Math.Min(actionEvent.ObjectIndex, partyMembers.Sum(p => p.Gold));
+                                int totalGoldToRemove = (int)Math.Min(actionEvent.ObjectIndex, partyMembers.Sum(p => p.Gold));
                                 int goldToRemovePerPlayer = totalGoldToRemove / partyMembers.Length;
                                 int singleGoldMemberCount = totalGoldToRemove % partyMembers.Length;
 
@@ -640,8 +640,8 @@ namespace Ambermoon
                                     if (removeAmount == goldToRemove)
                                         --singleGoldMemberCount;
 
-                                    partyMember.Gold -= removeAmount;
-                                    partyMember.TotalWeight -= removeAmount * Character.GoldWeight;
+                                    partyMember.Gold = (ushort)Math.Max(0, partyMember.Gold - removeAmount);
+                                    partyMember.TotalWeight -= (uint)removeAmount * Character.GoldWeight;
                                     totalGoldToRemove -= removeAmount;
                                 }
 
@@ -652,8 +652,8 @@ namespace Ambermoon
                                         if (partyMember.Gold != 0)
                                         {
                                             int removeAmount = Math.Min(totalGoldToRemove, partyMember.Gold);
-                                            partyMember.Gold -= removeAmount;
-                                            partyMember.TotalWeight -= removeAmount * Character.GoldWeight;
+                                            partyMember.Gold = (ushort)Math.Max(0, partyMember.Gold - removeAmount);
+                                            partyMember.TotalWeight -= (uint)removeAmount * Character.GoldWeight;
                                             totalGoldToRemove -= removeAmount;
                                         }
                                     }
@@ -668,7 +668,7 @@ namespace Ambermoon
                             else if (actionEvent.Value == 0) // Remove
                             {
                                 var partyMembers = game.PartyMembers.ToArray();
-                                int totalFoodToRemove = Math.Min(actionEvent.ObjectIndex, partyMembers.Sum(p => p.Food));
+                                int totalFoodToRemove = (int)Math.Min(actionEvent.ObjectIndex, partyMembers.Sum(p => p.Food));
                                 int foodToRemovePerPlayer = totalFoodToRemove / partyMembers.Length;
                                 int singleFoodMemberCount = totalFoodToRemove % partyMembers.Length;
 
@@ -684,8 +684,8 @@ namespace Ambermoon
                                     if (removeAmount == foodToRemove)
                                         --singleFoodMemberCount;
 
-                                    partyMember.Food -= removeAmount;
-                                    partyMember.TotalWeight -= removeAmount * Character.FoodWeight;
+                                    partyMember.Food = (ushort)Math.Max(0, partyMember.Food - removeAmount);
+                                    partyMember.TotalWeight -= (uint)removeAmount * Character.FoodWeight;
                                     totalFoodToRemove -= removeAmount;
                                 }
 
@@ -696,8 +696,8 @@ namespace Ambermoon
                                         if (partyMember.Food != 0)
                                         {
                                             int removeAmount = Math.Min(totalFoodToRemove, partyMember.Food);
-                                            partyMember.Food -= removeAmount;
-                                            partyMember.TotalWeight -= removeAmount * Character.FoodWeight;
+                                            partyMember.Food = (ushort)Math.Max(0, partyMember.Food - removeAmount);
+                                            partyMember.TotalWeight -= (uint)removeAmount * Character.FoodWeight;
                                             totalFoodToRemove -= removeAmount;
                                         }
                                     }
@@ -725,60 +725,29 @@ namespace Ambermoon
 
                     switch (conversationEvent.Interaction)
                     {
-                        case ConversationEvent.InteractionType.Keyword:
-                            // TODO: this has to be handled by the conversation window
-                            aborted = true;
-                            return null;
-                        case ConversationEvent.InteractionType.ShowItem:
-                            // TODO: this has to be handled by the conversation window
-                            aborted = true;
-                            return null;
-                        case ConversationEvent.InteractionType.GiveItem:
-                            // TODO: this has to be handled by the conversation window
-                            aborted = true;
-                            return null;
                         case ConversationEvent.InteractionType.Talk:
                             if (trigger != EventTrigger.Mouth)
                             {
                                 aborted = true;
                                 return null;
                             }
-                            break;
-                        case ConversationEvent.InteractionType.Leave:
-                            // TODO: this has to be handled by the conversation window
-                            aborted = true;
+                            game.ShowConversation(conversationPartner, conversationEvent.Next);
                             return null;
-                        case ConversationEvent.InteractionType.GiveGold:
-                            // TODO
-                            break;
-                        case ConversationEvent.InteractionType.GiveFood:
-                            // TODO
-                            break;
-                        case ConversationEvent.InteractionType.JoinParty:
-                            // TODO
-                            break;
-                        case ConversationEvent.InteractionType.LeaveParty:
-                            // TODO
-                            break;
                         default:
-                            // TODO
-                            Console.WriteLine($"Found unknown conversation interaction type: {conversationEvent.Interaction}");
+                            // Note: this is handled by the conversation window
                             aborted = true;
                             return null;
                     }
-                    game.ShowConversation(conversationPartner, conversationEvent.Next);
-                    return null;
                 }
                 case EventType.PrintText:
+                case EventType.Create:
+                case EventType.Exit:
+                case EventType.Interact:
                 {
-                    if (!(@event is PrintTextEvent printTextEvent))
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid print text event.");
-
-                    // Note: This is only used by conversations and is handled by game.ShowConversation.
-                    // So we don't need to do anything here.
-                    return printTextEvent.Next;
+                    // Note: These are only used by conversations and are handled in
+                    // game.ShowConversation. So we don't need to do anything here.
+                    return @event.Next;
                 }
-                // TODO ...
                 case EventType.Decision:
                 {
                     if (!(@event is DecisionEvent decisionEvent))
@@ -802,16 +771,20 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
-                // TODO ...
+                case EventType.ChangeMusic:
+                    // TODO
+                    return @event.Next;
+                case EventType.Spawn:
+                    // TODO
+                    return @event.Next;
+                case EventType.Unknown:
+                    // TODO
+                    return @event.Next;
+                default:
+                    Console.WriteLine($"Unknown event type found: {@event.Type}");
+                    return @event.Next;
             }
 
-            // TODO: battles, chest looting, etc should set this dependent on:
-            // - battle won
-            // - chest fully looted
-            // ...
-            // TODO: to do so we have to memorize the current event chain and continue
-            // it after the player has done some actions (loot a chest, fight a battle, etc).
-            // maybe we need a state machine here instead of just a linked list and a loop.
             lastEventStatus = true;
 
             return @event.Next;

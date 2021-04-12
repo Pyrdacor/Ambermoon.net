@@ -11001,9 +11001,9 @@ namespace Ambermoon
             return false;
         }
 
-        internal int DropItem(int partyMemberIndex, uint itemIndex, int amount)
+        internal int DropItem(PartyMember partyMember, uint itemIndex, int amount)
         {
-            return SlotFromPartyMember(partyMemberIndex), null, new ItemSlot
+            return DropItem(SlotFromPartyMember(partyMember).Value, null, new ItemSlot
             {
                 ItemIndex = itemIndex,
                 Amount = amount

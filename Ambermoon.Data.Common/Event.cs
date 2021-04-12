@@ -7,30 +7,104 @@ namespace Ambermoon.Data
 {
     public enum EventType
     {
+        /// <summary>
+        /// This is not used
+        /// </summary>
         Invalid,
-        Teleport, // open doors, exits, teleporters, etc
-        Door, // locked doors
-        Chest, // all kinds of lootable map objects
-        PopupText, // events with text popup
-        Spinner, // rotates the player to a random direction
-        Trap, // the burning fire places in grandfathers house, chest/door traps etc
-        RemoveBuffs, // this removes all active buffs in lebabs tower 4
+        /// <summary>
+        /// Map transitions, teleporters, windgates, etc.
+        /// </summary>
+        Teleport,
+        /// <summary>
+        /// Locked doors
+        /// </summary>
+        Door,
+        /// <summary>
+        /// Chests and lootable map objects.
+        /// Also used for locked chests.
+        /// </summary>
+        Chest,
+        /// <summary>
+        /// Shows a text popup
+        /// </summary>
+        PopupText,
+        /// <summary>
+        /// Rotates the player to a random direction
+        /// </summary>
+        Spinner,
+        /// <summary>
+        /// Hurts the player (map traps, fire, chest/door traps, etc)
+        /// </summary>
+        Trap,
+        /// <summary>
+        /// Removes one or all buffs
+        /// </summary>
+        RemoveBuffs,
+        /// <summary>
+        /// Opens the riddlemouth window with some riddle
+        /// </summary>
         Riddlemouth,
+        /// <summary>
+        /// Awards, rewards, punishments
+        /// </summary>
         Award,
+        /// <summary>
+        /// Change map tiles.
+        /// </summary>
         ChangeTile,
+        /// <summary>
+        /// Starts a battle with a monster group.
+        /// </summary>
         StartBattle,
-        EnterPlace, // merchant, healer, etc
+        /// <summary>
+        /// Enters a place like merchants, healer, etc.
+        /// </summary>
+        EnterPlace,
+        /// <summary>
+        /// Tests some condition
+        /// </summary>
         Condition,
+        /// <summary>
+        /// Executes some action
+        /// </summary>
         Action,
+        /// <summary>
+        /// Dice roll against some percent value
+        /// </summary>
         Dice100Roll,
+        /// <summary>
+        /// Trigger for a conversation action.
+        /// Starts a conversation event chain by user input.
+        /// </summary>
         Conversation,
+        /// <summary>
+        /// Prints conversation text (conversation only)
+        /// </summary>
         PrintText,
-        Create, // conversation only
-        Decision, // yes/no popup with text
+        /// <summary>
+        /// Create items (conversation only)
+        /// </summary>
+        Create,
+        /// <summary>
+        /// Yes/No popup with text
+        /// </summary>
+        Decision,
+        /// <summary>
+        /// Changes music to a new song or the default map song
+        /// </summary>
         ChangeMusic,
-        Exit, // conversation only
-        Spawn, // TODO: correct?
-        Interact, // conversation only, executes conversation actions like giving the item/gold/food or join/leave the party
+        /// <summary>
+        /// Exits conversations (conversation only)
+        /// </summary>
+        Exit,
+        /// <summary>
+        /// Spawns transports like ships or horses
+        /// </summary>
+        Spawn,
+        /// <summary>
+        /// Executes conversation actions like giving the item/gold/food or join/leave the party (conversation only)
+        /// </summary>
+        Interact,
         Unknown
     }
 
@@ -675,10 +749,17 @@ namespace Ambermoon.Data
 
     public class SpawnEvent : Event
     {
-        // TODO
+        public uint X { get; set; }
+        public uint Y { get; set; }
+        public TravelType TravelType { get; set; }
+        public byte[] Unknown1 { get; set; }
+        public uint MapIndex { get; set; }
+        public byte[] Unknown2 { get; set; }
+
+
         public override string ToString()
         {
-            return $"{Type}";
+            return $"{Type} {TravelType} on map {MapIndex} at {X}, {Y}";
         }
     }
 

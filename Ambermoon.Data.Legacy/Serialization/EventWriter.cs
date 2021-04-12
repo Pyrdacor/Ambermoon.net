@@ -248,6 +248,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(exitEvent.Unused);
                     break;
                 }
+                case EventType.Spawn:
+                {
+                    var spawnEvent = @event as SpawnEvent;
+                    dataWriter.Write((byte)spawnEvent.X);
+                    dataWriter.Write((byte)spawnEvent.Y);
+                    dataWriter.WriteEnumAsByte(spawnEvent.TravelType);
+                    dataWriter.Write(spawnEvent.Unknown1);
+                    dataWriter.Write((ushort)spawnEvent.MapIndex);
+                    dataWriter.Write(spawnEvent.Unknown2);
+                    break;
+                }
                 case EventType.Interact:
                 {
                     var interactEvent = @event as InteractEvent;

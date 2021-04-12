@@ -417,6 +417,31 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.Spawn:
+                {
+                    // byte0: x
+                    // byte1: y
+                    // byte2: travel type (see TravelType)
+                    // byte3-4: unused?
+                    // byte5-6: map index
+                    // byte7-8: unused?
+                    var x = dataReader.ReadByte();
+                    var y = dataReader.ReadByte();
+                    var travelType = (TravelType)dataReader.ReadByte();
+                    var unknown1 = dataReader.ReadBytes(2); // unknown
+                    var mapIndex = dataReader.ReadWord();
+                    var unknown2 = dataReader.ReadBytes(2); // unknown
+                    @event = new SpawnEvent
+                    {
+                        X = x,
+                        Y = y,
+                        TravelType = travelType,
+                        Unknown1 = unknown1,
+                        MapIndex = mapIndex,
+                        Unknown2 = unknown2
+                    };
+                    break;
+                }
                 case EventType.Interact:
                 {
                     @event = new InteractEvent
