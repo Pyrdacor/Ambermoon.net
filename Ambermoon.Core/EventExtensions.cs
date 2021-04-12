@@ -378,11 +378,14 @@ namespace Ambermoon
                                 return mapEventIfFalse;
                             }
                             break;
-                        case ConditionEvent.ConditionType.Unknown1:
+                        case ConditionEvent.ConditionType.GameOptionSet:
+                            if (game.CurrentSavegame.IsGameOptionActive((Data.Enumerations.Option)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
                             {
-                                // TODO
-                                break;
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
                             }
+                            break;
                         case ConditionEvent.ConditionType.CanSee:
                         {
                             // TODO: are there other things to consider?
@@ -395,7 +398,7 @@ namespace Ambermoon
                             }
                             break;
                         }
-                        case ConditionEvent.ConditionType.Unknown2:
+                        case ConditionEvent.ConditionType.Unknown:
                         {
                             // TODO
                             break;
@@ -474,30 +477,233 @@ namespace Ambermoon
                     if (!(@event is ActionEvent actionEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid action event.");
 
+                    bool ClearSetToggle(Func<bool> currentValueRetriever)
+                    {
+                        switch (actionEvent.Value)
+                        {
+                            case 0: // Clear
+                                return false;
+                            case 1: // Set
+                                return true;
+                            case 2: // Toggle
+                                return !currentValueRetriever();
+                            default: // Leave as it is
+                                return currentValueRetriever();
+                        }
+                    }
+
                     switch (actionEvent.TypeOfAction)
                     {
                         case ActionEvent.ActionType.SetGlobalVariable:
-                            game.CurrentSavegame.SetGlobalVariable(actionEvent.ObjectIndex, actionEvent.Value != 0);
+                            game.CurrentSavegame.SetGlobalVariable(actionEvent.ObjectIndex,
+                                ClearSetToggle(() => game.CurrentSavegame.GetGlobalVariable(actionEvent.ObjectIndex)));
                             break;
                         case ActionEvent.ActionType.SetEventBit:
-                            game.SetMapEventBit(actionEvent.ObjectIndex >> 6, actionEvent.ObjectIndex & 0x3f, actionEvent.Value != 0);
+                        {
+                            var mapIndex = actionEvent.ObjectIndex >> 6;
+                            var eventIndex = actionEvent.ObjectIndex & 0x3f;
+                            game.SetMapEventBit(mapIndex, eventIndex,
+                                ClearSetToggle(() => game.CurrentSavegame.GetEventBit(mapIndex, eventIndex)));
                             break;
+                        }
                         case ActionEvent.ActionType.LockDoor:
-                            if (actionEvent.Value == 0)
+                            if (!ClearSetToggle(() => !game.CurrentSavegame.IsDoorLocked(actionEvent.ObjectIndex)))
                                 game.CurrentSavegame.UnlockDoor(actionEvent.ObjectIndex);
                             else
                                 game.CurrentSavegame.LockDoor(actionEvent.ObjectIndex);
                             break;
                         case ActionEvent.ActionType.LockChest:
-                            if (actionEvent.Value == 0)
+                            if (!ClearSetToggle(() => !game.CurrentSavegame.IsChestLocked(actionEvent.ObjectIndex)))
                                 game.CurrentSavegame.UnlockChest(actionEvent.ObjectIndex);
                             else
                                 game.CurrentSavegame.LockChest(actionEvent.ObjectIndex);
                             break;
                         case ActionEvent.ActionType.SetCharacterBit:
-                            game.SetMapCharacterBit(actionEvent.ObjectIndex >> 5, actionEvent.ObjectIndex & 0x1f, actionEvent.Value != 0);
+                        {
+                            var mapIndex = actionEvent.ObjectIndex >> 5;
+                            var eventIndex = actionEvent.ObjectIndex & 0x1f;
+                            game.SetMapCharacterBit(mapIndex, eventIndex,
+                                ClearSetToggle(() => game.CurrentSavegame.GetCharacterBit(mapIndex, eventIndex)));
                             break;
-                            // TODO ...
+                        }
+                        case ActionEvent.ActionType.AddItem:
+                        {
+                            var itemIndex = actionEvent.ObjectIndex;
+                            if (itemIndex > 0)
+                            {
+                                if (actionEvent.Value == 1) // Add
+                                {
+                                    int numberToAdd = Math.Max(1, actionEvent.Count);
+                                    foreach (var partyMember in game.PartyMembers)
+                                    {
+                                        numberToAdd = game.DropItem(partyMember, itemIndex, numberToAdd);
+
+                                        if (numberToAdd == 0)
+                                            break;
+                                    }
+                                    // Ignore the rest as we couldn't do anything about it.
+                                }
+                                else if (actionEvent.Value == 0) // Remove
+                                {
+                                    int numberToRemove = Math.Max(1, actionEvent.Count);
+                                    // Prefer inventory
+                                    foreach (var partyMember in game.PartyMembers)
+                                    {
+                                        foreach (var slot in partyMember.Inventory.Slots)
+                                        {
+                                            if (slot?.ItemIndex == itemIndex)
+                                            {
+                                                int slotCount = slot.Amount;
+                                                slot.Remove(Math.Min(numberToRemove, slotCount));
+                                                int numRemoved = slotCount - slot.Amount;
+                                                game.InventoryItemRemoved(itemIndex, numRemoved, partyMember);
+                                                numberToRemove -= numRemoved;
+
+                                                if (numberToRemove == 0)
+                                                    break;
+                                            }
+                                        }
+
+                                        if (numberToRemove == 0)
+                                            break;
+                                    }
+                                    foreach (var partyMember in game.PartyMembers)
+                                    {
+                                        foreach (var slot in partyMember.Equipment.Slots.Values)
+                                        {
+                                            if (slot?.ItemIndex == itemIndex)
+                                            {
+                                                int slotCount = slot.Amount;
+                                                bool cursed = slot.Flags.HasFlag(ItemSlotFlags.Cursed);
+                                                slot.Remove(Math.Min(numberToRemove, slotCount));
+                                                int numRemoved = slotCount - slot.Amount;
+                                                game.EquipmentRemoved(partyMember,itemIndex, numRemoved, cursed);
+                                                numberToRemove -= numRemoved;
+
+                                                if (numberToRemove == 0)
+                                                    break;
+                                            }
+                                        }
+
+                                        if (numberToRemove == 0)
+                                            break;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        case ActionEvent.ActionType.AddKeyword:
+                            // Note: This may also remove a keyword but this is no real use case.
+                            // We will only add keywords here and ignore the action value.
+                            // The original code seems to do the same.
+                            game.CurrentSavegame.AddDictionaryWord(actionEvent.ObjectIndex);
+                            break;
+                        case ActionEvent.ActionType.SetGameOption:
+                        {
+                            var option = (Data.Enumerations.Option)(1 << (int)actionEvent.ObjectIndex);
+                            game.CurrentSavegame.SetGameOption(option, ClearSetToggle(() => game.CurrentSavegame.IsGameOptionActive(option)));
+                            break;
+                        }
+                        case ActionEvent.ActionType.Unknown:
+                            // TODO
+                            break;
+                        case ActionEvent.ActionType.AddAilment:
+                        {
+                            var ailment = (Ailment)(1 << (int)actionEvent.ObjectIndex);
+                            if (ClearSetToggle(() => game.CurrentPartyMember.Ailments.HasFlag(ailment)))
+                                game.AddAilment(ailment);
+                            else
+                                game.RemoveAilment(ailment, game.CurrentPartyMember);
+                            break;
+                        }
+                        case ActionEvent.ActionType.AddGold:
+                            // Note: The original code always removes the gold. But as this is not used
+                            // at all I think controlling the behavior with the value bit is better.
+                            if (actionEvent.Value == 1) // Add
+                                game.DistributeGold(actionEvent.ObjectIndex, true);
+                            else if (actionEvent.Value == 0) // Remove
+                            {
+                                var partyMembers = game.PartyMembers.ToArray();
+                                int totalGoldToRemove = Math.Min(actionEvent.ObjectIndex, partyMembers.Sum(p => p.Gold));
+                                int goldToRemovePerPlayer = totalGoldToRemove / partyMembers.Length;
+                                int singleGoldMemberCount = totalGoldToRemove % partyMembers.Length;
+
+                                foreach (var partyMember in partyMembers)
+                                {
+                                    int goldToRemove = goldToRemovePerPlayer;
+
+                                    if (singleGoldMemberCount != 0)
+                                        ++goldToRemove;
+
+                                    int removeAmount = Math.Min(goldToRemove, partyMember.Gold);
+
+                                    if (removeAmount == goldToRemove)
+                                        --singleGoldMemberCount;
+
+                                    partyMember.Gold -= removeAmount;
+                                    partyMember.TotalWeight -= removeAmount * Character.GoldWeight;
+                                    totalGoldToRemove -= removeAmount;
+                                }
+
+                                if (totalGoldToRemove != 0)
+                                {
+                                    foreach (var partyMember in partyMembers)
+                                    {
+                                        if (partyMember.Gold != 0)
+                                        {
+                                            int removeAmount = Math.Min(totalGoldToRemove, partyMember.Gold);
+                                            partyMember.Gold -= removeAmount;
+                                            partyMember.TotalWeight -= removeAmount * Character.GoldWeight;
+                                            totalGoldToRemove -= removeAmount;
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        case ActionEvent.ActionType.AddFood:
+                            // Note: The original code always removes the food. But as this is not used
+                            // at all I think controlling the behavior with the value bit is better.
+                            if (actionEvent.Value == 1) // Add
+                                game.DistributeFood(actionEvent.ObjectIndex, true);
+                            else if (actionEvent.Value == 0) // Remove
+                            {
+                                var partyMembers = game.PartyMembers.ToArray();
+                                int totalFoodToRemove = Math.Min(actionEvent.ObjectIndex, partyMembers.Sum(p => p.Food));
+                                int foodToRemovePerPlayer = totalFoodToRemove / partyMembers.Length;
+                                int singleFoodMemberCount = totalFoodToRemove % partyMembers.Length;
+
+                                foreach (var partyMember in partyMembers)
+                                {
+                                    int foodToRemove = foodToRemovePerPlayer;
+
+                                    if (singleFoodMemberCount != 0)
+                                        ++foodToRemove;
+
+                                    int removeAmount = Math.Min(foodToRemove, partyMember.Food);
+
+                                    if (removeAmount == foodToRemove)
+                                        --singleFoodMemberCount;
+
+                                    partyMember.Food -= removeAmount;
+                                    partyMember.TotalWeight -= removeAmount * Character.FoodWeight;
+                                    totalFoodToRemove -= removeAmount;
+                                }
+
+                                if (totalFoodToRemove != 0)
+                                {
+                                    foreach (var partyMember in partyMembers)
+                                    {
+                                        if (partyMember.Food != 0)
+                                        {
+                                            int removeAmount = Math.Min(totalFoodToRemove, partyMember.Food);
+                                            partyMember.Food -= removeAmount;
+                                            partyMember.TotalWeight -= removeAmount * Character.FoodWeight;
+                                            totalFoodToRemove -= removeAmount;
+                                        }
+                                    }
+                                }
+                            }
+                            break;
                     }
 
                     break;

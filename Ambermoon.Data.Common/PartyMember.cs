@@ -14,8 +14,8 @@ namespace Ambermoon.Data
         public List<Event> Events { get; } = new List<Event>();
         public List<Event> EventList { get; } = new List<Event>();
         public uint MaxWeight => 999 + Attributes[Attribute.Strength].TotalCurrentValue * 1000;
-        public uint MaxGoldToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Gold, ((int)MaxWeight - (int)TotalWeight) / 5));
-        public uint MaxFoodToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Food, ((int)MaxWeight - (int)TotalWeight) / 250));
+        public uint MaxGoldToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Gold, ((int)MaxWeight - (int)TotalWeight) / Character.GoldWeight));
+        public uint MaxFoodToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Food, ((int)MaxWeight - (int)TotalWeight) / Character.FoodWeight));
         public bool CanTakeItems(IItemManager itemManager, ItemSlot itemSlot)
         {
             var item = itemManager.GetItem(itemSlot.ItemIndex);
@@ -106,28 +106,28 @@ namespace Ambermoon.Data
         public void AddGold(uint gold)
         {
             var newGold = (ushort)Math.Min(ushort.MaxValue, Gold + gold);
-            TotalWeight += (uint)(newGold - Gold) * 5;
+            TotalWeight += (uint)(newGold - Gold) * Character.GoldWeight;
             Gold = newGold;
         }
 
         public void AddFood(uint food)
         {
             var newFood = (ushort)Math.Min(ushort.MaxValue, Food + food);
-            TotalWeight += (uint)(newFood - Food) * 250;
+            TotalWeight += (uint)(newFood - Food) * Character.FoodWeight;
             Food = newFood;
         }
 
         public void RemoveGold(uint gold)
         {
             var newGold = (ushort)Math.Max(0, Gold - (int)gold);
-            TotalWeight -= (uint)(Gold - newGold) * 5;
+            TotalWeight -= (uint)(Gold - newGold) * Character.GoldWeight;
             Gold = newGold;
         }
 
         public void RemoveFood(uint food)
         {
             var newFood = (ushort)Math.Max(0, Food - (int)food);
-            TotalWeight -= (uint)(Food - newFood) * 250;
+            TotalWeight -= (uint)(Food - newFood) * Character.FoodWeight;
             Food = newFood;
         }
 

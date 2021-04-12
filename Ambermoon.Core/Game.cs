@@ -3101,25 +3101,23 @@ namespace Ambermoon
             partyMember ??= CurrentInventory;
 
             partyMember.TotalWeight += (uint)amount * item.Weight;
-            // TODO ...
         }
 
         internal void InventoryItemAdded(uint itemIndex, int amount, PartyMember partyMember)
         {
-            InventoryItemAdded(ItemManager.GetItem(itemIndex), amount);
+            InventoryItemAdded(ItemManager.GetItem(itemIndex), amount, partyMember);
         }
 
-        void InventoryItemRemoved(Item item, int amount)
+        void InventoryItemRemoved(Item item, int amount, PartyMember partyMember = null)
         {
-            var partyMember = CurrentInventory;
+            partyMember ??= CurrentInventory;
 
             partyMember.TotalWeight -= (uint)amount * item.Weight;
-            // TODO ...
         }
 
-        internal void InventoryItemRemoved(uint itemIndex, int amount)
+        internal void InventoryItemRemoved(uint itemIndex, int amount, PartyMember partyMember = null)
         {
-            InventoryItemRemoved(ItemManager.GetItem(itemIndex), amount);
+            InventoryItemRemoved(ItemManager.GetItem(itemIndex), amount, partyMember);
         }
 
         void EquipmentAdded(Item item, int amount, bool cursed, Character character = null)
@@ -5376,6 +5374,24 @@ namespace Ambermoon
             layout.RemoveAllActiveSpells();
         }
 
+        internal void AddAilment(Ailment ailment)
+        {
+            var partyMember = CurrentPartyMember;
+
+            if (ailment >= Ailment.DeadCorpse && partyMember.Alive)
+            {
+                partyMember.Die(ailment);
+                return;
+            }
+
+            partyMember.Ailments |= ailment;
+
+            if (CurrentSavegame.ActivePartyMemberSlot == SlotFromPartyMember(partyMember))
+            {
+                RecheckActivePartyMember();
+            }
+        }
+
         internal void RemoveAilment(Ailment ailment, Character target)
         {
             // Healing spells or potions.
@@ -7235,7 +7251,45 @@ namespace Ambermoon
             });
         }
 
-        internal uint DistributeFood(uint food)
+        internal uint DistributeGold(uint gold, bool force)
+        {
+            var partyMembers = PartyMembers.ToList();
+
+            while (gold != 0)
+            {
+                int numTargetPlayers = partyMembers.Count;
+                uint goldPerPlayer = gold / (uint)numTargetPlayers;
+                bool anyCouldTake = false;
+
+                if (goldPerPlayer == 0)
+                {
+                    numTargetPlayers = (int)gold;
+                    goldPerPlayer = 1;
+                }
+
+                foreach (var partyMember in partyMembers)
+                {
+                    uint goldToTake = force ? goldPerPlayer : Math.Min(partyMember.MaxGoldToTake, goldPerPlayer);
+                    gold -= goldToTake;
+                    partyMember.AddGold(goldToTake);
+
+                    if (goldToTake != 0)
+                    {
+                        anyCouldTake = true;
+
+                        if (--numTargetPlayers == 0)
+                            break;
+                    }
+                }
+
+                if (!anyCouldTake)
+                    return gold;
+            }
+
+            return gold;
+        }
+
+        internal uint DistributeFood(uint food, bool force)
         {
             var partyMembers = PartyMembers.ToList();
 
@@ -7253,10 +7307,9 @@ namespace Ambermoon
 
                 foreach (var partyMember in partyMembers)
                 {
-                    uint foodToTake = Math.Min(partyMember.MaxFoodToTake, foodPerPlayer);
+                    uint foodToTake = force ? foodPerPlayer : Math.Min(partyMember.MaxFoodToTake, foodPerPlayer);
                     food -= foodToTake;
-                    partyMember.Food += (ushort)foodToTake;
-                    partyMember.TotalWeight += foodToTake * 250;
+                    partyMember.AddFood(foodToTake);
 
                     if (foodToTake != 0)
                     {
@@ -8096,7 +8149,7 @@ namespace Ambermoon
                 // Distribute food button
                 layout.AttachEventToButton(4, () =>
                 {
-                    foodDealer.AvailableFood = DistributeFood(foodDealer.AvailableFood);
+                    foodDealer.AvailableFood = DistributeFood(foodDealer.AvailableFood, false);
                     UpdateFoodDisplay();
                     UpdateButtons();
 
@@ -10875,7 +10928,7 @@ namespace Ambermoon
         internal void DropGold(uint amount)
         {
             layout.ClosePopup(false, true);
-            CurrentInventory.Gold = (ushort)Math.Max(0, CurrentInventory.Gold - (int)amount);
+            CurrentInventory.RemoveGold(amount);
             layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
         }
@@ -10883,7 +10936,7 @@ namespace Ambermoon
         internal void DropFood(uint amount)
         {
             layout.ClosePopup(false, true);
-            CurrentInventory.Food = (ushort)Math.Max(0, CurrentInventory.Food - (int)amount);
+            CurrentInventory.RemoveFood(amount);
             layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
         }
@@ -10894,7 +10947,7 @@ namespace Ambermoon
             var chest = OpenStorage as Chest;
             const uint MaxGoldPerChest = 50000; // TODO
             amount = Math.Min(amount, MaxGoldPerChest - chest.Gold);
-            CurrentInventory.Gold = (ushort)Math.Max(0, CurrentInventory.Gold - (int)amount);
+            CurrentInventory.RemoveGold(amount);
             chest.Gold += amount;
             layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
@@ -10906,7 +10959,7 @@ namespace Ambermoon
             var chest = OpenStorage as Chest;
             const uint MaxFoodPerChest = 5000; // TODO
             amount = Math.Min(amount, MaxFoodPerChest - chest.Food);
-            CurrentInventory.Food = (ushort)Math.Max(0, CurrentInventory.Food - (int)amount);
+            CurrentInventory.RemoveFood(amount);
             chest.Food += amount;
             layout.UpdateLayoutButtons();
             UpdateCharacterInfo();
@@ -10946,6 +10999,15 @@ namespace Ambermoon
             }
 
             return false;
+        }
+
+        internal int DropItem(int partyMemberIndex, uint itemIndex, int amount)
+        {
+            return SlotFromPartyMember(partyMemberIndex), null, new ItemSlot
+            {
+                ItemIndex = itemIndex,
+                Amount = amount
+            });
         }
 
         /// <summary>

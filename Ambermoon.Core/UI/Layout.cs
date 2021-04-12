@@ -1862,7 +1862,7 @@ namespace Ambermoon.UI
         void DistributeFood(Chest chest)
         {
             var initialFood = chest.Food;
-            chest.Food = game.DistributeFood(chest.Food);
+            chest.Food = game.DistributeFood(chest.Food, false);
 
             if (chest.Food != initialFood)
             {

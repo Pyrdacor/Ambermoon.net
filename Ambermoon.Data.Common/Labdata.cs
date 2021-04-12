@@ -69,10 +69,11 @@ namespace Ambermoon.Data
         }
 
         /// <summary>
-        /// The floor dimension (tile width/height) seems to be considered as 250.
-        /// So if this value is 250 as well, the wall's height is exactly a tile
+        /// The floor dimension (tile width/height) is 512.
+        /// So if this value is 512 as well, the wall's height is exactly a tile
         /// width and therefore each map block is a cube. If the value would be
-        /// 500, a wall would be twice as height as a tile width, etc.
+        /// 256, a wall would be twice as width as its height, etc.
+        /// The reference wall height is 341 (which is 2/3 of 512).
         /// </summary>
         public uint WallHeight { get; set; }
         /// <summary>

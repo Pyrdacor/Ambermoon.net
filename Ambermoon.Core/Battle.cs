@@ -240,7 +240,6 @@ namespace Ambermoon
 
         public event Action RoundFinished;
         public event Action<Character> CharacterDied;
-        public event Action<Character, uint, uint> CharacterMoved;
         public event Action<Game.BattleEndInfo> BattleEnded;
         public event Action<BattleAction> ActionCompleted;
         public event Action<PartyMember> PlayerWeaponBroke;
@@ -851,12 +850,12 @@ namespace Ambermoon
                 nextAction.ActionParameter = battleAction.ActionParameter;
                 if (flags.HasFlag(flag))
                 {
-                    var textColor = GetCharacterAt(tile).Type == CharacterType.PartyMember ? TextColor.BattlePlayer : TextColor.BattleMonster;
-                    var equipmentSlot = target.Equipment.Slots[equipmentSlot];
-                    var itemIndex = equipmentSlot.ItemIndex;
-                    game.EquipmentRemoved(target, itemIndex, 1, equipmentSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
-                    brokenItems.Add(KeyValuePair.Create(itemIndex, equipmentSlot.Flags));
-                    equipmentSlot.Clear();
+                    var textColor = target.Type == CharacterType.PartyMember ? TextColor.BattlePlayer : TextColor.BattleMonster;
+                    var equipSlot = target.Equipment.Slots[equipmentSlot];
+                    var itemIndex = equipSlot.ItemIndex;
+                    game.EquipmentRemoved(target, itemIndex, 1, equipSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                    brokenItems.Add(KeyValuePair.Create(itemIndex, equipSlot.Flags));
+                    equipSlot.Clear();
                     layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
                     ActionFinished(true);
                 }
@@ -1058,8 +1057,9 @@ namespace Ambermoon
                         else if (battleAction.Character is Monster attackingMonster) // Memorize monster damage stats
                             TrackMonsterHit(attackingMonster, trackDamage);
                     }
-                    void SkipAllFollowingAttacks(Character character = battleAction.Character)
+                    void SkipAllFollowingAttacks(Character character = null)
                     {
+                        character ??= battleAction.Character;
                         bool foundNextDisplayAction = false;
                         foreach (var action in roundBattleActions.Where(a => a.Character == character))
                         {

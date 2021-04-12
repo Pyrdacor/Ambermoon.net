@@ -7,6 +7,9 @@ namespace Ambermoon.Data
     [Serializable]
     public abstract class Character
     {
+        public const uint GoldWeight = 5;
+        public const uint FoodWeight = 250;
+
         public uint Index { get; set; }
         public CharacterType Type { get; }
         public Gender Gender { get; set; }

@@ -396,9 +396,9 @@ namespace Ambermoon.Data
             UseItem = 0x07,
             KnowsKeyword = 0x08, // TODO: needs testing
             LastEventResult = 0x09, // treasure fully looted, battle won, etc
-            Unknown1 = 0x0a,
+            GameOptionSet = 0x0a,
             CanSee = 0x0b,
-            Unknown2 = 0x0c,
+            Unknown = 0x0c,
             HasAilment = 0x0d,
             Hand = 0x0e,
             SayWord = 0x0f, // it also pops up the dictionary to say something
@@ -442,6 +442,7 @@ namespace Ambermoon.Data
                 ConditionType.UseItem => $"{Type}: Use item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.KnowsKeyword => $"{Type}: {(Value == 0 ? "Not know" : "Know")} keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.LastEventResult => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.GameOptionSet => $"{Type}: Game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)} is {(Value == 0 ? "not set" : "set")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.CanSee => $"{Type}: {(Value == 0 ? "Can't see" : "Can see")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.HasAilment => $"{Type}: {(Value == 0 ? "Has not" : "Has")} ailment {(Ailment)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
@@ -458,6 +459,11 @@ namespace Ambermoon.Data
 
     public class ActionEvent : Event
     {
+        /// <summary>
+        /// These are similar to the <see cref="ConditionEvent.ConditionType"/>
+        /// but the following IDs are not used for actions:
+        /// 5, 7, 9, 11, 14, 15, 16, 17 and 20
+        /// </summary>
         public enum ActionType
         {
             SetGlobalVariable = 0x00,
@@ -465,7 +471,13 @@ namespace Ambermoon.Data
             /// Sets an event (event list entry) to active or inactive.
             /// </summary>
             SetEventBit = 0x01,
+            /// <summary>
+            /// Locks or unlocks a door
+            /// </summary>
             LockDoor = 0x02,
+            /// <summary>
+            /// Locks or unlocks a chest
+            /// </summary>
             LockChest = 0x03,
             /// <summary>
             /// As event status can be set by SetEvent I guess
@@ -474,15 +486,33 @@ namespace Ambermoon.Data
             /// </summary>
             SetCharacterBit = 0x04,
             /// <summary>
-            /// Adds or remove some item
+            /// Adds or removes some items
             /// </summary>
             AddItem = 0x06,
             /// <summary>
-            /// Adds a new dictionary entry?
+            /// Adds or removes a new dictionary entry
             /// </summary>
-            Keyword = 0x08,
-
-            // TODO
+            AddKeyword = 0x08,
+            /// <summary>
+            /// Sets a game option
+            /// </summary>
+            SetGameOption = 0x0a,
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            Unknown = 0x0c,
+            /// <summary>
+            /// Adds or removes an ailment
+            /// </summary>
+            AddAilment = 0x0d,
+            /// <summary>
+            /// Adds or removes gold
+            /// </summary>
+            AddGold = 0x12,
+            /// <summary>
+            /// Adds or removes food
+            /// </summary>
+            AddFood = 0x13
         }
 
         public ActionType TypeOfAction { get; set; }
@@ -501,13 +531,16 @@ namespace Ambermoon.Data
             return TypeOfAction switch
             {
                 ActionType.SetGlobalVariable => $"{Type}: Set global variable {ObjectIndex} to {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
-                // TODO
                 ActionType.SetEventBit => $"{Type}: Set event bit {ObjectIndex / 64 + 1}:{ObjectIndex % 64} to {(Value != 0 ? "inactive" : "active")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.LockDoor => $"{Type}: {(Value == 0 ? "Lock" : "Unlock")} door {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.LockChest => $"{Type}: {(Value == 0 ? "Lock" : "Unlock")} chest {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",                
                 ActionType.SetCharacterBit => $"{Type}: Set character bit {ObjectIndex / 32 + 1}:{ObjectIndex % 32} to {(Value != 0 ? "hidden" : "show")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
-                // TODO
-                ActionType.AddItem => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, Count)}x item, ObjectIndex={ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
-                // TODO
-                ActionType.Keyword => $"{Type}: Keyword, ObjectIndex={ObjectIndex}, Value={Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.AddItem => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, Count)}x item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.AddKeyword => $"{Type}: {(Value == 0 ? "Remove" : "Add")} keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.SetGameOption => $"{Type}: {(Value == 0 ? "Deactivate" : "Activate")} game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.AddAilment => $"{Type}: {(Value == 0 ? "Remove" : "Add")} ailment {(Ailment)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.AddGold => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, ObjectIndex)} gold, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.AddFood => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, ObjectIndex)} food, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 _ => $"{Type}: Unknown ({TypeOfAction}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
             };
         }
