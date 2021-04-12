@@ -156,8 +156,12 @@ namespace Ambermoon
             /// skipped if attack misses etc.
             /// </summary>
             Hurt,
+            // The following actions will be optional actions
+            // that might occur by chance.
             WeaponBreak,
             ArmorBreak,
+            DefenderWeaponBreak,
+            DefenderShieldBreak,
             LastAmmo,
             DropWeapon
         }
@@ -633,6 +637,18 @@ namespace Ambermoon
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
+                                Action = BattleActionType.DefenderWeaponBreak,
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                            });
+                            roundBattleActions.Enqueue(new BattleAction
+                            {
+                                Character = partyMember,
+                                Action = BattleActionType.DefenderShieldBreak,
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                            });
+                            roundBattleActions.Enqueue(new BattleAction
+                            {
+                                Character = partyMember,
                                 Action = BattleActionType.LastAmmo,
                                 ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
                             });
@@ -728,6 +744,18 @@ namespace Ambermoon
                     roundBattleActions.Enqueue(new BattleAction
                     {
                         Character = monster,
+                        Action = BattleActionType.DefenderWeaponBreak,
+                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(actionParameter))
+                    });
+                    roundBattleActions.Enqueue(new BattleAction
+                    {
+                        Character = monster,
+                        Action = BattleActionType.DefenderShieldBreak,
+                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(actionParameter))
+                    });
+                    roundBattleActions.Enqueue(new BattleAction
+                    {
+                        Character = monster,
                         Action = BattleActionType.LastAmmo,
                         ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(actionParameter))
                     });
@@ -813,6 +841,29 @@ namespace Ambermoon
                 if (needsClickForNextAction && needClickAfterwards)
                     WaitForClick = true;
                 ReadyForNextAction = true;
+            }
+
+            void DefenderEquipBreak(AttackActionFlags flag, EquipmentSlot equipmentSlot)
+            {
+                GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out _, out var flags);
+                var target = GetCharacterAt((int)tile);
+                var nextAction = roundBattleActions.Peek();
+                nextAction.ActionParameter = battleAction.ActionParameter;
+                if (flags.HasFlag(flag))
+                {
+                    var textColor = GetCharacterAt(tile).Type == CharacterType.PartyMember ? TextColor.BattlePlayer : TextColor.BattleMonster;
+                    var equipmentSlot = target.Equipment.Slots[equipmentSlot];
+                    var itemIndex = equipmentSlot.ItemIndex;
+                    game.EquipmentRemoved(target, itemIndex, 1, equipmentSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                    brokenItems.Add(KeyValuePair.Create(itemIndex, equipmentSlot.Flags));
+                    equipmentSlot.Clear();
+                    layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
+                    ActionFinished(true);
+                }
+                else
+                {
+                    ActionFinished(false);
+                }
             }
 
             switch (battleAction.Action)
@@ -1007,10 +1058,10 @@ namespace Ambermoon
                         else if (battleAction.Character is Monster attackingMonster) // Memorize monster damage stats
                             TrackMonsterHit(attackingMonster, trackDamage);
                     }
-                    void SkipAllFollowingAttacks()
+                    void SkipAllFollowingAttacks(Character character = battleAction.Character)
                     {
                         bool foundNextDisplayAction = false;
-                        foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
+                        foreach (var action in roundBattleActions.Where(a => a.Character == character))
                         {
                             if (!foundNextDisplayAction)
                             {
@@ -1074,24 +1125,60 @@ namespace Ambermoon
                             }
                         }
                     }
-                    // TODO: they break quiet often at the moment
                     // Check weapon or armor breakage
                     if (attackResult != AttackResult.Missed)
                     {
-                        if (weapon != null && game.RollDice100() < weapon.BreakChance)
+                        int RollDice1000() => game.RandomInt(0, 999);
+
+                        if (weapon != null && RollDice1000() < weapon.BreakChance)
                         {
                             followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakWeapon);
                             SkipAllFollowingAttacks();
                         }
 
-                        var enemyArmorIndex = target.Equipment.Slots[EquipmentSlot.Body].ItemIndex;
-
-                        if (enemyArmorIndex != 0)
+                        if (attackResult == AttackResult.Blocked)
                         {
-                            var enemyArmor = game.ItemManager.GetItem(enemyArmorIndex);
+                            // When parried the defenders weapon and shield can break instead of the armor
+                            var enemyWeaponIndex = target.Equipment.Slots[EquipmentSlot.RightHand].ItemIndex;
 
-                            if (game.RollDice100() < enemyArmor.BreakChance)
-                                followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakArmor);
+                            if (enemyWeaponIndex != 0)
+                            {
+                                var enemyWeapon = game.ItemManager.GetItem(enemyWeaponIndex);
+
+                                if (RollDice1000() < enemyWeapon.BreakChance)
+                                {
+                                    followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakDefenderWeapon);
+
+                                    if (target is PartyMember)
+                                    {
+                                        // If the weapon of a party member breaks through parrying
+                                        // he should no longer be able to attack.
+                                        SkipAllFollowingAttacks(target);
+                                    }
+                                }
+                            }
+
+                            var enemyShieldIndex = target.Equipment.Slots[EquipmentSlot.LeftHand].ItemIndex;
+
+                            if (enemyShieldIndex != 0 && enemyShieldIndex != enemyWeaponIndex)
+                            {
+                                var enemyShield = game.ItemManager.GetItem(enemyShieldIndex);
+
+                                if (RollDice1000() < enemyShield.BreakChance)
+                                    followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakDefenderShield);
+                            }
+                        }
+                        else
+                        {
+                            var enemyArmorIndex = target.Equipment.Slots[EquipmentSlot.Body].ItemIndex;
+
+                            if (enemyArmorIndex != 0)
+                            {
+                                var enemyArmor = game.ItemManager.GetItem(enemyArmorIndex);
+
+                                if (RollDice1000() < enemyArmor.BreakChance)
+                                    followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakArmor);
+                            }
                         }
                     }
                     void ShowAttackMessage()
@@ -1578,25 +1665,17 @@ namespace Ambermoon
                 }
                 case BattleActionType.ArmorBreak:
                 {
-                    GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out _, out var flags);
-                    var target = GetCharacterAt((int)tile);
-                    var nextAction = roundBattleActions.Peek();
-                    nextAction.ActionParameter = battleAction.ActionParameter;
-                    if (flags.HasFlag(AttackActionFlags.BreakArmor))
-                    {
-                        var textColor = battleAction.Character.Type == CharacterType.PartyMember ? TextColor.BattleMonster : TextColor.BattlePlayer;
-                        var armorSlot = target.Equipment.Slots[EquipmentSlot.Body];
-                        var itemIndex = armorSlot.ItemIndex;
-                        game.EquipmentRemoved(target, itemIndex, 1, armorSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
-                        brokenItems.Add(KeyValuePair.Create(itemIndex, armorSlot.Flags));
-                        armorSlot.Clear();
-                        layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
-                        ActionFinished(true);
-                    }
-                    else
-                    {
-                        ActionFinished(false);
-                    }
+                    DefenderEquipBreak(AttackActionFlags.BreakArmor, EquipmentSlot.Body);
+                    return;
+                }
+                case BattleActionType.DefenderWeaponBreak:
+                {
+                    DefenderEquipBreak(AttackActionFlags.BreakDefenderWeapon, EquipmentSlot.RightHand);
+                    return;
+                }
+                case BattleActionType.DefenderShieldBreak:
+                {
+                    DefenderEquipBreak(AttackActionFlags.BreakDefenderShield, EquipmentSlot.LeftHand);
                     return;
                 }
                 case BattleActionType.LastAmmo:
@@ -3085,15 +3164,20 @@ namespace Ambermoon
         [Flags]
         enum AttackActionFlags : uint
         {
-            BreakWeapon = 0x10000000,
-            BreakArmor = 0x20000000,
-            LastAmmo = 0x40000000
+            BreakWeapon = 0x01000000,
+            BreakArmor = 0x02000000,
+            LastAmmo = 0x04000000,
+            BreakDefenderWeapon = 0x08000000,
+            BreakDefenderShield = 0x10000000
         }
-        // Lowest 5 bits: Tile index (0-29) where a character is hurt
-        // Rest: Damage
+        // Tile index (T, 0-29): 5 bits
+        // Attack result (R): 3 bits
+        // Damage (D): 16 bits
+        // Follow action flags (F): 8 bits
+        // FFFFFFFF DDDDDDDD DDDDDDDD RRRTTTTT
         public static uint CreateHurtParameter(uint targetTile) => (targetTile & 0x1f);
         static uint UpdateHurtParameter(uint hurtParameter, uint damage, AttackResult attackResult) =>
-            (hurtParameter & 0xe000001f) | ((damage & 0x000fffff) << 8) | ((uint)attackResult << 5);
+            (hurtParameter & 0xff00001f) | ((damage & 0x0000ffff) << 8) | ((uint)attackResult << 5);
         static uint UpdateAttackFollowActionParameter(uint parameter, AttackActionFlags additionalFlags) =>
             parameter | (uint)additionalFlags;
         public static uint GetTargetTileOrRowFromParameter(uint actionParameter) => actionParameter & 0x1f;
