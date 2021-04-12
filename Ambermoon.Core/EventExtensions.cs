@@ -775,7 +775,10 @@ namespace Ambermoon
                     // TODO
                     return @event.Next;
                 case EventType.Spawn:
-                    // TODO
+                    if (!(@event is SpawnEvent spawnEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid spawn event.");
+                    game.SpawnTransport(spawnEvent.MapIndex == 0 ? map.Index : spawnEvent.MapIndex,
+                        spawnEvent.X, spawnEvent.Y, spawnEvent.TravelType);
                     return @event.Next;
                 case EventType.Unknown:
                     // TODO

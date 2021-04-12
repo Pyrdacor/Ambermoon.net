@@ -8054,24 +8054,7 @@ namespace Ambermoon
                                 updatePartyGold?.Invoke();
                                 void Buy()
                                 {
-                                    for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
-                                    {
-                                        if (CurrentSavegame.TransportLocations[i] == null)
-                                        {
-                                            CurrentSavegame.TransportLocations[i] = new TransportLocation
-                                            {
-                                                TravelType = travelType,
-                                                MapIndex = (uint)salesman.SpawnMapIndex,
-                                                Position = new Position(salesman.SpawnX, salesman.SpawnY)
-                                            };
-                                        }
-                                        else if (CurrentSavegame.TransportLocations[i].TravelType == TravelType.Walk)
-                                        {
-                                            CurrentSavegame.TransportLocations[i].TravelType = travelType;
-                                            CurrentSavegame.TransportLocations[i].MapIndex = (uint)salesman.SpawnMapIndex;
-                                            CurrentSavegame.TransportLocations[i].Position = new Position(salesman.SpawnX, salesman.SpawnY);
-                                        }
-                                    }
+                                    SpawnTransport((uint)salesman.SpawnMapIndex, salesman.SpawnX, salesman.SpawnY, travelType);
                                     layout.EnableButton(3, false);
                                 }
                                 if (string.IsNullOrWhiteSpace(buyText))
@@ -8087,6 +8070,30 @@ namespace Ambermoon
                     });
                 }
             });
+        }
+
+        internal void SpawnTransport(uint mapIndex, uint x, uint y, TravelType travelType)
+        {
+            // TODO: This could theoretically spawn the transport on the current
+            // map. In this case the transport should be added to the visual map immediately.
+            for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
+            {
+                if (CurrentSavegame.TransportLocations[i] == null)
+                {
+                    CurrentSavegame.TransportLocations[i] = new TransportLocation
+                    {
+                        TravelType = travelType,
+                        MapIndex = mapIndex,
+                        Position = new Position(x, y)
+                    };
+                }
+                else if (CurrentSavegame.TransportLocations[i].TravelType == TravelType.Walk)
+                {
+                    CurrentSavegame.TransportLocations[i].TravelType = travelType;
+                    CurrentSavegame.TransportLocations[i].MapIndex = mapIndex;
+                    CurrentSavegame.TransportLocations[i].Position = new Position(x, y);
+                }
+            }
         }
 
         void OpenFoodDealer(Places.FoodDealer foodDealer, bool showWelcome = true)
