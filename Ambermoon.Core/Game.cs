@@ -196,6 +196,7 @@ namespace Ambermoon
         internal WindowInfo LastWindow { get; private set; } = DefaultWindow;
         internal WindowInfo CurrentWindow => currentWindow;
         Action closeWindowHandler = null;
+        FilledArea mapViewRightFillArea = null;
         // Note: These are not meant for ingame stuff but for fade effects etc that use real time.
         readonly List<TimedGameEvent> timedEvents = new List<TimedGameEvent>();
         readonly Movement movement;
@@ -2564,7 +2565,7 @@ namespace Ambermoon
             if (show)
             {
                 layout.Reset();
-                layout.FillArea(new Rect(208, 49, 96, 80), GetUIColor(28), false);
+                mapViewRightFillArea = layout.FillArea(new Rect(208, 49, 96, 80), GetUIColor(28), false);
                 SetWindow(Window.MapView);
 
                 foreach (var specialItem in Enum.GetValues<SpecialItemPurpose>())
@@ -3855,7 +3856,11 @@ namespace Ambermoon
             }
 
             if (mapChange && !WindowActive)
+            {
+                // Color of the filled upper right area may need update cause of palette change.
+                mapViewRightFillArea.Color = GetUIColor(28);
                 UpdateMapName();
+            }
 
             return true;
         }

@@ -22,6 +22,12 @@ namespace Ambermoon.UI
             set => renderText.Visible = value;
         }
 
+        public byte PaletteIndex
+        {
+            get => renderText.PaletteIndex;
+            set => renderText.PaletteIndex = value;
+        }
+
         /// <summary>
         /// The boolean gives information if the
         /// text was scrolled to the end. It is

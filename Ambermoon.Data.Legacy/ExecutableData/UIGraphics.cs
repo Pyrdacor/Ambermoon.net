@@ -128,8 +128,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(UIGraphic.Compass, ReadOpaqueGraphic(dataReader));
             graphicInfo.Width = 16;
             graphicInfo.Height = 9;
-            entries.Add(UIGraphic.Attack, ReadOpaqueGraphic(dataReader));
-            entries.Add(UIGraphic.Defense, ReadOpaqueGraphic(dataReader));
+            entries.Add(UIGraphic.Attack, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.Defense, ReadGraphic(dataReader));
             graphicInfo.Width = 32;
             graphicInfo.Height = 34;
             entries.Add(UIGraphic.Skull, ReadGraphic(dataReader, 25));

@@ -1102,7 +1102,17 @@ namespace Ambermoon.UI
         {
             buttonGrid.PaletteIndex = palette;
             sprite.PaletteIndex = palette;
-            // TODO?
+
+            foreach (var specialItemSprite in specialItemSprites)
+                specialItemSprite.Value.PaletteIndex = palette;
+            foreach (var specialItemText in specialItemTexts)
+                specialItemText.Value.PaletteIndex = palette;
+            foreach (var activeSpellSprite in activeSpellSprites)
+                activeSpellSprite.Value.PaletteIndex = palette;
+            foreach (var activeSpellDurationBackground in activeSpellDurationBackgrounds)
+                activeSpellDurationBackground.Value.Color = game.GetUIColor(26);
+            foreach (var activeSpellDurationBar in activeSpellDurationBars)
+                activeSpellDurationBar.Value.Color = game.GetUIColor(31);
         }
 
         internal void UpdateLayoutButtons(uint? ticksPerMovement = null)
