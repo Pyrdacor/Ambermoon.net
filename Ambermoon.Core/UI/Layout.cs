@@ -632,15 +632,15 @@ namespace Ambermoon.UI
             if (Type == LayoutType.Battle)
             {
                 boxArea = new Rect(88, 56, 144, 26);
-                textArea = new Rect(88, 58, 144, 26);
+                textArea = new Rect(88, 59, 144, 26);
             }
             else
             {
                 boxArea = new Rect(32, 82, 144, 26);
-                textArea = new Rect(32, 84, 144, 26);
+                textArea = new Rect(32, 85, 144, 26);
             }
             AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), game.UIPaletteIndex, 2);
-            AddText(textArea, versionString, TextColor.White, TextAlign.Center, 3);
+            AddText(textArea, versionString, TextColor.BrightGray, TextAlign.Center, 3);
 
             buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false); // TODO: ask to really quit etc
             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
