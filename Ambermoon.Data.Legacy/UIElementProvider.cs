@@ -74,7 +74,7 @@ namespace Ambermoon.Data.Legacy
                     // in each frame we have several stars in specific states (star frame)
                     var frame = new Graphic(16, 16, 0);
 
-                    // first update exising stars
+                    // first update existing stars
                     for (int s = stars.Count - 1; s >= 0; --s)
                     {
                         var star = stars[s];
@@ -98,8 +98,6 @@ namespace Ambermoon.Data.Legacy
 
                     animation.AddOverlay((uint)i * 16, 0, frame);
                 }
-
-                animation.ReplaceColor(0, 25);
 
                 return animation;
             }
