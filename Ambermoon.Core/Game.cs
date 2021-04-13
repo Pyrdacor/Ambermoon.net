@@ -4823,6 +4823,12 @@ namespace Ambermoon
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
+            if ((character.SpokenLanguages & CurrentPartyMember.SpokenLanguages) == 0)
+            {
+                ShowMessagePopup(DataNameProvider.YouDontSpeakSameLanguage);
+                return;
+            }
+
             IEnumerable<ConversationEvent> GetMatchingEvents(Func<ConversationEvent, bool> filter)
                 => conversationPartner.EventList.OfType<ConversationEvent>().Where(filter);
 
@@ -11215,6 +11221,25 @@ namespace Ambermoon
         internal void SetActivePartyMember(int index, bool updateBattlePosition = true)
         {
             var partyMember = GetPartyMember(index);
+
+            bool TestConversationLanguage(WindowInfo windowInfo)
+            {
+                var conversationPartner = windowInfo.WindowParameters[0] as IConversationPartner;
+
+                if (((conversationPartner as Character).SpokenLanguages & partyMember.SpokenLanguages) == 0)
+                {
+                    ShowMessagePopup(DataNameProvider.YouDontSpeakSameLanguage);
+                    return false;
+                }
+
+                return true;
+            }
+
+            // This avoids switching to a player that doesn't speak the same language.
+            if (CurrentWindow.Window == Window.Conversation && !TestConversationLanguage(CurrentWindow))
+                return;
+            if (LastWindow.Window == Window.Conversation && !TestConversationLanguage(LastWindow))
+                return;
 
             if (partyMember != null && (partyMember.Ailments.CanSelect() || currentWindow.Window == Window.Healer))
             {
