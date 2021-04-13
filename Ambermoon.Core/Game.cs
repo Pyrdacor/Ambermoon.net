@@ -4774,7 +4774,7 @@ namespace Ambermoon
             var currentInteractionType = InteractionType.Talk;
             bool lastEventStatus = true;
             bool aborted = false;
-            var textArea = new Rect(15, 43, 177, 80);
+            var textArea = new Rect(17, 44, 174, 79);
             UIText conversationText = null;
 
             void SetText(string text, Action followAction = null)
@@ -4802,6 +4802,7 @@ namespace Ambermoon
 
             void SayWord(string keyword)
             {
+                ClosePopup();
                 UntrapMouse();
 
                 foreach (var e in GetMatchingEvents(e => e.Interaction == InteractionType.Keyword))
@@ -4872,7 +4873,8 @@ namespace Ambermoon
 
                 if (conversationEvent is PrintTextEvent printTextEvent)
                 {
-                    SetText(conversationPartner.Texts[(int)printTextEvent.NPCTextIndex]);
+                    SetText(conversationPartner.Texts[(int)printTextEvent.NPCTextIndex],
+                        HandleNextEvent);
                 }
                 else if (conversationEvent is ExitEvent)
                 {
