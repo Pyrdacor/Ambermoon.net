@@ -2398,7 +2398,8 @@ namespace Ambermoon.UI
             }
         }
 
-        public void DestroyItem(ItemSlot itemSlot, TimeSpan initialDelay, bool consumed = false, Action finishAction = null)
+        public void DestroyItem(ItemSlot itemSlot, TimeSpan initialDelay, bool consumed = false, Action finishAction = null,
+            Position animationPosition = null)
         {
             ItemGrid itemGrid = null;
             int slotIndex = -1;
@@ -2448,7 +2449,7 @@ namespace Ambermoon.UI
 
             if (consumed)
             {
-                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, itemGrid.GetSlotPosition(slotIndex),
+                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
                     finishAction, initialDelay);
                 game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
                 {
@@ -2459,7 +2460,7 @@ namespace Ambermoon.UI
             }
             else
             {
-                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Destroy, itemGrid.GetSlotPosition(slotIndex),
+                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Destroy, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
                     finishAction, initialDelay, null, itemManager.GetItem(itemSlot.ItemIndex));
                 game.AddTimedEvent(initialDelay, () =>
                 {
@@ -3434,6 +3435,8 @@ namespace Ambermoon.UI
                 else if (game.ConversationTextActive && Type == LayoutType.Conversation)
                 {
                     cursorType = CursorType.Click;
+                    if (!texts[^1].WithScrolling)
+                        texts.RemoveAt(texts.Count - 1);
                     texts[^1].Click(position);
                     return true;
                 }

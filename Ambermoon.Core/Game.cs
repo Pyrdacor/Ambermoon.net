@@ -4821,6 +4821,11 @@ namespace Ambermoon
         /// </summary>
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent)
         {
+            // TODO: Item appears under character info when moved there.
+            // TODO: ItemGrid not scrollable via mouse wheel (also check other windows like chest, places, etc).
+            // TODO: When switching to inventory and then back, the initial talk text is shown again.
+            // TODO: Item move speed is much too low.
+
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
@@ -4843,6 +4848,7 @@ namespace Ambermoon
             bool aborted = false;
             var textArea = new Rect(17, 44, 174, 79);
             UIText conversationText = null;
+            ItemGrid itemGrid = null;
 
             void SetText(string text, Action followAction = null)
             {
@@ -4891,24 +4897,113 @@ namespace Ambermoon
                 SetText(DataNameProvider.DontKnowAnythingSpecialAboutIt);
             }
 
+            void ShowItems(string text, InteractionType interactionType)
+            {
+                currentInteractionType = interactionType;
+
+                var message = layout.AddText(textArea, ProcessText(text, textArea), TextColor.BrightGray);
+
+                void Abort()
+                {
+                    itemGrid.HideTooltip();
+                    itemGrid.Disabled = true;
+                    message?.Destroy();
+                    UntrapMouse();
+                    nextClickHandler = null;
+                }
+
+                itemGrid.Disabled = false;
+                itemGrid.DisableDrag = true;
+                CursorType = CursorType.Sword;
+                var itemArea = new Rect(16, 139, 151, 53);
+                TrapMouse(itemArea);
+                itemGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                void SetupRightClickAbort()
+                {
+                    nextClickHandler = buttons =>
+                    {
+                        if (buttons == MouseButtons.Right)
+                        {
+                            Abort();
+                            return true;
+                        }
+
+                        return false;
+                    };
+                }
+                SetupRightClickAbort();
+                void CheckItem(ItemSlot itemSlot)
+                {
+                    void MoveBack(Action followAction)
+                    {
+                        StartSequence();
+                        itemGrid.HideTooltip();
+                        itemGrid.PlayMoveAnimation(itemSlot, itemGrid.GetSlotPosition(itemGrid.SlotFromItemSlot(itemSlot)), () =>
+                        {
+                            itemGrid.ResetAnimation(itemSlot);
+                            EndSequence();
+                            Abort();
+                        });
+                    }
+                    EndSequence();
+                    message?.Destroy();
+                    message = null;
+                    UntrapMouse();
+                    conversationEvent = GetFirstMatchingEvent(e => e.Interaction == interactionType && e.ItemIndex == itemSlot.ItemIndex);
+
+                    if (conversationEvent == null)
+                    {
+                        SetText(DataNameProvider.NotInterestedInItem, () => MoveBack(null));
+                    }
+                    else
+                    {
+                        HandleNextEvent(() =>
+                        {
+                            // If we are here the user clicked the associated text etc.
+                            if (interactionType == InteractionType.GiveItem)
+                            {
+                                // Consume
+                                HandleNextEvent(() =>
+                                {
+                                    StartSequence();
+                                    itemGrid.HideTooltip();
+                                    layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true,
+                                        () => HandleNextEvent(null), new Position(215, 75));
+                                });
+                            }
+                            else
+                            {
+                                MoveBack(() => HandleNextEvent(null));
+                            }
+                        });
+                    }
+                }
+                itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                {
+                    StartSequence();
+                    itemGrid.HideTooltip();
+                    itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot));
+                };
+            }
+
             void ShowItem()
             {
-
+                ShowItems(DataNameProvider.WhichItemToGive, InteractionType.GiveItem);
             }
 
             void GiveItem()
             {
-
+                ShowItems(DataNameProvider.WhichItemToShow, InteractionType.ShowItem);
             }
 
             void GiveGold()
             {
-
+                // TODO
             }
 
             void GiveFood()
             {
-
+                // TODO
             }
 
             void AskToJoin()
@@ -5022,13 +5117,13 @@ namespace Ambermoon
                 CloseWindow();
             }
 
-            void HandleNextEvent()
+            void HandleNextEvent(Action followAction = null)
             {
                 conversationEvent = conversationEvent?.Next;
-                HandleEvent();
+                HandleEvent(followAction);
             }
 
-            void HandleEvent()
+            void HandleEvent(Action followAction = null)
             {
                 if (conversationEvent == null || aborted)
                 {
@@ -5039,10 +5134,11 @@ namespace Ambermoon
                     return;
                 }
 
+                var nextAction = followAction ?? (() => HandleNextEvent(null));
+
                 if (conversationEvent is PrintTextEvent printTextEvent)
                 {
-                    SetText(conversationPartner.Texts[(int)printTextEvent.NPCTextIndex],
-                        HandleNextEvent);
+                    SetText(conversationPartner.Texts[(int)printTextEvent.NPCTextIndex], nextAction);
                 }
                 else if (conversationEvent is ExitEvent)
                 {
@@ -5051,14 +5147,18 @@ namespace Ambermoon
                 else if (conversationEvent is CreateEvent createEvent)
                 {
                     // TODO: show item grid
+                    HandleNextEvent(followAction);
                 }
                 else if (conversationEvent is InteractEvent)
                 {
                     switch (currentInteractionType)
                     {
                         case InteractionType.GiveItem:
-                            // TODO: remove item
+                        {
+                            // Note: The ShowItems method will take care of it.
+                            nextAction?.Invoke();
                             break;
+                        }
                         case InteractionType.GiveGold:
                             // TODO: remove gold
                             break;
@@ -5066,10 +5166,10 @@ namespace Ambermoon
                             // TODO: remove food
                             break;
                         case InteractionType.JoinParty:
-                            AddPartyMember(HandleNextEvent);
+                            AddPartyMember(nextAction);
                             break;
                         case InteractionType.LeaveParty:
-                            RemovePartyMember(HandleNextEvent);
+                            RemovePartyMember(nextAction);
                             break;
                         case InteractionType.Leave:
                             Exit();
@@ -5085,7 +5185,7 @@ namespace Ambermoon
                     conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
                         (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, ref lastEventStatus, out aborted,
                         conversationPartner);
-                    HandleEvent();
+                    HandleEvent(followAction);
                 }
             }
 
@@ -5124,6 +5224,14 @@ namespace Ambermoon
                 layout.AttachEventToButton(6, GiveItem);
                 layout.AttachEventToButton(7, GiveGold);
                 layout.AttachEventToButton(8, GiveFood);
+
+                // Add item grid
+                var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
+                itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
+                itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, 24).ToList(),
+                    false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+                itemGrid.Disabled = true;
+                layout.AddItemGrid(itemGrid);
 
                 // Note: Mouse handling in Layout assumes this is the last text (text[^1]) so ensure that.
                 conversationText = layout.AddScrollableText(textArea, ProcessText(""), TextColor.BrightGray);

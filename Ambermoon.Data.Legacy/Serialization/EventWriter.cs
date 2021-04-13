@@ -226,6 +226,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(printTextEvent.Unused);
                     break;
                 }
+                case EventType.Create:
+                {
+                    // TODO
+                    var createEvent = @event as CreateEvent;
+                    dataWriter.Write(createEvent.Unused);
+                    break;
+                }
                 case EventType.Decision:
                 {
                     var decisionEvent = @event as DecisionEvent;

@@ -693,6 +693,8 @@ namespace Ambermoon.Data
     public class CreateEvent : Event
     {
         // TODO
+        public byte[] Unused { get; set; }
+
         public override string ToString()
         {
             return $"{Type}";

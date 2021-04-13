@@ -207,6 +207,13 @@ namespace Ambermoon.Data
         string WhoToTalkTo { get; }
         string SelfTalkingIsMad { get; }
         string UnableToTalk { get; }
+        string WhichItemToGive { get; }
+        string WhichItemToShow { get; }
+        string GiveHowMuchGoldToNPC { get; }
+        string GiveHowMuchFoodToNPC { get; }
+        string NotInterestedInItem { get; }
+        string NotInterestedInGold { get; }
+        string NotInterestedInFood { get; }
 
         #endregion
 

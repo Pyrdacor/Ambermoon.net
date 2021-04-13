@@ -223,6 +223,7 @@ namespace Ambermoon.Render
                 {
                     item.Dragged = false;
                     finishAction?.Invoke();
+                    finishAction = null;
                 }
                 else
                 {

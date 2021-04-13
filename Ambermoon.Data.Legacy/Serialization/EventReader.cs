@@ -383,6 +383,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
+                case EventType.Create:
+                {
+                    // TODO
+                    @event = new CreateEvent
+                    {
+                        Unused = dataReader.ReadBytes(9)
+                    };
+                    break;
+                }
                 case EventType.Decision:
                 {
                     var textIndex = dataReader.ReadByte();

@@ -229,6 +229,13 @@
         public string WhoToTalkTo => executableData.Messages.GetEntry(Messages.Index.WhoToTalkTo);
         public string SelfTalkingIsMad => executableData.Messages.GetEntry(Messages.Index.SelfTalkingIsMad);
         public string UnableToTalk => executableData.Messages.GetEntry(Messages.Index.YouCantConversate);
+        public string WhichItemToGive => executableData.Messages.GetEntry(Messages.Index.WhichItemToGive);
+        public string WhichItemToShow => executableData.Messages.GetEntry(Messages.Index.WhichItemToShow);
+        public string GiveHowMuchGoldToNPC => executableData.Messages.GetEntry(Messages.Index.GiveHowMuchGoldToNPC);
+        public string GiveHowMuchFoodToNPC => executableData.Messages.GetEntry(Messages.Index.GiveHowMuchFoodToNPC);
+        public string NotInterestedInItem => executableData.Messages.GetEntry(Messages.Index.NotInterestedInItem);
+        public string NotInterestedInGold => executableData.Messages.GetEntry(Messages.Index.NotInterestedInGold);
+        public string NotInterestedInFood => executableData.Messages.GetEntry(Messages.Index.NotInterestedInFood);
 
         #endregion
 
