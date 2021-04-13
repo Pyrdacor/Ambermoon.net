@@ -2021,8 +2021,9 @@ namespace Ambermoon
                         TriggerMapEvents(EventTrigger.Mouth, relativePosition);
                     else if (cursor.Type == CursorType.Target && !is3D)
                     {
-                        if (!TriggerMapEvents(EventTrigger.Eye, relativePosition))
-                            TriggerMapEvents(EventTrigger.Hand, relativePosition);
+                        if (!TriggerMapEvents(EventTrigger.Mouth, relativePosition))
+                            if (!TriggerMapEvents(EventTrigger.Eye, relativePosition))
+                                TriggerMapEvents(EventTrigger.Hand, relativePosition);
                     }
                     else if (cursor.Type == CursorType.Wait)
                     {
