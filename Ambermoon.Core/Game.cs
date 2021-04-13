@@ -1601,6 +1601,42 @@ namespace Ambermoon
             }
         }
 
+        internal void SpeakToParty()
+        {
+            var hero = GetPartyMember(0);
+
+            if (!hero.Alive || !hero.Ailments.CanTalk())
+            {
+                ShowMessagePopup(DataNameProvider.UnableToTalk);
+                return;
+            }
+            if (CurrentSavegame.ActivePartyMemberSlot != 0)
+                SetActivePartyMember(0);
+
+            layout.OpenTextPopup(ProcessText(DataNameProvider.WhoToTalkTo),
+                null, true, false, false, TextAlign.Center);
+            PickTargetPlayer();
+            void TargetPlayerPicked(int characterSlot)
+            {
+                targetPlayerPicked -= TargetPlayerPicked;
+                ClosePopup();
+                UntrapMouse();
+                InputEnable = true;
+
+                if (characterSlot != -1)
+                {
+                    if (characterSlot == 0)
+                        ExecuteNextUpdateCycle(() => ShowMessagePopup(DataNameProvider.SelfTalkingIsMad));
+                    else
+                    {
+                        var partyMember = GetPartyMember(characterSlot);
+                        ExecuteNextUpdateCycle(() => ShowConversation(partyMember, null));
+                    }
+                }
+            }
+            targetPlayerPicked += TargetPlayerPicked;
+        }
+
         void PickTargetPlayer()
         {
             pickingTargetPlayer = true;
@@ -1860,16 +1896,19 @@ namespace Ambermoon
 
             if (keyChar >= '1' && keyChar <= '6')
             {
+                int slot = keyChar - '1';
+                var partyMember = GetPartyMember(slot);
+
                 if (pickingTargetPlayer)
                 {
-                    FinishPickingTargetPlayer((int)(keyChar - '1'));
+                    if (partyMember != null)
+                        FinishPickingTargetPlayer(slot);
                     return;
                 }
                 if (pickingTargetInventory)
                 {
-                    int slot = (int)(keyChar - '1');
-                    var partyMember = GetPartyMember(slot);
-                    layout.TargetInventoryPlayerSelected(slot, partyMember);
+                    if (partyMember != null)
+                        layout.TargetInventoryPlayerSelected(slot, partyMember);
                     return;
                 }
             }
@@ -2018,12 +2057,30 @@ namespace Ambermoon
                     else if (cursor.Type == CursorType.Hand)
                         TriggerMapEvents(EventTrigger.Hand, relativePosition);
                     else if (cursor.Type == CursorType.Mouth)
-                        TriggerMapEvents(EventTrigger.Mouth, relativePosition);
+                    {
+                        if (!TriggerMapEvents(EventTrigger.Mouth, relativePosition))
+                        {
+                            if (!is3D && player2D?.DisplayArea.Contains(mapViewArea.Position + relativePosition) == true)
+                            {
+                                SpeakToParty();
+                            }
+                        }
+                    }
                     else if (cursor.Type == CursorType.Target && !is3D)
                     {
                         if (!TriggerMapEvents(EventTrigger.Mouth, relativePosition))
+                        {
                             if (!TriggerMapEvents(EventTrigger.Eye, relativePosition))
-                                TriggerMapEvents(EventTrigger.Hand, relativePosition);
+                            {
+                                if (!TriggerMapEvents(EventTrigger.Hand, relativePosition))
+                                {
+                                    if (!is3D && player2D?.DisplayArea.Contains(mapViewArea.Position + relativePosition) == true)
+                                    {
+                                        SpeakToParty();
+                                    }
+                                }
+                            }
+                        }
                     }
                     else if (cursor.Type == CursorType.Wait)
                     {
@@ -4772,6 +4829,8 @@ namespace Ambermoon
             ConversationEvent GetFirstMatchingEvent(Func<ConversationEvent, bool> filter)
                 => conversationPartner.EventList.OfType<ConversationEvent>().FirstOrDefault(filter);
 
+            conversationEvent ??= GetFirstMatchingEvent(e => e.Interaction == InteractionType.Talk);
+
             var currentInteractionType = InteractionType.Talk;
             bool lastEventStatus = true;
             bool aborted = false;
@@ -4847,16 +4906,16 @@ namespace Ambermoon
 
             void AskToJoin()
             {
+                if (PartyMembers.Count() == MaxPartyMembers)
+                {
+                    conversationEvent = null;
+                    SetText(DataNameProvider.PartyFull);
+                    return;
+                }
+
                 if (character is PartyMember &&
                     (conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.JoinParty)) != null)
                 {
-                    if (PartyMembers.Count() == MaxPartyMembers)
-                    {
-                        conversationEvent = null;
-                        SetText(DataNameProvider.PartyFull);
-                        return;
-                    }
-
                     currentInteractionType = InteractionType.JoinParty;
                     aborted = false;
                     lastEventStatus = true;
@@ -4890,13 +4949,32 @@ namespace Ambermoon
                 }
             }
 
+            void UpdateCharacterVisibility(uint characterIndex)
+            {
+                if (is3D)
+                    renderMap3D.UpdateCharacterVisibility(characterIndex);
+                else
+                    renderMap2D.UpdateCharacterVisibility(characterIndex);
+            }
+
             void AddPartyMember(Action followAction)
             {
                 for (int i = 0; i < MaxPartyMembers; ++i)
                 {
                     if (GetPartyMember(i) == null)
                     {
-                        this.AddPartyMember(i, character as PartyMember, followAction);
+                        var partyMember = character as PartyMember;
+                        var index = partyMember.CharacterBitIndex;
+                        uint mapIndex = (uint)index >> 5;
+                        uint characterIndex = (uint)index & 0x1f;
+                        CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, true);
+                        CurrentSavegame.CurrentPartyMemberIndices[i] =
+                            CurrentSavegame.PartyMembers.SingleOrDefault(p => p.Value == partyMember).Key;
+                        this.AddPartyMember(i, partyMember, followAction);
+                        layout.EnableButton(4, true); // Enable "Ask to leave"
+                        layout.EnableButton(5, false); // Disable "Ask to join"
+                        if (mapIndex == Map.Index)
+                            UpdateCharacterVisibility(characterIndex);
                         break;
                     }
                 }
@@ -4904,7 +4982,15 @@ namespace Ambermoon
 
             void RemovePartyMember(Action followAction)
             {
+                var partyMember = character as PartyMember;
+                var index = partyMember.CharacterBitIndex;
+                uint mapIndex = (uint)index >> 5;
+                uint characterIndex = (uint)index & 0x1f;
+                CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, false);
                 this.RemovePartyMember(SlotFromPartyMember(character as PartyMember).Value, false);
+                CurrentSavegame.CurrentPartyMemberIndices[SlotFromPartyMember(partyMember).Value] = 0;
+                if (mapIndex == Map.Index)
+                    UpdateCharacterVisibility(characterIndex);
             }
 
             void Exit(bool showLeaveMessage = false)
@@ -4976,7 +5062,7 @@ namespace Ambermoon
                             AddPartyMember(HandleNextEvent);
                             break;
                         case InteractionType.LeaveParty:
-                            // TODO: remove party member
+                            RemovePartyMember(HandleNextEvent);
                             break;
                         case InteractionType.Leave:
                             Exit();
@@ -5011,6 +5097,8 @@ namespace Ambermoon
                 if (character.Type != CharacterType.PartyMember ||
                     SlotFromPartyMember(character as PartyMember) == null)
                     layout.EnableButton(4, false); // Disable "Ask to leave" if not in party
+                if (character is PartyMember partyMember && PartyMembers.Contains(partyMember))
+                    layout.EnableButton(5, false); // Disable "Ask to join" if already in party
                 if (!CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false))
                 {
                     layout.EnableButton(3, false);

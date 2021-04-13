@@ -225,6 +225,10 @@
         public string DenyJoiningParty => executableData.Messages.GetEntry(Messages.Index.DenyJoiningParty);
         public string PartyFull => executableData.Messages.GetEntry(Messages.Index.PartyFull);
         public string DenyLeavingPartyOnForestMoon => executableData.Messages.GetEntry(Messages.Index.DenyLeavingPartyOnForestMoon);
+        public string YouDontSpeakSameLanguage => executableData.Messages.GetEntry(Messages.Index.YouDontSpeakSameLanguage);
+        public string WhoToTalkTo => executableData.Messages.GetEntry(Messages.Index.WhoToTalkTo);
+        public string SelfTalkingIsMad => executableData.Messages.GetEntry(Messages.Index.SelfTalkingIsMad);
+        public string UnableToTalk => executableData.Messages.GetEntry(Messages.Index.YouCantConversate);
 
         #endregion
 

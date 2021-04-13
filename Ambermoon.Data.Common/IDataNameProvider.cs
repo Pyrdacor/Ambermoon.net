@@ -203,6 +203,10 @@ namespace Ambermoon.Data
         string DenyJoiningParty { get; }
         string PartyFull { get; }
         string DenyLeavingPartyOnForestMoon { get; }
+        string YouDontSpeakSameLanguage { get; }
+        string WhoToTalkTo { get; }
+        string SelfTalkingIsMad { get; }
+        string UnableToTalk { get; }
 
         #endregion
 

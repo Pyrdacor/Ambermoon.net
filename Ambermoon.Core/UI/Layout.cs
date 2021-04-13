@@ -1166,7 +1166,13 @@ namespace Ambermoon.UI
                     {
                         buttonGrid.SetButton(0, ButtonType.Eye, false, () => game.TriggerMapEvents(EventTrigger.Eye), true);
                         buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(EventTrigger.Hand), true);
-                        buttonGrid.SetButton(2, ButtonType.Mouth, false, () => game.TriggerMapEvents(EventTrigger.Mouth), true);
+                        buttonGrid.SetButton(2, ButtonType.Mouth, false, () =>
+                        {
+                            if (!game.TriggerMapEvents(EventTrigger.Mouth))
+                            {
+                                game.SpeakToParty();
+                            }
+                        }, true);
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
                         buttonGrid.SetButton(4, ButtonType.Spells, false, () => game.CastSpell(false), false);
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
@@ -2360,7 +2366,8 @@ namespace Ambermoon.UI
                 {
                     void Finished()
                     {
-                        portraitAnimation.Finished -= Finished;
+                        if (portraitAnimation != null)
+                            portraitAnimation.Finished -= Finished;
                         finishAction?.Invoke();
                     }
                     portraitAnimation.Finished += Finished;
@@ -3649,12 +3656,14 @@ namespace Ambermoon.UI
                         {
                             if (pickingTargetPlayer)
                             {
-                                game.FinishPickingTargetPlayer(i);
+                                if (partyMember != null)
+                                    game.FinishPickingTargetPlayer(i);
                                 return true;
                             }
                             else if (pickingTargetInventory)
                             {
-                                TargetInventoryPlayerSelected(i, partyMember);
+                                if (partyMember != null)
+                                    TargetInventoryPlayerSelected(i, partyMember);
                                 return true;
                             }
 

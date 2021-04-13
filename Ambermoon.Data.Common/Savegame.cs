@@ -113,9 +113,9 @@ namespace Ambermoon.Data
                 throw new IndexOutOfRangeException("Character index must be between 0 and 31");
 
             int byteIndex = (int)characterIndex / 8;
-            byte bits = (byte)(CharacterBits[mapIndex - 1] >> (3 - byteIndex) * 8);
             int bitIndex = (int)characterIndex % 8;
-            return (bits & (1 << bitIndex)) != 0;
+            uint bitValue = 1u << ((3 - byteIndex) * 8 + bitIndex);
+            return (CharacterBits[mapIndex - 1] & bitValue) != 0;
         }
         public void SetCharacterBit(uint mapIndex, uint characterIndex, bool bit)
         {

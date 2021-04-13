@@ -6,6 +6,6 @@ namespace Ambermoon.Data
     {
         List<string> Texts { get; }
         List<Event> Events { get; }
-        List<Event> EventList { get; }        
+        List<Event> EventList { get; }
     }
 }
