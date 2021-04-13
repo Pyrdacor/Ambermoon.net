@@ -347,6 +347,7 @@ namespace Ambermoon
         internal static readonly Rect Map3DViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY,
             Global.Map3DViewWidth, Global.Map3DViewHeight);
         internal int PlayerAngle => is3D ? Util.Round(player3D.Angle) : (int)player2D.Direction.ToAngle();
+        internal CharacterDirection PlayerDirection => is3D ? player3D.Direction : player2D.Direction;
         bool targetMode2DActive = false;
         bool disableUntrapping = false;
         internal CursorType CursorType
@@ -11216,6 +11217,19 @@ namespace Ambermoon
         internal bool HasPartyMemberFled(PartyMember partyMember)
         {
             return currentBattle?.HasPartyMemberFled(partyMember) == true;
+        }
+
+        internal void SetPlayerDirection(CharacterDirection direction)
+        {
+            if (direction == CharacterDirection.Random)
+                direction = (CharacterDirection)RandomInt(0, 3);
+
+            CurrentSavegame.CharacterDirection = direction;
+
+            if (is3D)
+                player3D.TurnTowards((int)direction * 90.0f);
+            else
+                player2D.SetDirection(direction, CurrentTicks);
         }
 
         internal void SetActivePartyMember(int index, bool updateBattlePosition = true)

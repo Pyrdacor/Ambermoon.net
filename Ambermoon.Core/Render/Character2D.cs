@@ -122,6 +122,11 @@ namespace Ambermoon.Render
                 (uint)Util.Limit(0, (int)newY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
         }
 
+        public void SetDirection(CharacterDirection direction, uint ticks)
+        {
+            MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, direction);
+        }
+
         public virtual void MoveTo(Map map, uint x, uint y, uint ticks, bool frameReset, CharacterDirection? newDirection)
         {
             if (newDirection == CharacterDirection.Random)

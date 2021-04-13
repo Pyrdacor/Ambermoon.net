@@ -472,7 +472,7 @@ namespace Ambermoon.Data
             LastEventResult = 0x09, // treasure fully looted, battle won, etc
             GameOptionSet = 0x0a,
             CanSee = 0x0b,
-            Unknown = 0x0c,
+            Direction = 0x0c,
             HasAilment = 0x0d,
             Hand = 0x0e,
             SayWord = 0x0f, // it also pops up the dictionary to say something
@@ -572,9 +572,9 @@ namespace Ambermoon.Data
             /// </summary>
             SetGameOption = 0x0a,
             /// <summary>
-            /// Unknown
+            /// Sets the direction of the player
             /// </summary>
-            Unknown = 0x0c,
+            SetDirection = 0x0c,
             /// <summary>
             /// Adds or removes an ailment
             /// </summary>

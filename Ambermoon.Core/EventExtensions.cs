@@ -398,9 +398,14 @@ namespace Ambermoon
                             }
                             break;
                         }
-                        case ConditionEvent.ConditionType.Unknown:
+                        case ConditionEvent.ConditionType.Direction:
                         {
-                            // TODO
+                            if ((game.PlayerDirection == (CharacterDirection)conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
                             break;
                         }
                         case ConditionEvent.ConditionType.HasAilment:
@@ -604,9 +609,11 @@ namespace Ambermoon
                             game.CurrentSavegame.SetGameOption(option, ClearSetToggle(() => game.CurrentSavegame.IsGameOptionActive(option)));
                             break;
                         }
-                        case ActionEvent.ActionType.Unknown:
-                            // TODO
+                        case ActionEvent.ActionType.SetDirection:
+                        {
+                            game.SetPlayerDirection((CharacterDirection)(actionEvent.ObjectIndex % 5));
                             break;
+                        }
                         case ActionEvent.ActionType.AddAilment:
                         {
                             var ailment = (Ailment)(1 << (int)actionEvent.ObjectIndex);
