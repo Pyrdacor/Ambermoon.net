@@ -1394,13 +1394,13 @@ namespace Ambermoon.UI
                 case LayoutType.Conversation:
                     buttonGrid.SetButton(0, ButtonType.Mouth, false, null, false); // this is set later manually
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
-                    buttonGrid.SetButton(3, ButtonType.ViewItem, true, null, false); // TODO
-                    buttonGrid.SetButton(4, ButtonType.AskToJoin, true, null, false); // TODO
-                    buttonGrid.SetButton(5, ButtonType.AskToLeave, true, null, false); // TODO
-                    buttonGrid.SetButton(6, ButtonType.GiveItem, true, null, false); // TODO
-                    buttonGrid.SetButton(7, ButtonType.GiveGoldToNPC, true, null, false); // TODO
-                    buttonGrid.SetButton(8, ButtonType.GiveFoodToNPC, true, null, false); // TODO
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(3, ButtonType.ViewItem, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(4, ButtonType.AskToJoin, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(5, ButtonType.AskToLeave, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(6, ButtonType.GiveItem, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(7, ButtonType.GiveGoldToNPC, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(8, ButtonType.GiveFoodToNPC, false, null, false); // this is set later manually
                     break;
                 case LayoutType.Battle:
                     buttonGrid.SetButton(0, ButtonType.Flee, false, null, false); // this is set later manually

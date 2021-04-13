@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Attribute = Ambermoon.Data.Attribute;
 using TextColor = Ambermoon.Data.Enumerations.Color;
+using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
 
 namespace Ambermoon
 {
@@ -4752,17 +4753,65 @@ namespace Ambermoon
         /// </summary>
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent)
         {
-            // TODO: If a party member joins the party, set Character.CharacterBitIndex to the current
-            // map character bit if Character.CharacterBitIndex is 0xffff. Also deactivate the character
-            // bit of the current character. (this should be done be event chain I guess, right?)
-            // TODO: If you leave the conversation with a party member and it is not in the party,
-            // activate the character at Character.CharacterBitIndex if it is not 0xffff. Also
-            // deactivate the current character in this case.
+            if (!(conversationPartner is Character character))
+                throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
-            void SayWord(string word)
+            IEnumerable<ConversationEvent> GetMatchingEvents(Func<ConversationEvent, bool> filter)
+                => conversationPartner.EventList.OfType<ConversationEvent>().Where(filter);
+
+            ConversationEvent GetFirstMatchingEvent(Func<ConversationEvent, bool> filter)
+                => conversationPartner.EventList.OfType<ConversationEvent>().FirstOrDefault(filter);
+
+            void SayWord(string keyword)
             {
                 UntrapMouse();
-                // TODO
+
+                foreach (var e in GetMatchingEvents(e => e.Interaction == InteractionType.Keyword))
+                {
+                    var expectedKeyword = textDictionary.Entries[(int)e.KeywordIndex];
+
+                    if (string.Compare(keyword, expectedKeyword, true) == 0)
+                    {
+                        conversationEvent = e.Next;
+                        HandleNextEvent();
+                        break;
+                    }
+                }
+            }
+
+            void ShowItem()
+            {
+
+            }
+
+            void GiveItem()
+            {
+
+            }
+
+            void GiveGold()
+            {
+
+            }
+
+            void GiveFood()
+            {
+
+            }
+
+            void AskToJoin()
+            {
+
+            }
+
+            void AskToLeave()
+            {
+
+            }
+
+            void Exit()
+            {
+
             }
 
             bool lastEventStatus = false;
@@ -4796,16 +4845,32 @@ namespace Ambermoon
                 layout.FillArea(textArea, GetUIColor(28), false);
                 layout.FillArea(new Rect(15, 136, 152, 57), GetUIColor(28), false);
 
-                if (!(conversationPartner is Character character))
-                    throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
                 DisplayCharacterInfo(character, true);
 
+                if (character.Type != CharacterType.PartyMember ||
+                    SlotFromPartyMember(character as PartyMember) == null)
+                    layout.EnableButton(4, false); // Disable "Ask to leave" if not in party
+                if (!CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false))
+                {
+                    layout.EnableButton(3, false);
+                    layout.EnableButton(6, false);
+                }
+                if (CurrentPartyMember.Gold == 0)
+                    layout.EnableButton(7, false);
+                if (CurrentPartyMember.Food == 0)
+                    layout.EnableButton(8, false);
+
                 layout.AttachEventToButton(0, () => OpenDictionary(SayWord));
+                layout.AttachEventToButton(2, Exit);
+                layout.AttachEventToButton(3, ShowItem);
+                layout.AttachEventToButton(4, AskToLeave);
+                layout.AttachEventToButton(5, AskToJoin);
+                layout.AttachEventToButton(6, GiveItem);
+                layout.AttachEventToButton(7, GiveGold);
+                layout.AttachEventToButton(8, GiveFood);
 
                 while (conversationEvent != null && !aborted)
                     HandleNextEvent();
-
-                // TODO
             });
         }
 
@@ -8054,7 +8119,7 @@ namespace Ambermoon
                                 updatePartyGold?.Invoke();
                                 void Buy()
                                 {
-                                    SpawnTransport((uint)salesman.SpawnMapIndex, salesman.SpawnX, salesman.SpawnY, travelType);
+                                    SpawnTransport((uint)salesman.SpawnMapIndex, (uint)salesman.SpawnX, (uint)salesman.SpawnY, travelType);
                                     layout.EnableButton(3, false);
                                 }
                                 if (string.IsNullOrWhiteSpace(buyText))
@@ -8084,14 +8149,16 @@ namespace Ambermoon
                     {
                         TravelType = travelType,
                         MapIndex = mapIndex,
-                        Position = new Position(x, y)
+                        Position = new Position((int)x, (int)y)
                     };
+                    break;
                 }
                 else if (CurrentSavegame.TransportLocations[i].TravelType == TravelType.Walk)
                 {
                     CurrentSavegame.TransportLocations[i].TravelType = travelType;
                     CurrentSavegame.TransportLocations[i].MapIndex = mapIndex;
-                    CurrentSavegame.TransportLocations[i].Position = new Position(x, y);
+                    CurrentSavegame.TransportLocations[i].Position = new Position((int)x, (int)y);
+                    break;
                 }
             }
         }
