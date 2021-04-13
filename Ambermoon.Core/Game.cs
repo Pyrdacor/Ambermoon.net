@@ -947,21 +947,21 @@ namespace Ambermoon
             }
         }
 
-        void AddPartyMember(int slot, PartyMember partyMember)
+        void AddPartyMember(int slot, PartyMember partyMember, Action followAction = null)
         {
             FixPartyMember(partyMember);
             partyMember.Died += PartyMemberDied;
-            layout.SetCharacter(slot, partyMember);
+            layout.SetCharacter(slot, partyMember, false, followAction);
         }
 
-        void RemovePartyMember(int slot, bool initialize)
+        void RemovePartyMember(int slot, bool initialize, Action followAction = null)
         {
             var partyMember = GetPartyMember(slot);
 
             if (partyMember != null)
                 partyMember.Died -= PartyMemberDied;
 
-            layout.SetCharacter(slot, null, initialize);
+            layout.SetCharacter(slot, null, initialize, followAction);
         }
 
         void ClearPartyMembers()
@@ -4813,6 +4813,8 @@ namespace Ambermoon
                     {
                         currentInteractionType = InteractionType.Keyword;
                         conversationEvent = e;
+                        aborted = false;
+                        lastEventStatus = true;
                         HandleNextEvent();
                         return;
                     }
@@ -4844,19 +4846,85 @@ namespace Ambermoon
 
             void AskToJoin()
             {
+                if (character is PartyMember &&
+                    (conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.JoinParty)) != null)
+                {
+                    if (PartyMembers.Count() == MaxPartyMembers)
+                    {
+                        conversationEvent = null;
+                        SetText(DataNameProvider.PartyFull);
+                        return;
+                    }
 
+                    currentInteractionType = InteractionType.JoinParty;
+                    aborted = false;
+                    lastEventStatus = true;
+                    HandleNextEvent();
+                }
+                else
+                {
+                    SetText(DataNameProvider.DenyJoiningParty);
+                }
             }
 
             void AskToLeave()
             {
+                if (character is PartyMember partyMember && PartyMembers.Contains(partyMember))
+                {
+                    if (Map.World == World.ForestMoon)
+                    {
+                        SetText(DataNameProvider.DenyLeavingPartyOnForestMoon);
+                        return;
+                    }
 
+                    if ((conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.LeaveParty)) != null)
+                    {
+                        currentInteractionType = InteractionType.LeaveParty;
+                        aborted = false;
+                        lastEventStatus = true;
+                        HandleNextEvent();
+                    }
+                    else
+                        RemovePartyMember(() => Exit()); // Just remove from party and close
+                }
             }
 
-            void Exit(bool force = false)
+            void AddPartyMember(Action followAction)
             {
+                for (int i = 0; i < MaxPartyMembers; ++i)
+                {
+                    if (GetPartyMember(i) == null)
+                    {
+                        this.AddPartyMember(i, character as PartyMember, followAction);
+                        break;
+                    }
+                }
+            }
+
+            void RemovePartyMember(Action followAction)
+            {
+                this.RemovePartyMember(SlotFromPartyMember(character as PartyMember).Value, false);
+            }
+
+            void Exit(bool showLeaveMessage = false)
+            {
+                if (showLeaveMessage)
+                {
+                    // TODO: test if there are important items and if so deny and show info message instead
+
+                    conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.Leave);
+
+                    if (conversationEvent != null)
+                    {
+                        currentInteractionType = InteractionType.Leave;
+                        aborted = false;
+                        lastEventStatus = true;
+                        HandleNextEvent();
+                        return;
+                    }
+                }
+
                 ConversationTextActive = false;
-                // TODO: don't allow if items can't be left
-                // force is used by event chain and will always force closing
                 CloseWindow();
             }
 
@@ -4869,7 +4937,13 @@ namespace Ambermoon
             void HandleEvent()
             {
                 if (conversationEvent == null || aborted)
+                {
+                    if (currentInteractionType == InteractionType.LeaveParty ||
+                        currentInteractionType == InteractionType.Leave)
+                        Exit(); // After leaving the party or just leave the conversation, close the window.
+
                     return;
+                }
 
                 if (conversationEvent is PrintTextEvent printTextEvent)
                 {
@@ -4878,7 +4952,7 @@ namespace Ambermoon
                 }
                 else if (conversationEvent is ExitEvent)
                 {
-                    Exit(true);
+                    Exit();
                 }
                 else if (conversationEvent is CreateEvent createEvent)
                 {
@@ -4898,7 +4972,7 @@ namespace Ambermoon
                             // TODO: remove food
                             break;
                         case InteractionType.JoinParty:
-                            // TODO: add party member
+                            AddPartyMember(HandleNextEvent);
                             break;
                         case InteractionType.LeaveParty:
                             // TODO: remove party member
@@ -4928,7 +5002,7 @@ namespace Ambermoon
                 ShowMap(false);
                 layout.Reset();
 
-                layout.FillArea(textArea, GetUIColor(28), false);
+                layout.FillArea(new Rect(15, 43, 177, 80), GetUIColor(28), false);
                 layout.FillArea(new Rect(15, 136, 152, 57), GetUIColor(28), false);
 
                 DisplayCharacterInfo(character, true);
@@ -4947,7 +5021,7 @@ namespace Ambermoon
                     layout.EnableButton(8, false);
 
                 layout.AttachEventToButton(0, () => OpenDictionary(SayWord));
-                layout.AttachEventToButton(2, () => Exit());
+                layout.AttachEventToButton(2, () => Exit(true));
                 layout.AttachEventToButton(3, ShowItem);
                 layout.AttachEventToButton(4, AskToLeave);
                 layout.AttachEventToButton(5, AskToJoin);
@@ -4955,7 +5029,7 @@ namespace Ambermoon
                 layout.AttachEventToButton(7, GiveGold);
                 layout.AttachEventToButton(8, GiveFood);
 
-                // Note: Mouse handling in Layout assumes this is text[7] so ensure that.
+                // Note: Mouse handling in Layout assumes this is the last text (text[^1]) so ensure that.
                 conversationText = layout.AddScrollableText(textArea, ProcessText(""), TextColor.BrightGray);
                 conversationText.Visible = false;
 

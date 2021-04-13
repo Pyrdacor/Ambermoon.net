@@ -3427,7 +3427,7 @@ namespace Ambermoon.UI
                 else if (game.ConversationTextActive && Type == LayoutType.Conversation)
                 {
                     cursorType = CursorType.Click;
-                    texts[7].Click(position);
+                    texts[^1].Click(position);
                     return true;
                 }
 

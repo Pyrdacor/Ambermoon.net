@@ -195,7 +195,16 @@ namespace Ambermoon.Data
         string YouLevitate { get; }
         string WhichNumber { get; }
         string AutomapperNotWorkingHere { get; }
+
+
+        #region Conversations
+
         string DontKnowAnythingSpecialAboutIt { get; }
+        string DenyJoiningParty { get; }
+        string PartyFull { get; }
+        string DenyLeavingPartyOnForestMoon { get; }
+
+        #endregion
 
 
         #region Automap

@@ -217,7 +217,16 @@
         public string YouLevitate => executableData.Messages.GetEntry(Messages.Index.YouLevitate);
         public string WhichNumber => executableData.Messages.GetEntry(Messages.Index.WhichNumber);
         public string AutomapperNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.AutomapperNotWorkingHere);
+
+
+        #region Conversations
+
         public string DontKnowAnythingSpecialAboutIt => executableData.Messages.GetEntry(Messages.Index.DontKnowAnythingSpecialAboutIt);
+        public string DenyJoiningParty => executableData.Messages.GetEntry(Messages.Index.DenyJoiningParty);
+        public string PartyFull => executableData.Messages.GetEntry(Messages.Index.PartyFull);
+        public string DenyLeavingPartyOnForestMoon => executableData.Messages.GetEntry(Messages.Index.DenyLeavingPartyOnForestMoon);
+
+        #endregion
 
 
         #region Automap
