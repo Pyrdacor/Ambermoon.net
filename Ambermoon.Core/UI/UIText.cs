@@ -8,13 +8,17 @@ namespace Ambermoon.UI
     internal class UIText
     {
         readonly IRenderView renderView;
-        readonly IText text;
+        IText text;
         readonly IRenderText renderText;
         readonly Rect bounds;
         bool allowScrolling;
+        bool freeScrolling = false;
         int lineOffset = 0;
         readonly int numVisibleLines;
         public bool WithScrolling { get; internal set; }
+
+        public event Action FreeScrollingStarted;
+        public event Action FreeScrollingEnded;
 
         public bool Visible
         {
@@ -76,7 +80,11 @@ namespace Ambermoon.UI
 
         public void SetText(IText text)
         {
-            renderText.Text = text;
+            this.text = renderView.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+            allowScrolling = WithScrolling;
+            freeScrolling = false;
+            lineOffset = 0;
+            UpdateText(0);
         }
 
         public void SetTextColor(TextColor textColor)
@@ -99,15 +107,51 @@ namespace Ambermoon.UI
             renderText.Place(position.X, position.Y);
         }
 
+        public void MouseMove(int y)
+        {
+            if (freeScrolling)
+            {
+                if (y < 0)
+                {
+                    if (lineOffset > 0)
+                        UpdateText(--lineOffset);
+                }
+                else if (y > 0)
+                {
+                    if (lineOffset < text.LineCount - numVisibleLines)
+                        UpdateText(++lineOffset);
+                }
+            }
+        }
+
         public bool Click(Position position)
         {
+            if (freeScrolling)
+            {
+                freeScrolling = false;
+                FreeScrollingEnded?.Invoke();
+                Scrolled?.Invoke(true);
+                Clicked?.Invoke(true);
+                return true;
+            }
+
             if (allowScrolling)
             {
                 if (lineOffset >= text.LineCount - numVisibleLines)
                 {
                     allowScrolling = false;
-                    Scrolled?.Invoke(true);
-                    Clicked?.Invoke(true);
+                    bool wasScrollable = text.LineCount > numVisibleLines;
+
+                    if (wasScrollable)
+                    {
+                        freeScrolling = true;
+                        FreeScrollingStarted?.Invoke();
+                    }
+                    else
+                    {
+                        Scrolled?.Invoke(true);
+                        Clicked?.Invoke(true);
+                    }
                 }
                 else
                 {

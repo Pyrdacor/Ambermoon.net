@@ -271,6 +271,7 @@ namespace Ambermoon
         bool allInputDisabled = false;
         bool inputEnable = true;
         bool paused = false;
+        internal bool ConversationTextActive { get; private set; } = false;
         Func<MouseButtons, bool> nextClickHandler = null;
         /// <summary>
         /// The 3x3 buttons will always be enabled!
@@ -2107,13 +2108,18 @@ namespace Ambermoon
 
                 if (!InputEnable)
                 {
-                    if (layout.PopupActive)
+                    if (layout.FreeTextScrollingActive)
+                    {
+                        CursorType = CursorType.None;
+                    }
+                    else if (layout.PopupActive)
                     {
                         var cursorType = layout.PopupClickCursor ? CursorType.Click : CursorType.Sword;
                         layout.Hover(renderView.ScreenToGame(cursorPosition), ref cursorType);
                         CursorType = cursorType;
                     }
                     else if (layout.Type == LayoutType.Event ||
+                        (ConversationTextActive && layout.Type == LayoutType.Conversation) ||
                         (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true) ||
                         currentBattle?.WaitForClick == true ||
                         layout.ChestText?.WithScrolling == true ||
@@ -2271,6 +2277,8 @@ namespace Ambermoon
                     Determine2DTargetMode(position);
                 }
             }
+
+            layout.MouseMoved(position - lastMousePosition);
 
             lastMousePosition = new Position(position);
             position = GetMousePosition(position);
@@ -2525,6 +2533,7 @@ namespace Ambermoon
 
             ouchSprite.PaletteIndex = currentUIPaletteIndex;
             layout.UpdateUIPalette(currentUIPaletteIndex);
+            cursor.UpdatePalette(this);
         }
 
         void ShowMap(bool show)
@@ -4746,8 +4755,8 @@ namespace Ambermoon
         /// A conversation is started with a Conversation event but the
         /// displayed text depends on the following events. Mostly
         /// Condition and PrintText events. The argument conversationEvent
-        /// is the first event after the initial event and should be used
-        /// to determine the text to print etc.
+        /// is the initial conversation event of interaction type 'Talk'
+        /// and should be used to determine the text to print etc.
         /// 
         /// The event chain may also contain rewards, new keywords, etc.
         /// </summary>
@@ -4762,6 +4771,35 @@ namespace Ambermoon
             ConversationEvent GetFirstMatchingEvent(Func<ConversationEvent, bool> filter)
                 => conversationPartner.EventList.OfType<ConversationEvent>().FirstOrDefault(filter);
 
+            var currentInteractionType = InteractionType.Talk;
+            bool lastEventStatus = true;
+            bool aborted = false;
+            var textArea = new Rect(15, 43, 177, 80);
+            UIText conversationText = null;
+
+            void SetText(string text, Action followAction = null)
+            {
+                conversationText.Visible = true;
+                conversationText.SetText(ProcessText(text));
+                conversationText.Clicked += TextClicked;
+                CursorType = CursorType.Click;
+                InputEnable = false;
+                ConversationTextActive = true;
+
+                void TextClicked(bool toEnd)
+                {
+                    if (toEnd)
+                    {
+                        conversationText.Scrolled -= TextClicked;
+                        conversationText.Visible = false;
+                        InputEnable = true;
+                        ConversationTextActive = false;
+                        ExecuteNextUpdateCycle(() => CursorType = CursorType.Sword);
+                        followAction?.Invoke();
+                    }
+                }
+            }
+
             void SayWord(string keyword)
             {
                 UntrapMouse();
@@ -4772,11 +4810,15 @@ namespace Ambermoon
 
                     if (string.Compare(keyword, expectedKeyword, true) == 0)
                     {
-                        conversationEvent = e.Next;
+                        currentInteractionType = InteractionType.Keyword;
+                        conversationEvent = e;
                         HandleNextEvent();
-                        break;
+                        return;
                     }
                 }
+
+                // There is no event for it so just display a message.
+                SetText(DataNameProvider.DontKnowAnythingSpecialAboutIt);
             }
 
             void ShowItem()
@@ -4809,30 +4851,72 @@ namespace Ambermoon
 
             }
 
-            void Exit()
+            void Exit(bool force = false)
             {
-
+                ConversationTextActive = false;
+                // TODO: don't allow if items can't be left
+                // force is used by event chain and will always force closing
+                CloseWindow();
             }
-
-            bool lastEventStatus = false;
-            bool aborted = false;
-            var textArea = new Rect(15, 43, 177, 80);
 
             void HandleNextEvent()
             {
+                conversationEvent = conversationEvent?.Next;
+                HandleEvent();
+            }
+
+            void HandleEvent()
+            {
+                if (conversationEvent == null || aborted)
+                    return;
+
                 if (conversationEvent is PrintTextEvent printTextEvent)
                 {
-                    var text = conversationPartner.Texts[(int)printTextEvent.NPCTextIndex];
-                    layout.AddScrollableText(textArea, ProcessText(text));
-                    // TODO: it is added as scrollable but it isn't scrollable yet
-                    // TODO: clear old text
+                    SetText(conversationPartner.Texts[(int)printTextEvent.NPCTextIndex]);
                 }
-
-                // TODO: handle Create events as we need to take the items before progressing!
-                var trigger = EventTrigger.Always;
-                conversationEvent = conversationEvent.ExecuteEvent(Map, this, ref trigger, 0, 0, // TODO: do we care about x and y here?
-                    CurrentTicks, ref lastEventStatus, out aborted, conversationPartner);
-                SetWindow(Window.Conversation, conversationPartner, conversationEvent);
+                else if (conversationEvent is ExitEvent)
+                {
+                    Exit(true);
+                }
+                else if (conversationEvent is CreateEvent createEvent)
+                {
+                    // TODO: show item grid
+                }
+                else if (conversationEvent is InteractEvent)
+                {
+                    switch (currentInteractionType)
+                    {
+                        case InteractionType.GiveItem:
+                            // TODO: remove item
+                            break;
+                        case InteractionType.GiveGold:
+                            // TODO: remove gold
+                            break;
+                        case InteractionType.GiveFood:
+                            // TODO: remove food
+                            break;
+                        case InteractionType.JoinParty:
+                            // TODO: add party member
+                            break;
+                        case InteractionType.LeaveParty:
+                            // TODO: remove party member
+                            break;
+                        case InteractionType.Leave:
+                            Exit();
+                            break;
+                        default:
+                            // Do nothing for the rest.
+                            break;
+                    }
+                }
+                else
+                {
+                    var trigger = EventTrigger.Always;
+                    conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
+                        (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, ref lastEventStatus, out aborted,
+                        conversationPartner);
+                    HandleEvent();
+                }
             }
 
             Fade(() =>
@@ -4861,7 +4945,7 @@ namespace Ambermoon
                     layout.EnableButton(8, false);
 
                 layout.AttachEventToButton(0, () => OpenDictionary(SayWord));
-                layout.AttachEventToButton(2, Exit);
+                layout.AttachEventToButton(2, () => Exit());
                 layout.AttachEventToButton(3, ShowItem);
                 layout.AttachEventToButton(4, AskToLeave);
                 layout.AttachEventToButton(5, AskToJoin);
@@ -4869,8 +4953,11 @@ namespace Ambermoon
                 layout.AttachEventToButton(7, GiveGold);
                 layout.AttachEventToButton(8, GiveFood);
 
-                while (conversationEvent != null && !aborted)
-                    HandleNextEvent();
+                // Note: Mouse handling in Layout assumes this is text[7] so ensure that.
+                conversationText = layout.AddScrollableText(textArea, ProcessText(""), TextColor.BrightGray);
+                conversationText.Visible = false;
+
+                HandleNextEvent();
             });
         }
 
@@ -8260,7 +8347,7 @@ namespace Ambermoon
             });
         }
 
-        void ExecuteNextUpdateCycle(Action action)
+        internal void ExecuteNextUpdateCycle(Action action)
         {
             AddTimedEvent(TimeSpan.FromMilliseconds(0), action);
         }
@@ -10836,7 +10923,7 @@ namespace Ambermoon
                     scrollableText.Clicked += scrolledToEnd =>
                     {
                         if (scrolledToEnd)
-                            CloseWindow();
+                            CloseWindow(() => responseHandler?.Invoke(PopupTextEvent.Response.Close));
                     };
                     CursorType = CursorType.Click;
                     InputEnable = false;

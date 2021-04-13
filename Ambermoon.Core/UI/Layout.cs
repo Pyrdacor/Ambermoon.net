@@ -412,6 +412,8 @@ namespace Ambermoon.UI
         readonly List<MonsterCombatGraphic> monsterCombatGraphics = new List<MonsterCombatGraphic>();
         PortraitAnimation portraitAnimation = null;
         readonly List<ItemGrid> itemGrids = new List<ItemGrid>();
+        UIText freeScrolledText = null;
+        public bool FreeTextScrollingActive => freeScrolledText != null;
         internal UIText ChestText { get; private set; } = null;
         Button questionYesButton = null;
         Button questionNoButton = null;
@@ -1396,8 +1398,8 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
                     buttonGrid.SetButton(3, ButtonType.ViewItem, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(4, ButtonType.AskToJoin, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(5, ButtonType.AskToLeave, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(4, ButtonType.AskToLeave, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(5, ButtonType.AskToJoin, false, null, false); // this is set later manually
                     buttonGrid.SetButton(6, ButtonType.GiveItem, false, null, false); // this is set later manually
                     buttonGrid.SetButton(7, ButtonType.GiveGoldToNPC, false, null, false); // this is set later manually
                     buttonGrid.SetButton(8, ButtonType.GiveFoodToNPC, false, null, false); // this is set later manually
@@ -2919,6 +2921,20 @@ namespace Ambermoon.UI
         {
             var scrollableText = new UIText(RenderView, game.UIPaletteIndex, text, rect, displayLayer, color, true, textAlign, true);
             texts.Add(scrollableText);
+            scrollableText.FreeScrollingStarted += () =>
+            {
+                freeScrolledText = scrollableText;
+                game.ExecuteNextUpdateCycle(() => game.CursorType = CursorType.None);
+            };
+            scrollableText.FreeScrollingEnded += () =>
+            {
+                freeScrolledText = null;
+                game.ExecuteNextUpdateCycle(() =>
+                {
+                    game.CursorType = CursorType.Sword;
+                    game.UpdateCursor();
+                });
+            };
             return scrollableText;
         }
 
@@ -3276,6 +3292,9 @@ namespace Ambermoon.UI
                 return;
             }
 
+            if (freeScrolledText != null)
+                return;
+
             buttonGrid.MouseUp(position, MouseButtons.Left, out CursorType? cursorType, currentTicks);
 
             if (cursorType != null)
@@ -3368,15 +3387,15 @@ namespace Ambermoon.UI
             }
             else if (!pickingNewLeader)
             {
-                if (Type == LayoutType.Event)
+                if (freeScrolledText != null)
                 {
-                    if (buttons == MouseButtons.Right)
-                        game.CloseWindow();
-                    else if (buttons == MouseButtons.Left)
-                    {
-                        texts[0].Click(position);
-                        cursorType = CursorType.Click;
-                    }
+                    freeScrolledText.Click(position);
+                    return true;
+                }
+                else if (Type == LayoutType.Event)
+                {
+                    cursorType = CursorType.Click;
+                    texts[0].Click(position);
                     return true;
                 }
                 else if (questionYesButton != null || questionNoButton != null)
@@ -3404,6 +3423,12 @@ namespace Ambermoon.UI
                         cursorType = inventoryMessage == null ? CursorType.Sword : CursorType.Click;
                         return true;
                     }
+                }
+                else if (game.ConversationTextActive && Type == LayoutType.Conversation)
+                {
+                    cursorType = CursorType.Click;
+                    texts[7].Click(position);
+                    return true;
                 }
 
                 if (PopupActive)
@@ -3743,6 +3768,14 @@ namespace Ambermoon.UI
             if (draggedItem != null)
             {
                 draggedItem.Item.Position = position;
+            }
+        }
+
+        public void MouseMoved(Position diff)
+        {
+            if (freeScrolledText != null)
+            {
+                freeScrolledText?.MouseMove(diff.Y);
             }
         }
 

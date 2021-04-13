@@ -217,6 +217,7 @@
         public string YouLevitate => executableData.Messages.GetEntry(Messages.Index.YouLevitate);
         public string WhichNumber => executableData.Messages.GetEntry(Messages.Index.WhichNumber);
         public string AutomapperNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.AutomapperNotWorkingHere);
+        public string DontKnowAnythingSpecialAboutIt => executableData.Messages.GetEntry(Messages.Index.DontKnowAnythingSpecialAboutIt);
 
 
         #region Automap

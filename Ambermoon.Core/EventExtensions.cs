@@ -731,10 +731,11 @@ namespace Ambermoon
                                 aborted = true;
                                 return null;
                             }
-                            game.ShowConversation(conversationPartner, conversationEvent.Next);
+                            game.ShowConversation(conversationPartner, conversationEvent);
                             return null;
                         default:
-                            // Note: this is handled by the conversation window
+                            // Note: this is handled by the conversation window.
+                            // It should never appear inside a running event chain.
                             aborted = true;
                             return null;
                     }
@@ -746,7 +747,8 @@ namespace Ambermoon
                 {
                     // Note: These are only used by conversations and are handled in
                     // game.ShowConversation. So we don't need to do anything here.
-                    return @event.Next;
+                    // This should never be executed via this extension.
+                    throw new AmbermoonException(ExceptionScope.Application, $"Events of type {@event.Type} should be handled by the conversation window.");
                 }
                 case EventType.Decision:
                 {

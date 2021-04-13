@@ -82,5 +82,13 @@ namespace Ambermoon.Render
                 }
             }
         }
+
+        public void UpdatePalette(Game game)
+        {
+            lock (sprite)
+            {
+                sprite.PaletteIndex = game?.UIPaletteIndex ?? 0;
+            }
+        }
     }
 }

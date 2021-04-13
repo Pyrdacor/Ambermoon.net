@@ -727,16 +727,6 @@ namespace Ambermoon.Data
         }
     }
 
-    public class DebugEvent : Event
-    {
-        public byte[] Data { get; set; }
-
-        public override string ToString()
-        {
-            return Type.ToString() + ": " + string.Join(" ", Data.Select(d => d.ToString("X2")));
-        }
-    }
-
     public class ExitEvent : Event
     {
         public byte[] Unused { get; set; }
@@ -770,6 +760,16 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             return $"{Type}";
+        }
+    }
+
+    public class DebugEvent : Event
+    {
+        public byte[] Data { get; set; }
+
+        public override string ToString()
+        {
+            return Type.ToString() + ": " + string.Join(" ", Data.Select(d => d.ToString("X2")));
         }
     }
 }

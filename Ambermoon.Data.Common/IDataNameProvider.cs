@@ -195,6 +195,7 @@ namespace Ambermoon.Data
         string YouLevitate { get; }
         string WhichNumber { get; }
         string AutomapperNotWorkingHere { get; }
+        string DontKnowAnythingSpecialAboutIt { get; }
 
 
         #region Automap
