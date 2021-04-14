@@ -4823,8 +4823,6 @@ namespace Ambermoon
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent,
             bool showInitialText = true)
         {
-            // TODO: ItemGrid not scrollable via mouse wheel (also check other windows like chest, places, etc).
-
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 

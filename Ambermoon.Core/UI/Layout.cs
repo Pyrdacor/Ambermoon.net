@@ -3030,7 +3030,8 @@ namespace Ambermoon.UI
 
         bool IsInventory => Type == LayoutType.Inventory;
         bool HasScrollableItemGrid => IsInventory ||
-            (Type == LayoutType.Items && itemGrids.Count != 0 && !itemGrids[0].Disabled);
+            ((Type == LayoutType.Items || Type == LayoutType.Conversation) &&
+                itemGrids.Count != 0 && !itemGrids[0].Disabled);
 
         public void AddItemGrid(ItemGrid itemGrid)
         {
