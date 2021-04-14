@@ -163,7 +163,11 @@ namespace Ambermoon
             /// </summary>
             ConversationFood,
             ChestGold,
-            ChestFood
+            ChestFood,
+            /// <summary>
+            /// Name of the conversating party member.
+            /// </summary>
+            ConversationPartyMember
         }
 
         // TODO: cleanup members
@@ -3042,7 +3046,8 @@ namespace Ambermoon
             }
             else
             {
-                layout.AddText(new Rect(208, 99, 96, 7), CurrentPartyMember.Name, TextColor.ActivePartyMember, TextAlign.Center);
+                characterInfoTexts.Add(CharacterInfo.ConversationPartyMember,
+                    layout.AddText(new Rect(208, 99, 96, 7), CurrentPartyMember.Name, TextColor.ActivePartyMember, TextAlign.Center));
                 if (CurrentPartyMember.Gold > 0)
                 {
                     ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
@@ -3125,6 +3130,7 @@ namespace Ambermoon
                 character.TotalWeight / 1000, (character as PartyMember).MaxWeight / 1000));
             if (conversationPartner != null)
             {
+                UpdateText(CharacterInfo.ConversationPartyMember, () => CurrentPartyMember.Name);
                 ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
                     $"{DataNameProvider.GoldName}^{CurrentPartyMember.Gold}", new Rect(209, 107, 43, 15));
                 ShowTextPanel(CharacterInfo.ConversationFood, CurrentPartyMember.Food > 0,
@@ -4824,7 +4830,6 @@ namespace Ambermoon
             bool showInitialText = true)
         {
             // TODO: create events -> item grid
-            // TODO: player switching
 
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
@@ -4840,6 +4845,13 @@ namespace Ambermoon
 
             ConversationEvent GetFirstMatchingEvent(Func<ConversationEvent, bool> filter)
                 => conversationPartner.EventList.OfType<ConversationEvent>().FirstOrDefault(filter);
+
+            void SwitchPlayer()
+            {
+                UpdateCharacterInfo(character);
+            }
+
+            ActivePlayerChanged += SwitchPlayer;
 
             conversationEvent ??= GetFirstMatchingEvent(e => e.Interaction == InteractionType.Talk);
 
@@ -5136,14 +5148,6 @@ namespace Ambermoon
                 }
             }
 
-            void UpdateCharacterVisibility(uint characterIndex)
-            {
-                if (is3D)
-                    renderMap3D.UpdateCharacterVisibility(characterIndex);
-                else
-                    renderMap2D.UpdateCharacterVisibility(characterIndex);
-            }
-
             void AddPartyMember(Action followAction)
             {
                 for (int i = 0; i < MaxPartyMembers; ++i)
@@ -5194,6 +5198,7 @@ namespace Ambermoon
                     }
                 }
 
+                ActivePlayerChanged -= SwitchPlayer;
                 ConversationTextActive = false;
                 CloseWindow();
             }
@@ -5211,7 +5216,7 @@ namespace Ambermoon
                     if (currentInteractionType == InteractionType.LeaveParty ||
                         currentInteractionType == InteractionType.Leave)
                     {
-                        Exit(); // After leaving the party or just leave the conversation, close the window.
+                        Exit(); // After leaving the party or just leaving the conversation, close the window.
                     }
 
                     followAction?.Invoke(EventType.Invalid);
