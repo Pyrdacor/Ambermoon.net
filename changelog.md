@@ -1,7 +1,11 @@
 # Changelog
 
+## 0.6.x beta - Conversations, gameover screen
+- Version [0.6.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.6.0beta): Fully implemented conversations, added UI palette switching, bugfixing
+
 ## 0.5.x beta - Automap, spinners and traps
-- Version [0.5.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.5.1beta): Added mystic map spells, minimap, improved battle logic and improved render performance
+- Version [0.5.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.5.2beta): Added spinners and traps, falling, climbing and remaing map spells
+- Version [0.5.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.5.1beta): Added most mystic map spells, minimap, improved battle logic and improved render performance
 - Version [0.5.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.5.0beta): Added automap with legend and all features, added 3D map exploration
 
 ## 0.4.x beta - Locks and Level-Up

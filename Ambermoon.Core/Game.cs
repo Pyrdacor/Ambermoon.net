@@ -4858,6 +4858,8 @@ namespace Ambermoon
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent,
             ConversationItems createdItems, bool showInitialText = true)
         {
+            // TODO: Test if level ups in conversations work properly
+
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
