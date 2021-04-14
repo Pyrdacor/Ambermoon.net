@@ -4959,29 +4959,42 @@ namespace Ambermoon
                     }
                     else
                     {
-                        HandleNextEvent(() =>
+                        void HandleInteraction()
                         {
-                            // If we are here the user clicked the associated text etc.
-                            if (interactionType == InteractionType.GiveItem)
+                            HandleNextEvent(eventType =>
                             {
-                                // Consume
-                                HandleNextEvent(() =>
+                                if (eventType == EventType.Interact)
                                 {
-                                    StartSequence();
-                                    itemGrid.HideTooltip();
-                                    layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
+                                    // If we are here the user clicked the associated text etc.
+                                    if (interactionType == InteractionType.GiveItem)
+                                    {
+                                        // Consume
+                                        StartSequence();
+                                        itemGrid.HideTooltip();
+                                        layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
                                         {
                                             EndSequence();
                                             Abort();
                                             HandleNextEvent(null);
                                         }, new Position(215, 75));
-                                });
-                            }
-                            else
-                            {
-                                MoveBack(() => HandleNextEvent(null));
-                            }
-                        });
+                                    }
+                                    else // Show item
+                                    {
+                                        MoveBack(() => HandleNextEvent(null));
+                                    }
+                                }
+                                else if (eventType == EventType.Invalid) // End of event chain
+                                {
+                                    MoveBack(null);
+                                }
+                                else
+                                {
+                                    HandleInteraction();
+                                }
+                            });
+                        }
+
+                        HandleInteraction();
                     }
                 }
                 void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
@@ -5127,32 +5140,37 @@ namespace Ambermoon
                 CloseWindow();
             }
 
-            void HandleNextEvent(Action followAction = null)
+            void HandleNextEvent(Action<EventType> followAction = null)
             {
                 conversationEvent = conversationEvent?.Next;
                 HandleEvent(followAction);
             }
 
-            void HandleEvent(Action followAction = null)
+            void HandleEvent(Action<EventType> followAction = null)
             {
                 if (conversationEvent == null || aborted)
                 {
                     if (currentInteractionType == InteractionType.LeaveParty ||
                         currentInteractionType == InteractionType.Leave)
+                    {
                         Exit(); // After leaving the party or just leave the conversation, close the window.
+                    }
+
+                    followAction?.Invoke(EventType.Invalid);
 
                     return;
                 }
 
-                var nextAction = followAction ?? (() => HandleNextEvent(null));
+                var nextAction = followAction ?? (_ => HandleNextEvent());
 
                 if (conversationEvent is PrintTextEvent printTextEvent)
                 {
-                    SetText(conversationPartner.Texts[(int)printTextEvent.NPCTextIndex], nextAction);
+                    SetText(conversationPartner.Texts[(int)printTextEvent.NPCTextIndex], () => nextAction?.Invoke(EventType.PrintText));
                 }
                 else if (conversationEvent is ExitEvent)
                 {
                     Exit();
+                    nextAction?.Invoke(EventType.Exit);
                 }
                 else if (conversationEvent is CreateEvent createEvent)
                 {
@@ -5166,7 +5184,7 @@ namespace Ambermoon
                         case InteractionType.GiveItem:
                         {
                             // Note: The ShowItems method will take care of it.
-                            nextAction?.Invoke();
+                            nextAction?.Invoke(EventType.Interact);
                             break;
                         }
                         case InteractionType.GiveGold:
@@ -5176,16 +5194,17 @@ namespace Ambermoon
                             // TODO: remove food
                             break;
                         case InteractionType.JoinParty:
-                            AddPartyMember(nextAction);
+                            AddPartyMember(() => nextAction?.Invoke(EventType.Interact));
                             break;
                         case InteractionType.LeaveParty:
-                            RemovePartyMember(nextAction);
+                            RemovePartyMember(() => nextAction?.Invoke(EventType.Interact));
                             break;
                         case InteractionType.Leave:
                             Exit();
+                            nextAction?.Invoke(EventType.Interact);
                             break;
                         default:
-                            // Do nothing for the rest.
+                            nextAction?.Invoke(EventType.Interact);
                             break;
                     }
                 }
