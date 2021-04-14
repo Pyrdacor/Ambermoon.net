@@ -291,7 +291,8 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.CharacterBit:
-                            if (game.CurrentSavegame.GetCharacterBit(conditionEvent.ObjectIndex >> 5, conditionEvent.ObjectIndex & 0x1f) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame.GetCharacterBit(1 + (conditionEvent.ObjectIndex >> 5), conditionEvent.ObjectIndex & 0x1f)
+                                != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -525,7 +526,7 @@ namespace Ambermoon
                             break;
                         case ActionEvent.ActionType.SetCharacterBit:
                         {
-                            var mapIndex = actionEvent.ObjectIndex >> 5;
+                            var mapIndex = 1 + (actionEvent.ObjectIndex >> 5);
                             var eventIndex = actionEvent.ObjectIndex & 0x1f;
                             game.SetMapCharacterBit(mapIndex, eventIndex,
                                 ClearSetToggle(() => game.CurrentSavegame.GetCharacterBit(mapIndex, eventIndex)));

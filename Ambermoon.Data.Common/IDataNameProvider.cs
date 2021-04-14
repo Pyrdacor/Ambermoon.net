@@ -214,6 +214,8 @@ namespace Ambermoon.Data
         string NotInterestedInItem { get; }
         string NotInterestedInGold { get; }
         string NotInterestedInFood { get; }
+        string MoreGoldNeeded { get; }
+        string MoreFoodNeeded { get; }
 
         #endregion
 

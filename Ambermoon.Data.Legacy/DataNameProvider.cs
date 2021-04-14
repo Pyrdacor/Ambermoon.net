@@ -236,6 +236,8 @@
         public string NotInterestedInItem => executableData.Messages.GetEntry(Messages.Index.NotInterestedInItem);
         public string NotInterestedInGold => executableData.Messages.GetEntry(Messages.Index.NotInterestedInGold);
         public string NotInterestedInFood => executableData.Messages.GetEntry(Messages.Index.NotInterestedInFood);
+        public string MoreGoldNeeded => executableData.Messages.GetEntry(Messages.Index.HowAboutSomeMore);
+        public string MoreFoodNeeded => executableData.Messages.GetEntry(Messages.Index.MoreFoodWouldBeGood);
 
         #endregion
 

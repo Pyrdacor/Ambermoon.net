@@ -3056,7 +3056,7 @@ namespace Ambermoon
             }
         }
 
-        internal void UpdateCharacterInfo(NPC npc = null)
+        internal void UpdateCharacterInfo(Character conversationPartner = null)
         {
             if (currentWindow.Window != Window.Inventory &&
                 currentWindow.Window != Window.Stats &&
@@ -3065,7 +3065,7 @@ namespace Ambermoon
 
             if (currentWindow.Window == Window.Conversation)
             {
-                if (npc == null || CurrentPartyMember == null)
+                if (conversationPartner == null || CurrentPartyMember == null)
                     return;
             }
             else if (CurrentInventory == null)
@@ -3079,7 +3079,7 @@ namespace Ambermoon
                     characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text()));
             }
 
-            var character = (Character)npc ?? CurrentInventory;
+            var character = conversationPartner ?? CurrentInventory;
 
             UpdateText(CharacterInfo.Age, () => string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                 character.Attributes[Attribute.Age].CurrentValue));
@@ -3123,7 +3123,7 @@ namespace Ambermoon
             }
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
                 character.TotalWeight / 1000, (character as PartyMember).MaxWeight / 1000));
-            if (npc != null)
+            if (conversationPartner != null)
             {
                 ShowTextPanel(CharacterInfo.ConversationGold, CurrentPartyMember.Gold > 0,
                     $"{DataNameProvider.GoldName}^{CurrentPartyMember.Gold}", new Rect(209, 107, 43, 15));
@@ -4323,7 +4323,7 @@ namespace Ambermoon
         {
             CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, bit);
 
-            // TODO: what if we change an adjacent world map which is visible instead? is there even a use case?
+            // Note: That might not work for world maps but there are no characters on those maps.
             if (Map.Index == mapIndex)
             {
                 if (is3D)
@@ -4823,6 +4823,9 @@ namespace Ambermoon
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent,
             bool showInitialText = true)
         {
+            // TODO: create events -> item grid
+            // TODO: player switching
+
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
@@ -4848,6 +4851,7 @@ namespace Ambermoon
             ItemGrid itemGrid = null;
             var oldKeywords = new List<string>(Dictionary);
             var newKeywords = new List<string>();
+            uint amount = 0; // gold, food, etc
 
             void SetText(string text, Action followAction = null)
             {
@@ -5029,12 +5033,62 @@ namespace Ambermoon
 
             void GiveGold()
             {
-                // TODO
+                layout.OpenAmountInputBox(DataNameProvider.GiveHowMuchGoldToNPC, 96, DataNameProvider.GoldName,
+                    CurrentPartyMember.Gold, gold =>
+                    {
+                        ClosePopup();
+                        var @event = GetFirstMatchingEvent(e => e.Interaction == InteractionType.GiveGold);
+                        if (@event != null)
+                        {
+                            if (gold < @event.Value)
+                            {
+                                SetText(DataNameProvider.MoreGoldNeeded);
+                            }
+                            else
+                            {
+                                conversationEvent = @event;
+                                currentInteractionType = InteractionType.GiveGold;
+                                amount = @event.Value;
+                                aborted = false;
+                                lastEventStatus = true;
+                                HandleNextEvent();
+                            }
+                        }
+                        else
+                        {
+                            SetText(DataNameProvider.NotInterestedInGold);
+                        }
+                    });
             }
 
             void GiveFood()
             {
-                // TODO
+                layout.OpenAmountInputBox(DataNameProvider.GiveHowMuchFoodToNPC, 109, DataNameProvider.FoodName,
+                    CurrentPartyMember.Food, food =>
+                    {
+                        ClosePopup();
+                        var @event = GetFirstMatchingEvent(e => e.Interaction == InteractionType.GiveFood);
+                        if (@event != null)
+                        {
+                            if (food < @event.Value)
+                            {
+                                SetText(DataNameProvider.MoreFoodNeeded);
+                            }
+                            else
+                            {
+                                conversationEvent = @event;
+                                currentInteractionType = InteractionType.GiveFood;
+                                amount = @event.Value;
+                                aborted = false;
+                                lastEventStatus = true;
+                                HandleNextEvent();
+                            }
+                        }
+                        else
+                        {
+                            SetText(DataNameProvider.NotInterestedInFood);
+                        }
+                    });
             }
 
             void AskToJoin()
@@ -5098,16 +5152,14 @@ namespace Ambermoon
                     {
                         var partyMember = character as PartyMember;
                         var index = partyMember.CharacterBitIndex;
-                        uint mapIndex = (uint)index >> 5;
+                        uint mapIndex = 1 + ((uint)index >> 5);
                         uint characterIndex = (uint)index & 0x1f;
-                        CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, true);
                         CurrentSavegame.CurrentPartyMemberIndices[i] =
                             CurrentSavegame.PartyMembers.SingleOrDefault(p => p.Value == partyMember).Key;
                         this.AddPartyMember(i, partyMember, followAction);
                         layout.EnableButton(4, true); // Enable "Ask to leave"
                         layout.EnableButton(5, false); // Disable "Ask to join"
-                        if (mapIndex == Map.Index)
-                            UpdateCharacterVisibility(characterIndex);
+                        SetMapCharacterBit(mapIndex, characterIndex, true);
                         break;
                     }
                 }
@@ -5117,13 +5169,11 @@ namespace Ambermoon
             {
                 var partyMember = character as PartyMember;
                 var index = partyMember.CharacterBitIndex;
-                uint mapIndex = (uint)index >> 5;
+                uint mapIndex = 1 + ((uint)index >> 5);
                 uint characterIndex = (uint)index & 0x1f;
-                CurrentSavegame.SetCharacterBit(mapIndex, characterIndex, false);
                 this.RemovePartyMember(SlotFromPartyMember(character as PartyMember).Value, false);
                 CurrentSavegame.CurrentPartyMemberIndices[SlotFromPartyMember(partyMember).Value] = 0;
-                if (mapIndex == Map.Index)
-                    UpdateCharacterVisibility(characterIndex);
+                SetMapCharacterBit(mapIndex, characterIndex, false);
             }
 
             void Exit(bool showLeaveMessage = false)
@@ -5196,10 +5246,14 @@ namespace Ambermoon
                             break;
                         }
                         case InteractionType.GiveGold:
-                            // TODO: remove gold
+                            CurrentPartyMember.RemoveGold(amount);
+                            UpdateCharacterInfo(character);
+                            nextAction?.Invoke(EventType.Interact);
                             break;
                         case InteractionType.GiveFood:
-                            // TODO: remove food
+                            CurrentPartyMember.RemoveFood(amount);
+                            UpdateCharacterInfo(character);
+                            nextAction?.Invoke(EventType.Interact);
                             break;
                         case InteractionType.JoinParty:
                             AddPartyMember(() => nextAction?.Invoke(EventType.Interact));

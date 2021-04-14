@@ -314,7 +314,7 @@ namespace Ambermoon.Render
                             if (conversationPartner == null)
                                 throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC or party member index.");
 
-                            (conversationPartner as Character).CharacterBitIndex = (ushort)((map.Map.Index << 5) | characterIndex);
+                            (conversationPartner as Character).CharacterBitIndex = (ushort)(((map.Map.Index - 1) << 5) | characterIndex);
 
                             conversationPartner.ExecuteEvents(game, trigger);
                             return true;
