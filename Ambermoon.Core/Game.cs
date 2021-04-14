@@ -4846,6 +4846,8 @@ namespace Ambermoon
             var textArea = new Rect(17, 44, 174, 79);
             UIText conversationText = null;
             ItemGrid itemGrid = null;
+            var oldKeywords = new List<string>(Dictionary);
+            var newKeywords = new List<string>();
 
             void SetText(string text, Action followAction = null)
             {
@@ -4871,6 +4873,12 @@ namespace Ambermoon
                         });
                     }
                 }
+            }
+
+            void ShowDictionary()
+            {
+                OpenDictionary(SayWord, word => !oldKeywords.Contains(word) || newKeywords.Contains(word)
+                    ? TextColor.LightYellow : TextColor.BrightGray);
             }
 
             void SayWord(string keyword)
@@ -5210,6 +5218,15 @@ namespace Ambermoon
                 }
                 else
                 {
+                    if (conversationEvent is ActionEvent actionEvent &&
+                        actionEvent.TypeOfAction == ActionEvent.ActionType.AddKeyword)
+                    {
+                        string keyword = textDictionary.Entries[(int)actionEvent.ObjectIndex];
+
+                        if (!newKeywords.Contains(keyword))
+                            newKeywords.Add(keyword);
+                    }
+
                     var trigger = EventTrigger.Always;
                     conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
                         (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, ref lastEventStatus, out aborted,
@@ -5245,7 +5262,7 @@ namespace Ambermoon
                 if (CurrentPartyMember.Food == 0)
                     layout.EnableButton(8, false);
 
-                layout.AttachEventToButton(0, () => OpenDictionary(SayWord));
+                layout.AttachEventToButton(0, ShowDictionary);
                 layout.AttachEventToButton(2, () => Exit(true));
                 layout.AttachEventToButton(3, ShowItem);
                 layout.AttachEventToButton(4, AskToLeave);
@@ -11090,8 +11107,19 @@ namespace Ambermoon
             }
         }
 
-        internal void OpenDictionary(Action<string> choiceHandler)
+        internal void OpenDictionary(Action<string> choiceHandler, Func<string, TextColor> colorProvider = null)
         {
+            void WordEntered(string word)
+            {
+                // Add to known words if the entered word is a valid dictionary word.
+                int index = textDictionary.Entries.FindIndex(entry => string.Compare(entry, word, true) == 0);
+
+                if (index != -1)
+                    CurrentSavegame.AddDictionaryWord((uint)index);
+
+                choiceHandler?.Invoke(word);
+            }
+
             const int columns = 11;
             const int rows = 10;
             var popupArea = new Rect(32, 34, columns * 16, rows * 16);
@@ -11104,16 +11132,22 @@ namespace Ambermoon
             mouthButton.DisplayLayer = 200;
             exitButton.DisplayLayer = 200;
             mouthButton.LeftClickAction = () =>
-                layout.OpenInputPopup(new Position(51, 87), 20, (string solution) => choiceHandler?.Invoke(solution));
+                layout.OpenInputPopup(new Position(51, 87), 20, WordEntered);
             exitButton.LeftClickAction = () => layout.ClosePopup();
-            popup.AddDictionaryListBox(Dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
+            var dictionaryList = popup.AddDictionaryListBox(Dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
             (
                 entry, (int _, string text) =>
                 {
                     layout.ClosePopup(false);
                     choiceHandler?.Invoke(text);
                 }
-            )).ToList());
+            )).ToList(), colorProvider);
+            int scrollRange = Math.Max(0, Dictionary.Count - 16);
+            var scrollbar = popup.AddScrollbar(layout, scrollRange, 2);
+            scrollbar.Scrolled += offset =>
+            {
+                dictionaryList.ScrollTo(offset);
+            };
             popup.Closed += UntrapMouse;
         }
 

@@ -515,12 +515,13 @@ namespace Ambermoon.UI
             listBox = ListBox.CreateSavegameListbox(renderView, game, this, items, canEdit);
         }
 
-        public void AddDictionaryListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        public ListBox AddDictionaryListBox(List<KeyValuePair<string, Action<int, string>>> items,
+            Func<string, TextColor> colorProvider)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
 
-            listBox = ListBox.CreateDictionaryListbox(renderView, game, this, items);
+            return listBox = ListBox.CreateDictionaryListbox(renderView, game, this, items, colorProvider);
         }
 
         public ListBox AddSpellListBox(List<KeyValuePair<string, Action<int, string>>> items)

@@ -7,6 +7,7 @@ namespace Ambermoon.UI
 {
     internal class ListBox
     {
+        readonly Game game;
         readonly IRenderView renderView;
         readonly List<KeyValuePair<string, Action<int, string>>> items;
         readonly List<Rect> itemAreas = new List<Rect>(10);
@@ -15,6 +16,7 @@ namespace Ambermoon.UI
         readonly IColoredRect hoverBox;
         readonly TextInput editInput;
         readonly int maxItems;
+        readonly Func<string, TextColor> colorProvider;
         int hoveredItem = -1;
         int scrollOffset = 0;
         int editingItem = -1;
@@ -27,13 +29,16 @@ namespace Ambermoon.UI
 
         ListBox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items,
             Rect area, Position itemBasePosition, int itemHeight, int hoverBoxWidth, Position relativeHoverBoxOffset,
-            bool withIndex, int maxItems, char? fallbackChar = null, bool canEdit = false)
+            bool withIndex, int maxItems, char? fallbackChar = null, bool canEdit = false,
+            Func<string, TextColor> colorProvider = null)
         {
+            this.game = game;
             this.renderView = renderView;
             this.items = items;
             this.relativeHoverBoxOffset = relativeHoverBoxOffset;
             this.maxItems = maxItems;
             this.canEdit = canEdit;
+            this.colorProvider = colorProvider;
 
             popup.AddSunkenBox(area);
             hoverBox = popup.FillArea(new Rect(itemBasePosition + relativeHoverBoxOffset, new Size(hoverBoxWidth, itemHeight)),
@@ -42,7 +47,8 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < Util.Min(maxItems, items.Count); ++i)
             {
-                var color = items[i].Value == null ? TextColor.Disabled : TextColor.Bright;
+                var color = items[i].Value == null ? TextColor.Disabled
+                    : colorProvider?.Invoke(items[i].Key) ?? TextColor.Bright;
 
                 if (withIndex)
                 {
@@ -71,24 +77,31 @@ namespace Ambermoon.UI
             }
         }
 
-        public static ListBox CreateOptionsListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items)
+        public static ListBox CreateOptionsListbox(IRenderView renderView, Game game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>>> items)
         {
             return new ListBox(renderView, game, popup, items, new Rect(64, 85, 191, 38), new Position(67, 87), 7, 189, new Position(-2, -1), false, 5);
         }
 
-        public static ListBox CreateSavegameListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items, bool canEdit)
+        public static ListBox CreateSavegameListbox(IRenderView renderView, Game game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>>> items, bool canEdit)
         {
-            return new ListBox(renderView, game, popup, items, new Rect(32, 85, 256, 73), new Position(33, 87), 7, 237, new Position(16, -1), true, 10, '?', canEdit);
+            return new ListBox(renderView, game, popup, items, new Rect(32, 85, 256, 73),
+                new Position(33, 87), 7, 237, new Position(16, -1), true, 10, '?', canEdit);
         }
 
-        public static ListBox CreateDictionaryListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items)
+        public static ListBox CreateDictionaryListbox(IRenderView renderView, Game game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>>> items, Func<string, TextColor> colorProvider)
         {
-            return new ListBox(renderView, game, popup, items, new Rect(48, 48, 130, 115), new Position(52, 50), 7, 127, new Position(-3, -1), false, 16);
+            return new ListBox(renderView, game, popup, items, new Rect(48, 48, 130, 115),
+                new Position(52, 50), 7, 127, new Position(-3, -1), false, 16, null, false, colorProvider);
         }
 
-        public static ListBox CreateSpellListbox(IRenderView renderView, Game game, Popup popup, List<KeyValuePair<string, Action<int, string>>> items)
+        public static ListBox CreateSpellListbox(IRenderView renderView, Game game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>>> items)
         {
-            return new ListBox(renderView, game, popup, items, new Rect(48, 56, 162, 115), new Position(52, 58), 7, 159, new Position(-3, -1), false, 16);
+            return new ListBox(renderView, game, popup, items, new Rect(48, 56, 162, 115),
+                new Position(52, 58), 7, 159, new Position(-3, -1), false, 16);
         }
 
         public void Destroy()
@@ -111,16 +124,20 @@ namespace Ambermoon.UI
             itemTexts[index - scrollOffset].Visible = !string.IsNullOrWhiteSpace(text);
         }
 
-        void SetTextHovered(IRenderText text, bool hovered, bool enabled)
+        void SetTextHovered(IRenderText text, bool hovered, bool enabled, string textEntry)
         {
             text.Shadow = !enabled || !hovered;
-            text.TextColor = !enabled ? TextColor.Disabled : hovered ? TextColor.Dark : TextColor.Bright;
+            text.TextColor = !enabled ? TextColor.Disabled : hovered ? TextColor.Dark
+                : colorProvider?.Invoke(textEntry) ?? TextColor.Bright;
         }
 
         void SetHoveredItem(int index)
         {
             if (hoveredItem != -1)
-                SetTextHovered(itemTexts[hoveredItem], false, items[scrollOffset + hoveredItem].Value != null);
+            {
+                int realIndex = scrollOffset + hoveredItem;
+                SetTextHovered(itemTexts[hoveredItem], false, items[realIndex].Value != null, items[realIndex].Key);
+            }
 
             if (hoveredItem != index)
                 HoverItem?.Invoke(scrollOffset + index);
@@ -129,10 +146,14 @@ namespace Ambermoon.UI
 
             if (hoveredItem != -1)
             {
-                bool enabled = items[scrollOffset + hoveredItem].Value != null;
-                SetTextHovered(itemTexts[hoveredItem], true, enabled);
+                int realIndex = scrollOffset + hoveredItem;
+                bool enabled = items[realIndex].Value != null;
+                SetTextHovered(itemTexts[hoveredItem], true, enabled, items[realIndex].Key);
                 hoverBox.Y = itemAreas[index].Y + relativeHoverBoxOffset.Y;
                 hoverBox.Visible = enabled;
+
+                if (hoverBox.Visible)
+                    hoverBox.Color = game.GetTextColor(colorProvider?.Invoke(items[realIndex].Key) ?? TextColor.Bright);
             }
             else
             {
