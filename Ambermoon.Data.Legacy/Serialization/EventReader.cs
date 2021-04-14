@@ -385,10 +385,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Create:
                 {
-                    // TODO
+                    var unused = dataReader.ReadBytes(6);
+                    var amount = dataReader.ReadByte();
+                    var itemIndex = dataReader.ReadWord();
                     @event = new CreateEvent
                     {
-                        Unused = dataReader.ReadBytes(9)
+                        Unused = unused,
+                        Amount = amount,
+                        ItemIndex = itemIndex
                     };
                     break;
                 }

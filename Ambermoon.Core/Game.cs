@@ -14,6 +14,35 @@ namespace Ambermoon
 {
     public class Game
     {
+        internal class ConversationItems : IItemStorage
+        {
+            public const int SlotsPerRow = 6;
+            public const int SlotRows = 4;
+
+            public ItemSlot[,] Slots { get; } = new ItemSlot[6, 4];
+            public bool AllowsItemDrop { get; set; } = false;
+
+            public ConversationItems()
+            {
+                for (int y = 0; y < 4; ++y)
+                {
+                    for (int x = 0; x < 6; ++x)
+                        Slots[x, y] = new ItemSlot();
+                }
+            }
+
+            public void ResetItem(int slot, ItemSlot item)
+            {
+                int column = slot % SlotsPerRow;
+                int row = slot / SlotsPerRow;
+
+                if (Slots[column, row].Add(item) != 0)
+                    throw new AmbermoonException(ExceptionScope.Application, "Unable to reset conversation item.");
+            }
+
+            public ItemSlot GetSlot(int slot) => Slots[slot % SlotsPerRow, slot / SlotsPerRow];
+        }
+
         class NameProvider : ITextNameProvider
         {
             readonly Game game;
@@ -1636,7 +1665,7 @@ namespace Ambermoon
                     else
                     {
                         var partyMember = GetPartyMember(characterSlot);
-                        ExecuteNextUpdateCycle(() => ShowConversation(partyMember, null));
+                        ExecuteNextUpdateCycle(() => ShowConversation(partyMember, null, new ConversationItems()));
                     }
                 }
             }
@@ -4827,10 +4856,8 @@ namespace Ambermoon
         /// The event chain may also contain rewards, new keywords, etc.
         /// </summary>
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent,
-            bool showInitialText = true)
+            ConversationItems createdItems, bool showInitialText = true)
         {
-            // TODO: create events -> item grid
-
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
@@ -4851,10 +4878,12 @@ namespace Ambermoon
                 UpdateCharacterInfo(character);
             }
 
+            OpenStorage = createdItems;
             ActivePlayerChanged += SwitchPlayer;
 
             conversationEvent ??= GetFirstMatchingEvent(e => e.Interaction == InteractionType.Talk);
 
+            var createdItemSlots = createdItems.Slots.ToList();
             var currentInteractionType = InteractionType.Talk;
             bool lastEventStatus = true;
             bool aborted = false;
@@ -4864,6 +4893,9 @@ namespace Ambermoon
             var oldKeywords = new List<string>(Dictionary);
             var newKeywords = new List<string>();
             uint amount = 0; // gold, food, etc
+            UIText moveItemMessage = null;
+            layout.DraggedItemDropped += DraggedItemDropped;
+            closeWindowHandler = CleanUp;            
 
             void SetText(string text, Action followAction = null)
             {
@@ -4930,11 +4962,11 @@ namespace Ambermoon
                 void Abort()
                 {
                     itemGrid.HideTooltip();
-                    itemGrid.Disabled = true;
                     itemGrid.ItemClicked -= ItemClicked;
                     message?.Destroy();
                     UntrapMouse();
                     nextClickHandler = null;
+                    ShowCreatedItems();
                 }
 
                 itemGrid.Disabled = false;
@@ -4987,7 +5019,9 @@ namespace Ambermoon
                         {
                             HandleNextEvent(eventType =>
                             {
-                                if (eventType == EventType.Interact)
+                                // Note: A create event must also trigger the item consumption.
+                                // Otherwise we might have two item grids interfering.
+                                if (eventType == EventType.Interact || eventType == EventType.Create)
                                 {
                                     // If we are here the user clicked the associated text etc.
                                     if (interactionType == InteractionType.GiveItem)
@@ -5180,6 +5214,37 @@ namespace Ambermoon
                 SetMapCharacterBit(mapIndex, characterIndex, false);
             }
 
+            void ShowCreatedItems()
+            {
+                if (createdItemSlots.Any(item => !item.Empty))
+                {
+                    itemGrid.Disabled = false;
+                    itemGrid.DisableDrag = false;
+                    itemGrid.Initialize(createdItemSlots, false);
+                }
+                else
+                {
+                    itemGrid.Disabled = true;
+                }
+            }
+
+            void CreateItem(uint itemIndex, uint amount)
+            {
+                // Note: Multiple items can be created. While at least one
+                // item was created as is not picked up, the item grid is
+                // enabled.
+                for (int i = 0; i < 24; ++i)
+                {
+                    if (createdItemSlots[i].Empty)
+                    {
+                        createdItemSlots[i].ItemIndex = itemIndex;
+                        createdItemSlots[i].Amount = (int)amount;
+                        break;
+                    }
+                }
+                ShowCreatedItems();
+            }
+
             void Exit(bool showLeaveMessage = false)
             {
                 if (showLeaveMessage)
@@ -5198,9 +5263,14 @@ namespace Ambermoon
                     }
                 }
 
+                CloseWindow();
+            }
+
+            void CleanUp()
+            {
+                layout.DraggedItemDropped -= DraggedItemDropped;
                 ActivePlayerChanged -= SwitchPlayer;
                 ConversationTextActive = false;
-                CloseWindow();
             }
 
             void HandleNextEvent(Action<EventType> followAction = null)
@@ -5237,8 +5307,11 @@ namespace Ambermoon
                 }
                 else if (conversationEvent is CreateEvent createEvent)
                 {
-                    // TODO: show item grid
-                    HandleNextEvent(followAction);
+                    // Note: It is important to trigger the next action first
+                    // as it might trigger a consumption of a previously given item.
+                    // The create item only updates the grid of created items.
+                    nextAction?.Invoke(EventType.Create);
+                    CreateItem(createEvent.ItemIndex, createEvent.Amount);
                 }
                 else if (conversationEvent is InteractEvent)
                 {
@@ -5294,9 +5367,29 @@ namespace Ambermoon
                 }
             }
 
+            void ItemDragged(int slotIndex, ItemSlot itemSlot, int amount)
+            {
+                ExecuteNextUpdateCycle(() =>
+                {
+                    moveItemMessage = layout.AddText(textArea, DataNameProvider.WhereToMoveIt,
+                        TextColor.BrightGray, TextAlign.Center);
+                    var draggedSourceSlot = itemGrid.GetItemSlot(slotIndex);
+                    draggedSourceSlot.Remove(amount);
+                    createdItemSlots[slotIndex].Replace(draggedSourceSlot);
+                    itemGrid.SetItem(slotIndex, draggedSourceSlot);
+                });
+            }
+
+            void DraggedItemDropped()
+            {
+                itemGrid.Disabled = !createdItemSlots.Any(slot => !slot.Empty);
+                moveItemMessage?.Destroy();
+                moveItemMessage = null;
+            }
+
             Fade(() =>
             {
-                SetWindow(Window.Conversation, conversationPartner, conversationEvent);
+                SetWindow(Window.Conversation, conversationPartner, conversationEvent, createdItems);
                 layout.SetLayout(LayoutType.Conversation);
                 ShowMap(false);
                 layout.Reset();
@@ -5335,8 +5428,9 @@ namespace Ambermoon
                 itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
                 itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, Enumerable.Repeat(null as ItemSlot, 24).ToList(),
                     false, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
-                itemGrid.Disabled = true;
+                itemGrid.ItemDragged += ItemDragged;
                 layout.AddItemGrid(itemGrid);
+                ShowCreatedItems();
 
                 // Note: Mouse handling in Layout assumes this is the last text (text[^1]) so ensure that.
                 conversationText = layout.AddScrollableText(textArea, ProcessText(""), TextColor.BrightGray);
@@ -11782,8 +11876,9 @@ namespace Ambermoon
                 {
                     var conversationPartner = currentWindow.WindowParameters[0] as IConversationPartner;
                     var conversationEvent = currentWindow.WindowParameters[1] as Event;
+                    var conversationItems = currentWindow.WindowParameters[2] as ConversationItems;
                     currentWindow = DefaultWindow;
-                    ShowConversation(conversationPartner, conversationEvent, false);
+                    ShowConversation(conversationPartner, conversationEvent, conversationItems, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

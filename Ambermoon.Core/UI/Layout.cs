@@ -447,6 +447,7 @@ namespace Ambermoon.UI
         internal IRenderView RenderView { get; }
         public bool TransportEnabled { get; set; } = false;
         public event Action<int, int, MouseButtons> BattleFieldSlotClicked;
+        public event Action DraggedItemDropped;
 
         public Layout(Game game, IRenderView renderView, IItemManager itemManager)
         {
@@ -3019,13 +3020,15 @@ namespace Ambermoon.UI
                 ChestText?.Destroy();
                 ChestText = null;
             }
-            else
+            else if (!(game.OpenStorage is Game.ConversationItems))
             {
                 SetInventoryMessage(null);
             }
 
             // Remove hand icons and set current status icons
             game.PartyMembers.ToList().ForEach(p => UpdateCharacterStatus(p));
+
+            DraggedItemDropped?.Invoke();
         }
 
         bool IsInventory => Type == LayoutType.Inventory;
@@ -3731,7 +3734,7 @@ namespace Ambermoon.UI
 
             if (game.OpenStorage is Chest || game.OpenStorage is Merchant)
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
-            else
+            else if (!(game.OpenStorage is Game.ConversationItems))
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
         }
 

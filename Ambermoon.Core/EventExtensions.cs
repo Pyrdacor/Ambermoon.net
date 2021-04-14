@@ -739,7 +739,7 @@ namespace Ambermoon
                                 aborted = true;
                                 return null;
                             }
-                            game.ShowConversation(conversationPartner, conversationEvent);
+                            game.ShowConversation(conversationPartner, conversationEvent, new Game.ConversationItems());
                             return null;
                         default:
                             // Note: this is handled by the conversation window.

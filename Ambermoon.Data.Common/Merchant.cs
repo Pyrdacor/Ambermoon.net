@@ -36,7 +36,7 @@ namespace Ambermoon.Data
             int row = slot / SlotsPerRow;
 
             if (Slots[column, row].Add(item) != 0)
-                throw new AmbermoonException(ExceptionScope.Application, "Unable to reset chest item.");
+                throw new AmbermoonException(ExceptionScope.Application, "Unable to reset merchant item.");
         }
 
         public ItemSlot GetSlot(int slot) => Slots[slot % SlotsPerRow, slot / SlotsPerRow];

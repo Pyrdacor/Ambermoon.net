@@ -692,12 +692,14 @@ namespace Ambermoon.Data
 
     public class CreateEvent : Event
     {
-        // TODO
+        // TODO: maybe the first 6 bytes are also used? flags, charges, etc?
+        public uint Amount { get; set; }
+        public uint ItemIndex { get; set; }
         public byte[] Unused { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}";
+            return $"{Type}: {Amount}x Item {ItemIndex}";
         }
     }
 
