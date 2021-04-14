@@ -3439,9 +3439,13 @@ namespace Ambermoon.UI
                 else if (game.ConversationTextActive && Type == LayoutType.Conversation)
                 {
                     cursorType = CursorType.Click;
-                    if (!texts[^1].WithScrolling)
-                        texts.RemoveAt(texts.Count - 1);
-                    texts[^1].Click(position);
+                    var scrollText = texts.Last(text => text.WithScrolling);
+                    if (scrollText != null)
+                    {
+                        while (!texts[^1].WithScrolling)
+                            texts.RemoveAt(texts.Count - 1);
+                        scrollText.Click(position);
+                    }
                     return true;
                 }
 
