@@ -4825,7 +4825,6 @@ namespace Ambermoon
             // TODO: Item appears under character info when moved there.
             // TODO: ItemGrid not scrollable via mouse wheel (also check other windows like chest, places, etc).
             // TODO: When switching to inventory and then back, the initial talk text is shown again.
-            // TODO: Item move speed is much too low.
 
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
@@ -4948,7 +4947,7 @@ namespace Ambermoon
                             itemGrid.ResetAnimation(itemSlot);
                             EndSequence();
                             Abort();
-                        });
+                        }, 650);
                     }
                     EndSequence();
                     message?.Destroy();
@@ -4972,14 +4971,12 @@ namespace Ambermoon
                                 {
                                     StartSequence();
                                     itemGrid.HideTooltip();
-                                    layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true,
-                                        () =>
+                                    layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
                                         {
                                             EndSequence();
                                             Abort();
                                             HandleNextEvent(null);
-                                        },
-                                        new Position(215, 75));
+                                        }, new Position(215, 75));
                                 });
                             }
                             else
@@ -4996,7 +4993,7 @@ namespace Ambermoon
                     UntrapMouse();
                     StartSequence();
                     itemGrid.HideTooltip();
-                    itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot));
+                    itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot), 650);
                 }
                 itemGrid.ItemClicked += ItemClicked;
             }

@@ -754,7 +754,8 @@ namespace Ambermoon.UI
             }
         }
 
-        public void PlayMoveAnimation(ItemSlot itemSlot, Position targetPosition, Action finishAction)
+        public void PlayMoveAnimation(ItemSlot itemSlot, Position targetPosition, Action finishAction,
+            int pixelsPerSecond = 300)
         {
             var slotPosition = GetSlotPosition(SlotFromItemSlot(itemSlot));
             int slotIndex = SlotFromItemSlot(itemSlot);
@@ -773,7 +774,7 @@ namespace Ambermoon.UI
             item.ShowItemAmount = false;
 
             ItemAnimation.Play(game, renderView, ItemAnimation.Type.Move, startPosition, MoveFinished,
-                TimeSpan.FromMilliseconds(50), targetPosition, item);
+                TimeSpan.FromMilliseconds(50), targetPosition, item, pixelsPerSecond);
         }
 
         public void PlayShakeAnimation(ItemSlot itemSlot, Action finishAction)

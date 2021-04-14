@@ -110,29 +110,29 @@ namespace Ambermoon.Render
         }
 
         public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
-            Action finishAction = null, TimeSpan? initialDelay = null)
+            Action finishAction = null, TimeSpan? initialDelay = null, int pixelsPerSecond = 300)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, null,
-                GetGraphicIndex(game, type, null), null);
+                GetGraphicIndex(game, type, null), null, pixelsPerSecond);
         }
 
         public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
-            Action finishAction, TimeSpan? initialDelay, Position targetPosition, Item item)
+            Action finishAction, TimeSpan? initialDelay, Position targetPosition, Item item, int pixelsPerSecond = 300)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, targetPosition,
-                GetGraphicIndex(game, type, item?.Index), null);
+                GetGraphicIndex(game, type, item?.Index), null, pixelsPerSecond);
         }
 
         public static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
-            Action finishAction, TimeSpan? initialDelay, Position targetPosition, UIItem item)
+            Action finishAction, TimeSpan? initialDelay, Position targetPosition, UIItem item, int pixelsPerSecond = 300)
         {
             Play(game, renderView, type, startPosition, finishAction, initialDelay, targetPosition,
-                GetGraphicIndex(game, type, item?.Item?.ItemIndex), item);
+                GetGraphicIndex(game, type, item?.Item?.ItemIndex), item, pixelsPerSecond);
         }
 
         static void Play(Game game, IRenderView renderView, Type type, Position startPosition,
             Action finishAction, TimeSpan? initialDelay, Position targetPosition, uint graphicIndex,
-            UIItem item)
+            UIItem item, int pixelsPerSecond = 300)
         {
             void Start()
             {
@@ -180,7 +180,7 @@ namespace Ambermoon.Render
                     }
                     case Type.Move:
                     {
-                        PlayMoveAnimation(game, startPosition, targetPosition, item, finishAction);
+                        PlayMoveAnimation(game, startPosition, targetPosition, item, finishAction, pixelsPerSecond);
                         break;
                     }
                     case Type.Shake:
@@ -201,12 +201,12 @@ namespace Ambermoon.Render
                 Start();
         }
 
-        static void PlayMoveAnimation(Game game, Position startPosition, Position targetPosition, UIItem item, Action finishAction)
+        static void PlayMoveAnimation(Game game, Position startPosition, Position targetPosition, UIItem item,
+            Action finishAction, int pixelsPerSecond = 300)
         {
-            const int pixelsPerSecond = 300;
             const int timePerFrame = 10;
-            int distPerFrame = pixelsPerSecond * timePerFrame / 1000;
             var dist = targetPosition - startPosition;
+            int distPerFrame = pixelsPerSecond * timePerFrame / 1000;
             int moved = 0;
             float length = (float)Math.Sqrt(dist.X * dist.X + dist.Y * dist.Y);
             int maxMove = Util.Ceiling(length);
