@@ -5249,7 +5249,12 @@ namespace Ambermoon
             {
                 if (showLeaveMessage)
                 {
-                    // TODO: test if there are important items and if so deny and show info message instead
+                    if (createdItems.HasAnyImportantItem(ItemManager))
+                    {
+                        SetText(DataNameProvider.DontForgetItems +
+                            string.Join(", ", createdItems.GetImportantItemNames(ItemManager)) + ".");
+                        return;
+                    }
 
                     conversationEvent = GetFirstMatchingEvent(e => e.Interaction == InteractionType.Leave);
 
