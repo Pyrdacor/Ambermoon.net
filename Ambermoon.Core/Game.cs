@@ -561,8 +561,9 @@ namespace Ambermoon
             {
                 if (DateTime.Now >= timedEvents[i].ExecutionTime)
                 {
-                    timedEvents[i].Action?.Invoke();
+                    var timedEvent = timedEvents[i];
                     timedEvents.RemoveAt(i);
+                    timedEvent.Action?.Invoke();
                 }
             }
 
@@ -4863,12 +4864,15 @@ namespace Ambermoon
                 {
                     if (toEnd)
                     {
-                        conversationText.Scrolled -= TextClicked;
+                        conversationText.Clicked -= TextClicked;
                         conversationText.Visible = false;
                         InputEnable = true;
                         ConversationTextActive = false;
-                        ExecuteNextUpdateCycle(() => CursorType = CursorType.Sword);
-                        followAction?.Invoke();
+                        ExecuteNextUpdateCycle(() =>
+                        {
+                            CursorType = CursorType.Sword;
+                            followAction?.Invoke();
+                        });
                     }
                 }
             }
@@ -4907,6 +4911,7 @@ namespace Ambermoon
                 {
                     itemGrid.HideTooltip();
                     itemGrid.Disabled = true;
+                    itemGrid.ItemClicked -= ItemClicked;
                     message?.Destroy();
                     UntrapMouse();
                     nextClickHandler = null;
@@ -4968,7 +4973,13 @@ namespace Ambermoon
                                     StartSequence();
                                     itemGrid.HideTooltip();
                                     layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true,
-                                        () => HandleNextEvent(null), new Position(215, 75));
+                                        () =>
+                                        {
+                                            EndSequence();
+                                            Abort();
+                                            HandleNextEvent(null);
+                                        },
+                                        new Position(215, 75));
                                 });
                             }
                             else
@@ -4978,22 +4989,26 @@ namespace Ambermoon
                         });
                     }
                 }
-                itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                 {
+                    itemGrid.ItemClicked -= ItemClicked;
+                    nextClickHandler = null;
+                    UntrapMouse();
                     StartSequence();
                     itemGrid.HideTooltip();
                     itemGrid.PlayMoveAnimation(itemSlot, new Position(215, 75), () => CheckItem(itemSlot));
-                };
+                }
+                itemGrid.ItemClicked += ItemClicked;
             }
 
             void ShowItem()
             {
-                ShowItems(DataNameProvider.WhichItemToGive, InteractionType.GiveItem);
+                ShowItems(DataNameProvider.WhichItemToShow, InteractionType.ShowItem);
             }
 
             void GiveItem()
             {
-                ShowItems(DataNameProvider.WhichItemToShow, InteractionType.ShowItem);
+                ShowItems(DataNameProvider.WhichItemToGive, InteractionType.GiveItem);
             }
 
             void GiveGold()
