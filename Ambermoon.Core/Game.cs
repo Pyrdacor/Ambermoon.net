@@ -4820,10 +4820,10 @@ namespace Ambermoon
         /// 
         /// The event chain may also contain rewards, new keywords, etc.
         /// </summary>
-        internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent)
+        internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent,
+            bool showInitialText = true)
         {
             // TODO: ItemGrid not scrollable via mouse wheel (also check other windows like chest, places, etc).
-            // TODO: When switching to inventory and then back, the initial talk text is shown again.
 
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
@@ -5249,7 +5249,8 @@ namespace Ambermoon
                 conversationText = layout.AddScrollableText(textArea, ProcessText(""), TextColor.BrightGray);
                 conversationText.Visible = false;
 
-                HandleNextEvent();
+                if (showInitialText)
+                    HandleNextEvent();
             });
         }
 
@@ -11672,7 +11673,7 @@ namespace Ambermoon
                     var conversationPartner = currentWindow.WindowParameters[0] as IConversationPartner;
                     var conversationEvent = currentWindow.WindowParameters[1] as Event;
                     currentWindow = DefaultWindow;
-                    ShowConversation(conversationPartner, conversationEvent);
+                    ShowConversation(conversationPartner, conversationEvent, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
