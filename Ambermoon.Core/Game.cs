@@ -4822,7 +4822,6 @@ namespace Ambermoon
         /// </summary>
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent)
         {
-            // TODO: Item appears under character info when moved there.
             // TODO: ItemGrid not scrollable via mouse wheel (also check other windows like chest, places, etc).
             // TODO: When switching to inventory and then back, the initial talk text is shown again.
 
@@ -4952,6 +4951,7 @@ namespace Ambermoon
                     EndSequence();
                     message?.Destroy();
                     message = null;
+                    layout.GetItem(itemSlot).Dragged = true; // Keep it above UI
                     UntrapMouse();
                     conversationEvent = GetFirstMatchingEvent(e => e.Interaction == interactionType && e.ItemIndex == itemSlot.ItemIndex);
 
