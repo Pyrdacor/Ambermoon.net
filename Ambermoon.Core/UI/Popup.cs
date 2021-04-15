@@ -241,15 +241,15 @@ namespace Ambermoon.UI
 
         public Button AddButton(Position position)
         {
-            // TODO: use named palette colors
             var brightBorderColor = game.GetUIColor(31);
             var darkBorderColor = game.GetUIColor(26);            
 
             FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, 1);
-            FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);            
+            FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, 2);
+            FillArea(new Rect(position.X, position.Y, Button.Width, Button.Height), Color.Black, 3);
             var button = new Button(renderView, position, null);
             button.PaletteIndex = game.UIPaletteIndex;
-            button.DisplayLayer = (byte)Util.Min(255, DisplayLayer + 3);
+            button.DisplayLayer = (byte)Util.Min(255, DisplayLayer + 4);
             buttons.Add(button);
             return button;
         }

@@ -195,6 +195,9 @@ namespace Ambermoon.Data
         string YouLevitate { get; }
         string WhichNumber { get; }
         string AutomapperNotWorkingHere { get; }
+        string GameOverLoadOrQuit { get; }
+        string GameOverMessage { get; }
+        string ReallyQuit { get; }
 
 
         #region Conversations

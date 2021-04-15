@@ -224,6 +224,7 @@ namespace Ambermoon
         } = false;
         bool ingame = false;
         bool is3D = false;
+        internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
@@ -535,9 +536,24 @@ namespace Ambermoon
             }
         }
 
-        public void Quit()
+        public void Quit() => Quit(null);
+
+        void Quit(Action abortAction)
         {
-            QuitRequested?.Invoke();
+            bool wasPaused = paused;
+            ShowDecisionPopup(DataNameProvider.ReallyQuit, response =>
+            {
+                if (response == PopupTextEvent.Response.Yes)
+                {
+                    QuitRequested?.Invoke();
+                }
+                else
+                {
+                    if (wasPaused)
+                        Pause();
+                    abortAction?.Invoke();
+                }
+            }, 1, 50, TextAlign.Center);
         }
 
         public void Pause()
@@ -1019,6 +1035,7 @@ namespace Ambermoon
         public void Start(Savegame savegame)
         {
             Cleanup();
+            GameOverButtonsVisible = false;
             allInputDisabled = true;
             layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Render.Color.Black, FadeEffectType.FadeOut, FadeTime / 2);
             AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () => allInputDisabled = false);
@@ -1757,7 +1774,7 @@ namespace Ambermoon
                 return;
             }
 
-            if (allInputDisabled || pickingNewLeader)
+            if (allInputDisabled || pickingNewLeader || GameOverButtonsVisible)
                 return;
 
             if (!InputEnable)
@@ -2211,7 +2228,7 @@ namespace Ambermoon
                         layout.Hover(renderView.ScreenToGame(cursorPosition), ref cursorType);
                         CursorType = cursorType;
                     }
-                    else if (layout.Type == LayoutType.Event ||
+                    else if ((layout.Type == LayoutType.Event && !GameOverButtonsVisible) ||
                         (ConversationTextActive && layout.Type == LayoutType.Conversation) ||
                         (currentBattle?.RoundActive == true && currentBattle?.ReadyForNextAction == true) ||
                         currentBattle?.WaitForClick == true ||
@@ -4859,6 +4876,8 @@ namespace Ambermoon
             ConversationItems createdItems, bool showInitialText = true)
         {
             // TODO: Test if level ups in conversations work properly
+            // TODO: The new keyword coloring is not applied when scrolled
+            // (e.g. when the new keyword only appears after scrolling, the yellow color is only applied after hovering)
 
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
@@ -7868,26 +7887,7 @@ namespace Ambermoon
 
         void GameOver()
         {
-            // TODO
-            ShowMessagePopup("Game over screen not implemented yet. Instead default save is loaded now.", () =>
-            {
-                ClosePopup();
-                CloseWindow();
-                try
-                {
-                    LoadGame(0);
-                }
-                catch
-                {
-                    var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
-
-                    initialSavegame.PartyMembers[1].Name = CurrentSavegame.PartyMembers[1].Name;
-                    initialSavegame.PartyMembers[1].Gender = CurrentSavegame.PartyMembers[1].Gender;
-                    initialSavegame.PartyMembers[1].PortraitIndex = CurrentSavegame.PartyMembers[1].PortraitIndex;
-
-                    Start(initialSavegame);
-                }
-            });
+            ShowEvent(ProcessText(DataNameProvider.GameOverMessage), 8, null, true);
         }
 
         internal uint DistributeGold(uint gold, bool force)
@@ -11405,6 +11405,74 @@ namespace Ambermoon
             CursorType = CursorType.Click;
         }
 
+        void ShowEvent(IText text, uint imageIndex, Action closeAction,
+            bool gameOver = false)
+        {
+            GameOverButtonsVisible = false;
+
+            Fade(() =>
+            {
+                SetWindow(Window.Event);
+                layout.SetLayout(LayoutType.Event);
+                ShowMap(false);
+                layout.Reset();
+
+                if (gameOver)
+                {
+                    currentUIPaletteIndex = 37; // game over palette
+                    layout.UpdateUIPalette(currentUIPaletteIndex);
+                    cursor.UpdatePalette(this);
+                }
+
+                layout.AddEventPicture(imageIndex);
+                layout.FillArea(new Rect(16, 138, 288, 55), GetUIColor(28), false);
+
+                // Position = 18,139, max 40 chars per line and 7 lines.
+                var textArea = new Rect(18, 139, 285, 49);
+                var scrollableText = layout.AddScrollableText(textArea, text, TextColor.BrightGray);
+                scrollableText.Clicked += scrolledToEnd =>
+                {
+                    if (scrolledToEnd)
+                    {
+                        if (gameOver)
+                        {
+                            scrollableText?.Destroy();
+                            scrollableText = null;
+                            AddLoadQuitOptions();
+                        }
+                        else
+                        {
+                            CloseWindow(closeAction);
+                        }
+                    }
+                };
+                CursorType = CursorType.Click;
+                InputEnable = false;
+                void AddLoadQuitOptions()
+                {
+                    GameOverButtonsVisible = true;
+                    InputEnable = true;
+                    layout.AddText(textArea, ProcessText(DataNameProvider.GameOverLoadOrQuit), TextColor.BrightGray);
+                    void ShowButtons()
+                    {
+                        ExecuteNextUpdateCycle(() => CursorType = CursorType.Sword);
+                        layout.ShowGameOverButtons(load =>
+                        {
+                            if (load)
+                            {
+                                layout.OpenLoadMenu(CloseWindow, ShowButtons);
+                            }
+                            else
+                            {
+                                Quit(ShowButtons);
+                            }
+                        });
+                    }
+                    ShowButtons();
+                }
+            });
+        }
+
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
         {
             var text = ProcessText(map.Texts[(int)popupTextEvent.TextIndex]);
@@ -11412,26 +11480,8 @@ namespace Ambermoon
             if (popupTextEvent.HasImage)
             {
                 // Those always use a custom layout
-                Fade(() =>
-                {
-                    SetWindow(Window.Event);
-                    layout.SetLayout(LayoutType.Event);
-                    ShowMap(false);
-                    layout.Reset();
-                    layout.AddEventPicture(popupTextEvent.EventImageIndex);
-                    layout.FillArea(new Rect(16, 138, 288, 55), GetUIColor(28), false);
-
-                    // Position = 18,139, max 40 chars per line and 7 lines.
-                    var textArea = new Rect(18, 139, 285, 49);
-                    var scrollableText = layout.AddScrollableText(textArea, text, TextColor.BrightGray);
-                    scrollableText.Clicked += scrolledToEnd =>
-                    {
-                        if (scrolledToEnd)
-                            CloseWindow(() => responseHandler?.Invoke(PopupTextEvent.Response.Close));
-                    };
-                    CursorType = CursorType.Click;
-                    InputEnable = false;
-                });
+                ShowEvent(text, popupTextEvent.EventImageIndex,
+                    () => responseHandler?.Invoke(PopupTextEvent.Response.Close));
             }
             else
             {

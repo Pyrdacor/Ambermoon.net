@@ -217,6 +217,9 @@
         public string YouLevitate => executableData.Messages.GetEntry(Messages.Index.YouLevitate);
         public string WhichNumber => executableData.Messages.GetEntry(Messages.Index.WhichNumber);
         public string AutomapperNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.AutomapperNotWorkingHere);
+        public string GameOverLoadOrQuit => executableData.Messages.GetEntry(Messages.Index.GameOverLoadOrQuit);
+        public string GameOverMessage => executableData.Messages.GetEntry(Messages.Index.GameOver);
+        public string ReallyQuit => executableData.Messages.GetEntry(Messages.Index.ReallyQuit);
 
 
         #region Conversations

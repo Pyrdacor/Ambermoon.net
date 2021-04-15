@@ -645,14 +645,14 @@ namespace Ambermoon.UI
             AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), game.UIPaletteIndex, 2);
             AddText(textArea, versionString, TextColor.BrightGray, TextAlign.Center, 3);
 
-            buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false); // TODO: ask to really quit etc
+            buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false);
             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(2, ButtonType.Exit, false, CloseOptionMenu, false);
             buttonGrid.SetButton(3, ButtonType.Opt, false, OpenOptions, false);
             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(6, ButtonType.Save, game.BattleActive, OpenSaveMenu, false);
-            buttonGrid.SetButton(7, ButtonType.Load, false, OpenLoadMenu, false);
+            buttonGrid.SetButton(7, ButtonType.Load, false, () => OpenLoadMenu(), false);
             buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
         }
 
@@ -903,24 +903,32 @@ namespace Ambermoon.UI
 
         internal void ClearLeftUpIgnoring() => ignoreNextMouseUp = false;
 
-        void OpenLoadMenu()
+        internal void OpenLoadMenu(Action preLoadAction = null, Action abortAction = null)
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
-            OpenPopup(new Position(16, 62), 18, 7, true, false);
+            var savegamePopup = OpenPopup(new Position(16, 62), 18, 7, true, false);
             activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.BrightGray, TextAlign.Center);
             activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Load(slot + 1, name))
             ).ToList(), false);
 
-            void Close() => ClosePopup(false);
+            savegamePopup.Closed += Close;
+
+            void Close()
+            {
+                ClosePopup(false);
+                abortAction?.Invoke();
+            }
 
             void Load(int slot, string name)
             {
                 if (!string.IsNullOrEmpty(name))
                 {
+                    ClosePopup(false);
                     OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyLoad), () =>
                     {
                         ClosePopup();
+                        preLoadAction?.Invoke();
                         game.LoadGame(slot);
                     }, Close, Close);
                 }
@@ -1993,29 +2001,61 @@ namespace Ambermoon.UI
             game.InputEnable = false;
         }
 
+        Button AddButton(Position position, ButtonType type, Action leftClickAction, byte displayLayer,
+            ref List<FilledArea> areas)
+        {
+            var brightBorderColor = game.GetUIColor(31);
+            var darkBorderColor = game.GetUIColor(26);
+            displayLayer = Math.Min(displayLayer, (byte)251);
+
+            areas.Add(FillArea(new Rect(position.X, position.Y, Button.Width + 1, Button.Height + 1), brightBorderColor, displayLayer++));
+            areas.Add(FillArea(new Rect(position.X - 1, position.Y - 1, Button.Width + 1, Button.Height + 1), darkBorderColor, displayLayer++));
+            areas.Add(FillArea(new Rect(position.X, position.Y, Button.Width, Button.Height), Render.Color.Black, displayLayer++));
+            var button = new Button(RenderView, position, null);
+            button.PaletteIndex = game.UIPaletteIndex;
+            button.ButtonType = type;
+            button.Disabled = false;
+            button.DisplayLayer = displayLayer;
+            button.LeftClickAction = leftClickAction;
+            return button;
+        }
+
+        internal void ShowGameOverButtons(Action<bool> choiceEvent)
+        {
+            var areas = new List<FilledArea>();
+            questionYesButton?.Destroy();
+            questionNoButton?.Destroy();
+            questionYesButton = AddButton(new Position(128, 169), ButtonType.Load, () => Choose(true), 2, ref areas);
+            questionNoButton = AddButton(new Position(128 + Button.Width, 169), ButtonType.Quit, () => Choose(false), 2, ref areas);
+
+            void Choose(bool load)
+            {
+                areas.ForEach(area => area?.Destroy());
+                questionYesButton?.Destroy();
+                questionYesButton = null;
+                questionNoButton?.Destroy();
+                questionNoButton = null;
+                game.InputEnable = true;
+                choiceEvent?.Invoke(load);
+            }
+        }
+
         internal void ShowPlaceQuestion(string message, Action<bool> answerEvent, TextAlign textAlign = TextAlign.Center)
         {
             var bounds = new Rect(114, 46, 189, 28);
+            var areas = new List<FilledArea>();
             ChestText?.Destroy();
             ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
-            var buttonPanel = AddPanel(new Rect(223, 75, 2 * Button.Width, Button.Height), 2);
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
-            questionYesButton = new Button(RenderView, new Position(223, 75));
-            questionNoButton = new Button(RenderView, new Position(223 + Button.Width, 75));
-            questionYesButton.PaletteIndex = questionNoButton.PaletteIndex = game.UIPaletteIndex;
-            questionYesButton.ButtonType = ButtonType.Yes;
-            questionNoButton.ButtonType = ButtonType.No;
-            questionYesButton.Disabled = false;
-            questionNoButton.Disabled = false;
-            questionYesButton.LeftClickAction = () => Answer(true);
-            questionNoButton.LeftClickAction = () => Answer(false);
+            questionYesButton = AddButton(new Position(223, 75), ButtonType.Yes, () => Answer(true), 2, ref areas);
+            questionNoButton = AddButton(new Position(223 + Button.Width, 75), ButtonType.No, () => Answer(false), 2, ref areas);
             game.CursorType = CursorType.Click;
             game.InputEnable = false;
 
             void Answer(bool answer)
             {
-                buttonPanel?.Destroy();
+                areas.ForEach(area => area?.Destroy());
                 questionYesButton?.Destroy();
                 questionYesButton = null;
                 questionNoButton?.Destroy();
@@ -3404,7 +3444,7 @@ namespace Ambermoon.UI
                     freeScrolledText.Click(position);
                     return true;
                 }
-                else if (Type == LayoutType.Event)
+                else if (Type == LayoutType.Event && !game.GameOverButtonsVisible)
                 {
                     cursorType = CursorType.Click;
                     texts[0].Click(position);
