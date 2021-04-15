@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.6.x beta - Conversations, gameover screen
+- Version [0.6.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.6.1beta): Hotfix for save/load game issues
 - Version [0.6.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.6.0beta): Fully implemented conversations, added UI palette switching, bugfixing
 
 ## 0.5.x beta - Automap, spinners and traps
