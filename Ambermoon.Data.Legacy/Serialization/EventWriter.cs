@@ -62,7 +62,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write(doorEvent.DoorIndex);
                     dataWriter.Write((byte)doorEvent.TextIndex);
                     dataWriter.Write((byte)doorEvent.UnlockTextIndex);
-                    dataWriter.Write(doorEvent.Unknown);
+                    dataWriter.Write(doorEvent.Unused);
                     dataWriter.Write((ushort)doorEvent.KeyIndex);
                     dataWriter.Write((ushort)doorEvent.UnlockFailedEventIndex);
                     break;
@@ -90,15 +90,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     // event image index (0xff = no image)
                     // trigger (1 = move, 2 = cursor, 3 = both)
-                    // 1 unknown byte
+                    // auto remove event
                     // map text index as word
                     // 4 unknown bytes
                     var textEvent = @event as PopupTextEvent;
                     dataWriter.Write((byte)textEvent.EventImageIndex);
                     dataWriter.WriteEnumAsByte(textEvent.PopupTrigger);
-                    dataWriter.Write(textEvent.Unknown1);
+                    dataWriter.Write((byte)(textEvent.AutoRemove ? 1 : 0));
                     dataWriter.Write((ushort)textEvent.TextIndex);
-                    dataWriter.Write(textEvent.Unknown2);
+                    dataWriter.Write(textEvent.Unknown);
                     break;
                 }
                 case EventType.Spinner:

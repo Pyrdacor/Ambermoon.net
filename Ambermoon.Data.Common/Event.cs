@@ -148,14 +148,14 @@ namespace Ambermoon.Data
         public byte DoorIndex { get; set; }
         public uint TextIndex { get; set; }
         public uint UnlockTextIndex { get; set; }
-        public byte Unknown { get; set; }
+        public byte Unused { get; set; }
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
 
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
-            return $"{Type}: Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Lock=[{lockType}], Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, UnlockText {(UnlockTextIndex == 0xff ? "none" : UnlockTextIndex.ToString())}, Door Index {DoorIndex}, Unknown {Unknown:x2}";
+            return $"{Type}: Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Lock=[{lockType}], Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, UnlockText {(UnlockTextIndex == 0xff ? "none" : UnlockTextIndex.ToString())}, Door Index {DoorIndex}";
         }
     }
 
@@ -228,12 +228,12 @@ namespace Ambermoon.Data
         public EventTrigger PopupTrigger { get; set; }
         public bool CanTriggerByMoving => PopupTrigger.HasFlag(EventTrigger.Move);
         public bool CanTriggerByCursor => PopupTrigger.HasFlag(EventTrigger.EyeCursor);
-        public byte Unknown1 { get; set; }
-        public byte[] Unknown2 { get; set; }
+        public bool AutoRemove { get; set; }
+        public byte[] Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, Unknown1 {Unknown1}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, AutoRemove {AutoRemove}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 

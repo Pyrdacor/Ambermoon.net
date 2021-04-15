@@ -108,7 +108,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var doorIndex = dataReader.ReadByte();
                     var textIndex = dataReader.ReadByte();
                     var unlockTextIndex = dataReader.ReadByte();
-                    var unknown = dataReader.ReadByte(); // Unknown
+                    var unused = dataReader.ReadByte();
                     uint keyIndex = dataReader.ReadWord();
                     var unlockFailEventIndex = dataReader.ReadWord();
                     @event = new DoorEvent
@@ -117,7 +117,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         DoorIndex = doorIndex,
                         TextIndex = textIndex,
                         UnlockTextIndex = unlockTextIndex,
-                        Unknown = unknown,
+                        Unused = unused,
                         KeyIndex = keyIndex,
                         UnlockFailedEventIndex = unlockFailEventIndex
                     };
@@ -155,21 +155,21 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     // event image index (0xff = no image)
                     // trigger (1 = move, 2 = eye cursor, 3 = both)
-                    // 1 unknown byte
+                    // auto remove event
                     // map text index as word
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
                     var popupTrigger = (EventTrigger)dataReader.ReadByte();
-                    var unknown1 = dataReader.ReadByte();
+                    var autoRemove = dataReader.ReadByte() != 0;
                     var textIndex = dataReader.ReadWord();
-                    var unknown2 = dataReader.ReadBytes(4);
+                    var unknown = dataReader.ReadBytes(4);
                     @event = new PopupTextEvent
                     {
                         EventImageIndex = eventImageIndex,
                         PopupTrigger = popupTrigger,
                         TextIndex = textIndex,
-                        Unknown1 = unknown1,
-                        Unknown2 = unknown2
+                        AutoRemove = autoRemove,
+                        Unknown = unknown
                     };
                     break;
                 }

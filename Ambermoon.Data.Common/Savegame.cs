@@ -71,6 +71,7 @@ namespace Ambermoon.Data
         /// </summary>
         public ulong[] MapEventBits { get; } = new ulong[1024]; // valid maps are 1 to 528, but these bits allow for maps 1 to 1024
         public bool IsEventActive(uint mapIndex, uint eventIndex) => !GetEventBit(mapIndex, eventIndex);
+        public void ActivateEvent(uint mapIndex, uint eventIndex, bool activate) => SetEventBit(mapIndex, eventIndex, !activate);
         public bool GetEventBit(uint mapIndex, uint eventIndex)
         {
             if (mapIndex < 1 || mapIndex > 1024)

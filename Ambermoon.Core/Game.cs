@@ -2124,13 +2124,7 @@ namespace Ambermoon
                         {
                             if (!TriggerMapEvents(EventTrigger.Eye, relativePosition))
                             {
-                                if (!TriggerMapEvents(EventTrigger.Hand, relativePosition))
-                                {
-                                    if (!is3D && player2D?.DisplayArea.Contains(mapViewArea.Position + relativePosition) == true)
-                                    {
-                                        SpeakToParty();
-                                    }
-                                }
+                                TriggerMapEvents(EventTrigger.Hand, relativePosition);
                             }
                         }
                     }
