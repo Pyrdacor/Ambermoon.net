@@ -20,6 +20,8 @@ namespace Ambermoon.UI
         readonly IRenderText saveOptionText = null;
         readonly Tooltip saveOptionTooltip = new Tooltip();
         readonly IRenderText saveOptionTooltipText = null;
+        readonly Dictionary<Button, IColoredRect[]> buttonBackgrounds
+            = new Dictionary<Button, IColoredRect[]>();
         IColoredRect saveOptionTooltipBorder = null;
         IColoredRect saveOptionTooltipBackground = null;
         IText currentTooltipText = null;
@@ -38,7 +40,7 @@ namespace Ambermoon.UI
                     selectedVersion = value;
                     bool externalVersion = selectedVersion == 2;
 
-                    changeSaveOptionButton.Visible = externalVersion;
+                    ShowSaveOptionButton(externalVersion);
                     saveOptionText.Visible = externalVersion;
                     selectedVersionMarker.X = versionAreas[value].X;
                     selectedVersionMarker.Y = versionAreas[value].Y;
@@ -143,7 +145,7 @@ namespace Ambermoon.UI
             selectedSaveOption = (int)saveOption % 2;
             changeSaveOptionButton = CreateButton(new Position(versionListArea.X, versionListArea.Bottom + 3), textureAtlasManager);
             changeSaveOptionButton.ButtonType = Data.Enumerations.ButtonType.MoveRight;
-            changeSaveOptionButton.Visible = false;
+            ShowSaveOptionButton(false);
             changeSaveOptionButton.LeftClickAction = () => ToggleSaveOption(savegameOptions, savegameOptionTooltips);
             var saveOptionPosition = new Position(versionListArea.X + 34, versionListArea.Bottom + 9);
             saveOptionText = AddText(saveOptionPosition, savegameOptions[selectedSaveOption], TextColor.BrightGray);
@@ -164,11 +166,20 @@ namespace Ambermoon.UI
             SelectedVersion = selectedVersion;
         }
 
+        void ShowSaveOptionButton(bool show)
+        {
+            changeSaveOptionButton.Visible = show;
+            foreach (var background in buttonBackgrounds[changeSaveOptionButton])
+                background.Visible = show;
+        }
+
         Button CreateButton(Position position, TextureAtlasManager textureAtlasManager)
         {
             var button = new Button(renderView, position, textureAtlasManager);
             button.Disabled = false;
-            button.DisplayLayer = 1;
+            button.DisplayLayer = 3;
+            AddSunkenBox(new Rect(position.X - 1, position.Y - 1, Button.Width + 2, Button.Height + 2), 2, 0,
+                button);
             return button;
         }
 
@@ -201,22 +212,31 @@ namespace Ambermoon.UI
             );
         }
 
-        void AddSunkenBox(Rect area, byte displayLayer = 1)
+        void AddSunkenBox(Rect area, byte displayLayer = 1, byte fillColorIndex = 27,
+            Button associatedButton = null)
         {
             var darkBorderColor = GetPaletteColor(26);
             var brightBorderColor = GetPaletteColor(31);
-            var fillColor = GetPaletteColor(27);
+            var fillColor = GetPaletteColor(fillColorIndex);
 
             // upper dark border
-            FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, displayLayer);
+            var upperArea = FillArea(new Rect(area.X, area.Y, area.Width - 1, 1), darkBorderColor, displayLayer);
             // left dark border
-            FillArea(new Rect(area.X, area.Y + 1, 1, area.Height - 2), darkBorderColor, displayLayer);
+            var leftArea = FillArea(new Rect(area.X, area.Y + 1, 1, area.Height - 2), darkBorderColor, displayLayer);
             // fill
-            FillArea(new Rect(area.X + 1, area.Y + 1, area.Width - 2, area.Height - 2), fillColor, displayLayer);
+            var fillArea = FillArea(new Rect(area.X + 1, area.Y + 1, area.Width - 2, area.Height - 2), fillColor, displayLayer);
             // right bright border
-            FillArea(new Rect(area.Right - 1, area.Y + 1, 1, area.Height - 2), brightBorderColor, displayLayer);
+            var rightArea = FillArea(new Rect(area.Right - 1, area.Y + 1, 1, area.Height - 2), brightBorderColor, displayLayer);
             // lower bright border
-            FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, displayLayer);
+            var lowerArea = FillArea(new Rect(area.X + 1, area.Bottom - 1, area.Width - 1, 1), brightBorderColor, displayLayer);
+
+            if (associatedButton != null)
+            {
+                buttonBackgrounds[associatedButton] = new IColoredRect[]
+                {
+                    upperArea, leftArea, fillArea, rightArea, lowerArea
+                };
+            }
         }
 
         IColoredRect FillArea(Rect area, Color color, byte displayLayer = 1)
