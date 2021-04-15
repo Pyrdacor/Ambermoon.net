@@ -131,12 +131,15 @@ If you want to help use the issue tracker to report bugs or create pull requests
 
 I appreciate any kind of help.
 
-Special thanks to:
+Special thanks to my top patreons:
+- [Other Retro Matt](https://twitter.com/GothmogPlays)
+- [Mankie](https://twitter.com/MankiesWorkshop)
+
+Special thanks to some special contributors as well:
+- kermitfrog
 - Metibor
 - Thallyrion
 - a1exh
-- kermitfrog
-- Karol-13
 
 
 ## Other projects
