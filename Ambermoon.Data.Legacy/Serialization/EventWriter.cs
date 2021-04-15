@@ -197,6 +197,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var actionEvent = @event as ActionEvent;
                     dataWriter.WriteEnumAsByte(actionEvent.TypeOfAction);
                     dataWriter.Write((byte)actionEvent.Value);
+                    dataWriter.Write((byte)actionEvent.Count);
                     dataWriter.Write(actionEvent.Unknown1);
                     dataWriter.Write((ushort)actionEvent.ObjectIndex);
                     dataWriter.Write(actionEvent.Unknown2);

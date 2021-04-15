@@ -5211,7 +5211,7 @@ namespace Ambermoon
                 var index = partyMember.CharacterBitIndex;
                 uint mapIndex = 1 + ((uint)index >> 5);
                 uint characterIndex = (uint)index & 0x1f;
-                this.RemovePartyMember(SlotFromPartyMember(character as PartyMember).Value, false);
+                this.RemovePartyMember(SlotFromPartyMember(character as PartyMember).Value, false, followAction);
                 CurrentSavegame.CurrentPartyMemberIndices[SlotFromPartyMember(partyMember).Value] = 0;
                 SetMapCharacterBit(mapIndex, characterIndex, false);
             }
@@ -9473,7 +9473,7 @@ namespace Ambermoon
                                     if (target != null && (reviveSpell || spell == Spell.AllHealing || target.Alive))
                                     {
                                         if (reviveSpell)
-                                            ApplySpellEffect(spell, caster, target, null, true);
+                                            ApplySpellEffect(spell, caster, target, null, checkFail);
                                         else
                                         {
                                             currentAnimation?.Destroy();

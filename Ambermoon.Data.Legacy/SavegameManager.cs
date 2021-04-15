@@ -111,7 +111,10 @@ namespace Ambermoon.Data.Legacy
                 return null;
             }
 
-            savegameSerializer.Read(savegame, savegameFiles, gameData.Files["Party_texts.amb"]);
+            var initialPartyMemberReaders = gameData.Files.TryGetValue("Initial/Party_char.amb", out var readers)
+                ? readers : gameData.Files.TryGetValue("Save.00/Party_char.amb", out readers) ? readers : null;
+
+            savegameSerializer.Read(savegame, savegameFiles, gameData.Files["Party_texts.amb"], initialPartyMemberReaders);
 
             return savegame;
         }

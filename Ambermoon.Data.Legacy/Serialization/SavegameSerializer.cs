@@ -241,7 +241,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             // TODO: save other data to Party_data.sav
         }
 
-        public void Read(Savegame savegame, SavegameInputFiles files, IFileContainer partyTextsContainer)
+        public void Read(Savegame savegame, SavegameInputFiles files, IFileContainer partyTextsContainer,
+            IFileContainer fallbackPartyMemberContainer = null)
         {
             var partyMemberReader = new Characters.PartyMemberReader();
             var chestReader = new ChestReader();
@@ -258,7 +259,10 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var partyTextFile = partyTextsContainer.Files.ContainsKey(partyMemberDataReader.Key)
                     ? partyTextsContainer.Files[partyMemberDataReader.Key] : null;
                 partyMemberDataReader.Value.Position = 0;
-                savegame.PartyMembers.Add((uint)partyMemberDataReader.Key, PartyMember.Load((uint)partyMemberDataReader.Key, partyMemberReader, partyMemberDataReader.Value, partyTextFile));
+                savegame.PartyMembers.Add((uint)partyMemberDataReader.Key,
+                    PartyMember.Load((uint)partyMemberDataReader.Key, partyMemberReader,
+                        partyMemberDataReader.Value, partyTextFile,
+                            fallbackPartyMemberContainer?.Files[partyMemberDataReader.Key]));
             }
             foreach (var chestDataReader in files.ChestDataReaders.Files)
             {
