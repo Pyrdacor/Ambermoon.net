@@ -11416,15 +11416,9 @@ namespace Ambermoon
                 layout.SetLayout(LayoutType.Event);
                 ShowMap(false);
                 layout.Reset();
-
-                if (gameOver)
-                {
-                    currentUIPaletteIndex = 37; // game over palette
-                    layout.UpdateUIPalette(currentUIPaletteIndex);
-                    cursor.UpdatePalette(this);
-                }
-
-                layout.AddEventPicture(imageIndex);
+                layout.AddEventPicture(imageIndex, out currentUIPaletteIndex);
+                layout.UpdateUIPalette(currentUIPaletteIndex);
+                cursor.UpdatePalette(this);
                 layout.FillArea(new Rect(16, 138, 288, 55), GetUIColor(28), false);
 
                 // Position = 18,139, max 40 chars per line and 7 lines.

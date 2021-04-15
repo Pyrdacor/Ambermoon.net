@@ -3006,10 +3006,10 @@ namespace Ambermoon.UI
             }
         }
 
-        public void AddEventPicture(uint index)
+        public void AddEventPicture(uint index, out byte palette)
         {
             var sprite = eventPicture ??= RenderView.SpriteFactory.Create(320, 92, true, 10) as ILayerSprite;
-            sprite.PaletteIndex = index switch
+            palette = sprite.PaletteIndex = index switch
             {
                 0 => 26,
                 1 => 31,
