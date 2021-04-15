@@ -125,11 +125,7 @@ F1-F6 | Open inventory of party member 1-6
 You can find the full changelog [here](changelog.md). You can also look at the [releases](https://github.com/Pyrdacor/Ambermoon.net/releases). They have more details in general.
 
 
-## Contribution
-
-If you want to help use the issue tracker to report bugs or create pull requests. Moreover any kind of information about Ambermoon, Amberstar or even Albion could be valuable.
-
-I appreciate any kind of help.
+## Special thanks
 
 Special thanks to my top patreons:
 - [Other Retro Matt](https://twitter.com/GothmogPlays)
