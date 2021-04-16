@@ -900,6 +900,7 @@ namespace Ambermoon
             TravelType = TravelType.Walk;
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human);
+            UpdateUIPalette(true);
             renderView.SetLight(GetLight3D());
             player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
             player3D.TurnTowards((int)direction * 90.0f);
