@@ -768,6 +768,8 @@ namespace Ambermoon.UI
             decreaseButton.DisplayLayer = 200;
             increaseButton.LeftClickAction = () => ChangeInputValue(1);
             decreaseButton.LeftClickAction = () => ChangeInputValue(-1);
+            increaseButton.RightClickAction = () => ChangeInputValueTo(24);
+            decreaseButton.RightClickAction = () => ChangeInputValueTo(0);
             increaseButton.InstantAction = true;
             decreaseButton.InstantAction = true;
             increaseButton.ContinuousActionDelayInTicks = Game.TicksPerSecond / 5;
@@ -797,16 +799,14 @@ namespace Ambermoon.UI
                 game.Wait(input.Value);
             }
 
+            void ChangeInputValueTo(long amount)
+            {
+                input.Text = Util.Limit(0, amount, 24).ToString();
+            }
+
             void ChangeInputValue(int changeAmount)
             {
-                if (changeAmount < 0)
-                {
-                    input.Text = Math.Max(0, (int)input.Value + changeAmount).ToString();
-                }
-                else if (changeAmount > 0)
-                {
-                    input.Text = Math.Min(24, input.Value + (uint)changeAmount).ToString();
-                }
+                ChangeInputValueTo((long)input.Value + changeAmount);
             }
         }
 
@@ -2643,7 +2643,7 @@ namespace Ambermoon.UI
         {
             int slot = game.SlotFromPartyMember(partyMember).Value;
 
-            if (partyMember.Overweight)
+            if (partyMember.Alive && partyMember.Overweight)
             {
                 // Overweight
                 UpdateCharacterStatus(slot, UIGraphic.StatusOverweight);

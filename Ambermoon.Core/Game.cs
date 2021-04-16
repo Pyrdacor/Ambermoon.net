@@ -689,15 +689,15 @@ namespace Ambermoon
 
                 if (!WindowActive && layout.ButtonGridPage == 0)
                 {
-                    bool overweight = PartyMembers.Any(p => p.Overweight);
-                    layout.EnableButton(0, is3D || !overweight);
-                    layout.EnableButton(1, !overweight);
-                    layout.EnableButton(2, is3D || !overweight);
-                    layout.EnableButton(3, !overweight);
-                    layout.EnableButton(5, !overweight);
-                    layout.EnableButton(6, is3D || !overweight);
-                    layout.EnableButton(7, !overweight);
-                    layout.EnableButton(8, is3D || !overweight);
+                    bool canMove = CanPartyMove();
+                    layout.EnableButton(0, is3D || canMove);
+                    layout.EnableButton(1, canMove);
+                    layout.EnableButton(2, is3D || canMove);
+                    layout.EnableButton(3, canMove);
+                    layout.EnableButton(5, canMove);
+                    layout.EnableButton(6, is3D || canMove);
+                    layout.EnableButton(7, canMove);
+                    layout.EnableButton(8, is3D || canMove);
                 }
             }
 
@@ -1215,21 +1215,35 @@ namespace Ambermoon
             }
         }
 
-        void GameTime_GotExhausted()
+        void GameTime_GotExhausted(uint hoursExhausted)
         {
+            bool alreadyExhausted = false;
+            uint[] damageValues = new uint[MaxPartyMembers];
+
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
                 var partyMember = GetPartyMember(i);
 
                 if (partyMember != null && partyMember.Alive)
                 {
+                    if (partyMember.Ailments.HasFlag(Ailment.Exhausted))
+                        alreadyExhausted = true;
                     partyMember.Ailments |= Ailment.Exhausted;
-                    AddExhaustion(partyMember);
-                    layout.UpdateCharacterStatus(partyMember);
+                    damageValues[i] = AddExhaustion(partyMember, hoursExhausted);
+                    if (damageValues[i] < partyMember.HitPoints.CurrentValue)
+                        layout.UpdateCharacterStatus(partyMember);
                 }
             }
 
-            ShowMessagePopup(DataNameProvider.ExhaustedMessage);
+            void DealDamage()
+            {
+                DamageAllPartyMembers(p => damageValues[SlotFromPartyMember(p).Value]);
+            }
+
+            if (!alreadyExhausted)
+                ShowMessagePopup(DataNameProvider.ExhaustedMessage, DealDamage);
+            else
+                DealDamage();
         }
 
         void GameTime_GotTired()
@@ -6084,15 +6098,31 @@ namespace Ambermoon
             }
         }
 
-        void AddExhaustion(PartyMember partyMember)
+        uint AddExhaustion(PartyMember partyMember, uint hours)
         {
-            // TODO: damage
+            uint totalDamage = 0;
+            long hitPoints = partyMember.HitPoints.CurrentValue;
 
-            foreach (var attribute in Enum.GetValues<Attribute>())
+            for (uint i = 0; i < hours; ++i)
             {
-                partyMember.Attributes[attribute].StoredValue = partyMember.Attributes[attribute].CurrentValue;
-                partyMember.Attributes[attribute].CurrentValue /= 2;
+                // Do at least 1 damage per hour
+                uint damage = Math.Max(1, (uint)hitPoints / 10);
+                totalDamage += damage;
+                hitPoints -= damage;
+
+                if (hitPoints <= 0)
+                    break;
             }
+
+            if (hitPoints > 0)
+            {
+                foreach (var attribute in Enum.GetValues<Attribute>())
+                {
+                    partyMember.Attributes[attribute].StoredValue = partyMember.Attributes[attribute].CurrentValue;
+                    partyMember.Attributes[attribute].CurrentValue /= 2;
+                }
+            }
+            return Math.Min(totalDamage, partyMember.HitPoints.CurrentValue);
         }
 
         void RemoveExhaustion(PartyMember partyMember)
