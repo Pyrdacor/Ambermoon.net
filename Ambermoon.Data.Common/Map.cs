@@ -20,7 +20,7 @@ namespace Ambermoon.Data
         StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images). Set for all world maps.
         Unknown2 = 1 << 9,
         SecondaryUI2D = 1 << 10, // Display player smaller? Only all world maps have this set.
-        Unknown3 = 1 << 11 // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
+        CanUseMagic = 1 << 11 // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
     }
 
     public class Map
@@ -406,5 +406,6 @@ namespace Ambermoon.Data
         }
 
         public bool CanCamp => Flags.HasFlag(MapFlags.CanRest);
+        public bool CanUseSpells => Flags.HasFlag(MapFlags.CanUseMagic);
     }
 }
