@@ -14,6 +14,7 @@ namespace Ambermoon.Data
         public List<Event> Events { get; } = new List<Event>();
         public List<Event> EventList { get; } = new List<Event>();
         public uint MaxWeight => 999 + Attributes[Attribute.Strength].TotalCurrentValue * 1000;
+        public bool Overweight => (TotalWeight / 1000) > (MaxWeight / 1000);
         public uint MaxGoldToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Gold, ((int)MaxWeight - (int)TotalWeight) / Character.GoldWeight));
         public uint MaxFoodToTake => (uint)Math.Max(0, Math.Min(ushort.MaxValue - Food, ((int)MaxWeight - (int)TotalWeight) / Character.FoodWeight));
         public bool CanTakeItems(IItemManager itemManager, ItemSlot itemSlot)
@@ -68,12 +69,15 @@ namespace Ambermoon.Data
 
         public override bool CanMove(bool battle = true)
         {
-            return TotalWeight <= MaxWeight && (!battle || base.CanMove(true));
+            if (battle)
+                return base.CanMove(true);
+            else
+                return !Overweight;
         }
 
         public override bool CanFlee()
         {
-            return TotalWeight <= MaxWeight && base.CanFlee();
+            return base.CanFlee();
         }
 
         public bool HasAmmunition(IItemManager itemManager, AmmunitionType ammunitionType)

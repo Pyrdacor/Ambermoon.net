@@ -686,6 +686,19 @@ namespace Ambermoon
                 }
                 else
                     CurrentBattleTicks = 0;
+
+                if (!WindowActive && layout.ButtonGridPage == 0)
+                {
+                    bool overweight = PartyMembers.Any(p => p.Overweight);
+                    layout.EnableButton(0, is3D || !overweight);
+                    layout.EnableButton(1, !overweight);
+                    layout.EnableButton(2, is3D || !overweight);
+                    layout.EnableButton(3, !overweight);
+                    layout.EnableButton(5, !overweight);
+                    layout.EnableButton(6, is3D || !overweight);
+                    layout.EnableButton(7, !overweight);
+                    layout.EnableButton(8, is3D || !overweight);
+                }
             }
 
             layout.Update(CurrentTicks);
@@ -1452,45 +1465,39 @@ namespace Ambermoon
             GameTime.Wait(hours);
         }
 
+        bool CanPartyMove() => !PartyMembers.Any(p => !p.CanMove(false));
+
         internal void Move(CursorType cursorType, bool fromNumpadButton = false)
         {
             if (is3D)
             {
-                bool CanMove() => !PartyMembers.Any(p => !p.CanMove(false));
-
                 switch (cursorType)
                 {
                     case CursorType.ArrowForward:
-                        if (CanMove())
+                        if (CanPartyMove())
                             player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowBackward:
-                        if (CanMove())
+                        if (CanPartyMove())
                             player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowStrafeLeft:
-                        if (CanMove())
+                        if (CanPartyMove())
                             player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowStrafeRight:
-                        if (CanMove())
+                        if (CanPartyMove())
                             player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
                         break;
                     case CursorType.ArrowTurnLeft:
-                        if (CanMove())
-                        {
-                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            if (!fromNumpadButton)
-                                player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
-                        }
+                        player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                        if (!fromNumpadButton && CanPartyMove())
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         break;
                     case CursorType.ArrowTurnRight:
-                        if (CanMove())
-                        {
-                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            if (!fromNumpadButton)
-                                player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
-                        }
+                        player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                        if (!fromNumpadButton && CanPartyMove())
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         break;
                     case CursorType.ArrowRotateLeft:
                         if (fromNumpadButton)
@@ -1499,11 +1506,9 @@ namespace Ambermoon
                         }
                         else
                         {
-                            if (CanMove())
-                            {
-                                player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                            if (CanPartyMove())
                                 player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
-                            }
                         }
                         break;
                     case CursorType.ArrowRotateRight:
@@ -1513,11 +1518,9 @@ namespace Ambermoon
                         }
                         else
                         {
-                            if (CanMove())
-                            {
-                                player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                            if (CanPartyMove())
                                 player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
-                            }
                         }
                         break;
                     default:
@@ -1566,10 +1569,8 @@ namespace Ambermoon
 
         bool Move2D(int x, int y)
         {
-            // TODO: Uncomment but also fix wrong weight values first
-            // TODO: Also add the overweight status and show it
-            /*if (PartyMembers.Any(p => !p.CanMove(false)))
-                return false;*/
+            if (!CanPartyMove())
+                return false;
 
             bool Move()
             {
