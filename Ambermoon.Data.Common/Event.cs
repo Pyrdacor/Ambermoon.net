@@ -417,9 +417,11 @@ namespace Ambermoon.Data
         /// 0 means same map
         /// </summary>
         public uint MapIndex { get; set; }
-        public uint WallIndex => BackTileIndex != 255 && BackTileIndex > 100 ? BackTileIndex - 1 : 0;
-        public uint ObjectIndex => BackTileIndex <= 100 ? BackTileIndex : 0;
-        public bool MapBorder => BackTileIndex == 255;
+        public uint WallIndex => BlockDataIndex != 255 && BlockDataIndex > 100 ? BlockDataIndex - 100 : 0;
+        public uint ObjectIndex => BlockDataIndex <= 100 ? BlockDataIndex : 0;
+        public bool MapBorder => BlockDataIndex == 255;
+        bool FromSavegame => Index == uint.MaxValue;
+        uint BlockDataIndex => FromSavegame ? (FrontTileIndex & 0xff) : BackTileIndex;
 
         public override string ToString()
         {

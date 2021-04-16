@@ -1332,7 +1332,7 @@ namespace Ambermoon
                 var tileChangeEvents = CurrentSavegame.TileChangeEvents[mapIndex];
 
                 foreach (var tileChangeEvent in tileChangeEvents)
-                    UpdateMapTile(tileChangeEvent);
+                    UpdateMapTile(tileChangeEvent, true);
             }
         }
 
@@ -4384,7 +4384,8 @@ namespace Ambermoon
             }
         }
 
-        internal void UpdateMapTile(ChangeTileEvent changeTileEvent, uint? currentX = null, uint? currentY = null)
+        internal void UpdateMapTile(ChangeTileEvent changeTileEvent, bool fromSavegame,
+            uint? currentX = null, uint? currentY = null)
         {
             bool sameMap = changeTileEvent.MapIndex == 0 || changeTileEvent.MapIndex == Map.Index;
             var map = sameMap ? Map : MapManager.GetMap(changeTileEvent.MapIndex);
@@ -4400,9 +4401,17 @@ namespace Ambermoon
 
             if (is3D)
             {
-                map.Blocks[x, y].ObjectIndex = changeTileEvent.ObjectIndex;
-                map.Blocks[x, y].WallIndex = changeTileEvent.WallIndex;
-                map.Blocks[x, y].MapBorder = changeTileEvent.MapBorder;
+                var block = map.Blocks[x, y];
+                block.ObjectIndex = changeTileEvent.ObjectIndex;
+                block.WallIndex = changeTileEvent.WallIndex;
+                block.MapBorder = changeTileEvent.MapBorder;
+                if (fromSavegame)
+                {
+                    // TODO: Not sure about this
+                    block.MapEventId = changeTileEvent.FrontTileIndex >> 8;
+                }
+                else
+                    block.MapEventId = changeTileEvent.MapEventId;
 
                 if (sameMap)
                     renderMap3D.UpdateBlock(x, y);

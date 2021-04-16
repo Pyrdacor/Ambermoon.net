@@ -122,8 +122,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var y = dataReader.ReadByte();
                 var tileIndex = dataReader.ReadWord();
 
-                // TODO: handle other values
-                if (mapIndex < 0x0300 && tileIndex < (1 << 11)) // should be a real map and a valid front tile index (11 bit value)
+                if (mapIndex < 0x0300 && tileIndex < 0xffff) // should be a real map and a valid front tile index
                 {
                     savegame.TileChangeEvents.SafeAdd(mapIndex, new ChangeTileEvent
                     {
@@ -136,9 +135,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                         BackTileIndex = 0
                     });
                 }
+                else
+                {
+                    // TODO: Does this happen?
+                }
             }
-
-            // TODO: load other data from Party_data.sav
         }
 
         void WriteSaveData(Savegame savegame, IDataWriter dataWriter)
