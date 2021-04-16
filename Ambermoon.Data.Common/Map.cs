@@ -12,10 +12,10 @@ namespace Ambermoon.Data
         Indoor = 1 << 0,
         Outdoor = 1 << 1,
         Dungeon = 1 << 2,
-        Automapper = 1 << 3, // If active the map has to be explored
-        Unknown1 = 1 << 4,
+        Automapper = 1 << 3, // If set the map is available and the map has to be explored.
+        CanRest = 1 << 4,
         WorldSurface = 1 << 5,
-        SecondaryUI3D = 1 << 6, // 3D maps with sky? All towns have this and the ruin tower.
+        Sky = 1 << 6, // All towns have this and the ruin tower.
         NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours
         StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images). Set for all world maps.
         Unknown2 = 1 << 9,
@@ -405,9 +405,6 @@ namespace Ambermoon.Data
             };
         }
 
-        public bool CanCamp => // TODO: is this right?
-            Flags.HasFlag(MapFlags.WorldSurface) ||
-            Flags.HasFlag(MapFlags.Dungeon) ||
-            (Type == MapType.Map3D && Flags.HasFlag(MapFlags.Indoor));
+        public bool CanCamp => Flags.HasFlag(MapFlags.CanRest);
     }
 }

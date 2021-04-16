@@ -811,7 +811,7 @@ namespace Ambermoon
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
-            layout.SetLayout(LayoutType.Map2D,  movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
+            layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
             is3D = false;
             uint scrollRefY = playerY + (map.Flags.HasFlag(MapFlags.Indoor) ? 1u : 0u);
             int xOffset = (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2;
@@ -4265,7 +4265,7 @@ namespace Ambermoon
             {
                 monstersCanMoveImmediately = false;
                 ResetMoveKeys();
-                if (!WindowActive && layout.ButtonGridPage != 0)
+                if (!WindowActive)
                     layout.UpdateLayoutButtons();
 
                 // Update UI palette
@@ -6438,6 +6438,8 @@ namespace Ambermoon
                                         // Update direction to right
                                         player.Direction = CharacterDirection.Right; // Set this before player2D.MoveTo!
                                         player2D.MoveTo(Map, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
+                                        if (layout.ButtonGridPage != 0)
+                                            layout.EnableButton(3, true);
                                     }
                                     else
                                     {

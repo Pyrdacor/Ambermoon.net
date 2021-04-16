@@ -1133,7 +1133,7 @@ namespace Ambermoon.UI
                 case LayoutType.Map2D:
                     if (ButtonGridPage == 0)
                     {
-                        var moveDelay = ticksPerMovement.Value;
+                        var moveDelay = (ticksPerMovement ?? this.ticksPerMovement).Value;
                         buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => game.Move(CursorType.ArrowUpLeft), true, null, moveDelay);
                         buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => game.Move(CursorType.ArrowUp), true, null, moveDelay);
                         buttonGrid.SetButton(2, ButtonType.MoveUpRight, false, () => game.Move(CursorType.ArrowUpRight), true, null, moveDelay);
@@ -1160,7 +1160,7 @@ namespace Ambermoon.UI
                 case LayoutType.Map3D:
                     if (ButtonGridPage == 0)
                     {
-                        var moveDelay = ticksPerMovement.Value;
+                        var moveDelay = (ticksPerMovement ?? this.ticksPerMovement).Value;
                         buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => game.Move(CursorType.ArrowTurnLeft, true), true, null, moveDelay);
                         buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => game.Move(CursorType.ArrowForward, true), true, null, moveDelay);
                         buttonGrid.SetButton(2, ButtonType.TurnRight, false, () => game.Move(CursorType.ArrowTurnRight, true), true, null, moveDelay);
