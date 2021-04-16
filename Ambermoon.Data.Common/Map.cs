@@ -15,11 +15,11 @@ namespace Ambermoon.Data
         Automapper = 1 << 3, // If set the map is available and the map has to be explored.
         CanRest = 1 << 4,
         WorldSurface = 1 << 5,
-        Sky = 1 << 6, // All towns have this and the ruin tower.
+        Sky = 1 << 6, // All towns have this and the ruin tower. Only considered for 3D maps.
         NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours
         StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images). Set for all world maps.
-        Unknown2 = 1 << 9,
-        SecondaryUI2D = 1 << 10, // Display player smaller? Only all world maps have this set.
+        Unknown2 = 1 << 9, // Unknown. Never used in Ambermoon.
+        SmallPlayer = 1 << 10, // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
         CanUseMagic = 1 << 11 // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
     }
 
@@ -199,6 +199,9 @@ namespace Ambermoon.Data
         public bool IsLyramionWorldMap => IsWorldMap && World == World.Lyramion;
         public bool IsForestMoonWorldMap => IsWorldMap && World == World.ForestMoon;
         public bool IsMoragWorldMap => IsWorldMap && World == World.Morag;
+        // Note: We use this to determine that the player is drawn smaller.
+        // But actually it should depend on flag SmallPlayer. It is only used
+        // for all world maps in Ambermoon so it should be safe.
         public bool IsWorldMap => Flags.HasFlag(MapFlags.WorldSurface);
         public uint MoveWorldMapIndex(uint baseIndex, uint worldMapDimension, uint currentIndex, int changeX, int changeY)
         {

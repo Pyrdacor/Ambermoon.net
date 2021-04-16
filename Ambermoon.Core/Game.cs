@@ -3956,6 +3956,7 @@ namespace Ambermoon
             player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction);
             this.player.Position.X = RenderPlayer.Position.X;
             this.player.Position.Y = RenderPlayer.Position.Y;
+            TravelType = TravelType.Walk; // After teleport you always walk (important when falling into a town etc)
 
             if (!mapTypeChanged)
             {
@@ -5337,7 +5338,22 @@ namespace Ambermoon
                     // as it might trigger a consumption of a previously given item.
                     // The create item only updates the grid of created items.
                     nextAction?.Invoke(EventType.Create);
-                    CreateItem(createEvent.ItemIndex, createEvent.Amount);
+
+                    switch (createEvent.TypeOfCreation)
+                    {
+                        case CreateEvent.CreateType.Item:
+                            CreateItem(createEvent.ItemIndex, createEvent.Amount);
+                            break;
+                        case CreateEvent.CreateType.Gold:
+                            CurrentPartyMember.AddGold(createEvent.Amount);
+                            UpdateCharacterInfo(character);
+                            break;
+                        default: // food
+                            CurrentPartyMember.AddFood(createEvent.Amount);
+                            UpdateCharacterInfo(character);
+                            break;
+                    }
+                    
                 }
                 else if (conversationEvent is InteractEvent)
                 {

@@ -390,11 +390,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Create:
                 {
-                    var unused = dataReader.ReadBytes(6);
-                    var amount = dataReader.ReadByte();
+                    var createType = (CreateEvent.CreateType)dataReader.ReadByte();
+                    var unused = dataReader.ReadBytes(4);
+                    var amount = dataReader.ReadWord();
                     var itemIndex = dataReader.ReadWord();
                     @event = new CreateEvent
                     {
+                        TypeOfCreation = createType,
                         Unused = unused,
                         Amount = amount,
                         ItemIndex = itemIndex

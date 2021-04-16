@@ -228,8 +228,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.Create:
                 {
                     var createEvent = @event as CreateEvent;
+                    dataWriter.WriteEnumAsByte(createEvent.TypeOfCreation);
                     dataWriter.Write(createEvent.Unused);
-                    dataWriter.Write((byte)createEvent.Amount);
+                    dataWriter.Write((ushort)createEvent.Amount);
                     dataWriter.Write((ushort)createEvent.ItemIndex);
                     break;
                 }

@@ -700,14 +700,30 @@ namespace Ambermoon.Data
 
     public class CreateEvent : Event
     {
-        // TODO: maybe the first 6 bytes are also used? flags, charges, etc?
+        // TODO: maybe the other 5 bytes are also used? flags, charges, etc?
+        public enum CreateType
+        {
+            Item,
+            Gold,
+            Food
+        }
+
+        public CreateType TypeOfCreation { get; set; }
         public uint Amount { get; set; }
         public uint ItemIndex { get; set; }
         public byte[] Unused { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: {Amount}x Item {ItemIndex}";
+            switch (TypeOfCreation)
+            {
+                case CreateType.Item:
+                    return $"{Type}: {Amount}x Item {ItemIndex}";
+                case CreateType.Gold:
+                    return $"{Type}: {Amount} Gold";
+                default:
+                    return $"{Type}: {Amount} Food";
+            }
         }
     }
 
