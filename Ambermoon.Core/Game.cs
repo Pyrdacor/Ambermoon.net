@@ -11173,6 +11173,7 @@ namespace Ambermoon
                 void ShowRiddle()
                 {
                     InputEnable = false;
+                    HeadSpeak();
                     layout.OpenTextPopup(riddleText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
                     {
                         InputEnable = true;
@@ -11185,15 +11186,13 @@ namespace Ambermoon
                             string.Compare(textDictionary.Entries[(int)riddlemouthEvent.CorrectAnswerDictionaryIndex2], solution, true) == 0))
                     {
                         InputEnable = false;
+                        HeadSpeak();
                         layout.OpenTextPopup(solutionResponseText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White, () =>
                         {
-                            Fade(() =>
+                            Exit(() =>
                             {
-                                CloseWindow(() =>
-                                {
-                                    InputEnable = true;
-                                    solvedHandler?.Invoke();
-                                });
+                                InputEnable = true;
+                                solvedHandler?.Invoke();
                             });
                         });
                     }
@@ -11203,17 +11202,85 @@ namespace Ambermoon
                             solution = DataNameProvider.That;
                         var failedText = ProcessText(solution + DataNameProvider.WrongRiddlemouthSolutionText);
                         InputEnable = false;
+                        HeadSpeak();
                         layout.OpenTextPopup(failedText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White).Closed += () =>
                         {
                             InputEnable = true;
                         };
                     }
                 }
+
+                // Show stone head
+                layout.Set80x80Picture(Picture80x80.Riddlemouth, 224, 49);
+                var eyes = layout.AddAnimatedSprite(new Rect(240, 72, 48, 9), Graphics.RiddlemouthEyeIndex, UIPaletteIndex, 4);
+                var mouth = layout.AddAnimatedSprite(new Rect(240, 90, 48, 15), Graphics.RiddlemouthMouthIndex, UIPaletteIndex, 7);
+
                 if (showRiddle)
-                    ShowRiddle();
+                {
+                    // Open eyes on start (and show the riddle)
+                    AddTimedEvent(TimeSpan.FromMilliseconds(250), () => HeadChangeEyes(true, () =>
+                    {
+                        ShowRiddle();
+                    }));
+                }
+                else
+                {
+                    // Eyes already open
+                    eyes.CurrentFrame = 3;
+                }
+
                 layout.AttachEventToButton(6, () => OpenDictionary(TestSolution));
                 layout.AttachEventToButton(8, ShowRiddle);
-                // TODO
+                layout.AttachEventToButton(2, () => Exit(null));
+
+                void Exit(Action followAction)
+                {
+                    HeadChangeEyes(false, () => CloseWindow(followAction));
+                }
+
+                void HeadChangeEyes(bool open, Action followAction = null)
+                {
+                    void NextFrame()
+                    {
+                        void Next() => AddTimedEvent(TimeSpan.FromMilliseconds(150), NextFrame);
+
+                        if (open)
+                        {
+                            if (++eyes.CurrentFrame == 3)
+                                followAction?.Invoke();
+                            else
+                                Next();
+
+                        }
+                        else // close
+                        {
+                            if (--eyes.CurrentFrame == 0)
+                                followAction?.Invoke();
+                            else
+                                Next();
+                        }
+                    }
+
+                    NextFrame();
+                }
+
+                void HeadSpeak()
+                {
+                    void NextFrame()
+                    {
+                        void Next() => AddTimedEvent(TimeSpan.FromMilliseconds(150), NextFrame);
+
+                        ++mouth.CurrentFrame;
+
+                        // Note: The property will reset the frame to 0 when animation is done.
+                        // But don't use an inline increment operator inside the if. This won't work!
+                        if (mouth.CurrentFrame != 0)
+                            Next();
+                    }
+
+                    mouth.CurrentFrame = 0;
+                    NextFrame();
+                }
             });
         }
 

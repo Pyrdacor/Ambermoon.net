@@ -21,6 +21,9 @@ namespace Ambermoon.Render
         public const uint CombatGraphicOffset = 2500u;
         public const uint BattleFieldIconOffset = 3000u;
         public const uint AutomapOffset = 3200u;
+        public const uint RiddlemouthOffset = 3300u;
+        public const uint RiddlemouthEyeIndex = RiddlemouthOffset;
+        public const uint RiddlemouthMouthIndex = RiddlemouthOffset + 1;
 
         // We load 3 things into the same layer -> GraphicType.UIElements
         // 1. Our own UI elements like scrollbars, etc (see UICustomGraphic)

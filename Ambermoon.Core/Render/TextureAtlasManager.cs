@@ -331,6 +331,15 @@ namespace Ambermoon.Render
 
             #endregion
 
+            #region Riddlemouth graphics
+
+            var riddlemouthGraphics = graphicProvider.GetGraphics(GraphicType.RiddlemouthGraphics);
+
+            for (int i = 0; i < riddlemouthGraphics.Count; ++i)
+                AddTexture(Layer.UI, Graphics.RiddlemouthOffset + (uint)i, riddlemouthGraphics[i]);
+
+            #endregion
+
             #region Intro Text
 
             foreach (var introTextGlyph in introTextGlyphs)

@@ -238,6 +238,35 @@ namespace Ambermoon.Data.Legacy
                 {
                     // Do nothing. This is filled when processing GraphicType.CombatGraphics.
                 }
+                else if (type == GraphicType.RiddlemouthGraphics)
+                {
+                    var riddlemouthGraphics = new List<Graphic>(4 + 7);
+                    var reader = gameData.Files["Riddlemouth_graphics"].Files[1];
+                    // 4 eye frames
+                    ReadAndAddGraphics(4, 48, 9);
+                    // 7 mouth frames
+                    ReadAndAddGraphics(7, 48, 15);
+                    void ReadAndAddGraphics(int frames, int width, int height)
+                    {
+                        var graphicInfo = new GraphicInfo
+                        {
+                            Width = width,
+                            Height = height,
+                            GraphicFormat = GraphicFormat.Palette3Bit,
+                            Alpha = false,
+                            PaletteOffset = 24
+                        };
+                        var graphic = new Graphic();
+                        var compoundGraphic = new Graphic(frames * width, height, 0);
+                        for (int f = 0; f < frames; ++f)
+                        {
+                            graphicReader.ReadGraphic(graphic, reader, graphicInfo);
+                            compoundGraphic.AddOverlay((uint)(f * width), 0, graphic, false);
+                        }
+                        riddlemouthGraphics.Add(compoundGraphic);
+                    }
+                    graphics[type] = riddlemouthGraphics;
+                }
                 else if (type == GraphicType.AutomapGraphics)
                 {
                     var automapGraphics = new List<Graphic>(43);

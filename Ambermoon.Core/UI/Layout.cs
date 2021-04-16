@@ -1400,7 +1400,7 @@ namespace Ambermoon.UI
                 case LayoutType.Riddlemouth:
                     buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
                     buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
@@ -2987,7 +2987,7 @@ namespace Ambermoon.UI
             return scrollableText;
         }
 
-        public void Set80x80Picture(Picture80x80 picture)
+        public void Set80x80Picture(Picture80x80 picture, int x = Global.LayoutX + 16, int y = Global.LayoutY + 6)
         {
             if (picture == Picture80x80.None)
             {
@@ -2998,8 +2998,8 @@ namespace Ambermoon.UI
             {
                 var sprite = sprite80x80Picture ??= RenderView.SpriteFactory.Create(80, 80, true);
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(Graphics.Pics80x80Offset + (uint)(picture - 1));
-                sprite.X = Global.LayoutX + 16;
-                sprite.Y = Global.LayoutY + 6;
+                sprite.X = x;
+                sprite.Y = y;
                 sprite.PaletteIndex = game.UIPaletteIndex;
                 sprite.Layer = renderLayer;
                 sprite.Visible = true;

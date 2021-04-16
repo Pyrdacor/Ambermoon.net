@@ -29,8 +29,8 @@ namespace Ambermoon.Data
         CombatBackground,
         CombatGraphics,
         BattleFieldIcons,
-        AutomapGraphics
-        // TODO ...
+        AutomapGraphics,
+        RiddlemouthGraphics
     }
 
     public enum MonsterRow
