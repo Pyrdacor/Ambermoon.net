@@ -506,7 +506,7 @@ namespace Ambermoon
                             break;
                         case ActionEvent.ActionType.SetEventBit:
                         {
-                            var mapIndex = actionEvent.ObjectIndex >> 6;
+                            var mapIndex = 1 + (actionEvent.ObjectIndex >> 6);
                             var eventIndex = actionEvent.ObjectIndex & 0x3f;
                             game.SetMapEventBit(mapIndex, eventIndex,
                                 ClearSetToggle(() => game.CurrentSavegame.GetEventBit(mapIndex, eventIndex)));

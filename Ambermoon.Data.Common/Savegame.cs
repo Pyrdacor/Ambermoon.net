@@ -80,9 +80,10 @@ namespace Ambermoon.Data
                 throw new IndexOutOfRangeException("Event index must be between 0 and 63");
 
             int byteIndex = (int)eventIndex / 8;
-            byte bits = (byte)(MapEventBits[mapIndex - 1] >> (7 - byteIndex) * 8);
             int bitIndex = (int)eventIndex % 8;
-            return (bits & (1 << bitIndex)) != 0;
+            uint bitValue = 1u << ((7 - byteIndex) * 8 + bitIndex);
+
+            return (MapEventBits[mapIndex - 1] & bitValue) != 0;
         }
         public void SetEventBit(uint mapIndex, uint eventIndex, bool bit)
         {
@@ -93,7 +94,7 @@ namespace Ambermoon.Data
 
             int byteIndex = (int)eventIndex / 8;
             int bitIndex = (int)eventIndex % 8;
-            ulong bitValue = 1ul << ((7 - byteIndex) * 8 + bitIndex);
+            uint bitValue = 1u << ((7 - byteIndex) * 8 + bitIndex);
 
             if (bit)
                 MapEventBits[mapIndex - 1] |= bitValue;

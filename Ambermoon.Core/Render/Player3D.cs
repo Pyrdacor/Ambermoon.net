@@ -200,7 +200,7 @@ namespace Ambermoon.Render
 
                 foreach (var touchedPosition in touchedPositions)
                 {
-                    if (map.Map.StopMovingTowards(touchedPosition.X, touchedPosition.Y))
+                    if (map.Map.StopMovingTowards(game.CurrentSavegame, touchedPosition.X, touchedPosition.Y))
                     {
                         if (TriggerEvents(touchedPositions, Camera.X, Camera.Z, newX, newY))
                             return true;
