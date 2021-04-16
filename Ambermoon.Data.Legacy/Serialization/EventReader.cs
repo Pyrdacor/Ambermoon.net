@@ -255,14 +255,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var x = dataReader.ReadByte();
                     var y = dataReader.ReadByte();
                     var unknown = dataReader.ReadByte();
-                    var tileData = dataReader.ReadBytes(4);
+                    var backTileIndex = dataReader.ReadByte(); // also wall/object index
+                    var mapEventId = dataReader.ReadByte();
+                    var frontTileIndex = dataReader.ReadWord();
                     var mapIndex = dataReader.ReadWord();
                     @event = new ChangeTileEvent
                     {
                         X = x,
                         Y = y,
-                        BackTileIndex = ((uint)(tileData[1] & 0xe0) << 3) | tileData[0],
-                        FrontTileIndex = ((uint)(tileData[2] & 0x07) << 8) | tileData[3],
+                        BackTileIndex = backTileIndex,
+                        FrontTileIndex = frontTileIndex,
+                        MapEventId = mapEventId,
                         MapIndex = mapIndex,
                         Unknown = unknown
                     };

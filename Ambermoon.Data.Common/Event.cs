@@ -412,14 +412,18 @@ namespace Ambermoon.Data
         public byte Unknown { get; set; }
         public uint BackTileIndex { get; set; }
         public uint FrontTileIndex { get; set; }
+        public uint MapEventId { get; set; }
         /// <summary>
         /// 0 means same map
         /// </summary>
         public uint MapIndex { get; set; }
+        public uint WallIndex => BackTileIndex != 255 && BackTileIndex > 100 ? BackTileIndex - 1 : 0;
+        public uint ObjectIndex => BackTileIndex <= 100 ? BackTileIndex : 0;
+        public bool MapBorder => BackTileIndex == 255;
 
         public override string ToString()
         {
-            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Back tile {BackTileIndex}, Front tile {FrontTileIndex}, Unknown {Unknown}";
+            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Back tile {BackTileIndex}, Front tile {FrontTileIndex}, MapEventId {MapEventId}, Unknown {Unknown}";
         }
     }
 

@@ -150,15 +150,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.ChangeTile:
                 {
                     var changeTileEvent = @event as ChangeTileEvent;
-                    byte[] tileData = new byte[4];
-                    tileData[0] = (byte)(changeTileEvent.BackTileIndex & 0xff);
-                    tileData[1] = (byte)(((changeTileEvent.BackTileIndex >> 8) & 0x07) << 5);
-                    tileData[2] = (byte)((changeTileEvent.FrontTileIndex >> 8) & 0x07);
-                    tileData[3] = (byte)(changeTileEvent.FrontTileIndex & 0xff);
                     dataWriter.Write((byte)changeTileEvent.X);
                     dataWriter.Write((byte)changeTileEvent.Y);
                     dataWriter.Write(changeTileEvent.Unknown);
-                    dataWriter.Write(tileData);
+                    dataWriter.Write((byte)changeTileEvent.BackTileIndex);
+                    dataWriter.Write((byte)changeTileEvent.MapEventId);
+                    dataWriter.Write((ushort)changeTileEvent.FrontTileIndex);
                     dataWriter.Write((ushort)changeTileEvent.MapIndex);
                     break;
                 }

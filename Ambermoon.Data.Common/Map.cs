@@ -363,7 +363,7 @@ namespace Ambermoon.Data
             return TileType.Normal;
         }
 
-        public void UpdateTile(uint x, uint y, uint newBackTileIndex, uint newFrontTileIndex, Tileset tileset)
+        public void UpdateTile(uint x, uint y, uint newBackTileIndex, uint newFrontTileIndex, uint mapEventId, Tileset tileset)
         {
             if (Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiles can only be updated for 2D maps.");
@@ -385,6 +385,7 @@ namespace Ambermoon.Data
                 Tiles[x, y].FrontTileIndex = newFrontTileIndex;
             }
             Tiles[x, y].Type = TileTypeFromTile(Tiles[x, y], tileset);
+            Tiles[x, y].MapEventId = mapEventId;
         }
 
         public bool StopMovingTowards(Savegame savegame, int x, int y)
