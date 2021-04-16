@@ -11180,7 +11180,9 @@ namespace Ambermoon
                 }
                 void TestSolution(string solution)
                 {
-                    if (string.Compare(textDictionary.Entries[(int)riddlemouthEvent.CorrectAnswerDictionaryIndex], solution, true) == 0)
+                    if (string.Compare(textDictionary.Entries[(int)riddlemouthEvent.CorrectAnswerDictionaryIndex1], solution, true) == 0 ||
+                        (riddlemouthEvent.CorrectAnswerDictionaryIndex1 != riddlemouthEvent.CorrectAnswerDictionaryIndex2 &&
+                            string.Compare(textDictionary.Entries[(int)riddlemouthEvent.CorrectAnswerDictionaryIndex2], solution, true) == 0))
                     {
                         InputEnable = false;
                         layout.OpenTextPopup(solutionResponseText, riddleArea.Position, riddleArea.Width, riddleArea.Height, true, true, true, TextColor.White, () =>

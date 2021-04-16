@@ -100,9 +100,6 @@ namespace Ambermoon
 
                     game.ShowTextPopup(map, popupTextEvent, _ =>
                     {
-                        if (popupTextEvent.AutoRemove)
-                            game.CurrentSavegame.ActivateEvent(map.Index, @event.Index, false);
-
                         map.TriggerEventChain(game, EventTrigger.Always,
                             x, y, game.CurrentTicks, @event.Next, eventStatus);
                     });

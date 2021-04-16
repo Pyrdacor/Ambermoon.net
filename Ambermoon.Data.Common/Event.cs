@@ -228,23 +228,23 @@ namespace Ambermoon.Data
         public EventTrigger PopupTrigger { get; set; }
         public bool CanTriggerByMoving => PopupTrigger.HasFlag(EventTrigger.Move);
         public bool CanTriggerByCursor => PopupTrigger.HasFlag(EventTrigger.EyeCursor);
-        public bool AutoRemove { get; set; }
+        public bool UnknownBool { get; set; }
         public byte[] Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, AutoRemove {AutoRemove}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, UnknownBool {UnknownBool}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 
     public class SpinnerEvent : Event
     {
         public CharacterDirection Direction { get; set; }
-        public byte[] Unknown { get; set; }
+        public byte[] Unused { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Direction {Direction}, Unknown1 {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Direction {Direction}";
         }
     }
 
@@ -317,12 +317,16 @@ namespace Ambermoon.Data
     {
         public uint RiddleTextIndex { get; set; }
         public uint SolutionTextIndex { get; set; }
-        public uint CorrectAnswerDictionaryIndex { get; set; }
-        public byte[] Unknown { get; set; }
+        public uint CorrectAnswerDictionaryIndex1 { get; set; }
+        public uint CorrectAnswerDictionaryIndex2 { get; set; }
+        public byte[] Unused { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: IntroText {RiddleTextIndex}, SolutionText {SolutionTextIndex}, Unknown1 {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            string answerIndices = CorrectAnswerDictionaryIndex1 == CorrectAnswerDictionaryIndex2
+                ? $"AnswerIndex {CorrectAnswerDictionaryIndex1}"
+                : $"AnswerIndices {CorrectAnswerDictionaryIndex1} or {CorrectAnswerDictionaryIndex2}";
+            return $"{Type}: RiddleText {RiddleTextIndex}, SolvedText {SolutionTextIndex}, {answerIndices}";
         }
     }
 

@@ -155,12 +155,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     // event image index (0xff = no image)
                     // trigger (1 = move, 2 = eye cursor, 3 = both)
-                    // auto remove event
+                    // unknown boolean
                     // map text index as word
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
                     var popupTrigger = (EventTrigger)dataReader.ReadByte();
-                    var autoRemove = dataReader.ReadByte() != 0;
+                    var unknownBool = dataReader.ReadByte() != 0;
                     var textIndex = dataReader.ReadWord();
                     var unknown = dataReader.ReadBytes(4);
                     @event = new PopupTextEvent
@@ -168,7 +168,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         EventImageIndex = eventImageIndex,
                         PopupTrigger = popupTrigger,
                         TextIndex = textIndex,
-                        AutoRemove = autoRemove,
+                        UnknownBool = unknownBool,
                         Unknown = unknown
                     };
                     break;
@@ -176,11 +176,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                 case EventType.Spinner:
                 {
                     var direction = (CharacterDirection)dataReader.ReadByte();
-                    var unknown = dataReader.ReadBytes(8);
+                    var unused = dataReader.ReadBytes(8);
                     @event = new SpinnerEvent
                     {
                         Direction = direction,
-                        Unknown = unknown
+                        Unused = unused
                     };
                     break;
                 }
@@ -216,14 +216,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var introTextIndex = dataReader.ReadByte();
                     var solutionTextIndex = dataReader.ReadByte();
-                    var unknown = dataReader.ReadBytes(5);
-                    var correctAnswerTextIndex = dataReader.ReadWord();
+                    var unused = dataReader.ReadBytes(3);
+                    var correctAnswerTextIndex1 = dataReader.ReadWord();
+                    var correctAnswerTextIndex2 = dataReader.ReadWord();
                     @event = new RiddlemouthEvent
                     {
                         RiddleTextIndex = introTextIndex,
                         SolutionTextIndex = solutionTextIndex,
-                        CorrectAnswerDictionaryIndex = correctAnswerTextIndex,
-                        Unknown = unknown
+                        CorrectAnswerDictionaryIndex1 = correctAnswerTextIndex1,
+                        CorrectAnswerDictionaryIndex2 = correctAnswerTextIndex2,
+                        Unused = unused
                     };
                     break;
                 }

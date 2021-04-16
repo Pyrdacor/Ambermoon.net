@@ -90,13 +90,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     // event image index (0xff = no image)
                     // trigger (1 = move, 2 = cursor, 3 = both)
-                    // auto remove event
+                    // unknown boolean
                     // map text index as word
                     // 4 unknown bytes
                     var textEvent = @event as PopupTextEvent;
                     dataWriter.Write((byte)textEvent.EventImageIndex);
                     dataWriter.WriteEnumAsByte(textEvent.PopupTrigger);
-                    dataWriter.Write((byte)(textEvent.AutoRemove ? 1 : 0));
+                    dataWriter.Write((byte)(textEvent.UnknownBool ? 1 : 0));
                     dataWriter.Write((ushort)textEvent.TextIndex);
                     dataWriter.Write(textEvent.Unknown);
                     break;
@@ -105,7 +105,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var spinnerEvent = @event as SpinnerEvent;
                     dataWriter.WriteEnumAsByte(spinnerEvent.Direction);
-                    dataWriter.Write(spinnerEvent.Unknown);
+                    dataWriter.Write(spinnerEvent.Unused);
                     break;
                 }
                 case EventType.Trap:
@@ -130,8 +130,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var riddleMouthEvent = @event as RiddlemouthEvent;
                     dataWriter.Write((byte)riddleMouthEvent.RiddleTextIndex);
                     dataWriter.Write((byte)riddleMouthEvent.SolutionTextIndex);
-                    dataWriter.Write(riddleMouthEvent.Unknown);
-                    dataWriter.Write((ushort)riddleMouthEvent.CorrectAnswerDictionaryIndex);
+                    dataWriter.Write(riddleMouthEvent.Unused);
+                    dataWriter.Write((ushort)riddleMouthEvent.CorrectAnswerDictionaryIndex1);
+                    dataWriter.Write((ushort)riddleMouthEvent.CorrectAnswerDictionaryIndex2);
                     break;
                 }
                 case EventType.Award:
