@@ -241,6 +241,7 @@ namespace Ambermoon
         internal uint CurrentAnimationTicks { get; private set; } = 0;
         uint lastMapTicksReset = 0;
         uint lastMoveTicksReset = 0;
+        bool weightDisplayBlinking = false;
         readonly TimedGameEvent ouchEvent = new TimedGameEvent();
         readonly TimedGameEvent hurtPlayerEvent = new TimedGameEvent();
         TravelType travelType = TravelType.Walk;
@@ -699,6 +700,13 @@ namespace Ambermoon
                     layout.EnableButton(7, canMove);
                     layout.EnableButton(8, is3D || canMove);
                 }
+
+                if (CurrentWindow.Window == Window.Inventory &&
+                    CurrentInventory != null &&
+                    weightDisplayBlinking != CurrentInventory.Overweight)
+                {
+                    SetInventoryWeightDisplay(CurrentInventory);
+                }
             }
 
             layout.Update(CurrentTicks);
@@ -928,6 +936,7 @@ namespace Ambermoon
             CurrentInventoryIndex = null;
             CurrentCaster = null;
             OpenStorage = null;
+            weightDisplayBlinking = false;
 
             RenderMap3D.Reset();
             MapCharacter2D.Reset();
@@ -2720,6 +2729,33 @@ namespace Ambermoon
             }
         }
 
+        void SetInventoryWeightDisplay(PartyMember partyMember)
+        {
+            var weightArea = new Rect(27, 152, 68, 15);
+            string weightText = string.Format(DataNameProvider.CharacterInfoWeightString,
+                partyMember.TotalWeight / 1000, partyMember.MaxWeight / 1000);
+            if (partyMember.Overweight)
+            {
+                weightDisplayBlinking = true;
+                if (characterInfoTexts.ContainsKey(CharacterInfo.Weight))
+                    characterInfoTexts[CharacterInfo.Weight]?.Destroy();
+                characterInfoTexts[CharacterInfo.Weight] = AddAnimatedText((area, text, color, align) => layout.AddText(area, text, color, align, 5),
+                    weightArea.CreateModified(0, 8, 0, 0), weightText, TextAlign.Center, () => weightDisplayBlinking &&
+                        CurrentWindow.Window == Window.Inventory, 50, false);
+            }
+            else
+            {
+                weightDisplayBlinking = false;
+                ExecuteNextUpdateCycle(() =>
+                {
+                    if (characterInfoTexts.ContainsKey(CharacterInfo.Weight))
+                        characterInfoTexts[CharacterInfo.Weight]?.Destroy();
+                    characterInfoTexts[CharacterInfo.Weight] = layout.AddText(weightArea.CreateModified(0, 8, 0, 0),
+                        weightText, TextColor.White, TextAlign.Center, 5);
+                });
+            }
+        }
+
         internal bool OpenPartyMember(int slot, bool inventory, Action openedAction = null,
             bool changeInputEnableStateWhileFading = true)
         {
@@ -2901,9 +2937,7 @@ namespace Ambermoon
                 layout.AddPanel(weightArea, 2);
                 layout.AddText(weightArea.CreateModified(0, 1, 0, 0), DataNameProvider.CharacterInfoWeightHeaderString,
                     TextColor.White, TextAlign.Center, 5);
-                characterInfoTexts.Add(CharacterInfo.Weight, layout.AddText(weightArea.CreateModified(0, 8, 0, 0),
-                    string.Format(DataNameProvider.CharacterInfoWeightString, partyMember.TotalWeight / 1000,
-                    partyMember.MaxWeight / 1000), TextColor.White, TextAlign.Center, 5));
+                SetInventoryWeightDisplay(partyMember);
                 #endregion
             }
 
@@ -10029,7 +10063,7 @@ namespace Ambermoon
             var animatedText = textAdder(area, text, textColors[0], textAlign);
             void AnimateText()
             {
-                if (continueChecker?.Invoke() == true)
+                if (animatedText != null && continueChecker?.Invoke() == true)
                 {
                     animatedText.SetTextColor(textColors[textColorIndex]);
                     textColorIndex = (textColorIndex + 1) % textColors.Length;
@@ -11963,6 +11997,7 @@ namespace Ambermoon
             characterInfoPanels.Clear();
             CurrentInventoryIndex = null;
             windowTitle.Visible = false;
+            weightDisplayBlinking = false;
 
             if (currentWindow.Window == Window.Event || currentWindow.Window == Window.Riddlemouth)
             {
