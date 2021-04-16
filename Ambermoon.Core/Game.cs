@@ -10500,6 +10500,12 @@ namespace Ambermoon
 
         internal void ShowAutomap()
         {
+            if (!Map.Flags.HasFlag(MapFlags.Automapper))
+            {
+                ShowMessagePopup(DataNameProvider.AutomapperNotWorkingHere);
+                return;
+            }
+
             bool showAll = CurrentSavegame.IsSpellActive(ActiveSpellType.MysticMap);
             ShowAutomap(new AutomapOptions
             {
