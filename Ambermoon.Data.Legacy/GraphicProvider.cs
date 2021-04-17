@@ -242,6 +242,7 @@ namespace Ambermoon.Data.Legacy
                 {
                     var riddlemouthGraphics = new List<Graphic>(4 + 7);
                     var reader = gameData.Files["Riddlemouth_graphics"].Files[1];
+                    reader.Position = 0;
                     // 4 eye frames
                     ReadAndAddGraphics(4, 48, 9);
                     // 7 mouth frames
