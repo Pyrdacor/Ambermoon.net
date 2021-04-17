@@ -8,9 +8,9 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 Version | Normal | Standalone
 --- | --- | --- 
-**0.6.1 beta** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.1beta/Ambermoon.net-Windows-Standalone.zip)
-**0.6.1 beta** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.1beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.1beta/Ambermoon.net-Linux-Standalone.tar.gz)
-**0.6.1 beta** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.1beta/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.1beta/Ambermoon.net-Windows32Bit-Standalone.zip)
+**0.6.2 beta** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.2beta/Ambermoon.net-Windows-Standalone.zip)
+**0.6.2 beta** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.2beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.2beta/Ambermoon.net-Linux-Standalone.tar.gz)
+**0.6.2 beta** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.2beta/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.6.2beta/Ambermoon.net-Windows32Bit-Standalone.zip)
 
 The standalone versions should work without .NET installed but are larger in size.
 
@@ -68,6 +68,10 @@ I will also post updates about releases and interesting stuff on twitter: https:
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Doors.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Doors.png" width="400" alt="Locked doors" /></a>
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/LevelUp.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/LevelUp.png" width="400" alt="Level Up" /></a>
+</p>
+<p float="left">
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/GameOver.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/GameOver.png" width="400" alt="Game Over" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Riddlemouth.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Riddlemouth.png" width="400" alt="Riddlemouth" /></a>
 </p>
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png" width="400" alt="Automap" /></a>
