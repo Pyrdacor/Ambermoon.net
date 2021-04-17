@@ -993,7 +993,8 @@ namespace Ambermoon.Render
 
                 var wall = labdata.Walls[((int)block.WallIndex - 1) % labdata.Walls.Count];
 
-                return wall.Flags.HasFlag(Tileset.TileFlags.Transparency) ||
+                return wall.AutomapType != AutomapType.Wall ||
+                    wall.Flags.HasFlag(Tileset.TileFlags.Transparency) ||
                     !(wall.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wall.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk)) ||
                     labdataChangeableBlocks[Map.TilesetOrLabdataIndex].Contains(Map.PositionToTileIndex(mapX, mapY));
             }
