@@ -131,8 +131,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         MapIndex = mapIndex,
                         X = x,
                         Y = y,
-                        FrontTileIndex = tileIndex,
-                        BackTileIndex = 0
+                        FrontTileIndex = tileIndex
                     });
                 }
                 else
@@ -361,17 +360,26 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             var nameData = ConvertName(name);
             var currentSlot = slot--;
+            const int DataSize = 2 + 10 * 39;
 
             if (!gameData.Files.ContainsKey("Saves"))
             {
-                byte[] data = new byte[2 + 10 * 39];
+                byte[] data = new byte[DataSize];
                 WriteCurrentSlot(data, currentSlot);
                 Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
                 gameData.Files.Add("Saves", FileReader.CreateRawFile("Saves", data));
             }
             else
             {
+                // Note: There is a bug in original where the file 'Saves' is
+                // too small. If we detect it, we will fix it.
                 var data = gameData.Files["Saves"].Files[1].ToArray();
+                if (data.Length < DataSize)
+                {
+                    var tempData = new byte[DataSize];
+                    Buffer.BlockCopy(data, 0, tempData, 0, data.Length);
+                    data = tempData;
+                }
                 WriteCurrentSlot(data, currentSlot);
                 Buffer.BlockCopy(nameData, 0, data, 2 + slot * 39, 39);
                 gameData.Files["Saves"].Files[1] = new DataReader(data);

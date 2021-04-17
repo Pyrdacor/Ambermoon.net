@@ -254,18 +254,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
                     var x = dataReader.ReadByte();
                     var y = dataReader.ReadByte();
-                    var unknown = dataReader.ReadByte();
-                    var backTileIndex = dataReader.ReadByte(); // also wall/object index
-                    var mapEventId = dataReader.ReadByte();
-                    var frontTileIndex = dataReader.ReadWord();
+                    var unknown = dataReader.ReadBytes(3);
+                    var frontTileIndex = dataReader.ReadWord(); // also wall/object index in lower byte
                     var mapIndex = dataReader.ReadWord();
                     @event = new ChangeTileEvent
                     {
                         X = x,
                         Y = y,
-                        BackTileIndex = backTileIndex,
                         FrontTileIndex = frontTileIndex,
-                        MapEventId = mapEventId,
                         MapIndex = mapIndex,
                         Unknown = unknown
                     };
@@ -314,7 +310,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Condition:
                 {
-                    var conditionType = (ConditionEvent.ConditionType)dataReader.ReadByte(); // TODO: this needs more research
+                    var conditionType = (ConditionEvent.ConditionType)dataReader.ReadByte();
                     var value = dataReader.ReadByte();
                     var count = dataReader.ReadByte();
                     var unknown1 = dataReader.ReadBytes(2);

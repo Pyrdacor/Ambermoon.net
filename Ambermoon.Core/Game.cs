@@ -1332,7 +1332,7 @@ namespace Ambermoon
                 var tileChangeEvents = CurrentSavegame.TileChangeEvents[mapIndex];
 
                 foreach (var tileChangeEvent in tileChangeEvents)
-                    UpdateMapTile(tileChangeEvent, true);
+                    UpdateMapTile(tileChangeEvent);
             }
         }
 
@@ -4384,8 +4384,7 @@ namespace Ambermoon
             }
         }
 
-        internal void UpdateMapTile(ChangeTileEvent changeTileEvent, bool fromSavegame,
-            uint? currentX = null, uint? currentY = null)
+        internal void UpdateMapTile(ChangeTileEvent changeTileEvent, uint? currentX = null, uint? currentY = null)
         {
             bool sameMap = changeTileEvent.MapIndex == 0 || changeTileEvent.MapIndex == Map.Index;
             var map = sameMap ? Map : MapManager.GetMap(changeTileEvent.MapIndex);
@@ -4404,22 +4403,16 @@ namespace Ambermoon
                 var block = map.Blocks[x, y];
                 block.ObjectIndex = changeTileEvent.ObjectIndex;
                 block.WallIndex = changeTileEvent.WallIndex;
-                block.MapBorder = changeTileEvent.MapBorder;
-                if (fromSavegame)
-                {
-                    // TODO: Not sure about this
-                    block.MapEventId = changeTileEvent.FrontTileIndex >> 8;
-                }
-                else
-                    block.MapEventId = changeTileEvent.MapEventId;
+                block.MapBorder = false;
+                if (block.WallIndex == 0 && block.ObjectIndex == 0)
+                    block.MapEventId = 0;
 
                 if (sameMap)
                     renderMap3D.UpdateBlock(x, y);
             }
             else // 2D
             {
-                map.UpdateTile(x, y, changeTileEvent.BackTileIndex, changeTileEvent.FrontTileIndex,
-                    changeTileEvent.MapEventId, MapManager.GetTilesetForMap(map));
+                map.UpdateTile(x, y, changeTileEvent.FrontTileIndex, MapManager.GetTilesetForMap(map));
 
                 if (sameMap) // TODO: what if we change an adjacent world map which is visible instead? is there even a use case?
                     renderMap2D.UpdateTile(x, y);

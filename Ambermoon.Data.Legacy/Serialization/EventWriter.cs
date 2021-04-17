@@ -153,8 +153,6 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((byte)changeTileEvent.X);
                     dataWriter.Write((byte)changeTileEvent.Y);
                     dataWriter.Write(changeTileEvent.Unknown);
-                    dataWriter.Write((byte)changeTileEvent.BackTileIndex);
-                    dataWriter.Write((byte)changeTileEvent.MapEventId);
                     dataWriter.Write((ushort)changeTileEvent.FrontTileIndex);
                     dataWriter.Write((ushort)changeTileEvent.MapIndex);
                     break;

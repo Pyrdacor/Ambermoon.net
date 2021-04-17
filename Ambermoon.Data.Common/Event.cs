@@ -409,23 +409,18 @@ namespace Ambermoon.Data
     {
         public uint X { get; set; }
         public uint Y { get; set; }
-        public byte Unknown { get; set; }
-        public uint BackTileIndex { get; set; }
+        public byte[] Unknown { get; set; }
         public uint FrontTileIndex { get; set; }
-        public uint MapEventId { get; set; }
         /// <summary>
         /// 0 means same map
         /// </summary>
         public uint MapIndex { get; set; }
-        public uint WallIndex => BlockDataIndex != 255 && BlockDataIndex > 100 ? BlockDataIndex - 100 : 0;
-        public uint ObjectIndex => BlockDataIndex <= 100 ? BlockDataIndex : 0;
-        public bool MapBorder => BlockDataIndex == 255;
-        bool FromSavegame => Index == uint.MaxValue;
-        uint BlockDataIndex => FromSavegame ? (FrontTileIndex & 0xff) : BackTileIndex;
+        public uint WallIndex => FrontTileIndex > 100 && FrontTileIndex < 255 ? FrontTileIndex - 100 : 0;
+        public uint ObjectIndex => FrontTileIndex <= 100 ? FrontTileIndex : 0;
 
         public override string ToString()
         {
-            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Back tile {BackTileIndex}, Front tile {FrontTileIndex}, MapEventId {MapEventId}, Unknown {Unknown}";
+            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile / Wall / Object {FrontTileIndex}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 

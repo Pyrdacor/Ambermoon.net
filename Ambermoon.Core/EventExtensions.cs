@@ -224,11 +224,14 @@ namespace Ambermoon
                 }
                 case EventType.ChangeTile:
                 {
-                    // TODO: add those to the savegame as well!
                     if (!(@event is ChangeTileEvent changeTileEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
-                    game.UpdateMapTile(changeTileEvent, false, x, y);
+                    game.UpdateMapTile(changeTileEvent, x, y);
+
+                    // Add it to the savegame as well.
+                    // Note: Savegame stores the front tile index for 2D and wall/object index for 3D.
+                    game.CurrentSavegame.TileChangeEvents.SafeAdd(map.Index, changeTileEvent);
                     break;
                 }
                 case EventType.StartBattle:
