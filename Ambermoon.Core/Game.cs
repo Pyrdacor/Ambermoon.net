@@ -886,7 +886,7 @@ namespace Ambermoon
 
             mapViewArea = Map2DViewArea;
 
-            PlayerMoved(true, null, false);
+            PlayerMoved(true, null, true);
         }
 
         internal void Start3D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial)
@@ -917,7 +917,7 @@ namespace Ambermoon
 
             mapViewArea = Map3DViewArea;
 
-            PlayerMoved(true, null, false);
+            PlayerMoved(true, null, true);
         }
 
         void Cleanup()
