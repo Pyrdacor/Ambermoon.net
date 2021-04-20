@@ -59,7 +59,7 @@ namespace Ambermoon.Data.Legacy
 
                 try
                 {
-                    folderSaveData.Load(path);
+                    folderSaveData.Load(path, true);
 
                     KeyValuePair<string, IFileContainer>? TransferFile(string name)
                     {

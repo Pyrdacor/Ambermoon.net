@@ -176,7 +176,7 @@ namespace Ambermoon.Data.Legacy
             return version;
         }
 
-        public void Load(string folderPath)
+        public void Load(string folderPath, bool savesOnly = false)
         {
             Loaded = false;
             GameDataSource = GameDataSource.LegacyFiles;
@@ -202,13 +202,13 @@ namespace Ambermoon.Data.Legacy
                 return ADFReader.ReadADF(File.OpenRead(diskFile));
             };
             Func<string, bool> fileExistChecker = name => File.Exists(GetPath(name));
-            Load(fileLoader, diskLoader, fileExistChecker);
+            Load(fileLoader, diskLoader, fileExistChecker, savesOnly);
         }
 
         void Load(Func<string, IFileContainer> fileLoader, Func<char, Dictionary<string, byte[]>> diskLoader,
-            Func<string, bool> fileExistChecker)
+            Func<string, bool> fileExistChecker, bool savesOnly = false)
         {
-            var ambermoonFiles = Legacy.Files.AmigaFiles;
+            var ambermoonFiles = savesOnly ? Legacy.Files.AmigaSaveFiles : Legacy.Files.AmigaFiles;
             var fileReader = new FileReader();
             bool foundNoDictionary = true;
 
@@ -319,6 +319,12 @@ namespace Ambermoon.Data.Legacy
                         HandleFileLoaded(name);
                     }
                 }
+            }
+
+            if (savesOnly)
+            {
+                Loaded = true;
+                return;
             }
 
             if (foundNoDictionary && stopAtFirstError)

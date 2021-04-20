@@ -224,6 +224,8 @@ namespace Ambermoon
         } = false;
         bool ingame = false;
         bool is3D = false;
+        uint lightIntensity = 0;
+        IColoredRect lightOverlay2D = null;
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
@@ -454,6 +456,11 @@ namespace Ambermoon
             windowTitle.DisplayLayer = 2;
             layout = new Layout(this, renderView, itemManager);
             layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
+            lightOverlay2D = renderView.ColoredRectFactory.Create(Global.Map2DViewWidth, Global.Map2DViewHeight, Render.Color.Black, 0);
+            lightOverlay2D.X = Global.Map2DViewX;
+            lightOverlay2D.Y = Global.Map2DViewY;
+            lightOverlay2D.Layer = renderView.GetLayer(Layer.UI);
+            lightOverlay2D.Visible = false;
             ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
             ouchSprite.PaletteIndex = currentUIPaletteIndex;
@@ -812,21 +819,6 @@ namespace Ambermoon
 
         public Render.Color GetUIColor(int colorIndex) => GetPaletteColor(1 + UIPaletteIndex, colorIndex);
 
-        float GetLight3D()
-        {
-            if (Map.Flags.HasFlag(MapFlags.Outdoor))
-            {
-                // Light is based on daytime and own light sources
-                float daytimeFactor = 1.0f - (Math.Abs((int)CurrentSavegame.Hour * 60 + CurrentSavegame.Minute - 12 * 60)) / (24.0f * 60.0f);
-                return daytimeFactor * daytimeFactor * daytimeFactor; // TODO: light sources
-            }
-            else
-            {
-                // Light is based on own light sources
-                return 1.0f; // TODO: light sources
-            }
-        }
-
         internal void Start2D(Map map, uint playerX, uint playerY, CharacterDirection direction, bool initial)
         {
             if (map.Type != MapType.Map2D)
@@ -901,7 +893,6 @@ namespace Ambermoon
             renderMap2D.Destroy();
             renderMap3D.SetMap(map, playerX, playerY, direction, CurrentPartyMember?.Race ?? Race.Human);
             UpdateUIPalette(true);
-            renderView.SetLight(GetLight3D());
             player3D.SetPosition((int)playerX, (int)playerY, CurrentTicks, !initial);
             player3D.TurnTowards((int)direction * 90.0f);
             if (player2D != null)
@@ -1077,6 +1068,17 @@ namespace Ambermoon
             GameTime.GotExhausted += GameTime_GotExhausted;
             GameTime.NewDay += GameTime_NewDay;
             GameTime.NewYear += GameTime_NewYear;
+            GameTime.MinuteChanged += amount =>
+            {
+                if (Map.Flags.HasFlag(MapFlags.Dungeon) &&
+                    !CurrentSavegame.IsSpellActive(ActiveSpellType.Light) &&
+                    lightIntensity > 0)
+                {
+                    lightIntensity = (uint)Math.Max(0, (int)lightIntensity - amount / 2);
+                    UpdateLight();
+                }
+            };
+            GameTime.HourChanged += () => UpdateLight();
             currentBattle = null;
 
             ClearPartyMembers();
@@ -1111,6 +1113,7 @@ namespace Ambermoon
 
             ShowMap(true);
             layout.ShowPortraitArea(true);
+            UpdateLight(true);
 
             InputEnable = true;
             paused = false;
@@ -2677,6 +2680,7 @@ namespace Ambermoon
                 UpdateMapName();
                 Resume();
                 ResetMoveKeys();
+                UpdateLight();
             }
             else
             {
@@ -4025,6 +4029,7 @@ namespace Ambermoon
                 // Color of the filled upper right area may need update cause of palette change.
                 mapViewRightFillArea.Color = GetUIColor(28);
                 UpdateMapName();
+                UpdateLight(true);
             }
 
             return true;
@@ -6203,27 +6208,33 @@ namespace Ambermoon
                     action?.Invoke();
             }
 
+            void ActivateLight(uint duration, uint level)
+            {
+                CurrentSavegame.ActivateSpell(ActiveSpellType.Light, duration, level);
+                UpdateLight(false, true);
+            }
+
             switch (spell)
             {
                 case Spell.Light:
                     // Duration: 30 (150 minutes = 2h30m)
                     // Level: 1 (Light radius 1)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 30, 1));
+                    Cast(() => ActivateLight(30, 1));
                     break;
                 case Spell.MagicalTorch:
                     // Duration: 60 (300 minutes = 5h)
                     // Level: 1 (Light radius 1)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 60, 1));
+                    Cast(() => ActivateLight(60, 1));
                     break;
                 case Spell.MagicalLantern:
                     // Duration: 120 (600 minutes = 10h)
                     // Level: 2 (Light radius 2)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 120, 2));
+                    Cast(() => ActivateLight(120, 2));
                     break;
                 case Spell.MagicalSun:
                     // Duration: 180 (900 minutes = 15h)
                     // Level: 3 (Light radius 3)
-                    Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3));
+                    Cast(() => ActivateLight(180, 3));
                     break;
                 case Spell.Jump:
                     Cast(Jump);
@@ -7974,6 +7985,104 @@ namespace Ambermoon
         void GameOver()
         {
             ShowEvent(ProcessText(DataNameProvider.GameOverMessage), 8, null, true);
+        }
+
+        float Get3DLight()
+        {
+            uint usedLightIntensity = lightIntensity;
+
+            if (Map.Flags.HasFlag(MapFlags.Outdoor))
+            {
+                // Starting at 18:05 to 18:20 the sky gets darker areas and the light becomes darker (every 5 minutes).
+                // At 19:00 the stars appear. Light and sky are darkened from 19:05 to 19:20.
+                // 20:20 to 21:20 the sky again gets darker until night.
+                // 5:05 to 5:20 the sky gets brighter very quick.
+                // 6:05 to 6:20 more brighter.
+                // 7:25 to 7:40 even more brighter.
+                // 8.00 to 9:00 full brightness.
+
+                // Outdoor the light can't be fully black.
+                usedLightIntensity = Math.Min(50 + lightIntensity / 2, 100);
+            }
+            else
+            {
+                // Indoor the light should be a bit stronger as we only
+                // have our own light sources (0, 20, 40, 60).
+                if (CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
+                    usedLightIntensity = Math.Min(75 + lightIntensity / 2, 100);
+                else
+                    usedLightIntensity = Math.Min(75, lightIntensity * 75 / 20);
+            }
+
+            if (usedLightIntensity == 0)
+                return 0.0f;
+            else if (usedLightIntensity == 100)
+                return 1.0f;
+
+            return usedLightIntensity / 100.0f;
+        }
+
+        void UpdateLight(bool mapChange = false, bool lightActivated = false)
+        {
+            // Light radius/intensity:
+            // -----------------------
+            // 100: No FOW (Intensity 100 %, Day, 17:00 + Sun)
+            //  80: Largest radius(17:00 + Lantern)
+            //  60: Larger radius(17:00 + Torch, Sun)
+            //  40: Large radius(17:00, Lantern)
+            //  20: Medium radius(19:00, Torch)
+            //   0: Small radius(20:00)
+
+            if (Map.Flags.HasFlag(MapFlags.Outdoor))
+            {
+                // Light is based on daytime and own light sources
+                // 17:00-18:59: 40
+                // 19:00-19:59: 20
+                // 20:00-05:59: 0
+                // 06:00-06:59: 20
+                // 07:00-07:59: 40
+                // 08:00-16:59: 100
+
+                if (GameTime.Hour < 6 || GameTime.Hour >= 20)
+                    lightIntensity = 0;
+                else if (GameTime.Hour < 7)
+                    lightIntensity = 20;
+                else if (GameTime.Hour < 8)
+                    lightIntensity = 40;
+                else if (GameTime.Hour < 17)
+                    lightIntensity = 100;
+                else if (GameTime.Hour < 19)
+                    lightIntensity = 40;
+                else
+                    lightIntensity = 20;
+
+                lightIntensity = Math.Min(100, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 20);
+                lightOverlay2D.Visible = false;// TODO: !is3D && lightIntensity < 100;
+            }
+            else if (Map.Flags.HasFlag(MapFlags.Indoor))
+            {
+                // Full light
+                lightIntensity = 100;
+                lightOverlay2D.Visible = false;
+            }
+            else // Dungeon
+            {
+                // Otherwise light is based on own light sources only.
+                if (lightActivated || mapChange)
+                    lightIntensity = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 20;
+                if (!is3D && lightIntensity < 100)
+                    lightOverlay2D.Visible = true;
+            }
+
+            if (is3D)
+            {
+                lightOverlay2D.Visible = false;
+                renderView.SetLight(Get3DLight());
+            }
+            else if (lightOverlay2D.Visible) // 2D
+            {
+                // TODO: visible circle
+            }
         }
 
         internal uint DistributeGold(uint gold, bool force)

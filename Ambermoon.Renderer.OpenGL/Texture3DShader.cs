@@ -59,10 +59,10 @@ namespace Ambermoon.Renderer
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
             $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
             $"    ",
-            $"    if (alphaEnabled > 0.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f))",
+            $"    if (alphaEnabled > 0.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f) || {DefaultLightName} < 0.01f)",
             $"        discard;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = vec4({DefaultLightName} * pixelColor.rg, min(1.0f, 0.25f + {DefaultLightName}) * pixelColor.b, 1.0f);",
+            $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - 1), pixelColor.a);",
             $"}}"
         };
 

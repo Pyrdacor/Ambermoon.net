@@ -48,10 +48,10 @@ namespace Ambermoon.Renderer
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
             $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
             $"    ",
-            $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f)",
+            $"    if (colorIndex < 0.5f || pixelColor.a < 0.5f || {DefaultLightName} < 0.01f)",
             $"        discard;",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = vec4({DefaultLightName} * pixelColor.rg, min(1.0f, 0.25f + {DefaultLightName}) * pixelColor.b, pixelColor.a);",
+            $"        {DefaultFragmentOutColorName} = vec4(pixelColor.rgb + vec3({DefaultLightName}) - 1, pixelColor.a);",
             $"}}"
         };
         // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).

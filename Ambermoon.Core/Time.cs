@@ -177,6 +177,7 @@ namespace Ambermoon
         public void Tick()
         {
             savegame.Minute += 5;
+            MinuteChanged?.Invoke(5);
 
             if (savegame.Minute >= 60)
             {
@@ -228,6 +229,8 @@ namespace Ambermoon
             }
         }
 
+        public event Action<uint> MinuteChanged;
+        public event Action HourChanged;
         public event Action GotTired;
         public event Action<uint> GotExhausted;
         public event Action NewDay;
@@ -237,6 +240,7 @@ namespace Ambermoon
         {
             savegame.HoursWithoutSleep += hours;
             savegame.Hour += hours;
+            MinuteChanged?.Invoke(hours * 60);
             PostIncreaseUpdate(hours);
             ResetTickTimer();
             HandleTimePassed(hours, 0);
@@ -271,6 +275,8 @@ namespace Ambermoon
                 GotExhausted?.Invoke(Math.Min(hours, savegame.HoursWithoutSleep - 35));
             else if (savegame.HoursWithoutSleep >=24)
                 GotTired?.Invoke();
+
+            HourChanged?.Invoke();
         }
 
         void HandleTimePassed(uint passedHours, uint passedMinutes)
