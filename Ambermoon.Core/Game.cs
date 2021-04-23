@@ -8065,30 +8065,70 @@ namespace Ambermoon
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
                 // Light is based on daytime and own light sources
-                // 17:00-18:59: 96
-                // 19:00-19:59: 64
+                // 17:00-18:59: 128
+                // 19:00-19:59: 80
                 // 20:00-05:59: 32
-                // 06:00-06:59: 64
-                // 07:00-07:59: 96
+                // 06:00-06:59: 80
+                // 07:00-07:59: 128
                 // 08:00-16:59: 255
                 // Each light spell level adds an additional 32.
+
+                uint lastIntensity = lightIntensity;
 
                 if (GameTime.Hour < 6 || GameTime.Hour >= 20)
                     lightIntensity = 32;
                 else if (GameTime.Hour < 7)
-                    lightIntensity = 64;
+                    lightIntensity = 80;
                 else if (GameTime.Hour < 8)
-                    lightIntensity = 96;
+                    lightIntensity = 128;
                 else if (GameTime.Hour < 17)
                     lightIntensity = 255;
                 else if (GameTime.Hour < 19)
-                    lightIntensity = 64;
+                    lightIntensity = 128;
+                else if (GameTime.Hour < 20)
+                    lightIntensity = 80;
                 else
                     lightIntensity = 32;
 
                 lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
-                fow2D.Radius = (byte)(lightIntensity >> 1);
-                fow2D.Visible = !is3D && lightIntensity < 224;
+
+                if (!is3D && lastIntensity != lightIntensity)
+                {
+                    var map = Map;
+                    var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
+                    var lastRadius = (int)(lastIntensity >> 1);
+                    var newRadius = (int)(lightIntensity >> 1);
+                    fow2D.Visible = lastIntensity < 224;
+                    const int timePerChange = 75;
+                    var timeSpan = TimeSpan.FromMilliseconds(timePerChange);
+
+                    void ChangeLightRadius()
+                    {
+                        if (map != Map || // map changed
+                            lightLevel != CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light)) // light buff changed
+                            return;
+
+                        int diff = newRadius - lastRadius;
+
+                        if (diff != 0)
+                        {
+                            int change = Math.Sign(diff) * Math.Min(Math.Abs(diff), 8);
+                            lastRadius += change;
+                            fow2D.Radius = (byte)lastRadius;
+                            fow2D.Visible = lastRadius < 112;
+
+                            if (newRadius - lastRadius != 0)
+                                AddTimedEvent(timeSpan, ChangeLightRadius);
+                        }
+                    }
+
+                    AddTimedEvent(timeSpan, ChangeLightRadius);
+                }
+                else
+                {
+                    fow2D.Radius = (byte)(lightIntensity >> 1);
+                    fow2D.Visible = !is3D && lightIntensity < 224;
+                }
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
             {
