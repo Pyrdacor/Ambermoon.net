@@ -44,6 +44,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly ColoredRectFactory coloredRectFactory = null;
         readonly Surface3DFactory surface3DFactory = null;
         readonly RenderTextFactory renderTextFactory = null;
+        readonly FowFactory fowFactory = null;
         readonly Camera3D camera3D = null;
         bool fullscreen = false;
         public float VirtualAspectRatio { get; set; } = Global.VirtualAspectRatio;
@@ -68,6 +69,7 @@ namespace Ambermoon.Renderer.OpenGL
         public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
         public ISurface3DFactory Surface3DFactory => surface3DFactory;
         public IRenderTextFactory RenderTextFactory => renderTextFactory;
+        public IFowFactory FowFactory => fowFactory;
         public ICamera3D Camera3D => camera3D;
         public IGameData GameData { get; }
         public IGraphicProvider GraphicProvider { get; }
@@ -128,6 +130,7 @@ namespace Ambermoon.Renderer.OpenGL
             coloredRectFactory = new ColoredRectFactory(visibleArea);
             surface3DFactory = new Surface3DFactory(visibleArea);
             renderTextFactory = new RenderTextFactory(visibleArea);
+            fowFactory = new FowFactory(visibleArea);
 
             camera3D = new Camera3D(State);
 
@@ -408,9 +411,9 @@ namespace Ambermoon.Renderer.OpenGL
                         (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
                 }
 
-                if (layer.Key == Layer.Effects)
+                if (layer.Key == Layer.FOW || layer.Key == Layer.Effects)
                     State.Gl.Enable(EnableCap.Blend);
-                else if (layer.Key == Layer.Cursor)
+                else if (layer.Key == Layer.CombatBackground || layer.Key == Layer.Cursor)
                     State.Gl.Disable(EnableCap.Blend);
 
                 layer.Value.Render();

@@ -48,15 +48,19 @@ namespace Ambermoon.Renderer
         readonly ByteBuffer billboardOrientationBuffer = null;
         readonly ByteBuffer alphaBuffer = null;
         readonly FloatBuffer extrudeBuffer = null;
+        readonly PositionBuffer centerBuffer = null;
+        readonly ByteBuffer radiusBuffer = null;
         static readonly Dictionary<State, ColorShader> colorShaders = new Dictionary<State, ColorShader>();
         static readonly Dictionary<State, TextureShader> textureShaders = new Dictionary<State, TextureShader>();
         static readonly Dictionary<State, OpaqueTextureShader> opaqueTextureShaders = new Dictionary<State, OpaqueTextureShader>();
         static readonly Dictionary<State, Texture3DShader> texture3DShaders = new Dictionary<State, Texture3DShader>();
         static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = new Dictionary<State, Billboard3DShader>();
         static readonly Dictionary<State, TextShader> textShaders = new Dictionary<State, TextShader>();
+        static readonly Dictionary<State, FowShader> fowShaders = new Dictionary<State, FowShader>();
 
         public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
-            bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false)
+            bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
+            bool fow = false)
         {
             this.state = state;
             Opaque = opaque;
@@ -67,7 +71,13 @@ namespace Ambermoon.Renderer
                     throw new AmbermoonException(ExceptionScope.Render, "3D render buffers can't be masked nor layered and must not lack a texture.");
             }
 
-            if (noTexture)
+            if (fow)
+            {
+                if (!fowShaders.ContainsKey(state))
+                    fowShaders[state] = FowShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, fowShaders[state].ShaderProgram);
+            }
+            else if (noTexture)
             {
                 if (!colorShaders.ContainsKey(state))
                     colorShaders[state] = ColorShader.Create(state);
@@ -122,7 +132,15 @@ namespace Ambermoon.Renderer
                 positionBuffer = new PositionBuffer(state, false);
             indexBuffer = new IndexBuffer(state);
 
-            if (noTexture)
+            if (fow)
+            {
+                centerBuffer = new PositionBuffer(state, false);
+                radiusBuffer = new ByteBuffer(state, false);
+
+                vertexArrayObject.AddBuffer(FowShader.DefaultCenterName, centerBuffer);
+                vertexArrayObject.AddBuffer(FowShader.DefaultRadiusName, radiusBuffer);
+            }
+            else if (noTexture)
             {
                 colorBuffer = new ColorBuffer(state, true);
                 layerBuffer = new ByteBuffer(state, true);
@@ -191,7 +209,7 @@ namespace Ambermoon.Renderer
                 vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
             vertexArrayObject.AddBuffer("index", indexBuffer);
 
-            if (!noTexture)
+            if (!fow && !noTexture)
             {
                 vertexArrayObject.AddBuffer(TextureShader.DefaultPaletteIndexName, paletteIndexBuffer);
                 vertexArrayObject.AddBuffer(TextureShader.DefaultTexCoordName, textureAtlasOffsetBuffer);
@@ -204,6 +222,44 @@ namespace Ambermoon.Renderer
         internal Texture3DShader Texture3DShader => texture3DShaders[state];
         internal Billboard3DShader Billboard3DShader => billboard3DShaders[state];
         internal TextShader TextShader => textShaders[state];
+        internal FowShader FowShader => fowShaders[state];
+
+        public int GetDrawIndex(Render.IFow fow,
+            Render.PositionTransformation positionTransformation,
+            Render.SizeTransformation sizeTransformation)
+        {
+            var position = new Position(fow.X, fow.Y);
+            var size = new Size(fow.Width, fow.Height);
+            var center = new Position(fow.Center);
+
+            if (positionTransformation != null)
+            {
+                position = positionTransformation(position);
+                center = positionTransformation(center);
+            }
+
+            if (sizeTransformation != null)
+                size = sizeTransformation(size);
+
+            int index = positionBuffer.Add((short)position.X, (short)position.Y);
+            positionBuffer.Add((short)(position.X + size.Width), (short)position.Y, index + 1);
+            positionBuffer.Add((short)(position.X + size.Width), (short)(position.Y + size.Height), index + 2);
+            positionBuffer.Add((short)position.X, (short)(position.Y + size.Height), index + 3);
+
+            indexBuffer.InsertQuad(index / 4);
+
+            centerBuffer.Add((short)center.X, (short)center.Y, index);
+            centerBuffer.Add((short)center.X, (short)center.Y, index + 1);
+            centerBuffer.Add((short)center.X, (short)center.Y, index + 2);
+            centerBuffer.Add((short)center.X, (short)center.Y, index + 3);
+
+            radiusBuffer.Add(fow.Radius, index);
+            radiusBuffer.Add(fow.Radius, index + 1);
+            radiusBuffer.Add(fow.Radius, index + 2);
+            radiusBuffer.Add(fow.Radius, index + 3);
+
+            return index;
+        }
 
         public int GetDrawIndex(Render.IColoredRect coloredRect,
             Render.PositionTransformation positionTransformation,
@@ -808,6 +864,34 @@ namespace Ambermoon.Renderer
             }
         }
 
+        public void UpdateRadius(int index, byte radius)
+        {
+            if (radiusBuffer != null)
+            {
+                radiusBuffer.Update(index, radius);
+                radiusBuffer.Update(index + 1, radius);
+                radiusBuffer.Update(index + 2, radius);
+                radiusBuffer.Update(index + 3, radius);
+            }
+        }
+
+        public void UpdateCenter(int index, Position center,
+            Render.PositionTransformation positionTransformation)
+        {
+            if (centerBuffer != null)
+            {
+                center = new Position(center);
+
+                if (positionTransformation != null)
+                    center = positionTransformation(center);
+
+                centerBuffer.Update(index, (short)center.X, (short)center.Y);
+                centerBuffer.Update(index + 1, (short)center.X, (short)center.Y);
+                centerBuffer.Update(index + 2, (short)center.X, (short)center.Y);
+                centerBuffer.Update(index + 3, (short)center.X, (short)center.Y);
+            }
+        }
+
         public void FreeDrawIndex(int index)
         {
             /*int newSize = -1;
@@ -896,6 +980,16 @@ namespace Ambermoon.Renderer
                 if (extrudeBuffer != null)
                 {
                     extrudeBuffer.Remove(index + i);
+                }
+
+                if (centerBuffer != null)
+                {
+                    centerBuffer.Remove(index + i);
+                }
+
+                if (radiusBuffer != null)
+                {
+                    radiusBuffer.Remove(index + i);
                 }
             }
             

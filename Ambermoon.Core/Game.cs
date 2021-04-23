@@ -225,7 +225,7 @@ namespace Ambermoon
         bool ingame = false;
         bool is3D = false;
         uint lightIntensity = 0;
-        IColoredRect lightOverlay2D = null;
+        readonly IFow fow2D = null;
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
@@ -456,11 +456,12 @@ namespace Ambermoon
             windowTitle.DisplayLayer = 2;
             layout = new Layout(this, renderView, itemManager);
             layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
-            lightOverlay2D = renderView.ColoredRectFactory.Create(Global.Map2DViewWidth, Global.Map2DViewHeight, Render.Color.Black, 0);
-            lightOverlay2D.X = Global.Map2DViewX;
-            lightOverlay2D.Y = Global.Map2DViewY;
-            lightOverlay2D.Layer = renderView.GetLayer(Layer.UI);
-            lightOverlay2D.Visible = false;
+            fow2D = renderView.FowFactory.Create(Global.Map2DViewWidth, Global.Map2DViewHeight,
+                new Position(Global.Map2DViewX + Global.Map2DViewWidth / 2, Global.Map2DViewY + Global.Map2DViewHeight / 2), 255);
+            fow2D.X = Global.Map2DViewX;
+            fow2D.Y = Global.Map2DViewY;
+            fow2D.Layer = renderView.GetLayer(Layer.FOW);
+            fow2D.Visible = false;
             ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
             ouchSprite.PaletteIndex = currentUIPaletteIndex;
@@ -1075,7 +1076,10 @@ namespace Ambermoon
                     !CurrentSavegame.IsSpellActive(ActiveSpellType.Light) &&
                     lightIntensity > 0)
                 {
-                    lightIntensity = (uint)Math.Max(0, (int)lightIntensity - amount / 2);
+                    if (this.is3D)
+                        lightIntensity = (uint)Math.Max(0, (int)lightIntensity - amount * 4);
+                    else
+                        lightIntensity = 0;
                     UpdateLight();
                 }
                 else if (Map.Flags.HasFlag(MapFlags.Outdoor) && this.is3D)
@@ -7993,7 +7997,7 @@ namespace Ambermoon
 
         float Get3DLight()
         {
-            uint usedLightIntensity = lightIntensity;
+            uint usedLightIntensity;
 
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
@@ -8006,106 +8010,120 @@ namespace Ambermoon
                 // 8.00 to 9:00 full brightness.
 
                 if (GameTime.Hour < 5 || GameTime.Hour > 21)
-                    usedLightIntensity = 55;
+                    usedLightIntensity = 128;
                 else if (GameTime.Hour == 5)
-                    usedLightIntensity = 55 + Math.Min(GameTime.Minute * 2 / 3, 13);
+                    usedLightIntensity = 128 + Math.Min(GameTime.Minute * 2, 32);
                 else if (GameTime.Hour == 6)
-                    usedLightIntensity = 68 + Math.Min(GameTime.Minute * 2 / 3, 13);
+                    usedLightIntensity = 160 + Math.Min(GameTime.Minute * 2, 32);
                 else if (GameTime.Hour == 7)
-                    usedLightIntensity = 81 + (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2 / 3, 13);
+                    usedLightIntensity = 192 + (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2, 32);
                 else if (GameTime.Hour == 8)
-                    usedLightIntensity = Math.Min(100, 94 + GameTime.Minute / 5);
+                    usedLightIntensity = 224 + GameTime.Minute / 2;
                 else if (GameTime.Hour == 18)
-                    usedLightIntensity = 100 - Math.Min(GameTime.Minute / 5, 6);
+                    usedLightIntensity = 251 - GameTime.Minute / 2;
                 else if (GameTime.Hour == 19)
-                    usedLightIntensity = 94 - Math.Min(GameTime.Minute * 2 / 3, 13);
+                    usedLightIntensity = 224 - Math.Min(GameTime.Minute * 2, 32);
                 else if (GameTime.Hour == 20)
-                    usedLightIntensity = 81 - (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2 / 3, 13);
+                    usedLightIntensity = 192 - (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2, 32);
                 else if (GameTime.Hour == 21)
-                    usedLightIntensity = Math.Max(55, 68 - Math.Min(GameTime.Minute * 2 / 3, 13));
+                    usedLightIntensity = 160 - Math.Min(GameTime.Minute * 2, 32);
                 else
-                    usedLightIntensity = 100;
+                    usedLightIntensity = 255;
 
-                // TODO: light sources
+                usedLightIntensity = Math.Min(255, usedLightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
+            }
+            else if (Map.Flags.HasFlag(MapFlags.Indoor))
+            {
+                // Indoor always use full brightness.
+                usedLightIntensity = 255;
             }
             else
             {
-                // Indoor the light should be a bit stronger as we only
-                // have our own light sources (0, 20, 40, 60).
-                if (CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
-                    usedLightIntensity = Math.Min(75 + lightIntensity / 2, 100);
-                else
-                    usedLightIntensity = Math.Min(75, lightIntensity * 75 / 20);
+                usedLightIntensity = lightIntensity;
             }
 
             if (usedLightIntensity == 0)
                 return 0.0f;
-            else if (usedLightIntensity == 100)
+            else if (usedLightIntensity == 255)
                 return 1.0f;
 
-            return usedLightIntensity / 100.0f;
+            return usedLightIntensity / 255.0f;
         }
 
         void UpdateLight(bool mapChange = false, bool lightActivated = false)
         {
             // Light radius/intensity:
             // -----------------------
-            // 100: No FOW (Intensity 100 %, Day, 17:00 + Sun)
-            //  80: Largest radius(17:00 + Lantern)
-            //  60: Larger radius(17:00 + Torch, Sun)
-            //  40: Large radius(17:00, Lantern)
-            //  20: Medium radius(19:00, Torch)
-            //   0: Small radius(20:00)
+            // >=224: No FOW (Intensity 100 %, Day)
+            // 192: Largest radius (17:00 + Sun)
+            // 160: Larger radius (17:00 + Lantern)
+            // 128 Large radius(17:00 + Torch, Sun)
+            //  96: Medium radius (17:00, Lantern)
+            //  64: Medium radius (19:00, Torch)
+            //  32: Small radius (20:00)
 
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
                 // Light is based on daytime and own light sources
-                // 17:00-18:59: 40
-                // 19:00-19:59: 20
-                // 20:00-05:59: 0
-                // 06:00-06:59: 20
-                // 07:00-07:59: 40
-                // 08:00-16:59: 100
+                // 17:00-18:59: 96
+                // 19:00-19:59: 64
+                // 20:00-05:59: 32
+                // 06:00-06:59: 64
+                // 07:00-07:59: 96
+                // 08:00-16:59: 255
+                // Each light spell level adds an additional 32.
 
                 if (GameTime.Hour < 6 || GameTime.Hour >= 20)
-                    lightIntensity = 0;
+                    lightIntensity = 32;
                 else if (GameTime.Hour < 7)
-                    lightIntensity = 20;
+                    lightIntensity = 64;
                 else if (GameTime.Hour < 8)
-                    lightIntensity = 40;
+                    lightIntensity = 96;
                 else if (GameTime.Hour < 17)
-                    lightIntensity = 100;
+                    lightIntensity = 255;
                 else if (GameTime.Hour < 19)
-                    lightIntensity = 40;
+                    lightIntensity = 64;
                 else
-                    lightIntensity = 20;
+                    lightIntensity = 32;
 
-                lightIntensity = Math.Min(100, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 20);
-                lightOverlay2D.Visible = false;// TODO: !is3D && lightIntensity < 100;
+                lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
+                fow2D.Radius = (byte)lightIntensity;
+                fow2D.Visible = !is3D && lightIntensity < 224;
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
             {
                 // Full light
-                lightIntensity = 100;
-                lightOverlay2D.Visible = false;
+                lightIntensity = 255;
+                fow2D.Visible = false;
             }
             else // Dungeon
             {
                 // Otherwise light is based on own light sources only.
                 if (lightActivated || mapChange)
-                    lightIntensity = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 20;
-                if (!is3D && lightIntensity < 100)
-                    lightOverlay2D.Visible = true;
+                {
+                    if (is3D)
+                    {
+                        if (mapChange && !CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
+                            lightIntensity = 0;
+                        else
+                        {
+                            var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
+                            lightIntensity = Math.Min(255, 176 + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
+                            if (lightLevel == 1)
+                                lightIntensity = Math.Min(255, lightIntensity + 16);
+                        }
+                    }
+                    else
+                        lightIntensity = 32 + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32;
+                }
+                if (!is3D && lightIntensity < 224)
+                    fow2D.Visible = true;
             }
 
             if (is3D)
             {
-                lightOverlay2D.Visible = false;
+                fow2D.Visible = false;
                 renderView.SetLight(Get3DLight());
-            }
-            else if (lightOverlay2D.Visible) // 2D
-            {
-                // TODO: visible circle
             }
         }
 

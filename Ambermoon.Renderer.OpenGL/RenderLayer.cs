@@ -81,6 +81,7 @@ namespace Ambermoon.Renderer
             0.31f,  // MapForeground6
             0.31f,  // MapForeground7
             0.31f,  // MapForeground8
+            0.61f,  // FOW
             0.61f,  // CombatBackground
             0.62f,  // BattleMonsterRow
             0.62f,  // BattleEffects
@@ -99,17 +100,17 @@ namespace Ambermoon.Renderer
                 throw new AmbermoonException(ExceptionScope.Application, "Layer.None should never be used.");
 
             this.state = state;
-            bool supportAnimations = layer >= Global.First2DLayer && layer <= Global.Last2DLayer; // TODO
+            bool supportAnimations = layer != Layer.CombatBackground && layer != Layer.FOW && layer != Layer;
             bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
             bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
-                opaque);
+                opaque, layer == Layer.FOW);
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
             if (layer == Layer.UI || layer == Layer.Effects)
-                renderBufferColorRects = new RenderBuffer(state, false, false, false, true, true);
+                renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
 
             Layer = layer;
             Texture = texture;
@@ -121,98 +122,108 @@ namespace Ambermoon.Renderer
             if (!Visible)
                 return;
 
-            if (renderBufferColorRects != null)
+            if (Layer == Layer.FOW)
             {
-                var colorShader = renderBufferColorRects.ColorShader;
+                var fowShader = RenderBuffer.FowShader;
 
-                colorShader.UpdateMatrices(state);
-                colorShader.SetZ(LayerBaseZ[(int)Layer]);
-
-                renderBufferColorRects.Render();
+                fowShader.UpdateMatrices(state);
+                fowShader.SetZ(LayerBaseZ[(int)Layer]);
             }
-
-            if (Texture != null)
+            else
             {
-                if (!(Texture is Texture texture))
-                    throw new AmbermoonException(ExceptionScope.Render, "Invalid texture for this renderer.");
-
-                if (Layer == Layer.Map3D)
+                if (renderBufferColorRects != null)
                 {
-                    Texture3DShader shader = RenderBuffer.Texture3DShader;
+                    var colorShader = renderBufferColorRects.ColorShader;
 
-                    shader.UpdateMatrices(state);
+                    colorShader.UpdateMatrices(state);
+                    colorShader.SetZ(LayerBaseZ[(int)Layer]);
 
-                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
-                    state.Gl.ActiveTexture(GLEnum.Texture0);
-                    texture.Bind();
-
-                    if (palette != null)
-                    {
-                        shader.SetPalette(1);
-                        state.Gl.ActiveTexture(GLEnum.Texture1);
-                        palette.Bind();
-                    }
-
-                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                    renderBufferColorRects.Render();
                 }
-                else if (Layer == Layer.Billboards3D)
+
+                if (Texture != null)
                 {
-                    Billboard3DShader shader = RenderBuffer.Billboard3DShader;
+                    if (!(Texture is Texture texture))
+                        throw new AmbermoonException(ExceptionScope.Render, "Invalid texture for this renderer.");
 
-                    shader.UpdateMatrices(state);
-
-                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
-                    state.Gl.ActiveTexture(GLEnum.Texture0);
-                    texture.Bind();
-
-                    if (palette != null)
+                    if (Layer == Layer.Map3D)
                     {
-                        shader.SetPalette(1);
-                        state.Gl.ActiveTexture(GLEnum.Texture1);
-                        palette.Bind();
+                        Texture3DShader shader = RenderBuffer.Texture3DShader;
+
+                        shader.UpdateMatrices(state);
+
+                        shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                        state.Gl.ActiveTexture(GLEnum.Texture0);
+                        texture.Bind();
+
+                        if (palette != null)
+                        {
+                            shader.SetPalette(1);
+                            state.Gl.ActiveTexture(GLEnum.Texture1);
+                            palette.Bind();
+                        }
+
+                        shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                     }
-
-                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
-                }
-                else if (Layer == Layer.Text)
-                {
-                    TextShader shader = RenderBuffer.TextShader;
-
-                    shader.UpdateMatrices(state);
-
-                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
-                    state.Gl.ActiveTexture(GLEnum.Texture0);
-                    texture.Bind();
-
-                    if (palette != null)
+                    else if (Layer == Layer.Billboards3D)
                     {
-                        shader.SetPalette(1);
-                        state.Gl.ActiveTexture(GLEnum.Texture1);
-                        palette.Bind();
+                        Billboard3DShader shader = RenderBuffer.Billboard3DShader;
+
+                        shader.UpdateMatrices(state);
+
+                        shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                        state.Gl.ActiveTexture(GLEnum.Texture0);
+                        texture.Bind();
+
+                        if (palette != null)
+                        {
+                            shader.SetPalette(1);
+                            state.Gl.ActiveTexture(GLEnum.Texture1);
+                            palette.Bind();
+                        }
+
+                        shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
                     }
-
-                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
-                    shader.SetZ(LayerBaseZ[(int)Layer]);
-                }
-                else
-                {
-                    TextureShader shader = RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
-
-                    shader.UpdateMatrices(state);
-
-                    shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
-                    state.Gl.ActiveTexture(GLEnum.Texture0);
-                    texture.Bind();
-
-                    if (palette != null)
+                    else if (Layer == Layer.Text)
                     {
-                        shader.SetPalette(1);
-                        state.Gl.ActiveTexture(GLEnum.Texture1);
-                        palette.Bind();
-                    }
+                        TextShader shader = RenderBuffer.TextShader;
 
-                    shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
-                    shader.SetZ(LayerBaseZ[(int)Layer]);
+                        shader.UpdateMatrices(state);
+
+                        shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                        state.Gl.ActiveTexture(GLEnum.Texture0);
+                        texture.Bind();
+
+                        if (palette != null)
+                        {
+                            shader.SetPalette(1);
+                            state.Gl.ActiveTexture(GLEnum.Texture1);
+                            palette.Bind();
+                        }
+
+                        shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                        shader.SetZ(LayerBaseZ[(int)Layer]);
+                    }
+                    else
+                    {
+                        TextureShader shader = RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
+
+                        shader.UpdateMatrices(state);
+
+                        shader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+                        state.Gl.ActiveTexture(GLEnum.Texture0);
+                        texture.Bind();
+
+                        if (palette != null)
+                        {
+                            shader.SetPalette(1);
+                            state.Gl.ActiveTexture(GLEnum.Texture1);
+                            palette.Bind();
+                        }
+
+                        shader.SetAtlasSize((uint)Texture.Width, (uint)Texture.Height);
+                        shader.SetZ(LayerBaseZ[(int)Layer]);
+                    }
                 }
             }
 
@@ -228,6 +239,12 @@ namespace Ambermoon.Renderer
         public int GetDrawIndex(ISurface3D surface)
         {
             return RenderBuffer.GetDrawIndex(surface);
+        }
+
+        public int GetDrawIndex(IFow fow)
+        {
+            return RenderBuffer.GetDrawIndex(fow, PositionTransformation,
+                SizeTransformation);
         }
 
         public void FreeDrawIndex(int index)
@@ -260,6 +277,11 @@ namespace Ambermoon.Renderer
             RenderBuffer.UpdateTextureAtlasOffset(index, surface);
         }
 
+        public void UpdatePosition(int index, IFow fow)
+        {
+            RenderBuffer.UpdatePosition(index, fow, 0, PositionTransformation, SizeTransformation);
+        }
+
         public void UpdateDisplayLayer(int index, byte displayLayer)
         {
             RenderBuffer.UpdateDisplayLayer(index, displayLayer);
@@ -278,6 +300,16 @@ namespace Ambermoon.Renderer
         public void UpdateTextColorIndex(int index, byte textColorIndex)
         {
             RenderBuffer.UpdateTextColorIndex(index, textColorIndex);
+        }
+
+        public void UpdateFOWCenter(int index, Position center)
+        {
+            RenderBuffer.UpdateCenter(index, center, PositionTransformation);
+        }
+
+        public void UpdateFOWRadius(int index, byte radius)
+        {
+            RenderBuffer.UpdateRadius(index, radius);
         }
 
         public int GetColoredRectDrawIndex(ColoredRect coloredRect)

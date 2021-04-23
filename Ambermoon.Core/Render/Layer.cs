@@ -22,6 +22,7 @@
         MapForeground6,
         MapForeground7,
         MapForeground8,
+        FOW,
         CombatBackground,
         BattleMonsterRow,
         BattleEffects,
