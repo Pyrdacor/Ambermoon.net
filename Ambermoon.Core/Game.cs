@@ -494,7 +494,8 @@ namespace Ambermoon
             battleRoundActiveSprite.Layer = renderView.GetLayer(Layer.UI);
             battleRoundActiveSprite.PaletteIndex = PrimaryUIPaletteIndex;
             battleRoundActiveSprite.DisplayLayer = 2;
-            battleRoundActiveSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset((uint)Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace);
+            battleRoundActiveSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)
+                .GetOffset((uint)Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace);
             battleRoundActiveSprite.X = 240;
             battleRoundActiveSprite.Y = 150;
             battleRoundActiveSprite.Visible = false;
@@ -1075,6 +1076,10 @@ namespace Ambermoon
                     lightIntensity > 0)
                 {
                     lightIntensity = (uint)Math.Max(0, (int)lightIntensity - amount / 2);
+                    UpdateLight();
+                }
+                else if (Map.Flags.HasFlag(MapFlags.Outdoor) && this.is3D)
+                {
                     UpdateLight();
                 }
             };
@@ -6786,7 +6791,7 @@ namespace Ambermoon
             {
                 case Spell.Hurry:
                 case Spell.MassHurry:
-                    // TODO: add speed bonus for fight duration?
+                    // Note: This is handled by battle code
                     break;
                 case Spell.RemoveFear:
                 case Spell.RemovePanic:
@@ -7061,7 +7066,6 @@ namespace Ambermoon
         {
             Fade(() =>
             {
-                battleRoundActiveSprite.PaletteIndex = UIPaletteIndex;
                 PlayMusic(Song.SapphireFireballsOfPureLove);
                 roundPlayerBattleActions.Clear();
                 ShowBattleWindow(nextEvent, combatBackgroundIndex);
@@ -8001,8 +8005,28 @@ namespace Ambermoon
                 // 7:25 to 7:40 even more brighter.
                 // 8.00 to 9:00 full brightness.
 
-                // Outdoor the light can't be fully black.
-                usedLightIntensity = Math.Min(50 + lightIntensity / 2, 100);
+                if (GameTime.Hour < 5 || GameTime.Hour > 21)
+                    usedLightIntensity = 55;
+                else if (GameTime.Hour == 5)
+                    usedLightIntensity = 55 + Math.Min(GameTime.Minute * 2 / 3, 13);
+                else if (GameTime.Hour == 6)
+                    usedLightIntensity = 68 + Math.Min(GameTime.Minute * 2 / 3, 13);
+                else if (GameTime.Hour == 7)
+                    usedLightIntensity = 81 + (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2 / 3, 13);
+                else if (GameTime.Hour == 8)
+                    usedLightIntensity = Math.Min(100, 94 + GameTime.Minute / 5);
+                else if (GameTime.Hour == 18)
+                    usedLightIntensity = 100 - Math.Min(GameTime.Minute / 5, 6);
+                else if (GameTime.Hour == 19)
+                    usedLightIntensity = 94 - Math.Min(GameTime.Minute * 2 / 3, 13);
+                else if (GameTime.Hour == 20)
+                    usedLightIntensity = 81 - (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2 / 3, 13);
+                else if (GameTime.Hour == 21)
+                    usedLightIntensity = Math.Max(55, 68 - Math.Min(GameTime.Minute * 2 / 3, 13));
+                else
+                    usedLightIntensity = 100;
+
+                // TODO: light sources
             }
             else
             {

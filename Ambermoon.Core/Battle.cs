@@ -211,6 +211,7 @@ namespace Ambermoon
         readonly Character[] battleField = new Character[6 * 5];
         readonly List<PartyMember> parryingPlayers = new List<PartyMember>(Game.MaxPartyMembers);
         readonly List<Character> fledCharacters = new List<Character>();
+        readonly List<PartyMember> hurriedPlayers = new List<PartyMember>();
         readonly Dictionary<int, int> monsterSizeDisplayLayerMapping = new Dictionary<int, int>();
         uint? animationStartTicks = null;
         Monster currentlyAnimatedMonster = null;
@@ -602,22 +603,27 @@ namespace Ambermoon
                         continue;
                     }
 
+                    // Note: We add twice as much attack actions but the second half with
+                    // Skip=true. They will be used if the player has the Hurry buff.
                     int numActions = playerAction.BattleAction == BattleActionType.Attack
-                        ? partyMember.AttacksPerRound : 1;
+                        ? partyMember.AttacksPerRound * 2 : 1;
 
                     for (int i = 0; i < numActions; ++i)
                     {
+                        bool skip = i >= partyMember.AttacksPerRound;
                         roundBattleActions.Enqueue(new BattleAction
                         {
                             Character = partyMember,
                             Action = BattleActionType.DisplayActionText,
-                            ActionParameter = 0
+                            ActionParameter = 0,
+                            Skip = skip
                         });
                         roundBattleActions.Enqueue(new BattleAction
                         {
                             Character = partyMember,
                             Action = playerAction.BattleAction,
-                            ActionParameter = playerAction.Parameter
+                            ActionParameter = playerAction.Parameter,
+                            Skip = skip
                         });
                         if (playerAction.BattleAction == BattleActionType.Attack)
                         {
@@ -625,37 +631,43 @@ namespace Ambermoon
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.WeaponBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                Skip = skip
                             });
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.ArmorBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                Skip = skip
                             });
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.DefenderWeaponBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                Skip = skip
                             });
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.DefenderShieldBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                Skip = skip
                             });
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.LastAmmo,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                Skip = skip
                             });
                             roundBattleActions.Enqueue(new BattleAction
                             {
                                 Character = partyMember,
                                 Action = BattleActionType.Hurt,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter))
+                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                Skip = skip
                             });
                         }
                     }
@@ -862,6 +874,19 @@ namespace Ambermoon
                 else
                 {
                     ActionFinished(false);
+                }
+            }
+
+            // If hurried and attacking, enable twice as much attack actions.
+            if (battleAction.Character is PartyMember player &&
+                hurriedPlayers.Contains(player))
+            {
+                if (roundBattleActions.Any(a => a.Action == BattleActionType.Attack && a.Character == player))
+                {
+                    hurriedPlayers.Remove(player);
+
+                    foreach (var action in roundBattleActions.Where(a => a.Character == player))
+                        action.Skip = false;
                 }
             }
 
@@ -1348,6 +1373,11 @@ namespace Ambermoon
                             finishAction?.Invoke();
                             return;
                         }
+
+                        if (target is PartyMember targetPlayer &&
+                            (spell == Spell.Hurry || spell == Spell.MassHurry) &&
+                            !hurriedPlayers.Contains(targetPlayer))
+                            hurriedPlayers.Add(targetPlayer);
 
                         game.CurrentSpellTarget = target;
                         int position = GetCharacterPosition(target);
