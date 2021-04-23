@@ -8065,6 +8065,9 @@ namespace Ambermoon
 
         void UpdateLight(bool mapChange = false, bool lightActivated = false)
         {
+            if (Map == null)
+                return;
+
             // TODO: Handle blind status removal
 
             // Light radius/intensity:
