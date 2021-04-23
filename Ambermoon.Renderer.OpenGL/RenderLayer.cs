@@ -81,7 +81,7 @@ namespace Ambermoon.Renderer
             0.31f,  // MapForeground6
             0.31f,  // MapForeground7
             0.31f,  // MapForeground8
-            0.61f,  // FOW
+            0.31f,  // FOW
             0.61f,  // CombatBackground
             0.62f,  // BattleMonsterRow
             0.62f,  // BattleEffects
@@ -279,7 +279,7 @@ namespace Ambermoon.Renderer
 
         public void UpdatePosition(int index, IFow fow)
         {
-            RenderBuffer.UpdatePosition(index, fow, 0, PositionTransformation, SizeTransformation);
+            RenderBuffer.UpdatePosition(index, fow, fow.BaseLineOffset, PositionTransformation, SizeTransformation);
         }
 
         public void UpdateDisplayLayer(int index, byte displayLayer)

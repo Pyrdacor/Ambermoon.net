@@ -28,6 +28,7 @@ namespace Ambermoon.Renderer.OpenGL
         protected int drawIndex = -1;
         Position center = new Position();
         byte radius = 0;
+        int baseLineOffset = 0;
 
         public Fow(int width, int height, Position center, byte radius, Rect virtualScreen)
             : base(width, height, virtualScreen)
@@ -61,6 +62,20 @@ namespace Ambermoon.Renderer.OpenGL
                 radius = value;
 
                 UpdateRadius();
+            }
+        }
+
+        public int BaseLineOffset
+        {
+            get => baseLineOffset;
+            set
+            {
+                if (baseLineOffset == value)
+                    return;
+
+                baseLineOffset = value;
+
+                UpdatePosition();
             }
         }
 

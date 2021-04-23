@@ -224,8 +224,14 @@ namespace Ambermoon
         } = false;
         bool ingame = false;
         bool is3D = false;
+        internal const ushort MaxBaseLine = 0x4000;
+        // Note: This is half the max base line which is used for the player in complete
+        // darkness. Big gaps are needed as the z buffer precision is lower with higher distance.
+        const ushort FowBaseLine = 0x2000;
         uint lightIntensity = 0;
         readonly IFow fow2D = null;
+        internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) &&
+            (!Map.Flags.HasFlag(MapFlags.Dungeon) || CurrentSavegame.IsSpellActive(ActiveSpellType.Light));
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
@@ -340,11 +346,11 @@ namespace Ambermoon
                 if (Map?.IsWorldMap == true)
                 {
                     player2D?.UpdateAppearance(CurrentTicks);
-                    player2D.BaselineOffset = player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
+                    player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
                 }
                 else if (!is3D && player2D != null)
                 {
-                    player2D.BaselineOffset = 0;
+                    player2D.BaselineOffset = CanSee() ? 0 : MaxBaseLine;
                 }
             }
         }
@@ -458,6 +464,7 @@ namespace Ambermoon
             layout.BattleFieldSlotClicked += BattleFieldSlotClicked;
             fow2D = renderView.FowFactory.Create(Global.Map2DViewWidth, Global.Map2DViewHeight,
                 new Position(Global.Map2DViewX + Global.Map2DViewWidth / 2, Global.Map2DViewY + Global.Map2DViewHeight / 2), 255);
+            fow2D.BaseLineOffset = FowBaseLine;
             fow2D.X = Global.Map2DViewX;
             fow2D.Y = Global.Map2DViewY;
             fow2D.Layer = renderView.GetLayer(Layer.FOW);
@@ -716,6 +723,9 @@ namespace Ambermoon
                 {
                     SetInventoryWeightDisplay(CurrentInventory);
                 }
+
+                if (!WindowActive && player2D != null)
+                    fow2D.Center = player2D.DisplayArea.Center;
             }
 
             layout.Update(CurrentTicks);
@@ -4263,7 +4273,7 @@ namespace Ambermoon
                     renderMap2D.ClearTransports();
 
                     if (player.MovementAbility <= PlayerMovementAbility.Walking)
-                        player2D.BaselineOffset = 0;
+                        player2D.BaselineOffset = CanSee() ? 0 : MaxBaseLine;
                 }
 
                 if (Map.IsWorldMap)
@@ -7999,6 +8009,9 @@ namespace Ambermoon
         {
             uint usedLightIntensity;
 
+            if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
+                return 0.0f;
+
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
                 // Starting at 18:05 to 18:20 the sky gets darker areas and the light becomes darker (every 5 minutes).
@@ -8052,6 +8065,8 @@ namespace Ambermoon
 
         void UpdateLight(bool mapChange = false, bool lightActivated = false)
         {
+            // TODO: Handle blind status removal
+
             // Light radius/intensity:
             // -----------------------
             // >=224: No FOW (Intensity 100 %, Day)
@@ -8075,7 +8090,9 @@ namespace Ambermoon
 
                 uint lastIntensity = lightIntensity;
 
-                if (GameTime.Hour < 6 || GameTime.Hour >= 20)
+                if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
+                    lightIntensity = 32;
+                else if (GameTime.Hour < 6 || GameTime.Hour >= 20)
                     lightIntensity = 32;
                 else if (GameTime.Hour < 7)
                     lightIntensity = 80;
@@ -8139,7 +8156,11 @@ namespace Ambermoon
             else // Dungeon
             {
                 // Otherwise light is based on own light sources only.
-                if (lightActivated || mapChange)
+                if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
+                {
+                    lightIntensity = 0;
+                }
+                else if (lightActivated || mapChange)
                 {
                     if (is3D)
                     {
@@ -8154,16 +8175,25 @@ namespace Ambermoon
                         }
                     }
                     else
-                        lightIntensity = 32 + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32;
+                        lightIntensity = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32;
                 }
                 if (!is3D && lightIntensity < 224)
+                {
+                    fow2D.Radius = (byte)(lightIntensity >> 1);
                     fow2D.Visible = true;
+                }
+                else
+                    fow2D.Visible = false;
             }
 
             if (is3D)
             {
                 fow2D.Visible = false;
                 renderView.SetLight(Get3DLight());
+            }
+            else // 2D
+            {
+                player2D.BaselineOffset = !Map.IsWorldMap && !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
             }
         }
 
@@ -12013,6 +12043,8 @@ namespace Ambermoon
                     if (is3D)
                         renderMap3D?.SetCameraHeight(partyMember.Race);
                 }
+
+                UpdateLight();
 
                 ActivePlayerChanged?.Invoke();
             }

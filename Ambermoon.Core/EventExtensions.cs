@@ -392,8 +392,7 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.CanSee:
                         {
-                            // TODO: are there other things to consider?
-                            bool canSee = !game.CurrentPartyMember.Ailments.HasFlag(Ailment.Blind);
+                            bool canSee = game.CanSee();
                             if (canSee != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;

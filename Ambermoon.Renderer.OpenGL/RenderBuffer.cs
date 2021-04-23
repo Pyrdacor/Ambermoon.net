@@ -134,9 +134,11 @@ namespace Ambermoon.Renderer
 
             if (fow)
             {
+                baseLineBuffer = new WordBuffer(state, true);
                 centerBuffer = new PositionBuffer(state, false);
                 radiusBuffer = new ByteBuffer(state, false);
 
+                vertexArrayObject.AddBuffer(ColorShader.DefaultLayerName, baseLineBuffer);
                 vertexArrayObject.AddBuffer(FowShader.DefaultCenterName, centerBuffer);
                 vertexArrayObject.AddBuffer(FowShader.DefaultRadiusName, radiusBuffer);
             }
@@ -247,6 +249,18 @@ namespace Ambermoon.Renderer
             positionBuffer.Add((short)position.X, (short)(position.Y + size.Height), index + 3);
 
             indexBuffer.InsertQuad(index / 4);
+
+            var baseLineOffsetSize = new Size(0, fow.BaseLineOffset);
+
+            if (sizeTransformation != null)
+                baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
+
+            ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
+
+            baseLineBuffer.Add(baseLine, index);
+            baseLineBuffer.Add(baseLine, index + 1);
+            baseLineBuffer.Add(baseLine, index + 2);
+            baseLineBuffer.Add(baseLine, index + 3);
 
             centerBuffer.Add((short)center.X, (short)center.Y, index);
             centerBuffer.Add((short)center.X, (short)center.Y, index + 1);

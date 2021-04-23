@@ -110,10 +110,15 @@ namespace Ambermoon.Render
 
         void UpdateBaseline()
         {
-            var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
-            bool groundBased = !(this is Player2D) || !Map.Map.IsWorldMap;
-            sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (!groundBased ? CurrentAnimationInfo.FrameHeight :
-                Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT));
+            if (this is Player2D && baselineOffset == Game.MaxBaseLine)
+                sprite.BaseLineOffset = Game.MaxBaseLine;
+            else
+            {
+                var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+                bool groundBased = !(this is Player2D) || !Map.Map.IsWorldMap;
+                sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (!groundBased ? CurrentAnimationInfo.FrameHeight :
+                    Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT));
+            }
         }
 
         public void PostSameMapTeleport(Map map, uint newX, uint newY)

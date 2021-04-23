@@ -46,6 +46,7 @@ namespace Ambermoon.Renderer
         {
             GetVertexShaderHeader(state),
             $"in ivec2 {DefaultPositionName};",
+            $"in uint {DefaultLayerName};",
             $"in ivec2 {DefaultCenterName};",
             $"in uint {DefaultRadiusName};",
             $"uniform float {DefaultZName};",
@@ -61,7 +62,7 @@ namespace Ambermoon.Renderer
             $"    fowCenter = vec2(float({DefaultCenterName}.x), float({DefaultCenterName}.y));",
             $"    fowRadius = float({DefaultRadiusName});",
             $"    currentPos = pos;",
-            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos + vec2(0.49f, 0.49f), 1.0f - {DefaultZName}, 1.0f);",
+            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos + vec2(0.49f, 0.49f), 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
             $"}}"
         };
 

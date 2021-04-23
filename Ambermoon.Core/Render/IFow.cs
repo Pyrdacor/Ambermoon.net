@@ -34,6 +34,12 @@ namespace Ambermoon.Render
             get;
             set;
         }
+
+        int BaseLineOffset
+        {
+            get;
+            set;
+        }
     }
 
     public interface IFowFactory
