@@ -29,10 +29,15 @@ namespace Ambermoon.Renderer
         protected static string[] FowFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
-            $"in float alpha;",
+            $"in vec2 currentPos;",
+            $"flat in vec2 fowCenter;",
+            $"flat in float fowRadius;",
             $"",
             $"void main()",
             $"{{",
+            $"    vec2 dist = abs(currentPos - fowCenter);",
+            $"    float d = sqrt(dist.x * dist.x + dist.y * dist.y);",
+            $"    float alpha = d < fowRadius ? 0.0f : 1.0f;",
             $"    {DefaultFragmentOutColorName} = vec4(0, 0, 0, alpha);",
             $"}}"
         };
@@ -46,14 +51,16 @@ namespace Ambermoon.Renderer
             $"uniform float {DefaultZName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
-            $"out float alpha;",
+            $"out vec2 currentPos;",
+            $"flat out vec2 fowCenter;",
+            $"flat out float fowRadius;",
             $"",
             $"void main()",
             $"{{",
             $"    vec2 pos = vec2(float({DefaultPositionName}.x), float({DefaultPositionName}.y));",
-            $"    vec2 dist = abs(pos - vec2(float({DefaultCenterName}.x), float({DefaultCenterName}.y)));",
-            $"    float d = sqrt(dist.x * dist.x + dist.y * dist.y);",
-            $"    alpha = d < radius ? 0 : 1;",
+            $"    fowCenter = vec2(float({DefaultCenterName}.x), float({DefaultCenterName}.y));",
+            $"    fowRadius = float({DefaultRadiusName});",
+            $"    currentPos = pos;",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos + vec2(0.49f, 0.49f), 1.0f - {DefaultZName}, 1.0f);",
             $"}}"
         };

@@ -8087,7 +8087,7 @@ namespace Ambermoon
                     lightIntensity = 32;
 
                 lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
-                fow2D.Radius = (byte)lightIntensity;
+                fow2D.Radius = (byte)(lightIntensity >> 1);
                 fow2D.Visible = !is3D && lightIntensity < 224;
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
