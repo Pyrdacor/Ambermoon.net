@@ -1803,7 +1803,8 @@ namespace Ambermoon
         void ShowBattleFieldDamage(int tile, uint damage)
         {
             var layer = layout.RenderView.GetLayer(Layer.Text);
-            var text = layout.RenderView.TextProcessor.CreateText(damage > 999 ? "***" : $"{damage:000}");
+            // Note: Don't use *** as the digit font has no such character.
+            var text = layout.RenderView.TextProcessor.CreateText(damage >= 999 ? "999" : $"{damage:000}");
             var area = Global.BattleFieldSlotArea(tile).CreateModified(-5, 9, 12, 0);
             var damageText = layout.RenderView.RenderTextFactory.CreateDigits(layer, text, TextColor.Red, false, area, TextAlign.Center);
             damageText.PaletteIndex = game.UIPaletteIndex;
@@ -3247,10 +3248,10 @@ namespace Ambermoon
         static void GetAttackFollowUpInformation(uint actionParameter, out uint targetTile, out uint damage,
             out AttackResult attackResult, out AttackActionFlags flags)
         {
-            damage = (actionParameter >> 8) & 0x000fffff;
+            damage = (actionParameter >> 8) & 0x0000ffff;
             targetTile = actionParameter & 0x1f;
             attackResult = (AttackResult)((actionParameter >> 5) & 0x7);
-            flags = (AttackActionFlags)(actionParameter & 0xf0000000);
+            flags = (AttackActionFlags)(actionParameter & 0xff000000);
         }
 
         enum AttackResult
