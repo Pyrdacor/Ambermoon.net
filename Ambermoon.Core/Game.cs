@@ -8172,12 +8172,15 @@ namespace Ambermoon
                     {
                         if (mapChange && !CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
                             lightIntensity = 0;
-                        else if (!playerSwitched)
+                        else
                         {
                             var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
-                            lightIntensity = Math.Min(255, 176 + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
-                            if (lightLevel == 1)
-                                lightIntensity = Math.Min(255, lightIntensity + 16);
+                            if (lightLevel > 0 || !playerSwitched)
+                            {
+                                lightIntensity = Math.Min(255, 176 + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
+                                if (lightLevel == 1)
+                                    lightIntensity = Math.Min(255, lightIntensity + 16);
+                            }
                         }
                     }
                     else
