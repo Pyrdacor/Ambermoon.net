@@ -156,6 +156,8 @@ namespace Ambermoon
                         {
                             game.CurrentSavegame.ActiveSpells[i] = null;
                         }
+
+                        game.UpdateLight();
                     }
                     else
                     {
@@ -164,6 +166,9 @@ namespace Ambermoon
                         if (index < 6)
                         {
                             game.CurrentSavegame.ActiveSpells[index] = null;
+
+                            if (index == (int)Data.Enumerations.ActiveSpellType.Light)
+                                game.UpdateLight();
                         }
                     }
                     break;

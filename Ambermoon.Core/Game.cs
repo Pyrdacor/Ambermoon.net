@@ -6409,7 +6409,7 @@ namespace Ambermoon
                     // Duration: 180 (900 minutes = 15h)
                     Cast(() =>
                     {
-                        CurrentSavegame.ActivateSpell(ActiveSpellType.Light, 180, 3);
+                        ActivateLight(180, 3);
                         CurrentSavegame.ActivateSpell(ActiveSpellType.Protection, 180, 30);
                         CurrentSavegame.ActivateSpell(ActiveSpellType.Attack, 180, 30);
                         CurrentSavegame.ActivateSpell(ActiveSpellType.AntiMagic, 180, 25);
@@ -6417,17 +6417,14 @@ namespace Ambermoon
                     break;
                 case Spell.Knowledge:
                     // Duration: 30 (150 minutes = 2h30m)
-                    // TODO: level?
                     Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 30, 1));
                     break;
                 case Spell.Clairvoyance:
                     // Duration: 90 (450 minutes = 7h30m)
-                    // TODO: level?
                     Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 90, 1));
                     break;
                 case Spell.SeeTheTruth:
                     // Duration: 180 (900 minutes = 15h)
-                    // TODO: level?
                     Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1));
                     break;
                 case Spell.MapView:
@@ -8079,15 +8076,38 @@ namespace Ambermoon
             if (Map == null)
                 return;
 
-            // Light radius/intensity:
-            // -----------------------
-            // >=224: No FOW (Intensity 100 %, Day)
-            // 192: Largest radius (17:00 + Sun)
-            // 160: Larger radius (17:00 + Lantern)
-            // 128 Large radius(17:00 + Torch, Sun)
-            //  96: Medium radius (17:00, Lantern)
-            //  64: Medium radius (19:00, Torch)
-            //  32: Small radius (20:00)
+            void ChangeLightRadius(int lastRadius, int newRadius)
+            {
+                var map = Map;
+                var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
+                const int timePerChange = 75;
+                var timeSpan = TimeSpan.FromMilliseconds(timePerChange);
+
+                void ChangeLightRadius()
+                {
+                    if (map != Map || // map changed
+                        lightLevel != CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light)) // light buff changed
+                        return;
+
+                    int diff = newRadius - lastRadius;
+
+                    if (diff != 0)
+                    {
+                        int change = mapChange || playerSwitched ? diff : Math.Sign(diff) * Math.Min(Math.Abs(diff), 8);
+                        lastRadius += change;
+                        fow2D.Radius = (byte)lastRadius;
+                        fow2D.Visible = lastRadius < 112;
+
+                        if (newRadius - lastRadius != 0)
+                            AddTimedEvent(timeSpan, ChangeLightRadius);
+                    }
+                }
+
+                if (mapChange || playerSwitched)
+                    ChangeLightRadius();
+                else
+                    AddTimedEvent(timeSpan, ChangeLightRadius);
+            }
 
             if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
             {
@@ -8131,38 +8151,10 @@ namespace Ambermoon
 
                 if (!is3D && lastIntensity != lightIntensity)
                 {
-                    var map = Map;
-                    var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
                     var lastRadius = (int)(lastIntensity >> 1);
                     var newRadius = (int)(lightIntensity >> 1);
                     fow2D.Visible = lastIntensity < 224;
-                    const int timePerChange = 75;
-                    var timeSpan = TimeSpan.FromMilliseconds(timePerChange);
-
-                    void ChangeLightRadius()
-                    {
-                        if (map != Map || // map changed
-                            lightLevel != CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light)) // light buff changed
-                            return;
-
-                        int diff = newRadius - lastRadius;
-
-                        if (diff != 0)
-                        {
-                            int change = mapChange || playerSwitched ? diff : Math.Sign(diff) * Math.Min(Math.Abs(diff), 8);
-                            lastRadius += change;
-                            fow2D.Radius = (byte)lastRadius;
-                            fow2D.Visible = lastRadius < 112;
-
-                            if (newRadius - lastRadius != 0)
-                                AddTimedEvent(timeSpan, ChangeLightRadius);
-                        }
-                    }
-
-                    if (mapChange || playerSwitched)
-                        ChangeLightRadius();
-                    else
-                        AddTimedEvent(timeSpan, ChangeLightRadius);
+                    ChangeLightRadius(lastRadius, newRadius);
                 }
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
@@ -8189,14 +8181,25 @@ namespace Ambermoon
                         }
                     }
                     else
+                    {
+                        uint lastIntensity = lightIntensity;
                         lightIntensity = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32;
+
+                        if (lastIntensity != lightIntensity)
+                        {
+                            var lastRadius = (int)(lastIntensity >> 1);
+                            var newRadius = (int)(lightIntensity >> 1);
+                            fow2D.Visible = lastIntensity < 224;
+                            ChangeLightRadius(lastRadius, newRadius);
+                        }
+                    }
                 }
-                if (!is3D && lightIntensity < 224)
+                else if (!is3D && lightIntensity < 224)
                 {
                     fow2D.Radius = (byte)(lightIntensity >> 1);
                     fow2D.Visible = true;
                 }
-                else
+                if (is3D)
                     fow2D.Visible = false;
             }
 
@@ -12029,6 +12032,8 @@ namespace Ambermoon
 
             if (partyMember != null && (partyMember.Ailments.CanSelect() || currentWindow.Window == Window.Healer))
             {
+                bool switched = CurrentPartyMember != partyMember;
+
                 if (currentWindow.Window == Window.Healer)
                 {
                     currentlyHealedMember = partyMember;
@@ -12058,7 +12063,8 @@ namespace Ambermoon
                         renderMap3D?.SetCameraHeight(partyMember.Race);
                 }
 
-                UpdateLight(false, false, true);
+                if (switched)
+                    UpdateLight(false, false, true);
 
                 ActivePlayerChanged?.Invoke();
             }
