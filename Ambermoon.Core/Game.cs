@@ -8172,7 +8172,7 @@ namespace Ambermoon
                     {
                         if (mapChange && !CurrentSavegame.IsSpellActive(ActiveSpellType.Light))
                             lightIntensity = 0;
-                        else
+                        else if (!playerSwitched)
                         {
                             var lightLevel = CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light);
                             lightIntensity = Math.Min(255, 176 + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
