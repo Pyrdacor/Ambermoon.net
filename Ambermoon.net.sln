@@ -28,6 +28,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Data.Legacy", "Am
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.ConcatFiles", "Ambermoon.ConcatFiles\Ambermoon.ConcatFiles.csproj", "{F97FD942-702E-49FE-9242-3B4A95B66521}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{E2692FCA-174D-4723-A04C-4C6245321934}"
+	ProjectSection(SolutionItems) = preProject
+		arm64.sh = arm64.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,6 +130,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E2692FCA-174D-4723-A04C-4C6245321934} = {6D2AB877-1253-42C6-8ACF-0DACC23AC2F4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3995CD35-9B7F-4C04-B75D-E24ECC154A2A}
