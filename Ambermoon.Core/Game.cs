@@ -3484,7 +3484,12 @@ namespace Ambermoon
                         damagedPlayers.Add(partyMember);
 
                         if (inflictAilment != Ailment.None && inflictAilment < Ailment.DeadCorpse)
+                        {
                             partyMember.Ailments |= inflictAilment;
+
+                            if (inflictAilment == Ailment.Blind && partyMember == CurrentPartyMember)
+                                UpdateLight();
+                        }
                     }
 
                     if (partyMember.Alive && partyMember.Ailments.CanSelect())
@@ -3693,6 +3698,9 @@ namespace Ambermoon
                             partyMember.Ailments ^= awardEvent.Ailments.Value;
                             break;
                     }
+
+                    if (awardEvent.Ailments.Value.HasFlag(Ailment.Blind) && partyMember == CurrentPartyMember)
+                        UpdateLight();
                     break;
                 }
                 case AwardEvent.AwardType.UsableSpellTypes:
@@ -6136,9 +6144,10 @@ namespace Ambermoon
 
             partyMember.Ailments |= ailment;
 
-            if (CurrentSavegame.ActivePartyMemberSlot == SlotFromPartyMember(partyMember))
+            if (CurrentPartyMember == partyMember)
             {
-                RecheckActivePartyMember();
+                if (RecheckActivePartyMember() && ailment == Ailment.Blind)
+                    UpdateLight();
             }
         }
 
@@ -6156,6 +6165,8 @@ namespace Ambermoon
 
                 if (ailment == Ailment.Exhausted)
                     RemoveExhaustion(partyMember);
+                else if (ailment == Ailment.Blind && partyMember == CurrentPartyMember)
+                    UpdateLight();
             }
         }
 
@@ -8063,12 +8074,10 @@ namespace Ambermoon
             return usedLightIntensity / 255.0f;
         }
 
-        void UpdateLight(bool mapChange = false, bool lightActivated = false)
+        internal void UpdateLight(bool mapChange = false, bool lightActivated = false, bool playerSwitched = false)
         {
             if (Map == null)
                 return;
-
-            // TODO: Handle blind status removal
 
             // Light radius/intensity:
             // -----------------------
@@ -8080,7 +8089,17 @@ namespace Ambermoon
             //  64: Medium radius (19:00, Torch)
             //  32: Small radius (20:00)
 
-            if (Map.Flags.HasFlag(MapFlags.Outdoor))
+            if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
+            {
+                lightIntensity = 0;
+
+                if (!is3D)
+                {
+                    fow2D.Radius = 0;
+                    fow2D.Visible = true;
+                }
+            }
+            else if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
                 // Light is based on daytime and own light sources
                 // 17:00-18:59: 128
@@ -8093,9 +8112,7 @@ namespace Ambermoon
 
                 uint lastIntensity = lightIntensity;
 
-                if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
-                    lightIntensity = 32;
-                else if (GameTime.Hour < 6 || GameTime.Hour >= 20)
+                if (GameTime.Hour < 6 || GameTime.Hour >= 20)
                     lightIntensity = 32;
                 else if (GameTime.Hour < 7)
                     lightIntensity = 80;
@@ -8132,7 +8149,7 @@ namespace Ambermoon
 
                         if (diff != 0)
                         {
-                            int change = Math.Sign(diff) * Math.Min(Math.Abs(diff), 8);
+                            int change = mapChange || playerSwitched ? diff : Math.Sign(diff) * Math.Min(Math.Abs(diff), 8);
                             lastRadius += change;
                             fow2D.Radius = (byte)lastRadius;
                             fow2D.Visible = lastRadius < 112;
@@ -8142,12 +8159,10 @@ namespace Ambermoon
                         }
                     }
 
-                    AddTimedEvent(timeSpan, ChangeLightRadius);
-                }
-                else
-                {
-                    fow2D.Radius = (byte)(lightIntensity >> 1);
-                    fow2D.Visible = !is3D && lightIntensity < 224;
+                    if (mapChange || playerSwitched)
+                        ChangeLightRadius();
+                    else
+                        AddTimedEvent(timeSpan, ChangeLightRadius);
                 }
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
@@ -8159,11 +8174,7 @@ namespace Ambermoon
             else // Dungeon
             {
                 // Otherwise light is based on own light sources only.
-                if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
-                {
-                    lightIntensity = 0;
-                }
-                else if (lightActivated || mapChange)
+                if (lightActivated || mapChange || playerSwitched)
                 {
                     if (is3D)
                     {
@@ -8196,7 +8207,7 @@ namespace Ambermoon
             }
             else // 2D
             {
-                player2D.BaselineOffset = !Map.IsWorldMap && !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
+                player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
             }
         }
 
@@ -12047,7 +12058,7 @@ namespace Ambermoon
                         renderMap3D?.SetCameraHeight(partyMember.Race);
                 }
 
-                UpdateLight();
+                UpdateLight(false, false, true);
 
                 ActivePlayerChanged?.Invoke();
             }
