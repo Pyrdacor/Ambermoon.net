@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.x beta - Lights, FOW and skies
+- Version [0.7.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.7.0beta): Added fog of war (2D), blind effects and lighting (3D)
+
 ## 0.6.x beta - Conversations, gameover screen
 - Version [0.6.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.6.2beta): Added gameover screen, riddlemouth graphic and overweight effects
 - Version [0.6.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.6.1beta): Hotfix for save/load game issues
