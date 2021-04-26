@@ -20,6 +20,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Saves\**" />
+    <EmbeddedResource Remove="Saves\**" />
+    <None Remove="Saves\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="ambermoon.cfg" />
     <None Remove="Resources\IntroFont.dat" />
   </ItemGroup>

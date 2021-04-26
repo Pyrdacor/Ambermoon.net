@@ -30,7 +30,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.ConcatFiles", "Am
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{E2692FCA-174D-4723-A04C-4C6245321934}"
 	ProjectSection(SolutionItems) = preProject
-		arm64.sh = arm64.sh
+		build-arm64.sh = build-arm64.sh
+		build-win64.cmd = build-win64.cmd
 	EndProjectSection
 EndProject
 Global

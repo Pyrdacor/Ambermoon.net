@@ -1603,7 +1603,9 @@ namespace Ambermoon.UI
 
         void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
-            itemGrid.HideTooltip();
+            bool wasInputEnabled = game.InputEnable;
+            game.InputEnable = false;
+            game.ExecuteNextUpdateCycle(itemGrid.HideTooltip);
 
             if (itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
             {
@@ -1618,7 +1620,13 @@ namespace Ambermoon.UI
             {
                 ReduceItemCharge(itemSlot, true, () =>
                 {
-                    game.CloseWindow(() => game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex)));
+                    game.CloseWindow(() =>
+                    {
+                        if (wasInputEnabled)
+                            game.InputEnable = true;
+                        game.UpdateCursor();
+                        game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex));
+                    });
                 });
                 return;
             }
@@ -1680,7 +1688,13 @@ namespace Ambermoon.UI
                     // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
                     bool equipped = itemGrid == itemGrids[1];
                     var caster = game.CurrentInventory;
-                    game.CloseWindow(() => game.PickBattleSpell(item.Spell, (uint)slot, equipped, caster));
+                    game.CloseWindow(() =>
+                    {
+                        game.PickBattleSpell(item.Spell, (uint)slot, equipped, caster);
+                        if (wasInputEnabled)
+                            game.InputEnable = true;
+                        game.UpdateCursor();
+                    });
                     return;
                 }
                 else
@@ -1738,7 +1752,7 @@ namespace Ambermoon.UI
                         return;
                     }
 
-                    if (itemSlot.NumRemainingCharges == 0)
+                    if (item.MaxCharges != 0 && itemSlot.NumRemainingCharges == 0)
                     {
                         SetInventoryMessage(game.DataNameProvider.NoChargesLeft, true);
                         return;
@@ -1748,7 +1762,12 @@ namespace Ambermoon.UI
                     {
                         itemGrid.HideTooltip();
                         ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), () =>
-                            game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true));
+                        {
+                            if (wasInputEnabled)
+                                game.InputEnable = true;
+                            game.UpdateCursor();
+                            game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true);
+                        });
                     }
                     else
                     {
@@ -1757,11 +1776,20 @@ namespace Ambermoon.UI
 
                         void ConsumeItem(Action effectHandler)
                         {
-                            if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage) && itemSlot.NumRemainingCharges <= 1)
-                                DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, effectHandler);
-                            else
+                            void Done()
+                            {
                                 effectHandler?.Invoke();
+                                if (wasInputEnabled)
+                                    game.InputEnable = true;
+                                game.UpdateCursor();
+                            }
+
+                            if (item.Flags.HasFlag(ItemFlags.DestroyAfterUsage) && itemSlot.NumRemainingCharges <= 1)
+                                DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, Done);
+                            else
+                                Done();
                         }
+
                         game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true, ConsumeItem);
                     }
                 }
@@ -1780,6 +1808,10 @@ namespace Ambermoon.UI
                         SetInventoryMessage(game.DataNameProvider.CannotUseItHere, true);
                         return;
                     }
+
+                    if (wasInputEnabled)
+                        game.InputEnable = true;
+                    game.UpdateCursor();
 
                     switch (item.Transportation)
                     {
@@ -2201,6 +2233,7 @@ namespace Ambermoon.UI
                             inventoryMessage = null;
                             game.InputEnable = true;
                             game.CursorType = CursorType.Sword;
+                            game.UpdateCursor();
                         }
                     };
                     game.CursorType = CursorType.Click;
