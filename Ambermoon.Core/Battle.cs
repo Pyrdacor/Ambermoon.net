@@ -2302,8 +2302,7 @@ namespace Ambermoon
                     {
                         if (target is PartyMember partyMember)
                         {
-                            game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value,
-                                Math.Min(damage, partyMember.HitPoints.CurrentValue));
+                            game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, damage);
                         }
                         if (target.Ailments.HasFlag(Ailment.Sleep))
                             RemoveAilment(Ailment.Sleep, target);
@@ -3321,15 +3320,14 @@ namespace Ambermoon
 
         int CalculatePhysicalDamage(Character attacker, Character target)
         {
-            return Math.Min((int)target.HitPoints.CurrentValue,
-                attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack)
-                - (target.BaseDefense + game.RandomInt(0, target.VariableDefense) + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25));
+            return attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack)
+                - (target.BaseDefense + game.RandomInt(0, target.VariableDefense) + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25);
         }
 
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
         {
             // Note: In contrast to physical attacks this should always deal at least 1 damage
-            return Math.Min(target.HitPoints.CurrentValue, baseDamage + (uint)game.RandomInt(0, (int)variableDamage));
+            return Math.Max(1, baseDamage + (uint)game.RandomInt(0, (int)variableDamage));
         }
     }
 
