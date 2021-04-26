@@ -352,7 +352,6 @@ namespace Ambermoon.Render
                                             @event = conditionEvent.Next;
                                             trigger = EventTrigger.Always;
                                             break;
-                                        // TODO: Mouth condition?
                                         case ConditionEvent.ConditionType.UseItem:
                                         {
                                             if (trigger < EventTrigger.Item0)

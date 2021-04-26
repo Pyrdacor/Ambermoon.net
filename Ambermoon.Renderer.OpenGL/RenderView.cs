@@ -399,6 +399,7 @@ namespace Ambermoon.Renderer.OpenGL
                     else if (layer.Key == Global.First2DLayer)
                     {
                         // Reset to 2D stuff
+                        State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
                         State.RestoreModelViewMatrix(Matrix4.Identity);
                         State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
                         State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
