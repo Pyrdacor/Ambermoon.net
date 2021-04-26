@@ -42,7 +42,8 @@ namespace Ambermoon.Data
         public SpellSchool SpellSchool { get; set; }
         public byte SpellIndex { get; set; }
         public byte InitialCharges { get; set; } // 255 = infinite
-        public byte[] UnknownBytes26To27 { get; set; } // 2, has something to do with charges
+        public byte UnknownByte26 { get; set; } // unknown, maybe has something to do with charges as well
+        public byte MaxRecharges { get; set; }
         public byte MaxCharges { get; set; }
         public byte UnknownByte29 { get; set; } // has something to do with charges
         public int MagicArmorLevel { get; set; } // M-B-R

@@ -8377,7 +8377,11 @@ namespace Ambermoon
                         return;
                     }
 
-                    // TODO: last time enchanting?
+                    if (item.MaxRecharges != 0 && itemSlot.RechargeTimes >= item.MaxRecharges)
+                    {
+                        Error(DataNameProvider.CannotRechargeAnymore, false);
+                        return;
+                    }
 
                     int numMissingCharges = itemSlot.NumRemainingCharges >= item.MaxCharges ? 0 : item.MaxCharges - itemSlot.NumRemainingCharges;
 
@@ -8403,15 +8407,28 @@ namespace Ambermoon
                             nextClickHandler = null;
                             EndSequence();
                             UntrapMouse();
-                            layout.ShowChestMessage(null);
 
                             if (answer) // yes
                             {
-                                enchanter.AvailableGold -= cost;
-                                itemSlot.NumRemainingCharges += (int)charges;
-                            }
+                                void Enchant()
+                                {
+                                    layout.ShowChestMessage(null);
+                                    enchanter.AvailableGold -= cost;
+                                    itemSlot.NumRemainingCharges += (int)charges;
+                                    itemSlot.RechargeTimes = (byte)Math.Min(255, itemSlot.RechargeTimes + 1);
+                                    itemsGrid.Disabled = true;
+                                }
 
-                            itemsGrid.Disabled = true;
+                                if (item.MaxRecharges > 0 && itemSlot.RechargeTimes == item.MaxRecharges - 1)
+                                    layout.ShowClickChestMessage(DataNameProvider.LastTimeEnchanting, Enchant);
+                                else
+                                    Enchant();
+                            }
+                            else
+                            {
+                                layout.ShowChestMessage(null);
+                                itemsGrid.Disabled = true;
+                            }
                         }, TextAlign.Left);
                     }
 

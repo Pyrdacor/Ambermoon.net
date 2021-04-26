@@ -357,6 +357,8 @@ namespace Ambermoon.Data
         string PriceForEnchanting { get; }
         string LastTimeEnchanting { get; }
 
+        string CannotRechargeAnymore { get; }
+
         #endregion
     }
 }

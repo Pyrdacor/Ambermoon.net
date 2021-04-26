@@ -9,7 +9,10 @@ namespace Ambermoon.Data
         public int Amount; // 0-255, 255 = unlimited (**)
         public int NumRemainingCharges; // 0-255, 255 = unlimited (**)
         public ItemSlotFlags Flags;
-        public byte Unknown; // Unknown
+        /// <summary>
+        /// How often the item was recharged. Only enchanters count, not the spell ChargeItem.
+        /// </summary>
+        public byte RechargeTimes;
 
         public bool Empty => Amount == 0;
         public bool Unlimited => Amount == 255;
@@ -45,7 +48,7 @@ namespace Ambermoon.Data
                 Amount = amountToAdd;
                 Flags = item.Flags;
                 NumRemainingCharges = item.NumRemainingCharges;
-                Unknown = item.Unknown;
+                RechargeTimes = item.RechargeTimes;
                 item.Amount -= amountToAdd;
                 return item.Amount;
             }
@@ -70,7 +73,7 @@ namespace Ambermoon.Data
             Amount = 0;
             Flags = ItemSlotFlags.None;
             NumRemainingCharges = 0;
-            Unknown = 0;
+            RechargeTimes = 0;
         }
 
         public void Exchange(ItemSlot item)
@@ -79,19 +82,19 @@ namespace Ambermoon.Data
             var amount = Amount;
             var flags = Flags;
             var numRemainingCharges = NumRemainingCharges;
-            var unknown = Unknown;
+            var rechargeTimes = RechargeTimes;
 
             ItemIndex = item.ItemIndex;
             Amount = item.Amount;
             Flags = item.Flags;
             NumRemainingCharges = item.NumRemainingCharges;
-            Unknown = item.Unknown;
+            RechargeTimes = item.RechargeTimes;
 
             item.ItemIndex = itemIndex;
             item.Amount = amount;
             item.Flags = flags;
             item.NumRemainingCharges = numRemainingCharges;
-            item.Unknown = unknown;
+            item.RechargeTimes = rechargeTimes;
         }
 
         public void Replace(ItemSlot item)
@@ -100,7 +103,7 @@ namespace Ambermoon.Data
             Amount = item.Amount;
             Flags = item.Flags;
             NumRemainingCharges = item.NumRemainingCharges;
-            Unknown = item.Unknown;
+            RechargeTimes = item.RechargeTimes;
         }
 
         public ItemSlot Copy()
@@ -111,7 +114,7 @@ namespace Ambermoon.Data
                 Amount = Amount,
                 Flags = Flags,
                 NumRemainingCharges = NumRemainingCharges,
-                Unknown = Unknown
+                RechargeTimes = RechargeTimes
             };
         }
     }

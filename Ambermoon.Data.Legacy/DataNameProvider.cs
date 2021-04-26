@@ -378,6 +378,7 @@
         public string AlreadyFullyCharged => executableData.Messages.GetEntry(Messages.Index.AlreadyFullyCharged);
         public string PriceForEnchanting => executableData.Messages.GetEntry(Messages.Index.PriceForEnchanting);
         public string LastTimeEnchanting => executableData.Messages.GetEntry(Messages.Index.LastTimeEnchanting);
+        public string CannotRechargeAnymore => executableData.Messages.GetEntry(Messages.Index.CannotRechargeAnymore);
 
         #endregion
     }
