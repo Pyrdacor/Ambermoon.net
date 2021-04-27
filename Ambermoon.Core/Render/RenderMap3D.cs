@@ -39,13 +39,17 @@ namespace Ambermoon.Render
             readonly uint objectIndex;
             readonly uint numFrames;
             readonly uint ticksPerFrame;
+            readonly bool alternateAnimation;
+            bool animateForward = true;
 
             public MapObject(RenderMap3D map, ISurface3D surface,
-                uint objectIndex, uint numFrames, float fps = 1.0f)
+                uint objectIndex, bool alternateAnimation,
+                uint numFrames, float fps = 1.0f)
             {
                 this.surface = surface;
                 this.map = map;
                 this.objectIndex = objectIndex;
+                this.alternateAnimation = alternateAnimation;
                 this.numFrames = numFrames;
                 ticksPerFrame = Math.Max(1, (uint)Util.Round(Game.TicksPerSecond / Math.Max(0.001f, fps)));
             }
@@ -60,7 +64,20 @@ namespace Ambermoon.Render
                 if (numFrames <= 1 || !surface.Visible)
                     return;
 
-                uint frame = (ticks / ticksPerFrame) % numFrames;
+                uint frame = ticks / ticksPerFrame;
+
+                if (alternateAnimation)
+                {
+                    if (animateForward && (frame / numFrames) % 2 == 1)
+                        animateForward = false;
+                    else if (!animateForward && (frame / numFrames) % 2 == 0)
+                        animateForward = true;
+                    frame %= numFrames;
+                    if (!animateForward)
+                        frame = numFrames - frame - 1;
+                }
+                else
+                    frame %= numFrames;
                 surface.TextureAtlasOffset = map.GetObjectTextureOffset(objectIndex) +
                     new Position((int)(frame * surface.TextureWidth), 0);
             }
@@ -77,7 +94,9 @@ namespace Ambermoon.Render
             readonly Map.CharacterReference characterReference;
             readonly uint textureIndex;
             readonly Labdata.ObjectPosition objectPosition;
+            readonly bool alternateAnimation;
             bool active = true;
+            bool animateForward = true;
             DateTime lastInteractionTime = DateTime.MinValue;
             // This is used to avoid multiple monster encounters in the same update frame (e.g. 2 monsters move onto the player at the same time).
             static bool interacting = false;
@@ -93,7 +112,7 @@ namespace Ambermoon.Render
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
                 Labdata.ObjectPosition objectPosition, uint textureIndex, MapCharacter parent,
-                uint numFrames, float fps = 1.0f)
+                bool alternateAnimation, uint numFrames, float fps = 1.0f)
             {
                 this.game = game;
                 this.surface = surface;
@@ -104,6 +123,7 @@ namespace Ambermoon.Render
                 this.characterReference = characterReference;
                 this.textureIndex = textureIndex;
                 this.objectPosition = objectPosition;
+                this.alternateAnimation = alternateAnimation;
                 this.parent = parent;
                 if (parent != null)
                     character3D = parent.character3D;
@@ -393,7 +413,21 @@ namespace Ambermoon.Render
                 {
                     if (surface.Visible && numFrames > 1)
                     {
-                        uint frame = (ticks / ticksPerFrame) % numFrames; // TODO
+                        uint frame = ticks / ticksPerFrame;
+
+                        if (alternateAnimation)
+                        {
+                            if (animateForward && (frame / numFrames) % 2 == 1)
+                                animateForward = false;
+                            else if (!animateForward && (frame / numFrames) % 2 == 0)
+                                animateForward = true;
+                            frame %= numFrames;
+                            if (!animateForward)
+                                frame = numFrames - frame - 1;
+                        }
+                        else
+                            frame %= numFrames;
+
                         surface.TextureAtlasOffset = map.GetObjectTextureOffset(textureIndex) +
                             new Position((int)(frame * surface.TextureWidth), 0);
                     }
@@ -881,7 +915,8 @@ namespace Ambermoon.Render
             UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, objectPosition);
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
-                objectPosition, objectInfo.TextureIndex, parent, objectInfo.NumAnimationFrames, 4.0f); // TODO: fps?
+                objectPosition, objectInfo.TextureIndex, parent, objectInfo.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation),
+                objectInfo.NumAnimationFrames, 8.0f);
             mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
             if (mapCharacter.Active)
                 mapObject.Visible = true;
@@ -907,8 +942,6 @@ namespace Ambermoon.Render
         {
             uint blockIndex = mapX + mapY * (uint)Map.Width;
             blockCollisionBodies.Add(blockIndex, new List<ICollisionBody>(8));
-
-            // TODO: animations
 
             float wallHeight = WallHeight;
             float extrude = 8.0f * ExtrudeStep;
@@ -940,7 +973,8 @@ namespace Ambermoon.Render
                 mapObject.Z = z;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
                 mapObject.Visible = true; // TODO: not all objects should be always visible
-                objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex, objectInfo.NumAnimationFrames, 4.0f)); // TODO: fps?
+                objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex,
+                    objectInfo.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation), objectInfo.NumAnimationFrames, 8.0f));
 
                 if (objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk))
                 {

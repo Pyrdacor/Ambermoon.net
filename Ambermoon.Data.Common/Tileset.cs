@@ -8,6 +8,7 @@ namespace Ambermoon.Data
         public enum TileFlags
         {
             None = 0,
+            AlternateAnimation = 0x00000001, // Animations will go back and forth instead of loop
             BlockSight = 0x00000002, // TODO: not sure
             Background = 0x00000004,
             Floor = 0x00000008, // TODO: Is this also true for 2D?
