@@ -49,7 +49,7 @@ namespace Ambermoon.Render
         uint lastFrame = 0;
         readonly Dictionary<uint, MapCharacter2D> mapCharacters = new Dictionary<uint, MapCharacter2D>();
 
-        public event Action<Map[]> MapChanged;
+        public event Action<Map, Map[]> MapChanged;
 
         public uint ScrollX { get; private set; } = 0;
         public uint ScrollY { get; private set; } = 0;
@@ -555,9 +555,9 @@ namespace Ambermoon.Render
             }
 
             if (map.IsWorldMap)
-                InvokeMapChangedHandler(map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
+                InvokeMapChangedHandler(lastMap, map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
             else
-                InvokeMapChangedHandler(map);
+                InvokeMapChangedHandler(lastMap, map);
         }
 
         public void CheckIfMonsterSeesPlayer(MapCharacter2D monster, bool visible)
@@ -630,9 +630,9 @@ namespace Ambermoon.Render
             CheckIfMonstersSeePlayer();
         }
 
-        void InvokeMapChangedHandler(params Map[] maps)
+        void InvokeMapChangedHandler(Map lastMap, params Map[] maps)
         {
-            MapChanged?.Invoke(maps);
+            MapChanged?.Invoke(lastMap, maps);
         }
 
         public bool Scroll(int x, int y)

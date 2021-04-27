@@ -197,7 +197,7 @@ namespace Ambermoon.Render
                         tile = Map[(uint)player.Position.X, (uint)player.Position.Y];
                         Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
 
-                        game.PlayerMoved(true);
+                        game.PlayerMoved(true, null, true, oldMap);
                     }
                 }
             }

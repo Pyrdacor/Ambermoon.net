@@ -1364,9 +1364,11 @@ namespace Ambermoon
             RunSavegameTileChangeEvents(map.Index);
         }
 
-        void RenderMap2D_MapChanged(Map[] maps)
+        void RenderMap2D_MapChanged(Map lastMap, Map[] maps)
         {
-            ResetMoveKeys();
+            if (lastMap == null || !lastMap.IsWorldMap ||
+                !maps[0].IsWorldMap || lastMap.World != maps[0].World)
+                ResetMoveKeys();
 
             foreach (var map in maps)
                 RunSavegameTileChangeEvents(map.Index);
@@ -4259,7 +4261,8 @@ namespace Ambermoon
             DamageAllPartyMembers(CalculateDamage);
         }
 
-        internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true)
+        internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,
+            Map lastMap = null)
         {
             if (updateSavegame)
             {
@@ -4347,7 +4350,9 @@ namespace Ambermoon
             if (mapChange)
             {
                 monstersCanMoveImmediately = false;
-                ResetMoveKeys();
+                if (lastMap == null || !lastMap.IsWorldMap ||
+                    !Map.IsWorldMap || Map.World != lastMap.World)
+                    ResetMoveKeys();
                 if (!WindowActive)
                     layout.UpdateLayoutButtons();
 
