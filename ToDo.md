@@ -30,7 +30,7 @@
 
 ## 2D maps
 
-- 2D monsters should stay for 1 timeslot when they were on the player (e.g. flee success) cause
+- 2D monsters should stay for 1 timeslot when they were on top of the player (e.g. flee success) cause
   otherwise they always stay on the player when he moves.
 - Town house 2 (couple) inside door is only triggered when already moved outside map.
 
@@ -53,7 +53,6 @@
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
-- Lantern is destroyed after usage.
 - Can't ignite torch while chest + inventory is active (wrong place).
 - Add visual effects of drugs and mouse movement.
 - 
