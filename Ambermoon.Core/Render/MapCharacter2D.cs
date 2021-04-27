@@ -85,7 +85,8 @@ namespace Ambermoon.Render
                     NumSleepFrames = 0,
                     TicksPerFrame = map.TicksPerAnimationFrame * 2,
                     NoDirections = true,
-                    IgnoreTileType = true
+                    IgnoreTileType = true,
+                    UseTopSprite = false
                 };
             }
             else
@@ -103,7 +104,8 @@ namespace Ambermoon.Render
                     NumSleepFrames = playerAnimationInfo.NumSleepFrames,
                     TicksPerFrame = map.TicksPerAnimationFrame * 2,
                     NoDirections = true,
-                    IgnoreTileType = false
+                    IgnoreTileType = false,
+                    UseTopSprite = true
                 };
             }
         }

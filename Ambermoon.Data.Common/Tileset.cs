@@ -9,7 +9,7 @@ namespace Ambermoon.Data
         {
             None = 0,
             AlternateAnimation = 0x00000001, // Animations will go back and forth instead of loop
-            BlockSight = 0x00000002, // TODO: not sure
+            BlockSight = 0x00000002, // TODO: this should be considered in 2D monsters
             Background = 0x00000004,
             Floor = 0x00000008, // TODO: Is this also true for 2D?
             UseBackgroundTileFlags = 0x00000020,

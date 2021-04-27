@@ -866,7 +866,11 @@ namespace Ambermoon
             if (renderMap2D.Map != map)
                 renderMap2D.SetMap(map, (uint)xOffset, (uint)yOffset);
             else
+            {
                 renderMap2D.ScrollTo((uint)xOffset, (uint)yOffset, true);
+                renderMap2D.AddCharacters(map);
+                renderMap2D.InvokeMapChange();
+            }
 
             if (player2D == null)
             {
@@ -11677,7 +11681,8 @@ namespace Ambermoon
                     NumSleepFrames = 0,
                     TicksPerFrame = 0,
                     NoDirections = false,
-                    IgnoreTileType = false
+                    IgnoreTileType = false,
+                    UseTopSprite = false
                 };
             }
             else

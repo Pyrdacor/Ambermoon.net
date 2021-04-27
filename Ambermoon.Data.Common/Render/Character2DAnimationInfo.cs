@@ -13,5 +13,6 @@
         public uint TicksPerFrame;
         public bool NoDirections;
         public bool IgnoreTileType;
+        public bool UseTopSprite;
     }
 }

@@ -439,7 +439,8 @@ namespace Ambermoon.Data.Legacy
             NumSleepFrames = 1,
             TicksPerFrame = 0,
             NoDirections = false,
-            IgnoreTileType = false
+            IgnoreTileType = false,
+            UseTopSprite = true
         };
     }
 }

@@ -469,6 +469,7 @@ namespace Ambermoon.Render
                         backgroundTileSprites[index].CurrentFrame = 0;
                         backgroundTileSprites[index].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
                         backgroundTileSprites[index].Visible = true;
+                        backgroundTileSprites[index].BaseLineOffset = 0;
                     }
 
                     if (tile.FrontTileIndex == 0)
@@ -542,6 +543,29 @@ namespace Ambermoon.Render
 
             ScrollTo(initialScrollX, initialScrollY, true); // also updates tiles etc
 
+            AddCharacters(map);
+
+            if (map.IsWorldMap)
+                InvokeMapChangedHandler(lastMap, map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
+            else
+                InvokeMapChangedHandler(lastMap, map);
+        }
+
+        internal void InvokeMapChange()
+        {
+            if (Map.IsWorldMap)
+            {
+                InvokeMapChangedHandler(null, Map,
+                    mapManager.GetMap(Map.RightMapIndex.Value),
+                    mapManager.GetMap(Map.DownMapIndex.Value),
+                    mapManager.GetMap(Map.DownRightMapIndex.Value));
+            }
+            else
+                InvokeMapChangedHandler(null, Map);
+        }
+
+        internal void AddCharacters(Map map)
+        {
             for (uint characterIndex = 0; characterIndex < map.CharacterReferences.Length; ++characterIndex)
             {
                 var characterReference = map.CharacterReferences[characterIndex];
@@ -553,11 +577,6 @@ namespace Ambermoon.Render
                 mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(map.Index, characterIndex);
                 mapCharacters.Add(characterIndex, mapCharacter);
             }
-
-            if (map.IsWorldMap)
-                InvokeMapChangedHandler(lastMap, map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
-            else
-                InvokeMapChangedHandler(lastMap, map);
         }
 
         public void CheckIfMonsterSeesPlayer(MapCharacter2D monster, bool visible)

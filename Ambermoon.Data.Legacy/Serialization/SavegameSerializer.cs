@@ -122,7 +122,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var y = dataReader.ReadByte();
                 var tileIndex = dataReader.ReadWord();
 
-                if (mapIndex < 0x0300 && tileIndex < 0xffff) // should be a real map and a valid front tile index
+                if (mapIndex < 0x0300 && tileIndex <= 0xffff) // should be a real map and a valid front tile index
                 {
                     savegame.TileChangeEvents.SafeAdd(mapIndex, new ChangeTileEvent
                     {
@@ -226,19 +226,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((ushort)tileChangeEvent.MapIndex);
                     dataWriter.Write((byte)tileChangeEvent.X);
                     dataWriter.Write((byte)tileChangeEvent.Y);
-                    dataWriter.Write(ConvertEventTileIndex(tileChangeEvent));
+                    dataWriter.Write((ushort)tileChangeEvent.FrontTileIndex);
                 }
             }
 
             dataWriter.Write((ushort)0); // end marker
-
-            ushort ConvertEventTileIndex(ChangeTileEvent changeTileEvent)
-            {
-                // TODO: the savegame stores some other events too
-                return (ushort)changeTileEvent.FrontTileIndex;
-            }
-
-            // TODO: save other data to Party_data.sav
         }
 
         public void Read(Savegame savegame, SavegameInputFiles files, IFileContainer partyTextsContainer,

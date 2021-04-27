@@ -420,7 +420,7 @@ namespace Ambermoon.Data
 
         public override string ToString()
         {
-            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile / Wall / Object {FrontTileIndex}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Map {(MapIndex == 0 ? "Self" : MapIndex.ToString())}, X {X}, Y {Y}, Front tile / Wall / Object {FrontTileIndex}, Unknown {(Unknown == null ? "null" : string.Join(" ", Unknown.Select(u => u.ToString("x2"))))}";
         }
     }
 

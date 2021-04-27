@@ -19,7 +19,9 @@ namespace Ambermoon.Render
         }
 
         readonly Game game;
+        readonly ISpriteFactory spriteFactory;
         readonly ITextureAtlas textureAtlas;
+        IAnimatedSprite topSprite; // for non-world maps the upper half is drawn separatly
         readonly IAnimatedSprite sprite;
         readonly Func<Character2DAnimationInfo> animationInfoProvider;
         readonly Func<uint> paletteIndexProvider;
@@ -47,7 +49,8 @@ namespace Ambermoon.Render
         public CharacterDirection Direction { get; private set; } = CharacterDirection.Down;
         public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (only exception is the player)
         public Position Position { get; } // in tiles
-        public Rect DisplayArea => new Rect(sprite.X, sprite.Y, sprite.Width, sprite.Height);
+        public Rect DisplayArea => new Rect(topSprite?.X ?? sprite.X, topSprite?.Y ?? sprite.Y,
+            (topSprite?.Width ?? 0) + sprite.Width, (topSprite?.Height ?? 0) + sprite.Height);
         public bool Visible
         {
             get => visible;
@@ -56,6 +59,9 @@ namespace Ambermoon.Render
                 visible = value;
 
                 sprite.Visible = visible && active;
+
+                if (topSprite != null)
+                    topSprite.Visible = sprite.Visible;
             }
         }
         public bool Active
@@ -66,6 +72,9 @@ namespace Ambermoon.Render
                 active = value;
 
                 sprite.Visible = visible && active;
+
+                if (topSprite != null)
+                    topSprite.Visible = sprite.Visible;
             }
         }
         public State CurrentState { get; private set; }
@@ -82,6 +91,7 @@ namespace Ambermoon.Render
             Func<uint> paletteIndexProvider, Func<Position> drawOffsetProvider)
         {
             this.game = game;
+            this.spriteFactory = spriteFactory;
             Map = map;
             this.textureAtlas = textureAtlas;
             this.animationInfoProvider = animationInfoProvider;
@@ -90,34 +100,95 @@ namespace Ambermoon.Render
             var currentAnimationInfo = CurrentAnimationInfo;
             CurrentBaseFrameIndex = CurrentFrameIndex = currentAnimationInfo.StandFrameIndex;
             var textureOffset = textureAtlas.GetOffset(CurrentFrameIndex);
-            sprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, currentAnimationInfo.FrameHeight,
-                textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
-            sprite.TextureAtlasOffset = textureOffset;
-            sprite.Layer = layer;
             var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
-            sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
-            sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+            if (currentAnimationInfo.UseTopSprite)
+            {
+                sprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, Math.Min(currentAnimationInfo.FrameHeight, RenderMap2D.TILE_HEIGHT),
+                    textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
+                topSprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, Math.Max(0, currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT),
+                    textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
+                topSprite.TextureAtlasOffset = textureOffset;
+                sprite.TextureAtlasOffset = textureOffset + new Position(0, currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT);
+                topSprite.Layer = layer;
+                topSprite.PaletteIndex = (byte)paletteIndexProvider();
+                topSprite.ClipArea = Game.Map2DViewArea;
+                topSprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                topSprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+                sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y +
+                    currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT;
+            }
+            else
+            {
+                sprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, currentAnimationInfo.FrameHeight,
+                    textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
+                sprite.TextureAtlasOffset = textureOffset;
+                sprite.X = Global.Map2DViewX + (startPosition.X - (int)map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                sprite.Y = Global.Map2DViewY + (startPosition.Y - (int)map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+            }            
+            sprite.Layer = layer;
             sprite.PaletteIndex = (byte)paletteIndexProvider();
             sprite.ClipArea = Game.Map2DViewArea;
             UpdateBaseline();
             Position = startPosition;
         }
 
+        void RecheckTopSprite()
+        {
+            var currentAnimationInfo = CurrentAnimationInfo;
+
+            if (currentAnimationInfo.UseTopSprite)
+            {
+                if (topSprite == null)
+                {
+                    sprite.Resize(currentAnimationInfo.FrameWidth, Math.Min(currentAnimationInfo.FrameHeight, RenderMap2D.TILE_HEIGHT));
+                    topSprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, Math.Max(0, currentAnimationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT),
+                        textureAtlas.Texture.Width, currentAnimationInfo.NumStandFrames);
+                    topSprite.TextureAtlasOffset = sprite.TextureAtlasOffset;
+                    sprite.TextureAtlasOffset += new Position(0, topSprite.Height);
+                    topSprite.Layer = sprite.Layer;
+                    topSprite.PaletteIndex = sprite.PaletteIndex;
+                    topSprite.ClipArea = Game.Map2DViewArea;
+                    topSprite.X = sprite.X;
+                    topSprite.Y = sprite.Y;
+                    sprite.Y += topSprite.Height;
+                }                
+            }
+            else
+            {
+                if (topSprite != null)
+                {
+                    sprite.TextureAtlasOffset = topSprite.TextureAtlasOffset;
+                    sprite.Resize(currentAnimationInfo.FrameWidth, currentAnimationInfo.FrameHeight);
+                    sprite.X = topSprite.X;
+                    sprite.Y = topSprite.Y;
+                    topSprite.Delete();
+                    topSprite = null;
+                }
+            }
+        }
+
         public virtual void Destroy()
         {
             sprite?.Delete();
+            topSprite?.Delete();
         }
 
         void UpdateBaseline()
         {
             if (this is Player2D && baselineOffset == Game.MaxBaseLine)
+            {
                 sprite.BaseLineOffset = Game.MaxBaseLine;
+                if (topSprite != null)
+                    topSprite.BaseLineOffset = Game.MaxBaseLine;
+            }
             else
             {
                 var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
-                bool groundBased = !(this is Player2D) || !Map.Map.IsWorldMap;
-                sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (!groundBased ? CurrentAnimationInfo.FrameHeight :
-                    Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT));
+                sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (topSprite == null ? CurrentAnimationInfo.FrameHeight :
+                    Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT) - RenderMap2D.TILE_HEIGHT);
+                if (topSprite != null)
+                    topSprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + CurrentAnimationInfo.FrameHeight;
             }
         }
 
@@ -148,6 +219,8 @@ namespace Ambermoon.Render
                         (uint)Util.Limit(0, (int)x - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
                         (uint)Util.Limit(0, (int)y - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
                     Direction = newDirection.Value;
+
+                    RecheckTopSprite();
                 }
                 else
                 {
@@ -194,12 +267,20 @@ namespace Ambermoon.Render
                 Position.X = (int)x;
                 Position.Y = (int)y;
                 sprite.Visible = false;
+                if (topSprite != null)
+                    topSprite.Visible = false;
             }
             else
             {
                 var animationInfo = CurrentAnimationInfo;
                 var tileType = Map[x, y].Type;
-                sprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight);
+                if (topSprite == null)
+                    sprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight);
+                else
+                {
+                    topSprite.Resize(animationInfo.FrameWidth, animationInfo.FrameHeight - RenderMap2D.TILE_HEIGHT);
+                    sprite.Resize(animationInfo.FrameWidth, RenderMap2D.TILE_HEIGHT);
+                }
                 CurrentState = animationInfo.IgnoreTileType ? State.Stand : tileType switch
                 {
                     Data.Map.TileType.ChairUp => State.Sit,
@@ -210,6 +291,8 @@ namespace Ambermoon.Render
                     _ => State.Stand
                 };
                 sprite.NumFrames = NumFrames;
+                if (topSprite != null)
+                    topSprite.NumFrames = NumFrames;
                 CurrentBaseFrameIndex = animationInfo.IgnoreTileType ? animationInfo.StandFrameIndex : tileType switch
                 {
                     Data.Map.TileType.ChairUp => animationInfo.SitFrameIndex,
@@ -222,14 +305,26 @@ namespace Ambermoon.Render
                 if (!animationInfo.NoDirections && CurrentBaseFrameIndex == animationInfo.StandFrameIndex)
                     CurrentBaseFrameIndex += (uint)Direction * sprite.NumFrames;
                 CurrentFrameIndex = CurrentBaseFrameIndex;
-                sprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
+                if (topSprite == null)
+                    sprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
+                else
+                {
+                    topSprite.TextureAtlasOffset = textureAtlas.GetOffset(CurrentFrameIndex);
+                    sprite.TextureAtlasOffset = topSprite.TextureAtlasOffset + new Position(0, topSprite.Height);
+                }
                 if (frameReset)
                 {
                     sprite.CurrentFrame = 0;
+                    if (topSprite != null)
+                        topSprite.CurrentFrame = 0;
                     lastFrameReset = ticks;
                 }
                 else
+                {
                     sprite.CurrentFrame = sprite.CurrentFrame; // this may correct the value if NumFrames has changed
+                    if (topSprite != null)
+                        topSprite.CurrentFrame = sprite.CurrentFrame;
+                }
                 if (Position.X == x && Position.Y == y)
                     moved = false;
                 else
@@ -238,13 +333,27 @@ namespace Ambermoon.Render
                     Position.Y = (int)y;
                 }
                 var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
-                bool groundBased = !(this is Player2D) || !Map.Map.IsWorldMap;
-                sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
-                sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y + (groundBased ? RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight : 0);
                 sprite.PaletteIndex = (byte)paletteIndexProvider();
+                if (topSprite == null)
+                {
+                    sprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                    sprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y;
+                }
+                else
+                {
+                    topSprite.X = Global.Map2DViewX + (Position.X - (int)Map.ScrollX) * RenderMap2D.TILE_WIDTH + drawOffset.X;
+                    topSprite.Y = Global.Map2DViewY + (Position.Y - (int)Map.ScrollY) * RenderMap2D.TILE_HEIGHT + drawOffset.Y +
+                        RenderMap2D.TILE_HEIGHT - animationInfo.FrameHeight;
+                    sprite.X = topSprite.X;
+                    sprite.Y = topSprite.Y + topSprite.Height;
+                    topSprite.PaletteIndex = sprite.PaletteIndex;
+                    topSprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
+                }
                 sprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
                 if (sprite.Visible && tileType == Data.Map.TileType.Invisible)
                     sprite.Visible = false;
+                if (topSprite != null && topSprite.Visible && tileType == Data.Map.TileType.Invisible)
+                    topSprite.Visible = false;
                 UpdateBaseline();
             }
 
@@ -262,12 +371,16 @@ namespace Ambermoon.Render
         {
             uint elapsedTicks = ticks - lastFrameReset;
             sprite.CurrentFrame = elapsedTicks / CurrentAnimationInfo.TicksPerFrame; // this will take care of modulo frame count
+            if (topSprite != null)
+                topSprite.CurrentFrame = sprite.CurrentFrame;
             CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
         }
 
         public void SetCurrentFrame(uint frameIndex)
         {
             sprite.CurrentFrame = frameIndex; // this will take care of modulo frame count
+            if (topSprite != null)
+                topSprite.CurrentFrame = frameIndex;
             CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
         }
     }

@@ -371,11 +371,10 @@ namespace Ambermoon.Data
             if (Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiles can only be updated for 2D maps.");
 
-            Tiles[x, y].FrontTileIndex = newFrontTileIndex;
-
-            if (newFrontTileIndex == 0)
-                Tiles[x, y].MapEventId = 0; // Not 100% sure but I think this makes sense.
-
+            if (Tiles[x, y].BackTileIndex != 0 && newFrontTileIndex != 0 && newFrontTileIndex < 256)
+                Tiles[x, y].BackTileIndex = newFrontTileIndex;
+            else
+                Tiles[x, y].FrontTileIndex = newFrontTileIndex;
             Tiles[x, y].Type = TileTypeFromTile(Tiles[x, y], tileset);
         }
 
