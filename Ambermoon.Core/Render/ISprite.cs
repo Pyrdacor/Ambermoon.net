@@ -101,6 +101,12 @@ namespace Ambermoon.Render
             get;
             set;
         }
+
+        bool Alternate
+        {
+            get;
+            set;
+        }
     }
 
     public interface IAnimatedLayerSprite : IAnimatedSprite, ILayerSprite

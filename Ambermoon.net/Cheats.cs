@@ -48,7 +48,8 @@ namespace Ambermoon
                 Create
                 (
                     "Makes the party invulnerable." + Environment.NewLine +
-                    "Usage: teleport <map_id> [x] [y] [direction]",
+                    "Usage: teleport <map_id> [x] [y] [direction]" + Environment.NewLine +
+                    "   or: teleport <world> <x> <y> [direction]",
                     Teleport
                 )
             },
@@ -411,6 +412,63 @@ namespace Ambermoon
         static void Teleport(Game game, string[] args)
         {
             Console.WriteLine();
+
+            if (args.Length >= 3)
+            {
+                var world = Enum.GetValues<World>().Cast<World?>().FirstOrDefault(w =>
+                    string.Compare(args[0].Replace(" ", ""), w.ToString().Replace(" ", ""), true) == 0);
+
+                if (world != null)
+                {
+                    uint? worldX = uint.TryParse(args[1], out uint wx) ? wx : (uint?)null;
+                    uint? worldY = uint.TryParse(args[2], out uint wy) ? wy : (uint?)null;
+                    var worldDirection = (args.Length > 3 ? ParseDirection(args[3]) : null) ?? (CharacterDirection)(random.Next() % 4);
+
+                    if (worldX == null || worldY == null || worldX == 0 || worldY == 0)
+                    {
+                        Console.WriteLine("Invalid x or y coordinate.");
+                        Console.WriteLine();
+                        return;
+                    }
+
+                    uint mapColumn = (worldX.Value - 1) / 50;
+                    uint mapRow = (worldY.Value - 1) / 50;
+                    uint mapX = worldX.Value % 50;
+                    uint mapY = worldY.Value % 50;
+                    uint worldMapIndex = mapColumn + mapRow * world.Value switch
+                    {
+                        World.Lyramion => 16u,
+                        World.ForestMoon => 6u,
+                        World.Morag => 4u,
+                        _ => 16u
+                    } + world.Value switch
+                    {
+                        World.Lyramion => 1u,
+                        World.ForestMoon => 300u,
+                        World.Morag => 513u,
+                        _ => 1u
+                    };
+
+                    if (!game.Teleport(worldMapIndex, mapX, mapY, worldDirection, out bool blocked))
+                    {
+                        if (blocked)
+                        {
+                            Console.WriteLine($"Teleport to position ({worldX}, {worldY}) on world {world} is not possible.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Unable to teleport in current game state.");
+                            Console.WriteLine("Try to use the command when no ingame window is open.");
+                        }
+                        Console.WriteLine();
+                        return;
+                    }
+
+                    Console.WriteLine($"Teleported to world {world} ({worldX}, {worldY}) -> map {worldMapIndex} ({mapX}, {mapY})");
+                    Console.WriteLine();
+                    return;
+                }
+            }
 
             if (args.Length == 0 || !uint.TryParse(args[0], out uint mapIndex) ||
                 !game.MapManager.Maps.Any(m => m.Index == mapIndex))

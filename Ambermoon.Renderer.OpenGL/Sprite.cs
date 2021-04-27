@@ -230,6 +230,7 @@ namespace Ambermoon.Renderer
     {
         Position initialTextureOffset;
         uint currentFrame = 0;
+        bool alternate = false;
 
         public AnimatedSprite(int width, int height, int textureAtlasX, int textureAtlasY, Rect virtualScreen, uint numFrames, int textureAtlasWidth)
             : base(width, height, textureAtlasX, textureAtlasY, virtualScreen)
@@ -262,7 +263,17 @@ namespace Ambermoon.Renderer
             {
                 if (NumFrames > 1)
                 {
-                    currentFrame = BaseFrame + value % NumFrames;
+                    uint frameOffset = value;
+                    if (alternate)
+                    {
+                        bool animateForward = (frameOffset / NumFrames) % 2 == 0;
+                        frameOffset %= NumFrames;
+                        if (!animateForward)
+                            frameOffset = NumFrames - frameOffset - 1;
+                    }
+                    else
+                        frameOffset %= NumFrames;
+                    currentFrame = BaseFrame + frameOffset;
                     int newTextureOffsetX = initialTextureOffset.X + (int)currentFrame * Width;
                     int newTextureOffsetY = initialTextureOffset.Y;
 
@@ -278,6 +289,20 @@ namespace Ambermoon.Renderer
                 {
                     currentFrame = BaseFrame;
                 }
+            }
+        }
+        public bool Alternate
+        {
+            get => alternate;
+            set
+            {
+                if (alternate == value)
+                    return;
+
+                alternate = value;
+
+                // This update the frame after alternate change.
+                CurrentFrame = CurrentFrame;
             }
         }
     }
