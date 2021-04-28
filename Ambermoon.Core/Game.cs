@@ -10638,215 +10638,218 @@ namespace Ambermoon
 
         void OpenMiniMap()
         {
-            Pause();
-            var popup = layout.OpenPopup(Map2DViewArea.Position, 11, 9, true, false);
-            var contentArea = popup.ContentArea;
-            TrapMouse(contentArea);
-            const int numVisibleTilesX = 72; // (11 - 2) * 16 / 2
-            const int numVisibleTilesY = 56; // (9 - 2) * 16 / 2
-            int displayWidth = Map.IsWorldMap ? numVisibleTilesX : Math.Min(numVisibleTilesX, Map.Width);
-            int displayHeight = Map.IsWorldMap ? numVisibleTilesY : Math.Min(numVisibleTilesY, Map.Height);
-            var baseX = popup.ContentArea.Position.X + (numVisibleTilesX - displayWidth); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
-            var baseY = popup.ContentArea.Position.Y + (numVisibleTilesY - displayHeight); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
-            var backgroundFill = layout.FillArea(popup.ContentArea, Render.Color.Black, 90);
-            var filledAreas = new List<FilledArea>();
-            int drawX = baseX;
-            int drawY = baseY;
-
-            var rightMap = Map.IsWorldMap ? MapManager.GetMap(Map.RightMapIndex.Value) : null;
-            var downMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownMapIndex.Value) : null;
-            var downRightMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownRightMapIndex.Value) : null;
-            Func<Map, int, int, KeyValuePair<byte, byte?>> tileColorProvider = null;
-
-            if (is3D)
+            CloseWindow(() =>
             {
-                var labdata = MapManager.GetLabdataForMap(Map);
-                tileColorProvider = (map, x, y) =>
-                {
-                    // Note: In original this seems bugged. The map border is drawn in different colors depending on savegame and who knows what.
-                    // We just skip map border drawing at all by using color index 0 if there is no wall.
-                    if (map.Blocks[x, y].WallIndex == 0)
-                        return KeyValuePair.Create((byte)0, (byte?)null);
-                    else
-                        return KeyValuePair.Create(labdata.Walls[(int)map.Blocks[x, y].WallIndex - 1].ColorIndex, (byte?)null);
-                };
-            }
-            else // 2D
-            {
-                // Possible adjacent maps should use the same tileset so don't bother to provide 4 tilesets here.
-                var tileset = MapManager.GetTilesetForMap(Map);
-                tileColorProvider = (map, x, y) =>
-                {
-                    var backTileIndex = map.Tiles[x, y].BackTileIndex;
-                    var frontTileIndex = map.Tiles[x, y].FrontTileIndex;
-                    byte backColorIndex = tileset.Tiles[backTileIndex - 1].ColorIndex;
-                    byte? frontColorIndex = frontTileIndex == 0 ? (byte?)null : tileset.Tiles[frontTileIndex - 1].ColorIndex;
-                    return KeyValuePair.Create(backColorIndex, frontColorIndex);
-                };
-            }
-            void DrawTile(Map map, int x, int y)
-            {
-                bool visible = popup.ContentArea.Contains(drawX + 1, drawY + 1);
-                var tileColors = tileColorProvider(map, x, y);
-                var backArea = layout.FillArea(new Rect(drawX, drawY, 2, 2),
-                    GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Key)), 100);
-                filledAreas.Add(backArea);
-                backArea.Visible = visible;
-                if (tileColors.Value != null)
-                {
-                    var color = GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Value.Value));
-                    var upperRightArea = layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110);
-                    var lowerLeftArea = layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110);
-                    filledAreas.Add(upperRightArea);
-                    filledAreas.Add(lowerLeftArea);
-                    upperRightArea.Visible = visible;
-                    lowerLeftArea.Visible = visible;
-                }
-            }
-            for (int y = 0; y < Map.Height; ++y)
-            {
-                drawX = baseX;
+                Pause();
+                var popup = layout.OpenPopup(Map2DViewArea.Position, 11, 9, true, false);
+                var contentArea = popup.ContentArea;
+                TrapMouse(contentArea);
+                const int numVisibleTilesX = 72; // (11 - 2) * 16 / 2
+                const int numVisibleTilesY = 56; // (9 - 2) * 16 / 2
+                int displayWidth = Map.IsWorldMap ? numVisibleTilesX : Math.Min(numVisibleTilesX, Map.Width);
+                int displayHeight = Map.IsWorldMap ? numVisibleTilesY : Math.Min(numVisibleTilesY, Map.Height);
+                var baseX = popup.ContentArea.Position.X + (numVisibleTilesX - displayWidth); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
+                var baseY = popup.ContentArea.Position.Y + (numVisibleTilesY - displayHeight); // 1 tile = 2 pixel, half of it is 1, it's actually * 1 here
+                var backgroundFill = layout.FillArea(popup.ContentArea, Render.Color.Black, 90);
+                var filledAreas = new List<FilledArea>();
+                int drawX = baseX;
+                int drawY = baseY;
 
-                for (int x = 0; x < Map.Width; ++x)
-                {
-                    DrawTile(Map, x, y);
-                    drawX += 2;
-                }
+                var rightMap = Map.IsWorldMap ? MapManager.GetMap(Map.RightMapIndex.Value) : null;
+                var downMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownMapIndex.Value) : null;
+                var downRightMap = Map.IsWorldMap ? MapManager.GetMap(Map.DownRightMapIndex.Value) : null;
+                Func<Map, int, int, KeyValuePair<byte, byte?>> tileColorProvider = null;
 
-                if (rightMap != null)
+                if (is3D)
                 {
-                    for (int x = 0; x < rightMap.Width; ++x)
+                    var labdata = MapManager.GetLabdataForMap(Map);
+                    tileColorProvider = (map, x, y) =>
                     {
-                        DrawTile(rightMap, x, y);
-                        drawX += 2;
+                        // Note: In original this seems bugged. The map border is drawn in different colors depending on savegame and who knows what.
+                        // We just skip map border drawing at all by using color index 0 if there is no wall.
+                        if (map.Blocks[x, y].WallIndex == 0)
+                            return KeyValuePair.Create((byte)0, (byte?)null);
+                        else
+                            return KeyValuePair.Create(labdata.Walls[(int)map.Blocks[x, y].WallIndex - 1].ColorIndex, (byte?)null);
+                    };
+                }
+                else // 2D
+                {
+                    // Possible adjacent maps should use the same tileset so don't bother to provide 4 tilesets here.
+                    var tileset = MapManager.GetTilesetForMap(Map);
+                    tileColorProvider = (map, x, y) =>
+                    {
+                        var backTileIndex = map.Tiles[x, y].BackTileIndex;
+                        var frontTileIndex = map.Tiles[x, y].FrontTileIndex;
+                        byte backColorIndex = tileset.Tiles[backTileIndex - 1].ColorIndex;
+                        byte? frontColorIndex = frontTileIndex == 0 ? (byte?)null : tileset.Tiles[frontTileIndex - 1].ColorIndex;
+                        return KeyValuePair.Create(backColorIndex, frontColorIndex);
+                    };
+                }
+                void DrawTile(Map map, int x, int y)
+                {
+                    bool visible = popup.ContentArea.Contains(drawX + 1, drawY + 1);
+                    var tileColors = tileColorProvider(map, x, y);
+                    var backArea = layout.FillArea(new Rect(drawX, drawY, 2, 2),
+                        GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Key)), 100);
+                    filledAreas.Add(backArea);
+                    backArea.Visible = visible;
+                    if (tileColors.Value != null)
+                    {
+                        var color = GetPaletteColor((int)map.PaletteIndex, renderView.GraphicProvider.PaletteIndexFromColorIndex(map, tileColors.Value.Value));
+                        var upperRightArea = layout.FillArea(new Rect(drawX + 1, drawY, 1, 1), color, 110);
+                        var lowerLeftArea = layout.FillArea(new Rect(drawX, drawY + 1, 1, 1), color, 110);
+                        filledAreas.Add(upperRightArea);
+                        filledAreas.Add(lowerLeftArea);
+                        upperRightArea.Visible = visible;
+                        lowerLeftArea.Visible = visible;
                     }
                 }
-
-                drawY += 2;
-            }
-            if (downMap != null)
-            {
-                for (int y = 0; y < downMap.Height; ++y)
+                for (int y = 0; y < Map.Height; ++y)
                 {
                     drawX = baseX;
 
-                    for (int x = 0; x < downMap.Width; ++x)
+                    for (int x = 0; x < Map.Width; ++x)
                     {
-                        DrawTile(downMap, x, y);
+                        DrawTile(Map, x, y);
                         drawX += 2;
                     }
 
-                    if (downRightMap != null)
+                    if (rightMap != null)
                     {
-                        for (int x = 0; x < downRightMap.Width; ++x)
+                        for (int x = 0; x < rightMap.Width; ++x)
                         {
-                            DrawTile(downRightMap, x, y);
+                            DrawTile(rightMap, x, y);
                             drawX += 2;
                         }
                     }
 
                     drawY += 2;
                 }
-            }
-            bool closed = false;
-            // 16x10 pixels per frame, stored as one image of 16x40 pixels
-            // The real position inside each frame has an offset of 7,4
-            var positionMarkerGraphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.PlusBlinkAnimation);
-            var positionMarker = popup.AddImage(new Rect(baseX + player.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
-                positionMarkerGraphicIndex, Layer.UI, 120, UIPaletteIndex);
-            positionMarker.ClipArea = contentArea;
-            var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(positionMarkerGraphicIndex);
-            int positionMarkerFrame = 0;
-            void AnimatePosition()
-            {
-                if (!closed)
+                if (downMap != null)
                 {
-                    positionMarker.TextureAtlasOffset = positionMarkerBaseTextureOffset + new Position(0, positionMarkerFrame * 10);
-                    positionMarkerFrame = (positionMarkerFrame + 1) % 4; // 4 frames in total
-                    AddTimedEvent(TimeSpan.FromMilliseconds(75), AnimatePosition);
-                }
-            }
-            AnimatePosition();
-            popup.Closed += () =>
-            {
-                closed = true;
-                positionMarker.Delete();
-                backgroundFill.Destroy();
-                filledAreas.ForEach(area => area.Destroy());
-                UntrapMouse();
-                Resume();
-            };
-            nextClickHandler = buttons =>
-            {
-                if (buttons == MouseButtons.Right)
-                {
-                    ClosePopup();
-                    return true;
-                }
-
-                return false;
-            };
-            if (Map.IsWorldMap)
-            {
-                // Only world maps can be scrolled.
-                // We assume that every map has a size of 50x50.
-                // Each scrolling will scroll at least 4 tiles.
-                const int tilesPerScroll = 4;
-                const int maxScrollX = (100 - numVisibleTilesX) / tilesPerScroll; // 7
-                const int maxScrollY = (100 - numVisibleTilesY) / tilesPerScroll; // 11
-                int scrollOffsetX = 0; // in 4 pixel chunks
-                int scrollOffsetY = 0; // in 4 pixel chunks
-
-                void Scroll(int x, int y)
-                {
-                    int newX = Util.Limit(0, scrollOffsetX + x, maxScrollX);
-                    int newY = Util.Limit(0, scrollOffsetY + y, maxScrollY);
-
-                    if (scrollOffsetX != newX || scrollOffsetY != newY)
+                    for (int y = 0; y < downMap.Height; ++y)
                     {
-                        int diffX = (newX - scrollOffsetX) * tilesPerScroll;
-                        int diffY = (newY - scrollOffsetY) * tilesPerScroll;
-                        scrollOffsetX = newX;
-                        scrollOffsetY = newY;
-                        var diff = new Position(diffX, diffY);
+                        drawX = baseX;
 
-                        foreach (var area in filledAreas)
+                        for (int x = 0; x < downMap.Width; ++x)
                         {
-                            if (area?.Position != null)
+                            DrawTile(downMap, x, y);
+                            drawX += 2;
+                        }
+
+                        if (downRightMap != null)
+                        {
+                            for (int x = 0; x < downRightMap.Width; ++x)
                             {
-                                area.Position -= diff;
-                                area.Visible = contentArea.Contains(area.Position.X + 1, area.Position.Y + 1);
+                                DrawTile(downRightMap, x, y);
+                                drawX += 2;
                             }
                         }
 
-                        positionMarker.X -= diffX;
-                        positionMarker.Y -= diffY;
+                        drawY += 2;
                     }
                 }
-
-                void CheckScroll()
+                bool closed = false;
+                // 16x10 pixels per frame, stored as one image of 16x40 pixels
+                // The real position inside each frame has an offset of 7,4
+                var positionMarkerGraphicIndex = Graphics.GetUIGraphicIndex(UIGraphic.PlusBlinkAnimation);
+                var positionMarker = popup.AddImage(new Rect(baseX + player.Position.X * 2 - 7, baseY + player.Position.Y * 2 - 4, 16, 10),
+                    positionMarkerGraphicIndex, Layer.UI, 120, UIPaletteIndex);
+                positionMarker.ClipArea = contentArea;
+                var positionMarkerBaseTextureOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(positionMarkerGraphicIndex);
+                int positionMarkerFrame = 0;
+                void AnimatePosition()
                 {
                     if (!closed)
                     {
-                        AddTimedEvent(TimeSpan.FromMilliseconds(50), () =>
-                        {
-                            if (InputEnable)
-                            {
-                                var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
-                                int x = position.X < contentArea.Left + 4 ? -1 : position.X > contentArea.Right - 4 ? 1 : 0;
-                                int y = position.Y < contentArea.Top + 4 ? -1 : position.Y > contentArea.Bottom - 4 ? 1 : 0;
-
-                                if (x != 0 || y != 0)
-                                    Scroll(x, y);
-                            }
-
-                            CheckScroll();
-                        });
+                        positionMarker.TextureAtlasOffset = positionMarkerBaseTextureOffset + new Position(0, positionMarkerFrame * 10);
+                        positionMarkerFrame = (positionMarkerFrame + 1) % 4; // 4 frames in total
+                        AddTimedEvent(TimeSpan.FromMilliseconds(75), AnimatePosition);
                     }
                 }
+                AnimatePosition();
+                popup.Closed += () =>
+                {
+                    closed = true;
+                    positionMarker.Delete();
+                    backgroundFill.Destroy();
+                    filledAreas.ForEach(area => area.Destroy());
+                    UntrapMouse();
+                    Resume();
+                };
+                nextClickHandler = buttons =>
+                {
+                    if (buttons == MouseButtons.Right)
+                    {
+                        ClosePopup();
+                        return true;
+                    }
 
-                CheckScroll();
-            }
+                    return false;
+                };
+                if (Map.IsWorldMap)
+                {
+                    // Only world maps can be scrolled.
+                    // We assume that every map has a size of 50x50.
+                    // Each scrolling will scroll at least 4 tiles.
+                    const int tilesPerScroll = 4;
+                    const int maxScrollX = (100 - numVisibleTilesX) / tilesPerScroll; // 7
+                    const int maxScrollY = (100 - numVisibleTilesY) / tilesPerScroll; // 11
+                    int scrollOffsetX = 0; // in 4 pixel chunks
+                    int scrollOffsetY = 0; // in 4 pixel chunks
+
+                    void Scroll(int x, int y)
+                    {
+                        int newX = Util.Limit(0, scrollOffsetX + x, maxScrollX);
+                        int newY = Util.Limit(0, scrollOffsetY + y, maxScrollY);
+
+                        if (scrollOffsetX != newX || scrollOffsetY != newY)
+                        {
+                            int diffX = (newX - scrollOffsetX) * tilesPerScroll;
+                            int diffY = (newY - scrollOffsetY) * tilesPerScroll;
+                            scrollOffsetX = newX;
+                            scrollOffsetY = newY;
+                            var diff = new Position(diffX, diffY);
+
+                            foreach (var area in filledAreas)
+                            {
+                                if (area?.Position != null)
+                                {
+                                    area.Position -= diff;
+                                    area.Visible = contentArea.Contains(area.Position.X + 1, area.Position.Y + 1);
+                                }
+                            }
+
+                            positionMarker.X -= diffX;
+                            positionMarker.Y -= diffY;
+                        }
+                    }
+
+                    void CheckScroll()
+                    {
+                        if (!closed)
+                        {
+                            AddTimedEvent(TimeSpan.FromMilliseconds(50), () =>
+                            {
+                                if (InputEnable)
+                                {
+                                    var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+                                    int x = position.X < contentArea.Left + 4 ? -1 : position.X > contentArea.Right - 4 ? 1 : 0;
+                                    int y = position.Y < contentArea.Top + 4 ? -1 : position.Y > contentArea.Bottom - 4 ? 1 : 0;
+
+                                    if (x != 0 || y != 0)
+                                        Scroll(x, y);
+                                }
+
+                                CheckScroll();
+                            });
+                        }
+                    }
+
+                    CheckScroll();
+                }
+            });
         }
 
         internal void ShowAutomap()
@@ -10869,393 +10872,448 @@ namespace Ambermoon
 
         internal void ShowAutomap(AutomapOptions automapOptions)
         {
-            Fade(() =>
+            CloseWindow(() =>
             {
-                // Note: Each tile is displayed as 8x8.
-                //       The automap type icons are 16x16 but the lower-left 8x8 area is placed on a tile.
-                //       The player pin is 16x32 at the lower-left 8x8 is placed on the tile.
-                //       Each horizontal map background tile is 16 pixels wide and can contain 2 map tiles/blocks.
-                //       Each vertical map background tile is 32 pixels height and can contain 4 map tiles/blocks.
-                //       Fill inner map area with AA7744 (index 6). Lines (like walls) are drawn with 663300 (index 7).
-                byte paletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
-                var backgroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 6);
-                var foregroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 7);
-                var labdata = MapManager.GetLabdataForMap(Map);
-                int legendPage = 0;
-                ILayerSprite[] legendSprites = new ILayerSprite[8];
-                UIText[] legendTexts = new UIText[8];
-                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
-                int scrollOffsetX = 0; // in 16 pixel chunks
-                int scrollOffsetY = 0; // in 16 pixel chunks
-
-                InputEnable = true;
-                ShowMap(false);
-                SetWindow(Window.Automap);
-                layout.Reset();
-                layout.SetLayout(LayoutType.Automap);
-                CursorType = CursorType.Sword;
-
-                var sprites = new List<ISprite>();
-                var animatedSprites = new List<IAnimatedLayerSprite>();
-                // key = tile index, value = tileX, tileY, drawX, drawY, boolean -> true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
-                var walls = new Dictionary<int, Tuple<int, int, int, int, bool?>>();
-                var gotoPoints = new List<KeyValuePair<Map.GotoPoint, Tooltip>>();
-                var automapIcons = new Dictionary<int, ISprite>();
-                bool animationsPaused = false;
-
-                #region Legend
-                layout.FillArea(new Rect(208, 37, Global.VirtualScreenWidth - 208, Global.VirtualScreenHeight - 37), Render.Color.Black, 9);
-                // Legend panels
-                var headerArea = new Rect(217, 46, 86, 8);
-                layout.AddPanel(headerArea, 11);
-                layout.AddText(headerArea.CreateModified(0, 1, 0, -1), DataNameProvider.LegendHeader, TextColor.White, TextAlign.Center, 15);
-                var legendArea = new Rect(217, 56, 86, 108);
-                layout.AddPanel(legendArea, 11);
-                for (int i = 0; i < 8; ++i)
+                Fade(() =>
                 {
-                    legendSprites[i] = layout.AddSprite(new Rect(legendArea.X + 2, legendArea.Y + 4 + i * 13 + Global.GlyphLineHeight - 16, 16, 16),
-                        0u, paletteIndex, (byte)(15 + i));
-                    legendTexts[i] = layout.AddText(new Rect(legendArea.X + 18, legendArea.Y + 4 + i * 13, 68, Global.GlyphLineHeight), "",
-                        TextColor.White, TextAlign.Left, 15);
-                }
-                void ShowLegendPage(int page)
-                {
-                    legendPage = page;
-                    AddTimedEvent(TimeSpan.FromSeconds(4), ToggleLegendPage);
+                    // Note: Each tile is displayed as 8x8.
+                    //       The automap type icons are 16x16 but the lower-left 8x8 area is placed on a tile.
+                    //       The player pin is 16x32 at the lower-left 8x8 is placed on the tile.
+                    //       Each horizontal map background tile is 16 pixels wide and can contain 2 map tiles/blocks.
+                    //       Each vertical map background tile is 32 pixels height and can contain 4 map tiles/blocks.
+                    //       Fill inner map area with AA7744 (index 6). Lines (like walls) are drawn with 663300 (index 7).
+                    byte paletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
+                    var backgroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 6);
+                    var foregroundColor = GetPaletteColor(renderView.GraphicProvider.AutomapPaletteIndex, 7);
+                    var labdata = MapManager.GetLabdataForMap(Map);
+                    int legendPage = 0;
+                    ILayerSprite[] legendSprites = new ILayerSprite[8];
+                    UIText[] legendTexts = new UIText[8];
+                    var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.UI);
+                    int scrollOffsetX = 0; // in 16 pixel chunks
+                    int scrollOffsetY = 0; // in 16 pixel chunks
 
-                    void SetLegendEntry(int index, AutomapType? automapType)
+                    InputEnable = true;
+                    ShowMap(false);
+                    SetWindow(Window.Automap);
+                    layout.Reset();
+                    layout.SetLayout(LayoutType.Automap);
+                    CursorType = CursorType.Sword;
+
+                    var sprites = new List<ISprite>();
+                    var animatedSprites = new List<IAnimatedLayerSprite>();
+                    // key = tile index, value = tileX, tileY, drawX, drawY, boolean -> true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
+                    var walls = new Dictionary<int, Tuple<int, int, int, int, bool?>>();
+                    var gotoPoints = new List<KeyValuePair<Map.GotoPoint, Tooltip>>();
+                    var automapIcons = new Dictionary<int, ISprite>();
+                    bool animationsPaused = false;
+
+                    #region Legend
+                    layout.FillArea(new Rect(208, 37, Global.VirtualScreenWidth - 208, Global.VirtualScreenHeight - 37), Render.Color.Black, 9);
+                    // Legend panels
+                    var headerArea = new Rect(217, 46, 86, 8);
+                    layout.AddPanel(headerArea, 11);
+                    layout.AddText(headerArea.CreateModified(0, 1, 0, -1), DataNameProvider.LegendHeader, TextColor.White, TextAlign.Center, 15);
+                    var legendArea = new Rect(217, 56, 86, 108);
+                    layout.AddPanel(legendArea, 11);
+                    for (int i = 0; i < 8; ++i)
                     {
-                        if (automapType == null)
+                        legendSprites[i] = layout.AddSprite(new Rect(legendArea.X + 2, legendArea.Y + 4 + i * 13 + Global.GlyphLineHeight - 16, 16, 16),
+                            0u, paletteIndex, (byte)(15 + i));
+                        legendTexts[i] = layout.AddText(new Rect(legendArea.X + 18, legendArea.Y + 4 + i * 13, 68, Global.GlyphLineHeight), "",
+                            TextColor.White, TextAlign.Left, 15);
+                    }
+                    void ShowLegendPage(int page)
+                    {
+                        legendPage = page;
+                        AddTimedEvent(TimeSpan.FromSeconds(4), ToggleLegendPage);
+
+                        void SetLegendEntry(int index, AutomapType? automapType)
                         {
-                            legendSprites[index].Visible = false;
-                            legendTexts[index].Visible = false;
+                            if (automapType == null)
+                            {
+                                legendSprites[index].Visible = false;
+                                legendTexts[index].Visible = false;
+                            }
+                            else
+                            {
+                                legendSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAutomapGraphicIndex(automapType.Value.ToGraphic().Value));
+                                legendTexts[index].SetText(renderView.TextProcessor.CreateText(DataNameProvider.GetAutomapName(automapType.Value)));
+                                legendSprites[index].Visible = true;
+                                legendTexts[index].Visible = true;
+                            }
+                        }
+
+                        if (page == 0)
+                        {
+                            SetLegendEntry(0, AutomapType.Riddlemouth);
+                            SetLegendEntry(1, AutomapType.Teleporter);
+                            SetLegendEntry(2, AutomapType.Door);
+                            SetLegendEntry(3, AutomapType.Chest);
+                            if (automapOptions.TrapsVisible)
+                            {
+                                SetLegendEntry(4, AutomapType.Spinner);
+                                SetLegendEntry(5, AutomapType.Merchant);
+                                SetLegendEntry(6, AutomapType.Tavern);
+                                SetLegendEntry(7, AutomapType.Special);
+                            }
+                            else
+                            {
+                                SetLegendEntry(4, AutomapType.Merchant);
+                                SetLegendEntry(5, AutomapType.Tavern);
+                                SetLegendEntry(6, AutomapType.Special);
+                                SetLegendEntry(7, null);
+                            }
                         }
                         else
                         {
-                            legendSprites[index].TextureAtlasOffset = textureAtlas.GetOffset(Graphics.GetAutomapGraphicIndex(automapType.Value.ToGraphic().Value));
-                            legendTexts[index].SetText(renderView.TextProcessor.CreateText(DataNameProvider.GetAutomapName(automapType.Value)));
-                            legendSprites[index].Visible = true;
-                            legendTexts[index].Visible = true;
+                            SetLegendEntry(0, AutomapType.Exit);
+                            SetLegendEntry(1, AutomapType.Pile);
+                            int index = 2;
+                            if (automapOptions.TrapsVisible)
+                            {
+                                SetLegendEntry(2, AutomapType.Trap);
+                                SetLegendEntry(3, AutomapType.Trapdoor);
+                                index = 4;
+                            }
+                            if (automapOptions.MonstersVisible)
+                            {
+                                SetLegendEntry(index++, AutomapType.Monster);
+                            }
+                            if (automapOptions.PersonsVisible)
+                            {
+                                SetLegendEntry(index++, AutomapType.Person);
+                            }
+                            SetLegendEntry(index++, AutomapType.GotoPoint);
+                            while (index < 8)
+                                SetLegendEntry(index++, null);
                         }
                     }
-
-                    if (page == 0)
+                    void ToggleLegendPage()
                     {
-                        SetLegendEntry(0, AutomapType.Riddlemouth);
-                        SetLegendEntry(1, AutomapType.Teleporter);
-                        SetLegendEntry(2, AutomapType.Door);
-                        SetLegendEntry(3, AutomapType.Chest);
-                        if (automapOptions.TrapsVisible)
+                        ShowLegendPage(1 - legendPage);
+                    }
+                    ShowLegendPage(0);
+                    var locationArea = new Rect(217, 166, 86, 22);
+                    layout.AddPanel(locationArea, 11);
+                    layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
+                    layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
+                    DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16, 16, false);
+                    #endregion
+
+                    #region Map
+                    var automap = CurrentSavegame.Automaps.TryGetValue(Map.Index, out var a) ? a : null;
+                    void DrawPin(int x, int y, byte upperDisplayLayer, byte lowerDisplayLayer, bool onMap)
+                    {
+                        var pinHead = !CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.Compass)
+                            ? AutomapGraphic.PinUpperHalf
+                            : AutomapGraphic.PinDirectionUp + (int)player3D.PreciseDirection;
+                        var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), paletteIndex, upperDisplayLayer);
+                        var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), paletteIndex, lowerDisplayLayer);
+
+                        if (onMap)
                         {
-                            SetLegendEntry(4, AutomapType.Spinner);
-                            SetLegendEntry(5, AutomapType.Merchant);
-                            SetLegendEntry(6, AutomapType.Tavern);
-                            SetLegendEntry(7, AutomapType.Special);
-                        }
-                        else
-                        {
-                            SetLegendEntry(4, AutomapType.Merchant);
-                            SetLegendEntry(5, AutomapType.Tavern);
-                            SetLegendEntry(6, AutomapType.Special);
-                            SetLegendEntry(7, null);
+                            upperSprite.ClipArea = Global.AutomapArea;
+                            lowerSprite.ClipArea = Global.AutomapArea;
+                            sprites.Add(upperSprite);
+                            sprites.Add(lowerSprite);
                         }
                     }
-                    else
+                    var displayLayers = new Dictionary<int, byte>();
+                    displayLayers[RenderPlayer.Position.X + RenderPlayer.Position.Y * Map.Width] = 100;
+                    ILayerSprite AddGraphic(int x, int y, AutomapGraphic automapGraphic, int width, int height, byte displayLayer = 2)
                     {
-                        SetLegendEntry(0, AutomapType.Exit);
-                        SetLegendEntry(1, AutomapType.Pile);
-                        int index = 2;
-                        if (automapOptions.TrapsVisible)
+                        ILayerSprite sprite;
+
+                        switch (automapGraphic)
                         {
-                            SetLegendEntry(2, AutomapType.Trap);
-                            SetLegendEntry(3, AutomapType.Trapdoor);
-                            index = 4;
+                            case AutomapGraphic.Riddlemouth:
+                            case AutomapGraphic.Teleport:
+                            case AutomapGraphic.Spinner:
+                            case AutomapGraphic.Trap:
+                            case AutomapGraphic.TrapDoor:
+                            case AutomapGraphic.Special:
+                            case AutomapGraphic.Monster: // this and all above have 4 frames
+                            case AutomapGraphic.GotoPoint: // this has 7 frames
+                            {
+                                var animatedSprite = layout.AddAnimatedSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic),
+                                    paletteIndex, automapGraphic == AutomapGraphic.GotoPoint ? 7u : 4u, displayLayer);
+                                animatedSprites.Add(animatedSprite);
+                                sprite = animatedSprite;
+                                break;
+                            }
+                            default:
+                                sprite = layout.AddSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic), paletteIndex, displayLayer);
+                                break;
                         }
-                        if (automapOptions.MonstersVisible)
-                        {
-                            SetLegendEntry(index++, AutomapType.Monster);
-                        }
-                        if (automapOptions.PersonsVisible)
-                        {
-                            SetLegendEntry(index++, AutomapType.Person);
-                        }
-                        SetLegendEntry(index++, AutomapType.GotoPoint);
-                        while (index < 8)
-                            SetLegendEntry(index++, null);
+
+                        sprite.ClipArea = Global.AutomapArea;
+                        sprites.Add(sprite);
+                        return sprite;
                     }
-                }
-                void ToggleLegendPage()
-                {
-                    ShowLegendPage(1 - legendPage);
-                }
-                ShowLegendPage(0);
-                var locationArea = new Rect(217, 166, 86, 22);
-                layout.AddPanel(locationArea, 11);
-                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
-                layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
-                DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16, 16, false);
-                #endregion
-
-                #region Map
-                var automap = CurrentSavegame.Automaps.TryGetValue(Map.Index, out var a) ? a : null;
-                void DrawPin(int x, int y, byte upperDisplayLayer, byte lowerDisplayLayer, bool onMap)
-                {
-                    var pinHead = !CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.Compass)
-                        ? AutomapGraphic.PinUpperHalf
-                        : AutomapGraphic.PinDirectionUp + (int)player3D.PreciseDirection;
-                    var upperSprite = layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAutomapGraphicIndex(pinHead), paletteIndex, upperDisplayLayer);
-                    var lowerSprite = layout.AddSprite(new Rect(x, y + 16, 16, 16), Graphics.GetAutomapGraphicIndex(AutomapGraphic.PinLowerHalf), paletteIndex, lowerDisplayLayer);
-
-                    if (onMap)
+                    void AddAutomapType(int tx, int ty, int x, int y, AutomapType automapType,
+                        byte displayLayer = 5) // 5: above walls, fake wall overlays and player pin lower half (2, 3 and 4)
                     {
-                        upperSprite.ClipArea = Global.AutomapArea;
-                        lowerSprite.ClipArea = Global.AutomapArea;
-                        sprites.Add(upperSprite);
-                        sprites.Add(lowerSprite);
-                    }
-                }
-                var displayLayers = new Dictionary<int, byte>();
-                displayLayers[RenderPlayer.Position.X + RenderPlayer.Position.Y * Map.Width] = 100;
-                ILayerSprite AddGraphic(int x, int y, AutomapGraphic automapGraphic, int width, int height, byte displayLayer = 2)
-                {
-                    ILayerSprite sprite;
+                        if (!automapOptions.TrapsVisible && (automapType == AutomapType.Trap ||
+                            automapType == AutomapType.Trapdoor || automapType == AutomapType.Spinner))
+                            return;
 
-                    switch (automapGraphic)
-                    {
-                        case AutomapGraphic.Riddlemouth:
-                        case AutomapGraphic.Teleport:
-                        case AutomapGraphic.Spinner:
-                        case AutomapGraphic.Trap:
-                        case AutomapGraphic.TrapDoor:
-                        case AutomapGraphic.Special:
-                        case AutomapGraphic.Monster: // this and all above have 4 frames
-                        case AutomapGraphic.GotoPoint: // this has 7 frames
+                        byte baseDisplayLayer = displayLayer;
+                        var graphic = automapType.ToGraphic();
+
+                        if (graphic != null)
                         {
-                            var animatedSprite = layout.AddAnimatedSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic),
-                                paletteIndex, automapGraphic == AutomapGraphic.GotoPoint ? 7u : 4u, displayLayer);
-                            animatedSprites.Add(animatedSprite);
-                            sprite = animatedSprite;
-                            break;
-                        }
-                        default:
-                            sprite = layout.AddSprite(new Rect(x, y, width, height), Graphics.GetAutomapGraphicIndex(automapGraphic), paletteIndex, displayLayer);
-                            break;
-                    }
-
-                    sprite.ClipArea = Global.AutomapArea;
-                    sprites.Add(sprite);
-                    return sprite;
-                }
-                void AddAutomapType(int tx, int ty, int x, int y, AutomapType automapType,
-                    byte displayLayer = 5) // 5: above walls, fake wall overlays and player pin lower half (2, 3 and 4)
-                {
-                    if (!automapOptions.TrapsVisible && (automapType == AutomapType.Trap ||
-                        automapType == AutomapType.Trapdoor || automapType == AutomapType.Spinner))
-                        return;
-
-                    byte baseDisplayLayer = displayLayer;
-                    var graphic = automapType.ToGraphic();
-
-                    if (graphic != null)
-                    {
-                        if (tx > 0)
-                        {
-                            if (displayLayers.ContainsKey(tx - 1 + ty * Map.Width))
-                                displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + ty * Map.Width] + 1);
+                            if (tx > 0)
+                            {
+                                if (displayLayers.ContainsKey(tx - 1 + ty * Map.Width))
+                                    displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + ty * Map.Width] + 1);
+                                else if (ty > 0)
+                                {
+                                    if (tx < Map.Width - 1 && displayLayers.ContainsKey(tx + 1 + (ty - 1) * Map.Width))
+                                        displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + (ty - 1) * Map.Width] + 1);
+                                    else if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
+                                        displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
+                                    else if (tx > 0 && displayLayers.ContainsKey(tx - 1 + (ty - 1) * Map.Width))
+                                        displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + (ty - 1) * Map.Width] + 1);
+                                }
+                            }
                             else if (ty > 0)
                             {
                                 if (tx < Map.Width - 1 && displayLayers.ContainsKey(tx + 1 + (ty - 1) * Map.Width))
                                     displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + (ty - 1) * Map.Width] + 1);
                                 else if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
                                     displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
-                                else if (tx > 0 && displayLayers.ContainsKey(tx - 1 + (ty - 1) * Map.Width))
-                                    displayLayer = (byte)Math.Min(255, displayLayers[tx - 1 + (ty - 1) * Map.Width] + 1);
+                            }
+
+                            int tileIndex = tx + ty * Map.Width;
+
+                            if (automapIcons.ContainsKey(tileIndex))
+                            {
+                                // Already an automap icon there -> remove it
+                                automapIcons[tileIndex]?.Delete();
+                            }
+
+                            automapIcons[tileIndex] = AddGraphic(x, y - 8, graphic.Value, 16, 16, displayLayer);
+                            if (!displayLayers.ContainsKey(tileIndex) || displayLayers[tileIndex] < displayLayer)
+                                displayLayers[tileIndex] = displayLayer;
+                        }
+                    }
+                    void AddTile(int tx, int ty, int x, int y)
+                    {
+                        var characterType = renderMap3D.CharacterTypeFromBlock((uint)tx, (uint)ty);
+
+                        if (characterType == CharacterType.Monster)
+                        {
+                            if (automapOptions.MonstersVisible)
+                                AddAutomapType(tx, ty, x, y, AutomapType.Monster, 6);
+                        }
+                        else if (characterType == CharacterType.PartyMember || characterType == CharacterType.NPC)
+                        {
+                            if (automapOptions.PersonsVisible)
+                                AddAutomapType(tx, ty, x, y, AutomapType.Person, 6);
+                        }
+
+                        if (automap != null && !automap.IsBlockExplored(Map, (uint)tx, (uint)ty))
+                            return;
+
+                        // Note: Maps are always 3D
+                        var block = Map.Blocks[tx, ty];
+
+                        if (block.MapBorder)
+                        {
+                            // draw nothing
+                            return;
+                        }
+                        var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == tx + 1 && p.Y == ty + 1); // positions of goto points are 1-based
+                        if (gotoPoint != null && CurrentSavegame.IsGotoPointActive(gotoPoint.Index))
+                        {
+                            AddAutomapType(tx, ty, x, y, AutomapType.GotoPoint);
+                            gotoPoints.Add(KeyValuePair.Create(gotoPoint,
+                                layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
+                        }
+                        var automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
+                        if (automapType != AutomapType.None)
+                            AddAutomapType(tx, ty, x, y, automapType);
+                        if (block.WallIndex != 0)
+                        {
+                            var wall = labdata.Walls[(int)block.WallIndex - 1];
+                            bool blockingWall = block.BlocksPlayer(labdata);
+
+                            // Walls that don't block and use transparency are not considered walls
+                            // nor fake walls. For example a destroyed cobweb uses this.
+                            // Fake walls on the other hand won't block but are not transparent.
+                            if (wall.AutomapType == AutomapType.Wall || blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
+                            {
+                                bool draw = automapType == AutomapType.None || wall.AutomapType == AutomapType.Wall ||
+                                    automapType == AutomapType.Tavern || automapType == AutomapType.Merchant;
+
+                                walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y,
+                                    draw ? blockingWall : (bool?)null));
                             }
                         }
-                        else if (ty > 0)
+                    }
+
+                    int x = Global.AutomapArea.X;
+                    int y = Global.AutomapArea.Y;
+                    int xParts = (Map.Width + 1) / 2;
+                    int yParts = (Map.Height + 3) / 4;
+                    var totalArea = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y, 64 + xParts * 16, 64 + yParts * 32);
+                    var mapNameBounds = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y + 32, totalArea.Width, Global.GlyphLineHeight);
+                    var mapName = layout.AddText(mapNameBounds, Map.Name, TextColor.White, TextAlign.Center, 3);
+
+                    // Fill background black
+                    layout.FillArea(Global.AutomapArea, Render.Color.Black, 0);
+
+                    #region Upper border
+                    AddGraphic(x, y, AutomapGraphic.MapUpperLeft, 32, 32);
+                    x += 32;
+                    for (int tx = 0; tx < xParts; ++tx)
+                    {
+                        AddGraphic(x, y, AutomapGraphic.MapBorderTop1 + tx % 4, 16, 32);
+                        x += 16;
+                    }
+                    AddGraphic(x, y, AutomapGraphic.MapUpperRight, 32, 32);
+                    x = Global.AutomapArea.X;
+                    y += 32;
+                    #endregion
+
+                    #region Map content
+                    FilledArea mapFill = null;
+                    void FillMap()
+                    {
+                        mapFill?.Destroy();
+                        var fillArea = new Rect(Global.AutomapArea.X + 32 - scrollOffsetX * 16, Global.AutomapArea.Y + 32 - scrollOffsetY * 16, xParts * 16, yParts * 32);
+                        var clipArea = new Rect(Global.AutomapArea);
+                        int maxScrollX = (totalArea.Width - 208) / 16;
+                        int maxScrollY = (totalArea.Height - 160) / 16;
+                        if (scrollOffsetX >= maxScrollX - 1)
+                            clipArea = clipArea.SetWidth(clipArea.Width - (2 - (maxScrollX - scrollOffsetX)) * 16);
+                        if (scrollOffsetY >= maxScrollY - 1)
+                            clipArea = clipArea.SetHeight(clipArea.Height - (2 - (maxScrollY - scrollOffsetY)) * 16);
+                        fillArea.Clip(clipArea);
+                        mapFill = layout.FillArea(fillArea, backgroundColor, 1);
+                    }
+                    FillMap();
+                    for (int ty = 0; ty < Map.Height; ++ty)
+                    {
+                        if (ty % 4 == 0)
                         {
-                            if (tx < Map.Width - 1 && displayLayers.ContainsKey(tx + 1 + (ty - 1) * Map.Width))
-                                displayLayer = (byte)Math.Min(255, displayLayers[tx + 1 + (ty - 1) * Map.Width] + 1);
-                            else if (displayLayers.ContainsKey(tx + (ty - 1) * Map.Width))
-                                displayLayer = (byte)Math.Min(255, displayLayers[tx + (ty - 1) * Map.Width] + 1);
+                            AddGraphic(Global.AutomapArea.X, y, AutomapGraphic.MapBorderLeft1 + (ty % 8) / 4, 32, 32);
                         }
 
-                        int tileIndex = tx + ty * Map.Width;
+                        x = Global.AutomapArea.X + 32;
 
-                        if (automapIcons.ContainsKey(tileIndex))
+                        for (int tx = 0; tx < Map.Width; ++tx)
                         {
-                            // Already an automap icon there -> remove it
-                            automapIcons[tileIndex]?.Delete();
-                        }
-
-                        automapIcons[tileIndex] = AddGraphic(x, y - 8, graphic.Value, 16, 16, displayLayer);
-                        if (!displayLayers.ContainsKey(tileIndex) || displayLayers[tileIndex] < displayLayer)
-                            displayLayers[tileIndex] = displayLayer;
-                    }
-                }
-                void AddTile(int tx, int ty, int x, int y)
-                {
-                    var characterType = renderMap3D.CharacterTypeFromBlock((uint)tx, (uint)ty);
-
-                    if (characterType == CharacterType.Monster)
-                    {
-                        if (automapOptions.MonstersVisible)
-                            AddAutomapType(tx, ty, x, y, AutomapType.Monster, 6);
-                    }
-                    else if (characterType == CharacterType.PartyMember || characterType == CharacterType.NPC)
-                    {
-                        if (automapOptions.PersonsVisible)
-                            AddAutomapType(tx, ty, x, y, AutomapType.Person, 6);
-                    }
-
-                    if (automap != null && !automap.IsBlockExplored(Map, (uint)tx, (uint)ty))
-                        return;
-
-                    // Note: Maps are always 3D
-                    var block = Map.Blocks[tx, ty];
-
-                    if (block.MapBorder)
-                    {
-                        // draw nothing
-                        return;
-                    }
-                    var gotoPoint = Map.GotoPoints.FirstOrDefault(p => p.X == tx + 1 && p.Y == ty + 1); // positions of goto points are 1-based
-                    if (gotoPoint != null && CurrentSavegame.IsGotoPointActive(gotoPoint.Index))
-                    {
-                        AddAutomapType(tx, ty, x, y, AutomapType.GotoPoint);
-                        gotoPoints.Add(KeyValuePair.Create(gotoPoint,
-                            layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
-                    }
-                    var automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
-                    if (automapType != AutomapType.None)
-                        AddAutomapType(tx, ty, x, y, automapType);
-                    if (block.WallIndex != 0)
-                    {
-                        var wall = labdata.Walls[(int)block.WallIndex - 1];
-                        bool blockingWall = block.BlocksPlayer(labdata);
-
-                        // Walls that don't block and use transparency are not considered walls
-                        // nor fake walls. For example a destroyed cobweb uses this.
-                        // Fake walls on the other hand won't block but are not transparent.
-                        if (wall.AutomapType == AutomapType.Wall || blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
-                        {
-                            bool draw = automapType == AutomapType.None || wall.AutomapType == AutomapType.Wall ||
-                                automapType == AutomapType.Tavern || automapType == AutomapType.Merchant;
-
-                            walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y,
-                                draw ? blockingWall : (bool?)null));
-                        }
-                    }
-                }
-
-                int x = Global.AutomapArea.X;
-                int y = Global.AutomapArea.Y;
-                int xParts = (Map.Width + 1) / 2;
-                int yParts = (Map.Height + 3) / 4;
-                var totalArea = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y, 64 + xParts * 16, 64 + yParts * 32);
-                var mapNameBounds = new Rect(Global.AutomapArea.X, Global.AutomapArea.Y + 32, totalArea.Width, Global.GlyphLineHeight);
-                var mapName = layout.AddText(mapNameBounds, Map.Name, TextColor.White, TextAlign.Center, 3);
-
-                // Fill background black
-                layout.FillArea(Global.AutomapArea, Render.Color.Black, 0);
-
-                #region Upper border
-                AddGraphic(x, y, AutomapGraphic.MapUpperLeft, 32, 32);
-                x += 32;
-                for (int tx = 0; tx < xParts; ++tx)
-                {
-                    AddGraphic(x, y, AutomapGraphic.MapBorderTop1 + tx % 4, 16, 32);
-                    x += 16;
-                }
-                AddGraphic(x, y, AutomapGraphic.MapUpperRight, 32, 32);
-                x = Global.AutomapArea.X;
-                y += 32;
-                #endregion
-
-                #region Map content
-                FilledArea mapFill = null;
-                void FillMap()
-                {
-                    mapFill?.Destroy();
-                    var fillArea = new Rect(Global.AutomapArea.X + 32 - scrollOffsetX * 16, Global.AutomapArea.Y + 32 - scrollOffsetY * 16, xParts * 16, yParts * 32);
-                    var clipArea = new Rect(Global.AutomapArea);
-                    int maxScrollX = (totalArea.Width - 208) / 16;
-                    int maxScrollY = (totalArea.Height - 160) / 16;
-                    if (scrollOffsetX >= maxScrollX - 1)
-                        clipArea = clipArea.SetWidth(clipArea.Width - (2 - (maxScrollX - scrollOffsetX)) * 16);
-                    if (scrollOffsetY >= maxScrollY - 1)
-                        clipArea = clipArea.SetHeight(clipArea.Height - (2 - (maxScrollY - scrollOffsetY)) * 16);
-                    fillArea.Clip(clipArea);
-                    mapFill = layout.FillArea(fillArea, backgroundColor, 1);
-                }
-                FillMap();
-                for (int ty = 0; ty < Map.Height; ++ty)
-                {
-                    if (ty % 4 == 0)
-                    {
-                        AddGraphic(Global.AutomapArea.X, y, AutomapGraphic.MapBorderLeft1 + (ty % 8) / 4, 32, 32);
-                    }
-
-                    x = Global.AutomapArea.X + 32;
-
-                    for (int tx = 0; tx < Map.Width; ++tx)
-                    {
-                        AddTile(tx, ty, x, y);
-                        x += 8;
-                    }
-
-                    if (ty % 4 == 0)
-                    {
-                        if (Map.Width % 2 != 0)
+                            AddTile(tx, ty, x, y);
                             x += 8;
-                        AddGraphic(x, y, AutomapGraphic.MapBorderRight1 + (ty % 8) / 4, 32, 32);
+                        }
+
+                        if (ty % 4 == 0)
+                        {
+                            if (Map.Width % 2 != 0)
+                                x += 8;
+                            AddGraphic(x, y, AutomapGraphic.MapBorderRight1 + (ty % 8) / 4, 32, 32);
+                        }
+
+                        y += 8;
                     }
-
-                    y += 8;
-                }
-                // Draw walls
-                foreach (var wall in walls)
-                {
-                    int tx = wall.Value.Item1;
-                    int ty = wall.Value.Item2;
-                    int dx = wall.Value.Item3;
-                    int dy = wall.Value.Item4;
-                    bool? type = wall.Value.Item5;
-
-                    if (type != null)
+                    // Draw walls
+                    foreach (var wall in walls)
                     {
-                        bool hasWallLeft = tx > 0 && walls.ContainsKey(tx - 1 + ty * Map.Width);
-                        bool hasWallUp = ty > 0 && walls.ContainsKey(tx + (ty - 1) * Map.Width);
-                        bool hasWallRight = tx < Map.Width - 1 && walls.ContainsKey(tx + 1 + ty * Map.Width);
-                        bool hasWallDown = ty < Map.Height - 1 && walls.ContainsKey(tx + (ty + 1) * Map.Width);
-                        int wallGraphicType = 15; // closed
+                        int tx = wall.Value.Item1;
+                        int ty = wall.Value.Item2;
+                        int dx = wall.Value.Item3;
+                        int dy = wall.Value.Item4;
+                        bool? type = wall.Value.Item5;
 
-                        if (hasWallLeft)
+                        if (type != null)
                         {
-                            if (hasWallRight)
+                            bool hasWallLeft = tx > 0 && walls.ContainsKey(tx - 1 + ty * Map.Width);
+                            bool hasWallUp = ty > 0 && walls.ContainsKey(tx + (ty - 1) * Map.Width);
+                            bool hasWallRight = tx < Map.Width - 1 && walls.ContainsKey(tx + 1 + ty * Map.Width);
+                            bool hasWallDown = ty < Map.Height - 1 && walls.ContainsKey(tx + (ty + 1) * Map.Width);
+                            int wallGraphicType = 15; // closed
+
+                            if (hasWallLeft)
+                            {
+                                if (hasWallRight)
+                                {
+                                    if (hasWallUp)
+                                    {
+                                        if (hasWallDown)
+                                        {
+                                            // all directions open (+ crossing)
+                                            wallGraphicType = 12;
+                                        }
+                                        else
+                                        {
+                                            // left, right and top open (T crossing)
+                                            wallGraphicType = 8;
+                                        }
+                                    }
+                                    else if (hasWallDown)
+                                    {
+                                        // left, right and bottom open (T crossing)
+                                        wallGraphicType = 10;
+                                    }
+                                    else
+                                    {
+                                        // left and right open
+                                        wallGraphicType = 14;
+                                    }
+                                }
+                                else
+                                {
+                                    if (hasWallUp)
+                                    {
+                                        if (hasWallDown)
+                                        {
+                                            // left, top and bottom open (T crossing)
+                                            wallGraphicType = 11;
+                                        }
+                                        else
+                                        {
+                                            // left and top open (corner)
+                                            wallGraphicType = 7;
+                                        }
+                                    }
+                                    else if (hasWallDown)
+                                    {
+                                        // left and bottom open (corner)
+                                        wallGraphicType = 5;
+                                    }
+                                    else
+                                    {
+                                        // only left open
+                                        wallGraphicType = 3;
+                                    }
+                                }
+                            }
+                            else if (hasWallRight)
                             {
                                 if (hasWallUp)
                                 {
                                     if (hasWallDown)
                                     {
-                                        // all directions open (+ crossing)
-                                        wallGraphicType = 12;
+                                        // right, top and bottom open (T crossing)
+                                        wallGraphicType = 9;
                                     }
                                     else
                                     {
-                                        // left, right and top open (T crossing)
-                                        wallGraphicType = 8;
+                                        // right and top open
+                                        wallGraphicType = 6;
                                     }
                                 }
                                 else if (hasWallDown)
                                 {
-                                    // left, right and bottom open (T crossing)
-                                    wallGraphicType = 10;
+                                    // right and bottom open (corner)
+                                    wallGraphicType = 4;
                                 }
                                 else
                                 {
-                                    // left and right open
-                                    wallGraphicType = 14;
+                                    // only right open
+                                    wallGraphicType = 1;
                                 }
                             }
                             else
@@ -11264,262 +11322,210 @@ namespace Ambermoon
                                 {
                                     if (hasWallDown)
                                     {
-                                        // left, top and bottom open (T crossing)
-                                        wallGraphicType = 11;
+                                        // top and bottom open
+                                        wallGraphicType = 13;
                                     }
                                     else
                                     {
-                                        // left and top open (corner)
-                                        wallGraphicType = 7;
+                                        // only top open
+                                        wallGraphicType = 0;
                                     }
                                 }
                                 else if (hasWallDown)
                                 {
-                                    // left and bottom open (corner)
-                                    wallGraphicType = 5;
+                                    // only bottom open
+                                    wallGraphicType = 2;
                                 }
                                 else
                                 {
-                                    // only left open
-                                    wallGraphicType = 3;
+                                    // closed single wall
+                                    wallGraphicType = 15;
                                 }
                             }
-                        }
-                        else if (hasWallRight)
-                        {
-                            if (hasWallUp)
-                            {
-                                if (hasWallDown)
-                                {
-                                    // right, top and bottom open (T crossing)
-                                    wallGraphicType = 9;
-                                }
-                                else
-                                {
-                                    // right and top open
-                                    wallGraphicType = 6;
-                                }
-                            }
-                            else if (hasWallDown)
-                            {
-                                // right and bottom open (corner)
-                                wallGraphicType = 4;
-                            }
-                            else
-                            {
-                                // only right open
-                                wallGraphicType = 1;
-                            }
-                        }
-                        else
-                        {
-                            if (hasWallUp)
-                            {
-                                if (hasWallDown)
-                                {
-                                    // top and bottom open
-                                    wallGraphicType = 13;
-                                }
-                                else
-                                {
-                                    // only top open
-                                    wallGraphicType = 0;
-                                }
-                            }
-                            else if (hasWallDown)
-                            {
-                                // only bottom open
-                                wallGraphicType = 2;
-                            }
-                            else
-                            {
-                                // closed single wall
-                                wallGraphicType = 15;
-                            }
-                        }
 
-                        var sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.AutomapWallFrames), paletteIndex, 2);
-                        sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + wallGraphicType * 8, sprite.TextureAtlasOffset.Y);
-                        sprite.ClipArea = Global.AutomapArea;
-                        sprites.Add(sprite);
-
-                        if (type == false && automapOptions.SecretDoorsVisible) // fake wall
-                        {
-                            sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.FakeWallOverlay), paletteIndex, 3);
+                            var sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.AutomapWallFrames), paletteIndex, 2);
+                            sprite.TextureAtlasOffset = new Position(sprite.TextureAtlasOffset.X + wallGraphicType * 8, sprite.TextureAtlasOffset.Y);
                             sprite.ClipArea = Global.AutomapArea;
                             sprites.Add(sprite);
+
+                            if (type == false && automapOptions.SecretDoorsVisible) // fake wall
+                            {
+                                sprite = layout.AddSprite(new Rect(dx, dy, 8, 8), Graphics.GetCustomUIGraphicIndex(UICustomGraphic.FakeWallOverlay), paletteIndex, 3);
+                                sprite.ClipArea = Global.AutomapArea;
+                                sprites.Add(sprite);
+                            }
                         }
                     }
-                }
-                // Animate automap icons
-                void Animate()
-                {
-                    if (CurrentWindow.Window == Window.Automap && !animationsPaused)
+                    // Animate automap icons
+                    void Animate()
                     {
-                        foreach (var animatedSprite in animatedSprites)
-                            ++animatedSprite.CurrentFrame;
+                        if (CurrentWindow.Window == Window.Automap && !animationsPaused)
+                        {
+                            foreach (var animatedSprite in animatedSprites)
+                                ++animatedSprite.CurrentFrame;
 
-                        AddTimedEvent(TimeSpan.FromMilliseconds(100), Animate);
+                            AddTimedEvent(TimeSpan.FromMilliseconds(100), Animate);
+                        }
                     }
-                }
-                Animate();
-                // Draw player pin
-                DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 100, 100, true);
-                #endregion
+                    Animate();
+                    // Draw player pin
+                    DrawPin(Global.AutomapArea.X + 32 + RenderPlayer.Position.X * 8, Global.AutomapArea.Y + 32 + RenderPlayer.Position.Y * 8 - 24, 100, 100, true);
+                    #endregion
 
-                #region Lower border
-                x = Global.AutomapArea.X;
-                while ((y - Global.AutomapArea.Y) % 32 != 0)
-                    y += 8;
-                AddGraphic(x, y, AutomapGraphic.MapLowerLeft, 32, 32);
-                x += 32;
-                for (int tx = 0; tx < xParts; ++tx)
-                {
-                    AddGraphic(x, y, AutomapGraphic.MapBorderBottom1 + tx % 4, 16, 32);
-                    x += 16;
-                }
-                AddGraphic(x, y, AutomapGraphic.MapLowerRight, 32, 32);
-                #endregion
-
-                void Scroll(int x, int y)
-                {
-                    // The automap screen is 208x163 but we use 208x160 so they are both dividable by 16.
-                    // If scrolled to the left there is the 32 pixel wide border so you can see max 22 tiles (208 - 32) / 8 = 22.
-                    // Scrolling right is possible unless the 32 pixel wide border on the right is fully visible.
-                    // The total automap width is 64 + xParts * 16. So max scroll offset X in tiles is (64 + xParts * 16 - 208) / 16.
-                    // We will always scroll by 2 tiles (16 pixel chunks) in both directions.
-
-                    int maxScrollX = (totalArea.Width - 208) / 16;
-                    int maxScrollY = (totalArea.Height - 160) / 16;
-                    int newX = Util.Limit(0, scrollOffsetX + x, maxScrollX);
-                    int newY = Util.Limit(0, scrollOffsetY + y, maxScrollY);
-
-                    if (scrollOffsetX != newX || scrollOffsetY != newY)
+                    #region Lower border
+                    x = Global.AutomapArea.X;
+                    while ((y - Global.AutomapArea.Y) % 32 != 0)
+                        y += 8;
+                    AddGraphic(x, y, AutomapGraphic.MapLowerLeft, 32, 32);
+                    x += 32;
+                    for (int tx = 0; tx < xParts; ++tx)
                     {
-                        int diffX = (newX - scrollOffsetX) * 16;
-                        int diffY = (newY - scrollOffsetY) * 16;
-                        scrollOffsetX = newX;
-                        scrollOffsetY = newY;
-
-                        mapName.SetBounds(mapNameBounds.CreateOffset(-newX * 16, -newY * 16));
-                        mapName.Clip(Global.AutomapArea);
-                        FillMap();
-
-                        foreach (var sprite in sprites)
-                        {
-                            sprite.X -= diffX;
-                            sprite.Y -= diffY;
-                        }
-
-                        foreach (var gotoPoint in gotoPoints)
-                        {
-                            gotoPoint.Value.Area.Position.X -= diffX;
-                            gotoPoint.Value.Area.Position.Y -= diffY;
-                        }
-
-                        // Update active tooltips
-                        CursorType cursorType = CursorType.None;
-                        layout.Hover(GetMousePosition(lastMousePosition), ref cursorType);
+                        AddGraphic(x, y, AutomapGraphic.MapBorderBottom1 + tx % 4, 16, 32);
+                        x += 16;
                     }
-                }
+                    AddGraphic(x, y, AutomapGraphic.MapLowerRight, 32, 32);
+                    #endregion
 
-                TrapMouse(Global.AutomapArea);
-                void SetupClickHandlers()
-                {
-                    nextClickHandler = buttons =>
+                    void Scroll(int x, int y)
                     {
-                        if (buttons == MouseButtons.Right)
+                        // The automap screen is 208x163 but we use 208x160 so they are both dividable by 16.
+                        // If scrolled to the left there is the 32 pixel wide border so you can see max 22 tiles (208 - 32) / 8 = 22.
+                        // Scrolling right is possible unless the 32 pixel wide border on the right is fully visible.
+                        // The total automap width is 64 + xParts * 16. So max scroll offset X in tiles is (64 + xParts * 16 - 208) / 16.
+                        // We will always scroll by 2 tiles (16 pixel chunks) in both directions.
+
+                        int maxScrollX = (totalArea.Width - 208) / 16;
+                        int maxScrollY = (totalArea.Height - 160) / 16;
+                        int newX = Util.Limit(0, scrollOffsetX + x, maxScrollX);
+                        int newY = Util.Limit(0, scrollOffsetY + y, maxScrollY);
+
+                        if (scrollOffsetX != newX || scrollOffsetY != newY)
                         {
-                            Exit();
-                            return true;
-                        }
-                        else if (buttons == MouseButtons.Left && gotoPoints.Count != 0)
-                        {
-                            var mousePosition = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+                            int diffX = (newX - scrollOffsetX) * 16;
+                            int diffY = (newY - scrollOffsetY) * 16;
+                            scrollOffsetX = newX;
+                            scrollOffsetY = newY;
+
+                            mapName.SetBounds(mapNameBounds.CreateOffset(-newX * 16, -newY * 16));
+                            mapName.Clip(Global.AutomapArea);
+                            FillMap();
+
+                            foreach (var sprite in sprites)
+                            {
+                                sprite.X -= diffX;
+                                sprite.Y -= diffY;
+                            }
 
                             foreach (var gotoPoint in gotoPoints)
                             {
-                                if (gotoPoint.Value.Area.Contains(mousePosition))
-                                {
-                                    void AbortGoto()
-                                    {
-                                        animationsPaused = false;
-                                        Animate();
-                                        TrapMouse(Global.AutomapArea);
-                                        SetupClickHandlers();
-                                    }
+                                gotoPoint.Value.Area.Position.X -= diffX;
+                                gotoPoint.Value.Area.Position.Y -= diffY;
+                            }
 
-                                    layout.HideTooltip();
-                                    UntrapMouse();
-                                    animationsPaused = true;
-                                    if (MonsterSeesPlayer)
+                            // Update active tooltips
+                            CursorType cursorType = CursorType.None;
+                            layout.Hover(GetMousePosition(lastMousePosition), ref cursorType);
+                        }
+                    }
+
+                    TrapMouse(Global.AutomapArea);
+                    void SetupClickHandlers()
+                    {
+                        nextClickHandler = buttons =>
+                        {
+                            if (buttons == MouseButtons.Right)
+                            {
+                                Exit();
+                                return true;
+                            }
+                            else if (buttons == MouseButtons.Left && gotoPoints.Count != 0)
+                            {
+                                var mousePosition = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+
+                                foreach (var gotoPoint in gotoPoints)
+                                {
+                                    if (gotoPoint.Value.Area.Contains(mousePosition))
                                     {
-                                        ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left, 202);
-                                    }
-                                    else
-                                    {
-                                        ShowDecisionPopup(DataNameProvider.ReallyWantToGoThere, response =>
+                                        void AbortGoto()
                                         {
-                                            if (response == PopupTextEvent.Response.Yes)
+                                            animationsPaused = false;
+                                            Animate();
+                                            TrapMouse(Global.AutomapArea);
+                                            SetupClickHandlers();
+                                        }
+
+                                        layout.HideTooltip();
+                                        UntrapMouse();
+                                        animationsPaused = true;
+                                        if (MonsterSeesPlayer)
+                                        {
+                                            ShowMessagePopup(DataNameProvider.WayBackTooDangerous, AbortGoto, TextAlign.Left, 202);
+                                        }
+                                        else
+                                        {
+                                            ShowDecisionPopup(DataNameProvider.ReallyWantToGoThere, response =>
                                             {
-                                                if (player3D.Position.X + 1 == gotoPoint.Key.X && player3D.Position.Y + 1 == gotoPoint.Key.Y)
+                                                if (response == PopupTextEvent.Response.Yes)
                                                 {
-                                                    ShowMessagePopup(DataNameProvider.AlreadyAtGotoPoint, AbortGoto, TextAlign.Center, 202);
+                                                    if (player3D.Position.X + 1 == gotoPoint.Key.X && player3D.Position.Y + 1 == gotoPoint.Key.Y)
+                                                    {
+                                                        ShowMessagePopup(DataNameProvider.AlreadyAtGotoPoint, AbortGoto, TextAlign.Center, 202);
+                                                    }
+                                                    else
+                                                    {
+                                                        Exit(() => Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, gotoPoint.Key.Direction, out _, true));
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    Exit(() => Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, gotoPoint.Key.Direction, out _, true));
+                                                    AbortGoto();
                                                 }
-                                            }
-                                            else
-                                            {
-                                                AbortGoto();
-                                            }
-                                        }, 1, 202, TextAlign.Center);
+                                            }, 1, 202, TextAlign.Center);
+                                        }
+                                        return true;
                                     }
-                                    return true;
                                 }
                             }
-                        }
 
-                        return false;
-                    };
-                }
-                SetupClickHandlers();
-
-                #endregion
-
-                bool closed = false;
-
-                void Exit(Action followAction = null)
-                {
-                    closed = true;
-                    UntrapMouse();
-                    CloseWindow(followAction);
-                }
-
-                void CheckScroll()
-                {
-                    if (!closed)
-                    {
-                        AddTimedEvent(TimeSpan.FromMilliseconds(100), () =>
-                        {
-                            if (InputEnable)
-                            {
-                                var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
-                                int x = position.X < 4 ? -1 : position.X > 204 ? 1 : 0;
-                                int y = position.Y < 41 ? -1 : position.Y > 196 ? 1 : 0;
-
-                                if (x != 0 || y != 0)
-                                    Scroll(x, y);
-                            }
-
-                            CheckScroll();
-                        });
+                            return false;
+                        };
                     }
-                }
+                    SetupClickHandlers();
 
-                CheckScroll();
+                    #endregion
+
+                    bool closed = false;
+
+                    void Exit(Action followAction = null)
+                    {
+                        closed = true;
+                        UntrapMouse();
+                        CloseWindow(followAction);
+                    }
+
+                    void CheckScroll()
+                    {
+                        if (!closed)
+                        {
+                            AddTimedEvent(TimeSpan.FromMilliseconds(100), () =>
+                            {
+                                if (InputEnable)
+                                {
+                                    var position = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+                                    int x = position.X < 4 ? -1 : position.X > 204 ? 1 : 0;
+                                    int y = position.Y < 41 ? -1 : position.Y > 196 ? 1 : 0;
+
+                                    if (x != 0 || y != 0)
+                                        Scroll(x, y);
+                                }
+
+                                CheckScroll();
+                            });
+                        }
+                    }
+
+                    CheckScroll();
+                });
             });
         }
 
@@ -12264,7 +12270,10 @@ namespace Ambermoon
         internal void CloseWindow(Action finishAction)
         {
             if (!WindowActive)
+            {
+                finishAction?.Invoke();
                 return;
+            }
 
             closeWindowHandler?.Invoke();
             closeWindowHandler = null;

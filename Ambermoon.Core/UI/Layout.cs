@@ -2228,7 +2228,7 @@ namespace Ambermoon.UI
                         itemGrid.HideTooltip();
                     inventoryMessage?.Destroy();
                     game.CursorType = CursorType.Click;
-                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 14), game.ProcessText(message));
+                    inventoryMessage = AddScrollableText(new Rect(21, 51, 156, 14), game.ProcessText(message));
                     inventoryMessage.Clicked += scrolledToEnd =>
                     {
                         if (scrolledToEnd)
@@ -2246,7 +2246,7 @@ namespace Ambermoon.UI
                 }
                 else if (inventoryMessage == null)
                 {
-                    inventoryMessage = AddScrollableText(new Rect(21, 51, 162, 14), game.ProcessText(message));
+                    inventoryMessage = AddScrollableText(new Rect(21, 51, 156, 14), game.ProcessText(message));
                 }
                 else
                 {
