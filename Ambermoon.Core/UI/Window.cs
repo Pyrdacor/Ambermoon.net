@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Ambermoon.UI
+﻿namespace Ambermoon.UI
 {
     public enum Window
     {

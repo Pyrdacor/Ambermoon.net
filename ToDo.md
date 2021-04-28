@@ -53,6 +53,4 @@
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
-- Can't ignite torch while chest + inventory is active (wrong place).
 - Add visual effects of drugs and mouse movement.
-- 

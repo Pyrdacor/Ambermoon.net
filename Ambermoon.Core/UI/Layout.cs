@@ -1633,7 +1633,6 @@ namespace Ambermoon.UI
 
             if (!item.IsUsable)
             {
-                // TODO: correct message?
                 SetInventoryMessage(game.DataNameProvider.ItemHasNoEffectHere, true);
                 return;
             }
@@ -1721,7 +1720,7 @@ namespace Ambermoon.UI
                     {
                         wrongPlace = !SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.Camp);
                     }
-                    else if (game.LastWindow.Window == Window.MapView)
+                    else if (game.LastWindow.Window != Window.Battle)
                     {
                         if (!SpellInfos.Entries[item.Spell].ApplicationArea.HasFlag(SpellApplicationArea.AnyMap))
                         {
@@ -1758,7 +1757,12 @@ namespace Ambermoon.UI
                         return;
                     }
 
-                    if (item.Spell == Spell.CallEagle && game.TravelType == TravelType.Walk)
+                    if (item.Spell == Spell.Lockpicking)
+                    {
+                        // Do not consume. Can be used by Thief/Ranger but has no effect in Ambermoon.
+                        return;
+                    }
+                    else if (item.Spell == Spell.CallEagle && game.TravelType == TravelType.Walk)
                     {
                         itemGrid.HideTooltip();
                         ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), () =>

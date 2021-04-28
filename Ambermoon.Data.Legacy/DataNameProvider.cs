@@ -88,8 +88,8 @@
         public string CannotEquip => executableData.Messages.GetEntry(Messages.Index.ThisCannotBeEquipped);
         public string CannotEquipInFight => executableData.Messages.GetEntry(Messages.Index.CannotEquipInCombat);
         public string CannotUnequipInFight => executableData.Messages.GetEntry(Messages.Index.CannotUnequipInCombat);
-        public string ItemHasNoEffectHere => executableData.Messages.GetEntry(Messages.Index.CannotUseItHere);
-        public string ItemCannotBeUsedHere => executableData.Messages.GetEntry(Messages.Index.ItemCannotBeUsedHere);
+        public string ItemHasNoEffectHere => executableData.Messages.GetEntry(Messages.Index.ItemCannotBeUsedHere);
+        public string ItemCannotBeUsedHere => executableData.Messages.GetEntry(Messages.Index.CannotUseItHere);
         public string CannotUseBrokenItems => executableData.Messages.GetEntry(Messages.Index.CannotUseBrokenItems);
         public string WhichItemToUseMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToUse);
         public string WhichItemToExamineMessage => executableData.Messages.GetEntry(Messages.Index.WhichItemToExamine);
