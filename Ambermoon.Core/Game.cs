@@ -817,7 +817,7 @@ namespace Ambermoon
 
         public Render.Color GetNamedPaletteColor(NamedPaletteColors namedPaletteColor) => GetUIColor((int)namedPaletteColor);
 
-        Render.Color GetPaletteColor(int paletteIndex, int colorIndex)
+        internal Render.Color GetPaletteColor(int paletteIndex, int colorIndex)
         {
             var paletteData = renderView.GraphicProvider.Palettes[paletteIndex].Data;
             return new Render.Color
@@ -887,6 +887,7 @@ namespace Ambermoon
 
             renderMap2D.CheckIfMonstersSeePlayer();
 
+            renderView.GetLayer(Layer.Map3DBackground).Visible = false;
             renderView.GetLayer(Layer.Map3D).Visible = false;
             renderView.GetLayer(Layer.Billboards3D).Visible = false;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
@@ -916,7 +917,8 @@ namespace Ambermoon
             player.Position.X = (int)playerX;
             player.Position.Y = (int)playerY;
             player.Direction = direction;
-            
+
+            renderView.GetLayer(Layer.Map3DBackground).Visible = true;
             renderView.GetLayer(Layer.Map3D).Visible = true;
             renderView.GetLayer(Layer.Billboards3D).Visible = true;
             for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
@@ -2719,6 +2721,7 @@ namespace Ambermoon
             {
                 if (show)
                     layout.SetLayout(LayoutType.Map3D, movement.MovementTicks(true, false, TravelType.Walk));
+                renderView.GetLayer(Layer.Map3DBackground).Visible = show;
                 renderView.GetLayer(Layer.Map3D).Visible = show;
                 renderView.GetLayer(Layer.Billboards3D).Visible = show;
             }
@@ -8218,7 +8221,9 @@ namespace Ambermoon
             if (is3D)
             {
                 fow2D.Visible = false;
-                renderView.SetLight(Get3DLight());
+                var light3D = Get3DLight();
+                renderView.SetLight(light3D);
+                renderMap3D.SetLight(light3D);
             }
             else // 2D
             {

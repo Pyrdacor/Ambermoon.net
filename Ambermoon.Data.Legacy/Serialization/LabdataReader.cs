@@ -13,10 +13,14 @@ namespace Ambermoon.Data.Legacy.Serialization
             labdata.WallHeight = dataReader.ReadWord();
             labdata.Unknown1 = dataReader.ReadByte(); // Unknown
             labdata.CombatBackground = dataReader.ReadByte() & 0x0fu;
-            labdata.Unknown2 = dataReader.ReadBytes(2); // Unknown
+            labdata.CeilingColorIndex = dataReader.ReadByte();
+            labdata.FloorColorIndex = dataReader.ReadByte();
             // Note: The ceiling texture index can be 0 in which case a sky is used.
             //       The sky is composed of a color gradient and a lab background
             //       which is given inside the map data.
+            // To be more precisely if the texture index (ceiling and also floor) is
+            // 0, the color index is used to draw instead. For example the town of
+            // S'Angrila doesn't use a floor texture but only a color.
             uint ceilingTextureIndex = dataReader.ReadByte();
             uint floorTextureIndex = dataReader.ReadByte();
 
@@ -123,7 +127,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (floorTextureIndex != 0)
                 labdata.FloorGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)floorTextureIndex], 64, 64, false, false, true);
             if (ceilingTextureIndex != 0)
-                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)ceilingTextureIndex], 64, 64, false, false, true); // TODO
+                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)ceilingTextureIndex], 64, 64, false, false, true);
             var objectTextureFiles = gameData.Files[$"2Object3D.amb"].Files;
             gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f => objectTextureFiles[f.Key] = f.Value);
             labdata.ObjectGraphics.Clear();

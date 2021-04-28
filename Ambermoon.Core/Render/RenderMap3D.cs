@@ -580,6 +580,8 @@ namespace Ambermoon.Render
         readonly IMapManager mapManager = null;
         readonly IRenderView renderView = null;
         ITextureAtlas textureAtlas = null;
+        IColoredRect floorColor = null;
+        IColoredRect ceilingColor = null;
         ISurface3D floor = null;
         ISurface3D ceiling = null;
         Labdata labdata = null;
@@ -624,6 +626,44 @@ namespace Ambermoon.Render
                 SetMap(map, playerX, playerY, playerDirection, game.CurrentPartyMember?.Race ?? Race.Human);
         }
 
+        void SetupBackground()
+        {
+            floorColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
+                    game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex), 0);
+            ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
+                game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex), 0);
+
+            floorColor.X = Global.Map3DViewX;
+            floorColor.Y = Global.Map3DViewY + ceilingColor.Height;
+            ceilingColor.X = Global.Map3DViewX;
+            ceilingColor.Y = Global.Map3DViewY;
+
+            floorColor.Layer = ceilingColor.Layer = renderView.GetLayer(Layer.Map3DBackground);
+            floorColor.Visible = ceilingColor.Visible = true;
+        }
+
+        public void SetLight(float light)
+        {
+            // Note: This only affects the background color. Use IRenderView.SetLight to affect textures.
+            static Color CalculateColor(Color color)
+            {
+                byte r = color.R;
+                byte g = color.G;
+                byte b = color.B;
+                byte a = color.A;
+
+                /*if (alphaEnabled > 0.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f) || { DefaultLightName} < 0.01f)",
+            $"        discard;",
+            $"    else",
+            $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - 1), pixelColor.a);",*/
+
+                return new Color(r, g, b, a);
+            }
+
+            floorColor.Color = CalculateColor(game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex));
+            ceilingColor.Color = CalculateColor(game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex));
+        }
+
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection, Race race)
         {
             if (map.Type != MapType.Map3D)
@@ -638,6 +678,7 @@ namespace Ambermoon.Render
                 EnsureLabdataTextureAtlas();
                 EnsureChangeableBlocks();
                 UpdateSurfaces();
+                SetupBackground();
                 AddCharacters();
 
                 SetCameraHeight(race);
@@ -680,6 +721,8 @@ namespace Ambermoon.Render
 
         public void Destroy()
         {
+            floorColor?.Delete();
+            ceilingColor?.Delete();
             floor?.Delete();
             ceiling?.Delete();
 
@@ -760,8 +803,10 @@ namespace Ambermoon.Render
                 }
                 for (int i = 0; i < labdata.WallGraphics.Count; ++i)
                     graphics.Add((uint)i + 1000u, labdata.WallGraphics[i]);
-                graphics.Add(10000u, labdata.FloorGraphic ?? new Graphic(FloorTextureWidth, FloorTextureHeight, 0)); // TODO
-                graphics.Add(10001u, labdata.CeilingGraphic ?? new Graphic(FloorTextureWidth, FloorTextureHeight, 0)); // TODO
+                if (labdata.FloorGraphic != null)
+                    graphics.Add(10000u, labdata.FloorGraphic);
+                if (labdata.CeilingGraphic != null)
+                    graphics.Add(10001u, labdata.CeilingGraphic);
 
                 if (Map.Flags.HasFlag(MapFlags.Outdoor))
                     graphics.Add(10002u, labBackgroundGraphics[(int)Map.World]);
@@ -1159,28 +1204,34 @@ namespace Ambermoon.Render
             var billboardLayer = renderView.GetLayer(Layer.Billboards3D);
 
             // Add floor and ceiling
-            floor = surfaceFactory.Create(SurfaceType.Floor,
-                Map.Width * Global.DistancePerBlock, Map.Height * Global.DistancePerBlock,
-                FloorTextureWidth, FloorTextureHeight,
-                (uint)Map.Width * FloorTextureWidth, (uint)Map.Height * FloorTextureHeight, false);
-            floor.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-            floor.Layer = layer;
-            floor.X = 0.0f;
-            floor.Y = 0.0f;
-            floor.Z = -Map.Height * Global.DistancePerBlock;
-            floor.TextureAtlasOffset = FloorTextureOffset;
-            floor.Visible = true;
-            ceiling = surfaceFactory.Create(SurfaceType.Ceiling,
-                Map.Width * Global.DistancePerBlock, Map.Height * Global.DistancePerBlock,
-                FloorTextureWidth, FloorTextureHeight,
-                (uint)Map.Width * FloorTextureWidth, (uint)Map.Height * FloorTextureHeight, false);
-            ceiling.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-            ceiling.Layer = layer;
-            ceiling.X = 0.0f;
-            ceiling.Y = WallHeight;
-            ceiling.Z = 0.0f;
-            ceiling.TextureAtlasOffset = CeilingTextureOffset;
-            ceiling.Visible = true;
+            if (labdata.FloorGraphic != null)
+            {
+                floor = surfaceFactory.Create(SurfaceType.Floor,
+                    (Map.Width + 16) * Global.DistancePerBlock, (Map.Height + 16) * Global.DistancePerBlock,
+                    FloorTextureWidth, FloorTextureHeight,
+                    (uint)(Map.Width + 16) * FloorTextureWidth, (uint)(Map.Height + 16) * FloorTextureHeight, false);
+                floor.PaletteIndex = (byte)(Map.PaletteIndex - 1);
+                floor.Layer = layer;
+                floor.X = -8 * Global.DistancePerBlock;
+                floor.Y = 0.0f;
+                floor.Z = -(Map.Height + 8) * Global.DistancePerBlock;
+                floor.TextureAtlasOffset = FloorTextureOffset;
+                floor.Visible = true;
+            }
+            if (labdata.CeilingGraphic != null)
+            {
+                ceiling = surfaceFactory.Create(SurfaceType.Ceiling,
+                    (Map.Width + 16) * Global.DistancePerBlock, (Map.Height + 16) * Global.DistancePerBlock,
+                    FloorTextureWidth, FloorTextureHeight,
+                    (uint)(Map.Width + 16) * FloorTextureWidth, (uint)(Map.Height + 16) * FloorTextureHeight, false);
+                ceiling.PaletteIndex = (byte)(Map.PaletteIndex - 1);
+                ceiling.Layer = layer;
+                ceiling.X = -8 * Global.DistancePerBlock;
+                ceiling.Y = WallHeight;
+                ceiling.Z = -8 * Global.DistancePerBlock;
+                ceiling.TextureAtlasOffset = CeilingTextureOffset;
+                ceiling.Visible = true;
+            }
 
             // Add walls and objects
             for (uint y = 0; y < Map.Height; ++y)

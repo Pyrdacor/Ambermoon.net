@@ -82,7 +82,8 @@ namespace Ambermoon.Data
         /// </summary>
         public uint CombatBackground { get; set; }
         public byte Unknown1 { get; set; }
-        public byte[] Unknown2 { get; set; }
+        public byte CeilingColorIndex { get; set; }
+        public byte FloorColorIndex { get; set; }
         public List<Object> Objects { get; } = new List<Object>();
         public List<ObjectInfo> ObjectInfos { get; } = new List<ObjectInfo>();
         public List<WallData> Walls { get; } = new List<WallData>();

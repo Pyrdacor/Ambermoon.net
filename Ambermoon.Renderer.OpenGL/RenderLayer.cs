@@ -62,6 +62,7 @@ namespace Ambermoon.Renderer
 
         private static readonly float[] LayerBaseZ = new float[]
         {
+            0.00f,  // Map3DBackground
             0.00f,  // Map3D
             0.00f,  // Billboards3D
             0.01f,  // MapBackground1
@@ -100,16 +101,19 @@ namespace Ambermoon.Renderer
                 throw new AmbermoonException(ExceptionScope.Application, "Layer.None should never be used.");
 
             this.state = state;
-            bool supportAnimations = layer != Layer.CombatBackground && layer != Layer.FOW && layer != Layer;
+            bool supportAnimations = layer != Layer.CombatBackground && layer != Layer.FOW && layer != Layer.Map3DBackground;
             bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
-            bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
+            bool opaque = layer == Layer.Map3DBackground || layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
 
-            RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
-                supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
-                opaque, layer == Layer.FOW);
+            if (layer != Layer.Map3DBackground)
+            {
+                RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
+                    supportAnimations, layered, layer == Layer.Map3DBackground, layer == Layer.Billboards3D, layer == Layer.Text,
+                    opaque, layer == Layer.FOW);
+            }
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
-            if (layer == Layer.UI || layer == Layer.Effects)
+            if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.Effects)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
 
             Layer = layer;
@@ -227,7 +231,7 @@ namespace Ambermoon.Renderer
                 }
             }
 
-            RenderBuffer.Render();
+            RenderBuffer?.Render();
         }
 
         public int GetDrawIndex(ISprite sprite, byte? textColorIndex = null)

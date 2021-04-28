@@ -3,6 +3,7 @@
     public enum Layer
     {
         None = -1,
+        Map3DBackground, // Color floor, sky, etc
         Map3D,
         Billboards3D,
         MapBackground1,
