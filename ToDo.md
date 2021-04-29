@@ -25,6 +25,8 @@
 - Blocks behind walls should not be explored when nearby.
 - 3D monster get easily stuck on wall edges. :(
 - NPCs should not walk through doors etc. Or should they? They do so in Spannenberg park.
+  For sure they should not leave the town. The burnville guard sometimes leaves the town and
+  walks outside.
 - After climbing to new map (map 355 ~17,4) with a rope, the monster jumps to a new location.
 
 
@@ -43,6 +45,7 @@
 - Scrolling by dragging can't put the scrollbar to the top or bottom. There is a small gap.
 - When repairing item etc the item tooltip should not show up after magic animation.
 - I guess buff duration bars are a bit wrong (ingame no empty bar is shown, while it is in remake).
+- Speaking to simple NPC the popup uses centered text. Is this right?
 
 
 ## Misc
@@ -54,3 +57,4 @@
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Add visual effects of drugs and mouse movement.
+- Maybe add emergency savegame that is stored when game crashes.

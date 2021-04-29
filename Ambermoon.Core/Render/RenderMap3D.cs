@@ -645,19 +645,20 @@ namespace Ambermoon.Render
         public void SetLight(float light)
         {
             // Note: This only affects the background color. Use IRenderView.SetLight to affect textures.
-            static Color CalculateColor(Color color)
+            Color CalculateColor(Color color)
             {
-                byte r = color.R;
-                byte g = color.G;
-                byte b = color.B;
-                byte a = color.A;
+                if (light < 0.0001f)
+                    return new Color(Color.Black, color.A);
+                else if (light > 0.9999f)
+                    return color;
 
-                /*if (alphaEnabled > 0.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f) || { DefaultLightName} < 0.01f)",
-            $"        discard;",
-            $"    else",
-            $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - 1), pixelColor.a);",*/
+                byte Convert(byte c) => (byte)Util.Limit(0, Util.Round(255 * ((c / 255.0f) + light - 1.0f)), 255);
 
-                return new Color(r, g, b, a);
+                byte r = Convert(color.R);
+                byte g = Convert(color.G);
+                byte b = Convert(color.B);
+
+                return new Color(r, g, b, color.A);
             }
 
             floorColor.Color = CalculateColor(game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex));
@@ -1228,7 +1229,7 @@ namespace Ambermoon.Render
                 ceiling.Layer = layer;
                 ceiling.X = -8 * Global.DistancePerBlock;
                 ceiling.Y = WallHeight;
-                ceiling.Z = -8 * Global.DistancePerBlock;
+                ceiling.Z = 8 * Global.DistancePerBlock;
                 ceiling.TextureAtlasOffset = CeilingTextureOffset;
                 ceiling.Visible = true;
             }
