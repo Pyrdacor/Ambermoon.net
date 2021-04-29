@@ -30,7 +30,7 @@ namespace Ambermoon.Renderer
         int height = -1;
         Rotation rotation = Rotation.None;
         Matrix4 modelViewMatrix = Matrix4.Identity;
-        static readonly float FovY3D = (float)Math.PI * 0.2f;
+        static readonly float FovY3D = (float)Math.PI * 0.26f;
         State State { get; }
 
         public Context(State state, int width, int height, float aspect)

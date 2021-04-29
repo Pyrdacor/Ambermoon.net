@@ -102,15 +102,12 @@ namespace Ambermoon.Renderer
 
             this.state = state;
             bool supportAnimations = layer != Layer.CombatBackground && layer != Layer.FOW && layer != Layer.Map3DBackground;
-            bool layered = layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
-            bool opaque = layer == Layer.Map3DBackground || layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
+            bool layered = layer == Layer.Map3DBackground || layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
+            bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
 
-            if (layer != Layer.Map3DBackground)
-            {
-                RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
-                    supportAnimations, layered, layer == Layer.Map3DBackground, layer == Layer.Billboards3D, layer == Layer.Text,
-                    opaque, layer == Layer.FOW);
-            }
+            RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
+                supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
+                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground);
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
             if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.Effects)
@@ -210,7 +207,9 @@ namespace Ambermoon.Renderer
                     }
                     else
                     {
-                        TextureShader shader = RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
+                        bool sky = Layer == Layer.Map3DBackground;
+                        TextureShader shader = sky ? RenderBuffer.SkyShader :
+                            RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
 
                         shader.UpdateMatrices(state);
 

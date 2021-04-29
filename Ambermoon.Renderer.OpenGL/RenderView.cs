@@ -604,6 +604,7 @@ namespace Ambermoon.Renderer.OpenGL
         {
             (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetLight(light);
             (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetLight(light);
+            (GetLayer(Layer.Map3DBackground) as RenderLayer).RenderBuffer.SkyShader.SetLight(light);
         }
     }
 }

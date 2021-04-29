@@ -57,10 +57,11 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, Billboard3DShader> billboard3DShaders = new Dictionary<State, Billboard3DShader>();
         static readonly Dictionary<State, TextShader> textShaders = new Dictionary<State, TextShader>();
         static readonly Dictionary<State, FowShader> fowShaders = new Dictionary<State, FowShader>();
+        static readonly Dictionary<State, SkyShader> skyShaders = new Dictionary<State, SkyShader>();
 
         public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
             bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
-            bool fow = false)
+            bool fow = false, bool sky = false)
         {
             this.state = state;
             Opaque = opaque;
@@ -71,7 +72,13 @@ namespace Ambermoon.Renderer
                     throw new AmbermoonException(ExceptionScope.Render, "3D render buffers can't be masked nor layered and must not lack a texture.");
             }
 
-            if (fow)
+            if (sky)
+            {
+                if (!skyShaders.ContainsKey(state))
+                    skyShaders[state] = SkyShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, skyShaders[state].ShaderProgram);
+            }
+            else if (fow)
             {
                 if (!fowShaders.ContainsKey(state))
                     fowShaders[state] = FowShader.Create(state);
@@ -225,6 +232,7 @@ namespace Ambermoon.Renderer
         internal Billboard3DShader Billboard3DShader => billboard3DShaders[state];
         internal TextShader TextShader => textShaders[state];
         internal FowShader FowShader => fowShaders[state];
+        internal SkyShader SkyShader => skyShaders[state];
 
         public int GetDrawIndex(Render.IFow fow,
             Render.PositionTransformation positionTransformation,

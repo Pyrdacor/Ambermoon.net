@@ -567,6 +567,48 @@ namespace Ambermoon.Render
             }
         }
 
+        /// <summary>
+        /// Scrollable texture sprite used for skies.
+        /// </summary>
+        class SkySprite
+        {
+            ILayerSprite leftSprite;
+            ILayerSprite rightSprite;
+            int scrollX = 0;
+
+            public SkySprite(int y, Func<int, int, ILayerSprite> creator)
+            {
+                leftSprite = creator(Global.Map3DViewX, Global.Map3DViewY + y);
+                rightSprite = creator(Global.Map3DViewX + leftSprite.Width, Global.Map3DViewY + y);
+                leftSprite.Visible = true;
+                rightSprite.Visible = true;
+            }
+
+            public void Destroy()
+            {
+                leftSprite?.Delete();
+                rightSprite?.Delete();
+
+                leftSprite = null;
+                rightSprite = null;
+            }
+
+            public void ScrollTo(int x)
+            {
+                if (leftSprite == null || rightSprite == null)
+                    return;
+
+                while (x <= -Global.Map3DViewWidth)
+                    x += Global.Map3DViewWidth;
+                while (x > 0)
+                    x -= Global.Map3DViewWidth;
+
+                scrollX = x;
+                leftSprite.X = Global.Map3DViewX + x;
+                rightSprite.X = leftSprite.X + leftSprite.Width;
+            }
+        }
+
         public const int FloorTextureWidth = 64;
         public const int FloorTextureHeight = 64;
         public const int TextureWidth = 128;
@@ -582,6 +624,7 @@ namespace Ambermoon.Render
         ITextureAtlas textureAtlas = null;
         IColoredRect floorColor = null;
         IColoredRect ceilingColor = null;
+        SkySprite horizonSprite = null;
         ISurface3D floor = null;
         ISurface3D ceiling = null;
         Labdata labdata = null;
@@ -624,13 +667,26 @@ namespace Ambermoon.Render
 
             if (map != null)
                 SetMap(map, playerX, playerY, playerDirection, game.CurrentPartyMember?.Race ?? Race.Human);
+
+            camera.Turned += CameraTurned;
+        }
+
+        void CameraTurned(float angle)
+        {
+            while (angle <= -360.0f)
+                angle += 360.0f;
+            while (angle >= 360.0f)
+                angle -= 360.0f;
+
+            if (horizonSprite != null)
+                horizonSprite.ScrollTo(Util.Round(8.0f * -144.0f * angle / 360.0f));
         }
 
         void SetupBackground()
         {
-            floorColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
-                    game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex), 0);
-            ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
+            floorColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2 + 4,
+                game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex), 0);
+            ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2 - 4,
                 game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex), 0);
 
             floorColor.X = Global.Map3DViewX;
@@ -640,6 +696,21 @@ namespace Ambermoon.Render
 
             floorColor.Layer = ceilingColor.Layer = renderView.GetLayer(Layer.Map3DBackground);
             floorColor.Visible = ceilingColor.Visible = true;
+
+            if (Map.Flags.HasFlag(MapFlags.Outdoor))
+            {
+                horizonSprite = new SkySprite(ceilingColor.Height - 10, (x, y) =>
+                {
+                    var sprite = renderView.SpriteFactory.Create(144, 20, true, 1) as ILayerSprite;
+                    sprite.TextureAtlasOffset = HorizonTextureOffset;
+                    sprite.ClipArea = Game.Map3DViewArea;
+                    sprite.PaletteIndex = (byte)(Map.PaletteIndex - 1);
+                    sprite.Layer = ceilingColor.Layer;
+                    sprite.X = x;
+                    sprite.Y = y;
+                    return sprite;
+                });
+            }
         }
 
         public void SetLight(float light)
@@ -726,9 +797,13 @@ namespace Ambermoon.Render
             ceilingColor?.Delete();
             floor?.Delete();
             ceiling?.Delete();
+            horizonSprite?.Destroy();
 
+            floorColor = null;
+            ceilingColor = null;
             floor = null;
             ceiling = null;
+            horizonSprite = null;
 
             walls.Values.ToList().ForEach(walls => walls.ForEach(wall => wall?.Delete()));
             objects.Values.ToList().ForEach(objects => objects.ForEach(obj => obj?.Destroy()));
@@ -745,23 +820,8 @@ namespace Ambermoon.Render
 
         void EnsureLabBackgroundGraphics(IGraphicProvider graphicProvider)
         {
-            if (labBackgroundGraphics != null)
-                return;
-
-            // Note: Palette index 9 is used for the transparent parts (I don't know why) so
-            // we replace this index here with index 0.
-            labBackgroundGraphics = graphicProvider.GetGraphics(GraphicType.LabBackground).ToArray();
-
-            for (int i = 0; i < labBackgroundGraphics.Length; ++i)
-            {
-                var labBackgroundGraphic = labBackgroundGraphics[i];
-
-                for (int b = 0; b < labBackgroundGraphic.Width * labBackgroundGraphic.Height; ++b)
-                {
-                    if (labBackgroundGraphic.Data[b] == 9)
-                        labBackgroundGraphic.Data[b] = 0;
-                }
-            }
+            if (labBackgroundGraphics == null)
+                labBackgroundGraphics = graphicProvider.GetGraphics(GraphicType.LabBackground).ToArray();
         }
 
         void EnsureChangeableBlocks()
@@ -809,13 +869,13 @@ namespace Ambermoon.Render
                 if (labdata.CeilingGraphic != null)
                     graphics.Add(10001u, labdata.CeilingGraphic);
 
-                if (Map.Flags.HasFlag(MapFlags.Outdoor))
-                    graphics.Add(10002u, labBackgroundGraphics[(int)Map.World]);
+                graphics.Add(10002u, labBackgroundGraphics[(int)Map.World]);
 
                 labdataTextures.Add(Map.TilesetOrLabdataIndex, TextureAtlasManager.Instance.CreateFromGraphics(graphics, 1));
             }
 
             textureAtlas = labdataTextures[Map.TilesetOrLabdataIndex];
+            renderView.GetLayer(Layer.Map3DBackground).Texture = textureAtlas.Texture;
             renderView.GetLayer(Layer.Map3D).Texture = textureAtlas.Texture;
             renderView.GetLayer(Layer.Billboards3D).Texture = textureAtlas.Texture;
         }
@@ -832,6 +892,7 @@ namespace Ambermoon.Render
 
         Position FloorTextureOffset => textureAtlas.GetOffset(10000u);
         Position CeilingTextureOffset => textureAtlas.GetOffset(10001u);
+        Position HorizonTextureOffset => textureAtlas.GetOffset(10002u);
 
         void AddCharacters()
         {

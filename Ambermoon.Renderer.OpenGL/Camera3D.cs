@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Render;
 using System;
+using System.Linq;
 
 namespace Ambermoon.Renderer.OpenGL
 {
@@ -28,6 +29,21 @@ namespace Ambermoon.Renderer.OpenGL
         public float Y { get; private set; } = 0.0f;
         public float Z { get; private set; } = 0.0f;
         public float GroundY { get; set; } = 0.0f;
+
+        Action<float> turnedHandler;
+
+        public event Action<float> Turned
+        {
+            add
+            {
+                if (turnedHandler == null || !turnedHandler.GetInvocationList().Contains(value))
+                    turnedHandler += value;
+            }
+            remove
+            {
+                turnedHandler -= value;
+            }
+        }
 
         public void GetForwardPosition(float distance, out float x, out float z, bool noX, bool noZ)
         {
@@ -155,6 +171,8 @@ namespace Ambermoon.Renderer.OpenGL
             currentPerpendicularAngleCos = Math.Cos(radiant - QuarterTurnAngle);
             currentPerpendicularAngleSin = Math.Sin(radiant - QuarterTurnAngle);
             Rotate(currentAngle);
+
+            turnedHandler?.Invoke(currentAngle);
         }
     }
 }

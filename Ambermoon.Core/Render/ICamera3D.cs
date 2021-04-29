@@ -28,6 +28,8 @@ namespace Ambermoon.Render
         float Z { get; }
         float GroundY { get; set; }
 
+        event System.Action<float> Turned;
+
         void UpdatePosition();
         /// <summary>
         /// This will reset the view angle to up
