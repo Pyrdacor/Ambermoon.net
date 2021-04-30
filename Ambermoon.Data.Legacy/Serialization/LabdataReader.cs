@@ -181,7 +181,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
 
-        static Graphic ReadGraphic(GraphicReader graphicReader, IDataReader file, int width, int height, bool alpha, bool texture, bool reset)
+        static Graphic ReadGraphic(GraphicReader graphicReader, IDataReader file, int width, int height,
+            bool alpha, bool texture, bool reset)
         {
             var graphic = new Graphic
             {

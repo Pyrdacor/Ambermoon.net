@@ -1142,7 +1142,8 @@ namespace Ambermoon.Render
             void AddSurface(WallOrientation wallOrientation, float x, float z)
             {
                 var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerBlock, wallHeight,
-                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, 1, 0.0f, wallOrientation);
+                    TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, 1, 0.0f, wallOrientation,
+                    Map.Flags.HasFlag(MapFlags.Outdoor) ? labdata.CeilingColorIndex : (byte)0);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 wall.X = x;

@@ -464,7 +464,12 @@ namespace Ambermoon.Data.Legacy
 
                 foreach (var file in allFiles)
                 {
-                    LoadGraphic(file.Value, (byte)(type == GraphicType.Portrait ? 25 : 0));
+                    LoadGraphic(file.Value, (byte)(type switch
+                    {
+                        GraphicType.Portrait => 25,
+                        GraphicType.LabBackground => 9, // 9 is the sky color index
+                        _ => 0
+                    }));
                 }
             }
         }

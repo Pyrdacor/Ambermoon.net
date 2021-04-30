@@ -518,7 +518,7 @@ namespace Ambermoon.Renderer
 
             if (alphaBuffer != null)
             {
-                byte alpha = (byte)(surface.Alpha ? 1 : 0);
+                byte alpha = (byte)(surface.Alpha ? 1 : surface.SkyColorIndex);
                 int alphaBufferIndex = alphaBuffer.Add(alpha, index);
                 alphaBuffer.Add(alpha, alphaBufferIndex + 1);
                 alphaBuffer.Add(alpha, alphaBufferIndex + 2);

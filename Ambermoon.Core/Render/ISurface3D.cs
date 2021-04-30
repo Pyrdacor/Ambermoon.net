@@ -68,6 +68,7 @@ namespace Ambermoon.Render
         uint MappedTextureHeight { get; }
         bool Visible { get; set; }
         bool Alpha { get; }
+        byte SkyColorIndex { get; }
         int FrameCount { get; }
         IRenderLayer Layer { get; set; }
         WallOrientation WallOrientation { get; }
@@ -92,6 +93,7 @@ namespace Ambermoon.Render
     {
         ISurface3D Create(SurfaceType type, float width, float height, uint textureWidth, uint textureHeight,
             uint mappedTextureWidth, uint mappedTextureHeight, bool alpha, int frameCount = 1, float extrude = 0.0f,
-            WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0);
+            WallOrientation wallOrientation = WallOrientation.Normal, byte skyColorIndex = 0,
+            int textureAtlasX = 0, int textureAtlasY = 0);
     }
 }

@@ -86,6 +86,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public Buttons Buttons { get; }
         public ItemManager ItemManager { get; }
         public Graphic[] BuiltinPalettes { get; } = new Graphic[3];
+        public Graphic[] SkyGradients { get; } = new Graphic[9];
 
         static T Read<T>(IDataReader[] dataReaders, ref int readerIndex)
         {
@@ -156,6 +157,27 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             for (int i = 0; i < 3; ++i)
             {
                 BuiltinPalettes[i] = GraphicProvider.ReadPalette(dataHunkReaders[dataHunkIndex]);
+            }
+
+            // Then 9 vertical color gradients used for skies are stored. They are stored
+            // as 16 bit XRGB colors and not color indices!
+            // The first 3 skies are for Lyramion, the next 3 for the forest moon and the last
+            // 3 for Morag. The first sky is night, the second twilight and the third day.
+            // Transitions blend night with twilight or day with twilight.
+            var skyGraphicInfo = new GraphicInfo
+            {
+                Alpha = false,
+                GraphicFormat = GraphicFormat.XRGB16,
+                Width = 1,
+                Height = 72
+            };
+            var graphicReader = new GraphicReader();
+            List<uint> colors = new List<uint>();
+
+            for (int i = 0; i < 9; ++i)
+            {
+                var sky = SkyGradients[i] = new Graphic();
+                graphicReader.ReadGraphic(sky, dataHunkReaders[dataHunkIndex], skyGraphicInfo);
             }
 
             // TODO ...
