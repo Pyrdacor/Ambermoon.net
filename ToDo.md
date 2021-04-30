@@ -29,6 +29,7 @@
   walks outside.
 - After climbing to new map (map 355 ~17,4) with a rope, the monster jumps to a new location.
 - When climbing up/down the player appears to far away from the hole (maybe move him nearer beforehand).
+- Floor in ruin tower (index 349) looks weird as if it contains the sky color.
 
 
 ## 2D maps

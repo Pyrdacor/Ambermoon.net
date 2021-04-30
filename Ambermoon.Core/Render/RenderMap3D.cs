@@ -624,6 +624,7 @@ namespace Ambermoon.Render
         ITextureAtlas textureAtlas = null;
         IColoredRect floorColor = null;
         IColoredRect ceilingColor = null;
+        List<IColoredRect> skyColors = null;
         SkySprite horizonSprite = null;
         ISurface3D floor = null;
         ISurface3D ceiling = null;
@@ -701,7 +702,7 @@ namespace Ambermoon.Render
             {
                 horizonSprite = new SkySprite(ceilingColor.Height - 20, (x, y) =>
                 {
-                    var sprite = renderView.SpriteFactory.Create(144, 20, true, 1) as ILayerSprite;
+                    var sprite = renderView.SpriteFactory.Create(144, 20, true, 2) as ILayerSprite;
                     sprite.TextureAtlasOffset = HorizonTextureOffset;
                     sprite.ClipArea = Game.Map3DViewArea;
                     sprite.PaletteIndex = (byte)(Map.PaletteIndex - 1);
@@ -1309,6 +1310,26 @@ namespace Ambermoon.Render
                         AddObject(surfaceFactory, billboardLayer, x, y, labdata.Objects[((int)block.ObjectIndex - 1) % labdata.Objects.Count]);
                 }
             }
+        }
+
+        public void UpdateSky(ISkyProvider skyProvider, ITime time)
+        {
+            var skyParts = skyProvider.GetSkyParts(Map, time.Hour, time.Minute);
+
+            if (skyParts == null) // No change
+                return;
+
+            if (skyColors != null)
+                skyColors.ForEach(c => c?.Delete());
+            skyColors = skyParts.Select(part =>
+            {
+                var skyColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, part.Height, new Color(part.Color), 1);
+                skyColor.X = Global.Map3DViewX;
+                skyColor.Y = Global.Map3DViewY + part.Y;
+                skyColor.Layer = ceilingColor.Layer;
+                skyColor.Visible = true;
+                return skyColor;
+            }).ToList();
         }
 
         public void Update(uint ticks, ITime gameTime)

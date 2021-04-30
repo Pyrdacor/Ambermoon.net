@@ -256,6 +256,7 @@ namespace Ambermoon
         readonly NameProvider nameProvider;
         readonly TextDictionary textDictionary;
         internal IDataNameProvider DataNameProvider { get; }
+        readonly ISkyProvider skyProvider;
         readonly Layout layout;
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly Dictionary<CharacterInfo, Panel> characterInfoPanels = new Dictionary<CharacterInfo, Panel>();
@@ -433,7 +434,7 @@ namespace Ambermoon
         public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IMapManager mapManager,
             IItemManager itemManager, ICharacterManager characterManager, ISavegameManager savegameManager,
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
-            Places places, Cursor cursor)
+            Places places, Cursor cursor, ISkyProvider skyProvider)
         {
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
@@ -453,6 +454,7 @@ namespace Ambermoon
             this.savegameSerializer = savegameSerializer;
             DataNameProvider = dataNameProvider;
             this.textDictionary = textDictionary;
+            this.skyProvider = skyProvider;
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
@@ -8224,6 +8226,7 @@ namespace Ambermoon
                 var light3D = Get3DLight();
                 renderView.SetLight(light3D);
                 renderMap3D.SetLight(light3D);
+                renderMap3D.UpdateSky(skyProvider, GameTime);
             }
             else // 2D
             {

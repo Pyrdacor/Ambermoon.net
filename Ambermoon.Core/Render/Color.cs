@@ -69,6 +69,14 @@ namespace Ambermoon.Render
             A = a;
         }
 
+        public Color(uint xrgb, byte a = 255)
+        {
+            R = (byte)((xrgb >> 16) & 0xff);
+            G = (byte)((xrgb >> 8) & 0xff);
+            B = (byte)(xrgb & 0xff);
+            A = a;
+        }
+
         public static readonly Color Transparent = new Color(0x00, 0x00, 0x00, 0x00);
         public static readonly Color Black = new Color(0x00, 0x00, 0x00);
         public static readonly Color Green = new Color(0x73, 0xb3, 0x43);
