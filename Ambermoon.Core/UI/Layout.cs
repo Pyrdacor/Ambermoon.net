@@ -1791,7 +1791,11 @@ namespace Ambermoon.UI
                             if (item.MaxCharges == 0 && item.Flags.HasFlag(ItemFlags.DestroyAfterUsage) && itemSlot.NumRemainingCharges <= 1)
                                 DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, Done);
                             else
+                            {
+                                if (item.MaxCharges != 0 && itemSlot.NumRemainingCharges > 0)
+                                    --itemSlot.NumRemainingCharges;
                                 ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), Done);
+                            }
                         }
 
                         game.UseSpell(game.CurrentInventory, item.Spell, itemGrid, true, ConsumeItem);

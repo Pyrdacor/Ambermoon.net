@@ -684,9 +684,9 @@ namespace Ambermoon.Render
 
         void SetupBackground()
         {
-            floorColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2 + 4,
+            floorColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
                 game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex), 0);
-            ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2 - 4,
+            ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
                 game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex), 0);
 
             floorColor.X = Global.Map3DViewX;
@@ -699,7 +699,7 @@ namespace Ambermoon.Render
 
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
-                horizonSprite = new SkySprite(ceilingColor.Height - 10, (x, y) =>
+                horizonSprite = new SkySprite(ceilingColor.Height - 20, (x, y) =>
                 {
                     var sprite = renderView.SpriteFactory.Create(144, 20, true, 1) as ILayerSprite;
                     sprite.TextureAtlasOffset = HorizonTextureOffset;

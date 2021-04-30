@@ -28,6 +28,7 @@
   For sure they should not leave the town. The burnville guard sometimes leaves the town and
   walks outside.
 - After climbing to new map (map 355 ~17,4) with a rope, the monster jumps to a new location.
+- When climbing up/down the player appears to far away from the hole (maybe move him nearer beforehand).
 
 
 ## 2D maps
