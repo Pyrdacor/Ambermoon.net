@@ -936,7 +936,7 @@ namespace Ambermoon
             layout.Reset();
             renderMap2D?.Destroy();
             renderMap2D = null;
-            renderMap3D?.Destroy();
+            renderMap3D?.Destroy(true);
             renderMap3D = null;
             player2D?.Destroy();
             player2D = null;

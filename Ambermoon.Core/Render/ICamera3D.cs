@@ -27,6 +27,7 @@ namespace Ambermoon.Render
         float Y { get; }
         float Z { get; }
         float GroundY { get; set; }
+        float Angle { get; }
 
         event System.Action<float> Turned;
 

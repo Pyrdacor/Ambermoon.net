@@ -29,6 +29,7 @@ namespace Ambermoon.Renderer.OpenGL
         public float Y { get; private set; } = 0.0f;
         public float Z { get; private set; } = 0.0f;
         public float GroundY { get; set; } = 0.0f;
+        public float Angle => currentAngle;
 
         Action<float> turnedHandler;
 

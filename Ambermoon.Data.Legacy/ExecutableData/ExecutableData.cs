@@ -87,6 +87,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public ItemManager ItemManager { get; }
         public Graphic[] BuiltinPalettes { get; } = new Graphic[3];
         public Graphic[] SkyGradients { get; } = new Graphic[9];
+        public Graphic[] AdditionalSkyGradients { get; } = new Graphic[6];
 
         static T Read<T>(IDataReader[] dataReaders, ref int readerIndex)
         {
@@ -178,6 +179,22 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             {
                 var sky = SkyGradients[i] = new Graphic();
                 graphicReader.ReadGraphic(sky, dataHunkReaders[dataHunkIndex], skyGraphicInfo);
+            }
+
+            // Note: After the 9 sky gradients there are 6 additional gradients (2 per world, each 32 bytes
+            // and therefore 16 pixels height). They are also blended together with another builtin data
+            // sometimes (maybe current colors).
+            var smallSkyGraphicInfo = new GraphicInfo
+            {
+                Alpha = false,
+                GraphicFormat = GraphicFormat.XRGB16,
+                Width = 1,
+                Height = 16
+            };
+            for (int i = 0; i < 6; ++i)
+            {
+                var sky = AdditionalSkyGradients[i] = new Graphic();
+                graphicReader.ReadGraphic(sky, dataHunkReaders[dataHunkIndex], smallSkyGraphicInfo);
             }
 
             // TODO ...

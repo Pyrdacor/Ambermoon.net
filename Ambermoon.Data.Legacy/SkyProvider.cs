@@ -37,15 +37,11 @@ namespace Ambermoon.Data.Legacy
 
             if (hour >= 22 || hour < 5) // Night
             {
-                if (lastMapIndex == map.Index && lastPhase == 0)
-                    return null;
                 lastPhase = 0;
                 baseGraphic = executableData.SkyGradients[worldIndex * 3 + 0];
             }
             else if (hour >= 9 && hour < 18) // Day
             {
-                if (lastMapIndex == map.Index && lastPhase == 1)
-                    return null;
                 lastPhase = 1;
                 baseGraphic = executableData.SkyGradients[worldIndex * 3 + 2];
             }
