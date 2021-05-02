@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Ambermoon.Data.Legacy
 {
     public class SkyProvider : ISkyProvider
     {
         readonly ExecutableData.ExecutableData executableData;
+        readonly Dictionary<uint, List<SkyPart>> skyPartCache = new Dictionary<uint, List<SkyPart>>();
         uint lastMapIndex = 0;
         uint lastPhase = uint.MaxValue;
 
@@ -26,7 +26,16 @@ namespace Ambermoon.Data.Legacy
             Graphic baseGraphic;
             Graphic blendGraphic = null;
             uint destFactor = 0;
-            if (hour >= 22 && hour < 5) // Night
+
+            IEnumerable<SkyPart> Cache(uint phase, Func<List<SkyPart>> creator)
+            {
+                if (skyPartCache.TryGetValue(phase, out var parts))
+                    return parts;
+
+                return skyPartCache[phase] = creator();
+            }
+
+            if (hour >= 22 || hour < 5) // Night
             {
                 if (lastMapIndex == map.Index && lastPhase == 0)
                     return null;
@@ -42,28 +51,28 @@ namespace Ambermoon.Data.Legacy
             }
             else if (hour >= 18 && hour < 20) // Dawn phase I
             {
-                lastPhase = 3;
+                lastPhase = 1000 + hour * 60 + minute;
                 baseGraphic = executableData.SkyGradients[worldIndex * 3 + 2];
                 blendGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
                 destFactor = 255 * ((hour - 18) * 60 + minute) / 120;
             }
             else if (hour >= 20 && hour < 22) // Dawn phase II
             {
-                lastPhase = 3;
+                lastPhase = 3000 + hour * 60 + minute;
                 baseGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
                 blendGraphic = executableData.SkyGradients[worldIndex * 3 + 0];
                 destFactor = 255 * ((hour - 20) * 60 + minute) / 120;
             }
             else if (hour >= 5 && hour < 7) // Dusk phase I
             {
-                lastPhase = 3;
+                lastPhase = 5000 + hour * 60 + minute;
                 baseGraphic = executableData.SkyGradients[worldIndex * 3 + 0];
                 blendGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
                 destFactor = 255 * ((hour - 5) * 60 + minute) / 120;
             }
             else if (hour >= 7 && hour < 9) // Dusk phase II
             {
-                lastPhase = 3;
+                lastPhase = 7000 + hour * 60 + minute;
                 baseGraphic = executableData.SkyGradients[worldIndex * 3 + 1];
                 blendGraphic = executableData.SkyGradients[worldIndex * 3 + 2];
                 destFactor = 255 * ((hour - 7) * 60 + minute) / 120;
@@ -75,62 +84,65 @@ namespace Ambermoon.Data.Legacy
 
             lastMapIndex = map.Index;
 
-            var parts = new List<SkyPart>();
-            uint lastColor = uint.MaxValue;
-            SkyPart currentPart = null;
-
-            static uint ToColor(Graphic graphic, int y) =>
-                ((uint)graphic.Data[y * 4 + 0] << 16) | ((uint)graphic.Data[y * 4 + 1] << 8) | graphic.Data[y * 4 + 2];
-
-            void ProcessColor(int y, uint color)
+            return Cache(lastPhase, () =>
             {
-                if (lastColor != color)
+                var parts = new List<SkyPart>();
+                uint lastColor = uint.MaxValue;
+                SkyPart currentPart = null;
+
+                static uint ToColor(Graphic graphic, int y) =>
+                    ((uint)graphic.Data[y * 4 + 0] << 16) | ((uint)graphic.Data[y * 4 + 1] << 8) | graphic.Data[y * 4 + 2];
+
+                void ProcessColor(int y, uint color)
                 {
-                    if (currentPart != null)
-                        parts.Add(currentPart);
-
-                    lastColor = color;
-
-                    currentPart = new SkyPart
+                    if (lastColor != color)
                     {
-                        Y = y,
-                        Height = 1,
-                        Color = color
-                    };
+                        if (currentPart != null)
+                            parts.Add(currentPart);
+
+                        lastColor = color;
+
+                        currentPart = new SkyPart
+                        {
+                            Y = y,
+                            Height = 1,
+                            Color = color
+                        };
+                    }
+                    else
+                    {
+                        ++currentPart.Height;
+                    }
+                }
+
+                if (blendGraphic == null)
+                {
+                    for (int y = 0; y < 72; ++y)
+                    {
+                        ProcessColor(y, ToColor(baseGraphic, y));
+                    }
                 }
                 else
                 {
-                    ++currentPart.Height;
+                    for (int y = 0; y < 72; ++y)
+                    {
+                        byte sr = baseGraphic.Data[y * 4 + 0];
+                        byte sg = baseGraphic.Data[y * 4 + 1];
+                        byte sb = baseGraphic.Data[y * 4 + 2];
+                        byte dr = blendGraphic.Data[y * 4 + 0];
+                        byte dg = blendGraphic.Data[y * 4 + 1];
+                        byte db = blendGraphic.Data[y * 4 + 2];
+                        uint r = (sr * (255 - destFactor) + dr * destFactor) / 255;
+                        uint g = (sg * (255 - destFactor) + dg * destFactor) / 255;
+                        uint b = (sb * (255 - destFactor) + db * destFactor) / 255;
+                        ProcessColor(y, (r << 16) | (g << 8) | b);
+                    }
                 }
-            }
 
-            if (blendGraphic == null)
-            {
-                for (int y = 0; y < 72; ++y)
-                {
-                    ProcessColor(y, ToColor(baseGraphic, y));
-                }
-            }
-            else
-            {
-                for (int y = 0; y < 72; ++y)
-                {
-                    byte sr = baseGraphic.Data[y * 4 + 0];
-                    byte sg = baseGraphic.Data[y * 4 + 1];
-                    byte sb = baseGraphic.Data[y * 4 + 2];
-                    byte dr = blendGraphic.Data[y * 4 + 0];
-                    byte dg = blendGraphic.Data[y * 4 + 1];
-                    byte db = blendGraphic.Data[y * 4 + 2];
-                    uint r = (sr * (255 - destFactor) + dr * destFactor) / 255;
-                    uint g = (sg * (255 - destFactor) + dg * destFactor) / 255;
-                    uint b = (sb * (255 - destFactor) + db * destFactor) / 255;
-                    ProcessColor(y, (r << 16) | (g << 8) | b);
-                }
-            }
+                parts.Add(currentPart);
 
-            parts.Add(currentPart);
-
-            return parts;
+                return parts;
+            });
         }
     }
 }
