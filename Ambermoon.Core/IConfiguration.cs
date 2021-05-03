@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -53,6 +54,18 @@ namespace Ambermoon
                 }
             }
         };
+
+        public static List<Size> Filter(ScreenRatio screenRatio, List<Size> resolutions)
+        {
+            float ratio = screenRatio switch
+            {
+                ScreenRatio.Ratio16_10 => 16.0f / 10.0f,
+                ScreenRatio.Ratio16_9 => 16.0f / 9.0f,
+                ScreenRatio.Ratio4_3 => 4.0f / 3.0f,
+                _ => 16.0f / 10.0f
+            };
+            return resolutions.Where(res => Util.FloatEqual((float)res.Width / res.Height, ratio)).ToList();
+        }
 
         public static List<Size> GetPossibleResolutions(ScreenRatio screenRatio, Size maxSize)
         {

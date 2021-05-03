@@ -65,6 +65,7 @@ namespace Ambermoon.Renderer.OpenGL
 
         public Rect WindowArea { get; }
         public Size MaxScreenSize { get; set; }
+        public List<Size> AvailableFullscreenModes { get; set; }
 
         public ISpriteFactory SpriteFactory => spriteFactory;
         public IColoredRectFactory ColoredRectFactory => coloredRectFactory;

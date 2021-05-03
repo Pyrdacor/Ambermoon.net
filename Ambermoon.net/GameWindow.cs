@@ -577,8 +577,17 @@ namespace Ambermoon
         {
             if (renderView != null)
             {
-                var monitorSize = window.Monitor.Bounds.Size;
-                renderView.MaxScreenSize = new Size(monitorSize.Width, monitorSize.Height);
+                if (!Fullscreen)
+                {
+                    var monitorSize = window.Monitor.Bounds.Size;
+                    renderView.MaxScreenSize = new Size(monitorSize.Width, monitorSize.Height);
+                }
+                else if (renderView.MaxScreenSize == null)
+                {
+                    renderView.MaxScreenSize = new Size(640, 480);
+                }
+                renderView.AvailableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
+                    new Size(mode.Resolution.Value.Width, mode.Resolution.Value.Height)).Distinct().ToList();
             }
         }
 

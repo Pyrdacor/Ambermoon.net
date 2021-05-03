@@ -21,6 +21,7 @@
 
 using Ambermoon.Data;
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.Render
 {
@@ -44,6 +45,7 @@ namespace Ambermoon.Render
 
         Rect WindowArea { get; }
         Size MaxScreenSize { get; }
+        List<Size> AvailableFullscreenModes { get; set; }
         bool Fullscreen { get; set; }
 
         ISpriteFactory SpriteFactory { get; }

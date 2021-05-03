@@ -1062,7 +1062,9 @@ namespace Ambermoon.UI
             }
             void ChangeResolution(int? oldWidth)
             {
-                var possibleResolutions = ScreenResolutions.GetPossibleResolutions(game.Configuration.ScreenRatio, RenderView.MaxScreenSize);
+                var possibleResolutions = game.Configuration.Fullscreen
+                    ? ScreenResolutions.Filter(game.Configuration.ScreenRatio, RenderView.AvailableFullscreenModes)
+                    : ScreenResolutions.GetPossibleResolutions(game.Configuration.ScreenRatio, RenderView.MaxScreenSize);
                 int index = oldWidth == null ? 0 : (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count;
                 var resolution = possibleResolutions[index];
                 game.Configuration.Width = width = resolution.Width;
@@ -1079,6 +1081,7 @@ namespace Ambermoon.UI
             {
                 game.Configuration.Fullscreen = !game.Configuration.Fullscreen;
                 SetFullscreen();
+                ChangeResolution(width);
                 changedConfiguration = true;
                 windowChange = true;
             }
