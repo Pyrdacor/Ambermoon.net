@@ -19,6 +19,8 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Ambermoon.Data;
+
 namespace Ambermoon.Renderer
 {
     internal class Texture3DShader : ColorShader
@@ -32,6 +34,10 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultPaletteIndexName = TextureShader.DefaultPaletteIndexName;
         internal static readonly string DefaultAlphaName = "alpha";
         internal static readonly string DefaultLightName = "light";
+        internal static readonly string DefaultColorReplaceName = "palReplace";
+        internal static readonly string DefaultUseColorReplaceName = "useReplace";
+        internal static readonly string DefaultSkyColorIndexName = "skyColorIndex";
+        internal static readonly string DefaultSkyReplaceColorName = "skyColorReplace";
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -43,6 +49,10 @@ namespace Ambermoon.Renderer
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultLightName};",
+            $"uniform vec4 {DefaultColorReplaceName}[16];",
+            $"uniform float {DefaultUseColorReplaceName};",
+            $"uniform float {DefaultSkyColorIndexName};",
+            $"uniform vec4 {DefaultSkyReplaceColorName};",
             $"in vec2 varTexCoord;",
             $"flat in float palIndex;",
             $"flat in vec2 textureEndCoord;",
@@ -57,12 +67,18 @@ namespace Ambermoon.Renderer
             $"    if (realTexCoord.y >= textureEndCoord.y)",
             $"        realTexCoord.y -= int((textureSize.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
-            $"    vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"    vec4 pixelColor = {DefaultUseColorReplaceName} > 0.5f && colorIndex < 15.5f ? {DefaultColorReplaceName}[int(colorIndex + 0.5f)]",
+            $"        : texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
             $"    ",
             $"    if (alphaEnabled > 0.5f && alphaEnabled < 1.5f && (colorIndex < 0.5f || pixelColor.a < 0.5f) || {DefaultLightName} < 0.01f)",
             $"        discard;",
-            $"    else if (alphaEnabled > 7.5f && abs(colorIndex - alphaEnabled) < 0.0001f)",
-            $"        discard;",
+            $"    else if (abs(colorIndex - {DefaultSkyColorIndexName}) < 0.5f)",
+            $"    {{",
+            $"        if (alphaEnabled > 1.5f)",
+            $"            discard;",
+            $"        else",
+            $"            {DefaultFragmentOutColorName} = {DefaultSkyReplaceColorName};",
+            $"    }}",
             $"    else",
             $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - 1), pixelColor.a);",
             $"}}"
@@ -128,6 +144,29 @@ namespace Ambermoon.Renderer
         public void SetLight(float light)
         {
             shaderProgram.SetInput(DefaultLightName, light);
+        }
+
+        public void SetPaletteReplacement(PaletteReplacement paletteReplacement)
+        {
+            if (paletteReplacement == null)
+            {
+                shaderProgram.SetInput(DefaultUseColorReplaceName, 0.0f);
+            }
+            else
+            {
+                shaderProgram.SetInputColorArray(DefaultColorReplaceName, paletteReplacement.ColorData);
+                shaderProgram.SetInput(DefaultUseColorReplaceName, 1.0f);
+            }
+        }
+
+        public void SetSkyColorReplacement(uint? skyColor, Render.Color replaceColor)
+        {
+            shaderProgram.SetInput(DefaultSkyColorIndexName, skyColor == null ? 32.0f : skyColor.Value);
+            if (replaceColor != null)
+            {
+                shaderProgram.SetInputVector4(DefaultSkyReplaceColorName, replaceColor.R / 255.0f,
+                    replaceColor.G / 255.0f, replaceColor.B / 255.0f, replaceColor.A / 255.0f);
+            }
         }
 
         public new static Texture3DShader Create(State state) => new Texture3DShader(state);

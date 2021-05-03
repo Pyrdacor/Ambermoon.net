@@ -87,7 +87,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public ItemManager ItemManager { get; }
         public Graphic[] BuiltinPalettes { get; } = new Graphic[3];
         public Graphic[] SkyGradients { get; } = new Graphic[9];
-        public Graphic[] AdditionalSkyGradients { get; } = new Graphic[6];
+        public Graphic[] DaytimePaletteReplacements { get; } = new Graphic[6];
 
         static T Read<T>(IDataReader[] dataReaders, ref int readerIndex)
         {
@@ -181,10 +181,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 graphicReader.ReadGraphic(sky, dataHunkReaders[dataHunkIndex], skyGraphicInfo);
             }
 
-            // Note: After the 9 sky gradients there are 6 additional gradients (2 per world, each 32 bytes
-            // and therefore 16 pixels height). They are also blended together with another builtin data
-            // sometimes (maybe current colors).
-            var smallSkyGraphicInfo = new GraphicInfo
+            // After the 9 sky gradients there are 6 partial palettes (16 colors).
+            // Two of them per world (first for night, second for twilight).
+            // They are also blended together (the first 16 colors of the map's palette is
+            // used for day) and then replaces the first 16 colors of the map's palette.
+            var daytimePaletteReplacementInfo = new GraphicInfo
             {
                 Alpha = false,
                 GraphicFormat = GraphicFormat.XRGB16,
@@ -193,8 +194,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             };
             for (int i = 0; i < 6; ++i)
             {
-                var sky = AdditionalSkyGradients[i] = new Graphic();
-                graphicReader.ReadGraphic(sky, dataHunkReaders[dataHunkIndex], smallSkyGraphicInfo);
+                var replacement = DaytimePaletteReplacements[i] = new Graphic();
+                graphicReader.ReadGraphic(replacement, dataHunkReaders[dataHunkIndex], daytimePaletteReplacementInfo);
             }
 
             // TODO ...

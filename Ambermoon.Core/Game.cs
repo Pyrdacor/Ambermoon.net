@@ -256,7 +256,7 @@ namespace Ambermoon
         readonly NameProvider nameProvider;
         readonly TextDictionary textDictionary;
         internal IDataNameProvider DataNameProvider { get; }
-        readonly ISkyProvider skyProvider;
+        readonly ILightEffectProvider lightEffectProvider;
         readonly Layout layout;
         readonly Dictionary<CharacterInfo, UIText> characterInfoTexts = new Dictionary<CharacterInfo, UIText>();
         readonly Dictionary<CharacterInfo, Panel> characterInfoPanels = new Dictionary<CharacterInfo, Panel>();
@@ -434,7 +434,7 @@ namespace Ambermoon
         public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IMapManager mapManager,
             IItemManager itemManager, ICharacterManager characterManager, ISavegameManager savegameManager,
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
-            Places places, Cursor cursor, ISkyProvider skyProvider)
+            Places places, Cursor cursor, ILightEffectProvider lightEffectProvider)
         {
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
@@ -454,7 +454,7 @@ namespace Ambermoon
             this.savegameSerializer = savegameSerializer;
             DataNameProvider = dataNameProvider;
             this.textDictionary = textDictionary;
-            this.skyProvider = skyProvider;
+            this.lightEffectProvider = lightEffectProvider;
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
@@ -8036,36 +8036,8 @@ namespace Ambermoon
 
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
-                // Starting at 18:05 to 18:20 the sky gets darker areas and the light becomes darker (every 5 minutes).
-                // At 19:00 the stars appear. Light and sky are darkened from 19:05 to 19:20.
-                // 20:20 to 21:20 the sky again gets darker until night.
-                // 5:05 to 5:20 the sky gets brighter very quick.
-                // 6:05 to 6:20 more brighter.
-                // 7:25 to 7:40 even more brighter.
-                // 8.00 to 9:00 full brightness.
-
-                if (GameTime.Hour < 5 || GameTime.Hour > 21)
-                    usedLightIntensity = 128;
-                else if (GameTime.Hour == 5)
-                    usedLightIntensity = 128 + Math.Min(GameTime.Minute * 2, 32);
-                else if (GameTime.Hour == 6)
-                    usedLightIntensity = 160 + Math.Min(GameTime.Minute * 2, 32);
-                else if (GameTime.Hour == 7)
-                    usedLightIntensity = 192 + (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2, 32);
-                else if (GameTime.Hour == 8)
-                    usedLightIntensity = 224 + GameTime.Minute / 2;
-                else if (GameTime.Hour == 18)
-                    usedLightIntensity = 251 - GameTime.Minute / 2;
-                else if (GameTime.Hour == 19)
-                    usedLightIntensity = 224 - Math.Min(GameTime.Minute * 2, 32);
-                else if (GameTime.Hour == 20)
-                    usedLightIntensity = 192 - (uint)Util.Limit(0, ((int)GameTime.Minute - 20) * 2, 32);
-                else if (GameTime.Hour == 21)
-                    usedLightIntensity = 160 - Math.Min(GameTime.Minute * 2, 32);
-                else
-                    usedLightIntensity = 255;
-
-                usedLightIntensity = Math.Min(255, usedLightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
+                // This is handled by palette color replacement.
+                return 1.0f;
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
             {
@@ -8225,8 +8197,7 @@ namespace Ambermoon
                 fow2D.Visible = false;
                 var light3D = Get3DLight();
                 renderView.SetLight(light3D);
-                renderMap3D.SetLight(light3D);
-                renderMap3D.UpdateSky(skyProvider, GameTime);
+                renderMap3D.UpdateSky(lightEffectProvider, GameTime);
             }
             else // 2D
             {

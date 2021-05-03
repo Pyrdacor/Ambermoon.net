@@ -55,6 +55,8 @@ namespace Ambermoon.Render
         ICamera3D Camera3D { get; }
         Action<float> AspectProcessor { get; }
         void SetLight(float light);
+        void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
+        PaletteReplacement PaletteReplacement { get; set; }
 
         IGameData GameData { get; }
         IGraphicProvider GraphicProvider { get; }

@@ -310,13 +310,13 @@ namespace Ambermoon
                         var dataNameProvider = new DataNameProvider(executableData);
                         var characterManager = new CharacterManager(gameData, graphicProvider);
                         var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
-                        var skyProvider = new SkyProvider(executableData);
+                        var lightEffectProvider = new LightEffectProvider(executableData);
 
                         gameCreator = () =>
                         {
                             var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                 characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                cursor, skyProvider);
+                                cursor, lightEffectProvider);
                             game.QuitRequested += window.Close;
                             game.MouseTrappedChanged += (bool trapped, Position position) =>
                             {

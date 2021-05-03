@@ -20,6 +20,7 @@
  */
 
 using System;
+using System.Linq;
 using Silk.NET.OpenGL;
 
 namespace Ambermoon.Renderer
@@ -236,6 +237,13 @@ namespace Ambermoon.Renderer
             var location = GetLocation(name);
 
             state.Gl.ProgramUniform1(ProgramIndex, (int)location, value);
+        }
+
+        public void SetInputColorArray(string name, byte[] array)
+        {
+            var location = GetLocation(name);
+
+            state.Gl.ProgramUniform4(ProgramIndex, (int)location, (uint)array.Length, array.Select(i => i / 255.0f).ToArray());
         }
 
         public void SetInputVector2(string name, float x, float y)

@@ -741,27 +741,28 @@ namespace Ambermoon.Render
             }
         }
 
-        public void SetLight(float light)
+        void SetColors(PaletteReplacement paletteReplacement)
         {
-            // Note: This only affects the background color. Use IRenderView.SetLight to affect textures.
-            Color CalculateColor(Color color)
+            floorColor.Visible = ceilingColor.Visible = game.CanSee();
+
+            if (paletteReplacement != null)
             {
-                if (light < 0.0001f)
-                    return new Color(Color.Black, color.A);
-                else if (light > 0.9999f)
-                    return color;
-
-                byte Convert(byte c) => (byte)Util.Limit(0, Util.Round(255 * ((c / 255.0f) + light - 1.0f)), 255);
-
-                byte r = Convert(color.R);
-                byte g = Convert(color.G);
-                byte b = Convert(color.B);
-
-                return new Color(r, g, b, color.A);
+                int floorIndex = labdata.FloorColorIndex * 4;
+                byte fr = paletteReplacement.ColorData[floorIndex + 0];
+                byte fg = paletteReplacement.ColorData[floorIndex + 1];
+                byte fb = paletteReplacement.ColorData[floorIndex + 2];
+                int ceilingIndex = labdata.CeilingColorIndex * 4;
+                byte cr = paletteReplacement.ColorData[ceilingIndex + 0];
+                byte cg = paletteReplacement.ColorData[ceilingIndex + 1];
+                byte cb = paletteReplacement.ColorData[ceilingIndex + 2];
+                floorColor.Color = new Color(fr, fg, fb);
+                ceilingColor.Color = new Color(cr, cg, cb);
             }
-
-            floorColor.Color = CalculateColor(game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex));
-            ceilingColor.Color = CalculateColor(game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex));
+            else
+            {
+                floorColor.Color = game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex);
+                ceilingColor.Color = game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex);
+            }
         }
 
         public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection, Race race)
@@ -1346,12 +1347,20 @@ namespace Ambermoon.Render
             }
         }
 
-        public void UpdateSky(ISkyProvider skyProvider, ITime time)
+        public void UpdateSky(ILightEffectProvider lightEffectProvider, ITime time)
         {
-            var skyParts = skyProvider.GetSkyParts(Map, time.Hour, time.Minute);
+            var skyParts = lightEffectProvider.GetSkyParts(Map, time.Hour, time.Minute,
+                renderView.GraphicProvider, out var paletteReplacement);
 
-            if (skyParts == null) // No change
+            renderView.PaletteReplacement = paletteReplacement;
+
+            SetColors(paletteReplacement);
+
+            if (skyParts == null)
+            {
+                renderView.SetSkyColorReplacement(null, null);
                 return;
+            }
 
             if (skyColors != null)
                 skyColors.ForEach(c => c?.Delete());
@@ -1367,6 +1376,8 @@ namespace Ambermoon.Render
             stars.ForEach(s => s.Value.Visible = time.Hour >= 19 || time.Hour < 7);
 
             UpdateStars(Util.Round(8.0f * -144.0f * camera.Angle / 360.0f));
+
+            renderView.SetSkyColorReplacement(labdata.CeilingColorIndex, skyColors.Last().Color);
         }
 
         void UpdateStars(int scrollX)

@@ -19,11 +19,15 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Ambermoon.Data;
+
 namespace Ambermoon.Renderer
 {
     internal class SkyShader : TextureShader
     {
         internal static readonly string DefaultLightName = "light";
+        internal static readonly string DefaultColorReplaceName = "palReplace";
+        internal static readonly string DefaultUseColorReplaceName = "useReplace";
 
         // The palette has a size of 32xNumPalettes pixels.
         // Each row represents one palette of 32 colors.
@@ -36,6 +40,8 @@ namespace Ambermoon.Renderer
             $"uniform sampler2D {DefaultPaletteName};",
             $"uniform float {DefaultColorKeyName};",
             $"uniform float {DefaultLightName};",
+            $"uniform vec4 {DefaultColorReplaceName}[16];",
+            $"uniform float {DefaultUseColorReplaceName};",
             $"in vec2 varTexCoord;",
             $"flat in float palIndex;",
             $"flat in float maskColIndex;",
@@ -44,19 +50,13 @@ namespace Ambermoon.Renderer
             $"{{",
             $"    float colorIndex = texture({DefaultSamplerName}, varTexCoord).r * 255.0f;",
             $"    ",
-            $"    if (colorIndex < 0.5f)",
+            $"    if (colorIndex < 0.5f || {DefaultLightName} < 0.01f)",
             $"        discard;",
             $"    else",
             $"    {{",
-            $"        if (colorIndex >= 31.5f)",
-            $"            colorIndex = 0.0f;",
-            $"        vec4 pixelColor = texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
-            $"        if (maskColIndex >= 0.5f)",
-            $"            pixelColor = texture({DefaultPaletteName}, vec2((maskColIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
-            $"        if ({DefaultLightName} < 0.01f)",
-            $"            discard;",
-            $"        else",
-            $"            {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - 1), pixelColor.a);",
+            $"        vec4 pixelColor = {DefaultUseColorReplaceName} > 0.5f && colorIndex < 15.5f ? {DefaultColorReplaceName}[int(colorIndex + 0.5f)]",
+            $"            : texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
+            $"        {DefaultFragmentOutColorName} = vec4(max(vec3(0), pixelColor.rgb + vec3({DefaultLightName}) - 1), pixelColor.a);",
             $"    }}",
             $"}}"
         };
@@ -70,6 +70,19 @@ namespace Ambermoon.Renderer
         public void SetLight(float light)
         {
             shaderProgram.SetInput(DefaultLightName, light);
+        }
+
+        public void SetPaletteReplacement(PaletteReplacement paletteReplacement)
+        {
+            if (paletteReplacement == null)
+            {
+                shaderProgram.SetInput(DefaultUseColorReplaceName, 0.0f);
+            }
+            else
+            {
+                shaderProgram.SetInputColorArray(DefaultColorReplaceName, paletteReplacement.ColorData);
+                shaderProgram.SetInput(DefaultUseColorReplaceName, 1.0f);
+            }
         }
 
         public new static SkyShader Create(State state) => new SkyShader(state);

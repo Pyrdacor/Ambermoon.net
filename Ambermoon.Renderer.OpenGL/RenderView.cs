@@ -46,6 +46,7 @@ namespace Ambermoon.Renderer.OpenGL
         readonly RenderTextFactory renderTextFactory = null;
         readonly FowFactory fowFactory = null;
         readonly Camera3D camera3D = null;
+        PaletteReplacement paletteReplacement = null;
         bool fullscreen = false;
         public float VirtualAspectRatio { get; set; } = Global.VirtualAspectRatio;
         float sizeFactorX = 1.0f;
@@ -600,11 +601,33 @@ namespace Ambermoon.Renderer.OpenGL
             }
         }
 
+        public PaletteReplacement PaletteReplacement
+        {
+            get => paletteReplacement;
+            set
+            {
+                if (paletteReplacement != value)
+                {
+                    paletteReplacement = value;
+
+                    (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetPaletteReplacement(paletteReplacement);
+                    (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetPaletteReplacement(paletteReplacement);
+                    (GetLayer(Layer.Map3DBackground) as RenderLayer).RenderBuffer.SkyShader.SetPaletteReplacement(paletteReplacement);
+                }
+            }
+        }
+
         public void SetLight(float light)
         {
             (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetLight(light);
             (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetLight(light);
             (GetLayer(Layer.Map3DBackground) as RenderLayer).RenderBuffer.SkyShader.SetLight(light);
+        }
+
+        public void SetSkyColorReplacement(uint? skyColor, Color replaceColor)
+        {
+            (GetLayer(Layer.Billboards3D) as RenderLayer).RenderBuffer.Billboard3DShader.SetSkyColorReplacement(skyColor, replaceColor);
+            (GetLayer(Layer.Map3D) as RenderLayer).RenderBuffer.Texture3DShader.SetSkyColorReplacement(skyColor, replaceColor);
         }
     }
 }

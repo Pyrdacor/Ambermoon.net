@@ -44,12 +44,11 @@ namespace Ambermoon.Renderer.OpenGL
         public uint MappedTextureWidth { get; } = 0;
         public uint MappedTextureHeight { get; } = 0;
         public bool Alpha { get; } = false;
-        public byte SkyColorIndex { get; } = 0;
         public int FrameCount { get; } = 1;
 
         public Surface3D(SurfaceType type, float width, float height, int textureAtlasX, int textureAtlasY, uint textureWidth, uint textureHeight,
             uint mappedTextureWidth, uint mappedTextureHeight, Rect virtualScreen, WallOrientation wallOrientation, bool alpha, int frameCount,
-            float extrude, byte skyColorIndex)
+            float extrude)
         {
             Type = type;
             Width = width;
@@ -62,7 +61,6 @@ namespace Ambermoon.Renderer.OpenGL
             MappedTextureWidth = mappedTextureWidth;
             MappedTextureHeight = mappedTextureHeight;
             Alpha = alpha;
-            SkyColorIndex = skyColorIndex;
             FrameCount = frameCount;
             this.extrude = extrude;
         }
@@ -318,12 +316,10 @@ namespace Ambermoon.Renderer.OpenGL
 
         public ISurface3D Create(SurfaceType type, float width, float height, uint textureWidth, uint textureHeight,
             uint mappedTextureWidth, uint mappedTextureHeight, bool alpha, int frameCount = 1, float extrude = 0.0f,
-            WallOrientation wallOrientation = WallOrientation.Normal, byte skyColorIndex = 0,
-            int textureAtlasX = 0, int textureAtlasY = 0)
+            WallOrientation wallOrientation = WallOrientation.Normal, int textureAtlasX = 0, int textureAtlasY = 0)
         {
             return new Surface3D(type, width, height, textureAtlasX, textureAtlasY, textureWidth, textureHeight,
-                mappedTextureWidth, mappedTextureHeight, VirtualScreen, wallOrientation, alpha, frameCount, extrude,
-                skyColorIndex);
+                mappedTextureWidth, mappedTextureHeight, VirtualScreen, wallOrientation, alpha, frameCount, extrude);
         }
     }
 }
