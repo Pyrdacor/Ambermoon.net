@@ -96,13 +96,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             for (int i = 0; i < 1024; ++i)
                 savegame.CharacterBits[i] = dataReader.ReadDword();
 
-            Buffer.BlockCopy(dataReader.ReadBytes(15), 0, savegame.DictionaryWords, 0, 15);
-
-            // TODO: From start of dictionary words to goto points there are 128 bytes.
-            // The dictionary words need at least 15 bytes but most likely they also
-            // use 32 bytes or maybe even more.
-            dataReader.Position = 0x3584;
-
+            savegame.DictionaryWords = dataReader.ReadBytes(128);
             savegame.GotoPointBits = dataReader.ReadBytes(32); // 32 bytes for goto points (256 bits). Each goto point stores the bit index (0-based).
             savegame.ChestUnlockStates = dataReader.ReadBytes(32); // 32 * 8 bits = 256 bits (1 for each chest, possible chest indices 0 to 255)
             savegame.DoorUnlockStates = dataReader.ReadBytes(32); // 32 * 8 bits = 256 bits (1 for each door, possible door indices 0 to 255)
@@ -122,7 +116,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 var y = dataReader.ReadByte();
                 var tileIndex = dataReader.ReadWord();
 
-                if (mapIndex < 0x0300 && tileIndex <= 0xffff) // should be a real map and a valid front tile index
+                if (mapIndex != 0 && mapIndex < 0x0300 && tileIndex <= 0xffff) // should be a real map and a valid front tile index
                 {
                     savegame.TileChangeEvents.SafeAdd(mapIndex, new ChangeTileEvent
                     {
@@ -136,7 +130,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 else
                 {
-                    // TODO: Does this happen?
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid tile change event in savegame.");
                 }
             }
         }

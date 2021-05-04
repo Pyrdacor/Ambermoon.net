@@ -40,7 +40,8 @@ namespace Ambermoon
                 Create
                 (
                     "Shows a list of all maps." + Environment.NewLine +
-                    "Usage: maps",
+                    "Usage: maps" + Environment.NewLine +
+                    "Usage: maps <partial_name>",
                     ShowMaps
                 )
             },
@@ -391,22 +392,35 @@ namespace Ambermoon
         {
             Console.WriteLine();
 
-            var maps = new List<Map>(game.MapManager.Maps);
+            string pattern = args.Length == 0 || string.IsNullOrWhiteSpace(args[0])
+                ? null : args[0].ToLower();
+            var maps = pattern == null
+                ? new List<Map>(game.MapManager.Maps)
+                : game.MapManager.Maps.Where(map => map.Name.ToLower().Contains(pattern)).ToList();
             maps.Sort((a, b) => a.Index.CompareTo(b.Index));
-            int halfCount = maps.Count / 2;
-            int secondRowOffset = halfCount;
 
-            if (maps.Count % 2 == 1)
-                ++secondRowOffset;
-
-            for (int i = 0; i < halfCount; ++i)
+            if (maps.Count <= 12)
             {
-                Console.Write($"{maps[i].Index:000}: {maps[i].Name}".PadRight(24));
-                Console.WriteLine($"{maps[secondRowOffset + i].Index:000}: {maps[secondRowOffset + i].Name}");
+                for (int i = 0; i < maps.Count; ++i)
+                    Console.WriteLine($"{maps[i].Index:000}: {maps[i].Name}");
             }
+            else 
+            {
+                int halfCount = maps.Count / 2;
+                int secondRowOffset = halfCount;
 
-            if (secondRowOffset > halfCount)
-                Console.WriteLine($"{maps[secondRowOffset - 1].Index:000}: {maps[secondRowOffset - 1].Name}");
+                if (maps.Count % 2 == 1)
+                    ++secondRowOffset;
+
+                for (int i = 0; i < halfCount; ++i)
+                {
+                    Console.Write($"{maps[i].Index:000}: {maps[i].Name}".PadRight(28));
+                    Console.WriteLine($"{maps[secondRowOffset + i].Index:000}: {maps[secondRowOffset + i].Name}");
+                }
+
+                if (secondRowOffset > halfCount)
+                    Console.WriteLine($"{maps[secondRowOffset - 1].Index:000}: {maps[secondRowOffset - 1].Name}");
+            }
         }
 
         static void Teleport(Game game, string[] args)

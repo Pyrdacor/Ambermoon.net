@@ -215,11 +215,10 @@ namespace Ambermoon.Data
             return ActiveSpells.Where(s => s?.Type == activeSpellType && s?.Duration > 0).Select(s => s.Level).DefaultIfEmpty(0u).Max();
         }
         /// <summary>
-        /// 14 * 8 bits + 3 bits = 115 bits.
         /// One bit for each available dictionary word.
         /// If the bit is set the word is available in conversations.
         /// </summary>
-        public byte[] DictionaryWords { get; } = new byte[15];
+        public byte[] DictionaryWords { get; set; } = new byte[128];
         public bool IsDictionaryWordKnown(uint index)
         {
             return (DictionaryWords[index / 8] & (1u << (int)(index % 8))) != 0;

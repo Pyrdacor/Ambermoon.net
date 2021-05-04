@@ -11,8 +11,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         public void ReadLabdata(Labdata labdata, IDataReader dataReader, IGameData gameData)
         {
             labdata.WallHeight = dataReader.ReadWord();
-            labdata.Unknown1 = dataReader.ReadByte(); // Unknown
-            labdata.CombatBackground = dataReader.ReadByte() & 0x0fu;
+            labdata.CombatBackground = dataReader.ReadWord() & 0x0fu;
             labdata.CeilingColorIndex = dataReader.ReadByte();
             labdata.FloorColorIndex = dataReader.ReadByte();
             // Note: The ceiling texture index can be 0 in which case a sky is used.
