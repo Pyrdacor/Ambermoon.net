@@ -1364,20 +1364,24 @@ namespace Ambermoon.Render
 
             if (skyColors != null)
                 skyColors.ForEach(c => c?.Delete());
-            skyColors = skyParts.Select(part =>
+
+            bool canSee = game.CanSee();
+
+            if (canSee)
             {
-                var skyColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, part.Height, new Color(part.Color), 1);
-                skyColor.X = Global.Map3DViewX;
-                skyColor.Y = Global.Map3DViewY + part.Y;
-                skyColor.Layer = ceilingColor.Layer;
-                skyColor.Visible = true;
-                return skyColor;
-            }).ToList();
-            stars.ForEach(s => s.Value.Visible = time.Hour >= 19 || time.Hour < 7);
-
-            UpdateStars(Util.Round(8.0f * -144.0f * camera.Angle / 360.0f));
-
-            renderView.SetSkyColorReplacement(labdata.CeilingColorIndex, skyColors.Last().Color);
+                skyColors = skyParts.Select(part =>
+                {
+                    var skyColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, part.Height, new Color(part.Color), 1);
+                    skyColor.X = Global.Map3DViewX;
+                    skyColor.Y = Global.Map3DViewY + part.Y;
+                    skyColor.Layer = ceilingColor.Layer;
+                    skyColor.Visible = true;
+                    return skyColor;
+                }).ToList();
+                UpdateStars(Util.Round(8.0f * -144.0f * camera.Angle / 360.0f));
+                renderView.SetSkyColorReplacement(labdata.CeilingColorIndex, skyColors.Last().Color);
+            }
+            stars.ForEach(s => s.Value.Visible = canSee && (time.Hour >= 19 || time.Hour < 7));            
         }
 
         void UpdateStars(int scrollX)
