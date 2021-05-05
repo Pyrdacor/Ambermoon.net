@@ -33,7 +33,8 @@
         IntroGraphics,
         IntroText,
         Effects,
-        Cursor
+        Cursor,
+        DrugEffect
     }
 
     public partial class Global

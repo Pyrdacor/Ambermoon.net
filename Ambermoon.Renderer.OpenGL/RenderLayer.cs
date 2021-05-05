@@ -91,8 +91,9 @@ namespace Ambermoon.Renderer
             0.70f,  // Text
             0.70f,  // IntroGraphics
             0.70f,  // IntroText
-            0.98f,  // Effects
-            0.99f   // Cursor
+            0.97f,  // Effects
+            0.98f,  // Cursor
+            0.99f   // DrugEffect
         };
 
         public RenderLayer(State state, Layer layer, Texture texture, Texture palette)
@@ -106,11 +107,11 @@ namespace Ambermoon.Renderer
             bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
-                supportAnimations, layered, false, layer == Layer.Billboards3D, layer == Layer.Text,
+                supportAnimations, layered, layer == Layer.DrugEffect, layer == Layer.Billboards3D, layer == Layer.Text,
                 opaque, layer == Layer.FOW, layer == Layer.Map3DBackground);
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
-            if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.Effects)
+            if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.Effects || layer == Layer.DrugEffect)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
 
             Layer = layer;

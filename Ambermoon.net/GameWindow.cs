@@ -332,6 +332,7 @@ namespace Ambermoon
                                     Fullscreen = configuration.Fullscreen;
                                 }
                             };
+                            game.DrugTicked += Drug_Ticked;
                             game.Run(continueGame, mouse.Position.Round());
                             return game;
                         };
@@ -487,6 +488,17 @@ namespace Ambermoon
                 var path = Path.Combine(Configuration.FallbackConfigDirectory, suffix);
                 Directory.CreateDirectory(path);
                 return path;
+            }
+        }
+
+        void Drug_Ticked()
+        {
+            if (mouse != null && new System.Drawing.RectangleF(new System.Drawing.PointF(0, 0), window.Size).Contains(mouse.Position))
+            {
+                mouse.Position = new System.Drawing.PointF(mouse.Position.X + Game.RandomInt(-16, 16),
+                    mouse.Position.Y + Game.RandomInt(-16, 16));
+                if (Fullscreen) // This needs a little help
+                    Game.OnMouseMove(mouse.Position.Round(), GetMouseButtons(mouse));
             }
         }
 

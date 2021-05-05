@@ -310,6 +310,10 @@ namespace Ambermoon
         readonly List<ILayerSprite> highlightBattleFieldSprites = new List<ILayerSprite>();
         bool blinkingHighlight = false;
         FilledArea buttonGridBackground;
+        IColoredRect drugOverlay = null;
+        uint lastDrugColorChangeTicks = 0;
+        uint lastDrugMouseMoveTicks = 0;
+        public Action DrugTicked;
         readonly bool[] keys = new bool[Enum.GetValues<Key>().Length];
         bool allInputWasDisabled = false;
         bool allInputDisabled = false;
@@ -471,6 +475,11 @@ namespace Ambermoon
             fow2D.Y = Global.Map2DViewY;
             fow2D.Layer = renderView.GetLayer(Layer.FOW);
             fow2D.Visible = false;
+            drugOverlay = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Render.Color.Black, 255);
+            drugOverlay.Layer = renderView.GetLayer(Layer.DrugEffect);
+            drugOverlay.X = 0;
+            drugOverlay.Y = 0;
+            drugOverlay.Visible = false;
             ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
             ouchSprite.PaletteIndex = currentUIPaletteIndex;
@@ -731,6 +740,37 @@ namespace Ambermoon
             }
 
             layout.Update(CurrentTicks);
+
+            if (CurrentPartyMember != null && CurrentPartyMember.Ailments.HasFlag(Ailment.Drugged))
+            {
+                if (CurrentAnimationTicks - lastDrugColorChangeTicks >= 16)
+                {
+                    int colorComponent = RandomInt(0, 1) * 2;
+                    renderView.DrugColorComponent = colorComponent;
+                    ushort colorMod = (ushort)RandomInt(-9, 6);
+                    if (colorComponent == 0) // red
+                        colorMod <<= 8;
+                    uint r = (colorMod & 0x0f00u) >> 8;
+                    uint b = (colorMod & 0x00fu);
+                    r = (r << 16) | (r << 20);
+                    b |= (b << 4);
+                    drugOverlay.Color = new Render.Color(r | b);
+                    lastDrugColorChangeTicks = CurrentAnimationTicks;
+                }
+
+                if (CurrentAnimationTicks - lastDrugMouseMoveTicks >= 4)
+                {
+                    DrugTicked?.Invoke();
+                    lastDrugMouseMoveTicks = CurrentAnimationTicks;
+                }
+
+                drugOverlay.Visible = true;
+            }
+            else
+            {
+                renderView.DrugColorComponent = null;
+                drugOverlay.Visible = false;
+            }
         }
 
         internal void NotifyConfigurationChange(bool windowChange) => ConfigurationChanged?.Invoke(Configuration, windowChange);
@@ -740,7 +780,7 @@ namespace Ambermoon
             return RandomInt(0, 99);
         }
 
-        internal int RandomInt(int min, int max)
+        public int RandomInt(int min, int max)
         {
             uint range = (uint)(max + 1 - min);
             return min + (int)(random.Next() % range);

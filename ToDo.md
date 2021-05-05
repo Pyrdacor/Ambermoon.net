@@ -52,6 +52,7 @@
 
 ## Misc
 
+- Add item breakage (if breack chance != 0 against 1000) on item usage. Effect will take place even when breaking.
 - Load time is long. Either improve performance or if not possible
   only load the intro and load data while intro/logo is shown (maybe with progress bar).
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.

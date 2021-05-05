@@ -414,9 +414,20 @@ namespace Ambermoon.Renderer.OpenGL
                         (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
                 }
 
-                if (layer.Key == Layer.FOW || layer.Key == Layer.Effects)
+                if (layer.Key == Layer.DrugEffect)
+                {
+                    if (DrugColorComponent != null)
+                        State.Gl.BlendColor(System.Drawing.Color.FromArgb(255, System.Drawing.Color.FromArgb(0x202020 |
+                            (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
+                    State.Gl.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusConstantColor);
+                }
+                else if (layer.Key == Layer.FOW)
+                {
+                    State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                }
+                if (layer.Key == Layer.FOW || layer.Key == Layer.Effects || layer.Key == Layer.DrugEffect)
                     State.Gl.Enable(EnableCap.Blend);
-                else if (layer.Key == Layer.CombatBackground || layer.Key == Layer.Cursor)
+                else if (layer.Key == Layer.Map3DBackground || layer.Key == Layer.CombatBackground || layer.Key == Layer.Cursor)
                     State.Gl.Disable(EnableCap.Blend);
 
                 layer.Value.Render();
@@ -617,6 +628,8 @@ namespace Ambermoon.Renderer.OpenGL
                 }
             }
         }
+
+        public int? DrugColorComponent { get; set; } = null;
 
         public void SetLight(float light)
         {

@@ -59,6 +59,7 @@ namespace Ambermoon.Render
         void SetLight(float light);
         void SetSkyColorReplacement(uint? skyColor, Color replaceColor);
         PaletteReplacement PaletteReplacement { get; set; }
+        int? DrugColorComponent { get; set; }
 
         IGameData GameData { get; }
         IGraphicProvider GraphicProvider { get; }
