@@ -358,79 +358,93 @@ namespace Ambermoon.Renderer.OpenGL
             layers[layer].Visible = show;
         }
 
+        bool accessViolationDetected = false;
+
         public void Render(FloatPosition viewportOffset)
         {
             if (disposed)
                 return;
 
-            context.SetRotation(rotation);
-
-            State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
-
-            bool render3DMap = layers[Layer.Map3D].Visible;
-            var viewOffset = new Position
-            (
-                Util.Round((viewportOffset?.X ?? 0.0f) * virtualScreenDisplay.Width),
-                Util.Round((viewportOffset?.Y ?? 0.0f) * virtualScreenDisplay.Height)
-            );
-
-            foreach (var layer in layers)
+            try
             {
-                if (render3DMap)
+                context.SetRotation(rotation);
+
+                State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+
+                bool render3DMap = layers[Layer.Map3D].Visible;
+                var viewOffset = new Position
+                (
+                    Util.Round((viewportOffset?.X ?? 0.0f) * virtualScreenDisplay.Width),
+                    Util.Round((viewportOffset?.Y ?? 0.0f) * virtualScreenDisplay.Height)
+                );
+
+                foreach (var layer in layers)
                 {
-                    if (layer.Key == Layer.Map3D)
+                    if (render3DMap)
                     {
-                        // Setup 3D stuff
-                        camera3D.Activate();
-                        State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
-                        var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth + 1, Global.Map3DViewHeight + 1);
-                        mapViewArea.Position = PositionTransformation(mapViewArea.Position);
-                        mapViewArea.Size = SizeTransformation(mapViewArea.Size);
-                        State.Gl.Viewport
-                        (
-                            virtualScreenDisplay.X + mapViewArea.X + viewOffset.X,
-                            WindowArea.Height - (virtualScreenDisplay.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
-                            (uint)mapViewArea.Width, (uint)mapViewArea.Height
-                        );
-                        State.Gl.Enable(EnableCap.CullFace);
+                        if (layer.Key == Layer.Map3D)
+                        {
+                            // Setup 3D stuff
+                            camera3D.Activate();
+                            State.RestoreProjectionMatrix(State.ProjectionMatrix3D);
+                            var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth + 1, Global.Map3DViewHeight + 1);
+                            mapViewArea.Position = PositionTransformation(mapViewArea.Position);
+                            mapViewArea.Size = SizeTransformation(mapViewArea.Size);
+                            State.Gl.Viewport
+                            (
+                                virtualScreenDisplay.X + mapViewArea.X + viewOffset.X,
+                                WindowArea.Height - (virtualScreenDisplay.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
+                                (uint)mapViewArea.Width, (uint)mapViewArea.Height
+                            );
+                            State.Gl.Enable(EnableCap.CullFace);
+                        }
+                        else if (layer.Key == Layer.Billboards3D)
+                        {
+                            State.Gl.Disable(EnableCap.CullFace);
+                        }
+                        else if (layer.Key == Global.First2DLayer)
+                        {
+                            // Reset to 2D stuff
+                            State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
+                            State.RestoreModelViewMatrix(Matrix4.Identity);
+                            State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
+                            State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
+                                (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
+                        }
                     }
-                    else if (layer.Key == Layer.Billboards3D)
+                    else
                     {
-                        State.Gl.Disable(EnableCap.CullFace);
-                    }
-                    else if (layer.Key == Global.First2DLayer)
-                    {
-                        // Reset to 2D stuff
-                        State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
-                        State.RestoreModelViewMatrix(Matrix4.Identity);
-                        State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
                         State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
                             (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
                     }
-                }
-                else
-                {
-                    State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
-                        (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
+
+                    if (layer.Key == Layer.DrugEffect)
+                    {
+                        if (DrugColorComponent != null)
+                            State.Gl.BlendColor(System.Drawing.Color.FromArgb(255, System.Drawing.Color.FromArgb(0x202020 |
+                                (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
+                        State.Gl.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusConstantColor);
+                    }
+                    else if (layer.Key == Layer.FOW)
+                    {
+                        State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                    }
+                    if (layer.Key == Layer.FOW || layer.Key == Layer.Effects || layer.Key == Layer.DrugEffect)
+                        State.Gl.Enable(EnableCap.Blend);
+                    else if (layer.Key == Layer.Map3DBackground || layer.Key == Layer.CombatBackground || layer.Key == Layer.Cursor)
+                        State.Gl.Disable(EnableCap.Blend);
+
+                    layer.Value.Render();
                 }
 
-                if (layer.Key == Layer.DrugEffect)
-                {
-                    if (DrugColorComponent != null)
-                        State.Gl.BlendColor(System.Drawing.Color.FromArgb(255, System.Drawing.Color.FromArgb(0x202020 |
-                            (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
-                    State.Gl.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusConstantColor);
-                }
-                else if (layer.Key == Layer.FOW)
-                {
-                    State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                }
-                if (layer.Key == Layer.FOW || layer.Key == Layer.Effects || layer.Key == Layer.DrugEffect)
-                    State.Gl.Enable(EnableCap.Blend);
-                else if (layer.Key == Layer.Map3DBackground || layer.Key == Layer.CombatBackground || layer.Key == Layer.Cursor)
-                    State.Gl.Disable(EnableCap.Blend);
+                accessViolationDetected = false;
+            }
+            catch (AccessViolationException)
+            {
+                if (accessViolationDetected)
+                    throw;
 
-                layer.Value.Render();
+                accessViolationDetected = true;
             }
         }
 
