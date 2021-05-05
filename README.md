@@ -8,9 +8,9 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 Version | Normal | Standalone
 --- | --- | --- 
-**0.7.1 beta** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.1beta/Ambermoon.net-Windows-Standalone.zip)
-**0.7.1 beta** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.1beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.1beta/Ambermoon.net-Linux-Standalone.tar.gz)
-**0.7.1 beta** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.1beta/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.1beta/Ambermoon.net-Windows32Bit-Standalone.zip)
+**0.7.2 beta** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.2beta/Ambermoon.net-Windows-Standalone.zip)
+**0.7.2 beta** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.2beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.2beta/Ambermoon.net-Linux-Standalone.tar.gz)
+**0.7.2 beta** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.2beta/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.7.2beta/Ambermoon.net-Windows32Bit-Standalone.zip)
 
 The standalone versions should work without .NET installed but are larger in size.
 
@@ -34,7 +34,7 @@ I will also post updates about releases and interesting stuff on twitter: https:
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering2.png" width="400" alt="World map" /></a>
 </p>
 <p float="left">
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering3.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/MapRendering3.png" width="400" alt="Morag" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Skies.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Skies.png" width="400" alt="Skies" /></a>
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Map3D.png" width="400" alt="3D map" /></a>
 </p>
 <p float="left">
@@ -75,7 +75,7 @@ I will also post updates about releases and interesting stuff on twitter: https:
 </p>
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/FogOfWar.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/FogOfWar.png" width="400" alt="Fog of war" /></a>
-  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Lights3D.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Lights3D.png" width="400" alt="Lighting" /></a>
+  <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Drugs.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Drugs.png" width="400" alt="Drug effect" /></a>
 </p>
 <p float="left">
   <a href="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png"><img src="https://github.com/Pyrdacor/Ambermoon.net/raw/master/Screenshots/Automap.png" width="400" alt="Automap" /></a>

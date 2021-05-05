@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.7.x beta - Lights, FOW and skies
+- Version [0.7.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.7.2beta): Added skies and stars, fixed 3D lighting, added drug effects
 - Version [0.7.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.7.1beta): Bugfixes
 - Version [0.7.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.7.0beta): Added fog of war (2D), blind effects and lighting (3D)
 
