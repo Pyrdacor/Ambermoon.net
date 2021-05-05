@@ -42,7 +42,7 @@ namespace Ambermoon.Renderer
 
             Gl = GL.GetApi(contextProvider);
 
-            var openGLVersion = Gl.GetString(StringName.Version).TrimStart();
+            var openGLVersion = Gl.GetStringS(StringName.Version).TrimStart();
 
             Regex versionRegex = new Regex(@"([0-9]+)\.([0-9]+)", RegexOptions.Compiled);
 
@@ -58,7 +58,7 @@ namespace Ambermoon.Renderer
 
             if (OpenGLVersionMajor >= 2) // glsl is supported since OpenGL 2.0
             {
-                var glslVersion = Gl.GetString(StringName.ShadingLanguageVersion);
+                var glslVersion = Gl.GetStringS(StringName.ShadingLanguageVersion);
 
                 match = versionRegex.Match(glslVersion);
 

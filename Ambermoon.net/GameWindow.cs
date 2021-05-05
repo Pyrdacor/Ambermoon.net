@@ -3,22 +3,21 @@ using Ambermoon.Data.Legacy;
 using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
-using Ambermoon.Geometry;
 using Ambermoon.Render;
 using Ambermoon.Renderer.OpenGL;
 using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
-using Silk.NET.Input.Common;
-using Silk.NET.Windowing.Common;
+using Silk.NET.Windowing;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
+using MousePosition = System.Numerics.Vector2;
+using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 
 namespace Ambermoon
 {
@@ -91,59 +90,59 @@ namespace Ambermoon
         {
             var modifiers = KeyModifiers.None;
 
-            if (keyboard.IsKeyPressed(Silk.NET.Input.Common.Key.ShiftLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Common.Key.ShiftRight))
+            if (keyboard.IsKeyPressed(Silk.NET.Input.Key.ShiftLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.ShiftRight))
                 modifiers |= KeyModifiers.Shift;
-            if (keyboard.IsKeyPressed(Silk.NET.Input.Common.Key.ControlLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Common.Key.ControlRight))
+            if (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight))
                 modifiers |= KeyModifiers.Control;
-            if (keyboard.IsKeyPressed(Silk.NET.Input.Common.Key.AltLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Common.Key.AltRight))
+            if (keyboard.IsKeyPressed(Silk.NET.Input.Key.AltLeft) || keyboard.IsKeyPressed(Silk.NET.Input.Key.AltRight))
                 modifiers |= KeyModifiers.Alt;
 
             return modifiers;
         }
 
-        static Key ConvertKey(Silk.NET.Input.Common.Key key) => key switch
+        static Key ConvertKey(Silk.NET.Input.Key key) => key switch
         {
-            Silk.NET.Input.Common.Key.Left => Key.Left,
-            Silk.NET.Input.Common.Key.Right => Key.Right,
-            Silk.NET.Input.Common.Key.Up => Key.Up,
-            Silk.NET.Input.Common.Key.Down => Key.Down,
-            Silk.NET.Input.Common.Key.Escape => Key.Escape,
-            Silk.NET.Input.Common.Key.F1 => Key.F1,
-            Silk.NET.Input.Common.Key.F2 => Key.F2,
-            Silk.NET.Input.Common.Key.F3 => Key.F3,
-            Silk.NET.Input.Common.Key.F4 => Key.F4,
-            Silk.NET.Input.Common.Key.F5 => Key.F5,
-            Silk.NET.Input.Common.Key.F6 => Key.F6,
-            Silk.NET.Input.Common.Key.F7 => Key.F7,
-            Silk.NET.Input.Common.Key.F8 => Key.F8,
-            Silk.NET.Input.Common.Key.F9 => Key.F9,
-            Silk.NET.Input.Common.Key.F10 => Key.F10,
-            Silk.NET.Input.Common.Key.F11 => Key.F11,
-            Silk.NET.Input.Common.Key.F12 => Key.F12,
-            Silk.NET.Input.Common.Key.Enter => Key.Return,
-            Silk.NET.Input.Common.Key.KeypadEnter => Key.Return,
-            Silk.NET.Input.Common.Key.Delete => Key.Delete,
-            Silk.NET.Input.Common.Key.Backspace => Key.Backspace,
-            Silk.NET.Input.Common.Key.Tab => Key.Tab,
-            Silk.NET.Input.Common.Key.Keypad0 => Key.Num0,
-            Silk.NET.Input.Common.Key.Keypad1 => Key.Num1,
-            Silk.NET.Input.Common.Key.Keypad2 => Key.Num2,
-            Silk.NET.Input.Common.Key.Keypad3 => Key.Num3,
-            Silk.NET.Input.Common.Key.Keypad4 => Key.Num4,
-            Silk.NET.Input.Common.Key.Keypad5 => Key.Num5,
-            Silk.NET.Input.Common.Key.Keypad6 => Key.Num6,
-            Silk.NET.Input.Common.Key.Keypad7 => Key.Num7,
-            Silk.NET.Input.Common.Key.Keypad8 => Key.Num8,
-            Silk.NET.Input.Common.Key.Keypad9 => Key.Num9,
-            Silk.NET.Input.Common.Key.PageUp => Key.PageUp,
-            Silk.NET.Input.Common.Key.PageDown => Key.PageDown,
-            Silk.NET.Input.Common.Key.Home => Key.Home,
-            Silk.NET.Input.Common.Key.End => Key.End,
-            Silk.NET.Input.Common.Key.Space => Key.Space,
-            Silk.NET.Input.Common.Key.W => Key.W,
-            Silk.NET.Input.Common.Key.A => Key.A,
-            Silk.NET.Input.Common.Key.S => Key.S,
-            Silk.NET.Input.Common.Key.D => Key.D,
+            Silk.NET.Input.Key.Left => Key.Left,
+            Silk.NET.Input.Key.Right => Key.Right,
+            Silk.NET.Input.Key.Up => Key.Up,
+            Silk.NET.Input.Key.Down => Key.Down,
+            Silk.NET.Input.Key.Escape => Key.Escape,
+            Silk.NET.Input.Key.F1 => Key.F1,
+            Silk.NET.Input.Key.F2 => Key.F2,
+            Silk.NET.Input.Key.F3 => Key.F3,
+            Silk.NET.Input.Key.F4 => Key.F4,
+            Silk.NET.Input.Key.F5 => Key.F5,
+            Silk.NET.Input.Key.F6 => Key.F6,
+            Silk.NET.Input.Key.F7 => Key.F7,
+            Silk.NET.Input.Key.F8 => Key.F8,
+            Silk.NET.Input.Key.F9 => Key.F9,
+            Silk.NET.Input.Key.F10 => Key.F10,
+            Silk.NET.Input.Key.F11 => Key.F11,
+            Silk.NET.Input.Key.F12 => Key.F12,
+            Silk.NET.Input.Key.Enter => Key.Return,
+            Silk.NET.Input.Key.KeypadEnter => Key.Return,
+            Silk.NET.Input.Key.Delete => Key.Delete,
+            Silk.NET.Input.Key.Backspace => Key.Backspace,
+            Silk.NET.Input.Key.Tab => Key.Tab,
+            Silk.NET.Input.Key.Keypad0 => Key.Num0,
+            Silk.NET.Input.Key.Keypad1 => Key.Num1,
+            Silk.NET.Input.Key.Keypad2 => Key.Num2,
+            Silk.NET.Input.Key.Keypad3 => Key.Num3,
+            Silk.NET.Input.Key.Keypad4 => Key.Num4,
+            Silk.NET.Input.Key.Keypad5 => Key.Num5,
+            Silk.NET.Input.Key.Keypad6 => Key.Num6,
+            Silk.NET.Input.Key.Keypad7 => Key.Num7,
+            Silk.NET.Input.Key.Keypad8 => Key.Num8,
+            Silk.NET.Input.Key.Keypad9 => Key.Num9,
+            Silk.NET.Input.Key.PageUp => Key.PageUp,
+            Silk.NET.Input.Key.PageDown => Key.PageDown,
+            Silk.NET.Input.Key.Home => Key.Home,
+            Silk.NET.Input.Key.End => Key.End,
+            Silk.NET.Input.Key.Space => Key.Space,
+            Silk.NET.Input.Key.W => Key.W,
+            Silk.NET.Input.Key.A => Key.A,
+            Silk.NET.Input.Key.S => Key.S,
+            Silk.NET.Input.Key.D => Key.D,
             _ => Key.Invalid,
         };
 
@@ -155,9 +154,9 @@ namespace Ambermoon
                 Game.OnKeyChar(keyChar);
         }
 
-        void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Common.Key key, int value)
+        void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
-            if (key == Silk.NET.Input.Common.Key.F11)
+            if (key == Silk.NET.Input.Key.F11)
                 Fullscreen = !Fullscreen;
             else
             {
@@ -168,7 +167,7 @@ namespace Ambermoon
             }
         }
 
-        void Keyboard_KeyUp(IKeyboard keyboard, Silk.NET.Input.Common.Key key, int value)
+        void Keyboard_KeyUp(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
             if (versionSelector != null)
                 versionSelector.OnKeyUp(ConvertKey(key), GetModifiers(keyboard));
@@ -201,42 +200,47 @@ namespace Ambermoon
             };
         }
 
+        static Position ConvertMousePosition(MousePosition position)
+        {
+            return new Position(Util.Round(position.X), Util.Round(position.Y));
+        }
+
         void Mouse_MouseDown(IMouse mouse, MouseButton button)
         {
             if (versionSelector != null)
-                versionSelector.OnMouseDown(mouse.Position.Round(), GetMouseButtons(mouse));
+                versionSelector.OnMouseDown(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
             else if (mainMenu != null)
-                mainMenu.OnMouseDown(mouse.Position.Round(), ConvertMouseButtons(button));
+                mainMenu.OnMouseDown(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
             else if (Game != null)
-                Game.OnMouseDown(mouse.Position.Round(), GetMouseButtons(mouse));
+                Game.OnMouseDown(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
         }
 
         void Mouse_MouseUp(IMouse mouse, MouseButton button)
         {
             if (versionSelector != null)
-                versionSelector.OnMouseUp(mouse.Position.Round(), ConvertMouseButtons(button));
+                versionSelector.OnMouseUp(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
             else if (mainMenu != null)
-                mainMenu.OnMouseUp(mouse.Position.Round(), ConvertMouseButtons(button));
+                mainMenu.OnMouseUp(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
             else if (Game != null)
-                Game.OnMouseUp(mouse.Position.Round(), ConvertMouseButtons(button));
+                Game.OnMouseUp(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
         }
 
-        void Mouse_MouseMove(IMouse mouse, System.Drawing.PointF position)
+        void Mouse_MouseMove(IMouse mouse, MousePosition position)
         {
             if (versionSelector != null)
-                versionSelector.OnMouseMove(position.Round(), GetMouseButtons(mouse));
+                versionSelector.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (mainMenu != null)
-                mainMenu.OnMouseMove(mouse.Position.Round(), GetMouseButtons(mouse));
+                mainMenu.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (Game != null)
-                Game.OnMouseMove(position.Round(), GetMouseButtons(mouse));
+                Game.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
         }
 
         void Mouse_Scroll(IMouse mouse, ScrollWheel wheelDelta)
         {
             if (versionSelector != null)
-                versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
+                versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(mouse.Position));
             else if (Game != null)
-                Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), mouse.Position.Round());
+                Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(mouse.Position));
         }
 
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
@@ -291,7 +295,7 @@ namespace Ambermoon
             });
             InitGlyphs();
             var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
-            cursor.UpdatePosition(mouse.Position.Round(), null);
+            cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
             var savegameManager = new SavegameManager(savePath);
             savegameManager.GetSavegameNames(gameData, out int currentSavegame);
             bool canContinue = currentSavegame != 0;
@@ -322,7 +326,7 @@ namespace Ambermoon
                             {
                                 this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
 
-                                mouse.Position = new System.Drawing.PointF(position.X, position.Y);
+                                mouse.Position = new MousePosition(position.X, position.Y);
                             };
                             game.ConfigurationChanged += (configuration, windowChange) =>
                             {
@@ -333,7 +337,7 @@ namespace Ambermoon
                                 }
                             };
                             game.DrugTicked += Drug_Ticked;
-                            game.Run(continueGame, mouse.Position.Round());
+                            game.Run(continueGame, ConvertMousePosition(mouse.Position));
                             return game;
                         };
                     }
@@ -491,14 +495,20 @@ namespace Ambermoon
             }
         }
 
+        bool PositionInsideWindow(MousePosition position)
+        {
+            return position.X >= 0 && position.X < window.Size.X &&
+                position.Y >= 0 && position.Y < window.Size.Y;
+        }
+
         void Drug_Ticked()
         {
-            if (mouse != null && new System.Drawing.RectangleF(new System.Drawing.PointF(0, 0), window.Size).Contains(mouse.Position))
+            if (mouse != null && PositionInsideWindow(mouse.Position))
             {
-                mouse.Position = new System.Drawing.PointF(mouse.Position.X + Game.RandomInt(-16, 16),
+                mouse.Position = new MousePosition(mouse.Position.X + Game.RandomInt(-16, 16),
                     mouse.Position.Y + Game.RandomInt(-16, 16));
                 if (Fullscreen) // This needs a little help
-                    Game.OnMouseMove(mouse.Position.Round(), GetMouseButtons(mouse));
+                    Game.OnMouseMove(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
             }
         }
 
@@ -571,16 +581,16 @@ namespace Ambermoon
             }
         }
 
-        void Window_Resize(System.Drawing.Size size)
+        void Window_Resize(WindowDimension size)
         {
-            if (size.Width != Width || size.Height != Height)
+            if (size.X != Width || size.Y != Height)
             {
                 // This seems to happen when changing the screen resolution.
-                window.Size = new System.Drawing.Size(Width, Height);
+                window.Size = new WindowDimension(Width, Height);
             }
         }
 
-        void Window_Move(System.Drawing.Point position)
+        void Window_Move(WindowDimension position)
         {
             WindowMoved();
         }
@@ -592,14 +602,14 @@ namespace Ambermoon
                 if (!Fullscreen)
                 {
                     var monitorSize = window.Monitor.Bounds.Size;
-                    renderView.MaxScreenSize = new Size(monitorSize.Width, monitorSize.Height);
+                    renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
                 }
                 else if (renderView.MaxScreenSize == null)
                 {
                     renderView.MaxScreenSize = new Size(640, 480);
                 }
                 renderView.AvailableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
-                    new Size(mode.Resolution.Value.Width, mode.Resolution.Value.Height)).Distinct().ToList();
+                    new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
             }
         }
 
@@ -608,7 +618,7 @@ namespace Ambermoon
             var screenSize = configuration.GetScreenSize();
             this.configuration.Width = Width = screenSize.Width;
             this.configuration.Height = Height = screenSize.Height;
-            window.Size = new System.Drawing.Size(screenSize.Width, screenSize.Height);
+            window.Size = new WindowDimension(screenSize.Width, screenSize.Height);
             var screenResolution = configuration.GetScreenResolution();
             renderView.VirtualAspectRatio = (float)screenResolution.Width / screenResolution.Height;
             renderView.Resize(screenSize.Width, screenSize.Height);
@@ -622,12 +632,11 @@ namespace Ambermoon
             this.configuration.Height = Height = screenSize.Height;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            var videoMode = new VideoMode(new System.Drawing.Size(Width, Height), 60);
-            var options = new WindowOptions(true, true, new System.Drawing.Point(100, 100),
-                new System.Drawing.Size(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
+            var videoMode = new VideoMode(new WindowDimension(Width, Height), 60);
+            var options = new WindowOptions(true, new WindowDimension(100, 100),
+                new WindowDimension(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
                 $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} beta",
-                WindowState.Normal, WindowBorder.Fixed, VSyncMode.Off,
-                10, false, videoMode, 24);
+                WindowState.Normal, WindowBorder.Fixed, false, false, videoMode, 24);
 
             try
             {

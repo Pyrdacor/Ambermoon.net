@@ -184,7 +184,7 @@ namespace Ambermoon.Renderer
             lock (bufferLock)
             {
                 state.Gl.BufferData(BufferTarget, (uint)(Size * Marshal.SizeOf<T>()),
-                    new Span<T>(buffer), usageHint);
+                    new ReadOnlySpan<T>(buffer), usageHint);
             }
 
             changedSinceLastCreation = false;
@@ -203,7 +203,7 @@ namespace Ambermoon.Renderer
             lock (bufferLock)
             {
                 state.Gl.BufferData(BufferTarget, (uint)(Size * Marshal.SizeOf<T>()),
-                    new Span<T>(buffer), usageHint);
+                    new ReadOnlySpan<T>(buffer), usageHint);
             }
 
             changedSinceLastCreation = false;

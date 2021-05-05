@@ -58,7 +58,7 @@ namespace Ambermoon.Renderer
                 GLEnum.FragmentShader :
                 GLEnum.VertexShader);
 
-            state.Gl.ShaderSource(ShaderIndex, 1, new string[] { code }, new int[] { code.Length });
+            state.Gl.ShaderSource(ShaderIndex, code);
             state.Gl.CompileShader(ShaderIndex);
 
             // Auf Fehler pr�fen
