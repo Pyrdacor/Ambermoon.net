@@ -7107,8 +7107,8 @@ namespace Ambermoon
                     IncreaseAttribute(Attribute.AntiMagic);
                     break;
                 case Spell.DecreaseAge:
-                    if (target.Alive) // TODO: Is this limited?
-                        target.Attributes[Attribute.Age].CurrentValue = (uint)Math.Max(17, (int)target.Attributes[Attribute.Age].CurrentValue - 1);
+                    if (target.Alive && !target.Ailments.HasFlag(Ailment.Petrified))
+                        target.Attributes[Attribute.Age].CurrentValue = (uint)Math.Max(18, (int)target.Attributes[Attribute.Age].CurrentValue - RandomInt(1, 10));
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
