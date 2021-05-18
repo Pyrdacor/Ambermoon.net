@@ -2,6 +2,113 @@
 {
 	public struct Instrument
 	{
+		public enum Effect
+        {
+			NoEffect,
+			/// <summary>
+			/// Effect1: -
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			WaveNegator,
+			/// <summary>
+			/// Effect1: EffWave
+			/// Effect2: WaveLen
+			/// Effect3: WaveRept
+			/// </summary>
+			FreeNegator,
+			/// <summary>
+			/// Effect1: DeltaVal
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			RotateVert,
+			/// <summary>
+			/// Effect1: -
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			RotateHdri,
+			/// <summary>
+			/// Effect1: EffWave
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			AlienVoice,
+			/// <summary>
+			/// Effect1: -
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			PolyNegator,
+			/// <summary>
+			/// Effect1: EffWave
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			ShackWave1,
+			/// <summary>
+			/// Effect1: EffWave
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			ShackWave2,
+			/// <summary>
+			/// Effect1: DestWave
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			Metawdrpk,
+			/// <summary>
+			/// Effect1: -
+			/// Effect2: Detune
+			/// Effect3: Repeats
+			/// </summary>
+			LaserAwf,
+			/// <summary>
+			/// Effect1: DeltaVal
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			WaveAlias,
+			/// <summary>
+			/// Effect1: -
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			NoiseGenerator,
+			/// <summary>
+			/// Effect1: DeltaVal
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			LowPassFilter1,
+			/// <summary>
+			/// Effect1: EffWave
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			LowPassFilter2,
+			/// <summary>
+			/// Effect1: DestWave
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			Oscillator1,
+			/// <summary>
+			/// Effect1: -
+			/// Effect2: StartPnt
+			/// Effect3: StopPnt
+			/// </summary>
+			NoiseGenerator2,
+			/// <summary>
+			/// Effect1: Level
+			/// Effect2: Factor
+			/// Effect3: Repeats
+			/// </summary>
+			FMDrum
+		}
+
 		/// <summary>
 		/// Synthetic mode (off/on).
 		/// </summary>
@@ -94,7 +201,7 @@
 		public short SustainPt { get; private set; }
 		public short SustainVal { get; private set; }
 		//16
-		public short EffectNumber { get; private set; }
+		public Effect EffectNumber { get; private set; }
 		public short Effect1 { get; private set; }
 		public short Effect2 { get; private set; }
 		public short Effect3 { get; private set; }
@@ -130,8 +237,8 @@
 			SustainPt = reader.ReadBEInt16();
 			SustainVal = reader.ReadBEInt16();
 			reader.ReadBytes(16);
-			EffectNumber = reader.ReadBEInt16();
 			Effect1 = reader.ReadBEInt16();
+			EffectNumber = (Effect)reader.ReadBEInt16();
 			Effect2 = reader.ReadBEInt16();
 			Effect3 = reader.ReadBEInt16();
 			EffectDelay = reader.ReadBEInt16();

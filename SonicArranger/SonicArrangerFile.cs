@@ -170,9 +170,10 @@ namespace SonicArranger
 				int samplesOffset = reader.ReadBEInt32();
 
 				ushort magic = reader.ReadBEUInt16(); // always 0x2144 or 0x2154
+				// TODO: is this some sample rate?
 
-				if (magic != 0x2144 && magic != 0x2154)
-					ThrowInvalidData();
+				/*if (magic != 0x2144 && magic != 0x2154)
+					ThrowInvalidData();*/
 
 				if (reader.ReadBEUInt16() != 0xffff) // always 0xffff
 					ThrowInvalidData();
