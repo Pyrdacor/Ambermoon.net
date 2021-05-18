@@ -96,14 +96,31 @@ namespace SonicArranger
 		/// Gets the frequency factor of a note for
 		/// sampled data. The note index is 0-based so
 		/// use Note.Value - 1 here.
+		/// 
+		/// The fine tuning value should be in the range
+		/// -8 to +7 and states the amount of semi-tone
+		/// increases (-8/8 semi-tones to +7/8 semi-tones).
 		/// </summary>
-		/// <param name="noteIndex"></param>
-		/// <returns></returns>
-		public static double GetNoteFrequencyFactor(int noteIndex)
+		public static double GetNoteFrequencyFactor(int noteIndex, int fineTuning)
         {
 			int octave = noteIndex / 12;
 			int note = noteIndex % 12;
-			return BaseNoteFactors[note] * Math.Pow(2.0, octave - 6);
+			double frequencyFactor = BaseNoteFactors[note];
+
+			if (fineTuning < 0)
+            {
+				double lower = note == 0 ?
+					0.5 * BaseNoteFactors[11] : BaseNoteFactors[note - 1];
+				frequencyFactor += (fineTuning / 8.0) * (frequencyFactor - lower);
+			}
+			else if (fineTuning > 0)
+            {
+				double upper = note == 11 ?
+					2.0 * BaseNoteFactors[0] : BaseNoteFactors[note + 1];
+				frequencyFactor += (fineTuning / 8.0) * (upper - frequencyFactor);
+			}
+
+			return frequencyFactor * Math.Pow(2.0, octave - 6);
         }
 
 		public string Author { get; private set; }
