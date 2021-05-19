@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Data.Legacy;
+using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
@@ -284,8 +285,9 @@ namespace Ambermoon
             var fontProvider = new FontProvider(executableData);
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
+            var songManager = new SongManager(gameData.Files["Music.amb"]);
 
-            // Create render view
+            // Create render view<
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;

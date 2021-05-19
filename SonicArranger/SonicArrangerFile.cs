@@ -47,21 +47,25 @@ namespace SonicArranger
 	/// But the length can be lower than that and parts can be repeated.
 	/// You can access the wave table data by the property <see cref="Waves"/>.
 	/// Synth waves are often used together with ADSR waves to create effects.
+	/// Note that the total data length of the wave data is Length plus Repeat
+	/// and the sum can only be 128 at max. Also note that both values are in words
+	/// so you have multiply each of them by 2 to get the size in bytes. This is
+	/// not true for ADSR and AMF waves though but the Length + Repeat thing is.
 	/// 
 	/// Samples are at the end of the SA file and are stored in <see cref="Samples"/>.
 	/// 
 	/// There are also two additional wave tables. The first one (right after the
-	/// synth wave tables) seem to be the ADSR waves (also up to 128 bytes each).
+	/// synth wave tables) are the ADSR waves (also up to 128 bytes each).
 	/// An instrument can use them by specify the index in <see cref="Instrument.AdsrWave"/>.
 	/// Then with <see cref="Instrument.AdsrLength"/> and <see cref="Instrument.AdsrRepeat"/>
-	/// the used part can be specified. A length of 0 means that no ADSR is used.
+	/// the used part can be specified. A length and repeat of 0 means that no ADSR is used.
 	/// You can access the ADSR waves with <see cref="AdsrWaves"/>.
-	/// ADSR wave tables seem to contain volume amplitudes in the range 0 to 64 (100%).
+	/// ADSR wave tables contain volume amplitudes in the range 0 to 64 (100%).
 	/// 
 	/// The second of those wave tables is stored as "SYAF" and I guess it is related
 	/// to the AMF values of the instrument. It is rarely used and I don't know the exact
 	/// usage but data-wise it is handled in the same fashion as the ADSR waves.
-	/// You can access the ADSR waves with <see cref="AmfWaves"/>.
+	/// You can access the AMF waves with <see cref="AmfWaves"/>.
 	/// 
 	/// </summary>
 	public class SonicArrangerFile
@@ -97,31 +101,47 @@ namespace SonicArranger
 		/// sampled data. The note index is 0-based so
 		/// use Note.Value - 1 here.
 		/// 
-		/// The fine tuning value should be in the range
-		/// -8 to +7 and states the amount of semi-tone
-		/// increases (-8/8 semi-tones to +7/8 semi-tones).
+		/// The fine tuning of sonic arranger seems to
+		/// be in the range 0 to 255 so I guess it is
+		/// unsigned value * 1/100th semi-tone up or
+		/// signed value * 1/100th semi-tone.
 		/// </summary>
 		public static double GetNoteFrequencyFactor(int noteIndex, int fineTuning)
         {
-			int octave = noteIndex / 12;
-			int note = noteIndex % 12;
-			double frequencyFactor = BaseNoteFactors[note];
+			const int expOffset = -6;
 
-			if (fineTuning < 0)
-            {
-				double lower = note == 0 ?
-					0.5 * BaseNoteFactors[11] : BaseNoteFactors[note - 1];
-				frequencyFactor += (fineTuning / 8.0) * (frequencyFactor - lower);
-			}
-			else if (fineTuning > 0)
-            {
-				double upper = note == 11 ?
-					2.0 * BaseNoteFactors[0] : BaseNoteFactors[note + 1];
-				frequencyFactor += (fineTuning / 8.0) * (upper - frequencyFactor);
+			double GetFrequencyFactor(int index)
+			{
+				int octave = index / 12;
+				int note = index % 12;
+				return BaseNoteFactors[note] * Math.Pow(2.0, octave + expOffset);
 			}
 
-			return frequencyFactor * Math.Pow(2.0, octave - 6);
-        }
+			if (fineTuning == 0)
+				return GetFrequencyFactor(noteIndex);
+			else if (fineTuning == -100)
+				return GetFrequencyFactor(noteIndex - 1);
+			else if (fineTuning == 100)
+				return GetFrequencyFactor(noteIndex + 1);
+			else if (fineTuning < -100)
+				return GetNoteFrequencyFactor(noteIndex - 1, fineTuning + 100);
+			else if (fineTuning > 100)
+				return GetNoteFrequencyFactor(noteIndex + 1, fineTuning - 100);
+			else if (fineTuning < 0)
+			{
+				double factor = -fineTuning / 100.0;
+				double baseValue = GetFrequencyFactor(noteIndex);
+				double nextValue = GetFrequencyFactor(noteIndex - 1);
+				return baseValue - (baseValue - nextValue) * factor;
+			}
+			else // fineTuning > 0
+			{
+				double factor = fineTuning / 100.0;
+				double baseValue = GetFrequencyFactor(noteIndex);
+				double nextValue = GetFrequencyFactor(noteIndex + 1);
+				return baseValue + (nextValue - baseValue) * factor;
+			}
+		}
 
 		public string Author { get; private set; }
 		public string Version { get; private set; }

@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
+    <ProjectReference Include="..\SonicArranger\SonicArranger.csproj" />
   </ItemGroup>
 
 </Project>

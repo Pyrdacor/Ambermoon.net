@@ -1,5 +1,7 @@
 ﻿using Ambermoon.Data.Serialization;
+using SonicArranger;
 using System;
+using System.Linq;
 using System.Text;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -8,7 +10,7 @@ namespace Ambermoon.Data.Legacy.Serialization
     using dword = UInt32;
     using qword = UInt64;
 
-    public class DataReader : IDataReader
+    public class DataReader : IDataReader, ICustomReader
     {
         public static readonly Encoding Encoding;
         protected readonly byte[] data;
@@ -173,7 +175,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         protected void CheckOutOfRange(int sizeToRead)
         {
             if (Position + sizeToRead > data.Length)
-                throw new IndexOutOfRangeException("Read beyond the data size.");
+                throw new System.IO.EndOfStreamException("Read beyond the data size.");
         }
 
         public long FindByteSequence(byte[] sequence, long offset)
@@ -221,5 +223,12 @@ namespace Ambermoon.Data.Legacy.Serialization
         }
 
         public byte[] ToArray() => data;
+
+        // SonicArranger.ICustomReader implementation
+        public char[] ReadChars(int amount) => Encoding.ASCII.GetChars(ReadBytes(amount));
+        public short ReadBEInt16() => unchecked((short)ReadWord());
+        public ushort ReadBEUInt16() => ReadWord();
+        public int ReadBEInt32() => unchecked((int)ReadDword());
+        public uint ReadBEUInt32() => ReadDword();
     }
 }
