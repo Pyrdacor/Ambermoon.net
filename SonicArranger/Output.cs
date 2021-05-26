@@ -58,6 +58,15 @@ namespace SonicArranger
             public short Effect2;
             public short Effect3;
             public short EffectDelay;
+
+            public class InstrumentState
+            {
+                public byte[] Data;
+                public int EffectDelay;
+            }
+
+            // State data
+            public InstrumentState State;
         }
 
         class TrackData
@@ -183,17 +192,17 @@ namespace SonicArranger
         }
 
         /// <summary>
-        /// Creates 8-bit PCM data from a loaded SA file with the given
-        /// sample rate. Note that the sample rate is not used for
-        /// loading or processing the SA data but only for the
-        /// output resolution.
+        /// Creates 8-bit PCM data from a loaded SA file with the default
+        /// sample rate of 22168.
         /// 
         /// Note: Even though the data type is unsigned, the data itself
         /// really is signed data (-128 to +127). But most software uses
         /// unsigned bytes as input so this should be ok.
         /// </summary>
-        public static byte[] Create(SonicArrangerFile sonicArrangerFile, uint sampleRate = 44100)
+        public static byte[] Create(SonicArrangerFile sonicArrangerFile, out uint sampleRate)
         {
+            sampleRate = SonicArrangerFile.SampleRate;
+
             // 4 tracks with up to 16 channels
             var inst = sonicArrangerFile.Instruments;
             var ovtb = sonicArrangerFile.Voices;
@@ -208,7 +217,7 @@ namespace SonicArranger
                 var instr = inst[i];
                 int len = instr.Length * 2;
                 int repeat = instr.Repeat * 2;
-                int fineTuning = instr.FineTuning & 0xf; // TODO: SA seems to support up to 0xff
+                int fineTuning = instr.FineTuning;
                 var instrument = new SampleInstrument
                 {
                     Data = instr.SynthMode
@@ -224,8 +233,12 @@ namespace SonicArranger
                     Effect1 = instr.Effect1,
                     Effect2 = instr.Effect2,
                     Effect3 = instr.Effect3,
-                    EffectDelay = instr.EffectDelay
+                    EffectDelay = instr.EffectDelay,
+                    State = new SampleInstrument.InstrumentState()
                 };
+                // Initialize state
+                instrument.State.Data = new byte[instrument.Data.Length];
+                instrument.State.EffectDelay = instrument.EffectDelay;
                 instruments.Add(instrument);
             }
             var tracks = new Track[4];
@@ -294,8 +307,8 @@ namespace SonicArranger
                 int repeatOffset, int delayInBytes, double scale, Func<byte, double> valueTransform, SampleInstrument? instrument)
             {
                 int totalSize = delayInBytes + waveData.Length;
-                double samplesPerSecond = frequency * totalSize;
-                double sampleIndex = sampleTime * samplesPerSecond;
+                double samplesPerSecond = frequency * totalSize; // e.g. 220Hz (220 periods per sec) and 32 bytes per period = 7040 bytes per sec
+                double sampleIndex = sampleTime * samplesPerSecond; // sampleTime is in seconds
 
                 if (sampleIndex < delayInBytes)
                     return 0.0;
@@ -330,70 +343,66 @@ namespace SonicArranger
 
                 if (instrument != null)
                 {
-                    var effect = instrument.Value.EffectNumber;
-                    var param1 = instrument.Value.Effect1;
-                    var param2 = instrument.Value.Effect2;
-                    var param3 = instrument.Value.Effect3;
-                    var delay = instrument.Value.EffectDelay - 1;
-
-                    // TODO: use effect delay
-
-                    switch (effect)
+                    if (--instrument.Value.State.EffectDelay == 0)
                     {
-                        case Instrument.Effect.WaveNegator:
+                        instrument.Value.State.EffectDelay = instrument.Value.EffectDelay;
+                        var effect = instrument.Value.EffectNumber;
+                        var param1 = instrument.Value.Effect1;
+                        var param2 = instrument.Value.Effect2;
+                        var param3 = instrument.Value.Effect3;
+                        var delay = instrument.Value.EffectDelay - 1;
+
+                        switch (effect)
                         {
-                            // TODO: Test this!
-                            var startPnt = param2;
-                            var stopPnt = param3;
-                            if (leftIndex >= startPnt && leftIndex <= stopPnt)
-                                leftValue = -leftValue;
-                            if (rightIndex >= startPnt && rightIndex <= stopPnt)
-                                rightValue = -rightValue;
-                            value = leftValue + gamma * (rightValue - leftValue);
-                            break;
-                        }
-                        case Instrument.Effect.LowPassFilter1:
-                        {
-                            // TODO: WIP
-                            // TODO: Test this!
-                            // TODO: effect and normal delay?
-                            var deltaVal = param1;
-                            var startPnt = param2;
-                            var stopPnt = param3;
-                            double lastSampleTime = sampleTime - deltaVal * tickTime;
-                            if (lastSampleTime < 0 || leftIndex < startPnt || leftIndex > stopPnt)
-                                value = leftValue + gamma * (rightValue - leftValue);
-                            else
+                            case Instrument.Effect.WaveNegator:
                             {
-                                double lastSampleIndex = lastSampleTime * samplesPerSecond;
-                                if (lastSampleIndex >= waveData.Length)
+                                // TODO: Test this!
+                                var startPnt = param2;
+                                var stopPnt = param3;
+                                if (leftIndex >= startPnt && leftIndex <= stopPnt)
+                                    leftValue = -leftValue;
+                                if (rightIndex >= startPnt && rightIndex <= stopPnt)
+                                    rightValue = -rightValue;
+                                value = leftValue + gamma * (rightValue - leftValue);
+                                break;
+                            }
+                            case Instrument.Effect.LowPassFilter1:
+                            {
+                                // TODO: WIP
+                                // TODO: Test this!
+                                // TODO: effect and normal delay?
+                                var deltaVal = param1;
+                                var startPnt = param2;
+                                var stopPnt = Math.Min(param3, waveData.Length - 1);
+                                if (startPnt >= 0 && startPnt < waveData.Length - 1 && stopPnt > startPnt)
                                 {
-                                    if (repeatOffset >= 0 && repeatOffset < waveData.Length)
+                                    for (int i = startPnt; i <= stopPnt && i < waveData.Length; ++i)
                                     {
-                                        int repeatLength = waveData.Length - repeatOffset;
-                                        lastSampleIndex = repeatOffset + (lastSampleIndex - waveData.Length) % repeatLength;
-                                    }
-                                    else
-                                    {
-                                        lastSampleIndex %= waveData.Length;
+                                        var next = i == stopPnt ? waveData[startPnt] : waveData[i + 1];
+                                        var diff = Math.Abs(waveData[i] - next);
+
+                                        if (deltaVal < diff)
+                                        {
+                                            if (next >= waveData[i])
+                                                waveData[i] += 2;
+                                            else
+                                                waveData[i] -= 2;
+                                        }
                                     }
                                 }
-                                int delayedLeftIndex = (int)lastSampleIndex;
-                                int delayedRightIndex = delayedLeftIndex == waveData.Length - 1 ? startIndex : delayedLeftIndex + 1;
-                                double delayedLeftValue = TransformValue(waveData[delayedLeftIndex]);
-                                double delayedRightValue = TransformValue(waveData[delayedRightIndex]);
-                                double a = 0.5; // TODO: ?
-                                value = a * (leftValue + gamma * (rightValue - leftValue));
-                                gamma = lastSampleIndex - delayedLeftIndex;
-                                value += (1.0 - a) * (delayedLeftValue + gamma * (delayedRightValue - delayedLeftValue));
+                                value = leftValue + gamma * (rightValue - leftValue);
+                                break;
                             }
-                            break;
+                            // TODO: other effects
+                            case Instrument.Effect.NoEffect:
+                            default:
+                                value = leftValue + gamma * (rightValue - leftValue);
+                                break;
                         }
-                        // TODO: other effects
-                        case Instrument.Effect.NoEffect:
-                        default:
-                            value = leftValue + gamma * (rightValue - leftValue);
-                            break;
+                    }
+                    else
+                    {
+                        value = leftValue + gamma * (rightValue - leftValue);
                     }
                 }
                 else
@@ -401,24 +410,38 @@ namespace SonicArranger
                     value = leftValue + gamma * (rightValue - leftValue);
                 }
 
+                //if (instrument == null)
+                //    System.IO.File.AppendAllText(@"D:\Programmierung\C#\Projects\Ambermoon\ambermoon.net\FileSpecs\Extract\decoded\Music.amb\test.csv", $"{scale * value:0.00}\r\n");
+
                 return scale * value;
             }
 
-            double GetInstrumentAmplitude(int instrumentIndex, double sampleTime, int noteId)
+            double GetInstrumentAmplitude(int instrumentIndex, double sampleTime, int noteId, double patternDuration,
+                out bool finished)
             {
                 var instrument = instruments[instrumentIndex];
+                finished = false;
 
                 if (instrument.Synthetic) // Synth wave
                 {
+                    if (sampleTime >= patternDuration)
+                    {
+                        finished = true;
+                        return 0.0;
+                    }
+
                     var frequency = NoteToFreq(noteId);
-                    var output = GetWaveAmplitude(instrument.Data, sampleTime, frequency, -1, 0, 1.0 / 128.0,
+                    var output = GetWaveAmplitude(instrument.State.Data, sampleTime, frequency, -1, 0, 1.0 / 128.0,
                         b => unchecked((sbyte)b), instrument);
 
                     if (instrument.Adsr != null)
                     {
                         var adsr = instrument.Adsr.Value;
-                        output *= GetWaveAmplitude(adsr.Data, sampleTime, frequency,
-                            adsr.RepeatOffset, adsr.Delay - 1, 1.0 / 64.0, null, null);
+                        // The ADSR should run once per pattern (duration) so the frequency is
+                        // 1.0 / patternDuration.
+                        double adsrFrequency = 2.048;// 1.0 / patternDuration;
+                        output *= GetWaveAmplitude(adsr.Data, sampleTime, adsrFrequency,
+                            adsr.RepeatOffset, adsr.Delay - 1, 1.0 / (instrument.Volume * 64.0), null, null);
                     }
 
                     // TODO: AMF?
@@ -428,16 +451,27 @@ namespace SonicArranger
                 else // Sampled
                 {
                     double noteFactor = SonicArrangerFile.GetNoteFrequencyFactor(noteId, instrument.FineTune);
-                    int sampleIndex = (int)Math.Round(sampleTime * SonicArrangerFile.SampleRate * noteFactor);
-                    if (sampleIndex >= instrument.Data.Length)
+
+                    if (sampleTime >= patternDuration)
                     {
-                        if (instrument.RepeatOffset < 0 || instrument.RepeatOffset == instrument.Data.Length) // no repeat
+                        double noteTime = instrument.State.Data.Length / (SonicArrangerFile.SampleRate * noteFactor);
+                        if (sampleTime >= noteTime)
+                        {
+                            finished = true;
+                            return 0.0;
+                        }
+                    }
+
+                    int sampleIndex = (int)Math.Round(sampleTime * SonicArrangerFile.SampleRate * noteFactor);
+                    if (sampleIndex >= instrument.State.Data.Length)
+                    {
+                        if (instrument.RepeatOffset < 0 || instrument.RepeatOffset == instrument.State.Data.Length) // no repeat
                             return 0.0;
 
-                        int repeatLength = instrument.Data.Length - instrument.RepeatOffset;
+                        int repeatLength = instrument.State.Data.Length - instrument.RepeatOffset;
                         sampleIndex = instrument.RepeatOffset + (sampleIndex - instrument.RepeatOffset) % repeatLength;
                     }
-                    return unchecked((sbyte)instrument.Data[sampleIndex]) / 128.0;
+                    return unchecked((sbyte)instrument.State.Data[sampleIndex]) / 128.0;
                 }
             }
 
@@ -479,25 +513,13 @@ namespace SonicArranger
                     {
                         trackSpeed[t] = trackData.Speed;
                         var instrument = instruments[trackData.Instrument];
+                        if (sampleTimes[t] == 0.0)
+                            Array.Copy(instrument.Data, instrument.State.Data, instrument.State.Data.Length);
                         value = instrument.Volume * trackData.Volume * GetInstrumentAmplitude(trackData.Instrument, sampleTimes[t],
-                            trackData.NoteId);
+                            trackData.NoteId, GetPatternEntryDuration(trackSpeed[t]) / 1000.0, out bool finished);
 
-                        if (fadeOut)
-                        {
-                            var patternEntryDuration = GetPatternEntryDuration(trackSpeed[t]) / 1000.0; // in seconds
-                            if (sampleTimes[t] >= patternEntryDuration)
-                            {
-                                if (instrument.Synthetic)
-                                    trackData = null;
-                                else
-                                {
-                                    double noteFactor = SonicArrangerFile.GetNoteFrequencyFactor(trackData.NoteId, instrument.FineTune);
-                                    double noteTime = instrument.Data.Length / (SonicArrangerFile.SampleRate * noteFactor);
-                                    if (sampleTimes[t] >= noteTime)
-                                        trackData = null;
-                                }
-                            }
-                        }
+                        if (fadeOut && finished)
+                            trackData = null;
                     }
 
                     amplitude += value;
@@ -505,7 +527,7 @@ namespace SonicArranger
                     lastTrackData[t] = trackData;
                 }
 
-                data[i] = (byte)unchecked((sbyte)Math.Round(127.0 * (Math.Max(-1.0, Math.Min(amplitude, 1.0)))));
+                data[i] = unchecked((byte)Math.Round(127.0 * (Math.Max(-1.0, Math.Min(amplitude, 1.0)))));
 
                 time += tickTime;
             }
