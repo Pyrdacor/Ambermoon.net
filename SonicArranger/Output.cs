@@ -410,9 +410,6 @@ namespace SonicArranger
                     value = leftValue + gamma * (rightValue - leftValue);
                 }
 
-                //if (instrument == null)
-                //    System.IO.File.AppendAllText(@"D:\Programmierung\C#\Projects\Ambermoon\ambermoon.net\FileSpecs\Extract\decoded\Music.amb\test.csv", $"{scale * value:0.00}\r\n");
-
                 return scale * value;
             }
 
