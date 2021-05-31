@@ -182,9 +182,9 @@ namespace SonicArranger
 				int instrumentsOffset = reader.ReadBEInt32();
 				// Synth waveforms
 				int sywtptr = reader.ReadBEInt32();
-				// Synth arrangements (ASDR waves?)
+				// Synth ASDR waves
 				int syarOffset = reader.ReadBEInt32();
-				// Synth AF?
+				// Synth AMF waves
 				int syafOffset = reader.ReadBEInt32();
 				// Sample data
 				int samplesOffset = reader.ReadBEInt32();
@@ -338,7 +338,7 @@ namespace SonicArranger
 
         }
 
-		public SonicArrangerFile(Stream stream, bool leaveOpen = false)
+		public SonicArrangerFile(System.IO.Stream stream, bool leaveOpen = false)
 			: this(new BinaryReader(stream, Encoding.ASCII, leaveOpen))
 		{
 		

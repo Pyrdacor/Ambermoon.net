@@ -128,6 +128,15 @@
 		/// 
 		/// Note: The total size in bytes for sampled instruments is
 		/// <see cref="Length"/> * 2 + <see cref="Repeat"/> * 2.
+		/// 
+		/// The special case Repeat=1 seems to be used to disable
+		/// repeating and looping. So if it is set, the playback
+		/// will stop after the first cycle and then will only
+		/// output zeros (no sound).
+		/// 
+		/// If repeat is 0, the whole sound is looped from offset
+		/// 0 to Length*2. This is the reason why synth waves always
+		/// have this set to 0.
 		/// </summary>
 		public short Repeat { get; private set; }
 		//8

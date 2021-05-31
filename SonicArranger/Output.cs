@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace SonicArranger
 {
+#if false
     public static class Output
     {
         struct Adsr
@@ -17,9 +18,11 @@ namespace SonicArranger
             /// </summary>
             public int RepeatOffset;
             /// <summary>
-            /// In bytes
+            /// In ticks
             /// </summary>
             public int Delay;
+            public int SustainStart;
+            public int SustainCounter;
         }
 
         struct Amf
@@ -33,7 +36,7 @@ namespace SonicArranger
             /// </summary>
             public int RepeatOffset;
             /// <summary>
-            /// In bytes
+            /// In ticks
             /// </summary>
             public int Delay;
         }
@@ -62,11 +65,34 @@ namespace SonicArranger
             public class InstrumentState
             {
                 public byte[] Data;
-                public int EffectDelay;
+                public int EffectDelayCounter;
+                public int AmfDelayCounter;
+                public int AdsrDelayCounter;
+                public int SustainCounter;
+                public int AdsrIndex;
+                public int AmfIndex;
+                public int AdsrFreqCounter;
             }
 
             // State data
             public InstrumentState State;
+
+            public void Start(double freq)
+            {
+                if (State == null)
+                    State = new InstrumentState();
+                if (State.Data == null)
+                    State.Data = new byte[Data.Length];
+
+                Array.Copy(Data, State.Data, Data.Length);
+                State.EffectDelayCounter = EffectDelay;
+                State.AmfDelayCounter = Amf == null ? 0 : Amf.Value.Delay;
+                State.AdsrDelayCounter = Adsr == null ? 0 : Adsr.Value.Delay;
+                State.SustainCounter = Adsr == null ? 0 : Adsr.Value.SustainCounter;
+                State.AdsrIndex = 0;
+                State.AmfIndex = 0;
+                State.AdsrFreqCounter = Adsr == null ? 0 : (int)Math.Round(freq * Adsr.Value.Data.Length * SonicArrangerFile.SampleRate);
+            }
         }
 
         class TrackData
@@ -161,7 +187,9 @@ namespace SonicArranger
             {
                 Data = sonicArrangerFile.AdsrWaves[instrument.AdsrWave].Data.Take(instrument.AdsrLength).ToArray(),
                 RepeatOffset = instrument.AdsrRepeat == 0 ? -1 : instrument.AdsrRepeat - instrument.AdsrLength,
-                Delay = instrument.AdsrDelay
+                Delay = instrument.AdsrDelay,
+                SustainStart = instrument.SustainPt,
+                SustainCounter = instrument.SustainVal
             };
         }
 
@@ -236,9 +264,6 @@ namespace SonicArranger
                     EffectDelay = instr.EffectDelay,
                     State = new SampleInstrument.InstrumentState()
                 };
-                // Initialize state
-                instrument.State.Data = new byte[instrument.Data.Length];
-                instrument.State.EffectDelay = instrument.EffectDelay;
                 instruments.Add(instrument);
             }
             var tracks = new Track[4];
@@ -304,16 +329,10 @@ namespace SonicArranger
 
             // TODO: WIP
             double GetWaveAmplitude(byte[] waveData, double sampleTime, double frequency,
-                int repeatOffset, int delayInBytes, double scale, Func<byte, double> valueTransform, SampleInstrument? instrument)
+                int repeatOffset, double scale, Func<byte, double> valueTransform, SampleInstrument? instrument)
             {
-                int totalSize = delayInBytes + waveData.Length;
-                double samplesPerSecond = frequency * totalSize; // e.g. 220Hz (220 periods per sec) and 32 bytes per period = 7040 bytes per sec
+                double samplesPerSecond = frequency * waveData.Length; // e.g. 220Hz (220 periods per sec) and 32 bytes per period = 7040 bytes per sec
                 double sampleIndex = sampleTime * samplesPerSecond; // sampleTime is in seconds
-
-                if (sampleIndex < delayInBytes)
-                    return 0.0;
-
-                sampleIndex -= delayInBytes;
                 int startIndex = 0;
 
                 if (sampleIndex >= waveData.Length)
@@ -343,9 +362,9 @@ namespace SonicArranger
 
                 if (instrument != null)
                 {
-                    if (--instrument.Value.State.EffectDelay == 0)
+                    if (--instrument.Value.State.EffectDelayCounter == 0)
                     {
-                        instrument.Value.State.EffectDelay = instrument.Value.EffectDelay;
+                        instrument.Value.State.EffectDelayCounter = instrument.Value.EffectDelay;
                         var effect = instrument.Value.EffectNumber;
                         var param1 = instrument.Value.Effect1;
                         var param2 = instrument.Value.Effect2;
@@ -428,17 +447,49 @@ namespace SonicArranger
                     }
 
                     var frequency = NoteToFreq(noteId);
-                    var output = GetWaveAmplitude(instrument.State.Data, sampleTime, frequency, -1, 0, 1.0 / 128.0,
+                    var output = GetWaveAmplitude(instrument.State.Data, sampleTime, frequency, -1, 1.0 / 128.0,
                         b => unchecked((sbyte)b), instrument);
 
                     if (instrument.Adsr != null)
                     {
                         var adsr = instrument.Adsr.Value;
-                        // The ADSR should run once per pattern (duration) so the frequency is
-                        // 1.0 / patternDuration.
-                        double adsrFrequency = 2.048;// 1.0 / patternDuration;
-                        output *= GetWaveAmplitude(adsr.Data, sampleTime, adsrFrequency,
-                            adsr.RepeatOffset, adsr.Delay - 1, 1.0 / (instrument.Volume * 64.0), null, null);
+                        var state = instrument.State;
+                        
+                        if (state.AdsrIndex >= adsr.SustainStart)
+                        {
+                            if (adsr.SustainCounter > 0)
+                            {
+                                if (--state.SustainCounter == 0)
+                                {
+                                    state.SustainCounter = Math.Max(1, adsr.SustainCounter);
+                                    UpdateAdsrIndex();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            UpdateAdsrIndex();
+                        }
+
+                        void UpdateAdsrIndex()
+                        {
+                            if (--state.AdsrDelayCounter == 0)
+                            {
+                                state.AdsrDelayCounter = Math.Max(1, adsr.Delay);
+                                ++state.AdsrIndex;
+
+                                if (state.AdsrIndex >= adsr.Data.Length)
+                                {
+                                    if (adsr.RepeatOffset == -1)
+                                        state.AdsrIndex = adsr.Data.Length - 1;
+                                    else
+                                        state.AdsrIndex = adsr.RepeatOffset;
+                                }
+                            }
+                        }
+
+                        // TODO: Freq
+                        output *= adsr.Data[state.AdsrIndex] / (instrument.Volume * 64.0);
                     }
 
                     // TODO: AMF?
@@ -511,7 +562,7 @@ namespace SonicArranger
                         trackSpeed[t] = trackData.Speed;
                         var instrument = instruments[trackData.Instrument];
                         if (sampleTimes[t] == 0.0)
-                            Array.Copy(instrument.Data, instrument.State.Data, instrument.State.Data.Length);
+                            instrument.Start();
                         value = instrument.Volume * trackData.Volume * GetInstrumentAmplitude(trackData.Instrument, sampleTimes[t],
                             trackData.NoteId, GetPatternEntryDuration(trackSpeed[t]) / 1000.0, out bool finished);
 
@@ -532,4 +583,5 @@ namespace SonicArranger
             return data;
         }
     }
+#endif
 }
