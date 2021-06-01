@@ -22,13 +22,13 @@
 			/// Effect2: StartPnt
 			/// Effect3: StopPnt
 			/// </summary>
-			RotateVert,
+			RotateVertical,
 			/// <summary>
 			/// Effect1: -
 			/// Effect2: StartPnt
 			/// Effect3: StopPnt
 			/// </summary>
-			RotateHdri,
+			RotateHorizontal,
 			/// <summary>
 			/// Effect1: EffWave
 			/// Effect2: StartPnt

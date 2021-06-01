@@ -147,7 +147,7 @@ namespace SonicArranger
                         if (++patternIndex > song.StopPos)
                         {
                             // one full note till the end which lasts for noteDuration
-                            int remainingSamples = (int)Math.Ceiling(noteDuration * sampleRate);
+                            int remainingSamples = (int)(noteDuration * sampleRate);
                             endOfStreamIndex = processedAmount + bufferIndex + remainingSamples * (stereo ? 2 : 1);
                         }
                     }

@@ -358,10 +358,18 @@ namespace SonicArranger
                     case SonicArranger.Instrument.Effect.FreeNegator:
                         // TODO
                         break;
-                    case SonicArranger.Instrument.Effect.RotateVert:
-                        // TODO
+                    case SonicArranger.Instrument.Effect.RotateVertical:
+                    {
+                        sbyte deltaVal = (sbyte)instr.Effect1;
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        for (int i = startPos; i <= stopPos; ++i)
+                        {
+                            currentSample.Sample = unchecked((sbyte)(currentSample.Sample + deltaVal));
+                        }
                         break;
-                    case SonicArranger.Instrument.Effect.RotateHdri:
+                    }
+                    case SonicArranger.Instrument.Effect.RotateHorizontal:
                         // TODO
                         break;
                     case SonicArranger.Instrument.Effect.AlienVoice:
