@@ -399,8 +399,17 @@ namespace SonicArranger
                         break;
                     }
                     case SonicArranger.Instrument.Effect.PolyNegator:
-                        // TODO
+                    {
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        int index = currentSample.Index;
+                        currentSample.Sample = unchecked((sbyte)sonicArrangerFile.Waves[instr.SampleWaveNo].Data[index]);
+                        if (stopPos <= index)
+                            index = startPos - 1;
+                        ++index;
+                        currentSample[index] = unchecked((sbyte)-currentSample[index]);
                         break;
+                    }
                     case SonicArranger.Instrument.Effect.ShackWave1:
                         // TODO
                         break;
