@@ -382,8 +382,18 @@ namespace SonicArranger
                         break;
                     }
                     case SonicArranger.Instrument.Effect.AlienVoice:
-                        // TODO
+                    {
+                        // This just adds two waves together
+                        int effectWave = instr.Effect1;
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        byte[] data = effectWave >= sonicArrangerFile.Waves.Length ? null : sonicArrangerFile.Waves[effectWave].Data;
+                        for (int i = startPos; i <= stopPos; ++i)
+                        {
+                            currentSample[i] = unchecked((sbyte)(currentSample[i] + (data == null ? 0 : data[i])));
+                        }
                         break;
+                    }
                     case SonicArranger.Instrument.Effect.PolyNegator:
                         // TODO
                         break;
