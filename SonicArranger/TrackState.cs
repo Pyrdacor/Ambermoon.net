@@ -255,6 +255,7 @@ namespace SonicArranger
             if (instrument.Template.SynthMode)
             {
                 // TODO: apply effects (only for synthethic instruments)
+                ApplyInstrumentEffects(instrument, ref period);
             }
 
             int volume = instrument.NoteVolume;
@@ -323,6 +324,103 @@ namespace SonicArranger
             // Update Paula track state
             state.Period = period;
             state.Volume = volume;
+        }
+
+        void ApplyInstrumentEffects(Instrument instrument, ref int period)
+        {
+            var instr = instrument.Template;
+            var currentSample = paulaState.CurrentSamples[trackIndex];
+
+            if (--instrument.EffectDelayCounter == 0)
+            {
+                instrument.EffectDelayCounter = Math.Max(1, (int)instr.EffectDelay);
+
+                switch (instr.EffectNumber)
+                {
+                    case SonicArranger.Instrument.Effect.NoEffect:
+                        break;
+                    case SonicArranger.Instrument.Effect.WaveNegator:
+                    {
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        if (currentSample.Index >= startPos && currentSample.Index <= stopPos)
+                        {
+                            if (currentSample.Sample == -128)
+                                currentSample.Sample = 127;
+                            else
+                                currentSample.Sample = (sbyte)-currentSample.Sample;
+                        }
+                        break;
+                    }
+                    case SonicArranger.Instrument.Effect.FreeNegator:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.RotateVert:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.RotateHdri:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.AlienVoice:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.PolyNegator:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.ShackWave1:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.ShackWave2:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.Metawdrpk:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.LaserAwf:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.WaveAlias:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.NoiseGenerator:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.LowPassFilter1:
+                    {
+                        int deltaVal = instr.Effect1;
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        for (int i = startPos; i <= stopPos; ++i)
+                        {
+                            var next = i == stopPos ? currentSample[startPos] : currentSample[i + 1];
+                            var diff = Math.Abs(currentSample[i] - next);
+
+                            if (deltaVal < diff)
+                            {
+                                if (next >= currentSample[i])
+                                    currentSample[i] += 2;
+                                else
+                                    currentSample[i] -= 2;
+                            }
+                        }
+                        break;
+                    }
+                    case SonicArranger.Instrument.Effect.LowPassFilter2:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.Oscillator1:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.NoiseGenerator2:
+                        // TODO
+                        break;
+                    case SonicArranger.Instrument.Effect.FMDrum:
+                        // TODO
+                        break;
+                    default:
+                        throw new NotSupportedException($"Unknown instrument effect: 0x{(int)instr.EffectNumber:x2}.");
+                }
+            }
         }
     }
 }

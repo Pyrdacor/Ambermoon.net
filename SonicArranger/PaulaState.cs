@@ -9,7 +9,7 @@ namespace SonicArranger
     /// 
     /// It is documented at http://amiga-dev.wikidot.com/information:hardware.
     /// </summary>
-    public class PaulaState
+    internal class PaulaState
     {
         public const int NumTracks = 4;
 
@@ -83,10 +83,51 @@ namespace SonicArranger
             public double StartPlayTime { get; set; }
         }
 
+        public interface ICurrentSample
+        {
+            sbyte Sample { get; set; }
+            int Index { get; }
+            int Length { get; }
+            sbyte this[int index] { get; set; }
+        }
+
+        class CurrentSample : ICurrentSample
+        {
+            readonly CurrentTrackState currentTrackState;
+
+            public CurrentSample(CurrentTrackState currentTrackState)
+            {
+                this.currentTrackState = currentTrackState;
+            }
+
+            public int Index { get; set; } = 0;
+            public int NextIndex { get; set; } = 1;
+            public double Gamma { get; set; } = 0.0;
+            public int Length => currentTrackState.Data?.Length ?? 0;
+
+            public sbyte Sample
+            {
+                get => this[Index];
+                set => this[Index] = value;
+            }
+
+            public sbyte this[int index]
+            {
+                get => currentTrackState.Data == null ? (sbyte)0 : unchecked((sbyte)currentTrackState.Data[index]);
+                set
+                {
+                    if (currentTrackState.Data != null)
+                        currentTrackState.Data[index] = unchecked((byte)value);
+                }
+            }
+        }
+
         public delegate void TrackFinishedHandler(int trackIndex, double currentPlayTime);
         public event TrackFinishedHandler TrackFinished;
         public readonly TrackState[] Tracks = new TrackState[NumTracks];
         readonly CurrentTrackState[] currentTrackStates = new CurrentTrackState[NumTracks];
+        readonly CurrentSample[] currentSamples = new CurrentSample[4];
+        public ICurrentSample[] CurrentSamples => currentSamples;
         const double palClockFrequency = 7093789.2;
         const double ntscClockFrequency = 7159090.5;
         double clockFrequency = palClockFrequency;
@@ -98,6 +139,7 @@ namespace SonicArranger
             {
                 Tracks[i] = new TrackState();
                 currentTrackStates[i] = new CurrentTrackState();
+                currentSamples[i] = new CurrentSample(currentTrackStates[i]);
             }
         }
 
@@ -117,6 +159,8 @@ namespace SonicArranger
                 var trackState = currentTrackStates[i];
                 trackState.Data = null;
                 trackState.StartPlayTime = 0.0;
+
+                currentSamples[i].Index = 0;
             }
         }
 
@@ -130,6 +174,7 @@ namespace SonicArranger
 
             track.Data = null;
             trackState.Data = null;
+            currentSamples[trackIndex].Index = 0;
         }
 
         public void StartTrackData(int trackIndex, double currentPlayTime)
@@ -151,6 +196,8 @@ namespace SonicArranger
                 Buffer.BlockCopy(track.Data, track.DataIndex, trackState.Data, 0, size);
                 trackState.StartPlayTime = currentPlayTime;
             }
+
+            currentSamples[trackIndex].Index = 0;
         }
 
         public double ProcessTrack(int trackIndex, double currentPlaybackTime)
@@ -158,15 +205,43 @@ namespace SonicArranger
             if (trackIndex < 0 || trackIndex > NumTracks)
                 throw new IndexOutOfRangeException("Invalid track index.");
 
+            var data = currentTrackStates[trackIndex].Data;
+
+            if (data == null || Tracks[trackIndex].Period < 0.01)
+                return 0.0;
+
+            var currentSample = currentSamples[trackIndex];
+            double leftValue = unchecked((sbyte)data[currentSample.Index]) / 128.0;
+            double rightValue = unchecked((sbyte)data[currentSample.NextIndex]) / 128.0;
+
+            return Tracks[trackIndex].Volume * (leftValue + currentSample.Gamma * (rightValue - leftValue)) / 64.0;
+        }
+
+        public void UpdateCurrentSample(int trackIndex, double currentPlaybackTime)
+        {
+            if (trackIndex < 0 || trackIndex > NumTracks)
+                throw new IndexOutOfRangeException("Invalid track index.");
+
             var trackState = currentTrackStates[trackIndex];
+            var currentSample = currentSamples[trackIndex];
 
             if (trackState.Data == null || trackState.StartPlayTime > currentPlaybackTime)
-                return 0.0;
+            {
+                currentSample.Index = 0;
+                currentSample.NextIndex = 1;
+                currentSample.Gamma = 0.0;
+                return;
+            }
 
             var period = Tracks[trackIndex].Period;
 
             if (period < 0.01)
-                return 0.0;            
+            {
+                currentSample.Index = 0;
+                currentSample.NextIndex = 1;
+                currentSample.Gamma = 0.0;
+                return;
+            }
 
             double samplesPerSecond = clockFrequency / (2.0 * period);
             double trackTime = currentPlaybackTime - trackState.StartPlayTime;
@@ -180,20 +255,22 @@ namespace SonicArranger
                 TrackFinished?.Invoke(trackIndex, currentPlaybackTime);
 
                 if (trackState.Data == null)
-                    return 0.0;
+                {
+                    currentSample.Index = 0;
+                    currentSample.NextIndex = 1;
+                    currentSample.Gamma = 0.0;
+                    return;
+                }
 
                 index -= data.Length;
-                data = trackState.Data;                
+                data = trackState.Data;
                 leftIndex = 0;
                 trackState.StartPlayTime = currentPlaybackTime;
             }
 
-            int rightIndex = leftIndex == data.Length - 1 ? 0 : leftIndex + 1;
-            double gamma = index - leftIndex;
-            double leftValue = unchecked((sbyte)data[leftIndex]) / 128.0;
-            double rightValue = unchecked((sbyte)data[rightIndex]) / 128.0;
-
-            return Tracks[trackIndex].Volume * (leftValue + gamma * (rightValue - leftValue)) / 64.0;
+            currentSample.Index = leftIndex;
+            currentSample.NextIndex = leftIndex == data.Length - 1 ? 0 : leftIndex + 1;
+            currentSample.Gamma = index - leftIndex;
         }
 
         public double Process(double currentPlaybackTime)

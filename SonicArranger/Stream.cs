@@ -57,7 +57,7 @@ namespace SonicArranger
             // We store 2 seconds of data
             buffer = new byte[2 * sampleRate * (stereo ? 2 : 1)];
 
-            interruptDelay = 1000.0 / this.song.NBIrqps;
+            interruptDelay = 1.0 / this.song.NBIrqps;
 
             Reset();
         }
@@ -159,6 +159,11 @@ namespace SonicArranger
                             endOfStreamIndex = processedAmount + bufferIndex + remainingSamples * (stereo ? 2 : 1);
                         }
                     }
+                }
+
+                for (int i = 0; i < PaulaState.NumTracks; ++i)
+                {
+                    paulaState.UpdateCurrentSample(i, playTime);
                 }
 
                 if (nextInterruptTime <= playTime)
