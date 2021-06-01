@@ -114,6 +114,15 @@ namespace SonicArranger
             {
                 if (this.instrument != null)
                     this.instrument.NoteOff = true;
+                else
+                {
+                    // No note played yet
+                    this.instrument = new Instrument
+                    {
+                        NoteVolume = 64,
+                        FadeOutVolume = 256
+                    };
+                }
 
                 return;
             }
@@ -135,8 +144,8 @@ namespace SonicArranger
                 NotePeriod = Tables.NotePeriodTable[noteId],
                 AdsrFinished = false,
                 NoteOff = false,
-                NoteVolume = 64,
-                FadeOutVolume = 256,
+                NoteVolume = this.instrument == null ? 64 : this.instrument.NoteVolume,
+                FadeOutVolume = this.instrument == null ? 256 : this.instrument.FadeOutVolume,
                 VibratoDelayCounter = instr.VibDelay,
                 VibratoIndex = 0
             };

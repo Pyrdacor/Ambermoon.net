@@ -99,13 +99,19 @@ namespace SonicArranger
             int sizePerSample = stereo ? 2 : 1;
             int bufferIndex = bufferSampleIndex * sizePerSample;
             int size = numSamples * sizePerSample;
+            bool endOfStream = false;
             if (endOfStreamIndex != null && size > endOfStreamIndex.Value - processedAmount)
+            {
                 size = (int)(endOfStreamIndex.Value - processedAmount);
+                numSamples = size / sizePerSample;
+                endOfStream = true;
+            }
             byte[] data = new byte[size];
             Buffer.BlockCopy(buffer, bufferIndex, data, 0, data.Length);
             bufferSampleIndex += numSamples;
+            processedAmount += data.Length;
 
-            if (bufferSampleIndex > sampleRate)
+            if (!endOfStream && bufferSampleIndex > sampleRate)
             {
                 // When we have read more than 1 second of data we will
                 // load more data to the end of the buffer.                
@@ -113,11 +119,17 @@ namespace SonicArranger
                 int loadedSize = buffer.Length - bufferIndex;
                 if (loadedSize != 0)
                     Buffer.BlockCopy(buffer, bufferIndex, buffer, 0, loadedSize);
-                Load(loadedSize, Math.Min(buffer.Length - loadedSize, size - loadedSize) / sizePerSample);
+                if (endOfStreamIndex != null)
+                {
+                    int remainingSize = (int)(endOfStreamIndex.Value - processedAmount) - loadedSize;
+                    Load(loadedSize, Math.Min(remainingSize, (buffer.Length - loadedSize) / sizePerSample));
+                }
+                else
+                {
+                    Load(loadedSize, (buffer.Length - loadedSize) / sizePerSample);
+                }
                 bufferSampleIndex = 0;
             }
-
-            processedAmount += data.Length;
 
             return data;
         }
@@ -126,9 +138,16 @@ namespace SonicArranger
         {
             double tick = 1.0 / sampleRate;
             double deltaTime = (double)numSamples / sampleRate - 0.1 * tick; // - 0.1 tick avoids rounding errors in loop condition
+            double endOfStreamTime = double.MaxValue;
 
             for (double d = 0.0; d < deltaTime; d += tick)
             {
+                if (endOfStreamTime <= playTime)
+                {
+                    endOfStreamIndex = processedAmount + bufferIndex;
+                    return;
+                }
+
                 if (nextNoteTime <= playTime)
                 {
                     ProcessNotes();
@@ -139,8 +158,7 @@ namespace SonicArranger
 
                         if (++patternIndex > song.StopPos)
                         {
-                            endOfStreamIndex = processedAmount + bufferIndex + numSamples * (stereo ? 2 : 1);
-                            return;
+                            endOfStreamTime = nextNoteTime;
                         }
                     }
                 }
