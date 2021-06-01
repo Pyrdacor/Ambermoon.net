@@ -26,14 +26,6 @@ namespace SonicArranger
 
         public bool EndOfStream => endOfStreamIndex == processedAmount;
 
-        static double GetNoteDuration(int speed)
-        {
-            const int quarterNoteDuration = 60000 / 125;
-            int patternEntryDenominator = 96 / speed;
-            int patternEntryFactor = patternEntryDenominator / 4;
-            return (quarterNoteDuration / patternEntryFactor) / 1000.0;
-        }
-
         public Stream(SonicArrangerFile sonicArrangerFile, int song, uint sampleRate, bool stereo, bool pal = true)
         {
             if (sonicArrangerFile == null)
@@ -67,7 +59,7 @@ namespace SonicArranger
             paulaState.Reset(pal);
             playTime = 0.0;
             nextInterruptTime = 0.0;
-            noteDuration = GetNoteDuration(song.SongSpeed);
+            noteDuration = song.GetNoteDuration(song.SongSpeed);
             songSpeed = song.SongSpeed;
             patternIndex = song.StartPos;
             noteIndex = 0;
@@ -198,12 +190,12 @@ namespace SonicArranger
                     var note = sonicArrangerFile.Notes[voice.NoteAddress + noteIndex];
                     int speed = songSpeed;
                     tracks[i].Play(note.Value, note.Instrument == 0 ? (Instrument?)null : sonicArrangerFile.Instruments[note.Instrument - 1], playTime);
-                    tracks[i].ProcessNoteCommand(note.Command, note.CommandInfo, ref speed);                    
+                    tracks[i].ProcessNoteCommand(note.Command, note.CommandInfo, ref speed);
 
                     if (speed != songSpeed)
                     {
                         songSpeed = speed;
-                        noteDuration = GetNoteDuration(speed);
+                        noteDuration = song.GetNoteDuration(speed);
                     }
                 }
 

@@ -7,30 +7,37 @@ namespace SonicArranger
 {
 	/// <summary>
 	/// Timing: There is the primary timing which is
-	/// mostly used for effects and settings. One tick
-	/// is 1/96 note. The exact duration can be set
-	/// by the BPM (beats per minute) setting. But
-	/// "beats" means 1/4 note.
+	/// mostly used for effects and settings. It is
+	/// controlled by the IrqsPerSecond setting which
+	/// is stored as <see cref="Song.NBIrqps"/>. This
+	/// is the number of interrupt calls per second.
+	/// Each interrupt applies effects like ADSR, AMF
+	/// or volume fading.
 	/// 
 	/// Table entries used in patterns normally won't
-	/// use the primary ticks as 1/96 is much too short
+	/// use the primary ticks as it is much too short
 	/// for a sample to play. Therefore the secondary
 	/// timing can be used. It is controlled by the
 	/// song speed which is 6 by default but can be
-	/// changed during playing the song or globally.
+	/// changed during playback or globally.
 	/// 
-	/// The song speed is a factor to use multiple
-	/// 1/96 ticks for one slot in the pattern table.
-	/// So for example song speed 6 means 6 of those
-	/// ticks which means 6 * 1/96 = 1/16 note. Each
-	/// pattern table entry will be one 1/16 note.
+	/// The BPM for song speed 6 is calculated as
+	/// 60 * NBIrqps / 24 which is 125 by default
+	/// as NBIrqps is 50 by default. For other speeds
+	/// this BPM value is just multiplied by speed/6.
 	/// 
-	/// For 125 bpm each 1/4 note has a duration of
-	/// 60000 / 125 = 480 ms. So each 1/16 note has
-	/// a duration of 120 ms which is then also the
-	/// duration of one pattern table entry.
+	/// For example if song speed is 4 and NBIrqps is 50
+	/// the BPM will be 125 * 6 / 4 which is 187.5.
 	/// 
-	/// Sonic Arranger uses 125 bpm by default.
+	/// To get the number of notes per second the
+	/// simple formula NBIrqps/speed can be used.
+	/// For example with default settings (speed=6,
+	/// NBIrqps=50) there are 50/6 notes per second
+	/// which equals 8.333 notes per second.
+	/// 
+	/// So the note duration in seconds is:
+	/// 1/(NBIrqps/speed) = speed/NBIrqps.
+	/// Default a note lasts for 0.12 seconds.
 	/// 
 	/// The volume (amplitude) is always in the range
 	/// 0x00 (0) to 0x40 (64) which means 0% to 100%.
@@ -70,79 +77,6 @@ namespace SonicArranger
 	/// </summary>
 	public class SonicArrangerFile
 	{
-		/// <summary>
-		/// Samples seems to be recorded as F-3 (period value = 160).
-		/// The sample rate formula of protracker is: 7093789.2 / (period * 2)
-		/// 
-		/// So it should be 7093789.2 / 320 = 22168.0913.
-		/// </summary>
-		public const int SampleRate = 22168;
-
-		const double FreqF = 21.83;
-		static readonly double[] BaseNoteFactors = new double[12]
-		{
-			// Recorded as F (21.83 Hz)
-			16.35 / FreqF, // C
-			17.32 / FreqF, // C#/Db
-			18.35 / FreqF, // D
-			19.45 / FreqF, // D#/Eb
-			20.60 / FreqF, // E
-			1.0, // F
-			23.12 / FreqF, // F#/Gb
-			24.50 / FreqF, // G
-			25.96 / FreqF, // G#/Ab
-			27.50 / FreqF, // A
-			29.14 / FreqF, // A#/Bb
-			30.87 / FreqF, // B
-		};
-
-		/// <summary>
-		/// Gets the frequency factor of a note for
-		/// sampled data. The note index is 0-based so
-		/// use Note.Value - 1 here.
-		/// 
-		/// The fine tuning of sonic arranger seems to
-		/// be in the range 0 to 255 so I guess it is
-		/// unsigned value * 1/100th semi-tone up or
-		/// signed value * 1/100th semi-tone.
-		/// </summary>
-		public static double GetNoteFrequencyFactor(int noteIndex, int fineTuning)
-        {
-			const int expOffset = -6;
-
-			double GetFrequencyFactor(int index)
-			{
-				int octave = index / 12;
-				int note = index % 12;
-				return BaseNoteFactors[note] * Math.Pow(2.0, octave + expOffset);
-			}
-
-			if (fineTuning == 0)
-				return GetFrequencyFactor(noteIndex);
-			else if (fineTuning == -100)
-				return GetFrequencyFactor(noteIndex - 1);
-			else if (fineTuning == 100)
-				return GetFrequencyFactor(noteIndex + 1);
-			else if (fineTuning < -100)
-				return GetNoteFrequencyFactor(noteIndex - 1, fineTuning + 100);
-			else if (fineTuning > 100)
-				return GetNoteFrequencyFactor(noteIndex + 1, fineTuning - 100);
-			else if (fineTuning < 0)
-			{
-				double factor = -fineTuning / 100.0;
-				double baseValue = GetFrequencyFactor(noteIndex);
-				double nextValue = GetFrequencyFactor(noteIndex - 1);
-				return baseValue - (baseValue - nextValue) * factor;
-			}
-			else // fineTuning > 0
-			{
-				double factor = fineTuning / 100.0;
-				double baseValue = GetFrequencyFactor(noteIndex);
-				double nextValue = GetFrequencyFactor(noteIndex + 1);
-				return baseValue + (nextValue - baseValue) * factor;
-			}
-		}
-
 		public string Author { get; private set; }
 		public string Version { get; private set; }
 

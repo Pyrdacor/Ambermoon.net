@@ -119,6 +119,7 @@ namespace SonicArranger
                     // No note played yet
                     this.instrument = new Instrument
                     {
+                        NoteOff = true,
                         NoteVolume = 64,
                         FadeOutVolume = 256
                     };
@@ -145,7 +146,7 @@ namespace SonicArranger
                 AdsrFinished = false,
                 NoteOff = false,
                 NoteVolume = this.instrument == null ? 64 : this.instrument.NoteVolume,
-                FadeOutVolume = this.instrument == null ? 256 : this.instrument.FadeOutVolume,
+                FadeOutVolume = 256,
                 VibratoDelayCounter = instr.VibDelay,
                 VibratoIndex = 0
             };
@@ -198,12 +199,12 @@ namespace SonicArranger
             // Note fade out
             if (instrument.NoteOff || instrument.AdsrFinished)
             {
-                if (instrument.FadeOutVolume != 0)
+                if (instrument.FadeOutVolume > 0)
                 {
                     instrument.FadeOutVolume -= 4;
-                    // TODO: Is this right?
-                    state.Volume = (instrument.FadeOutVolume * Math.Max(0, Math.Min(64, (instrument.NoteVolume * instrument.Template.Volume) >> 6))) >> 8;
                 }
+                else // TODO: Is this right?
+                    paulaState.StopTrack(trackIndex);
                 return;
             }
 
@@ -311,10 +312,12 @@ namespace SonicArranger
                 // Normal volume without envelop
                 volume = Math.Max(0, Math.Min(64, (volume * instrument.Template.Volume) >> 6));
 
-                if (instrument.FadeOutVolume != 0)
+                if (instrument.FadeOutVolume > 0)
                 {
                     instrument.FadeOutVolume -= 4;
                 }
+                else // TODO: Is this right?
+                    paulaState.StopTrack(trackIndex);
             }
 
             // Safety checks

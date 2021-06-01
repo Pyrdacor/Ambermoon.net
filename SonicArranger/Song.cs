@@ -10,18 +10,20 @@
 		public short NBIrqps { get; private set; }
 
 		/// <summary>
-		/// Beats per minute.
-		/// 
-		/// Note: Note 100% sure about the formula.
+		/// This is the BPM when song speed is set to 6 (default).
 		/// </summary>
-		public double BPM => BPMFromSpeed(SongSpeed);
+		int baseBPM => 60 * NBIrqps / 24;
 
 		/// <summary>
-		/// Calculates the BPM from a given song speed.
-		/// 
-		/// Note: Note 100% sure about the formula.
+		/// Initial beats per minute.
 		/// </summary>
-		public double BPMFromSpeed(short speed) => 3000 / speed;//(60.0 * NBIrqps) / (speed * 4);
+		public int InitialBPM => GetBPM(SongSpeed);
+
+		public int GetBPM(int songSpeed) => songSpeed == 0 ? 0 : baseBPM * 6 / songSpeed;
+
+		public double GetNotesPerSecond(int songSpeed) => songSpeed == 0 ? 0.0 : (double)NBIrqps / songSpeed;
+
+		public double GetNoteDuration(int songSpeed) => NBIrqps == 0 ? 0.0 : (double)songSpeed / NBIrqps;
 
 		internal Song(ICustomReader reader) : this()
 		{
