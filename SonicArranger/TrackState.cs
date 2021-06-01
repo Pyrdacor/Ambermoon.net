@@ -411,11 +411,22 @@ namespace SonicArranger
                         break;
                     }
                     case SonicArranger.Instrument.Effect.ShackWave1:
-                        // TODO
+                        ProcessShackWave();
                         break;
                     case SonicArranger.Instrument.Effect.ShackWave2:
-                        // TODO
+                    {
+                        ProcessShackWave();
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        int index = startPos + instrument.CurrentEffectRuns;
+                        if (currentSample[index] == -128)
+                            currentSample[index] = 127;
+                        else
+                            currentSample[index] = (sbyte)-currentSample[index];
+                        if (++instrument.CurrentEffectRuns == stopPos - startPos)
+                            instrument.CurrentEffectRuns = 0;
                         break;
+                    }
                     case SonicArranger.Instrument.Effect.Metawdrpk:
                         // TODO
                         break;
@@ -440,8 +451,14 @@ namespace SonicArranger
                         break;
                     }
                     case SonicArranger.Instrument.Effect.NoiseGenerator:
-                        // TODO
+                    {
+                        // Note: Original uses the lower byte of VHPOSR
+                        // which is the horizontal screen position of the beam
+                        // and then uses: currentSample = hBeamPos ^ currentSample
+                        var random = new Random(DateTime.Now.Millisecond);
+                        currentSample.Sample = (sbyte)random.Next(-128, 128);
                         break;
+                    }
                     case SonicArranger.Instrument.Effect.LowPassFilter1:
                     {
                         int deltaVal = instr.Effect1;
@@ -455,9 +472,9 @@ namespace SonicArranger
                             if (deltaVal < diff)
                             {
                                 if (next >= currentSample[i])
-                                    currentSample[i] += 2;
+                                    currentSample[i] = (sbyte)Math.Min(127, currentSample[i] + 2);
                                 else
-                                    currentSample[i] -= 2;
+                                    currentSample[i] = (sbyte)Math.Max(-128, currentSample[i] - 2);
                             }
                         }
                         break;
@@ -487,6 +504,22 @@ namespace SonicArranger
                     }
                     default:
                         throw new NotSupportedException($"Unknown instrument effect: 0x{(int)instr.EffectNumber:x2}.");
+                }
+
+                void ProcessShackWave()
+                {
+                    int effectWave = instr.Effect1;
+                    int startPos = instr.Effect2;
+                    int stopPos = instr.Effect3;
+                    var waveData = sonicArrangerFile.Waves[effectWave].Data;
+                    int offset = currentSample.Index;
+
+                    for (int i = startPos; i <= stopPos; ++i)
+                    {
+                        int waveIndex = offset + i;
+                        var wave = waveIndex >= currentSample.Length || waveIndex >= waveData.Length ? 0 : waveData[waveIndex];
+                        currentSample[i] = unchecked((sbyte)(currentSample[i] + wave));
+                    }
                 }
             }
         }
