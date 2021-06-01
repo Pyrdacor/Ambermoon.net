@@ -21,6 +21,8 @@ namespace SonicArranger
             public int FadeOutVolume { get; set; }
             public int VibratoDelayCounter { get; set; }
             public int VibratoIndex { get; set; }
+            public int Finetuning { get; set; }
+            public int CurrentEffectRuns { get; set; }
         }
 
         readonly PaulaState paulaState;
@@ -148,7 +150,9 @@ namespace SonicArranger
                 NoteVolume = this.instrument == null ? 64 : this.instrument.NoteVolume,
                 FadeOutVolume = 256,
                 VibratoDelayCounter = instr.VibDelay,
-                VibratoIndex = 0
+                VibratoIndex = 0,
+                Finetuning = instr.FineTuning,
+                CurrentEffectRuns = 0
             };
 
             state.Data = instr.SynthMode
@@ -248,7 +252,7 @@ namespace SonicArranger
                 }
             }
 
-            // TODO: A4+0x84 decreases period
+            period -= instrument.Finetuning; // This is A4+0x84
             // TODO: if DAT_002658f4 != 0, A4+0x84 is increased by A4+0x86
             // I guess it is some pitch up effect/slider
 
@@ -410,8 +414,22 @@ namespace SonicArranger
                         // TODO
                         break;
                     case SonicArranger.Instrument.Effect.WaveAlias:
-                        // TODO
+                    {
+                        int deltaVal = instr.Effect1;
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+
+                        for (int i = startPos; i <= stopPos; ++i)
+                        {
+                            var next = i == stopPos ? currentSample[startPos] : currentSample[i + 1];
+
+                            if (currentSample[i] <= next)
+                                currentSample[i] = unchecked((sbyte)(currentSample[i] + deltaVal));
+                            else
+                                currentSample[i] = unchecked((sbyte)(currentSample[i] - deltaVal));
+                        }
                         break;
+                    }
                     case SonicArranger.Instrument.Effect.NoiseGenerator:
                         // TODO
                         break;
@@ -445,8 +463,19 @@ namespace SonicArranger
                         // TODO
                         break;
                     case SonicArranger.Instrument.Effect.FMDrum:
-                        // TODO
+                    {
+                        int level = instr.Effect1;
+                        int factor = instr.Effect2;
+                        int repeats = instr.Effect3;
+                        if (instrument.CurrentEffectRuns > repeats)
+                        {
+                            instrument.Finetuning = instr.FineTuning;
+                            instrument.CurrentEffectRuns = 0;
+                        }
+                        instrument.Finetuning -= level * factor;
+                        ++instrument.CurrentEffectRuns;
                         break;
+                    }
                     default:
                         throw new NotSupportedException($"Unknown instrument effect: 0x{(int)instr.EffectNumber:x2}.");
                 }
