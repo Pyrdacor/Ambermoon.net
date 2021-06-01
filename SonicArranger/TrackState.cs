@@ -365,13 +365,22 @@ namespace SonicArranger
                         int stopPos = instr.Effect3;
                         for (int i = startPos; i <= stopPos; ++i)
                         {
-                            currentSample.Sample = unchecked((sbyte)(currentSample.Sample + deltaVal));
+                            currentSample[i] = unchecked((sbyte)(currentSample[i] + deltaVal));
                         }
                         break;
                     }
                     case SonicArranger.Instrument.Effect.RotateHorizontal:
-                        // TODO
+                    {
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        sbyte first = currentSample[startPos];
+                        for (int i = startPos; i < stopPos; ++i)
+                        {
+                            currentSample[i] = currentSample[i + 1];
+                        }
+                        currentSample[stopPos] = first;
                         break;
+                    }
                     case SonicArranger.Instrument.Effect.AlienVoice:
                         // TODO
                         break;
