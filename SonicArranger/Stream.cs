@@ -138,15 +138,11 @@ namespace SonicArranger
         {
             double tick = 1.0 / sampleRate;
             double deltaTime = (double)numSamples / sampleRate - 0.1 * tick; // - 0.1 tick avoids rounding errors in loop condition
-            double endOfStreamTime = double.MaxValue;
 
             for (double d = 0.0; d < deltaTime; d += tick)
             {
-                if (endOfStreamTime <= playTime)
-                {
-                    endOfStreamIndex = processedAmount + bufferIndex;
+                if (endOfStreamIndex != null && endOfStreamIndex == processedAmount + bufferIndex)
                     return;
-                }
 
                 if (nextNoteTime <= playTime)
                 {
@@ -158,7 +154,9 @@ namespace SonicArranger
 
                         if (++patternIndex > song.StopPos)
                         {
-                            endOfStreamTime = nextNoteTime;
+                            // one full note till the end which lasts for noteDuration
+                            int remainingSamples = (int)Math.Ceiling(noteDuration * sampleRate);
+                            endOfStreamIndex = processedAmount + bufferIndex + remainingSamples * (stereo ? 2 : 1);
                         }
                     }
                 }
