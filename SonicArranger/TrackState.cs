@@ -30,12 +30,16 @@ namespace SonicArranger
             public int FadeOutVolume { get; set; }
             public int VibratoDelayCounter { get; set; }
             public int VibratoIndex { get; set; }
+            // A4+0x84
             public int Finetuning { get; set; }
+            // A4+0x86
+            public int PitchReductionPerTick { get; set; }
             public int CurrentEffectRuns { get; set; }
             public int CurrentEffectIndex { get; set; }
             public int LastNotePeriod { get; set; }
             public int LastNoteIndex { get; set; }
             public int CurrentNoteIndex { get; set; }
+            public bool FirstNoteTick { get; set; }
         }
 
         readonly PaulaState paulaState;
@@ -111,7 +115,7 @@ namespace SonicArranger
                     // TODO
                     break;
                 case 0xF: // Set speed
-                    songSpeed = param;
+                    songSpeed = Math.Max(0, Math.Min((int)param, 16));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Invalid note command.");
@@ -134,7 +138,8 @@ namespace SonicArranger
             playState.VibratoDelayCounter = instrument.VibDelay;
             playState.VibratoIndex = 0;
             playState.LastNotePeriod = 0;
-            
+            playState.PitchReductionPerTick = 0;
+
             state.Data = instrument.SynthMode
                 ? sonicArrangerFile.Waves[instrument.SampleWaveNo].Data
                 : sonicArrangerFile.Samples[instrument.SampleWaveNo].Data;
@@ -171,6 +176,8 @@ namespace SonicArranger
         void Mute()
         {
             playState.NoteOff = true;
+            playState.AdsrFinished = true;
+            playState.EffectFinished = true;
             playState.NoteVolume = 0;
             playState.FadeOutVolume = 0;
             paulaState.StopTrack(trackIndex);
@@ -183,6 +190,8 @@ namespace SonicArranger
         public void Play(int noteId, int noteInstrument, int noteTranspose, int soundTranspose,
             Note.Flags noteFlags, double currentPlayTime)
         {
+            playState.FirstNoteTick = true;
+
             if (noteId == 0)
             {
                 if (noteInstrument != 0)
@@ -255,6 +264,9 @@ namespace SonicArranger
             if (playState == null)
                 return;
 
+            bool firstTick = playState.FirstNoteTick;
+            playState.FirstNoteTick = false;
+
             // Note fade out
             if (playState.NoteOff || playState.AdsrFinished || playState.Instrument == null)
             {
@@ -306,9 +318,9 @@ namespace SonicArranger
                 }
             }
 
-            period -= playState.Finetuning; // This is A4+0x84
-            // TODO: if DAT_002658f4 != 0, A4+0x84 is increased by A4+0x86
-            // I guess it is some pitch up effect/slider
+            period -= playState.Finetuning;
+            if (!firstTick)
+                playState.Finetuning -= playState.PitchReductionPerTick;
 
             // Instrument effects
             if (instrument.SynthMode && !playState.EffectFinished)
