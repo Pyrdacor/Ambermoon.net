@@ -630,9 +630,17 @@ namespace SonicArranger
                     case Instrument.Effect.Metawdrpk:
                         // TODO
                         break;
-                    case Instrument.Effect.LaserAwf:
-                        // TODO
+                    case Instrument.Effect.LaserAmf:
+                    {
+                        int detune = instr.Effect2;
+                        int repeats = instr.Effect3;
+                        if (playState.CurrentEffectRuns < repeats)
+                        {
+                            playState.Finetuning += detune;
+                            ++playState.CurrentEffectRuns;
+                        }
                         break;
+                    }
                     case Instrument.Effect.WaveAlias:
                     {
                         int deltaVal = instr.Effect1;

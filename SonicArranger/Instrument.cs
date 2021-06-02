@@ -64,7 +64,7 @@
 			/// Effect2: Detune
 			/// Effect3: Repeats
 			/// </summary>
-			LaserAwf,
+			LaserAmf,
 			/// <summary>
 			/// Effect1: DeltaVal
 			/// Effect2: StartPnt
