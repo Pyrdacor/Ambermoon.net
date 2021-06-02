@@ -5,9 +5,9 @@ namespace SonicArranger
 {
     internal class TrackState
     {
-        class Instrument
+        class PlayState
         {
-            public SonicArranger.Instrument Template { get; set; }
+            public Instrument? Instrument { get; set; }
             public int EffectDelayCounter { get; set; }
             public int AmfDelayCounter { get; set; }
             public int AdsrDelayCounter { get; set; }
@@ -15,7 +15,16 @@ namespace SonicArranger
             public int AdsrIndex { get; set; }
             public int AmfIndex { get; set; }
             public int NotePeriod { get; set; }
+            /// <summary>
+            /// This is used if the ADSR repeat portion is
+            /// 0 and the full ADSR wave was processed.
+            /// </summary>
             public bool AdsrFinished { get; set; }
+            /// <summary>
+            /// This is used for effects that can theoretically be
+            /// applied repeated but has a repeat portion of 0.
+            /// </summary>
+            public bool EffectFinished { get; set; }
             public bool NoteOff { get; set; }
             public int NoteVolume { get; set; }
             public int FadeOutVolume { get; set; }
@@ -23,13 +32,17 @@ namespace SonicArranger
             public int VibratoIndex { get; set; }
             public int Finetuning { get; set; }
             public int CurrentEffectRuns { get; set; }
+            public int CurrentEffectIndex { get; set; }
+            public int LastNotePeriod { get; set; }
+            public int LastNoteIndex { get; set; }
+            public int CurrentNoteIndex { get; set; }
         }
 
         readonly PaulaState paulaState;
         readonly PaulaState.TrackState state;
         readonly int trackIndex;
         readonly SonicArrangerFile sonicArrangerFile;
-        Instrument instrument = null;
+        readonly PlayState playState = new PlayState();
 
         public TrackState(int index, PaulaState paulaState, SonicArrangerFile sonicArrangerFile)
         {
@@ -52,11 +65,11 @@ namespace SonicArranger
             {
                 case 0x0: // No command
                     break;
-                case 0x1:
+                case 0x1: // Pitch fade?
                     // TODO
                     break;
                 case 0x2: // Set ADSR data index?
-                    instrument.AdsrIndex = param; // TODO: out of range checks, etc
+                    playState.AdsrIndex = param; // TODO: out of range checks, etc
                     break;
                 case 0x3:
                     // TODO
@@ -88,8 +101,8 @@ namespace SonicArranger
                     // TODO
                     break;
                 case 0xC: // Set volume
-                    instrument.NoteVolume = Math.Max(0, Math.Min(64, (int)param));
-                    instrument.FadeOutVolume = ((instrument.Template.Volume * instrument.NoteVolume) >> 6) * 4;
+                    playState.NoteVolume = Math.Max(0, Math.Min(64, (int)param));
+                    playState.FadeOutVolume = ((paulaState.MasterVolume * playState.NoteVolume) >> 6) * 4;
                     break;
                 case 0xD:
                     // TODO
@@ -105,70 +118,112 @@ namespace SonicArranger
             }
         }
 
-        /// <summary>
-        /// This should be called whenever a new note or instrument
-        /// is played.
-        /// </summary>
-        public void Play(int noteId, SonicArranger.Instrument? instrument,
-            double currentPlayTime)
+        void InitState(int noteId, int instrumentIndex, double currentPlayTime)
         {
-            if (noteId == 0 || instrument == null) // No note
-            {
-                if (this.instrument != null)
-                    this.instrument.NoteOff = true;
-                else
-                {
-                    // No note played yet
-                    this.instrument = new Instrument
-                    {
-                        NoteOff = true,
-                        NoteVolume = 64,
-                        FadeOutVolume = 256
-                    };
-                }
+            if (instrumentIndex <= 0)
+                throw new ArgumentOutOfRangeException("Expected instrument index to be > 0.");
 
-                return;
-            }
+            var instrument = sonicArrangerFile.Instruments[instrumentIndex - 1];
 
-            if (noteId > 9 * 12)
-                throw new ArgumentOutOfRangeException(nameof(noteId));
+            ResetEffectState();
 
-            var instr = instrument.Value;
-
-            this.instrument = new Instrument
-            {
-                Template = instr,
-                EffectDelayCounter = instr.EffectDelay,
-                AmfDelayCounter = instr.AmfDelay,
-                AdsrDelayCounter = instr.AdsrDelay,
-                SustainCounter = instr.SustainVal,
-                AdsrIndex = 0,
-                AmfIndex = 0,
-                NotePeriod = Tables.NotePeriodTable[noteId],
-                AdsrFinished = false,
-                NoteOff = false,
-                NoteVolume = this.instrument == null ? 64 : this.instrument.NoteVolume,
-                FadeOutVolume = 256,
-                VibratoDelayCounter = instr.VibDelay,
-                VibratoIndex = 0,
-                Finetuning = instr.FineTuning,
-                CurrentEffectRuns = 0
-            };
-
-            state.Data = instr.SynthMode
-                ? sonicArrangerFile.Waves[instr.SampleWaveNo].Data
-                : sonicArrangerFile.Samples[instr.SampleWaveNo].Data;
-            int length = instr.Length * 2;
-            if (!instr.SynthMode && instr.Repeat > 1)
-                length += instr.Repeat * 2;
+            playState.Instrument = instrument;
+            playState.NoteOff = false;
+            playState.NotePeriod = Tables.NotePeriodTable[noteId];
+            playState.NoteVolume = instrument.Volume;
+            playState.VibratoDelayCounter = instrument.VibDelay;
+            playState.VibratoIndex = 0;
+            playState.LastNotePeriod = 0;
+            
+            state.Data = instrument.SynthMode
+                ? sonicArrangerFile.Waves[instrument.SampleWaveNo].Data
+                : sonicArrangerFile.Samples[instrument.SampleWaveNo].Data;
+            int length = instrument.Length * 2;
+            if (!instrument.SynthMode && instrument.Repeat > 1)
+                length += instrument.Repeat * 2;
             if (length > state.Data.Length)
                 throw new ArgumentOutOfRangeException("Length + repeat is greater than the sample data size.");
             else if (length < state.Data.Length)
                 state.Data = state.Data.Take(length).ToArray();
             state.DataIndex = 0;
-            state.Period = this.instrument.NotePeriod;
-            state.Volume = (this.instrument.NoteVolume * instrument.Value.Volume) >> 6;
+            state.Period = playState.NotePeriod;
+            state.Volume = (playState.NoteVolume * paulaState.MasterVolume) >> 6;
             paulaState.StartTrackData(trackIndex, currentPlayTime);
+        }
+
+        void ResetEffectState()
+        {
+            var instrument = playState.Instrument;
+            playState.Finetuning = instrument?.FineTuning ?? 0;
+            playState.EffectDelayCounter = instrument?.EffectDelay ?? 1;
+            playState.AmfDelayCounter = instrument?.AmfDelay ?? 1;
+            playState.AdsrDelayCounter = instrument?.AdsrDelay ?? 1;
+            playState.SustainCounter = instrument?.SustainVal ?? 1;
+            playState.CurrentEffectIndex = instrument?.Effect2 ?? 0;
+            playState.CurrentEffectRuns = 0;
+            playState.AdsrIndex = 0;
+            playState.AmfIndex = 0;
+            playState.AdsrFinished = false;
+            playState.EffectFinished = false;
+            playState.FadeOutVolume = ((playState.NoteVolume * paulaState.MasterVolume) >> 6) * 4;
+        }
+
+        void Mute()
+        {
+            playState.NoteOff = true;
+            playState.NoteVolume = 0;
+            playState.FadeOutVolume = 0;
+            paulaState.StopTrack(trackIndex);
+        }
+
+        /// <summary>
+        /// This should be called whenever a new note or instrument
+        /// is played.
+        /// </summary>
+        public void Play(int noteId, int noteInstrument, int noteTranspose, int soundTranspose,
+            Note.Flags noteFlags, double currentPlayTime)
+        {
+            if (noteId == 0)
+            {
+                if (noteInstrument != 0)
+                    InitState(0, noteInstrument, currentPlayTime);
+            }
+            else
+            {
+                if (noteId != 0x80)
+                {
+                    if (noteId == 0x7f)
+                    {
+                        Mute();
+                    }
+                    else
+                    {
+                        if (!noteFlags.HasFlag(Note.Flags.DisableNoteTranspose))
+                            noteId += noteTranspose;
+                        if (noteId > 9 * 12)
+                            throw new ArgumentOutOfRangeException(nameof(noteId));
+                        if (noteInstrument != 0 && !noteFlags.HasFlag(Note.Flags.DisableSoundTranspose))
+                            noteInstrument += soundTranspose;
+                        playState.LastNoteIndex = playState.CurrentNoteIndex;
+                        playState.CurrentNoteIndex = noteId;
+                        if (playState.LastNoteIndex == 0)
+                            playState.LastNoteIndex = noteId;
+                        if (noteInstrument <= 0)
+                        {
+                            if (playState.Instrument == null)
+                            {
+                                Mute();                                
+                                return;
+                            }
+                            ResetEffectState();
+                        }
+                        else
+                        {
+                            InitState(noteId, noteInstrument, currentPlayTime);
+                        }                        
+                    }
+                }
+            }
         }
 
         void TrackFinished(int trackIndex, double currentPlayTime)
@@ -176,14 +231,14 @@ namespace SonicArranger
             if (this.trackIndex != trackIndex)
                 return;
 
-            if (instrument.Template.Repeat == 1)
+            if (playState.Instrument == null || playState.Instrument.Value.Repeat == 1)
             {
-                // This is a "no loop" marker.
+                // Repeat=1 is a "no loop" marker.
                 paulaState.StopTrack(trackIndex);
             }
-            else if (instrument.Template.Repeat > 0)
+            else if (playState.Instrument.Value.Repeat > 0)
             {
-                state.DataIndex = instrument.Template.Length * 2;
+                state.DataIndex = playState.Instrument.Value.Length * 2;
                 paulaState.StartTrackData(trackIndex, currentPlayTime);
             }
 
@@ -197,91 +252,92 @@ namespace SonicArranger
         /// </summary>
         public void Tick()
         {
-            if (instrument == null)
+            if (playState == null)
                 return;
 
             // Note fade out
-            if (instrument.NoteOff || instrument.AdsrFinished)
+            if (playState.NoteOff || playState.AdsrFinished || playState.Instrument == null)
             {
-                if (instrument.FadeOutVolume > 0)
+                if (playState.FadeOutVolume > 0)
                 {
-                    instrument.FadeOutVolume -= 4;
+                    playState.FadeOutVolume -= 4;
                 }
-                else // TODO: Is this right?
-                    paulaState.StopTrack(trackIndex);
                 return;
             }
 
-            var period = instrument.NotePeriod;
+            var instrument = playState.Instrument.Value;
+            var period = playState.NotePeriod;
 
             // Vibrato effect
-            if (instrument.VibratoDelayCounter != -1)
+            if (playState.VibratoDelayCounter != -1)
             {
-                if (--instrument.VibratoDelayCounter == 0)
+                if (--playState.VibratoDelayCounter == 0)
                 {
-                    instrument.VibratoDelayCounter = instrument.Template.VibDelay;
+                    playState.VibratoDelayCounter = instrument.VibDelay;
 
-                    if (instrument.Template.VibLevel != 0)
+                    if (instrument.VibLevel != 0)
                     {
-                        period += unchecked((sbyte)Tables.VibratoTable[instrument.VibratoIndex]) * 4 / instrument.Template.VibLevel;
+                        period += unchecked((sbyte)Tables.VibratoTable[playState.VibratoIndex]) * 4 / instrument.VibLevel;
                     }
 
-                    instrument.VibratoIndex = (instrument.VibratoIndex + instrument.Template.VibSpeed) & 0xff;
+                    playState.VibratoIndex = (playState.VibratoIndex + instrument.VibSpeed) & 0xff;
                 }
             }
 
             // AMF (pitch amplifier)
-            int amfTotalLength = Math.Min(128, instrument.Template.AmfLength + instrument.Template.AmfRepeat);
-            if (amfTotalLength != 0 && instrument.Template.AmfWave < sonicArrangerFile.AmfWaves.Length)
+            int amfTotalLength = Math.Min(128, instrument.AmfLength + instrument.AmfRepeat);
+            if (amfTotalLength != 0 && instrument.AmfWave < sonicArrangerFile.AmfWaves.Length)
             {
-                byte amfData = sonicArrangerFile.AmfWaves[instrument.Template.AmfWave].Data[instrument.AmfIndex];
+                byte amfData = sonicArrangerFile.AmfWaves[instrument.AmfWave].Data[playState.AmfIndex];
                 period -= unchecked((sbyte)amfData);
 
-                if (--instrument.AmfDelayCounter == 0)
+                if (--playState.AmfDelayCounter == 0)
                 {
-                    instrument.AmfDelayCounter = instrument.Template.AmfDelay;
-                    ++instrument.AmfIndex;
+                    playState.AmfDelayCounter = instrument.AmfDelay;
+                    ++playState.AmfIndex;
 
-                    if (instrument.AmfIndex >= amfTotalLength)
+                    if (playState.AmfIndex >= amfTotalLength)
                     {
-                        if (instrument.Template.AmfRepeat == 0)
-                            instrument.AmfIndex = instrument.Template.AmfLength - 1;
+                        if (instrument.AmfRepeat == 0)
+                            playState.AmfIndex = instrument.AmfLength - 1;
                         else
-                            instrument.AmfIndex = instrument.Template.AmfLength;
+                            playState.AmfIndex = instrument.AmfLength;
                     }
                 }
             }
 
-            period -= instrument.Finetuning; // This is A4+0x84
+            period -= playState.Finetuning; // This is A4+0x84
             // TODO: if DAT_002658f4 != 0, A4+0x84 is increased by A4+0x86
             // I guess it is some pitch up effect/slider
 
             // Instrument effects
-            if (instrument.Template.SynthMode)
+            if (instrument.SynthMode && !playState.EffectFinished)
             {
-                // TODO: apply effects (only for synthethic instruments)
-                ApplyInstrumentEffects(instrument, ref period);
+                // Note: Changes to pitch/period through effects is only
+                // applied in next tick so only playState.Finetuning will
+                // be changed and used above in the next tick.
+                ApplyInstrumentEffects();
             }
 
-            int volume = instrument.NoteVolume;
+            int volume = playState.NoteVolume;
 
             // ADSR envelop
-            int adsrTotalLength = Math.Min(128, instrument.Template.AdsrLength + instrument.Template.AdsrRepeat);
-            if (adsrTotalLength != 0 && instrument.Template.AdsrWave < sonicArrangerFile.AdsrWaves.Length)
+            int adsrTotalLength = Math.Min(128, instrument.AdsrLength + instrument.AdsrRepeat);
+            if (adsrTotalLength != 0 && instrument.AdsrWave < sonicArrangerFile.AdsrWaves.Length)
             {
-                byte adsrData = sonicArrangerFile.AdsrWaves[instrument.Template.AdsrWave].Data[instrument.AdsrIndex];
-                int adsrVolume = (adsrData * instrument.Template.Volume) >> 6;
+                byte adsrData = sonicArrangerFile.AdsrWaves[instrument.AdsrWave].Data[playState.AdsrIndex];
+                int adsrVolume = (adsrData * instrument.Volume) >> 6;
                 volume = Math.Max(0, Math.Min(64, (volume * adsrVolume) >> 6));
-                instrument.FadeOutVolume = volume * 4;
+                playState.FadeOutVolume = volume * 4;
 
-                if (instrument.AdsrIndex >= instrument.Template.SustainPt)
+                if (playState.AdsrIndex >= instrument.SustainPt)
                 {
                     // Sustain mode
-                    if (instrument.Template.SustainVal != 0) // If 0, keep adsr index forever
+                    if (instrument.SustainVal != 0) // If 0, keep adsr index forever
                     {
-                        if (--instrument.SustainCounter == 0)
+                        if (--playState.SustainCounter == 0)
                         {
-                            instrument.SustainCounter = instrument.Template.SustainVal;
+                            playState.SustainCounter = instrument.SustainVal;
                             ProcessAdsrTick();
                         }
                     }
@@ -293,20 +349,20 @@ namespace SonicArranger
 
                 void ProcessAdsrTick()
                 {
-                    if (--instrument.AdsrDelayCounter == 0)
+                    if (--playState.AdsrDelayCounter == 0)
                     {
-                        instrument.AdsrDelayCounter = instrument.Template.AdsrDelay;
-                        ++instrument.AdsrIndex;
+                        playState.AdsrDelayCounter = instrument.AdsrDelay;
+                        ++playState.AdsrIndex;
 
-                        if (instrument.AdsrIndex >= adsrTotalLength)
+                        if (playState.AdsrIndex >= adsrTotalLength)
                         {
-                            if (instrument.Template.AdsrRepeat == 0)
-                                instrument.AdsrIndex = instrument.Template.AdsrLength - 1;
+                            if (instrument.AdsrRepeat == 0)
+                                playState.AdsrIndex = instrument.AdsrLength - 1;
                             else
-                                instrument.AdsrIndex = instrument.Template.AdsrLength;
+                                playState.AdsrIndex = instrument.AdsrLength;
 
-                            if (instrument.Template.AdsrRepeat == 0 && adsrData == 0)
-                                instrument.AdsrFinished = true;
+                            if (instrument.AdsrRepeat == 0 && adsrData == 0)
+                                playState.AdsrFinished = true;
                         }
                     }
                 }
@@ -314,14 +370,12 @@ namespace SonicArranger
             else
             {
                 // Normal volume without envelop
-                volume = Math.Max(0, Math.Min(64, (volume * instrument.Template.Volume) >> 6));
+                volume = Math.Max(0, Math.Min(64, (volume * playState.Instrument.Value.Volume) >> 6));
 
-                if (instrument.FadeOutVolume > 0)
+                if (playState.FadeOutVolume > 0)
                 {
-                    instrument.FadeOutVolume -= 4;
+                    playState.FadeOutVolume -= 4;
                 }
-                else // TODO: Is this right?
-                    paulaState.StopTrack(trackIndex);
             }
 
             // Safety checks
@@ -333,20 +387,20 @@ namespace SonicArranger
             state.Volume = volume;
         }
 
-        void ApplyInstrumentEffects(Instrument instrument, ref int period)
+        void ApplyInstrumentEffects()
         {
-            var instr = instrument.Template;
+            var instr = playState.Instrument.Value;
             var currentSample = paulaState.CurrentSamples[trackIndex];
 
-            if (--instrument.EffectDelayCounter == 0)
+            if (--playState.EffectDelayCounter == 0)
             {
-                instrument.EffectDelayCounter = Math.Max(1, (int)instr.EffectDelay);
+                playState.EffectDelayCounter = Math.Max(1, (int)instr.EffectDelay);
 
                 switch (instr.EffectNumber)
                 {
-                    case SonicArranger.Instrument.Effect.NoEffect:
-                        break;
-                    case SonicArranger.Instrument.Effect.WaveNegator:
+                    case Instrument.Effect.NoEffect:
+                        return;
+                    case Instrument.Effect.WaveNegator:
                     {
                         int startPos = instr.Effect2;
                         int stopPos = instr.Effect3;
@@ -359,10 +413,38 @@ namespace SonicArranger
                         }
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.FreeNegator:
-                        // TODO
+                    case Instrument.Effect.FreeNegator:
+                    {
+                        if (this.playState.AdsrFinished || this.playState.EffectFinished)
+                            return;
+                        int effectWave = instr.Effect1;
+                        int waveLen = instr.Effect2;
+                        int waveRep = instr.Effect3;
+                        int offset = sonicArrangerFile.Waves[effectWave].Data[this.playState.CurrentEffectRuns] & 0x7f;
+                        int length = Math.Min(currentSample.Length, instr.Length * 2);
+                        Array.Copy(sonicArrangerFile.Waves[instr.SampleWaveNo].Data, offset, currentSample.CopyTarget, offset, length);
+                        for (int i = 0; i < offset; ++i)
+                        {
+                            sbyte input = unchecked((sbyte)sonicArrangerFile.Waves[instr.SampleWaveNo].Data[i]);
+                            if (input == -128)
+                                currentSample.Sample = 127;
+                            else
+                                currentSample.Sample = (sbyte)-input;
+                        }
+                        if (++playState.CurrentEffectRuns < waveLen + waveRep)
+                            return;
+                        playState.CurrentEffectRuns = waveLen;
+                        if (waveRep != 0)
+                            return;
+                        if (offset != 0)
+                        {
+                            --playState.CurrentEffectRuns;
+                            return;
+                        }
+                        this.playState.EffectFinished = true;
                         break;
-                    case SonicArranger.Instrument.Effect.RotateVertical:
+                    }
+                    case Instrument.Effect.RotateVertical:
                     {
                         sbyte deltaVal = (sbyte)instr.Effect1;
                         int startPos = instr.Effect2;
@@ -373,7 +455,7 @@ namespace SonicArranger
                         }
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.RotateHorizontal:
+                    case Instrument.Effect.RotateHorizontal:
                     {
                         int startPos = instr.Effect2;
                         int stopPos = instr.Effect3;
@@ -385,7 +467,7 @@ namespace SonicArranger
                         currentSample[stopPos] = first;
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.AlienVoice:
+                    case Instrument.Effect.AlienVoice:
                     {
                         // This just adds two waves together
                         int effectWave = instr.Effect1;
@@ -398,11 +480,11 @@ namespace SonicArranger
                         }
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.PolyNegator:
+                    case Instrument.Effect.PolyNegator:
                     {
                         int startPos = instr.Effect2;
                         int stopPos = instr.Effect3;
-                        int index = currentSample.Index;
+                        int index = this.playState.CurrentEffectIndex;
                         currentSample.Sample = unchecked((sbyte)sonicArrangerFile.Waves[instr.SampleWaveNo].Data[index]);
                         if (stopPos <= index)
                             index = startPos - 1;
@@ -410,30 +492,30 @@ namespace SonicArranger
                         currentSample[index] = unchecked((sbyte)-currentSample[index]);
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.ShackWave1:
+                    case Instrument.Effect.ShackWave1:
                         ProcessShackWave();
                         break;
-                    case SonicArranger.Instrument.Effect.ShackWave2:
+                    case Instrument.Effect.ShackWave2:
                     {
                         ProcessShackWave();
                         int startPos = instr.Effect2;
                         int stopPos = instr.Effect3;
-                        int index = startPos + instrument.CurrentEffectRuns;
+                        int index = startPos + playState.CurrentEffectRuns;
                         if (currentSample[index] == -128)
                             currentSample[index] = 127;
                         else
                             currentSample[index] = (sbyte)-currentSample[index];
-                        if (++instrument.CurrentEffectRuns == stopPos - startPos)
-                            instrument.CurrentEffectRuns = 0;
+                        if (++playState.CurrentEffectRuns == stopPos - startPos)
+                            playState.CurrentEffectRuns = 0;
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.Metawdrpk:
+                    case Instrument.Effect.Metawdrpk:
                         // TODO
                         break;
-                    case SonicArranger.Instrument.Effect.LaserAwf:
+                    case Instrument.Effect.LaserAwf:
                         // TODO
                         break;
-                    case SonicArranger.Instrument.Effect.WaveAlias:
+                    case Instrument.Effect.WaveAlias:
                     {
                         int deltaVal = instr.Effect1;
                         int startPos = instr.Effect2;
@@ -450,16 +532,16 @@ namespace SonicArranger
                         }
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.NoiseGenerator:
+                    case Instrument.Effect.NoiseGenerator:
                     {
                         // Note: Original uses the lower byte of VHPOSR
                         // which is the horizontal screen position of the beam
                         // and then uses: currentSample = hBeamPos ^ currentSample
                         var random = new Random(DateTime.Now.Millisecond);
-                        currentSample.Sample = (sbyte)random.Next(-128, 128);
+                        currentSample[this.playState.CurrentEffectIndex] = (sbyte)random.Next(-128, 128);
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.LowPassFilter1:
+                    case Instrument.Effect.LowPassFilter1:
                     {
                         int deltaVal = instr.Effect1;
                         int startPos = instr.Effect2;
@@ -479,32 +561,37 @@ namespace SonicArranger
                         }
                         break;
                     }
-                    case SonicArranger.Instrument.Effect.LowPassFilter2:
+                    case Instrument.Effect.LowPassFilter2:
                         // TODO
                         break;
-                    case SonicArranger.Instrument.Effect.Oscillator1:
+                    case Instrument.Effect.Oscillator1:
                         // TODO
                         break;
-                    case SonicArranger.Instrument.Effect.NoiseGenerator2:
+                    case Instrument.Effect.NoiseGenerator2:
                         // TODO
                         break;
-                    case SonicArranger.Instrument.Effect.FMDrum:
+                    case Instrument.Effect.FMDrum:
                     {
                         int level = instr.Effect1;
                         int factor = instr.Effect2;
                         int repeats = instr.Effect3;
-                        if (instrument.CurrentEffectRuns > repeats)
+                        if (playState.CurrentEffectRuns > repeats)
                         {
-                            instrument.Finetuning = instr.FineTuning;
-                            instrument.CurrentEffectRuns = 0;
+                            playState.Finetuning = instr.FineTuning;
+                            playState.CurrentEffectRuns = 0;
                         }
-                        instrument.Finetuning -= level * factor;
-                        ++instrument.CurrentEffectRuns;
+                        playState.Finetuning -= level * factor;
+                        ++playState.CurrentEffectRuns;
                         break;
                     }
                     default:
                         throw new NotSupportedException($"Unknown instrument effect: 0x{(int)instr.EffectNumber:x2}.");
                 }
+
+                // Note: Those effects which use the index have StartPos and StopPos
+                // in Effect2 and Effect3. Other effects are not care anyways.
+                if (++this.playState.CurrentEffectIndex > instr.Effect3)
+                    this.playState.CurrentEffectIndex = instr.Effect2;
 
                 void ProcessShackWave()
                 {
@@ -512,7 +599,7 @@ namespace SonicArranger
                     int startPos = instr.Effect2;
                     int stopPos = instr.Effect3;
                     var waveData = sonicArrangerFile.Waves[effectWave].Data;
-                    int offset = currentSample.Index;
+                    int offset = this.playState.CurrentEffectIndex;
 
                     for (int i = startPos; i <= stopPos; ++i)
                     {

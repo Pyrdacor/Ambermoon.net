@@ -189,7 +189,7 @@ namespace SonicArranger
                     var voice = sonicArrangerFile.Voices[patternIndex * 4 + i];
                     var note = sonicArrangerFile.Notes[voice.NoteAddress + noteIndex];
                     int speed = songSpeed;
-                    tracks[i].Play(note.Value, note.Instrument == 0 ? (Instrument?)null : sonicArrangerFile.Instruments[note.Instrument - 1], playTime);
+                    tracks[i].Play(note.Value, note.Instrument, voice.NoteTranspose, voice.SoundTranspose, note.NoteFlags, playTime);
                     tracks[i].ProcessNoteCommand(note.Command, note.CommandInfo, ref speed);
 
                     if (speed != songSpeed)

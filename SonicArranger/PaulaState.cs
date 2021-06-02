@@ -89,6 +89,7 @@ namespace SonicArranger
             int Index { get; }
             int Length { get; }
             sbyte this[int index] { get; set; }
+            byte[] CopyTarget { get; }
         }
 
         class CurrentSample : ICurrentSample
@@ -104,6 +105,7 @@ namespace SonicArranger
             public int NextIndex { get; set; } = 1;
             public double Gamma { get; set; } = 0.0;
             public int Length => currentTrackState.Data?.Length ?? 0;
+            public byte[] CopyTarget => currentTrackState.Data;
 
             public sbyte Sample
             {
@@ -131,7 +133,12 @@ namespace SonicArranger
         const double palClockFrequency = 7093789.2;
         const double ntscClockFrequency = 7159090.5;
         double clockFrequency = palClockFrequency;
-
+        int masterVolume = 64;
+        public int MasterVolume
+        {
+            get => masterVolume;
+            set => masterVolume = Math.Max(0, Math.Min(value, 64));
+        }
 
         public PaulaState()
         {
