@@ -226,7 +226,7 @@
 			SampleWaveNo = reader.ReadBEInt16();
 			Length = reader.ReadBEInt16();
 			Repeat = reader.ReadBEInt16();
-			reader.ReadBytes(8);
+			reader.ReadBytes(8); // TODO
 			Volume = reader.ReadBEInt16();
 			FineTuning = reader.ReadBEInt16();
 			Portamento = reader.ReadBEInt16();
@@ -245,7 +245,7 @@
 			AdsrRepeat = reader.ReadBEInt16();
 			SustainPt = reader.ReadBEInt16();
 			SustainVal = reader.ReadBEInt16();
-			reader.ReadBytes(16);
+			reader.ReadBytes(16); // TODO
 			Effect1 = reader.ReadBEInt16();
 			EffectNumber = (Effect)reader.ReadBEInt16();
 			Effect2 = reader.ReadBEInt16();

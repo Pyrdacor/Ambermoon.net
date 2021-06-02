@@ -13,33 +13,57 @@ namespace SonicArranger
             public int AdsrDelayCounter { get; set; }
             public int SustainCounter { get; set; }
             public int AdsrIndex { get; set; }
+            /// <summary>
+            /// A4+0xa4
+            /// </summary>
             public int AmfIndex { get; set; }
-            public int NotePeriod { get; set; }
             /// <summary>
             /// This is used if the ADSR repeat portion is
             /// 0 and the full ADSR wave was processed.
+            /// 
+            /// A4+0xb4 bit 0
             /// </summary>
             public bool AdsrFinished { get; set; }
             /// <summary>
             /// This is used for effects that can theoretically be
             /// applied repeated but has a repeat portion of 0.
+            /// 
+            /// A4+0xb4 bit 2
             /// </summary>
             public bool EffectFinished { get; set; }
             public bool NoteOff { get; set; }
             public int NoteVolume { get; set; }
+            /// <summary>
+            /// A4+0xb2
+            /// </summary>
             public int FadeOutVolume { get; set; }
             public int VibratoDelayCounter { get; set; }
             public int VibratoIndex { get; set; }
-            // A4+0x84
+            public int VibratoSpeed { get; set; }
+            public int VibratoLevel { get; set; }
+            /// <summary>
+            /// A4+0x84
+            /// </summary>
             public int Finetuning { get; set; }
-            // A4+0x86
-            public int PitchReductionPerTick { get; set; }
+            /// <summary>
+            /// A4+0x86
+            /// </summary>
+            public int PeriodReductionPerTick { get; set; }
             public int CurrentEffectRuns { get; set; }
             public int CurrentEffectIndex { get; set; }
             public int LastNotePeriod { get; set; }
             public int LastNoteIndex { get; set; }
             public int CurrentNoteIndex { get; set; }
             public bool FirstNoteTick { get; set; }
+            public Note? CurrentNote { get; set; }
+            /// <summary>
+            /// A4+0xae
+            /// </summary>
+            public int CurrentArpeggioIndex { get; set; }
+            /// <summary>
+            /// A4+0xb0
+            /// </summary>
+            public int CurrentArpeggioCommandIteration { get; set; }
         }
 
         readonly PaulaState paulaState;
@@ -63,59 +87,64 @@ namespace SonicArranger
             paulaState.TrackFinished += TrackFinished;
         }
 
-        public void ProcessNoteCommand(byte command, byte param, ref int songSpeed)
+        public void ProcessNoteCommand(Note.NoteCommand command, byte param, ref int songSpeed)
         {
             switch (command)
             {
-                case 0x0: // No command
+                case Note.NoteCommand.None:
+                case Note.NoteCommand.Unused:
                     break;
-                case 0x1: // Pitch fade?
+                case Note.NoteCommand.SlideUp: // smoothly reduce note period, increases pitch
+                    playState.PeriodReductionPerTick = param;
+                    break;
+                case Note.NoteCommand.SetADSRIndex:
+                {
+                    int maxIndex = 0;
+                    if (playState.Instrument != null)
+                    {
+                        var instr = playState.Instrument.Value;
+                        maxIndex = Math.Max(0, instr.AdsrLength + instr.AdsrRepeat - 1);
+                    }
+                    playState.AdsrIndex = Math.Min(param, maxIndex);
+                    break;
+                }
+                case Note.NoteCommand.ResetVibrato:
+                    playState.VibratoDelayCounter = 0;
+                    break;
+                case Note.NoteCommand.SetVibrato:
+                    playState.VibratoSpeed = 2 * (param >> 4);
+                    playState.VibratoLevel = unchecked((sbyte)(160 - (param & 0xf) * 16));
+                    break;
+                case Note.NoteCommand.SetMasterVolume: // in contrast to SetVolume this will affect all channels
+                    paulaState.MasterVolume = Math.Min(64, (int)param);
+                    break;
+                case Note.NoteCommand.SetNotePeriod:
                     // TODO
                     break;
-                case 0x2: // Set ADSR data index?
-                    playState.AdsrIndex = param; // TODO: out of range checks, etc
-                    break;
-                case 0x3:
+                case Note.NoteCommand.MuteNote: // Set note period value to 0 (mute note)
                     // TODO
                     break;
-                case 0x4: // Set vibrato
-                    // TODO: vibrato
-                    // Speed = 2 * (param >> 4)
-                    // Level = 160 - (param & 0xf) * 16
-                    break;
-                case 0x5:
+                case Note.NoteCommand.Unknown9:
                     // TODO
                     break;
-                case 0x6: // Set instrument volume
+                case Note.NoteCommand.Unknown10:
                     // TODO
                     break;
-                case 0x7: // Set note period value
+                case Note.NoteCommand.Unknown11:
                     // TODO
                     break;
-                case 0x8: // Set note period value to 0 (mute note)
-                    // TODO
-                    break;
-                case 0x9:
-                    // TODO
-                    break;
-                case 0xA:
-                    // TODO
-                    break;
-                case 0xB:
-                    // TODO
-                    break;
-                case 0xC: // Set volume
-                    playState.NoteVolume = Math.Max(0, Math.Min(64, (int)param));
+                case Note.NoteCommand.SetVolume:
+                    playState.NoteVolume = Math.Min(64, (int)param);
                     playState.FadeOutVolume = ((paulaState.MasterVolume * playState.NoteVolume) >> 6) * 4;
                     break;
-                case 0xD:
+                case Note.NoteCommand.Unknown13:
                     // TODO
                     break;
-                case 0xE: // Enable LED (and therefore the LPF)
+                case Note.NoteCommand.EnableHardwareLPF: // Enable LED (and therefore the LPF)
                     // TODO
                     break;
-                case 0xF: // Set speed
-                    songSpeed = Math.Max(0, Math.Min((int)param, 16));
+                case Note.NoteCommand.SetSpeed:
+                    songSpeed = Math.Min((int)param, 16);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("Invalid note command.");
@@ -133,12 +162,14 @@ namespace SonicArranger
 
             playState.Instrument = instrument;
             playState.NoteOff = false;
-            playState.NotePeriod = Tables.NotePeriodTable[noteId];
             playState.NoteVolume = instrument.Volume;
             playState.VibratoDelayCounter = instrument.VibDelay;
             playState.VibratoIndex = 0;
+            playState.VibratoLevel = instrument.VibLevel;
+            playState.VibratoSpeed = instrument.VibSpeed;
             playState.LastNotePeriod = 0;
-            playState.PitchReductionPerTick = 0;
+            playState.PeriodReductionPerTick = 0;
+            playState.CurrentArpeggioIndex = 0;
 
             state.Data = instrument.SynthMode
                 ? sonicArrangerFile.Waves[instrument.SampleWaveNo].Data
@@ -151,7 +182,7 @@ namespace SonicArranger
             else if (length < state.Data.Length)
                 state.Data = state.Data.Take(length).ToArray();
             state.DataIndex = 0;
-            state.Period = playState.NotePeriod;
+            state.Period = Tables.NotePeriodTable[noteId]; ;
             state.Volume = (playState.NoteVolume * paulaState.MasterVolume) >> 6;
             paulaState.StartTrackData(trackIndex, currentPlayTime);
         }
@@ -187,9 +218,12 @@ namespace SonicArranger
         /// This should be called whenever a new note or instrument
         /// is played.
         /// </summary>
-        public void Play(int noteId, int noteInstrument, int noteTranspose, int soundTranspose,
-            Note.Flags noteFlags, double currentPlayTime)
+        public void Play(Note note, int noteTranspose, int soundTranspose, double currentPlayTime)
         {
+            int noteId = note.Value;
+            int noteInstrument = note.Instrument;
+            var noteFlags = note.Flags;
+            playState.CurrentNote = note;
             playState.FirstNoteTick = true;
 
             if (noteId == 0)
@@ -207,11 +241,11 @@ namespace SonicArranger
                     }
                     else
                     {
-                        if (!noteFlags.HasFlag(Note.Flags.DisableNoteTranspose))
+                        if (!noteFlags.HasFlag(Note.NoteFlags.DisableNoteTranspose))
                             noteId += noteTranspose;
                         if (noteId > 9 * 12)
                             throw new ArgumentOutOfRangeException(nameof(noteId));
-                        if (noteInstrument != 0 && !noteFlags.HasFlag(Note.Flags.DisableSoundTranspose))
+                        if (noteInstrument != 0 && !noteFlags.HasFlag(Note.NoteFlags.DisableSoundTranspose))
                             noteInstrument += soundTranspose;
                         playState.LastNoteIndex = playState.CurrentNoteIndex;
                         playState.CurrentNoteIndex = noteId;
@@ -268,7 +302,7 @@ namespace SonicArranger
             playState.FirstNoteTick = false;
 
             // Note fade out
-            if (playState.NoteOff || playState.AdsrFinished || playState.Instrument == null)
+            if (playState.CurrentNote == null || playState.NoteOff || playState.AdsrFinished || playState.Instrument == null)
             {
                 if (playState.FadeOutVolume > 0)
                 {
@@ -277,8 +311,54 @@ namespace SonicArranger
                 return;
             }
 
+            var note = playState.CurrentNote.Value;
             var instrument = playState.Instrument.Value;
-            var period = playState.NotePeriod;
+            int noteId = playState.CurrentNoteIndex;
+            int lastNoteId = playState.LastNoteIndex;
+
+            if (note.ArpeggioIndex == 0)
+            {
+                if (note.Command == 0 && // This is also used to influence arpeggio play if the param is != 0
+                    note.CommandInfo != 0)
+                {
+                    // In this case a sequence of "normal note", "note + x semitones", "note + y semitones"
+                    // is played. This is also documented for ProTracker.
+                    if (playState.CurrentArpeggioCommandIteration == 0)
+                    {
+                        // Normal note. Just increase the iteration.
+                        ++playState.CurrentArpeggioCommandIteration;
+                    }
+                    else
+                    {
+                        // Here the notes are adjusted.
+                        if (playState.CurrentArpeggioCommandIteration == 1)
+                        {
+                            noteId += (note.CommandInfo >> 4);
+                            ++playState.CurrentArpeggioCommandIteration;
+                        }
+                        else // 2
+                        {
+                            noteId += note.CommandInfo & 0xf;
+                            playState.CurrentArpeggioCommandIteration = 0;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Arpeggio
+                var arpeggio = instrument.ArpegData[note.ArpeggioIndex];
+                int arpeggioTotalLength = Math.Min(14, arpeggio.Length + arpeggio.Repeat);
+                int index = playState.CurrentArpeggioIndex;
+                int noteOffset = index >= arpeggio.Data.Length ? 0 : arpeggio.Data[index];
+                noteId += noteOffset;
+                lastNoteId += noteOffset;
+                if (++index >= arpeggioTotalLength)
+                    index = arpeggio.Length;
+                playState.CurrentArpeggioIndex = index;
+            }
+
+            int period = Tables.NotePeriodTable[noteId];
 
             // Vibrato effect
             if (playState.VibratoDelayCounter != -1)
@@ -287,12 +367,12 @@ namespace SonicArranger
                 {
                     playState.VibratoDelayCounter = instrument.VibDelay;
 
-                    if (instrument.VibLevel != 0)
+                    if (playState.VibratoLevel != 0)
                     {
-                        period += unchecked((sbyte)Tables.VibratoTable[playState.VibratoIndex]) * 4 / instrument.VibLevel;
+                        period += unchecked((sbyte)Tables.VibratoTable[playState.VibratoIndex]) * 4 / playState.VibratoLevel;
                     }
 
-                    playState.VibratoIndex = (playState.VibratoIndex + instrument.VibSpeed) & 0xff;
+                    playState.VibratoIndex = (playState.VibratoIndex + playState.VibratoSpeed) & 0xff;
                 }
             }
 
@@ -320,7 +400,7 @@ namespace SonicArranger
 
             period -= playState.Finetuning;
             if (!firstTick)
-                playState.Finetuning -= playState.PitchReductionPerTick;
+                playState.Finetuning -= playState.PeriodReductionPerTick;
 
             // Instrument effects
             if (instrument.SynthMode && !playState.EffectFinished)
