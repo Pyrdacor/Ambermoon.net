@@ -488,7 +488,7 @@ namespace SonicArranger
             else
             {
                 // Normal volume without envelop
-                volume = Math.Max(0, Math.Min(64, (volume * playState.Instrument.Value.Volume) >> 6));
+                volume = Math.Max(0, Math.Min(64, (volume * paulaState.MasterVolume) >> 6));
 
                 if (playState.FadeOutVolume > 0)
                 {
@@ -540,7 +540,7 @@ namespace SonicArranger
                         int waveRep = instr.Effect3;
                         int offset = sonicArrangerFile.Waves[effectWave].Data[this.playState.CurrentEffectRuns] & 0x7f;
                         int length = Math.Min(currentSample.Length, instr.Length * 2);
-                        Array.Copy(sonicArrangerFile.Waves[instr.SampleWaveNo].Data, offset, currentSample.CopyTarget, offset, length);
+                        Array.Copy(sonicArrangerFile.Waves[instr.SampleWaveNo].Data, offset, currentSample.CopyTarget, offset, length - offset);
                         for (int i = 0; i < offset; ++i)
                         {
                             sbyte input = unchecked((sbyte)sonicArrangerFile.Waves[instr.SampleWaveNo].Data[i]);
@@ -683,11 +683,20 @@ namespace SonicArranger
                         // TODO
                         break;
                     case Instrument.Effect.Oscillator1:
-                        // TODO
+                        // TODO: this is quiet a monster to implement :D
                         break;
                     case Instrument.Effect.NoiseGenerator2:
-                        // TODO
+                    {
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        var random = new Random(DateTime.Now.Millisecond);
+                        for (int i = startPos; i <= stopPos; ++i)
+                        {
+                            var value = currentSample[i];
+                            currentSample[i] = unchecked((sbyte)((value ^ 5) << 2 | (value >> 6) + random.Next(-128, 128)));
+                        }
                         break;
+                    }
                     case Instrument.Effect.FMDrum:
                     {
                         int level = instr.Effect1;
