@@ -51,7 +51,6 @@ namespace SonicArranger
             public int PeriodReductionPerTick { get; set; }
             public int CurrentEffectRuns { get; set; }
             public int CurrentEffectIndex { get; set; }
-            public int LastNotePeriod { get; set; }
             public int LastNoteIndex { get; set; }
             public int CurrentNoteIndex { get; set; }
             public bool FirstNoteTick { get; set; }
@@ -64,6 +63,14 @@ namespace SonicArranger
             /// A4+0xb0
             /// </summary>
             public int CurrentArpeggioCommandIteration { get; set; }
+            /// <summary>
+            /// A4+0x9a
+            /// </summary>
+            public int CurrentNotePortamentoPeriod { get; set; }
+            /// <summary>
+            /// A4+0x9c
+            /// </summary>
+            public int LastNotePortamentoPeriod { get; set; }
         }
 
         readonly PaulaState paulaState;
@@ -167,9 +174,10 @@ namespace SonicArranger
             playState.VibratoIndex = 0;
             playState.VibratoLevel = instrument.VibLevel;
             playState.VibratoSpeed = instrument.VibSpeed;
-            playState.LastNotePeriod = 0;
             playState.PeriodReductionPerTick = 0;
             playState.CurrentArpeggioIndex = 0;
+            playState.CurrentNotePortamentoPeriod = instrument.Portamento;
+            playState.LastNotePortamentoPeriod = 0;
 
             state.Data = instrument.SynthMode
                 ? sonicArrangerFile.Waves[instrument.SampleWaveNo].Data
@@ -359,6 +367,24 @@ namespace SonicArranger
             }
 
             int period = Tables.NotePeriodTable[noteId];
+
+            // Portamento
+            if (playState.CurrentNotePortamentoPeriod != 0)
+            {
+                if (playState.LastNotePortamentoPeriod == 0)
+                    playState.LastNotePortamentoPeriod = Tables.NotePeriodTable[lastNoteId];
+                int diff = Math.Abs(period - playState.LastNotePortamentoPeriod);
+                if (playState.CurrentNotePortamentoPeriod > diff)
+                    playState.CurrentNotePortamentoPeriod = 0;
+                else
+                {
+                    int add = playState.LastNotePortamentoPeriod < period
+                        ? playState.CurrentNotePortamentoPeriod
+                        : -playState.CurrentNotePortamentoPeriod;
+                    playState.LastNotePortamentoPeriod += add;
+                    period = playState.LastNotePortamentoPeriod;
+                }
+            }
 
             // Vibrato effect
             if (playState.VibratoDelayCounter != -1)
