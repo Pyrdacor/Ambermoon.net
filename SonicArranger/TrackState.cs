@@ -49,6 +49,10 @@ namespace SonicArranger
             /// A4+0x86
             /// </summary>
             public int PeriodReductionPerTick { get; set; }
+            /// <summary>
+            /// A4+0x90
+            /// </summary>
+            public int VolumeChangePerTick { get; set; }
             public int CurrentEffectRuns { get; set; }
             public int CurrentEffectIndex { get; set; }
             public int LastNoteIndex { get; set; }
@@ -125,17 +129,20 @@ namespace SonicArranger
                 case Note.NoteCommand.SetMasterVolume: // in contrast to SetVolume this will affect all channels
                     paulaState.MasterVolume = Math.Min(64, (int)param);
                     break;
-                case Note.NoteCommand.SetNotePeriod:
-                    // TODO
+                case Note.NoteCommand.SetPortamento:
+                    playState.CurrentNotePortamentoPeriod = param;
                     break;
-                case Note.NoteCommand.MuteNote: // Set note period value to 0 (mute note)
-                    // TODO
+                case Note.NoteCommand.ClearPortamento:
+                    playState.CurrentNotePortamentoPeriod = 0;
                     break;
                 case Note.NoteCommand.Unknown9:
                     // TODO
                     break;
-                case Note.NoteCommand.Unknown10:
-                    // TODO
+                case Note.NoteCommand.VolumeSlide:
+                    if ((param & 0xf0) != 0)
+                        playState.VolumeChangePerTick = param >> 4;
+                    else
+                        playState.VolumeChangePerTick = -(param & 0xf);
                     break;
                 case Note.NoteCommand.Unknown11:
                     // TODO
@@ -175,6 +182,7 @@ namespace SonicArranger
             playState.VibratoLevel = instrument.VibLevel;
             playState.VibratoSpeed = instrument.VibSpeed;
             playState.PeriodReductionPerTick = 0;
+            playState.VolumeChangePerTick = 0;
             playState.CurrentArpeggioIndex = 0;
             playState.CurrentNotePortamentoPeriod = instrument.Portamento;
             playState.LastNotePortamentoPeriod = 0;
@@ -496,9 +504,15 @@ namespace SonicArranger
                 }
             }
 
+            playState.NoteVolume -= playState.VolumeChangePerTick;
+
             // Safety checks
             if (period < 124)
                 period = 124;
+            if (playState.NoteVolume < 0)
+                playState.NoteVolume = 0;
+            if (playState.NoteVolume > 64)
+                playState.NoteVolume = 64;
 
             // Update Paula track state
             state.Period = period;
