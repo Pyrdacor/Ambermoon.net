@@ -688,8 +688,29 @@ namespace SonicArranger
                         break;
                     }
                     case Instrument.Effect.LowPassFilter2:
-                        // TODO
+                    {
+                        int effectWave = instr.Effect1;
+                        int startPos = instr.Effect2;
+                        int stopPos = instr.Effect3;
+                        byte[] data = effectWave >= sonicArrangerFile.Waves.Length ? null : sonicArrangerFile.Waves[effectWave].Data;
+                        if (data != null)
+                        {
+                            for (int i = startPos; i <= stopPos; ++i)
+                            {
+                                var next = i == stopPos ? currentSample[startPos] : currentSample[i + 1];
+                                var diff = Math.Abs(currentSample[i] - next);
+
+                                if (data[i] < diff)
+                                {
+                                    if (next >= currentSample[i])
+                                        currentSample[i] = (sbyte)Math.Min(127, currentSample[i] + 2);
+                                    else
+                                        currentSample[i] = (sbyte)Math.Max(-128, currentSample[i] - 2);
+                                }
+                            }
+                        }
                         break;
+                    }
                     case Instrument.Effect.Oscillator1:
                         // TODO: this is quiet a monster to implement :D
                         break;
