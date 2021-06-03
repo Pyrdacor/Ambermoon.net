@@ -580,21 +580,21 @@ namespace SonicArranger
                     }
                     case Instrument.Effect.FreeNegator:
                     {
-                        if (this.playState.InstrumentFinished || this.playState.EffectFinished)
+                        if (playState.InstrumentFinished || playState.EffectFinished)
                             return;
                         int effectWave = instr.Effect1;
                         int waveLen = instr.Effect2;
                         int waveRep = instr.Effect3;
-                        int offset = sonicArrangerFile.Waves[effectWave].Data[this.playState.CurrentEffectRuns] & 0x7f;
+                        int offset = sonicArrangerFile.Waves[effectWave].Data[playState.CurrentEffectRuns] & 0x7f;
                         int length = Math.Min(currentSample.Length, instr.Length * 2);
                         Array.Copy(sonicArrangerFile.Waves[instr.SampleWaveNo].Data, offset, currentSample.CopyTarget, offset, length - offset);
                         for (int i = 0; i < offset; ++i)
                         {
                             sbyte input = unchecked((sbyte)sonicArrangerFile.Waves[instr.SampleWaveNo].Data[i]);
                             if (input == -128)
-                                currentSample.Sample = 127;
+                                currentSample[i] = 127;
                             else
-                                currentSample.Sample = (sbyte)-input;
+                                currentSample[i] = (sbyte)-input;
                         }
                         if (++playState.CurrentEffectRuns < waveLen + waveRep)
                             return;
@@ -606,7 +606,7 @@ namespace SonicArranger
                             --playState.CurrentEffectRuns;
                             return;
                         }
-                        this.playState.EffectFinished = true;
+                        playState.EffectFinished = true;
                         break;
                     }
                     case Instrument.Effect.RotateVertical:
