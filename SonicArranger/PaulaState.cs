@@ -18,7 +18,7 @@ namespace SonicArranger
             byte[] data = null;
             int dataIndex = 0;
 
-            public bool DataChanged { get; private set; } = false;
+            public bool DataChanged { get; set; } = false;
 
             /// <summary>
             /// Source data for playback.
@@ -190,7 +190,7 @@ namespace SonicArranger
             var track = Tracks[trackIndex];
             var trackState = currentTrackStates[trackIndex];
 
-            track.Data = null;
+            //track.Data = null;
             trackState.Data = null;
             currentSamples[trackIndex].Index = 0;
         }
@@ -201,6 +201,7 @@ namespace SonicArranger
                 throw new IndexOutOfRangeException("Invalid track index.");
 
             var track = Tracks[trackIndex];
+            var trackState = currentTrackStates[trackIndex];
 
             if (track.DataChanged)
             {
@@ -209,12 +210,12 @@ namespace SonicArranger
                 if (size <= 0)
                     throw new ArgumentOutOfRangeException("Track data index must be less than the data size.");
 
-                var trackState = currentTrackStates[trackIndex];
                 trackState.Data = new byte[size];
                 Buffer.BlockCopy(track.Data, track.DataIndex, trackState.Data, 0, size);
-                trackState.StartPlayTime = currentPlayTime;
+                track.DataChanged = false;
             }
 
+            trackState.StartPlayTime = currentPlayTime;
             currentSamples[trackIndex].Index = 0;
         }
 

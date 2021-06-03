@@ -101,8 +101,12 @@ namespace SonicArranger
             paulaState.TrackFinished += TrackFinished;
         }
 
-        public void ProcessNoteCommand(Note.NoteCommand command, byte param, ref int songSpeed)
+        public void ProcessNoteCommand(Note.NoteCommand command, byte param, ref int songSpeed,
+            int currentPatternIndex, out int? noteChangeIndex, out int? patternChangeIndex)
         {
+            noteChangeIndex = null;
+            patternChangeIndex = null;
+
             switch (command)
             {
                 case Note.NoteCommand.None:
@@ -147,15 +151,18 @@ namespace SonicArranger
                     else
                         playState.VolumeChangePerTick = -(param & 0xf);
                     break;
-                case Note.NoteCommand.PositionJump: // stop after the current notes and then continue with pattern 'param' (0-127)
-                    // TODO
+                case Note.NoteCommand.PositionJump: // stop after the current note and then continue with given pattern
+                    // Note: In contrast to ProTracker the division is reset to 0.
+                    noteChangeIndex = 0;
+                    patternChangeIndex = Math.Max(0, (param - 1) & 0x7f);
                     break;
                 case Note.NoteCommand.SetVolume:
                     playState.NoteVolume = Math.Min(64, (int)param);
                     playState.FadeOutVolume = ((paulaState.MasterVolume * playState.NoteVolume) >> 6) * 4;
                     break;
-                case Note.NoteCommand.PatternBreak: // set the division (note) index to pattern length, continue with next pattern after current note
-                    // TODO
+                case Note.NoteCommand.PatternBreak: // continue with next pattern after current note
+                    noteChangeIndex = 0;
+                    patternChangeIndex = currentPatternIndex + 1;
                     break;
                 case Note.NoteCommand.DisableHardwareLPF: // Disable LED (and therefore the LPF)
                     paulaState.UseLowPassFilter = param == 0;
@@ -219,8 +226,7 @@ namespace SonicArranger
         }
 
         /// <summary>
-        /// This should be called whenever a new note or instrument
-        /// is played.
+        /// This should be called whenever a new note or instrument is played.
         /// </summary>
         public void Play(Note note, int noteTranspose, int soundTranspose, double currentPlayTime)
         {
