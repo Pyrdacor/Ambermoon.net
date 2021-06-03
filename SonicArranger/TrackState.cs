@@ -21,9 +21,12 @@ namespace SonicArranger
             /// This is used if the ADSR repeat portion is
             /// 0 and the full ADSR wave was processed.
             /// 
+            /// It is also used for sampled instruments
+            /// if the specified sample is not present.
+            /// 
             /// A4+0xb4 bit 0
             /// </summary>
-            public bool AdsrFinished { get; set; }
+            public bool InstrumentFinished { get; set; }
             /// <summary>
             /// This is used for effects that can theoretically be
             /// applied repeated but has a repeat portion of 0.
@@ -144,18 +147,18 @@ namespace SonicArranger
                     else
                         playState.VolumeChangePerTick = -(param & 0xf);
                     break;
-                case Note.NoteCommand.Unknown11:
+                case Note.NoteCommand.PositionJump: // stop after the current notes and then continue with pattern 'param' (0-127)
                     // TODO
                     break;
                 case Note.NoteCommand.SetVolume:
                     playState.NoteVolume = Math.Min(64, (int)param);
                     playState.FadeOutVolume = ((paulaState.MasterVolume * playState.NoteVolume) >> 6) * 4;
                     break;
-                case Note.NoteCommand.Unknown13:
+                case Note.NoteCommand.PatternBreak: // set the division (note) index to pattern length, continue with next pattern after current note
                     // TODO
                     break;
-                case Note.NoteCommand.EnableHardwareLPF: // Enable LED (and therefore the LPF)
-                    // TODO
+                case Note.NoteCommand.DisableHardwareLPF: // Disable LED (and therefore the LPF)
+                    paulaState.UseLowPassFilter = param == 0;
                     break;
                 case Note.NoteCommand.SetSpeed:
                     songSpeed = Math.Min((int)param, 16);
@@ -165,7 +168,7 @@ namespace SonicArranger
             }
         }
 
-        void InitState(int noteId, int instrumentIndex, double currentPlayTime)
+        void InitState(int instrumentIndex)
         {
             if (instrumentIndex <= 0)
                 throw new ArgumentOutOfRangeException("Expected instrument index to be > 0.");
@@ -186,21 +189,6 @@ namespace SonicArranger
             playState.CurrentArpeggioIndex = 0;
             playState.CurrentNotePortamentoPeriod = instrument.Portamento;
             playState.LastNotePortamentoPeriod = 0;
-
-            state.Data = instrument.SynthMode
-                ? sonicArrangerFile.Waves[instrument.SampleWaveNo].Data
-                : sonicArrangerFile.Samples[instrument.SampleWaveNo].Data;
-            int length = instrument.Length * 2;
-            if (!instrument.SynthMode && instrument.Repeat > 1)
-                length += instrument.Repeat * 2;
-            if (length > state.Data.Length)
-                throw new ArgumentOutOfRangeException("Length + repeat is greater than the sample data size.");
-            else if (length < state.Data.Length)
-                state.Data = state.Data.Take(length).ToArray();
-            state.DataIndex = 0;
-            state.Period = Tables.NotePeriodTable[noteId]; ;
-            state.Volume = (playState.NoteVolume * paulaState.MasterVolume) >> 6;
-            paulaState.StartTrackData(trackIndex, currentPlayTime);
         }
 
         void ResetEffectState()
@@ -215,7 +203,7 @@ namespace SonicArranger
             playState.CurrentEffectRuns = 0;
             playState.AdsrIndex = 0;
             playState.AmfIndex = 0;
-            playState.AdsrFinished = false;
+            playState.InstrumentFinished = false;
             playState.EffectFinished = false;
             playState.FadeOutVolume = ((playState.NoteVolume * paulaState.MasterVolume) >> 6) * 4;
         }
@@ -223,7 +211,7 @@ namespace SonicArranger
         void Mute()
         {
             playState.NoteOff = true;
-            playState.AdsrFinished = true;
+            playState.InstrumentFinished = true;
             playState.EffectFinished = true;
             playState.NoteVolume = 0;
             playState.FadeOutVolume = 0;
@@ -245,7 +233,9 @@ namespace SonicArranger
             if (noteId == 0)
             {
                 if (noteInstrument != 0)
-                    InitState(0, noteInstrument, currentPlayTime);
+                {
+                    InitState(noteInstrument);
+                }
             }
             else
             {
@@ -271,15 +261,51 @@ namespace SonicArranger
                         {
                             if (playState.Instrument == null)
                             {
-                                Mute();                                
+                                Mute();
                                 return;
                             }
                             ResetEffectState();
                         }
                         else
                         {
-                            InitState(noteId, noteInstrument, currentPlayTime);
-                        }                        
+                            InitState(noteInstrument);
+                        }
+                        var instrument = playState.Instrument.Value;
+                        if (instrument.SynthMode)
+                        {
+                            if (instrument.SampleWaveNo >= sonicArrangerFile.Waves.Length ||
+                                sonicArrangerFile.Waves[instrument.SampleWaveNo].Data == null ||
+                                sonicArrangerFile.Waves[instrument.SampleWaveNo].Data.Length == 0)
+                            {
+                                playState.InstrumentFinished = true;
+                                Mute();
+                                return;
+                            }
+                            state.Data = sonicArrangerFile.Waves[instrument.SampleWaveNo].Data;
+                        }
+                        else
+                        {
+                            if (instrument.SampleWaveNo >= sonicArrangerFile.Samples.Length ||
+                                sonicArrangerFile.Samples[instrument.SampleWaveNo].Data == null ||
+                                sonicArrangerFile.Samples[instrument.SampleWaveNo].Data.Length == 0)
+                            {
+                                playState.InstrumentFinished = true;
+                                Mute();
+                                return;
+                            }
+                            state.Data = sonicArrangerFile.Samples[instrument.SampleWaveNo].Data;
+                        }
+                        int length = instrument.Length * 2;
+                        if (!instrument.SynthMode && instrument.Repeat > 1)
+                            length += instrument.Repeat * 2;
+                        if (length > state.Data.Length)
+                            throw new ArgumentOutOfRangeException("Length + repeat is greater than the sample/wave data size.");
+                        else if (length < state.Data.Length)
+                            state.Data = state.Data.Take(length).ToArray();
+                        state.DataIndex = 0;
+                        state.Period = Tables.NotePeriodTable[playState.CurrentNoteIndex];
+                        state.Volume = (playState.NoteVolume * paulaState.MasterVolume) >> 6;
+                        paulaState.StartTrackData(trackIndex, currentPlayTime);
                     }
                 }
             }
@@ -318,7 +344,7 @@ namespace SonicArranger
             playState.FirstNoteTick = false;
 
             // Note fade out
-            if (playState.CurrentNote == null || playState.NoteOff || playState.AdsrFinished || playState.Instrument == null)
+            if (playState.CurrentNote == null || playState.NoteOff || playState.InstrumentFinished || playState.Instrument == null)
             {
                 if (playState.FadeOutVolume > 0)
                 {
@@ -488,7 +514,7 @@ namespace SonicArranger
                                 playState.AdsrIndex = instrument.AdsrLength;
 
                             if (instrument.AdsrRepeat == 0 && adsrData == 0)
-                                playState.AdsrFinished = true;
+                                playState.InstrumentFinished = true;
                         }
                     }
                 }
@@ -547,7 +573,7 @@ namespace SonicArranger
                     }
                     case Instrument.Effect.FreeNegator:
                     {
-                        if (this.playState.AdsrFinished || this.playState.EffectFinished)
+                        if (this.playState.InstrumentFinished || this.playState.EffectFinished)
                             return;
                         int effectWave = instr.Effect1;
                         int waveLen = instr.Effect2;

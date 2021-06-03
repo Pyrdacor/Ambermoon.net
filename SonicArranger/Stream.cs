@@ -22,11 +22,13 @@ namespace SonicArranger
         int noteIndex = 0;
         long? endOfStreamIndex = null;
         long processedAmount = 0;
+        readonly bool allowLowPassFilter = true;
         readonly bool pal = true;
 
         public bool EndOfStream => endOfStreamIndex == processedAmount;
 
-        public Stream(SonicArrangerFile sonicArrangerFile, int song, uint sampleRate, bool stereo, bool pal = true)
+        public Stream(SonicArrangerFile sonicArrangerFile, int song, uint sampleRate, bool stereo,
+            bool allowAmigaLowPassFilter = true, bool pal = true)
         {
             if (sonicArrangerFile == null)
                 throw new ArgumentNullException(nameof(sonicArrangerFile));
@@ -42,6 +44,7 @@ namespace SonicArranger
             this.stereo = stereo;
             this.song = sonicArrangerFile.Songs[song];
             this.pal = pal;
+            allowLowPassFilter = allowAmigaLowPassFilter;
 
             if (this.song.NBIrqps < 1 || this.song.NBIrqps > 200)
                 throw new NotSupportedException("Number of interrupts must be in the range 1 to 200.");
@@ -56,7 +59,7 @@ namespace SonicArranger
 
         public void Reset()
         {
-            paulaState.Reset(pal);
+            paulaState.Reset(allowLowPassFilter, pal);
             playTime = 0.0;
             nextInterruptTime = 0.0;
             noteDuration = song.GetNoteDuration(song.SongSpeed);

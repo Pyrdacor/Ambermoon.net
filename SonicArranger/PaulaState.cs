@@ -139,6 +139,14 @@ namespace SonicArranger
             get => masterVolume;
             set => masterVolume = Math.Max(0, Math.Min(value, 64));
         }
+        public bool UseLowPassFilter
+        {
+            get;
+            set;
+        } = true;
+        bool allowLowPassFilter = true;
+        LowPassFilter lowPassFilterLeft = new LowPassFilter();
+        LowPassFilter lowPassFilterRight = new LowPassFilter();
 
         public PaulaState()
         {
@@ -150,9 +158,12 @@ namespace SonicArranger
             }
         }
 
-        public void Reset(bool pal = true)
+        public void Reset(bool allowLowPassFilter, bool pal)
         {
+            this.allowLowPassFilter = allowLowPassFilter;
             clockFrequency = pal ? palClockFrequency : ntscClockFrequency;
+            lowPassFilterLeft.Reset();
+            lowPassFilterRight.Reset();
 
             for (int i = 0; i < NumTracks; ++i)
             {
@@ -205,6 +216,43 @@ namespace SonicArranger
             }
 
             currentSamples[trackIndex].Index = 0;
+        }
+
+        class LowPassFilter
+        {
+            // The original filter will start decreasing the amplitude at 4kHz.
+            // At 7kHz no amplitude is left. We try to mimick the 4kHz cutoff here.
+            const double CutOffFrequency = 4000.0; // 4kHz
+            double? startTime = null;
+            bool initialized = false;
+            double e;
+            double output = 0.0;
+
+            public void Reset()
+            {
+                startTime = null;
+                initialized = false;
+            }
+
+            public double Filter(double value, double currentPlaybackTime)
+            {
+                if (!initialized)
+                {
+                    if (startTime == null)
+                    {
+                        startTime = currentPlaybackTime;
+                        return value;
+                    }
+                    else
+                    {
+                        double deltaTime = currentPlaybackTime - startTime.Value;
+                        e = 1.0 - Math.Exp(-deltaTime * 2.0 * Math.PI * CutOffFrequency);
+                        initialized = true;
+                    }
+                }
+                output += (value - output) * e;
+                return output;
+            }
         }
 
         public double ProcessTrack(int trackIndex, double currentPlaybackTime)
@@ -287,6 +335,9 @@ namespace SonicArranger
             for (int i = 0; i < NumTracks; ++i)
                 output += ProcessTrack(i, currentPlaybackTime);
 
+            if (allowLowPassFilter && UseLowPassFilter)
+                output = lowPassFilterLeft.Filter(output, currentPlaybackTime);
+
             return Math.Max(-1.0, Math.Min(1.0, output));
         }
 
@@ -298,6 +349,9 @@ namespace SonicArranger
             output += ProcessTrack(0, currentPlaybackTime);
             output += ProcessTrack(3, currentPlaybackTime);
 
+            if (allowLowPassFilter && UseLowPassFilter)
+                output = lowPassFilterLeft.Filter(output, currentPlaybackTime);
+
             return Math.Max(-1.0, Math.Min(1.0, output));
         }
 
@@ -308,6 +362,9 @@ namespace SonicArranger
             // LRRL
             output += ProcessTrack(1, currentPlaybackTime);
             output += ProcessTrack(2, currentPlaybackTime);
+
+            if (allowLowPassFilter && UseLowPassFilter)
+                output = lowPassFilterRight.Filter(output, currentPlaybackTime);
 
             return Math.Max(-1.0, Math.Min(1.0, output));
         }

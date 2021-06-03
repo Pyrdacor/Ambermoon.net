@@ -32,10 +32,10 @@ namespace SonicArranger
 			ClearPortamento = 0x8,
 			Unknown9 = 0x9,
 			VolumeSlide = 0xa,
-			Unknown11 = 0xb,
+			PositionJump = 0xb,
 			SetVolume = 0xc,
-			Unknown13 = 0xd,
-			EnableHardwareLPF = 0xe,
+			PatternBreak = 0xd,
+			DisableHardwareLPF = 0xe,
 			SetSpeed = 0xf
 		}
 
