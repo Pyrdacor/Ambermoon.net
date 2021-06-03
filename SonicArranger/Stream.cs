@@ -231,7 +231,7 @@ namespace SonicArranger
                 if (nextInterruptTime <= playTime)
                 {
                     for (int i = 0; i < PaulaState.NumTracks; ++i)
-                        tracks[i].Tick();
+                        tracks[i].Tick(songSpeed);
 
                     nextInterruptTime += interruptDelay;
                 }

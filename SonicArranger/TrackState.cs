@@ -60,7 +60,7 @@ namespace SonicArranger
             public int CurrentEffectIndex { get; set; }
             public int LastNoteIndex { get; set; }
             public int CurrentNoteIndex { get; set; }
-            public bool FirstNoteTick { get; set; }
+            public int DivisionTick { get; set; }
             public Note? CurrentNote { get; set; }
             /// <summary>
             /// A4+0xae
@@ -105,6 +105,9 @@ namespace SonicArranger
         public void ProcessNoteCommand(Note.NoteCommand command, byte param, ref int songSpeed,
             int currentPatternIndex, out int? noteChangeIndex, out int? patternChangeIndex)
         {
+            playState.PeriodReductionPerTick = 0;
+            playState.VolumeChangePerTick = 0;
+
             noteChangeIndex = null;
             patternChangeIndex = null;
 
@@ -114,7 +117,7 @@ namespace SonicArranger
                 case Note.NoteCommand.Unused:
                     break;
                 case Note.NoteCommand.SlideUp: // smoothly reduce note period, increases pitch
-                    playState.PeriodReductionPerTick = param;
+                    playState.PeriodReductionPerTick = unchecked((sbyte)param);
                     break;
                 case Note.NoteCommand.SetADSRIndex:
                 {
@@ -235,7 +238,7 @@ namespace SonicArranger
             int noteInstrument = note.Instrument;
             var noteFlags = note.Flags;
             playState.CurrentNote = note;
-            playState.FirstNoteTick = true;
+            playState.DivisionTick = 0;
 
             if (noteId == 0)
             {
@@ -342,13 +345,12 @@ namespace SonicArranger
         /// every 20ms by default. Use <see cref="Song.NBIrqps"/>
         /// to get a value how often this is called per second.
         /// </summary>
-        public void Tick()
+        public void Tick(int speed)
         {
             if (playState == null)
                 return;
 
-            bool firstTick = playState.FirstNoteTick;
-            playState.FirstNoteTick = false;
+            playState.DivisionTick = (playState.DivisionTick + 1) % speed;
 
             // Note fade out
             if (playState.CurrentNote == null || playState.NoteOff || playState.InstrumentFinished || playState.Instrument == null)
@@ -466,8 +468,8 @@ namespace SonicArranger
             }
 
             period -= playState.Finetuning;
-            if (!firstTick)
-                playState.Finetuning -= playState.PeriodReductionPerTick;
+            if (playState.DivisionTick != 0)
+                playState.Finetuning += playState.PeriodReductionPerTick;
 
             // Instrument effects
             if (instrument.SynthMode && !playState.EffectFinished)
@@ -649,7 +651,7 @@ namespace SonicArranger
                     {
                         int startPos = instr.Effect2;
                         int stopPos = instr.Effect3;
-                        int index = this.playState.CurrentEffectIndex;
+                        int index = playState.CurrentEffectIndex;
                         currentSample.Sample = unchecked((sbyte)sonicArrangerFile.Waves[instr.SampleWaveNo].Data[index]);
                         if (stopPos <= index)
                             index = startPos - 1;
@@ -793,8 +795,8 @@ namespace SonicArranger
 
                 // Note: Those effects which use the index have StartPos and StopPos
                 // in Effect2 and Effect3. Other effects are not care anyways.
-                if (++this.playState.CurrentEffectIndex > instr.Effect3)
-                    this.playState.CurrentEffectIndex = instr.Effect2;
+                if (++playState.CurrentEffectIndex > instr.Effect3)
+                    playState.CurrentEffectIndex = instr.Effect2;
 
                 void ProcessShackWave()
                 {
