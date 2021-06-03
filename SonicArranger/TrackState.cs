@@ -56,6 +56,9 @@ namespace SonicArranger
             /// A4+0x90
             /// </summary>
             public int VolumeChangePerTick { get; set; }
+            /// <summary>
+            /// A4+0xaa
+            /// </summary>
             public int CurrentEffectRuns { get; set; }
             public int CurrentEffectIndex { get; set; }
             public int LastNoteIndex { get; set; }
@@ -91,10 +94,7 @@ namespace SonicArranger
             if (index < 0 || index > 3)
                 throw new ArgumentOutOfRangeException(nameof(index));
 
-            if (paulaState == null)
-                throw new ArgumentNullException(nameof(paulaState));
-
-            this.paulaState = paulaState;
+            this.paulaState = paulaState ?? throw new ArgumentNullException(nameof(paulaState));
             trackIndex = index;
             state = paulaState.Tracks[index];
             this.sonicArrangerFile = sonicArrangerFile;
@@ -491,10 +491,10 @@ namespace SonicArranger
                 volume = Math.Max(0, Math.Min(64, (volume * adsrVolume) >> 6));
                 playState.FadeOutVolume = volume * 4;
 
-                if (playState.AdsrIndex >= instrument.SustainPt)
+                if (noteId == 0x80 && playState.AdsrIndex >= instrument.SustainPt)
                 {
                     // Sustain mode
-                    if (instrument.SustainVal != 0) // If 0, keep adsr index forever
+                    if (instrument.SustainVal != 0) // If 0, keep adsr index until noteId is no longer 0x80
                     {
                         if (--playState.SustainCounter == 0)
                         {
