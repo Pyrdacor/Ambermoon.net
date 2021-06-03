@@ -98,7 +98,8 @@ namespace SonicArranger
             trackIndex = index;
             state = paulaState.Tracks[index];
             this.sonicArrangerFile = sonicArrangerFile;
-            paulaState.TrackFinished += TrackFinished;
+
+            paulaState.AttachTrackFinishHandler(index, TrackFinished);
         }
 
         public void ProcessNoteCommand(Note.NoteCommand command, byte param, ref int songSpeed,

@@ -102,7 +102,7 @@ namespace SonicArranger
             }
 
             public int Index { get; set; } = 0;
-            public int NextIndex { get; set; } = 1;
+            public int NextIndex => Index == Length - 1 ? 0 : Index + 1;
             public double Gamma { get; set; } = 0.0;
             public int Length => currentTrackState.Data?.Length ?? 0;
             public byte[] CopyTarget => currentTrackState.Data;
@@ -125,7 +125,10 @@ namespace SonicArranger
         }
 
         public delegate void TrackFinishedHandler(int trackIndex, double currentPlayTime);
-        public event TrackFinishedHandler TrackFinished;
+        event TrackFinishedHandler track1Finished;
+        event TrackFinishedHandler track2Finished;
+        event TrackFinishedHandler track3Finished;
+        event TrackFinishedHandler track4Finished;
         public readonly TrackState[] Tracks = new TrackState[NumTracks];
         readonly CurrentTrackState[] currentTrackStates = new CurrentTrackState[NumTracks];
         readonly CurrentSample[] currentSamples = new CurrentSample[4];
@@ -145,8 +148,8 @@ namespace SonicArranger
             set;
         } = true;
         bool allowLowPassFilter = true;
-        LowPassFilter lowPassFilterLeft = new LowPassFilter();
-        LowPassFilter lowPassFilterRight = new LowPassFilter();
+        readonly LowPassFilter lowPassFilterLeft = new LowPassFilter();
+        readonly LowPassFilter lowPassFilterRight = new LowPassFilter();
 
         public PaulaState()
         {
@@ -179,6 +182,7 @@ namespace SonicArranger
                 trackState.StartPlayTime = 0.0;
 
                 currentSamples[i].Index = 0;
+                currentSamples[i].Gamma = 0.0;
             }
         }
 
@@ -190,9 +194,10 @@ namespace SonicArranger
             var track = Tracks[trackIndex];
             var trackState = currentTrackStates[trackIndex];
 
-            //track.Data = null;
+            track.Data = null;
             trackState.Data = null;
             currentSamples[trackIndex].Index = 0;
+            currentSamples[trackIndex].Gamma = 0;
         }
 
         public void StartTrackData(int trackIndex, double currentPlayTime)
@@ -217,6 +222,7 @@ namespace SonicArranger
 
             trackState.StartPlayTime = currentPlayTime;
             currentSamples[trackIndex].Index = 0;
+            currentSamples[trackIndex].Gamma = 0;
         }
 
         class LowPassFilter
@@ -284,7 +290,6 @@ namespace SonicArranger
             if (trackState.Data == null || trackState.StartPlayTime > currentPlaybackTime)
             {
                 currentSample.Index = 0;
-                currentSample.NextIndex = 1;
                 currentSample.Gamma = 0.0;
                 return;
             }
@@ -294,7 +299,6 @@ namespace SonicArranger
             if (period < 0.01)
             {
                 currentSample.Index = 0;
-                currentSample.NextIndex = 1;
                 currentSample.Gamma = 0.0;
                 return;
             }
@@ -308,25 +312,64 @@ namespace SonicArranger
 
             if (leftIndex >= data.Length)
             {
-                TrackFinished?.Invoke(trackIndex, currentPlaybackTime);
+                InvokeTrackFinishHandler(trackIndex, currentPlaybackTime);
 
                 if (trackState.Data == null)
                 {
                     currentSample.Index = 0;
-                    currentSample.NextIndex = 1;
                     currentSample.Gamma = 0.0;
                     return;
                 }
 
                 index -= data.Length;
-                data = trackState.Data;
                 leftIndex = 0;
                 trackState.StartPlayTime = currentPlaybackTime;
             }
 
             currentSample.Index = leftIndex;
-            currentSample.NextIndex = leftIndex == data.Length - 1 ? 0 : leftIndex + 1;
             currentSample.Gamma = index - leftIndex;
+        }
+
+        void InvokeTrackFinishHandler(int trackIndex, double currentPlaybackTime)
+        {
+            switch (trackIndex)
+            {
+                case 0:
+                    track1Finished?.Invoke(trackIndex, currentPlaybackTime);
+                    break;
+                case 1:
+                    track2Finished?.Invoke(trackIndex, currentPlaybackTime);
+                    break;
+                case 2:
+                    track3Finished?.Invoke(trackIndex, currentPlaybackTime);
+                    break;
+                case 3:
+                    track4Finished?.Invoke(trackIndex, currentPlaybackTime);
+                    break;
+            }
+        }
+
+        public void AttachTrackFinishHandler(int trackIndex, TrackFinishedHandler handler)
+        {
+            switch (trackIndex)
+            {
+                case 0:
+                    track1Finished = null;
+                    track1Finished += handler;
+                    break;
+                case 1:
+                    track2Finished = null;
+                    track2Finished += handler;
+                    break;
+                case 2:
+                    track3Finished = null;
+                    track3Finished += handler;
+                    break;
+                case 3:
+                    track4Finished = null;
+                    track4Finished += handler;
+                    break;
+            }
         }
 
         public double Process(double currentPlaybackTime)
