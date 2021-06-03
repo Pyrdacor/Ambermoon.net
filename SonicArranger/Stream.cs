@@ -27,6 +27,7 @@ namespace SonicArranger
         readonly bool pal = true;
         readonly object readMutex = new object();
         readonly object copyMutex = new object();
+        bool initialized = false;
 
         public bool EndOfStream => endOfStreamIndex == processedAmount;
 
@@ -66,6 +67,9 @@ namespace SonicArranger
 
             interruptDelay = 1.0 / this.song.NBIrqps;
 
+            for (int i = 0; i < PaulaState.NumTracks; ++i)
+                tracks[i] = new TrackState(i, paulaState, sonicArrangerFile);
+
             Reset();
         }
 
@@ -74,9 +78,13 @@ namespace SonicArranger
         /// </summary>
         public void Reset()
         {
+            if (initialized)
+                return;
+
             paulaState.Reset(allowLowPassFilter, pal);
             playTime = 0.0;
             nextInterruptTime = 0.0;
+            nextNoteTime = 0.0;
             noteDuration = song.GetNoteDuration(song.SongSpeed);
             songSpeed = song.SongSpeed;
             patternIndex = song.StartPos;
@@ -85,11 +93,10 @@ namespace SonicArranger
             processedAmount = 0;
             LoopCounter = 0;
 
-            for (int i = 0; i < PaulaState.NumTracks; ++i)
-                tracks[i] = new TrackState(i, paulaState, sonicArrangerFile);
-
             // Load initial data
             Load(0, (int)sampleRate * 2, false);
+
+            initialized = true;
         }
 
         /// <summary>
@@ -110,6 +117,8 @@ namespace SonicArranger
         {
             lock (readMutex)
             {
+                initialized = false;
+
                 if (endOfStreamIndex == processedAmount)
                     throw new System.IO.EndOfStreamException("End of stream reached.");
 
@@ -294,13 +303,13 @@ namespace SonicArranger
                     if (loop)
                     {
                         ++LoopCounter;
-                        patternIndex = Math.Min(song.RepeatPos, song.StopPos - 1);
+                        patternIndex = Math.Min(song.RepeatPos, song.StopPos);
                     }
                     else
                     {
                         // one full note till the end which lasts for noteDuration
                         int remainingSamples = (int)(noteDuration * sampleRate);
-                        endOfStreamIndex = processedAmount + bufferIndex + remainingSamples * (stereo ? 2 : 1);
+                        endOfStreamIndex = processedAmount + bufferIndex + remainingSamples * (stereo ? 2 : 1) - 1;
                     }
                 }
 
