@@ -19,11 +19,11 @@
 
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Common" Version="7.2.0" />
+    <PackageReference Include="SonicArranger" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
-    <ProjectReference Include="..\SonicArranger\SonicArranger.csproj" />
   </ItemGroup>
 
 </Project>
