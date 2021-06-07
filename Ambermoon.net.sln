@@ -35,6 +35,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{E2692FCA
 		build-win64.cmd = build-win64.cmd
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambermoon.Audio.OpenAL", "Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj", "{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,18 @@ Global
 		{F97FD942-702E-49FE-9242-3B4A95B66521}.Release|x64.Build.0 = Release|Any CPU
 		{F97FD942-702E-49FE-9242-3B4A95B66521}.Release|x86.ActiveCfg = Release|Any CPU
 		{F97FD942-702E-49FE-9242-3B4A95B66521}.Release|x86.Build.0 = Release|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Debug|x64.Build.0 = Debug|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Debug|x86.Build.0 = Debug|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Release|x64.ActiveCfg = Release|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Release|x64.Build.0 = Release|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Release|x86.ActiveCfg = Release|Any CPU
+		{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

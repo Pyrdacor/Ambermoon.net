@@ -17,9 +17,9 @@ namespace Ambermoon.Data.Legacy.Audio
             stream = new Stream(sonicArrangerFile, 0, 44100, stereo, hardwareLPF, pal);
         }
 
-        public void Play()
+        public void Play(IAudioOutput audioOutput)
         {
-            songPlayer.Start(stream);
+            songPlayer.Start(audioOutput, stream);
         }
 
         public void Stop()

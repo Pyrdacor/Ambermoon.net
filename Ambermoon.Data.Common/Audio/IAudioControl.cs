@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Audio
 {
-    public interface ISoundInterface
+    public interface IAudioControl
     {
         /// <summary>
         /// Output volume (0.0 to 1.0)

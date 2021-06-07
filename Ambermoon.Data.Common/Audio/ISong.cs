@@ -2,7 +2,7 @@
 {
     public interface ISong
     {
-        void Play();
+        void Play(IAudioOutput audioOutput);
         void Stop();
     }
 }

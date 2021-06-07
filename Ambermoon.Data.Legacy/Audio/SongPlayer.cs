@@ -4,11 +4,12 @@ using System;
 
 namespace Ambermoon.Data.Legacy.Audio
 {
-    class SongPlayer : ISoundInterface
+    class SongPlayer : IAudioControl
     {
         Stream currentStream = null;
         double nextReadTime = 0.0;
         double? playTime = null;
+        IAudioOutput audioOutput = null;
 
         /// <summary>
         /// <inheritdoc />
@@ -20,8 +21,10 @@ namespace Ambermoon.Data.Legacy.Audio
         /// </summary>
         public bool Enabled { get; set; } = true;
 
-        public void Start(Stream stream)
+        public void Start(IAudioOutput audioOutput, Stream stream)
         {
+            this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));
+
             if (currentStream == stream)
                 return;
 
@@ -33,6 +36,7 @@ namespace Ambermoon.Data.Legacy.Audio
         {
             playTime = null;
             currentStream?.Reset();
+            audioOutput.Clear();
         }
 
         /// <summary>
@@ -41,7 +45,7 @@ namespace Ambermoon.Data.Legacy.Audio
         /// <param name="delta">Delta time in seconds</param>
         public void Update(double delta)
         {
-            if (currentStream == null)
+            if (audioOutput == null || !audioOutput.Enabled || currentStream == null)
                 return;
 
             bool updateBuffer;
@@ -60,8 +64,11 @@ namespace Ambermoon.Data.Legacy.Audio
             if (updateBuffer)
             {
                 double secondsToRead = Math.Min(1.0, 0.5 + playTime.Value - nextReadTime);
+                double remainingPlaybackSeconds = 1.0 - secondsToRead;
                 var data = currentStream.Read((int)Math.Round(secondsToRead * 1000.0), true);
-                // TODO: fill OpenAL buffer etc
+                audioOutput.StreamData(data, remainingPlaybackSeconds);
+                if (!audioOutput.Streaming)
+                    audioOutput.Start();
                 nextReadTime = playTime.Value + 0.5;
             }
         }
