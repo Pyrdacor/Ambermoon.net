@@ -650,7 +650,8 @@ namespace Ambermoon
             {
                 Silk.NET.Windowing.Glfw.GlfwWindowing.Use();
                 window = (IWindow)Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
-                //window = Silk.NET.Windowing.Vi Silk.NET.Windowing.Window.Create(options);
+                window.Size = options.Size;
+                window.WindowBorder = options.WindowBorder;
                 window.Load += Window_Load;
                 window.Render += Window_Render;
                 window.Update += Window_Update;
