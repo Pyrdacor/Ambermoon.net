@@ -4,11 +4,13 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>Ambermoon</RootNamespace>
     <Authors>Robert Schneckenhaus</Authors>
-    <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon.net</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <Description>Library that contains basic stuff for other Ambermoon libraries.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>7.2.0</Version>
+    <Version>8.0.0</Version>
+    <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
+    <PackageTags>Ambermoon</PackageTags>
   </PropertyGroup>
 
 </Project>
