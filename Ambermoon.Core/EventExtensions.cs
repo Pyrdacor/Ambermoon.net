@@ -797,7 +797,9 @@ namespace Ambermoon
                     return null; // next event is only executed after popup response
                 }
                 case EventType.ChangeMusic:
-                    // TODO
+                    if (!(@event is ChangeMusicEvent changeMusicEvent))
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid change music event.");
+                    game.PlayMusic((Data.Enumerations.Song)changeMusicEvent.MusicIndex);
                     return @event.Next;
                 case EventType.Spawn:
                     if (!(@event is SpawnEvent spawnEvent))
