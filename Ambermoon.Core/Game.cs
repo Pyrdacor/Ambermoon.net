@@ -9,6 +9,7 @@ using System.Linq;
 using Attribute = Ambermoon.Data.Attribute;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 using InteractionType = Ambermoon.Data.ConversationEvent.InteractionType;
+using Ambermoon.Data.Audio;
 
 namespace Ambermoon
 {
@@ -265,6 +266,9 @@ namespace Ambermoon
         public ICharacterManager CharacterManager { get; }
         readonly Places places;
         readonly IRenderView renderView;
+        readonly IAudioOutput audioOutput;
+        readonly ISongManager songManager;
+        ISong currentSong;
         internal ISavegameManager SavegameManager { get; }
         readonly ISavegameSerializer savegameSerializer;
         Player player;
@@ -438,7 +442,7 @@ namespace Ambermoon
         public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IMapManager mapManager,
             IItemManager itemManager, ICharacterManager characterManager, ISavegameManager savegameManager,
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
-            Places places, Cursor cursor, ILightEffectProvider lightEffectProvider)
+            Places places, Cursor cursor, ILightEffectProvider lightEffectProvider, IAudioOutput audioOutput, ISongManager songManager)
         {
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
@@ -450,6 +454,8 @@ namespace Ambermoon
             movement = new Movement(configuration.LegacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
+            this.audioOutput = audioOutput;
+            this.songManager = songManager;
             MapManager = mapManager;
             ItemManager = itemManager;
             CharacterManager = characterManager;
@@ -4407,6 +4413,8 @@ namespace Ambermoon
 
                 // Update UI palette
                 UpdateUIPalette(true);
+
+                PlayMapMusic();
             }
             else
             {
@@ -10501,6 +10509,11 @@ namespace Ambermoon
         }
 
         /// <summary>
+        /// Starts playing the map's music.
+        /// </summary>
+        void PlayMapMusic() => PlayMusic(Song.Default);
+
+        /// <summary>
         /// Starts playing a specific music. If Song.Default is given
         /// the current map music is played instead.
         /// 
@@ -10516,8 +10529,17 @@ namespace Ambermoon
                 return PlayMusic(Map.MusicIndex == 0 ? Song.PloddingAlong : (Song)Map.MusicIndex);
             }
 
-            // TODO ...
-            return Song.Default;
+            var newSong = songManager.GetSong(song);
+            var oldSong = currentSong?.Song ?? Song.Default;
+
+            if (currentSong != newSong)
+            {
+                currentSong?.Stop();
+                currentSong = newSong;
+                currentSong?.Play(audioOutput);
+            }
+
+            return oldSong;
         }
 
         void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)

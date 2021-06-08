@@ -1386,6 +1386,9 @@ namespace Ambermoon.Render
 
         void UpdateStars(int scrollX)
         {
+            if (Map == null)
+                return;
+
             const int starAreaWidth = 8 * Global.Map3DViewWidth;
             bool showStars = game.GameTime.Hour >= 19 || game.GameTime.Hour < 7;
             var starColor = !showStars ? null

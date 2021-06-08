@@ -6,17 +6,18 @@ namespace Ambermoon.Data.Legacy.Audio
 {
     public class SongManager : ISongManager
     {
-        readonly Dictionary<int, ISong> songs = new Dictionary<int, ISong>();
+        readonly Dictionary<Enumerations.Song, ISong> songs = new Dictionary<Enumerations.Song, ISong>();
         readonly SongPlayer songPlayer = new SongPlayer();
 
         public SongManager(IFileContainer fileContainer)
         {
             foreach (var file in fileContainer.Files)
             {
-                songs.Add(file.Key, new Song(songPlayer, file.Value as DataReader, false, true, true));
+                var song = (Enumerations.Song)file.Key;
+                songs.Add(song, new Song(song, songPlayer, file.Value as DataReader, false, true, true));
             }
         }
 
-        public ISong GetSong(int index) => songs.TryGetValue(index, out var song) ? song : null;
+        public ISong GetSong(Enumerations.Song index) => songs.TryGetValue(index, out var song) ? song : null;
     }
 }

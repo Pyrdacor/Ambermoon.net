@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
 using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
+using Ambermoon.Audio.OpenAL;
 
 namespace Ambermoon
 {
@@ -286,6 +287,7 @@ namespace Ambermoon
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
             var songManager = new SongManager(gameData.Files["Music.amb"]);
+            var audioOutput = new AudioOutput(1, 44100);
 
             // Create render view<
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
@@ -322,7 +324,7 @@ namespace Ambermoon
                         {
                             var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                 characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                cursor, lightEffectProvider);
+                                cursor, lightEffectProvider, audioOutput, songManager);
                             game.QuitRequested += window.Close;
                             game.MouseTrappedChanged += (bool trapped, Position position) =>
                             {
@@ -642,7 +644,9 @@ namespace Ambermoon
 
             try
             {
-                window = Silk.NET.Windowing.Window.Create(options);
+                Silk.NET.Windowing.Glfw.GlfwWindowing.Use();
+                window = (IWindow)Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
+                //window = Silk.NET.Windowing.Vi Silk.NET.Windowing.Window.Create(options);
                 window.Load += Window_Load;
                 window.Render += Window_Render;
                 window.Update += Window_Update;

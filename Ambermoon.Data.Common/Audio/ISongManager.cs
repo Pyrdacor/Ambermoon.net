@@ -1,7 +1,9 @@
-﻿namespace Ambermoon.Data.Audio
+﻿using Ambermoon.Data.Enumerations;
+
+namespace Ambermoon.Data.Audio
 {
     public interface ISongManager
     {
-        ISong GetSong(int index);
+        ISong GetSong(Song index);
     }
 }

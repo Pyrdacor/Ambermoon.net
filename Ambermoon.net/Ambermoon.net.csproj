@@ -39,11 +39,13 @@
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Legacy" Version="7.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Silk.NET.Input" Version="2.3.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.3.0" />
+    <PackageReference Include="Silk.NET.GLFW" Version="2.4.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.4.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
     <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
     <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
     <ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />

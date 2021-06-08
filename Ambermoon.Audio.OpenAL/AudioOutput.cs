@@ -11,16 +11,19 @@ namespace Ambermoon.Audio.OpenAL
         readonly Device* device = null;
         readonly Context* context = null;
         readonly uint source = 0;
-        readonly uint buffer = 0;
         bool disposed = false;
-        readonly int channels = 1;
-        readonly int sampleRate = 44100;
+        float volume = 1.0f;
         bool enabled = true;
-        int remainingBufferBytes = 0;
-        byte[] lastBuffer = null;
+        readonly AudioBuffer audioBuffer;
 
-        public AudioOutput()
+        public AudioOutput(int channels = 1, int sampleRate = 44100)
         {
+            if (channels < 1 || channels > 2)
+                throw new ArgumentOutOfRangeException(nameof(channels));
+
+            if (sampleRate < 2000 || sampleRate > 200000)
+                throw new ArgumentOutOfRangeException(nameof(sampleRate));
+
             al = AL.GetApi();
             alContext = ALContext.GetApi();
             device = alContext.OpenDevice("");
@@ -43,27 +46,20 @@ namespace Ambermoon.Audio.OpenAL
                     return;
                 }
                 source = al.GenSource();
-                buffer = al.GenBuffer();
+                audioBuffer = new AudioBuffer(al, channels, sampleRate);
                 al.SetSourceProperty(source, SourceBoolean.Looping, true);
-                al.SetSourceProperty(source, SourceInteger.Buffer, buffer);
+                al.SetSourceProperty(source, SourceFloat.Gain, 1.0f);
             }
         }
 
-        public AudioOutput(int channels, int sampleRate)
-            : this()
-        {
-            if (channels < 1 || channels > 2)
-                throw new ArgumentOutOfRangeException(nameof(channels));
-
-            if (sampleRate < 2000 || sampleRate > 200000)
-                throw new ArgumentOutOfRangeException(nameof(sampleRate));
-
-            this.channels = channels;
-            this.sampleRate = sampleRate;
-        }
-
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public bool Available { get; private set; }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public bool Enabled
         {
             get => enabled;
@@ -72,12 +68,37 @@ namespace Ambermoon.Audio.OpenAL
                 if (enabled == value)
                     return;
 
-                // TODO
-                enabled = value;
+                if (!value && Available && Streaming)
+                    Stop();
+
+                enabled = value;                
             }
         }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public bool Streaming { get; private set; } = false;
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public float Volume
+        {
+            get => volume;
+            set
+            {
+                value = Math.Max(0.0f, Math.Min(value, 1.0f));
+
+                if (Util.FloatEqual(volume, value))
+                    return;
+
+                volume = value;
+
+                if (Available)
+                    al.SetSourceProperty(source, SourceFloat.Gain, volume);
+            }
+        }
 
         public void Dispose()
         {
@@ -87,7 +108,7 @@ namespace Ambermoon.Audio.OpenAL
             if (Available)
             {
                 al.DeleteSource(source);
-                al.DeleteBuffer(buffer);
+                audioBuffer?.Dispose();
                 alContext.DestroyContext(context);
                 alContext.CloseDevice(device);
                 al.Dispose();
@@ -100,6 +121,9 @@ namespace Ambermoon.Audio.OpenAL
             disposed = true;
         }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public void Start()
         {
             if (!Available || !Enabled)
@@ -111,14 +135,14 @@ namespace Ambermoon.Audio.OpenAL
             if (source == 0)
                 throw new NotSupportedException("Start was called without a valid source.");
 
-            if (remainingBufferBytes == 0)
-                throw new System.IO.EndOfStreamException("No audio data present.");
-
             Streaming = true;
 
             al.SourcePlay(source);
         }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public void Stop()
         {
             if (!Available || !Enabled)
@@ -135,30 +159,26 @@ namespace Ambermoon.Audio.OpenAL
             al.SourceStop(source);
         }
 
-        public void StreamData(byte[] data, double timeToKeep)
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public void StreamData(byte[] data)
         {
             if (!Available)
                 return;
 
-            if (lastBuffer == null || lastBuffer.Length == 0 || timeToKeep < 0.00001)
-            {
-                lastBuffer = data;
-                al.BufferData(buffer, channels == 1 ? BufferFormat.Mono8 : BufferFormat.Stereo8, data, sampleRate);
-            }
-            else
-            {
-                int bytesToKeep = Math.Min(lastBuffer.Length, (int)Math.Ceiling(sampleRate * timeToKeep * channels));
-                var dataBuffer = new byte[bytesToKeep + data.Length];
-                Buffer.BlockCopy(lastBuffer, lastBuffer.Length - bytesToKeep, dataBuffer, 0, bytesToKeep);
-                Buffer.BlockCopy(data, 0, dataBuffer, bytesToKeep, data.Length);
-                lastBuffer = dataBuffer;
-                al.BufferData(buffer, channels == 1 ? BufferFormat.Mono8 : BufferFormat.Stereo8, dataBuffer, sampleRate);
-            }
+            audioBuffer.Fill(source, data);
         }
 
-        public void Clear()
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public void Reset()
         {
-            lastBuffer = null;
+            if (!Available)
+                return;
+
+            audioBuffer.Reset(source);
         }
     }
 }
