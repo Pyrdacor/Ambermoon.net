@@ -351,6 +351,8 @@ namespace Ambermoon
             set
             {
                 travelType = value;
+                if (Map != null)
+                    PlayMusic(travelType.TravelSong());
                 player.MovementAbility = travelType.ToPlayerMovementAbility();
                 if (Map?.IsWorldMap == true)
                 {
@@ -4168,7 +4170,6 @@ namespace Ambermoon
 
             void Activate()
             {
-                PlayMusic(travelType.TravelSong());
                 TravelType = travelType;
                 layout.TransportEnabled = true;
                 if (layout.ButtonGridPage == 1)
@@ -4225,8 +4226,6 @@ namespace Ambermoon
                     StartSwimming();
                 else
                     TravelType = TravelType.Walk;
-
-                PlayMusic(Song.Default);
 
                 Map.TriggerEvents(this, EventTrigger.Move, x, y, CurrentTicks, CurrentSavegame);
             }
@@ -4414,7 +4413,8 @@ namespace Ambermoon
                 // Update UI palette
                 UpdateUIPalette(true);
 
-                PlayMapMusic();
+                if (!Map.IsWorldMap || TravelType == TravelType.Walk)
+                    PlayMapMusic();
             }
             else
             {

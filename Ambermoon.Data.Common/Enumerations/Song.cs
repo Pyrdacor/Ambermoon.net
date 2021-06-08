@@ -131,6 +131,18 @@
         /// <summary>
         /// Game over
         /// </summary>
-        GameOver
+        GameOver,
+        /// <summary>
+        /// Intro music
+        /// </summary>
+        Intro,
+        /// <summary>
+        /// Outro music (same as Menu)
+        /// </summary>
+        Outro,
+        /// <summary>
+        /// Menu music (same as Outro)
+        /// </summary>
+        Menu = Outro
     }
 }

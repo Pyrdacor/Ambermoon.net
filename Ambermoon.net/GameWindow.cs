@@ -32,6 +32,8 @@ namespace Ambermoon
         ICursor cursor = null;
         MainMenu mainMenu = null;
         Func<Game> gameCreator = null;
+        SongManager songManager = null;
+        AudioOutput audioOutput = null;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -248,6 +250,10 @@ namespace Ambermoon
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             IntroFont introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction)
         {
+            songManager = new SongManager(renderView.GameData, Data.Enumerations.Song.Outro); // TODO: use intro later maybe and initialize earlier then
+            audioOutput = new AudioOutput(1, 44100);
+            songManager.GetSong(Data.Enumerations.Song.Menu).Play(audioOutput);
+
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue);
             mainMenu.Closed += closeAction =>
             {
@@ -286,8 +292,6 @@ namespace Ambermoon
             var fontProvider = new FontProvider(executableData);
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
-            var songManager = new SongManager(gameData.Files["Music.amb"]);
-            var audioOutput = new AudioOutput(1, 44100);
 
             // Create render view<
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>

@@ -12,14 +12,19 @@ namespace Ambermoon.Data.Legacy.Audio
         readonly SonicArrangerFile sonicArrangerFile;
         readonly Enumerations.Song song;
         byte[] buffer;
-        readonly Task loadTask;
+        readonly Task loadTask = null;
 
-        public Song(Enumerations.Song song, SongPlayer songPlayer, DataReader reader, bool stereo, bool hardwareLPF, bool pal)
+        public Song(Enumerations.Song song, SongPlayer songPlayer, DataReader reader, bool stereo, bool hardwareLPF, bool pal,
+            bool waitForLoading = false)
         {
             this.song = song;
             this.songPlayer = songPlayer;
             sonicArrangerFile = new SonicArrangerFile(reader);
-            loadTask = Task.Run(() => buffer = new Stream(sonicArrangerFile, 0, 44100, stereo, hardwareLPF, pal).ToUnsignedArray());
+            void Load() => buffer = new Stream(sonicArrangerFile, 0, 44100, stereo, hardwareLPF, pal).ToUnsignedArray();
+            if (waitForLoading)
+                Load();
+            else
+                loadTask = Task.Run(Load);
         }
 
         Enumerations.Song ISong.Song => song;

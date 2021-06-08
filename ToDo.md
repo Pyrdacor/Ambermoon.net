@@ -48,6 +48,8 @@
 - When repairing item etc the item tooltip should not show up after magic animation.
 - I guess buff duration bars are a bit wrong (ingame no empty bar is shown, while it is in remake).
 - Speaking to simple NPC the popup uses centered text. Is this right?
+- Error messages in inventory can't be acknowledge by right click.
+- "Do you accept this character?" message is missing in character creator.
 
 
 ## Misc
