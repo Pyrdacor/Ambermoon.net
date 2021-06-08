@@ -12,6 +12,7 @@
   - Either move diagonal up in direction of a player (best to attack him immediately)
   - Or otherwise don't move at all
 - Initial scale of dissolve victim seems to be too small. Don't know why or if this is caused by anchor.
+- If background has darker color (night battles) the monsters should be darkened too.
 
 ## Events
 
@@ -63,3 +64,4 @@
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Add visual effects of drugs and mouse movement.
 - Maybe add emergency savegame that is stored when game crashes.
+- Switching fullscreen by key (F11) the resolution is not corrected

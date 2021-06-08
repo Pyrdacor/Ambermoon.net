@@ -20,12 +20,14 @@ namespace Ambermoon
         readonly Cursor cursor = null;
         ILayerSprite background;
         IColoredRect fadeArea;
+        IRenderText loadingText;
         List<KeyValuePair<Rect, IntroText>> mainMenuTexts = new List<KeyValuePair<Rect, IntroText>>(4);
         int hoveredTextIndex = -1;
         DateTime? hoverStartTime = null;
         const int HoverColorTime = 125;
         const int FadeOutTime = 1000;
         DateTime? fadeOutStartTime = null;
+        internal bool GameDataLoaded { get; set; } = false;
         static readonly byte[] hoveredColorIndices = new byte[]
         {
             (byte)TextColor.White,
@@ -71,11 +73,17 @@ namespace Ambermoon
                 y += 16 + 8;
             }
 
-            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Transparent, 255);
-            fadeArea.Layer = renderView.GetLayer(Layer.Effects);
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Transparent, 250);
+            fadeArea.Layer = renderView.GetLayer(Layer.UI);
             fadeArea.X = 0;
             fadeArea.Y = 0;
             fadeArea.Visible = false;
+
+            var text = renderView.TextProcessor.CreateText("Preparing game ...");
+            loadingText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, TextColor.White, false,
+                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
+            loadingText.DisplayLayer = 254;
+            loadingText.Visible = false;
 
             cursor.Type = Data.CursorType.Sword;
         }
@@ -89,11 +97,15 @@ namespace Ambermoon
             mainMenuTexts = null;
             fadeArea?.Delete();
             fadeArea = null;
+            loadingText?.Delete();
+            loadingText = null;
         }
 
         public void FadeOutAndDestroy()
         {
+            fadeArea.Color = new Color(0, 0, 0, 255);
             fadeArea.Visible = true;
+            loadingText.Visible = true;
             fadeOutStartTime = DateTime.Now;
         }
 
@@ -112,12 +124,21 @@ namespace Ambermoon
             {
                 if (fadeArea != null)
                 {
-                    var blackness = (float)(DateTime.Now - fadeOutStartTime.Value).TotalMilliseconds / FadeOutTime;
+                    if (GameDataLoaded)
+                    {
+                        loadingText.Visible = false;
+                        var blackness = (float)(DateTime.Now - fadeOutStartTime.Value).TotalMilliseconds / FadeOutTime;
 
-                    if (blackness >= 1.0f)
-                        Destroy();
+                        if (blackness >= 1.0f)
+                            Destroy();
+                        else
+                            fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+                    }
                     else
-                        fadeArea.Color = new Color(0, 0, 0, Util.Round(blackness * 255));
+                    {
+                        // Wait till the data is loaded
+                        fadeOutStartTime = DateTime.Now;
+                    }
                 }
             }
             else

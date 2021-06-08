@@ -1012,7 +1012,7 @@ namespace Ambermoon.UI
             int width = game.Configuration.Width ?? 640;
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
-                KeyValuePair.Create("", (Action<int, string>)null/*((index, _) => ToggleMusic())*/), // TODO: enable later
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
                 KeyValuePair.Create("", (Action<int, string>)null/*((index, _) => ToggleFastBattleMode())*/), // TODO: enable later
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleScreenRatio())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleResolution())),
@@ -1042,7 +1042,9 @@ namespace Ambermoon.UI
             void ToggleMusic()
             {
                 game.Configuration.Music = !game.Configuration.Music;
-                // TODO: later turn on and off music as well
+                game.AudioOutput.Enabled = game.Configuration.Music;
+                if (game.AudioOutput.Available && game.AudioOutput.Enabled)
+                    game.ContinueMusic();
                 SetMusic();
                 changedConfiguration = true;
             }

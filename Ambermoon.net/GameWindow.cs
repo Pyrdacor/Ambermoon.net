@@ -34,6 +34,7 @@ namespace Ambermoon
         Func<Game> gameCreator = null;
         SongManager songManager = null;
         AudioOutput audioOutput = null;
+        IRenderText infoText = null;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -252,7 +253,14 @@ namespace Ambermoon
         {
             songManager = new SongManager(renderView.GameData, Data.Enumerations.Song.Outro); // TODO: use intro later maybe and initialize earlier then
             audioOutput = new AudioOutput(1, 44100);
-            songManager.GetSong(Data.Enumerations.Song.Menu).Play(audioOutput);
+
+            audioOutput.Enabled = audioOutput.Available && configuration.Music;
+
+            infoText?.Delete();
+            infoText = null;
+
+            if (audioOutput.Enabled)
+                songManager.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue);
             mainMenu.Closed += closeAction =>
@@ -267,6 +275,7 @@ namespace Ambermoon
                         break;
                     case MainMenu.CloseAction.Intro:
                         // TODO
+                        songManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
                         break;
                     case MainMenu.CloseAction.Exit:
                         mainMenu?.Destroy();
@@ -288,10 +297,7 @@ namespace Ambermoon
             // Load game data
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData, introData);
-            var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
             var fontProvider = new FontProvider(executableData);
-            foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
-                executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
 
             // Create render view<
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
@@ -301,58 +307,76 @@ namespace Ambermoon
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
                 return textureAtlasManager;
             });
+
             InitGlyphs();
-            var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
-            cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
-            var savegameManager = new SavegameManager(savePath);
-            savegameManager.GetSavegameNames(gameData, out int currentSavegame);
-            bool canContinue = currentSavegame != 0;
 
-            ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
-                introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
+            var text = renderView.TextProcessor.CreateText("Loading game data ...");
+            infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
+                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
+            infoText.DisplayLayer = 254;
+            infoText.Visible = true;
+
+            renderView.Render(null);
+
+            Task.Run(() =>
             {
+                var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
+                foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
+                    executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
+                var savegameManager = new SavegameManager(savePath);
+                savegameManager.GetSavegameNames(gameData, out int currentSavegame);
+                bool canContinue = currentSavegame != 0;
+                var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
+                cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
                 cursor.Type = Data.CursorType.None;
-                mainMenu.FadeOutAndDestroy();
-                Task.Run(() =>
+
+                ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
+                    introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                 {
-                    try
+                    cursor.Type = Data.CursorType.None;
+                    mainMenu.FadeOutAndDestroy();
+                    Task.Run(() =>
                     {
-                        var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
-                        var savegameSerializer = new SavegameSerializer();
-                        var dataNameProvider = new DataNameProvider(executableData);
-                        var characterManager = new CharacterManager(gameData, graphicProvider);
-                        var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
-                        var lightEffectProvider = new LightEffectProvider(executableData);
-
-                        gameCreator = () =>
+                        try
                         {
-                            var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
-                                characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                cursor, lightEffectProvider, audioOutput, songManager);
-                            game.QuitRequested += window.Close;
-                            game.MouseTrappedChanged += (bool trapped, Position position) =>
-                            {
-                                this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+                            var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
+                            var savegameSerializer = new SavegameSerializer();
+                            var dataNameProvider = new DataNameProvider(executableData);
+                            var characterManager = new CharacterManager(gameData, graphicProvider);
+                            var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
+                            var lightEffectProvider = new LightEffectProvider(executableData);
 
-                                mouse.Position = new MousePosition(position.X, position.Y);
-                            };
-                            game.ConfigurationChanged += (configuration, windowChange) =>
+                            gameCreator = () =>
                             {
-                                if (windowChange)
+                                var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
+                                    characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
+                                    cursor, lightEffectProvider, audioOutput, songManager);
+                                game.QuitRequested += window.Close;
+                                game.MouseTrappedChanged += (bool trapped, Position position) =>
                                 {
-                                    UpdateWindow(configuration);
-                                    Fullscreen = configuration.Fullscreen;
-                                }
+                                    this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+
+                                    mouse.Position = new MousePosition(position.X, position.Y);
+                                };
+                                game.ConfigurationChanged += (configuration, windowChange) =>
+                                {
+                                    if (windowChange)
+                                    {
+                                        UpdateWindow(configuration);
+                                        Fullscreen = configuration.Fullscreen;
+                                    }
+                                };
+                                game.DrugTicked += Drug_Ticked;
+                                mainMenu.GameDataLoaded = true;
+                                game.Run(continueGame, ConvertMousePosition(mouse.Position));
+                                return game;
                             };
-                            game.DrugTicked += Drug_Ticked;
-                            game.Run(continueGame, ConvertMousePosition(mouse.Position));
-                            return game;
-                        };
-                    }
-                    catch (Exception ex)
-                    {
-                        gameCreator = () => throw ex;
-                    }
+                        }
+                        catch (Exception ex)
+                        {
+                            gameCreator = () => throw ex;
+                        }
+                    });
                 });
             });
         }
@@ -547,6 +571,8 @@ namespace Ambermoon
                 mainMenu.Render();
             else if (Game != null)
                 renderView.Render(Game.ViewportOffset);
+            else if (renderView != null)
+                renderView.Render(null);
             window.SwapBuffers();
         }
 

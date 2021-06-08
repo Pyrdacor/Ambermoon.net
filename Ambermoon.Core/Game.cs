@@ -266,7 +266,7 @@ namespace Ambermoon
         public ICharacterManager CharacterManager { get; }
         readonly Places places;
         readonly IRenderView renderView;
-        readonly IAudioOutput audioOutput;
+        internal IAudioOutput AudioOutput { get; private set; }
         readonly ISongManager songManager;
         ISong currentSong;
         internal ISavegameManager SavegameManager { get; }
@@ -456,7 +456,7 @@ namespace Ambermoon
             movement = new Movement(configuration.LegacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
-            this.audioOutput = audioOutput;
+            this.AudioOutput = audioOutput;
             this.songManager = songManager;
             MapManager = mapManager;
             ItemManager = itemManager;
@@ -10521,9 +10521,6 @@ namespace Ambermoon
         /// </summary>
         internal Song PlayMusic(Song song)
         {
-            if (!Configuration.Music)
-                return Song.Default;
-
             if (song == Song.Default)
             {
                 return PlayMusic(Map.MusicIndex == 0 ? Song.PloddingAlong : (Song)Map.MusicIndex);
@@ -10536,10 +10533,16 @@ namespace Ambermoon
             {
                 currentSong?.Stop();
                 currentSong = newSong;
-                currentSong?.Play(audioOutput);
+                ContinueMusic();
             }
 
             return oldSong;
+        }
+
+        internal void ContinueMusic()
+        {
+            if (Configuration.Music)
+                currentSong?.Play(AudioOutput);
         }
 
         void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)
