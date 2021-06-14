@@ -929,6 +929,7 @@ namespace Ambermoon
             }
 
             player2D.Visible = true;
+            player2D.RecheckTopSprite();
             player2D.MoveTo(map, playerX, playerY, CurrentTicks, true, direction);
 
             player.Position.X = (int)playerX;

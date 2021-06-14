@@ -133,11 +133,11 @@ namespace Ambermoon.Render
             Position = startPosition;
         }
 
-        void RecheckTopSprite()
+        internal void RecheckTopSprite()
         {
             var currentAnimationInfo = CurrentAnimationInfo;
 
-            if (currentAnimationInfo.UseTopSprite)
+            if (currentAnimationInfo.UseTopSprite && currentAnimationInfo.FrameHeight > RenderMap2D.TILE_HEIGHT)
             {
                 if (topSprite == null)
                 {
