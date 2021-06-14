@@ -30,6 +30,7 @@
   walks outside.
 - After climbing to new map (map 355 ~17,4) with a rope, the monster jumps to a new location.
 - When climbing up/down the player appears to far away from the hole (maybe move him nearer beforehand).
+- Sometimes stars are shown in dungeons when it's dark (no light).
 
 
 ## 2D maps
@@ -37,6 +38,7 @@
 - 2D monsters should stay for 1 timeslot when they were on top of the player (e.g. flee success) cause
   otherwise they always stay on the player when he moves.
 - Town house 2 (couple) inside door is only triggered when already moved outside map.
+- In Spannenberg Inn the player is above walls. This is the case cause the position is wrong when entering the map.
 
 
 ## UI

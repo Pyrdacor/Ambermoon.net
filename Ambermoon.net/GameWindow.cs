@@ -35,6 +35,7 @@ namespace Ambermoon
         SongManager songManager = null;
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
+        DateTime? initializeErrorTime = null;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -256,8 +257,7 @@ namespace Ambermoon
 
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
 
-            infoText?.Delete();
-            infoText = null;
+            infoText.Visible = false;
 
             if (audioOutput.Enabled)
                 songManager.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
@@ -320,64 +320,116 @@ namespace Ambermoon
 
             Task.Run(() =>
             {
-                var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
-                foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
-                    executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
-                var savegameManager = new SavegameManager(savePath);
-                savegameManager.GetSavegameNames(gameData, out int currentSavegame);
-                bool canContinue = currentSavegame != 0;
-                var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
-                cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
-                cursor.Type = Data.CursorType.None;
-
-                ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
-                    introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
+                try
                 {
+                    var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
+                    foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
+                        executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
+                    var savegameManager = new SavegameManager(savePath);
+                    savegameManager.GetSavegameNames(gameData, out int currentSavegame);
+                    bool canContinue = currentSavegame != 0;
+                    var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
+                    cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
                     cursor.Type = Data.CursorType.None;
-                    mainMenu.FadeOutAndDestroy();
-                    Task.Run(() =>
+
+                    ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
+                        introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                     {
-                        try
+                        cursor.Type = Data.CursorType.None;
+                        mainMenu.FadeOutAndDestroy();
+                        Task.Run(() =>
                         {
-                            var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
-                            var savegameSerializer = new SavegameSerializer();
-                            var dataNameProvider = new DataNameProvider(executableData);
-                            var characterManager = new CharacterManager(gameData, graphicProvider);
-                            var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
-                            var lightEffectProvider = new LightEffectProvider(executableData);
-
-                            gameCreator = () =>
+                            try
                             {
-                                var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
-                                    characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                    cursor, lightEffectProvider, audioOutput, songManager);
-                                game.QuitRequested += window.Close;
-                                game.MouseTrappedChanged += (bool trapped, Position position) =>
-                                {
-                                    this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+                                var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
+                                var savegameSerializer = new SavegameSerializer();
+                                var dataNameProvider = new DataNameProvider(executableData);
+                                var characterManager = new CharacterManager(gameData, graphicProvider);
+                                var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
+                                var lightEffectProvider = new LightEffectProvider(executableData);
 
-                                    mouse.Position = new MousePosition(position.X, position.Y);
-                                };
-                                game.ConfigurationChanged += (configuration, windowChange) =>
+                                gameCreator = () =>
                                 {
-                                    if (windowChange)
+                                    var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
+                                        characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
+                                        cursor, lightEffectProvider, audioOutput, songManager);
+                                    game.QuitRequested += window.Close;
+                                    game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
-                                        UpdateWindow(configuration);
-                                        Fullscreen = configuration.Fullscreen;
-                                    }
+                                        this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
+
+                                        mouse.Position = new MousePosition(position.X, position.Y);
+                                    };
+                                    game.ConfigurationChanged += (configuration, windowChange) =>
+                                    {
+                                        if (windowChange)
+                                        {
+                                            UpdateWindow(configuration);
+                                            Fullscreen = configuration.Fullscreen;
+                                        }
+                                    };
+                                    game.DrugTicked += Drug_Ticked;
+                                    mainMenu.GameDataLoaded = true;
+                                    game.Run(continueGame, ConvertMousePosition(mouse.Position));
+                                    return game;
                                 };
-                                game.DrugTicked += Drug_Ticked;
-                                mainMenu.GameDataLoaded = true;
-                                game.Run(continueGame, ConvertMousePosition(mouse.Position));
-                                return game;
-                            };
-                        }
-                        catch (Exception ex)
-                        {
-                            gameCreator = () => throw ex;
-                        }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Error while preparing game: " + ex.Message);
+                                gameCreator = () => throw ex;
+                            }
+                        });
                     });
-                });
+                }
+                catch (Exception ex)
+                {
+                    string error = "Error while loading data: " + ex.Message;
+                    Console.WriteLine(error);                   
+
+                    try
+                    {
+                        error = @"Error loading data   \(o_o\)";
+                        if (ex is FileNotFoundException fnf && fnf.Source == "Silk.NET.Core")
+                        {
+                            var missingLibrary = ParseMissingFileName(fnf);
+
+                            if (missingLibrary != null)
+                            {
+                                error = @$"Error: {Path.GetFileName(missingLibrary)} is missing   (/o_o)/";
+
+                                if (missingLibrary.ToLower().Contains("openal"))
+                                    error += $"^Please install OpenAL manually"; // ^ is new line
+                            }
+                        }
+
+                        int height = 6 + error.Count(ch => ch == '^') * 7;
+                        var text = renderView.TextProcessor.CreateText(error, '_');
+                        text = renderView.TextProcessor.WrapText(text, new Rect(0, 0, Global.VirtualScreenWidth, height), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                        infoText.Text = renderView.TextProcessor.CreateText(error, '_');/* renderView.TextProcessor.WrapText(renderView.TextProcessor.CreateText(error, '_')
+                            new Rect(infoText.Place), new Size(Global.GlyphWidth, Global.GlyphLineHeight));*/
+                        infoText.Place(new Rect(infoText.X, infoText.Y, infoText.Text.MaxLineSize * 6, height), TextAlign.Center);
+                        infoText.Visible = true;
+                        initializeErrorTime = DateTime.Now;
+
+                        static string ParseMissingFileName(FileNotFoundException fileNotFoundException)
+                        {
+                            if (fileNotFoundException?.FileName != null)
+                                return fileNotFoundException.FileName;
+
+                            // TODO: improve/remove this later
+                            var regex = new System.Text.RegularExpressions.Regex(
+                                "Could not find or load the native library: (.*) Attempted:", System.Text.RegularExpressions.RegexOptions.Compiled);
+                            var match = regex.Match(fileNotFoundException.Message);
+
+                            return match.Success ? match.Groups[1].Value : null;
+                        }
+                    }
+                    catch
+                    {
+                        window.Close();
+                    }
+                }
             });
         }
 
@@ -578,6 +630,13 @@ namespace Ambermoon
 
         void Window_Update(double delta)
         {
+            if (initializeErrorTime != null)
+            {
+                if ((DateTime.Now - initializeErrorTime.Value).TotalSeconds > 5)
+                    window.Close();
+                return;
+            }
+
             if (versionSelector != null)
                 versionSelector.Update(delta);
             else if (mainMenu != null)
@@ -687,6 +746,16 @@ namespace Ambermoon
             }
             finally
             {
+                try
+                {
+                    infoText?.Delete();
+                    infoText = null;
+                }
+                catch
+                {
+                    Console.WriteLine();
+                }
+
                 try
                 {
                     window?.Dispose();

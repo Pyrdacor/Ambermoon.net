@@ -11,7 +11,6 @@ namespace Ambermoon.Audio.OpenAL
         readonly BufferFormat format;
         readonly int sampleRate;
         int firstBufferIndex = 0;
-        int queuedBuffers = 0;
         bool disposed = false;
 
         public AudioBuffer(AL al, int channels, int sampleRate)
@@ -26,16 +25,22 @@ namespace Ambermoon.Audio.OpenAL
         {
             fixed (uint* bufferIndex = &bufferIndices[index])
                 al.SourceQueueBuffers(source, 1, bufferIndex);
-
-            ++queuedBuffers;
         }
 
         unsafe void UnqueueBuffer(uint source, int index)
         {
             fixed (uint* bufferIndex = &bufferIndices[index])
                 al.SourceUnqueueBuffers(source, 1, bufferIndex);
+        }
 
-            --queuedBuffers;
+        void UnqueueProcessedBuffers(uint source, int processed)
+        {
+            while (processed != 0)
+            {
+                UnqueueBuffer(source, firstBufferIndex);
+                firstBufferIndex = (firstBufferIndex + 1) % NumBuffers;
+                --processed;
+            }
         }
 
         public void Reset(uint source)
@@ -43,15 +48,12 @@ namespace Ambermoon.Audio.OpenAL
             if (disposed)
                 throw new InvalidOperationException("Tried to reset a disposed audio buffer.");
 
-            al.GetSourceProperty(source, GetSourceInteger.BuffersQueued, out int queued);
             al.GetSourceProperty(source, GetSourceInteger.BuffersProcessed, out int processed);
-            firstBufferIndex += processed;
 
-            for (int i = 0; i < queued; ++i)
-                UnqueueBuffer(source, (firstBufferIndex + i) % NumBuffers);
-
-            firstBufferIndex = 0;
-            queuedBuffers = 0;
+            // Note: OpenAL only allows unqueuing processed buffers. But when the
+            // source is stopped, all buffers are marked as processed. So then this
+            // will unqueue all buffers. So call al.SourceStop before this.
+            UnqueueProcessedBuffers(source, processed);
         }
 
         public void Fill(uint source, byte[] data)
@@ -65,13 +67,10 @@ namespace Ambermoon.Audio.OpenAL
             if (queued == NumBuffers && processed == 0)
                 throw new InsufficientMemoryException("All audio buffers are already full and queued.");
 
-            while (processed != 0)
-            {
-                UnqueueBuffer(source, firstBufferIndex);
-                firstBufferIndex = (firstBufferIndex + 1) % NumBuffers;
-                --processed;
-            }
+            // Clean up processed buffers
+            UnqueueProcessedBuffers(source, processed);
 
+            // firstBufferIndex now points to first queued buffer
             int index = (firstBufferIndex + queued) % NumBuffers;
             al.BufferData(bufferIndices[index], format, data, sampleRate);
             QueueBuffer(source, index);
