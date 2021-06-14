@@ -65,3 +65,4 @@
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Maybe add emergency savegame that is stored when game crashes.
 - Switching fullscreen by key (F11) the resolution is not corrected
+- If starting game too fast while the game is not fully loaded, the main menu song starts on the first map

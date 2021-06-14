@@ -11619,6 +11619,15 @@ namespace Ambermoon
                     }
 
                     CheckScroll();
+
+                    // Initial scroll
+                    int startScrollX = Math.Max(0, (player.Position.X - 6) / 2);
+                    int startScrollY = Math.Max(0, (player.Position.Y - 8) / 2);
+                    Scroll(startScrollX, startScrollY);
+
+                    lastMousePosition = renderView.GameToScreen(Global.AutomapArea.Center);
+                    MouseTrappedChanged?.Invoke(false, lastMousePosition);
+                    UpdateCursor();
                 });
             });
         }
