@@ -24,8 +24,8 @@ namespace Ambermoon.Data.Legacy.Audio
 
         public void Stop()
         {
-            audioOutput.Stop();
-            audioOutput.Reset();
+            audioOutput?.Stop();
+            audioOutput?.Reset();
             currentStream = null;
         }
     }
