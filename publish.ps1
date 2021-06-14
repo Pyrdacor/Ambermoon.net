@@ -17,7 +17,7 @@ if ($isWindows) {
   7z a Ambermoon.net-Windows-Standalone.zip "Ambermoon.net\Ambermoon.net.exe"
   cmd /c copy /b "Ambermoon.net\bin\Any CPU\Release\netcoreapp3.1\win-x86\publish\Ambermoon.net.exe"+"versions.dat" "Ambermoon.net\Ambermoon.net.exe"
   7z a Ambermoon.net-Windows32Bit-Standalone.zip "Ambermoon.net\Ambermoon.net.exe"
-} else if ($isMac) {
+} elseif ($isMac) {
   Write-Host Publish Mac executable
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r osx-x64 --no-restore --no-self-contained
   dotnet publish -c Release "./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj" -r osx-x64 --no-restore
