@@ -9330,7 +9330,11 @@ namespace Ambermoon
             layout.Set80x80Picture(picture);
 
             // Put all gold on the table!
-            place.AvailableGold = (uint)PartyMembers.Sum(p => p.Gold);
+            foreach (var partyMember in PartyMembers)
+            {
+                place.AvailableGold += partyMember.Gold;
+                partyMember.RemoveGold(partyMember.Gold);
+            }
 
             ShowTextPanel(CharacterInfo.ChestGold, true,
                 $"{DataNameProvider.GoldName}^{place.AvailableGold}", new Rect(111, 104, 43, 15));
@@ -9367,13 +9371,18 @@ namespace Ambermoon
 
                     // Distribute the gold
                     var partyMembers = PartyMembers.ToList();
-                    int goldPerPartyMember = (int)place.AvailableGold / partyMembers.Count;
-                    int restGold = (int)place.AvailableGold % partyMembers.Count;
+                    uint availableGold = place.AvailableGold;
+                    availableGold = DistributeGold(availableGold, false);
+                    int goldPerPartyMember = (int)availableGold / partyMembers.Count;
+                    int restGold = (int)availableGold % partyMembers.Count;
 
-                    for (int i = 0; i < partyMembers.Count; ++i)
+                    if (availableGold != 0)
                     {
-                        int gold = goldPerPartyMember + (i < restGold ? 1 : 0);
-                        partyMembers[i].SetGold((uint)gold);
+                        for (int i = 0; i < partyMembers.Count; ++i)
+                        {
+                            int gold = goldPerPartyMember + (i < restGold ? 1 : 0);
+                            partyMembers[i].AddGold((uint)gold);
+                        }
                     }
 
                     closeAction?.Invoke();
@@ -9491,13 +9500,18 @@ namespace Ambermoon
 
                     // Distribute the gold
                     var partyMembers = PartyMembers.ToList();
-                    int goldPerPartyMember = (int)merchant.AvailableGold / partyMembers.Count;
-                    int restGold = (int)merchant.AvailableGold % partyMembers.Count;
+                    uint availableGold = merchant.AvailableGold;
+                    availableGold = DistributeGold(availableGold, false);
+                    int goldPerPartyMember = (int)availableGold / partyMembers.Count;
+                    int restGold = (int)availableGold % partyMembers.Count;
 
-                    for (int i = 0; i < partyMembers.Count; ++i)
+                    if (availableGold != 0)
                     {
-                        int gold = goldPerPartyMember + (i < restGold ? 1 : 0);
-                        partyMembers[i].SetGold((uint)gold);
+                        for (int i = 0; i < partyMembers.Count; ++i)
+                        {
+                            int gold = goldPerPartyMember + (i < restGold ? 1 : 0);
+                            partyMembers[i].AddGold((uint)gold);
+                        }
                     }
                 }
 
@@ -9789,7 +9803,11 @@ namespace Ambermoon
             };
 
             // Put all gold on the table!
-            merchant.AvailableGold = (uint)PartyMembers.Sum(p => p.Gold);
+            foreach (var partyMember in PartyMembers)
+            {
+                merchant.AvailableGold += partyMember.Gold;
+                partyMember.RemoveGold(partyMember.Gold);
+            }
 
             ShowTextPanel(CharacterInfo.ChestGold, true,
                 $"{DataNameProvider.GoldName}^{merchant.AvailableGold}", new Rect(111, 104, 43, 15));
