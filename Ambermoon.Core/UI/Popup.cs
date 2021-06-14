@@ -358,6 +358,28 @@ namespace Ambermoon.UI
                 return true;
             }
 
+            if (key == Key.Up || key == Key.PageUp || key == Key.Home)
+            {
+                var upButton = buttons.FirstOrDefault(button => button.ButtonType == Data.Enumerations.ButtonType.MoveUp);
+
+                if (upButton != null)
+                {
+                    upButton.PressImmediately(key == Key.PageUp || key == Key.Home);
+                    return true;
+                }
+            }
+
+            if (key == Key.Down || key == Key.PageDown || key == Key.End)
+            {
+                var downButton = buttons.FirstOrDefault(button => button.ButtonType == Data.Enumerations.ButtonType.MoveDown);
+
+                if (downButton != null)
+                {
+                    downButton.PressImmediately(key == Key.PageDown || key == Key.End);
+                    return true;
+                }
+            }
+
             return false;
         }
 

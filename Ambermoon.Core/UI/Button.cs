@@ -317,6 +317,17 @@ namespace Ambermoon.UI
             return cursorChangeAction?.Invoke();
         }
 
+        internal void PressImmediately(bool rightMouse = false)
+        {
+            if (!Disabled)
+            {
+                if (rightMouse)
+                    RightClickAction?.Invoke();
+                else
+                    LeftClickAction?.Invoke();
+            }
+        }
+
         internal CursorType? Press(uint currentTicks)
         {
             if (Disabled)
