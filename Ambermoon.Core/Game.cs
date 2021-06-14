@@ -8153,6 +8153,10 @@ namespace Ambermoon
                     fow2D.Radius = 0;
                     fow2D.Visible = true;
                 }
+                else
+                {
+                    renderMap3D.HideSky();
+                }
             }
             else if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
@@ -8197,6 +8201,9 @@ namespace Ambermoon
                 // Full light
                 lightIntensity = 255;
                 fow2D.Visible = false;
+
+                if (is3D)
+                    renderMap3D.HideSky();
             }
             else // Dungeon
             {
@@ -8238,7 +8245,10 @@ namespace Ambermoon
                     fow2D.Visible = true;
                 }
                 if (is3D)
+                {
                     fow2D.Visible = false;
+                    renderMap3D.HideSky();
+                }
             }
 
             if (is3D)

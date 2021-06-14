@@ -1347,8 +1347,21 @@ namespace Ambermoon.Render
             }
         }
 
+        public void HideSky()
+        {
+            renderView.PaletteReplacement = null;
+            renderView.SetSkyColorReplacement(null, null);
+            stars.ForEach(s => s.Value.Visible = false);
+            if (skyColors != null)
+                skyColors.ForEach(c => c?.Delete());
+            SetColors(null);            
+        }
+
         public void UpdateSky(ILightEffectProvider lightEffectProvider, ITime time)
         {
+            if (Map?.Flags.HasFlag(MapFlags.Outdoor) != true)
+                return;
+
             var skyParts = lightEffectProvider.GetSkyParts(Map, time.Hour, time.Minute,
                 renderView.GraphicProvider, out var paletteReplacement);
 
