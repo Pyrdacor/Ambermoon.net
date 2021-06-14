@@ -692,15 +692,18 @@ namespace Ambermoon.Render
                     return false;
             }
 
-            ScrollTo((uint)newScrollX, (uint)newScrollY);
+            ScrollTo((uint)newScrollX, (uint)newScrollY, false, false);
 
             return true;
         }
 
-        public void ScrollTo(uint x, uint y, bool forceUpdate = false)
+        public void ScrollTo(uint x, uint y, bool forceUpdate = false, bool initial = true)
         {
             if (!forceUpdate && ScrollX == x && ScrollY == y)
                 return;
+
+            if (initial && !Map.Flags.HasFlag(MapFlags.SmallPlayer) && y > 0)
+                --y;
 
             ScrollX = x;
             ScrollY = y;
