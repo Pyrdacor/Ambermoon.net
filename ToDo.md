@@ -50,6 +50,8 @@
 - Speaking to simple NPC the popup uses centered text. Is this right?
 - Error messages in inventory can't be acknowledge by right click.
 - "Do you accept this character?" message is missing in character creator.
+- There is a rare crash in battle position window. I guess it works like this:
+  - Add new member -> Move position of other member and then move back -> Add another member and open/close battle position window
 
 
 ## Misc
@@ -61,6 +63,5 @@
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
-- Add visual effects of drugs and mouse movement.
 - Maybe add emergency savegame that is stored when game crashes.
 - Switching fullscreen by key (F11) the resolution is not corrected

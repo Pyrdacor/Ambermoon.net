@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.8.x beta - Music, intro, outro
+- Version [0.8.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.1beta): Bugfixing
 - Version [0.8.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.0beta): Added music
 
 ## 0.7.x beta - Lights, FOW and skies
