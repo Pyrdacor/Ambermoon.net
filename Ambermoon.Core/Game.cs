@@ -200,8 +200,13 @@ namespace Ambermoon
             ConversationPartyMember
         }
 
+        public delegate void FullscreenChangeHandler(bool fullscreen, int? oldWidth);
+        public delegate void ResolutionChangeHandler(int? oldWidth);
+
         // TODO: cleanup members
-        internal IConfiguration Configuration { get; private set; }
+        readonly FullscreenChangeHandler fullscreenChangeHandler;
+        readonly ResolutionChangeHandler resolutionChangeHandler;
+        public IConfiguration Configuration { get; private set; }
         public event Action<IConfiguration, bool> ConfigurationChanged;
         internal GameLanguage GameLanguage { get; private set; }
         CharacterCreator characterCreator = null;
@@ -441,15 +446,21 @@ namespace Ambermoon
             }
         }
 
+        internal void RequestFullscreenChange(bool fullscreen, int? oldWidth) => fullscreenChangeHandler?.Invoke(fullscreen, oldWidth);
+        internal void NotifyResolutionChange(int? oldWidth) => resolutionChangeHandler?.Invoke(oldWidth);
+
         public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IMapManager mapManager,
             IItemManager itemManager, ICharacterManager characterManager, ISavegameManager savegameManager,
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
-            Places places, Cursor cursor, ILightEffectProvider lightEffectProvider, IAudioOutput audioOutput, ISongManager songManager)
+            Places places, Cursor cursor, ILightEffectProvider lightEffectProvider, IAudioOutput audioOutput, ISongManager songManager,
+            FullscreenChangeHandler fullscreenChangeHandler, ResolutionChangeHandler resolutionChangeHandler)
         {
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
             AutomapPaletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);
 
+            this.fullscreenChangeHandler = fullscreenChangeHandler;
+            this.resolutionChangeHandler = resolutionChangeHandler;
             Configuration = configuration;
             GameLanguage = gameLanguage;
             this.cursor = cursor;

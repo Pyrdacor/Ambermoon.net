@@ -68,6 +68,60 @@ namespace Ambermoon
             Identifier = id;
         }
 
+        void ChangeResolution(int? oldWidth) => ChangeResolution(oldWidth, configuration.Fullscreen, true);
+
+        void ChangeResolution(int? oldWidth, bool fullscreen, bool changed)
+        {
+            if (renderView == null || configuration == null)
+                return;
+
+            var possibleResolutions = fullscreen
+                ? ScreenResolutions.Filter(configuration.ScreenRatio, renderView.AvailableFullscreenModes)
+                : ScreenResolutions.GetPossibleResolutions(configuration.ScreenRatio, renderView.MaxScreenSize);
+            int index = oldWidth == null ? 0 : changed
+                ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
+                : FindNearestResolution(oldWidth.Value);
+            var resolution = possibleResolutions[index];
+            configuration.Width = resolution.Width;
+            configuration.Height = resolution.Height;
+
+            int FindNearestResolution(int width)
+            {
+                int index = possibleResolutions.FindIndex(r => r.Width == width);
+
+                if (index != -1)
+                    return index;
+
+                int minDiffIndex = 0;
+                int minDiff = Math.Abs(possibleResolutions[0].Width - width);
+
+                for (int i = 1; i < possibleResolutions.Count; ++i)
+                {
+                    int diff = Math.Abs(possibleResolutions[i].Width - width);
+
+                    if (diff < minDiff)
+                    {
+                        minDiffIndex = i;
+                        minDiff = diff;
+                    }
+                }
+
+                return minDiffIndex;
+            }
+        }
+
+        void FullscreenChangeRequest(bool fullscreen)
+        {
+            FullscreenChangeRequest(fullscreen, configuration.Width);
+            UpdateWindow(configuration);
+            Fullscreen = fullscreen;
+        }
+
+        void FullscreenChangeRequest(bool fullscreen, int? oldWidth)
+        {
+            ChangeResolution(oldWidth, fullscreen, false);
+        }
+
         void SetupInput(IInputContext inputContext)
         {
             var keyboard = inputContext.Keyboards.FirstOrDefault(k => k.IsConnected);
@@ -163,7 +217,7 @@ namespace Ambermoon
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
             if (key == Silk.NET.Input.Key.F11)
-                Fullscreen = !Fullscreen;
+                FullscreenChangeRequest(!Fullscreen);
             else
             {
                 if (versionSelector != null)
@@ -352,7 +406,7 @@ namespace Ambermoon
                                 {
                                     var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                         characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                        cursor, lightEffectProvider, audioOutput, songManager);
+                                        cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution);
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
@@ -365,7 +419,7 @@ namespace Ambermoon
                                         if (windowChange)
                                         {
                                             UpdateWindow(configuration);
-                                            Fullscreen = configuration.Fullscreen;
+                                            FullscreenChangeRequest(configuration.Fullscreen);
                                         }
                                     };
                                     game.DrugTicked += Drug_Ticked;
@@ -601,7 +655,7 @@ namespace Ambermoon
             window.MakeCurrent();
 
             if (configuration.Fullscreen)
-                Fullscreen = true; // This will adjust the window
+                FullscreenChangeRequest(true); // This will adjust the window
 
             // Setup input
             SetupInput(window.CreateInput());

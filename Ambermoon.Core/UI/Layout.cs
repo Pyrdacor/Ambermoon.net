@@ -1058,32 +1058,27 @@ namespace Ambermoon.UI
             {
                 game.Configuration.ScreenRatio = (ScreenRatio)(((int)game.Configuration.ScreenRatio + 1) % 3);
                 SetScreenRatio();
-                ChangeResolution(null);
+                game.NotifyResolutionChange(null);
+                width = game.Configuration.Width.Value;
+                SetResolution();
                 changedConfiguration = true;
                 windowChange = true;
             }
-            void ChangeResolution(int? oldWidth)
-            {
-                var possibleResolutions = game.Configuration.Fullscreen
-                    ? ScreenResolutions.Filter(game.Configuration.ScreenRatio, RenderView.AvailableFullscreenModes)
-                    : ScreenResolutions.GetPossibleResolutions(game.Configuration.ScreenRatio, RenderView.MaxScreenSize);
-                int index = oldWidth == null ? 0 : (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count;
-                var resolution = possibleResolutions[index];
-                game.Configuration.Width = width = resolution.Width;
-                game.Configuration.Height = resolution.Height;
-                SetResolution();
-            }
             void ToggleResolution()
             {
-                ChangeResolution(width);
+                game.NotifyResolutionChange(width);
+                width = game.Configuration.Width.Value;
+                SetResolution();
                 changedConfiguration = true;
                 windowChange = true;
             }
             void ToggleFullscreen()
             {
                 game.Configuration.Fullscreen = !game.Configuration.Fullscreen;
+                game.RequestFullscreenChange(game.Configuration.Fullscreen, width);                
                 SetFullscreen();
-                ChangeResolution(width);
+                width = game.Configuration.Width.Value;
+                SetResolution();                
                 changedConfiguration = true;
                 windowChange = true;
             }
@@ -3333,27 +3328,27 @@ namespace Ambermoon.UI
             switch (key)
             {
                 case Key.Up:
-                    if (HasScrollableItemGrid)
+                    if (!PopupActive && HasScrollableItemGrid)
                         itemGrids[0].ScrollUp();
                     break;
                 case Key.Down:
-                    if (HasScrollableItemGrid)
+                    if (!PopupActive && HasScrollableItemGrid)
                         itemGrids[0].ScrollDown();
                     break;
                 case Key.PageUp:
-                    if (HasScrollableItemGrid)
+                    if (!PopupActive && HasScrollableItemGrid)
                         itemGrids[0].ScrollPageUp();
                     break;
                 case Key.PageDown:
-                    if (HasScrollableItemGrid)
+                    if (!PopupActive && HasScrollableItemGrid)
                         itemGrids[0].ScrollPageDown();
                     break;
                 case Key.Home:
-                    if (HasScrollableItemGrid)
+                    if (!PopupActive && HasScrollableItemGrid)
                         itemGrids[0].ScrollToBegin();
                     break;
                 case Key.End:
-                    if (HasScrollableItemGrid)
+                    if (!PopupActive && HasScrollableItemGrid)
                         itemGrids[0].ScrollToEnd();
                     break;
             }
