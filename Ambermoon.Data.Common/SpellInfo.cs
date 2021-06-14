@@ -122,7 +122,7 @@ namespace Ambermoon.Data
             { Spell.ChangeDust, new SpellInfo { SP = 250, SLP = 25, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
             { Spell.GreatHealing, new SpellInfo { SP = 100, SLP = 30, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.MassHealing, new SpellInfo { SP = 150, SLP = 20, Target = SpellTarget.AllFriends, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
-            { Spell.Resurrection, new SpellInfo { SP = 250, SLP = 30, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
+            { Spell.Resurrection, new SpellInfo { SP = 250, SLP = 30, Target = SpellTarget.AllFriends, ApplicationArea = SpellApplicationArea.Camp, Worlds = WorldFlag.All } },
             { Spell.RemoveRigidness, new SpellInfo { SP = 15, SLP = 5, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.RemoveLamedness, new SpellInfo { SP = 30, SLP = 10, Target = SpellTarget.AllFriends, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.HealAging, new SpellInfo { SP = 50, SLP = 12, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },

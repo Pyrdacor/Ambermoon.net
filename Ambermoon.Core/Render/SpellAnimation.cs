@@ -527,6 +527,7 @@ namespace Ambermoon.Render
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
                 case Spell.WakeTheDead:
+                case Spell.Resurrection:
                 case Spell.SpellPointsI:
                 case Spell.SpellPointsII:
                 case Spell.SpellPointsIII:
@@ -546,9 +547,9 @@ namespace Ambermoon.Render
             }
         }
 
-        public void CastOnAllPartyMembers(Spell spell, Action finishAction)
+        public void CastHealingOnPartyMembers(Action finishAction, bool reviving)
         {
-            var partyMembers = game.PartyMembers.Where(p => p.Alive).ToList();
+            var partyMembers = game.PartyMembers.Where(p => p.Alive != reviving).ToList();
 
             for (int i = 0; i < partyMembers.Count; ++i)
                 PlayHealingAnimation(partyMembers[i], i == partyMembers.Count - 1 ? finishAction : null);

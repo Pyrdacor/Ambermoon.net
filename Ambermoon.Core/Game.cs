@@ -6933,6 +6933,15 @@ namespace Ambermoon
                 case Spell.CreateFood:
                     Cast(() => ++target.Food);
                     break;
+                case Spell.Resurrection:
+                {
+                    TrySpell(() =>
+                    {
+                        target.Ailments &= ~Ailment.DeadCorpse;
+                        PartyMemberRevived(target as PartyMember, finishAction, false);
+                    });
+                    break;
+                }
                 case Spell.WakeTheDead:
                 {
                     if (!(target is PartyMember targetPlayer))
@@ -9882,7 +9891,9 @@ namespace Ambermoon
                                     if (target != null && (reviveSpell || spell == Spell.AllHealing || target.Alive))
                                     {
                                         if (reviveSpell)
+                                        {
                                             ApplySpellEffect(spell, caster, target, null, checkFail);
+                                        }
                                         else
                                         {
                                             currentAnimation?.Destroy();
@@ -9921,14 +9932,24 @@ namespace Ambermoon
                         {
                             currentAnimation?.Destroy();
                             currentAnimation = new SpellAnimation(this, layout);
-                            currentAnimation.CastOnAllPartyMembers(spell, () =>
+
+                            currentAnimation.CastHealingOnPartyMembers(() =>
                             {
                                 currentAnimation.Destroy();
                                 currentAnimation = null;
 
-                                foreach (var partyMember in PartyMembers.Where(p => p.Alive))
-                                    ApplySpellEffect(spell, caster, partyMember, null, false);
-                            });
+                                if (spell == Spell.Resurrection)
+                                {
+                                    void Revive(PartyMember target, Action finishAction) =>
+                                        ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, checkFail);
+                                    ForeachPartyMember(Revive, p => p.Ailments.HasFlag(Ailment.DeadCorpse));
+                                }
+                                else
+                                {
+                                    foreach (var partyMember in PartyMembers.Where(p => p.Alive))
+                                        ApplySpellEffect(spell, caster, partyMember, null, false);
+                                }
+                            }, spell == Spell.Resurrection);
                         }
                         if (checkFail)
                             TrySpell(Cast);
