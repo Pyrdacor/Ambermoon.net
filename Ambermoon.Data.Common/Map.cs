@@ -99,8 +99,6 @@ namespace Ambermoon.Data
                 {
                     var obj = labdata.Objects[((int)ObjectIndex - 1) % labdata.Objects.Count];
 
-                    // TODO: maybe header contains movement blocking bit?
-
                     foreach (var subObject in obj.SubObjects)
                     {
                         var objectFlags = subObject.Object.Flags;
@@ -108,6 +106,20 @@ namespace Ambermoon.Data
                         if (objectFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectFlags.HasFlag(Tileset.TileFlags.AllowMovementWalk))
                             return true;
                     }
+                }
+
+                return false;
+            }
+
+            public bool BlocksPlayerSight(Labdata labdata)
+            {
+                if (MapBorder)
+                    return true;
+
+                if (WallIndex != 0)
+                {
+                    var wallFlags = labdata.Walls[((int)WallIndex - 1) % labdata.Walls.Count].Flags;
+                    return wallFlags.HasFlag(Tileset.TileFlags.BlockSight);
                 }
 
                 return false;
