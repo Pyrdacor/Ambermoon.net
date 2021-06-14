@@ -85,7 +85,10 @@ namespace Ambermoon.Data.Legacy
                         }
                     }
 
-                    TransferFile("Saves");
+                    var saves = TransferFile("Saves");
+
+                    if (saves != null)
+                        gameData.Files[saves.Value.Key] = saves.Value.Value;
                 }
                 catch
                 {
