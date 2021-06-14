@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Common" Version="8.1.0" />
-    <PackageReference Include="SonicArranger" Version="1.0.4" />
+    <PackageReference Include="SonicArranger" Version="1.0.6" />
   </ItemGroup>
 
   <ItemGroup>

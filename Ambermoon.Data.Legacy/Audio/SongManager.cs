@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Audio;
 using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
 
@@ -10,12 +11,14 @@ namespace Ambermoon.Data.Legacy.Audio
         readonly Dictionary<Enumerations.Song, ISong> songs = new Dictionary<Enumerations.Song, ISong>();
         readonly SongPlayer songPlayer = new SongPlayer();
 
+        Song CreateSong(Enumerations.Song song, IDataReader dataReader, bool waitForLoading) =>
+            new Song(song, songPlayer, dataReader as DataReader, SonicArranger.Stream.ChannelMode.Mono, true, true, false);
+
         public SongManager(IFileContainer fileContainer, int songIndexOffset = 0,
             Enumerations.Song? immediateLoadSongIndex = null)
         {
             var immediateLoadedSong = immediateLoadSongIndex == null ? null :
-                new Song(immediateLoadSongIndex.Value, songPlayer,
-                    fileContainer.Files[(int)immediateLoadSongIndex.Value - songIndexOffset] as DataReader, false, true, true, true);
+                CreateSong(immediateLoadSongIndex.Value, fileContainer.Files[(int)immediateLoadSongIndex.Value - songIndexOffset], true);
 
             foreach (var file in fileContainer.Files)
             {
@@ -23,7 +26,7 @@ namespace Ambermoon.Data.Legacy.Audio
                 if (immediateLoadSongIndex == song)
                     songs.Add(song, immediateLoadedSong);
                 else
-                    songs.Add(song, new Song(song, songPlayer, file.Value as DataReader, false, true, true, false));
+                    songs.Add(song, CreateSong(song, file.Value, false));
             }
         }
 
@@ -47,7 +50,7 @@ namespace Ambermoon.Data.Legacy.Audio
                     _ => musicContainer.Files[(int)immediateLoadSongIndex.Value],
                 };
                 if (reader != null)
-                    immediateLoadedSong = new Song(immediateLoadSongIndex.Value, songPlayer, reader as DataReader, false, true, true, true);
+                    immediateLoadedSong = CreateSong(immediateLoadSongIndex.Value, reader, true);
             }
 
             foreach (var file in musicContainer.Files)
@@ -64,7 +67,7 @@ namespace Ambermoon.Data.Legacy.Audio
                 if (immediateLoadSongIndex == song)
                     songs.Add(song, immediateLoadedSong);
                 else
-                    songs.Add(song, new Song(song, songPlayer, readerProvider(), false, true, true, false));
+                    songs.Add(song, CreateSong(song, readerProvider(), false));
             }
         }
 
