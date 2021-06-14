@@ -43,12 +43,10 @@
 
 - Memorize spell list scroll offset per party member (temporary per game).
 - Cursor keys should scroll automap. Mouse wheel would be cool to.
-- Center player when opening automap.
 - Scrolling by dragging can't put the scrollbar to the top or bottom. There is a small gap.
 - When repairing item etc the item tooltip should not show up after magic animation.
 - I guess buff duration bars are a bit wrong (ingame no empty bar is shown, while it is in remake).
 - Speaking to simple NPC the popup uses centered text. Is this right?
-- Error messages in inventory can't be acknowledge by right click.
 - "Do you accept this character?" message is missing in character creator.
 - There is a rare crash in battle position window. I guess it works like this:
   - Add new member -> Move position of other member and then move back -> Add another member and open/close battle position window
@@ -64,5 +62,4 @@
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Maybe add emergency savegame that is stored when game crashes.
-- Switching fullscreen by key (F11) the resolution is not corrected
 - If starting game too fast while the game is not fully loaded, the main menu song starts on the first map
