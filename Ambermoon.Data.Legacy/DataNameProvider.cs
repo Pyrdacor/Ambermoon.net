@@ -220,6 +220,7 @@
         public string GameOverLoadOrQuit => executableData.Messages.GetEntry(Messages.Index.GameOverLoadOrQuit);
         public string GameOverMessage => executableData.Messages.GetEntry(Messages.Index.GameOver);
         public string ReallyQuit => executableData.Messages.GetEntry(Messages.Index.ReallyQuit);
+        public string ItemIsImportant => executableData.Messages.GetEntry(Messages.Index.YouNeedThisItem);
 
 
         #region Conversations

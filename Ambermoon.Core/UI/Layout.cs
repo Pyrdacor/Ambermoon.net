@@ -2146,10 +2146,18 @@ namespace Ambermoon.UI
 
         void DropItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
+            var item = itemManager.GetItem(itemSlot.ItemIndex);
+
+            if (!item.Flags.HasFlag(ItemFlags.NotImportant))
+            {
+                itemGrid.HideTooltip();
+                SetInventoryMessage(game.DataNameProvider.ItemIsImportant, true);
+                return;
+            }
+
             if (itemSlot.Amount > 1)
             {
                 itemGrid.HideTooltip();
-                var item = itemManager.GetItem(itemSlot.ItemIndex);
                 OpenAmountInputBox(game.DataNameProvider.DropHowMuchItemsMessage,
                     item.GraphicIndex, item.Name, (uint)itemSlot.Amount, DropAmount);
             }
@@ -3509,7 +3517,7 @@ namespace Ambermoon.UI
                 }
                 else if (ChestText != null)
                 {
-                    if (buttons == MouseButtons.Left)
+                    if (buttons == MouseButtons.Left || buttons == MouseButtons.Right)
                     {
                         if (ChestText.Click(position))
                         {
@@ -3520,7 +3528,7 @@ namespace Ambermoon.UI
                 }
                 else if (InventoryMessageWaitsForClick)
                 {
-                    if (buttons == MouseButtons.Left)
+                    if (buttons == MouseButtons.Left || buttons == MouseButtons.Right)
                     {
                         inventoryMessage.Click(position);
                         cursorType = inventoryMessage == null ? CursorType.Sword : CursorType.Click;
