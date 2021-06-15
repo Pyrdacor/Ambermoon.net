@@ -2005,7 +2005,7 @@ namespace Ambermoon
                 case Key.Num8:
                 case Key.Num9:
                 {
-                    if (layout.PopupDisableButtons || layout.IsDragging)
+                    if (layout.PopupDisableButtons || layout.IsDragging || layout.InventoryMessageWaitsForClick)
                         break;
 
                     int index = key - Key.Num1;

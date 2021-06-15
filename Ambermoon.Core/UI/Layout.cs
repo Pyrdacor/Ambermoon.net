@@ -2183,30 +2183,75 @@ namespace Ambermoon.UI
         void StoreGold()
         {
             // Note: 96 is the object icon index for coins (gold).
+            var chest = game.OpenStorage as Chest;
             OpenAmountInputBox(game.DataNameProvider.StoreHowMuchGoldMessage,
-                96, game.DataNameProvider.GoldName, game.CurrentInventory.Gold,
-                amount => game.StoreGold(amount));
+                96, game.DataNameProvider.GoldName, Math.Min(game.CurrentInventory.Gold, 0xffff - chest.Gold),
+                amount =>
+                {
+                    game.StoreGold(amount);
+                    if (chest.Gold == 0xffff)
+                        SetInventoryMessage(game.DataNameProvider.ChestNowFull, true);
+                });
         }
 
         void StoreFood()
         {
             // Note: 109 is the object icon index for food.
+            var chest = game.OpenStorage as Chest;
             OpenAmountInputBox(game.DataNameProvider.StoreHowMuchFoodMessage,
-                109, game.DataNameProvider.FoodName, game.CurrentInventory.Food,
-                amount => game.StoreFood(amount));
+                109, game.DataNameProvider.FoodName, Math.Min(game.CurrentInventory.Food, 0xffff - chest.Food),
+                amount =>
+                {
+                    game.StoreFood(amount);
+                    if (chest.Food == 0xffff)
+                        SetInventoryMessage(game.DataNameProvider.ChestNowFull, true);
+                });
         }
 
         void StoreItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
+            var slots = game.OpenStorage.Slots.ToList();
+            int maxItemsToStore = 0;
+
+            if (slots.Any(slot => slot.Empty))
+                maxItemsToStore = 99;
+            else
+            {
+                var item = itemManager.GetItem(itemSlot.ItemIndex);
+
+                if (item.Flags.HasFlag(ItemFlags.Stackable))
+                {
+                    foreach (var possibleSlot in slots.Where(s => s.ItemIndex == item.Index))
+                    {
+                        maxItemsToStore += 99 - possibleSlot.Amount;
+                    }
+                }
+            }
+
+            if (maxItemsToStore == 0)
+            {
+                SetInventoryMessage(game.DataNameProvider.ChestFull, true);
+                return;
+            }
+
             if (itemSlot.Amount > 1)
             {
                 var item = itemManager.GetItem(itemSlot.ItemIndex);
+                bool nowFull = maxItemsToStore <= itemSlot.Amount;
                 OpenAmountInputBox(game.DataNameProvider.StoreHowMuchItemsMessage,
-                    item.GraphicIndex, item.Name, (uint)itemSlot.Amount, StoreAmount);
+                    item.GraphicIndex, item.Name, (uint)maxItemsToStore, amount =>
+                    {
+                        StoreAmount(amount);
+                        if (nowFull)
+                            SetInventoryMessage(game.DataNameProvider.ChestNowFull, true);
+                    });                
             }
             else
             {
                 StoreAmount(1);
+
+                if (maxItemsToStore == 1)
+                    SetInventoryMessage(game.DataNameProvider.ChestNowFull, true);
             }
 
             void StoreAmount(uint amount)

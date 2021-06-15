@@ -199,6 +199,8 @@ namespace Ambermoon.Data
         string GameOverMessage { get; }
         string ReallyQuit { get; }
         string ItemIsImportant { get; }
+        string ChestFull { get; }
+        string ChestNowFull { get; }
 
 
         #region Conversations
