@@ -654,9 +654,6 @@ namespace Ambermoon
         {
             window.MakeCurrent();
 
-            if (configuration.Fullscreen)
-                FullscreenChangeRequest(true); // This will adjust the window
-
             // Setup input
             SetupInput(window.CreateInput());
 
@@ -667,6 +664,9 @@ namespace Ambermoon
                 WindowMoved();
                 versionSelector = null;
             });
+
+            if (configuration.Fullscreen)
+                FullscreenChangeRequest(true); // This will adjust the window
         }
 
         void Window_Render(double delta)
