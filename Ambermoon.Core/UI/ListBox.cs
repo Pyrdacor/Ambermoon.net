@@ -104,6 +104,13 @@ namespace Ambermoon.UI
                 new Position(52, 58), 7, 159, new Position(-3, -1), false, 16);
         }
 
+        public static ListBox CreateSongListbox(IRenderView renderView, Game game, Popup popup,
+            List<KeyValuePair<string, Action<int, string>>> items)
+        {
+            return new ListBox(renderView, game, popup, items, new Rect(32, 50, 192, 115),
+                new Position(36, 52), 7, 189, new Position(-3, -1), false, 16);
+        }
+
         public void Destroy()
         {
             items.Clear();

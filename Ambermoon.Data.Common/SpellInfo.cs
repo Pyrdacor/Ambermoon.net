@@ -234,7 +234,7 @@ namespace Ambermoon.Data
             { Spell.SpellPointsIV, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.SpellPointsV, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.AllHealing, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
-            { Spell.MagicalMap, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
+            { Spell.MagicalMap, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.WorldMapOnly, Worlds = WorldFlag.Lyramion } },
             { Spell.AddStrength, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.AddIntelligence, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.AddDexterity, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },

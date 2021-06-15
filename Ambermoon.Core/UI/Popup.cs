@@ -554,6 +554,14 @@ namespace Ambermoon.UI
             return listBox = ListBox.CreateSpellListbox(renderView, game, this, items);
         }
 
+        public ListBox AddSongListBox(List<KeyValuePair<string, Action<int, string>>> items)
+        {
+            if (listBox != null)
+                throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
+
+            return listBox = ListBox.CreateSongListbox(renderView, game, this, items);
+        }
+
         public Scrollbar AddScrollbar(Layout layout, int scrollRange, int displayLayer = 1, int yOffset = 0)
         {
             return scrollbar = new Scrollbar(game, layout, ScrollbarType.LargeVertical, new Rect(ContentArea.Right - 9, ContentArea.Top + yOffset, 6, 112),

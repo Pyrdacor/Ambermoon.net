@@ -544,6 +544,9 @@ namespace Ambermoon.Render
                 case Spell.AddAntiMagic:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
+                default:
+                    finishAction?.Invoke();
+                    break;
             }
         }
 

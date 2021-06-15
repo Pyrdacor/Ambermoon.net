@@ -14,9 +14,10 @@ namespace Ambermoon.Data
         string GetGenderName(GenderFlag gender);
         string GetLanguageName(Language language);
         string GetAilmentName(Ailment ailment);
-        string GetSpellname(Spell spell);
+        string GetSpellName(Spell spell);
         string GetWorldName(World world);
         string GetItemTypeName(ItemType itemType);
+        string GetSongName(Song song);
         string CharacterInfoHitPointsString { get; }
         string CharacterInfoSpellPointsString { get; }
         string CharacterInfoSpellLearningPointsString { get; }

@@ -940,7 +940,7 @@ namespace Ambermoon
                         case BattleActionType.CastSpell:
                         {
                             GetCastSpellInformation(next.ActionParameter, out _, out Spell spell, out var itemSlotIndex, out bool equippedItem);
-                            string spellName = game.DataNameProvider.GetSpellname(spell);
+                            string spellName = game.DataNameProvider.GetSpellName(spell);
 
                             if (itemSlotIndex != null)
                             {

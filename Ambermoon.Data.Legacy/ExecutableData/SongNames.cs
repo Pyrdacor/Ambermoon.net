@@ -1,4 +1,5 @@
-﻿using Ambermoon.Data.Legacy.Serialization;
+﻿using Ambermoon.Data.Enumerations;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
 
@@ -10,8 +11,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// </summary>
     public class SongNames
     {
-        readonly List<string> entries = new List<string>();
-        public IReadOnlyList<string> Entries => entries.AsReadOnly();
+        readonly Dictionary<Song, string> entries = new Dictionary<Song, string>();
+        public IReadOnlyDictionary<Song, string> Entries => entries;
 
         const int NumSongs = 32;
 
@@ -24,9 +25,19 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal SongNames(IDataReader dataReader)
         {
-            for (int i = 0; i < NumSongs; ++i)
+            string ReadName()
             {
-                entries.Add(dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
+                var name = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+
+                if (string.IsNullOrWhiteSpace(name))
+                    name = "No name";
+
+                return name;
+            }
+
+            for (int i = 1; i <= NumSongs; ++i)
+            {
+                entries.Add((Song)i, ReadName());
             }
 
             dataReader.AlignToWord();

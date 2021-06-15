@@ -137,12 +137,12 @@
         /// </summary>
         Intro,
         /// <summary>
-        /// Outro music (same as Menu)
+        /// Outro music
         /// </summary>
         Outro,
         /// <summary>
-        /// Menu music (same as Outro)
+        /// Menu music
         /// </summary>
-        Menu = Outro
+        Menu
     }
 }

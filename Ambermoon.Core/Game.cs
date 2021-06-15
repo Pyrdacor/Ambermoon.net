@@ -6270,23 +6270,29 @@ namespace Ambermoon
             layout.RemoveAllActiveSpells();
         }
 
-        internal void AddAilment(Ailment ailment)
+        internal void AddAilment(Ailment ailment, PartyMember target = null)
         {
-            var partyMember = CurrentPartyMember;
+            target ??= CurrentPartyMember;
 
-            if (ailment >= Ailment.DeadCorpse && partyMember.Alive)
+            if (ailment >= Ailment.DeadCorpse && target.Alive)
             {
-                partyMember.Die(ailment);
+                target.Die(ailment);
                 return;
             }
 
-            partyMember.Ailments |= ailment;
+            target.Ailments |= ailment;
 
-            if (CurrentPartyMember == partyMember)
+            if (CurrentPartyMember == target)
             {
-                if (RecheckActivePartyMember() && ailment == Ailment.Blind)
-                    UpdateLight();
+                if (RecheckActivePartyMember())
+                {
+                    if (ailment == Ailment.Blind)
+                        UpdateLight();
+                }
             }
+
+            layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
+            layout.UpdateCharacter(target);
         }
 
         internal void RemoveAilment(Ailment ailment, Character target)
@@ -6711,9 +6717,13 @@ namespace Ambermoon
                     }
                     break;
                 case Spell.PlayElfHarp:
+                    OpenMusicList();
+                    break;
                 case Spell.MagicalMap:
-                case Spell.Drugs:
-                    // TODO
+                    // TODO: In original this has no effect. Maybe it was planned to show
+                    // the real map that was inside the original package.
+                    // For now we show the minimap instead.
+                    OpenMiniMap();
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no spell without target.");
@@ -7202,6 +7212,10 @@ namespace Ambermoon
                 case Spell.DecreaseAge:
                     if (target.Alive && !target.Ailments.HasFlag(Ailment.Petrified))
                         target.Attributes[Attribute.Age].CurrentValue = (uint)Math.Max(18, (int)target.Attributes[Attribute.Age].CurrentValue - RandomInt(1, 10));
+                    break;
+                case Spell.Drugs:
+                    if (target is PartyMember partyMember)
+                        AddAilment(Ailment.Drugged, partyMember);
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
@@ -10463,7 +10477,7 @@ namespace Ambermoon
             if (item.Spell != Spell.None && item.InitialCharges != 0)
             {
                 detailsPopup.AddText(new Position(48, 117),
-                    $"{DataNameProvider.GetSpellname(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",
+                    $"{DataNameProvider.GetSpellName(item.Spell)} ({(itemSlot.NumRemainingCharges > 99 ? "**" : itemSlot.NumRemainingCharges.ToString())})",
                     TextColor.White);
             }
             if (cursed)
@@ -10805,6 +10819,40 @@ namespace Ambermoon
             public bool TrapsVisible;
         }
 
+        // Elf harp
+        void OpenMusicList()
+        {
+            bool wasPaused = paused;
+            Pause();
+            const int columns = 15;
+            const int rows = 10;
+            var popupArea = new Rect(16, 36, columns * 16, rows * 16);
+            TrapMouse(new Rect(popupArea.Left + 16, popupArea.Top + 16, popupArea.Width - 32, popupArea.Height - 32));
+            var popup = layout.OpenPopup(popupArea.Position, columns, rows, true, false);
+            var songList = popup.AddSongListBox(Enumerable.Range(0, 32).Select(index => new KeyValuePair<string, Action<int, string>>
+            (
+                DataNameProvider.GetSongName((Song)(index + 1)), PlaySong
+            )).ToList());
+            void PlaySong(int index, string name) => PlayMusic((Song)(index + 1));
+            var exitButton = popup.AddButton(new Position(190, 166));
+            exitButton.ButtonType = ButtonType.Exit;
+            exitButton.Disabled = false;
+            exitButton.LeftClickAction = ClosePopup;
+            exitButton.Visible = true;
+            popup.Closed += () =>
+            {
+                UntrapMouse();
+                if (!wasPaused)
+                    Resume();
+            };
+            int scrollRange = Math.Max(0, 16); // = 32 songs - 16 songs visible
+            var scrollbar = popup.AddScrollbar(layout, scrollRange, 2);
+            scrollbar.Scrolled += offset =>
+            {
+                songList.ScrollTo(offset);
+            };
+        }
+
         void OpenMiniMap()
         {
             CloseWindow(() =>
@@ -10812,6 +10860,7 @@ namespace Ambermoon
                 Pause();
                 var popup = layout.OpenPopup(Map2DViewArea.Position, 11, 9, true, false);
                 var contentArea = popup.ContentArea;
+                CursorType = CursorType.Sword;
                 TrapMouse(contentArea);
                 const int numVisibleTilesX = 72; // (11 - 2) * 16 / 2
                 const int numVisibleTilesY = 56; // (9 - 2) * 16 / 2
@@ -11942,7 +11991,7 @@ namespace Ambermoon
             string GetSpellEntry(Spell spell, bool available)
             {
                 var spellInfo = SpellInfos.Entries[spell];
-                string entry = DataNameProvider.GetSpellname(spell);
+                string entry = DataNameProvider.GetSpellName(spell);
 
                 if (available)
                 {

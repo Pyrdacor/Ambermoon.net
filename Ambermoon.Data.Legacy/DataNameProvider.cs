@@ -45,9 +45,18 @@
         };
         public string GetLanguageName(Language language) => executableData.LanguageNames.Entries[language];
         public string GetRaceName(Race race) => executableData.RaceNames.Entries[race];
-        public string GetSpellname(Spell spell) => executableData.SpellNames.Entries[spell];
+        public string GetSpellName(Spell spell) => executableData.SpellNames.Entries[spell];
         public string GetWorldName(World world) => executableData.WorldNames.Entries[world];
         public string GetItemTypeName(ItemType itemType) => executableData.ItemTypeNames.Entries[itemType];
+        public string GetSongName(Song song)
+            => song switch
+            {
+                Song.Default => "",
+                Song.Intro => "Intro",
+                Song.Outro => "Extro",
+                Song.Menu => "MainMenu",
+                _ => executableData.SongNames.Entries[song]
+            };
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
         public string AbilitiesHeaderString => executableData.UITexts.Entries[UITextIndex.Abilities];
