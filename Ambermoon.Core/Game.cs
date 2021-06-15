@@ -4707,6 +4707,7 @@ namespace Ambermoon
             itemSlotPositions.AddRange(Enumerable.Range(1, 6).Select(index => new Position(index * 22, 168)));
             var itemGrid = ItemGrid.Create(this, layout, renderView, ItemManager, itemSlotPositions, storage.Slots.ToList(),
                 OpenStorage.AllowsItemDrop, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
+            itemGrid.Refresh();
             layout.AddItemGrid(itemGrid);
 
             if (storage.IsBattleLoot)
@@ -4720,17 +4721,6 @@ namespace Ambermoon
             else
             {
                 layout.Set80x80Picture(Picture80x80.ChestOpenFull);
-            }
-
-            for (int y = 0; y < 2; ++y)
-            {
-                for (int x = 0; x < 6; ++x)
-                {
-                    var slot = storage.Slots[x, y];
-
-                    if (!slot.Empty)
-                        itemGrid.SetItem(x + y * 6, slot);
-                }
             }
 
             itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
