@@ -1178,6 +1178,16 @@ namespace Ambermoon
                 }
             }
             CurrentPartyMember = GetPartyMember(CurrentSavegame.ActivePartyMemberSlot);
+
+            if (CurrentPartyMember == null)
+            {
+                CurrentSavegame.ActivePartyMemberSlot = 0;
+                CurrentPartyMember = GetPartyMember(0);
+
+                if (CurrentPartyMember == null)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid party member data in savegame.");
+            }
+
             SetActivePartyMember(CurrentSavegame.ActivePartyMemberSlot);
 
             player = new Player();
@@ -5107,7 +5117,8 @@ namespace Ambermoon
 
             void SwitchPlayer()
             {
-                UpdateCharacterInfo(character);
+                if (CurrentWindow.Window == Window.Conversation)
+                    UpdateCharacterInfo(character);
             }
 
             OpenStorage = createdItems;
