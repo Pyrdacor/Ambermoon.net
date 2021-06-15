@@ -397,10 +397,12 @@ namespace Ambermoon.Data
             if (mapEventId == 0 || !savegame.IsEventActive(Index, mapEventId - 1))
                 return false;
 
-            return EventList[(int)mapEventId - 1].Type switch
+            var @event = EventList[(int)mapEventId - 1];
+
+            return @event.Type switch
             {
                 EventType.Chest => true,
-                EventType.Door => true,
+                EventType.Door => savegame.IsDoorLocked((@event as DoorEvent).DoorIndex), // Only locked doors block
                 EventType.EnterPlace => true,
                 EventType.Riddlemouth => true,
                 _ => false
