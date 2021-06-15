@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.8.x beta - Music, intro, outro
+- Version [0.8.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.3beta): Added elf harp (music list), bugfixing
 - Version [0.8.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.2beta): Mac version and bugfixing
 - Version [0.8.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.1beta): Bugfixing
 - Version [0.8.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.0beta): Added music
