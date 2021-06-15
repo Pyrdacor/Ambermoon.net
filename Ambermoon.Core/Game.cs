@@ -1092,11 +1092,11 @@ namespace Ambermoon
             }
         }
 
-        void AddPartyMember(int slot, PartyMember partyMember, Action followAction = null)
+        void AddPartyMember(int slot, PartyMember partyMember, Action followAction = null, bool forceAnimation = false)
         {
             FixPartyMember(partyMember);
             partyMember.Died += PartyMemberDied;
-            layout.SetCharacter(slot, partyMember, false, followAction);
+            layout.SetCharacter(slot, partyMember, false, followAction, forceAnimation);
         }
 
         void RemovePartyMember(int slot, bool initialize, Action followAction = null)
@@ -5437,7 +5437,7 @@ namespace Ambermoon
                         uint characterIndex = (uint)index & 0x1f;
                         CurrentSavegame.CurrentPartyMemberIndices[i] =
                             CurrentSavegame.PartyMembers.SingleOrDefault(p => p.Value == partyMember).Key;
-                        this.AddPartyMember(i, partyMember, followAction);
+                        this.AddPartyMember(i, partyMember, followAction, true);
                         // Set battle position
                         CurrentSavegame.BattlePositions[i] = 0xff;
                         var usePositions = CurrentSavegame.BattlePositions.ToList();
