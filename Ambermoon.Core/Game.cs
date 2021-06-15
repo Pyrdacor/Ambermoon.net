@@ -12344,9 +12344,11 @@ namespace Ambermoon
             if (OpenStorage == null)
                 return false; // should not happen
 
+            var slots = OpenStorage.Slots.ToList();
+
             if (ItemManager.GetItem(itemSlot.ItemIndex).Flags.HasFlag(ItemFlags.Stackable))
             {
-                foreach (var slot in OpenStorage.Slots)
+                foreach (var slot in slots)
                 {
                     if (!slot.Empty && slot.ItemIndex == itemSlot.ItemIndex)
                     {
@@ -12357,7 +12359,7 @@ namespace Ambermoon
                 }
             }
 
-            foreach (var slot in OpenStorage.Slots)
+            foreach (var slot in slots)
             {
                 if (slot.Empty)
                 {
