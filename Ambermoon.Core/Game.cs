@@ -5438,6 +5438,17 @@ namespace Ambermoon
                         CurrentSavegame.CurrentPartyMemberIndices[i] =
                             CurrentSavegame.PartyMembers.SingleOrDefault(p => p.Value == partyMember).Key;
                         this.AddPartyMember(i, partyMember, followAction);
+                        // Set battle position
+                        CurrentSavegame.BattlePositions[i] = 0xff;
+                        var usePositions = CurrentSavegame.BattlePositions.ToList();
+                        for (int p = 11; p >= 0; --p)
+                        {
+                            if (!usePositions.Contains((byte)p))
+                            {
+                                CurrentSavegame.BattlePositions[i] = (byte)p;
+                                break;
+                            }
+                        }
                         layout.EnableButton(4, true); // Enable "Ask to leave"
                         layout.EnableButton(5, false); // Disable "Ask to join"
                         SetMapCharacterBit(mapIndex, characterIndex, true);
