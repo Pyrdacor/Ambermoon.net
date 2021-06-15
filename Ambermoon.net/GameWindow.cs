@@ -36,6 +36,7 @@ namespace Ambermoon
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
         DateTime? initializeErrorTime = null;
+        bool initializedMusic = false;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -314,7 +315,7 @@ namespace Ambermoon
             infoText.Visible = false;
 
             if (audioOutput.Enabled)
-                songManager.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
+                songManager.GetSong(Data.Enumerations.Song.Outro)?.Play(audioOutput); // TODO: switch to main menu song when found
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue);
             mainMenu.Closed += closeAction =>

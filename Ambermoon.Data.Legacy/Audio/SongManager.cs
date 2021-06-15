@@ -11,8 +11,10 @@ namespace Ambermoon.Data.Legacy.Audio
         readonly Dictionary<Enumerations.Song, ISong> songs = new Dictionary<Enumerations.Song, ISong>();
         readonly SongPlayer songPlayer = new SongPlayer();
 
-        Song CreateSong(Enumerations.Song song, IDataReader dataReader, bool waitForLoading) =>
-            new Song(song, songPlayer, dataReader as DataReader, SonicArranger.Stream.ChannelMode.Mono, true, true, false);
+        Song CreateSong(Enumerations.Song song, IDataReader dataReader, bool waitForLoading)
+        {
+            return new Song(song, songPlayer, dataReader as DataReader, SonicArranger.Stream.ChannelMode.Mono, true, true, waitForLoading);
+        }
 
         public SongManager(IFileContainer fileContainer, int songIndexOffset = 0,
             Enumerations.Song? immediateLoadSongIndex = null)

@@ -1,7 +1,7 @@
 ﻿using Ambermoon.Data.Audio;
 using Ambermoon.Data.Legacy.Serialization;
 using SonicArranger;
-using System.Threading;
+using System;
 using System.Threading.Tasks;
 
 namespace Ambermoon.Data.Legacy.Audio
@@ -15,12 +15,16 @@ namespace Ambermoon.Data.Legacy.Audio
         readonly Task loadTask = null;
 
         public Song(Enumerations.Song song, SongPlayer songPlayer, DataReader reader, Stream.ChannelMode channelMode,
-            bool hardwareLPF, bool pal, bool waitForLoading = false)
+            bool hardwareLPF, bool pal, bool waitForLoading = false, Action loadFinishedHandler = null)
         {
             this.song = song;
             this.songPlayer = songPlayer;
             sonicArrangerFile = new SonicArrangerFile(reader);
-            void Load() => buffer = new Stream(sonicArrangerFile, 0, 44100, channelMode, hardwareLPF, pal).ToUnsignedArray();
+            void Load()
+            {
+                buffer = new Stream(sonicArrangerFile, 0, 44100, channelMode, hardwareLPF, pal).ToUnsignedArray();
+                loadFinishedHandler?.Invoke();
+            }
             if (waitForLoading)
                 Load();
             else
