@@ -1547,6 +1547,9 @@ namespace Ambermoon.UI
                 ChangeInputValueTo((long)input.Value + changeAmount);
             }
 
+            itemGrids.ForEach(itemGrid => itemGrid.HideTooltip());
+            HideTooltip();
+
             return activePopup;
         }
 
@@ -2239,7 +2242,7 @@ namespace Ambermoon.UI
                 var item = itemManager.GetItem(itemSlot.ItemIndex);
                 bool nowFull = maxItemsToStore <= itemSlot.Amount;
                 OpenAmountInputBox(game.DataNameProvider.StoreHowMuchItemsMessage,
-                    item.GraphicIndex, item.Name, (uint)maxItemsToStore, amount =>
+                    item.GraphicIndex, item.Name, (uint)Math.Min(itemSlot.Amount, maxItemsToStore), amount =>
                     {
                         StoreAmount(amount);
                         if (nowFull)
