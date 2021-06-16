@@ -388,7 +388,7 @@ namespace Ambermoon
             {
                 if (battleTicks >= nextIdleAnimationTicks)
                 {
-                    var monsters = Monsters.ToList();
+                    var monsters = Monsters.Where(m => m.Ailments.CanMove()).ToList();
 
                     if (monsters.Count != 0)
                     {
