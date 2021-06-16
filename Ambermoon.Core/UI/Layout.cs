@@ -287,18 +287,24 @@ namespace Ambermoon.UI
                     if (Equipped == true)
                     {
                         previousSlot.Replace(partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)]);
-                        game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, Item.Item.Flags.HasFlag(ItemSlotFlags.Cursed), partyMember);
-                        game.UpdateCharacterInfo();
-                        partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Add(Item.Item);
-                        updateSlot = partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)];
+                        if (previousSlot.Empty) // Otherwise DropItem below will handle this
+                        {
+                            game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, Item.Item.Flags.HasFlag(ItemSlotFlags.Cursed), partyMember);
+                            game.UpdateCharacterInfo();
+                            partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Add(Item.Item);
+                            updateSlot = partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)];
+                        }
                     }
                     else
                     {
                         previousSlot.Replace(partyMember.Inventory.Slots[SourceSlot]);
-                        game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
-                        game.UpdateCharacterInfo();
-                        partyMember.Inventory.Slots[SourceSlot].Add(Item.Item);
-                        updateSlot = partyMember.Inventory.Slots[SourceSlot];
+                        if (previousSlot.Empty) // Otherwise DropItem below will handle this
+                        {
+                            game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
+                            game.UpdateCharacterInfo();
+                            partyMember.Inventory.Slots[SourceSlot].Add(Item.Item);
+                            updateSlot = partyMember.Inventory.Slots[SourceSlot];
+                        }
                     }
 
                     if (game.CurrentInventoryIndex != SourcePlayer)
