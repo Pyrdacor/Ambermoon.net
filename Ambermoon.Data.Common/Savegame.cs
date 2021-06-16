@@ -74,8 +74,8 @@ namespace Ambermoon.Data
         public void ActivateEvent(uint mapIndex, uint eventIndex, bool activate) => SetEventBit(mapIndex, eventIndex, !activate);
         public bool GetEventBit(uint mapIndex, uint eventIndex)
         {
-            if (mapIndex < 1 || mapIndex > 1024)
-                throw new IndexOutOfRangeException("Map index must be between 1 and 1024");
+            if (mapIndex < 1 || mapIndex > 1023)
+                throw new IndexOutOfRangeException("Map index must be between 1 and 1023");
             if (eventIndex > 63)
                 throw new IndexOutOfRangeException("Event index must be between 0 and 63");
 
@@ -83,12 +83,12 @@ namespace Ambermoon.Data
             int bitIndex = (int)eventIndex % 8;
             uint bitValue = 1u << ((7 - byteIndex) * 8 + bitIndex);
 
-            return (MapEventBits[mapIndex - 1] & bitValue) != 0;
+            return (MapEventBits[mapIndex] & bitValue) != 0;
         }
         public void SetEventBit(uint mapIndex, uint eventIndex, bool bit)
         {
-            if (mapIndex < 1 || mapIndex > 1024)
-                throw new IndexOutOfRangeException("Map index must be between 1 and 1024");
+            if (mapIndex < 1 || mapIndex > 1023)
+                throw new IndexOutOfRangeException("Map index must be between 1 and 1023");
             if (eventIndex > 63)
                 throw new IndexOutOfRangeException("Event index must be between 0 and 63");
 
@@ -97,9 +97,9 @@ namespace Ambermoon.Data
             uint bitValue = 1u << ((7 - byteIndex) * 8 + bitIndex);
 
             if (bit)
-                MapEventBits[mapIndex - 1] |= bitValue;
+                MapEventBits[mapIndex] |= bitValue;
             else
-                MapEventBits[mapIndex - 1] &= ~bitValue;
+                MapEventBits[mapIndex] &= ~bitValue;
         }
         /// <summary>
         /// 32 events bits per map.

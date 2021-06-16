@@ -283,7 +283,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.EventBit:
-                            if (game.CurrentSavegame.GetEventBit(conditionEvent.ObjectIndex >> 6, conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
+                            if (game.CurrentSavegame.GetEventBit(1 + (conditionEvent.ObjectIndex >> 6), conditionEvent.ObjectIndex & 0x3f) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
