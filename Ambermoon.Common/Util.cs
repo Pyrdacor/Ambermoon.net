@@ -5,6 +5,18 @@ namespace Ambermoon
 {
     public static class Util
     {
+        public static void SafeCall(Action action)
+        {
+            try
+            {
+                action?.Invoke();
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
         public static bool FloatEqual(float f1, float f2)
         {
             return Math.Abs(f1 - f2) < 0.00001f;

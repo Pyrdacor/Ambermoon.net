@@ -804,26 +804,49 @@ namespace Ambermoon
                 window.Move += Window_Move;
                 window.Run();
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                // TODO: save emergency savegame?
+
+                if (renderView != null && infoText != null)
+                {
+                    Util.SafeCall(() => Game?.Destroy());
+                    Util.SafeCall(() => window.DoRender());
+                    Util.SafeCall(() =>
+                    {
+                        var screenArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                        var text = renderView.TextProcessor.CreateText(ex.Message
+                            .Replace("\r\n", "^")                            
+                            .Replace("\n", "^")
+                            .Replace("\r", "^"),
+                            ' ');
+                        text = renderView.TextProcessor.WrapText(text, screenArea, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
+                        int height = text.LineCount * Global.GlyphLineHeight - 1;
+                        infoText.Text = text;
+                        screenArea.Position.Y = Math.Max(0, (Global.VirtualScreenHeight - height) / 2);
+                        infoText.Place(screenArea, TextAlign.Center);
+                        infoText.Visible = true;
+
+                        for (int i = 0; i < 5; ++i)
+                        {
+                            window.DoRender();
+                            System.Threading.Thread.Sleep(1000);
+                        }
+                    });
+                }
+
+                Environment.Exit(1);
+            }
             finally
             {
-                try
+                Util.SafeCall(() =>
                 {
                     infoText?.Delete();
                     infoText = null;
-                }
-                catch
-                {
-                    Console.WriteLine();
-                }
-
-                try
-                {
-                    window?.Dispose();
-                }
-                catch
-                {
-                    // ignore
-                }
+                });
+                Util.SafeCall(() => window?.Dispose());
             }
         }
     }

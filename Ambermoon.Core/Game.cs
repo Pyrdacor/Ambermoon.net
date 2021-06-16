@@ -1021,6 +1021,18 @@ namespace Ambermoon
             paused = false;
         }
 
+        public void Destroy()
+        {
+            Util.SafeCall(UntrapMouse);
+            allInputDisabled = true;
+            ingame = false;
+            Util.SafeCall(() => AudioOutput?.Stop());
+            Util.SafeCall(Cleanup);
+            Util.SafeCall(() => layout.Destroy());
+            Util.SafeCall(() => CursorType = CursorType.None);
+            Util.SafeCall(() => windowTitle?.Delete());
+        }
+
         void PartyMemberDied(Character partyMember)
         {
             if (!(partyMember is PartyMember member))

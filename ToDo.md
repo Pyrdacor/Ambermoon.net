@@ -13,7 +13,7 @@
   - Or otherwise don't move at all
 - Initial scale of dissolve victim seems to be too small. Don't know why or if this is caused by anchor.
 - If background has darker color (night battles) the monsters should be darkened too.
-- While a mnster is hurt and moved (wind spells) it shortly changes the frame back to normal which looks off
+- While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 
 ## Events
 
@@ -49,8 +49,6 @@
 - I guess buff duration bars are a bit wrong (ingame no empty bar is shown, while it is in remake).
 - Speaking to simple NPC the popup uses centered text. Is this right?
 - "Do you accept this character?" message is missing in character creator.
-- There is a rare crash in battle position window. I guess it works like this:
-  - Add new member -> Move position of other member and then move back -> Add another member and open/close battle position window
 
 
 ## Misc
@@ -63,4 +61,3 @@
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Maybe add emergency savegame that is stored when game crashes.
-- If starting game too fast while the game is not fully loaded, the main menu song starts on the first map

@@ -2387,56 +2387,157 @@ namespace Ambermoon.UI
             itemGrids[1].RightClicked += Aborted;
         }
 
+        public void Destroy()
+        {
+            Util.SafeCall(() => sprite?.Delete());
+            Util.SafeCall(() =>
+            {
+                foreach (var portraitBackground in portraitBackgrounds)
+                    portraitBackground?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var portraitBarBackground in portraitBarBackgrounds)
+                    portraitBarBackground?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var portraitBorder in portraitBorders)
+                    portraitBorder?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var portraitName in portraitNames)
+                    portraitName?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var portrait in portraits)
+                    portrait?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var characterStatusIcon in characterStatusIcons)
+                    characterStatusIcon?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var barArea in barAreas)
+                    barArea?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var characterBar in characterBars)
+                    characterBar?.Destroy();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var fadeEffectArea in fadeEffectAreas)
+                    fadeEffectArea?.Delete();
+            });
+            Util.SafeCall(() =>
+            {
+                foreach (var fadeEffect in fadeEffects)
+                    fadeEffect?.Destroy();
+            });
+            Util.SafeCall(() => buttonGrid.Visible = false);
+        }
+
         public void Reset(bool keepInventoryMessage = false)
         {
             OptionMenuOpen = false;
-            sprite80x80Picture?.Delete();
-            sprite80x80Picture = null;
-            eventPicture?.Delete();
-            eventPicture = null;
-            additionalSprites.ForEach(sprite => sprite?.Delete());
-            additionalSprites.Clear();
-            itemGrids.ForEach(grid => grid.Destroy());
-            itemGrids.Clear();
-            filledAreas.ForEach(area => area?.Delete());
-            filledAreas.Clear();
-            activePopup?.Destroy();
-            activePopup = null;
-            activeTooltip?.Delete();
-            activeTooltip = null;
-            tooltips.Clear();
-            if (keepInventoryMessage)
+            Util.SafeCall(() =>
             {
-                texts.Remove(inventoryMessage);
-                texts.ForEach(text => text?.Destroy());
-                texts.Clear();
-                texts.Add(inventoryMessage);
-            }
-            else
+                ChestText?.Destroy();
+                ChestText = null;
+            });
+            Util.SafeCall(() => tooltips.Clear());
+            Util.SafeCall(() =>
             {
-                texts.ForEach(text => text?.Destroy());
-                texts.Clear();
-                inventoryMessage?.Destroy();
-                inventoryMessage = null;
-            }
-            battleMessage?.Destroy();
-            battleMessage = null;
-            battleEffectAnimations.ForEach(a => a?.Destroy());
-            battleEffectAnimations.Clear();
-            activeSpellSprites.Clear(); // sprites are destroyed above
-            activeSpellDurationBackgrounds.Values.ToList().ForEach(b => b?.Delete());
-            activeSpellDurationBackgrounds.Clear();
-            activeSpellDurationBars.Clear(); // areas are destroyed above
-            specialItemSprites.Clear(); // sprites are destroyed above
-            specialItemTexts.Clear(); // texts are destroyed above
-            monsterCombatGraphics.ForEach(g => { g.Animation?.Destroy(); g.BattleFieldSprite?.Delete(); RemoveTooltip(g.Tooltip); });
-            monsterCombatGraphics.Clear();
-            ChestText?.Destroy();
-            ChestText = null;
-            questionYesButton?.Destroy();
-            questionYesButton = null;
-            questionNoButton?.Destroy();
-            questionNoButton = null;
+                if (keepInventoryMessage)
+                {
+                    texts.Remove(inventoryMessage);
+                    texts.ForEach(text => text?.Destroy());
+                    texts.Clear();
+                    texts.Add(inventoryMessage);
+                }
+                else
+                {
+                    texts.ForEach(text => text?.Destroy());
+                    texts.Clear();
+                    inventoryMessage?.Destroy();
+                    inventoryMessage = null;
+                }
+            });
+            Util.SafeCall(() =>
+            {
+                additionalSprites.ForEach(sprite => sprite?.Delete());
+                additionalSprites.Clear();
+            });
+            Util.SafeCall(() =>
+            {
+                sprite80x80Picture?.Delete();
+                sprite80x80Picture = null;
+            });
+            Util.SafeCall(() =>
+            {
+                eventPicture?.Delete();
+                eventPicture = null;
+            });
+            Util.SafeCall(() =>
+            {
+                itemGrids.ForEach(grid => grid.Destroy());
+                itemGrids.Clear();
+            });
+            Util.SafeCall(() =>
+            {
+                filledAreas.ForEach(area => area?.Delete());
+                filledAreas.Clear();
+            });
+            Util.SafeCall(() =>
+            {
+                activePopup?.Destroy();
+                activePopup = null;
+            });
+            Util.SafeCall(() =>
+            {
+                activeTooltip?.Delete();
+                activeTooltip = null;
+            });
+            Util.SafeCall(() =>
+            {
+                battleMessage?.Destroy();
+                battleMessage = null;
+            });
+            Util.SafeCall(() =>
+            {
+                battleEffectAnimations.ForEach(a => a?.Destroy());
+                battleEffectAnimations.Clear();
+            });
+            Util.SafeCall(() =>
+            {
+                activeSpellSprites?.Clear(); // sprites are destroyed above
+                activeSpellDurationBars.Clear(); // areas are destroyed above
+                activeSpellDurationBackgrounds?.Values?.ToList()?.ForEach(b => b?.Delete());
+                activeSpellDurationBackgrounds?.Clear();                
+            });
+            Util.SafeCall(() =>
+            {
+                specialItemSprites?.Clear(); // sprites are destroyed above
+                specialItemTexts?.Clear(); // texts are destroyed above
+            });
+            Util.SafeCall(() =>
+            {
+                monsterCombatGraphics.ForEach(g => { g.Animation?.Destroy(); g.BattleFieldSprite?.Delete(); RemoveTooltip(g.Tooltip); });
+                monsterCombatGraphics.Clear();
+            });
+            Util.SafeCall(() =>
+            {
+                questionYesButton?.Destroy();
+                questionYesButton = null;
+                questionNoButton?.Destroy();
+                questionNoButton = null;
+            });
 
             // Note: Don't remove fadeEffects or bars here.
         }
