@@ -3272,10 +3272,16 @@ namespace Ambermoon
                 return;
             }
 
-            void UpdateText(CharacterInfo characterInfo, Func<string> text)
+            void UpdateText(CharacterInfo characterInfo, Func<string> text, bool checkNextCycle = false)
             {
                 if (characterInfoTexts.ContainsKey(characterInfo))
                     characterInfoTexts[characterInfo].SetText(renderView.TextProcessor.CreateText(text()));
+                else if (checkNextCycle)
+                {
+                    // The weight display and maybe others might only be added in next cycle so
+                    // re-check in two cycles.
+                    ExecuteNextUpdateCycle(() => ExecuteNextUpdateCycle(() => UpdateText(characterInfo, text, false)));
+                }
             }
 
             var character = conversationPartner ?? CurrentInventory;
@@ -3321,7 +3327,7 @@ namespace Ambermoon
                     string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)));
             }
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
-                character.TotalWeight / 1000, (character as PartyMember).MaxWeight / 1000));
+                character.TotalWeight / 1000, (character as PartyMember).MaxWeight / 1000), true);
             if (conversationPartner != null)
             {
                 UpdateText(CharacterInfo.ConversationPartyMember, () => CurrentPartyMember.Name);
