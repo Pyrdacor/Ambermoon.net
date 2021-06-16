@@ -1165,11 +1165,7 @@ namespace Ambermoon
                     UpdateLight();
                 }
             };
-            GameTime.HourChanged += hours =>
-            {
-                UpdateLight();
-                ProcessPoisonDamage(hours);
-            };
+            GameTime.HourChanged += GameTime_HoursPassed;
             currentBattle = null;
 
             ClearPartyMembers();
@@ -1345,7 +1341,7 @@ namespace Ambermoon
             }
         }
 
-        void GameTime_GotExhausted(uint hoursExhausted)
+        void GameTime_GotExhausted(uint hoursExhausted, uint hoursPassed)
         {
             bool alreadyExhausted = false;
             uint[] damageValues = new uint[MaxPartyMembers];
@@ -1367,7 +1363,8 @@ namespace Ambermoon
 
             void DealDamage()
             {
-                DamageAllPartyMembers(p => damageValues[SlotFromPartyMember(p).Value]);
+                DamageAllPartyMembers(p => damageValues[SlotFromPartyMember(p).Value],
+                    null, null, () => GameTime_HoursPassed(hoursPassed));
             }
 
             if (!alreadyExhausted)
@@ -1376,9 +1373,15 @@ namespace Ambermoon
                 DealDamage();
         }
 
-        void GameTime_GotTired()
+        void GameTime_GotTired(uint hoursPassed)
         {
-            ShowMessagePopup(DataNameProvider.TiredMessage);
+            ShowMessagePopup(DataNameProvider.TiredMessage, () => GameTime_HoursPassed(hoursPassed));
+        }
+
+        void GameTime_HoursPassed(uint hours)
+        {
+            UpdateLight();
+            ProcessPoisonDamage(hours);
         }
 
         void AgePlayer(PartyMember partyMember, Action finishAction)
@@ -1608,7 +1611,8 @@ namespace Ambermoon
 
         internal void Wait(uint hours)
         {
-            GameTime.Wait(hours);
+            if (hours != 0)
+                GameTime.Wait(hours);
         }
 
         bool CanPartyMove() => !PartyMembers.Any(p => !p.CanMove(false));
@@ -3613,6 +3617,7 @@ namespace Ambermoon
                                 return;
                             }
 
+                            bool inputWasEnabled = InputEnable;
                             newLeaderPicked += NewLeaderPicked;
                             RecheckActivePartyMember();
 
@@ -3620,6 +3625,7 @@ namespace Ambermoon
                             {
                                 newLeaderPicked -= NewLeaderPicked;
                                 finished?.Invoke();
+                                InputEnable = inputWasEnabled;
                             }
                         }
                         else
