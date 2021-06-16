@@ -3917,7 +3917,7 @@ namespace Ambermoon.UI
                 }
             }
 
-            if (game.OpenStorage is Chest || game.OpenStorage is Merchant)
+            if (game.CurrentWindow.Window != Window.Inventory && (game.OpenStorage is Chest || game.OpenStorage is Merchant))
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
             else if (!(game.OpenStorage is Game.ConversationItems))
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
