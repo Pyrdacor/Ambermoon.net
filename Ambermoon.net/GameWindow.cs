@@ -488,7 +488,7 @@ namespace Ambermoon
             });
         }
 
-        void ShowVersionSelector(Action<IGameData, string, GameLanguage> selectHandler)
+        bool ShowVersionSelector(Action<IGameData, string, GameLanguage> selectHandler)
         {
             var versionLoader = new BuiltinVersionLoader();
             var versions = versionLoader.Load();
@@ -501,7 +501,7 @@ namespace Ambermoon
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
                 selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]), gameData.Language.ToGameLanguage());
-                return;
+                return false;
             }
 
             GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion)
@@ -597,6 +597,8 @@ namespace Ambermoon
                     gameVersions[gameVersionIndex].Language.ToGameLanguage());
                 versionLoader.Dispose();
             };
+
+            return true;
         }
 
         void InitGlyphs(TextureAtlasManager textureAtlasManager = null)
@@ -658,13 +660,16 @@ namespace Ambermoon
             // Setup input
             SetupInput(window.CreateInput());
 
-            ShowVersionSelector((gameData, savePath, gameLanguage) =>
+            if (ShowVersionSelector((gameData, savePath, gameLanguage) =>
             {
                 renderView?.Dispose();
                 StartGame(gameData as GameData, savePath, gameLanguage);
                 WindowMoved();
                 versionSelector = null;
-            });
+            }))
+            {
+                WindowMoved();
+            }
 
             if (configuration.Fullscreen)
                 FullscreenChangeRequest(true); // This will adjust the window
