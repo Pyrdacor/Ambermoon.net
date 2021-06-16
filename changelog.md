@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.8.x beta - Music, intro, outro
+## 0.9.x beta - Finalizing
+- Version [0.9.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.0beta): Added poison effect, bugfixing
+
+## 0.8.x beta - Music
 - Version [0.8.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.3beta): Added elf harp (music list), bugfixing
 - Version [0.8.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.2beta): Mac version and bugfixing
 - Version [0.8.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.8.1beta): Bugfixing
