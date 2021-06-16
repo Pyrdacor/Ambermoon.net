@@ -40,8 +40,33 @@ namespace Ambermoon.Renderer
             $"}}"
         };
 
+        protected static string[] OpaqueTextureVertexShader(State state) => new string[]
+        {
+            GetVertexShaderHeader(state),
+            $"in ivec2 {DefaultPositionName};",
+            $"in ivec2 {DefaultTexCoordName};",
+            $"in uint {DefaultLayerName};",
+            $"in uint {DefaultPaletteIndexName};",
+            $"in uint {DefaultMaskColorIndexName};",
+            $"uniform uvec2 {DefaultAtlasSizeName};",
+            $"uniform float {DefaultZName};",
+            $"uniform mat4 {DefaultProjectionMatrixName};",
+            $"uniform mat4 {DefaultModelViewMatrixName};",
+            $"out vec2 varTexCoord;",
+            $"flat out float palIndex;",
+            $"",
+            $"void main()",
+            $"{{",
+            $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
+            $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
+            $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
+            $"    palIndex = float({DefaultPaletteIndexName});",
+            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
+            $"}}"
+        };
+
         OpaqueTextureShader(State state)
-            : base(state, OpaqueTextureFragmentShader(state), TextureVertexShader(state))
+            : base(state, OpaqueTextureFragmentShader(state), OpaqueTextureVertexShader(state))
         {
 
         }
