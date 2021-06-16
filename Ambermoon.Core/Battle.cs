@@ -2031,15 +2031,42 @@ namespace Ambermoon
 
             if (target is PartyMember partyMember)
             {
+                if (!ailment.CanParry() && parryingPlayers.Contains(partyMember))
+                    parryingPlayers.Remove(partyMember);
+
                 game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, 0);
                 game.UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(game.CurrentSavegame.ActivePartyMemberSlot);
             }
 
-            if (!ailment.CanSelect()) // disabled
+            void SkipActions()
             {
                 foreach (var action in roundBattleActions.Where(a => a.Character == target))
                     action.Skip = true;
+            }
+
+            if (!ailment.CanSelect()) // disabled
+            {
+                SkipActions();
+            }
+            else
+            {
+                if (!ailment.CanAttack() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Attack))
+                {
+                    SkipActions();
+                }
+                else if (!ailment.CanCastSpell() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.CastSpell))
+                {
+                    SkipActions();
+                }
+                else if (!ailment.CanMove() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Move))
+                {
+                    SkipActions();
+                }
+                else if (!ailment.CanFlee() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Flee))
+                {
+                    SkipActions();
+                }
             }
         }
 
