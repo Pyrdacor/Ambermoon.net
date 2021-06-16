@@ -516,6 +516,46 @@ namespace Ambermoon
             }
         }
 
+        void PoisonDamageMonster(Monster monster, Action followAction)
+        {
+            var animation = layout.GetMonsterBattleAnimation(monster);
+            uint damage = (uint)game.RandomInt(1, 5);
+
+            void EndHurt()
+            {
+                monster.Damage(damage);
+
+                if (!monster.Alive)
+                {
+                    HandleCharacterDeath(null, monster, followAction);
+                }
+                else
+                {
+                    followAction?.Invoke();
+                }
+            }
+
+            void HurtAnimationFinished()
+            {
+                animation.AnimationFinished -= HurtAnimationFinished;
+                currentBattleAnimation = null;
+                currentlyAnimatedMonster = null;
+                EndHurt();
+            }
+            
+            animation.AnimationFinished += HurtAnimationFinished;
+            var frames = monster.GetAnimationFrameIndices(MonsterAnimationType.Hurt);
+            animation.Play(frames, (Game.TicksPerSecond / 2) / (uint)frames.Length, game.CurrentBattleTicks);
+            currentBattleAnimation = animation;
+            currentlyAnimatedMonster = monster;
+            int tile = GetSlotFromCharacter(monster);
+
+            PlayBattleEffectAnimation(BattleEffect.HurtMonster, (uint)tile, game.CurrentBattleTicks, null);
+            ShowBattleFieldDamage(tile, damage);
+            if (monster.Ailments.HasFlag(Ailment.Sleep))
+                game.RemoveAilment(Ailment.Sleep, monster);
+        }
+
         /// <summary>
         /// Starts a new battle round.
         /// </summary>
@@ -523,159 +563,183 @@ namespace Ambermoon
         /// <param name="battleTicks">Battle ticks when starting the round.</param>
         internal void StartRound(PlayerBattleAction[] playerBattleActions, uint battleTicks)
         {
-            // Recalculate the RDE value each round
-            var partyDamage = Util.Limit(1, (uint)averagePlayerDamage.Where((d, i) => partyMembers[i] != null && battleField.Contains(partyMembers[i])).Sum(x => x), 0x7fff);
-            var monsterDamage = Util.Limit(1, (uint)averageMonsterDamage.Where((d, i) => battleField.Contains(initialMonsters[i])).Sum(x => x), 0x7fff);
-            relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
-
-            var roundActors = battleField
-                .Where(f => f != null)
-                .OrderByDescending(c => c.Attributes[Attribute.Speed].TotalCurrentValue)
-                .ToList();
-            parryingPlayers.Clear();
-            bool monstersAdvance = false;
-
-            foreach (var droppedWeaponMonster in droppedWeaponMonsters)
+            game.ProcessPoisonDamage(1, () =>
             {
-                if (roundActors.Contains(droppedWeaponMonster))
-                {
-                    roundBattleActions.Enqueue(new BattleAction
-                    {
-                        Character = droppedWeaponMonster,
-                        Action = BattleActionType.DropWeapon,
-                        ActionParameter = 0
-                    });
-                }
-            }
+                var poisonedMonsters = Monsters.Where(m => m.Alive && m.Ailments.HasFlag(Ailment.Poisoned)).ToList();
 
-            droppedWeaponMonsters.Clear();
-
-            // This is added in addition to normal monster actions directly
-            // TODO: removed for now, check later when this is used (it seems awkward at the moment, maybe only later in battle?)
-            /*if (CanMoveForward)
-            {
-                var firstMonster = roundActors.FirstOrDefault(c => c.Type == CharacterType.Monster && c.Alive);
-                roundBattleActions.Enqueue(new BattleAction
-                {
-                    Character = firstMonster,
-                    Action = BattleActionType.DisplayActionText,
-                    ActionParameter = 0
-                });
-                roundBattleActions.Enqueue(new BattleAction
-                {
-                    Character = firstMonster,
-                    Action = BattleActionType.MoveGroupForward,
-                    ActionParameter = 0
-                });
-                monstersAdvance = true;
-            }*/
-
-            var forbiddenMoveSpots = playerBattleActions.Where(a => a != null && a.BattleAction == BattleActionType.Move)
-                .Select(a => (int)GetTargetTileOrRowFromParameter(a.Parameter)).ToList();
-            var forbiddenMonsterMoveSpots = new List<int>();
-
-            foreach (var roundActor in roundActors)
-            {
-                if (roundActor is Monster monster)
-                {
-                    AddMonsterActions(monster, ref monstersAdvance, forbiddenMonsterMoveSpots);
-                }
+                if (poisonedMonsters.Count == 0)
+                    Start();
                 else
                 {
-                    var partyMember = roundActor as PartyMember;
-                    int playerIndex = partyMembers.ToList().IndexOf(partyMember);
-                    var playerAction = playerBattleActions[playerIndex];
-
-                    if (partyMember.Ailments.HasFlag(Ailment.Panic))
+                    void HandleMonster(int index)
                     {
-                        PickPanicAction(partyMember, playerAction, forbiddenMoveSpots);
-                    }
-                    else if (partyMember.Ailments.HasFlag(Ailment.Crazy))
-                    {
-                        PickMadAction(partyMember, playerAction, forbiddenMoveSpots);
+                        var next = index == poisonedMonsters.Count - 1
+                            ? (Action)Start
+                            : () => HandleMonster(index + 1);
+                        var monster = poisonedMonsters[index];
+                        PoisonDamageMonster(monster, next);
                     }
 
-                    if (playerAction.BattleAction == BattleActionType.None)
-                        continue;
-                    if (playerAction.BattleAction == BattleActionType.Parry)
-                    {
-                        parryingPlayers.Add(partyMember);
-                        continue;
-                    }
+                    HandleMonster(0);
+                }
 
-                    // Note: We add twice as much attack actions but the second half with
-                    // Skip=true. They will be used if the player has the Hurry buff.
-                    int numActions = playerAction.BattleAction == BattleActionType.Attack
-                        ? partyMember.AttacksPerRound * 2 : 1;
+                void Start()
+                {
+                    // Recalculate the RDE value each round
+                    var partyDamage = Util.Limit(1, (uint)averagePlayerDamage.Where((d, i) => partyMembers[i] != null && battleField.Contains(partyMembers[i])).Sum(x => x), 0x7fff);
+                    var monsterDamage = Util.Limit(1, (uint)averageMonsterDamage.Where((d, i) => battleField.Contains(initialMonsters[i])).Sum(x => x), 0x7fff);
+                    relativeDamageEfficiency = Math.Min(partyDamage * 50 / monsterDamage, 100);
 
-                    for (int i = 0; i < numActions; ++i)
+                    var roundActors = battleField
+                        .Where(f => f != null)
+                        .OrderByDescending(c => c.Attributes[Attribute.Speed].TotalCurrentValue)
+                        .ToList();
+                    parryingPlayers.Clear();
+                    bool monstersAdvance = false;
+
+                    foreach (var droppedWeaponMonster in droppedWeaponMonsters)
                     {
-                        bool skip = i >= partyMember.AttacksPerRound;
-                        roundBattleActions.Enqueue(new BattleAction
-                        {
-                            Character = partyMember,
-                            Action = BattleActionType.DisplayActionText,
-                            ActionParameter = 0,
-                            Skip = skip
-                        });
-                        roundBattleActions.Enqueue(new BattleAction
-                        {
-                            Character = partyMember,
-                            Action = playerAction.BattleAction,
-                            ActionParameter = playerAction.Parameter,
-                            Skip = skip
-                        });
-                        if (playerAction.BattleAction == BattleActionType.Attack)
+                        if (roundActors.Contains(droppedWeaponMonster))
                         {
                             roundBattleActions.Enqueue(new BattleAction
                             {
-                                Character = partyMember,
-                                Action = BattleActionType.WeaponBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
-                                Skip = skip
-                            });
-                            roundBattleActions.Enqueue(new BattleAction
-                            {
-                                Character = partyMember,
-                                Action = BattleActionType.ArmorBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
-                                Skip = skip
-                            });
-                            roundBattleActions.Enqueue(new BattleAction
-                            {
-                                Character = partyMember,
-                                Action = BattleActionType.DefenderWeaponBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
-                                Skip = skip
-                            });
-                            roundBattleActions.Enqueue(new BattleAction
-                            {
-                                Character = partyMember,
-                                Action = BattleActionType.DefenderShieldBreak,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
-                                Skip = skip
-                            });
-                            roundBattleActions.Enqueue(new BattleAction
-                            {
-                                Character = partyMember,
-                                Action = BattleActionType.LastAmmo,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
-                                Skip = skip
-                            });
-                            roundBattleActions.Enqueue(new BattleAction
-                            {
-                                Character = partyMember,
-                                Action = BattleActionType.Hurt,
-                                ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
-                                Skip = skip
+                                Character = droppedWeaponMonster,
+                                Action = BattleActionType.DropWeapon,
+                                ActionParameter = 0
                             });
                         }
                     }
-                }
-            }
 
-            RoundActive = true;
-            NextAction(battleTicks);
+                    droppedWeaponMonsters.Clear();
+
+                    // This is added in addition to normal monster actions directly
+                    // TODO: removed for now, check later when this is used (it seems awkward at the moment, maybe only later in battle?)
+                    /*if (CanMoveForward)
+                    {
+                        var firstMonster = roundActors.FirstOrDefault(c => c.Type == CharacterType.Monster && c.Alive);
+                        roundBattleActions.Enqueue(new BattleAction
+                        {
+                            Character = firstMonster,
+                            Action = BattleActionType.DisplayActionText,
+                            ActionParameter = 0
+                        });
+                        roundBattleActions.Enqueue(new BattleAction
+                        {
+                            Character = firstMonster,
+                            Action = BattleActionType.MoveGroupForward,
+                            ActionParameter = 0
+                        });
+                        monstersAdvance = true;
+                    }*/
+
+                    var forbiddenMoveSpots = playerBattleActions.Where(a => a != null && a.BattleAction == BattleActionType.Move)
+                        .Select(a => (int)GetTargetTileOrRowFromParameter(a.Parameter)).ToList();
+                    var forbiddenMonsterMoveSpots = new List<int>();
+
+                    foreach (var roundActor in roundActors)
+                    {
+                        if (roundActor is Monster monster)
+                        {
+                            AddMonsterActions(monster, ref monstersAdvance, forbiddenMonsterMoveSpots);
+                        }
+                        else
+                        {
+                            var partyMember = roundActor as PartyMember;
+                            int playerIndex = partyMembers.ToList().IndexOf(partyMember);
+                            var playerAction = playerBattleActions[playerIndex];
+
+                            if (partyMember.Ailments.HasFlag(Ailment.Panic))
+                            {
+                                PickPanicAction(partyMember, playerAction, forbiddenMoveSpots);
+                            }
+                            else if (partyMember.Ailments.HasFlag(Ailment.Crazy))
+                            {
+                                PickMadAction(partyMember, playerAction, forbiddenMoveSpots);
+                            }
+
+                            if (playerAction.BattleAction == BattleActionType.None)
+                                continue;
+                            if (playerAction.BattleAction == BattleActionType.Parry)
+                            {
+                                parryingPlayers.Add(partyMember);
+                                continue;
+                            }
+
+                            // Note: We add twice as much attack actions but the second half with
+                            // Skip=true. They will be used if the player has the Hurry buff.
+                            int numActions = playerAction.BattleAction == BattleActionType.Attack
+                                ? partyMember.AttacksPerRound * 2 : 1;
+
+                            for (int i = 0; i < numActions; ++i)
+                            {
+                                bool skip = i >= partyMember.AttacksPerRound;
+                                roundBattleActions.Enqueue(new BattleAction
+                                {
+                                    Character = partyMember,
+                                    Action = BattleActionType.DisplayActionText,
+                                    ActionParameter = 0,
+                                    Skip = skip
+                                });
+                                roundBattleActions.Enqueue(new BattleAction
+                                {
+                                    Character = partyMember,
+                                    Action = playerAction.BattleAction,
+                                    ActionParameter = playerAction.Parameter,
+                                    Skip = skip
+                                });
+                                if (playerAction.BattleAction == BattleActionType.Attack)
+                                {
+                                    roundBattleActions.Enqueue(new BattleAction
+                                    {
+                                        Character = partyMember,
+                                        Action = BattleActionType.WeaponBreak,
+                                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                        Skip = skip
+                                    });
+                                    roundBattleActions.Enqueue(new BattleAction
+                                    {
+                                        Character = partyMember,
+                                        Action = BattleActionType.ArmorBreak,
+                                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                        Skip = skip
+                                    });
+                                    roundBattleActions.Enqueue(new BattleAction
+                                    {
+                                        Character = partyMember,
+                                        Action = BattleActionType.DefenderWeaponBreak,
+                                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                        Skip = skip
+                                    });
+                                    roundBattleActions.Enqueue(new BattleAction
+                                    {
+                                        Character = partyMember,
+                                        Action = BattleActionType.DefenderShieldBreak,
+                                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                        Skip = skip
+                                    });
+                                    roundBattleActions.Enqueue(new BattleAction
+                                    {
+                                        Character = partyMember,
+                                        Action = BattleActionType.LastAmmo,
+                                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                        Skip = skip
+                                    });
+                                    roundBattleActions.Enqueue(new BattleAction
+                                    {
+                                        Character = partyMember,
+                                        Action = BattleActionType.Hurt,
+                                        ActionParameter = CreateHurtParameter(GetTargetTileOrRowFromParameter(playerAction.Parameter)),
+                                        Skip = skip
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    RoundActive = true;
+                    NextAction(battleTicks);
+                }
+            });
         }
 
         void AddMonsterActions(Monster monster, ref bool monstersAdvance, List<int> forbiddenMonsterMoveSpots)
@@ -780,10 +844,21 @@ namespace Ambermoon
             }
         }
 
-        void KillMonster(PartyMember attacker, Character target)
+        void KillMonster(PartyMember attacker, Character target, int targetPosition)
         {
             CharacterDied?.Invoke(target);
-            PlayerLostTarget?.Invoke(attacker);
+            if (attacker == null) // death from poison etc
+            {
+                foreach (var partyMember in PartyMembers.Where(p => p.Alive))
+                {
+                    if (roundBattleActions.Any(a => a.Character == partyMember &&
+                        a.Action == BattleActionType.Attack &&
+                        GetTargetTileOrRowFromParameter(a.ActionParameter) == targetPosition))
+                        PlayerLostTarget?.Invoke(partyMember);
+                }
+            }
+            else
+                PlayerLostTarget?.Invoke(attacker);
             if (Monsters.Count() == 0)
             {
                 EndBattleCleanup();
@@ -1982,7 +2057,7 @@ namespace Ambermoon
             foreach (var action in roundBattleActions.Where(a => a.Character == target || a.Character == attacker))
                 action.Skip = true;
 
-            if (attacker is PartyMember partyMember)
+            if (target is Monster)
             {
                 var battleFieldCopy = (Character[])battleField.Clone();
                 int slot = GetSlotFromCharacter(target);
@@ -2000,7 +2075,7 @@ namespace Ambermoon
                 {
                     RemoveCharacterFromBattleField(target);
                     finishAction?.Invoke();
-                    KillMonster(partyMember, target);
+                    KillMonster(attacker as PartyMember, target, slot);
                 }, GetMonsterDeathScale(target as Monster), battleFieldCopy);
             }
             else
@@ -2116,16 +2191,19 @@ namespace Ambermoon
                 case Spell.DispellUndead:
                 case Spell.DestroyUndead:
                 case Spell.HolyWord:
+                {
+                    int slot = GetCharacterPosition(target);
                     RemoveCharacterFromBattleField(target);
                     if (caster is PartyMember partyMember)
                     {
-                        KillMonster(partyMember, target);
+                        KillMonster(partyMember, target, slot);
                     }
                     else
                     {
                         KillPlayer(target);
                     }
                     break;
+                }
                 case Spell.Lame:
                     AddAilment(Ailment.Lamed, target);
                     break;

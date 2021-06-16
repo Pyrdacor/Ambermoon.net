@@ -1165,7 +1165,11 @@ namespace Ambermoon
                     UpdateLight();
                 }
             };
-            GameTime.HourChanged += () => UpdateLight();
+            GameTime.HourChanged += hours =>
+            {
+                UpdateLight();
+                ProcessPoisonDamage(hours);
+            };
             currentBattle = null;
 
             ClearPartyMembers();
@@ -1218,6 +1222,22 @@ namespace Ambermoon
             // Trigger events after game load
             TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
                 (uint)player.Position.Y);
+        }
+
+        internal void ProcessPoisonDamage(uint times, Action followAction = null)
+        {
+            uint GetDamage()
+            {
+                uint damage = 0;
+
+                for (uint i = 0; i < times; ++i)
+                    damage += (uint)RandomInt(1, 5);
+
+                return damage;
+            }
+
+            DamageAllPartyMembers(_ => GetDamage(),
+                p => p.Alive && p.Ailments.HasFlag(Ailment.Poisoned), null, followAction);
         }
 
         void Sleep(bool inn)

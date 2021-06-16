@@ -13,6 +13,7 @@
   - Or otherwise don't move at all
 - Initial scale of dissolve victim seems to be too small. Don't know why or if this is caused by anchor.
 - If background has darker color (night battles) the monsters should be darkened too.
+- While a mnster is hurt and moved (wind spells) it shortly changes the frame back to normal which looks off
 
 ## Events
 

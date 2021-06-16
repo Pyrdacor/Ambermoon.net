@@ -267,6 +267,21 @@ namespace Ambermoon.Render
                 case Spell.Waterfall:
                 case Spell.Icestorm:
                 case Spell.Iceshower:
+                case Spell.SpellPointsI:
+                case Spell.SpellPointsII:
+                case Spell.SpellPointsIII:
+                case Spell.SpellPointsIV:
+                case Spell.SpellPointsV:
+                case Spell.AllHealing:
+                case Spell.AddStrength:
+                case Spell.AddIntelligence:
+                case Spell.AddDexterity:
+                case Spell.AddSpeed:
+                case Spell.AddStamina:
+                case Spell.AddCharisma:
+                case Spell.AddLuck:
+                case Spell.AddAntiMagic:
+                case Spell.Drugs:
                     // Those spells have no source position. They just appear somewhere.
                     // Or they only work with the target position. GetSourcePosition should
                     // never be called for those spells so we throw here.
@@ -351,6 +366,21 @@ namespace Ambermoon.Render
                 case Spell.Earthquake:
                 case Spell.Blink:
                 case Spell.Escape:
+                case Spell.SpellPointsI:
+                case Spell.SpellPointsII:
+                case Spell.SpellPointsIII:
+                case Spell.SpellPointsIV:
+                case Spell.SpellPointsV:
+                case Spell.AllHealing:
+                case Spell.AddStrength:
+                case Spell.AddIntelligence:
+                case Spell.AddDexterity:
+                case Spell.AddSpeed:
+                case Spell.AddStamina:
+                case Spell.AddCharisma:
+                case Spell.AddLuck:
+                case Spell.AddAntiMagic:
+                case Spell.Drugs:
                     // Those spells have no target position. They are just visible on portraits or not at all.
                     // GetTargetPosition should never be called for those spells so we throw here.
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} should not use a target position.");
@@ -712,6 +742,24 @@ namespace Ambermoon.Render
                 case Spell.Blind:
                 case Spell.Drug:
                     // Curses will only use the MoveTo method.
+                    this.finishAction?.Invoke();
+                    break;
+                case Spell.SpellPointsI:
+                case Spell.SpellPointsII:
+                case Spell.SpellPointsIII:
+                case Spell.SpellPointsIV:
+                case Spell.SpellPointsV:
+                case Spell.AllHealing:
+                case Spell.AddStrength:
+                case Spell.AddIntelligence:
+                case Spell.AddDexterity:
+                case Spell.AddSpeed:
+                case Spell.AddStamina:
+                case Spell.AddCharisma:
+                case Spell.AddLuck:
+                case Spell.AddAntiMagic:
+                case Spell.Drugs:
+                    // Those spells will only use the MoveTo method.
                     this.finishAction?.Invoke();
                     break;
                 case Spell.Earthslide:
@@ -1328,6 +1376,21 @@ namespace Ambermoon.Render
                 case Spell.WakeUp:
                 case Spell.RemoveIrritation:
                 case Spell.Hurry:
+                case Spell.SpellPointsI:
+                case Spell.SpellPointsII:
+                case Spell.SpellPointsIII:
+                case Spell.SpellPointsIV:
+                case Spell.SpellPointsV:
+                case Spell.AllHealing:
+                case Spell.AddStrength:
+                case Spell.AddIntelligence:
+                case Spell.AddDexterity:
+                case Spell.AddSpeed:
+                case Spell.AddStamina:
+                case Spell.AddCharisma:
+                case Spell.AddLuck:
+                case Spell.AddAntiMagic:
+                case Spell.Drugs:
                     if (fromMonster)
                     {
                         // No visual effect if monster casts it.

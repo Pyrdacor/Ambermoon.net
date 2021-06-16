@@ -230,7 +230,7 @@ namespace Ambermoon
         }
 
         public event Action<uint> MinuteChanged;
-        public event Action HourChanged;
+        public event Action<uint> HourChanged;
         public event Action GotTired;
         public event Action<uint> GotExhausted;
         public event Action NewDay;
@@ -276,7 +276,7 @@ namespace Ambermoon
             else if (savegame.HoursWithoutSleep >=24)
                 GotTired?.Invoke();
 
-            HourChanged?.Invoke();
+            HourChanged?.Invoke(hours);
         }
 
         void HandleTimePassed(uint passedHours, uint passedMinutes)
