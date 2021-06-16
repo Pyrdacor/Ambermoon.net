@@ -258,23 +258,35 @@ namespace Ambermoon.UI
 
             /// <summary>
             /// Drop back to source.
+            /// 
+            /// This returns true if dragging should continue.
+            /// This is the case when there was an item at the drop location.
             /// </summary>
-            public void Reset(Game game, Layout layout)
+            public bool Reset(Game game, Layout layout, bool scrollToItem = false)
             {
                 // Reset in case 1: Is only possible while in first player inventory.
                 // Reset in case 2: Is also possible while in second player inventory.
                 //                  First players inventory is opened in addition on reset.
                 // Reset in case 3: Is only possible while in chest screen.
                 bool updateGrid = true;
-                int? switchToPlayer = null;
                 ItemSlot updateSlot = Item.Item;
+                ItemSlot previousSlot = new ItemSlot();
 
                 if (SourcePlayer != null)
                 {
+                    if (game.CurrentInventoryIndex != SourcePlayer)
+                    {
+                        if (game.OpenPartyMember(SourcePlayer.Value, true))
+                        {
+                            return layout.draggedItem.Reset(game, layout, true);
+                        }                        
+                    }
+
                     var partyMember = game.GetPartyMember(SourcePlayer.Value);
 
                     if (Equipped == true)
                     {
+                        previousSlot.Replace(partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)]);
                         game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, Item.Item.Flags.HasFlag(ItemSlotFlags.Cursed), partyMember);
                         game.UpdateCharacterInfo();
                         partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Add(Item.Item);
@@ -282,6 +294,7 @@ namespace Ambermoon.UI
                     }
                     else
                     {
+                        previousSlot.Replace(partyMember.Inventory.Slots[SourceSlot]);
                         game.InventoryItemAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                         game.UpdateCharacterInfo();
                         partyMember.Inventory.Slots[SourceSlot].Add(Item.Item);
@@ -291,7 +304,6 @@ namespace Ambermoon.UI
                     if (game.CurrentInventoryIndex != SourcePlayer)
                     {
                         updateGrid = false;
-                        switchToPlayer = SourcePlayer;
                     }
                     else
                     {
@@ -300,7 +312,7 @@ namespace Ambermoon.UI
                         // are two different instances even if they represent the
                         // same inventory. Therefore we have to update the SourceGrid.
                         if (SourceGrid != null)
-                            SourceGrid = layout.itemGrids[0];
+                            SourceGrid = layout.itemGrids[Equipped == true ? 1 : 0];
                     }
                 }
                 else if (game.OpenStorage != null)
@@ -308,23 +320,24 @@ namespace Ambermoon.UI
                     SourceGrid.DropItem(SourceSlot, this);
                 }
 
+                if (scrollToItem && Equipped != true)
+                {
+                    // Note: The grid may haved changed through OpenPartyMember!
+                    layout.itemGrids[0].ScrollTo(Math.Max(0, SourceSlot - Inventory.VisibleWidth));
+                }
+
+                if (!previousSlot.Empty) // There is an item at the target slot (dragged item was exchanged before)
+                {
+                    SourceGrid.DropItem(SourceSlot, this);
+                    return true;
+                }
+
                 if (updateGrid && SourceGrid != null)
                     SourceGrid.SetItem(SourceSlot, updateSlot);
 
                 Item.Destroy();
 
-                if (switchToPlayer != null)
-                {
-                    game.OpenPartyMember(switchToPlayer.Value, true, () =>
-                    {
-                        // Scroll to item
-                        if (Equipped != true)
-                        {
-                            // Note: The grid has changed through OpenPartyMember!
-                            layout.itemGrids[0].ScrollTo(Math.Max(0, SourceSlot - Inventory.VisibleWidth));
-                        }
-                    });
-                }
+                return false;
             }
 
             private DraggedItem()
@@ -3154,7 +3167,8 @@ namespace Ambermoon.UI
         {
             if (draggedItem != null)
             {
-                draggedItem.Reset(game, this);
+                if (draggedItem.Reset(game, this))
+                    return;
                 DropItem();
             }
 
@@ -3890,7 +3904,7 @@ namespace Ambermoon.UI
             {
                 var partyMember = game.GetPartyMember(i);
 
-                if (partyMember != null && partyMember != game.CurrentInventory)
+                if (partyMember?.Alive == true)
                 {
                     UpdateCharacterStatus(i, partyMember.CanTakeItems(itemManager, draggedItem.Item.Item) &&
                         !game.HasPartyMemberFled(partyMember) ? UIGraphic.StatusHandTake : UIGraphic.StatusHandStop);

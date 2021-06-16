@@ -437,6 +437,10 @@ namespace Ambermoon.UI
                 itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
                 item.Item.Update(true);
                 ItemExchanged?.Invoke(slot, item.Item.Item, item.Item.Item.Amount, itemSlot.Item);
+                if (game.CurrentWindow.Window == Window.Inventory)
+                    item.SourcePlayer = game.CurrentInventoryIndex;
+                item.SourceGrid = this;
+                item.SourceSlot = slot;
                 return itemSlot.Item.Amount;
             }
         }
@@ -643,26 +647,40 @@ namespace Ambermoon.UI
                     if (!dragDisabled && itemSlot.Item.Draggable)
                     {
                         itemAction = ItemAction.Drag;
-                        pickupAction(this, slot.Value, itemSlot, (Layout.DraggedItem item, int amount) =>
+                        Pickup(slot.Value, itemSlot, mouseButtons == MouseButtons.Right, item =>
                         {
-                            item.Item.Item.Amount = amount;
-                            item.Item.Update(false);
-                            ItemDragged?.Invoke(slot.Value, item.Item.Item, amount);
-                            if (items[slot.Value].Item.Empty)
-                            {
-                                items[slot.Value].Destroy();
-                                items[slot.Value] = null;
-                            }
-                            else
-                                items[slot.Value].Update(false);
                             Hover(position); // This updates the tooltip
                             dragHandler?.Invoke(item);
-                        }, mouseButtons == MouseButtons.Right);
+                        });
                     }
                 }
             }
 
             return true;
+        }
+
+        internal void Pickup(ItemSlot itemSlot, bool takeAll)
+        {
+            int slot = SlotFromItemSlot(itemSlot);
+            Pickup(slot, items[slot], takeAll, null);
+        }
+
+        void Pickup(int slot, UIItem itemSlot, bool takeAll, Action<Layout.DraggedItem> additionalAction)
+        {
+            pickupAction(this, slot, itemSlot, (Layout.DraggedItem item, int amount) =>
+            {
+                item.Item.Item.Amount = amount;
+                item.Item.Update(false);
+                ItemDragged?.Invoke(slot, item.Item.Item, amount);
+                if (items[slot].Item.Empty)
+                {
+                    items[slot].Destroy();
+                    items[slot] = null;
+                }
+                else
+                    items[slot].Update(false);
+                additionalAction?.Invoke(item);
+            }, takeAll);
         }
 
         public void HideTooltip()
