@@ -504,11 +504,8 @@ namespace Ambermoon.UI
             if (ScrollOffset == offset) // already there
                 return;
 
-            if (offset % slotsPerScroll != 0)
-            {
-                throw new AmbermoonException(ExceptionScope.Application,
-                    $"Can not scroll the item grid to offset {offset} as a scroll must be a multiple of {slotsPerScroll} slots.");
-            }
+            while (offset % slotsPerScroll != 0)
+                --offset;
 
             ScrollOffset = offset;
             PostScrollUpdate();

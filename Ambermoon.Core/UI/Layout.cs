@@ -266,6 +266,7 @@ namespace Ambermoon.UI
                 //                  First players inventory is opened in addition on reset.
                 // Reset in case 3: Is only possible while in chest screen.
                 bool updateGrid = true;
+                int? switchToPlayer = null;
                 ItemSlot updateSlot = Item.Item;
 
                 if (SourcePlayer != null)
@@ -288,7 +289,10 @@ namespace Ambermoon.UI
                     }
 
                     if (game.CurrentInventoryIndex != SourcePlayer)
+                    {
                         updateGrid = false;
+                        switchToPlayer = SourcePlayer;
+                    }
                     else
                     {
                         // Note: When switching to another inventory and back to the
@@ -308,6 +312,19 @@ namespace Ambermoon.UI
                     SourceGrid.SetItem(SourceSlot, updateSlot);
 
                 Item.Destroy();
+
+                if (switchToPlayer != null)
+                {
+                    game.OpenPartyMember(switchToPlayer.Value, true, () =>
+                    {
+                        // Scroll to item
+                        if (Equipped != true)
+                        {
+                            // Note: The grid has changed through OpenPartyMember!
+                            layout.itemGrids[0].ScrollTo(Math.Max(0, SourceSlot - Inventory.VisibleWidth));
+                        }
+                    });
+                }
             }
 
             private DraggedItem()
