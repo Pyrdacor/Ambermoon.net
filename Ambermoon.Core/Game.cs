@@ -4216,10 +4216,27 @@ namespace Ambermoon
                         MoveVertically(true, true, Resume);
                     }));
                     break;
+                case TeleportEvent.TransitionType.Outro:
+                    ShowOutro();
+                    break;
                 default:
                     Fade(RunTransition);
                     break;
             }
+        }
+
+        void ShowOutro()
+        {
+            PlayMusic(Song.Outro);
+            // TODO: later show outro
+            ShowMessagePopup("THE END", () =>
+            {
+                if (!LoadGame(0))
+                {
+                    ShowMessagePopup("Failed to load initial savegame.",
+                        () => QuitRequested?.Invoke(), TextAlign.Center, 200);
+                }
+            }, TextAlign.Center, 200);
         }
 
         public bool ActivateTransport(TravelType travelType)
