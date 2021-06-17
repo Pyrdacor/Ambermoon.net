@@ -113,9 +113,10 @@ namespace Ambermoon
             }
         }
 
-        void FullscreenChangeRequest(bool fullscreen)
+        void ChangeFullscreenMode(bool fullscreen)
         {
             FullscreenChangeRequest(fullscreen, configuration.Width);
+            UpdateWindow(configuration);
             Fullscreen = fullscreen;
         }
 
@@ -219,7 +220,7 @@ namespace Ambermoon
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
             if (key == Silk.NET.Input.Key.F11)
-                FullscreenChangeRequest(!Fullscreen);
+                ChangeFullscreenMode(!Fullscreen);
             else
             {
                 if (versionSelector != null)
@@ -420,8 +421,7 @@ namespace Ambermoon
                                     {
                                         if (windowChange)
                                         {
-                                            UpdateWindow(configuration);
-                                            FullscreenChangeRequest(configuration.Fullscreen);
+                                            ChangeFullscreenMode(configuration.Fullscreen);
                                         }
                                     };
                                     game.DrugTicked += Drug_Ticked;
@@ -712,7 +712,7 @@ namespace Ambermoon
             }
 
             if (configuration.Fullscreen)
-                FullscreenChangeRequest(true); // This will adjust the window
+                ChangeFullscreenMode(true); // This will adjust the window
         }
 
         void Window_Render(double delta)
