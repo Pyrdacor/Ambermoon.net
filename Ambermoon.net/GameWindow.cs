@@ -122,7 +122,6 @@ namespace Ambermoon
         void FullscreenChangeRequest(bool fullscreen, int? oldWidth)
         {
             ChangeResolution(oldWidth, fullscreen, false);
-            UpdateWindow(configuration);
         }
 
         void SetupInput(IInputContext inputContext)
@@ -421,6 +420,7 @@ namespace Ambermoon
                                     {
                                         if (windowChange)
                                         {
+                                            UpdateWindow(configuration);
                                             FullscreenChangeRequest(configuration.Fullscreen);
                                         }
                                     };
@@ -615,8 +615,11 @@ namespace Ambermoon
             var screenResolution = configuration.GetScreenResolution();
             var aspectRatio = (float)screenResolution.Width / screenResolution.Height;
 
+            screenResolution.Width = screenResolution.Width * window.FramebufferSize.X / window.Size.X;
+            screenResolution.Height = screenResolution.Height * window.FramebufferSize.Y / window.Size.Y;
+
             return new RenderView(this, gameData, graphicProvider, fontProvider,
-                new TextProcessor(), textureAtlasManagerProvider, Width, Height, aspectRatio);
+                new TextProcessor(), textureAtlasManagerProvider, screenResolution.Width, screenResolution.Height, aspectRatio);
         }
 
         string GetSavePath(string version)
@@ -811,7 +814,9 @@ namespace Ambermoon
             var screenResolution = configuration.GetScreenResolution();
             window.Size = new WindowDimension(screenSize.Width, screenResolution.Height);
             renderView.VirtualAspectRatio = (float)screenResolution.Width / screenResolution.Height;
-            renderView.Resize(screenSize.Width, screenSize.Height);
+            screenResolution.Width = screenResolution.Width * window.FramebufferSize.X / window.Size.X;
+            screenResolution.Height = screenResolution.Height * window.FramebufferSize.Y / window.Size.Y;
+            renderView.Resize(screenResolution.Width, screenResolution.Height);
         }
 
         public void Run(Configuration configuration)
