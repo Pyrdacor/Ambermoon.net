@@ -489,13 +489,11 @@ namespace Ambermoon.Render
                 return !collisionInfo.TestCollision(lastX, lastY, newX, newY, Player3D.CollisionRadius, false);
             }
 
-            // TODO: Sometimes a monster is in a spot where it shouldn't be and the MoveRandom will never find a
-            // valid spot and lead to an infinite loop. Happened in lowest level of Luminor's tower for example.
             void MoveRandom()
             {
-                Position newPosition;
+                Position newPosition = null;
 
-                while (true)
+                for (int i = 0; i < 10; ++i)
                 {
                     newPosition = new Position(Position.X + game.RandomInt(-1, 1), Position.Y + game.RandomInt(-1, 1));
 
@@ -512,11 +510,13 @@ namespace Ambermoon.Render
 
                     uint blockIndex = (uint)(newPosition.X + newPosition.Y * map.Map.Width);
 
-                    if (!map.characterBlockingBlocks.Contains(blockIndex))
+                    if (!map.characterBlockingBlocks.Contains(blockIndex) &&
+                        !map.EventBlocksCharacter(newPosition))
                         break;
                 }
 
-                character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y);
+                if (newPosition != null)
+                    character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y);
             }
 
             public void Update(uint ticks, ITime gameTime)
@@ -1462,6 +1462,27 @@ namespace Ambermoon.Render
             return info;
         }
 
+        public bool EventBlocksCharacter(Position position)
+        {
+            var eventId = Map.Blocks[position.X, position.Y].MapEventId;
+
+            if (eventId != 0 && game.CurrentSavegame.IsEventActive(Map.Index, eventId))
+            {
+                var @event = Map.EventList[(int)eventId - 1];
+
+                switch (@event.Type)
+                {
+                    case EventType.Door:
+                    case EventType.EnterPlace:
+                    case EventType.Riddlemouth:
+                    case EventType.Teleport:
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         public CollisionDetectionInfo3D GetCollisionDetectionInfoFromPositions(params Position[] positions)
         {
             var info = new CollisionDetectionInfo3D();
@@ -1474,6 +1495,20 @@ namespace Ambermoon.Render
                 {
                     foreach (var collisionBody in blockCollisionBodies[blockIndex])
                         info.CollisionBodies.Add(collisionBody);
+
+                    if (EventBlocksCharacter(position))
+                    {
+                        float x = position.X * Global.DistancePerBlock + 0.5f * BlockSize;
+                        float z = position.Y * Global.DistancePerBlock + Global.DistancePerBlock - 0.5f * BlockSize;
+                        info.CollisionBodies.Add(new CollisionSphere3D
+                        {
+                            CenterX = x,
+                            CenterZ = -z,
+                            Radius = 0.5f * BlockSize,
+                            PlayerCanPass = false
+                        });
+                        break;
+                    }
                 }
                 // TODO: characters on tiles
                 /*else
