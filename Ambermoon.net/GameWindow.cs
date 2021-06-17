@@ -39,7 +39,6 @@ namespace Ambermoon
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
         DateTime? initializeErrorTime = null;
-        bool initializedMusic = false;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -117,13 +116,13 @@ namespace Ambermoon
         void FullscreenChangeRequest(bool fullscreen)
         {
             FullscreenChangeRequest(fullscreen, configuration.Width);
-            UpdateWindow(configuration);
             Fullscreen = fullscreen;
         }
 
         void FullscreenChangeRequest(bool fullscreen, int? oldWidth)
         {
             ChangeResolution(oldWidth, fullscreen, false);
+            UpdateWindow(configuration);
         }
 
         void SetupInput(IInputContext inputContext)
@@ -422,7 +421,6 @@ namespace Ambermoon
                                     {
                                         if (windowChange)
                                         {
-                                            UpdateWindow(configuration);
                                             FullscreenChangeRequest(configuration.Fullscreen);
                                         }
                                     };
@@ -810,8 +808,8 @@ namespace Ambermoon
             var screenSize = configuration.GetScreenSize();
             this.configuration.Width = Width = screenSize.Width;
             this.configuration.Height = Height = screenSize.Height;
-            window.Size = new WindowDimension(screenSize.Width, screenSize.Height);
             var screenResolution = configuration.GetScreenResolution();
+            window.Size = new WindowDimension(screenSize.Width, screenResolution.Height);
             renderView.VirtualAspectRatio = (float)screenResolution.Width / screenResolution.Height;
             renderView.Resize(screenSize.Width, screenSize.Height);
         }
