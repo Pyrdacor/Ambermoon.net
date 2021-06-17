@@ -11,25 +11,10 @@ namespace Ambermoon.Data.Legacy.Audio
         readonly Dictionary<Enumerations.Song, ISong> songs = new Dictionary<Enumerations.Song, ISong>();
         readonly SongPlayer songPlayer = new SongPlayer();
 
-        Song CreateSong(Enumerations.Song song, IDataReader dataReader, bool waitForLoading)
+        Song CreateSong(Enumerations.Song song, int songIndex, IDataReader dataReader, bool waitForLoading)
         {
-            return new Song(song, songPlayer, dataReader as DataReader, SonicArranger.Stream.ChannelMode.Mono, true, true, waitForLoading);
-        }
-
-        public SongManager(IFileContainer fileContainer, int songIndexOffset = 0,
-            Enumerations.Song? immediateLoadSongIndex = null)
-        {
-            var immediateLoadedSong = immediateLoadSongIndex == null ? null :
-                CreateSong(immediateLoadSongIndex.Value, fileContainer.Files[(int)immediateLoadSongIndex.Value - songIndexOffset], true);
-
-            foreach (var file in fileContainer.Files)
-            {
-                var song = (Enumerations.Song)(songIndexOffset + file.Key);
-                if (immediateLoadSongIndex == song)
-                    songs.Add(song, immediateLoadedSong);
-                else
-                    songs.Add(song, CreateSong(song, file.Value, false));
-            }
+            return new Song(song, songIndex, songPlayer, dataReader as DataReader,
+                SonicArranger.Stream.ChannelMode.Mono, true, true, waitForLoading);
         }
 
         public SongManager(IGameData gameData, Enumerations.Song? immediateLoadSongIndex = null)
@@ -49,11 +34,18 @@ namespace Ambermoon.Data.Legacy.Audio
                     Enumerations.Song.Default => null,
                     Enumerations.Song.Intro => introContainer.Files[1],
                     Enumerations.Song.Outro => outroContainer.Files[1],
+                    Enumerations.Song.Menu => introContainer.Files[1],
                     _ => musicContainer.Files[(int)immediateLoadSongIndex.Value],
                 };
                 if (reader != null)
-                    immediateLoadedSong = CreateSong(immediateLoadSongIndex.Value, reader, true);
+                {
+                    var song = immediateLoadSongIndex.Value;
+                    immediateLoadedSong = CreateSong(song, song == Enumerations.Song.Menu ? 1 : 0, reader, true);
+                }
             }
+
+            AddSong(Enumerations.Song.Intro, () => introContainer.Files[1] as DataReader);
+            AddSong(Enumerations.Song.Menu, () => introContainer.Files[1] as DataReader);
 
             foreach (var file in musicContainer.Files)
             {
@@ -61,7 +53,6 @@ namespace Ambermoon.Data.Legacy.Audio
                 AddSong(song, () => file.Value as DataReader);
             }
 
-            AddSong(Enumerations.Song.Intro, () => introContainer.Files[1] as DataReader);
             AddSong(Enumerations.Song.Outro, () => outroContainer.Files[1] as DataReader);
 
             void AddSong(Enumerations.Song song, Func<DataReader> readerProvider)
@@ -69,7 +60,10 @@ namespace Ambermoon.Data.Legacy.Audio
                 if (immediateLoadSongIndex == song)
                     songs.Add(song, immediateLoadedSong);
                 else
-                    songs.Add(song, CreateSong(song, readerProvider(), false));
+                {
+                    int songIndex = song == Enumerations.Song.Menu ? 1 : 0;
+                    songs.Add(song, CreateSong(song, songIndex, readerProvider(), false));
+                }
             }
         }
 

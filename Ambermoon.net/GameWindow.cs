@@ -310,7 +310,7 @@ namespace Ambermoon
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             IntroFont introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction)
         {
-            songManager = new SongManager(renderView.GameData, Data.Enumerations.Song.Outro); // TODO: use intro later maybe and initialize earlier then
+            songManager = new SongManager(renderView.GameData, Data.Enumerations.Song.Menu); // TODO: use intro later maybe and initialize earlier then
             audioOutput = new AudioOutput(1, 44100);
 
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
@@ -318,7 +318,7 @@ namespace Ambermoon
             infoText.Visible = false;
 
             if (audioOutput.Enabled)
-                songManager.GetSong(Data.Enumerations.Song.Outro)?.Play(audioOutput); // TODO: switch to main menu song when found
+                songManager.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue);
             mainMenu.Closed += closeAction =>
