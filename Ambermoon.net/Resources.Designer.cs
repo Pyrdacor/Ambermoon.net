@@ -7,23 +7,15 @@ namespace Ambermoon
 {
     internal class Resources
     {        
-        static System.Resources.ResourceManager resourceManager;
-        
+        static ResourceManager resourceManager;
+
         [SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources()
         {
         }
         
         [EditorBrowsableAttribute(EditorBrowsableState.Advanced)]
-        internal static ResourceManager ResourceManager
-        {
-            get
-            {
-                if (object.ReferenceEquals(resourceManager, null))
-                    resourceManager = new ResourceManager("Ambermoon.Resources", typeof(Resources).Assembly);
-                return resourceManager;
-            }
-        }
+        internal static ResourceManager ResourceManager => resourceManager ??= new ResourceManager("Ambermoon.Resources", typeof(Resources).Assembly);
         
         [EditorBrowsableAttribute(EditorBrowsableState.Advanced)]
         internal static CultureInfo Culture
@@ -32,6 +24,8 @@ namespace Ambermoon
             set;
         }
         
+        internal static System.Drawing.Icon App => (System.Drawing.Icon)ResourceManager.GetObject("app", Culture);
         internal static byte[] IntroFont => (byte[])ResourceManager.GetObject("IntroFont", Culture);
+        internal static System.Drawing.Bitmap WindowIcon => (System.Drawing.Bitmap)ResourceManager.GetObject("windowIcon", Culture);
     }
 }

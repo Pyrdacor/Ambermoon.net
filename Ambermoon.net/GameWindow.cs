@@ -657,9 +657,8 @@ namespace Ambermoon
             }
         }
 
-        unsafe static Silk.NET.Core.RawImage LoadBitmap(Stream stream)
+        unsafe static Silk.NET.Core.RawImage LoadBitmap(Bitmap bitmap)
         {
-            var bitmap = (Bitmap)Image.FromStream(stream);
             var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                 ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 
@@ -693,7 +692,8 @@ namespace Ambermoon
 
         void Window_Load()
         {
-            // TODO: add window icon here: use LoadBitmap and window.SetWindowIcon
+            var windowIcon = LoadBitmap(Resources.WindowIcon);
+            window.SetWindowIcon(ref windowIcon);
 
             window.MakeCurrent();
 

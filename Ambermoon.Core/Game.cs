@@ -5470,7 +5470,7 @@ namespace Ambermoon
                         uint mapIndex = 1 + ((uint)index >> 5);
                         uint characterIndex = (uint)index & 0x1f;
                         CurrentSavegame.CurrentPartyMemberIndices[i] =
-                            CurrentSavegame.PartyMembers.SingleOrDefault(p => p.Value == partyMember).Key;
+                            CurrentSavegame.PartyMembers.FirstOrDefault(p => p.Value == partyMember).Key;
                         this.AddPartyMember(i, partyMember, followAction, true);
                         // Set battle position
                         CurrentSavegame.BattlePositions[i] = 0xff;

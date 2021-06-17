@@ -508,7 +508,7 @@ namespace Ambermoon
                     return null;
             }
 
-            var map = game.MapManager.Maps.Single(m => m.Index == mapIndex);
+            var map = game.MapManager.Maps.First(m => m.Index == mapIndex);
             uint? x = args.Length > 1 && uint.TryParse(args[1], out uint ax) ? ax : (uint?)null;
             uint? y = args.Length > 2 && uint.TryParse(args[2], out uint ay) ? ay : (uint?)null;
             var direction = (args.Length > 3 ? ParseDirection(args[3]) : null) ?? (CharacterDirection)(random.Next() % 4);

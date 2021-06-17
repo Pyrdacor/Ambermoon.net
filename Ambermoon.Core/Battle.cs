@@ -3099,7 +3099,7 @@ namespace Ambermoon
             }
 
             if (possiblePositions.Count == 1)
-                return (uint)possiblePositions.Single().Key;
+                return (uint)possiblePositions.First().Key;
 
             if (!mad)
             {
