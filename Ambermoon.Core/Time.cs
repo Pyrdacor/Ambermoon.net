@@ -263,6 +263,8 @@ namespace Ambermoon
                     {
                         savegame.Month = 1;
                         ++savegame.Year;
+                        if (savegame.YearsPassed < 0xffff)
+                            ++savegame.YearsPassed;
                         NewYear?.Invoke();
 
                         if (savegame.Year > 0xffff)

@@ -314,6 +314,7 @@ namespace Ambermoon.Data
         public uint Hour { get; set; }
         public uint Minute { get; set; } // a multiple of 5
         public uint HoursWithoutSleep { get; set; }
+        public uint YearsPassed { get; set; }
         public ushort SpecialItemsActive { get; set; }
         public ushort GameOptions { get; set; }
 

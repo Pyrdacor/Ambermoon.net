@@ -50,8 +50,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             for (int i = 0; i < 6; ++i)
                 savegame.CurrentPartyMemberIndices[i] = dataReader.ReadWord();
 
-            // TODO: Unknown word
-            dataReader.ReadWord();
+            savegame.YearsPassed = dataReader.ReadWord();
             savegame.TravelType = (TravelType)dataReader.ReadWord();
             savegame.SpecialItemsActive = dataReader.ReadWord();
             savegame.GameOptions = dataReader.ReadWord();
@@ -162,8 +161,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             for (int i = 0; i < 6; ++i)
                 dataWriter.Write((ushort)savegame.CurrentPartyMemberIndices[i]);
 
-            // TODO: Unknown word
-            dataWriter.Write((ushort)0);
+            dataWriter.Write((ushort)savegame.YearsPassed);
             dataWriter.Write((ushort)savegame.TravelType);
             dataWriter.Write((ushort)savegame.SpecialItemsActive);
             dataWriter.Write((ushort)savegame.GameOptions);
