@@ -3736,7 +3736,7 @@ namespace Ambermoon.UI
                     if (!activePopup.CloseOnClick && buttons == MouseButtons.Right && activePopup.TestButtonRightClick(position))
                         return true;
 
-                    if (activePopup.CloseOnClick || (buttons == MouseButtons.Right &&
+                    if (activePopup.CloseOnClick || (buttons == MouseButtons.Right && activePopup.CanAbort &&
                         (!activePopup.HasTextInput() || TextInput.FocusedInput == null)))
                     {
                         ClosePopup();

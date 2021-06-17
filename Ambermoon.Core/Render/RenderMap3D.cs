@@ -299,7 +299,7 @@ namespace Ambermoon.Render
                                     character3D.ResetMovementTimer();
                                 }
                             }
-                        }, 2);
+                        }, 2, 0, TextAlign.Left, false);
 
                         return true;
                     }

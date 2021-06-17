@@ -12190,9 +12190,10 @@ namespace Ambermoon
         }
 
         internal void ShowDecisionPopup(string text, Action<PopupTextEvent.Response> responseHandler,
-            int minLines = 3, byte displayLayerOffset = 0, TextAlign textAlign = TextAlign.Left)
+            int minLines = 3, byte displayLayerOffset = 0, TextAlign textAlign = TextAlign.Left,
+            bool canAbort = true)
         {
-            layout.OpenYesNoPopup
+            var popup = layout.OpenYesNoPopup
             (
                 ProcessText(text),
                 () =>
@@ -12216,6 +12217,7 @@ namespace Ambermoon
                     responseHandler?.Invoke(PopupTextEvent.Response.Close);
                 }, minLines, displayLayerOffset, textAlign
             );
+            popup.CanAbort = canAbort;
             Pause();
             InputEnable = false;
             CursorType = CursorType.Sword;

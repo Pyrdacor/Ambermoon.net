@@ -378,7 +378,7 @@ namespace Ambermoon.Render
                                     lastTimeSlot = game.GameTime.TimeSlot;
                                 }
                             }
-                        }, 2);
+                        }, 2, 0, TextAlign.Left, false);
                     }
                     break;
                 }
