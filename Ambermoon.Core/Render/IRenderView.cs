@@ -43,7 +43,7 @@ namespace Ambermoon.Render
         Size ScreenToView(Size size);
         Rect ScreenToView(Rect rect);
 
-        Rect WindowArea { get; }
+        Rect RenderArea { get; }
         Size MaxScreenSize { get; }
         List<Size> AvailableFullscreenModes { get; set; }
         bool Fullscreen { get; set; }

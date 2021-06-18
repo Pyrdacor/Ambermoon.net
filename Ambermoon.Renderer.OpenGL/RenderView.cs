@@ -33,11 +33,11 @@ namespace Ambermoon.Renderer.OpenGL
     {
         bool disposed = false;
         readonly Context context;
-        Rect virtualScreenDisplay;
+        Rect renderDisplayAray;
+        Size windowSize;
         readonly SizingPolicy sizingPolicy;
         readonly OrientationPolicy orientationPolicy;
         readonly DeviceType deviceType;
-        readonly bool isLandscapeRatio = true;
         Rotation rotation = Rotation.None;
         readonly SortedDictionary<Layer, RenderLayer> layers = new SortedDictionary<Layer, RenderLayer>();
         readonly SpriteFactory spriteFactory = null;
@@ -52,6 +52,11 @@ namespace Ambermoon.Renderer.OpenGL
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
 
+        float RenderFactorX => (float)renderDisplayAray.Width / Global.VirtualScreenWidth;
+        float RenderFactorY => (float)renderDisplayAray.Height / Global.VirtualScreenHeight;
+        float WindowFactorX => (float)windowSize.Width / Global.VirtualScreenWidth;
+        float WindowFactorY => (float)windowSize.Height / Global.VirtualScreenHeight;
+
 #pragma warning disable 0067
         public event EventHandler Closed;
         public event EventHandler Click;
@@ -63,9 +68,10 @@ namespace Ambermoon.Renderer.OpenGL
 #pragma warning restore 0067
         public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
 
-        public Rect WindowArea { get; }
+        public Rect RenderArea { get; }
         public Size MaxScreenSize { get; set; }
         public List<Size> AvailableFullscreenModes { get; set; }
+        public bool IsLandscapeRatio { get; } = true;
 
         public ISpriteFactory SpriteFactory => spriteFactory;
         public IColoredRectFactory ColoredRectFactory => coloredRectFactory;
@@ -81,21 +87,13 @@ namespace Ambermoon.Renderer.OpenGL
         #region Coordinate transformations
 
         PositionTransformation PositionTransformation => (Position position) =>
-        {
-            float factorX = (float)virtualScreenDisplay.Width / Global.VirtualScreenWidth;
-            float factorY = (float)virtualScreenDisplay.Height / Global.VirtualScreenHeight;
-
-            return new Position(Misc.Round(position.X * factorX), Misc.Round(position.Y * factorY));
-        };
+            new Position(Misc.Round(position.X * RenderFactorX), Misc.Round(position.Y * RenderFactorY));
 
         SizeTransformation SizeTransformation => (Size size) =>
         {
-            float factorX = (float)virtualScreenDisplay.Width / Global.VirtualScreenWidth;
-            float factorY = (float)virtualScreenDisplay.Height / Global.VirtualScreenHeight;
-
             // don't scale a dimension of 0
-            int width = (size.Width == 0) ? 0 : Misc.Ceiling(size.Width * factorX);
-            int height = (size.Height == 0) ? 0 : Misc.Ceiling(size.Height * factorY);
+            int width = (size.Width == 0) ? 0 : Misc.Ceiling(size.Width * RenderFactorX);
+            int height = (size.Height == 0) ? 0 : Misc.Ceiling(size.Height * RenderFactorY);
 
             return new Size(width, height);
         };
@@ -105,8 +103,8 @@ namespace Ambermoon.Renderer.OpenGL
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
-            int windowWidth, int windowHeight, float virtualAspectRatio, DeviceType deviceType = DeviceType.Desktop,
-            SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
+            int framebufferWidth, int framebufferHeight, float virtualAspectRatio, Size windowSize,
+            DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
             OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
@@ -114,17 +112,18 @@ namespace Ambermoon.Renderer.OpenGL
             GameData = gameData;
             GraphicProvider = graphicProvider;
             TextProcessor = textProcessor;
-            WindowArea = new Rect(0, 0, windowWidth, windowHeight);
-            virtualScreenDisplay = new Rect(WindowArea);
+            RenderArea = new Rect(0, 0, framebufferWidth, framebufferHeight);
+            renderDisplayAray = new Rect(RenderArea);
+            this.windowSize = new Size(windowSize);
             this.sizingPolicy = sizingPolicy;
             this.orientationPolicy = orientationPolicy;
             this.deviceType = deviceType;
-            isLandscapeRatio = WindowArea.Width > WindowArea.Height;
+            IsLandscapeRatio = RenderArea.Width > RenderArea.Height;
             VirtualAspectRatio = virtualAspectRatio;
 
-            Resize(windowWidth, windowHeight);
+            Resize(framebufferWidth, framebufferHeight);
 
-            context = new Context(State, virtualScreenDisplay.Width, virtualScreenDisplay.Height, 1.0f);
+            context = new Context(State, renderDisplayAray.Width, renderDisplayAray.Height, 1.0f);
 
             // factories
             var visibleArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
@@ -286,8 +285,8 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void Resize(int width, int height, Orientation orientation)
         {
-            WindowArea.Size.Width = width;
-            WindowArea.Size.Height = height;
+            RenderArea.Size.Width = width;
+            RenderArea.Size.Height = height;
 
             SetRotation(orientation);
 
@@ -296,7 +295,7 @@ namespace Ambermoon.Renderer.OpenGL
                 sizingPolicy == SizingPolicy.FitWindowForcePortrait ||
                 sizingPolicy == SizingPolicy.FitWindowForceLandscape)
             {
-                virtualScreenDisplay = new Rect(0, 0, width, height);
+                renderDisplayAray = new Rect(0, 0, width, height);
 
                 sizeFactorX = 1.0f;
                 sizeFactorY = 1.0f;
@@ -311,33 +310,33 @@ namespace Ambermoon.Renderer.OpenGL
 
                 if (Misc.FloatEqual(windowRatio, virtualRatio))
                 {
-                    virtualScreenDisplay = new Rect(0, 0, width, height);
+                    renderDisplayAray = new Rect(0, 0, width, height);
                 }
                 else if (windowRatio < virtualRatio)
                 {
                     int newHeight = Misc.Round(width / virtualRatio);
-                    virtualScreenDisplay = new Rect(0, (height - newHeight) / 2, width, newHeight);
+                    renderDisplayAray = new Rect(0, (height - newHeight) / 2, width, newHeight);
                 }
                 else // ratio > virtualRatio
                 {
                     int newWidth = Misc.Round(height * virtualRatio);
-                    virtualScreenDisplay = new Rect((width - newWidth) / 2, 0, newWidth, height);
+                    renderDisplayAray = new Rect((width - newWidth) / 2, 0, newWidth, height);
                 }
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
                 {
-                    sizeFactorX = (float)WindowArea.Height / virtualScreenDisplay.Width;
-                    sizeFactorY = (float)WindowArea.Width / virtualScreenDisplay.Height;
+                    sizeFactorX = (float)RenderArea.Height / renderDisplayAray.Width;
+                    sizeFactorY = (float)RenderArea.Width / renderDisplayAray.Height;
                 }
                 else
                 {
-                    sizeFactorX = (float)WindowArea.Width / virtualScreenDisplay.Width;
-                    sizeFactorY = (float)WindowArea.Height / virtualScreenDisplay.Height;
+                    sizeFactorX = (float)RenderArea.Width / renderDisplayAray.Width;
+                    sizeFactorY = (float)RenderArea.Height / renderDisplayAray.Height;
                 }
             }
 
-            State.Gl.Viewport(virtualScreenDisplay.X, virtualScreenDisplay.Y,
-                (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
+            State.Gl.Viewport(renderDisplayAray.X, renderDisplayAray.Y,
+                (uint)renderDisplayAray.Width, (uint)renderDisplayAray.Height);
         }
 
         public void AddLayer(IRenderLayer layer)
@@ -374,8 +373,8 @@ namespace Ambermoon.Renderer.OpenGL
                 bool render3DMap = layers[Layer.Map3D].Visible;
                 var viewOffset = new Position
                 (
-                    Util.Round((viewportOffset?.X ?? 0.0f) * virtualScreenDisplay.Width),
-                    Util.Round((viewportOffset?.Y ?? 0.0f) * virtualScreenDisplay.Height)
+                    Util.Round((viewportOffset?.X ?? 0.0f) * renderDisplayAray.Width),
+                    Util.Round((viewportOffset?.Y ?? 0.0f) * renderDisplayAray.Height)
                 );
 
                 foreach (var layer in layers)
@@ -392,8 +391,8 @@ namespace Ambermoon.Renderer.OpenGL
                             mapViewArea.Size = SizeTransformation(mapViewArea.Size);
                             State.Gl.Viewport
                             (
-                                virtualScreenDisplay.X + mapViewArea.X + viewOffset.X,
-                                WindowArea.Height - (virtualScreenDisplay.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
+                                renderDisplayAray.X + mapViewArea.X + viewOffset.X,
+                                RenderArea.Height - (renderDisplayAray.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
                                 (uint)mapViewArea.Width, (uint)mapViewArea.Height
                             );
                             State.Gl.Enable(EnableCap.CullFace);
@@ -408,14 +407,14 @@ namespace Ambermoon.Renderer.OpenGL
                             State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
                             State.RestoreModelViewMatrix(Matrix4.Identity);
                             State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
-                            State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
-                                (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
+                            State.Gl.Viewport(renderDisplayAray.X + viewOffset.X, renderDisplayAray.Y + viewOffset.Y,
+                                (uint)renderDisplayAray.Width, (uint)renderDisplayAray.Height);
                         }
                     }
                     else
                     {
-                        State.Gl.Viewport(virtualScreenDisplay.X + viewOffset.X, virtualScreenDisplay.Y + viewOffset.Y,
-                            (uint)virtualScreenDisplay.Width, (uint)virtualScreenDisplay.Height);
+                        State.Gl.Viewport(renderDisplayAray.X + viewOffset.X, renderDisplayAray.Y + viewOffset.Y,
+                            (uint)renderDisplayAray.Width, (uint)renderDisplayAray.Height);
                     }
 
                     if (layer.Key == Layer.DrugEffect)
@@ -448,13 +447,8 @@ namespace Ambermoon.Renderer.OpenGL
             }
         }
 
-        public Position GameToScreen(Position position)
-        {
-            float factorX = (float)virtualScreenDisplay.Width / Global.VirtualScreenWidth;
-            float factorY = (float)virtualScreenDisplay.Height / Global.VirtualScreenHeight;
-
-            return ViewToScreen(new Position(Misc.Round(position.X * factorX), Misc.Round(position.Y * factorY)));
-        }
+        public Position GameToScreen(Position position) =>
+            ViewToScreen(new Position(Misc.Round(position.X * WindowFactorX), Misc.Round(position.Y * WindowFactorY)));
 
         public Position ViewToScreen(Position position)
         {
@@ -471,20 +465,20 @@ namespace Ambermoon.Renderer.OpenGL
                     relY = rotatedY;
                     break;
                 case Rotation.Deg90:
-                    relX = virtualScreenDisplay.Width - rotatedY;
+                    relX = renderDisplayAray.Width - rotatedY;
                     relY = rotatedX;
                      break;
                 case Rotation.Deg180:
-                    relX = virtualScreenDisplay.Width - rotatedX;
-                    relY = virtualScreenDisplay.Height - rotatedY;
+                    relX = renderDisplayAray.Width - rotatedX;
+                    relY = renderDisplayAray.Height - rotatedY;
                     break;
                 case Rotation.Deg270:
                     relX = rotatedY;
-                    relY = virtualScreenDisplay.Height - rotatedX;
+                    relY = renderDisplayAray.Height - rotatedX;
                     break;
             }
 
-            return new Position(virtualScreenDisplay.X + relX, virtualScreenDisplay.Y + relY);
+            return new Position(renderDisplayAray.X + relX, renderDisplayAray.Y + relY);
         }
 
         public Size ViewToScreen(Size size)
@@ -499,14 +493,12 @@ namespace Ambermoon.Renderer.OpenGL
 
         public Size GameToScreen(Size size)
         {
-            float factorX = (float)virtualScreenDisplay.Width / Global.VirtualScreenWidth;
-            float factorY = (float)virtualScreenDisplay.Height / Global.VirtualScreenHeight;
             bool swapDimensions = rotation == Rotation.Deg90 || rotation == Rotation.Deg270;
 
             int width = (swapDimensions) ? size.Height : size.Width;
             int height = (swapDimensions) ? size.Width : size.Height;
 
-            return new Size(Misc.Round(width * factorX / sizeFactorX), Misc.Round(height * factorY / sizeFactorY));
+            return new Size(Misc.Round(width * WindowFactorX / sizeFactorX), Misc.Round(height * WindowFactorY / sizeFactorY));
         }
 
         public Rect GameToScreen(Rect rect)
@@ -515,7 +507,7 @@ namespace Ambermoon.Renderer.OpenGL
             var size = GameToScreen(rect.Size);
             rect = new Rect(position, size);
 
-            rect.Clip(virtualScreenDisplay);
+            rect.Clip(renderDisplayAray);
 
             if (rect.Empty)
                 return null;
@@ -529,7 +521,7 @@ namespace Ambermoon.Renderer.OpenGL
             var size = ViewToScreen(rect.Size);
             rect = new Rect(position, size);
 
-            rect.Clip(virtualScreenDisplay);
+            rect.Clip(renderDisplayAray);
 
             if (rect.Empty)
                 return null;
@@ -541,16 +533,13 @@ namespace Ambermoon.Renderer.OpenGL
         {
             position = ScreenToView(position);
 
-            float factorX = (float)virtualScreenDisplay.Width / Global.VirtualScreenWidth;
-            float factorY = (float)virtualScreenDisplay.Height / Global.VirtualScreenHeight;
-
-            return new Position(Misc.Round(position.X / factorX), Misc.Round(position.Y / factorY));
+            return new Position(Misc.Round(position.X / WindowFactorX), Misc.Round(position.Y / WindowFactorY));
         }
 
         public Position ScreenToView(Position position)
         {
-            int relX = position.X - virtualScreenDisplay.X;
-            int relY = position.Y - virtualScreenDisplay.Y;
+            int relX = position.X - renderDisplayAray.X;
+            int relY = position.Y - renderDisplayAray.Y;
             int rotatedX;
             int rotatedY;
 
@@ -563,14 +552,14 @@ namespace Ambermoon.Renderer.OpenGL
                     break;
                 case Rotation.Deg90:
                     rotatedX = relY;
-                    rotatedY = virtualScreenDisplay.Width - relX;
+                    rotatedY = renderDisplayAray.Width - relX;
                     break;
                 case Rotation.Deg180:
-                    rotatedX = virtualScreenDisplay.Width - relX;
-                    rotatedY = virtualScreenDisplay.Height - relY;
+                    rotatedX = renderDisplayAray.Width - relX;
+                    rotatedY = renderDisplayAray.Height - relY;
                     break;
                 case Rotation.Deg270:
-                    rotatedX = virtualScreenDisplay.Height - relY;
+                    rotatedX = renderDisplayAray.Height - relY;
                     rotatedY = relX;
                     break;
             }
@@ -595,7 +584,7 @@ namespace Ambermoon.Renderer.OpenGL
         {
             var clippedRect = new Rect(rect);
 
-            clippedRect.Clip(virtualScreenDisplay);
+            clippedRect.Clip(renderDisplayAray);
 
             if (clippedRect.Empty)
                 return null;

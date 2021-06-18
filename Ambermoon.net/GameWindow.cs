@@ -619,7 +619,8 @@ namespace Ambermoon
             screenResolution.Height = screenResolution.Height * window.FramebufferSize.Y / window.Size.Y;
 
             return new RenderView(this, gameData, graphicProvider, fontProvider,
-                new TextProcessor(), textureAtlasManagerProvider, screenResolution.Width, screenResolution.Height, aspectRatio);
+                new TextProcessor(), textureAtlasManagerProvider, screenResolution.Width, screenResolution.Height, aspectRatio,
+                new Size(window.Size.X, window.Size.Y));
         }
 
         string GetSavePath(string version)
