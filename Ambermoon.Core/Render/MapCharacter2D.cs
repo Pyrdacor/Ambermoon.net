@@ -139,8 +139,8 @@ namespace Ambermoon.Render
                 if (collisionPosition.Y < 0 || collisionPosition.Y >= map.Height)
                     return false;
 
-                // TODO: is there a flag to block only NPC/Monster movement?
-                return Map[collisionPosition].AllowMovement(tileset, TravelType.Walk, false);
+                // Note: Monsters and NPCs use TravelType.Horse for collision detection.
+                return Map[collisionPosition].AllowMovement(tileset, TravelType.Horse, false);
             }
 
             void MoveRandom()

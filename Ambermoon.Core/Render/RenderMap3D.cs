@@ -474,8 +474,8 @@ namespace Ambermoon.Render
 
             bool TestPossibleCharacterMovement(FloatPosition position)
             {
-                // Note: This is only used for non-player characters.
-                var collisionInfo = map.GetCollisionDetectionInfoFromPositions
+                // Note: This is only used for monsters.
+                var collisionInfo = map.GetCollisionDetectionInfoForMonsterFromPositions
                 (
                     Position,
                     position.Round(1.0f / Global.DistancePerBlock)
@@ -630,6 +630,7 @@ namespace Ambermoon.Render
         ISurface3D floor = null;
         ISurface3D ceiling = null;
         Labdata labdata = null;
+        readonly List<uint> playerBlockingBlocks = new List<uint>();
         readonly List<uint> characterBlockingBlocks = new List<uint>();
         readonly List<uint> monsterBlockSightBlocks = new List<uint>();
         readonly Dictionary<uint, List<ICollisionBody>> blockCollisionBodies = new Dictionary<uint, List<ICollisionBody>>();
@@ -850,6 +851,7 @@ namespace Ambermoon.Render
             mapCharacters.Clear();
 
             blockCollisionBodies.Clear();
+            playerBlockingBlocks.Clear();
             characterBlockingBlocks.Clear();
             monsterBlockSightBlocks.Clear();
         }
@@ -1119,9 +1121,11 @@ namespace Ambermoon.Render
                 objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex,
                     objectInfo.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation), objectInfo.NumAnimationFrames, 8.0f));
 
-                if (objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk))
+                bool blockPlayer = objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk);
+                bool blockMonster = objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementMonster);
+
+                if (blockPlayer || blockMonster)
                 {
-                    // TODO: floor objects
                     blockCollisionBodies[blockIndex].Add(new CollisionSphere3D
                     {
                         CenterX = mapObject.X,
@@ -1129,9 +1133,12 @@ namespace Ambermoon.Render
                         Radius = 0.5f * Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
                         PlayerCanPass = false
                     });
-                    if (!characterBlockingBlocks.Contains(blockIndex))
-                        characterBlockingBlocks.Add(blockIndex);
                 }
+
+                if (blockPlayer && !playerBlockingBlocks.Contains(blockIndex))
+                    playerBlockingBlocks.Add(blockIndex);
+                if (blockMonster && !characterBlockingBlocks.Contains(blockIndex))
+                    characterBlockingBlocks.Add(blockIndex);
             }
         }
 
@@ -1145,15 +1152,16 @@ namespace Ambermoon.Render
             var wallTextureOffset = GetWallTextureOffset(wallIndex);
             var wallFlags = labdata.Walls[(int)wallIndex].Flags;
             bool alpha = wallFlags.HasFlag(Tileset.TileFlags.Transparency);
-            bool blocksMovement = wallFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wallFlags.HasFlag(Tileset.TileFlags.AllowMovementWalk);
+            bool blockPlayer = wallFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wallFlags.HasFlag(Tileset.TileFlags.AllowMovementWalk);
+            bool blockMonster = wallFlags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !wallFlags.HasFlag(Tileset.TileFlags.AllowMovementMonster);
 
-            if (!characterBlockingBlocks.Contains(blockIndex) &&
-                (blocksMovement || wallFlags.HasFlag(Tileset.TileFlags.BlockSight)))
-            {
-                // Note: Doors will also block characters
+            if (blockPlayer && !playerBlockingBlocks.Contains(blockIndex))
+                playerBlockingBlocks.Add(blockIndex);
+            if (blockMonster && !characterBlockingBlocks.Contains(blockIndex))
                 characterBlockingBlocks.Add(blockIndex);
+
+            if (!monsterBlockSightBlocks.Contains(blockIndex) && wallFlags.HasFlag(Tileset.TileFlags.BlockSight))
                 monsterBlockSightBlocks.Add(blockIndex);
-            }
 
             // This is used to determine if surrounded tiles should add a wall.
             // Free block means no wall, non-blocking wall or a transparent/removable wall.
@@ -1195,7 +1203,7 @@ namespace Ambermoon.Render
                     Z = -(wallOrientation == WallOrientation.Rotated270 ? z - Global.DistancePerBlock : z),
                     Horizontal = wallOrientation == WallOrientation.Normal || wallOrientation == WallOrientation.Rotated180,
                     Length = Global.DistancePerBlock,
-                    PlayerCanPass = !blocksMovement
+                    PlayerCanPass = !blockPlayer
                 });
             }
 
@@ -1239,6 +1247,8 @@ namespace Ambermoon.Render
 
             if (blockCollisionBodies.ContainsKey(index))
                 blockCollisionBodies.Remove(index);
+            if (playerBlockingBlocks.Contains(index))
+                playerBlockingBlocks.Remove(index);
             if (characterBlockingBlocks.Contains(index))
                 characterBlockingBlocks.Remove(index);
             if (monsterBlockSightBlocks.Contains(index))
@@ -1282,6 +1292,8 @@ namespace Ambermoon.Render
                             walls.Remove(adjacentIndex);
                             if (blockCollisionBodies.ContainsKey(adjacentIndex))
                                 blockCollisionBodies.Remove(adjacentIndex);
+                            if (playerBlockingBlocks.Contains(adjacentIndex))
+                                playerBlockingBlocks.Remove(adjacentIndex);
                             if (characterBlockingBlocks.Contains(adjacentIndex))
                                 characterBlockingBlocks.Remove(adjacentIndex);
                             if (monsterBlockSightBlocks.Contains(adjacentIndex))
@@ -1441,7 +1453,7 @@ namespace Ambermoon.Render
             mapCharacters[characterIndex].Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
         }
 
-        public CollisionDetectionInfo3D GetCollisionDetectionInfo(Position position)
+        public CollisionDetectionInfo3D GetCollisionDetectionInfoForPlayer(Position position)
         {
             var info = new CollisionDetectionInfo3D();
 
@@ -1451,7 +1463,7 @@ namespace Ambermoon.Render
                 {
                     uint blockIndex = (uint)(x + y * Map.Width);
 
-                    if (blockCollisionBodies.ContainsKey(blockIndex))
+                    if (playerBlockingBlocks.Contains(blockIndex) && blockCollisionBodies.ContainsKey(blockIndex))
                     {
                         foreach (var collisionBody in blockCollisionBodies[blockIndex])
                             info.CollisionBodies.Add(collisionBody);
@@ -1483,7 +1495,7 @@ namespace Ambermoon.Render
             return false;
         }
 
-        public CollisionDetectionInfo3D GetCollisionDetectionInfoFromPositions(params Position[] positions)
+        public CollisionDetectionInfo3D GetCollisionDetectionInfoForMonsterFromPositions(params Position[] positions)
         {
             var info = new CollisionDetectionInfo3D();
 
@@ -1491,7 +1503,7 @@ namespace Ambermoon.Render
             {
                 uint blockIndex = (uint)(position.X + position.Y * Map.Width);
 
-                if (blockCollisionBodies.ContainsKey(blockIndex))
+                if (characterBlockingBlocks.Contains(blockIndex) && blockCollisionBodies.ContainsKey(blockIndex))
                 {
                     foreach (var collisionBody in blockCollisionBodies[blockIndex])
                         info.CollisionBodies.Add(collisionBody);

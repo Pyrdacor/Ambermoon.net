@@ -245,6 +245,10 @@ namespace Ambermoon
                     if (changeTileEvent.Y == 0)
                         changeTileEvent.Y = y + 1;
                     game.CurrentSavegame.TileChangeEvents.SafeAdd(map.Index, changeTileEvent);
+                    // Change tile events that are triggered directly should be disabled afterwards
+                    int eventIndex = map.EventList.IndexOf(@event);
+                    if (eventIndex != -1)
+                        game.CurrentSavegame.ActivateEvent(map.Index, (uint)eventIndex, false);
                     break;
                 }
                 case EventType.StartBattle:

@@ -119,7 +119,7 @@ namespace Ambermoon.Render
             Geometry.CameraToWorldPosition(map.Map, x, z, out float mapX, out float mapY);
 
             // This contains all collision bodies in a 3x3 area around the current position.
-            var collisionDetectionInfo = map.GetCollisionDetectionInfo(Position);
+            var collisionDetectionInfo = map.GetCollisionDetectionInfoForPlayer(Position);
 
             return collisionDetectionInfo.TestCollision(lastMapX, lastMapY, mapX, mapY, CollisionRadius, true);
         }

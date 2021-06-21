@@ -9,14 +9,14 @@ namespace Ambermoon.Data
         {
             None = 0,
             AlternateAnimation = 0x00000001, // Animations will go back and forth instead of loop
-            BlockSight = 0x00000002, // TODO: this should be considered in 2D monsters
+            BlockSight = 0x00000002, // TODO: this should be considered for 2D monsters
             Background = 0x00000004,
             Floor = 0x00000008, // TODO: Is this also true for 2D?
             UseBackgroundTileFlags = 0x00000020,
             BringToFront = 0x00000040,
             BlockAllMovement = 0x00000080,
             AllowMovementWalk = 0x00000100,
-            AllowMovementHorse = 0x00000200, // TODO: Seems to have some different meaning for 3D objects
+            AllowMovementHorse = 0x00000200, // In 3D (and maybe also indoor 2D) this means "AllowMovementMonster"
             AllowMovementRaft = 0x00000400,
             AllowMovementShip = 0x00000800,
             AllowMovementMagicalDisc = 0x00001000,
@@ -32,7 +32,8 @@ namespace Ambermoon.Data
             AllowMovementUnused15 = 0x00400000,
             AllowMovementUnused16 = 0x00800000,
             PlayerInvisible = 0x04000000,
-            Transparency = Floor
+            Transparency = Floor,
+            AllowMovementMonster = AllowMovementHorse
         }
 
         public class Tile
