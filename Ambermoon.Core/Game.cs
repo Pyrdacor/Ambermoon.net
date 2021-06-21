@@ -2723,12 +2723,12 @@ namespace Ambermoon
         {
             if (trigger == null)
             {
-                // If null it was triggered by crosshair cursor. We test eye, hand and mouth in this case.
+                // If null it was triggered by crosshair cursor. We test mouth, eye and hand in this case.
+                if (TriggerMapEvents(EventTrigger.Mouth))
+                    return true;
                 if (TriggerMapEvents(EventTrigger.Eye))
                     return true;
                 if (TriggerMapEvents(EventTrigger.Hand))
-                    return true;
-                if (TriggerMapEvents(EventTrigger.Mouth))
                     return true;
                 return false;
             }
