@@ -15,20 +15,12 @@
 - If background has darker color (night battles) the monsters should be darkened too.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 
-## Events
-
-- Teleporters in temple of gala did not work once after cheat teleport (map: 277 x: ~9 y: ~9)
-
 
 ## 3D maps
 
 - Should piles block monsters? Test in grandfather's cellar.
 - Monster should be able to run through destroyed cobwebs etc.
-- Blocks behind walls should not be explored when nearby.
 - 3D monster get easily stuck on wall edges. :(
-- NPCs should not walk through doors etc. Or should they? They do so in Spannenberg park.
-  For sure they should not leave the town. The burnville guard sometimes leaves the town and
-  walks outside.
 - After climbing to new map (map 355 ~17,4) with a rope, the monster jumps to a new location.
 - When climbing up/down the player appears to far away from the hole (maybe move him nearer beforehand).
 
