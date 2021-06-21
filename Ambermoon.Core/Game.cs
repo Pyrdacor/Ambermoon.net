@@ -12216,14 +12216,14 @@ namespace Ambermoon
                 ProcessText(text),
                 () =>
                 {
-                    layout.ClosePopup(false);
+                    layout.ClosePopup(false, true);
                     InputEnable = true;
                     Resume();
                     responseHandler?.Invoke(PopupTextEvent.Response.Yes);
                 },
                 () =>
                 {
-                    layout.ClosePopup(false);
+                    layout.ClosePopup(false, true);
                     InputEnable = true;
                     Resume();
                     responseHandler?.Invoke(PopupTextEvent.Response.No);
