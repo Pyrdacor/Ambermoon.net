@@ -55,8 +55,7 @@ namespace Ambermoon
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message + Environment.NewLine + ex.StackTrace);
-                // TODO: ignored for now
+                PrintException(ex);
             }
             finally
             {
@@ -67,9 +66,22 @@ namespace Ambermoon
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             if (e.ExceptionObject is Exception ex)
-                Console.WriteLine(ex.Message + Environment.NewLine + ex.StackTrace);
+                PrintException(ex);
             else
                 Console.WriteLine(e.ExceptionObject?.ToString() ?? "Unhandled exception without exception object");
+        }
+
+        static void PrintException(Exception ex)
+        {
+            string message = ex.Message;
+
+            if (ex.InnerException != null)
+            {
+                message += Environment.NewLine + ex.InnerException.Message;
+                ex = ex.InnerException;
+            }
+
+            Console.WriteLine(message + Environment.NewLine + ex.StackTrace);
         }
     }
 }

@@ -764,6 +764,7 @@ namespace Ambermoon
                     // Show cheat info
                     Console.WriteLine("***** Ambermoon Cheat Console *****");
                     Console.WriteLine("Type 'help' for more information.");
+                    Console.WriteLine();
                 }
             }
             else if (Game != null)
@@ -850,8 +851,6 @@ namespace Ambermoon
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-
                 // TODO: save emergency savegame?
 
                 if (renderView != null && infoText != null)
@@ -881,7 +880,7 @@ namespace Ambermoon
                     });
                 }
 
-                Environment.Exit(1);
+                throw;
             }
             finally
             {
