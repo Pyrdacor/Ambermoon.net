@@ -6,10 +6,24 @@ namespace Ambermoon
 {
     internal static class EventExtensions
     {
+        public class EventProvider
+        {
+            public Event Event { get; private set; } = null;
+            public void Provide(Event @event)
+            {
+                Event = @event;
+                Provided?.Invoke(@event);
+            }
+
+            public event Action<Event> Provided;
+        }
+
         public static Event ExecuteEvent(this Event @event, Map map, Game game,
             ref EventTrigger trigger, uint x, uint y, uint ticks, ref bool lastEventStatus,
-            out bool aborted, IConversationPartner conversationPartner = null)
+            out bool aborted, out EventProvider eventProvider, IConversationPartner conversationPartner = null)
         {
+            eventProvider = null;
+
             // Note: Aborted means that an event is not even executed. It does not mean that a decision
             // box is answered with No for example. It is used when:
             // - A condition of a condition event is not met and there is no event that is triggered in that case.
@@ -97,11 +111,25 @@ namespace Ambermoon
                     }
 
                     bool eventStatus = lastEventStatus;
+                    EventProvider provider = null;
+
+                    if (conversationPartner != null)
+                        provider = eventProvider = new EventProvider();
 
                     game.ShowTextPopup(map, popupTextEvent, _ =>
                     {
-                        map.TriggerEventChain(game, EventTrigger.Always,
-                            x, y, game.CurrentTicks, @event.Next, eventStatus);
+                        if (@event.Next != null)
+                        {
+                            if (conversationPartner == null)
+                            {
+                                map.TriggerEventChain(game, EventTrigger.Always,
+                                    x, y, game.CurrentTicks, @event.Next, eventStatus);
+                            }
+                            else
+                            {
+                                provider?.Provide(popupTextEvent.Next);
+                            }
+                        }
                     });
                     return null; // next event is only executed after popup response
                 }
@@ -195,11 +223,19 @@ namespace Ambermoon
                 {
                     if (!(@event is AwardEvent awardEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid award event.");
+                    EventProvider provider = null;
+                    if (conversationPartner != null)
+                        provider = eventProvider = new EventProvider();
                     void Award(PartyMember partyMember, Action followAction) => game.AwardPlayer(partyMember, awardEvent, followAction);
                     void Done()
                     {
                         if (awardEvent.Next != null)
-                            TriggerEventChain(map, game, EventTrigger.Always, x, y, game.CurrentTicks, awardEvent.Next, true);
+                        {
+                            if (conversationPartner == null)
+                                TriggerEventChain(map, game, EventTrigger.Always, x, y, game.CurrentTicks, awardEvent.Next, true);
+                            else
+                                provider?.Provide(awardEvent.Next);
+                        }
                     }
                     switch (awardEvent.Target)
                     {
@@ -774,8 +810,7 @@ namespace Ambermoon
                 {
                     // Note: These are only used by conversations and are handled in
                     // game.ShowConversation. So we don't need to do anything here.
-                    // This should never be executed via this extension.
-                    throw new AmbermoonException(ExceptionScope.Application, $"Events of type {@event.Type} should be handled by the conversation window.");
+                    throw new AmbermoonException(ExceptionScope.Data, "Conversation events must not be called outside of conversations.");
                 }
                 case EventType.Decision:
                 {
@@ -804,16 +839,16 @@ namespace Ambermoon
                     if (!(@event is ChangeMusicEvent changeMusicEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid change music event.");
                     game.PlayMusic((Data.Enumerations.Song)changeMusicEvent.MusicIndex);
-                    return @event.Next;
+                    break;
                 case EventType.Spawn:
                     if (!(@event is SpawnEvent spawnEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid spawn event.");
                     game.SpawnTransport(spawnEvent.MapIndex == 0 ? map.Index : spawnEvent.MapIndex,
                         spawnEvent.X, spawnEvent.Y, spawnEvent.TravelType);
-                    return @event.Next;
+                    break;
                 case EventType.Unknown:
                     // TODO
-                    return @event.Next;
+                    break;
                 default:
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;
@@ -831,7 +866,7 @@ namespace Ambermoon
 
             while (mapEvent != null)
             {
-                mapEvent = mapEvent.ExecuteEvent(map, game, ref trigger, x, y, ticks, ref lastEventStatus, out bool aborted);
+                mapEvent = mapEvent.ExecuteEvent(map, game, ref trigger, x, y, ticks, ref lastEventStatus, out bool aborted, out var _);
 
                 if (aborted)
                     return false;

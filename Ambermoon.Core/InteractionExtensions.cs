@@ -16,7 +16,7 @@ namespace Ambermoon
                 uint y = (uint)game.RenderPlayer.Position.Y;
                 bool lastEventStatus = false;
                 @event.ExecuteEvent(game.Map, game, ref trigger, x, y, game.CurrentTicks,
-                    ref lastEventStatus, out bool _, conversationPartner);
+                    ref lastEventStatus, out bool _, out var _, conversationPartner);
             }
         }
     }

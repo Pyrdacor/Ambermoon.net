@@ -5688,8 +5688,27 @@ namespace Ambermoon
                     var trigger = EventTrigger.Always;
                     conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
                         (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, ref lastEventStatus, out aborted,
-                        conversationPartner);
-                    HandleEvent(followAction);
+                        out var eventProvider, conversationPartner);
+                    if (conversationEvent == null && eventProvider != null)
+                    {
+                        if (eventProvider.Event != null)
+                        {
+                            conversationEvent = eventProvider.Event;
+                            HandleEvent(followAction);
+                        }
+                        else
+                        {
+                            eventProvider.Provided += @event =>
+                            {
+                                conversationEvent = @event;
+                                HandleEvent(followAction);
+                            };
+                        }
+                    }
+                    else
+                    {
+                        HandleEvent(followAction);
+                    }
                 }
             }
 
