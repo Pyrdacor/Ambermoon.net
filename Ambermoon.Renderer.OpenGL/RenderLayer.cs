@@ -93,7 +93,9 @@ namespace Ambermoon.Renderer
             0.70f,  // IntroText
             0.97f,  // Effects
             0.98f,  // Cursor
-            0.99f   // DrugEffect
+            0.99f,  // DrugEffect
+            0.00f,  // Intro
+            0.00f   // Outro
         };
 
         public RenderLayer(State state, Layer layer, Texture texture, Texture palette)

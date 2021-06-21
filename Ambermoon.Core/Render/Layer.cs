@@ -34,7 +34,11 @@
         IntroText,
         Effects,
         Cursor,
-        DrugEffect
+        DrugEffect,
+        // Intro and outro use their own layer as graphics
+        // are also loaded for specific layers
+        Intro,
+        Outro
     }
 
     public partial class Global
