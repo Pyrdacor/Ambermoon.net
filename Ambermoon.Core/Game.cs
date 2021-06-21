@@ -4675,10 +4675,11 @@ namespace Ambermoon
         {
             var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
 
-            if (chestEvent.Next != null)
-                Map.TriggerEventChain(this, EventTrigger.Always, 0, 0, CurrentTicks, chestEvent.Next, true);
-
-            CloseWindow();
+            CloseWindow(() =>
+            {
+                if (chestEvent.Next != null)
+                    Map.TriggerEventChain(this, EventTrigger.Always, 0, 0, CurrentTicks, chestEvent.Next, true);
+            });
         }
 
         internal void ItemRemovedFromStorage()
