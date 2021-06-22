@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.9.x beta - Finalizing
+- Version [0.9.1 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.1beta): Lots of bugfixing
 - Version [0.9.0 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.0beta): Added poison effect, bugfixing
 
 ## 0.8.x beta - Music
