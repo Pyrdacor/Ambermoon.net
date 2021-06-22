@@ -1657,16 +1657,31 @@ namespace Ambermoon.UI
 
             if (!game.BattleActive && game.TestUseItemMapEvent(itemSlot.ItemIndex))
             {
-                ReduceItemCharge(itemSlot, true, () =>
+                void Use()
                 {
-                    game.CloseWindow(() =>
+                    ReduceItemCharge(itemSlot, true, () =>
                     {
-                        if (wasInputEnabled)
-                            game.InputEnable = true;
-                        game.UpdateCursor();
-                        game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex));
+                        game.CloseWindow(() =>
+                        {
+                            if (wasInputEnabled)
+                                game.InputEnable = true;
+                            game.UpdateCursor();
+                            game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex));
+                        });
                     });
-                });
+                }
+                int RollDice1000() => game.RandomInt(0, 999);
+                if (item.BreakChance != 0 && RollDice1000() < item.BreakChance)
+                {
+                    itemSlot.Flags |= ItemSlotFlags.Broken;
+                    UpdateItemSlot(itemSlot);
+                    string message = game.CurrentInventory.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);
+                    game.ShowMessagePopup(message, Use);
+                }
+                else
+                {
+                    Use();
+                }
                 return;
             }
 
