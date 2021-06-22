@@ -401,6 +401,7 @@ namespace Ambermoon
         /// Open chest which can be used to store items.
         /// </summary>
         internal IItemStorage OpenStorage { get; private set; }
+        readonly int[] spellListScrollOffsets = new int[MaxPartyMembers];
         Rect mapViewArea = Map2DViewArea;
         internal static readonly Rect Map2DViewArea = new Rect(Global.Map2DViewX, Global.Map2DViewY,
             Global.Map2DViewWidth, Global.Map2DViewHeight);
@@ -1026,6 +1027,9 @@ namespace Ambermoon
             UntrapMouse();
             InputEnable = false;
             paused = false;
+
+            for (int i = 0; i < spellListScrollOffsets.Length; ++i)
+                spellListScrollOffsets[i] = 0;
         }
 
         public void Destroy()
@@ -1116,6 +1120,7 @@ namespace Ambermoon
             FixPartyMember(partyMember);
             partyMember.Died += PartyMemberDied;
             layout.SetCharacter(slot, partyMember, false, followAction, forceAnimation);
+            spellListScrollOffsets[slot] = 0;
         }
 
         void RemovePartyMember(int slot, bool initialize, Action followAction = null)
@@ -1126,6 +1131,7 @@ namespace Ambermoon
                 partyMember.Died -= PartyMemberDied;
 
             layout.SetCharacter(slot, null, initialize, followAction);
+            spellListScrollOffsets[slot] = 0;
         }
 
         void ClearPartyMembers()
@@ -12117,10 +12123,16 @@ namespace Ambermoon
             };
             int scrollRange = Math.Max(0, spells.Count - 16);
             var scrollbar = popup.AddScrollbar(layout, scrollRange, 2);
+            int slot = SlotFromPartyMember(partyMember).Value;
             scrollbar.Scrolled += offset =>
             {
+                spellListScrollOffsets[slot] = offset;
                 spellList.ScrollTo(offset);
             };
+            // Initial scroll
+            if (spellListScrollOffsets[slot] > scrollRange)
+                spellListScrollOffsets[slot] = scrollRange;
+            scrollbar.SetScrollPosition(spellListScrollOffsets[slot], true);
         }
 
         internal void ShowMessagePopup(string text, Action closeAction = null,

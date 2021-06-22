@@ -32,7 +32,6 @@
 
 ## UI
 
-- Memorize spell list scroll offset per party member (temporary per game).
 - Cursor keys should scroll automap. Mouse wheel would be cool to.
 - Scrolling by dragging can't put the scrollbar to the top or bottom. There is a small gap.
 - When repairing item etc the item tooltip should not show up after magic animation.
