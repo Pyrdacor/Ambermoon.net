@@ -12106,7 +12106,7 @@ namespace Ambermoon
                 })
             )).ToList());
             popup.AddSunkenBox(new Rect(48, 173, 174, 10));
-            var spellMessage = popup.AddText(new Rect(49, 175, 172, 6), "", TextColor.White, TextAlign.Center, true, 2);
+            var spellMessage = popup.AddText(new Rect(49, 175, 172, 6), "", TextColor.Bright, TextAlign.Center, true, 2);
             popup.Closed += () =>
             {
                 UntrapMouse();
@@ -12121,7 +12121,7 @@ namespace Ambermoon
                 else
                     spellMessage.SetText(ProcessText(message));
             };
-            int scrollRange = Math.Max(0, spells.Count - 16);
+            int scrollRange = Math.Max(0, spells.Count - 17);
             var scrollbar = popup.AddScrollbar(layout, scrollRange, 2);
             int slot = SlotFromPartyMember(partyMember).Value;
             scrollbar.Scrolled += offset =>

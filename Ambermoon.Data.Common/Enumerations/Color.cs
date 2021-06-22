@@ -7,16 +7,6 @@
     /// </summary>
     public enum Color : byte
     {
-        /*//
-                    // green (stat UI headers), disabled text, dark gray, red (move blocked cross)
-                    0xaa, 0xaa, 0x44, 0xff, 0x66, 0x55, 0x44, 0xff, 0x88, 0x77, 0x66, 0xff, 0x88, 0x11, 0x22, 0xff,
-                    // pale red (wait hour message outdoor), pale yellow (wait hour message indoor),
-                    // azure (wait hour message 3D), light gray (item info headers)
-                    0xbb, 0x77, 0x55, 0xff, 0xcc, 0xaa, 0x44, 0xff, 0x00, 0xcc, 0xff, 0xff, 0xaa, 0xaa, 0x99, 0xff,
-                    // light orange (item details headers), 3 blue tones (buff text animation)
-                    0xff, 0x99, 0x00, 0xff, 0x00, 0x33, 0x44, 0xff, 0x22, 0x55, 0x66, 0xff, 0x55, 0x77, 0x88, 0xff,
-                    */
-
         /// <summary>
         /// RGB: 000
         /// </summary>
@@ -183,20 +173,6 @@
         /// Header color in the monster info
         /// </summary>
         MonsterInfoHeader = Gray,
-
-        /*
-        Green,
-        Disabled,
-        DarkGray,
-        DarkRed,
-        PaleRed,
-        PaleYellow,
-        Azure,
-        LightGray,
-        LightOrange,
-        DarkBlue,
-        LightDarkBlue,
-        BluishGray*/
     }
 
     public static class TextColors

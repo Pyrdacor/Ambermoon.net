@@ -62,7 +62,7 @@ namespace Ambermoon.UI
             renderText.DisplayLayer = displayLayer;
             renderText.PaletteIndex = paletteIndex;
             renderText.Visible = true;
-            numVisibleLines = bounds.Height / Global.GlyphLineHeight;
+            numVisibleLines = (bounds.Height + 1) / Global.GlyphLineHeight;
             WithScrolling = allowScrolling;
         }
 
