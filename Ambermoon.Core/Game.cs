@@ -3025,10 +3025,10 @@ namespace Ambermoon
                     // TODO: rings/fingers
                     UpdateCharacterInfo();
                 }
-                void AddEquipment(int slotIndex, ItemSlot itemSlot)
+                void AddEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                    EquipmentAdded(item, itemSlot.Amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+                    EquipmentAdded(item, amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
 
                     if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
                     {
@@ -3046,15 +3046,15 @@ namespace Ambermoon
                     InventoryItemRemoved(ItemManager.GetItem(itemSlot.ItemIndex), amount);
                     UpdateCharacterInfo();
                 }
-                void AddInventoryItem(int slotIndex, ItemSlot itemSlot)
+                void AddInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
                 {
-                    InventoryItemAdded(ItemManager.GetItem(itemSlot.ItemIndex), itemSlot.Amount);
+                    InventoryItemAdded(ItemManager.GetItem(itemSlot.ItemIndex), amount);
                     UpdateCharacterInfo();
                 }
                 equipmentGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
                 {
                     RemoveEquipment(slotIndex, draggedItem, draggedAmount);
-                    AddEquipment(slotIndex, droppedItem);
+                    AddEquipment(slotIndex, droppedItem, droppedItem.Amount);
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(draggedItem.ItemIndex));
                 };
                 equipmentGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
@@ -3064,24 +3064,24 @@ namespace Ambermoon
                     // TODO: When resetting the item back to the slot (even just dropping it there) the previous battle action should be restored.
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(itemSlot.ItemIndex));
                 };
-                equipmentGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+                equipmentGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
                 {
-                    AddEquipment(slotIndex, itemSlot);
+                    AddEquipment(slotIndex, itemSlot, amount);
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), null);
                 };
                 inventoryGrid.ItemExchanged += (int slotIndex, ItemSlot draggedItem, int draggedAmount, ItemSlot droppedItem) =>
                 {
                     RemoveInventoryItem(slotIndex, draggedItem, draggedAmount);
-                    AddInventoryItem(slotIndex, droppedItem);
+                    AddInventoryItem(slotIndex, droppedItem, droppedItem.Amount);
                 };
                 inventoryGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
                 {
                     RemoveInventoryItem(slotIndex, itemSlot, amount);
                     partyMember.Inventory.Slots[slotIndex].Remove(amount);
                 };
-                inventoryGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+                inventoryGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
                 {
-                    AddInventoryItem(slotIndex, itemSlot);
+                    AddInventoryItem(slotIndex, itemSlot, amount);
                 };
                 #endregion
                 #region Character info
@@ -4849,7 +4849,7 @@ namespace Ambermoon
                 int row = slotIndex / Chest.SlotsPerRow;
                 storage.Slots[column, row].Remove(amount);
             };
-            itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+            itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
             {
                 if (!storage.IsBattleLoot)
                     layout.Set80x80Picture(Picture80x80.ChestOpenFull);
@@ -9783,7 +9783,7 @@ namespace Ambermoon
                 boughtItems[slotIndex].Remove(amount);
                 layout.EnableButton(0, boughtItems.Any(slot => slot == null || slot.Empty) && merchant.AvailableGold > 0);
             };
-            itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot) =>
+            itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
             {
                 if (mode == -1)
                 {

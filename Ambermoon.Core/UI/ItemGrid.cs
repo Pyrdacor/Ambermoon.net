@@ -44,7 +44,7 @@ namespace Ambermoon.UI
         }
 
         public event Action<int, ItemSlot, int> ItemDragged;
-        public event Action<int, ItemSlot> ItemDropped;
+        public event Action<int, ItemSlot, int> ItemDropped;
         public event Action<int, ItemSlot, int, ItemSlot> ItemExchanged;
         public event Action<ItemGrid, int, ItemSlot> ItemClicked;
         public event Func<bool> RightClicked;
@@ -411,13 +411,13 @@ namespace Ambermoon.UI
                 item.Item.SetItem(slots[slot]);
                 item.Item.Position = slotPositions[slot - ScrollOffset];
                 items[slot] = item.Item;
-                ItemDropped?.Invoke(slot, item.Item.Item);
+                ItemDropped?.Invoke(slot, item.Item.Item, item.Item.Item.Amount);
                 return 0;
             }
             else if (itemSlot.Item.Empty || (itemSlot.Item.ItemIndex == item.Item.Item.ItemIndex &&
                 itemInfo.Flags.HasFlag(ItemFlags.Stackable)))
             {
-                int amountToDrop = itemSlot.Item.Amount;
+                int amountToDrop = item.Item.Item.Amount;
                 int remaining = itemSlot.Item.Add(item.Item.Item);
 
                 if (remaining < amountToDrop)
@@ -429,7 +429,7 @@ namespace Ambermoon.UI
                     else
                         item.Item.Update(false);
 
-                    ItemDropped?.Invoke(slot, itemSlot.Item);
+                    ItemDropped?.Invoke(slot, itemSlot.Item, amountToDrop - remaining);
                 }
 
                 return remaining;
