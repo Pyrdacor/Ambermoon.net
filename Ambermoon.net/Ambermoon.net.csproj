@@ -47,7 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Legacy" Version="9.0.0" />
+    <PackageReference Include="Ambermoon.Data.Legacy" Version="9.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Silk.NET.GLFW" Version="2.5.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.5.0" />
