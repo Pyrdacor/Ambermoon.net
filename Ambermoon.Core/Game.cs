@@ -3942,47 +3942,87 @@ namespace Ambermoon
             });
         }
 
+        void Levitate(Action failAction, bool climbIfNoEvent = true)
+        {
+            ConditionEvent climbEvent = null;
+            var levitatePosition = new Position(player.Position);
+            bool HasClimbEvent(uint x, uint y)
+            {
+                var mapEventId = Map.Blocks[x, y].MapEventId;
+
+                if (mapEventId == 0)
+                    return false;
+
+                var @event = Map.EventList[(int)mapEventId - 1];
+
+                if (!(@event is ConditionEvent conditionEvent))
+                    return false;
+
+                climbEvent = conditionEvent;
+
+                return conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.Levitating;
+            }
+            if (!HasClimbEvent((uint)player.Position.X, (uint)player.Position.Y))
+            {
+                // Also try forward position
+                camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
+                var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
+
+                if (position == player.Position ||
+                    position.X < 0 || position.X >= Map.Width ||
+                    position.Y < 0 || position.Y >= Map.Height ||
+                    !HasClimbEvent((uint)position.X, (uint)position.Y))
+                {
+                    climbEvent = null;
+                }
+                else
+                {
+                    levitatePosition = position;
+                }
+            }
+            if (climbEvent != null)
+            {
+                // Attach player to ladded or hole
+                float angle = camera3D.Angle;
+                Geometry.Geometry.BlockToCameraPosition(Map, levitatePosition, out float x, out float z);
+                camera3D.SetPosition(-x, z);
+                camera3D.TurnTowards(angle);
+                camera3D.GetBackwardPosition(0.5f * Global.DistancePerBlock, out x, out z, false, false);
+                camera3D.SetPosition(-x, z);
+                camera3D.TurnTowards(angle);
+            }
+            if (climbIfNoEvent || climbEvent != null)
+            {
+                void StartClimbing()
+                {
+                    Pause();
+                    Climb(() =>
+                    {
+                        if (climbEvent == null)
+                            failAction?.Invoke();
+                        else
+                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true);
+                    });
+                }
+                if (WindowActive)
+                    CloseWindow(StartClimbing);
+                else
+                    StartClimbing();
+            }
+            else
+            {
+                failAction?.Invoke();
+            }
+        }
+
         void Levitate()
         {
-            Pause();
-            Climb(() =>
+            Levitate(() =>
             {
-                ConditionEvent climbEvent = null;
-                bool HasClimbEvent(uint x, uint y)
+                ShowMessagePopup(DataNameProvider.YouLevitate, () =>
                 {
-                    var mapEventId = Map.Blocks[x, y].MapEventId;
-
-                    if (mapEventId == 0)
-                        return false;
-
-                    var @event = Map.EventList[(int)mapEventId - 1];
-
-                    if (!(@event is ConditionEvent conditionEvent))
-                        return false;
-
-                    climbEvent = conditionEvent;
-
-                    return conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.Levitating;
-                }
-                if (!HasClimbEvent((uint)player.Position.X, (uint)player.Position.Y))
-                {
-                    // Also try forward position
-                    camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
-                    var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
-
-                    if (position == player.Position ||
-                        position.X < 0 || position.X >= Map.Width ||
-                        position.Y < 0 || position.Y >= Map.Height ||
-                        !HasClimbEvent((uint)position.X, (uint)position.Y))
-                    {
-                        ShowMessagePopup(DataNameProvider.YouLevitate, () =>
-                        {
-                            MoveVertically(false, true, Resume);
-                        });
-                        return;
-                    }
-                }
-                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true);
+                    MoveVertically(false, true, Resume);
+                });
             });
         }
 
@@ -6596,45 +6636,7 @@ namespace Ambermoon
                     }
                     else
                     {
-                        ConditionEvent climbEvent = null;
-                        bool HasClimbEvent(uint x, uint y)
-                        {
-                            var mapEventId = Map.Blocks[x, y].MapEventId;
-
-                            if (mapEventId == 0)
-                                return false;
-
-                            var @event = Map.EventList[(int)mapEventId - 1];
-
-                            if (!(@event is ConditionEvent conditionEvent))
-                                return false;
-
-                            climbEvent = conditionEvent;
-
-                            return conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.Levitating;
-                        }
-                        if (!HasClimbEvent((uint)player.Position.X, (uint)player.Position.Y))
-                        {
-                            // Also try forward position
-                            camera3D.GetForwardPosition(Global.DistancePerBlock, out float x, out float z, false, false);
-                            var position = Geometry.Geometry.CameraToBlockPosition(Map, x, z);
-
-                            if (position == player.Position ||
-                                position.X < 0 || position.X >= Map.Width ||
-                                position.Y < 0 || position.Y >= Map.Height ||
-                                !HasClimbEvent((uint)position.X, (uint)position.Y))
-                            {
-                                ShowMessagePopup(DataNameProvider.CannotClimbHere);
-                                return;
-                            }
-                        }
-                        // If we are here, we can climb!
-                        CloseWindow(() =>
-                        {
-                            Pause();
-                            Climb(() =>
-                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true));
-                        });
+                        Levitate(() => ShowMessagePopup(DataNameProvider.CannotClimbHere), false);
                     }
                     break;
                 }

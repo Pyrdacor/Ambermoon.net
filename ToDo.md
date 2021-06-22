@@ -20,7 +20,6 @@
 
 - Should piles block monsters? Test in grandfather's cellar.
 - 3D monster get easily stuck on wall edges. :(
-- When climbing up/down the player appears to far away from the hole (maybe move him nearer beforehand).
 
 
 ## 2D maps
