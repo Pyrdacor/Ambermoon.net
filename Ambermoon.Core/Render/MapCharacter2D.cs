@@ -15,6 +15,7 @@ namespace Ambermoon.Render
         readonly uint characterIndex;
         readonly Map.CharacterReference characterReference;
         uint lastTimeSlot = 0;
+        uint? disallowInstantMovementUntilTimeSlot = null;
         DateTime lastInteractionTime = DateTime.MinValue;
         // This is used to avoid multiple monster encounters in the same update frame (e.g. 2 monsters move onto the player at the same time).
         static bool interacting = false;
@@ -145,7 +146,7 @@ namespace Ambermoon.Render
 
             void MoveRandom()
             {
-                while (true)
+                for (int i = 0; i < 10; ++i) // limit to 10 tries to avoid infinite loops
                 {
                     newPosition = new Position(Position.X + game.RandomInt(-1, 1), Position.Y + game.RandomInt(-1, 1));
 
@@ -169,8 +170,11 @@ namespace Ambermoon.Render
                     SeesPlayer = true;
                     CheckedIfSeesPlayer = true;
 
-                    if (allowInstantMovement || lastTimeSlot != gameTime.TimeSlot)
+                    if (lastTimeSlot != gameTime.TimeSlot ||
+                        (allowInstantMovement && (disallowInstantMovementUntilTimeSlot == null
+                            || disallowInstantMovementUntilTimeSlot == gameTime.TimeSlot)))
                     {
+                        disallowInstantMovementUntilTimeSlot = null;
                         var diff = game.RenderPlayer.Position - newPosition;
                         int dx = Math.Sign(diff.X);
                         int dy = Math.Sign(diff.Y);
@@ -351,7 +355,9 @@ namespace Ambermoon.Render
                                     game.CurrentSavegame.SetCharacterBit(map.Index, characterIndex, true);
                                 }
                                 else
-                                    lastTimeSlot = game.GameTime.TimeSlot;
+                                {
+                                    Map.StopMonstersForOneTimeSlot();
+                                }
                             }, characterReference.CombatBackgroundIndex);
                         }
 
@@ -375,7 +381,7 @@ namespace Ambermoon.Render
                                     // successfully fled
                                     lastInteractionTime = DateTime.Now;
                                     interacting = false;
-                                    lastTimeSlot = game.GameTime.TimeSlot;
+                                    Map.StopMonstersForOneTimeSlot();
                                 }
                             }
                         }, 2, 0, TextAlign.Left, false);
@@ -388,6 +394,13 @@ namespace Ambermoon.Render
             }
 
             return true;
+        }
+
+        public void StopMonsterForOneTimeSlot()
+        {
+            lastInteractionTime = DateTime.Now;
+            lastTimeSlot = game.GameTime.TimeSlot;
+            disallowInstantMovementUntilTimeSlot = (lastTimeSlot + 1) % 288;
         }
 
         void ShowPopup(string text)

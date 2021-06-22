@@ -7796,6 +7796,7 @@ namespace Ambermoon
         internal void SetBattleMessageWithClick(string message, TextColor textColor = TextColor.BattlePlayer,
             Action followAction = null, TimeSpan? delay = null)
         {
+            layout.HideTooltip();
             layout.SetBattleMessage(message, textColor);
 
             if (delay == null)
@@ -8035,6 +8036,13 @@ namespace Ambermoon
                     if (!CheckAbilityToAttack(out bool ranged))
                         return;
 
+                    if (!ranged)
+                    {
+                        int position = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
+                        if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
+                            return;
+                    }
+
                     if (currentBattle.GetCharacterAt(column + row * 6)?.Type == CharacterType.Monster)
                     {
                         SetPlayerBattleAction(Battle.BattleActionType.Attack,
@@ -8084,7 +8092,7 @@ namespace Ambermoon
                 return false;
             }
 
-            if (currentPickingActionMember.BaseAttack <= 0)
+            if (currentPickingActionMember.BaseAttack <= 0 || !currentPickingActionMember.Ailments.CanAttack())
             {
                 CancelSpecificPlayerAction();
                 SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, TextColor.BrightGray);
@@ -12395,6 +12403,8 @@ namespace Ambermoon
             if (CurrentWindow.Window == Window.Conversation && !TestConversationLanguage(CurrentWindow))
                 return;
             if (LastWindow.Window == Window.Conversation && !TestConversationLanguage(LastWindow))
+                return;
+            if (BattleActive && !BattleRoundActive && currentPlayerBattleAction != PlayerBattleAction.PickPlayerAction)
                 return;
 
             if (partyMember != null && (partyMember.Ailments.CanSelect() || currentWindow.Window == Window.Healer))

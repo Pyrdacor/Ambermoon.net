@@ -729,5 +729,11 @@ namespace Ambermoon.Render
                 : tileset.Tiles[tile.BackTileIndex - 1];
             return tilesetTile.CombatBackgroundIndex;
         }
+
+        public void StopMonstersForOneTimeSlot()
+        {
+            foreach (var monster in mapCharacters.Where(c => c.Value?.Active == true && c.Value?.IsMonster == true))
+                monster.Value.StopMonsterForOneTimeSlot();
+        }
     }
 }
