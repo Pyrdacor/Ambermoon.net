@@ -347,7 +347,7 @@ namespace Ambermoon
                 UntrapMouse();
 
                 if (!inputEnable)
-                    ResetMoveKeys();
+                    ResetMoveKeys(true);
             }
         }
         internal TravelType TravelType
@@ -377,6 +377,7 @@ namespace Ambermoon
         readonly Position trappedMousePositionOffset = new Position();
         bool trapped => trapMouseArea != null;
         public event Action<bool, Position> MouseTrappedChanged;
+        readonly Func<List<Key>> pressedKeyProvider;
         Func<Position, MouseButtons, bool> battlePositionClickHandler = null;
         Action<Position> battlePositionDragHandler = null;
         bool battlePositionDragging = false;
@@ -453,7 +454,8 @@ namespace Ambermoon
             IItemManager itemManager, ICharacterManager characterManager, ISavegameManager savegameManager,
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
             Places places, Cursor cursor, ILightEffectProvider lightEffectProvider, IAudioOutput audioOutput, ISongManager songManager,
-            FullscreenChangeHandler fullscreenChangeHandler, ResolutionChangeHandler resolutionChangeHandler)
+            FullscreenChangeHandler fullscreenChangeHandler, ResolutionChangeHandler resolutionChangeHandler,
+            Func<List<Key>> pressedKeyProvider)
         {
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
@@ -464,6 +466,7 @@ namespace Ambermoon
             Configuration = configuration;
             GameLanguage = gameLanguage;
             this.cursor = cursor;
+            this.pressedKeyProvider = pressedKeyProvider;
             movement = new Movement(configuration.LegacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
@@ -861,16 +864,20 @@ namespace Ambermoon
             trappedMousePositionOffset.Y = 0;
         }
 
-        void ResetMoveKeys()
+        void ResetMoveKeys(bool forceDisable = false)
         {
-            keys[(int)Key.Up] = false;
-            keys[(int)Key.Down] = false;
-            keys[(int)Key.Left] = false;
-            keys[(int)Key.Right] = false;
-            keys[(int)Key.W] = false;
-            keys[(int)Key.A] = false;
-            keys[(int)Key.S] = false;
-            keys[(int)Key.D] = false;
+            var pressedKeys = pressedKeyProvider?.Invoke();
+
+            void ResetKey(Key key) => keys[(int)key] = !forceDisable && pressedKeys?.Contains(key) == true;
+
+            ResetKey(Key.Up);
+            ResetKey(Key.Down);
+            ResetKey(Key.Left);
+            ResetKey(Key.Right);
+            ResetKey(Key.W);
+            ResetKey(Key.A);
+            ResetKey(Key.S);
+            ResetKey(Key.D);
             lastMoveTicksReset = CurrentTicks;
         }
 
@@ -4101,6 +4108,8 @@ namespace Ambermoon
 
             PlayTimedSequence(fullSteps + 1, Step, 65, () =>
             {
+                ResetMoveKeys();
+
                 if (nextEvent != null)
                 {
                     EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
@@ -4183,6 +4192,9 @@ namespace Ambermoon
                 UpdateMapName();
                 UpdateLight(true);
             }
+
+            if (!mapChange) // Otherwise the map change handler takes care of this
+                ResetMoveKeys();
 
             return true;
         }

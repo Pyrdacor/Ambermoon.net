@@ -31,6 +31,7 @@ namespace Ambermoon
         Configuration configuration;
         RenderView renderView;
         IWindow window;
+        IKeyboard keyboard = null;
         IMouse mouse = null;
         ICursor cursor = null;
         MainMenu mainMenu = null;
@@ -127,7 +128,7 @@ namespace Ambermoon
 
         void SetupInput(IInputContext inputContext)
         {
-            var keyboard = inputContext.Keyboards.FirstOrDefault(k => k.IsConnected);
+            keyboard = inputContext.Keyboards.FirstOrDefault(k => k.IsConnected);
 
             if (keyboard != null)
             {
@@ -162,6 +163,9 @@ namespace Ambermoon
 
             return modifiers;
         }
+
+        List<Key> QueryPressedKeys()
+            => keyboard?.SupportedKeys.Where(key => keyboard.IsKeyPressed(key)).Select(ConvertKey).ToList();
 
         static Key ConvertKey(Silk.NET.Input.Key key) => key switch
         {
@@ -409,7 +413,8 @@ namespace Ambermoon
                                 {
                                     var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                         characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                        cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution);
+                                        cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution,
+                                        QueryPressedKeys);
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
