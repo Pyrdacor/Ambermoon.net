@@ -14,7 +14,6 @@
     <RepositoryType>github</RepositoryType>
     <PackageTags>Ambermoon</PackageTags>
     <Description>Rework of the Amiga game Ambermoon</Description>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 

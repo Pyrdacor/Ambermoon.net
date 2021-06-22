@@ -12,8 +12,6 @@ using Silk.NET.Input;
 using Silk.NET.Windowing;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -663,42 +661,9 @@ namespace Ambermoon
             }
         }
 
-        unsafe static Silk.NET.Core.RawImage LoadBitmap(Bitmap bitmap)
-        {
-            var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-
-            try
-            {
-                int numPixels = bitmap.Width * bitmap.Height;
-                var buffer = new byte[numPixels * 4];
-                Marshal.Copy(data.Scan0, buffer, 0, buffer.Length);
-                fixed (byte* bptr = &buffer[0])
-                {
-                    uint* ptr = (uint*)bptr;
-                    for (int i = 0; i < numPixels; ++i)
-                    {
-                        // BGRA -> RGBA
-                        // Actually in little endian the result format is 0xAABBGGRR (RGBA).
-                        // The source format on the other hand is 0xAARRGGBB (BGRA).
-                        uint blue = (*ptr & 0x000000ff) << 16;
-                        uint red = (*ptr & 0x00ff0000) >> 16;
-                        *ptr = (*ptr & 0xff00ff00) | red | blue;
-                        ++ptr;
-                    }
-                }
-                return new Silk.NET.Core.RawImage(bitmap.Width, bitmap.Height, new Memory<byte>(buffer));
-            }
-            finally
-            {
-                bitmap.UnlockBits(data);
-                bitmap.Dispose();
-            }
-        }
-
         void Window_Load()
         {
-            var windowIcon = LoadBitmap(Resources.WindowIcon);
+            var windowIcon = new Silk.NET.Core.RawImage(16, 16, new Memory<byte>(Resources.WindowIcon));
             window.SetWindowIcon(ref windowIcon);
 
             window.MakeCurrent();

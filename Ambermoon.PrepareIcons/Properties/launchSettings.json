@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Ambermoon.PrepareIcons": {
+      "commandName": "Project",
+      "commandLineArgs": "\"$(SolutionDir)Ambermoon.net\\Resources\\windowIcon.png\" \"$(SolutionDir)Ambermoon.net\\Resources\\windowIcon.raw\""
+    }
+  }
+}
