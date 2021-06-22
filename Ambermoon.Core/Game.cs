@@ -10255,14 +10255,9 @@ namespace Ambermoon
                                     if (!Map.IsWorldMap)
                                         return DataNameProvider.WrongArea;
                                 }
-                                else if (spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.Maps3DOnly))
-                                {
-                                    if (Map.Type != MapType.Map3D)
-                                        return DataNameProvider.WrongArea;
-                                }
                                 else if (spellInfo.ApplicationArea.HasFlag(SpellApplicationArea.DungeonOnly))
                                 {
-                                    if (!Map.Flags.HasFlag(MapFlags.Dungeon))
+                                    if (Map.Type != MapType.Map3D || Map.Flags.HasFlag(MapFlags.Outdoor))
                                         return DataNameProvider.WrongArea;
                                 }
                                 else

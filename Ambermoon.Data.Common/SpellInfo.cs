@@ -29,8 +29,7 @@ namespace Ambermoon.Data
         Camp = 0x02,
         Battle = 0x04,
         WorldMapOnly = 0x08,
-        DungeonOnly = 0x10,
-        Maps3DOnly = 0x20,
+        DungeonOnly = 0x10, // this also includes indoor 3D maps
         All = AnyMap | Camp | Battle,
         BattleOnly = Battle,
         NoBattle = AnyMap | Camp,
@@ -243,7 +242,7 @@ namespace Ambermoon.Data
             { Spell.AddCharisma, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.AddLuck, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.AddAntiMagic, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
-            { Spell.Rope, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.Maps3DOnly, Worlds = WorldFlag.All } },
+            { Spell.Rope, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.DungeonOnly, Worlds = WorldFlag.All } },
             { Spell.Drugs, new SpellInfo { SP = 0, SLP = 0, Target = SpellTarget.SingleFriend, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } }
         };
 

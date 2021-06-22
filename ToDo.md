@@ -19,7 +19,6 @@
 ## 3D maps
 
 - Should piles block monsters? Test in grandfather's cellar.
-- Monster should be able to run through destroyed cobwebs etc.
 - 3D monster get easily stuck on wall edges. :(
 - After climbing to new map (map 355 ~17,4) with a rope, the monster jumps to a new location.
 - When climbing up/down the player appears to far away from the hole (maybe move him nearer beforehand).
