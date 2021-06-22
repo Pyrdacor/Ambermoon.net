@@ -112,6 +112,7 @@ namespace Ambermoon.UI
                         else
                         {
                             amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
+                            amountDisplay.X = Item.Amount < 10 ? sprite.X + 5 : sprite.X + 2;
                             amountDisplay.Visible = ShowItemAmount;
                         }
                     }
@@ -120,7 +121,10 @@ namespace Ambermoon.UI
             else if (amountDisplay != null)
             {
                 if (Item.Stacked)
+                {
                     amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
+                    amountDisplay.X = Item.Amount < 10 ? sprite.X + 5 : sprite.X + 2;
+                }
                 amountDisplay.Visible = Item.Stacked && ShowItemAmount;
             }
 

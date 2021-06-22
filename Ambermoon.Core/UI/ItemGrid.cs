@@ -402,6 +402,7 @@ namespace Ambermoon.UI
                 return item.Item.Item.Amount;
 
             var itemSlot = items[slot];
+            var itemInfo = itemSlot == null ? null : itemManager.GetItem(itemSlot.Item.ItemIndex);
 
             if (itemSlot == null)
             {
@@ -413,17 +414,23 @@ namespace Ambermoon.UI
                 ItemDropped?.Invoke(slot, item.Item.Item);
                 return 0;
             }
-            else if (itemSlot.Item.Empty || itemSlot.Item.ItemIndex == item.Item.Item.ItemIndex)
+            else if (itemSlot.Item.Empty || (itemSlot.Item.ItemIndex == item.Item.Item.ItemIndex &&
+                itemInfo.Flags.HasFlag(ItemFlags.Stackable)))
             {
+                int amountToDrop = itemSlot.Item.Amount;
                 int remaining = itemSlot.Item.Add(item.Item.Item);
-                itemSlot.Update(false);
 
-                if (remaining == 0)
-                    item.Item.Destroy();
-                else
-                    item.Item.Update(false);
+                if (remaining < amountToDrop)
+                {
+                    itemSlot.Update(false);
 
-                ItemDropped?.Invoke(slot, itemSlot.Item);
+                    if (remaining == 0)
+                        item.Item.Destroy();
+                    else
+                        item.Item.Update(false);
+
+                    ItemDropped?.Invoke(slot, itemSlot.Item);
+                }
 
                 return remaining;
             }
