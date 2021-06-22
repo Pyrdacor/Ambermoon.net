@@ -1653,9 +1653,10 @@ namespace Ambermoon.UI
             }
 
             var user = game.CurrentInventory;
-            var item = itemManager.GetItem(itemSlot.ItemIndex);
+            uint itemIndex = itemSlot.ItemIndex;
+            var item = itemManager.GetItem(itemIndex);            
 
-            if (!game.BattleActive && game.TestUseItemMapEvent(itemSlot.ItemIndex))
+            if (!game.BattleActive && game.TestUseItemMapEvent(itemIndex))
             {
                 void Use()
                 {
@@ -1666,7 +1667,7 @@ namespace Ambermoon.UI
                             if (wasInputEnabled)
                                 game.InputEnable = true;
                             game.UpdateCursor();
-                            game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemSlot.ItemIndex));
+                            game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemIndex));
                         });
                     });
                 }

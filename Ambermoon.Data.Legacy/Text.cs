@@ -294,7 +294,18 @@ namespace Ambermoon.Data.Legacy
                     glyphIndices.Add((byte)(SpecialGlyph.FirstColor + colorIndex));
                 }
                 else
-                    throw new AmbermoonException(ExceptionScope.Data, $"Unknown tag: ~{name}~");
+                {
+                    // Sometimes rune text is encoded as ~"text"~
+                    if (name.Length > 2 && name[0] == '"' && name[^1] == '"')
+                    {
+                        name.Substring(1, name.Length - 2).ToList().ForEach(c =>
+                            glyphIndices.Add(CharToGlyph(c, true, fallbackChar)));
+                    }
+                    else
+                    {
+                        throw new AmbermoonException(ExceptionScope.Data, $"Unknown tag: ~{name}~");
+                    }
+                }
             }
 
             for (int i = 0; i < text.Length; ++i)
