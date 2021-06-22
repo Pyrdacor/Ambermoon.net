@@ -574,7 +574,6 @@ namespace Ambermoon.Render
         {
             ILayerSprite leftSprite;
             ILayerSprite rightSprite;
-            int scrollX = 0;
 
             public SkySprite(int y, Func<int, int, ILayerSprite> creator)
             {
@@ -603,7 +602,6 @@ namespace Ambermoon.Render
                 while (x > 0)
                     x -= Global.Map3DViewWidth;
 
-                scrollX = x;
                 leftSprite.X = Global.Map3DViewX + x;
                 rightSprite.X = leftSprite.X + leftSprite.Width;
             }
@@ -1057,7 +1055,9 @@ namespace Ambermoon.Render
                     extrude);
             mapObject.Layer = layer;
             mapObject.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-            UpdateCharacterSurfaceCoordinates(characterReference.Positions[0], mapObject, objectPosition);
+            var initialPosition = new Position(characterReference.Positions[0]);
+            initialPosition.Offset(-1, -1);
+            UpdateCharacterSurfaceCoordinates(initialPosition, mapObject, objectPosition);
             mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
             var mapCharacter = new MapCharacter(game, this, mapObject, characterIndex, characterReference,
                 objectPosition, objectInfo.TextureIndex, parent, objectInfo.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation),
