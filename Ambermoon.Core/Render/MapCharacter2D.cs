@@ -139,8 +139,8 @@ namespace Ambermoon.Render
                 if (collisionPosition.Y < 0 || collisionPosition.Y >= map.Height)
                     return false;
 
-                // Note: Monsters and NPCs use TravelType.Horse for collision detection.
-                return Map[collisionPosition].AllowMovement(tileset, TravelType.Horse, false);
+                // Note: Monsters and NPCs in 2D also use TravelType.Walk for collision detection.
+                return Map[collisionPosition].AllowMovement(tileset, TravelType.Walk, false);
             }
 
             void MoveRandom()
