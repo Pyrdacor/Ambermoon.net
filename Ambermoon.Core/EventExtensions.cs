@@ -40,7 +40,10 @@ namespace Ambermoon
                 {
                     if (trigger != EventTrigger.Move &&
                         trigger != EventTrigger.Always)
+                    {
+                        aborted = true;
                         return null;
+                    }
 
                     if (!(@event is TeleportEvent teleportEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid teleport event.");
@@ -289,6 +292,13 @@ namespace Ambermoon
                 }
                 case EventType.StartBattle:
                 {
+                    if (trigger != EventTrigger.Move &&
+                        trigger != EventTrigger.Always)
+                    {
+                        aborted = true;
+                        return null;
+                    }
+
                     if (!(@event is StartBattleEvent battleEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid battle event.");
 
@@ -297,6 +307,13 @@ namespace Ambermoon
                 }
                 case EventType.EnterPlace:
                 {
+                    if (trigger != EventTrigger.Move &&
+                        trigger != EventTrigger.Always)
+                    {
+                        aborted = true;
+                        return null;
+                    }
+
                     if (!(@event is EnterPlaceEvent enterPlaceEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid place event.");
 
