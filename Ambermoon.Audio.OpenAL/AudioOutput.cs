@@ -69,7 +69,10 @@ namespace Ambermoon.Audio.OpenAL
                     return;
 
                 if (!value && Available && Streaming)
+                {
                     Stop();
+                    Reset();
+                }
 
                 enabled = value;                
             }

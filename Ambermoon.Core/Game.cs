@@ -1038,6 +1038,7 @@ namespace Ambermoon
             allInputDisabled = true;
             ingame = false;
             Util.SafeCall(() => AudioOutput?.Stop());
+            Util.SafeCall(() => AudioOutput?.Reset());
             Util.SafeCall(Cleanup);
             Util.SafeCall(() => layout.Destroy());
             Util.SafeCall(() => CursorType = CursorType.None);
