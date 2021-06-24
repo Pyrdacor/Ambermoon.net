@@ -167,7 +167,7 @@ namespace Ambermoon.Data
             { Spell.Knowledge, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
             { Spell.Clairvoyance, new SpellInfo { SP = 30, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
             { Spell.SeeTheTruth, new SpellInfo { SP = 60, SLP = 30, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
-            { Spell.MapView, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
+            { Spell.MapView, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
             { Spell.MagicalCompass, new SpellInfo { SP = 5, SLP = 2, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
             { Spell.FindTraps, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
             { Spell.FindMonsters, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap} },
