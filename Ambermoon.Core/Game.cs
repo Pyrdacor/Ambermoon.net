@@ -381,6 +381,7 @@ namespace Ambermoon
         Func<Position, MouseButtons, bool> battlePositionClickHandler = null;
         Action<Position> battlePositionDragHandler = null;
         bool battlePositionDragging = false;
+        static Dictionary<uint, Chest> initialChests = null;
         internal Savegame CurrentSavegame { get; private set; }
         event Action ActivePlayerChanged;
 
@@ -2634,6 +2635,23 @@ namespace Ambermoon
             .Select(i => GetPartyMember(i)).Where(p => p != null);
         public PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
         internal Chest GetChest(uint index) => CurrentSavegame.Chests[index];
+        internal Chest GetInitialChest(uint index)
+        {
+            if (initialChests == null)
+            {
+                try
+                {
+                    var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+                    initialChests = initialSavegame.Chests;
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+
+            return initialChests?[index];
+        }
         internal Merchant GetMerchant(uint index) => CurrentSavegame.Merchants[index];
 
         /// <summary>
@@ -4883,7 +4901,22 @@ namespace Ambermoon
             var chest = GetChest(1 + chestEvent.ChestIndex);
 
             if (chestEvent.RemoveWhenEmpty && chest.Empty)
-                return;
+            {
+                // This is used by the flowers on Kire's moon.
+                // Chest events reuse the same chest and it is
+                // refilled each time another flower is looted.
+                var initialChest = GetInitialChest(1 + chestEvent.ChestIndex);
+                if (initialChest == null)
+                    return;
+                chest.Gold = initialChest.Gold;
+                chest.Food = initialChest.Food;
+
+                for (int y = 0; y < Chest.SlotRows; ++y)
+                {
+                    for (int x = 0; x < Chest.SlotsPerRow; ++x)
+                        chest.Slots[x, y].Replace(initialChest.Slots[x, y]);
+                }
+            }
 
             void OpenChest()
             {
