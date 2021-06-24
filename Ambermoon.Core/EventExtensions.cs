@@ -546,6 +546,39 @@ namespace Ambermoon
                             break;
                     }
 
+                    // For some follow-up events we won't proceed by using Eye, Hand or Mouth.
+                    if (conversationPartner == null && conditionEvent.Next != null &&
+                        trigger != EventTrigger.Move && trigger != EventTrigger.Always &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Eye &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.UseItem &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Levitating &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.EnterNumber &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.SayWord &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.LastEventResult)
+                    {
+                        var next = conditionEvent.Next;
+
+                        while (next != null && (next.Type == EventType.Condition ||
+                            next.Type == EventType.Action || next.Type == EventType.Award ||
+                            next.Type == EventType.ChangeMusic || next.Type == EventType.Dice100Roll))
+                            next = next.Next;
+
+                        if (next != null)
+                        {
+                            switch (next.Type)
+                            {
+                                case EventType.Teleport:
+                                case EventType.StartBattle:
+                                case EventType.EnterPlace:
+                                case EventType.Riddlemouth:
+                                    aborted = true;
+                                    return null;
+                            }
+                        }
+                    }
+
                     trigger = EventTrigger.Always; // following events should not dependent on the trigger anymore
 
                     break;
