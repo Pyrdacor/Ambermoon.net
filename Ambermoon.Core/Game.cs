@@ -4733,11 +4733,15 @@ namespace Ambermoon
         void ChestRemoved()
         {
             var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
+            var position = (Position)currentWindow.WindowParameters[4];
 
             CloseWindow(() =>
             {
                 if (chestEvent.Next != null)
-                    Map.TriggerEventChain(this, EventTrigger.Always, 0, 0, CurrentTicks, chestEvent.Next, true);
+                {
+                    Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
+                        (uint)(position?.Y ?? 0), CurrentTicks, chestEvent.Next, true);
+                }
             });
         }
 
@@ -4874,7 +4878,7 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map)
+        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map, Position position)
         {
             var chest = GetChest(1 + chestEvent.ChestIndex);
 
@@ -4887,7 +4891,7 @@ namespace Ambermoon
                     map.Texts[(int)chestEvent.TextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map);
+                SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map, position);
 
                 if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.ChestIndex))
                 {
@@ -4895,7 +4899,7 @@ namespace Ambermoon
                     {
                         CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
                         currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
-                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map));
+                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position));
                     }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
@@ -12672,8 +12676,9 @@ namespace Ambermoon
                     bool trapFound = (bool)currentWindow.WindowParameters[1];
                     bool trapDisarmed = (bool)currentWindow.WindowParameters[2];
                     var map = (Map)currentWindow.WindowParameters[3];
+                    var position = (Position)currentWindow.WindowParameters[4];
                     currentWindow = DefaultWindow;
-                    ShowChest(chestEvent, trapFound, trapDisarmed, map);
+                    ShowChest(chestEvent, trapFound, trapDisarmed, map, position);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

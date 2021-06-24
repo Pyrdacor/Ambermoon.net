@@ -14,6 +14,8 @@
 - Initial scale of dissolve victim seems to be too small. Don't know why or if this is caused by anchor.
 - If background has darker color (night battles) the monsters should be darkened too.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
+- If a near monster in the middle casts magic projectile (maybe similar things too) it isn't shown (tested with energy balls)
+- Energyballs did not disappear after won battle (ap 361)
 
 
 ## 3D maps
@@ -48,3 +50,4 @@
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Maybe add emergency savegame that is stored when game crashes.
+- Check if NPCs have a time range where they are visible (Aman for example)

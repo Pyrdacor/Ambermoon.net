@@ -79,7 +79,7 @@ namespace Ambermoon
                         return null;
                     }
 
-                    game.ShowChest(chestEvent, false, false, map);
+                    game.ShowChest(chestEvent, false, false, map, new Position((int)x, (int)y));
                     return null;
                 }
                 case EventType.PopupText:
