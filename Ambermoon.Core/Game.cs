@@ -7384,7 +7384,7 @@ namespace Ambermoon
             }
         }
 
-        void ShowBattleWindow(Event nextEvent, bool surpriseAttack, uint? combatBackgroundIndex = null)
+        void ShowBattleWindow(Event nextEvent, bool failedFlight, uint? combatBackgroundIndex = null)
         {
             Fade(() =>
             {
@@ -7539,7 +7539,7 @@ namespace Ambermoon
                 };
                 BattlePlayerSwitched();
 
-                if (surpriseAttack)
+                if (failedFlight)
                 {
                     SetBattleMessageWithClick(DataNameProvider.AttackEscapeFailedMessage, TextColor.BrightGray, () => StartBattleRound(true));
                 }
@@ -10755,7 +10755,7 @@ namespace Ambermoon
             {
                 MonsterGroupIndex = battleEvent.MonsterGroupIndex
             };
-            ShowBattleWindow(nextEvent, true, combatBackgroundIndex);
+            ShowBattleWindow(nextEvent, false, combatBackgroundIndex);
         }
 
         internal uint GetCombatBackgroundIndex(Map map, uint x, uint y) => is3D ? renderMap3D.CombatBackgroundIndex : renderMap2D.GetCombatBackgroundIndex(map, x, y);
