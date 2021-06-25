@@ -8,10 +8,11 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 Version | Normal | Standalone
 --- | --- | --- 
-**0.9.1 beta** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Windows-Standalone.zip)
-**0.9.1 beta** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Linux-Standalone.tar.gz)
-**0.9.1 beta** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Windows32Bit-Standalone.zip)
-**0.9.1 beta** (Mac 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Mac.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.1beta/Ambermoon.net-Mac-Standalone.zip)
+**0.9.2 beta** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Windows-Standalone.zip)
+**0.9.2 beta** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Linux-Standalone.tar.gz)
+**0.9.2 beta** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Windows32Bit-Standalone.zip)
+**0.9.2 beta** (Mac 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Mac.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Mac-Standalone.zip)
+**0.9.2 beta** (Mac 64bit bundled) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Bundle-Mac.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.2beta/Ambermoon.net-Mac-Bundle-Standalone.zip)
 
 The standalone versions should work without .NET installed but are larger in size.
 
