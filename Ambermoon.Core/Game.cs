@@ -4566,6 +4566,10 @@ namespace Ambermoon
                         }
                     }
                 }
+                else
+                {
+                    layout.TransportEnabled = false;
+                }
             }
 
             if (mapChange)
@@ -8465,7 +8469,7 @@ namespace Ambermoon
 
                 lightIntensity = Math.Min(255, lightIntensity + CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Light) * 32);
 
-                if (!is3D && lastIntensity != lightIntensity)
+                if (!is3D && (lastIntensity != lightIntensity || mapChange))
                 {
                     var lastRadius = (int)(lastIntensity >> 1);
                     var newRadius = (int)(lightIntensity >> 1);
