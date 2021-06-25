@@ -7634,7 +7634,7 @@ namespace Ambermoon
 
             static void FixValue(Game game, CharacterValue characterValue)
             {
-                if (characterValue.CurrentValue < characterValue.MaxValue && characterValue.MaxValue % 99 == 0)
+                if (characterValue.CurrentValue != 0)
                     characterValue.MaxValue = characterValue.CurrentValue;
                 AdjustMonsterValue(game, characterValue);
             }
