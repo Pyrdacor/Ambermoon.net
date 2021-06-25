@@ -18,8 +18,14 @@ namespace Ambermoon
 
     internal static class MapExtensions
     {
-        static uint? LastMapEventIndexMap = null; // TODO: do it better
-        static uint? LastMapEventIndex = null; // TODO: do it better
+        static uint? LastMapEventIndexMap = null;
+        static uint? LastMapEventIndex = null;
+
+        public static void Reset()
+        {
+            LastMapEventIndexMap = null;
+            LastMapEventIndex = null;
+        }
 
         public static uint PositionToTileIndex(this Map map, uint x, uint y) => x + y * (uint)map.Width;
 

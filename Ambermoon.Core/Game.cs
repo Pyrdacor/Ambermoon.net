@@ -1156,6 +1156,7 @@ namespace Ambermoon
         public void Start(Savegame savegame)
         {
             Cleanup();
+            MapExtensions.Reset();
             GameOverButtonsVisible = false;
             allInputDisabled = true;
             layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Render.Color.Black, FadeEffectType.FadeOut, FadeTime / 2);
@@ -1766,7 +1767,7 @@ namespace Ambermoon
                         if (eventTriggered)
                             return false;
 
-                        return player2D.Move(x, 0, CurrentTicks, TravelType, out eventTriggered, true, prevDirection);
+                        return player2D.Move(x, 0, CurrentTicks, TravelType, out _, true, prevDirection);
                     }
                 }
 

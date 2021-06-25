@@ -732,16 +732,19 @@ namespace Ambermoon
                     gameCreator = null;
 
                     // Show cheat info
-                    Console.WriteLine("***** Ambermoon Cheat Console *****");
-                    Console.WriteLine("Type 'help' for more information.");
-                    Console.WriteLine();
+                    if (!Console.IsInputRedirected)
+                    {
+                        Console.WriteLine("***** Ambermoon Cheat Console *****");
+                        Console.WriteLine("Type 'help' for more information.");
+                        Console.WriteLine();
+                    }
                 }
             }
             else if (Game != null)
             {
                 Game.Update(delta);
 
-                if (Console.KeyAvailable)
+                if (!Console.IsInputRedirected && Console.KeyAvailable)
                     Cheats.ProcessInput(Console.ReadKey(true), Game);
             }
         }

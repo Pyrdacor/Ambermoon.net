@@ -18,6 +18,12 @@
 - Energyballs did not disappear after won battle (ap 361)
 
 
+## 2D maps
+
+- Scroll offset of the map is sometimes wrong. Especially after teleporting (with and without cheat).
+- Entering the world map does not update FOW (only after 5 minutes pass).
+
+
 ## 3D maps
 
 - Should piles block monsters? Test in grandfather's cellar.
