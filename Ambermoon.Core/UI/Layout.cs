@@ -1284,7 +1284,8 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
                         buttonGrid.SetButton(4, ButtonType.DistributeGold, chest.Gold == 0, () => DistributeGold(chest), false);
                         buttonGrid.SetButton(5, ButtonType.DistributeFood, chest.Food == 0, () => DistributeFood(chest), false);
-                        buttonGrid.SetButton(6, ButtonType.ViewItem, true, null, false); // TODO: view item
+                        buttonGrid.SetButton(6, ButtonType.ViewItem, false, () => PickChestItemForAction(ViewItem,
+                            game.DataNameProvider.WhichItemToExamineMessage), false);
                         buttonGrid.SetButton(7, ButtonType.GiveGold, chest.Gold == 0, () => GiveGold(chest), false);
                         buttonGrid.SetButton(8, ButtonType.GiveFood, chest.Food == 0, () => GiveFood(chest), false);
                     }
@@ -2364,6 +2365,35 @@ namespace Ambermoon.UI
                     inventoryMessage.SetText(game.ProcessText(message));
                 }
             }
+        }
+
+        void PickChestItemForAction(Action<ItemGrid, int, ItemSlot> itemAction, string message)
+        {
+            ShowChestMessage(message);
+            var itemArea = new Rect(16, 139, 151, 53);
+            game.TrapMouse(itemArea);
+
+            void ItemChosen(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
+            {
+                ShowChestMessage(null);
+                itemGrids[0].DisableDrag = false;
+                itemGrids[0].ItemClicked -= ItemChosen;
+                itemGrids[0].RightClicked -= Aborted;
+                game.UntrapMouse();
+
+                if (itemGrid != null && itemSlot != null)
+                    itemAction?.Invoke(itemGrid, slot, itemSlot);
+            }
+
+            bool Aborted()
+            {
+                ItemChosen(null, 0, null);
+                return true;
+            }
+
+            itemGrids[0].DisableDrag = true;
+            itemGrids[0].ItemClicked += ItemChosen;
+            itemGrids[0].RightClicked += Aborted;
         }
 
         void PickInventoryItemForAction(Action<ItemGrid, int, ItemSlot> itemAction, bool includeEquipment, string message)
