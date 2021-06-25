@@ -10840,9 +10840,9 @@ namespace Ambermoon
         /// </summary>
         internal Song PlayMusic(Song song)
         {
-            if (song == Song.Default)
+            if (song == Song.Default || (int)song == 255)
             {
-                return PlayMusic(Map.MusicIndex == 0 ? Song.PloddingAlong : (Song)Map.MusicIndex);
+                return PlayMusic(Map.MusicIndex == 0 || Map.MusicIndex == 255 ? Song.PloddingAlong : (Song)Map.MusicIndex);
             }
 
             var newSong = songManager.GetSong(song);

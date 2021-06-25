@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Audio;
 using Silk.NET.OpenAL;
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.Audio.OpenAL
 {
@@ -14,7 +15,7 @@ namespace Ambermoon.Audio.OpenAL
         bool disposed = false;
         float volume = 1.0f;
         bool enabled = true;
-        readonly AudioBuffer audioBuffer;
+        readonly Dictionary<byte[], AudioBuffer> audioBuffers = new Dictionary<byte[], AudioBuffer>();
 
         public AudioOutput(int channels = 1, int sampleRate = 44100)
         {
@@ -46,7 +47,6 @@ namespace Ambermoon.Audio.OpenAL
                     return;
                 }
                 source = al.GenSource();
-                audioBuffer = new AudioBuffer(al, channels, sampleRate);
                 al.SetSourceProperty(source, SourceBoolean.Looping, true);
                 al.SetSourceProperty(source, SourceFloat.Gain, 1.0f);
             }
@@ -111,7 +111,8 @@ namespace Ambermoon.Audio.OpenAL
             if (Available)
             {
                 al.DeleteSource(source);
-                audioBuffer?.Dispose();
+                foreach (var audioBuffer in audioBuffers)
+                    audioBuffer.Value?.Dispose();
                 alContext.DestroyContext(context);
                 alContext.CloseDevice(device);
                 al.Dispose();
@@ -170,7 +171,10 @@ namespace Ambermoon.Audio.OpenAL
             if (!Available)
                 return;
 
-            audioBuffer.Fill(source, data);
+            if (!audioBuffers.ContainsKey(data))
+                audioBuffers[data] = new AudioBuffer(al, 1, 44100);
+
+            audioBuffers[data]?.Fill(source, data);
         }
 
         /// <summary>
@@ -181,7 +185,7 @@ namespace Ambermoon.Audio.OpenAL
             if (!Available)
                 return;
 
-            audioBuffer.Reset(source);
+            al.SetSourceProperty(source, SourceInteger.Buffer, 0u);
         }
     }
 }
