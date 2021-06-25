@@ -4760,6 +4760,31 @@ namespace Ambermoon
                     Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
                         (uint)(position?.Y ?? 0), CurrentTicks, chestEvent.Next, true);
                 }
+                else
+                {
+                    bool RemoveFromMap(Map map)
+                    {
+                        int index = map.EventList.IndexOf(chestEvent);
+
+                        if (index != -1)
+                        {
+                            CurrentSavegame.ActivateEvent(map.Index, (uint)index, false);
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    if (!Map.IsWorldMap)
+                        RemoveFromMap(Map);
+                    else
+                    {
+                        if (!RemoveFromMap(Map) &&
+                            !RemoveFromMap(MapManager.GetMap(Map.RightMapIndex.Value)) &&
+                            !RemoveFromMap(MapManager.GetMap(Map.DownMapIndex.Value)))
+                            RemoveFromMap(MapManager.GetMap(Map.DownRightMapIndex.Value));
+                    }
+                }
             });
         }
 
