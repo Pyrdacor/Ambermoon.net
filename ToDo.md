@@ -21,7 +21,8 @@
 ## 2D maps
 
 - Scroll offset of the map is sometimes wrong. Especially after teleporting (with and without cheat).
-- Entering the world map does not update FOW (only after 5 minutes pass).
+- A horse etc can be drawn in front of tree tops etc.
+- Sometimes the indoor player is in front of arcs he should be covered by (map 290 -> Nalven's magic school).
 
 
 ## 3D maps
