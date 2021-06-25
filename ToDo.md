@@ -26,10 +26,8 @@
 
 ## UI
 
-- Cursor keys should scroll automap. Mouse wheel would be cool to.
 - Scrolling by dragging can't put the scrollbar to the top or bottom. There is a small gap.
 - When repairing item etc the item tooltip should not show up after magic animation.
-- I guess buff duration bars are a bit wrong (ingame no empty bar is shown, while it is in remake).
 - "Do you accept this character?" message is missing in character creator.
 
 

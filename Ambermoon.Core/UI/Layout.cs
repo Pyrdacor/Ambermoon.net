@@ -123,9 +123,13 @@ namespace Ambermoon.UI
         /// Fills the bar dependent on the given value.
         /// </summary>
         /// <param name="percentage">Value in the range 0 to 1 (0 to 100%).</param>
-        public void Fill(float percentage)
+        /// <param name="forceNotEmpty">If true at least 1 pixel remaings.</param>
+        public void Fill(float percentage, bool forceNotEmpty = false)
         {
             int pixels = Util.Round(size * percentage);
+
+            if (forceNotEmpty && pixels == 0)
+                pixels = 1;
 
             if (pixels == 0)
                 area.Visible = false;
@@ -3012,7 +3016,7 @@ namespace Ambermoon.UI
                 }
                 else // update duration display
                 {
-                    activeSpellDurationBars[activeSpellType].Fill(activeSpell.Duration / 200.0f);
+                    activeSpellDurationBars[activeSpellType].Fill(activeSpell.Duration / 200.0f, true);
                 }
             }
         }
