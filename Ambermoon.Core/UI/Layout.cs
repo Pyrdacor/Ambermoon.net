@@ -1233,7 +1233,7 @@ namespace Ambermoon.UI
                 case LayoutType.Inventory:
                     buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false);
                     buttonGrid.SetButton(1, ButtonType.UseItem, false, () => PickInventoryItemForAction(UseItem,
-                        false, game.DataNameProvider.WhichItemToUseMessage), true);
+                        true, game.DataNameProvider.WhichItemToUseMessage), true);
                     buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
                     if (game.OpenStorage?.AllowsItemDrop == true)
                     {
