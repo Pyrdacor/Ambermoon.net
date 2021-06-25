@@ -274,6 +274,29 @@ namespace Ambermoon.UI
                     return true;
             }
 
+            ch = char.ToLower(ch);
+
+            if (ch == 'y' || ch == 'j')
+            {
+                var yesButton = buttons.FirstOrDefault(button => button.ButtonType == Data.Enumerations.ButtonType.Yes);
+
+                if (yesButton != null)
+                {
+                    yesButton.Press(game.CurrentTicks);
+                    return true;
+                }
+            }
+            else if (ch == 'n')
+            {
+                var noButton = buttons.FirstOrDefault(button => button.ButtonType == Data.Enumerations.ButtonType.No);
+
+                if (noButton != null)
+                {
+                    noButton.Press(game.CurrentTicks);
+                    return true;
+                }
+            }
+
             return false;
         }
 

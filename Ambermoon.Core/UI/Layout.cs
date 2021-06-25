@@ -3514,6 +3514,18 @@ namespace Ambermoon.UI
 
         public bool KeyChar(char ch)
         {
+            if (questionYesButton != null && (char.ToLower(ch) == 'y' || char.ToLower(ch) == 'j'))
+            {
+                questionYesButton.Press(game.CurrentTicks);
+                return true;
+            }
+
+            if (questionNoButton != null && char.ToLower(ch) == 'n')
+            {
+                questionNoButton.Press(game.CurrentTicks);
+                return true;
+            }
+
             if (PopupActive && activePopup.KeyChar(ch))
                 return true;
 
