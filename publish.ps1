@@ -40,9 +40,15 @@ if ($isWindows) {
   Write-Host Pack zips for Mac
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.net"'
   7z a Ambermoon.net-Mac.zip "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.net"
+  mkdir -p ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
+  cp -r ./Ambermoon.net/Mac/* ./bundle/Ambermoon.net/
+  cp "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
+  7z a Ambermoon.net-Mac-Bundle.zip ./bundle/Ambermoon.net/
   Write-Host Publish Mac standalone executable
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r osx-x64 --no-restore --self-contained
   Write-Host Pack standalone zips for Mac
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.net"'
   7z a Ambermoon.net-Mac-Standalone.zip "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.net"
+  cp "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.net" ./bundle/Ambermoon.net/Ambermoon.net.app/Contents/MacOS/
+  7z a Ambermoon.net-Mac-Bundle-Standalone.zip ./bundle/Ambermoon.net/
 }

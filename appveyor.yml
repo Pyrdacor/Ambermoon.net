@@ -23,6 +23,8 @@ artifacts:
     name: Ambermoon.net-Linux
   - path: Ambermoon.net-Mac.zip
     name: Ambermoon.net-Mac
+  - path: Ambermoon.net-Mac-Bundle.zip
+    name: Ambermoon.net-Mac-Bundle
   - path: Ambermoon.net-Windows-Standalone.zip
     name: Ambermoon.net-Windows-Standalone
   - path: Ambermoon.net-Windows32Bit-Standalone.zip
@@ -31,6 +33,8 @@ artifacts:
     name: Ambermoon.net-Linux-Standalone
   - path: Ambermoon.net-Mac-Standalone.zip
     name: Ambermoon.net-Mac-Standalone
+  - path: Ambermoon.net-Mac-Bundle-Standalone.zip
+    name: Ambermoon.net-Mac-Bundle-Standalone
   - path: nuget\*.nupkg
     name: NugetPackages
 
@@ -94,6 +98,19 @@ deploy:
     on:
       APPVEYOR_REPO_TAG: true
   - provider: GitHub
+    name: Ambermoon.net-Mac-Bundle
+    artifact: Ambermoon.net-Mac-Bundle
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    auth_token:
+      secure: CP6qsCjIlyJrYsuHs4tzdrYUWOO83Jlx6/U0Gqtl/SicGmBaN1hrYUEk6RSL6D8j
+    draft: true
+    prerelease: true
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
+  - provider: GitHub
     name: Ambermoon.net-Windows-Standalone
     artifact: Ambermoon.net-Windows-Standalone
     tag: $(APPVEYOR_REPO_TAG_NAME)
@@ -135,6 +152,19 @@ deploy:
   - provider: GitHub
     name: Ambermoon.net-Mac-Standalone
     artifact: Ambermoon.net-Mac-Standalone
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: $(APPVEYOR_REPO_TAG_NAME)
+    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
+    auth_token:
+      secure: CP6qsCjIlyJrYsuHs4tzdrYUWOO83Jlx6/U0Gqtl/SicGmBaN1hrYUEk6RSL6D8j
+    draft: true
+    prerelease: true
+    force_update: true
+    on:
+      APPVEYOR_REPO_TAG: true
+  - provider: GitHub
+    name: Ambermoon.net-Mac-Bundle-Standalone
+    artifact: Ambermoon.net-Mac-Bundle-Standalone
     tag: $(APPVEYOR_REPO_TAG_NAME)
     release: $(APPVEYOR_REPO_TAG_NAME)
     description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
