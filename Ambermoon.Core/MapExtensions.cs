@@ -60,14 +60,21 @@ namespace Ambermoon
 
             if (trigger == EventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
             {
+                var ev = @event;
+
+                while (ev?.Type == EventType.Condition ||
+                       ev?.Type == EventType.Dice100Roll)
+                    ev = ev.Next;
+
                 // avoid triggering the same event twice, but only for some events
-                if (@event.Type != EventType.Teleport &&
-                    @event.Type != EventType.Chest &&
-                    @event.Type != EventType.Door &&
-                    @event.Type != EventType.EnterPlace &&
-                    @event.Type != EventType.RemoveBuffs &&
-                    @event.Type != EventType.Riddlemouth &&
-                    (map.Type == MapType.Map3D || @event.Type != EventType.Trap))
+                if (ev != null &&
+                    ev.Type != EventType.Teleport &&
+                    ev.Type != EventType.Chest &&
+                    ev.Type != EventType.Door &&
+                    ev.Type != EventType.EnterPlace &&
+                    ev.Type != EventType.RemoveBuffs &&
+                    ev.Type != EventType.Riddlemouth &&
+                    (map.Type == MapType.Map3D || ev.Type != EventType.Trap))
                 {
                     return true;
                 }

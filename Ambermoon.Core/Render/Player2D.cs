@@ -59,13 +59,19 @@ namespace Ambermoon.Render
                 var tileset = mapManager.GetTilesetForMap(map);
                 canMove = tile.AllowMovement(tileset, travelType);
 
+                if (!canMove && travelType == TravelType.Swim && tile.AllowMovement(tileset, TravelType.Walk))
+                    canMove = true; // go on land
+
                 // check if there is a place, teleport, riddlemouth, chest
                 // or door event at the new position
                 var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
 
-                if (mapEventId > 0)
+                if (mapEventId > 0 && game.CurrentSavegame.IsEventActive(map.Index, mapEventId.Value - 1))
                 {
-                    static bool HasSpecialEvent(Event ev)
+                    var trigger = EventTrigger.Move;
+                    bool lastEventStatus = false;
+
+                    bool HasSpecialEvent(Event ev)
                     {
                         if (ev.Type == EventType.EnterPlace ||
                             ev.Type == EventType.Teleport ||
@@ -74,7 +80,19 @@ namespace Ambermoon.Render
                             ev.Type == EventType.Door)
                             return true;
 
-                        return ev.Next != null && HasSpecialEvent(ev.Next);
+                        if (ev.Next == null)
+                            return false;
+
+                        if (ev is ConditionEvent conditionEvent)
+                        {
+                            ev = conditionEvent.ExecuteEvent(map, game, ref trigger, (uint)Position.X,
+                                (uint)Position.Y, game.CurrentTicks, ref lastEventStatus, out bool aborted, out _);
+
+                            if (aborted || ev == null)
+                                return false;
+                        }
+                        
+                        return HasSpecialEvent(ev.Next);
                     }
 
                     var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
@@ -83,7 +101,7 @@ namespace Ambermoon.Render
                     {
                         if (!travelType.BlockedByTeleport() &&
                             EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
-                            mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                                mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
                         {
                             eventTriggered = true;
                             return false;
@@ -93,9 +111,7 @@ namespace Ambermoon.Render
                     }
                 }
 
-                if (!canMove && travelType == TravelType.Swim && tile.AllowMovement(tileset, TravelType.Walk))
-                    canMove = true; // go on land
-                else if (canMove && tile.Type == Data.Map.TileType.Water && travelType.BlockedByWater())
+                if (canMove && tile.Type == Data.Map.TileType.Water && travelType.BlockedByWater())
                     canMove = false;
             }
 
