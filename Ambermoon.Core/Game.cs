@@ -1752,16 +1752,22 @@ namespace Ambermoon
             bool Move()
             {
                 bool diagonal = x != 0 && y != 0;
+                bool eventTriggered;
 
-                if (!player2D.Move(x, y, CurrentTicks, TravelType, !diagonal, null, !diagonal))
+                if (!player2D.Move(x, y, CurrentTicks, TravelType, out eventTriggered, !diagonal, null, !diagonal))
                 {
-                    if (!diagonal)
+                    if (eventTriggered || !diagonal)
                         return false;
 
                     var prevDirection = player2D.Direction;
 
-                    if (!player2D.Move(0, y, CurrentTicks, TravelType, false, prevDirection, false))
-                        return player2D.Move(x, 0, CurrentTicks, TravelType, true, prevDirection);
+                    if (!player2D.Move(0, y, CurrentTicks, TravelType, out eventTriggered, false, prevDirection, false))
+                    {
+                        if (eventTriggered)
+                            return false;
+
+                        return player2D.Move(x, 0, CurrentTicks, TravelType, out eventTriggered, true, prevDirection);
+                    }
                 }
 
                 return true;
@@ -9610,6 +9616,7 @@ namespace Ambermoon
             layout.Set80x80Picture(picture);
 
             // Put all gold on the table!
+            place.AvailableGold = 0;
             foreach (var partyMember in PartyMembers)
             {
                 place.AvailableGold += partyMember.Gold;
@@ -10083,6 +10090,7 @@ namespace Ambermoon
             };
 
             // Put all gold on the table!
+            merchant.AvailableGold = 0;
             foreach (var partyMember in PartyMembers)
             {
                 merchant.AvailableGold += partyMember.Gold;

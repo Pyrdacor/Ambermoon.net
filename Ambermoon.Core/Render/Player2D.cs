@@ -21,10 +21,12 @@ namespace Ambermoon.Render
             this.mapManager = mapManager;
         }
 
-        public bool Move(int x, int y, uint ticks, TravelType travelType,
+        public bool Move(int x, int y, uint ticks, TravelType travelType, out bool eventTriggered,
             bool displayOuchIfBlocked = true, CharacterDirection? prevDirection = null,
             bool updateDirectionIfNotMoving = true) // x,y in tiles
         {
+            eventTriggered = false;
+
             if (player.MovementAbility == PlayerMovementAbility.NoMovement)
                 return false;
 
@@ -82,7 +84,10 @@ namespace Ambermoon.Render
                         if (!travelType.BlockedByTeleport() &&
                             EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
                             mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                        {
+                            eventTriggered = true;
                             return false;
+                        }
                         else
                             canMove = false;
                     }
