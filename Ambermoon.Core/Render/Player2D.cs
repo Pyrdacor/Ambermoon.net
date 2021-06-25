@@ -57,62 +57,41 @@ namespace Ambermoon.Render
                 var tileset = mapManager.GetTilesetForMap(map);
                 canMove = tile.AllowMovement(tileset, travelType);
 
-                if (!canMove && travelType == TravelType.Swim && tile.AllowMovement(tileset, TravelType.Walk))
-                    canMove = true; // go on land
-                else if (canMove)
+                // check if there is a place, teleport, riddlemouth, chest
+                // or door event at the new position
+                var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
+
+                if (mapEventId > 0)
                 {
-                    if (tile.Type == Data.Map.TileType.Water && travelType.BlockedByWater())
-                        canMove = false;
-                    else if (travelType.BlockedByTeleport())
+                    static bool HasSpecialEvent(Event ev)
                     {
-                        // check if there is a teleport event at the new position
-                        var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
+                        if (ev.Type == EventType.EnterPlace ||
+                            ev.Type == EventType.Teleport ||
+                            ev.Type == EventType.Riddlemouth ||
+                            ev.Type == EventType.Chest ||
+                            ev.Type == EventType.Door)
+                            return true;
 
-                        if (mapEventId > 0)
-                        {
-                            static bool HasTeleportEvent(Event ev)
-                            {
-                                if (ev.Type == EventType.Teleport)
-                                    return true;
-
-                                return ev.Next != null && HasTeleportEvent(ev.Next);
-                            }
-
-                            var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
-
-                            if (HasTeleportEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
-                                canMove = false;
-                        }
+                        return ev.Next != null && HasSpecialEvent(ev.Next);
                     }
 
-                    if (canMove)
+                    var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
+
+                    if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
                     {
-                        // check if there is a place event at the new position
-                        var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
-
-                        if (mapEventId > 0)
-                        {
-                            static bool HasPlaceEvent(Event ev)
-                            {
-                                if (ev.Type == EventType.EnterPlace)
-                                    return true;
-
-                                return ev.Next != null && HasPlaceEvent(ev.Next);
-                            }
-
-                            var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
-
-                            if (HasPlaceEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
-                            {
-                                if (EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
-                                    mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
-                                    return false;
-                                else
-                                    canMove = false;
-                            }
-                        }
+                        if (!travelType.BlockedByTeleport() &&
+                            EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
+                            mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                            return false;
+                        else
+                            canMove = false;
                     }
                 }
+
+                if (!canMove && travelType == TravelType.Swim && tile.AllowMovement(tileset, TravelType.Walk))
+                    canMove = true; // go on land
+                else if (canMove && tile.Type == Data.Map.TileType.Water && travelType.BlockedByWater())
+                    canMove = false;
             }
 
             if (canMove)

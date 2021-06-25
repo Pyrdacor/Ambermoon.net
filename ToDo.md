@@ -28,7 +28,6 @@
 
 - 2D monsters should stay for 1 timeslot when they were on top of the player (e.g. flee success) cause
   otherwise they always stay on the player when he moves.
-- Town house 2 (couple) inside door is only triggered when already moved outside map.
 
 
 ## UI
