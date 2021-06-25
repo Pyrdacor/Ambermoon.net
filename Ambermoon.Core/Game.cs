@@ -4961,6 +4961,7 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map, position);
+                CursorType = CursorType.Sword;
 
                 if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.ChestIndex))
                 {
