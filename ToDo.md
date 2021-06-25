@@ -24,19 +24,12 @@
 - 3D monster get easily stuck on wall edges. :(
 
 
-## 2D maps
-
-- 2D monsters should stay for 1 timeslot when they were on top of the player (e.g. flee success) cause
-  otherwise they always stay on the player when he moves.
-
-
 ## UI
 
 - Cursor keys should scroll automap. Mouse wheel would be cool to.
 - Scrolling by dragging can't put the scrollbar to the top or bottom. There is a small gap.
 - When repairing item etc the item tooltip should not show up after magic animation.
 - I guess buff duration bars are a bit wrong (ingame no empty bar is shown, while it is in remake).
-- Speaking to simple NPC the popup uses centered text. Is this right?
 - "Do you accept this character?" message is missing in character creator.
 
 

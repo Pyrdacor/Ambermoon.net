@@ -11902,6 +11902,25 @@ namespace Ambermoon
 
                                     if (x != 0 || y != 0)
                                         Scroll(x, y);
+                                    else
+                                    {
+                                        bool left = keys[(int)Key.Left] || keys[(int)Key.A] || keys[(int)Key.Home];
+                                        bool right = keys[(int)Key.Right] || keys[(int)Key.D] || keys[(int)Key.End];
+                                        bool up = keys[(int)Key.Up] || keys[(int)Key.W] || keys[(int)Key.PageUp];
+                                        bool down = keys[(int)Key.Down] || keys[(int)Key.S] || keys[(int)Key.PageDown];
+
+                                        if (left && !right)
+                                            x = -1;
+                                        else if (right && !left)
+                                            x = 1;
+                                        if (up && !down)
+                                            y = -1;
+                                        else if (down && !up)
+                                            y = 1;
+
+                                        if (x != 0 || y != 0)
+                                            Scroll(x, y);
+                                    }
                                 }
 
                                 CheckScroll();
