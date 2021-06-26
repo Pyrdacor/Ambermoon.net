@@ -4508,6 +4508,13 @@ namespace Ambermoon
                         player2D.BaselineOffset = CanSee() ? 0 : MaxBaseLine;
                 }
 
+                void EnableTransport(bool enable = true)
+                {
+                    layout.TransportEnabled = enable;
+                    if (layout.ButtonGridPage == 1)
+                        layout.EnableButton(3, enable);
+                }
+
                 if (Map.IsWorldMap)
                 {
                     var transports = GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
@@ -4532,13 +4539,6 @@ namespace Ambermoon
                     {
                         renderMap2D.PlaceTransport(transport.MapIndex,
                             (uint)transport.Position.X - 1, (uint)transport.Position.Y - 1, transport.TravelType);
-                    }
-
-                    void EnableTransport(bool enable = true)
-                    {
-                        layout.TransportEnabled = enable;
-                        if (layout.ButtonGridPage == 1)
-                            layout.EnableButton(3, enable);
                     }
 
                     if (transportAtPlayerIndex != null && TravelType == TravelType.Walk)
