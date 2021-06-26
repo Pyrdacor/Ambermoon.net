@@ -389,8 +389,8 @@ namespace Ambermoon.Render
                 sprite.BaseLineOffset = TILE_HEIGHT / 2;
                 sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
                 sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + stationaryImage.AsIndex());
-                sprite.X = Global.Map2DViewX + (int)(x - ScrollX) * TILE_WIDTH + offset.X;
-                sprite.Y = Global.Map2DViewY + (int)(y - ScrollY) * TILE_HEIGHT + offset.Y;
+                sprite.X = Global.Map2DViewX + (position.X - (int)ScrollX) * TILE_WIDTH + offset.X;
+                sprite.Y = Global.Map2DViewY + (position.Y - (int)ScrollY) * TILE_HEIGHT + offset.Y;
                 sprite.Visible = true;
                 transportSprites.Add(position, new KeyValuePair<ISprite, Position>(sprite, offset));
             }

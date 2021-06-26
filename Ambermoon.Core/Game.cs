@@ -4369,14 +4369,14 @@ namespace Ambermoon
                             CurrentSavegame.TransportLocations[i] = new TransportLocation
                             {
                                 MapIndex = mapIndex,
-                                Position = new Position((int)x + 1, (int)y + 1),
+                                Position = new Position((int)x % 50 + 1, (int)y % 50 + 1),
                                 TravelType = TravelType
                             };
                             break;
                         }
                     }
 
-                    renderMap2D.PlaceTransport(mapIndex, x, y, TravelType);
+                    renderMap2D.PlaceTransport(mapIndex, x % 50, y % 50, TravelType);
                 }
                 else
                 {
@@ -4394,12 +4394,12 @@ namespace Ambermoon
                 else
                     TravelType = TravelType.Walk;
 
-                Map.TriggerEvents(this, EventTrigger.Move, x, y, CurrentTicks, CurrentSavegame);
+                renderMap2D.TriggerEvents(player2D, EventTrigger.Move, x, y, MapManager, CurrentTicks, CurrentSavegame);
             }
             else if (transport != null && TravelType == TravelType.Walk)
             {
                 CurrentSavegame.TransportLocations[index.Value] = null;
-                renderMap2D.RemoveTransportAt(mapIndex, x, y);
+                renderMap2D.RemoveTransportAt(mapIndex, x % 50, y % 50);
                 ActivateTransport(transport.TravelType);
             }
         }
@@ -4409,7 +4409,7 @@ namespace Ambermoon
             index = null;
             var mapIndex = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
             // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
-            var position = new Position(player.Position.X + 1, player.Position.Y + 1);
+            var position = new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1);
 
             for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
             {
@@ -4438,7 +4438,7 @@ namespace Ambermoon
 
             var mapIndex = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
             // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
-            var position = new Position(player.Position.X + 1, player.Position.Y + 1);
+            var position = new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1);
 
             for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
             {
@@ -4534,11 +4534,11 @@ namespace Ambermoon
                             (uint)transport.Position.X - 1, (uint)transport.Position.Y - 1, transport.TravelType);
                     }
 
-                    void EnableTransport()
+                    void EnableTransport(bool enable = true)
                     {
-                        layout.TransportEnabled = true;
+                        layout.TransportEnabled = enable;
                         if (layout.ButtonGridPage == 1)
-                            layout.EnableButton(3, true);
+                            layout.EnableButton(3, enable);
                     }
 
                     if (transportAtPlayerIndex != null && TravelType == TravelType.Walk)
@@ -4547,28 +4547,23 @@ namespace Ambermoon
                     }
                     else if (TravelType.IsStoppable() && transportAtPlayerIndex == null)
                     {
-                        if (TravelType == TravelType.MagicalDisc ||
-                            TravelType == TravelType.Raft ||
-                            TravelType == TravelType.Ship ||
-                            TravelType == TravelType.SandShip)
-                        {
-                            // We can always leave them as we would stay on them.
-                            EnableTransport();
-                        }
-                        else
-                        {
-                            // Only allow if we could stand or swim there.
-                            var tileset = MapManager.GetTilesetForMap(renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y));
+                        // Only allow if we could stand or swim there.
+                        var tileset = MapManager.GetTilesetForMap(renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y));
 
-                            if (tile.AllowMovement(tileset, TravelType.Walk) ||
-                                tile.AllowMovement(tileset, TravelType.Swim))
-                                EnableTransport();
-                        }
+                        if (tile.AllowMovement(tileset, TravelType.Walk) ||
+                            tile.AllowMovement(tileset, TravelType.Swim))
+                            EnableTransport();
+                        else
+                            EnableTransport(false);
+                    }
+                    else
+                    {
+                        EnableTransport(false);
                     }
                 }
                 else
                 {
-                    layout.TransportEnabled = false;
+                    EnableTransport(false);
                 }
             }
 
