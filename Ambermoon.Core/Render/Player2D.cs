@@ -91,7 +91,10 @@ namespace Ambermoon.Render
                             if (aborted || ev == null)
                                 return false;
                         }
-                        
+
+                        if (ev.Next == null)
+                            return false;
+
                         return HasSpecialEvent(ev.Next);
                     }
 
