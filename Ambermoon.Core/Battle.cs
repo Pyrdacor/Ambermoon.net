@@ -2163,13 +2163,15 @@ namespace Ambermoon
                 TextColor.BrightGray);
             position.Y += Global.GlyphLineHeight;
             popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), Layer.UI, 1, game.UIPaletteIndex);
+            int damage = monster.BaseAttack + (int)monster.Attributes[Attribute.Strength].TotalCurrentValue / 25;
             popup.AddText(position + new Position(6, 2),
-                string.Format(game.DataNameProvider.CharacterInfoDamageString.Replace(' ', monster.BaseAttack < 0 ? '-' : '+'), Math.Abs(monster.BaseAttack)),
+                string.Format(game.DataNameProvider.CharacterInfoDamageString.Replace(' ', damage < 0 ? '-' : '+'), Math.Abs(damage)),
                 TextColor.BrightGray);
             position.X = area.X + panelWidth + Global.GlyphWidth;
             popup.AddImage(new Rect(position.X, position.Y, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), Layer.UI, 1, game.UIPaletteIndex);
+            int defense = monster.BaseDefense + (int)monster.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
             popup.AddText(position + new Position(7, 2),
-                string.Format(game.DataNameProvider.CharacterInfoDefenseString.Replace(' ', monster.BaseDefense < 0 ? '-' : '+'), Math.Abs(monster.BaseDefense)),
+                string.Format(game.DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)),
                 TextColor.BrightGray);
             position.X = area.X;
             position.Y += Global.GlyphLineHeight + 4;
