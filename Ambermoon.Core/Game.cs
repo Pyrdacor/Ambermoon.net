@@ -3287,7 +3287,7 @@ namespace Ambermoon
                 {
                     int attack = character.BaseAttack;
                     if (attack > 0)
-                        attack = Util.Round(attack * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack) / 100.0f));
+                        attack = (attack * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
                     string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack));
                     characterInfoTexts.Add(CharacterInfo.Attack, AddAnimatedText((area, text, color, align) => layout.AddText(area, text, color, align),
                         new Rect(220, 122, 30, 7), attackString, TextAlign.Left, () => CurrentWindow.Window == Window.Inventory, 100, true));
@@ -3302,7 +3302,7 @@ namespace Ambermoon
                 {
                     int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                     if (defense > 0)
-                        defense = Util.Round(defense * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection) / 100.0f));
+                        defense = (defense * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
                     string defenseString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense));
                     characterInfoTexts.Add(CharacterInfo.Defense, AddAnimatedText((area, text, color, align) => layout.AddText(area, text, color, align),
                         new Rect(268, 122, 30, 7), defenseString, TextAlign.Left, () => CurrentWindow.Window == Window.Inventory, 100, true));
@@ -3379,7 +3379,7 @@ namespace Ambermoon
             {
                 int attack = character.BaseAttack;
                 if (attack > 0)
-                    attack = Util.Round(attack * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack) / 100.0f));
+                    attack = (attack * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
                 UpdateText(CharacterInfo.Attack, () =>
                     string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack)));
             }
@@ -3392,7 +3392,7 @@ namespace Ambermoon
             {
                 int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                 if (defense > 0)
-                    defense = Util.Round(defense * (1.0f + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection) / 100.0f));
+                    defense = (defense * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
                 UpdateText(CharacterInfo.Defense, () =>
                     string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)));
             }

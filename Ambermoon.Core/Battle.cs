@@ -3425,8 +3425,15 @@ namespace Ambermoon
 
         int CalculatePhysicalDamage(Character attacker, Character target)
         {
-            return attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack)
-                - (target.BaseDefense + game.RandomInt(0, target.VariableDefense) + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25);
+            int damage = attacker.BaseAttack + game.RandomInt(0, attacker.VariableAttack) + (int)target.Attributes[Attribute.Strength].TotalCurrentValue / 25;
+            int defense = target.BaseDefense + game.RandomInt(0, target.VariableDefense) + (int)target.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
+
+            if (damage > 0)
+                damage = (damage * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
+            if (defense > 0)
+                defense = (defense * (100 + (int)game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
+
+            return (game.RandomInt(50, 100) * damage) / 100 - (game.RandomInt(50, 100) * defense) / 100;
         }
 
         uint CalculateSpellDamage(Character caster, Character target, uint baseDamage, uint variableDamage)
