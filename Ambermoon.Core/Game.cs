@@ -3285,7 +3285,7 @@ namespace Ambermoon
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
                 {
-                    int attack = character.BaseAttack;
+                    int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                     if (attack > 0)
                         attack = (attack * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
                     string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack));
@@ -3377,7 +3377,7 @@ namespace Ambermoon
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
             {
-                int attack = character.BaseAttack;
+                int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                 if (attack > 0)
                     attack = (attack * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
                 UpdateText(CharacterInfo.Attack, () =>
