@@ -81,7 +81,7 @@ namespace Ambermoon.Render
                                 ev.Type == EventType.Teleport ||
                                 ev.Type == EventType.Riddlemouth ||
                                 ev.Type == EventType.Chest ||
-                                ev.Type == EventType.Door)
+                                (ev is DoorEvent doorEvent && game.CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex)))
                             {
                                 eventType = ev.Type;
                                 return true;
