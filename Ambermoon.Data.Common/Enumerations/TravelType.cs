@@ -64,6 +64,13 @@ namespace Ambermoon.Data.Enumerations
             _ => false
         };
 
+        public static bool IgnoreEvents(this TravelType travelType) => travelType switch
+        {
+            TravelType.Eagle => true,
+            TravelType.WitchBroom => true,
+            _ => false
+        };
+
         public static Song TravelSong(this TravelType travelType) => travelType switch
         {
             TravelType.Walk => Song.Default,

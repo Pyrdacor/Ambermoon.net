@@ -62,55 +62,63 @@ namespace Ambermoon.Render
                 if (!canMove && travelType == TravelType.Swim && tile.AllowMovement(tileset, TravelType.Walk))
                     canMove = true; // go on land
 
-                // check if there is a place, teleport, riddlemouth, chest
-                // or door event at the new position
-                var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
-
-                if (mapEventId > 0 && game.CurrentSavegame.IsEventActive(map.Index, mapEventId.Value - 1))
+                if (!travelType.IgnoreEvents())
                 {
-                    var trigger = EventTrigger.Move;
-                    bool lastEventStatus = false;
+                    // check if there is a place, teleport, riddlemouth, chest
+                    // or door event at the new position
+                    var mapEventId = Map[(uint)newX, (uint)newY]?.MapEventId;
 
-                    bool HasSpecialEvent(Event ev)
+                    if (mapEventId > 0 && game.CurrentSavegame.IsEventActive(map.Index, mapEventId.Value - 1))
                     {
-                        if (ev.Type == EventType.EnterPlace ||
-                            ev.Type == EventType.Teleport ||
-                            ev.Type == EventType.Riddlemouth ||
-                            ev.Type == EventType.Chest ||
-                            ev.Type == EventType.Door)
-                            return true;
+                        var trigger = EventTrigger.Move;
+                        bool lastEventStatus = false;
 
-                        if (ev.Next == null)
-                            return false;
-
-                        if (ev is ConditionEvent conditionEvent)
+                        bool HasSpecialEvent(Event ev, out EventType? eventType)
                         {
-                            ev = conditionEvent.ExecuteEvent(map, game, ref trigger, (uint)Position.X,
-                                (uint)Position.Y, game.CurrentTicks, ref lastEventStatus, out bool aborted, out _);
+                            eventType = null;
 
-                            if (aborted || ev == null)
+                            if (ev.Type == EventType.EnterPlace ||
+                                ev.Type == EventType.Teleport ||
+                                ev.Type == EventType.Riddlemouth ||
+                                ev.Type == EventType.Chest ||
+                                ev.Type == EventType.Door)
+                            {
+                                eventType = ev.Type;
+                                return true;
+                            }
+
+                            if (ev.Next == null)
                                 return false;
+
+                            if (ev is ConditionEvent conditionEvent)
+                            {
+                                ev = conditionEvent.ExecuteEvent(map, game, ref trigger, (uint)Position.X,
+                                    (uint)Position.Y, game.CurrentTicks, ref lastEventStatus, out bool aborted, out _);
+
+                                if (aborted || ev == null)
+                                    return false;
+                            }
+
+                            if (ev.Next == null)
+                                return false;
+
+                            return HasSpecialEvent(ev.Next, out eventType);
                         }
 
-                        if (ev.Next == null)
-                            return false;
+                        var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
 
-                        return HasSpecialEvent(ev.Next);
-                    }
-
-                    var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
-
-                    if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
-                    {
-                        if (!travelType.BlockedByTeleport() &&
-                            EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
-                                mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                        if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var type))
                         {
-                            eventTriggered = true;
-                            return false;
+                            if ((type != EventType.Teleport || !travelType.BlockedByTeleport()) &&
+                                EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
+                                    mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                            {
+                                eventTriggered = true;
+                                return false;
+                            }
+                            else
+                                canMove = false;
                         }
-                        else
-                            canMove = false;
                     }
                 }
 
