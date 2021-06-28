@@ -103,6 +103,17 @@ namespace Ambermoon.Data
 
         public bool IsImportant => !Flags.HasFlag(ItemFlags.NotImportant) && !Flags.HasFlag(ItemFlags.Clonable);
 
+        public bool CanBreak => !Flags.HasFlag(ItemFlags.Indestructible) && Type switch
+        {
+            ItemType.CloseRangeWeapon => true,
+            ItemType.LongRangeWeapon => true,
+            ItemType.Armor => true,
+            ItemType.Shield => true,
+            ItemType.Tool => true,
+            ItemType.NormalItem => true,
+            _ => false
+        };
+
         public static Item Load(uint index, IItemReader itemReader, IDataReader dataReader)
         {
             var item = new Item { Index = index };

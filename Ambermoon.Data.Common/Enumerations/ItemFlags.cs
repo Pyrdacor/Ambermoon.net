@@ -32,6 +32,11 @@ namespace Ambermoon.Data
         /// <summary>
         /// Item can be duplicated.
         /// </summary>
-        Clonable = 0x40
+        Clonable = 0x40,
+        /// <summary>
+        /// Same bit as <see cref="Readable"/> but only used
+        /// for weapons, armor, tools and normal items.
+        /// </summary>
+        Indestructible = Readable
     }
 }

@@ -1226,11 +1226,11 @@ namespace Ambermoon
                         }
                     }
                     // Check weapon or armor breakage
-                    if (attackResult != AttackResult.Missed)
+                    if (attackResult != AttackResult.Missed && attackResult != AttackResult.Failed)
                     {
                         int RollDice1000() => game.RandomInt(0, 999);
 
-                        if (weapon != null && RollDice1000() < weapon.BreakChance)
+                        if (weapon != null && weapon.CanBreak && RollDice1000() < weapon.BreakChance)
                         {
                             followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakWeapon);
                             SkipAllFollowingAttacks();
@@ -1245,7 +1245,7 @@ namespace Ambermoon
                             {
                                 var enemyWeapon = game.ItemManager.GetItem(enemyWeaponIndex);
 
-                                if (RollDice1000() < enemyWeapon.BreakChance)
+                                if (enemyWeapon.CanBreak && RollDice1000() < enemyWeapon.BreakChance)
                                 {
                                     followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakDefenderWeapon);
 
@@ -1264,7 +1264,7 @@ namespace Ambermoon
                             {
                                 var enemyShield = game.ItemManager.GetItem(enemyShieldIndex);
 
-                                if (RollDice1000() < enemyShield.BreakChance)
+                                if (enemyShield.CanBreak && RollDice1000() < enemyShield.BreakChance)
                                     followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakDefenderShield);
                             }
                         }
@@ -1276,7 +1276,7 @@ namespace Ambermoon
                             {
                                 var enemyArmor = game.ItemManager.GetItem(enemyArmorIndex);
 
-                                if (RollDice1000() < enemyArmor.BreakChance)
+                                if (enemyArmor.CanBreak && RollDice1000() < enemyArmor.BreakChance)
                                     followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakArmor);
                             }
                         }

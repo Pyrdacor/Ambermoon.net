@@ -1677,7 +1677,7 @@ namespace Ambermoon.UI
                     });
                 }
                 int RollDice1000() => game.RandomInt(0, 999);
-                if (item.BreakChance != 0 && RollDice1000() < item.BreakChance)
+                if (item.CanBreak && RollDice1000() < item.BreakChance)
                 {
                     itemSlot.Flags |= ItemSlotFlags.Broken;
                     UpdateItemSlot(itemSlot);
