@@ -10948,24 +10948,39 @@ namespace Ambermoon
                     };
                 }
             }
-            int slot = 0;
+            var slots = loot.Slots.ToList();
             foreach (var item in battleEndInfo.KilledMonsters
                 .SelectMany(m => Enumerable.Concat(m.Inventory.Slots, m.Equipment.Slots.Values)
                     .Where(slot => slot != null && !slot.Empty)))
             {
-                int column = slot % 6;
-                int row = slot / 6;
-                ++slot;
-                loot.Slots[column, row].Replace(item);
+                bool stackable = ItemManager.GetItem(item.ItemIndex).Flags.HasFlag(ItemFlags.Stackable);
+
+                while (item.Amount > 0)
+                {
+                    ItemSlot slot = null;
+
+                    if (stackable)
+                        slot = slots.FirstOrDefault(s => s.ItemIndex == item.ItemIndex && s.Amount < 99);
+
+                    if (slot == null)
+                        slot = slots.FirstOrDefault(s => s.Empty);
+
+                    if (slot == null) // doesn't fit
+                        break;
+
+                    slot.Add(item);
+                }
             }
             foreach (var brokenItem in battleEndInfo.BrokenItems)
             {
-                int column = slot % 6;
-                int row = slot / 6;
-                ++slot;
-                loot.Slots[column, row].ItemIndex = brokenItem.Key;
-                loot.Slots[column, row].Amount = 1;
-                loot.Slots[column, row].Flags = brokenItem.Value | ItemSlotFlags.Broken;
+                var slot = slots.FirstOrDefault(s => s.Empty);
+
+                if (slot == null) // doesn't fit
+                    break;
+
+                slot.ItemIndex = brokenItem.Key;
+                slot.Amount = 1;
+                slot.Flags = brokenItem.Value | ItemSlotFlags.Broken;
             }
             var expReceivingPartyMembers = PartyMembers.Where(m => m.Alive && !battleEndInfo.FledPartyMembers.Contains(m)).ToList();
             int expPerPartyMember = battleEndInfo.TotalExperience / expReceivingPartyMembers.Count;
