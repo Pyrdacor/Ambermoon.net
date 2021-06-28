@@ -1019,8 +1019,8 @@ namespace Ambermoon.UI
                 new string[OptionCount]
                 {
                     "Musik",
+                    "Lautstärke",
                     "Schneller Kampfmodus",
-                    "Seitenverhältnis",
                     "Auflösung",
                     "Vollbild"
                 }
@@ -1030,8 +1030,8 @@ namespace Ambermoon.UI
                 new string[OptionCount]
                 {
                     "Music",
+                    "Volume",
                     "Fast battle mode",
-                    "Screen ratio",
                     "Resolution",
                     "Fullscreen"
                 }
@@ -1049,13 +1049,14 @@ namespace Ambermoon.UI
             ListBox listBox = null;
             var on = game.DataNameProvider.On;
             var off = game.DataNameProvider.Off;
-            int width = game.Configuration.Width ?? 640;
+            int width = game.Configuration.Width ?? 1280;
+            var toggleResolutionAction = (Action<int, string>)((index, _) => ToggleResolution());
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleVolume())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleScreenRatio())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleResolution())),
+                KeyValuePair.Create("", game.Configuration.Fullscreen ? null : toggleResolutionAction),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
             };
             listBox = activePopup.AddOptionsListBox(options);
@@ -1074,8 +1075,8 @@ namespace Ambermoon.UI
                 listBox.SetItemText(optionIndex, optionString);
             }
             void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
-            void SetFastBattleMode() => SetOptionString(1, game.Configuration.FastBattleMode ? on : off);
-            void SetScreenRatio() => SetOptionString(2, game.Configuration.ScreenRatio.ToString().Replace("Ratio", "").Replace('_', ':'));
+            void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
+            void SetFastBattleMode() => SetOptionString(2, game.Configuration.FastBattleMode ? on : off);
             void SetResolution() => SetOptionString(3, GetResolutionString());
             void SetFullscreen() => SetOptionString(4, game.Configuration.Fullscreen ? on : off);
 
@@ -1088,6 +1089,17 @@ namespace Ambermoon.UI
                 SetMusic();
                 changedConfiguration = true;
             }
+            void ToggleVolume()
+            {
+                var oldVolume = game.Configuration.Volume;
+                game.Configuration.Volume = ((game.Configuration.Volume + 10) / 10) * 10;
+                while (game.Configuration.Volume > 100)
+                    game.Configuration.Volume -= 100;
+                game.Configuration.Volume = Math.Max(0, game.Configuration.Volume);
+                game.AudioOutput.Volume = game.Configuration.Volume / 100.0f;
+                SetVolume();
+                changedConfiguration = true;
+            }
             void ToggleFastBattleMode()
             {
                 game.Configuration.FastBattleMode = !game.Configuration.FastBattleMode;
@@ -1095,18 +1107,11 @@ namespace Ambermoon.UI
                 game.SetFastBattleMode(game.Configuration.FastBattleMode);
                 changedConfiguration = true;
             }
-            void ToggleScreenRatio()
-            {
-                game.Configuration.ScreenRatio = (ScreenRatio)(((int)game.Configuration.ScreenRatio + 1) % 3);
-                SetScreenRatio();
-                game.NotifyResolutionChange(null);
-                width = game.Configuration.Width.Value;
-                SetResolution();
-                changedConfiguration = true;
-                windowChange = true;
-            }
             void ToggleResolution()
             {
+                if (game.Configuration.Fullscreen)
+                    return;
+
                 game.NotifyResolutionChange(width);
                 width = game.Configuration.Width.Value;
                 SetResolution();
@@ -1116,10 +1121,14 @@ namespace Ambermoon.UI
             void ToggleFullscreen()
             {
                 game.Configuration.Fullscreen = !game.Configuration.Fullscreen;
-                game.RequestFullscreenChange(game.Configuration.Fullscreen, width);                
+
+                listBox.SetItemAction(3, game.Configuration.Fullscreen ? null : toggleResolutionAction);
+
+                if (!game.Configuration.Fullscreen)
+                    SetResolution();
+
+                game.RequestFullscreenChange(game.Configuration.Fullscreen);
                 SetFullscreen();
-                width = game.Configuration.Width.Value;
-                SetResolution();                
                 changedConfiguration = true;
                 windowChange = true;
             }
@@ -1139,8 +1148,8 @@ namespace Ambermoon.UI
             exitButton.Visible = true;
 
             SetMusic();
+            SetVolume();
             SetFastBattleMode();
-            SetScreenRatio();
             SetResolution();
             SetFullscreen();
         }

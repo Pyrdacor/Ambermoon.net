@@ -30,7 +30,7 @@ namespace Ambermoon.Render
         void Render(FloatPosition viewportOffset);
         void AddLayer(IRenderLayer layer);
         IRenderLayer GetLayer(Layer layer);
-        void Resize(int width, int height);
+        void Resize(int width, int height, int? windowWidth = null, int? windowHeight = null);
         void Close();
 
         Position GameToScreen(Position position);

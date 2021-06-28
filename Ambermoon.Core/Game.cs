@@ -200,7 +200,7 @@ namespace Ambermoon
             ConversationPartyMember
         }
 
-        public delegate void FullscreenChangeHandler(bool fullscreen, int? oldWidth);
+        public delegate void FullscreenChangeHandler(bool fullscreen);
         public delegate void ResolutionChangeHandler(int? oldWidth);
 
         // TODO: cleanup members
@@ -449,7 +449,7 @@ namespace Ambermoon
             }
         }
 
-        internal void RequestFullscreenChange(bool fullscreen, int? oldWidth) => fullscreenChangeHandler?.Invoke(fullscreen, oldWidth);
+        internal void RequestFullscreenChange(bool fullscreen) => fullscreenChangeHandler?.Invoke(fullscreen);
         internal void NotifyResolutionChange(int? oldWidth) => resolutionChangeHandler?.Invoke(oldWidth);
 
         public Game(IConfiguration configuration, GameLanguage gameLanguage, IRenderView renderView, IMapManager mapManager,
@@ -797,7 +797,18 @@ namespace Ambermoon
             }
         }
 
-        internal void NotifyConfigurationChange(bool windowChange) => ConfigurationChanged?.Invoke(Configuration, windowChange);
+        internal void NotifyConfigurationChange(bool windowChange)
+        {
+            ConfigurationChanged?.Invoke(Configuration, windowChange);
+
+            if (windowChange && !trapped)
+            {
+                trappedMousePositionOffset.X = 0;
+                trappedMousePositionOffset.Y = 0;
+                MouseTrappedChanged?.Invoke(false, lastMousePosition);
+                UpdateCursor();
+            }
+        }
 
         internal int RollDice100()
         {

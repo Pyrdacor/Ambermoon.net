@@ -8,9 +8,10 @@ namespace Ambermoon
 {
     internal class Configuration : IConfiguration
     {
-        public ScreenRatio ScreenRatio { get; set; } = ScreenRatio.Ratio16_10;
         public int? Width { get; set; } = 1280;
         public int? Height { get; set; } = 800;
+        public int? FullscreenWidth { get; set; } = 1280;
+        public int? FullscreenHeight { get; set; } = 800;
         public bool Fullscreen { get; set; } = false;
         public bool UseDataPath { get; set; } = false;
         public string DataPath { get; set; } = ExecutableDirectoryPath;
@@ -18,6 +19,7 @@ namespace Ambermoon
         public int GameVersionIndex { get; set; } = 0;
         public bool LegacyMode { get; set; } = false;
         public bool Music { get; set; } = true;
+        public int Volume { get; set; } = 100;
         public bool FastBattleMode { get; set; } = false;
 
         public static readonly string FallbackConfigDirectory =

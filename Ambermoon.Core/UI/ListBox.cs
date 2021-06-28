@@ -129,6 +129,7 @@ namespace Ambermoon.UI
             itemTexts[index - scrollOffset].Text = renderView.TextProcessor.CreateText(text, fallbackChar);
             items[index] = KeyValuePair.Create(text, items[index].Value);
             itemTexts[index - scrollOffset].Visible = !string.IsNullOrWhiteSpace(text);
+            PostScrollUpdate();
         }
 
         void SetTextHovered(IRenderText text, bool hovered, bool enabled, string textEntry)
@@ -325,6 +326,12 @@ namespace Ambermoon.UI
                 itemTexts[i].Text = renderView.TextProcessor.CreateText(items[scrollOffset + i].Key);
                 itemTexts[i].TextColor = textColor;
             }
+        }
+
+        public void SetItemAction(int index, Action<int, string> action)
+        {
+            items[index] = KeyValuePair.Create(items[index].Key, action);
+            PostScrollUpdate();
         }
     }
 }

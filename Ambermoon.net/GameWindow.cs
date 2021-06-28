@@ -38,6 +38,7 @@ namespace Ambermoon
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
         DateTime? initializeErrorTime = null;
+        List<Size> availableFullscreenModes = null;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -77,51 +78,62 @@ namespace Ambermoon
             if (renderView == null || configuration == null)
                 return;
 
-            var possibleResolutions = fullscreen
-                ? ScreenResolutions.Filter(configuration.ScreenRatio, renderView.AvailableFullscreenModes)
-                : ScreenResolutions.GetPossibleResolutions(configuration.ScreenRatio, renderView.MaxScreenSize);
-            int index = oldWidth == null ? 0 : changed
-                ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
-                : FindNearestResolution(oldWidth.Value);
-            var resolution = possibleResolutions[index];
-            configuration.Width = resolution.Width;
-            configuration.Height = resolution.Height;
-
-            int FindNearestResolution(int width)
+            if (fullscreen)
             {
-                int index = possibleResolutions.FindIndex(r => r.Width == width);
+                var fullscreenSize = renderView.AvailableFullscreenModes.OrderBy(r => r.Width * r.Height).LastOrDefault();
 
-                if (index != -1)
-                    return index;
-
-                int minDiffIndex = 0;
-                int minDiff = Math.Abs(possibleResolutions[0].Width - width);
-
-                for (int i = 1; i < possibleResolutions.Count; ++i)
+                if (fullscreenSize != null)
                 {
-                    int diff = Math.Abs(possibleResolutions[i].Width - width);
-
-                    if (diff < minDiff)
-                    {
-                        minDiffIndex = i;
-                        minDiff = diff;
-                    }
+                    configuration.FullscreenWidth = fullscreenSize.Width;
+                    configuration.FullscreenHeight = fullscreenSize.Height;
                 }
+            }
+            else
+            {
+                var possibleResolutions = ScreenResolutions.GetPossibleResolutions(renderView.MaxScreenSize);
+                int index = oldWidth == null ? 0 : changed
+                    ? (possibleResolutions.FindIndex(r => r.Width == oldWidth.Value) + 1) % possibleResolutions.Count
+                    : FindNearestResolution(oldWidth.Value);
+                var resolution = possibleResolutions[index];
+                configuration.Width = resolution.Width;
+                configuration.Height = resolution.Height;
 
-                return minDiffIndex;
+                int FindNearestResolution(int width)
+                {
+                    int index = possibleResolutions.FindIndex(r => r.Width == width);
+
+                    if (index != -1)
+                        return index;
+
+                    int minDiffIndex = 0;
+                    int minDiff = Math.Abs(possibleResolutions[0].Width - width);
+
+                    for (int i = 1; i < possibleResolutions.Count; ++i)
+                    {
+                        int diff = Math.Abs(possibleResolutions[i].Width - width);
+
+                        if (diff < minDiff)
+                        {
+                            minDiffIndex = i;
+                            minDiff = diff;
+                        }
+                    }
+
+                    return minDiffIndex;
+                }
             }
         }
 
         void ChangeFullscreenMode(bool fullscreen)
         {
-            FullscreenChangeRequest(fullscreen, configuration.Width);
-            UpdateWindow(configuration);
+            FullscreenChangeRequest(fullscreen);
             Fullscreen = fullscreen;
+            UpdateWindow(configuration);
         }
 
-        void FullscreenChangeRequest(bool fullscreen, int? oldWidth)
+        void FullscreenChangeRequest(bool fullscreen)
         {
-            ChangeResolution(oldWidth, fullscreen, false);
+            ChangeResolution(configuration.Width, fullscreen, false);
         }
 
         void SetupInput(IInputContext inputContext)
@@ -314,6 +326,7 @@ namespace Ambermoon
             songManager = new SongManager(renderView.GameData, Data.Enumerations.Song.Menu); // TODO: use intro later maybe and initialize earlier then
             audioOutput = new AudioOutput(1, 44100);
 
+            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
 
             infoText.Visible = false;
@@ -366,6 +379,7 @@ namespace Ambermoon
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
                 return textureAtlasManager;
             });
+            renderView.AvailableFullscreenModes = availableFullscreenModes;
 
             InitGlyphs();
 
@@ -567,6 +581,7 @@ namespace Ambermoon
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
                 return textureAtlasManager;
             });
+            renderView.AvailableFullscreenModes = availableFullscreenModes;
             InitGlyphs(textureAtlasManager);
             var gameVersions = new List<GameVersion>(3);
             for (int i = 0; i < versions.Count; ++i)
@@ -615,15 +630,20 @@ namespace Ambermoon
         RenderView CreateRenderView(GameData gameData, ExecutableData executableData, GraphicProvider graphicProvider,
             FontProvider fontProvider, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
-            var screenResolution = configuration.GetScreenResolution();
-            var aspectRatio = (float)screenResolution.Width / screenResolution.Height;
+            Size screenResolution;
 
-            screenResolution.Width = screenResolution.Width * window.FramebufferSize.X / window.Size.X;
-            screenResolution.Height = screenResolution.Height * window.FramebufferSize.Y / window.Size.Y;
+            if (Fullscreen)
+            {
+                screenResolution = new Size(configuration.FullscreenWidth.Value, configuration.FullscreenHeight.Value);
+            }
+            else
+            {
+                screenResolution = configuration.GetScreenSize();
+            }
 
             return new RenderView(this, gameData, graphicProvider, fontProvider,
-                new TextProcessor(), textureAtlasManagerProvider, screenResolution.Width, screenResolution.Height, aspectRatio,
-                new Size(window.Size.X, window.Size.Y));
+                new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
+                screenResolution);
         }
 
         string GetSavePath(string version)
@@ -671,6 +691,22 @@ namespace Ambermoon
             // Setup input
             SetupInput(window.CreateInput());
 
+            availableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
+                new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
+
+            var fullscreenSize = availableFullscreenModes.OrderBy(r => r.Width * r.Height).LastOrDefault();
+
+            if (fullscreenSize != null)
+            {
+                configuration.FullscreenWidth = fullscreenSize.Width;
+                configuration.FullscreenHeight = fullscreenSize.Height;
+            }
+
+            if (configuration.Fullscreen)
+            {
+                ChangeFullscreenMode(true); // This will adjust the window
+            }
+
             if (ShowVersionSelector((gameData, savePath, gameLanguage) =>
             {
                 renderView?.Dispose();
@@ -681,9 +717,6 @@ namespace Ambermoon
             {
                 WindowMoved();
             }
-
-            if (configuration.Fullscreen)
-                ChangeFullscreenMode(true); // This will adjust the window
         }
 
         void Window_Render(double delta)
@@ -751,11 +784,17 @@ namespace Ambermoon
 
         void Window_Resize(WindowDimension size)
         {
-            if (size.X != Width || size.Y != Height)
+            if (!Fullscreen && (size.X != Width || size.Y != Height))
             {
                 // This seems to happen when changing the screen resolution.
                 window.Size = new WindowDimension(Width, Height);
             }
+        }
+
+        void Window_FramebufferResize(WindowDimension size)
+        {
+            if (renderView != null)
+                renderView.Resize(size.X, size.Y);
         }
 
         void Window_Move(WindowDimension position)
@@ -776,22 +815,25 @@ namespace Ambermoon
                 {
                     renderView.MaxScreenSize = new Size(640, 480);
                 }
-                renderView.AvailableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
-                    new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
             }
         }
 
         void UpdateWindow(IConfiguration configuration)
         {
-            var screenSize = configuration.GetScreenSize();
-            this.configuration.Width = Width = screenSize.Width;
-            this.configuration.Height = Height = screenSize.Height;
-            var screenResolution = configuration.GetScreenResolution();
-            window.Size = new WindowDimension(screenSize.Width, screenResolution.Height);
-            renderView.VirtualAspectRatio = (float)screenResolution.Width / screenResolution.Height;
-            screenResolution.Width = screenResolution.Width * window.FramebufferSize.X / window.Size.X;
-            screenResolution.Height = screenResolution.Height * window.FramebufferSize.Y / window.Size.Y;
-            renderView.Resize(screenResolution.Width, screenResolution.Height);
+            Size screenResolution;
+
+            if (Fullscreen)
+            {
+                screenResolution = new Size(configuration.FullscreenWidth.Value, configuration.FullscreenHeight.Value);
+            }
+            else
+            {
+                screenResolution = configuration.GetScreenSize();
+                this.configuration.Width = Width = screenResolution.Width;
+                this.configuration.Height = Height = screenResolution.Height;
+                window.Size = new WindowDimension(screenResolution.Width, screenResolution.Height);
+            }
+            renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, screenResolution.Width, screenResolution.Height);
         }
 
         public void Run(Configuration configuration)
@@ -802,7 +844,7 @@ namespace Ambermoon
             this.configuration.Height = Height = screenSize.Height;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            var videoMode = new VideoMode(new WindowDimension(Width, Height), 60);
+            var videoMode = new VideoMode(60);
             var options = new WindowOptions(true, new WindowDimension(100, 100),
                 new WindowDimension(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
                 $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} beta",
@@ -819,6 +861,7 @@ namespace Ambermoon
                 window.Render += Window_Render;
                 window.Update += Window_Update;
                 window.Resize += Window_Resize;
+                window.FramebufferResize += Window_FramebufferResize;
                 window.Move += Window_Move;
                 window.Run();
             }
