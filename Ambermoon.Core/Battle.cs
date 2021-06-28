@@ -234,7 +234,7 @@ namespace Ambermoon
         readonly List<uint> averageMonsterDamage = new List<uint>();
         uint relativeDamageEfficiency = 0;
         bool showMonsterLP = false;
-        readonly bool needsClickForNextAction;
+        internal bool NeedsClickForNextAction { get; set; }
         public bool ReadyForNextAction { get; private set; } = false;
         public bool WaitForClick { get; set; } = false;
         public bool SkipNextBattleFieldClick { get; private set; } = false;
@@ -266,7 +266,7 @@ namespace Ambermoon
             this.game = game;
             this.layout = layout;
             this.partyMembers = partyMembers;
-            this.needsClickForNextAction = needsClickForNextAction;
+            this.NeedsClickForNextAction = needsClickForNextAction;
 
             // place characters
             for (int i = 0; i < partyMembers.Length; ++i)
@@ -401,7 +401,7 @@ namespace Ambermoon
                 }
             }
 
-            if (ReadyForNextAction && (!needsClickForNextAction || !WaitForClick))
+            if (ReadyForNextAction && (!NeedsClickForNextAction || !WaitForClick))
                 NextAction(battleTicks);
 
             if (currentBattleAnimation != null)
@@ -504,7 +504,7 @@ namespace Ambermoon
 
             if (RoundActive)
             {
-                if (ReadyForNextAction && needsClickForNextAction)
+                if (ReadyForNextAction && NeedsClickForNextAction)
                 {
                     NextAction(battleTicks);
                 }
@@ -917,6 +917,9 @@ namespace Ambermoon
             averageMonsterDamage[index] = totalMonsterDamage[index] / numSuccessfulMonsterHits[index];
         }
 
+        void Proceed(Action action)
+            => game.AddTimedEvent(TimeSpan.FromMilliseconds(NeedsClickForNextAction ? 1000 : 500), action);
+
         void RunBattleAction(BattleAction battleAction, uint battleTicks)
         {
             game.CursorType = CursorType.Sword;
@@ -924,7 +927,7 @@ namespace Ambermoon
             void ActionFinished(bool needClickAfterwards = true)
             {
                 ActionCompleted?.Invoke(battleAction);
-                if (needsClickForNextAction && needClickAfterwards)
+                if (NeedsClickForNextAction && needClickAfterwards)
                     WaitForClick = true;
                 ReadyForNextAction = true;
             }
@@ -944,7 +947,7 @@ namespace Ambermoon
                     brokenItems.Add(KeyValuePair.Create(itemIndex, equipSlot.Flags));
                     equipSlot.Clear();
                     layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
-                    ActionFinished(true);
+                    Proceed(() => ActionFinished(true));
                 }
                 else
                 {
@@ -971,7 +974,7 @@ namespace Ambermoon
                 {
                     // Note: This only displays the message. The PickMonsterAction method will drop/switch ranged weapons automatically.
                     layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageHasDroppedWeapon, TextColor.BrightGray);
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => ActionFinished());
+                    Proceed(() => ActionFinished());
                     return;
                 }
                 case BattleActionType.DisplayActionText:
@@ -1039,7 +1042,7 @@ namespace Ambermoon
                             break;
                     }
                     layout.SetBattleMessage(text, next.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => ActionFinished());
+                    Proceed(() => ActionFinished());
                     return;
                 }
                 case BattleActionType.Move:
@@ -1070,10 +1073,7 @@ namespace Ambermoon
 
                     if (moveFailed)
                     {
-                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                        {
-                            ActionFinished();
-                        });
+                        Proceed(() => ActionFinished());
                         return;
                     }
 
@@ -1110,17 +1110,13 @@ namespace Ambermoon
                     }
                     else
                     {
-                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                        {
-                            EndMove();
-                        });
+                        Proceed(EndMove);
                     }
                     return;
                 }
                 case BattleActionType.MoveGroupForward:
                     // No parameter
                     layout.SetBattleMessage(null);
-                    // TODO
                     break;
                 case BattleActionType.Attack:
                 {
@@ -1142,10 +1138,15 @@ namespace Ambermoon
                     if (attackResult == AttackResult.Petrified)
                     {
                         if (target.Type == CharacterType.Monster)
+                        {
                             layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, textColor);
+                            Proceed(() => ActionFinished(true));
+                        }
                         else
+                        {
                             layout.SetBattleMessage(null);
-                        ActionFinished(true);
+                            ActionFinished(true);
+                        }
                         return;
                     }
                     if (damage != 0)
@@ -1307,7 +1308,7 @@ namespace Ambermoon
                                 layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageDidPointsOfDamage, damage), textColor);
                                 break;
                         }
-                        ActionFinished(true);
+                        Proceed(() => ActionFinished(true));
                     }
                     if (battleAction.Character is Monster monster)
                     {
@@ -1405,12 +1406,12 @@ namespace Ambermoon
                             {
                                 currentSpellAnimation?.Destroy();
                                 currentSpellAnimation = null;
-                                ActionFinished(needClickAfterwards);
+                                Proceed(() => ActionFinished(needClickAfterwards));
                             });
                         }
                         else
                         {
-                            ActionFinished(needClickAfterwards);
+                            Proceed(() => ActionFinished(needClickAfterwards));
                         }
                     }
 
@@ -1421,10 +1422,7 @@ namespace Ambermoon
                             {
                                 layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
                                     battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
-                                game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                                {
-                                    EndCast();
-                                });
+                                Proceed(() => EndCast());
                                 return;
                             }
                             break;
@@ -1463,8 +1461,8 @@ namespace Ambermoon
                         {
                             if (finish && spellBlocked)
                             {
-                                ShowSpellFailMessage(battleAction.Character, spellInfo, target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? finishAction : null);
-                                PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : finishAction);
+                                ShowSpellFailMessage(battleAction.Character, spellInfo, target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, NeedsClickForNextAction ? finishAction : null);
+                                PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, NeedsClickForNextAction ? null : finishAction);
                                 return;
                             }
                             else if (playHurt || finish)
@@ -1593,7 +1591,6 @@ namespace Ambermoon
                     }
                     else
                     {
-                        // TODO: If this is a player we should decrease item charge if item was used. For monster items as well?
                         StartCasting();
                     }
 
@@ -1625,7 +1622,7 @@ namespace Ambermoon
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
                                             battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
-                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => EndCast());
+                                        Proceed(() => EndCast());
                                         return;
                                     }
                                     CastSpellOnRow(enemyType, (int)targetRowOrTile, () => EndCast());
@@ -1637,7 +1634,7 @@ namespace Ambermoon
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
                                             battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
-                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () => EndCast());
+                                        Proceed(() => EndCast());
                                         return;
                                     }
                                     CastSpellOnRow(battleAction.Character.Type, (int)targetRowOrTile, () => EndCast());
@@ -1650,10 +1647,7 @@ namespace Ambermoon
                                     {
                                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget,
                                             battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
-                                        game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
-                                        {
-                                            EndCast();
-                                        });
+                                        Proceed(() => EndCast());
                                         return;
                                     }
                                     ApplySpellEffect(battleAction.Character, character, spell, game.CurrentBattleTicks, () => EndCast(),
@@ -1760,7 +1754,7 @@ namespace Ambermoon
                             if (monster.BaseAttack == 0)
                                 monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                         }
-                        ActionFinished(true);
+                        Proceed(() => ActionFinished(true));
                     }
                     else
                     {
@@ -1794,7 +1788,7 @@ namespace Ambermoon
                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageUsedLastAmmunition, textColor);
                         if (battleAction.Character is Monster monster)
                             droppedWeaponMonsters.Add(monster);
-                        ActionFinished(true);
+                        Proceed(() => ActionFinished(true));
                     }
                     else
                     {
@@ -1944,17 +1938,20 @@ namespace Ambermoon
             var color = caster.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
             var delay = TimeSpan.FromMilliseconds(700);
 
-            if (needsClickForNextAction && !spellInfo.Target.TargetsMultipleEnemies())
+            if (NeedsClickForNextAction && !spellInfo.Target.TargetsMultipleEnemies())
             {
                 game.SetBattleMessageWithClick(message, color, finishAction, delay);
             }
             else
             {
-                layout.SetBattleMessage(message, color);
                 game.AddTimedEvent(delay, () =>
                 {
-                    layout.SetBattleMessage(null);
-                    finishAction?.Invoke();
+                    layout.SetBattleMessage(message, color);
+                    Proceed(() =>
+                    {
+                        layout.SetBattleMessage(null);
+                        finishAction?.Invoke();
+                    });
                 });
             }
         }
@@ -1984,8 +1981,8 @@ namespace Ambermoon
                         // Blocked
                         if (playBlocked)
                         {
-                            ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? blockedAction : null);
-                            PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : blockedAction);
+                            ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, NeedsClickForNextAction ? blockedAction : null);
+                            PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, NeedsClickForNextAction ? null : blockedAction);
                         }
                         else
                         {

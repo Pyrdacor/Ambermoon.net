@@ -1053,7 +1053,7 @@ namespace Ambermoon.UI
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
-                KeyValuePair.Create("", (Action<int, string>)null/*((index, _) => ToggleFastBattleMode())*/), // TODO: enable later
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleScreenRatio())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleResolution())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
@@ -1092,6 +1092,7 @@ namespace Ambermoon.UI
             {
                 game.Configuration.FastBattleMode = !game.Configuration.FastBattleMode;
                 SetFastBattleMode();
+                game.SetFastBattleMode(game.Configuration.FastBattleMode);
                 changedConfiguration = true;
             }
             void ToggleScreenRatio()

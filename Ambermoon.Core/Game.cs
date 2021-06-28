@@ -6436,9 +6436,11 @@ namespace Ambermoon
         void AdvanceParty(Action finishAction)
         {
             int advancedMonsters = 0;
-            int totalMonsters = currentBattle.Monsters.Count();
+            var monsters = currentBattle.Monsters.ToList();
+            int totalMonsters = monsters.Count;
+            var newPositions = new Dictionary<int, uint>(totalMonsters);
 
-            void MoveMonster(Monster monster)
+            void MoveMonster(Monster monster, int index)
             {
                 int position = currentBattle.GetSlotFromCharacter(monster);
                 int currentColumn = position % 6;
@@ -6450,11 +6452,15 @@ namespace Ambermoon
                 {
                     animation.AnimationFinished -= MoveAnimationFinished;
                     currentBattle.SetMonsterDisplayLayer(animation, monster, position);
-                    currentBattle.MoveCharacterTo((uint)(position + 6), monster);
+                    newPositions[index] = (uint)(position + 6);
 
                     if (++advancedMonsters == totalMonsters)
                     {
                         advancing = false;
+
+                        for (int i = 0; i < monsters.Count; ++i)
+                            currentBattle.MoveCharacterTo(newPositions[i], monsters[i]);
+
                         layout.EnableButton(4, currentBattle.CanMoveForward);
                         finishAction?.Invoke();
                     }
@@ -6462,13 +6468,14 @@ namespace Ambermoon
 
                 var newDisplayPosition = layout.GetMonsterCombatCenterPosition(currentColumn, newRow, monster);
                 animation.AnimationFinished += MoveAnimationFinished;
-                animation.Play(new int[] { 0 }, TicksPerSecond / 2, CurrentBattleTicks, newDisplayPosition,
+                animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move).Take(1).ToArray(),
+                    TicksPerSecond / 2, CurrentBattleTicks, newDisplayPosition,
                     layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
             }
 
-            foreach (var monster in currentBattle.Monsters)
+            for (int i = 0; i < monsters.Count; ++i)
             {
-                MoveMonster(monster);
+                MoveMonster(monsters[i], i);
             }
 
             advancing = true;
@@ -7423,6 +7430,12 @@ namespace Ambermoon
             }
         }
 
+        internal void SetFastBattleMode(bool active)
+        {
+            if (currentBattle != null)
+                currentBattle.NeedsClickForNextAction = !active;
+        }
+
         void ShowBattleWindow(Event nextEvent, bool failedFlight, uint? combatBackgroundIndex = null)
         {
             Fade(() =>
@@ -7450,7 +7463,7 @@ namespace Ambermoon
                     }
                 }
                 currentBattle = new Battle(this, layout, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
-                    monsterGroup, monsterBattleAnimations, true); // TODO: make last param depend on game options
+                    monsterGroup, monsterBattleAnimations, !Configuration.FastBattleMode);
                 foreach (var monsterBattleAnimation in monsterBattleAnimations)
                     currentBattle.SetMonsterDisplayLayer(monsterBattleAnimation.Value, currentBattle.GetCharacterAt(monsterBattleAnimation.Key) as Monster);
                 currentBattle.RoundFinished += () =>
