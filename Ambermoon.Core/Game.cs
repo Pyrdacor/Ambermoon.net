@@ -4281,8 +4281,11 @@ namespace Ambermoon
             switch (teleportEvent.Transition)
             {
                 case TeleportEvent.TransitionType.Teleporter:
-                case TeleportEvent.TransitionType.WindGate:
                     RunTransition();
+                    break;
+                case TeleportEvent.TransitionType.WindGate:
+                    if (CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.WindChain))
+                        RunTransition();
                     break;
                 case TeleportEvent.TransitionType.Falling:
                     Pause();
