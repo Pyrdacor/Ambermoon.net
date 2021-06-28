@@ -10544,11 +10544,11 @@ namespace Ambermoon
             popup.AddItemImage(itemArea.CreateModified(1, 1, -2, -2), item.GraphicIndex);
             popup.AddText(new Position(51, 101), item.Name, TextColor.White);
             popup.AddText(new Position(51, 109), DataNameProvider.GetItemTypeName(item.Type), TextColor.White);
-            popup.AddText(new Position(32, 120), string.Format(DataNameProvider.ItemWeightDisplay.Replace("{0:00000}", " {0:0}"), item.Weight), TextColor.White);
+            popup.AddText(new Position(32, 120), string.Format(DataNameProvider.ItemWeightDisplay.Replace("{0:00000}", "{0,5}"), item.Weight), TextColor.White);
             popup.AddText(new Position(32, 130), string.Format(DataNameProvider.ItemHandsDisplay, item.NumberOfHands), TextColor.White);
             popup.AddText(new Position(32, 138), string.Format(DataNameProvider.ItemFingersDisplay, item.NumberOfFingers), TextColor.White);
-            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+#;-#; 0")), TextColor.White);
-            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace(" {0:000}", item.Defense.ToString("+#;-#; 0")), TextColor.White);
+            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+#;-#;0")), TextColor.White);
+            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace(" {0:000}", item.Defense.ToString("+#;-#;0")), TextColor.White);
 
             popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, TextColor.LightGray);
             int column = 0;

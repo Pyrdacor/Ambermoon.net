@@ -1959,15 +1959,43 @@ namespace Ambermoon
             }
         }
 
-        bool CheckSpell(Character caster, Character target, Spell spell, Action<bool> failAction, bool playBlocked)
+        internal bool CheckSpell(Character caster, Character target, Spell spell, Action<bool> failAction, bool playBlocked,
+            bool showMessage = true, bool checkDeflection = true)
         {
             var spellInfo = SpellInfos.Entries[spell];
             void Fail() => failAction?.Invoke(false);
-            void ShowFailMessage(string message, Action finishAction) => ShowSpellFailMessage(caster, spellInfo, message, finishAction);
+            void ShowFailMessage(string message, Action finishAction)
+            {
+                if (showMessage)
+                    ShowSpellFailMessage(caster, spellInfo, message, finishAction);
+                else
+                    finishAction?.Invoke();
+            }
 
             if (target.Type != caster.Type)
             {
-                if (target.SpellTypeImmunity.HasFlag((SpellTypeImmunity)spellInfo.SpellType))
+                if (checkDeflection)
+                {
+                    uint antiMagicBuffValue = game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
+
+                    if (game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
+                    {
+                        Action blockedAction = () => failAction?.Invoke(true);
+                        // Blocked
+                        if (playBlocked)
+                        {
+                            ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? blockedAction : null);
+                            PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : blockedAction);
+                        }
+                        else
+                        {
+                            blockedAction();
+                        }
+                        return false;
+                    }
+                }
+
+                if ((target.SpellTypeImmunity & (SpellTypeImmunity)spellInfo.SpellType) != 0)
                 {
                     ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpellType, Fail);
                     return false;
@@ -1979,24 +2007,6 @@ namespace Ambermoon
                         Fail();
                     else
                         ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageImmuneToSpell, Fail);
-                    return false;
-                }
-
-                uint antiMagicBuffValue = game.CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.AntiMagic);
-
-                if (game.RollDice100() < (int)(target.Attributes[Attribute.AntiMagic].TotalCurrentValue + antiMagicBuffValue))
-                {
-                    Action blockedAction = () => failAction?.Invoke(true);
-                    // Blocked
-                    if (playBlocked)
-                    {
-                        ShowFailMessage(target.Name + game.DataNameProvider.BattleMessageDeflectedSpell, needsClickForNextAction ? blockedAction : null);
-                        PlayBattleEffectAnimation(BattleEffect.BlockSpell, (uint)GetSlotFromCharacter(target), game.CurrentBattleTicks, needsClickForNextAction ? null : blockedAction);
-                    }
-                    else
-                    {
-                        blockedAction();
-                    }
                     return false;
                 }
             }

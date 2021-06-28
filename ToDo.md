@@ -16,6 +16,8 @@
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 - If a near monster in the middle casts magic projectile (maybe similar things too) it isn't shown (tested with energy balls)
 - Energyballs did not disappear after won battle (ap 361)
+- If moving forward after picking spell targets, all spells will miss
+- Locking in a "target all" spell and then pick the target of a single-target spell with same char, will still show the selection of all fields.
 
 
 ## 2D maps

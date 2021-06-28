@@ -1195,36 +1195,44 @@ namespace Ambermoon.Render
             // Used for all curses
             void PlayCurse(CombatGraphicIndex iconGraphicIndex)
             {
-                // Note: The hurt animation comes first so we immediately call the passed finish action
-                // which will display the hurt animation.
-                finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
-                this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
-
-                float scale = fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
-                var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(6 * scale));
-                game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
+                if (!battle.CheckSpell(battle.GetCharacterAt(startPosition), battle.GetCharacterAt(tile), spell, null, false, false, false))
                 {
-                    void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action finishAction, bool reverse, byte displayLayer)
+                    this.finishAction?.Invoke();
+                }
+                else
+                {
+                    // Note: The hurt animation comes first so we immediately call the passed finish action
+                    // which will display the hurt animation.
+                    finishAction?.Invoke(game.CurrentBattleTicks, true, false); // Play hurt animation but do not finish.
+                    this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, false, true); // This is called after the animation to finish.
+
+                    float scale = fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)(tile / 6));
+                    var targetPosition = GetTargetPosition(tile) - new Position(0, Util.Round(6 * scale));
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(500), () =>
                     {
-                        AddAnimation(graphicIndex, 1, targetPosition, targetPosition, reverse ? Game.TicksPerSecond / 4 : Game.TicksPerSecond / 2,
-                            reverse ? scale : 0.0f, reverse ? 0.5f * scale : scale, displayLayer, finishAction);
-                    }
-                    byte displayLayerRing = (byte)(fromMonster ? 254 : ((tile / 6) * 60 + 60));
-                    byte displayLayer = (byte)(displayLayerRing + 1);
-                    AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, false, displayLayerRing);
-                    AddCurseAnimation(iconGraphicIndex, () =>
-                    {
-                        AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, true, displayLayerRing);
-                        AddCurseAnimation(iconGraphicIndex, null, true, displayLayer); // This will trigger the outer finish action
-                    }, false, displayLayer);
-                });
+                        void AddCurseAnimation(CombatGraphicIndex graphicIndex, Action finishAction, bool reverse, byte displayLayer)
+                        {
+                            AddAnimation(graphicIndex, 1, targetPosition, targetPosition, reverse ? Game.TicksPerSecond / 4 : Game.TicksPerSecond / 2,
+                                reverse ? scale : 0.0f, reverse ? 0.5f * scale : scale, displayLayer, finishAction);
+                        }
+                        byte displayLayerRing = (byte)(fromMonster ? 254 : ((tile / 6) * 60 + 60));
+                        byte displayLayer = (byte)(displayLayerRing + 1);
+                        AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, false, displayLayerRing);
+                        AddCurseAnimation(iconGraphicIndex, () =>
+                        {
+                            AddCurseAnimation(CombatGraphicIndex.RedRing, () => { }, true, displayLayerRing);
+                            AddCurseAnimation(iconGraphicIndex, null, true, displayLayer); // This will trigger the outer finish action
+                        }, false, displayLayer);
+                    });
+                }
             }
 
             // Used for Anti-undead spells
             void PlayHolyLight()
             {
                 // Should always be a monster but just in case we check here.
-                if (battle.GetCharacterAt(tile) is Monster monster)
+                if (battle.GetCharacterAt(tile) is Monster monster &&
+                    battle.CheckSpell(battle.GetCharacterAt(startPosition), monster, spell, null, false, false, false))
                 {
                     var position = GetTargetPosition(tile) + new Position(0, 4);
                     int beamHeight = 8 + position.Y - Global.CombatBackgroundArea.Top;
@@ -1252,6 +1260,10 @@ namespace Ambermoon.Render
                         AddAnimation(CombatGraphicIndex.HolyBeam, 1, startPosition, endPosition, Game.TicksPerSecond * 3 / 4, 1, 0, displayLayer, null,
                             new Size(beamWidth, beamHeight), BattleAnimation.AnimationScaleType.XOnly);
                     }, new Size(beamWidth, beamHeight));
+                }
+                else
+                {
+                    this.finishAction?.Invoke();
                 }
             }
 
@@ -1577,23 +1589,31 @@ namespace Ambermoon.Render
                     break;
                 case Spell.DissolveVictim:
                 {
-                    int row = tile / 6;
-                    var position = GetTargetPosition(tile);
-                    void ShowParticle()
+                    var target = battle.GetCharacterAt(tile);
+                    if (!battle.CheckSpell(battle.GetCharacterAt(startPosition), target, spell, null, false, false, false))
                     {
-                        AddAnimation(CombatGraphicIndex.GreenStar, 5, position, position - new Position(0, 4), Game.TicksPerSecond / 5, 1, 1, 255,
-                            () => finishAction?.Invoke(game.CurrentBattleTicks, false, true));
-                    }                   
-                    if (battle.GetCharacterAt(tile) is Monster monster)
-                    {
-                        // Shrink monster to zero
-                        battle.StartMonsterAnimation(monster, animation =>
-                            animation.PlayWithoutAnimating(Game.TicksPerSecond, game.CurrentBattleTicks, position, 0.0f),
-                            _ => ShowParticle());
+                        this.finishAction?.Invoke();
                     }
                     else
                     {
-                        ShowParticle();
+                        int row = tile / 6;
+                        var position = GetTargetPosition(tile);
+                        void ShowParticle()
+                        {
+                            AddAnimation(CombatGraphicIndex.GreenStar, 5, position, position - new Position(0, 4), Game.TicksPerSecond / 5, 1, 1, 255,
+                                () => finishAction?.Invoke(game.CurrentBattleTicks, false, true));
+                        }
+                        if (target is Monster monster)
+                        {
+                            // Shrink monster to zero
+                            battle.StartMonsterAnimation(monster, animation =>
+                                animation.PlayWithoutAnimating(Game.TicksPerSecond, game.CurrentBattleTicks, position, 0.0f),
+                                _ => ShowParticle());
+                        }
+                        else
+                        {
+                            ShowParticle();
+                        }
                     }
                     break;
                 }
