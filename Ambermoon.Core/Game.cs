@@ -4340,7 +4340,10 @@ namespace Ambermoon
                 TravelType = travelType;
                 layout.TransportEnabled = true;
                 if (layout.ButtonGridPage == 1)
+                {
                     layout.EnableButton(3, true);
+                    layout.EnableButton(5, travelType.CanCampOn());
+                }
             }
 
             if (WindowActive)
@@ -4393,6 +4396,9 @@ namespace Ambermoon
                     StartSwimming();
                 else
                     TravelType = TravelType.Walk;
+
+                if (layout.ButtonGridPage == 1)
+                    layout.EnableButton(5, TravelType.CanCampOn());
 
                 renderMap2D.TriggerEvents(player2D, EventTrigger.Move, x, y, MapManager, CurrentTicks, CurrentSavegame);
             }
@@ -6871,12 +6877,10 @@ namespace Ambermoon
                                     {
                                         EndSequence();
                                         eagle.Delete();
-                                        TravelType = TravelType.Eagle;
+                                        ActivateTransport(TravelType.Eagle);
                                         // Update direction to right
                                         player.Direction = CharacterDirection.Right; // Set this before player2D.MoveTo!
                                         player2D.MoveTo(Map, (uint)player2D.Position.X, (uint)player2D.Position.Y, CurrentTicks, true, CharacterDirection.Right);
-                                        if (layout.ButtonGridPage != 0)
-                                            layout.EnableButton(3, true);
                                     }
                                     else
                                     {

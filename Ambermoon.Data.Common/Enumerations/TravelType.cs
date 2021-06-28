@@ -42,6 +42,18 @@ namespace Ambermoon.Data.Enumerations
             _ => false
         };
 
+        public static bool CanCampOn(this TravelType travelType) => travelType switch
+        {
+            TravelType.Walk => true,
+            TravelType.Horse => true,
+            TravelType.Raft => true,
+            TravelType.Ship => true,
+            TravelType.SandLizard => true,
+            TravelType.SandShip => true,
+            TravelType.MagicalDisc => true,
+            _ => false
+        };
+
         public static bool IsStoppable(this TravelType travelType) => travelType switch
         {
             TravelType.Walk => false,
