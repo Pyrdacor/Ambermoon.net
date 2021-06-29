@@ -6,13 +6,29 @@ using System.Threading.Tasks;
 
 namespace Ambermoon.Data.Legacy.Audio
 {
-    class Song : ISong
+    public interface ISonicArrangerSongInfo
     {
+        int SongLength { get; }
+        int PatternLength { get; }
+        int InterruptsPerSecond { get; }
+        int InitialSongSpeed { get; }
+        int InitialBeatsPerMinute { get; }
+    }
+
+    class Song : ISong, ISonicArrangerSongInfo
+    {
+        readonly SonicArranger.Song sonicArrangerSong;
         readonly SongPlayer songPlayer;
         readonly SonicArrangerFile sonicArrangerFile;
         readonly Enumerations.Song song;
         byte[] buffer;
         readonly Task loadTask = null;
+
+        public int SongLength => sonicArrangerSong.StopPos - sonicArrangerSong.StartPos;
+        public int PatternLength => sonicArrangerSong.PatternLength;
+        public int InterruptsPerSecond => sonicArrangerSong.NBIrqps;
+        public int InitialSongSpeed => sonicArrangerSong.SongSpeed;
+        public int InitialBeatsPerMinute => sonicArrangerSong.InitialBPM;
 
         public Song(Enumerations.Song song, int songIndex, SongPlayer songPlayer, DataReader reader,
             Stream.ChannelMode channelMode, bool hardwareLPF, bool pal, bool waitForLoading = false, Action loadFinishedHandler = null)
@@ -21,6 +37,7 @@ namespace Ambermoon.Data.Legacy.Audio
             this.songPlayer = songPlayer;
             reader.Position = 0;
             sonicArrangerFile = new SonicArrangerFile(reader);
+            sonicArrangerSong = sonicArrangerFile.Songs[songIndex];
             void Load()
             {
                 buffer = new Stream(sonicArrangerFile, songIndex, 44100, channelMode, hardwareLPF, pal).ToUnsignedArray();

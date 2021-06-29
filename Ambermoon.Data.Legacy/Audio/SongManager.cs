@@ -8,7 +8,7 @@ namespace Ambermoon.Data.Legacy.Audio
 {
     public class SongManager : ISongManager
     {
-        readonly Dictionary<Enumerations.Song, ISong> songs = new Dictionary<Enumerations.Song, ISong>();
+        readonly Dictionary<Enumerations.Song, Song> songs = new Dictionary<Enumerations.Song, Song>();
         readonly SongPlayer songPlayer = new SongPlayer();
 
         Song CreateSong(Enumerations.Song song, int songIndex, IDataReader dataReader, bool waitForLoading)
@@ -67,6 +67,10 @@ namespace Ambermoon.Data.Legacy.Audio
             }
         }
 
-        public ISong GetSong(Enumerations.Song index) => songs.TryGetValue(index, out var song) ? song : null;
+        Song GetSongInternal(Enumerations.Song index) => songs.TryGetValue(index, out var song) ? song : null;
+
+        public ISong GetSong(Enumerations.Song index) => GetSongInternal(index);
+
+        public ISonicArrangerSongInfo GetSongInfo(Enumerations.Song index) => GetSongInternal(index);
     }
 }
