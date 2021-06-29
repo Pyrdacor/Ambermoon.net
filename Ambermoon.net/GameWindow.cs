@@ -707,6 +707,14 @@ namespace Ambermoon
                 ChangeFullscreenMode(true); // This will adjust the window
             }
 
+            if (configuration.Width == null || configuration.Height == null)
+            {
+                var monitorSize = window.Monitor.Bounds.Size;
+                var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[1];
+                configuration.Width = Width = size.Width;
+                configuration.Height = Height = size.Height;
+            }
+
             if (ShowVersionSelector((gameData, savePath, gameLanguage) =>
             {
                 renderView?.Dispose();
@@ -840,8 +848,8 @@ namespace Ambermoon
         {
             this.configuration = configuration;
             var screenSize = configuration.GetScreenSize();
-            this.configuration.Width = Width = screenSize.Width;
-            this.configuration.Height = Height = screenSize.Height;
+            Width = screenSize.Width;
+            Height = screenSize.Height;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             var videoMode = new VideoMode(60);

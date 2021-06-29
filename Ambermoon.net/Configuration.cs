@@ -8,10 +8,10 @@ namespace Ambermoon
 {
     internal class Configuration : IConfiguration
     {
-        public int? Width { get; set; } = 1280;
-        public int? Height { get; set; } = 800;
-        public int? FullscreenWidth { get; set; } = 1280;
-        public int? FullscreenHeight { get; set; } = 800;
+        public int? Width { get; set; } = null;
+        public int? Height { get; set; } = null;
+        public int? FullscreenWidth { get; set; } = null;
+        public int? FullscreenHeight { get; set; } = null;
         public bool Fullscreen { get; set; } = false;
         public bool UseDataPath { get; set; } = false;
         public string DataPath { get; set; } = ExecutableDirectoryPath;
