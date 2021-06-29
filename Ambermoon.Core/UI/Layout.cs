@@ -3769,37 +3769,40 @@ namespace Ambermoon.UI
                     return questionYesButton?.LeftMouseDown(position, currentTicks) == true ||
                            questionNoButton?.LeftMouseDown(position, currentTicks) == true;
                 }
-                else if (ChestText != null)
+                else if (activePopup?.CloseOnClick != true)
                 {
-                    if (buttons == MouseButtons.Left || buttons == MouseButtons.Right)
+                    if (ChestText != null)
                     {
-                        if (ChestText.Click(position))
+                        if (buttons == MouseButtons.Left || buttons == MouseButtons.Right)
                         {
-                            cursorType = ChestText?.WithScrolling == true ? CursorType.Click : CursorType.Sword;
+                            if (ChestText.Click(position))
+                            {
+                                cursorType = ChestText?.WithScrolling == true ? CursorType.Click : CursorType.Sword;
+                                return true;
+                            }
+                        }
+                    }
+                    else if (InventoryMessageWaitsForClick)
+                    {
+                        if (buttons == MouseButtons.Left || buttons == MouseButtons.Right)
+                        {
+                            inventoryMessage.Click(position);
+                            cursorType = inventoryMessage == null ? CursorType.Sword : CursorType.Click;
                             return true;
                         }
                     }
-                }
-                else if (InventoryMessageWaitsForClick)
-                {
-                    if (buttons == MouseButtons.Left || buttons == MouseButtons.Right)
+                    else if (game.ConversationTextActive && Type == LayoutType.Conversation)
                     {
-                        inventoryMessage.Click(position);
-                        cursorType = inventoryMessage == null ? CursorType.Sword : CursorType.Click;
+                        cursorType = CursorType.Click;
+                        var scrollText = texts.Last(text => text.WithScrolling);
+                        if (scrollText != null)
+                        {
+                            while (!texts[^1].WithScrolling)
+                                texts.RemoveAt(texts.Count - 1);
+                            scrollText.Click(position);
+                        }
                         return true;
                     }
-                }
-                else if (game.ConversationTextActive && Type == LayoutType.Conversation)
-                {
-                    cursorType = CursorType.Click;
-                    var scrollText = texts.Last(text => text.WithScrolling);
-                    if (scrollText != null)
-                    {
-                        while (!texts[^1].WithScrolling)
-                            texts.RemoveAt(texts.Count - 1);
-                        scrollText.Click(position);
-                    }
-                    return true;
                 }
 
                 if (PopupActive)

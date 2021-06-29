@@ -10892,6 +10892,8 @@ namespace Ambermoon
 
         void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)
         {
+            bool inputWasEnabled = InputEnable;
+            InputEnable = false;
             var previousSong = PlayMusic(Song.StairwayToLevel50);
             var popup = layout.OpenPopup(new Position(16, 62), 18, 6);
             bool magicClass = partyMember.Class.IsMagic();
@@ -10920,6 +10922,7 @@ namespace Ambermoon
 
             popup.Closed += () =>
             {
+                InputEnable = inputWasEnabled;
                 PlayMusic(previousSong);
                 finishedEvent?.Invoke();
             };
