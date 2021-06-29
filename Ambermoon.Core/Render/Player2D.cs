@@ -80,7 +80,7 @@ namespace Ambermoon.Render
                             if (ev.Type == EventType.EnterPlace ||
                                 (ev is TeleportEvent teleportEvent && teleportEvent.Transition != TeleportEvent.TransitionType.WindGate) ||
                                 ev.Type == EventType.Riddlemouth ||
-                                ev.Type == EventType.Chest ||
+                                (ev.Type == EventType.Chest && Map.Map.IsWorldMap) ||
                                 (ev is DoorEvent doorEvent && game.CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex)))
                             {
                                 eventType = ev.Type;
