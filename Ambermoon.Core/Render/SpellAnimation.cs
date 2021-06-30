@@ -892,7 +892,7 @@ namespace Ambermoon.Render
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     const float scaleReducePerFlame = 0.225f;
                     float scale = GetScaleYRelativeToCombatArea(info.GraphicInfo.Height, 1.15f) *
-                        (fromMonster ? 1.5f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
+                        (fromMonster ? 1.2f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                     void AddFlameAnimation(int width, float startScale, float endScale, Position startGroundPosition, Position endGroundPosition,
                         int startFrame, uint duration, Action finishAction)
                     {
@@ -911,7 +911,7 @@ namespace Ambermoon.Render
                             new Size(width, startHeight), BattleAnimation.AnimationScaleType.YOnly);
                     }
                     var combatArea = Global.CombatBackgroundArea;
-                    var leftPosition = fromMonster ? Layout.GetPlayerSlotCenterPosition(2) : Layout.GetMonsterCombatGroundPosition(renderView, targetRow * 6 + 2);
+                    var leftPosition = fromMonster ? Layout.GetPlayerSlotTargetPosition(2) : Layout.GetMonsterCombatGroundPosition(renderView, targetRow * 6 + 2);
                     int width = Util.Round(scale * info.GraphicInfo.Width * 0.5f);
                     uint primaryDuration = Game.TicksPerSecond;
                     uint secondaryDuration = Game.TicksPerSecond * 5 / 8;
