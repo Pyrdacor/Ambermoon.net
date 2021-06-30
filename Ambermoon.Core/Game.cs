@@ -578,18 +578,41 @@ namespace Ambermoon
             }
             else
             {
-                characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
-                {
-                    var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
-
-                    initialSavegame.PartyMembers[1].Name = name;
-                    initialSavegame.PartyMembers[1].Gender = female ? Gender.Female : Gender.Male;
-                    initialSavegame.PartyMembers[1].PortraitIndex = (ushort)portraitIndex;
-
-                    Start(initialSavegame);
-                    characterCreator = null;
-                });
+                NewGame(false);
             }
+        }
+
+        internal void NewGame(bool cleanUp = true)
+        {
+            if (cleanUp)
+            {
+                ClosePopup();
+                CloseWindow();
+                Cleanup();
+                layout.ShowPortraitArea(false);
+                layout.SetLayout(LayoutType.None);
+                windowTitle.Visible = false;
+                cursor.Type = Data.CursorType.Sword;
+                UpdateCursor(lastMousePosition, MouseButtons.None);
+                currentUIPaletteIndex = 0;
+            }
+
+            currentSong?.Stop();
+            currentSong = null;
+
+            PlayMusic(Song.HisMastersVoice);
+
+            characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
+            {
+                var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+
+                initialSavegame.PartyMembers[1].Name = name;
+                initialSavegame.PartyMembers[1].Gender = female ? Gender.Female : Gender.Male;
+                initialSavegame.PartyMembers[1].PortraitIndex = (ushort)portraitIndex;
+
+                Start(initialSavegame);
+                characterCreator = null;
+            });
         }
 
         void Exit()
@@ -1531,9 +1554,19 @@ namespace Ambermoon
                 RunSavegameTileChangeEvents(map.Index);
         }
 
+        internal string GetCustomText(CustomTexts.Index index) => CustomTexts.GetText(GameLanguage, index);
+
         public void LoadGame(int slot, bool showError = false, bool loadInitialOnError = false,
-            Action<Action> preLoadAction = null)
+            Action<Action> preLoadAction = null, bool exitWhenFailing = true)
         {
+            void Failed()
+            {
+                if (exitWhenFailing)
+                    Exit();
+                else
+                    ClosePopup();
+            }
+
             var savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot);
 
             if (savegame == null)
@@ -1546,14 +1579,14 @@ namespace Ambermoon
 
                         if (savegame == null)
                         {
-                            ShowMessagePopup("Failed to load savegame.",
-                                Exit, TextAlign.Center, 200);
+                            ShowMessagePopup(GetCustomText(CustomTexts.Index.FailedToLoadSavegame),
+                                Failed, TextAlign.Center, 200);
                         }
                         else
                         {
                             void ProceedWithInitial()
                             {
-                                ShowMessagePopup("Failed to load savegame. Loaded initial savegame instead.",
+                                ShowMessagePopup(GetCustomText(CustomTexts.Index.FailedToLoadSavegameUseInitial),
                                     () => this.Start(savegame), TextAlign.Center, 200);
                             }
                             if (preLoadAction != null)
@@ -1566,23 +1599,23 @@ namespace Ambermoon
                     {
                         if (slot == 0)
                         {
-                            ShowMessagePopup("Failed to load initial savegame.",
-                                Exit, TextAlign.Center, 200);
+                            ShowMessagePopup(GetCustomText(CustomTexts.Index.FailedToLoadInitialSavegame),
+                                Failed, TextAlign.Center, 200);
                         }
                         else
                         {
-                            ShowMessagePopup("Failed to load savegame.",
-                                Exit, TextAlign.Center, 200);
+                            ShowMessagePopup(GetCustomText(CustomTexts.Index.FailedToLoadSavegame),
+                                Failed, TextAlign.Center, 200);
                         }
                     }
                     return;
                 }
                 else if (loadInitialOnError && slot != 0)
                 {
-                    LoadGame(0, true, false, preLoadAction);
+                    LoadGame(0, true, false, preLoadAction, exitWhenFailing);
                     return;
                 }
-                Exit();
+                Failed();
                 return;
             }
 
@@ -12444,7 +12477,7 @@ namespace Ambermoon
                         {
                             if (load)
                             {
-                                layout.OpenLoadMenu(CloseWindow, ShowButtons);
+                                layout.OpenLoadMenu(CloseWindow, ShowButtons, true);
                             }
                             else
                             {

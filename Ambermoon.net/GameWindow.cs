@@ -420,6 +420,7 @@ namespace Ambermoon
                                 var characterManager = new CharacterManager(gameData, graphicProvider);
                                 var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
                                 var lightEffectProvider = new LightEffectProvider(executableData);
+                                songManager?.WaitForAllSongsLoaded();
 
                                 gameCreator = () =>
                                 {

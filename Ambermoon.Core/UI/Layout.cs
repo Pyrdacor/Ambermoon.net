@@ -530,6 +530,13 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
+                if (portraitBackgrounds[i] != null)
+                    portraitBackgrounds[i].Visible = show;
+                if (portraits[i] != null)
+                    portraits[i].Visible = show;
+                if (portraitNames[i] != null)
+                    portraitNames[i].Visible = show;
+
                 bool showBar = show;
 
                 if (game.CurrentSavegame == null)
@@ -693,7 +700,7 @@ namespace Ambermoon.UI
             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(6, ButtonType.Save, game.BattleActive, OpenSaveMenu, false);
             buttonGrid.SetButton(7, ButtonType.Load, false, () => OpenLoadMenu(), false);
-            buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
+            buttonGrid.SetButton(8, ButtonType.Stats, false, NewGame, false);
         }
 
         void CloseOptionMenu()
@@ -943,7 +950,20 @@ namespace Ambermoon.UI
 
         internal void ClearLeftUpIgnoring() => ignoreNextMouseUp = false;
 
-        internal void OpenLoadMenu(Action<Action> preLoadAction = null, Action abortAction = null)
+        void NewGame()
+        {
+            void ClosePopup() => this.ClosePopup(false, true);
+
+            OpenYesNoPopup(game.ProcessText(game.GetCustomText(CustomTexts.Index.ReallyStartNewGame)),
+                () =>
+                {
+                    ClosePopup();
+                    game.NewGame();
+                }, ClosePopup, ClosePopup);
+        }
+
+        internal void OpenLoadMenu(Action<Action> preLoadAction = null, Action abortAction = null,
+            bool loadInitialSavegameOnFailure = false)
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             var savegamePopup = OpenPopup(new Position(16, 62), 18, 7, true, false);
@@ -968,7 +988,7 @@ namespace Ambermoon.UI
                     OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyLoad), () =>
                     {
                         ClosePopup();
-                        game.LoadGame(slot, true, true, preLoadAction);
+                        game.LoadGame(slot, true, loadInitialSavegameOnFailure, preLoadAction, false);
                     }, Close, Close);
                 }
             }
@@ -1491,7 +1511,6 @@ namespace Ambermoon.UI
                     buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                     break;
-                    // TODO
             }
         }
 

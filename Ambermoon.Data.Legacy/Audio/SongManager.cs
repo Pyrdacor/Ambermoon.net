@@ -3,6 +3,7 @@ using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Ambermoon.Data.Legacy.Audio
 {
@@ -10,11 +11,12 @@ namespace Ambermoon.Data.Legacy.Audio
     {
         readonly Dictionary<Enumerations.Song, Song> songs = new Dictionary<Enumerations.Song, Song>();
         readonly SongPlayer songPlayer = new SongPlayer();
+        int numSongsLoaded = 0;
 
         Song CreateSong(Enumerations.Song song, int songIndex, IDataReader dataReader, bool waitForLoading)
         {
             return new Song(song, songIndex, songPlayer, dataReader as DataReader,
-                SonicArranger.Stream.ChannelMode.Mono, true, true, waitForLoading);
+                SonicArranger.Stream.ChannelMode.Mono, true, true, waitForLoading, () => ++numSongsLoaded);
         }
 
         public SongManager(IGameData gameData, Enumerations.Song? immediateLoadSongIndex = null)
@@ -65,6 +67,12 @@ namespace Ambermoon.Data.Legacy.Audio
                     songs.Add(song, CreateSong(song, songIndex, readerProvider(), false));
                 }
             }
+        }
+
+        public void WaitForAllSongsLoaded()
+        {
+            while (numSongsLoaded < songs.Count)
+                Thread.Sleep(25);
         }
 
         Song GetSongInternal(Enumerations.Song index) => songs.TryGetValue(index, out var song) ? song : null;

@@ -446,6 +446,11 @@ namespace Ambermoon
             animation.SetDisplayLayer(displayLayer);
         }
 
+        static string GetLPString(uint lp) => lp > 999 ? "***" : lp.ToString();
+
+        static string GetMonsterLPString(Monster monster) =>
+            $"{GetLPString(monster.HitPoints.CurrentValue)}/{GetLPString(monster.HitPoints.TotalMaxValue)}^{monster.Name}";
+
         /// <summary>
         /// Called while updating the battle. Each call will
         /// perform the next action which can be a movement,
@@ -468,8 +473,7 @@ namespace Ambermoon
                 {
                     foreach (var monster in Monsters)
                     {
-                        layout.GetMonsterBattleFieldTooltip(monster).Text =
-                            $"{monster.HitPoints.CurrentValue}/{monster.HitPoints.TotalMaxValue}^{monster.Name}";
+                        layout.GetMonsterBattleFieldTooltip(monster).Text = GetMonsterLPString(monster);
                     }
                 }
                 RoundFinished?.Invoke();
@@ -2375,8 +2379,7 @@ namespace Ambermoon
                     {
                         foreach (var monster in Monsters)
                         {
-                            layout.GetMonsterBattleFieldTooltip(monster).Text =
-                                $"{monster.HitPoints.CurrentValue}/{monster.HitPoints.TotalMaxValue}^{monster.Name}";
+                            layout.GetMonsterBattleFieldTooltip(monster).Text = GetMonsterLPString(monster);
                         }
                         showMonsterLP = true;
                     }
