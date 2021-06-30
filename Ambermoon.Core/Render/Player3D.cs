@@ -153,14 +153,19 @@ namespace Ambermoon.Render
                     if (considerPosition)
                     {
                         var oldMapIndex = map.Map.Index;
+                        var oldMapPosition = new Position(Position);
                         anyEventTriggered = anyEventTriggered || map.Map.TriggerEvents(game, EventTrigger.Move,
                             (uint)touchedPosition.X, (uint)touchedPosition.Y, ticks, game.CurrentSavegame, out _);
 
                         if (oldMapIndex != game.Map.Index)
                         {
-                            // TODO: There are also teleports to the same map
                             game.PlayerMoved(true);
                             break; // map changed
+                        }
+                        else if (anyEventTriggered && oldMapPosition != Position)
+                        {
+                            game.PlayerMoved(false, oldMapPosition);
+                            break; // teleported
                         }
                     }
                 }
