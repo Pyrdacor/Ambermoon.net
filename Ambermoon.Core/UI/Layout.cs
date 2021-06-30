@@ -3589,13 +3589,13 @@ namespace Ambermoon.UI
         {
             if (questionYesButton != null && (char.ToLower(ch) == 'y' || char.ToLower(ch) == 'j'))
             {
-                questionYesButton.Press(game.CurrentTicks);
+                questionYesButton.PressImmediately(game, false, true);
                 return true;
             }
 
             if (questionNoButton != null && char.ToLower(ch) == 'n')
             {
-                questionNoButton.Press(game.CurrentTicks);
+                questionNoButton.PressImmediately(game, false, true);
                 return true;
             }
 

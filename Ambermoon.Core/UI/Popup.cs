@@ -304,7 +304,7 @@ namespace Ambermoon.UI
 
                 if (yesButton != null)
                 {
-                    yesButton.Press(game.CurrentTicks);
+                    yesButton.PressImmediately(game, false, true);
                     return true;
                 }
             }
@@ -314,7 +314,7 @@ namespace Ambermoon.UI
 
                 if (noButton != null)
                 {
-                    noButton.Press(game.CurrentTicks);
+                    noButton.PressImmediately(game, false, true);
                     return true;
                 }
             }
@@ -409,7 +409,7 @@ namespace Ambermoon.UI
 
                 if (upButton != null)
                 {
-                    upButton.PressImmediately(key == Key.PageUp || key == Key.Home);
+                    upButton.PressImmediately(game, key == Key.PageUp || key == Key.Home);
                     return true;
                 }
             }
@@ -420,7 +420,7 @@ namespace Ambermoon.UI
 
                 if (downButton != null)
                 {
-                    downButton.PressImmediately(key == Key.PageDown || key == Key.End);
+                    downButton.PressImmediately(game, key == Key.PageDown || key == Key.End);
                     return true;
                 }
             }

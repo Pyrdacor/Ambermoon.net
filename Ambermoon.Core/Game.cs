@@ -300,7 +300,6 @@ namespace Ambermoon
         Battle currentBattle = null;
         internal bool BattleActive => currentBattle != null;
         internal bool BattleRoundActive => currentBattle?.RoundActive == true;
-        internal Button QuestionYesButton = null;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;

@@ -317,14 +317,40 @@ namespace Ambermoon.UI
             return cursorChangeAction?.Invoke();
         }
 
-        internal void PressImmediately(bool rightMouse = false)
+        internal void PressImmediately(Game game, bool rightMouse = false, bool delayedPressAnimation = false)
         {
             if (!Disabled)
             {
+                void Press(Action action)
+                {
+                    void PressAction()
+                    {
+                        released = true;
+                        action?.Invoke();
+                    }
+
+                    if (delayedPressAnimation)
+                    {
+                        released = false;
+                        Pressed = true;
+                        game.AddTimedEvent(TimeSpan.FromMilliseconds(250), PressAction);
+                    }
+                    else
+                    {
+                        PressAction();
+                    }
+                }
+
                 if (rightMouse)
-                    RightClickAction?.Invoke();
+                {
+                    if (RightClickAction != null)
+                        Press(RightClickAction);
+                }
                 else
-                    LeftClickAction?.Invoke();
+                {
+                    if (LeftClickAction != null)
+                        Press(LeftClickAction);
+                }
             }
         }
 
