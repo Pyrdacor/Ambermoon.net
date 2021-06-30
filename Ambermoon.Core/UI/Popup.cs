@@ -150,27 +150,49 @@ namespace Ambermoon.UI
         }
 
         public UIText AddText(Rect bounds, string text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
-            bool shadow = true, byte displayLayer = 1, bool scrolling = false)
+            bool shadow = true, byte displayLayer = 1, bool scrolling = false, Layout layout = null)
         {
             return AddText(bounds, renderView.TextProcessor.CreateText(text), textColor, textAlign,
-                shadow, (byte)Util.Min(255, displayLayer), scrolling);
+                shadow, (byte)Util.Min(255, displayLayer), scrolling, layout);
         }
 
         public UIText AddText(Rect bounds, IText text, TextColor textColor, TextAlign textAlign = TextAlign.Left,
-            bool shadow = true, byte displayLayer = 1, bool scrolling = false)
+            bool shadow = true, byte displayLayer = 1, bool scrolling = false, Layout layout = null)
         {
-            var uiText = new UIText(renderView, game.TextPaletteIndex, text, bounds, (byte)Util.Min(255, DisplayLayer + displayLayer),
-                textColor, shadow, textAlign, scrolling);
+            UIText uiText;
+            displayLayer = (byte)Util.Min(255, DisplayLayer + displayLayer);
+
+            if (scrolling && layout != null)
+                uiText = layout.CreateScrollableText(bounds, text, textColor, textAlign, displayLayer, shadow, game.TextPaletteIndex);
+            else
+            {
+                uiText = new UIText(renderView, game.TextPaletteIndex, text, bounds, (byte)Util.Min(255, DisplayLayer + displayLayer),
+                    textColor, shadow, textAlign, scrolling);
+            }
             texts.Add(uiText);
             if (scrolling)
             {
                 bool closeAfterScroll = CloseOnClick;
                 CloseOnClick = false;
-                uiText.Scrolled += scrolledToEnd =>
+                if (closeAfterScroll)
                 {
-                    if (closeAfterScroll && scrolledToEnd)
-                        game.ClosePopup();
-                };
+                    if (layout != null)
+                    {
+                        uiText.FreeScrollingEnded += () =>
+                        {
+                            if (closeAfterScroll)
+                                game.ClosePopup();
+                        };
+                    }
+                    else
+                    {
+                        uiText.Scrolled += scrolledToEnd =>
+                        {
+                            if (closeAfterScroll && scrolledToEnd)
+                                game.ClosePopup();
+                        };
+                    }
+                }
             }
             return uiText;
         }

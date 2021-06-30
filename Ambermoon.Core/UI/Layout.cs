@@ -753,7 +753,7 @@ namespace Ambermoon.UI
                 CloseOnClick = closeOnClick
             };
             bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
-            activePopup.AddText(textBounds, text, textColor, textAlign, true, 1, scrolling);
+            activePopup.AddText(textBounds, text, textColor, textAlign, true, 1, scrolling, this);
             if (closeAction != null)
                 activePopup.Closed += closeAction;
             return activePopup;
@@ -3254,22 +3254,33 @@ namespace Ambermoon.UI
             }
         }
 
-        public UIText AddText(Rect rect, string text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, string text, TextColor color = TextColor.White,
+            TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
             return AddText(rect, RenderView.TextProcessor.CreateText(text), color, textAlign, displayLayer);
         }
 
-        public UIText AddText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddText(Rect rect, IText text, TextColor color = TextColor.White,
+            TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
             var uiText = new UIText(RenderView, game.UIPaletteIndex, text, rect, displayLayer, color, true, textAlign, false);
             texts.Add(uiText);
             return uiText;
         }
 
-        public UIText AddScrollableText(Rect rect, IText text, TextColor color = TextColor.White, TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
+        public UIText AddScrollableText(Rect rect, IText text, TextColor color = TextColor.White,
+            TextAlign textAlign = TextAlign.Left, byte displayLayer = 2)
         {
-            var scrollableText = new UIText(RenderView, game.UIPaletteIndex, text, rect, displayLayer, color, true, textAlign, true);
+            var scrollableText = CreateScrollableText(rect, text, color, textAlign, displayLayer);
             texts.Add(scrollableText);
+            return scrollableText;
+        }
+
+        public UIText CreateScrollableText(Rect rect, IText text, TextColor color = TextColor.White,
+            TextAlign textAlign = TextAlign.Left, byte displayLayer = 2, bool shadow = true, byte? paletteIndex = null)
+        {
+            var scrollableText = new UIText(RenderView, paletteIndex ?? game.UIPaletteIndex, text, rect,
+                displayLayer, color, shadow, textAlign, true);
             scrollableText.FreeScrollingStarted += () =>
             {
                 freeScrolledText = scrollableText;
