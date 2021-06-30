@@ -4702,7 +4702,7 @@ namespace Ambermoon
                 monstersCanMoveImmediately = false;
                 if (lastMap == null || !lastMap.IsWorldMap ||
                     !Map.IsWorldMap || Map.World != lastMap.World)
-                    ResetMoveKeys();
+                    ResetMoveKeys(lastMap == null || lastMap.Type != Map.Type);
                 if (!WindowActive)
                     layout.UpdateLayoutButtons();
 
