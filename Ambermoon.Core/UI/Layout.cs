@@ -530,12 +530,17 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < Game.MaxPartyMembers; ++i)
             {
-                if (portraitBackgrounds[i] != null)
-                    portraitBackgrounds[i].Visible = show;
-                if (portraits[i] != null)
-                    portraits[i].Visible = show;
-                if (portraitNames[i] != null)
-                    portraitNames[i].Visible = show;
+                if (!show)
+                {
+                    if (portraitBackgrounds[i] != null)
+                        portraitBackgrounds[i].Visible = false;
+                    if (portraits[i] != null)
+                        portraits[i].Visible = false;
+                    if (portraitNames[i] != null)
+                        portraitNames[i].Visible = false;
+                    if (characterStatusIcons[i] != null)
+                        characterStatusIcons[i].Visible = false;
+                }
 
                 bool showBar = show;
 
