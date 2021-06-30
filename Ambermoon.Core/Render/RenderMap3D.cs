@@ -809,7 +809,7 @@ namespace Ambermoon.Render
                 Race.Dwarf => -0.125f,
                 Race.Gnome => -0.125f,
                 Race.HalfElf => 0.01f,
-                Race.Sylphe => 0.25f,
+                Race.Sylphe => -0.09f,
                 Race.Felinic => 0.0f,
                 Race.Thalionic => -0.04f,
                 _ => 0.0f
