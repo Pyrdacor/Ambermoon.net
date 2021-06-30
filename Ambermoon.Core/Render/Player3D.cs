@@ -139,6 +139,7 @@ namespace Ambermoon.Render
                 foreach (var touchedPosition in touchedPositions)
                 {
                     bool considerPosition = touchedPosition == currentPosition;
+                    bool considerNonExitPosition = considerPosition;
 
                     if (!considerPosition)
                     {
@@ -150,12 +151,38 @@ namespace Ambermoon.Render
                             (sameYDirection && Math.Abs(touchX - oldX) < 0.5f * Global.DistancePerBlock);
                     }
 
+                    if (!considerNonExitPosition && considerPosition)
+                    {
+                        Geometry.BlockToCameraPosition(map.Map, touchedPosition, out float touchX, out float touchY);
+                        considerNonExitPosition = Math.Abs(touchY - newY) < 0.275f * Global.DistancePerBlock &&
+                            Math.Abs(touchX - newX) < 0.275f * Global.DistancePerBlock;
+                    }
+
                     if (considerPosition)
                     {
+                        bool Filter(Event @event)
+                        {
+                            if (considerNonExitPosition)
+                                return true;
+
+                            if ((@event is TeleportEvent teleportEvent &&
+                                teleportEvent.MapIndex != map.Map.Index) ||
+                                @event.Type == EventType.EnterPlace ||
+                                @event.Type == EventType.Door ||
+                                @event.Type == EventType.Riddlemouth)
+                                return true;
+
+                            if (@event.Next == null)
+                                return false;
+
+                            return Filter(@event.Next);
+                        }
+
                         var oldMapIndex = map.Map.Index;
                         var oldMapPosition = new Position(Position);
                         anyEventTriggered = anyEventTriggered || map.Map.TriggerEvents(game, EventTrigger.Move,
-                            (uint)touchedPosition.X, (uint)touchedPosition.Y, ticks, game.CurrentSavegame, out _);
+                            (uint)touchedPosition.X, (uint)touchedPosition.Y, ticks, game.CurrentSavegame, out _,
+                            Filter);
 
                         if (oldMapIndex != game.Map.Index)
                         {

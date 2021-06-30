@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using System;
 
 namespace Ambermoon
 {
@@ -47,7 +48,7 @@ namespace Ambermoon
         }
 
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
-            uint x, uint y, uint ticks, Savegame savegame, out bool hasMapEvent)
+            uint x, uint y, uint ticks, Savegame savegame, out bool hasMapEvent, Func<Event, bool> filter = null)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
@@ -57,6 +58,9 @@ namespace Ambermoon
                 return false;
 
             var @event = map.EventList[(int)mapEventId - 1];
+
+            if (filter != null && !filter(@event))
+                return false;
 
             if (trigger == EventTrigger.Move && LastMapEventIndexMap == map.Index && LastMapEventIndex == mapEventId)
             {
