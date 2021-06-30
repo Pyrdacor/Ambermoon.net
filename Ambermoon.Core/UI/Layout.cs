@@ -943,7 +943,7 @@ namespace Ambermoon.UI
 
         internal void ClearLeftUpIgnoring() => ignoreNextMouseUp = false;
 
-        internal void OpenLoadMenu(Action preLoadAction = null, Action abortAction = null)
+        internal void OpenLoadMenu(Action<Action> preLoadAction = null, Action abortAction = null)
         {
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             var savegamePopup = OpenPopup(new Position(16, 62), 18, 7, true, false);
@@ -968,8 +968,7 @@ namespace Ambermoon.UI
                     OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyLoad), () =>
                     {
                         ClosePopup();
-                        preLoadAction?.Invoke();
-                        game.LoadGame(slot);
+                        game.LoadGame(slot, true, true, preLoadAction);
                     }, Close, Close);
                 }
             }

@@ -592,6 +592,11 @@ namespace Ambermoon
             }
         }
 
+        void Exit()
+        {
+            QuitRequested?.Invoke();
+        }
+
         public void Quit() => Quit(null);
 
         void Quit(Action abortAction)
@@ -601,7 +606,7 @@ namespace Ambermoon
             {
                 if (response == PopupTextEvent.Response.Yes)
                 {
-                    QuitRequested?.Invoke();
+                    Exit();
                 }
                 else
                 {
@@ -1176,6 +1181,8 @@ namespace Ambermoon
 
         public void Start(Savegame savegame)
         {
+            currentSong?.Stop();
+            currentSong = null;
             Cleanup();
             MapExtensions.Reset();
             GameOverButtonsVisible = false;
@@ -1524,15 +1531,67 @@ namespace Ambermoon
                 RunSavegameTileChangeEvents(map.Index);
         }
 
-        public bool LoadGame(int slot)
+        public void LoadGame(int slot, bool showError = false, bool loadInitialOnError = false,
+            Action<Action> preLoadAction = null)
         {
             var savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot);
 
             if (savegame == null)
-                return false;
+            {
+                if (showError)
+                {
+                    if (loadInitialOnError && slot != 0)
+                    {
+                        savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, 0);
 
-            Start(savegame);
-            return true;
+                        if (savegame == null)
+                        {
+                            ShowMessagePopup("Failed to load savegame.",
+                                Exit, TextAlign.Center, 200);
+                        }
+                        else
+                        {
+                            void ProceedWithInitial()
+                            {
+                                ShowMessagePopup("Failed to load savegame. Loaded initial savegame instead.",
+                                    () => this.Start(savegame), TextAlign.Center, 200);
+                            }
+                            if (preLoadAction != null)
+                                preLoadAction?.Invoke(ProceedWithInitial);
+                            else
+                                ProceedWithInitial();
+                        }
+                    }
+                    else
+                    {
+                        if (slot == 0)
+                        {
+                            ShowMessagePopup("Failed to load initial savegame.",
+                                Exit, TextAlign.Center, 200);
+                        }
+                        else
+                        {
+                            ShowMessagePopup("Failed to load savegame.",
+                                Exit, TextAlign.Center, 200);
+                        }
+                    }
+                    return;
+                }
+                else if (loadInitialOnError && slot != 0)
+                {
+                    LoadGame(0, true, false, preLoadAction);
+                    return;
+                }
+                Exit();
+                return;
+            }
+
+            void Start() => this.Start(savegame);
+
+            if (preLoadAction != null)
+                preLoadAction?.Invoke(Start);
+            else
+                Start();
         }
 
         public void SaveGame(int slot, string name)
@@ -1543,9 +1602,7 @@ namespace Ambermoon
         public void ContinueGame()
         {
             SavegameManager.GetSavegameNames(renderView.GameData, out int current);
-
-            if (current != 0)
-                LoadGame(current);
+            LoadGame(current, false, true);
         }
 
         // TODO: Optimize to not query this every time
@@ -4354,14 +4411,7 @@ namespace Ambermoon
         {
             PlayMusic(Song.Outro);
             // TODO: later show outro
-            ShowMessagePopup("THE END", () =>
-            {
-                if (!LoadGame(0))
-                {
-                    ShowMessagePopup("Failed to load initial savegame.",
-                        () => QuitRequested?.Invoke(), TextAlign.Center, 200);
-                }
-            }, TextAlign.Center, 200);
+            ShowMessagePopup("THE END", () => LoadGame(0, true), TextAlign.Center, 200);
         }
 
         public bool ActivateTransport(TravelType travelType)
@@ -8407,6 +8457,7 @@ namespace Ambermoon
 
         void GameOver()
         {
+            PlayMusic(Song.GameOver);
             ShowEvent(ProcessText(DataNameProvider.GameOverMessage), 8, null, true);
         }
 
