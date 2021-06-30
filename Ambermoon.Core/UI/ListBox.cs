@@ -316,7 +316,8 @@ namespace Ambermoon.UI
 
             for (int i = 0; i < itemAreas.Count; ++i)
             {
-                var textColor = items[scrollOffset + i].Value != null ? TextColor.Bright : TextColor.Disabled;
+                var textColor = items[scrollOffset + i].Value == null ? TextColor.Disabled
+                    : colorProvider?.Invoke(items[scrollOffset + i].Key) ?? TextColor.Bright;
 
                 if (withIndex)
                 {
