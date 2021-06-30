@@ -937,15 +937,16 @@ namespace Ambermoon.Render
                 case Spell.Firepillar:
                 {
                     ShowOverlay(Color.FireOverlay);
-                    var startPosition = new Position(Global.CombatBackgroundArea.Center) + new Position(0, 10);
-                    var endPosition = new Position(Global.CombatBackgroundArea.Center) + new Position(0, 25);
+                    var position = new Position(Global.CombatBackgroundArea.Center) + new Position(0, 30);
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.BigFlame);
                     AddAnimation(CombatGraphicIndex.BigFlame, Enumerable.Range(0, 16).Select(i => i % 8).ToArray(),
-                        startPosition, endPosition, Game.TicksPerSecond * 7 / 2, 4.0f, 10.0f, 255, () =>
+                        position, position, Game.TicksPerSecond * 3, 0.5f, 3.5f, (byte)(fromMonster ? 255 : 120),
+                        () =>
                         {
                             HideOverlay();
                             this.finishAction?.Invoke();
-                        });
+                        }, new Size(info.GraphicInfo.Width * 3 / 2, info.GraphicInfo.Height), BattleAnimation.AnimationScaleType.Both,
+                        BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Bottom);
                     // TODO: The flame turns black afterwards
                     break;
                 }
@@ -1142,36 +1143,36 @@ namespace Ambermoon.Render
         {
             this.finishAction = () => finishAction?.Invoke(game.CurrentBattleTicks, true, true);
 
-            void PlayParticleEffect(CombatGraphicIndex combatGraphicIndex, int frameCount)
+            void PlayParticleEffect(CombatGraphicIndex combatGraphicIndex, int frameCount, byte displayLayer = 255)
             {
                 var position = GetTargetPosition(tile) - new Position(2, 0);
                 if (position.Y > Global.CombatBackgroundArea.Bottom - 6)
                     position.Y = Global.CombatBackgroundArea.Bottom - 6;
-                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, 255, () => { });
+                AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer, () => { });
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(125), () =>
                 {
                     position.X += 6;
                     position.Y += 6;
-                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, 255, () => { });
+                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer, () => { });
                 });
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
                 {
                     position.X -= 12;
                     position.Y -= 4;
-                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1);
+                    AddAnimation(combatGraphicIndex, frameCount, position, position - new Position(0, 6), Game.TicksPerSecond / 4, 1, 1, displayLayer);
                 });
             }
 
             // Used by fire spells
             void PlayBurn()
             {
-                PlayParticleEffect(CombatGraphicIndex.SmallFlame, 6);
+                PlayParticleEffect(CombatGraphicIndex.SmallFlame, 6, (byte)(fromMonster ? 255 : (tile / 6) * 60 + 60));
             }
 
             // Used for ice spells
             void PlayChill()
             {
-                PlayParticleEffect(CombatGraphicIndex.SnowFlake, 5);
+                PlayParticleEffect(CombatGraphicIndex.SnowFlake, 5, (byte)(fromMonster ? 255 : (tile / 6) * 60 + 60));
             }
 
             // Used for monster knowledge
@@ -1179,6 +1180,7 @@ namespace Ambermoon.Render
             {
                 const int count = 8;
                 var basePosition = GetTargetPosition(tile) + new Position(0, 18);
+                var displayLayer = (byte)(fromMonster ? 255 : (tile / 6) * 60 + 60);
 
                 for (int i = 0; i < count; ++i)
                 {
@@ -1187,7 +1189,7 @@ namespace Ambermoon.Render
                     {
                         var position = basePosition + new Position(game.RandomInt(0, 32) - 16, -2 * index);
                         AddAnimation(CombatGraphicIndex.GreenStar, 5, position, new Position(position.X, position.Y - 38),
-                            Game.TicksPerSecond * 7 / 10, 1.0f, 1.2f, 255, index == count - 1 ? (Action)null : () => { });
+                            Game.TicksPerSecond * 7 / 10, 1.0f, 1.2f, displayLayer, index == count - 1 ? (Action)null : () => { });
                     });
                 }
             }
