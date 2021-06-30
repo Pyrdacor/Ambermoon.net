@@ -371,6 +371,7 @@ namespace Ambermoon
             }
         }
         bool clickMoveActive = false;
+        bool trappedAfterClickMoveActivation = false;
         Rect trapMouseArea = null;
         bool mouseTrappingActive = false;
         Position lastMousePosition = new Position();
@@ -444,6 +445,9 @@ namespace Ambermoon
                 }
                 else if (!disableUntrapping)
                 {
+                    if (is3D && clickMoveActive && !trappedAfterClickMoveActivation &&
+                        value >= CursorType.ArrowForward && value <= CursorType.Wait)
+                        return;
                     UntrapMouse();
                 }
             }
@@ -833,6 +837,9 @@ namespace Ambermoon
 
         internal void TrapMouse(Rect area)
         {
+            if (clickMoveActive)
+                trappedAfterClickMoveActivation = true;
+
             mouseTrappingActive = true;
 
             try
@@ -865,6 +872,8 @@ namespace Ambermoon
 
         internal void UntrapMouse()
         {
+            trappedAfterClickMoveActivation = false;
+
             if (mouseTrappingActive)
                 return;
 
@@ -1036,6 +1045,7 @@ namespace Ambermoon
             for (int i = 0; i < keys.Length; ++i)
                 keys[i] = false;
             clickMoveActive = false;
+            trappedAfterClickMoveActivation = false;
             UntrapMouse();
             InputEnable = false;
             paused = false;
@@ -1607,7 +1617,12 @@ namespace Ambermoon
         {
             if (paused || WindowActive || !InputEnable || !clickMoveActive || allInputDisabled || pickingNewLeader || pickingTargetPlayer || pickingTargetInventory)
             {
-                clickMoveActive = false;
+                if (clickMoveActive)
+                {
+                    if (!trappedAfterClickMoveActivation)
+                        UntrapMouse();
+                    clickMoveActive = false;
+                }
                 return;
             }
 
@@ -1713,7 +1728,11 @@ namespace Ambermoon
                         }
                         break;
                     default:
-                        clickMoveActive = false;
+                        if (cursorType != CursorType.Wait)
+                        {
+                            clickMoveActive = false;
+                            UntrapMouse();
+                        }
                         break;
                 }
 
@@ -2209,7 +2228,13 @@ namespace Ambermoon
 
             if (buttons.HasFlag(MouseButtons.Left))
             {
-                clickMoveActive = false;
+                if (clickMoveActive)
+                {
+                    clickMoveActive = false;
+
+                    if (is3D)
+                        UntrapMouse();
+                }
 
                 layout.LeftMouseUp(position, out CursorType? cursorType, CurrentTicks);
 
@@ -2330,6 +2355,8 @@ namespace Ambermoon
                     }
                     else if (cursor.Type > CursorType.Sword && cursor.Type < CursorType.Wait)
                     {
+                        if (is3D)
+                            TrapMouse(Map3DViewArea);
                         clickMoveActive = true;
                         HandleClickMovement();
                     }
