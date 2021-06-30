@@ -1736,17 +1736,21 @@ namespace Ambermoon.Render
                     int startXOffset = Util.Round(0.5f * xOffset * startScale);
                     int endXOffset = Util.Round(0.5f * xOffset * endScale);
                     float scaleFactor = 1.0f;
+                    int displayLayer = fromMonster ? 255 : 252;
+                    int displayLayerChange = fromMonster ? -1 : 1;
                     AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition, endPosition,
                         BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
                         scaleFactor * (fromMonster ? endScale : startScale),
-                        scaleFactor * (fromMonster ? startScale : endScale), 252, () => { });
+                        scaleFactor * (fromMonster ? startScale : endScale), (byte)displayLayer, () => { });
+                    displayLayer += displayLayerChange;
                     scaleFactor = 0.85f;
                     var startOffset = new Position(Util.Round(scaleFactor * startXOffset), 4);
                     var endOffset = new Position(Util.Round(scaleFactor * endXOffset), 4);
                     AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition + startOffset, endPosition + endOffset,
                         BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
                         scaleFactor * (fromMonster ? endScale : startScale),
-                        scaleFactor * (fromMonster ? startScale : endScale), 253, () => { });
+                        scaleFactor * (fromMonster ? startScale : endScale), (byte)displayLayer, () => { });
+                    displayLayer += displayLayerChange;
                     scaleFactor = 0.7f;
                     startOffset.X += Util.Round(scaleFactor * startXOffset);
                     endOffset.X += Util.Round(scaleFactor * endXOffset);
@@ -1755,7 +1759,8 @@ namespace Ambermoon.Render
                     AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition + startOffset, endPosition + endOffset,
                         BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
                         scaleFactor * (fromMonster ? endScale : startScale),
-                        scaleFactor * (fromMonster ? startScale : endScale), 254, () => { });
+                        scaleFactor * (fromMonster ? startScale : endScale), (byte)displayLayer, () => { });
+                    displayLayer += displayLayerChange;
                     scaleFactor = 0.55f;
                     startOffset.X += Util.Round(scaleFactor * startXOffset);
                     endOffset.X += Util.Round(scaleFactor * endXOffset);
@@ -1764,7 +1769,7 @@ namespace Ambermoon.Render
                     AddAnimation(CombatGraphicIndex.FireBall, 8, startPosition + startOffset, endPosition + endOffset,
                         BattleEffects.GetFlyDuration((uint)this.startPosition, (uint)tile),
                         scaleFactor * (fromMonster ? endScale : startScale),
-                        scaleFactor * (fromMonster ? startScale : endScale), 255, () => { HideOverlay(); PlayBurn(); });
+                        scaleFactor * (fromMonster ? startScale : endScale), (byte)displayLayer, () => { HideOverlay(); PlayBurn(); });
                     break;
                 }
                 case Spell.Fireball:
