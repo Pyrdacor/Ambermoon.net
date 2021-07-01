@@ -62,7 +62,7 @@ namespace Ambermoon
                 window.WindowState = configuration.Fullscreen ? WindowState.Fullscreen : WindowState.Normal;
 
                 if (cursor != null)
-                    cursor.CursorMode = value ? CursorMode.Disabled : CursorMode.Hidden;
+                    cursor.CursorMode = CursorMode.Hidden;
             }
         }
 
@@ -152,7 +152,7 @@ namespace Ambermoon
             if (mouse != null)
             {
                 cursor = mouse.Cursor;
-                cursor.CursorMode = Fullscreen ? CursorMode.Disabled : CursorMode.Hidden;
+                cursor.CursorMode = CursorMode.Hidden;
                 mouse.MouseDown += Mouse_MouseDown;
                 mouse.MouseUp += Mouse_MouseUp;
                 mouse.MouseMove += Mouse_MouseMove;
@@ -431,8 +431,7 @@ namespace Ambermoon
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
-                                        this.cursor.CursorMode = Fullscreen || trapped ? CursorMode.Disabled : CursorMode.Hidden;
-
+                                        this.cursor.CursorMode = CursorMode.Hidden;
                                         mouse.Position = new MousePosition(position.X, position.Y);
                                     };
                                     game.ConfigurationChanged += (configuration, windowChange) =>
