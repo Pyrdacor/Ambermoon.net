@@ -2,8 +2,6 @@
 
 - Can't skip spell reflect message with space key
 - Does spell reflect message use wrong color?
-- Firepillar's big flame must appear between 2nd and 3rd row.
-- Firepillar flame animation looks wrong.
 - Winddevil etc enlarges/changes size of the monster sprite.
 - Winddevil and windhowler end animation looks wrong.
 - Row target selection should only show 1 highlighted row on hover (not blinking all rows).
@@ -15,7 +13,7 @@
 - If background has darker color (night battles) the monsters should be darkened too.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 - If a near monster in the middle casts magic projectile (maybe similar things too) it isn't shown (tested with energy balls)
-- Energyballs did not disappear after won battle (ap 361)
+- Energyballs did not disappear after won battle (map 361)
 - Locking in a "target all" spell and then pick the target of a single-target spell with same char, will still show the selection of all fields.
 
 
@@ -42,6 +40,7 @@
 
 ## Misc
 
+- First time resolution is wrong. Also sometimes after switching from fullscreen to window.
 - Load time is long. Either improve performance or if not possible
   only load the intro and load data while intro/logo is shown (maybe with progress bar).
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
