@@ -8778,6 +8778,9 @@ namespace Ambermoon
 
         void OpenEnchanter(Places.Enchanter enchanter, bool showWelcome = true)
         {
+            if (showWelcome)
+                enchanter.AvailableGold = 0;
+
             Action updatePartyGold = null;
             ItemGrid itemsGrid = null;
 
@@ -8920,6 +8923,9 @@ namespace Ambermoon
 
         void OpenSage(Places.Sage sage, bool showWelcome = true)
         {
+            if (showWelcome)
+                sage.AvailableGold = 0;
+
             Action updatePartyGold = null;
             ItemGrid itemsGrid = null;
 
@@ -9019,6 +9025,9 @@ namespace Ambermoon
 
         void OpenHealer(Places.Healer healer, bool showWelcome = true)
         {
+            if (showWelcome)
+                healer.AvailableGold = 0;
+
             Action updatePartyGold = null;
             ItemGrid conditionGrid = null;
 
@@ -9271,6 +9280,9 @@ namespace Ambermoon
 
         void OpenBlacksmith(Places.Blacksmith blacksmith, bool showWelcome = true)
         {
+            if (showWelcome)
+                blacksmith.AvailableGold = 0;
+
             // Note: The blacksmith uses the same 80x80 image as the sage.
             Action updatePartyGold = null;
             ItemGrid itemsGrid = null;
@@ -9370,6 +9382,9 @@ namespace Ambermoon
 
         void OpenInn(Places.Inn inn, bool showWelcome = true)
         {
+            if (showWelcome)
+                inn.AvailableGold = 0;
+
             Action updatePartyGold = null;
 
             void SetupInn(Action updateGold, ItemGrid _)
@@ -9415,18 +9430,27 @@ namespace Ambermoon
 
         void OpenHorseSalesman(Places.HorseSalesman horseSalesman, string buyText, bool showWelcome = true)
         {
+            if (showWelcome)
+                horseSalesman.AvailableGold = 0;
+
             OpenTransportSalesman(horseSalesman, buyText, TravelType.Horse, Window.HorseSalesman,
                 Picture80x80.Horse, showWelcome ? DataNameProvider.WelcomeHorseSeller : null);
         }
 
         void OpenRaftSalesman(Places.RaftSalesman raftSalesman, string buyText, bool showWelcome = true)
         {
+            if (showWelcome)
+                raftSalesman.AvailableGold = 0;
+
             OpenTransportSalesman(raftSalesman, buyText, TravelType.Raft, Window.RaftSalesman,
                 Picture80x80.Merchant, showWelcome ? DataNameProvider.WelcomeRaftSeller : null);
         }
 
         void OpenShipSalesman(Places.ShipSalesman shipSalesman, string buyText, bool showWelcome = true)
         {
+            if (showWelcome)
+                shipSalesman.AvailableGold = 0;
+
             OpenTransportSalesman(shipSalesman, buyText, TravelType.Ship, Window.ShipSalesman,
                 Picture80x80.Captain, showWelcome ? DataNameProvider.WelcomeShipSeller : null);
         }
@@ -9554,6 +9578,9 @@ namespace Ambermoon
 
         void OpenFoodDealer(Places.FoodDealer foodDealer, bool showWelcome = true)
         {
+            if (showWelcome)
+                foodDealer.AvailableGold = 0;
+
             Action updatePartyGold = null;
 
             void SetupFoodDealer(Action updateGold, ItemGrid _)
@@ -9656,6 +9683,9 @@ namespace Ambermoon
 
         void OpenTrainer(Places.Trainer trainer, bool showWelcome = true)
         {
+            if (showWelcome)
+                trainer.AvailableGold = 0;
+
             Action updatePartyGold = null;
 
             void SetupTrainer(Action updateGold, ItemGrid _)
@@ -9764,7 +9794,6 @@ namespace Ambermoon
             layout.Set80x80Picture(picture);
 
             // Put all gold on the table!
-            place.AvailableGold = 0;
             foreach (var partyMember in PartyMembers)
             {
                 place.AvailableGold += partyMember.Gold;
@@ -9829,6 +9858,8 @@ namespace Ambermoon
         {
             var merchant = GetMerchant(1 + merchantIndex);
             merchant.Name = placeName;
+            if (showWelcome)
+                merchant.AvailableGold = 0;
 
             Fade(() =>
             {
@@ -10238,7 +10269,6 @@ namespace Ambermoon
             };
 
             // Put all gold on the table!
-            merchant.AvailableGold = 0;
             foreach (var partyMember in PartyMembers)
             {
                 merchant.AvailableGold += partyMember.Gold;
