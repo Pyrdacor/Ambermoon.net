@@ -3846,10 +3846,14 @@ namespace Ambermoon
                 };
             }
 
+            var currentPartyMember = CurrentPartyMember;
+
             switch (trapEvent.Target)
             {
                 case TrapEvent.TrapTarget.ActivePlayer:
-                    targetFilter = p => p == CurrentPartyMember;
+                    // Note: Don't check against the property CurrentPartyMember
+                    // directly as it might change if someone dies.
+                    targetFilter = p => p == currentPartyMember;
                     break;
                 default:
                     // TODO: are there more like random?
