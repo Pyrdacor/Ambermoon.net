@@ -168,6 +168,7 @@ namespace Ambermoon.Render
 
                             if (@event.Type == EventType.Teleport ||
                                 @event.Type == EventType.EnterPlace ||
+                                @event.Type == EventType.Chest ||
                                 @event.Type == EventType.Door ||
                                 @event.Type == EventType.Riddlemouth)
                                 return true;
