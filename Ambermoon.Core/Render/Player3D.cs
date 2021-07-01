@@ -134,6 +134,7 @@ namespace Ambermoon.Render
             bool TriggerEvents(List<Position> touchedPositions, float oldX, float oldY, float newX, float newY)
             {
                 bool anyEventTriggered = false;
+                bool anyEventTouched = false;
                 Position currentPosition = touchedPositions[0];
 
                 foreach (var touchedPosition in touchedPositions)
@@ -165,8 +166,7 @@ namespace Ambermoon.Render
                             if (considerNonExitPosition)
                                 return true;
 
-                            if ((@event is TeleportEvent teleportEvent &&
-                                teleportEvent.MapIndex != map.Map.Index) ||
+                            if (@event.Type == EventType.Teleport ||
                                 @event.Type == EventType.EnterPlace ||
                                 @event.Type == EventType.Door ||
                                 @event.Type == EventType.Riddlemouth)
@@ -178,11 +178,15 @@ namespace Ambermoon.Render
                             return Filter(@event.Next);
                         }
 
+                        bool hasMapEvent = false;
                         var oldMapIndex = map.Map.Index;
                         var oldMapPosition = new Position(Position);
                         anyEventTriggered = anyEventTriggered || map.Map.TriggerEvents(game, EventTrigger.Move,
-                            (uint)touchedPosition.X, (uint)touchedPosition.Y, ticks, game.CurrentSavegame, out _,
+                            (uint)touchedPosition.X, (uint)touchedPosition.Y, ticks, game.CurrentSavegame, out hasMapEvent,
                             Filter);
+
+                        if (!anyEventTouched && hasMapEvent)
+                            anyEventTouched = true;
 
                         if (oldMapIndex != game.Map.Index)
                         {
@@ -197,7 +201,7 @@ namespace Ambermoon.Render
                     }
                 }
 
-                if (!anyEventTriggered)
+                if (!anyEventTouched)
                     map.Map.ClearLastEvent();
 
                 return anyEventTriggered;

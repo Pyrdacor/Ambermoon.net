@@ -4854,8 +4854,6 @@ namespace Ambermoon
                 block.ObjectIndex = changeTileEvent.ObjectIndex;
                 block.WallIndex = changeTileEvent.WallIndex;
                 block.MapBorder = false;
-                if (block.WallIndex == 0 && block.ObjectIndex == 0)
-                    block.MapEventId = 0;
 
                 if (sameMap)
                     renderMap3D.UpdateBlock(x, y);

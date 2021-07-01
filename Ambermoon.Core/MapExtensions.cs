@@ -80,7 +80,7 @@ namespace Ambermoon
                     ev.Type != EventType.Riddlemouth &&
                     (map.Type == MapType.Map3D || ev.Type != EventType.Trap))
                 {
-                    return true;
+                    return false;
                 }
             }
 
