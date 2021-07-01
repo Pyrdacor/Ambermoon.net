@@ -1727,6 +1727,7 @@ namespace Ambermoon
             layout.ReleaseButtons();
             allInputDisabled = true;
             clickMoveActive = false;
+            trappedAfterClickMoveActivation = false;
         }
 
         internal void EndSequence(bool force = true)
@@ -2708,6 +2709,9 @@ namespace Ambermoon
                 characterCreator.OnMouseWheel(xScroll, yScroll, mousePosition);
                 return;
             }
+
+            if (allInputDisabled)
+                return;
 
             bool scrolled = false;
 
