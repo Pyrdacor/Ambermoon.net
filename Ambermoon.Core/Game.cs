@@ -541,7 +541,7 @@ namespace Ambermoon
             battleRoundActiveSprite.PaletteIndex = PrimaryUIPaletteIndex;
             battleRoundActiveSprite.DisplayLayer = 2;
             battleRoundActiveSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI)
-                .GetOffset((uint)Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace);
+                .GetOffset(Graphics.CombatGraphicOffset + (uint)CombatGraphicIndex.UISwordAndMace);
             battleRoundActiveSprite.X = 240;
             battleRoundActiveSprite.Y = 150;
             battleRoundActiveSprite.Visible = false;
@@ -594,6 +594,7 @@ namespace Ambermoon
                 cursor.Type = Data.CursorType.Sword;
                 UpdateCursor(lastMousePosition, MouseButtons.None);
                 currentUIPaletteIndex = 0;
+                battleRoundActiveSprite.Visible = false;
             }
 
             currentSong?.Stop();
