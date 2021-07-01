@@ -12882,10 +12882,8 @@ namespace Ambermoon
                 InputEnable = true;
                 ResetCursor();
             }
-            else if (currentWindow.Window == Window.BattleLoot)
-            {
-                (currentWindow.WindowParameters[1] as Action)?.Invoke(); // Close action
-            }
+
+            var closedWindow = currentWindow;
 
             if (currentWindow.Window == LastWindow.Window)
                 currentWindow = DefaultWindow;
@@ -12895,8 +12893,17 @@ namespace Ambermoon
             switch (currentWindow.Window)
             {
                 case Window.MapView:
-                    Fade(() => { ShowMap(true); finishAction?.Invoke(); });
+                {
+                    Fade(() =>
+                    {
+                        ShowMap(true);
+                        finishAction?.Invoke();
+
+                        if (closedWindow.Window == Window.BattleLoot)
+                            (closedWindow.WindowParameters[1] as Action)?.Invoke();
+                    });
                     break;
+                }
                 case Window.Inventory:
                 {
                     int partyMemberIndex = (int)currentWindow.WindowParameters[0];
