@@ -5126,17 +5126,32 @@ namespace Ambermoon
             {
                 string initialText = doorEvent.TextIndex != 255 ?
                     map.Texts[(int)doorEvent.TextIndex] : null;
+                string unlockText = doorEvent.UnlockTextIndex != 255 ?
+                    map.Texts[(int)doorEvent.UnlockTextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map);
                 ShowLocked(Picture80x80.Door, () =>
                 {
                     CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
-                    CloseWindow();
-                    if (doorEvent.Next != null)
+                    if (unlockText != null)
                     {
-                        EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
-                            (uint)player.Position.Y, CurrentTicks, doorEvent.Next, true);
+                        layout.ShowClickChestMessage(unlockText, Close);
+                    }
+                    else
+                    {
+                        Close();
+                    }
+                    void Close()
+                    {
+                        CloseWindow(() =>
+                        {
+                            if (doorEvent.Next != null)
+                            {
+                                EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
+                                    (uint)player.Position.Y, CurrentTicks, doorEvent.Next, true);
+                            }
+                        });
                     }
                 }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 doorEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
@@ -5251,6 +5266,8 @@ namespace Ambermoon
                                         itemGrid.ResetAnimation(itemSlot);
                                         item.ShowItemAmount = false;
                                         item.Visible = false;
+                                        itemGrid.HideTooltip();
+                                        itemGrid.Disabled = true;
                                         EndSequence();
                                         openedAction?.Invoke();
                                     });
