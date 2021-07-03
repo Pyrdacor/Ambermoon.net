@@ -451,6 +451,7 @@ namespace Ambermoon
                 }
             }
         }
+        internal IMapCharacter CurrentMapCharacter { get; set; } // This is set when interacting with a non-monster map character
 
         internal void RequestFullscreenChange(bool fullscreen) => fullscreenChangeHandler?.Invoke(fullscreen);
         internal void NotifyResolutionChange(int? oldWidth) => resolutionChangeHandler?.Invoke(oldWidth);
@@ -1055,6 +1056,7 @@ namespace Ambermoon
             renderMap2D = null;
             renderMap3D?.Destroy(true);
             renderMap3D = null;
+            CurrentMapCharacter = null;
             player2D?.Destroy();
             player2D = null;
             player3D = null;
@@ -4906,12 +4908,26 @@ namespace Ambermoon
                 {
                     bool RemoveFromMap(Map map)
                     {
-                        int index = map.EventList.IndexOf(chestEvent);
-
-                        if (index != -1)
+                        for (int i = 0; i < map.EventList.Count; ++i)
                         {
-                            CurrentSavegame.ActivateEvent(map.Index, (uint)index, false);
-                            return true;
+                            var @event = map.EventList[i];
+
+                            while (@event != null)
+                            {
+                                if (@event == chestEvent)
+                                {
+                                    // If the chest event chain was triggered by a character interaction
+                                    // only remove that character but keep the event active as it might
+                                    // be used by other characters (e.g. mushrooms in Dor Grestin).
+                                    // But if this was triggered by a normal map event, just deactivate
+                                    // the map event so that the chest is removed from the map.
+                                    if (CurrentMapCharacter?.CheckDeactivation((uint)i + 1) != true)
+                                        CurrentSavegame.ActivateEvent(map.Index, (uint)i, false);
+                                    return true;
+                                }
+
+                                @event = @event.Next;
+                            }
                         }
 
                         return false;

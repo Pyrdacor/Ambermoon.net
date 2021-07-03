@@ -263,8 +263,31 @@ namespace Ambermoon.Render
                 Interact(EventTrigger.Move, false);
         }
 
+        public bool CheckDeactivation(uint deactivatedEventIndex)
+        {
+            if (characterReference.EventIndex == deactivatedEventIndex)
+            {
+                if (Active && characterReference.Type == CharacterType.MapObject)
+                    Deactivate();
+                return true;
+            }
+
+            return false;
+        }
+
+        void Deactivate()
+        {
+            Active = false;
+            game.CurrentSavegame.SetCharacterBit(map.Index, characterIndex, true);
+
+            if (game.CurrentMapCharacter == this)
+                game.CurrentMapCharacter = null;
+        }
+
         public bool Interact(EventTrigger trigger, bool bed)
         {
+            game.CurrentMapCharacter = null;
+
             switch (trigger)
             {
                 case EventTrigger.Eye:
@@ -287,9 +310,51 @@ namespace Ambermoon.Render
                 return true;
             }
 
+            bool TriggerCharacterEvents(uint eventIndex)
+            {
+                var @event = map.EventList[(int)eventIndex - 1];
+
+                if (@event is ConditionEvent conditionEvent)
+                {
+                    switch (conditionEvent.TypeOfCondition)
+                    {
+                        case ConditionEvent.ConditionType.Eye:
+                            if (trigger != EventTrigger.Eye)
+                                return false;
+                            @event = conditionEvent.Next;
+                            trigger = EventTrigger.Always;
+                            break;
+                        case ConditionEvent.ConditionType.Hand:
+                            if (trigger != EventTrigger.Hand)
+                                return false;
+                            @event = conditionEvent.Next;
+                            trigger = EventTrigger.Always;
+                            break;
+                        case ConditionEvent.ConditionType.UseItem:
+                        {
+                            if (trigger < EventTrigger.Item0)
+                                return false;
+                            var itemIndex = (uint)trigger - (uint)EventTrigger.Item0;
+                            if (conditionEvent.ObjectIndex != itemIndex)
+                                return false;
+                            @event = conditionEvent.Next;
+                            trigger = EventTrigger.Always;
+                            break;
+                        }
+                    }
+                }
+                game.CurrentMapCharacter = this;
+                var position = game.RenderPlayer.Position;
+                return EventExtensions.TriggerEventChain(map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
+            }
+
             if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
             {
-                if (trigger == EventTrigger.Eye)
+                if (characterReference.EventIndex != 0 && game.CurrentSavegame.IsEventActive(map.Index, characterReference.EventIndex - 1))
+                {
+                    return TriggerCharacterEvents(characterReference.EventIndex);
+                }
+                else if (trigger == EventTrigger.Eye)
                 {
                     // Popup NPCs can't be looked at but only talked to.
                     return false;
@@ -351,8 +416,7 @@ namespace Ambermoon.Render
 
                                 if (battleEndInfo.MonstersDefeated)
                                 {
-                                    Active = false;
-                                    game.CurrentSavegame.SetCharacterBit(map.Index, characterIndex, true);
+                                    Deactivate();
                                 }
                                 else
                                 {
@@ -389,7 +453,8 @@ namespace Ambermoon.Render
                     break;
                 }
                 case CharacterType.MapObject:
-                    // TODO
+                    if (characterReference.EventIndex != 0 && game.CurrentSavegame.IsEventActive(map.Index, characterReference.EventIndex - 1))
+                        return TriggerCharacterEvents(characterReference.EventIndex);
                     break;
             }
 
