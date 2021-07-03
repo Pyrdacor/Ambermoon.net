@@ -798,7 +798,8 @@ namespace Ambermoon
 
             layout.Update(CurrentTicks);
 
-            if (CurrentPartyMember != null && CurrentPartyMember.Ailments.HasFlag(Ailment.Drugged))
+            if (CurrentPartyMember != null && CurrentPartyMember.Ailments.HasFlag(Ailment.Drugged) &&
+                !layout.OptionMenuOpen)
             {
                 if (CurrentAnimationTicks - lastDrugColorChangeTicks >= 16)
                 {
