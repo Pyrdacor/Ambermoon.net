@@ -171,7 +171,11 @@ namespace Ambermoon.Render
 
                     active = value;
                     surface.Visible = active;
-                    children.ForEach(c => c.Active = value);
+                    children.ForEach(c =>
+                    {
+                        c.active = active;
+                        c.surface.Visible = active;
+                    });
                 }
             }
 
