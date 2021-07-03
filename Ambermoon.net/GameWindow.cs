@@ -38,6 +38,7 @@ namespace Ambermoon
         IRenderText infoText = null;
         DateTime? initializeErrorTime = null;
         List<Size> availableFullscreenModes = null;
+        DateTime lastRenderTime = DateTime.MinValue;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -682,6 +683,12 @@ namespace Ambermoon
 
         void Window_Load()
         {
+            if (window.Native.Glfw is null)
+            {
+                Console.WriteLine("WARNING: The current window is not a GLFW window." + Environment.NewLine +
+                                  "         Other window systems may be not fully supported!");
+            }
+
             var windowIcon = new Silk.NET.Core.RawImage(16, 16, new Memory<byte>(Resources.WindowIcon));
             window.SetWindowIcon(ref windowIcon);
 
@@ -728,6 +735,15 @@ namespace Ambermoon
 
         void Window_Render(double delta)
         {
+            if (window.VSync)
+            {
+                int refreshRate = Util.Limit(1, window.Monitor.VideoMode.RefreshRate ?? 60, 250);
+                var timePerFrame = 1000.0 / refreshRate;
+                var renderDuration = DateTime.Now - lastRenderTime;
+                if (renderDuration.TotalMilliseconds < timePerFrame - delta)
+                    return;
+            }
+
             if (versionSelector != null)
                 versionSelector.Render();
             if (mainMenu != null)
@@ -737,6 +753,8 @@ namespace Ambermoon
             else if (renderView != null)
                 renderView.Render(null);
             window.SwapBuffers();
+
+            lastRenderTime = DateTime.Now;
         }
 
         void Window_Update(double delta)
@@ -774,9 +792,7 @@ namespace Ambermoon
                     // Show cheat info
                     if (!Console.IsInputRedirected)
                     {
-                        Console.WriteLine("***** Ambermoon Cheat Console *****");
-                        Console.WriteLine("Type 'help' for more information.");
-                        Console.WriteLine();
+                        PrintCheatConsoleHeader();
                     }
                 }
             }
@@ -787,6 +803,13 @@ namespace Ambermoon
                 if (!Console.IsInputRedirected && Console.KeyAvailable)
                     Cheats.ProcessInput(Console.ReadKey(true), Game);
             }
+        }
+
+        static void PrintCheatConsoleHeader()
+        {
+            Console.WriteLine("***** Ambermoon Cheat Console *****");
+            Console.WriteLine("Type 'help' for more information.");
+            Console.WriteLine();
         }
 
         void Window_Resize(WindowDimension size)
@@ -855,7 +878,7 @@ namespace Ambermoon
             var options = new WindowOptions(true, new WindowDimension(100, 100),
                 new WindowDimension(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
                 $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} beta",
-                WindowState.Normal, WindowBorder.Fixed, false, false, videoMode, 24);
+                WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
 
             try
             {
