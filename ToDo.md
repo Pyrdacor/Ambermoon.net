@@ -33,13 +33,13 @@
 
 ## UI
 
-- Scrolling by dragging can't put the scrollbar to the top or bottom. There is a small gap.
 - When repairing item etc the item tooltip should not show up after magic animation.
 - "Do you accept this character?" message is missing in character creator.
 
 
 ## Misc
 
+- Add more savegame slots?
 - First time resolution is wrong. Also sometimes after switching from fullscreen to window.
 - Load time is long. Either improve performance or if not possible
   only load the intro and load data while intro/logo is shown (maybe with progress bar).
