@@ -147,14 +147,19 @@ namespace Ambermoon.UI
                     // if the cursor is closest to this center.
                     // The correct area can be calculated by dividing the
                     // cursor position by the area size.
-                    int areaSize = (scrollArea.Height - barSize) / (ScrollRange + 1);
-                    int newPosition = Math.Min(ScrollRange, (position.Y - (scrollArea.Top + barSize / 2)) / areaSize);
+                    int areaSize;
+                    int entriesPerScroll = 0;
+                    do
+                    {
+                        areaSize = (scrollArea.Height - barSize) / ((ScrollRange + 1) / ++entriesPerScroll);
+                    } while (areaSize == 0);
+                    int newPosition = Math.Min(ScrollRange, entriesPerScroll * (position.Y - (scrollArea.Top + barSize / 2)) / areaSize);
                     if (newPosition != ScrollOffset)
                     {
                         ScrollOffset = newPosition;
                         Scrolled?.Invoke(newPosition);
                     }
-                    SetBarPosition(new Position(this.position.X, position.Y - barSize / 2));
+                    SetBarPosition(new Position(this.position.X, scrollArea.Top + Util.Round((float)newPosition * (scrollArea.Height - barSize) / ScrollRange)));
                 }
             }
             else // horizontal
@@ -165,14 +170,19 @@ namespace Ambermoon.UI
                     SetScrollPosition(ScrollRange);
                 else
                 {
-                    int areaSize = (scrollArea.Width - barSize) / (ScrollRange + 1);
-                    int newPosition = Math.Min(ScrollRange, (position.X - (scrollArea.Left + +barSize / 2)) / areaSize);
+                    int areaSize;
+                    int entriesPerScroll = 0;
+                    do
+                    {
+                        areaSize = (scrollArea.Width - barSize) / ((ScrollRange + 1) / ++entriesPerScroll);
+                    } while (areaSize == 0);
+                    int newPosition = Math.Min(ScrollRange, entriesPerScroll * (position.X - (scrollArea.Left + barSize / 2)) / areaSize);
                     if (newPosition != ScrollOffset)
                     {
                         ScrollOffset = newPosition;
                         Scrolled?.Invoke(newPosition);
                     }
-                    SetBarPosition(new Position(position.X - barSize / 2, this.position.Y));
+                    SetBarPosition(new Position(scrollArea.Left + Util.Round((float)newPosition * (scrollArea.Width - barSize) / ScrollRange), this.position.Y));
                 }
             }
 
