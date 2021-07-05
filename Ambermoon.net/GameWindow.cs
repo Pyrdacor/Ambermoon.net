@@ -40,6 +40,8 @@ namespace Ambermoon
         List<Size> availableFullscreenModes = null;
         DateTime lastRenderTime = DateTime.MinValue;
         bool trapMouse = false;
+        FloatPosition trappedMouseOffset = null;
+        FloatPosition trappedMouseLastPosition = null;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -285,26 +287,40 @@ namespace Ambermoon
 
         void Mouse_MouseDown(IMouse mouse, MouseButton button)
         {
+            var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
+
             if (versionSelector != null)
-                versionSelector.OnMouseDown(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
+                versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (mainMenu != null)
-                mainMenu.OnMouseDown(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
+                mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
             else if (Game != null)
-                Game.OnMouseDown(ConvertMousePosition(mouse.Position), GetMouseButtons(mouse));
+                Game.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
         }
 
         void Mouse_MouseUp(IMouse mouse, MouseButton button)
         {
+            var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
+
             if (versionSelector != null)
-                versionSelector.OnMouseUp(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
+                versionSelector.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
             else if (mainMenu != null)
-                mainMenu.OnMouseUp(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
+                mainMenu.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
             else if (Game != null)
-                Game.OnMouseUp(ConvertMousePosition(mouse.Position), ConvertMouseButtons(button));
+                Game.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
         }
 
         void Mouse_MouseMove(IMouse mouse, MousePosition position)
         {
+            if (trapMouse && mouse != null)
+            {
+                mouse.MouseMove -= Mouse_MouseMove;
+                trappedMouseOffset.X += position.X - trappedMouseLastPosition.X;
+                trappedMouseOffset.Y += position.Y - trappedMouseLastPosition.Y;
+                mouse.Position = new MousePosition(window.Size.X / 2, window.Size.Y / 2);
+                position = new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y);
+                mouse.MouseMove += Mouse_MouseMove;
+            }
+
             if (versionSelector != null)
                 versionSelector.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (mainMenu != null)
@@ -433,8 +449,16 @@ namespace Ambermoon
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
                                         trapMouse = trapped;
+                                        trappedMouseOffset = trapped ? new FloatPosition(position) : null;
+                                        trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
                                         this.cursor.CursorMode = CursorMode.Hidden;
-                                        mouse.Position = new MousePosition(position.X, position.Y);
+                                        if (mouse != null)
+                                        {
+                                            mouse.MouseMove -= Mouse_MouseMove;
+                                            mouse.Position = !trapped ? new MousePosition(position.X, position.Y) :
+                                                new MousePosition(window.Size.X / 2, window.Size.Y / 2);
+                                            mouse.MouseMove += Mouse_MouseMove;
+                                        }
                                     };
                                     game.ConfigurationChanged += (configuration, windowChange) =>
                                     {

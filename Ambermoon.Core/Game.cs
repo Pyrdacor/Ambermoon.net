@@ -4864,7 +4864,7 @@ namespace Ambermoon
             {
                 map.UpdateTile(x, y, changeTileEvent.FrontTileIndex, MapManager.GetTilesetForMap(map));
 
-                if (sameMap) // TODO: what if we change an adjacent world map which is visible instead? is there even a use case?
+                if (renderMap2D.IsMapVisible(changeTileEvent.MapIndex, ref x, ref y))
                     renderMap2D.UpdateTile(x, y);
             }
         }
@@ -12151,7 +12151,6 @@ namespace Ambermoon
                         }
                     }
 
-                    TrapMouse(Global.AutomapArea);
                     void SetupClickHandlers()
                     {
                         nextClickHandler = buttons =>
@@ -12274,7 +12273,7 @@ namespace Ambermoon
                     Scroll(startScrollX, startScrollY);
 
                     lastMousePosition = renderView.GameToScreen(Global.AutomapArea.Center);
-                    MouseTrappedChanged?.Invoke(false, lastMousePosition);
+                    TrapMouse(Global.AutomapArea);
                     UpdateCursor();
                 });
             });

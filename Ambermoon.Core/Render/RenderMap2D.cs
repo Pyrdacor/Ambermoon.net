@@ -509,6 +509,28 @@ namespace Ambermoon.Render
                 index == Map.DownRightMapIndex;
         }
 
+        public bool IsMapVisible(uint index, ref uint localMapX, ref uint localMapY)
+        {
+            if (Map.Index == index)
+                return true;
+
+            if (!Map.IsWorldMap)
+                return false;
+
+            if (index == Map.RightMapIndex ||
+                index == Map.DownRightMapIndex)
+                localMapX += (uint)Map.Width;
+
+            if (index == Map.DownMapIndex ||
+                index == Map.DownRightMapIndex)
+                localMapY += (uint)Map.Height;
+
+            return
+                index == Map.RightMapIndex ||
+                index == Map.DownMapIndex ||
+                index == Map.DownRightMapIndex;
+        }
+
         public void SetMap(Map map, uint initialScrollX = 0, uint initialScrollY = 0)
         {
             if (Map == map)
