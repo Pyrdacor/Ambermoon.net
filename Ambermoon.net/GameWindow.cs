@@ -39,6 +39,7 @@ namespace Ambermoon
         DateTime? initializeErrorTime = null;
         List<Size> availableFullscreenModes = null;
         DateTime lastRenderTime = DateTime.MinValue;
+        bool trapMouse = false;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -431,6 +432,7 @@ namespace Ambermoon
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
+                                        trapMouse = trapped;
                                         this.cursor.CursorMode = CursorMode.Hidden;
                                         mouse.Position = new MousePosition(position.X, position.Y);
                                     };
@@ -463,9 +465,10 @@ namespace Ambermoon
                     try
                     {
                         error = @"Error loading data   \(o_o\)";
-                        if (ex is FileNotFoundException fnf && fnf.Source == "Silk.NET.Core")
+                        if (ex is FileNotFoundException fileNotFoundException &&
+                            fileNotFoundException.Source == "Silk.NET.Core")
                         {
-                            var missingLibrary = ParseMissingFileName(fnf);
+                            var missingLibrary = fileNotFoundException?.FileName;
 
                             if (missingLibrary != null)
                             {
@@ -479,24 +482,10 @@ namespace Ambermoon
                         int height = 6 + error.Count(ch => ch == '^') * 7;
                         var text = renderView.TextProcessor.CreateText(error, '_');
                         text = renderView.TextProcessor.WrapText(text, new Rect(0, 0, Global.VirtualScreenWidth, height), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-                        infoText.Text = renderView.TextProcessor.CreateText(error, '_');/* renderView.TextProcessor.WrapText(renderView.TextProcessor.CreateText(error, '_')
-                            new Rect(infoText.Place), new Size(Global.GlyphWidth, Global.GlyphLineHeight));*/
-                        infoText.Place(new Rect(infoText.X, infoText.Y, infoText.Text.MaxLineSize * 6, height), TextAlign.Center);
+                        infoText.Text = text;
+                        infoText.Place(new Rect(Math.Max(0, (Global.VirtualScreenWidth - infoText.Width) / 2), infoText.Y, infoText.Text.MaxLineSize * 6, height));
                         infoText.Visible = true;
                         initializeErrorTime = DateTime.Now;
-
-                        static string ParseMissingFileName(FileNotFoundException fileNotFoundException)
-                        {
-                            if (fileNotFoundException?.FileName != null)
-                                return fileNotFoundException.FileName;
-
-                            // TODO: improve/remove this later
-                            var regex = new System.Text.RegularExpressions.Regex(
-                                "Could not find or load the native library: (.*) Attempted:", System.Text.RegularExpressions.RegexOptions.Compiled);
-                            var match = regex.Match(fileNotFoundException.Message);
-
-                            return match.Success ? match.Groups[1].Value : null;
-                        }
                     }
                     catch
                     {
@@ -802,6 +791,26 @@ namespace Ambermoon
 
                 if (!Console.IsInputRedirected && Console.KeyAvailable)
                     Cheats.ProcessInput(Console.ReadKey(true), Game);
+            }
+
+            if (trapMouse && mouse != null)
+            {
+                var width = window.Size.X;
+                var height = window.Size.Y;
+                float x = mouse.Position.X;
+                float y = mouse.Position.Y;
+
+                if (x < 0)
+                    x = 0;
+                else if (x >= width)
+                    x = width - 1;
+
+                if (y < 0)
+                    y = 0;
+                else if (y >= height)
+                    y = height - 1;
+
+                mouse.Position = new MousePosition(x, y);
             }
         }
 

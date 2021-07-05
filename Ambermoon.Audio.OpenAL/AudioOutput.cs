@@ -25,8 +25,16 @@ namespace Ambermoon.Audio.OpenAL
             if (sampleRate < 2000 || sampleRate > 200000)
                 throw new ArgumentOutOfRangeException(nameof(sampleRate));
 
-            al = AL.GetApi();
-            alContext = ALContext.GetApi();
+            try
+            {
+                al = AL.GetApi(true);
+                alContext = ALContext.GetApi(true);
+            }
+            catch
+            {
+                al = AL.GetApi(false);
+                alContext = ALContext.GetApi(false);
+            }
             device = alContext.OpenDevice("");
 
             Available = device != null;

@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Common" Version="9.3.0" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.5.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.6.0" />
   </ItemGroup>
 
   <ItemGroup>
