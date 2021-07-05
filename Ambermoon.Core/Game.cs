@@ -8850,6 +8850,7 @@ namespace Ambermoon
                     CursorType = CursorType.Sword;
                     TrapMouse(itemArea);
                     itemsGrid.Initialize(CurrentPartyMember.Inventory.Slots.ToList(), false);
+                    itemsGrid.ItemClicked += ItemClicked;
                     SetupRightClickAbort();
                 });
                 void SetupRightClickAbort()
@@ -8858,8 +8859,7 @@ namespace Ambermoon
                     {
                         if (buttons == MouseButtons.Right)
                         {
-                            itemsGrid.HideTooltip();
-                            itemsGrid.Disabled = true;
+                            DisableItemGrid();
                             layout.ShowChestMessage(null);
                             UntrapMouse();
                             return true;
@@ -8868,7 +8868,13 @@ namespace Ambermoon
                         return false;
                     };
                 }
-                itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                void DisableItemGrid()
+                {
+                    itemsGrid.HideTooltip();
+                    itemsGrid.ItemClicked -= ItemClicked;
+                    itemsGrid.Disabled = true;
+                }
+                void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                 {
                     itemsGrid.HideTooltip();
 
@@ -8881,6 +8887,10 @@ namespace Ambermoon
                                 TrapMouse(itemArea);
                                 SetupRightClickAbort();
                                 ShowDefaultMessage();
+                            }
+                            else
+                            {
+                                DisableItemGrid();
                             }
                         });
                     }
@@ -8932,7 +8942,7 @@ namespace Ambermoon
                                     enchanter.AvailableGold -= cost;
                                     itemSlot.NumRemainingCharges += (int)charges;
                                     itemSlot.RechargeTimes = (byte)Math.Min(255, itemSlot.RechargeTimes + 1);
-                                    itemsGrid.Disabled = true;
+                                    DisableItemGrid();
                                 }
 
                                 if (item.MaxRecharges > 0 && itemSlot.RechargeTimes == item.MaxRecharges - 1)
@@ -8943,7 +8953,7 @@ namespace Ambermoon
                             else
                             {
                                 layout.ShowChestMessage(null);
-                                itemsGrid.Disabled = true;
+                                DisableItemGrid();
                             }
                         }, TextAlign.Left);
                     }
@@ -9001,8 +9011,7 @@ namespace Ambermoon
                         {
                             if (buttons == MouseButtons.Right)
                             {
-                                itemsGrid.HideTooltip();
-                                itemsGrid.Disabled = true;
+                                DisableItemGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
                                 return true;
@@ -9012,7 +9021,14 @@ namespace Ambermoon
                         };
                     }
                     SetupRightClickAbort();
-                    itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                    void DisableItemGrid()
+                    {
+                        itemsGrid.HideTooltip();
+                        itemsGrid.ItemClicked -= ItemClicked;
+                        itemsGrid.Disabled = true;
+                    }
+                    itemsGrid.ItemClicked += ItemClicked;
+                    void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                     {
                         itemsGrid.HideTooltip();
 
@@ -9025,6 +9041,10 @@ namespace Ambermoon
                                     TrapMouse(itemArea);
                                     SetupRightClickAbort();
                                     ShowDefaultMessage();
+                                }
+                                else
+                                {
+                                    DisableItemGrid();
                                 }
                             });
                         }
@@ -9046,7 +9066,7 @@ namespace Ambermoon
                             nextClickHandler = null;
                             EndSequence();
                             UntrapMouse();
-                            itemsGrid.Disabled = true;
+                            DisableItemGrid();
                             layout.ShowChestMessage(null);
 
                             if (answer) // yes
@@ -9262,8 +9282,7 @@ namespace Ambermoon
                         {
                             if (buttons == MouseButtons.Right)
                             {
-                                conditionGrid.HideTooltip();
-                                conditionGrid.Disabled = true;
+                                DisableConditionGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
                                 return true;
@@ -9273,7 +9292,14 @@ namespace Ambermoon
                         };
                     }
                     SetupRightClickAbort();
-                    conditionGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                    void DisableConditionGrid()
+                    {
+                        conditionGrid.HideTooltip();
+                        conditionGrid.ItemClicked -= ConditionClicked;
+                        conditionGrid.Disabled = true;
+                    }
+                    conditionGrid.ItemClicked += ConditionClicked;
+                    void ConditionClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                     {
                         if (slotIndex < slotAilments.Count)
                         {
@@ -9304,7 +9330,9 @@ namespace Ambermoon
                                         layout.ShowChestMessage(DataNameProvider.WhichConditionToHeal, TextAlign.Left);
                                     }
                                     else
-                                        conditionGrid.Disabled = true;
+                                    {
+                                        DisableConditionGrid();
+                                    }
                                 }
                                 else
                                 {
@@ -9359,8 +9387,7 @@ namespace Ambermoon
                         {
                             if (buttons == MouseButtons.Right)
                             {
-                                itemsGrid.HideTooltip();
-                                itemsGrid.Disabled = true;
+                                DisableItemGrid();
                                 layout.ShowChestMessage(null);
                                 UntrapMouse();
                                 return true;
@@ -9370,7 +9397,14 @@ namespace Ambermoon
                         };
                     }
                     SetupRightClickAbort();
-                    itemsGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
+                    void DisableItemGrid()
+                    {
+                        itemsGrid.HideTooltip();
+                        itemsGrid.ItemClicked -= ItemClicked;
+                        itemsGrid.Disabled = true;
+                    }
+                    itemsGrid.ItemClicked += ItemClicked;
+                    void ItemClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                     {
                         itemsGrid.HideTooltip();
 
@@ -9383,6 +9417,10 @@ namespace Ambermoon
                                     TrapMouse(itemArea);
                                     SetupRightClickAbort();
                                     ShowDefaultMessage();
+                                }
+                                else
+                                {
+                                    DisableItemGrid();
                                 }
                             });
                         }
@@ -9415,7 +9453,7 @@ namespace Ambermoon
                                 itemSlot.Flags &= ~ItemSlotFlags.Broken;
                             }
 
-                            itemsGrid.Disabled = true;
+                            DisableItemGrid();
                         }, TextAlign.Left);
                     };
                 });

@@ -32,7 +32,6 @@
 
 ## UI
 
-- Removing letters in list box (savegame name) they will stay and new text is added on top (and stays after window closing!)
 - When repairing item etc the item tooltip should not show up after magic animation.
 - "Do you accept this character?" message is missing in character creator.
 
@@ -49,4 +48,3 @@
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
   It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Maybe add emergency savegame that is stored when game crashes.
-- Check if NPCs have a time range where they are visible (Aman for example)

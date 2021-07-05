@@ -2134,7 +2134,7 @@ namespace Ambermoon.UI
         }
 
         Button AddButton(Position position, ButtonType type, Action leftClickAction, byte displayLayer,
-            ref List<FilledArea> areas)
+            List<FilledArea> areas)
         {
             var brightBorderColor = game.GetUIColor(31);
             var darkBorderColor = game.GetUIColor(26);
@@ -2157,8 +2157,8 @@ namespace Ambermoon.UI
             var areas = new List<FilledArea>();
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
-            questionYesButton = AddButton(new Position(128, 169), ButtonType.Load, () => Choose(true), 2, ref areas);
-            questionNoButton = AddButton(new Position(128 + Button.Width, 169), ButtonType.Quit, () => Choose(false), 2, ref areas);
+            questionYesButton = AddButton(new Position(128, 169), ButtonType.Load, () => Choose(true), 2, areas);
+            questionNoButton = AddButton(new Position(128 + Button.Width, 169), ButtonType.Quit, () => Choose(false), 2, areas);
 
             void Choose(bool load)
             {
@@ -2180,8 +2180,8 @@ namespace Ambermoon.UI
             ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
-            questionYesButton = AddButton(new Position(223, 75), ButtonType.Yes, () => Answer(true), 2, ref areas);
-            questionNoButton = AddButton(new Position(223 + Button.Width, 75), ButtonType.No, () => Answer(false), 2, ref areas);
+            questionYesButton = AddButton(new Position(223, 75), ButtonType.Yes, () => Answer(true), 2, areas);
+            questionNoButton = AddButton(new Position(223 + Button.Width, 75), ButtonType.No, () => Answer(false), 2, areas);
             game.CursorType = CursorType.Click;
             game.InputEnable = false;
 
