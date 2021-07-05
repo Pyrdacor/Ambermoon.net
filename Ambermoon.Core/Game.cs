@@ -11713,8 +11713,11 @@ namespace Ambermoon
                     ShowLegendPage(0);
                     var locationArea = new Rect(217, 166, 86, 22);
                     layout.AddPanel(locationArea, 11);
-                    layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
-                    layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
+                    if (CurrentSavegame.IsSpecialItemActive(SpecialItemPurpose.MapLocation))
+                    {
+                        layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 3, 70, Global.GlyphLineHeight), DataNameProvider.Location, TextColor.White, TextAlign.Left, 15);
+                        layout.AddText(new Rect(locationArea.X + 2, locationArea.Y + 12, 70, Global.GlyphLineHeight), $"X:{player3D.Position.X + 1,-2} Y:{player3D.Position.Y + 1}", TextColor.White, TextAlign.Left, 15);
+                    }
                     DrawPin(locationArea.Right - 16, locationArea.Bottom - 32, 16, 16, false);
                     #endregion
 
