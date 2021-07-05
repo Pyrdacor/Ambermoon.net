@@ -180,7 +180,6 @@ namespace Ambermoon.Data
 
         void AddLevelUpEffects(Func<int, int, int> random)
         {
-            // Note: Original only uses base value but I find it better to use bonus values as well.
             var intelligence = Attributes[Attribute.Intelligence].TotalCurrentValue;
             bool magicClass = Class.IsMagic();
             uint lpAdd = HitPointsPerLevel * (uint)random(50, 100) / 100;

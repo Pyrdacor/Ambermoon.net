@@ -4055,7 +4055,7 @@ namespace Ambermoon
                     switch (awardEvent.Operation)
                     {
                         case AwardEvent.AwardOperation.Increase:
-                            partyMember.ExperiencePoints = (uint)Util.Min(uint.MaxValue, (long)partyMember.ExperiencePoints + awardEvent.Value);
+                            AddExperience(partyMember, awardEvent.Value, followAction);
                             break;
                         case AwardEvent.AwardOperation.Decrease:
                             partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - awardEvent.Value);
@@ -5446,10 +5446,6 @@ namespace Ambermoon
         internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent,
             ConversationItems createdItems, bool showInitialText = true)
         {
-            // TODO: Test if level ups in conversations work properly
-            // TODO: The new keyword coloring is not applied when scrolled
-            // (e.g. when the new keyword only appears after scrolling, the yellow color is only applied after hovering)
-
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
 
