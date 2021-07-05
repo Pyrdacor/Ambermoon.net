@@ -271,18 +271,19 @@ namespace Ambermoon
                     if (!(@event is ChangeTileEvent changeTileEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
-                    game.UpdateMapTile(changeTileEvent, x, y);
-
-                    // Add it to the savegame as well.
-                    // Note: Savegame stores the front tile index for 2D and wall/object index for 3D.
-                    // Note: If map index is 0 (same map) we have to replace it with the real map index
-                    // for savegames. Otherwise it will be interpreted as "end of tile changes marker".
                     if (changeTileEvent.MapIndex == 0)
                         changeTileEvent.MapIndex = map.Index;
                     if (changeTileEvent.X == 0)
                         changeTileEvent.X = x + 1;
                     if (changeTileEvent.Y == 0)
                         changeTileEvent.Y = y + 1;
+
+                    game.UpdateMapTile(changeTileEvent, x, y);
+
+                    // Add it to the savegame as well.
+                    // Note: Savegame stores the front tile index for 2D and wall/object index for 3D.
+                    // Note: If map index is 0 (same map) we have to replace it with the real map index
+                    // for savegames. Otherwise it will be interpreted as "end of tile changes marker".
                     game.CurrentSavegame.TileChangeEvents.SafeAdd(map.Index, changeTileEvent);
                     // Change tile events that are triggered directly should be disabled afterwards
                     int eventIndex = map.EventList.IndexOf(@event);
