@@ -692,18 +692,24 @@ namespace Ambermoon.Render
                     return false;
             }
 
-            ScrollTo((uint)newScrollX, (uint)newScrollY, false, false);
+            ScrollTo((uint)newScrollX, (uint)newScrollY, false);
 
             return true;
         }
 
-        public void ScrollTo(uint x, uint y, bool forceUpdate = false, bool initial = true)
+        public void ScrollToPlayer(uint x, uint y) => ScrollToPlayer(new Position((int)x, (int)y));
+
+        public void ScrollToPlayer(Position playerPostion)
+        {
+            playerPostion ??= game.PartyPosition;
+            ScrollTo((uint)Util.Limit(0, playerPostion.X - NUM_VISIBLE_TILES_X / 2, Map.Width - NUM_VISIBLE_TILES_X),
+                (uint)Util.Limit(0, playerPostion.Y - NUM_VISIBLE_TILES_Y / 2, Map.Height - NUM_VISIBLE_TILES_Y));
+        }
+
+        public void ScrollTo(uint x, uint y, bool forceUpdate = false)
         {
             if (!forceUpdate && ScrollX == x && ScrollY == y)
                 return;
-
-            if (initial && !Map.Flags.HasFlag(MapFlags.SmallPlayer) && y > 0)
-                --y;
 
             ScrollX = x;
             ScrollY = y;

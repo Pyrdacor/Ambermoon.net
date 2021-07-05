@@ -19,7 +19,6 @@
 
 ## 2D maps
 
-- Scroll offset of the map is sometimes wrong. Especially after teleporting (with and without cheat).
 - A horse etc can be drawn in front of tree tops etc.
 - Sometimes the indoor player is in front of arcs he should be covered by (map 290 -> Nalven's magic school).
 - Ouch bubble on top of map slightly shimmers through the UI border
@@ -33,12 +32,14 @@
 
 ## UI
 
+- Removing letters in list box (savegame name) they will stay and new text is added on top (and stays after window closing!)
 - When repairing item etc the item tooltip should not show up after magic animation.
 - "Do you accept this character?" message is missing in character creator.
 
 
 ## Misc
 
+- When mouse is trapped and the cursor leaves the window and enters somewhere else things get messed up. Trap the cursor in the whole window too!
 - Add more savegame slots?
 - First time resolution is wrong. Also sometimes after switching from fullscreen to window.
 - Load time is long. Either improve performance or if not possible

@@ -192,12 +192,6 @@ namespace Ambermoon.Render
             }
         }
 
-        public void PostSameMapTeleport(Map map, uint newX, uint newY)
-        {
-            Map.ScrollTo((uint)Util.Limit(0, (int)newX - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                (uint)Util.Limit(0, (int)newY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
-        }
-
         public void SetDirection(CharacterDirection direction, uint ticks)
         {
             MoveTo(Map.Map, (uint)Position.X, (uint)Position.Y, ticks, true, direction);

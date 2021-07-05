@@ -958,9 +958,8 @@ namespace Ambermoon
 
             layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
             is3D = false;
-            uint scrollRefY = playerY + (map.Flags.HasFlag(MapFlags.Indoor) ? 1u : 0u);
             int xOffset = (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2;
-            int yOffset = (int)scrollRefY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2;
+            int yOffset = (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2;
 
             if (map.IsWorldMap)
             {
@@ -4374,9 +4373,9 @@ namespace Ambermoon
                 }
             }
 
-            if (!mapChange && !is3D)
+            if (!is3D && !mapChange)
             {
-                player2D.PostSameMapTeleport(Map, newX, newY);
+                renderMap2D.ScrollToPlayer(newX, newY);
             }
 
             player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction);
@@ -4386,13 +4385,6 @@ namespace Ambermoon
 
             if (!mapTypeChanged)
             {
-                if (!WindowActive && !layout.PopupActive)
-                {
-                    // Trigger events after map transition
-                    TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
-                        (uint)player.Position.Y);
-                }
-
                 PlayerMoved(mapChange);
             }
 
@@ -4406,6 +4398,13 @@ namespace Ambermoon
 
             if (!mapChange) // Otherwise the map change handler takes care of this
                 ResetMoveKeys();
+
+            if (!WindowActive && !layout.PopupActive)
+            {
+                // Trigger events after map transition
+                TriggerMapEvents(EventTrigger.Move, (uint)this.player.Position.X,
+                    (uint)this.player.Position.Y);
+            }
 
             return true;
         }
@@ -5978,30 +5977,43 @@ namespace Ambermoon
                         if (!newKeywords.Contains(keyword))
                             newKeywords.Add(keyword);
                     }
-
-                    var trigger = EventTrigger.Always;
-                    conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
-                        (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, ref lastEventStatus, out aborted,
-                        out var eventProvider, conversationPartner);
-                    if (conversationEvent == null && eventProvider != null)
+                    
+                    if (conversationEvent.Type == EventType.Teleport ||
+                        conversationEvent.Type == EventType.Chest ||
+                        conversationEvent.Type == EventType.Door ||
+                        conversationEvent.Type == EventType.EnterPlace ||
+                        conversationEvent.Type == EventType.Riddlemouth ||
+                        conversationEvent.Type == EventType.StartBattle)
                     {
-                        if (eventProvider.Event != null)
-                        {
-                            conversationEvent = eventProvider.Event;
-                            HandleEvent(followAction);
-                        }
-                        else
-                        {
-                            eventProvider.Provided += @event =>
-                            {
-                                conversationEvent = @event;
-                                HandleEvent(followAction);
-                            };
-                        }
+                        CloseWindow(() => EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
+                            (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, conversationEvent, true));
                     }
                     else
                     {
-                        HandleEvent(followAction);
+                        var trigger = EventTrigger.Always;
+                        conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
+                            (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, ref lastEventStatus, out aborted,
+                            out var eventProvider, conversationPartner);
+                        if (conversationEvent == null && eventProvider != null)
+                        {
+                            if (eventProvider.Event != null)
+                            {
+                                conversationEvent = eventProvider.Event;
+                                HandleEvent(followAction);
+                            }
+                            else
+                            {
+                                eventProvider.Provided += @event =>
+                                {
+                                    conversationEvent = @event;
+                                    HandleEvent(followAction);
+                                };
+                            }
+                        }
+                        else
+                        {
+                            HandleEvent(followAction);
+                        }
                     }
                 }
             }
@@ -8644,7 +8656,7 @@ namespace Ambermoon
 
                 if (!is3D && (lastIntensity != lightIntensity || mapChange))
                 {
-                    var lastRadius = (int)(lastIntensity >> 1);
+                    var lastRadius = mapChange ? 0 : (int)(lastIntensity >> 1);
                     var newRadius = (int)(lightIntensity >> 1);
                     fow2D.Visible = lastIntensity < 224;
                     ChangeLightRadius(lastRadius, newRadius);
