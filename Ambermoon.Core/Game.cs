@@ -1536,7 +1536,7 @@ namespace Ambermoon
                 var tileChangeEvents = CurrentSavegame.TileChangeEvents[mapIndex];
 
                 foreach (var tileChangeEvent in tileChangeEvents)
-                    UpdateMapTile(tileChangeEvent);
+                    UpdateMapTile(tileChangeEvent, null, null, false);
             }
         }
 
@@ -4836,7 +4836,21 @@ namespace Ambermoon
             }
         }
 
-        internal void UpdateMapTile(ChangeTileEvent changeTileEvent, uint? currentX = null, uint? currentY = null)
+        void RemoveMapTile(Map map, uint x, uint y, bool save)
+        {
+            UpdateMapTile(new ChangeTileEvent
+            {
+                Type = EventType.ChangeTile,
+                Index = uint.MaxValue,
+                FrontTileIndex = 0,
+                MapIndex = map.Index,
+                X = x + 1,
+                Y = y + 1
+            }, null, null, save);
+        }
+
+        internal void UpdateMapTile(ChangeTileEvent changeTileEvent, uint? currentX = null, uint? currentY = null,
+            bool save = true)
         {
             bool sameMap = changeTileEvent.MapIndex == 0 || changeTileEvent.MapIndex == Map.Index;
             var map = sameMap ? Map : MapManager.GetMap(changeTileEvent.MapIndex);
@@ -4846,6 +4860,12 @@ namespace Ambermoon
             uint y = changeTileEvent.Y == 0
                 ? (currentY ?? throw new AmbermoonException(ExceptionScope.Data, "No change tile position given"))
                 : changeTileEvent.Y - 1;
+
+            if (save)
+            {
+                // Add it to the savegame as well.                
+                CurrentSavegame.TileChangeEvents.SafeAdd(map.Index, changeTileEvent);
+            }
 
             if (!changedMaps.Contains(map.Index))
                 changedMaps.Add(map.Index);
@@ -5133,7 +5153,7 @@ namespace Ambermoon
                 Fade(OpenChest);
         }
 
-        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map)
+        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y)
         {
             if (!CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
                 return false;
@@ -5146,7 +5166,7 @@ namespace Ambermoon
                     map.Texts[(int)doorEvent.UnlockTextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map);
+                SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map, x, y);
                 ShowLocked(Picture80x80.Door, () =>
                 {
                     CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
@@ -5162,6 +5182,23 @@ namespace Ambermoon
                     {
                         CloseWindow(() =>
                         {
+                            if (is3D)
+                            {
+                                // 3D doors that have automap type wall seem to be removed after opening.
+                                // This is at least the case for the Newlake library bookshelf.
+                                var wallIndex = map.Blocks[x, y].WallIndex;
+                                var labdata = MapManager.GetLabdataForMap(map);
+
+                                if (wallIndex != 0 &&
+                                    labdata.Walls[((int)wallIndex - 1) % labdata.Walls.Count].AutomapType == AutomapType.Wall)
+                                {
+                                    RemoveMapTile(map, x, y, true);
+                                }
+                            }
+                            // If this is a direct map event it is deactivated when the door is opened.
+                            int eventIndex = map.EventList.IndexOf(doorEvent);
+                            if (eventIndex != -1)
+                                CurrentSavegame.ActivateEvent(map.Index, (uint)eventIndex, false);
                             if (doorEvent.Next != null)
                             {
                                 EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
@@ -13110,8 +13147,10 @@ namespace Ambermoon
                     bool trapFound = (bool)currentWindow.WindowParameters[1];
                     bool trapDisarmed = (bool)currentWindow.WindowParameters[2];
                     var map = (Map)currentWindow.WindowParameters[3];
+                    var x = (uint)currentWindow.WindowParameters[4];
+                    var y = (uint)currentWindow.WindowParameters[5];
                     currentWindow = DefaultWindow;
-                    ShowDoor(doorEvent, trapFound, trapDisarmed, map);
+                    ShowDoor(doorEvent, trapFound, trapDisarmed, map, x, y);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
