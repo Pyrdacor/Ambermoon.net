@@ -792,26 +792,6 @@ namespace Ambermoon
                 if (!Console.IsInputRedirected && Console.KeyAvailable)
                     Cheats.ProcessInput(Console.ReadKey(true), Game);
             }
-
-            if (trapMouse && mouse != null)
-            {
-                var width = window.Size.X;
-                var height = window.Size.Y;
-                float x = mouse.Position.X;
-                float y = mouse.Position.Y;
-
-                if (x < 0)
-                    x = 0;
-                else if (x >= width)
-                    x = width - 1;
-
-                if (y < 0)
-                    y = 0;
-                else if (y >= height)
-                    y = height - 1;
-
-                mouse.Position = new MousePosition(x, y);
-            }
         }
 
         static void PrintCheatConsoleHeader()
