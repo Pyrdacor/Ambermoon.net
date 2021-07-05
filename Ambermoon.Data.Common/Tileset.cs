@@ -16,7 +16,7 @@ namespace Ambermoon.Data
             BringToFront = 0x00000040,
             BlockAllMovement = 0x00000080,
             AllowMovementWalk = 0x00000100,
-            AllowMovementHorse = 0x00000200, // In 3D (and maybe also indoor 2D) this means "AllowMovementMonster"
+            AllowMovementHorse = 0x00000200, // In 3D this means "AllowMovementMonster"
             AllowMovementRaft = 0x00000400,
             AllowMovementShip = 0x00000800,
             AllowMovementMagicalDisc = 0x00001000,

@@ -32,7 +32,6 @@
 
 ## UI
 
-- When repairing item etc the item tooltip should not show up after magic animation.
 - "Do you accept this character?" message is missing in character creator.
 
 

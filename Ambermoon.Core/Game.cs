@@ -11540,6 +11540,16 @@ namespace Ambermoon
             });
         }
 
+        struct AutomapWall
+        {
+            public int TileX;
+            public int TileY;
+            public int DrawX;
+            public int DrawY;
+            public bool? NormalWall; // true: normal, false: fake wall, null: wall with automap graphic on it
+            public byte ColorIndex;
+        }
+
         internal void ShowAutomap(AutomapOptions automapOptions)
         {
             CloseWindow(() =>
@@ -11573,7 +11583,7 @@ namespace Ambermoon
                     var sprites = new List<ISprite>();
                     var animatedSprites = new List<IAnimatedLayerSprite>();
                     // key = tile index, value = tileX, tileY, drawX, drawY, boolean -> true = normal blocking wall, false = fake wall, null = count as wall but has automap graphic on it
-                    var walls = new Dictionary<int, Tuple<int, int, int, int, bool?>>();
+                    var walls = new Dictionary<int, AutomapWall>();
                     var gotoPoints = new List<KeyValuePair<Map.GotoPoint, Tooltip>>();
                     var automapIcons = new Dictionary<int, ISprite>();
                     bool animationsPaused = false;
@@ -11817,8 +11827,15 @@ namespace Ambermoon
                                 bool draw = automapType == AutomapType.None || wall.AutomapType == AutomapType.Wall ||
                                     automapType == AutomapType.Tavern || automapType == AutomapType.Merchant;
 
-                                walls.Add(tx + ty * Map.Width, Tuple.Create(tx, ty, x, y,
-                                    draw ? blockingWall : (bool?)null));
+                                walls.Add(tx + ty * Map.Width, new AutomapWall
+                                {
+                                    TileX = tx,
+                                    TileY = ty,
+                                    DrawX = x,
+                                    DrawY = y,
+                                    NormalWall = draw ? blockingWall : (bool?)null,
+                                    ColorIndex = wall.ColorIndex
+                                });
                             }
                         }
                     }
@@ -11891,18 +11908,41 @@ namespace Ambermoon
                     // Draw walls
                     foreach (var wall in walls)
                     {
-                        int tx = wall.Value.Item1;
-                        int ty = wall.Value.Item2;
-                        int dx = wall.Value.Item3;
-                        int dy = wall.Value.Item4;
-                        bool? type = wall.Value.Item5;
+                        int tx = wall.Value.TileX;
+                        int ty = wall.Value.TileY;
+                        int dx = wall.Value.DrawX;
+                        int dy = wall.Value.DrawY;
+                        bool? type = wall.Value.NormalWall;
+                        byte colorIndex = wall.Value.ColorIndex;
 
                         if (type != null)
                         {
-                            bool hasWallLeft = tx > 0 && walls.ContainsKey(tx - 1 + ty * Map.Width);
-                            bool hasWallUp = ty > 0 && walls.ContainsKey(tx + (ty - 1) * Map.Width);
-                            bool hasWallRight = tx < Map.Width - 1 && walls.ContainsKey(tx + 1 + ty * Map.Width);
-                            bool hasWallDown = ty < Map.Height - 1 && walls.ContainsKey(tx + (ty + 1) * Map.Width);
+                            bool ContainsSameWall(int x, int y, out bool otherWall)
+                            {
+                                otherWall = false;
+
+                                // Note: This is used to detect if walls should be
+                                // merged visually. There are some special walls that
+                                // have a different color index (e.g. the crystal wall
+                                // in the temple of brotherhood). Those should be treated
+                                // as "another" wall so we will return false here if the
+                                // color indices do not match.
+                                if (!walls.TryGetValue(x + y * Map.Width, out var wall))
+                                    return false;
+
+                                otherWall = colorIndex != wall.ColorIndex;
+
+                                return !otherWall || (type == null) != (wall.NormalWall == null);
+                            }
+
+                            bool hasOtherWallLeft = false;
+                            bool hasOtherWallUp = false;
+                            bool hasOtherWallRight = false;
+                            bool hasOtherWallDown = false;
+                            bool hasWallLeft = tx > 0 && ContainsSameWall(tx - 1, ty, out hasOtherWallLeft);
+                            bool hasWallUp = ty > 0 && ContainsSameWall(tx, ty - 1, out hasOtherWallUp);
+                            bool hasWallRight = tx < Map.Width - 1 && ContainsSameWall(tx + 1, ty, out hasOtherWallRight);
+                            bool hasWallDown = ty < Map.Height - 1 && ContainsSameWall(tx, ty + 1, out hasOtherWallDown);
                             int wallGraphicType = 15; // closed
 
                             if (hasWallLeft)
@@ -12008,8 +12048,21 @@ namespace Ambermoon
                                 }
                                 else
                                 {
-                                    // closed single wall
-                                    wallGraphicType = 15;
+                                    if (hasOtherWallLeft || hasOtherWallRight)
+                                    {
+                                        // left and right open
+                                        wallGraphicType = 14;
+                                    }
+                                    else if (hasOtherWallUp || hasOtherWallDown)
+                                    {
+                                        // top and bottom open
+                                        wallGraphicType = 13;
+                                    }
+                                    else
+                                    {
+                                        // closed single wall
+                                        wallGraphicType = 15;
+                                    }
                                 }
                             }
 
