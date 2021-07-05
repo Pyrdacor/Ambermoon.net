@@ -195,14 +195,15 @@ namespace Ambermoon.UI
             editingItem = -1;
             if (editInput == TextInput.FocusedInput)
                 editInput.Submit();
-            AbortEdit();
+            AbortEdit(itemIndex);
             itemTexts[itemIndex - scrollOffset].Text = renderView.TextProcessor.CreateText(editInput.Text);
             items[itemIndex] = KeyValuePair.Create(editInput.Text, items[itemIndex].Value);
             items[itemIndex].Value?.Invoke(itemIndex, items[itemIndex].Key);
         }
 
-        public void AbortEdit()
+        public void AbortEdit(int? index = null)
         {
+            itemTexts[index ?? editingItem].Visible = true;
             editingItem = -1;
             editInput.LoseFocus();
             editInput.Visible = false;
@@ -212,6 +213,7 @@ namespace Ambermoon.UI
         {
             editingItem = itemIndex;
             SetHoveredItem(-1);
+            itemTexts[itemIndex].Visible = false;
             editInput.MoveTo(new Position(itemTexts[row].X, itemTexts[row].Y));
             editInput.Visible = true;
             editInput.SetText(items[itemIndex].Key);
