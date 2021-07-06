@@ -159,6 +159,33 @@ namespace Ambermoon.Render
                             Math.Abs(touchX - newX) < 0.275f * Global.DistancePerBlock;
                     }
 
+                    // Tile change events that put something on the block where the player
+                    // stands should never be considered. Otherwise we would get stuck.
+                    if (considerPosition)
+                    {
+                        var block = map.Map.Blocks[(uint)touchedPosition.X, (uint)touchedPosition.Y];
+
+                        if (block.MapEventId != 0 && game.CurrentSavegame.IsEventActive(map.Map.Index, block.MapEventId - 1))
+                        {
+                            var @event = map.Map.EventList[(int)block.MapEventId - 1];
+
+                            do
+                            {
+                                if (@event is ChangeTileEvent changeTileEvent)
+                                {
+                                    if (changeTileEvent.X == Position.X + 1 && changeTileEvent.Y == Position.Y + 1 &&
+                                        changeTileEvent.WallIndex != 0)
+                                    {
+                                        considerPosition = false;
+                                        break;
+                                    }
+                                }
+
+                                @event = @event.Next;
+                            } while (@event != null);
+                        }
+                    }
+
                     if (considerPosition)
                     {
                         bool Filter(Event @event)
