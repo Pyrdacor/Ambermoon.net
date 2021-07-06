@@ -57,14 +57,33 @@ namespace Ambermoon.Geometry
             NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 288;
         }
 
-        public void MoveToTile(uint x, uint y)
+        public void MoveToTile(uint x, uint y, Position lastPosition = null)
         {
-            targetTilePosition = new Position((int)x, (int)y);
-            direction = lastTilePosition.GetDirectionTo(targetTilePosition);
-            lastMoveTicks = game.CurrentTicks;
-            movedTicks = 0;
+            if (lastPosition != null) // Fixed route
+            {
+                if (targetTilePosition == null || targetTilePosition.X != x || targetTilePosition.Y != y)
+                {
+                    // New position and last position is given (fixed route).
+                    // In this case we ensure that the character is synced with
+                    // its path and place him at the last position.
+                    Place((uint)lastPosition.X, (uint)lastPosition.Y, false);
+                    lastTilePosition = new Position(lastPosition);
+                    InitMovement();
+                    currentState = State.MovingToTile;
+                }
+                return;
+            }
 
-            ticksPerMovement = lastTilePosition.GetMaxDistance(targetTilePosition) * TicksPerMovement;
+            void InitMovement()
+            {
+                targetTilePosition = new Position((int)x, (int)y);
+                direction = lastTilePosition.GetDirectionTo(targetTilePosition);
+                lastMoveTicks = game.CurrentTicks;
+                movedTicks = 0;
+                ticksPerMovement = lastTilePosition.GetMaxDistance(targetTilePosition) * TicksPerMovement;
+            }
+
+            InitMovement();
 
             if (currentState == State.Idle)
             {
@@ -193,20 +212,23 @@ namespace Ambermoon.Geometry
                     }
                     else
                     {
-                        uint moveTicks = Math.Min(ticks - lastMoveTicks, ticksPerMovement - movedTicks);
-                        lastMoveTicks = ticks;
-                        var diff = targetTilePosition - lastTilePosition;
-                        diff.Normalize();
-                        float stepSize = moveTicks * Global.DistancePerBlock / TicksPerMovement;
-
-                        RealPosition.X += diff.X * stepSize;
-                        RealPosition.Y += diff.Y * stepSize;
-                        movedTicks += moveTicks;
-
-                        if (movedTicks == ticksPerMovement) // finished movement
+                        if (ticks > lastMoveTicks)
                         {
-                            currentState = State.IdleOnTile;
-                            lastTilePosition = Position;
+                            uint moveTicks = Math.Min(ticks - lastMoveTicks, ticksPerMovement - movedTicks);
+                            lastMoveTicks = ticks;
+                            var diff = targetTilePosition - lastTilePosition;
+                            diff.Normalize();
+                            float stepSize = moveTicks * Global.DistancePerBlock / TicksPerMovement;
+
+                            RealPosition.X += diff.X * stepSize;
+                            RealPosition.Y += diff.Y * stepSize;
+                            movedTicks += moveTicks;
+
+                            if (movedTicks == ticksPerMovement) // finished movement
+                            {
+                                currentState = State.IdleOnTile;
+                                lastTilePosition = Position;
+                            }
                         }
                     }
 

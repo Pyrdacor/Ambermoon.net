@@ -448,7 +448,7 @@ namespace Ambermoon.Render
 
             void UpdateCurrentMovement(uint ticks)
             {
-                if (!character3D.Moving)
+                if (!character3D.Moving && characterReference.Type != CharacterType.MapObject)
                     ResetFrame();
                 else
                 {
@@ -590,9 +590,12 @@ namespace Ambermoon.Render
                 if (!randomMovement && characterReference.Type != CharacterType.Monster)
                 {
                     // Walk a given path every day time slot
+                    uint lastTimeSlot = gameTime.TimeSlot == 0 ? 287 : gameTime.TimeSlot - 1;
+                    var lastPosition = new Position(characterReference.Positions[(int)lastTimeSlot]);
                     var newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
                     newPosition.Offset(-1, -1); // positions are 1-based
-                    character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y);
+                    lastPosition.Offset(-1, -1);
+                    character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y, lastPosition);
                 }
 
                 bool monster = characterReference.Type == CharacterType.Monster;
