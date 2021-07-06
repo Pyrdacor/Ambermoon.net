@@ -231,6 +231,7 @@ namespace Ambermoon
         bool ingame = false;
         bool is3D = false;
         bool noEvents = false;
+        bool levitating = false;
         internal const ushort MaxBaseLine = 0x4000;
         // Note: This is half the max base line which is used for the player in complete
         // darkness. Big gaps are needed as the z buffer precision is lower with higher distance.
@@ -1069,6 +1070,7 @@ namespace Ambermoon
             CurrentCaster = null;
             OpenStorage = null;
             weightDisplayBlinking = false;
+            levitating = false;
 
             RenderMap3D.Reset();
             MapCharacter2D.Reset();
@@ -4171,7 +4173,7 @@ namespace Ambermoon
             }
             if (climbEvent != null)
             {
-                // Attach player to ladded or hole
+                // Attach player to ladder or hole
                 float angle = camera3D.Angle;
                 Geometry.Geometry.BlockToCameraPosition(Map, levitatePosition, out float x, out float z);
                 camera3D.SetPosition(-x, z);
@@ -4190,7 +4192,10 @@ namespace Ambermoon
                         if (climbEvent == null)
                             failAction?.Invoke();
                         else
+                        {
+                            levitating = true;
                             EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true);
+                        }
                     });
                 }
                 if (WindowActive)
@@ -4358,8 +4363,6 @@ namespace Ambermoon
         /// </summary>
         public bool Teleport(uint mapIndex, uint x, uint y, CharacterDirection direction, out bool blocked, bool force = false)
         {
-            // TODO: sometimes scroll offset is wrong (e.g. when teleporting manually to a world map).
-
             blocked = false;
 
             if (!ingame || layout.OptionMenuOpen || BattleActive || (!force && (WindowActive || layout.PopupActive)))
@@ -4440,10 +4443,16 @@ namespace Ambermoon
 
             void RunTransition()
             {
+                levitating = false;
                 Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _, true);
             }
 
-            switch (teleportEvent.Transition)
+            var transition = teleportEvent.Transition;
+
+            if (transition == TeleportEvent.TransitionType.MapChange && levitating)
+                transition = TeleportEvent.TransitionType.Climbing;
+
+            switch (transition)
             {
                 case TeleportEvent.TransitionType.Teleporter:
                     RunTransition();
