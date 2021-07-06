@@ -28,6 +28,7 @@
 
 - Should piles block monsters? Test in grandfather's cellar.
 - 3D monster get easily stuck on wall edges. :(
+- Change to automap wall drawing for crystal wall messed up automaps for maps like 350
 
 
 ## UI
@@ -37,7 +38,6 @@
 
 ## Misc
 
-- When mouse is trapped and the cursor leaves the window and enters somewhere else things get messed up. Trap the cursor in the whole window too!
 - Add more savegame slots?
 - First time resolution is wrong. Also sometimes after switching from fullscreen to window.
 - Load time is long. Either improve performance or if not possible
