@@ -16,7 +16,7 @@ namespace Ambermoon.Render
         readonly Map.CharacterReference characterReference;
         uint lastTimeSlot = 0;
         uint? disallowInstantMovementUntilTimeSlot = null;
-        DateTime lastInteractionTime = DateTime.MinValue;
+        uint lastInteractionTicks = 0;
         // This is used to avoid multiple monster encounters in the same update frame (e.g. 2 monsters move onto the player at the same time).
         static bool interacting = false;
         public bool CheckedIfSeesPlayer { get; set; } = false;
@@ -40,6 +40,8 @@ namespace Ambermoon.Render
         };
 
         public static void Reset() => interacting = false;
+
+        public void ResetLastInteractionTime() => lastInteractionTicks = game.CurrentTicks;
 
         private MapCharacter2D(Game game, IRenderView renderView, Layer layer, IMapManager mapManager,
             RenderMap2D map, uint characterIndex, Map.CharacterReference characterReference)
@@ -312,6 +314,9 @@ namespace Ambermoon.Render
 
             bool TriggerCharacterEvents(uint eventIndex)
             {
+                if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
+                    return false;
+
                 var @event = map.EventList[(int)eventIndex - 1];
 
                 if (@event is ConditionEvent conditionEvent)
@@ -343,6 +348,8 @@ namespace Ambermoon.Render
                         }
                     }
                 }
+                lastInteractionTicks = uint.MaxValue;
+                interacting = true;
                 game.CurrentMapCharacter = this;
                 var position = game.RenderPlayer.Position;
                 return EventExtensions.TriggerEventChain(map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
@@ -399,11 +406,11 @@ namespace Ambermoon.Render
                 {
                     if (trigger == EventTrigger.Move)
                     {
-                        if (DateTime.Now - lastInteractionTime < TimeSpan.FromSeconds(2)) // TODO: Is this based on real time or ingame time?
+                        if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
                             return false;
 
                         // First set this to max so we won't trigger this again while we are interacting.
-                        lastInteractionTime = DateTime.MaxValue;
+                        lastInteractionTicks = uint.MaxValue;
                         interacting = true;
                         var map = Map.GetMapFromTile((uint)Position.X, (uint)Position.Y);
 
@@ -411,7 +418,7 @@ namespace Ambermoon.Render
                         {
                             game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
                             {
-                                lastInteractionTime = DateTime.Now;
+                                lastInteractionTicks = game.CurrentTicks;
                                 interacting = false;
 
                                 if (battleEndInfo.MonstersDefeated)
@@ -443,7 +450,7 @@ namespace Ambermoon.Render
                                 else
                                 {
                                     // successfully fled
-                                    lastInteractionTime = DateTime.Now;
+                                    lastInteractionTicks = game.CurrentTicks;
                                     interacting = false;
                                     Map.StopMonstersForOneTimeSlot();
                                 }
@@ -463,7 +470,7 @@ namespace Ambermoon.Render
 
         public void StopMonsterForOneTimeSlot()
         {
-            lastInteractionTime = DateTime.Now;
+            lastInteractionTicks = game.CurrentTicks;
             lastTimeSlot = game.GameTime.TimeSlot;
             disallowInstantMovementUntilTimeSlot = (lastTimeSlot + 1) % 288;
         }

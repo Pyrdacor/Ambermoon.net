@@ -97,7 +97,7 @@ namespace Ambermoon.Render
             readonly bool alternateAnimation;
             bool active = true;
             bool animateForward = true;
-            DateTime lastInteractionTime = DateTime.MinValue;
+            uint lastInteractionTicks = 0;
             // This is used to avoid multiple monster encounters in the same update frame (e.g. 2 monsters move onto the player at the same time).
             static bool interacting = false;
             readonly Character3D character3D;
@@ -108,6 +108,8 @@ namespace Ambermoon.Render
             public uint EventId => characterReference?.EventIndex ?? 0;
 
             public static void Reset() => interacting = false;
+
+            public void ResetLastInteractionTime() => lastInteractionTicks = game.CurrentTicks;
 
             public MapCharacter(Game game, RenderMap3D map, ISurface3D surface,
                 uint characterIndex, Map.CharacterReference characterReference,
@@ -253,6 +255,9 @@ namespace Ambermoon.Render
 
                 bool TriggerCharacterEvents(uint eventIndex)
                 {
+                    if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
+                        return false;
+
                     var @event = map.Map.EventList[(int)eventIndex - 1];
 
                     if (@event is ConditionEvent conditionEvent)
@@ -284,6 +289,8 @@ namespace Ambermoon.Render
                             }
                         }
                     }
+                    lastInteractionTicks = uint.MaxValue;
+                    interacting = true;
                     game.CurrentMapCharacter = this;
                     var position = game.RenderPlayer.Position;
                     return EventExtensions.TriggerEventChain(map.Map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
@@ -293,11 +300,11 @@ namespace Ambermoon.Render
                 {
                     if (trigger == EventTrigger.Move)
                     {
-                        if (DateTime.Now - lastInteractionTime < TimeSpan.FromSeconds(2)) // TODO: Is this based on real time or ingame time?
+                        if ((long)game.CurrentTicks - lastInteractionTicks < Game.TicksPerSecond)
                             return false;
 
                         // First set this to max so we won't trigger this again while we are interacting.
-                        lastInteractionTime = DateTime.MaxValue;
+                        lastInteractionTicks = uint.MaxValue;
                         interacting = true;
 
                         // Turn the player towards the monster.
@@ -325,7 +332,7 @@ namespace Ambermoon.Render
                         {
                             game.StartBattle(characterReference.Index, failedEscape, battleEndInfo =>
                             {
-                                lastInteractionTime = DateTime.Now;
+                                lastInteractionTicks = game.CurrentTicks;
                                 interacting = false;
 
                                 if (battleEndInfo.MonstersDefeated)
@@ -358,7 +365,7 @@ namespace Ambermoon.Render
                                 {
                                     // successfully fled
                                     RestoreExtrude();
-                                    lastInteractionTime = DateTime.Now;
+                                    lastInteractionTicks = game.CurrentTicks;
                                     interacting = false;
                                     character3D.ResetMovementTimer();
                                 }

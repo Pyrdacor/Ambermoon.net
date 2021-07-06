@@ -133,6 +133,10 @@ namespace Ambermoon
                                 provider?.Provide(popupTextEvent.Next);
                             }
                         }
+                        else
+                        {
+                            game.ResetMapCharacterInteraction(map);
+                        }
                     });
                     return null; // next event is only executed after popup response
                 }
@@ -283,10 +287,33 @@ namespace Ambermoon
 
                     game.UpdateMapTile(changeTileEvent, x, y);
 
-                    // Change tile events that are triggered directly should be disabled afterwards
+                    // Change tile events that are triggered directly should be disabled afterwards.
+                    // But only if they don't chain some important events.
                     int eventIndex = map.EventList.IndexOf(changeTileEvent);
                     if (eventIndex != -1)
-                        game.CurrentSavegame.ActivateEvent(map.Index, (uint)eventIndex, false);
+                    {
+                        bool remove = true;
+
+                        while (true)
+                        {
+                            var next = changeTileEvent.Next;
+
+                            if (next == null)
+                                break;
+
+                            if (next.Type == EventType.Teleport ||
+                                next.Type == EventType.Chest ||
+                                next.Type == EventType.Door ||
+                                next.Type == EventType.EnterPlace ||
+                                next.Type == EventType.Riddlemouth ||
+                                next.Type == EventType.StartBattle)
+                                remove = false;
+                                break;
+                        }
+
+                        if (remove)
+                            game.CurrentSavegame.ActivateEvent(map.Index, (uint)eventIndex, false);
+                    }
                     break;
                 }
                 case EventType.StartBattle:

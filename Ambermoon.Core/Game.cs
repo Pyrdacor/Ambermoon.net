@@ -230,6 +230,7 @@ namespace Ambermoon
         } = false;
         bool ingame = false;
         bool is3D = false;
+        bool noEvents = false;
         internal const ushort MaxBaseLine = 0x4000;
         // Note: This is half the max base line which is used for the player in complete
         // darkness. Big gaps are needed as the z buffer precision is lower with higher distance.
@@ -1082,6 +1083,20 @@ namespace Ambermoon
 
             for (int i = 0; i < spellListScrollOffsets.Length; ++i)
                 spellListScrollOffsets[i] = 0;
+        }
+
+        internal void ResetMapCharacterInteraction(Map map, bool leaveMapCharacter = false)
+        {
+            if (CurrentMapCharacter != null)
+            {
+                CurrentMapCharacter.ResetLastInteractionTime();
+                if (map.Type == MapType.Map3D)
+                    RenderMap3D.Reset();
+                else
+                    MapCharacter2D.Reset();
+                if (!leaveMapCharacter)
+                    CurrentMapCharacter = null;
+            }
         }
 
         public void Destroy()
@@ -2815,6 +2830,9 @@ namespace Ambermoon
 
         bool TriggerMapEvents(EventTrigger trigger, uint x, uint y)
         {
+            if (noEvents)
+                return false;
+
             if (is3D)
             {
                 return renderMap3D.TriggerEvents(this, trigger, x, y, CurrentTicks, CurrentSavegame);
@@ -2894,6 +2912,9 @@ namespace Ambermoon
 
         internal bool TriggerMapEvents(EventTrigger? trigger)
         {
+            if (noEvents)
+                return false;
+
             if (trigger == null)
             {
                 // If null it was triggered by crosshair cursor. We test mouth, eye and hand in this case.
@@ -3894,6 +3915,10 @@ namespace Ambermoon
                     EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
                         (uint)player.Position.Y, CurrentTicks, trapEvent.Next, true);
                 }
+                else
+                {
+                    ResetMapCharacterInteraction(Map);
+                }
             }
         }
 
@@ -4411,6 +4436,8 @@ namespace Ambermoon
 
         internal void Teleport(TeleportEvent teleportEvent)
         {
+            ResetMapCharacterInteraction(Map);
+
             void RunTransition()
             {
                 Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _, true);
@@ -4429,16 +4456,28 @@ namespace Ambermoon
                     Pause();
                     Fall(() => Fade(() =>
                     {
+                        noEvents = true;
                         RunTransition();
-                        MoveVertically(false, true, Resume);
+                        MoveVertically(false, true, () =>
+                        {
+                            Resume();
+                            noEvents = false;
+                            TriggerMapEvents(EventTrigger.Move);
+                        });
                     }));
                     break;
                 case TeleportEvent.TransitionType.Climbing:
                     Pause();
                     Climb(() => Fade(() =>
                     {
+                        noEvents = true;
                         RunTransition();
-                        MoveVertically(true, true, Resume);
+                        MoveVertically(true, true, () =>
+                        {
+                            Resume();
+                            noEvents = false;
+                            TriggerMapEvents(EventTrigger.Move);
+                        });
                     }));
                     break;
                 case TeleportEvent.TransitionType.Outro:
@@ -5129,6 +5168,7 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map, position);
                 CursorType = CursorType.Sword;
+                ResetMapCharacterInteraction(map ?? Map, true);
 
                 if (chestEvent.LockpickingChanceReduction != 0 && CurrentSavegame.IsChestLocked(chestEvent.ChestIndex))
                 {
@@ -13105,6 +13145,13 @@ namespace Ambermoon
                 {
                     Fade(() =>
                     {
+                        if (CurrentMapCharacter != null &&
+                            (closedWindow.Window == Window.Battle ||
+                            closedWindow.Window == Window.BattleLoot ||
+                            closedWindow.Window == Window.Chest ||
+                            closedWindow.Window == Window.Event))
+                            CurrentMapCharacter = null;
+
                         ShowMap(true);
                         finishAction?.Invoke();
 
