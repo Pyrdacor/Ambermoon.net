@@ -434,7 +434,7 @@ namespace Ambermoon.Renderer.OpenGL
                     }
                     if (layer.Key == Layer.FOW || layer.Key == Layer.Effects || layer.Key == Layer.DrugEffect)
                         State.Gl.Enable(EnableCap.Blend);
-                    else if (layer.Key == Layer.Map3DBackground || layer.Key == Layer.CombatBackground || layer.Key == Layer.Cursor)
+                    else
                         State.Gl.Disable(EnableCap.Blend);
 
                     layer.Value.Render();

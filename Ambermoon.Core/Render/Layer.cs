@@ -34,7 +34,9 @@
         IntroText,
         Effects,
         Cursor,
-        DrugEffect
+        DrugEffect,
+        Intro,
+        Outro
     }
 
     public partial class Global

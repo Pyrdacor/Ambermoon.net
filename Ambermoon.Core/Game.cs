@@ -215,7 +215,7 @@ namespace Ambermoon
         readonly List<uint> changedMaps = new List<uint>();
         const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
-        internal const uint TicksPerSecond = 60;
+        public const uint TicksPerSecond = 60;
         /// <summary>
         /// This is used for screen shaking.
         /// Position is in percentage of the resolution.
@@ -238,6 +238,8 @@ namespace Ambermoon
         const ushort FowBaseLine = 0x2000;
         uint lightIntensity = 0;
         readonly IFow fow2D = null;
+        IOutroFactory outroFactory;
+        IOutro outro = null;
         internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) &&
             (!Map.Flags.HasFlag(MapFlags.Dungeon) || CurrentSavegame.IsSpellActive(ActiveSpellType.Light));
         internal bool GameOverButtonsVisible { get; private set; } = false;
@@ -463,7 +465,7 @@ namespace Ambermoon
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
             Places places, Cursor cursor, ILightEffectProvider lightEffectProvider, IAudioOutput audioOutput, ISongManager songManager,
             FullscreenChangeHandler fullscreenChangeHandler, ResolutionChangeHandler resolutionChangeHandler,
-            Func<List<Key>> pressedKeyProvider)
+            Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory)
         {
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
@@ -478,7 +480,7 @@ namespace Ambermoon
             movement = new Movement(configuration.LegacyMode);
             nameProvider = new NameProvider(this);
             this.renderView = renderView;
-            this.AudioOutput = audioOutput;
+            AudioOutput = audioOutput;
             this.songManager = songManager;
             MapManager = mapManager;
             ItemManager = itemManager;
@@ -489,6 +491,7 @@ namespace Ambermoon
             DataNameProvider = dataNameProvider;
             this.textDictionary = textDictionary;
             this.lightEffectProvider = lightEffectProvider;
+            this.outroFactory = outroFactory;
             camera3D = renderView.Camera3D;
             messageText = renderView.RenderTextFactory.Create();
             messageText.Layer = renderView.GetLayer(Layer.Text);
@@ -687,6 +690,12 @@ namespace Ambermoon
 
         public void Update(double deltaTime)
         {
+            if (outro?.Active == true)
+            {
+                outro.Update(deltaTime);
+                return;
+            }
+
             if (characterCreator != null)
             {
                 characterCreator.Update(deltaTime);
@@ -1053,6 +1062,7 @@ namespace Ambermoon
 
         void Cleanup()
         {
+            outro?.Destroy();
             layout.Reset();
             renderMap2D?.Destroy();
             renderMap2D = null;
@@ -4500,9 +4510,10 @@ namespace Ambermoon
 
         void ShowOutro()
         {
+            outro?.Destroy();
             PlayMusic(Song.Outro);
-            // TODO: later show outro
-            ShowMessagePopup("THE END", () => LoadGame(0, true), TextAlign.Center, 200);
+            outro ??= outroFactory.Create(() => NewGame(true));
+            outro.Start(CurrentSavegame);
         }
 
         public bool ActivateTransport(TravelType travelType)

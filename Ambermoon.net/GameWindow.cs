@@ -390,7 +390,7 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, introData);
             var fontProvider = new FontProvider(executableData);
 
-            // Create render view<
+            // Create render view
             renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
@@ -446,7 +446,7 @@ namespace Ambermoon
                                     var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                         characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
                                         cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution,
-                                        QueryPressedKeys);
+                                        QueryPressedKeys, new OutroFactory(renderView));
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
