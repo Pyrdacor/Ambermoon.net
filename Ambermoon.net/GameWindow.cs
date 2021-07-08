@@ -340,7 +340,7 @@ namespace Ambermoon
         }
 
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
-            IntroFont introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction)
+            Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction)
         {
             songManager = new SongManager(renderView.GameData, Data.Enumerations.Song.Menu); // TODO: use intro later maybe and initialize earlier then
             audioOutput = new AudioOutput(1, 44100);
@@ -383,11 +383,15 @@ namespace Ambermoon
         {
             // Load intro data
             var introData = new IntroData(gameData);
-            var introFont = new IntroFont();
+            var introFont = new Font(Resources.IntroFont);
+
+            // Load outro data
+            var outroData = new OutroData(gameData);
+            var outroFont = new Font(Resources.OutroFont);
 
             // Load game data
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
-            var graphicProvider = new GraphicProvider(gameData, executableData, introData);
+            var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData);
             var fontProvider = new FontProvider(executableData);
 
             // Create render view
@@ -446,7 +450,7 @@ namespace Ambermoon
                                     var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                         characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
                                         cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution,
-                                        QueryPressedKeys, new OutroFactory(renderView));
+                                        QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont));
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
@@ -586,7 +590,7 @@ namespace Ambermoon
                 () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1])
             };
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
-            var graphicProvider = new GraphicProvider(gameData, executableData, null);
+            var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             var fontProvider = new FontProvider(executableData);
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)

@@ -55,5 +55,6 @@ namespace Ambermoon.Data
         byte SecondaryUIPaletteIndex { get; }
         byte AutomapPaletteIndex { get; }
         byte FirstIntroPaletteIndex { get; }
+        byte FirstOutroPaletteIndex { get; }
     }
 }

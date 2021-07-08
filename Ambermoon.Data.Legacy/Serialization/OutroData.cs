@@ -38,6 +38,14 @@ namespace Ambermoon.Data.Legacy.Serialization
         public uint? ImageOffset { get; internal set; }
     }
 
+    public struct OutroGraphicInfo
+    {
+        public uint GraphicIndex { get; internal set; }
+        public int Width { get; internal set; }
+        public int Height { get; internal set; }
+        public byte PaletteIndex { get; internal set; }
+    }
+
     public class OutroData
     {
         readonly Dictionary<OutroOption, IReadOnlyList<OutroAction>> outroActions = new Dictionary<OutroOption, IReadOnlyList<OutroAction>>();
@@ -55,8 +63,17 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions;
         public IReadOnlyList<Graphic> OutroPalettes => outroPalettes.AsReadOnly();
-        public IReadOnlyList<KeyValuePair<Graphic, byte>> Graphics => graphics.OrderBy(g => g.Key).Select(g => g.Value).ToList();
+        public IReadOnlyList<Graphic> Graphics => graphics.OrderBy(g => g.Key).Select(g => g.Value.Key).ToList();
         public IReadOnlyList<string> Texts => texts.AsReadOnly();
+        public IReadOnlyDictionary<uint, OutroGraphicInfo> GraphicInfos => graphics.OrderBy(g => g.Key).Select((g, i) => new { GraphicEntry = g, Index = i })
+            .ToDictionary(g => g.GraphicEntry.Key, g => new OutroGraphicInfo
+            {
+                GraphicIndex = (uint)g.Index,
+                Width = g.GraphicEntry.Value.Key.Width,
+                Height = g.GraphicEntry.Value.Key.Height,
+                PaletteIndex = g.GraphicEntry.Value.Value
+            }
+        );
 
 
         public OutroData(IGameData gameData)

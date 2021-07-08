@@ -597,7 +597,7 @@ namespace Ambermoon
                 layout.ShowPortraitArea(false);
                 layout.SetLayout(LayoutType.None);
                 windowTitle.Visible = false;
-                cursor.Type = Data.CursorType.Sword;
+                cursor.Type = CursorType.Sword;
                 UpdateCursor(lastMousePosition, MouseButtons.None);
                 currentUIPaletteIndex = 0;
                 battleRoundActiveSprite.Visible = false;
@@ -711,6 +711,11 @@ namespace Ambermoon
                     timedEvent.Action?.Invoke();
                 }
             }
+
+            // Might be activated by a timed event and we don't want to
+            // process other things in this case.
+            if (outro?.Active == true)
+                return;
 
             if (ingame)
             {
@@ -2381,6 +2386,12 @@ namespace Ambermoon
                 return;
             }
 
+            if (outro?.Active == true)
+            {
+                outro.Click();
+                return;
+            }
+
             lastMousePosition = new Position(position);
 
             if (allInputDisabled)
@@ -2690,7 +2701,7 @@ namespace Ambermoon
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
-            if (!InputEnable && !layout.PopupActive)
+            if (outro?.Active != true && !InputEnable && !layout.PopupActive)
                 UntrapMouse();
 
             if (trapped)
@@ -2725,11 +2736,19 @@ namespace Ambermoon
                 }
             }
 
-            layout.MouseMoved(position - lastMousePosition);
+            if (outro?.Active == true)
+            {
+                lastMousePosition = new Position(position);
+                CursorType = CursorType.None;
+            }
+            else
+            {
+                layout.MouseMoved(position - lastMousePosition);
 
-            lastMousePosition = new Position(position);
-            position = GetMousePosition(position);
-            UpdateCursor(position, buttons);
+                lastMousePosition = new Position(position);
+                position = GetMousePosition(position);
+                UpdateCursor(position, buttons);
+            }
         }
 
         public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
@@ -4510,10 +4529,27 @@ namespace Ambermoon
 
         void ShowOutro()
         {
-            outro?.Destroy();
-            PlayMusic(Song.Outro);
-            outro ??= outroFactory.Create(() => NewGame(true));
-            outro.Start(CurrentSavegame);
+            ClosePopup();
+            CloseWindow();
+            Pause();
+            StartSequence();
+            ExecuteNextUpdateCycle(() =>
+            {
+                Cleanup();
+                layout.ShowPortraitArea(false);
+                layout.SetLayout(LayoutType.None);
+                windowTitle.Visible = false;
+                TrapMouse(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight));
+                cursor.Type = CursorType.None;
+                UpdateCursor(lastMousePosition, MouseButtons.None);
+                currentUIPaletteIndex = 0;
+                battleRoundActiveSprite.Visible = false;
+                paused = true;
+
+                PlayMusic(Song.Outro);
+                outro ??= outroFactory.Create(() => NewGame(true));
+                outro.Start(CurrentSavegame);
+            });
         }
 
         public bool ActivateTransport(TravelType travelType)

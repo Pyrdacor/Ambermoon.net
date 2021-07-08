@@ -2,6 +2,7 @@
 using Ambermoon.Render;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Ambermoon
 {
@@ -9,41 +10,42 @@ namespace Ambermoon
     {
         public int Advance;
         public Graphic Graphic;
-        public const int SpaceWidth = 12;
     }
 
-    class IntroText
+    class Text
     {
-        readonly List<ILayerSprite> renderGlyphs = new List<ILayerSprite>(26);
+        readonly List<ILayerSprite> renderGlyphs = new List<ILayerSprite>();
         bool visible = false;
         readonly int totalWidth = 0;
         int baseX = 0;
         byte colorIndex = 2; // white
 
-        public IntroText(IRenderView renderView, string text, Dictionary<char, Glyph> glyphs, byte displayLayer)
+        public Text(IRenderView renderView, Layer layer, string text, Dictionary<char, Glyph> glyphs,
+            byte displayLayer, int spaceWidth = 12, char firstCharacter = 'A', bool upperOnly = true)
         {
             totalWidth = 0;
-            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroText);
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
 
-            foreach (char ch in text.ToUpper())
+            if (upperOnly)
+                text = text.ToUpper();
+
+            foreach (char ch in text)
             {
                 if (ch == ' ')
-                    totalWidth += Glyph.SpaceWidth;
-                else if (ch >= 'A' && ch <= 'Z')
+                    totalWidth += spaceWidth;
+                else
                 {
                     var glyph = glyphs[ch];
                     var sprite = renderView.SpriteFactory.Create(glyph.Graphic.Width, glyph.Graphic.Height, true, displayLayer) as ILayerSprite;
-                    sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)(ch - 'A'));
+                    sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)(ch - firstCharacter));
                     sprite.X = totalWidth;
                     sprite.Y = 0;
-                    sprite.Layer = renderView.GetLayer(Layer.IntroText);
+                    sprite.Layer = renderView.GetLayer(layer);
                     sprite.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
                     sprite.Visible = false;
                     renderGlyphs.Add(sprite);
                     totalWidth += glyph.Advance;
                 }
-                else
-                    throw new AmbermoonException(ExceptionScope.Data, $"Unsupported character: {ch}");
             }
         }
 
@@ -58,6 +60,11 @@ namespace Ambermoon
                 colorIndex = value;
                 renderGlyphs?.ForEach(g => { if (g != null) g.MaskColor = colorIndex; });
             }
+        }
+
+        public void MoveY(int amount)
+        {
+            renderGlyphs.ForEach(g => g.Y += amount);
         }
 
         public void Place(Rect area, TextAlign textAlign)
@@ -85,6 +92,8 @@ namespace Ambermoon
             renderGlyphs.ForEach(g => { g.X += xOffset; g.Y = area.Y; });
         }
 
+        public bool OnScreen => renderGlyphs == null ? false : renderGlyphs.Any(g => g.Visible);
+
         public bool Visible
         {
             get => visible;
@@ -104,26 +113,17 @@ namespace Ambermoon
         }
     }
 
-    class IntroFont
+    class Font
     {
-        readonly Dictionary<char, Glyph> glyphs = new Dictionary<char, Glyph>(26);
+        readonly Dictionary<char, Glyph> glyphs = new Dictionary<char, Glyph>();
 
-        public Dictionary<uint, Graphic> GlyphGraphics
+        public Dictionary<uint, Graphic> GlyphGraphics => glyphs.OrderBy(g => g.Key).
+            Select((g, i) => new { Glyph = g, Index = i }).ToDictionary(g => (uint)g.Index,
+                g => g.Glyph.Value.Graphic);
+
+        public Font(byte[] data)
         {
-            get
-            {
-                var glyphGraphics = new Dictionary<uint, Graphic>(26);
-
-                for (uint i = 0; i < 26; ++i)
-                    glyphGraphics.Add(i, glyphs[(char)('A' + i)].Graphic);
-
-                return glyphGraphics;
-            }
-        }
-
-        public IntroFont()
-        {
-            var glyphReader = new BinaryReader(new MemoryStream(Resources.IntroFont));
+            var glyphReader = new BinaryReader(new MemoryStream(data));
             Graphic LoadGraphic(int width, int height)
             {
                 var graphic = new Graphic(width, height, 0);
@@ -145,13 +145,9 @@ namespace Ambermoon
                 return graphic;
             }
 
-            for (int i = 0; i < 26; ++i)
+            while (glyphReader.BaseStream.Position < glyphReader.BaseStream.Length)
             {
-                char ch = (char)('A' + i);
-
-                if (ch != (char)glyphReader.ReadByte())
-                    throw new AmbermoonException(ExceptionScope.Data, "Invalid intro font data.");
-
+                char ch = (char)glyphReader.ReadByte();
                 int width = glyphReader.ReadByte();
                 int height = glyphReader.ReadByte();
                 var glyph = new Glyph
@@ -163,25 +159,24 @@ namespace Ambermoon
             }
         }
 
-        public IntroText CreateText(IRenderView renderView, Rect area, string text, byte displayLayer, TextAlign textAlign = TextAlign.Center)
+        public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text, byte displayLayer,
+            int spaceWidth = 12, char firstCharacter = 'A', bool upperOnly = true, TextAlign textAlign = TextAlign.Center)
         {
-            var introText = new IntroText(renderView, text, glyphs, displayLayer);
-            introText.Place(area, textAlign);
-            return introText;
+            var renderText = new Text(renderView, layer, text, glyphs, displayLayer, spaceWidth, firstCharacter, upperOnly);
+            renderText.Place(area, textAlign);
+            return renderText;
         }
 
-        public int MeasureTextWidth(string text)
+        public int MeasureTextWidth(string text, int spaceWidth = 12)
         {
             int totalWidth = 0;
 
             foreach (char ch in text.ToUpper())
             {
                 if (ch == ' ')
-                    totalWidth += Glyph.SpaceWidth;
-                else if (ch >= 'A' && ch <= 'Z')
-                    totalWidth += glyphs[ch].Advance;
+                    totalWidth += spaceWidth;
                 else
-                    throw new AmbermoonException(ExceptionScope.Data, $"Unsupported character: {ch}");
+                    totalWidth += glyphs[ch].Advance;
             }
 
             return totalWidth;

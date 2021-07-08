@@ -32,11 +32,11 @@
         Text,
         IntroGraphics,
         IntroText,
+        OutroGraphics,
+        OutroText,
         Effects,
         Cursor,
-        DrugEffect,
-        Intro,
-        Outro
+        DrugEffect
     }
 
     public partial class Global

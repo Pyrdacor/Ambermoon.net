@@ -21,7 +21,7 @@ namespace Ambermoon
         ILayerSprite background;
         IColoredRect fadeArea;
         IRenderText loadingText;
-        List<KeyValuePair<Rect, IntroText>> mainMenuTexts = new List<KeyValuePair<Rect, IntroText>>(4);
+        List<KeyValuePair<Rect, Text>> mainMenuTexts = new List<KeyValuePair<Rect, Text>>(4);
         int hoveredTextIndex = -1;
         DateTime? hoverStartTime = null;
         const int HoverColorTime = 125;
@@ -43,7 +43,7 @@ namespace Ambermoon
         public event Action<CloseAction> Closed;
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
-            IntroFont introFont, string[] texts, bool canContinue)
+            Font introFont, string[] texts, bool canContinue)
         {
             this.renderView = renderView;
             this.cursor = cursor;
@@ -67,7 +67,7 @@ namespace Ambermoon
                 int offsetX = (Global.VirtualScreenWidth - textWidth) / 2;
                 var area = new Rect(0, y - 6, Global.VirtualScreenWidth, 24);
                 var clickArea = new Rect(offsetX, y, textWidth, 16);
-                var mainMenuText = introFont.CreateText(renderView, area, texts[i], 1);
+                var mainMenuText = introFont.CreateText(renderView, Layer.IntroText, area, texts[i], 1);
                 mainMenuText.Visible = i != 0 || canContinue;
                 mainMenuTexts.Add(KeyValuePair.Create(clickArea, mainMenuText));
                 y += 16 + 8;
