@@ -17,7 +17,7 @@ namespace Ambermoon
         TextColor textColor = TextColor.White;
 
         public Text(IRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
-            List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly)
+            List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly, uint textureAtlasIndexOffset)
         {
             totalWidth = 0;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
@@ -29,11 +29,10 @@ namespace Ambermoon
             {
                 if (ch == ' ')
                     totalWidth += spaceWidth;
-                else
+                else if (glyphs.TryGetValue(ch, out var glyph))
                 {
-                    var glyph = glyphs[ch];
                     var sprite = renderView.SpriteFactory.Create(glyph.Graphic.Width, glyph.Graphic.Height, true, displayLayer) as ILayerSprite;
-                    sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)characters.IndexOf(ch));
+                    sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)characters.IndexOf(ch) + textureAtlasIndexOffset);
                     sprite.X = totalWidth;
                     sprite.Y = 0;
                     sprite.Layer = renderView.GetLayer(layer);
@@ -115,17 +114,19 @@ namespace Ambermoon
         readonly IReadOnlyDictionary<char, Glyph> glyphs;
         readonly bool upperOnly;
         readonly List<char> characters;
+        readonly uint textureAtlasIndexOffset = 0;
 
         public Dictionary<uint, Graphic> GlyphGraphics => glyphs.OrderBy(g => g.Key).
-            Select((g, i) => new { Glyph = g, Index = i }).ToDictionary(g => (uint)g.Index,
+            Select((g, i) => new { Glyph = g, Index = i }).ToDictionary(g => textureAtlasIndexOffset + (uint)g.Index,
                 g => g.Glyph.Value.Graphic);
 
-        public Font(IReadOnlyDictionary<char, Glyph> glyphs, int spaceWidth)
+        public Font(IReadOnlyDictionary<char, Glyph> glyphs, int spaceWidth, uint textureAtlasIndexOffset)
         {
             this.glyphs = glyphs;
             this.spaceWidth = spaceWidth;
             upperOnly = false;
             characters = glyphs.Keys.OrderBy(k => k).ToList();
+            this.textureAtlasIndexOffset = textureAtlasIndexOffset;
         }
 
         public Font(byte[] data, int spaceWidth)
@@ -176,7 +177,8 @@ namespace Ambermoon
         public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text,
             byte displayLayer, TextAlign textAlign = TextAlign.Center)
         {
-            var renderText = new Text(renderView, layer, text, glyphs, characters, displayLayer, spaceWidth, upperOnly);
+            var renderText = new Text(renderView, layer, text, glyphs, characters, displayLayer, spaceWidth, upperOnly,
+                textureAtlasIndexOffset);
             renderText.Place(area, textAlign);
             return renderText;
         }

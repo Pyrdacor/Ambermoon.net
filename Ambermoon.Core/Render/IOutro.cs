@@ -9,7 +9,8 @@ namespace Ambermoon.Render
         void Start(Savegame savegame);
         void Update(double deltaTime);
         void Destroy();
-        void Click();
+        void Click(bool right);
+        void Abort();
     }
 
     public interface IOutroFactory

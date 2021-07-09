@@ -62,6 +62,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         };
         readonly List<string> texts = new List<string>();
         readonly Dictionary<char, Glyph> glyphs = new Dictionary<char, Glyph>();
+        readonly Dictionary<char, Glyph> largeGlyphs = new Dictionary<char, Glyph>();
 
         public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions;
         public IReadOnlyList<Graphic> OutroPalettes => outroPalettes.AsReadOnly();
@@ -77,8 +78,12 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         );
         public IReadOnlyDictionary<char, Glyph> Glyphs => glyphs;
+        public IReadOnlyDictionary<char, Glyph> LargeGlyphs => largeGlyphs;
 
-        public OutroData(IGameData gameData)
+        public delegate void FontOffsetProvider(bool large, out int glyphMappingOffset,
+            out int advanceValueOffset, out int glyphDataOffset);
+
+        public OutroData(IGameData gameData, FontOffsetProvider fontOffsetProvider)
         {
             var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1]);
             var codeHunks = outroHunks.Where(h => h.Type == AmigaExecutable.HunkType.Code)
@@ -106,7 +111,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return paletteGraphic;
             }
 
-            LoadFont(codeHunks[0]);
+            LoadFonts(codeHunks[0], fontOffsetProvider);
 
             #region Hunk 0 - Actions and texts
 
@@ -173,7 +178,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                                 Command = OutroCommand.PrintTextAndScroll,
                                 LargeText = largeText,
                                 TextIndex = textIndex,
-                                ScrollAmount = scrollAmount
+                                ScrollAmount = scrollAmount + 1
                             });
                         }
 
@@ -202,7 +207,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             foreach (var imageDataOffset in imageDataOffsets)
             {
                 imageHunk.Position = (int)imageDataOffset;
-                int width = (imageHunk.ReadBEUInt16() & 0xfffe) * 16;
+                int width = imageHunk.ReadBEUInt16() * 16;
                 int height = imageHunk.ReadBEUInt16();
                 imageHunk.Position += 2; // unused word
                 byte paletteIndex = (byte)outroPalettes.Count;
@@ -213,55 +218,77 @@ namespace Ambermoon.Data.Legacy.Serialization
             #endregion
         }
 
-        unsafe void LoadFont(IDataReader dataReader)
+        unsafe void LoadFonts(IDataReader dataReader, FontOffsetProvider fontOffsetProvider)
         {
-            // Read glyph mapping
-            dataReader.Position = 0x6ea;
-            byte[] glyphMapping = dataReader.ReadBytes(96); // 96 chars (first is space)
-
-            // Read glyph mapping
-            dataReader.Position = 0x76e;
-            byte[] advanceValues = dataReader.ReadBytes(76); // for 76 valid chars
-
-            // Read glyph data
-            dataReader.Position = 0x7ba;
-            byte[] glyphData = dataReader.ReadBytes(76 * 22); // for 76 valid chars (22 bytes per glyph, 11 rows, 16 pixel bits)
-
-            for (int i = 1; i < glyphMapping.Length; ++i)
+            void LoadFont(bool large, int glyphWidth, int glyphHeight, Dictionary<char, Glyph> glyphs)
             {
-                int index = glyphMapping[i];
+                fontOffsetProvider(large, out int glyphMappingOffset, out int advanceValueOffset,
+                    out int dataOffset);
 
-                if (index == 0xff)
-                    continue;
+                int bytesPerGlyph = glyphWidth * glyphHeight / 8;
 
-                char ch = (char)(0x20 + i);
-                var graphic = new Graphic
+                // Read glyph mapping
+                dataReader.Position = glyphMappingOffset;
+                byte[] glyphMapping = dataReader.ReadBytes(96); // 96 chars (first is space)
+
+                // Read advance positions
+                dataReader.Position = advanceValueOffset;
+                byte[] advanceValues = dataReader.ReadBytes(76); // for 76 valid chars
+
+                // Read glyph data
+                dataReader.Position = dataOffset;
+                byte[] glyphData = dataReader.ReadBytes(76 * bytesPerGlyph); // for 76 valid chars
+
+                for (int i = 1; i < glyphMapping.Length; ++i)
                 {
-                    Width = 16,
-                    Height = 11,
-                    IndexedGraphic = true,
-                    Data = new byte[16 * 11]
-                };
-                fixed (byte* glyphPtr = &glyphData[index * 22])
-                {
-                    byte* ptr = glyphPtr;
-                    for (int y = 0; y < 11; ++y)
+                    int index = glyphMapping[i];
+
+                    if (index == 0xff)
+                        continue;
+
+                    char ch = (char)(0x20 + i);
+                    var graphic = new Graphic
                     {
-                        ushort line = (ushort)(((*ptr++) << 8) | (*ptr++));
-
-                        for (int b = 0; b < 16; ++b)
+                        Width = glyphWidth,
+                        Height = glyphHeight,
+                        IndexedGraphic = true,
+                        Data = new byte[glyphWidth * glyphHeight]
+                    };
+                    int numBytesPerRow = (glyphWidth + 7) / 8;
+                    fixed (byte* glyphPtr = &glyphData[index * bytesPerGlyph])
+                    {
+                        byte* ptr = glyphPtr;
+                        for (int y = 0; y < glyphHeight; ++y)
                         {
-                            if ((line & (1 << (15 - b))) != 0)
-                                graphic.Data[y * 16 + b] = (byte)Enumerations.Color.White;
+                            int offset = 0;
+
+                            for (int n = 0; n < numBytesPerRow; ++n)
+                            {
+                                var data = *ptr++;
+
+                                for (int b = 0; b < 8; ++b)
+                                {
+                                    if ((data & (1 << (7 - b))) != 0)
+                                        graphic.Data[y * numBytesPerRow * 8 + offset + b] = (byte)Enumerations.Color.White;
+                                }
+
+                                offset += 8;
+                            }
                         }
                     }
+                    glyphs.Add(ch, new Glyph
+                    {
+                        Advance = advanceValues[index],
+                        Graphic = graphic
+                    });
                 }
-                glyphs.Add(ch, new Glyph
-                {
-                    Advance = advanceValues[index],
-                    Graphic = graphic
-                });
             }
+
+            // Normal font
+            LoadFont(false, 16, 11, glyphs);
+
+            // Large font
+            LoadFont(true, 32, 22, largeGlyphs);
         }
     }
 }

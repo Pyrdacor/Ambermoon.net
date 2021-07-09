@@ -13,13 +13,14 @@ namespace Ambermoon
         readonly Action finishAction;
         readonly OutroData outroData;
         readonly Font outroFont;
+        readonly Font outroFontLarge;
         readonly IRenderView renderView;
         readonly IRenderTextFactory renderTextFactory;
         readonly ITextProcessor textProcessor;
         readonly IRenderLayer renderLayer;
         long ticks = 0;
-        static readonly double[] PixelScrollPerSecond = new double[3] { 20.0, 60.0, 100.0 };
-        int speedIndex = 0;
+        static readonly double[] PixelScrollPerSecond = new double[5] { 10.0, 20.0, 60.0, 100.0, 200.0 };
+        int speedIndex = 1;
         IReadOnlyList<OutroAction> actions = null;
         int actionIndex = 0;
         int scrolledAmount = 0;
@@ -35,7 +36,7 @@ namespace Ambermoon
         long fadeStartTicks = 0;
         const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
 
-        static void EnsureTextures(IRenderView renderView, OutroData outroData, Font outroFont)
+        static void EnsureTextures(IRenderView renderView, OutroData outroData, Font outroFont, Font outroFontLarge)
         {
             if (textureAtlas == null)
             {
@@ -44,15 +45,17 @@ namespace Ambermoon
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroGraphics);
                 renderView.GetLayer(Layer.OutroGraphics).Texture = textureAtlas.Texture;
                 TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFont.GlyphGraphics);
+                TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFontLarge.GlyphGraphics);
                 renderView.GetLayer(Layer.OutroText).Texture = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroText).Texture;
             }
         }
 
-        public Outro(IRenderView renderView, OutroData outroData, Font outroFont, Action finishAction)
+        public Outro(IRenderView renderView, OutroData outroData, Font outroFont, Font outroFontLarge, Action finishAction)
         {
             this.finishAction = finishAction;
             this.outroData = outroData;
             this.outroFont = outroFont;
+            this.outroFontLarge = outroFontLarge;
             this.renderView = renderView;
             renderLayer = renderView.GetLayer(Layer.OutroGraphics);
             picture = renderView.SpriteFactory.Create(160, 128, true, 1) as ILayerSprite;
@@ -67,7 +70,7 @@ namespace Ambermoon
 
             graphicInfos = outroData.GraphicInfos;
 
-            EnsureTextures(renderView, outroData, outroFont);
+            EnsureTextures(renderView, outroData, outroFont, outroFontLarge);
         }
 
         public bool Active { get; private set; }
@@ -81,7 +84,7 @@ namespace Ambermoon
             scrollStartTicks = 0;
             nextActionTicks = 0;
             waitForClick = false;
-            speedIndex = 0;
+            speedIndex = 1;
 
             var option = OutroOption.ValdynNotInParty;
 
@@ -131,11 +134,11 @@ namespace Ambermoon
             Process();
         }
 
-        public void Click()
+        public void Click(bool right)
         {
             if (!waitForClick)
             {
-                ToggleSpeed();
+                ToggleSpeed(!right);
                 return;
             }
 
@@ -143,9 +146,23 @@ namespace Ambermoon
             nextActionTicks = 0; // this ensures immediate processing of next action
         }
 
-        void ToggleSpeed()
+        void ToggleSpeed(bool up)
         {
-            speedIndex = (speedIndex + 1) % PixelScrollPerSecond.Length;
+            if (up)
+            {
+                if (speedIndex == PixelScrollPerSecond.Length - 1)
+                    return;
+
+                ++speedIndex;
+            }
+            else // down
+            {
+                if (speedIndex == 0)
+                    return;
+
+                --speedIndex;
+            }
+
             double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
             long scrollTicks = (long)Math.Round((actions[actionIndex - 1].ScrollAmount - scrolledAmount) / pixelsPerTick);
             scrolledAmount = 0;
@@ -249,19 +266,27 @@ namespace Ambermoon
 
             if (large)
             {
-                // TODO
-                textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight, Global.VirtualScreenWidth, 16), text, 10);
+                textEntry = outroFontLarge.CreateText(renderView, Layer.OutroText,
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 22), text, 10);
             }
             else
             {
                 textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight, Global.VirtualScreenWidth, 16), text, 10);
+                    new Rect(x, Global.VirtualScreenHeight - 1, Global.VirtualScreenWidth, 11), text, 10);
             }
 
             textEntry.Visible = true;
 
             texts.Add(textEntry);
+        }
+
+        public void Abort()
+        {
+            if (Active)
+            {
+                Active = false;
+                finishAction?.Invoke();
+            }
         }
 
         public void Destroy()
@@ -279,14 +304,16 @@ namespace Ambermoon
         readonly IRenderView renderView;
         readonly OutroData outroData;
         readonly Font outroFont;
+        readonly Font outroFontLarge;
 
-        public OutroFactory(IRenderView renderView, OutroData outroData, Font outroFont)
+        public OutroFactory(IRenderView renderView, OutroData outroData, Font outroFont, Font outroFontLarge)
         {
             this.renderView = renderView;
             this.outroData = outroData;
             this.outroFont = outroFont;
+            this.outroFontLarge = outroFontLarge;
         }
 
-        public IOutro Create(Action finishAction) => new Outro(renderView, outroData, outroFont, finishAction);
+        public IOutro Create(Action finishAction) => new Outro(renderView, outroData, outroFont, outroFontLarge, finishAction);
     }
 }

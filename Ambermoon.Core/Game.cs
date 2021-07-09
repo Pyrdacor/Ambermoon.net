@@ -2114,6 +2114,14 @@ namespace Ambermoon
                 return;
             }
 
+            if (outro?.Active == true)
+            {
+                if (key == Key.Escape)
+                    outro.Abort();
+
+                return;
+            }
+
             if (allInputDisabled || pickingNewLeader || GameOverButtonsVisible)
                 return;
 
@@ -2388,7 +2396,7 @@ namespace Ambermoon
 
             if (outro?.Active == true)
             {
-                outro.Click();
+                outro.Click(buttons == MouseButtons.Right);
                 return;
             }
 
