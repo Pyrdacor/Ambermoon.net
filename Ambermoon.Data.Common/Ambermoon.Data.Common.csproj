@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Common" Version="9.3.0" />
+    <PackageReference Include="Ambermoon.Common" Version="9.4.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -338,7 +338,8 @@ namespace Ambermoon.UI
 
                 if (!previousSlot.Empty) // There is an item at the target slot (dragged item was exchanged before)
                 {
-                    SourceGrid.DropItem(SourceSlot, this);
+                    if (SourceGrid.DropItem(SourceSlot, this) == 0)
+                        layout.DropItem();
                     return true;
                 }
 
