@@ -149,18 +149,18 @@ namespace Ambermoon
                     {
                         int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
                         byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
-                        mainMenuTexts[i].Value.ColorIndex = colorIndex;
+                        mainMenuTexts[i].Value.TextColor = (TextColor)colorIndex;
                     }
                     else
                     {
                         // TODO: REMOVE LATER
                         if (i == 2) // Intro
                         {
-                            mainMenuTexts[i].Value.ColorIndex = (byte)TextColor.Gray;
+                            mainMenuTexts[i].Value.TextColor = TextColor.Gray;
                             continue;
                         }
 
-                        mainMenuTexts[i].Value.ColorIndex = (byte)TextColor.White;
+                        mainMenuTexts[i].Value.TextColor = TextColor.White;
                     }
                 }
             }

@@ -18,7 +18,8 @@ namespace Ambermoon
         readonly ITextProcessor textProcessor;
         readonly IRenderLayer renderLayer;
         long ticks = 0;
-        const double PixelScrollPerSecond = 10.0;
+        static readonly double[] PixelScrollPerSecond = new double[3] { 20.0, 60.0, 100.0 };
+        int speedIndex = 0;
         IReadOnlyList<OutroAction> actions = null;
         int actionIndex = 0;
         int scrolledAmount = 0;
@@ -29,6 +30,10 @@ namespace Ambermoon
         readonly byte paletteOffset;
         bool waitForClick = false;
         readonly List<Text> texts = new List<Text>();
+        readonly IColoredRect fadeArea;
+        Action fadeMidAction = null;
+        long fadeStartTicks = 0;
+        const long HalfFadeDurationInTicks = 3 * Game.TicksPerSecond / 4;
 
         static void EnsureTextures(IRenderView renderView, OutroData outroData, Font outroFont)
         {
@@ -39,6 +44,7 @@ namespace Ambermoon
                 textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroGraphics);
                 renderView.GetLayer(Layer.OutroGraphics).Texture = textureAtlas.Texture;
                 TextureAtlasManager.Instance.AddFromGraphics(Layer.OutroText, outroFont.GlyphGraphics);
+                renderView.GetLayer(Layer.OutroText).Texture = TextureAtlasManager.Instance.GetOrCreate(Layer.OutroText).Texture;
             }
         }
 
@@ -55,10 +61,13 @@ namespace Ambermoon
             picture.Visible = false;
             renderTextFactory = renderView.RenderTextFactory;
             textProcessor = renderView.TextProcessor;
-            
+
+            fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
+            fadeArea.Visible = false;
+
             graphicInfos = outroData.GraphicInfos;
 
-            EnsureTextures(renderView, outroData, outroFont);            
+            EnsureTextures(renderView, outroData, outroFont);
         }
 
         public bool Active { get; private set; }
@@ -72,6 +81,7 @@ namespace Ambermoon
             scrollStartTicks = 0;
             nextActionTicks = 0;
             waitForClick = false;
+            speedIndex = 0;
 
             var option = OutroOption.ValdynNotInParty;
 
@@ -91,19 +101,62 @@ namespace Ambermoon
         public void Update(double deltaTime)
         {
             ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
+
+            if (fadeArea.Visible || fadeMidAction != null)
+            {
+                long fadeDuration = ticks - fadeStartTicks;
+
+                if (fadeDuration >= HalfFadeDurationInTicks * 2)
+                {
+                    fadeMidAction = null;
+                    fadeArea.Visible = false;
+                    nextActionTicks = ticks;
+                }
+                else
+                {
+                    byte alpha = (byte)(255 - Math.Abs(HalfFadeDurationInTicks - fadeDuration) * 255 / HalfFadeDurationInTicks);
+                    fadeArea.Color = new Color(fadeArea.Color, alpha);
+                    fadeArea.Visible = true;
+
+                    if (fadeMidAction != null && fadeDuration >= HalfFadeDurationInTicks)
+                    {
+                        fadeMidAction?.Invoke();
+                        fadeMidAction = null;
+                    }
+
+                    return;
+                }
+            }
+
             Process();
         }
 
         public void Click()
         {
+            if (!waitForClick)
+            {
+                ToggleSpeed();
+                return;
+            }
+
             waitForClick = false;
             nextActionTicks = 0; // this ensures immediate processing of next action
+        }
+
+        void ToggleSpeed()
+        {
+            speedIndex = (speedIndex + 1) % PixelScrollPerSecond.Length;
+            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
+            long scrollTicks = (long)Math.Round((actions[actionIndex - 1].ScrollAmount - scrolledAmount) / pixelsPerTick);
+            scrolledAmount = 0;
+            scrollStartTicks = ticks;
+            nextActionTicks = ticks + scrollTicks;
         }
 
         void Scroll()
         {
             long scrollTicks = ticks - scrollStartTicks;
-            double pixelsPerTick = PixelScrollPerSecond / Game.TicksPerSecond;
+            double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
             int scrollAmount = (int)Math.Round(scrollTicks * pixelsPerTick);
             int delta = scrollAmount - scrolledAmount;
 
@@ -114,7 +167,7 @@ namespace Ambermoon
             
             foreach (var text in texts.ToList())
             {
-                text.MoveY(-delta);
+                text.Move(0, -delta);
 
                 if (!text.OnScreen) // not on screen anymore
                 {
@@ -126,7 +179,7 @@ namespace Ambermoon
 
         void Process()
         {
-            if (waitForClick)
+            if (waitForClick || fadeMidAction != null)
                 return;
 
             if (nextActionTicks > ticks)
@@ -148,14 +201,19 @@ namespace Ambermoon
             {
                 case OutroCommand.ChangePicture:
                 {
-                    var graphicInfo = graphicInfos[action.ImageOffset.Value];
-                    picture.PaletteIndex = (byte)(paletteOffset + graphicInfo.PaletteIndex);
-                    picture.TextureAtlasOffset = textureAtlas.GetOffset(graphicInfo.GraphicIndex);
-                    picture.Resize(graphicInfo.Width, graphicInfo.Height);
-                    picture.X = (Global.VirtualScreenWidth - graphicInfo.Width) / 2;
-                    picture.Y = (Global.VirtualScreenHeight - graphicInfo.Height) / 2;
-                    picture.Visible = true;
-                    ++actionIndex;
+                    Fade(() =>
+                    {
+                        texts.ForEach(text => text.Destroy());
+                        texts.Clear();
+                        var graphicInfo = graphicInfos[action.ImageOffset.Value];
+                        picture.PaletteIndex = (byte)(paletteOffset + graphicInfo.PaletteIndex);
+                        picture.TextureAtlasOffset = textureAtlas.GetOffset(graphicInfo.GraphicIndex);
+                        picture.Resize(graphicInfo.Width, graphicInfo.Height);
+                        picture.X = (Global.VirtualScreenWidth - graphicInfo.Width) / 2;
+                        picture.Y = (Global.VirtualScreenHeight - graphicInfo.Height) / 2;
+                        picture.Visible = true;
+                        ++actionIndex;
+                    });
                     break;
                 }
                 case OutroCommand.WaitForClick:
@@ -168,7 +226,7 @@ namespace Ambermoon
                 {
                     if (action.TextIndex != null)
                         PrintText(action.TextDisplayX, outroData.Texts[action.TextIndex.Value], action.LargeText);
-                    double pixelsPerTick = PixelScrollPerSecond / Game.TicksPerSecond;
+                    double pixelsPerTick = PixelScrollPerSecond[speedIndex] / Game.TicksPerSecond;
                     long scrollTicks = (long)Math.Round(action.ScrollAmount / pixelsPerTick);
                     ++actionIndex;
                     scrolledAmount = 0;
@@ -179,6 +237,12 @@ namespace Ambermoon
             }
         }
 
+        void Fade(Action midAction)
+        {
+            fadeStartTicks = ticks;
+            fadeMidAction = midAction;
+        }
+
         void PrintText(int x, string text, bool large)
         {
             Text textEntry;
@@ -187,12 +251,12 @@ namespace Ambermoon
             {
                 // TODO
                 textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight, Global.VirtualScreenWidth, 16), text, 10, 10, '!', false);
+                    new Rect(x, Global.VirtualScreenHeight, Global.VirtualScreenWidth, 16), text, 10);
             }
             else
             {
                 textEntry = outroFont.CreateText(renderView, Layer.OutroText,
-                    new Rect(x, Global.VirtualScreenHeight, Global.VirtualScreenWidth, 16), text, 10, 10, '!', false);
+                    new Rect(x, Global.VirtualScreenHeight, Global.VirtualScreenWidth, 16), text, 10);
             }
 
             textEntry.Visible = true;
@@ -204,6 +268,9 @@ namespace Ambermoon
         {
             Active = false;
             picture.Visible = false;
+            texts.ForEach(text => text.Destroy());
+            texts.Clear();
+            fadeArea.Visible = false;
         }
     }
 

@@ -1,27 +1,23 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon
 {
-    struct Glyph
-    {
-        public int Advance;
-        public Graphic Graphic;
-    }
-
     class Text
     {
         readonly List<ILayerSprite> renderGlyphs = new List<ILayerSprite>();
         bool visible = false;
         readonly int totalWidth = 0;
         int baseX = 0;
-        byte colorIndex = 2; // white
+        TextColor textColor = TextColor.White;
 
-        public Text(IRenderView renderView, Layer layer, string text, Dictionary<char, Glyph> glyphs,
-            byte displayLayer, int spaceWidth = 12, char firstCharacter = 'A', bool upperOnly = true)
+        public Text(IRenderView renderView, Layer layer, string text, IReadOnlyDictionary<char, Glyph> glyphs,
+            List<char> characters, byte displayLayer, int spaceWidth, bool upperOnly)
         {
             totalWidth = 0;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(layer);
@@ -37,7 +33,7 @@ namespace Ambermoon
                 {
                     var glyph = glyphs[ch];
                     var sprite = renderView.SpriteFactory.Create(glyph.Graphic.Width, glyph.Graphic.Height, true, displayLayer) as ILayerSprite;
-                    sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)(ch - firstCharacter));
+                    sprite.TextureAtlasOffset = textureAtlas.GetOffset((uint)characters.IndexOf(ch));
                     sprite.X = totalWidth;
                     sprite.Y = 0;
                     sprite.Layer = renderView.GetLayer(layer);
@@ -49,22 +45,22 @@ namespace Ambermoon
             }
         }
 
-        public byte ColorIndex
+        public TextColor TextColor
         {
-            get => colorIndex;
+            get => textColor;
             set
             {
-                if (colorIndex == value)
+                if (textColor == value)
                     return;
 
-                colorIndex = value;
-                renderGlyphs?.ForEach(g => { if (g != null) g.MaskColor = colorIndex; });
+                textColor = value;
+                renderGlyphs?.ForEach(g => { if (g != null) g.MaskColor = (byte)textColor; });
             }
         }
 
-        public void MoveY(int amount)
+        public void Move(int x, int y)
         {
-            renderGlyphs.ForEach(g => g.Y += amount);
+            renderGlyphs.ForEach(g => { g.X += x; g.Y += y; });
         }
 
         public void Place(Rect area, TextAlign textAlign)
@@ -115,14 +111,28 @@ namespace Ambermoon
 
     class Font
     {
-        readonly Dictionary<char, Glyph> glyphs = new Dictionary<char, Glyph>();
+        readonly int spaceWidth;
+        readonly IReadOnlyDictionary<char, Glyph> glyphs;
+        readonly bool upperOnly;
+        readonly List<char> characters;
 
         public Dictionary<uint, Graphic> GlyphGraphics => glyphs.OrderBy(g => g.Key).
             Select((g, i) => new { Glyph = g, Index = i }).ToDictionary(g => (uint)g.Index,
                 g => g.Glyph.Value.Graphic);
 
-        public Font(byte[] data)
+        public Font(IReadOnlyDictionary<char, Glyph> glyphs, int spaceWidth)
         {
+            this.glyphs = glyphs;
+            this.spaceWidth = spaceWidth;
+            upperOnly = false;
+            characters = glyphs.Keys.OrderBy(k => k).ToList();
+        }
+
+        public Font(byte[] data, int spaceWidth)
+        {
+            var glyphs = new Dictionary<char, Glyph>();
+            this.spaceWidth = spaceWidth;
+            upperOnly = true;
             var glyphReader = new BinaryReader(new MemoryStream(data));
             Graphic LoadGraphic(int width, int height)
             {
@@ -157,17 +167,21 @@ namespace Ambermoon
                 };
                 glyphs.Add(ch, glyph);
             }
+
+            characters = glyphs.Keys.OrderBy(k => k).ToList();
+
+            this.glyphs = glyphs;
         }
 
-        public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text, byte displayLayer,
-            int spaceWidth = 12, char firstCharacter = 'A', bool upperOnly = true, TextAlign textAlign = TextAlign.Center)
+        public Text CreateText(IRenderView renderView, Layer layer, Rect area, string text,
+            byte displayLayer, TextAlign textAlign = TextAlign.Center)
         {
-            var renderText = new Text(renderView, layer, text, glyphs, displayLayer, spaceWidth, firstCharacter, upperOnly);
+            var renderText = new Text(renderView, layer, text, glyphs, characters, displayLayer, spaceWidth, upperOnly);
             renderText.Place(area, textAlign);
             return renderText;
         }
 
-        public int MeasureTextWidth(string text, int spaceWidth = 12)
+        public int MeasureTextWidth(string text)
         {
             int totalWidth = 0;
 

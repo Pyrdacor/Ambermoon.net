@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Ambermoon.Data.Serialization;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
@@ -60,6 +61,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             GraphicFormat = GraphicFormat.XRGB16
         };
         readonly List<string> texts = new List<string>();
+        readonly Dictionary<char, Glyph> glyphs = new Dictionary<char, Glyph>();
 
         public IReadOnlyDictionary<OutroOption, IReadOnlyList<OutroAction>> OutroActions => outroActions;
         public IReadOnlyList<Graphic> OutroPalettes => outroPalettes.AsReadOnly();
@@ -74,12 +76,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                 PaletteIndex = g.GraphicEntry.Value.Value
             }
         );
-
+        public IReadOnlyDictionary<char, Glyph> Glyphs => glyphs;
 
         public OutroData(IGameData gameData)
         {
-            var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1])
-                .Where(h => h.Type == AmigaExecutable.HunkType.Data).Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
+            var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1]);
+            var codeHunks = outroHunks.Where(h => h.Type == AmigaExecutable.HunkType.Code)
+                .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
+                .ToList();
+            var dataHunks = outroHunks
+                .Where(h => h.Type == AmigaExecutable.HunkType.Data)
+                .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data))
                 .ToList();
             var graphicReader = new GraphicReader();
             var graphicInfo = new GraphicInfo
@@ -88,8 +95,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 Alpha = false,
                 PaletteOffset = 0
             };
-            var dataHunk = outroHunks[0];
-            var imageHunk = outroHunks[1];
+            var dataHunk = dataHunks[0];
+            var imageHunk = dataHunks[1];
             var actionCache = new Dictionary<uint, List<OutroAction>>();
             var imageDataOffsets = new List<uint>();
             Graphic LoadPalette(DataReader hunk)
@@ -98,6 +105,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 graphicReader.ReadGraphic(paletteGraphic, hunk, paletteGraphicInfo);
                 return paletteGraphic;
             }
+
+            LoadFont(codeHunks[0]);
 
             #region Hunk 0 - Actions and texts
 
@@ -202,6 +211,57 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
 
             #endregion
+        }
+
+        unsafe void LoadFont(IDataReader dataReader)
+        {
+            // Read glyph mapping
+            dataReader.Position = 0x6ea;
+            byte[] glyphMapping = dataReader.ReadBytes(96); // 96 chars (first is space)
+
+            // Read glyph mapping
+            dataReader.Position = 0x76e;
+            byte[] advanceValues = dataReader.ReadBytes(76); // for 76 valid chars
+
+            // Read glyph data
+            dataReader.Position = 0x7ba;
+            byte[] glyphData = dataReader.ReadBytes(76 * 22); // for 76 valid chars (22 bytes per glyph, 11 rows, 16 pixel bits)
+
+            for (int i = 1; i < glyphMapping.Length; ++i)
+            {
+                int index = glyphMapping[i];
+
+                if (index == 0xff)
+                    continue;
+
+                char ch = (char)(0x20 + i);
+                var graphic = new Graphic
+                {
+                    Width = 16,
+                    Height = 11,
+                    IndexedGraphic = true,
+                    Data = new byte[16 * 11]
+                };
+                fixed (byte* glyphPtr = &glyphData[index * 22])
+                {
+                    byte* ptr = glyphPtr;
+                    for (int y = 0; y < 11; ++y)
+                    {
+                        ushort line = (ushort)(((*ptr++) << 8) | (*ptr++));
+
+                        for (int b = 0; b < 16; ++b)
+                        {
+                            if ((line & (1 << (15 - b))) != 0)
+                                graphic.Data[y * 16 + b] = (byte)Enumerations.Color.White;
+                        }
+                    }
+                }
+                glyphs.Add(ch, new Glyph
+                {
+                    Advance = advanceValues[index],
+                    Graphic = graphic
+                });
+            }
         }
     }
 }

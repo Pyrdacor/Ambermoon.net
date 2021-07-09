@@ -21,8 +21,6 @@ namespace Ambermoon
 
         internal static byte[] IntroFont => (byte[])ResourceManager.GetObject("IntroFont", Culture);
 
-        internal static byte[] OutroFont => (byte[])ResourceManager.GetObject("OutroFont", Culture);
-
         internal static byte[] WindowIcon => (byte[])ResourceManager.GetObject("windowIcon", Culture);
     }
 }

@@ -383,11 +383,11 @@ namespace Ambermoon
         {
             // Load intro data
             var introData = new IntroData(gameData);
-            var introFont = new Font(Resources.IntroFont);
+            var introFont = new Font(Resources.IntroFont, 12);
 
             // Load outro data
             var outroData = new OutroData(gameData);
-            var outroFont = new Font(Resources.OutroFont);
+            var outroFont = new Font(outroData.Glyphs, 6);
 
             // Load game data
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
