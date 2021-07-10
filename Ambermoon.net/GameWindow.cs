@@ -386,41 +386,7 @@ namespace Ambermoon
             var introFont = new Font(Resources.IntroFont, 12);
 
             // Load outro data
-            void ProvideOutroFontDataOffsets(bool large, out int glyphMappingOffset,
-                out int advanceValueOffset, out int glyphDataOffset)
-            {
-                if (gameLanguage == GameLanguage.German)
-                {
-                    glyphMappingOffset = 0x6ea;
-
-                    if (large)
-                    {
-                        advanceValueOffset = 0x106a;
-                        glyphDataOffset = 0x10b6;
-                    }
-                    else
-                    {
-                        advanceValueOffset = 0x76e;
-                        glyphDataOffset = 0x7ba;
-                    }
-                }
-                else // english and other languages (TODO: hopefully other languages will be based on the english version)
-                {
-                    glyphMappingOffset = 0x758;
-
-                    if (large)
-                    {
-                        advanceValueOffset = 0x10d8;
-                        glyphDataOffset = 0x1124;
-                    }
-                    else
-                    {
-                        advanceValueOffset = 0x7dc;
-                        glyphDataOffset = 0x828;
-                    }
-                }
-            }
-            var outroData = new OutroData(gameData, ProvideOutroFontDataOffsets);
+            var outroData = new OutroData(gameData);
             var outroFont = new Font(outroData.Glyphs, 6, 0);
             var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
 
