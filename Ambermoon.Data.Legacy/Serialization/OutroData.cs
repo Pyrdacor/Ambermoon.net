@@ -83,7 +83,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         public delegate void FontOffsetProvider(bool large, out int glyphMappingOffset,
             out int advanceValueOffset, out int glyphDataOffset);
 
-        public OutroData(IGameData gameData, FontOffsetProvider fontOffsetProvider)
+        public OutroData(IGameData gameData)
         {
             var outroHunks = AmigaExecutable.Read(gameData.Files["Ambermoon_extro"].Files[1]);
             var codeHunks = outroHunks.Where(h => h.Type == AmigaExecutable.HunkType.Code)
@@ -111,7 +111,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return paletteGraphic;
             }
 
-            LoadFonts(codeHunks[0], fontOffsetProvider);
+            LoadFonts(codeHunks[0]);
 
             #region Hunk 0 - Actions and texts
 
@@ -218,13 +218,45 @@ namespace Ambermoon.Data.Legacy.Serialization
             #endregion
         }
 
-        unsafe void LoadFonts(IDataReader dataReader, FontOffsetProvider fontOffsetProvider)
+        static readonly byte[] GlyphMappingSearchBytes = new byte[4] { 0xff, 0x42, 0xff, 0xff };
+        static readonly byte[] AdvanceValuesSearchBytes = new byte[4] { 0x0b, 0x09, 0x09, 0x0a };
+        static readonly byte[] LargeAdvanceValuesSearchBytes = new byte[4] { 0x15, 0x11, 0x10, 0x13 };
+
+        static int FindByteSequence(IDataReader reader, byte[] sequence)
         {
+            int matchLength = 0;
+
+            while (reader.Position < reader.Size)
+            {
+                if ((reader.Size - reader.Position) + matchLength < sequence.Length)
+                    return -1;
+
+                if (reader.ReadByte() == sequence[matchLength])
+                {
+                    if (++matchLength == sequence.Length)
+                        return reader.Position - matchLength;
+                }
+                else
+                {
+                    matchLength = 0;
+                }
+            }
+
+            return -1;
+        }
+
+        unsafe void LoadFonts(IDataReader dataReader)
+        {
+            dataReader.Position = 0x600; // The data won't be located before that
+            int glyphMappingOffset = FindByteSequence(dataReader, GlyphMappingSearchBytes);
+            int advanceValueOffset = FindByteSequence(dataReader, AdvanceValuesSearchBytes);
+            int largeAdvanceValueOffset = FindByteSequence(dataReader, LargeAdvanceValuesSearchBytes);
+
+            if (glyphMappingOffset == -1 || advanceValueOffset == -1 || largeAdvanceValueOffset == -1)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid outro data");
+
             void LoadFont(bool large, int glyphWidth, int glyphHeight, Dictionary<char, Glyph> glyphs)
             {
-                fontOffsetProvider(large, out int glyphMappingOffset, out int advanceValueOffset,
-                    out int dataOffset);
-
                 int bytesPerGlyph = glyphWidth * glyphHeight / 8;
 
                 // Read glyph mapping
@@ -232,10 +264,11 @@ namespace Ambermoon.Data.Legacy.Serialization
                 byte[] glyphMapping = dataReader.ReadBytes(96); // 96 chars (first is space)
 
                 // Read advance positions
-                dataReader.Position = advanceValueOffset;
+                dataReader.Position = large ? largeAdvanceValueOffset : advanceValueOffset;
                 byte[] advanceValues = dataReader.ReadBytes(76); // for 76 valid chars
 
                 // Read glyph data
+                int dataOffset = (large ? largeAdvanceValueOffset : advanceValueOffset) + 76;
                 dataReader.Position = dataOffset;
                 byte[] glyphData = dataReader.ReadBytes(76 * bytesPerGlyph); // for 76 valid chars
 
