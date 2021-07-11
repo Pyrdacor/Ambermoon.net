@@ -2,6 +2,7 @@
 using Ambermoon.Data.Legacy.Serialization;
 using SonicArranger;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ambermoon.Data.Legacy.Audio
@@ -15,7 +16,12 @@ namespace Ambermoon.Data.Legacy.Audio
         int InitialBeatsPerMinute { get; }
     }
 
-    class Song : ISong, ISonicArrangerSongInfo
+    public interface ISongDataProvider
+    {
+        byte[] GetData();
+    }
+
+    class Song : ISong, ISonicArrangerSongInfo, ISongDataProvider
     {
         readonly SonicArranger.Song sonicArrangerSong;
         readonly SongPlayer songPlayer;
@@ -64,6 +70,14 @@ namespace Ambermoon.Data.Legacy.Audio
         public void Stop()
         {
             songPlayer.Stop();
+        }
+
+        public byte[] GetData()
+        {
+            while (buffer == null && loadTask?.GetAwaiter().IsCompleted == false)
+                Thread.Sleep(10);
+
+            return buffer;
         }
     }
 }

@@ -33,7 +33,7 @@ namespace Ambermoon
         ICursor cursor = null;
         MainMenu mainMenu = null;
         Func<Game> gameCreator = null;
-        SongManager songManager = null;
+        MusicCache musicCache = null;
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
         DateTime? initializeErrorTime = null;
@@ -342,7 +342,8 @@ namespace Ambermoon
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction)
         {
-            songManager = new SongManager(renderView.GameData, Data.Enumerations.Song.Menu); // TODO: use intro later maybe and initialize earlier then
+            musicCache = new MusicCache(renderView.GameData, Data.Enumerations.Song.Menu, // TODO: use intro later maybe and initialize earlier then
+                Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
             audioOutput = new AudioOutput(1, 44100);
 
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
@@ -351,7 +352,7 @@ namespace Ambermoon
             infoText.Visible = false;
 
             if (audioOutput.Enabled)
-                songManager.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
+                musicCache.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue);
             mainMenu.Closed += closeAction =>
@@ -366,7 +367,7 @@ namespace Ambermoon
                         break;
                     case MainMenu.CloseAction.Intro:
                         // TODO
-                        songManager.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
+                        musicCache.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
                         break;
                     case MainMenu.CloseAction.Exit:
                         mainMenu?.Destroy();
@@ -444,13 +445,13 @@ namespace Ambermoon
                                 var characterManager = new CharacterManager(gameData, graphicProvider);
                                 var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
                                 var lightEffectProvider = new LightEffectProvider(executableData);
-                                songManager?.WaitForAllSongsLoaded();
+                                musicCache?.WaitForAllSongsLoaded();
 
                                 gameCreator = () =>
                                 {
                                     var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                         characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                        cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution,
+                                        cursor, lightEffectProvider, audioOutput, musicCache, FullscreenChangeRequest, ChangeResolution,
                                         QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge));
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
@@ -954,6 +955,14 @@ namespace Ambermoon
                 {
                     infoText?.Delete();
                     infoText = null;
+                });
+                Util.SafeCall(() =>
+                {
+                    if (configuration?.CacheMusic == true && musicCache != null && !musicCache.Cached)
+                    {
+                        MusicCache.Cache(musicCache, Configuration.ExecutableDirectoryPath,
+                            Configuration.FallbackConfigDirectory, Path.GetTempPath());
+                    }
                 });
                 Util.SafeCall(() => window?.Dispose());
             }

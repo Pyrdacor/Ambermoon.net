@@ -21,6 +21,7 @@ namespace Ambermoon
         public bool Music { get; set; } = true;
         public int Volume { get; set; } = 100;
         public bool FastBattleMode { get; set; } = false;
+        public bool CacheMusic { get; set; } = true;
 
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
