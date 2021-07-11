@@ -124,10 +124,7 @@ namespace Ambermoon.Renderer
             {
                 fixed (byte* ptr = &pixelData[0])
                 {
-                    // IntPtr pixelDataPtr = System.Runtime.InteropServices.Marshal.AllocHGlobal(pixelData.Length);
-                    // System.Runtime.InteropServices.Marshal.Copy(pixelData, 0, pixelDataPtr, pixelData.Length);
                     state.Gl.TexImage2D(GLEnum.Texture2D, 0, (int)InternalFormat.Rgba8, (uint)Width, (uint)Height, 0, ToOpenGLPixelFormat(format), GLEnum.UnsignedByte, ptr);
-                    // System.Runtime.InteropServices.Marshal.FreeHGlobal(pixelDataPtr);
                 }
             }
 

@@ -389,6 +389,8 @@ namespace Ambermoon.Renderer.OpenGL
             {
                 context.SetRotation(rotation);
 
+                // TODO: use framebuffer, create retro shader, use framebuffer texture as input for that shader
+
                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
                 bool render3DMap = layers[Layer.Map3D].Visible;
