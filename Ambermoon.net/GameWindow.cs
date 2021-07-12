@@ -740,6 +740,7 @@ namespace Ambermoon
                 var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[1];
                 configuration.Width = Width = size.Width;
                 configuration.Height = Height = size.Height;
+                window.Size = new WindowDimension(Width, Height);
             }
 
             if (ShowVersionSelector((gameData, savePath, gameLanguage) =>
