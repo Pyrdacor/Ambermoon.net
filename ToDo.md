@@ -23,7 +23,6 @@
 
 - Should piles block monsters? Test in grandfather's cellar.
 - 3D monster get easily stuck on wall edges. :(
-- Change to automap wall drawing for crystal wall messed up automaps for maps like 350
 
 
 ## UI
@@ -34,9 +33,6 @@
 ## Misc
 
 - Add more savegame slots?
-- First time resolution is wrong. Also sometimes after switching from fullscreen to window.
-- Load time is long. Either improve performance or if not possible
-  only load the intro and load data while intro/logo is shown (maybe with progress bar).
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
