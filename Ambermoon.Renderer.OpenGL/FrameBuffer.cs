@@ -1,15 +1,14 @@
 ﻿using Silk.NET.OpenGL;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Ambermoon.Renderer.OpenGL
 {
-    public class FrameBuffer// : IDisposable
+    public class FrameBuffer : IDisposable
     {
         uint index;
         uint depthBuffer;
         uint renderTexture;
+        bool disposed = false;
         readonly State state;
 
         public FrameBuffer(State state)
@@ -24,8 +23,11 @@ namespace Ambermoon.Renderer.OpenGL
             gl.BindFramebuffer(FramebufferTarget.Framebuffer, index);
 
             gl.BindTexture(GLEnum.Texture2D, renderTexture);
-            gl.TexImage2D(GLEnum.Texture2D, 0, (int)InternalFormat.Rgba8, Global.VirtualScreenWidth,
-                Global.VirtualScreenHeight, 0, GLEnum.Rgba, GLEnum.UnsignedByte, IntPtr.Zero);
+            unsafe
+            {
+                gl.TexImage2D(GLEnum.Texture2D, 0, InternalFormat.Rgba8, Global.VirtualScreenWidth,
+                    Global.VirtualScreenHeight, 0, GLEnum.Rgba, GLEnum.UnsignedByte, (void*)0);
+            }
             gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             gl.BindTexture(GLEnum.Texture2D, 0);
@@ -47,7 +49,30 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void Bind()
         {
-            state.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, index);
+            if (!disposed)
+                state.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, index);
+        }
+
+        public void BindAsTexture()
+        {
+            if (!disposed)
+                state.Gl.BindTexture(GLEnum.Texture2D, renderTexture);
+        }
+
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                state.Gl.DeleteTexture(renderTexture);
+                state.Gl.DeleteRenderbuffer(depthBuffer);
+                state.Gl.DeleteFramebuffer(index);
+
+                renderTexture = 0;
+                depthBuffer = 0;
+                index = 0;
+
+                disposed = true;
+            }
         }
     }
 }

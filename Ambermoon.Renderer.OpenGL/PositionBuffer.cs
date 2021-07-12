@@ -47,17 +47,17 @@ namespace Ambermoon.Renderer
                 changed = true;
             }
 
-            return index == Size || changed;
+            return changed || index == Size;
         }
 
         public int Add(short x, short y, int index = -1)
         {
-            return base.Add(UpdatePositionData, Tuple.Create(x, y), index);
+            return Add(UpdatePositionData, Tuple.Create(x, y), index);
         }
 
         public void Update(int index, short x, short y)
         {
-            base.Update(UpdatePositionData, index, Tuple.Create(x, y));
+            Update(UpdatePositionData, index, Tuple.Create(x, y));
         }
     }
 }

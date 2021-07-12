@@ -40,7 +40,7 @@ namespace Ambermoon.Renderer
         readonly Dictionary<string, int> bufferLocations = new Dictionary<string, int>();
         bool disposed = false;
         bool buffersAreBound = false;
-        ShaderProgram program = null;
+        readonly ShaderProgram program = null;
         readonly object vaoLock = new object();
         readonly State state = null;
 
@@ -221,6 +221,7 @@ namespace Ambermoon.Renderer
                 {
                     state.Gl.BindVertexArray(index);
                     program.Use();
+                    ActiveVAO = this;
                 }
 
                 if (!bindOnly)
@@ -276,8 +277,6 @@ namespace Ambermoon.Renderer
                         BindBuffers();
                     }
                 }
-
-                ActiveVAO = this;
             }
         }
 

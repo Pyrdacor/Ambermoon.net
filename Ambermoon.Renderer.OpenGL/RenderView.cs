@@ -37,6 +37,9 @@ namespace Ambermoon.Renderer.OpenGL
     {
         bool disposed = false;
         readonly Context context;
+        readonly FrameBuffer framebuffer;
+        readonly ScreenShader screenShader;
+        readonly ScreenRenderBuffer screenBuffer;
         // Area inside the window where the rendering happens.
         // Note that this area is in screen coordinates and not
         // necessarily in pixels!
@@ -174,6 +177,21 @@ namespace Ambermoon.Renderer.OpenGL
                     throw new AmbermoonException(ExceptionScope.Render, $"Unable to create layer '{layer}': {ex.Message}");
                 }
             }
+
+            try
+            {
+                framebuffer = new FrameBuffer(State);
+                screenShader = ScreenShader.Create(State);
+                screenBuffer = new ScreenRenderBuffer(State, screenShader);
+            }
+            catch
+            {
+                framebuffer?.Dispose();
+                framebuffer = null;
+                screenShader = null;
+                screenBuffer?.Dispose();
+                screenBuffer = null;
+            }
         }
 
         void UpdateAspect(float aspect)
@@ -183,8 +201,6 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void Close()
         {
-            //GameManager.Instance.GetCurrentGame()?.Close();
-
             Dispose();
 
             Closed?.Invoke(this, EventArgs.Empty);
@@ -389,8 +405,6 @@ namespace Ambermoon.Renderer.OpenGL
             {
                 context.SetRotation(rotation);
 
-                // TODO: use framebuffer, create retro shader, use framebuffer texture as input for that shader
-
                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
                 bool render3DMap = layers[Layer.Map3D].Visible;
@@ -431,16 +445,34 @@ namespace Ambermoon.Renderer.OpenGL
                             State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
                             State.RestoreModelViewMatrix(Matrix4.Identity);
                             State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
-                            var viewport = framebufferWindowArea;
-                            State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
-                                (uint)viewport.Width, (uint)viewport.Height);
+
+                            if (framebuffer == null)
+                            {
+                                var viewport = framebufferWindowArea;
+                                State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                                    (uint)viewport.Width, (uint)viewport.Height);
+                            }
+                            else
+                            {
+                                framebuffer.Bind()
+                                State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                            }
                         }
                     }
                     else
                     {
-                        var viewport = framebufferWindowArea;
-                        State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
-                            (uint)viewport.Width, (uint)viewport.Height);
+                        framebuffer?.Bind();
+
+                        if (framebuffer == null)
+                        {
+                            var viewport = framebufferWindowArea;
+                            State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                                (uint)viewport.Width, (uint)viewport.Height);
+                        }
+                        else
+                        {
+                            State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                        }
                     }
 
                     if (layer.Key == Layer.DrugEffect)
@@ -462,6 +494,13 @@ namespace Ambermoon.Renderer.OpenGL
                     layer.Value.Render();
                 }
 
+                if (framebuffer != null)
+                {
+                    State.Gl.Viewport(renderDisplayArea.X + viewOffset.X, renderDisplayArea.Y + viewOffset.Y,
+                        (uint)renderDisplayArea.Width, (uint)renderDisplayArea.Height);
+                    RenderToScreen();
+                }
+
                 accessViolationDetected = false;
             }
             catch (AccessViolationException)
@@ -471,6 +510,21 @@ namespace Ambermoon.Renderer.OpenGL
 
                 accessViolationDetected = true;
             }
+        }
+
+        void RenderToScreen()
+        {
+            State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit);
+            screenShader.Use(State);
+            screenShader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+            State.Gl.ActiveTexture(GLEnum.Texture0);
+            framebuffer.BindAsTexture();
+            State.Gl.Disable(EnableCap.Blend);
+            State.Gl.Disable(EnableCap.DepthTest);
+            screenBuffer.Render();
+            State.Gl.BindTexture(GLEnum.Texture2D, 0);
+            State.Gl.Enable(EnableCap.DepthTest);
         }
 
         public Position GameToScreen(Position position) =>
@@ -616,22 +670,14 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        void Dispose(bool disposing)
-        {
             if (!disposed)
             {
-                if (disposing)
-                {
-                    foreach (var layer in layers.Values)
-                        layer?.Dispose();
+                foreach (var layer in layers.Values)
+                    layer?.Dispose();
 
-                    layers.Clear();
+                layers.Clear();
 
-                    disposed = true;
-                }
+                disposed = true;
             }
         }
 

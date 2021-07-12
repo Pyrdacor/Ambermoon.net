@@ -37,6 +37,7 @@ namespace Ambermoon.Renderer
         public override int Width { get; } = 0;
         public override int Height { get; } = 0;
         readonly State state = null;
+        bool disposed = false;
 
         protected Texture(State state, int width, int height)
         {
@@ -153,38 +154,21 @@ namespace Ambermoon.Renderer
             }
         }
 
-
-        #region IDisposable Support
-
-        private bool disposed = false;
-
-        protected virtual void Dispose(bool disposing)
+        public void Dispose()
         {
             if (!disposed)
             {
-                if (disposing)
-                {
-                    if (ActiveTexture == this)
-                        Unbind();
+                if (ActiveTexture == this)
+                    Unbind();
 
-                    if (Index != 0)
-                    {
-                        state.Gl.DeleteTexture(Index);
-                        Index = 0;
-                    }
+                if (Index != 0)
+                {
+                    state.Gl.DeleteTexture(Index);
+                    Index = 0;
                 }
 
                 disposed = true;
             }
         }
-
-        public void Dispose()
-        {
-            Dispose(true);
-
-        }
-
-        #endregion
-
     }
 }
