@@ -140,9 +140,9 @@ namespace Ambermoon.Render
                 else if (x < 0 && (map.IsWorldMap || (newX <= map.Width - 7 && Map.ScrollX > 0)))
                     scrollX = -1;
 
-                if (y > 0 && (map.IsWorldMap || (newY >= 4 && Map.ScrollY < Map.Map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)))
+                if (y > 0 && (map.IsWorldMap || (newY >= 5 && Map.ScrollY < Map.Map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y)))
                     scrollY = 1;
-                else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 7 && Map.ScrollY > 0)))
+                else if (y < 0 && (map.IsWorldMap || (newY <= map.Height - 6 && Map.ScrollY > 0)))
                     scrollY = -1;
 
                 if (y > 0)
