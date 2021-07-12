@@ -5432,7 +5432,8 @@ namespace Ambermoon
                                 AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
                                 {
                                     item.Visible = false;
-                                    itemSlot.Remove(1);
+                                    InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
+                                    itemSlot.Remove(1);                                    
                                 });
                             });
                         }
@@ -5445,6 +5446,7 @@ namespace Ambermoon
                                 {
                                     layout.ShowClickChestMessage(DataNameProvider.LockpickBreaks, () =>
                                     {
+                                        InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
                                         itemSlot.Remove(1);
                                         if (itemSlot.Amount > 0)
                                         {
@@ -5971,14 +5973,18 @@ namespace Ambermoon
             void CreateItem(uint itemIndex, uint amount)
             {
                 // Note: Multiple items can be created. While at least one
-                // item was created as is not picked up, the item grid is
+                // item was created and is not picked up, the item grid is
                 // enabled.
                 for (int i = 0; i < 24; ++i)
                 {
                     if (createdItemSlots[i].Empty)
                     {
+                        var item = ItemManager.GetItem(itemIndex);
                         createdItemSlots[i].ItemIndex = itemIndex;
                         createdItemSlots[i].Amount = (int)amount;
+                        createdItemSlots[i].NumRemainingCharges = Math.Max(1, (int)item.InitialCharges);
+                        createdItemSlots[i].Flags = item.DefaultSlotFlags;
+                        createdItemSlots[i].RechargeTimes = 0;
                         break;
                     }
                 }
@@ -10440,6 +10446,7 @@ namespace Ambermoon
                             {
                                 merchant.AddItems(ItemManager, item.Index, amount);
                                 CurrentPartyMember.Inventory.Slots[slotIndex].Remove((int)amount);
+                                InventoryItemRemoved(item.Index, (int)amount, CurrentPartyMember);
                                 itemGrid.SetItem(slotIndex, CurrentPartyMember.Inventory.Slots[slotIndex], true);
                                 merchant.AvailableGold += sellPrice;
                                 UpdateGoldDisplay();

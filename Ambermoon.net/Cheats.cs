@@ -719,7 +719,7 @@ namespace Ambermoon
                 {
                     int addAmount = Math.Min(remainingAmount, 99 - slot.Amount);
                     slot.Amount += addAmount;
-                    slot.NumRemainingCharges = Math.Max(slot.NumRemainingCharges, 1);
+                    slot.NumRemainingCharges = Util.Max(slot.NumRemainingCharges, 1, item.InitialCharges);
                     remainingAmount -= addAmount;
                     partyMember.TotalWeight += (uint)addAmount * item.Weight;
 
@@ -733,7 +733,7 @@ namespace Ambermoon
                 int addAmount = Math.Min(remainingAmount, stackable ? 99 : 1);
                 slot.ItemIndex = itemIndex;
                 slot.Amount = addAmount;
-                slot.NumRemainingCharges = Math.Max(slot.NumRemainingCharges, 1);
+                slot.NumRemainingCharges = Util.Max(slot.NumRemainingCharges, 1, item.InitialCharges);
                 remainingAmount -= addAmount;
                 partyMember.TotalWeight += (uint)addAmount * item.Weight;
 

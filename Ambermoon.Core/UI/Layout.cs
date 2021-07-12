@@ -1699,7 +1699,7 @@ namespace Ambermoon.UI
             {
                 void Use()
                 {
-                    ReduceItemCharge(itemSlot, true, () =>
+                    ReduceItemCharge(itemSlot, true, itemGrid == itemGrids[1], game.CurrentInventory, () =>
                     {
                         game.CloseWindow(() =>
                         {
@@ -1774,8 +1774,13 @@ namespace Ambermoon.UI
 
                     if (itemSlot.NumRemainingCharges == 0)
                     {
-                        SetInventoryMessage(game.DataNameProvider.NoChargesLeft, true);
-                        return;
+                        if (item.Flags.HasFlag(ItemFlags.Stackable))
+                            itemSlot.NumRemainingCharges = Math.Max(1, (int)item.InitialCharges);
+                        else
+                        {
+                            SetInventoryMessage(game.DataNameProvider.NoChargesLeft, true);
+                            return;
+                        }
                     }
 
                     // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
@@ -1934,7 +1939,8 @@ namespace Ambermoon.UI
             }
         }
 
-        internal void ReduceItemCharge(ItemSlot itemSlot, bool slotVisible = true, Action followAction = null)
+        internal void ReduceItemCharge(ItemSlot itemSlot, bool slotVisible,
+            bool equip, Character character, Action followAction = null)
         {
             itemSlot.NumRemainingCharges = Math.Max(0, itemSlot.NumRemainingCharges - 1);
 
@@ -1951,6 +1957,8 @@ namespace Ambermoon.UI
                         game.InputEnable = false;
                         DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, () =>
                         {
+                            if (!itemSlot.Empty)
+                                itemSlot.NumRemainingCharges = Math.Max(1, (int)item.InitialCharges);
                             game.InputEnable = true;
                             game.AddTimedEvent(TimeSpan.FromMilliseconds(50), followAction);
                         });
@@ -1958,7 +1966,16 @@ namespace Ambermoon.UI
                     }
                     else
                     {
+                        if (character is PartyMember partyMember)
+                        {
+                            if (equip)
+                                game.EquipmentRemoved(partyMember, itemSlot.ItemIndex, 1, false);
+                            else
+                                game.InventoryItemRemoved(itemSlot.ItemIndex, 1, partyMember);
+                        }
                         itemSlot.Remove(1);
+                        if (!itemSlot.Empty)
+                            itemSlot.NumRemainingCharges = Math.Max(1, (int)item.InitialCharges);
                     }
                 }
             }

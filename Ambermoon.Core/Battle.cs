@@ -1199,6 +1199,9 @@ namespace Ambermoon
                             {
                                 slot.Remove(1);
 
+                                if (attacker is PartyMember partyMember)
+                                    game.InventoryItemRemoved(ammoIndex, 1, partyMember);
+
                                 if (slot.Amount == 0)
                                 {
                                     // Do we have more in inventory?
@@ -1222,6 +1225,7 @@ namespace Ambermoon
                                     throw new AmbermoonException(ExceptionScope.Application, "Character used long ranged weapon without needed ammo.");
 
                                 ammoSlot.Remove(1);
+                                game.EquipmentRemoved(attacker, ammoIndex, 1, false);
 
                                 if (ammoSlot.Amount == 0)
                                 {
@@ -1401,7 +1405,7 @@ namespace Ambermoon
                             var itemSlot = equippedItem
                                 ? battleAction.Character.Equipment.Slots[(EquipmentSlot)itemSlotIndex.Value]
                                 : battleAction.Character.Inventory.Slots[itemSlotIndex.Value];
-                            layout.ReduceItemCharge(itemSlot, false);
+                            layout.ReduceItemCharge(itemSlot, false, equippedItem, battleAction.Character);
                         }
 
                         if (currentSpellAnimation != null)
