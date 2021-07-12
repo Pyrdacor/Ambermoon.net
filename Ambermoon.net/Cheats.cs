@@ -58,7 +58,8 @@ namespace Ambermoon
                 Create
                 (
                     "Shows a list of all available monster groups." + Environment.NewLine +
-                    "Usage: monsters",
+                    "Usage: monsters" + Environment.NewLine +
+                    "Usage: monsters <partial_name>",
                     ShowMonsters
                 )
             },
@@ -74,7 +75,8 @@ namespace Ambermoon
                 Create
                 (
                     "Shows a list of all available items." + Environment.NewLine +
-                    "Usage: items",
+                    "Usage: items" + Environment.NewLine +
+                    "Usage: items <partial_name>",
                     ShowItems
                 )
             },
@@ -273,9 +275,21 @@ namespace Ambermoon
                             Console.WriteLine();
 
                             cheat.Value.Value?.Invoke(game, parts.Skip(1).ToArray());
+                            Console.WriteLine();
                             return;
                         }
                     }
+
+                    historyIndex = -1;
+                    history.Add(currentInput);
+                    currentAutoFillInput = null;
+                    currentInput = "";
+                    autoFillIndex = -1;
+                    cursorPosition = 0;
+                    Console.CursorLeft = currentInput.Length;
+                    Console.WriteLine();
+                    Console.WriteLine("Invalid cheat command. Type 'help' for a list of commands.");
+                    Console.WriteLine();
                 }
             }
         }
@@ -406,6 +420,13 @@ namespace Ambermoon
             Console.WriteLine();
 
             var items = Filter(args, list, nameProvider);
+
+            if (items.Count == 0)
+            {
+                Console.WriteLine("No items found.");
+                return;
+            }
+
             items.Sort((a, b) => indexProvider(a).CompareTo(indexProvider(b)));
 
             if (!twoRows || items.Count <= 12)
