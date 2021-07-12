@@ -3864,7 +3864,10 @@ namespace Ambermoon
 
                             bool inputWasEnabled = InputEnable;
                             newLeaderPicked += NewLeaderPicked;
-                            RecheckActivePartyMember();
+                            RecheckActivePartyMember(out bool gameOver);
+
+                            if (gameOver)
+                                newLeaderPicked -= NewLeaderPicked;
 
                             void NewLeaderPicked(int index)
                             {
@@ -6825,8 +6828,11 @@ namespace Ambermoon
 
             if (CurrentPartyMember == target)
             {
-                if (RecheckActivePartyMember())
+                if (RecheckActivePartyMember(out bool gameOver))
                 {
+                    if (gameOver)
+                        return;
+
                     if (ailment == Ailment.Blind)
                         UpdateLight();
                 }
@@ -7796,8 +7802,12 @@ namespace Ambermoon
                         CheckPlayerActionVisuals(GetPartyMember(action.Key), action.Value);
                     layout.SetBattleFieldSlotColor(currentBattle.GetSlotFromCharacter(CurrentPartyMember), BattleFieldSlotColor.Yellow);
                     layout.SetBattleMessage(null);
-                    if (RecheckActivePartyMember())
+                    if (RecheckActivePartyMember(out bool gameOver))
+                    {
+                        if (gameOver)
+                            return;
                         BattlePlayerSwitched();
+                    }
                     else
                         AddCurrentPlayerActionVisuals();
                     UpdateBattleStatus();
@@ -7825,6 +7835,7 @@ namespace Ambermoon
                 };
                 currentBattle.BattleEnded += battleEndInfo =>
                 {
+                    battleRoundActiveSprite.Visible = false;
                     for (int i = 0; i < MaxPartyMembers; ++i)
                     {
                         if (GetPartyMember(i) != null)
@@ -12906,11 +12917,29 @@ namespace Ambermoon
             }
         }
 
-        bool RecheckActivePartyMember()
+        bool RecheckActivePartyMember(out bool gameOver)
         {
+            gameOver = false;
+
             if (!CurrentPartyMember.Ailments.CanSelect() || currentBattle?.GetSlotFromCharacter(CurrentPartyMember) == -1)
             {
                 layout.ClearBattleFieldSlotColors();
+
+                if (!PartyMembers.Any(p => p.Ailments.CanSelect()))
+                {
+                    if (battleRoundActiveSprite != null)
+                        battleRoundActiveSprite.Visible = false;
+                    currentBattleInfo = null;
+                    currentBattle = null;
+                    CloseWindow(() =>
+                    {
+                        InputEnable = true;
+                        GameOver();
+                    });
+                    gameOver = true;
+                    return true;
+                }
+
                 Pause();
                 // Simple text popup
                 var popup = layout.OpenTextPopup(ProcessText(DataNameProvider.SelectNewLeaderMessage), () =>
@@ -12924,7 +12953,6 @@ namespace Ambermoon
                 pickingNewLeader = true;
                 CursorType = CursorType.Sword;
                 TrapMouse(Global.PartyMemberPortraitArea);
-                // TODO: What happens if all party members are no longer selectable? E.g. all sleeping?
                 return false;
             }
             else

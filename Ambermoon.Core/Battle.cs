@@ -71,7 +71,6 @@ namespace Ambermoon
         }
     }
 
-    // TODO: Check reset later (e.g. when loading while in battle)
     internal class Battle
     {
         internal enum BattleActionType
