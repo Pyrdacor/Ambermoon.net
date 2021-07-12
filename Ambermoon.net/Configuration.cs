@@ -22,6 +22,7 @@ namespace Ambermoon
         public int Volume { get; set; } = 100;
         public bool FastBattleMode { get; set; } = false;
         public bool CacheMusic { get; set; } = true;
+        public bool EnableCheats { get; set; } = true; // TODO: change to false
 
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
@@ -30,7 +31,7 @@ namespace Ambermoon
         {
             get
             {
-                bool isWindows = System.Environment.OSVersion.Platform == System.PlatformID.Win32NT;
+                bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
 
                 var assemblyPath = Process.GetCurrentProcess().MainModule.FileName;
 

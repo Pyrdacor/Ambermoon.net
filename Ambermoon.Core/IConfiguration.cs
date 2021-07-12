@@ -41,6 +41,8 @@ namespace Ambermoon
         bool Music { get; set; }
         int Volume { get; set; }
         bool FastBattleMode { get; set; }
+        bool CacheMusic { get; set; }
+        bool EnableCheats { get; set; }
     }
 
     public static class ConfigurationExtensions

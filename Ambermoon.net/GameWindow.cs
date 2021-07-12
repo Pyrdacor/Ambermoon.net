@@ -811,7 +811,7 @@ namespace Ambermoon
                     gameCreator = null;
 
                     // Show cheat info
-                    if (!Console.IsInputRedirected)
+                    if (configuration.EnableCheats && !Console.IsInputRedirected)
                     {
                         PrintCheatConsoleHeader();
                     }
@@ -821,7 +821,7 @@ namespace Ambermoon
             {
                 Game.Update(delta);
 
-                if (!Console.IsInputRedirected && Console.KeyAvailable)
+                if (configuration.EnableCheats && !Console.IsInputRedirected && Console.KeyAvailable)
                     Cheats.ProcessInput(Console.ReadKey(true), Game);
             }
         }

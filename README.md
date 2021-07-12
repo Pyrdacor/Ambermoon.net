@@ -130,6 +130,12 @@ F1-F6 | Open inventory of party member 1-6
 - Clicking the wheel or middle mouse button on 2D maps will show the crosshair or mouth cursor.
 
 
+## Configuration
+
+Ambermoon.net can be configured ingame but also via a configuration file.
+See [Configuration](Configuration.md) for more details.
+
+
 ## Changelog
 
 You can find the full changelog [here](changelog.md). You can also look at the [releases](https://github.com/Pyrdacor/Ambermoon.net/releases). They have more details in general.
