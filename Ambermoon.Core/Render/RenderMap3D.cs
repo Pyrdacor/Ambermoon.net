@@ -1168,6 +1168,13 @@ namespace Ambermoon.Render
                 bool blockPlayer = objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk);
                 bool blockMonster = objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementMonster);
 
+                // Small objects should not block
+                if (objectInfo.MappedTextureWidth < BlockSize / 6)
+                {
+                    blockPlayer = false;
+                    blockMonster = false;
+                }
+
                 if (blockPlayer || blockMonster)
                 {
                     blockCollisionBodies[blockIndex].Add(new CollisionSphere3D
@@ -1175,7 +1182,7 @@ namespace Ambermoon.Render
                         CenterX = mapObject.X,
                         CenterZ = -mapObject.Z,
                         Radius = 0.5f * Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
-                        PlayerCanPass = false
+                        PlayerCanPass = !blockPlayer
                     });
                 }
 
