@@ -11695,7 +11695,7 @@ namespace Ambermoon
             public int DrawX;
             public int DrawY;
             public bool? NormalWall; // true: normal, false: fake wall, null: wall with automap graphic on it
-            public byte ColorIndex;
+            public bool BlocksSight;
         }
 
         internal void ShowAutomap(AutomapOptions automapOptions)
@@ -11985,7 +11985,7 @@ namespace Ambermoon
                                     DrawX = x,
                                     DrawY = y,
                                     NormalWall = draw ? blockingWall : (bool?)null,
-                                    ColorIndex = wall.ColorIndex
+                                    BlocksSight = wall.Flags.HasFlag(Tileset.TileFlags.BlockSight)
                                 });
                             }
                         }
@@ -12064,7 +12064,7 @@ namespace Ambermoon
                         int dx = wall.Value.DrawX;
                         int dy = wall.Value.DrawY;
                         bool? type = wall.Value.NormalWall;
-                        byte colorIndex = wall.Value.ColorIndex;
+                        bool blocksSight = wall.Value.BlocksSight;
 
                         if (type != null)
                         {
@@ -12074,14 +12074,14 @@ namespace Ambermoon
 
                                 // Note: This is used to detect if walls should be
                                 // merged visually. There are some special walls that
-                                // have a different color index (e.g. the crystal wall
-                                // in the temple of brotherhood). Those should be treated
-                                // as "another" wall so we will return false here if the
-                                // color indices do not match.
+                                // have a different block sight state (e.g. the crystal
+                                // wall in the temple of brotherhood).
+                                // Those should be treated as "another" wall so we will
+                                // return false here if the color indices do not match.
                                 if (!walls.TryGetValue(x + y * Map.Width, out var wall))
                                     return false;
 
-                                otherWall = colorIndex != wall.ColorIndex;
+                                otherWall = blocksSight != wall.BlocksSight;
 
                                 return !otherWall || (type == null) != (wall.NormalWall == null);
                             }
