@@ -4344,20 +4344,15 @@ namespace Ambermoon.UI
             return GetMonsterCombatTopPosition(RenderView, position, monster);
         }
 
-        public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster, byte displayLayer)
+        public BattleAnimation AddMonsterCombatSprite(int column, int row, Monster monster, byte displayLayer,
+            byte paletteIndex)
         {
             float sizeMultiplier = RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)row);            
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleMonsterRow);
             var sprite = RenderView.SpriteFactory.Create((int)monster.MappedFrameWidth, (int)monster.MappedFrameHeight, true) as ILayerSprite;
             sprite.TextureAtlasOffset = textureAtlas.GetOffset(monster.Index);
             sprite.DisplayLayer = displayLayer;
-            sprite.PaletteIndex = monster.CombatGraphicIndex switch // TODO
-            {
-                MonsterGraphicIndex.Gizzek => 36,
-                MonsterGraphicIndex.Tornak => 19,
-                MonsterGraphicIndex.MoragMachine => 19,
-                _ => 17
-            };
+            sprite.PaletteIndex = paletteIndex;
             sprite.Layer = RenderView.GetLayer(Layer.BattleMonsterRow);
             sprite.Visible = true;
             var animation = new BattleAnimation(sprite);

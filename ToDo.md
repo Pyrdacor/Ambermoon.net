@@ -2,18 +2,14 @@
 
 - Can't skip spell reflect message with space key
 - Does spell reflect message use wrong color?
-- Winddevil etc enlarges/changes size of the monster sprite.
 - Winddevil and windhowler end animation looks wrong.
 - Row target selection should only show 1 highlighted row on hover (not blinking all rows).
-- When clicking on a row which is not possible, the spell should not be locked in.
 - If monsters are in nearest row and can't attack anyone it should
   - Either move diagonal up in direction of a player (best to attack him immediately)
   - Or otherwise don't move at all
 - Initial scale of dissolve victim seems to be too small. Don't know why or if this is caused by anchor.
-- If background has darker color (night battles) the monsters should be darkened too.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 - If a near monster in the middle casts magic projectile (maybe similar things too) it isn't shown (tested with energy balls)
-- Energyballs did not disappear after won battle (map 361)
 - Locking in a "target all" spell and then pick the target of a single-target spell with same char, will still show the selection of all fields.
 
 

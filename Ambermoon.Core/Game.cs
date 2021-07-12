@@ -6570,7 +6570,7 @@ namespace Ambermoon
             });
         }
 
-        void ShowBattleWindow(Event nextEvent, uint? combatBackgroundIndex = null)
+        void ShowBattleWindow(Event nextEvent, out byte paletteIndex, uint? combatBackgroundIndex = null)
         {
             combatBackgroundIndex ??= is3D ? renderMap3D.CombatBackgroundIndex : Map.World switch
             {
@@ -6588,8 +6588,9 @@ namespace Ambermoon
             var combatBackground = is3D
                 ? renderView.GraphicProvider.Get3DCombatBackground(combatBackgroundIndex.Value)
                 : renderView.GraphicProvider.Get2DCombatBackground(combatBackgroundIndex.Value);
+            paletteIndex = (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1);
             layout.AddSprite(Global.CombatBackgroundArea, Graphics.CombatBackgroundOffset + combatBackground.GraphicIndex - 1,
-                (byte)(combatBackground.Palettes[GameTime.CombatBackgroundPaletteIndex()] - 1), 1, null, null, Layer.CombatBackground);
+                paletteIndex, 1, null, null, Layer.CombatBackground);
             layout.FillArea(new Rect(0, 132, 320, 68), Render.Color.Black, 0);
             layout.FillArea(new Rect(5, 139, 84, 56), GetUIColor(28), 1);
 
@@ -6600,7 +6601,7 @@ namespace Ambermoon
                 {
                     int slot = currentBattle.GetSlotFromCharacter(monster);
                     monsterBattleAnimations.Add(slot, layout.AddMonsterCombatSprite(slot % 6, slot / 6, monster,
-                        currentBattle.GetMonsterDisplayLayer(monster, slot)));
+                        currentBattle.GetMonsterDisplayLayer(monster, slot), paletteIndex));
                 }
                 currentBattle.SetMonsterAnimations(monsterBattleAnimations);
             }
@@ -7764,7 +7765,7 @@ namespace Ambermoon
             {
                 PlayMusic(Song.SapphireFireballsOfPureLove);
                 roundPlayerBattleActions.Clear();
-                ShowBattleWindow(nextEvent, combatBackgroundIndex);
+                ShowBattleWindow(nextEvent, out byte paletteIndex, combatBackgroundIndex);
                 // Note: Create clones so we can change the values in battle for each monster.
                 var monsterGroup = CharacterManager.GetMonsterGroup(currentBattleInfo.MonsterGroupIndex).Clone();
                 foreach (var monster in monsterGroup.Monsters)
@@ -7780,7 +7781,7 @@ namespace Ambermoon
                         if (monster != null)
                         {
                             monsterBattleAnimations.Add(column + row * 6,
-                                layout.AddMonsterCombatSprite(column, row, monster, 0));
+                                layout.AddMonsterCombatSprite(column, row, monster, 0, paletteIndex));
                         }
                     }
                 }
@@ -13341,7 +13342,7 @@ namespace Ambermoon
                     var nextEvent = (Event)currentWindow.WindowParameters[0];
                     var combatBackgroundIndex = (uint?)currentWindow.WindowParameters[1];
                     currentWindow = DefaultWindow;
-                    Fade(() => { ShowBattleWindow(nextEvent, combatBackgroundIndex); finishAction?.Invoke(); });
+                    Fade(() => { ShowBattleWindow(nextEvent, out _, combatBackgroundIndex); finishAction?.Invoke(); });
                     break;
                 }
                 case Window.BattleLoot:

@@ -1354,6 +1354,12 @@ namespace Ambermoon.Render
                                 {
                                     PlayScale(0.2f - additionalScale);
                                 }
+                                else
+                                {
+                                    var monsterAnimation = layout.GetMonsterBattleAnimation(monster);
+                                    monsterAnimation.SetStartFrame(basePosition, baseScale);
+                                    monsterAnimation.Reset();
+                                }
                             });
                         }
                         PlayScale(0.2f);
