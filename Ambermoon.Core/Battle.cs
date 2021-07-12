@@ -1389,12 +1389,12 @@ namespace Ambermoon
 
                         if (battleAction.Character is PartyMember castingPartyMember)
                             layout.FillCharacterBars(castingPartyMember);
-                    }
 
-                    if (!CheckSpellCast(battleAction.Character, spellInfo))
-                    {
-                        EndCast(true);
-                        return;
+                        if (!CheckSpellCast(battleAction.Character, spellInfo))
+                        {
+                            EndCast(true);
+                            return;
+                        }
                     }
 
                     void EndCast(bool needClickAfterwards = false)

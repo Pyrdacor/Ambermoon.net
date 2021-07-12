@@ -29,6 +29,8 @@
 - Should piles block monsters? Test in grandfather's cellar.
 - 3D monster get easily stuck on wall edges. :(
 - Change to automap wall drawing for crystal wall messed up automaps for maps like 350
+- Climb between mine 1 and 2 (forest moon). This is buggy and after-climb height is wrong.
+  I guess the group climbs from the base pos instead from the ground. Fade is not working too.
 
 
 ## UI

@@ -432,7 +432,7 @@ namespace Ambermoon
                                 lastEventStatus = false;
                                 return mapEventIfFalse;
                             }
-                            else if (conditionEvent.Value == 1 && totalCount == 0 || totalCount < conditionEvent.Count)
+                            else if (conditionEvent.Value == 1 && (totalCount == 0 || totalCount < conditionEvent.Count))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;

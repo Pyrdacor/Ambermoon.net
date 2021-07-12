@@ -176,8 +176,15 @@ namespace Ambermoon.Render
                                     if (changeTileEvent.X == Position.X + 1 && changeTileEvent.Y == Position.Y + 1 &&
                                         changeTileEvent.WallIndex != 0)
                                     {
-                                        considerPosition = false;
-                                        break;
+                                        var labdata = mapManager.GetLabdataForMap(map.Map);
+                                        var wall = labdata.Walls[(int)changeTileEvent.WallIndex - 1];
+
+                                        if (wall.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) ||
+                                            !wall.Flags.HasFlag(Tileset.TileFlags.AllowMovementWalk))
+                                        {
+                                            considerPosition = false;
+                                            break;
+                                        }
                                     }
                                 }
 
