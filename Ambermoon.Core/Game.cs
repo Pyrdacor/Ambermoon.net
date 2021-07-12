@@ -85,20 +85,19 @@ namespace Ambermoon
                 tickDivider = new uint[]
                 {
                     GetTickDivider3D(legacyMode), // 3D movement
-                    // TODO: these have to be corrected later after testing them
                     // 2D movement
-                    6, // Indoor
-                    4, // Outdoor walk
-                    8, // Horse
-                    4, // Raft
-                    8, // Ship
-                    4, // Magical disc
-                    16, // Eagle
-                    8, // Fly
-                    4, // Swim
+                    7,  // Indoor
+                    4,  // Outdoor walk
+                    8,  // Horse
+                    4,  // Raft
+                    8,  // Ship
+                    4,  // Magical disc
+                    15, // Eagle
+                    30, // Fly
+                    4,  // Swim
                     10, // Witch broom
-                    8, // Sand lizard
-                    8  // Sand ship
+                    8,  // Sand lizard
+                    8   // Sand ship
                 };
                 MoveSpeed3D = GetMoveSpeed3D(legacyMode);
                 TurnSpeed3D = GetTurnSpeed3D(legacyMode);
@@ -2497,6 +2496,7 @@ namespace Ambermoon
                         if (is3D)
                             TrapMouse(Map3DViewArea);
                         clickMoveActive = true;
+                        lastMoveTicksReset = CurrentTicks;
                         HandleClickMovement();
                     }
 

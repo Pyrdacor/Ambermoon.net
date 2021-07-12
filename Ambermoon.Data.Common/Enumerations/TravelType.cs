@@ -80,6 +80,7 @@ namespace Ambermoon.Data.Enumerations
         {
             TravelType.Eagle => true,
             TravelType.WitchBroom => true,
+            TravelType.Fly => true,
             _ => false
         };
 
