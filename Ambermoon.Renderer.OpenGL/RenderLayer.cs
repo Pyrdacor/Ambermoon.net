@@ -350,23 +350,15 @@ namespace Ambermoon.Renderer
 
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        void Dispose(bool disposing)
-        {
             if (!disposed)
             {
-                if (disposing)
-                {
-                    RenderBuffer?.Dispose();
-                    renderBufferColorRects?.Dispose();
-                    if (Texture is Texture texture)
-                        texture?.Dispose();
-                    Visible = false;
+                RenderBuffer?.Dispose();
+                renderBufferColorRects?.Dispose();
+                if (Texture is Texture texture)
+                    texture?.Dispose();
+                Visible = false;
 
-                    disposed = true;
-                }
+                disposed = true;
             }
         }
     }

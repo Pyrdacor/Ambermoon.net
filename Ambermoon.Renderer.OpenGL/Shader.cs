@@ -81,23 +81,15 @@ namespace Ambermoon.Renderer
 
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        private void Dispose(bool disposing)
-        {
             if (!disposed)
             {
-                if (disposing)
+                if (ShaderIndex != 0)
                 {
-                    if (ShaderIndex != 0)
-                    {
-                        state.Gl.DeleteShader(ShaderIndex);
-                        ShaderIndex = 0;
-                    }
-
-                    disposed = true;
+                    state.Gl.DeleteShader(ShaderIndex);
+                    ShaderIndex = 0;
                 }
+
+                disposed = true;
             }
         }
     }

@@ -25,7 +25,6 @@ using Silk.NET.OpenGLES;
 using Silk.NET.OpenGL;
 #endif
 using System;
-using System.Runtime.CompilerServices;
 
 namespace Ambermoon.Renderer
 {

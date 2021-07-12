@@ -315,29 +315,21 @@ namespace Ambermoon.Renderer
 
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        private void Dispose(bool disposing)
-        {
             if (!disposed)
             {
-                if (disposing)
+                if (ProgramIndex != 0)
                 {
-                    if (ProgramIndex != 0)
+                    if (ActiveProgram == this)
                     {
-                        if (ActiveProgram == this)
-                        {
-                            state.Gl.UseProgram(0);
-                            ActiveProgram = null;
-                        }
-
-                        state.Gl.DeleteProgram(ProgramIndex);
-                        ProgramIndex = 0;
+                        state.Gl.UseProgram(0);
+                        ActiveProgram = null;
                     }
 
-                    disposed = true;
+                    state.Gl.DeleteProgram(ProgramIndex);
+                    ProgramIndex = 0;
                 }
+
+                disposed = true;
             }
         }
     }

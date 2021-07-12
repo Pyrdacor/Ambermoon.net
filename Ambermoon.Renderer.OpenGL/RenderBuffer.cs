@@ -1074,27 +1074,19 @@ namespace Ambermoon.Renderer
 
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        void Dispose(bool disposing)
-        {
             if (!disposed)
             {
-                if (disposing)
-                {
-                    vertexArrayObject?.Dispose();
-                    positionBuffer?.Dispose();
-                    paletteIndexBuffer?.Dispose();
-                    textColorIndexBuffer?.Dispose();
-                    textureAtlasOffsetBuffer?.Dispose();
-                    baseLineBuffer?.Dispose();
-                    colorBuffer?.Dispose();
-                    layerBuffer?.Dispose();
-                    indexBuffer?.Dispose();
+                vertexArrayObject?.Dispose();
+                positionBuffer?.Dispose();
+                paletteIndexBuffer?.Dispose();
+                textColorIndexBuffer?.Dispose();
+                textureAtlasOffsetBuffer?.Dispose();
+                baseLineBuffer?.Dispose();
+                colorBuffer?.Dispose();
+                layerBuffer?.Dispose();
+                indexBuffer?.Dispose();
 
-                    disposed = true;
-                }
+                disposed = true;
             }
         }
     }
