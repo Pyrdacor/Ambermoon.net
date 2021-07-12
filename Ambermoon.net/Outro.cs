@@ -66,6 +66,9 @@ namespace Ambermoon
             textProcessor = renderView.TextProcessor;
 
             fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
+            fadeArea.Layer = renderView.GetLayer(Layer.Effects);
+            fadeArea.X = 0;
+            fadeArea.Y = 0;
             fadeArea.Visible = false;
 
             graphicInfos = outroData.GraphicInfos;

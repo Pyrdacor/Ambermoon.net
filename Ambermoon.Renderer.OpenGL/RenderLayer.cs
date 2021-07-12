@@ -114,7 +114,7 @@ namespace Ambermoon.Renderer
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
             if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.Effects || layer == Layer.DrugEffect ||
-                layer == Layer.IntroGraphics || layer == Layer.OutroGraphics)
+                layer == Layer.IntroGraphics)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
 
             Layer = layer;
