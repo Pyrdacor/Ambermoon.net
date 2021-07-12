@@ -1169,7 +1169,7 @@ namespace Ambermoon.Render
                 bool blockMonster = objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementMonster);
 
                 // Small objects should not block
-                if (objectInfo.MappedTextureWidth < BlockSize / 6)
+                if (objectInfo.MappedTextureWidth < BlockSize / 8)
                 {
                     blockPlayer = false;
                     blockMonster = false;
@@ -1181,7 +1181,7 @@ namespace Ambermoon.Render
                     {
                         CenterX = mapObject.X,
                         CenterZ = -mapObject.Z,
-                        Radius = 0.5f * Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
+                        Radius = 0.25f * Global.DistancePerBlock * objectInfo.MappedTextureWidth / BlockSize,
                         PlayerCanPass = !blockPlayer
                     });
                 }
