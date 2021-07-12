@@ -513,6 +513,7 @@ namespace Ambermoon
             drugOverlay.Y = 0;
             drugOverlay.Visible = false;
             ouchSprite = renderView.SpriteFactory.Create(32, 23, true) as ILayerSprite;
+            ouchSprite.ClipArea = Map2DViewArea;
             ouchSprite.Layer = renderView.GetLayer(Layer.UI);
             ouchSprite.PaletteIndex = currentUIPaletteIndex;
             ouchSprite.TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Ouch));
