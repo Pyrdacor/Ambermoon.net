@@ -49,7 +49,12 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid teleport event.");
 
                     game.Teleport(teleportEvent);
-                    break;
+
+                    // Note: The teleporter from Mine 1 to 2 has a teleport event which has another
+                    // one as its next event. We have to avoid further event execution by just return
+                    // null here. I guess teleport events are not allowed to chain anything and this
+                    // might be a data bug.
+                    return null;
                 }
                 case EventType.Door:
                 {
