@@ -461,8 +461,6 @@ namespace Ambermoon.Renderer.OpenGL
                     }
                     else
                     {
-                        framebuffer?.Bind();
-
                         if (framebuffer == null)
                         {
                             var viewport = framebufferWindowArea;
@@ -471,6 +469,7 @@ namespace Ambermoon.Renderer.OpenGL
                         }
                         else
                         {
+                            framebuffer.Bind();
                             State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
                         }
                     }
@@ -495,11 +494,7 @@ namespace Ambermoon.Renderer.OpenGL
                 }
 
                 if (framebuffer != null)
-                {
-                    State.Gl.Viewport(renderDisplayArea.X + viewOffset.X, renderDisplayArea.Y + viewOffset.Y,
-                        (uint)renderDisplayArea.Width, (uint)renderDisplayArea.Height);
                     RenderToScreen();
-                }
 
                 accessViolationDetected = false;
             }
