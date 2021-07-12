@@ -255,6 +255,9 @@ namespace Ambermoon.Render
                 Visible = true; // reset visibility before changing map
 
             base.MoveTo(map, x, y, ticks, frameReset, newDirection);
+
+            if (frameReset && map.Type == MapType.Map2D && !map.IsWorldMap)
+                SetCurrentFrame(CurrentFrameIndex + 1); // Middle move frame = stand frame
         }
 
         public override void Update(uint ticks, ITime gameTime, bool allowInstantMovement = false,
