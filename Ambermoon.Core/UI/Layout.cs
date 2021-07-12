@@ -1693,7 +1693,8 @@ namespace Ambermoon.UI
 
             var user = game.CurrentInventory;
             uint itemIndex = itemSlot.ItemIndex;
-            var item = itemManager.GetItem(itemIndex);            
+            var item = itemManager.GetItem(itemIndex);
+            int RollDice1000() => game.RandomInt(0, 999);
 
             if (!game.BattleActive && game.TestUseItemMapEvent(itemIndex))
             {
@@ -1710,7 +1711,6 @@ namespace Ambermoon.UI
                         });
                     });
                 }
-                int RollDice1000() => game.RandomInt(0, 999);
                 if (item.CanBreak && RollDice1000() < item.BreakChance)
                 {
                     itemSlot.Flags |= ItemSlotFlags.Broken;
@@ -1737,10 +1737,25 @@ namespace Ambermoon.UI
                 return;
             }
 
-            if (item.Flags.HasFlag(ItemFlags.Readable) && item.TextIndex != 0)
+            if (item.Type == ItemType.TextScroll && item.TextIndex != 0)
             {
-                if (!ShowTextItem(item.TextIndex, item.TextSubIndex))
-                    throw new AmbermoonException(ExceptionScope.Data, $"Invalid text index for item '{item.Name}'");
+                if (item.CanBreak && RollDice1000() < item.BreakChance)
+                {
+                    itemSlot.Flags |= ItemSlotFlags.Broken;
+                    UpdateItemSlot(itemSlot);
+                    string message = game.CurrentInventory.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);
+                    game.ShowMessagePopup(message, ShowText);
+                }
+                else
+                {
+                    ShowText();
+                }
+
+                void ShowText()
+                {
+                    if (!ShowTextItem(item.TextIndex, item.TextSubIndex))
+                        throw new AmbermoonException(ExceptionScope.Data, $"Invalid text index for item '{item.Name}'");
+                }
                 return;
             }
             else if (item.Type == ItemType.SpecialItem)

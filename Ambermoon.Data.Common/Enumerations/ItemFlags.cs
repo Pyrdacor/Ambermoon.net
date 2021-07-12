@@ -24,19 +24,18 @@ namespace Ambermoon.Data
         /// equipment like pickaxe or Valdyn's boots.
         /// </summary>
         RemovableDuringFight = 0x08,
+        /// <summary>
+        /// After using the last charge the item will be destroyed.
+        /// </summary>
         DestroyAfterUsage = 0x10,
         /// <summary>
-        /// Text popup when item is viewed.
+        /// If set for weapons, armor, tools, text and normal items
+        /// this will stop the items from breaking.
         /// </summary>
-        Readable = 0x20,
+        Indestructible = 0x20,
         /// <summary>
         /// Item can be duplicated.
         /// </summary>
-        Clonable = 0x40,
-        /// <summary>
-        /// Same bit as <see cref="Readable"/> but only used
-        /// for weapons, armor, tools and normal items.
-        /// </summary>
-        Indestructible = Readable
+        Clonable = 0x40
     }
 }
