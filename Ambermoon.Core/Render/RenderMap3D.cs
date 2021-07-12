@@ -1169,7 +1169,7 @@ namespace Ambermoon.Render
                 bool blockMonster = objectInfo.Flags.HasFlag(Tileset.TileFlags.BlockAllMovement) || !objectInfo.Flags.HasFlag(Tileset.TileFlags.AllowMovementMonster);
 
                 // Small objects should not block
-                if (objectInfo.MappedTextureWidth < BlockSize / 8)
+                if (objectInfo.MappedTextureWidth < BlockSize / 5)
                 {
                     blockPlayer = false;
                     blockMonster = false;
