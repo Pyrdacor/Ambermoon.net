@@ -173,7 +173,10 @@ namespace Ambermoon
                     break;*/
             }
 
-            if (keyInfo.KeyChar >= ' ' && keyInfo.KeyChar < 127)
+            if ((keyInfo.KeyChar >= ' ' && keyInfo.KeyChar < 127) ||
+                keyInfo.KeyChar == 'ä' || keyInfo.KeyChar == 'Ä' ||
+                keyInfo.KeyChar == 'ö' || keyInfo.KeyChar == 'Ö' ||
+                keyInfo.KeyChar == 'ü' || keyInfo.KeyChar == 'Ü')
                 AddInput(keyInfo.KeyChar);
         }
 
@@ -388,39 +391,50 @@ namespace Ambermoon
             Console.WriteLine();
         }
 
-        static void ShowMaps(Game game, string[] args)
+        static List<T> Filter<T>(string[] args, IEnumerable<T> list, Func<T, string> nameProvider)
+        {
+            string pattern = args.Length == 0 || string.IsNullOrWhiteSpace(args[0])
+                ? null : args[0].ToLower();
+            return pattern == null
+                ? new List<T>(list)
+                : list.Where(item => nameProvider(item).ToLower().Contains(pattern)).ToList();
+        }
+
+        static void ShowList<T>(string[] args, IEnumerable<T> list, Func<T, string> nameProvider,
+            Func<T, uint> indexProvider, bool twoRows = true)
         {
             Console.WriteLine();
 
-            string pattern = args.Length == 0 || string.IsNullOrWhiteSpace(args[0])
-                ? null : args[0].ToLower();
-            var maps = pattern == null
-                ? new List<Map>(game.MapManager.Maps)
-                : game.MapManager.Maps.Where(map => map.Name.ToLower().Contains(pattern)).ToList();
-            maps.Sort((a, b) => a.Index.CompareTo(b.Index));
+            var items = Filter(args, list, nameProvider);
+            items.Sort((a, b) => indexProvider(a).CompareTo(indexProvider(b)));
 
-            if (maps.Count <= 12)
+            if (!twoRows || items.Count <= 12)
             {
-                for (int i = 0; i < maps.Count; ++i)
-                    Console.WriteLine($"{maps[i].Index:000}: {maps[i].Name}");
+                for (int i = 0; i < items.Count; ++i)
+                    Console.WriteLine($"{indexProvider(items[i]):000}: {nameProvider(items[i])}");
             }
-            else 
+            else
             {
-                int halfCount = maps.Count / 2;
+                int halfCount = items.Count / 2;
                 int secondRowOffset = halfCount;
 
-                if (maps.Count % 2 == 1)
+                if (items.Count % 2 == 1)
                     ++secondRowOffset;
 
                 for (int i = 0; i < halfCount; ++i)
                 {
-                    Console.Write($"{maps[i].Index:000}: {maps[i].Name}".PadRight(28));
-                    Console.WriteLine($"{maps[secondRowOffset + i].Index:000}: {maps[secondRowOffset + i].Name}");
+                    Console.Write($"{indexProvider(items[i]):000}: {nameProvider(items[i])}".PadRight(28));
+                    Console.WriteLine($"{indexProvider(items[secondRowOffset + i]):000}: {nameProvider(items[secondRowOffset + i])}");
                 }
 
                 if (secondRowOffset > halfCount)
-                    Console.WriteLine($"{maps[secondRowOffset - 1].Index:000}: {maps[secondRowOffset - 1].Name}");
+                    Console.WriteLine($"{indexProvider(items[secondRowOffset - 1]):000}: {nameProvider(items[secondRowOffset - 1])}");
             }
+        }
+
+        static void ShowMaps(Game game, string[] args)
+        {
+            ShowList(args, game.MapManager.Maps, map => map.Name, map => map.Index);
         }
 
         static void Teleport(Game game, string[] args)
@@ -574,7 +588,9 @@ namespace Ambermoon
 
         static void ShowMonsters(Game game, string[] args)
         {
-            Console.WriteLine();
+            var monsterGroups = game.CharacterManager.MonsterGroups.ToList();
+
+            ShowList(args, monsterGroups, g => GetMonsterNames(g.Value), g => g.Key, false);
 
             static string GetMonsterNames(MonsterGroup monsterGroup)
             {
@@ -592,11 +608,6 @@ namespace Ambermoon
                 }
 
                 return string.Join(", ", monsterNames.Select(m => $"{m.Value}x{m.Key}"));
-            }
-
-            foreach (var monsterGroup in game.CharacterManager.MonsterGroups)
-            {
-                Console.WriteLine($"{monsterGroup.Key:000}: {GetMonsterNames(monsterGroup.Value)}");
             }
         }
 
@@ -624,24 +635,7 @@ namespace Ambermoon
 
         static void ShowItems(Game game, string[] args)
         {
-            Console.WriteLine();
-
-            var items = new List<Item>(game.ItemManager.Items);
-            items.Sort((a, b) => a.Index.CompareTo(b.Index));
-            int halfCount = items.Count / 2;
-            int secondRowOffset = halfCount;
-
-            if (items.Count % 2 == 1)
-                ++secondRowOffset;
-
-            for (int i = 0; i < halfCount; ++i)
-            {
-                Console.Write($"{items[i].Index:000}: {items[i].Name}".PadRight(30));
-                Console.WriteLine($"{items[secondRowOffset + i].Index:000}: {items[secondRowOffset + i].Name}");
-            }
-
-            if (secondRowOffset > halfCount)
-                Console.WriteLine($"{items[secondRowOffset - 1].Index:000}: {items[secondRowOffset - 1].Name}");
+            ShowList(args, game.ItemManager.Items, item => item.Name, item => item.Index);
         }
 
         static void GiveItem(Game game, string[] args)
