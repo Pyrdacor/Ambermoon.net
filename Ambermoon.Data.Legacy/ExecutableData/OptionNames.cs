@@ -26,6 +26,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             foreach (var type in Enum.GetValues<Option>())
             {
                 entries.Add(type, dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding));
+
+                if (type == Option.CeilingTexture3D)
+                    break; // stop here
             }
 
             dataReader.AlignToWord();

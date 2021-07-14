@@ -93,7 +93,7 @@ namespace Ambermoon
 
             if (savegame.CurrentPartyMemberIndices.Contains(12u)) // Valdyn in party
             {
-                if (false) // TODO
+                if (savegame.IsGameOptionActive(Data.Enumerations.Option.FoundYellowSphere))
                     option = OutroOption.ValdynInPartyWithYellowSphere;
                 else
                     option = OutroOption.ValdynInPartyNoYellowSphere;
