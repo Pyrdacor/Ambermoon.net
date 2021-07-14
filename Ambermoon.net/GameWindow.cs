@@ -763,7 +763,8 @@ namespace Ambermoon
                 int refreshRate = Util.Limit(1, window.Monitor.VideoMode.RefreshRate ?? 60, 250);
                 var timePerFrame = 1000.0 / refreshRate;
                 var renderDuration = DateTime.Now - lastRenderTime;
-                if (renderDuration.TotalMilliseconds < timePerFrame - 4.0 * delta * 1000.0 - lastRenderDuration.TotalMilliseconds)
+                if (lastRenderDuration.TotalMilliseconds < 10 &&
+                    renderDuration.TotalMilliseconds < timePerFrame - 4.0 * delta * 1000.0 - lastRenderDuration.TotalMilliseconds)
                     return;
             }
 
