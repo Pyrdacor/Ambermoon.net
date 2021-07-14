@@ -23,8 +23,12 @@
     <PackageReference Include="Ambermoon.Data.Common" Version="9.4.0" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <DefineConstants Condition=" '$(UseGLES)' == 'true' ">$(DefineConstants);GLES</DefineConstants>
+  </PropertyGroup>
+
   <Choose>
-    <When Condition="$(DefineConstants.Contains('GLES'))">
+    <When Condition=" '$(UseGLES)' == 'true' ">
       <ItemGroup>
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.6.0" />
       </ItemGroup>
