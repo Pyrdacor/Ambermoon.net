@@ -19,7 +19,11 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if GLES
+using Silk.NET.OpenGLES;
+#else
 using Silk.NET.OpenGL;
+#endif
 using System;
 
 namespace Ambermoon.Renderer
@@ -37,9 +41,15 @@ namespace Ambermoon.Renderer
         {
             State = state;
 
+#if GLES
+            // We need at least OpenGLES 3.0 for instancing and shaders
+            if (State.OpenGLVersionMajor < 3)
+                throw new Exception($"OpenGL ES version 3.0 is required for rendering. Your version is {State.OpenGLVersionMajor}.{State.OpenGLVersionMinor}.");
+#else
             // We need at least OpenGL 3.1 for instancing and shaders
             if (State.OpenGLVersionMajor < 3 || (State.OpenGLVersionMajor == 3 && State.OpenGLVersionMinor < 1))
                 throw new Exception($"OpenGL version 3.1 is required for rendering. Your version is {State.OpenGLVersionMajor}.{State.OpenGLVersionMinor}.");
+#endif
 
             State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 

@@ -19,7 +19,11 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if GLES
+using Silk.NET.OpenGLES;
+#else
 using Silk.NET.OpenGL;
+#endif
 using System;
 using System.IO;
 
@@ -62,8 +66,6 @@ namespace Ambermoon.Renderer
             Height = height;
 
             Create(format, pixelData, numMipMapLevels);
-
-            pixelData = null;
         }
 
         public Texture(State state, int width, int height, PixelFormat format, byte[] pixelData, int numMipMapLevels = 0)

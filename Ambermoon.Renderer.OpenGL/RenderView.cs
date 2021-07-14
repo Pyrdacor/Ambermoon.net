@@ -21,7 +21,11 @@
 
 using Ambermoon.Data;
 using Ambermoon.Render;
+#if GLES
+using Silk.NET.OpenGLES;
+#else
 using Silk.NET.OpenGL;
+#endif
 using System;
 using System.Collections.Generic;
 

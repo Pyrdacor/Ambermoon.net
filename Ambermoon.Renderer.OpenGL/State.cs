@@ -20,7 +20,11 @@
  */
 
 using Ambermoon.Renderer.OpenGL;
+#if GLES
+using Silk.NET.OpenGLES;
+#else
 using Silk.NET.OpenGL;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;

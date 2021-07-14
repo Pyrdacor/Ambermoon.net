@@ -20,19 +20,31 @@ if ($isWindows) {
 } elseif ($isLinux) {
   Write-Host Publish Linux executable
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r linux-x64 --no-restore --no-self-contained
+  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:DefineConstants=GLES -r linux-arm64 --no-restore --no-self-contained
   dotnet publish -c Release "./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj" -r linux-x64 --no-restore
   Write-Host Pack tar for Linux
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.net"'
   7z a Ambermoon.net-Linux.tar "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.net"
   7z a Ambermoon.net-Linux.tar.gz Ambermoon.net-Linux.tar
   rm Ambermoon.net-Linux.tar
+  Write-Host Pack tar for Raspberry Pi 4
+  Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-arm64/publish/Ambermoon.net"'
+  7z a Ambermoon.net-Pi4.tar "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-arm64/publish/Ambermoon.net"
+  7z a Ambermoon.net-Pi4.tar.gz Ambermoon.net-Pi4.tar
+  rm Ambermoon.net-Pi4.tar
   Write-Host Publish Linux standalone executable
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r linux-x64 --no-restore --self-contained
+  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:DefineConstants=GLES -r linux-arm64 --no-restore --self-contained
   Write-Host Pack standalone tar for Linux
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.net"'
   7z a Ambermoon.net-Linux-Standalone.tar "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.net"
   7z a Ambermoon.net-Linux-Standalone.tar.gz Ambermoon.net-Linux-Standalone.tar
   rm Ambermoon.net-Linux-Standalone.tar
+  Write-Host Pack standalone tar for Raspberry Pi 4
+  Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-arm64/publish/Ambermoon.net"'
+  7z a Ambermoon.net-Pi4-Standalone.tar "./Ambermoon.net/bin/Any CPU/Release/netcoreapp3.1/linux-arm64/publish/Ambermoon.net"
+  7z a Ambermoon.net-Pi4-Standalone.tar.gz Ambermoon.net-Pi4-Standalone.tar
+  rm Ambermoon.net-Pi4-Standalone.tar
 } else {
   Write-Host Publish Mac executable
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r osx-x64 --no-restore --no-self-contained

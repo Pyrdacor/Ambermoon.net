@@ -21,8 +21,20 @@
 
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Common" Version="9.4.0" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.6.0" />
   </ItemGroup>
+
+  <Choose>
+    <When Condition="$(DefineConstants.Contains('GLES'))">
+      <ItemGroup>
+        <PackageReference Include="Silk.NET.OpenGLES" Version="2.6.0" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.6.0" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />

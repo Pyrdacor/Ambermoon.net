@@ -35,7 +35,11 @@ namespace Ambermoon.Renderer
 
         protected static string GetFragmentShaderHeader(State state)
         {
+#if GLES
+            string header = $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor} es\n";
+#else
             string header = $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor}\n";
+#endif
 
             header += "\n";
             header += "#ifdef GL_ES\n";
@@ -50,7 +54,11 @@ namespace Ambermoon.Renderer
 
         protected static string GetVertexShaderHeader(State state)
         {
+#if GLES
+            return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor} es\n\n";
+#else
             return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor}\n\n";
+#endif
         }
 
         static string[] ColorFragmentShader(State state) => new string[]

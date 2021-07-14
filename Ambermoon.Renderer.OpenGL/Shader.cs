@@ -19,7 +19,11 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if GLES
+using Silk.NET.OpenGLES;
+#else
 using Silk.NET.OpenGL;
+#endif
 using System;
 
 namespace Ambermoon.Renderer
@@ -27,7 +31,7 @@ namespace Ambermoon.Renderer
     internal class Shader : IDisposable
     {
         // Note: We use this inside the shader code texts so this is a string.
-        // This included the game data palettes, some extra added ones and the intro and outro palettes.
+        // This includes the game data palettes, some extra added ones and the intro and outro palettes.
         public const string PaletteCount = "68.0f";
 
         public enum Type
