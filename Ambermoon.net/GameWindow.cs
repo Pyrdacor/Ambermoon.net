@@ -39,6 +39,7 @@ namespace Ambermoon
         DateTime? initializeErrorTime = null;
         List<Size> availableFullscreenModes = null;
         DateTime lastRenderTime = DateTime.MinValue;
+        TimeSpan lastRenderDuration = TimeSpan.FromMilliseconds(0);
         bool trapMouse = false;
         FloatPosition trappedMouseOffset = null;
         FloatPosition trappedMouseLastPosition = null;
@@ -762,9 +763,11 @@ namespace Ambermoon
                 int refreshRate = Util.Limit(1, window.Monitor.VideoMode.RefreshRate ?? 60, 250);
                 var timePerFrame = 1000.0 / refreshRate;
                 var renderDuration = DateTime.Now - lastRenderTime;
-                if (renderDuration.TotalMilliseconds < timePerFrame - delta)
+                if (renderDuration.TotalMilliseconds < timePerFrame - 4.0 * delta * 1000.0 - lastRenderDuration.TotalMilliseconds)
                     return;
             }
+
+            var startRenderTime = DateTime.Now;
 
             if (versionSelector != null)
                 versionSelector.Render();
@@ -777,6 +780,7 @@ namespace Ambermoon
             window.SwapBuffers();
 
             lastRenderTime = DateTime.Now;
+            lastRenderDuration = lastRenderTime - startRenderTime;
         }
 
         void Window_Update(double delta)
