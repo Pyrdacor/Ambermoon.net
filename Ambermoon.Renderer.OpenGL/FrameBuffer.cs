@@ -10,7 +10,7 @@ namespace Ambermoon.Renderer.OpenGL
         uint renderTexture;
         bool disposed = false;
         readonly State state;
-        Size size = new Size(0, 0);
+        readonly Size size = new Size(0, 0);
 
         public FrameBuffer(State state)
         {
