@@ -849,6 +849,9 @@ namespace Ambermoon
                 // This seems to happen when changing the screen resolution.
                 window.Size = new WindowDimension(Width, Height);
             }
+
+            if (renderView != null)
+                renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
         }
 
         void Window_FramebufferResize(WindowDimension size)
@@ -866,15 +869,8 @@ namespace Ambermoon
         {
             if (renderView != null)
             {
-                if (!Fullscreen)
-                {
-                    var monitorSize = window.Monitor.Bounds.Size;
-                    renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
-                }
-                else if (renderView.MaxScreenSize == null)
-                {
-                    renderView.MaxScreenSize = new Size(640, 480);
-                }
+                var monitorSize = window.Monitor?.Bounds.Size ?? new WindowDimension(800, 500);
+                renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
             }
         }
 

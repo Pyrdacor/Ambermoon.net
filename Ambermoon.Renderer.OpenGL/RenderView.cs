@@ -37,8 +37,20 @@ namespace Ambermoon.Renderer.OpenGL
     {
         bool disposed = false;
         readonly Context context;
+        // Area inside the window where the rendering happens.
+        // Note that this area is in screen coordinates and not
+        // necessarily in pixels!
         Rect renderDisplayArea;
+        // The content size of the window in screen coordinates (not pixels!)
         Size windowSize;
+        // The size of the framebuffer in pixels
+        Size framebufferSize;
+        // The rendering area in pixels
+        Rect framebufferWindowArea => new Rect
+        (
+            new FloatPosition(renderDisplayArea.X / sizeFactorX, renderDisplayArea.Y / sizeFactorY).Round(),
+            framebufferSize
+        );
         readonly SizingPolicy sizingPolicy;
         readonly OrientationPolicy orientationPolicy;
         readonly DeviceType deviceType;
@@ -56,10 +68,10 @@ namespace Ambermoon.Renderer.OpenGL
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
 
-        float RenderFactorX => (float)renderDisplayArea.Width / Global.VirtualScreenWidth;
-        float RenderFactorY => (float)renderDisplayArea.Height / Global.VirtualScreenHeight;
-        float WindowFactorX => (float)windowSize.Width / Global.VirtualScreenWidth;
-        float WindowFactorY => (float)windowSize.Height / Global.VirtualScreenHeight;
+        float RenderFactorX => (float)framebufferSize.Width / Global.VirtualScreenWidth;
+        float RenderFactorY => (float)framebufferSize.Height / Global.VirtualScreenHeight;
+        float WindowFactorX => (float)renderDisplayArea.Width / Global.VirtualScreenWidth;
+        float WindowFactorY => (float)renderDisplayArea.Height / Global.VirtualScreenHeight;
 
 #pragma warning disable 0067
         public event EventHandler Closed;
@@ -72,7 +84,6 @@ namespace Ambermoon.Renderer.OpenGL
 #pragma warning restore 0067
         public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
 
-        public Rect RenderArea { get; }
         public Size MaxScreenSize { get; set; }
         public List<Size> AvailableFullscreenModes { get; set; }
         public bool IsLandscapeRatio { get; } = true;
@@ -116,17 +127,17 @@ namespace Ambermoon.Renderer.OpenGL
             GameData = gameData;
             GraphicProvider = graphicProvider;
             TextProcessor = textProcessor;
-            RenderArea = new Rect(0, 0, framebufferWidth, framebufferHeight);
-            renderDisplayArea = new Rect(RenderArea);
+            framebufferSize = new Size(framebufferWidth, framebufferHeight);
+            renderDisplayArea = new Rect(new Position(0, 0), windowSize);
             this.windowSize = new Size(windowSize);
             this.sizingPolicy = sizingPolicy;
             this.orientationPolicy = orientationPolicy;
             this.deviceType = deviceType;
-            IsLandscapeRatio = RenderArea.Width > RenderArea.Height;
+            IsLandscapeRatio = framebufferWidth > framebufferHeight;
 
             Resize(framebufferWidth, framebufferHeight);
 
-            context = new Context(State, renderDisplayArea.Width, renderDisplayArea.Height, 1.0f);
+            context = new Context(State, framebufferWidth, framebufferHeight, 1.0f);
 
             // factories
             var visibleArea = new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
@@ -273,6 +284,11 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void Resize(int width, int height, int? windowWidth = null, int? windowHeight = null)
         {
+            if (windowWidth != null)
+                windowSize.Width = windowWidth.Value;
+            if (windowHeight != null)
+                windowSize.Height = windowHeight.Value;
+
             switch (deviceType)
             {
                 default:
@@ -284,17 +300,12 @@ namespace Ambermoon.Renderer.OpenGL
                     Resize(width, height, Orientation.PortraitTopDown);
                     break;
             }
-
-            if (windowWidth != null)
-                windowSize.Width = windowWidth.Value;
-            if (windowHeight != null)
-                windowSize.Height = windowHeight.Value;
         }
 
         public void Resize(int width, int height, Orientation orientation)
         {
-            RenderArea.Size.Width = width;
-            RenderArea.Size.Height = height;
+            framebufferSize.Width = width;
+            framebufferSize.Height = height;
 
             SetRotation(orientation);
 
@@ -318,33 +329,35 @@ namespace Ambermoon.Renderer.OpenGL
 
                 if (Misc.FloatEqual(windowRatio, virtualRatio))
                 {
-                    renderDisplayArea = new Rect(0, 0, width, height);
+                    renderDisplayArea = new Rect(0, 0, windowSize.Width, windowSize.Height);
                 }
                 else if (windowRatio < virtualRatio)
                 {
-                    int newHeight = Misc.Round(width / virtualRatio);
-                    renderDisplayArea = new Rect(0, (height - newHeight) / 2, width, newHeight);
+                    int newHeight = Misc.Round(windowSize.Width / virtualRatio);
+                    renderDisplayArea = new Rect(0, (windowSize.Height - newHeight) / 2, windowSize.Width, newHeight);
+                    framebufferSize.Height = Misc.Round(framebufferSize.Width / virtualRatio);
                 }
-                else // ratio > virtualRatio
+                else // windowRatio > virtualRatio
                 {
-                    int newWidth = Misc.Round(height * virtualRatio);
-                    renderDisplayArea = new Rect((width - newWidth) / 2, 0, newWidth, height);
+                    int newWidth = Misc.Round(windowSize.Height * virtualRatio);
+                    renderDisplayArea = new Rect((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
+                    framebufferSize.Width = Misc.Round(framebufferSize.Height * virtualRatio);
                 }
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
                 {
-                    sizeFactorX = (float)RenderArea.Height / renderDisplayArea.Width;
-                    sizeFactorY = (float)RenderArea.Width / renderDisplayArea.Height;
+                    sizeFactorX = (float)framebufferSize.Height / renderDisplayArea.Width;
+                    sizeFactorY = (float)framebufferSize.Width / renderDisplayArea.Height;
                 }
                 else
                 {
-                    sizeFactorX = (float)RenderArea.Width / renderDisplayArea.Width;
-                    sizeFactorY = (float)RenderArea.Height / renderDisplayArea.Height;
+                    sizeFactorX = (float)framebufferSize.Width / renderDisplayArea.Width;
+                    sizeFactorY = (float)framebufferSize.Height / renderDisplayArea.Height;
                 }
             }
 
-            State.Gl.Viewport(renderDisplayArea.X, renderDisplayArea.Y,
-                (uint)renderDisplayArea.Width, (uint)renderDisplayArea.Height);
+            var viewport = framebufferWindowArea;
+            State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
         }
 
         public void AddLayer(IRenderLayer layer)
@@ -397,10 +410,11 @@ namespace Ambermoon.Renderer.OpenGL
                             var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth + 1, Global.Map3DViewHeight + 1);
                             mapViewArea.Position = PositionTransformation(mapViewArea.Position);
                             mapViewArea.Size = SizeTransformation(mapViewArea.Size);
+                            var viewport = framebufferWindowArea;
                             State.Gl.Viewport
                             (
-                                renderDisplayArea.X + mapViewArea.X + viewOffset.X,
-                                RenderArea.Height - (renderDisplayArea.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
+                                viewport.X + mapViewArea.X + viewOffset.X,
+                                viewport.Height - (viewport.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
                                 (uint)mapViewArea.Width, (uint)mapViewArea.Height
                             );
                             State.Gl.Enable(EnableCap.CullFace);
@@ -415,14 +429,16 @@ namespace Ambermoon.Renderer.OpenGL
                             State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
                             State.RestoreModelViewMatrix(Matrix4.Identity);
                             State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
-                            State.Gl.Viewport(renderDisplayArea.X + viewOffset.X, renderDisplayArea.Y + viewOffset.Y,
-                                (uint)renderDisplayArea.Width, (uint)renderDisplayArea.Height);
+                            var viewport = framebufferWindowArea;
+                            State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                                (uint)viewport.Width, (uint)viewport.Height);
                         }
                     }
                     else
                     {
-                        State.Gl.Viewport(renderDisplayArea.X + viewOffset.X, renderDisplayArea.Y + viewOffset.Y,
-                            (uint)renderDisplayArea.Width, (uint)renderDisplayArea.Height);
+                        var viewport = framebufferWindowArea;
+                        State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                            (uint)viewport.Width, (uint)viewport.Height);
                     }
 
                     if (layer.Key == Layer.DrugEffect)
@@ -460,8 +476,8 @@ namespace Ambermoon.Renderer.OpenGL
 
         public Position ViewToScreen(Position position)
         {
-            int rotatedX = Misc.Round(position.X / sizeFactorX);
-            int rotatedY = Misc.Round(position.Y / sizeFactorY);
+            int rotatedX = position.X;
+            int rotatedY = position.Y;
             int relX;
             int relY;
 
@@ -493,20 +509,15 @@ namespace Ambermoon.Renderer.OpenGL
         {
             bool swapDimensions = rotation == Rotation.Deg90 || rotation == Rotation.Deg270;
 
-            int width = (swapDimensions) ? size.Height : size.Width;
-            int height = (swapDimensions) ? size.Width : size.Height;
+            int width = swapDimensions ? size.Height : size.Width;
+            int height = swapDimensions ? size.Width : size.Height;
 
-            return new Size(Misc.Round(width / sizeFactorX), Misc.Round(height / sizeFactorY));
+            return new Size(width, height);
         }
 
         public Size GameToScreen(Size size)
         {
-            bool swapDimensions = rotation == Rotation.Deg90 || rotation == Rotation.Deg270;
-
-            int width = (swapDimensions) ? size.Height : size.Width;
-            int height = (swapDimensions) ? size.Width : size.Height;
-
-            return new Size(Misc.Round(width * WindowFactorX / sizeFactorX), Misc.Round(height * WindowFactorY / sizeFactorY));
+            return ViewToScreen(new Size(Misc.Round(size.Width * WindowFactorX), Misc.Round(size.Height * WindowFactorY)));
         }
 
         public Rect GameToScreen(Rect rect)
@@ -537,6 +548,7 @@ namespace Ambermoon.Renderer.OpenGL
             return rect;
         }
 
+        // This is used to convert mouse coordinates to game coordinates
         public Position ScreenToGame(Position position)
         {
             position = ScreenToView(position);
@@ -572,20 +584,17 @@ namespace Ambermoon.Renderer.OpenGL
                     break;
             }
 
-            int x = Misc.Round(sizeFactorX * rotatedX);
-            int y = Misc.Round(sizeFactorY * rotatedY);
-
-            return new Position(x, y);
+            return new Position(rotatedX, rotatedY);
         }
 
         public Size ScreenToView(Size size)
         {
             bool swapDimensions = rotation == Rotation.Deg90 || rotation == Rotation.Deg270;
 
-            int width = (swapDimensions) ? size.Height : size.Width;
-            int height = (swapDimensions) ? size.Width : size.Height;
+            int width = swapDimensions ? size.Height : size.Width;
+            int height = swapDimensions ? size.Width : size.Height;
 
-            return new Size(Misc.Round(sizeFactorX * width), Misc.Round(sizeFactorY * height));
+            return new Size(width, height);
         }
 
         public Rect ScreenToView(Rect rect)
