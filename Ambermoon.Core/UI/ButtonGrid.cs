@@ -30,6 +30,8 @@ namespace Ambermoon.UI
             }
         }
 
+        public Action GetButtonAction(int index) => buttons[index].LeftClickAction;
+
         public CursorType? PressButton(int index, uint currentTicks)
         {
             return buttons[index].Disabled ? null : buttons[index].Press(currentTicks);

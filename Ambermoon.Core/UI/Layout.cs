@@ -4279,6 +4279,8 @@ namespace Ambermoon.UI
             return consumed;
         }
 
+        public Action GetButtonAction(int index) => buttonGrid.GetButtonAction(index);
+
         public CursorType? PressButton(int index, uint currentTicks)
         {
             if (PopupActive)

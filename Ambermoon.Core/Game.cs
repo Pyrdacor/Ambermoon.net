@@ -4411,6 +4411,9 @@ namespace Ambermoon
             if (!ingame || layout.OptionMenuOpen || BattleActive || (!force && (WindowActive || layout.PopupActive)))
                 return false;
 
+            if (mapIndex == 0)
+                mapIndex = Map.Index;
+
             var newMap = MapManager.GetMap(mapIndex);
             bool mapChange = newMap.Index != Map.Index;
             var player = is3D ? (IRenderPlayer)player3D : player2D;
@@ -9658,8 +9661,9 @@ namespace Ambermoon
                             updatePartyGold?.Invoke();
                             layout.ShowClickChestMessage(DataNameProvider.InnkeeperGoodSleepWish, () =>
                             {
-                                OpenStorage = null;
                                 currentWindow.Window = Window.MapView; // This way closing the camp will return to map and not the Inn
+                                layout.GetButtonAction(2)?.Invoke(); // Call close handler
+                                OpenStorage = null;
                                 Teleport((uint)inn.BedroomMapIndex, (uint)inn.BedroomX,
                                     (uint)inn.BedroomY, player.Direction, out _, true);
                                 OpenCamp(true);
