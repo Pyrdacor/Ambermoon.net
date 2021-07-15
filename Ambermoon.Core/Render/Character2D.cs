@@ -50,7 +50,7 @@ namespace Ambermoon.Render
         public RenderMap2D Map { get; private set; } // Note: No character will appear on world maps so the map is always a non-world map (only exception is the player)
         public Position Position { get; } // in tiles
         public Rect DisplayArea => new Rect(topSprite?.X ?? sprite.X, topSprite?.Y ?? sprite.Y,
-            (topSprite?.Width ?? 0) + sprite.Width, (topSprite?.Height ?? 0) + sprite.Height);
+            Math.Max(topSprite?.Width ?? 0, sprite.Width), (topSprite?.Height ?? 0) + sprite.Height);
         public bool Visible
         {
             get => visible;

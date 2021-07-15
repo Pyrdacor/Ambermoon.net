@@ -2614,6 +2614,8 @@ namespace Ambermoon
                         if (Map.Type == MapType.Map2D)
                         {
                             var playerArea = player2D.DisplayArea;
+                            playerArea.Position.Y = playerArea.Bottom - RenderMap2D.TILE_HEIGHT;
+                            playerArea.Size.Height = RenderMap2D.TILE_HEIGHT;
 
                             bool left = relativePosition.X < playerArea.Left;
                             bool right = relativePosition.X >= playerArea.Right;
