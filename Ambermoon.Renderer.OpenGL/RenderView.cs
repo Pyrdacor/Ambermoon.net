@@ -405,14 +405,19 @@ namespace Ambermoon.Renderer.OpenGL
             {
                 context.SetRotation(rotation);
 
-                State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
-
                 bool render3DMap = layers[Layer.Map3D].Visible;
                 var viewOffset = new Position
                 (
                     Util.Round((viewportOffset?.X ?? 0.0f) * renderDisplayArea.Width),
                     Util.Round((viewportOffset?.Y ?? 0.0f) * renderDisplayArea.Height)
                 );
+
+                State.Gl.ClearColor(framebuffer != null && render3DMap ? System.Drawing.Color.Magenta : System.Drawing.Color.Black);
+
+                if (framebuffer == null || render3DMap)
+                    State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+
+                bool set2DViewport = false;
 
                 foreach (var layer in layers)
                 {
@@ -454,12 +459,14 @@ namespace Ambermoon.Renderer.OpenGL
                             }
                             else
                             {
-                                framebuffer.Bind()
+                                framebuffer.Bind(Global.VirtualScreenWidth, Global.VirtualScreenHeight);
                                 State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                                State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                             }
+                            set2DViewport = true;
                         }
                     }
-                    else
+                    else if (!set2DViewport)
                     {
                         if (framebuffer == null)
                         {
@@ -469,9 +476,11 @@ namespace Ambermoon.Renderer.OpenGL
                         }
                         else
                         {
-                            framebuffer.Bind();
+                            framebuffer.Bind(Global.VirtualScreenWidth, Global.VirtualScreenHeight);
                             State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                            State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                         }
+                        set2DViewport = true;
                     }
 
                     if (layer.Key == Layer.DrugEffect)
@@ -494,7 +503,7 @@ namespace Ambermoon.Renderer.OpenGL
                 }
 
                 if (framebuffer != null)
-                    RenderToScreen();
+                    RenderToScreen(viewOffset);
 
                 accessViolationDetected = false;
             }
@@ -507,7 +516,7 @@ namespace Ambermoon.Renderer.OpenGL
             }
         }
 
-        void RenderToScreen()
+        void RenderToScreen(Position viewOffset)
         {
             State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit);
@@ -517,6 +526,9 @@ namespace Ambermoon.Renderer.OpenGL
             framebuffer.BindAsTexture();
             State.Gl.Disable(EnableCap.Blend);
             State.Gl.Disable(EnableCap.DepthTest);
+            var viewport = framebufferWindowArea;
+            State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                (uint)viewport.Width, (uint)viewport.Height);
             screenBuffer.Render();
             State.Gl.BindTexture(GLEnum.Texture2D, 0);
             State.Gl.Enable(EnableCap.DepthTest);

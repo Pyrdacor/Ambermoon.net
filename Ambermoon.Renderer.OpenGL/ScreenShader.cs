@@ -61,7 +61,10 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    {DefaultFragmentOutColorName} = texture({DefaultSamplerName}, varTexCoord);",
+            $"    vec4 color = texture({DefaultSamplerName}, varTexCoord);",
+            $"    if (abs(color.rgb - vec4(1, 0, 1)) < vec4(0.01, 0.01, 0.01))",
+            $"        discard;",
+            $"    {DefaultFragmentOutColorName} = color;",
             $"}}"
         };
 
