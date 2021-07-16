@@ -340,6 +340,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         TypeOfAction = actionType,
                         ObjectIndex = objectIndex,
                         Value = value,
+                        Count = count,
                         Unknown1 = unknown1,
                         Unknown2 = unknown2
                     };
