@@ -25,7 +25,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
 
-        static void SaveEvent(IDataWriter dataWriter, Event @event)
+        public static void SaveEvent(IDataWriter dataWriter, Event @event)
         {
             switch (@event.Type)
             {

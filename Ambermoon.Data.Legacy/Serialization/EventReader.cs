@@ -60,7 +60,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
         }
 
-        static Event ParseEvent(IDataReader dataReader)
+        public static Event ParseEvent(IDataReader dataReader)
         {
             Event @event;
             var type = (EventType)dataReader.ReadByte();
