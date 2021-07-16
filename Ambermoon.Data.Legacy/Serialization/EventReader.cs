@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    internal class EventReader
+    public class EventReader
     {
         public static void ReadEvents(IDataReader dataReader,
             List<Event> events, List<Event> eventList)
