@@ -6,6 +6,8 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
+The Test Release should be used for final testing. It will be updated from time to time to integrate bugfixes. It will be turned into the main release later.
+
 Version | Normal | Standalone
 --- | --- | --- 
 **1.0.0 Test-Release** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Windows-Standalone.zip)
