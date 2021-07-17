@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows and Linux.
+Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows, Linux and Mac.
 
 ### Download
 
