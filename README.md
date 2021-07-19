@@ -158,11 +158,12 @@ You can find the full changelog [here](changelog.md). You can also look at the [
 ## Special thanks
 
 Special thanks to my top patreons:
-- [Other Retro Matt](https://twitter.com/GothmogPlays)
 - Daniel Egger
+- [Other Retro Matt](https://twitter.com/GothmogPlays)
 - Lorenz P.
 - [Mankie](https://twitter.com/MankiesWorkshop)
 - Jan Rennfanz
+- Benjamin Ziebert
 
 Special thanks to some special contributors as well:
 - kermitfrog
