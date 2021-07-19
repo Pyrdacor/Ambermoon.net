@@ -10103,7 +10103,8 @@ namespace Ambermoon
             });
         }
 
-        void OpenMerchant(uint merchantIndex, string placeName, string buyText, bool isLibrary, bool showWelcome = true)
+        void OpenMerchant(uint merchantIndex, string placeName, string buyText, bool isLibrary,
+            bool showWelcome, ItemSlot[] boughtItems)
         {
             var merchant = GetMerchant(1 + merchantIndex);
             merchant.Name = placeName;
@@ -10114,7 +10115,7 @@ namespace Ambermoon
             {
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Merchant, merchantIndex, placeName, buyText, isLibrary);
+                SetWindow(Window.Merchant, merchantIndex, placeName, buyText, isLibrary, boughtItems);
                 ShowMerchantWindow(merchant, placeName, showWelcome ? isLibrary ? DataNameProvider.WelcomeMagician :
                     DataNameProvider.WelcomeMerchant : null, buyText,
                     isLibrary ? Picture80x80.Librarian : Map.World switch
@@ -10124,12 +10125,12 @@ namespace Ambermoon
                         World.Morag => Picture80x80.MoragMerchant,
                         _ => Picture80x80.Merchant
                     },
-                !isLibrary);
+                !isLibrary, boughtItems);
             });
         }
 
         void ShowMerchantWindow(Merchant merchant, string placeName, string initialText,
-            string buyText, Picture80x80 picture, bool buysGoods)
+            string buyText, Picture80x80 picture, bool buysGoods, ItemSlot[] boughtItems)
         {
             // TODO: use buyText?
 
@@ -10148,7 +10149,8 @@ namespace Ambermoon
             layout.Set80x80Picture(picture);
             var itemArea = new Rect(16, 139, 151, 53);
             int mode = -1; // -1: show bought items, 0: buy, 3: sell, 4: examine (= button index)
-            var boughtItems = Enumerable.Repeat(new ItemSlot(), 24).ToArray();
+            boughtItems ??= Enumerable.Repeat(new ItemSlot(), 24).ToArray();
+            currentWindow.WindowParameters[4] = boughtItems;
 
             void SetupRightClickAbort()
             {
@@ -10441,21 +10443,14 @@ namespace Ambermoon
                     {
                         var item = ItemManager.GetItem(itemIndex);
 
-                        if (item.Flags.HasFlag(ItemFlags.Stackable))
-                        {
-                            var slots = merchant.Slots.ToList();
+                        var slots = merchant.Slots.ToList();
 
-                            if (slots.Any(slot => slot == null || slot.Empty))
-                                return 99;
+                        if (slots.Any(slot => slot == null || slot.Empty))
+                            return 99;
 
-                            var slotWithItem = slots.FirstOrDefault(slot => slot.ItemIndex == itemIndex && slot.Amount < 99);
+                        var slotWithItem = slots.FirstOrDefault(slot => slot.ItemIndex == itemIndex && slot.Amount < 99);
 
-                            return slotWithItem == null ? 0 : 99u - (uint)slotWithItem.Amount;
-                        }
-                        else
-                        {
-                            return 1;
-                        }
+                        return slotWithItem == null ? 0 : 99u - (uint)slotWithItem.Amount;
                     }
 
                     void Sell(uint amount)
@@ -10529,6 +10524,7 @@ namespace Ambermoon
                 $"{DataNameProvider.GoldName}^{merchant.AvailableGold}", new Rect(111, 104, 43, 15));
 
             UpdateButtons();
+            ShowBoughtItems();
 
             if (initialText != null)
             {
@@ -11159,7 +11155,7 @@ namespace Ambermoon
                     case PlaceType.Library:
                         OpenMerchant(enterPlaceEvent.MerchantDataIndex, places.Entries[(int)enterPlaceEvent.PlaceIndex - 1].Name,
                             enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex],
-                            enterPlaceEvent.PlaceType == PlaceType.Library);
+                            enterPlaceEvent.PlaceType == PlaceType.Library, true, null);
                         return true;
                     case PlaceType.FoodDealer:
                     {
@@ -13155,8 +13151,10 @@ namespace Ambermoon
             if (partyMember == null || !partyMember.CanTakeItems(ItemManager, item))
                 return item.Amount;
 
+            bool stackable = ItemManager.GetItem(item.ItemIndex).Flags.HasFlag(ItemFlags.Stackable);
+
             var slots = slotIndex == null
-                ? partyMember.Inventory.Slots.Where(s => s.ItemIndex == item.ItemIndex && s.Amount < 99).ToArray()
+                ? stackable ? partyMember.Inventory.Slots.Where(s => s.ItemIndex == item.ItemIndex && s.Amount < 99).ToArray() : new ItemSlot[0]
                 : new ItemSlot[1] { partyMember.Inventory.Slots[slotIndex.Value] };
             int amountToAdd = item.Amount;
 
@@ -13321,7 +13319,8 @@ namespace Ambermoon
                     string placeName = (string)currentWindow.WindowParameters[1];
                     string buyText = (string)currentWindow.WindowParameters[2];
                     bool isLibrary = (bool)currentWindow.WindowParameters[3];
-                    OpenMerchant(merchantIndex, placeName, buyText, isLibrary, false);
+                    var boughtItems = (ItemSlot[])currentWindow.WindowParameters[4];
+                    OpenMerchant(merchantIndex, placeName, buyText, isLibrary, false, boughtItems);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
