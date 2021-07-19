@@ -32,6 +32,7 @@ namespace Ambermoon.UI
         Layout.DraggedItem dragScrollItem = null; // set when scrolling while dragging an item
         bool disabled;
         Func<Position, bool, Item, int?> dropSlotProvider = null;
+        Func<int, int, int> dropLimiter = null;
         bool showPrice = false;
         readonly Func<uint> availableGoldProvider = null;
 
@@ -168,6 +169,7 @@ namespace Ambermoon.UI
                             () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, true));
                     }
                 }, 9, 0, 9);
+            grid.dropLimiter = (slot, amount) => 1;
             grid.dropSlotProvider = (position, broken, item) =>
             {
                 if (!new Rect(19, 71, 82, 122).Contains(position))
@@ -406,19 +408,37 @@ namespace Ambermoon.UI
 
             if (itemSlot == null)
             {
-                item.Item.Dragged = false;
-                slots[slot].Replace(item.Item.Item);
-                item.Item.SetItem(slots[slot]);
-                item.Item.Position = slotPositions[slot - ScrollOffset];
-                items[slot] = item.Item;
-                ItemDropped?.Invoke(slot, item.Item.Item, item.Item.Item.Amount);
-                return 0;
+                int dropAmount = dropLimiter?.Invoke(slot, item.Item.Item.Amount) ?? item.Item.Item.Amount;
+                int remainingAmount = item.Item.Item.Amount - dropAmount;
+                if (remainingAmount == 0)
+                {
+                    item.Item.Dragged = false;
+                    slots[slot].Replace(item.Item.Item);
+                    item.Item.SetItem(slots[slot]);
+                    item.Item.Position = slotPositions[slot - ScrollOffset];
+                    items[slot] = item.Item;
+                    ItemDropped?.Invoke(slot, item.Item.Item, item.Item.Item.Amount);
+                }
+                else
+                {
+                    slots[slot] ??= new ItemSlot();
+                    slots[slot].Add(item.Item.Item, 1);
+                    SetItem(slot, slots[slot]);
+                    item.Item.Update(false);
+                    ItemDropped?.Invoke(slot, slots[slot], dropAmount);
+                }
+                return remainingAmount;
             }
             else if (itemSlot.Item.Empty || (itemSlot.Item.ItemIndex == item.Item.Item.ItemIndex &&
                 itemInfo.Flags.HasFlag(ItemFlags.Stackable)))
             {
                 int amountToDrop = item.Item.Item.Amount;
-                int remaining = itemSlot.Item.Add(item.Item.Item);
+                int newAmount = itemSlot.Item.Amount + amountToDrop;
+
+                if (dropLimiter != null)
+                    newAmount = dropLimiter(slot, newAmount);
+
+                int remaining = itemSlot.Item.Add(item.Item.Item, newAmount - itemSlot.Item.Amount);
 
                 if (remaining < amountToDrop)
                 {
@@ -438,6 +458,10 @@ namespace Ambermoon.UI
             {
                 if (!itemSlot.Item.Draggable)
                     return item.Item.Item.Amount;
+
+                if (item.Item.Item.Amount > 1 && dropLimiter != null &&
+                    dropLimiter(slot, 2) == 1)
+                    return item.Item.Item.Amount; // Try to exchange an item stack on an equip slot
 
                 itemSlot.Item.Exchange(item.Item.Item);
                 itemSlot.Update(true);
