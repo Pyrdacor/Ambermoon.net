@@ -327,6 +327,7 @@ namespace Ambermoon.UI
                 }
                 else if (game.OpenStorage != null)
                 {
+                    previousSlot.Replace(game.OpenStorage.Slots[SourceSlot % 6, SourceSlot / 6]);
                     SourceGrid.DropItem(SourceSlot, this);
                 }
 
@@ -338,7 +339,7 @@ namespace Ambermoon.UI
 
                 if (!previousSlot.Empty) // There is an item at the target slot (dragged item was exchanged before)
                 {
-                    if (SourceGrid.DropItem(SourceSlot, this) == 0)
+                    if (SourcePlayer != null && SourceGrid.DropItem(SourceSlot, this) == 0)
                         layout.DropItem();
                     return true;
                 }
