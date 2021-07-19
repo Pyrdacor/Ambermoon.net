@@ -9105,6 +9105,7 @@ namespace Ambermoon
                                 {
                                     layout.ShowChestMessage(null);
                                     enchanter.AvailableGold -= cost;
+                                    updatePartyGold?.Invoke();
                                     itemSlot.NumRemainingCharges += (int)charges;
                                     itemSlot.RechargeTimes = (byte)Math.Min(255, itemSlot.RechargeTimes + 1);
                                     DisableItemGrid();
@@ -9237,6 +9238,7 @@ namespace Ambermoon
                             if (answer) // yes
                             {
                                 sage.AvailableGold -= (uint)sage.Cost;
+                                updatePartyGold?.Invoke();
                                 itemSlot.Flags |= ItemSlotFlags.Identified;
                                 ShowItemPopup(itemSlot, null);
                             }
@@ -9615,6 +9617,7 @@ namespace Ambermoon
                             if (answer) // yes
                             {
                                 blacksmith.AvailableGold -= cost;
+                                updatePartyGold?.Invoke();
                                 itemSlot.Flags &= ~ItemSlotFlags.Broken;
                             }
 
