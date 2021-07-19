@@ -876,20 +876,15 @@ namespace Ambermoon
 
         void UpdateWindow(IConfiguration configuration)
         {
-            Size screenResolution;
+            if (!Fullscreen)
+            {
+                var size = configuration.GetScreenSize();
+                this.configuration.Width = Width = size.Width;
+                this.configuration.Height = Height = size.Height;
+                window.Size = new WindowDimension(size.Width, size.Height);
+            }
 
-            if (Fullscreen)
-            {
-                screenResolution = new Size(configuration.FullscreenWidth.Value, configuration.FullscreenHeight.Value);
-            }
-            else
-            {
-                screenResolution = configuration.GetScreenSize();
-                this.configuration.Width = Width = screenResolution.Width;
-                this.configuration.Height = Height = screenResolution.Height;
-                window.Size = new WindowDimension(screenResolution.Width, screenResolution.Height);
-            }
-            renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, screenResolution.Width, screenResolution.Height);
+            renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
         }
 
         public void Run(Configuration configuration)
