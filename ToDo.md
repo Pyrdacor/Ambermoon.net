@@ -17,6 +17,7 @@
 
 - A horse etc can be drawn in front of tree tops etc.
 - Sometimes the indoor player is in front of arcs he should be covered by (map 290 -> Nalven's magic school).
+- NPCs can leave the map through non-blocking portals which teleport the player (Spannenberg Inn etc).
 
 
 ## 3D maps

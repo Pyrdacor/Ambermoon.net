@@ -4125,7 +4125,7 @@ namespace Ambermoon
                     {
                         case AwardEvent.AwardOperation.Increase:
                             AddExperience(partyMember, awardEvent.Value, followAction);
-                            break;
+                            return;
                         case AwardEvent.AwardOperation.Decrease:
                             partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - awardEvent.Value);
                             break;
