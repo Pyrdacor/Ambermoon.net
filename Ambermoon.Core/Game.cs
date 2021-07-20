@@ -11951,6 +11951,9 @@ namespace Ambermoon
                     {
                         renderMap3D.CharacterTypeFromBlock((uint)tx, (uint)ty, out var automapType);
 
+                        if (automapType == AutomapType.None)
+                            automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
+
                         if (automapType == AutomapType.Monster)
                         {
                             if (automapOptions.MonstersVisible)
@@ -11980,8 +11983,6 @@ namespace Ambermoon
                             gotoPoints.Add(KeyValuePair.Create(gotoPoint,
                                 layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
                         }
-                        if (automapType == null)
-                            automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
                         if (automapType != AutomapType.None)
                             AddAutomapType(tx, ty, x, y, automapType);
                         if (block.WallIndex != 0)
