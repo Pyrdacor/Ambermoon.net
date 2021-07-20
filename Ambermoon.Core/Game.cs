@@ -5036,7 +5036,7 @@ namespace Ambermoon
                     Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
                         (uint)(position?.Y ?? 0), CurrentTicks, chestEvent.Next, true);
                 }
-                else
+                else if (chestEvent.AutoRemove)
                 {
                     bool RemoveFromMap(Map map)
                     {
@@ -5158,7 +5158,7 @@ namespace Ambermoon
         void ShowLoot(ITreasureStorage storage, string initialText, Action initialTextClosedEvent, ChestEvent chestEvent = null)
         {
             OpenStorage = storage;
-            OpenStorage.AllowsItemDrop = chestEvent == null ? false : !chestEvent.RemoveWhenEmpty;
+            OpenStorage.AllowsItemDrop = chestEvent == null ? false : !chestEvent.CloseWhenEmpty;
             layout.SetLayout(LayoutType.Items);
             layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
             var itemSlotPositions = Enumerable.Range(1, 6).Select(index => new Position(index * 22, 139)).ToList();
@@ -5215,9 +5215,10 @@ namespace Ambermoon
         {
             var chest = GetChest(1 + chestEvent.ChestIndex);
 
-            if (chestEvent.RemoveWhenEmpty && chest.Empty)
+            if (chestEvent.CloseWhenEmpty && chest.Empty)
             {
-                // This is used by the flowers on Kire's moon.
+                // This is used by the flowers on Kire's moon
+                // or the flowers on Lyramion.
                 // Chest events reuse the same chest and it is
                 // refilled each time another flower is looted.
                 var initialChest = GetInitialChest(1 + chestEvent.ChestIndex);

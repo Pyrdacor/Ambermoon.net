@@ -73,7 +73,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // 2. byte are the chest flags
                     // 3. byte is an optional text index (0xff = no text)
                     // 4. byte is the chest index (0-based)
-                    // 5. byte (0 = chest, 1 = pile/removable loot or item) or "remove if empty"
+                    // 5. byte are loot flags
                     // word at position 6 is the key index if a key must unlock it
                     // last word is the event index (0-based) of the event that is called when unlocking fails
                     var chestEvent = @event as ChestEvent;
@@ -81,7 +81,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.WriteEnumAsByte(chestEvent.Flags);
                     dataWriter.Write((byte)chestEvent.TextIndex);
                     dataWriter.Write((byte)chestEvent.ChestIndex);
-                    dataWriter.Write((byte)(chestEvent.RemoveWhenEmpty ? 1 : 0));
+                    dataWriter.Write((byte)chestEvent.LootFlags);
                     dataWriter.Write((ushort)chestEvent.KeyIndex);
                     dataWriter.Write((ushort)chestEvent.UnlockFailedEventIndex);
                     break;

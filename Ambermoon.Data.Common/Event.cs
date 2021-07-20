@@ -173,13 +173,34 @@ namespace Ambermoon.Data
             Unknown5 = 0x20
         }
 
+        [Flags]
+        public enum ChestLootFlags : byte
+        {
+            None = 0,
+            /// <summary>
+            /// Close the chest window when looted.
+            /// Also remove the event when <see cref="NoAutoRemove"/> is false.
+            /// 
+            /// This can also be interpreted as "temporary chest" which can't
+            /// store any new items.
+            /// </summary>
+            CloseWhenEmpty = 0x01,
+            /// <summary>
+            /// Only considered if <see cref="CloseWhenEmpty"/> is set.
+            /// If true the chest (event) is not removed automatically.
+            /// </summary>
+            NoAutoRemove = 0x02
+        }
+
         public uint LockpickingChanceReduction { get; set; }
         public uint TextIndex { get; set; } // 255 = none
         /// <summary>
         /// Note: This is 0-based but the files might by 1-based.
         /// </summary>
         public uint ChestIndex { get; set; }
-        public bool RemoveWhenEmpty { get; set; }
+        public ChestLootFlags LootFlags { get; set; }
+        public bool CloseWhenEmpty => LootFlags.HasFlag(ChestLootFlags.CloseWhenEmpty);
+        public bool AutoRemove => CloseWhenEmpty && !LootFlags.HasFlag(ChestLootFlags.NoAutoRemove);
         public uint KeyIndex { get; set; }
         public uint UnlockFailedEventIndex { get; set; }
         /// <summary>
@@ -194,7 +215,7 @@ namespace Ambermoon.Data
         public override string ToString()
         {
             string lockType = LockpickingChanceReduction == 0 ? "Open" : LockpickingChanceReduction >= 100 ? "No Lockpicking" : $"-{LockpickingChanceReduction}% Chance";
-            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], RemovedWhenEmpty={RemoveWhenEmpty}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Flags: {Flags}";
+            return $"{Type}: Chest {ChestIndex}, Lock=[{lockType}], LootFlags={LootFlags}, Key={(KeyIndex == 0 ? "None" : KeyIndex.ToString())}, Event index if unlock failed {UnlockFailedEventIndex:x4}, Text {(TextIndex == 0xff ? "none" : TextIndex.ToString())}, Flags: {Flags}";
         }
     }
 
