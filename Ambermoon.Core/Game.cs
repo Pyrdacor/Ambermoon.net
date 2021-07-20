@@ -11949,14 +11949,14 @@ namespace Ambermoon
                     }
                     void AddTile(int tx, int ty, int x, int y)
                     {
-                        var characterType = renderMap3D.CharacterTypeFromBlock((uint)tx, (uint)ty);
+                        renderMap3D.CharacterTypeFromBlock((uint)tx, (uint)ty, out var automapType);
 
-                        if (characterType == CharacterType.Monster)
+                        if (automapType == AutomapType.Monster)
                         {
                             if (automapOptions.MonstersVisible)
                                 AddAutomapType(tx, ty, x, y, AutomapType.Monster, 6);
                         }
-                        else if (characterType == CharacterType.PartyMember || characterType == CharacterType.NPC)
+                        else if (automapType == AutomapType.Person)
                         {
                             if (automapOptions.PersonsVisible)
                                 AddAutomapType(tx, ty, x, y, AutomapType.Person, 6);
@@ -11980,7 +11980,8 @@ namespace Ambermoon
                             gotoPoints.Add(KeyValuePair.Create(gotoPoint,
                                 layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
                         }
-                        var automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
+                        if (automapType == null)
+                            automapType = renderMap3D.AutomapTypeFromBlock((uint)tx, (uint)ty);
                         if (automapType != AutomapType.None)
                             AddAutomapType(tx, ty, x, y, automapType);
                         if (block.WallIndex != 0)

@@ -106,6 +106,7 @@ namespace Ambermoon.Render
             public Tileset.TileFlags TileFlags => characterReference?.TileFlags ?? Tileset.TileFlags.None;
             public CharacterType? Type => characterReference?.Type;
             public uint EventId => characterReference?.EventIndex ?? 0;
+            public uint MapObjectIndex => characterReference?.GraphicIndex ?? 0;
 
             public static void Reset() => interacting = false;
 
@@ -696,9 +697,25 @@ namespace Ambermoon.Render
 
         public static void Reset() => MapCharacter.Reset();
 
-        public CharacterType? CharacterTypeFromBlock(uint x, uint y)
+        public CharacterType? CharacterTypeFromBlock(uint x, uint y, out AutomapType automapType)
         {
-            return mapCharacters.Values.FirstOrDefault(c => c.Active && c.Position.X == x && c.Position.Y == y)?.Type;
+            automapType = AutomapType.None;
+            var character = mapCharacters.Values.FirstOrDefault(c => c.Active && c.Position.X == x && c.Position.Y == y);
+
+            if (character?.Type == CharacterType.MapObject)
+            {
+                if (character.MapObjectIndex != 0)
+                {
+                    var mapObject = labdata.Objects[(int)character.MapObjectIndex - 1];
+                    automapType = mapObject.AutomapType;
+                }
+            }
+            else if (character != null)
+            {
+                automapType = character.Type == CharacterType.Monster ? AutomapType.Monster : AutomapType.Person;
+            }
+
+            return character?.Type;
         }
 
         public RenderMap3D(Game game, Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
