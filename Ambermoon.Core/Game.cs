@@ -1765,7 +1765,7 @@ namespace Ambermoon
 
             lock (cursor)
             {
-                Move(cursor.Type);
+                Move(false, cursor.Type);
             }
         }
 
@@ -1809,39 +1809,72 @@ namespace Ambermoon
 
         bool CanPartyMove() => !PartyMembers.Any(p => !p.CanMove(false));
 
-        internal void Move(CursorType cursorType, bool fromNumpadButton = false)
+        internal void Move(bool fromNumpadButton, params CursorType[] cursorTypes)
         {
             if (is3D)
             {
-                switch (cursorType)
+                bool moveForward = cursorTypes.Contains(CursorType.ArrowForward);
+                bool moveBackward = cursorTypes.Contains(CursorType.ArrowBackward);
+                bool turnLeft = moveForward ? cursorTypes.Contains(CursorType.ArrowTurnLeft) : cursorTypes.Contains(CursorType.ArrowRotateLeft);
+                bool turnRight = moveForward ? cursorTypes.Contains(CursorType.ArrowTurnRight) : cursorTypes.Contains(CursorType.ArrowRotateRight);
+
+                if (CanPartyMove())
                 {
-                    case CursorType.ArrowForward:
-                        if (CanPartyMove())
+                    bool strafeLeft = cursorTypes.Contains(CursorType.ArrowStrafeLeft);
+                    bool strafeRight = cursorTypes.Contains(CursorType.ArrowStrafeRight);
+
+                    if (moveForward)
+                    {
+                        if (strafeLeft || turnLeft)
+                        {
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        }
+                        else if (strafeRight || turnRight)
+                        {
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        }
+                        else
                             player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                        break;
-                    case CursorType.ArrowBackward:
-                        if (CanPartyMove())
+                    }
+                    else if (moveBackward)
+                    {
+                        if (strafeLeft || turnLeft)
+                        {
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        }
+                        else if (strafeRight || turnRight)
+                        {
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                        }
+                        else
                             player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                        break;
-                    case CursorType.ArrowStrafeLeft:
-                        if (CanPartyMove())
-                            player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                        break;
-                    case CursorType.ArrowStrafeRight:
-                        if (CanPartyMove())
-                            player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
-                        break;
-                    case CursorType.ArrowTurnLeft:
+                    }
+                    else if (cursorTypes.Contains(CursorType.ArrowStrafeLeft))
+                        player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                    else if (cursorTypes.Contains(CursorType.ArrowStrafeRight))
+                        player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                }
+
+                if (!moveForward && !moveBackward)
+                {
+                    if (cursorTypes.Contains(CursorType.ArrowTurnLeft))
+                    {
                         player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
                         if (!fromNumpadButton && CanPartyMove())
                             player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
-                        break;
-                    case CursorType.ArrowTurnRight:
+                    }
+                    else if (cursorTypes.Contains(CursorType.ArrowTurnRight))
+                    {
                         player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
                         if (!fromNumpadButton && CanPartyMove())
                             player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
-                        break;
-                    case CursorType.ArrowRotateLeft:
+                    }
+                    else if (cursorTypes.Contains(CursorType.ArrowRotateLeft))
+                    {
                         if (fromNumpadButton)
                         {
                             PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 65);
@@ -1852,8 +1885,9 @@ namespace Ambermoon
                             if (CanPartyMove())
                                 player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         }
-                        break;
-                    case CursorType.ArrowRotateRight:
+                    }
+                    else if (cursorTypes.Contains(CursorType.ArrowRotateRight))
+                    {
                         if (fromNumpadButton)
                         {
                             PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 65);
@@ -1864,21 +1898,20 @@ namespace Ambermoon
                             if (CanPartyMove())
                                 player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
                         }
-                        break;
-                    default:
-                        if (cursorType != CursorType.Wait)
-                        {
-                            clickMoveActive = false;
-                            UntrapMouse();
-                        }
-                        break;
+                    }
+                }
+
+                if (cursorTypes.Length == 1 && (cursorTypes[0] < CursorType.ArrowForward || cursorTypes[0] > CursorType.Wait))
+                {
+                    clickMoveActive = false;
+                    UntrapMouse();
                 }
 
                 player.Direction = player3D.Direction;
             }
             else
             {
-                switch (cursorType)
+                switch (cursorTypes[0])
                 {
                     case CursorType.ArrowUpLeft:
                         Move2D(-1, -1);
@@ -4839,7 +4872,7 @@ namespace Ambermoon
                     !Map.IsWorldMap || Map.World != lastMap.World)
                     ResetMoveKeys(lastMap == null || lastMap.Type != Map.Type);
                 if (!WindowActive)
-                    layout.UpdateLayoutButtons();
+                    layout.UpdateLayoutButtons(movement.MovementTicks(Map.Type == MapType.Map3D, Map.IsWorldMap, TravelType.Walk));
 
                 // Update UI palette
                 UpdateUIPalette(true);

@@ -1202,23 +1202,188 @@ namespace Ambermoon.UI
                 activeSpellDurationBar.Value.Color = game.GetUIColor(31);
         }
 
+        uint lastButtonMoveTicks = 0;
+        static readonly CursorType[] MoveButtonCursorMapping2D = new CursorType[9]
+        {
+            CursorType.ArrowUpLeft,
+            CursorType.ArrowUp,
+            CursorType.ArrowUpRight,
+            CursorType.ArrowLeft,
+            CursorType.None,
+            CursorType.ArrowRight,
+            CursorType.ArrowDownLeft,
+            CursorType.ArrowDown,
+            CursorType.ArrowDownRight
+        };
+        static readonly CursorType[] MoveButtonCursorMapping3D = new CursorType[9]
+        {
+            CursorType.ArrowTurnLeft,
+            CursorType.ArrowForward,
+            CursorType.ArrowTurnRight,
+            CursorType.ArrowStrafeLeft,
+            CursorType.None,
+            CursorType.ArrowStrafeRight,
+            CursorType.ArrowRotateLeft,
+            CursorType.ArrowBackward,
+            CursorType.ArrowRotateRight
+        };
+        static CursorType CombineMoveCursorTypes2D(List<CursorType> cursorTypes)
+        {
+            bool left = cursorTypes.Contains(CursorType.ArrowUpLeft) ||
+                        cursorTypes.Contains(CursorType.ArrowLeft) ||
+                        cursorTypes.Contains(CursorType.ArrowDownLeft);
+            bool right = cursorTypes.Contains(CursorType.ArrowUpRight) ||
+                         cursorTypes.Contains(CursorType.ArrowRight) ||
+                         cursorTypes.Contains(CursorType.ArrowDownRight);
+            bool up = cursorTypes.Contains(CursorType.ArrowUpLeft) ||
+                      cursorTypes.Contains(CursorType.ArrowUp) ||
+                      cursorTypes.Contains(CursorType.ArrowUpRight);
+            bool down = cursorTypes.Contains(CursorType.ArrowDownLeft) ||
+                        cursorTypes.Contains(CursorType.ArrowDown) ||
+                        cursorTypes.Contains(CursorType.ArrowDownRight);
+
+            if (left && right)
+                left = right = false;
+            if (up && down)
+                up = down = false;
+
+            if (left)
+            {
+                if (up)
+                    return CursorType.ArrowUpLeft;
+                else if (down)
+                    return CursorType.ArrowDownLeft;
+                else
+                    return CursorType.ArrowLeft;
+            }
+            else if (right)
+            {
+                if (up)
+                    return CursorType.ArrowUpRight;
+                else if (down)
+                    return CursorType.ArrowDownRight;
+                else
+                    return CursorType.ArrowRight;
+            }
+            else
+            {
+                if (up)
+                    return CursorType.ArrowUp;
+                else if (down)
+                    return CursorType.ArrowDown;
+                else
+                    return CursorType.None;
+            }
+        }
+        static CursorType[] CombineMoveCursorTypes3D(List<CursorType> cursorTypes)
+        {
+            cursorTypes.Remove(CursorType.Wait);
+
+            if (cursorTypes.Count <= 1)
+                return cursorTypes.ToArray();
+
+            if (cursorTypes.Count != 2)
+                return new CursorType[0];
+
+            // Only forward plus turn or strafe is allowed as a combination.
+            if (cursorTypes.Contains(CursorType.ArrowForward))
+            {
+                if (cursorTypes.Contains(CursorType.ArrowTurnLeft) ||
+                    cursorTypes.Contains(CursorType.ArrowTurnRight) ||
+                    cursorTypes.Contains(CursorType.ArrowStrafeLeft) ||
+                    cursorTypes.Contains(CursorType.ArrowStrafeRight))
+                    return cursorTypes.ToArray();
+            }
+            // Or backward plus rotate  or strafe.
+            else if (cursorTypes.Contains(CursorType.ArrowBackward))
+            {
+                if (cursorTypes.Contains(CursorType.ArrowRotateLeft) ||
+                    cursorTypes.Contains(CursorType.ArrowRotateRight) ||
+                    cursorTypes.Contains(CursorType.ArrowStrafeLeft) ||
+                    cursorTypes.Contains(CursorType.ArrowStrafeRight))
+                    return cursorTypes.ToArray();
+            }
+
+            // All other combinations won't work.
+            return new CursorType[0];
+        }
+
         internal void UpdateLayoutButtons(uint? ticksPerMovement = null)
         {
+            var moveDelay = (ticksPerMovement ?? this.ticksPerMovement) ?? 0;
+
+            void HandleButtonMove(CursorType cursorType)
+            {
+                var pressedCursors = new List<CursorType>();
+
+                if (Type == LayoutType.Map2D)
+                {
+                    if (game.CurrentTicks - lastButtonMoveTicks < moveDelay)
+                        return;
+
+                    for (int i = 0; i < 9; ++i)
+                    {
+                        if (buttonGrid.IsButtonPressed(i))
+                        {
+                            pressedCursors.Add(MoveButtonCursorMapping2D[i]);
+                        }
+                    }
+
+                    cursorType = CombineMoveCursorTypes2D(pressedCursors);
+
+                    if (cursorType == CursorType.None)
+                        return;
+
+                    lastButtonMoveTicks = game.CurrentTicks;
+
+                    game.Move(true, cursorType);
+                }
+                else if (Type == LayoutType.Map3D)
+                {
+                    for (int i = 0; i < 9; ++i)
+                    {
+                        if (buttonGrid.IsButtonPressed(i))
+                        {
+                            pressedCursors.Add(MoveButtonCursorMapping3D[i]);
+                        }
+                    }
+
+                    var cursorTypes = CombineMoveCursorTypes3D(pressedCursors);
+
+                    if (cursorTypes.Length == 0)
+                        return;
+
+                    if (cursorTypes.Length == 1)
+                    {
+                        if (cursorTypes[0] == CursorType.ArrowRotateLeft)
+                            game.ExecuteNextUpdateCycle(() => buttonGrid.ReleaseButton(6, true));
+                        else if (cursorTypes[0] == CursorType.ArrowRotateRight)
+                            game.ExecuteNextUpdateCycle(() => buttonGrid.ReleaseButton(8, true));
+                    }
+
+                    if (game.CurrentTicks - lastButtonMoveTicks < moveDelay)
+                        return;
+
+                    lastButtonMoveTicks = game.CurrentTicks;
+
+                    game.Move(true, cursorTypes);
+                }
+            }
+
             switch (Type)
             {
                 case LayoutType.Map2D:
                     if (ButtonGridPage == 0)
                     {
-                        var moveDelay = (ticksPerMovement ?? this.ticksPerMovement).Value;
-                        buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => game.Move(CursorType.ArrowUpLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => game.Move(CursorType.ArrowUp), true, null, moveDelay);
-                        buttonGrid.SetButton(2, ButtonType.MoveUpRight, false, () => game.Move(CursorType.ArrowUpRight), true, null, moveDelay);
-                        buttonGrid.SetButton(3, ButtonType.MoveLeft, false, () => game.Move(CursorType.ArrowLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => HandleButtonMove(CursorType.ArrowUpLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => HandleButtonMove(CursorType.ArrowUp), true, null, moveDelay);
+                        buttonGrid.SetButton(2, ButtonType.MoveUpRight, false, () => HandleButtonMove(CursorType.ArrowUpRight), true, null, moveDelay);
+                        buttonGrid.SetButton(3, ButtonType.MoveLeft, false, () => HandleButtonMove(CursorType.ArrowLeft), true, null, moveDelay);
                         buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false);
-                        buttonGrid.SetButton(5, ButtonType.MoveRight, false, () => game.Move(CursorType.ArrowRight), true, null, moveDelay);
-                        buttonGrid.SetButton(6, ButtonType.MoveDownLeft, false, () => game.Move(CursorType.ArrowDownLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(7, ButtonType.MoveDown, false, () => game.Move(CursorType.ArrowDown), true, null, moveDelay);
-                        buttonGrid.SetButton(8, ButtonType.MoveDownRight, false, () => game.Move(CursorType.ArrowDownRight), true, null, moveDelay);
+                        buttonGrid.SetButton(5, ButtonType.MoveRight, false, () => HandleButtonMove(CursorType.ArrowRight), true, null, moveDelay);
+                        buttonGrid.SetButton(6, ButtonType.MoveDownLeft, false, () => HandleButtonMove(CursorType.ArrowDownLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(7, ButtonType.MoveDown, false, () => HandleButtonMove(CursorType.ArrowDown), true, null, moveDelay);
+                        buttonGrid.SetButton(8, ButtonType.MoveDownRight, false, () => HandleButtonMove(CursorType.ArrowDownRight), true, null, moveDelay);
                     }
                     else
                     {
@@ -1236,16 +1401,15 @@ namespace Ambermoon.UI
                 case LayoutType.Map3D:
                     if (ButtonGridPage == 0)
                     {
-                        var moveDelay = (ticksPerMovement ?? this.ticksPerMovement).Value;
-                        buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => game.Move(CursorType.ArrowTurnLeft, true), true, null, moveDelay);
-                        buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => game.Move(CursorType.ArrowForward, true), true, null, moveDelay);
-                        buttonGrid.SetButton(2, ButtonType.TurnRight, false, () => game.Move(CursorType.ArrowTurnRight, true), true, null, moveDelay);
-                        buttonGrid.SetButton(3, ButtonType.StrafeLeft, false, () => game.Move(CursorType.ArrowStrafeLeft, true), true, null, moveDelay);
+                        buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => HandleButtonMove(CursorType.ArrowTurnLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => HandleButtonMove(CursorType.ArrowForward), true, null, moveDelay);
+                        buttonGrid.SetButton(2, ButtonType.TurnRight, false, () => HandleButtonMove(CursorType.ArrowTurnRight), true, null, moveDelay);
+                        buttonGrid.SetButton(3, ButtonType.StrafeLeft, false, () => HandleButtonMove(CursorType.ArrowStrafeLeft), true, null, moveDelay);
                         buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false);
-                        buttonGrid.SetButton(5, ButtonType.StrafeRight, false, () => game.Move(CursorType.ArrowStrafeRight, true), true, null, moveDelay);
-                        buttonGrid.SetButton(6, ButtonType.RotateLeft, false, () => game.Move(CursorType.ArrowRotateLeft, true), false, null, null);
-                        buttonGrid.SetButton(7, ButtonType.MoveBackward, false, () => game.Move(CursorType.ArrowBackward, true), true, null, moveDelay);
-                        buttonGrid.SetButton(8, ButtonType.RotateRight, false, () => game.Move(CursorType.ArrowRotateRight, true), false, null, null);
+                        buttonGrid.SetButton(5, ButtonType.StrafeRight, false, () => HandleButtonMove(CursorType.ArrowStrafeRight), true, null, moveDelay);
+                        buttonGrid.SetButton(6, ButtonType.RotateLeft, false, () => HandleButtonMove(CursorType.ArrowRotateLeft), true, null, moveDelay);
+                        buttonGrid.SetButton(7, ButtonType.MoveBackward, false, () => HandleButtonMove(CursorType.ArrowBackward), true, null, moveDelay);
+                        buttonGrid.SetButton(8, ButtonType.RotateRight, false, () => HandleButtonMove(CursorType.ArrowRotateRight), true, null, moveDelay);
                     }
                     else
                     {

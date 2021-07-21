@@ -375,8 +375,11 @@ namespace Ambermoon.UI
             return ExecuteActions(currentTicks, false);
         }
 
-        internal void Release()
+        internal void Release(bool immediately = false)
         {
+            if (immediately)
+                Pressed = false;
+
             released = true;
         }
 

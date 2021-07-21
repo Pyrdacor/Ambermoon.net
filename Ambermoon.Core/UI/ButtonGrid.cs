@@ -32,15 +32,17 @@ namespace Ambermoon.UI
 
         public Action GetButtonAction(int index) => buttons[index].LeftClickAction;
 
+        public bool IsButtonPressed(int index) => buttons[index].Pressed;
+
         public CursorType? PressButton(int index, uint currentTicks)
         {
             return buttons[index].Disabled ? null : buttons[index].Press(currentTicks);
         }
 
-        public void ReleaseButton(int index)
+        public void ReleaseButton(int index, bool immediately = false)
         {
             if (!buttons[index].Disabled)
-                buttons[index].Release();
+                buttons[index].Release(immediately);
         }
 
         public void SetButtonAction(int slot, Action action)
