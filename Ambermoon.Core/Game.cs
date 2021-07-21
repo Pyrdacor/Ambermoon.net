@@ -358,6 +358,7 @@ namespace Ambermoon
             set
             {
                 travelType = value;
+                CurrentSavegame.TravelType = value;
                 if (Map != null)
                     PlayMusic(travelType.TravelSong());
                 player.MovementAbility = travelType.ToPlayerMovementAbility();
