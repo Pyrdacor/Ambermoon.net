@@ -473,7 +473,7 @@ namespace Ambermoon
                                         if (mouse != null)
                                         {
                                             mouse.MouseMove -= Mouse_MouseMove;
-                                            mouse.Position = !trapped ? new MousePosition(position.X, position.Y) :
+                                            mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
                                                 new MousePosition(window.Size.X / 2, window.Size.Y / 2);
                                             mouse.MouseMove += Mouse_MouseMove;
                                         }

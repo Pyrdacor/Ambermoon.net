@@ -1341,7 +1341,7 @@ namespace Ambermoon.UI
 
                     lastButtonMoveTicks = game.CurrentTicks;
 
-                    game.Move(true, cursorType);
+                    game.Move(true, 1.0f, cursorType);
                 }
                 else if (Type == LayoutType.Map3D)
                 {
@@ -1371,7 +1371,7 @@ namespace Ambermoon.UI
 
                     lastButtonMoveTicks = game.CurrentTicks;
 
-                    game.Move(true, cursorTypes);
+                    game.Move(true, 1.0f, cursorTypes);
                 }
             }
 

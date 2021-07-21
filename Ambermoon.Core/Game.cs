@@ -574,7 +574,7 @@ namespace Ambermoon
             layout.ShowPortraitArea(false);
 
             lastMousePosition = new Position(startCursorPosition);
-            cursor.Type = Data.CursorType.Sword;
+            cursor.Type = CursorType.Sword;
             UpdateCursor(lastMousePosition, MouseButtons.None);
 
             if (continueGame)
@@ -873,7 +873,7 @@ namespace Ambermoon
 
         Position GetMousePosition(Position position)
         {
-            position = new Position(position); // Import to not modify passed position object!
+            position = new Position(position); // Important to not modify passed position object!
 
             if (trapMouseArea != null)
                 position += trappedMousePositionOffset;
@@ -1765,7 +1765,17 @@ namespace Ambermoon
 
             lock (cursor)
             {
-                Move(false, cursor.Type);
+                float speedFactor3D = 0.0f;
+
+                if (is3D)
+                {
+                    var position = GetMousePosition(lastMousePosition);
+                    var relativePosition = renderView.ScreenToGame(position);
+                    var center = Map3DViewArea.Center;
+                    speedFactor3D = Math.Max(2.0f * Math.Abs(relativePosition.X - center.X) / Map3DViewArea.Width,
+                        2.0f * Math.Abs(relativePosition.Y - center.Y) / Map3DViewArea.Height);
+                }
+                Move(false, speedFactor3D, cursor.Type);
             }
         }
 
@@ -1809,7 +1819,7 @@ namespace Ambermoon
 
         bool CanPartyMove() => !PartyMembers.Any(p => !p.CanMove(false));
 
-        internal void Move(bool fromNumpadButton, params CursorType[] cursorTypes)
+        internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
         {
             if (is3D)
             {
@@ -1827,51 +1837,51 @@ namespace Ambermoon
                     {
                         if (strafeLeft || turnLeft)
                         {
-                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f * speedFactor3D);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                         }
                         else if (strafeRight || turnRight)
                         {
-                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f * speedFactor3D);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                         }
                         else
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * speedFactor3D, CurrentTicks);
                     }
                     else if (moveBackward)
                     {
                         if (strafeLeft || turnLeft)
                         {
-                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f * speedFactor3D);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                         }
                         else if (strafeRight || turnRight)
                         {
-                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f * speedFactor3D);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                         }
                         else
-                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                            player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * speedFactor3D, CurrentTicks);
                     }
                     else if (cursorTypes.Contains(CursorType.ArrowStrafeLeft))
-                        player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                        player3D.MoveLeft(movement.MoveSpeed3D * Global.DistancePerBlock * speedFactor3D, CurrentTicks);
                     else if (cursorTypes.Contains(CursorType.ArrowStrafeRight))
-                        player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                        player3D.MoveRight(movement.MoveSpeed3D * Global.DistancePerBlock * speedFactor3D, CurrentTicks);
                 }
 
                 if (!moveForward && !moveBackward)
                 {
                     if (cursorTypes.Contains(CursorType.ArrowTurnLeft))
                     {
-                        player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                        player3D.TurnLeft(movement.TurnSpeed3D * 0.7f * speedFactor3D);
                         if (!fromNumpadButton && CanPartyMove())
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                     }
                     else if (cursorTypes.Contains(CursorType.ArrowTurnRight))
                     {
-                        player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                        player3D.TurnRight(movement.TurnSpeed3D * 0.7f * speedFactor3D);
                         if (!fromNumpadButton && CanPartyMove())
-                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                            player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                     }
                     else if (cursorTypes.Contains(CursorType.ArrowRotateLeft))
                     {
@@ -1881,9 +1891,9 @@ namespace Ambermoon
                         }
                         else
                         {
-                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f);
+                            player3D.TurnLeft(movement.TurnSpeed3D * 0.7f * speedFactor3D);
                             if (CanPartyMove())
-                                player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                                player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                         }
                     }
                     else if (cursorTypes.Contains(CursorType.ArrowRotateRight))
@@ -1894,9 +1904,9 @@ namespace Ambermoon
                         }
                         else
                         {
-                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f);
+                            player3D.TurnRight(movement.TurnSpeed3D * 0.7f * speedFactor3D);
                             if (CanPartyMove())
-                                player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f, CurrentTicks, true);
+                                player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock * 0.75f * speedFactor3D, CurrentTicks, true);
                         }
                     }
                 }
