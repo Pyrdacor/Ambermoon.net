@@ -949,14 +949,14 @@ namespace Ambermoon
 
             if (!WindowActive && !layout.PopupActive && layout.ButtonGridPage == 0)
             {
-                layout.ReleaseButton(0);
-                layout.ReleaseButton(1);
-                layout.ReleaseButton(2);
-                layout.ReleaseButton(3);
-                layout.ReleaseButton(5);
-                layout.ReleaseButton(6);
-                layout.ReleaseButton(7);
-                layout.ReleaseButton(8);
+                layout.ReleaseButton(0, true);
+                layout.ReleaseButton(1, true);
+                layout.ReleaseButton(2, true);
+                layout.ReleaseButton(3, true);
+                layout.ReleaseButton(5, true);
+                layout.ReleaseButton(6, true);
+                layout.ReleaseButton(7, true);
+                layout.ReleaseButton(8, true);
             }
 
             lastMoveTicksReset = CurrentTicks;
@@ -4531,6 +4531,7 @@ namespace Ambermoon
 
         internal void Teleport(TeleportEvent teleportEvent)
         {
+            ResetMoveKeys();
             ResetMapCharacterInteraction(Map);
 
             void RunTransition()
@@ -11161,6 +11162,8 @@ namespace Ambermoon
             if (WindowActive)
                 return false;
 
+            ResetMoveKeys();
+
             int openingHour = enterPlaceEvent.OpeningHour;
             int closingHour = enterPlaceEvent.ClosingHour == 0 ? 24 : enterPlaceEvent.ClosingHour;
 
@@ -11254,6 +11257,8 @@ namespace Ambermoon
         {
             if (BattleActive)
                 return;
+
+            ResetMoveKeys();
 
             currentBattleInfo = new BattleInfo
             {

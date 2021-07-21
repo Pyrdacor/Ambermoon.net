@@ -4454,15 +4454,15 @@ namespace Ambermoon.UI
             return buttonGrid.PressButton(index, currentTicks);
         }
 
-        public void ReleaseButton(int index)
+        public void ReleaseButton(int index, bool immediately = false)
         {
-            buttonGrid.ReleaseButton(index);
+            buttonGrid.ReleaseButton(index, immediately);
         }
 
-        public void ReleaseButtons()
+        public void ReleaseButtons(bool immediately = false)
         {
             for (int i = 0; i < 9; ++i)
-                ReleaseButton(i);
+                ReleaseButton(i, immediately);
         }
 
         public static Position GetPlayerSlotCenterPosition(int column)
