@@ -946,6 +946,19 @@ namespace Ambermoon
             ResetKey(Key.A);
             ResetKey(Key.S);
             ResetKey(Key.D);
+
+            if (!WindowActive && !layout.PopupActive && layout.ButtonGridPage == 0)
+            {
+                layout.ReleaseButton(0);
+                layout.ReleaseButton(1);
+                layout.ReleaseButton(2);
+                layout.ReleaseButton(3);
+                layout.ReleaseButton(5);
+                layout.ReleaseButton(6);
+                layout.ReleaseButton(7);
+                layout.ReleaseButton(8);
+            }
+
             lastMoveTicksReset = CurrentTicks;
         }
 
