@@ -83,9 +83,11 @@ namespace Ambermoon
             { "give",
                 Create
                 (
-                    "Gives an item to a party member." + Environment.NewLine +
-                    "Usage: give <item_index> [amount] [party_member_index]",
-                    GiveItem
+                    "Gives an item, gold or food to a party member." + Environment.NewLine +
+                    "Usage: give <item_index> [amount] [party_member_index]" + Environment.NewLine +
+                    "Usage: give gold <amount> [party_member_index]" + Environment.NewLine +
+                    "Usage: give food <amount> [party_member_index]",
+                    Give
                 )
             },
             { "fly",
@@ -659,9 +661,58 @@ namespace Ambermoon
             ShowList(args, game.ItemManager.Items, item => item.Name, item => item.Index);
         }
 
-        static void GiveItem(Game game, string[] args)
+        static void Give(Game game, string[] args)
         {
             Console.WriteLine();
+
+            int? partyMemberIndex = args.Length < 3 ? (int?)null : int.TryParse(args[2], out int i) ? i : -1;
+
+            if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers))
+            {
+                Console.WriteLine("Party member index was invalid or outside the range 1~6.");
+                Console.WriteLine();
+                return;
+            }
+
+            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value);
+
+            if (partyMember == null)
+            {
+                Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
+                Console.WriteLine();
+                return;
+            }
+
+            if (args.Length >= 2)
+            {
+                switch (args[0].ToLower())
+                {
+                    case "gold":
+                        if (int.TryParse(args[1], out int gold) || gold < 1)
+                        {
+                            partyMember.AddGold((uint)gold);
+                            Console.WriteLine($"{gold} gold was added.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid gold amount.");
+                        }
+                        Console.WriteLine();
+                        return;
+                    case "food":
+                        if (int.TryParse(args[1], out int food) || food < 1)
+                        {
+                            partyMember.AddFood((uint)food);
+                            Console.WriteLine($"{food} food was added.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid food amount.");
+                        }
+                        Console.WriteLine();
+                        return;
+                }
+            }
 
             if (args.Length == 0 || !uint.TryParse(args[0], out uint itemIndex) ||
                 !game.ItemManager.Items.Any(item => item.Index == itemIndex))
@@ -684,24 +735,6 @@ namespace Ambermoon
             if (amount > 99)
             {
                 Console.WriteLine("Item amount must not be greater than 99.");
-                Console.WriteLine();
-                return;
-            }
-
-            int? partyMemberIndex = args.Length < 3 ? (int?)null : int.TryParse(args[2], out int i) ? i : -1;
-
-            if (partyMemberIndex != null && (partyMemberIndex < 1 || partyMemberIndex > Game.MaxPartyMembers))
-            {
-                Console.WriteLine("Party member index was invalid or outside the range 1~6.");
-                Console.WriteLine();
-                return;
-            }
-
-            var partyMember = partyMemberIndex == null ? game.CurrentPartyMember : game.GetPartyMember(partyMemberIndex.Value);
-
-            if (partyMember == null)
-            {
-                Console.WriteLine($"Party member with index {partyMemberIndex} does not exist.");
                 Console.WriteLine();
                 return;
             }
