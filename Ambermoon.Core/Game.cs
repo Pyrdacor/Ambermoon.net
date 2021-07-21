@@ -2288,6 +2288,8 @@ namespace Ambermoon
                 default:
                     if (WindowActive || layout.PopupActive)
                         layout.KeyDown(key, modifiers);
+                    else if (key == Key.Return)
+                        layout.ToggleButtonGridPage();
                     break;
             }
 

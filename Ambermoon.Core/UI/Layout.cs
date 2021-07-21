@@ -564,18 +564,23 @@ namespace Ambermoon.UI
             }
         }
 
-        void ButtonGrid_RightMouseClicked()
+        public void ToggleButtonGridPage()
         {
             if (Type == LayoutType.Map2D ||
                 Type == LayoutType.Map3D)
             {
-                if (game.CursorType == CursorType.Sword &&
-                    game.InputEnable)
+                if (game.InputEnable)
                 {
                     ButtonGridPage = 1 - ButtonGridPage;
                     SetLayout(Type, ticksPerMovement);
                 }
             }
+        }
+
+        void ButtonGrid_RightMouseClicked()
+        {
+            if (game.CursorType == CursorType.Sword)
+                ToggleButtonGridPage();
         }
 
         void AddStaticSprites()

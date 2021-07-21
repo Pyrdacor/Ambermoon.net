@@ -485,7 +485,7 @@ namespace Ambermoon.Render
                         foregroundTileSprites[index].CurrentFrame = 0;
                         foregroundTileSprites[index].Visible = true;
                         foregroundTileSprites[index].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
-                        foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? TILE_HEIGHT + 2 : frontTile.Background ? -1 : 0;
+                        foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? (Map.IsWorldMap ? TILE_HEIGHT : 2 * TILE_HEIGHT) + 2 : frontTile.Background ? -1 : 0;
                     }
 
                     ++index;
