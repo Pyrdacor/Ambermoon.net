@@ -457,10 +457,19 @@ namespace Ambermoon
                                     game.QuitRequested += window.Close;
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
-                                        trapMouse = trapped;
-                                        trappedMouseOffset = trapped ? new FloatPosition(position) : null;
-                                        trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
-                                        this.cursor.CursorMode = CursorMode.Hidden;
+                                        try
+                                        {
+                                            this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
+                                            trapMouse = false;
+                                        }
+                                        catch
+                                        {
+                                            // SDL etc needs special logic as CursorMode.Disabled is not available
+                                            trapMouse = trapped;
+                                            trappedMouseOffset = trapped ? new FloatPosition(position) : null;
+                                            trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
+                                            this.cursor.CursorMode = CursorMode.Hidden;
+                                        }
                                         if (mouse != null)
                                         {
                                             mouse.MouseMove -= Mouse_MouseMove;
