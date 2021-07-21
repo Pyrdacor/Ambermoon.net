@@ -652,20 +652,9 @@ namespace Ambermoon
         RenderView CreateRenderView(GameData gameData, ExecutableData executableData, GraphicProvider graphicProvider,
             FontProvider fontProvider, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
-            Size screenResolution;
-
-            if (Fullscreen)
-            {
-                screenResolution = new Size(configuration.FullscreenWidth.Value, configuration.FullscreenHeight.Value);
-            }
-            else
-            {
-                screenResolution = configuration.GetScreenSize();
-            }
-
             return new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                screenResolution);
+                new Size(window.Size.X, window.Size.Y));
         }
 
         string GetSavePath(string version)
@@ -741,7 +730,8 @@ namespace Ambermoon
                 var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[1];
                 configuration.Width = Width = size.Width;
                 configuration.Height = Height = size.Height;
-                window.Size = new WindowDimension(Width, Height);
+                if (!configuration.Fullscreen)
+                    window.Size = new WindowDimension(Width, Height);
             }
 
             if (ShowVersionSelector((gameData, savePath, gameLanguage) =>
