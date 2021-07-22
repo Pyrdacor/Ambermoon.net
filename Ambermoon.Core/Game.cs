@@ -13188,8 +13188,12 @@ namespace Ambermoon
                     if (!slot.Empty && slot.ItemIndex == itemSlot.ItemIndex)
                     {
                         // This will update itemSlot
+                        int oldAmount = itemSlot.Amount;
                         slot.Add(itemSlot, (int)maxAmount);
-                        return true;
+                        int dropped = oldAmount - itemSlot.Amount;
+                        maxAmount -= (uint)dropped;
+                        if (maxAmount == 0)
+                            return true;
                     }
                 }
             }

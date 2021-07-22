@@ -27,7 +27,7 @@ namespace Ambermoon.Data
             {
                 if (Amount + amountToAdd > 99)
                 {
-                    item.Amount = Amount + amountToAdd - 99;
+                    item.Amount = Amount + item.Amount - 99;
                     Amount = 99;
                     return item.Amount;
                 }
