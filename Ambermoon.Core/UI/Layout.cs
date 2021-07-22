@@ -4032,12 +4032,7 @@ namespace Ambermoon.UI
                     {
                         cursorType = CursorType.Click;
                         var scrollText = texts.Last(text => text.WithScrolling);
-                        if (scrollText != null)
-                        {
-                            while (!texts[^1].WithScrolling)
-                                texts.RemoveAt(texts.Count - 1);
-                            scrollText.Click(position);
-                        }
+                        scrollText?.Click(position);
                         return true;
                     }
                 }

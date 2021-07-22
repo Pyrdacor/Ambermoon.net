@@ -5680,7 +5680,10 @@ namespace Ambermoon
             void SwitchPlayer()
             {
                 if (CurrentWindow.Window == Window.Conversation)
+                {
                     UpdateCharacterInfo(character);
+                    UpdateButtons();
+                }
             }
 
             OpenStorage = createdItems;
@@ -6259,6 +6262,15 @@ namespace Ambermoon
                 moveItemMessage = null;
             }
 
+            void UpdateButtons()
+            {
+                bool enableItemButtons = CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false);
+                layout.EnableButton(3, enableItemButtons);
+                layout.EnableButton(6, enableItemButtons);
+                layout.EnableButton(7, CurrentPartyMember.Gold != 0);
+                layout.EnableButton(8, CurrentPartyMember.Food != 0);
+            }
+
             Fade(() =>
             {
                 SetWindow(Window.Conversation, conversationPartner, conversationEvent, createdItems);
@@ -6276,15 +6288,8 @@ namespace Ambermoon
                     layout.EnableButton(4, false); // Disable "Ask to leave" if not in party
                 if (character is PartyMember partyMember && PartyMembers.Contains(partyMember))
                     layout.EnableButton(5, false); // Disable "Ask to join" if already in party
-                if (!CurrentPartyMember.Inventory.Slots.Any(s => s?.Empty == false))
-                {
-                    layout.EnableButton(3, false);
-                    layout.EnableButton(6, false);
-                }
-                if (CurrentPartyMember.Gold == 0)
-                    layout.EnableButton(7, false);
-                if (CurrentPartyMember.Food == 0)
-                    layout.EnableButton(8, false);
+
+                UpdateButtons();
 
                 layout.AttachEventToButton(0, ShowDictionary);
                 layout.AttachEventToButton(2, () => Exit(true));
