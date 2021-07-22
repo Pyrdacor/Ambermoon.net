@@ -2499,13 +2499,12 @@ namespace Ambermoon.UI
         {
             var slots = game.OpenStorage.Slots.ToList();
             int maxItemsToStore = 0;
+            var item = itemManager.GetItem(itemSlot.ItemIndex);
 
             if (slots.Any(slot => slot.Empty))
                 maxItemsToStore = 99;
             else
             {
-                var item = itemManager.GetItem(itemSlot.ItemIndex);
-
                 if (item.Flags.HasFlag(ItemFlags.Stackable))
                 {
                     foreach (var possibleSlot in slots.Where(s => s.ItemIndex == item.Index))
@@ -2523,21 +2522,20 @@ namespace Ambermoon.UI
 
             if (itemSlot.Amount > 1)
             {
-                var item = itemManager.GetItem(itemSlot.ItemIndex);
-                bool nowFull = maxItemsToStore <= itemSlot.Amount;
                 OpenAmountInputBox(game.DataNameProvider.StoreHowMuchItemsMessage,
                     item.GraphicIndex, item.Name, (uint)Math.Min(itemSlot.Amount, maxItemsToStore), amount =>
                     {
                         StoreAmount(amount);
-                        if (nowFull)
+                        if (amount == maxItemsToStore && !slots.Any(slot => slot.Empty || (slot.ItemIndex == item.Index && slot.Amount < 99)))
                             SetInventoryMessage(game.DataNameProvider.ChestNowFull, true);
-                    });                
+                    });
             }
             else
             {
                 StoreAmount(1);
 
-                if (maxItemsToStore == 1)
+                if ((maxItemsToStore == 1 || (maxItemsToStore == 99 && !item.Flags.HasFlag(ItemFlags.Stackable))) &&
+                    !slots.Any(slot => slot.Empty))
                     SetInventoryMessage(game.DataNameProvider.ChestNowFull, true);
             }
 
