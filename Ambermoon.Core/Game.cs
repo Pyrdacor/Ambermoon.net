@@ -365,7 +365,7 @@ namespace Ambermoon
                 if (Map?.IsWorldMap == true)
                 {
                     player2D?.UpdateAppearance(CurrentTicks);
-                    player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
+                    player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
                 }
                 else if (!is3D && player2D != null)
                 {

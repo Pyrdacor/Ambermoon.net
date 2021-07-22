@@ -15,7 +15,6 @@
 
 ## 2D maps
 
-- A horse etc can be drawn in front of tree tops etc.
 - NPCs can leave the map through non-blocking portals which teleport the player (Spannenberg Inn etc).
 - Teleporting from a 2D map to a 2D world map via cheat with fixed positions (e.g. teleport 110 1 1) scrolls the map badly.
 

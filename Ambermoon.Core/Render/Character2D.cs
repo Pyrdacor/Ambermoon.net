@@ -185,10 +185,15 @@ namespace Ambermoon.Render
             else
             {
                 var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
-                sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (topSprite == null ? CurrentAnimationInfo.FrameHeight :
+                sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (topSprite == null ? drawOffset.Y :
                     Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT) - RenderMap2D.TILE_HEIGHT);
                 if (topSprite != null)
                     topSprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + CurrentAnimationInfo.FrameHeight;
+                else if ((drawOffset.Y + CurrentAnimationInfo.FrameHeight) % RenderMap2D.TILE_HEIGHT != 0)
+                    sprite.BaseLineOffset = Math.Max(sprite.BaseLineOffset, (RenderMap2D.TILE_HEIGHT + drawOffset.Y) % RenderMap2D.TILE_HEIGHT + 1);
+                else sprite.BaseLineOffset = Math.Max(sprite.BaseLineOffset, RenderMap2D.TILE_HEIGHT - 1);
+                // TODO: travel types should be divided into tiles like the player in indoor 2D maps
+                // so that each part can use a suitable baseline and it looks much better (when riding through trees it looks bad even in original)
             }
         }
 
