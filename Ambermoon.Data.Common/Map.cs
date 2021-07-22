@@ -56,7 +56,7 @@ namespace Ambermoon.Data
                     return false;
                 }
 
-                if (Type != TileType.Normal)
+                if (Type > TileType.Normal && Type < TileType.Invisible)
                 {
                     return true;
                 }

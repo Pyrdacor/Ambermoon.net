@@ -142,6 +142,25 @@ namespace Ambermoon.Render
                 if (collisionPosition.Y < 0 || collisionPosition.Y >= map.Height)
                     return false;
 
+                var mapEventId = Map[collisionPosition].MapEventId;
+
+                if (mapEventId != 0)
+                {
+                    // Note: Won't work for world maps but there are no characters.
+                    if (game.CurrentSavegame.IsEventActive(Map.Map.Index, mapEventId - 1))
+                    {
+                        switch (Map.Map.EventList[(int)mapEventId - 1].Type)
+                        {
+                            case EventType.Chest:
+                            case EventType.Door:
+                            case EventType.EnterPlace:
+                            case EventType.Riddlemouth:
+                            case EventType.Teleport:
+                                return false;
+                        }
+                    }
+                }
+
                 // Note: Monsters and NPCs in 2D also use TravelType.Walk for collision detection.
                 return Map[collisionPosition].AllowMovement(tileset, TravelType.Walk, false);
             }
@@ -154,6 +173,8 @@ namespace Ambermoon.Render
 
                     if (TestPosition(newPosition))
                         break;
+
+                    newPosition = Position;
                 }
             }
 

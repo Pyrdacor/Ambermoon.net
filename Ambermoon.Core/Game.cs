@@ -1965,9 +1965,8 @@ namespace Ambermoon
             bool Move()
             {
                 bool diagonal = x != 0 && y != 0;
-                bool eventTriggered;
 
-                if (!player2D.Move(x, y, CurrentTicks, TravelType, out eventTriggered, !diagonal, null, !diagonal))
+                if (!player2D.Move(x, y, CurrentTicks, TravelType, out bool eventTriggered, !diagonal, null, !diagonal))
                 {
                     if (eventTriggered || !diagonal)
                         return false;

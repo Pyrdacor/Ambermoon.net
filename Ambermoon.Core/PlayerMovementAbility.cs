@@ -22,14 +22,14 @@ namespace Ambermoon
         {
             TravelType.Walk => PlayerMovementAbility.Walking,
             TravelType.Horse => PlayerMovementAbility.Walking,
-            TravelType.SandLizard => PlayerMovementAbility.Walking, // TODO
+            TravelType.SandLizard => PlayerMovementAbility.Walking,
             TravelType.Swim => PlayerMovementAbility.Swimming,
             TravelType.MagicalDisc => PlayerMovementAbility.FlyingDisc,
-            TravelType.SandShip => PlayerMovementAbility.FlyingDisc, // TODO
+            TravelType.SandShip => PlayerMovementAbility.Sailing, // TODO
             TravelType.Raft => PlayerMovementAbility.Rafting,
             TravelType.Ship => PlayerMovementAbility.Sailing,
             TravelType.WitchBroom => PlayerMovementAbility.WitchBroom,
-            TravelType.Fly => PlayerMovementAbility.WitchBroom, // TODO
+            TravelType.Fly => PlayerMovementAbility.Eagle,
             TravelType.Eagle => PlayerMovementAbility.Eagle,
             _ => PlayerMovementAbility.NoMovement
         };
