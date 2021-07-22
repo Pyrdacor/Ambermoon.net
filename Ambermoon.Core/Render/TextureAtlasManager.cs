@@ -265,7 +265,10 @@ namespace Ambermoon.Render
             var eventGraphics = graphicProvider.GetGraphics(GraphicType.EventPictures);
 
             for (int i = 0; i < eventGraphics.Count; ++i)
+            {
+                eventGraphics[i].ReplaceColor(0, 32);
                 AddTexture(Layer.UI, Graphics.EventPictureOffset + (uint)i, eventGraphics[i]);
+            }
 
             #endregion
 
