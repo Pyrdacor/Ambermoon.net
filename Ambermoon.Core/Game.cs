@@ -2356,6 +2356,10 @@ namespace Ambermoon
             if (keyChar >= '1' && keyChar <= '6')
             {
                 int slot = keyChar - '1';
+
+                if (keys[(int)Key.Num1 + slot])
+                    return;
+
                 var partyMember = GetPartyMember(slot);
 
                 if (pickingTargetPlayer)
