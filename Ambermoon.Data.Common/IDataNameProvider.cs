@@ -202,6 +202,8 @@ namespace Ambermoon.Data
         string ItemIsImportant { get; }
         string ChestFull { get; }
         string ChestNowFull { get; }
+        string NoOneCanCarryThatMuch { get; }
+        string CannotCarryAllGold { get; }
 
 
         #region Conversations
@@ -360,7 +362,6 @@ namespace Ambermoon.Data
         string AlreadyFullyCharged { get; }
         string PriceForEnchanting { get; }
         string LastTimeEnchanting { get; }
-
         string CannotRechargeAnymore { get; }
 
         #endregion

@@ -9976,7 +9976,8 @@ namespace Ambermoon
                         UpdateButtons();
                         UntrapMouse();
                         ExecuteNextUpdateCycle(ShowDefaultMessage);
-                    }, () => layout.ShowChestMessage(DataNameProvider.GiveToWhom), ShowDefaultMessage);
+                    }, () => layout.ShowChestMessage(DataNameProvider.GiveToWhom), ShowDefaultMessage,
+                    () => layout.ShowClickChestMessage(DataNameProvider.NoOneCanCarryThatMuch));
                 });
                 void UpdateFoodDisplay()
                 {

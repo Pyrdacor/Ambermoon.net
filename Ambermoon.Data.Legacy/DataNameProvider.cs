@@ -232,6 +232,8 @@
         public string ItemIsImportant => executableData.Messages.GetEntry(Messages.Index.YouNeedThisItem);
         public string ChestFull => executableData.Messages.GetEntry(Messages.Index.ChestFull);
         public string ChestNowFull => executableData.Messages.GetEntry(Messages.Index.ChestNowFull);
+        public string NoOneCanCarryThatMuch => executableData.Messages.GetEntry(Messages.Index.NoOneCanCarryThatMuch);
+        public string CannotCarryAllGold => executableData.Messages.GetEntry(Messages.Index.CannotCarryAllGold);
 
 
         #region Conversations

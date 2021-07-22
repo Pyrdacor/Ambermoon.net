@@ -2170,39 +2170,8 @@ namespace Ambermoon.UI
 
         void DistributeGold(Chest chest)
         {
-            var partyMembers = game.PartyMembers.ToList();
             var initialGold = chest.Gold;
-
-            while (chest.Gold != 0)
-            {
-                int numTargetPlayers = partyMembers.Count;
-                uint goldPerPlayer = chest.Gold / (uint)numTargetPlayers;
-                bool anyCouldTake = false;
-
-                if (goldPerPlayer == 0)
-                {
-                    numTargetPlayers = (int)chest.Gold;
-                    goldPerPlayer = 1;
-                }
-
-                foreach (var partyMember in partyMembers)
-                {
-                    uint goldToTake = Math.Min(partyMember.MaxGoldToTake, goldPerPlayer);
-                    chest.Gold -= goldToTake;
-                    partyMember.AddGold(goldToTake);
-
-                    if (goldToTake != 0)
-                    {
-                        anyCouldTake = true;
-
-                        if (--numTargetPlayers == 0)
-                            break;
-                    }
-                }
-
-                if (!anyCouldTake)
-                    return;
-            }
+            chest.Gold = game.DistributeGold(chest.Gold, false);
 
             if (chest.Gold != initialGold)
             {
@@ -2234,6 +2203,16 @@ namespace Ambermoon.UI
             {
                 ClosePopup();
                 CancelDrag();
+
+                if (!game.PartyMembers.Any(p => p.MaxGoldToTake >= amount))
+                {
+                    if (chest != null)
+                        ShowClickChestMessage(game.DataNameProvider.NoOneCanCarryThatMuch);
+                    else
+                        SetInventoryMessage(game.DataNameProvider.NoOneCanCarryThatMuch, true);
+                    return;
+                }
+
                 draggedGold = amount;
                 game.CursorType = CursorType.Gold;
                 game.TrapMouse(Global.PartyMemberPortraitArea);
@@ -2266,10 +2245,16 @@ namespace Ambermoon.UI
                     : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); },
                 chest == null
                     ? (Action)(() => SetInventoryMessage(game.DataNameProvider.GiveToWhom))
-                    : () => ShowChestMessage(game.DataNameProvider.GiveToWhom));
+                    : () => ShowChestMessage(game.DataNameProvider.GiveToWhom), null, () =>
+                    {
+                        if (chest != null)
+                            ShowClickChestMessage(game.DataNameProvider.NoOneCanCarryThatMuch);
+                        else
+                            SetInventoryMessage(game.DataNameProvider.NoOneCanCarryThatMuch, true);
+                    });
         }
 
-        internal void GiveFood(uint food, Action<uint> foodRemover, Action setup, Action abortAction = null)
+        internal void GiveFood(uint food, Action<uint> foodRemover, Action setup, Action abortAction, Action cannotCarryHandler)
         {
             // Note: 109 is the object icon index for food.
             OpenAmountInputBox(game.DataNameProvider.GiveHowMuchFoodMessage,
@@ -2279,6 +2264,13 @@ namespace Ambermoon.UI
             {
                 ClosePopup();
                 CancelDrag();
+
+                if (!game.PartyMembers.Any(p => p.MaxFoodToTake >= amount))
+                {
+                    cannotCarryHandler?.Invoke();
+                    return;
+                }
+
                 draggedFood = amount;
                 game.CursorType = CursorType.Food;
                 game.TrapMouse(Global.PartyMemberPortraitArea);
@@ -4281,6 +4273,11 @@ namespace Ambermoon.UI
                 CancelDrag();
                 return true;
             }
+
+            if (draggedGold != 0)
+                cursorType = CursorType.Gold;
+            if (draggedFood != 0)
+                cursorType = CursorType.Food;
 
             return false;
         }
