@@ -6360,12 +6360,14 @@ namespace Ambermoon
 
         void UpdateBattle()
         {
-            currentBattle.Update(CurrentBattleTicks);
-
             if (advancing)
             {
                 foreach (var monster in currentBattle.Monsters)
                     layout.GetMonsterBattleAnimation(monster).Update(CurrentBattleTicks);
+            }
+            else
+            {
+                currentBattle.Update(CurrentBattleTicks);
             }
 
             if (highlightBattleFieldSprites.Count != 0)
@@ -6745,8 +6747,10 @@ namespace Ambermoon
                     InputEnable = false;
                     currentBattle.WaitForClick = true;
                     CursorType = CursorType.Click;
+                    allInputDisabled = true;
                     AdvanceParty(() =>
                     {
+                        allInputDisabled = false;
                         InputEnable = true;
                         currentBattle.WaitForClick = false;
                         CursorType = CursorType.Sword;
@@ -6840,6 +6844,7 @@ namespace Ambermoon
             var monsters = currentBattle.Monsters.ToList();
             int totalMonsters = monsters.Count;
             var newPositions = new Dictionary<int, uint>(totalMonsters);
+            uint timePerMonster = Math.Max(1u, TicksPerSecond / (2u * (uint)totalMonsters));
 
             void MoveMonster(Monster monster, int index)
             {
@@ -6870,7 +6875,7 @@ namespace Ambermoon
                 var newDisplayPosition = layout.GetMonsterCombatCenterPosition(currentColumn, newRow, monster);
                 animation.AnimationFinished += MoveAnimationFinished;
                 animation.Play(monster.GetAnimationFrameIndices(MonsterAnimationType.Move).Take(1).ToArray(),
-                    TicksPerSecond / 2, CurrentBattleTicks, newDisplayPosition,
+                    timePerMonster, CurrentBattleTicks, newDisplayPosition,
                     layout.RenderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)newRow));
             }
 
