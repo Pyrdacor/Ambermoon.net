@@ -57,7 +57,9 @@ namespace Ambermoon.Data
                     return;
                 else
                 {
+
                     remainingAmount -= (uint)Math.Min((int)remainingAmount, 99 - slot.Amount);
+                    slot.Amount = Math.Min(99, slot.Amount + (int)amount);
 
                     if (remainingAmount == 0)
                         return;
