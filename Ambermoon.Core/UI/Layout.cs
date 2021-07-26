@@ -2456,10 +2456,7 @@ namespace Ambermoon.UI
                 {
                     // TODO: animation where the item falls down the screen
                     game.InventoryItemRemoved(itemSlot.ItemIndex, (int)amount);
-                    if (amount >= itemSlot.Amount)
-                        itemSlot.Clear();
-                    else
-                        itemSlot.Amount -= (int)amount;
+                    itemSlot.Remove((int)amount);
                     itemGrid.SetItem(slot, itemSlot); // update appearance
                     game.UpdateCharacterInfo();
                 }

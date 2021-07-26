@@ -103,14 +103,7 @@ namespace Ambermoon.Data
             if (slot.Amount > 99) // unlimited item slot
                 return;
 
-            slot.Amount -= (int)amount;
-
-            if (slot.Amount == 0)
-            {
-                slot.ItemIndex = 0;
-                slot.Flags = 0;
-                slot.NumRemainingCharges = 0;
-            }
+            slot.Remove((int)amount);
         }
     }
 }

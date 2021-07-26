@@ -58,13 +58,13 @@ namespace Ambermoon
             /// <inheritdoc />
             public string LeadName => game.CurrentPartyMember?.Name ?? "";
             /// <inheritdoc />
-            public string SelfName => LeadName; // TODO: maybe this is the active actor in battle?
+            public string SelfName => LeadName;
             /// <inheritdoc />
             public string CastName => game.CurrentCaster?.Name ?? LeadName;
             /// <inheritdoc />
             public string InvnName => game.CurrentInventory?.Name ?? LeadName;
             /// <inheritdoc />
-            public string SubjName => Subject?.Name; // TODO
+            public string SubjName => Subject?.Name;
             /// <inheritdoc />
             public string Sex1Name => Subject?.Gender == Gender.Male ? game.DataNameProvider.He : game.DataNameProvider.She;
             /// <inheritdoc />

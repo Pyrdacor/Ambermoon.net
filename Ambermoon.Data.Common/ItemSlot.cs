@@ -34,7 +34,7 @@ namespace Ambermoon.Data
                 else
                 {
                     Amount += amountToAdd;
-                    item.Amount -= amountToAdd;
+                    item.Remove(amountToAdd);
                     return item.Amount;
                 }
             }
@@ -49,7 +49,7 @@ namespace Ambermoon.Data
                 Flags = item.Flags;
                 NumRemainingCharges = item.NumRemainingCharges;
                 RechargeTimes = item.RechargeTimes;
-                item.Amount -= amountToAdd;
+                item.Remove(amountToAdd);
                 return item.Amount;
             }
         }
