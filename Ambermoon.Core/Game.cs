@@ -10446,8 +10446,10 @@ namespace Ambermoon
                                                 boughtItems[i] = new ItemSlot
                                                 {
                                                     ItemIndex = item.Index,
-                                                    Amount = (int)amount
-                                                    // TODO: flags, charges, etc
+                                                    Amount = (int)amount,
+                                                    NumRemainingCharges = item.InitialCharges,
+                                                    RechargeTimes = 0,
+                                                    Flags = itemSlot.Flags
                                                 };
                                                 amount = 0;
                                                 break;
@@ -10464,8 +10466,10 @@ namespace Ambermoon
                                             boughtItems[i] = new ItemSlot
                                             {
                                                 ItemIndex = item.Index,
-                                                Amount = 1
-                                                // TODO: flags, charges, etc
+                                                Amount = 1,
+                                                NumRemainingCharges = itemSlot.NumRemainingCharges,
+                                                RechargeTimes = itemSlot.RechargeTimes,
+                                                Flags = itemSlot.Flags
                                             };
                                             if (--amount == 0)
                                                 break;
@@ -10534,7 +10538,7 @@ namespace Ambermoon
                         {
                             if (answer) // yes
                             {
-                                merchant.AddItems(ItemManager, item.Index, amount);
+                                merchant.AddItems(ItemManager, item.Index, amount, itemSlot);
                                 CurrentPartyMember.Inventory.Slots[slotIndex].Remove((int)amount);
                                 InventoryItemRemoved(item.Index, (int)amount, CurrentPartyMember);
                                 itemGrid.SetItem(slotIndex, CurrentPartyMember.Inventory.Slots[slotIndex], true);

@@ -1883,6 +1883,8 @@ namespace Ambermoon.UI
                 }
                 if (item.CanBreak && RollDice1000() < item.BreakChance)
                 {
+                    // TODO: unequip, remove red cross for equipped two-handed weapons
+
                     itemSlot.Flags |= ItemSlotFlags.Broken;
                     UpdateItemSlot(itemSlot);
                     string message = game.CurrentInventory.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);

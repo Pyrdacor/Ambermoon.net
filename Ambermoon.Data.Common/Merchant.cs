@@ -41,7 +41,7 @@ namespace Ambermoon.Data
 
         public ItemSlot GetSlot(int slot) => Slots[slot % SlotsPerRow, slot / SlotsPerRow];
 
-        public void AddItems(IItemManager itemManager, uint itemIndex, uint amount)
+        public void AddItems(IItemManager itemManager, uint itemIndex, uint amount, ItemSlot sourceSlot)
         {
             if (amount == 0)
                 return;
@@ -74,7 +74,20 @@ namespace Ambermoon.Data
 
             emptySlot.ItemIndex = itemIndex;
             emptySlot.Amount = (int)remainingAmount;
-            // TODO: flags like curse, charges, etc?
+            emptySlot.Flags = sourceSlot.Flags;
+
+            if (item.Flags.HasFlag(ItemFlags.Stackable))
+            {
+                emptySlot.NumRemainingCharges = item.InitialCharges;
+                emptySlot.RechargeTimes = 0;
+            }
+            else
+            {
+                // TODO: how can the original distinct number of charges when
+                // all items can be stacked?
+                emptySlot.NumRemainingCharges = sourceSlot.NumRemainingCharges;
+                emptySlot.RechargeTimes = sourceSlot.RechargeTimes;
+            }
         }
 
         public void TakeItems(int column, int row, uint amount)
