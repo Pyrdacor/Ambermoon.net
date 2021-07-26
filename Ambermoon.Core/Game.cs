@@ -13305,6 +13305,8 @@ namespace Ambermoon
                 return;
             }
 
+            layout.SetCharacterHealSymbol(null);
+
             closeWindowHandler?.Invoke();
             closeWindowHandler = null;
 
