@@ -2272,6 +2272,10 @@ namespace Ambermoon
                     RemoveCharacterFromBattleField(target);
                     if (caster is PartyMember partyMember)
                     {
+                        // Monsters dissolved by those spells are
+                        // handled like fled monsters so that their
+                        // belongings won't remain after battle.
+                        fledCharacters.Add(target);
                         KillMonster(partyMember, target, slot);
                     }
                     else
