@@ -2645,7 +2645,18 @@ namespace Ambermoon.UI
                 game.UntrapMouse();
 
                 if (itemGrid != null && itemSlot != null)
+                {
+                    // Catch two-handed weapon left hand slot click
+                    if (itemSlot.ItemIndex == 0 &&
+                        itemGrid == itemGrids[1] && // equip
+                        (EquipmentSlot)(slot + 1) == EquipmentSlot.LeftHand)
+                    {
+                        slot -= 2;
+                        itemSlot = itemGrid.GetItemSlot(slot);
+                    }
+
                     itemAction?.Invoke(itemGrid, slot, itemSlot);
+                }
             }
 
             bool Aborted()

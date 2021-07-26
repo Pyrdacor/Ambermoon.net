@@ -1026,7 +1026,7 @@ namespace Ambermoon
                             if (itemSlotIndex != null)
                             {
                                 var itemSlot = equippedItem
-                                    ? battleAction.Character.Equipment.Slots[(EquipmentSlot)itemSlotIndex.Value]
+                                    ? battleAction.Character.Equipment.Slots[(EquipmentSlot)(itemSlotIndex.Value + 1)]
                                     : battleAction.Character.Inventory.Slots[itemSlotIndex.Value];
                                 var item = game.ItemManager.GetItem(itemSlot.ItemIndex);
                                 text = next.Character.Name + string.Format(game.DataNameProvider.BattleMessageCastsSpellFrom, spellName, item.Name);
@@ -1402,7 +1402,7 @@ namespace Ambermoon
                         {
                             // Note: It will always be a party member as monsters can't use item spells.
                             var itemSlot = equippedItem
-                                ? battleAction.Character.Equipment.Slots[(EquipmentSlot)itemSlotIndex.Value]
+                                ? battleAction.Character.Equipment.Slots[(EquipmentSlot)(itemSlotIndex.Value + 1)]
                                 : battleAction.Character.Inventory.Slots[itemSlotIndex.Value];
                             layout.ReduceItemCharge(itemSlot, false, equippedItem, battleAction.Character);
                         }
