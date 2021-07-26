@@ -329,6 +329,7 @@ namespace Ambermoon.Data
         string SellHowMuchItems { get; }
         string NotEnoughMoneyToBuy { get; }
         string NotInterestedInItemMerchant { get; }
+        string WontBuyBrokenStuff { get; }
         string WantToGoWithoutItemsMerchant { get; }
         string TrainHowOften { get; }
         string PriceForTraining { get; }

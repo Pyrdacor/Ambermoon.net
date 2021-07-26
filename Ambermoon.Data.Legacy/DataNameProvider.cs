@@ -359,6 +359,7 @@
         public string SellHowMuchItems => executableData.Messages.GetEntry(Messages.Index.SellHowMany);
         public string NotEnoughMoneyToBuy => executableData.Messages.GetEntry(Messages.Index.NotEnoughMoney);
         public string NotInterestedInItemMerchant => executableData.Messages.GetEntry(Messages.Index.NotInterestedInTrinket);
+        public string WontBuyBrokenStuff => executableData.Messages.GetEntry(Messages.Index.WontBuyBrokenStuff);
         public string WantToGoWithoutItemsMerchant => executableData.Messages.GetEntry(Messages.Index.LeaveBoughtGoods);
         public string TrainHowOften => executableData.Messages.GetEntry(Messages.Index.TrainHowOften);
         public string PriceForTraining => executableData.Messages.GetEntry(Messages.Index.PriceForTraining);

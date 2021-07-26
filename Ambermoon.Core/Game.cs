@@ -10549,6 +10549,16 @@ namespace Ambermoon
                         return;
                     }
 
+                    if (itemSlot.Flags.HasFlag(ItemSlotFlags.Broken))
+                    {
+                        layout.ShowClickChestMessage(DataNameProvider.WontBuyBrokenStuff, () =>
+                        {
+                            TrapMouse(itemArea);
+                            SetupRightClickAbort();
+                        });
+                        return;
+                    }
+
                     nextClickHandler = null;
                     UntrapMouse();
 
