@@ -243,6 +243,7 @@ namespace Ambermoon
         public event Action<Game.BattleEndInfo> BattleEnded;
         public event Action<BattleAction> ActionCompleted;
         public event Action<PartyMember> PlayerWeaponBroke;
+        public event Action<PartyMember> PlayerLastAmmoUsed;
         public event Action<PartyMember> PlayerLostTarget;
         event Action AnimationFinished;
         readonly List<Monster> initialMonsters = new List<Monster>();
@@ -1188,6 +1189,8 @@ namespace Ambermoon
                         {
                             followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.LastAmmo);
                             SkipAllFollowingAttacks();
+                            if (battleAction.Character is PartyMember partyMember)
+                            PlayerLastAmmoUsed?.Invoke(partyMember);
                         }
                         var attacker = battleAction.Character;
                         if (weapon.UsedAmmunitionType != AmmunitionType.None)

@@ -7990,6 +7990,12 @@ namespace Ambermoon
                     roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
                     layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value, null);
                 };
+                currentBattle.PlayerLastAmmoUsed += partyMember =>
+                {
+                    // Note: no need to check action here as it only can happen while attacking
+                    roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
+                    layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value, null);
+                };
                 currentBattle.PlayerLostTarget += partyMember =>
                 {
                     roundPlayerBattleActions.Remove(SlotFromPartyMember(partyMember).Value);
