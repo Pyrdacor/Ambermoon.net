@@ -2542,10 +2542,12 @@ namespace Ambermoon.UI
             {
                 ClosePopup(false);
 
+                uint itemIndex = itemSlot.ItemIndex;
+
                 // TODO: animation where the item flies to the right of the screen
                 if (game.StoreItem(itemSlot, amount))
                 {
-                    game.InventoryItemRemoved(itemSlot.ItemIndex, (int)amount);
+                    game.InventoryItemRemoved(itemIndex, (int)amount);
                     itemGrid.SetItem(slot, itemSlot); // update appearance
                     game.UpdateCharacterInfo();
                 }
