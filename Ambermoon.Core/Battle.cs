@@ -877,7 +877,7 @@ namespace Ambermoon
             }
         }
 
-        void EndBattleCleanup()
+        internal void EndBattleCleanup()
         {
             foreach (var battleFieldDamageText in battleFieldDamageTexts)
                 battleFieldDamageText.Value?.Delete();
@@ -959,6 +959,90 @@ namespace Ambermoon
                 }
             }
 
+            void SkipAllFollowingAttacks(Character character = null)
+            {
+                character ??= battleAction.Character;
+                bool foundNextDisplayAction = false;
+                foreach (var action in roundBattleActions.Where(a => a.Character == character))
+                {
+                    if (!foundNextDisplayAction)
+                    {
+                        if (action.Action == BattleActionType.DisplayActionText)
+                        {
+                            foundNextDisplayAction = true;
+                            action.Skip = true;
+                        }
+                    }
+                    else
+                    {
+                        action.Skip = true;
+                    }
+                }
+            }
+
+            bool CheckAmmo(Item weapon, uint ammoIndex)
+            {
+                // Check for last ammunition consumption
+                if (weapon?.Type == ItemType.LongRangeWeapon)
+                {
+                    void LastAmmoUsed()
+                    {
+                        var followAction = roundBattleActions.Peek();
+                        followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.LastAmmo);
+                        SkipAllFollowingAttacks();
+                        if (battleAction.Character is PartyMember partyMember)
+                            PlayerLastAmmoUsed?.Invoke(partyMember);
+                    }
+                    var attacker = battleAction.Character;
+                    if (weapon.UsedAmmunitionType != AmmunitionType.None)
+                    {
+                        var slot = attacker.Inventory.Slots.FirstOrDefault(slot => slot.ItemIndex == ammoIndex && slot.Amount > 0);
+
+                        if (slot != null)
+                        {
+                            slot.Remove(1);
+
+                            if (attacker is PartyMember partyMember)
+                                game.InventoryItemRemoved(ammoIndex, 1, partyMember);
+
+                            if (slot.Amount == 0)
+                            {
+                                // Do we have more in inventory?
+                                if (!attacker.Inventory.Slots.Any(slot => slot.ItemIndex == ammoIndex && slot.Amount > 0))
+                                {
+                                    var ammoSlot = attacker.Equipment.Slots[EquipmentSlot.LeftHand];
+
+                                    if (ammoSlot.ItemIndex != ammoIndex || ammoSlot.Amount <= 0)
+                                    {
+                                        // Monsters might only have the ammo in inventory
+                                        LastAmmoUsed();
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var ammoSlot = attacker.Equipment.Slots[EquipmentSlot.LeftHand];
+
+                            if (ammoSlot.ItemIndex != ammoIndex || ammoSlot.Amount <= 0) // This should not happen!
+                                throw new AmbermoonException(ExceptionScope.Application, "Character used long ranged weapon without needed ammo.");
+
+                            ammoSlot.Remove(1);
+                            game.EquipmentRemoved(attacker, ammoIndex, 1, false);
+
+                            if (ammoSlot.Amount == 0)
+                            {
+                                LastAmmoUsed();
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return true;
+            }
+
             // If hurried and attacking, enable twice as much attack actions.
             if (battleAction.Character is PartyMember player &&
                 hurriedPlayers.Contains(player))
@@ -1001,15 +1085,19 @@ namespace Ambermoon
                             break;
                         case BattleActionType.Attack:
                         {
-                            GetAttackInformation(next.ActionParameter, out uint targetTile, out uint weaponIndex, out uint _);
+                            GetAttackInformation(next.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
                             var weapon = weaponIndex == 0 ? null : game.ItemManager.GetItem(weaponIndex);
                             var target = battleField[targetTile];
 
                             if (target == null)
                             {
                                 text = next.Character.Name + game.DataNameProvider.BattleMessageMissedTheTarget;
-                                foreach (var action in roundBattleActions.Where(a => a.Character == next.Character))
-                                    action.Skip = true;
+                                roundBattleActions.Dequeue(); // Remove the attack action
+                                if (CheckAmmo(weapon, ammoIndex))
+                                {
+                                    foreach (var action in roundBattleActions.Where(a => a.Character == next.Character))
+                                        action.Skip = true;
+                                }
                                 if (next.Character is PartyMember partyMember)
                                     PlayerLostTarget?.Invoke(partyMember);
                             }
@@ -1125,9 +1213,14 @@ namespace Ambermoon
                 case BattleActionType.Attack:
                 {
                     GetAttackInformation(battleAction.ActionParameter, out uint targetTile, out uint weaponIndex, out uint ammoIndex);
+                    var target = GetCharacterAt((int)targetTile);
+                    if (target == null)
+                    {
+                        ActionFinished(false);
+                        return;
+                    }
                     var attackResult = ProcessAttack(battleAction.Character, (int)targetTile, out int damage, out bool abort);
                     var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
-                    var target = GetCharacterAt((int)targetTile);
                     if (abort)
                     {
                         foreach (var action in roundBattleActions.Where(a => a.Character == battleAction.Character))
@@ -1162,80 +1255,7 @@ namespace Ambermoon
                         else if (battleAction.Character is Monster attackingMonster) // Memorize monster damage stats
                             TrackMonsterHit(attackingMonster, trackDamage);
                     }
-                    void SkipAllFollowingAttacks(Character character = null)
-                    {
-                        character ??= battleAction.Character;
-                        bool foundNextDisplayAction = false;
-                        foreach (var action in roundBattleActions.Where(a => a.Character == character))
-                        {
-                            if (!foundNextDisplayAction)
-                            {
-                                if (action.Action == BattleActionType.DisplayActionText)
-                                {
-                                    foundNextDisplayAction = true;
-                                    action.Skip = true;
-                                }
-                            }
-                            else
-                            {
-                                action.Skip = true;
-                            }
-                        }
-                    }
-                    // Check for last ammunition consumption
-                    if (weapon?.Type == ItemType.LongRangeWeapon)
-                    {
-                        void LastAmmoUsed()
-                        {
-                            followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.LastAmmo);
-                            SkipAllFollowingAttacks();
-                            if (battleAction.Character is PartyMember partyMember)
-                            PlayerLastAmmoUsed?.Invoke(partyMember);
-                        }
-                        var attacker = battleAction.Character;
-                        if (weapon.UsedAmmunitionType != AmmunitionType.None)
-                        {
-                            var slot = attacker.Inventory.Slots.FirstOrDefault(slot => slot.ItemIndex == ammoIndex && slot.Amount > 0);
-
-                            if (slot != null)
-                            {
-                                slot.Remove(1);
-
-                                if (attacker is PartyMember partyMember)
-                                    game.InventoryItemRemoved(ammoIndex, 1, partyMember);
-
-                                if (slot.Amount == 0)
-                                {
-                                    // Do we have more in inventory?
-                                    if (!attacker.Inventory.Slots.Any(slot => slot.ItemIndex == ammoIndex && slot.Amount > 0))
-                                    {
-                                        var ammoSlot = attacker.Equipment.Slots[EquipmentSlot.LeftHand];
-
-                                        if (ammoSlot.ItemIndex != ammoIndex || ammoSlot.Amount <= 0)
-                                        {
-                                            // Monsters might only have the ammo in inventory
-                                            LastAmmoUsed();
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                var ammoSlot = attacker.Equipment.Slots[EquipmentSlot.LeftHand];
-
-                                if (ammoSlot.ItemIndex != ammoIndex || ammoSlot.Amount <= 0) // This should not happen!
-                                    throw new AmbermoonException(ExceptionScope.Application, "Character used long ranged weapon without needed ammo.");
-
-                                ammoSlot.Remove(1);
-                                game.EquipmentRemoved(attacker, ammoIndex, 1, false);
-
-                                if (ammoSlot.Amount == 0)
-                                {
-                                    LastAmmoUsed();
-                                }
-                            }
-                        }
-                    }
+                    CheckAmmo(weapon, ammoIndex);
                     // Check weapon or armor breakage
                     if (attackResult != AttackResult.Missed && attackResult != AttackResult.Failed)
                     {
@@ -1817,6 +1837,11 @@ namespace Ambermoon
                     var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
                     GetAttackFollowUpInformation(battleAction.ActionParameter, out uint tile, out uint damage, out var attackResult, out var flags);
                     var target = GetCharacterAt((int)tile);
+                    if (target == null)
+                    {
+                        ActionFinished(false);
+                        return;
+                    }
                     if(attackResult != AttackResult.Damage && attackResult != AttackResult.CriticalHit)
                     {
                         ActionFinished(false);

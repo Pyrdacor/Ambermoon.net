@@ -1081,6 +1081,7 @@ namespace Ambermoon
 
         void Cleanup()
         {
+            currentBattle?.EndBattleCleanup();
             outro?.Destroy();
             layout.Reset();
             renderMap2D?.Destroy();
@@ -1114,6 +1115,8 @@ namespace Ambermoon
 
             for (int i = 0; i < spellListScrollOffsets.Length; ++i)
                 spellListScrollOffsets[i] = 0;
+
+            battleRoundActiveSprite.Visible = false;
         }
 
         internal void ResetMapCharacterInteraction(Map map, bool leaveMapCharacter = false)
