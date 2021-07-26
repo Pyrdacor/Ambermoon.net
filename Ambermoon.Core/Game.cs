@@ -6385,11 +6385,6 @@ namespace Ambermoon
                 {
                     blinkingBattleFieldSprite.Visible = showBlinkingSprites;
                 }
-
-                if (showBlinkingSprites)
-                    RemoveCurrentPlayerActionVisuals();
-                else
-                    AddCurrentPlayerActionVisuals();
             }
         }
 
@@ -6816,6 +6811,10 @@ namespace Ambermoon
         {
             ExecuteNextUpdateCycle(() =>
             {
+                highlightBattleFieldSprites.ForEach(s => s?.Delete());
+                highlightBattleFieldSprites.Clear();
+                SetCurrentPlayerBattleAction(Battle.BattleActionType.None);
+
                 pickedSpell = spell;
                 spellItemSlotIndex = itemSlotIndex;
                 spellItemIsEquipped = itemIsEquipped;

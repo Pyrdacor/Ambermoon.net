@@ -10,7 +10,6 @@
 - Initial scale of dissolve victim seems to be too small. Don't know why or if this is caused by anchor.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 - If a near monster in the middle casts magic projectile (maybe similar things too) it isn't shown (tested with energy balls)
-- Locking in a "target all" spell and then pick the target of a single-target spell with same char, will still show the selection of all fields.
 
 
 ## 2D maps
