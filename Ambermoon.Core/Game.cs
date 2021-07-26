@@ -13148,7 +13148,7 @@ namespace Ambermoon
         {
             layout.ClosePopup(false, true);
             var chest = OpenStorage as Chest;
-            const uint MaxGoldPerChest = 50000; // TODO
+            const uint MaxGoldPerChest = 0xffff;
             amount = Math.Min(amount, MaxGoldPerChest - chest.Gold);
             CurrentInventory.RemoveGold(amount);
             chest.Gold += amount;
@@ -13160,7 +13160,7 @@ namespace Ambermoon
         {
             layout.ClosePopup(false, true);
             var chest = OpenStorage as Chest;
-            const uint MaxFoodPerChest = 5000; // TODO
+            const uint MaxFoodPerChest = 0xffff;
             amount = Math.Min(amount, MaxFoodPerChest - chest.Food);
             CurrentInventory.RemoveFood(amount);
             chest.Food += amount;
