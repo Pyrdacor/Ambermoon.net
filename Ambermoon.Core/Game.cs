@@ -5094,12 +5094,7 @@ namespace Ambermoon
 
             CloseWindow(() =>
             {
-                if (chestEvent.Next != null)
-                {
-                    Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
-                        (uint)(position?.Y ?? 0), CurrentTicks, chestEvent.Next, true);
-                }
-                else if (chestEvent.AutoRemove)
+                if (chestEvent.AutoRemove)
                 {
                     bool RemoveFromMap(Map map)
                     {
@@ -5137,6 +5132,11 @@ namespace Ambermoon
                             !RemoveFromMap(MapManager.GetMap(Map.DownMapIndex.Value)))
                             RemoveFromMap(MapManager.GetMap(Map.DownRightMapIndex.Value));
                     }
+                }
+                if (chestEvent.Next != null)
+                {
+                    Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
+                        (uint)(position?.Y ?? 0), CurrentTicks, chestEvent.Next, true);
                 }
             });
         }
