@@ -5838,10 +5838,13 @@ namespace Ambermoon
                                         itemGrid.HideTooltip();
                                         layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
                                         {
+                                            InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
+                                            itemSlot.Remove(1);
+                                            ShowCreatedItems();
                                             EndSequence();
                                             Abort();
                                             HandleNextEvent(null);
-                                        }, new Position(215, 75));
+                                        }, new Position(215, 75), false);
                                     }
                                     else // Show item
                                     {

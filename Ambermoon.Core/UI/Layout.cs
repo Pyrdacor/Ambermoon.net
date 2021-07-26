@@ -2949,7 +2949,7 @@ namespace Ambermoon.UI
         }
 
         public void DestroyItem(ItemSlot itemSlot, TimeSpan initialDelay, bool consumed = false, Action finishAction = null,
-            Position animationPosition = null)
+            Position animationPosition = null, bool applyRemoveEffects = true)
         {
             ItemGrid itemGrid = null;
             int slotIndex = -1;
@@ -3001,23 +3001,29 @@ namespace Ambermoon.UI
             {
                 ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Consume, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
                     finishAction, initialDelay);
-                game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
+                if (applyRemoveEffects)
                 {
-                    ApplyItemRemoveEffects();
-                    itemSlot.Remove(1);
-                    itemGrid.SetItem(slotIndex, itemSlot);
-                });
+                    game.AddTimedEvent(initialDelay + TimeSpan.FromMilliseconds(200), () =>
+                    {
+                        ApplyItemRemoveEffects();
+                        itemSlot.Remove(1);
+                        itemGrid.SetItem(slotIndex, itemSlot);
+                    });
+                }
             }
             else
             {
                 ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Destroy, animationPosition ?? itemGrid.GetSlotPosition(slotIndex),
                     finishAction, initialDelay, null, itemManager.GetItem(itemSlot.ItemIndex));
-                game.AddTimedEvent(initialDelay, () =>
+                if (applyRemoveEffects)
                 {
-                    ApplyItemRemoveEffects();
-                    itemSlot.Remove(1);
-                    itemGrid.SetItem(slotIndex, itemSlot);
-                });
+                    game.AddTimedEvent(initialDelay, () =>
+                    {
+                        ApplyItemRemoveEffects();
+                        itemSlot.Remove(1);
+                        itemGrid.SetItem(slotIndex, itemSlot);
+                    });
+                }
             }
         }
 
