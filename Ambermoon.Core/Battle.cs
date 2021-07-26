@@ -1735,10 +1735,15 @@ namespace Ambermoon
                         var textColor = battleAction.Character.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
                         var weaponSlot = battleAction.Character.Equipment.Slots[EquipmentSlot.RightHand];
                         var itemIndex = weaponSlot.ItemIndex;
+                        var weapon = game.ItemManager.GetItem(itemIndex);
+                        if (weapon.NumberOfHands == 2)
+                        {
+                            // Remove the cross from left hand slot
+                            battleAction.Character.Equipment.Slots[EquipmentSlot.LeftHand]?.Clear();
+                        }
                         game.EquipmentRemoved(battleAction.Character, itemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                         brokenItems.Add(KeyValuePair.Create(itemIndex, weaponSlot.Flags));
                         weaponSlot.Clear();
-                        var weapon = game.ItemManager.GetItem(itemIndex);
                         layout.SetBattleMessage(battleAction.Character.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, weapon.Name), textColor);
                         if (battleAction.Character is PartyMember partyMember)
                         {
