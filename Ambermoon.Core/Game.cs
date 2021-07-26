@@ -6807,35 +6807,38 @@ namespace Ambermoon
         internal void PickBattleSpell(Spell spell, uint? itemSlotIndex = null, bool? itemIsEquipped = null,
             PartyMember caster = null)
         {
-            pickedSpell = spell;
-            spellItemSlotIndex = itemSlotIndex;
-            spellItemIsEquipped = itemIsEquipped;
-            currentPickingActionMember = caster ?? CurrentPartyMember;
-
-            var spellInfo = SpellInfos.Entries[pickedSpell];
-
-            switch (spellInfo.Target)
+            ExecuteNextUpdateCycle(() =>
             {
-                case SpellTarget.SingleEnemy:
-                    SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTarget);
-                    break;
-                case SpellTarget.SingleFriend:
-                    SetCurrentPlayerAction(PlayerBattleAction.PickFriendSpellTarget);
-                    break;
-                case SpellTarget.EnemyRow:
-                    SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
-                    break;
-                case SpellTarget.BattleField:
-                    if (spell == Spell.Blink)
-                        SetCurrentPlayerAction(PlayerBattleAction.PickMemberToBlink);
-                    else
-                        throw new AmbermoonException(ExceptionScope.Data, "Only the Blink spell should have target type BattleField.");
-                    break;
-                default:
-                    SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
-                        Battle.CreateCastSpellParameter(0, pickedSpell, spellItemSlotIndex, spellItemIsEquipped));
-                    break;
-            }
+                pickedSpell = spell;
+                spellItemSlotIndex = itemSlotIndex;
+                spellItemIsEquipped = itemIsEquipped;
+                currentPickingActionMember = caster ?? CurrentPartyMember;
+
+                var spellInfo = SpellInfos.Entries[pickedSpell];
+
+                switch (spellInfo.Target)
+                {
+                    case SpellTarget.SingleEnemy:
+                        SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTarget);
+                        break;
+                    case SpellTarget.SingleFriend:
+                        SetCurrentPlayerAction(PlayerBattleAction.PickFriendSpellTarget);
+                        break;
+                    case SpellTarget.EnemyRow:
+                        SetCurrentPlayerAction(PlayerBattleAction.PickEnemySpellTargetRow);
+                        break;
+                    case SpellTarget.BattleField:
+                        if (spell == Spell.Blink)
+                            SetCurrentPlayerAction(PlayerBattleAction.PickMemberToBlink);
+                        else
+                            throw new AmbermoonException(ExceptionScope.Data, "Only the Blink spell should have target type BattleField.");
+                        break;
+                    default:
+                        SetPlayerBattleAction(Battle.BattleActionType.CastSpell,
+                            Battle.CreateCastSpellParameter(0, pickedSpell, spellItemSlotIndex, spellItemIsEquipped));
+                        break;
+                }
+            });
         }
 
         void AdvanceParty(Action finishAction)
