@@ -2184,6 +2184,13 @@ namespace Ambermoon
             if (allInputDisabled || pickingNewLeader || GameOverButtonsVisible)
                 return;
 
+            if (currentBattle != null && !currentBattle.RoundActive && trapMouseArea != null)
+            {
+                if (key == Key.Escape)
+                    CancelSpecificPlayerAction();
+                return;
+            }
+
             if (!InputEnable)
             {
                 if (layout.PopupActive)
@@ -2193,7 +2200,7 @@ namespace Ambermoon
                 }
 
                 // In battle the space key can be used to click for next action.
-                if (key == Key.Space && BattleRoundActive && currentBattle.WaitForClick)
+                if (key == Key.Space && BattleRoundActive && currentBattle?.WaitForClick == true)
                 {
                     currentBattle.Click(CurrentBattleTicks);
                     return;
