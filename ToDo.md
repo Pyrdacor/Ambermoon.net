@@ -3,7 +3,6 @@
 - Can't skip spell reflect message with space key
 - Does spell reflect message use wrong color?
 - Winddevil and windhowler end animation looks wrong.
-- Row target selection should only show 1 highlighted row on hover (not blinking all rows).
 - If monsters are in nearest row and can't attack anyone it should
   - Either move diagonal up in direction of a player (best to attack him immediately)
   - Or otherwise don't move at all

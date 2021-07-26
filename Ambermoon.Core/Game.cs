@@ -784,10 +784,38 @@ namespace Ambermoon
                     {
                         CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime);
                         UpdateBattle();
+
+                        if (!currentBattle.RoundActive && currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
+                        {
+                            var y = renderView.ScreenToGame(GetMousePosition(lastMousePosition)).Y - Global.BattleFieldArea.Top;
+                            int hoveredRow = y / Global.BattleFieldSlotHeight;
+                            highlightBattleFieldSprites.ForEach(s => s?.Delete());
+                            highlightBattleFieldSprites.Clear();
+                            for (int row = 0; row < 4; ++row)
+                            {
+                                for (int column = 0; column < 6; ++column)
+                                {
+                                    if (hoveredRow == row && currentBattle.GetCharacterAt(column, row)?.Type != CharacterType.PartyMember)
+                                    {
+                                        highlightBattleFieldSprites.Add
+                                        (
+                                            layout.AddSprite
+                                            (
+                                                Global.BattleFieldSlotArea(column + row * 6),
+                                                Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight),
+                                                UIPaletteIndex
+                                            )
+                                        );
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 else
+                {
                     CurrentBattleTicks = 0;
+                }
 
                 if (!WindowActive && layout.ButtonGridPage == 0)
                 {
@@ -1081,6 +1109,8 @@ namespace Ambermoon
 
         void Cleanup()
         {
+            highlightBattleFieldSprites.ForEach(s => s?.Delete());
+            highlightBattleFieldSprites.Clear();
             currentBattle?.EndBattleCleanup();
             outro?.Destroy();
             layout.Reset();
@@ -8534,7 +8564,7 @@ namespace Ambermoon
                     if (currentPickingActionMember == CurrentPartyMember)
                     {
                         layout.ClearBattleFieldSlotColorsExcept(currentBattle.GetSlotFromCharacter(currentPickingActionMember));
-                        SetBattleRowSlotColors(row, (c, r) => currentBattle.GetCharacterAt(c, r)?.Type == CharacterType.Monster, BattleFieldSlotColor.Orange);
+                        SetBattleRowSlotColors(row, (c, r) => currentBattle.GetCharacterAt(c, r)?.Type != CharacterType.PartyMember, BattleFieldSlotColor.Orange);
                     }
                     CancelSpecificPlayerAction();
                     break;
@@ -8656,26 +8686,9 @@ namespace Ambermoon
                 }
                 case PlayerBattleAction.PickEnemySpellTargetRow:
                 {
-                    // TODO: only show 1 row and only when hovering the row
-                    var valuableRows = Enumerable.Range(0, 4).Where(r => Enumerable.Range(0, 6).Any(c => currentBattle.GetCharacterAt(c + r * 6)?.Type == CharacterType.Monster));
-                    foreach (var row in valuableRows)
-                    {
-                        for (int column = 0; column < 6; ++column)
-                        {
-                            highlightBattleFieldSprites.Add
-                            (
-                                layout.AddSprite
-                                (
-                                    Global.BattleFieldSlotArea(column + row * 6),
-                                    Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BattleFieldGreenHighlight),
-                                    UIPaletteIndex
-                                )
-                            );
-                        }
-                    }
                     RemoveCurrentPlayerActionVisuals();
                     TrapMouse(Global.BattleFieldArea);
-                    blinkingHighlight = true;
+                    blinkingHighlight = false;
                     layout.SetBattleMessage(DataNameProvider.BattleMessageWhichMonsterRowAsTarget);
                     break;
                 }
