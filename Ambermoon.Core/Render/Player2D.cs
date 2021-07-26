@@ -98,11 +98,12 @@ namespace Ambermoon.Render
                                 if (aborted || ev == null)
                                     return false;
                             }
+                            else
+                            {
+                                ev = ev.Next;
+                            }
 
-                            if (ev.Next == null)
-                                return false;
-
-                            return HasSpecialEvent(ev.Next, out eventType);
+                            return HasSpecialEvent(ev, out eventType);
                         }
 
                         var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
