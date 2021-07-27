@@ -433,6 +433,7 @@ namespace Ambermoon.Render
                         // First set this to max so we won't trigger this again while we are interacting.
                         lastInteractionTicks = uint.MaxValue;
                         interacting = true;
+                        game.CurrentMapCharacter = this;
                         var map = Map.GetMapFromTile((uint)Position.X, (uint)Position.Y);
 
                         void StartBattle(bool failedEscape)
@@ -441,6 +442,7 @@ namespace Ambermoon.Render
                             {
                                 lastInteractionTicks = game.CurrentTicks;
                                 interacting = false;
+                                game.CurrentMapCharacter = null;
 
                                 if (battleEndInfo.MonstersDefeated)
                                 {
@@ -473,6 +475,7 @@ namespace Ambermoon.Render
                                     // successfully fled
                                     lastInteractionTicks = game.CurrentTicks;
                                     interacting = false;
+                                    game.CurrentMapCharacter = null;
                                     Map.StopMonstersForOneTimeSlot();
                                 }
                             }

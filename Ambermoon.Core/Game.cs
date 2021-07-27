@@ -243,6 +243,7 @@ namespace Ambermoon
             (!Map.Flags.HasFlag(MapFlags.Dungeon) || CurrentSavegame.IsSpellActive(ActiveSpellType.Light));
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
+        internal bool PopupActive => layout?.PopupActive ?? false;
         static readonly WindowInfo DefaultWindow = new WindowInfo { Window = Window.MapView };
         WindowInfo currentWindow = DefaultWindow;
         internal WindowInfo LastWindow { get; private set; } = DefaultWindow;
@@ -455,7 +456,7 @@ namespace Ambermoon
                 }
             }
         }
-        internal IMapCharacter CurrentMapCharacter { get; set; } // This is set when interacting with a non-monster map character
+        internal IMapCharacter CurrentMapCharacter { get; set; } // This is set when interacting with a map character
 
         internal void RequestFullscreenChange(bool fullscreen) => fullscreenChangeHandler?.Invoke(fullscreen);
         internal void NotifyResolutionChange(int? oldWidth) => resolutionChangeHandler?.Invoke(oldWidth);
@@ -13358,6 +13359,7 @@ namespace Ambermoon
                 return;
             }
 
+            ResetMapCharacterInteraction(Map);
             layout.SetCharacterHealSymbol(null);
 
             closeWindowHandler?.Invoke();

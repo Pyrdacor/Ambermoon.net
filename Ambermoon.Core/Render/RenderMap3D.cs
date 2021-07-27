@@ -307,6 +307,7 @@ namespace Ambermoon.Render
                         // First set this to max so we won't trigger this again while we are interacting.
                         lastInteractionTicks = uint.MaxValue;
                         interacting = true;
+                        game.CurrentMapCharacter = this;
 
                         // Turn the player towards the monster.
                         var player3D = game.RenderPlayer as Player3D;
@@ -335,6 +336,7 @@ namespace Ambermoon.Render
                             {
                                 lastInteractionTicks = game.CurrentTicks;
                                 interacting = false;
+                                game.CurrentMapCharacter = null;
 
                                 if (battleEndInfo.MonstersDefeated)
                                 {
@@ -368,6 +370,7 @@ namespace Ambermoon.Render
                                     RestoreExtrude();
                                     lastInteractionTicks = game.CurrentTicks;
                                     interacting = false;
+                                    game.CurrentMapCharacter = null;
                                     character3D.ResetMovementTimer();
                                 }
                             }
