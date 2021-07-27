@@ -786,7 +786,8 @@ namespace Ambermoon
                         CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime);
                         UpdateBattle();
 
-                        if (!currentBattle.RoundActive && currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
+                        // Note: The null check for currentBattle is important here even if checking above.
+                        if (currentBattle != null && !currentBattle.RoundActive && currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
                         {
                             var y = renderView.ScreenToGame(GetMousePosition(lastMousePosition)).Y - Global.BattleFieldArea.Top;
                             int hoveredRow = y / Global.BattleFieldSlotHeight;
