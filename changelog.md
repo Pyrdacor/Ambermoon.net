@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.9.x beta - Finalizing
+- Version [0.9.5 RC2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.5rc2): Tutorial, button tooltips, more options, bugfixing
 - Version [0.9.4 RC1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.4rc1): Outro, vsync, built-in OpenAL, bugfixing
 - Version [0.9.3 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.3beta): Lots of bugfixing, also fixed much in original data
 - Version [0.9.2 beta](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.2beta): Lots of bugfixing, also fixed much in original data
