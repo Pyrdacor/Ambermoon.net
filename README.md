@@ -26,6 +26,12 @@ An up-to-date overview for planned releases and features can be found [here](htt
 If you are interested in the original Amiga game files you can find them here: https://github.com/Pyrdacor/Ambermoon. I released some
 new versions and patches of the original game files there as well.
 
+### Need help?
+
+New to Ambermoon? Please have a look [here](FirstPlay.md). (auch in Deutsch ;) )
+
+If you have questions feel free to ask via email, on Twitter or here in GitHub in the issues. Some more info follows below as well.
+
 ### Support the project
 
 I appreciate all kind of support for this project. If you want to donate to help increase my motivation and allow me to spend more time developing this Ambermoon project and similar projects like a 3rd part of the trilogy or map and character editors, you can do so here. \
