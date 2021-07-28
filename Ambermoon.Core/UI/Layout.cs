@@ -573,6 +573,7 @@ namespace Ambermoon.UI
                 {
                     ButtonGridPage = 1 - ButtonGridPage;
                     SetLayout(Type, ticksPerMovement);
+                    buttonGrid?.HideTooltips();
                 }
             }
         }
@@ -704,15 +705,15 @@ namespace Ambermoon.UI
             AddSprite(boxArea, Graphics.GetCustomUIGraphicIndex(UICustomGraphic.BiggerInfoBox), game.UIPaletteIndex, 2);
             AddText(textArea, versionString, TextColor.BrightGray, TextAlign.Center, 3);
 
-            buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false);
+            buttonGrid.SetButton(0, ButtonType.Quit, false, game.Quit, false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.Quit));
             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-            buttonGrid.SetButton(2, ButtonType.Exit, false, CloseOptionMenu, false);
-            buttonGrid.SetButton(3, ButtonType.Opt, false, OpenOptions, false);
+            buttonGrid.SetButton(2, ButtonType.Exit, false, CloseOptionMenu, false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.Exit));
+            buttonGrid.SetButton(3, ButtonType.Opt, false, OpenOptions, false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.Options));
             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-            buttonGrid.SetButton(6, ButtonType.Save, game.BattleActive, OpenSaveMenu, false);
-            buttonGrid.SetButton(7, ButtonType.Load, false, () => OpenLoadMenu(), false);
-            buttonGrid.SetButton(8, ButtonType.Stats, false, NewGame, false);
+            buttonGrid.SetButton(6, ButtonType.Save, game.BattleActive, OpenSaveMenu, false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.Save));
+            buttonGrid.SetButton(7, ButtonType.Load, false, () => OpenLoadMenu(), false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.Load));
+            buttonGrid.SetButton(8, ButtonType.Stats, false, NewGame, false, Button.GetTooltip(game.GameLanguage, Button.TooltipType.New));
         }
 
         void CloseOptionMenu()
@@ -744,6 +745,7 @@ namespace Ambermoon.UI
         internal Popup OpenPopup(Position position, int columns, int rows,
             bool disableButtons = true, bool closeOnClick = true, byte displayLayerOffset = 0)
         {
+            buttonGrid?.HideTooltips();
             activePopup = new Popup(game, RenderView, position, columns, rows, false, displayLayerOffset)
             {
                 DisableButtons = disableButtons,
@@ -757,6 +759,7 @@ namespace Ambermoon.UI
             TextColor textColor = TextColor.BrightGray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
             byte displayLayerOffset = 0)
         {
+            buttonGrid?.HideTooltips();
             ClosePopup(false);
             var processedText = RenderView.TextProcessor.WrapText(text,
                 new Rect(0, 0, maxWidth, int.MaxValue),
@@ -797,6 +800,7 @@ namespace Ambermoon.UI
                 return;
             }
 
+            buttonGrid?.HideTooltips();
             ClosePopup(false);
             activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
             {
@@ -897,6 +901,7 @@ namespace Ambermoon.UI
             Action closeAction, int minLines = 3, byte displayLayerOffset = 0,
             TextAlign textAlign = TextAlign.Left)
         {
+            buttonGrid?.HideTooltips();
             ClosePopup(false);
             const int maxTextWidth = 192;
             var processedText = RenderView.TextProcessor.WrapText(text,
@@ -1042,35 +1047,51 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 5;
+        const int OptionCount = 10;
+        const int OptionsPerPage = 5;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
             {
                 GameLanguage.German,
                 new string[OptionCount]
                 {
+                    // Page 1
                     "Musik",
                     "Lautstärke",
                     "Schneller Kampfmodus",
                     "Auflösung",
-                    "Vollbild"
+                    "Vollbild",
+                    // Page 2
+                    "Tooltips anzeigen",
+                    "Musik cachen",
+                    "Cheats aktivieren",
+                    "Fantasy Intro anzeigen",
+                    "Intro anzeigen",
                 }
             },
             {
                 GameLanguage.English,
                 new string[OptionCount]
                 {
+                    // Page 1
                     "Music",
                     "Volume",
                     "Fast battle mode",
                     "Resolution",
-                    "Fullscreen"
+                    "Fullscreen",
+                    // Page 2
+                    "Show tooltips",
+                    "Cache music",
+                    "Enable cheats",
+                    "Show fantasy intro",
+                    "Show intro",
                 }
             }
         };
 
         void OpenOptions()
         {
+            int page = 0;
             var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(48, 62), 14, 6, true, false);
             activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.BrightGray, TextAlign.Center);
@@ -1081,6 +1102,7 @@ namespace Ambermoon.UI
             var on = game.DataNameProvider.On;
             var off = game.DataNameProvider.Off;
             int width = game.Configuration.Width ?? 1280;
+            bool cheatsEnabled = game.Configuration.EnableCheats;
             var toggleResolutionAction = (Action<int, string>)((index, _) => ToggleResolution());
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
@@ -1089,8 +1111,13 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
                 KeyValuePair.Create("", game.Configuration.Fullscreen ? null : toggleResolutionAction),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleCheats())),
+                KeyValuePair.Create("", (Action<int, string>)null/*(Action<int, string>)((index, _) => ToggleFantasyIntro())*/), // TODO: add later
+                KeyValuePair.Create("", (Action<int, string>)null/*(Action<int, string>)((index, _) => ToggleIntro())*/), // TODO: add later
             };
-            listBox = activePopup.AddOptionsListBox(options);
+            listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
 
             string GetResolutionString()
             {
@@ -1103,13 +1130,40 @@ namespace Ambermoon.UI
                 int remainingSpace = 31 - optionString.Length - value.Length;
                 optionString += new string(' ', remainingSpace);
                 optionString += value;
-                listBox.SetItemText(optionIndex, optionString);
+                listBox.SetItemText(optionIndex - page * OptionsPerPage, optionString);
             }
             void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
             void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
             void SetFastBattleMode() => SetOptionString(2, game.Configuration.FastBattleMode ? on : off);
             void SetResolution() => SetOptionString(3, GetResolutionString());
             void SetFullscreen() => SetOptionString(4, game.Configuration.Fullscreen ? on : off);
+            void SetTooltips() => SetOptionString(5, game.Configuration.ShowButtonTooltips ? on : off);
+            void SetMusicCaching() => SetOptionString(6, game.Configuration.CacheMusic ? on : off);
+            void SetCheats() => SetOptionString(7, cheatsEnabled ? on : off);
+            void SetFantasyIntro() => SetOptionString(8, game.Configuration.ShowFantasyIntro ? on : off);
+            void SetIntro() => SetOptionString(9, game.Configuration.ShowIntro ? on : off);
+
+            void ShowOptions()
+            {
+                switch (page)
+                {
+                    default:
+                    case 0:
+                        SetMusic();
+                        SetVolume();
+                        SetFastBattleMode();
+                        SetResolution();
+                        SetFullscreen();
+                        break;
+                    case 1:
+                        SetTooltips();
+                        SetMusicCaching();
+                        SetCheats();
+                        SetFantasyIntro();
+                        SetIntro();
+                        break;
+                }
+            }
 
             void ToggleMusic()
             {
@@ -1163,6 +1217,24 @@ namespace Ambermoon.UI
                 changedConfiguration = true;
                 windowChange = true;
             }
+            void ToggleTooltips()
+            {
+                game.Configuration.ShowButtonTooltips = !game.Configuration.ShowButtonTooltips;
+                SetTooltips();
+                changedConfiguration = true;
+            }
+            void ToggleMusicCaching()
+            {
+                game.Configuration.CacheMusic = !game.Configuration.CacheMusic;
+                SetMusicCaching();
+                changedConfiguration = true;
+            }
+            void ToggleCheats()
+            {
+                cheatsEnabled = !cheatsEnabled;
+                SetCheats();
+                changedConfiguration = true;
+            }
 
             var contentArea = activePopup.ContentArea;
             var exitButton = activePopup.AddButton(new Position(contentArea.Right - 32, contentArea.Bottom - 17));
@@ -1174,15 +1246,39 @@ namespace Ambermoon.UI
                 ClosePopup();
                 CloseOptionMenu();
                 if (changedConfiguration)
+                {
+                    game.Configuration.EnableCheats = cheatsEnabled;
                     game.NotifyConfigurationChange(windowChange);
+                }
             };
             exitButton.Visible = true;
 
-            SetMusic();
-            SetVolume();
-            SetFastBattleMode();
-            SetResolution();
-            SetFullscreen();
+            ShowOptions();
+
+            var changePageButton = activePopup.AddButton(new Position(contentArea.Left, contentArea.Bottom - 17));
+            changePageButton.ButtonType = ButtonType.MoveRight;
+            changePageButton.Disabled = false;
+            changePageButton.InstantAction = false;
+            changePageButton.LeftClickAction = () =>
+            {
+                int numPages = (options.Count + OptionsPerPage - 1) / OptionsPerPage;
+                page = (page + 1) % numPages;
+                var visibleOptions = options.Skip(page * OptionsPerPage).Take(OptionsPerPage).ToList();
+                for (int i = 0; i < OptionsPerPage; ++i)
+                {
+                    if (i >= visibleOptions.Count)
+                    {
+                        listBox.SetItemText(i, "");
+                        listBox.SetItemAction(i, null);
+                    }
+                    else
+                    {
+                        listBox.SetItemAction(i, visibleOptions[i].Value);
+                    }
+                }
+                ShowOptions();
+            };
+            changePageButton.Visible = true;
         }
 
         public void AttachEventToButton(int index, Action action)
@@ -1313,6 +1409,8 @@ namespace Ambermoon.UI
             return new CursorType[0];
         }
 
+        string GetTooltip(Button.TooltipType tooltipType) => Button.GetTooltip(game.GameLanguage, tooltipType);
+
         internal void UpdateLayoutButtons(uint? ticksPerMovement = null)
         {
             var moveDelay = (ticksPerMovement ?? this.ticksPerMovement) ?? 0;
@@ -1380,89 +1478,89 @@ namespace Ambermoon.UI
                 case LayoutType.Map2D:
                     if (ButtonGridPage == 0)
                     {
-                        buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => HandleButtonMove(CursorType.ArrowUpLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => HandleButtonMove(CursorType.ArrowUp), true, null, moveDelay);
-                        buttonGrid.SetButton(2, ButtonType.MoveUpRight, false, () => HandleButtonMove(CursorType.ArrowUpRight), true, null, moveDelay);
-                        buttonGrid.SetButton(3, ButtonType.MoveLeft, false, () => HandleButtonMove(CursorType.ArrowLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false);
-                        buttonGrid.SetButton(5, ButtonType.MoveRight, false, () => HandleButtonMove(CursorType.ArrowRight), true, null, moveDelay);
-                        buttonGrid.SetButton(6, ButtonType.MoveDownLeft, false, () => HandleButtonMove(CursorType.ArrowDownLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(7, ButtonType.MoveDown, false, () => HandleButtonMove(CursorType.ArrowDown), true, null, moveDelay);
-                        buttonGrid.SetButton(8, ButtonType.MoveDownRight, false, () => HandleButtonMove(CursorType.ArrowDownRight), true, null, moveDelay);
+                        buttonGrid.SetButton(0, ButtonType.MoveUpLeft, false, () => HandleButtonMove(CursorType.ArrowUpLeft), true, null, null, moveDelay);
+                        buttonGrid.SetButton(1, ButtonType.MoveUp, false, () => HandleButtonMove(CursorType.ArrowUp), true, null, null, moveDelay);
+                        buttonGrid.SetButton(2, ButtonType.MoveUpRight, false, () => HandleButtonMove(CursorType.ArrowUpRight), true, null, null, moveDelay);
+                        buttonGrid.SetButton(3, ButtonType.MoveLeft, false, () => HandleButtonMove(CursorType.ArrowLeft), true, null, null, moveDelay);
+                        buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false, GetTooltip(Button.TooltipType.Wait));
+                        buttonGrid.SetButton(5, ButtonType.MoveRight, false, () => HandleButtonMove(CursorType.ArrowRight), true, null, null, moveDelay);
+                        buttonGrid.SetButton(6, ButtonType.MoveDownLeft, false, () => HandleButtonMove(CursorType.ArrowDownLeft), true, null, null, moveDelay);
+                        buttonGrid.SetButton(7, ButtonType.MoveDown, false, () => HandleButtonMove(CursorType.ArrowDown), true, null, null, moveDelay);
+                        buttonGrid.SetButton(8, ButtonType.MoveDownRight, false, () => HandleButtonMove(CursorType.ArrowDownRight), true, null, null, moveDelay);
                     }
                     else
                     {
-                        buttonGrid.SetButton(0, ButtonType.Eye, false, null, false, () => CursorType.Eye);
-                        buttonGrid.SetButton(1, ButtonType.Hand, false, null, false, () => CursorType.Hand);
-                        buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, () => CursorType.Mouth);
-                        buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false);
-                        buttonGrid.SetButton(4, ButtonType.Spells, game?.Map?.CanUseSpells != true, () => game.CastSpell(false), false);
-                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game.OpenCamp(false), false);
-                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false);
-                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
-                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
+                        buttonGrid.SetButton(0, ButtonType.Eye, false, null, false, GetTooltip(Button.TooltipType.Eye), () => CursorType.Eye);
+                        buttonGrid.SetButton(1, ButtonType.Hand, false, null, false, GetTooltip(Button.TooltipType.Hand), () => CursorType.Hand);
+                        buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, GetTooltip(Button.TooltipType.Mouth), () => CursorType.Mouth);
+                        buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false, GetTooltip(Button.TooltipType.Transport));
+                        buttonGrid.SetButton(4, ButtonType.Spells, game?.Map?.CanUseSpells != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
+                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
+                        buttonGrid.SetButton(6, ButtonType.Map, true, null, false, null);
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
+                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Map3D:
                     if (ButtonGridPage == 0)
                     {
-                        buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => HandleButtonMove(CursorType.ArrowTurnLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => HandleButtonMove(CursorType.ArrowForward), true, null, moveDelay);
-                        buttonGrid.SetButton(2, ButtonType.TurnRight, false, () => HandleButtonMove(CursorType.ArrowTurnRight), true, null, moveDelay);
-                        buttonGrid.SetButton(3, ButtonType.StrafeLeft, false, () => HandleButtonMove(CursorType.ArrowStrafeLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false);
-                        buttonGrid.SetButton(5, ButtonType.StrafeRight, false, () => HandleButtonMove(CursorType.ArrowStrafeRight), true, null, moveDelay);
-                        buttonGrid.SetButton(6, ButtonType.RotateLeft, false, () => HandleButtonMove(CursorType.ArrowRotateLeft), true, null, moveDelay);
-                        buttonGrid.SetButton(7, ButtonType.MoveBackward, false, () => HandleButtonMove(CursorType.ArrowBackward), true, null, moveDelay);
-                        buttonGrid.SetButton(8, ButtonType.RotateRight, false, () => HandleButtonMove(CursorType.ArrowRotateRight), true, null, moveDelay);
+                        buttonGrid.SetButton(0, ButtonType.TurnLeft, false, () => HandleButtonMove(CursorType.ArrowTurnLeft), true, null, null, moveDelay);
+                        buttonGrid.SetButton(1, ButtonType.MoveForward, false, () => HandleButtonMove(CursorType.ArrowForward), true, null, null, moveDelay);
+                        buttonGrid.SetButton(2, ButtonType.TurnRight, false, () => HandleButtonMove(CursorType.ArrowTurnRight), true, null, null, moveDelay);
+                        buttonGrid.SetButton(3, ButtonType.StrafeLeft, false, () => HandleButtonMove(CursorType.ArrowStrafeLeft), true, null, null, moveDelay);
+                        buttonGrid.SetButton(4, ButtonType.Wait, false, OpenWaitPopup, false, GetTooltip(Button.TooltipType.Wait));
+                        buttonGrid.SetButton(5, ButtonType.StrafeRight, false, () => HandleButtonMove(CursorType.ArrowStrafeRight), true, null, null, moveDelay);
+                        buttonGrid.SetButton(6, ButtonType.RotateLeft, false, () => HandleButtonMove(CursorType.ArrowRotateLeft), true, null, null, moveDelay);
+                        buttonGrid.SetButton(7, ButtonType.MoveBackward, false, () => HandleButtonMove(CursorType.ArrowBackward), true, null, null, moveDelay);
+                        buttonGrid.SetButton(8, ButtonType.RotateRight, false, () => HandleButtonMove(CursorType.ArrowRotateRight), true, null, null, moveDelay);
                     }
                     else
                     {
-                        buttonGrid.SetButton(0, ButtonType.Eye, false, () => game.TriggerMapEvents(EventTrigger.Eye), true);
-                        buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(EventTrigger.Hand), true);
+                        buttonGrid.SetButton(0, ButtonType.Eye, false, () => game.TriggerMapEvents(EventTrigger.Eye), true, GetTooltip(Button.TooltipType.Eye));
+                        buttonGrid.SetButton(1, ButtonType.Hand, false, () => game.TriggerMapEvents(EventTrigger.Hand), true, GetTooltip(Button.TooltipType.Hand));
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, () =>
                         {
                             if (!game.TriggerMapEvents(EventTrigger.Mouth))
                             {
                                 game.SpeakToParty();
                             }
-                        }, true);
+                        }, true, GetTooltip(Button.TooltipType.Mouth));
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
-                        buttonGrid.SetButton(4, ButtonType.Spells, game?.Map?.CanUseSpells != true, () => game.CastSpell(false), false);
-                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false);
-                        buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false); // TODO: is this disabled in some cases?
-                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false);
-                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false);
+                        buttonGrid.SetButton(4, ButtonType.Spells, game?.Map?.CanUseSpells != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
+                        buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
+                        buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap)); // TODO: is this disabled in some cases?
+                        buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
+                        buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
                     break;
                 case LayoutType.Inventory:
-                    buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false);
+                    buttonGrid.SetButton(0, ButtonType.Stats, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, false), false, GetTooltip(Button.TooltipType.Stats));
                     buttonGrid.SetButton(1, ButtonType.UseItem, false, () => PickInventoryItemForAction(UseItem,
-                        true, game.DataNameProvider.WhichItemToUseMessage), true);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                        true, game.DataNameProvider.WhichItemToUseMessage), true, GetTooltip(Button.TooltipType.UseItem));
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false, GetTooltip(Button.TooltipType.Exit));
                     if (game.OpenStorage?.AllowsItemDrop == true)
                     {
                         buttonGrid.SetButton(3, ButtonType.StoreItem, false, () => PickInventoryItemForAction(StoreItem,
-                            false, game.DataNameProvider.WhichItemToStoreMessage), false);
-                        buttonGrid.SetButton(4, ButtonType.StoreGold, game.CurrentInventory?.Gold == 0, StoreGold, false);
-                        buttonGrid.SetButton(5, ButtonType.StoreFood, game.CurrentInventory?.Food == 0, StoreFood, false);
+                            false, game.DataNameProvider.WhichItemToStoreMessage), false, GetTooltip(Button.TooltipType.StoreItem));
+                        buttonGrid.SetButton(4, ButtonType.StoreGold, game.CurrentInventory?.Gold == 0, StoreGold, false, GetTooltip(Button.TooltipType.StoreGold));
+                        buttonGrid.SetButton(5, ButtonType.StoreFood, game.CurrentInventory?.Food == 0, StoreFood, false, GetTooltip(Button.TooltipType.StoreFood));
                     }
                     else
                     {
                         buttonGrid.SetButton(3, ButtonType.DropItem, false, () => PickInventoryItemForAction(DropItem,
-                            false, game.DataNameProvider.WhichItemToDropMessage), false);
-                        buttonGrid.SetButton(4, ButtonType.DropGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, DropGold, false);
-                        buttonGrid.SetButton(5, ButtonType.DropFood, game.CurrentInventory?.Food == 0, DropFood, false);
+                            false, game.DataNameProvider.WhichItemToDropMessage), false, GetTooltip(Button.TooltipType.DropItem));
+                        buttonGrid.SetButton(4, ButtonType.DropGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, DropGold, false, GetTooltip(Button.TooltipType.DropGold));
+                        buttonGrid.SetButton(5, ButtonType.DropFood, game.CurrentInventory?.Food == 0, DropFood, false, GetTooltip(Button.TooltipType.DropFood));
                     }
                     buttonGrid.SetButton(6, ButtonType.ViewItem, false, () => PickInventoryItemForAction(ViewItem,
-                        true, game.DataNameProvider.WhichItemToExamineMessage), false);
-                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false);
-                    buttonGrid.SetButton(8, ButtonType.GiveFood, game.CurrentInventory?.Food == 0, () => GiveFood(null), false);
+                        true, game.DataNameProvider.WhichItemToExamineMessage), false, GetTooltip(Button.TooltipType.ExamineItem));
+                    buttonGrid.SetButton(7, ButtonType.GiveGold, game.OpenStorage is IPlace || game.CurrentInventory?.Gold == 0, () => GiveGold(null), false, GetTooltip(Button.TooltipType.GiveGold));
+                    buttonGrid.SetButton(8, ButtonType.GiveFood, game.CurrentInventory?.Food == 0, () => GiveFood(null), false, GetTooltip(Button.TooltipType.GiveFood));
                     break;
                 case LayoutType.Stats:
-                    buttonGrid.SetButton(0, ButtonType.Inventory, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, true), false);
+                    buttonGrid.SetButton(0, ButtonType.Inventory, false, () => game.OpenPartyMember(game.CurrentInventoryIndex.Value, true), false, GetTooltip(Button.TooltipType.Inventory));
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false, GetTooltip(Button.TooltipType.Exit));
                     buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
@@ -1489,22 +1587,22 @@ namespace Ambermoon.UI
                         }
                         buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                         buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(2, ButtonType.Exit, false, CloseChest, false);
+                        buttonGrid.SetButton(2, ButtonType.Exit, false, CloseChest, false, GetTooltip(Button.TooltipType.Exit));
                         buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(4, ButtonType.DistributeGold, chest.Gold == 0, () => DistributeGold(chest), false);
-                        buttonGrid.SetButton(5, ButtonType.DistributeFood, chest.Food == 0, () => DistributeFood(chest), false);
+                        buttonGrid.SetButton(4, ButtonType.DistributeGold, chest.Gold == 0, () => DistributeGold(chest), false, GetTooltip(Button.TooltipType.DistributeGold));
+                        buttonGrid.SetButton(5, ButtonType.DistributeFood, chest.Food == 0, () => DistributeFood(chest), false, GetTooltip(Button.TooltipType.DistributeFood));
                         buttonGrid.SetButton(6, ButtonType.ViewItem, false, () => PickChestItemForAction(ViewItem,
-                            game.DataNameProvider.WhichItemToExamineMessage), false);
-                        buttonGrid.SetButton(7, ButtonType.GiveGold, chest.Gold == 0, () => GiveGold(chest), false);
-                        buttonGrid.SetButton(8, ButtonType.GiveFood, chest.Food == 0, () => GiveFood(chest), false);
+                            game.DataNameProvider.WhichItemToExamineMessage), false, GetTooltip(Button.TooltipType.ExamineItem));
+                        buttonGrid.SetButton(7, ButtonType.GiveGold, chest.Gold == 0, () => GiveGold(chest), false, GetTooltip(Button.TooltipType.GiveGold));
+                        buttonGrid.SetButton(8, ButtonType.GiveFood, chest.Food == 0, () => GiveFood(chest), false, GetTooltip(Button.TooltipType.GiveFood));
                     }
                     else if (game.OpenStorage is Merchant merchant)
                     {
-                        buttonGrid.SetButton(0, ButtonType.BuyItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(0, ButtonType.BuyItem, false, null, false, GetTooltip(Button.TooltipType.Buy)); // this is set later manually
                         buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                        buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(3, ButtonType.SellItem, false, null, false); // this is set later manually
-                        buttonGrid.SetButton(4, ButtonType.ViewItem, false, null, false); // this is set later manually
+                        buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                        buttonGrid.SetButton(3, ButtonType.SellItem, false, null, false, GetTooltip(Button.TooltipType.Sell)); // this is set later manually
+                        buttonGrid.SetButton(4, ButtonType.ViewItem, false, null, false, GetTooltip(Button.TooltipType.ExamineItem)); // this is set later manually
                         buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                         buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
                         buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
@@ -1517,8 +1615,8 @@ namespace Ambermoon.UI
                             case PlaceType.Trainer:
                                 buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.Train, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.Train, false, null, false, GetTooltip(Button.TooltipType.Train)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
@@ -1528,30 +1626,30 @@ namespace Ambermoon.UI
                             case PlaceType.FoodDealer:
                                 buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.BuyFood, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(4, ButtonType.DistributeFood, true, null, false); // this is set later manually
-                                buttonGrid.SetButton(5, ButtonType.GiveFood, true, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.BuyFood, false, null, false, GetTooltip(Button.TooltipType.Buy)); // this is set later manually
+                                buttonGrid.SetButton(4, ButtonType.DistributeFood, true, null, false, GetTooltip(Button.TooltipType.DistributeFood)); // this is set later manually
+                                buttonGrid.SetButton(5, ButtonType.GiveFood, true, null, false, GetTooltip(Button.TooltipType.GiveFood)); // this is set later manually
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
                             case PlaceType.Healer:
-                                buttonGrid.SetButton(0, ButtonType.HealPerson, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(0, ButtonType.HealPerson, false, null, false, GetTooltip(Button.TooltipType.HealPerson)); // this is set later manually
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.RemoveCurse, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.RemoveCurse, false, null, false, GetTooltip(Button.TooltipType.RemoveCurse)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(6, ButtonType.HealAilment, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(6, ButtonType.HealAilment, false, null, false, GetTooltip(Button.TooltipType.HealAilment)); // this is set later manually
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
                             case PlaceType.Inn:
                                 buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.Camp, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.Camp, false, null, false, GetTooltip(Button.TooltipType.RestInn)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
@@ -1563,14 +1661,14 @@ namespace Ambermoon.UI
                             case PlaceType.ShipDealer:
                                 buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
                                 buttonGrid.SetButton(3, place.PlaceType switch
                                 {
                                     PlaceType.HorseDealer => ButtonType.BuyHorse,
                                     PlaceType.RaftDealer => ButtonType.BuyRaft,
                                     PlaceType.ShipDealer => ButtonType.BuyBoat,
                                     _ => ButtonType.Empty
-                                }, false, null, false); // this is set later manually
+                                }, false, null, false, GetTooltip(Button.TooltipType.Buy)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
@@ -1578,10 +1676,10 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
                             case PlaceType.Sage:
-                                buttonGrid.SetButton(0, ButtonType.Grid, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(0, ButtonType.Grid, false, null, false, GetTooltip(Button.TooltipType.IdentifyEquipment)); // this is set later manually
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.Inventory, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.Inventory, false, null, false, GetTooltip(Button.TooltipType.IdentifyInventory)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
@@ -1591,8 +1689,8 @@ namespace Ambermoon.UI
                             case PlaceType.Blacksmith:
                                 buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.RepairItem, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.RepairItem, false, null, false, GetTooltip(Button.TooltipType.Repair)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
@@ -1602,8 +1700,8 @@ namespace Ambermoon.UI
                             case PlaceType.Enchanter:
                                 buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                                buttonGrid.SetButton(3, ButtonType.RechargeItem, false, null, false); // this is set later manually
+                                buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                                buttonGrid.SetButton(3, ButtonType.RechargeItem, false, null, false, GetTooltip(Button.TooltipType.Recharge)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(6, ButtonType.Empty, false, null, false);
@@ -1618,25 +1716,25 @@ namespace Ambermoon.UI
                     {
                         if (game.CurrentWindow.Window == Window.Camp)
                         {
-                            buttonGrid.SetButton(0, ButtonType.Spells, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(0, ButtonType.Spells, false, null, false, GetTooltip(Button.TooltipType.Spells)); // this is set later manually
                             buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                            buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                            buttonGrid.SetButton(3, ButtonType.ReadScroll, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                            buttonGrid.SetButton(3, ButtonType.ReadScroll, false, null, false, GetTooltip(Button.TooltipType.ReadScroll)); // this is set later manually
                             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                            buttonGrid.SetButton(6, ButtonType.Sleep, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(6, ButtonType.Sleep, false, null, false, GetTooltip(Button.TooltipType.Sleep)); // this is set later manually
                             buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                             buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                         }
                         else
                         {
-                            buttonGrid.SetButton(0, ButtonType.Lockpick, false, null, false); // this is set later manually
-                            buttonGrid.SetButton(1, ButtonType.UseItem, false, null, false); // this is set later manually
-                            buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                            buttonGrid.SetButton(3, ButtonType.FindTrap, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(0, ButtonType.Lockpick, false, null, false, GetTooltip(Button.TooltipType.Lockpick)); // this is set later manually
+                            buttonGrid.SetButton(1, ButtonType.UseItem, false, null, false, GetTooltip(Button.TooltipType.UseItem)); // this is set later manually
+                            buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                            buttonGrid.SetButton(3, ButtonType.FindTrap, false, null, false, GetTooltip(Button.TooltipType.FindTrap)); // this is set later manually
                             buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                             buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                            buttonGrid.SetButton(6, ButtonType.DisarmTrap, false, null, false); // this is set later manually
+                            buttonGrid.SetButton(6, ButtonType.DisarmTrap, false, null, false, GetTooltip(Button.TooltipType.DisarmTrap)); // this is set later manually
                             buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                             buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                         }
@@ -1646,40 +1744,40 @@ namespace Ambermoon.UI
                 case LayoutType.Riddlemouth:
                     buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
                     buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(6, ButtonType.Mouth, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(6, ButtonType.Mouth, false, null, false, GetTooltip(Button.TooltipType.SolveRiddle)); // this is set later manually
                     buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(8, ButtonType.Ear, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(8, ButtonType.Ear, false, null, false, GetTooltip(Button.TooltipType.HearRiddle)); // this is set later manually
                     break;
                 case LayoutType.Conversation:
-                    buttonGrid.SetButton(0, ButtonType.Mouth, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(0, ButtonType.Mouth, false, null, false, GetTooltip(Button.TooltipType.Say)); // this is set later manually
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(3, ButtonType.ViewItem, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(4, ButtonType.AskToLeave, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(5, ButtonType.AskToJoin, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(6, ButtonType.GiveItem, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(7, ButtonType.GiveGoldToNPC, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(8, ButtonType.GiveFoodToNPC, false, null, false); // this is set later manually
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, null, false, GetTooltip(Button.TooltipType.Exit)); // this is set later manually
+                    buttonGrid.SetButton(3, ButtonType.ViewItem, false, null, false, GetTooltip(Button.TooltipType.ShowItemToNPC)); // this is set later manually
+                    buttonGrid.SetButton(4, ButtonType.AskToLeave, false, null, false, GetTooltip(Button.TooltipType.AskToLeave)); // this is set later manually
+                    buttonGrid.SetButton(5, ButtonType.AskToJoin, false, null, false, GetTooltip(Button.TooltipType.AskToJoin)); // this is set later manually
+                    buttonGrid.SetButton(6, ButtonType.GiveItem, false, null, false, GetTooltip(Button.TooltipType.GiveItemToNPC)); // this is set later manually
+                    buttonGrid.SetButton(7, ButtonType.GiveGoldToNPC, false, null, false, GetTooltip(Button.TooltipType.GiveGoldToNPC)); // this is set later manually
+                    buttonGrid.SetButton(8, ButtonType.GiveFoodToNPC, false, null, false, GetTooltip(Button.TooltipType.GiveFoodToNPC)); // this is set later manually
                     break;
                 case LayoutType.Battle:
-                    buttonGrid.SetButton(0, ButtonType.Flee, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(1, ButtonType.Options, false, OpenOptionMenu, false);
-                    buttonGrid.SetButton(2, ButtonType.Ok, false, null, false); // this is set later manually
-                    buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false); // this is set later manually
-                    buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false); // this is set later manually
+                    buttonGrid.SetButton(0, ButtonType.Flee, false, null, false, GetTooltip(Button.TooltipType.Flee)); // this is set later manually
+                    buttonGrid.SetButton(1, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
+                    buttonGrid.SetButton(2, ButtonType.Ok, false, null, false, GetTooltip(Button.TooltipType.StartBattleRound)); // this is set later manually
+                    buttonGrid.SetButton(3, ButtonType.BattlePositions, true, null, false, GetTooltip(Button.TooltipType.BattleMove)); // this is set later manually
+                    buttonGrid.SetButton(4, ButtonType.MoveForward, true, null, false, GetTooltip(Button.TooltipType.BattleAdvance)); // this is set later manually
                     buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(6, ButtonType.Attack, true, null, false); // this is set later manually
-                    buttonGrid.SetButton(7, ButtonType.Defend, true, null, false); // this is set later manually
-                    buttonGrid.SetButton(8, ButtonType.Spells, true, null, false); // this is set later manually
+                    buttonGrid.SetButton(6, ButtonType.Attack, true, null, false, GetTooltip(Button.TooltipType.BattleAttack)); // this is set later manually
+                    buttonGrid.SetButton(7, ButtonType.Defend, true, null, false, GetTooltip(Button.TooltipType.BattleDefend)); // this is set later manually
+                    buttonGrid.SetButton(8, ButtonType.Spells, true, null, false, GetTooltip(Button.TooltipType.BattleCast)); // this is set later manually
                     break;
                 case LayoutType.BattlePositions:
                     buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);
-                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false);
+                    buttonGrid.SetButton(2, ButtonType.Exit, false, game.CloseWindow, false, GetTooltip(Button.TooltipType.Exit));
                     buttonGrid.SetButton(3, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                     buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
@@ -1712,6 +1810,7 @@ namespace Ambermoon.UI
         internal Popup OpenAmountInputBox(string message, uint? imageIndex, string name, uint maxAmount,
             Action<uint> submitAction, Action abortAction = null)
         {
+            buttonGrid?.HideTooltips();
             ClosePopup(false);
             activePopup = new Popup(game, RenderView, new Position(64, 64), 11, 6, false)
             {
@@ -2304,7 +2403,6 @@ namespace Ambermoon.UI
 
         internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = false)
         {
-            // TODO: Right-clicking will stop following mouse clicks
             var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
             ChestText = AddScrollableText(bounds, game.ProcessText(message, bounds));
@@ -3454,7 +3552,11 @@ namespace Ambermoon.UI
                 HideTooltip();
         }
 
-        internal void HideTooltip() => SetActiveTooltip(null, null);
+        internal void HideTooltip()
+        {
+            SetActiveTooltip(null, null);
+            buttonGrid?.HideTooltips();
+        }
 
         void SetActiveTooltip(Position cursorPosition, Tooltip tooltip)
         {
@@ -4400,6 +4502,12 @@ namespace Ambermoon.UI
             }
         }
 
+        public void HoverButtonGrid(Position position)
+        {
+            if (game.Configuration.ShowButtonTooltips)
+                buttonGrid?.Hover(position);
+        }
+
         public bool Hover(Position position, ref CursorType cursorType)
         {
             if (PopupActive)
@@ -4451,7 +4559,10 @@ namespace Ambermoon.UI
                 }
 
                 if (!consumed)
+                {
                     SetActiveTooltip(position, null);
+                    HoverButtonGrid(position);
+                }
             }
 
             return consumed;

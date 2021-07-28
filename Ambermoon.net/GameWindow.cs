@@ -484,6 +484,18 @@ namespace Ambermoon
                                         {
                                             ChangeFullscreenMode(configuration.Fullscreen);
                                         }
+
+                                        if (configuration.EnableCheats && !Console.IsInputRedirected)
+                                        {
+                                            while (Console.KeyAvailable)
+                                                Console.ReadKey(true);
+                                            PrintCheatConsoleHeader();
+                                        }
+                                        else if (!configuration.EnableCheats && !Console.IsInputRedirected)
+                                        {
+                                            cheatHeaderPrinted = false;
+                                            Console.Clear();
+                                        }
                                     };
                                     game.DrugTicked += Drug_Ticked;
                                     mainMenu.GameDataLoaded = true;
@@ -827,18 +839,26 @@ namespace Ambermoon
             }
             else if (Game != null)
             {
+                bool cheatsEnabled = configuration.EnableCheats;
+
                 Game.Update(delta);
 
-                if (configuration.EnableCheats && !Console.IsInputRedirected && Console.KeyAvailable)
+                if (cheatsEnabled && configuration.EnableCheats && !Console.IsInputRedirected && Console.KeyAvailable)
                     Cheats.ProcessInput(Console.ReadKey(true), Game);
             }
         }
 
+        static bool cheatHeaderPrinted = false;
+
         static void PrintCheatConsoleHeader()
         {
-            Console.WriteLine("***** Ambermoon Cheat Console *****");
-            Console.WriteLine("Type 'help' for more information.");
-            Console.WriteLine();
+            if (!cheatHeaderPrinted)
+            {
+                cheatHeaderPrinted = true;
+                Console.WriteLine("***** Ambermoon Cheat Console *****");
+                Console.WriteLine("Type 'help' for more information.");
+                Console.WriteLine();
+            }
         }
 
         void Window_Resize(WindowDimension size)

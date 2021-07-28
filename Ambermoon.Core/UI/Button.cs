@@ -2,14 +2,218 @@
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Render;
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.UI
 {
     internal class Button
     {
+        public enum TooltipType
+        {
+            Exit,
+            Quit,
+            Options,
+            Save,
+            Load,
+            New,
+            Eye,
+            Hand,
+            Mouth,
+            Transport,
+            Spells,
+            Camp,
+            Automap,
+            BattlePositions,
+            Wait,
+            Stats,
+            Inventory,
+            UseItem,
+            ExamineItem,
+            StoreItem,
+            StoreGold,
+            StoreFood,
+            DropItem,
+            DropGold,
+            DropFood,
+            GiveGold,
+            GiveFood,
+            DistributeGold,
+            DistributeFood,
+            Buy,
+            Sell,
+            Train,
+            HealPerson,
+            RemoveCurse,
+            HealAilment,
+            RestInn,
+            IdentifyEquipment,
+            IdentifyInventory,
+            Repair,
+            Recharge,
+            ReadScroll,
+            Sleep,
+            Lockpick,
+            FindTrap,
+            DisarmTrap,
+            SolveRiddle,
+            HearRiddle,
+            Say,
+            ShowItemToNPC,
+            GiveItemToNPC,
+            GiveGoldToNPC,
+            GiveFoodToNPC,
+            AskToJoin,
+            AskToLeave,
+            Flee,
+            StartBattleRound,
+            BattleMove,
+            BattleAdvance,
+            BattleAttack,
+            BattleDefend,
+            BattleCast
+        }
+
+        // TODO: add more languages or add this to some kind of game data
+        static readonly Dictionary<GameLanguage, string[]> tooltips = new Dictionary<GameLanguage, string[]>
+        {
+            { GameLanguage.German, new string[]
+                {
+                    "Schließen",
+                    "Spiel beenden",
+                    "Optionen",
+                    "Speichern",
+                    "Laden",
+                    "Neues Spiel",
+                    "Untersuchen",
+                    "Berühren",
+                    "Sprechen",
+                    "Transport",
+                    "Zaubersprüche",
+                    "Lager",
+                    "Karte",
+                    "Kampfpositionen",
+                    "Warten",
+                    "Charakterinfo",
+                    "Inventar",
+                    "Gegenstand benutzen",
+                    "Gegenstand untersuchen",
+                    "Gegenstand in Truhe packen",
+                    "Gold in Truhe packen",
+                    "Rationen in Truhe packen",
+                    "Gegenstand wegwerfen",
+                    "Gold wegwerfen",
+                    "Rationen wegwerfen",
+                    "Gold überreichen",
+                    "Rationen überreichen",
+                    "Gold aufteilen",
+                    "Rationen aufteilen",
+                    "Kaufen",
+                    "Verkaufen",
+                    "Trainieren",
+                    "Person heilen",
+                    "Fluch entfernen",
+                    "Kondition heilen",
+                    "Übernachten",
+                    "Ausrüstung identifizieren",
+                    "Gegenstände identifizieren",
+                    "Gegenstand reparieren",
+                    "Gegenstand laden",
+                    "Spruchrolle lesen",
+                    "Schlafen",
+                    "Schloss knacken",
+                    "Falle finden",
+                    "Falle entschärfen",
+                    "Antwort eingeben",
+                    "Rätsel anhören",
+                    "Etwas sagen",
+                    "Gegenstand zeigen",
+                    "Gegenstand geben",
+                    "Gold geben",
+                    "Rationen geben",
+                    "In Gruppe einladen",
+                    "Aus Gruppe entlassen",
+                    "Flüchten",
+                    "Kampfrunde starten",
+                    "Bewegen",
+                    "Vorrücken",
+                    "Angreifen",
+                    "Abwehren",
+                    "Zaubern"
+                }
+            },
+            { GameLanguage.English, new string[]
+                {
+                    "Close",
+                    "Quit game",
+                    "Options",
+                    "Save",
+                    "Load",
+                    "New game",
+                    "Examine",
+                    "Touch",
+                    "Speak",
+                    "Transport",
+                    "Spell book",
+                    "Camp",
+                    "Map",
+                    "Battle positions",
+                    "Wait",
+                    "Character stats",
+                    "Inventory",
+                    "Use item",
+                    "Examine item",
+                    "Store item in chest",
+                    "Store gold in chest",
+                    "Store food in chest",
+                    "Drop item",
+                    "Drop gold",
+                    "Drop food",
+                    "Hand over gold",
+                    "Hand over food",
+                    "Distribute gold",
+                    "Distribute food",
+                    "Buy",
+                    "Sell",
+                    "Train",
+                    "Heal person",
+                    "Remove curse",
+                    "Heal condition",
+                    "Stay for the night",
+                    "Identify equipment",
+                    "Identify items",
+                    "Repair item",
+                    "Recharge item",
+                    "Read spell scroll",
+                    "Sleep",
+                    "Lockpick",
+                    "Find trap",
+                    "Disarm trap",
+                    "Answer",
+                    "Rehear riddle",
+                    "Say something",
+                    "Show item",
+                    "Give item",
+                    "Give gold",
+                    "Give food",
+                    "Ask to join",
+                    "Ask to leave",
+                    "Flee",
+                    "Start round",
+                    "Move",
+                    "Advance",
+                    "Attack",
+                    "Defend",
+                    "Cast spell"
+                }
+            }
+        };
+
+        public static string GetTooltip(GameLanguage gameLanguage, TooltipType type) => tooltips[gameLanguage][(int)type];
+
         public const int ButtonReleaseTime = 250;
         public const int Width = 32;
         public const int Height = 17;
+        readonly IRenderView renderView;
         public Rect Area { get; }
         ButtonType buttonType = ButtonType.Empty;
         readonly ILayerSprite frameSprite; // 32x17
@@ -25,10 +229,13 @@ namespace Ambermoon.UI
         uint lastActionTimeInTicks = 0;
         uint? continuousActionDelayInTicks = null;
         uint? initialContinuousActionDelayInTicks = null;
+        readonly IRenderText tooltip = null;
+        string tooltipText = null;
 
         public Button(IRenderView renderView, Position position,
             TextureAtlasManager textureAtlasManager = null)
         {
+            this.renderView = renderView;
             Area = new Rect(position, new Size(Width, Height));
             byte paletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
 
@@ -60,7 +267,41 @@ namespace Ambermoon.UI
             frameSprite.Visible = true;
             disableOverlay.Visible = false;
             iconSprite.Visible = true;
+
+            var text = renderView.TextProcessor.CreateText("");
+            tooltip = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, true);
+            tooltip.DisplayLayer = 254;
+            tooltip.Visible = false;
         }
+
+        public string Tooltip
+        {
+            get => tooltipText;
+            set
+            {
+                tooltipText = value;
+
+                if (string.IsNullOrWhiteSpace(tooltipText))
+                    tooltip.Visible = false;
+            }
+        }
+
+        public void SetTooltip(string text)
+        {
+            bool visible = !string.IsNullOrWhiteSpace(text);
+
+            if (visible)
+            {
+                tooltip.Text = renderView.TextProcessor.CreateText(text);
+                int width = tooltip.Text.MaxLineSize * Global.GlyphWidth;
+                tooltip.X = Math.Min(Global.VirtualScreenWidth - width, Area.Center.X - width / 2);
+                tooltip.Y = Area.Top - tooltip.Text.LineCount * Global.GlyphLineHeight + 1;
+            }
+
+            tooltip.Visible = visible;
+        }
+
+        public void HideTooltip() => SetTooltip(null);
 
         public byte DisplayLayer
         {
@@ -78,6 +319,7 @@ namespace Ambermoon.UI
             frameSprite?.Delete();
             disableOverlay?.Delete();
             iconSprite?.Delete();
+            tooltip?.Delete();
         }
 
         public ButtonType ButtonType
@@ -300,6 +542,14 @@ namespace Ambermoon.UI
             }
 
             return false;
+        }
+
+        public void Hover(Position position)
+        {
+            if (!string.IsNullOrEmpty(tooltipText) && Area.Contains(position))
+                SetTooltip(tooltipText);
+            else
+                HideTooltip();
         }
 
         CursorType? ExecuteActions(uint currentTicks, bool rightMouse)

@@ -22,7 +22,10 @@ namespace Ambermoon
         public int Volume { get; set; } = 100;
         public bool FastBattleMode { get; set; } = false;
         public bool CacheMusic { get; set; } = true;
-        public bool EnableCheats { get; set; } = true; // TODO: change to false
+        public bool EnableCheats { get; set; } = false;
+        public bool ShowButtonTooltips { get; set; } = true;
+        public bool ShowFantasyIntro { get; set; } = false; // TODO: change to true
+        public bool ShowIntro { get; set; } = false; // TODO: change to true
 
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");

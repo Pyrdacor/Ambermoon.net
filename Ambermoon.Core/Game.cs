@@ -2705,6 +2705,9 @@ namespace Ambermoon
                         layout.UpdateDraggedItemPosition(renderView.ScreenToGame(cursorPosition));
                     }
 
+                    if (layout.OptionMenuOpen && !layout.PopupActive)
+                        layout.HoverButtonGrid(renderView.ScreenToGame(cursorPosition));
+
                     return;
                 }
 
@@ -3145,6 +3148,8 @@ namespace Ambermoon
 
         void ShowMap(bool show)
         {
+            layout.HideTooltip();
+
             if (show)
             {
                 UpdateUIPalette(true);
@@ -10032,7 +10037,18 @@ namespace Ambermoon
                     }
                 }
                 UpdateButtons();
-                ShowDefaultMessage();
+                if (!showWelcome)
+                    ShowDefaultMessage();
+                else
+                {
+                    void ClickedWelcomeMessage(bool _)
+                    {
+                        if (layout.ChestText != null)
+                            layout.ChestText.Clicked -= ClickedWelcomeMessage;
+                        ExecuteNextUpdateCycle(ShowDefaultMessage);
+                    }
+                    layout.ChestText.Clicked += ClickedWelcomeMessage;
+                }
             });
         }
 
@@ -11173,6 +11189,7 @@ namespace Ambermoon
 
         void ShowItemDetails(Popup itemPopup, ItemSlot itemSlot)
         {
+            layout.HideTooltip();
             var item = ItemManager.GetItem(itemSlot.ItemIndex);
             bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) || item.Flags.HasFlag(ItemFlags.Accursed);
             int factor = cursed ? -1 : 1;
@@ -13357,6 +13374,8 @@ namespace Ambermoon
 
         internal void CloseWindow(Action finishAction)
         {
+            layout.HideTooltip();
+
             if (!WindowActive)
             {
                 finishAction?.Invoke();

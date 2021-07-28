@@ -43,6 +43,9 @@ namespace Ambermoon
         bool FastBattleMode { get; set; }
         bool CacheMusic { get; set; }
         bool EnableCheats { get; set; }
+        bool ShowButtonTooltips { get; set; }
+        bool ShowFantasyIntro { get; set; }
+        bool ShowIntro { get; set; }
     }
 
     public static class ConfigurationExtensions

@@ -56,7 +56,7 @@ namespace Ambermoon.UI
         }
 
         public void SetButton(int slot, ButtonType buttonType, bool disabled, Action action,
-            bool instantAction, Func<CursorType> cursorChangeAction = null,
+            bool instantAction, string tooltip = null, Func<CursorType> cursorChangeAction = null,
             uint? continuousActionDelayInTicks = null)
         {
             buttons[slot].ButtonType = buttonType;
@@ -65,6 +65,22 @@ namespace Ambermoon.UI
             buttons[slot].CursorChangeAction = cursorChangeAction;
             buttons[slot].ContinuousActionDelayInTicks = continuousActionDelayInTicks;
             buttons[slot].Disabled = disabled;
+            buttons[slot].Tooltip = tooltip;
+        }
+
+        public void HideTooltips()
+        {
+            foreach (var button in buttons)
+                button?.HideTooltip();
+        }
+
+        public void Hover(Position position)
+        {
+            foreach (var button in buttons)
+            {
+                if (button != null && !button.Disabled && button.Visible)
+                    button.Hover(position);
+            }
         }
 
         public void MouseUp(Position position, MouseButtons mouseButtons, out CursorType? newCursorType, uint currentTicks)

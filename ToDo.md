@@ -13,7 +13,6 @@
 
 ## 2D maps
 
-- NPCs can leave the map through non-blocking portals which teleport the player (Spannenberg Inn etc).
 - Teleporting from a 2D map to a 2D world map via cheat with fixed positions (e.g. teleport 110 1 1) scrolls the map badly.
 
 
@@ -27,6 +26,7 @@
 ## UI
 
 - "Do you accept this character?" message is missing in character creator.
+- Add "New game" button to game over screen
 
 
 ## Misc
