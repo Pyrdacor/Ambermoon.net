@@ -13,7 +13,7 @@ Here are some tips:
 
 Hier sind ein paar Tipps:
 
-- Die Aktionstasten im unteren linken Bereich können mit der rechten Maustaste umgeschaltet werden. Man kann zwischen Bewegungstasten und allen möglichen Aktionen wechseln.
+- Die Aktionstasten im unteren rechten Bereich können mit der rechten Maustaste umgeschaltet werden. Man kann zwischen Bewegungstasten und allen möglichen Aktionen wechseln.
 - Rechtsklicks auf die Map in 2D verwandelt den Mauscursor in einen Aktionscursor. Damit kannst du mit der Welt interagieren.
 - Rechtsklick in die Mitte der 3D Map lässt dich mit den Mapobjekten vor dir interagieren.
 - Du kannst auch Gegenstände aus dem Inventar benutzen. Manchmal haben diese auch einen Effekt auf die Map. Zum Beispiel kannst du manche Spinnennetze mit einer Fackel anzünden.
