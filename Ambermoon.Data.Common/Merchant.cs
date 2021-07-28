@@ -57,7 +57,6 @@ namespace Ambermoon.Data
                     return;
                 else
                 {
-
                     remainingAmount -= (uint)Math.Min((int)remainingAmount, 99 - slot.Amount);
                     slot.Amount = Math.Min(99, slot.Amount + (int)amount);
 
@@ -77,19 +76,8 @@ namespace Ambermoon.Data
             emptySlot.ItemIndex = itemIndex;
             emptySlot.Amount = (int)remainingAmount;
             emptySlot.Flags = sourceSlot.Flags;
-
-            if (item.Flags.HasFlag(ItemFlags.Stackable))
-            {
-                emptySlot.NumRemainingCharges = item.InitialCharges;
-                emptySlot.RechargeTimes = 0;
-            }
-            else
-            {
-                // TODO: how can the original distinct number of charges when
-                // all items can be stacked?
-                emptySlot.NumRemainingCharges = sourceSlot.NumRemainingCharges;
-                emptySlot.RechargeTimes = sourceSlot.RechargeTimes;
-            }
+            emptySlot.NumRemainingCharges = sourceSlot.NumRemainingCharges;
+            emptySlot.RechargeTimes = sourceSlot.RechargeTimes;
         }
 
         public void TakeItems(int column, int row, uint amount)

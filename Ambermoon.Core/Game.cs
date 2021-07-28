@@ -10456,6 +10456,9 @@ namespace Ambermoon
                             {
                                 int column = slotIndex % Merchant.SlotsPerRow;
                                 int row = slotIndex / Merchant.SlotsPerRow;
+                                int numCharges = itemSlot.NumRemainingCharges;
+                                byte rechargeTimes = itemSlot.RechargeTimes;
+                                var flags = itemSlot.Flags;
                                 merchant.TakeItems(column, row, amount);
                                 itemGrid.SetItem(slotIndex, merchant.Slots[column, row], true);
                                 merchant.AvailableGold -= amount * item.Price;
@@ -10485,9 +10488,9 @@ namespace Ambermoon
                                                 {
                                                     ItemIndex = item.Index,
                                                     Amount = (int)amount,
-                                                    NumRemainingCharges = item.InitialCharges,
-                                                    RechargeTimes = 0,
-                                                    Flags = itemSlot.Flags
+                                                    NumRemainingCharges = numCharges,
+                                                    RechargeTimes = rechargeTimes,
+                                                    Flags = flags
                                                 };
                                                 amount = 0;
                                                 break;
@@ -10505,9 +10508,9 @@ namespace Ambermoon
                                             {
                                                 ItemIndex = item.Index,
                                                 Amount = 1,
-                                                NumRemainingCharges = itemSlot.NumRemainingCharges,
-                                                RechargeTimes = itemSlot.RechargeTimes,
-                                                Flags = itemSlot.Flags
+                                                NumRemainingCharges = numCharges,
+                                                RechargeTimes = rechargeTimes,
+                                                Flags = flags
                                             };
                                             if (--amount == 0)
                                                 break;
