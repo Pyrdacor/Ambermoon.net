@@ -919,7 +919,7 @@ namespace Ambermoon
             var videoMode = new VideoMode(60);
             var options = new WindowOptions(true, new WindowDimension(100, 100),
                 new WindowDimension(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
-                $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} - Test Release",
+                $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} RC2",
                 WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
 
             try
