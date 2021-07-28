@@ -58,7 +58,7 @@ namespace Ambermoon
             /// <inheritdoc />
             public string LeadName => game.CurrentPartyMember?.Name ?? "";
             /// <inheritdoc />
-            public string SelfName => LeadName;
+            public string SelfName => game?.PartyMembers?.FirstOrDefault()?.Name ?? LeadName;
             /// <inheritdoc />
             public string CastName => game.CurrentCaster?.Name ?? LeadName;
             /// <inheritdoc />
@@ -1377,6 +1377,9 @@ namespace Ambermoon
             InputEnable = true;
             paused = false;
 
+            if (layout.ButtonGridPage == 1)
+                ToggleButtonGridPage();
+
             // Trigger events after game load
             TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
                 (uint)player.Position.Y);
@@ -2341,12 +2344,14 @@ namespace Ambermoon
                     if (WindowActive || layout.PopupActive)
                         layout.KeyDown(key, modifiers);
                     else if (key == Key.Return)
-                        layout.ToggleButtonGridPage();
+                        ToggleButtonGridPage();
                     break;
             }
 
             lastMoveTicksReset = CurrentTicks;
         }
+
+        internal void ToggleButtonGridPage() => layout.ToggleButtonGridPage();
 
         public void OnKeyUp(Key key, KeyModifiers modifiers)
         {
@@ -12947,7 +12952,23 @@ namespace Ambermoon
                         }
                         else
                         {
-                            CloseWindow(closeAction);
+                            // Special case, we show a small game introduction
+                            // when playing for the first time and closing the
+                            // initial event with grandfather.
+                            if (Configuration.FirstStart && imageIndex == 1)
+                            {
+                                // This avoids asking for introduction twice in the same sessions.
+                                Configuration.FirstStart = false;
+                                CloseWindow(() =>
+                                {
+                                    closeAction?.Invoke();
+                                    ShowTutorial();
+                                });
+                            }
+                            else
+                            {
+                                CloseWindow(closeAction);
+                            }
                         }
                     }
                 };
@@ -12976,6 +12997,11 @@ namespace Ambermoon
                     ShowButtons();
                 }
             });
+        }
+
+        void ShowTutorial()
+        {
+            new Tutorial(this).Run(renderView);
         }
 
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)

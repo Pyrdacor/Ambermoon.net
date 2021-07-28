@@ -28,6 +28,8 @@ namespace Ambermoon
 
     public interface IConfiguration
     {
+        bool FirstStart { get; set; }
+
         int? Width { get; set; }
         int? Height { get; set; }
         int? FullscreenWidth { get; set; }

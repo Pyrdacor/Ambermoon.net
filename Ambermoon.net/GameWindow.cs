@@ -364,6 +364,8 @@ namespace Ambermoon
                         startGameAction?.Invoke(false);
                         break;
                     case MainMenu.CloseAction.Continue:
+                        // Someone who has savegames won't need any introduction, so set this to false.
+                        configuration.FirstStart = false;
                         startGameAction?.Invoke(true);
                         break;
                     case MainMenu.CloseAction.Intro:

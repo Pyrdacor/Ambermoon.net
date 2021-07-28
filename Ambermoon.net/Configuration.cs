@@ -8,6 +8,9 @@ namespace Ambermoon
 {
     internal class Configuration : IConfiguration
     {
+        [JsonIgnore]
+        public bool FirstStart { get; set; } = false;
+
         public int? Width { get; set; } = null;
         public int? Height { get; set; } = null;
         public int? FullscreenWidth { get; set; } = null;

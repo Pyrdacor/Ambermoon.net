@@ -16,7 +16,7 @@ namespace Ambermoon
                 return configuration;
 
             path = Path.Combine(Configuration.FallbackConfigDirectory, ConfigurationFileName);
-            return Configuration.Load(path, new Configuration());
+            return Configuration.Load(path, new Configuration { FirstStart = true });
         }
 
         static void SaveConfig(Configuration configuration)
