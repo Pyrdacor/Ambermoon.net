@@ -377,11 +377,15 @@ namespace Ambermoon
         bool clickMoveActive = false;
         bool trappedAfterClickMoveActivation = false;
         Rect trapMouseArea = null;
+        Rect trapMouseGameArea = null;
+        Rect preFullscreenChangeTrapMouseArea = null;
+        Position preFullscreenMousePosition = null;
         bool mouseTrappingActive = false;
         Position lastMousePosition = new Position();
         readonly Position trappedMousePositionOffset = new Position();
         bool trapped => trapMouseArea != null;
         public event Action<bool, Position> MouseTrappedChanged;
+        public event Action<Position> MousePositionChanged;
         readonly Func<List<Key>> pressedKeyProvider;
         Func<Position, MouseButtons, bool> battlePositionClickHandler = null;
         Action<Position> battlePositionDragHandler = null;
@@ -924,6 +928,7 @@ namespace Ambermoon
                 var newTrapArea = renderView.GameToScreen(area);
                 if (trapMouseArea == newTrapArea)
                     return;
+                trapMouseGameArea = area;
                 trapMouseArea = newTrapArea;
                 trappedMousePositionOffset.X = 0;
                 trappedMousePositionOffset.Y = 0;
@@ -931,8 +936,6 @@ namespace Ambermoon
                 {
                     bool keepX = lastMousePosition.X >= trapMouseArea.Left && lastMousePosition.X <= trapMouseArea.Right;
                     bool keepY = lastMousePosition.Y >= trapMouseArea.Top && lastMousePosition.Y <= trapMouseArea.Bottom;
-                    trappedMousePositionOffset.X = 0;
-                    trappedMousePositionOffset.Y = 0;
                     if (!keepX)
                         lastMousePosition.X = lastMousePosition.X > trapMouseArea.Right ? trapMouseArea.Right : trapMouseArea.Left;
                     if (!keepY)
@@ -957,8 +960,10 @@ namespace Ambermoon
             if (trapMouseArea == null)
                 return;
 
-            MouseTrappedChanged?.Invoke(false, GetMousePosition(lastMousePosition));
+            lastMousePosition = GetMousePosition(lastMousePosition);
+            MouseTrappedChanged?.Invoke(false, lastMousePosition);
             trapMouseArea = null;
+            trapMouseGameArea = null;
             trappedMousePositionOffset.X = 0;
             trappedMousePositionOffset.Y = 0;
         }
@@ -2669,6 +2674,29 @@ namespace Ambermoon
                 CursorType = CursorType.Target;
             else
                 CursorType = CursorType.Mouth;
+        }
+
+        public void PreFullscreenChanged()
+        {
+            preFullscreenMousePosition = renderView.ScreenToGame(GetMousePosition(lastMousePosition));
+            preFullscreenChangeTrapMouseArea = trapMouseGameArea;
+            if (trapMouseGameArea != null)
+                UntrapMouse();
+        }
+
+        public void PostFullscreenChanged()
+        {
+            lastMousePosition = renderView.GameToScreen(preFullscreenMousePosition);
+
+            if (preFullscreenChangeTrapMouseArea != null)
+            {
+                TrapMouse(preFullscreenChangeTrapMouseArea);
+                preFullscreenChangeTrapMouseArea = null;
+            }
+            else
+            {
+                MousePositionChanged?.Invoke(lastMousePosition);
+            }
         }
 
         internal void UpdateCursor()

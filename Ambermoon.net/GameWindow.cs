@@ -238,7 +238,17 @@ namespace Ambermoon
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
             if (key == Silk.NET.Input.Key.F11)
+            {
+                if (Game != null)
+                    Game.PreFullscreenChanged();
+
+                // This can happen while a mouse trap is active in-game. Otherwise a fullscreen
+                // change can only happen from the options menu where mouse trapping can't be active.
                 ChangeFullscreenMode(!Fullscreen);
+
+                if (Game != null)
+                    Game.PostFullscreenChanged();
+            }
             else
             {
                 if (versionSelector != null)
@@ -457,6 +467,15 @@ namespace Ambermoon
                                         cursor, lightEffectProvider, audioOutput, musicCache, FullscreenChangeRequest, ChangeResolution,
                                         QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge));
                                     game.QuitRequested += window.Close;
+                                    game.MousePositionChanged += position =>
+                                    {
+                                        if (mouse != null)
+                                        {
+                                            mouse.MouseMove -= Mouse_MouseMove;
+                                            mouse.Position = new MousePosition(position.X, position.Y);
+                                            mouse.MouseMove += Mouse_MouseMove;
+                                        }
+                                    };
                                     game.MouseTrappedChanged += (bool trapped, Position position) =>
                                     {
                                         try
