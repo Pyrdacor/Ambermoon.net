@@ -2,6 +2,7 @@
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
@@ -15,16 +16,18 @@ namespace Ambermoon.UI
         readonly Cursor cursor = null;
         readonly IRenderText[] versionTexts = new IRenderText[3];
         readonly IColoredRect[] versionHighlights = new IColoredRect[3];
+        readonly Rect gameDataVersionTooltipArea = null;
+        readonly IText gameDataVersionTooltipText = null;
         readonly IColoredRect selectedVersionMarker = null;
         readonly Button changeSaveOptionButton = null;
         readonly IRenderText saveOptionText = null;
         readonly Tooltip saveOptionTooltip = new Tooltip();
-        readonly IRenderText saveOptionTooltipText = null;
+        readonly IRenderText tooltipText = null;
         readonly Dictionary<Button, IColoredRect[]> buttonBackgrounds
             = new Dictionary<Button, IColoredRect[]>();
-        IColoredRect saveOptionTooltipBorder = null;
-        IColoredRect saveOptionTooltipBackground = null;
-        IText currentTooltipText = null;
+        IColoredRect tooltipBorder = null;
+        IColoredRect tooltipBackground = null;
+        IText currentSaveTooltipText = null;
         readonly Button okButton = null;
         readonly List<Rect> versionAreas = new List<Rect>(3);
         int selectedSaveOption = 0;
@@ -50,9 +53,12 @@ namespace Ambermoon.UI
 
         public event Action<int, IGameData, bool> Closed;
 
-        public VersionSelector(IRenderView renderView, TextureAtlasManager textureAtlasManager,
+        public VersionSelector(string ambermoonNetVersion, IRenderView renderView, TextureAtlasManager textureAtlasManager,
             List<GameVersion> gameVersions, Cursor cursor, int selectedVersion, SaveOption saveOption)
         {
+            var culture = CultureInfo.DefaultThreadCurrentCulture ?? CultureInfo.CurrentCulture;
+            var cultureName = culture?.Name ?? "";
+            var language = cultureName == "de" || cultureName.StartsWith("de-") ? GameLanguage.German : GameLanguage.English;
             this.renderView = renderView;
             textureAtlas = textureAtlasManager.GetOrCreate(Layer.UI);
             var fontTextureAtlas = textureAtlasManager.GetOrCreate(Layer.Text);
@@ -114,7 +120,23 @@ namespace Ambermoon.UI
                 versionListSize.Width,
                 versionListSize.Height
             );
-            AddText(new Position(versionListArea.X, versionListArea.Y - 12), "Select a game data version:", TextColor.BrightGray);
+
+            int width = ambermoonNetVersion.Length * Global.GlyphWidth;
+            int x = (Global.VirtualScreenWidth - width) / 2;
+            AddText(new Position(x, Global.VirtualScreenHeight - 10),
+                ambermoonNetVersion, TextColor.DarkerGray);
+            var headerPosition = new Position(versionListArea.X, versionListArea.Y - 12);
+            var headerText = language == GameLanguage.German
+                ? "Wähle eine Spieldaten-Version:     (?)"
+                : "Select a game data version:        (?)";
+            AddText(headerPosition, headerText, TextColor.BrightGray);
+            gameDataVersionTooltipArea = new Rect(new Position(headerPosition.X + (headerText.Length - 3) * Global.GlyphWidth, headerPosition.Y),
+                new Size(3 * Global.GlyphWidth, Global.GlyphLineHeight - 1));
+            gameDataVersionTooltipText = renderView.TextProcessor.CreateText(language == GameLanguage.German
+                ? "Die Spieldaten-Version bezieht sich auf die Amiga-Basisdaten. Diese Versionierung ist unabhängig von der Ambermoon.net Version."
+                : "The game data version relates to the Amiga base data. This version is independent of the Ambermoon.net version.");
+            gameDataVersionTooltipText = renderView.TextProcessor.WrapText(gameDataVersionTooltipText,
+                new Rect(0, 0, 300, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
             AddSunkenBox(versionListArea.CreateModified(-1, -1, 2, 2));
             for (int i = 0; i < gameVersions.Count; ++i)
             {
@@ -134,13 +156,21 @@ namespace Ambermoon.UI
             #region Savegame option and OK button
             var savegameOptions = new string[2]
             {
-                "Save games in program path",
-                "Save games in data path"
+                language == GameLanguage.German
+                    ? "Speichere beim Programm"
+                    : "Save games in program path",
+                language == GameLanguage.German
+                    ? "Speichere bei den Daten"
+                    : "Save games in data path"
             };
             var savegameOptionTooltips = new string[2]
             {
-                "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'.",
-                "Savegames are stored in the original data path and may overwrite original savegames!"
+                language == GameLanguage.German
+                    ? "Spielstände werden neben der Ambermoon.net.exe im Unterorder 'Saves' gespeichert."
+                    : "Savegames are stored next to the Ambermoon.net.exe inside the sub-folder 'Saves'.",
+                language == GameLanguage.German
+                    ? "Spielstände werden im Pfad der Originaldaten gespeichert und überschreiben die Originalspielstände!"
+                    : "Savegames are stored in the original data path and may overwrite original savegames!"
             };
             selectedSaveOption = (int)saveOption % 2;
             changeSaveOptionButton = CreateButton(new Position(versionListArea.X, versionListArea.Bottom + 3), textureAtlasManager);
@@ -158,10 +188,11 @@ namespace Ambermoon.UI
                 Closed?.Invoke(this.selectedVersion, gameVersions[this.selectedVersion].DataProvider?.Invoke(), this.selectedVersion == 2 && selectedSaveOption == 1);
             };
             saveOptionTooltip.Area = new Rect(saveOptionPosition, new Size(savegameOptions[selectedSaveOption].Length * Global.GlyphWidth, Global.GlyphLineHeight));
-            saveOptionTooltipText = AddText(new Position(), "", TextColor.White, true, 250);
-            saveOptionTooltipText.Visible = false;
             UpdateSaveOptionTooltip(savegameOptionTooltips);
             #endregion
+
+            tooltipText = AddText(new Position(), "", TextColor.White, true, 250);
+            tooltipText.Visible = false;
 
             SelectedVersion = selectedVersion;
         }
@@ -194,9 +225,9 @@ namespace Ambermoon.UI
         void UpdateSaveOptionTooltip(string[] savegameOptionTooltips)
         {
             saveOptionTooltip.Text = savegameOptionTooltips[selectedSaveOption];
-            saveOptionTooltip.TextColor = selectedSaveOption == 0 ? TextColor.BrightGray : TextColor.LightRed;
-            currentTooltipText = renderView.TextProcessor.CreateText(saveOptionTooltip.Text);
-            currentTooltipText = renderView.TextProcessor.WrapText(currentTooltipText,
+            saveOptionTooltip.TextColor = selectedSaveOption == 0 ? TextColor.White : TextColor.LightRed;
+            currentSaveTooltipText = renderView.TextProcessor.CreateText(saveOptionTooltip.Text);
+            currentSaveTooltipText = renderView.TextProcessor.WrapText(currentSaveTooltipText,
                 new Rect(0, 0, 200, 200), new Size(Global.GlyphWidth, Global.GlyphLineHeight));
         }
 
@@ -257,6 +288,7 @@ namespace Ambermoon.UI
             renderText.DisplayLayer = displayLayer;
             renderText.X = position.X;
             renderText.Y = position.Y;
+            renderText.PaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             renderText.Visible = true;
             return renderText;
         }
@@ -367,22 +399,33 @@ namespace Ambermoon.UI
 
             HighlightVersion(-1);
 
-            if (selectedVersion == 2 && currentTooltipText != null && saveOptionTooltip.Area.Contains(position))
+            void ShowTooltip(IText text, TextColor textColor, bool up)
             {
-                saveOptionTooltipText.Text = currentTooltipText;
-                saveOptionTooltipText.TextColor = saveOptionTooltip.TextColor;
+                tooltipText.Text = text;
+                tooltipText.TextColor = textColor;
 
-                int textWidth = currentTooltipText.MaxLineSize * Global.GlyphWidth;
-                int x = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
-                int y = position.Y + 16;
-                int textHeight = currentTooltipText.LineCount * Global.GlyphLineHeight;
+                int textWidth = text.MaxLineSize * Global.GlyphWidth;
+                int x = Util.Limit(0, position.X - textWidth / 2, Global.VirtualScreenWidth - textWidth - 3);
+                int textHeight = text.LineCount * Global.GlyphLineHeight;
+                int y = up ? position.Y - textHeight - 8 : position.Y + 16;
 
-                saveOptionTooltipText.Place(new Rect(x, y, textWidth, textHeight), TextAlign.Center);
-                saveOptionTooltipText.Visible = true;
-                saveOptionTooltipBorder?.Delete();
-                saveOptionTooltipBackground?.Delete();
-                saveOptionTooltipBorder = FillArea(new Rect(x - 2, y - 3, textWidth + 4, textHeight + 4), GetPaletteColor(31), 248);
-                saveOptionTooltipBackground = FillArea(new Rect(x - 1, y - 2, textWidth + 2, textHeight + 2), GetPaletteColor(28), 249);
+                var backgroundColor = textColor == TextColor.White ? GetPaletteColor(15) : GetPaletteColor(19);
+
+                tooltipText.Place(new Rect(x, y, textWidth, textHeight), TextAlign.Center);
+                tooltipText.Visible = true;
+                tooltipBorder?.Delete();
+                tooltipBackground?.Delete();
+                tooltipBorder = FillArea(new Rect(x - 2, y - 3, textWidth + 4, textHeight + 4), GetPaletteColor(29), 248);
+                tooltipBackground = FillArea(new Rect(x - 1, y - 2, textWidth + 2, textHeight + 2), backgroundColor, 249);
+            }
+
+            if (selectedVersion == 2 && currentSaveTooltipText != null && saveOptionTooltip.Area.Contains(position))
+            {
+                ShowTooltip(currentSaveTooltipText, saveOptionTooltip.TextColor, false);
+            }
+            else if (gameDataVersionTooltipArea.Contains(position))
+            {
+                ShowTooltip(gameDataVersionTooltipText, TextColor.White, true);
             }
             else
             {
@@ -392,12 +435,12 @@ namespace Ambermoon.UI
 
         void HideTooltip()
         {
-            saveOptionTooltipText.Visible = false;
-            saveOptionTooltipBorder?.Delete();
-            saveOptionTooltipBackground?.Delete();
+            tooltipText.Visible = false;
+            tooltipBorder?.Delete();
+            tooltipBackground?.Delete();
         }
 
-        public void OnMouseWheel(int xScroll, int yScroll, Position mousePosition)
+        public void OnMouseWheel(int _, int yScroll, Position mousePosition)
         {
             if (yScroll != 0)
             {

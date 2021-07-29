@@ -1,6 +1,5 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Data.Legacy;
-using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
@@ -25,6 +24,7 @@ namespace Ambermoon
 {
     class GameWindow : IContextProvider
     {
+        string gameVersion = "Ambermoon.net";
         Configuration configuration;
         RenderView renderView;
         IWindow window;
@@ -671,7 +671,7 @@ namespace Ambermoon
             }
             var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
                 textureAtlasManager);
-            versionSelector = new VersionSelector(renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
+            versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
             versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
             {
                 configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
@@ -935,10 +935,10 @@ namespace Ambermoon
             Height = screenSize.Height;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
+            gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} RC2";
             var videoMode = new VideoMode(60);
             var options = new WindowOptions(true, new WindowDimension(100, 100),
-                new WindowDimension(Width, Height), 60.0, 60.0, GraphicsAPI.Default,
-                $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} RC2",
+                new WindowDimension(Width, Height), 60.0, 60.0, GraphicsAPI.Default, gameVersion,
                 WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
 
             try
