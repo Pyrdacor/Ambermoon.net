@@ -132,7 +132,11 @@ namespace Ambermoon.UI
                 pixels = 1;
 
             if (pixels == 0)
+            {
+                area.X = short.MaxValue;
+                area.Y = short.MaxValue;
                 area.Visible = false;
+            }
             else if (horizontal)
             {
                 area.X = barArea.Left;
@@ -3301,15 +3305,17 @@ namespace Ambermoon.UI
 
         public void FillCharacterBars(int slot, PartyMember partyMember)
         {
+            uint hp = partyMember?.HitPoints.CurrentValue ?? 0;
+            uint sp = partyMember?.SpellPoints.CurrentValue ?? 0;
             float lpPercentage = partyMember == null || !partyMember.Alive ? 0.0f
-                : Math.Min(1.0f, (float)partyMember.HitPoints.CurrentValue / partyMember.HitPoints.TotalMaxValue);
+                : Math.Min(1.0f, (float)hp / partyMember.HitPoints.TotalMaxValue);
             float spPercentage = partyMember == null || !partyMember.Alive || !partyMember.Class.IsMagic() ? 0.0f
-                : Math.Min(1.0f, (float)partyMember.SpellPoints.CurrentValue / partyMember.SpellPoints.TotalMaxValue);
+                : Math.Min(1.0f, (float)sp / partyMember.SpellPoints.TotalMaxValue);
 
-            characterBars[slot * 4 + 0]?.Fill(lpPercentage);
-            characterBars[slot * 4 + 1]?.Fill(lpPercentage);
-            characterBars[slot * 4 + 2]?.Fill(spPercentage);
-            characterBars[slot * 4 + 3]?.Fill(spPercentage);
+            characterBars[slot * 4 + 0]?.Fill(lpPercentage, hp != 0);
+            characterBars[slot * 4 + 1]?.Fill(lpPercentage, hp != 0);
+            characterBars[slot * 4 + 2]?.Fill(spPercentage, sp != 0);
+            characterBars[slot * 4 + 3]?.Fill(spPercentage, sp != 0);
         }
 
         public void AddActiveSpell(ActiveSpellType activeSpellType, ActiveSpell activeSpell, bool battle)
