@@ -118,7 +118,7 @@ namespace Ambermoon.UI
             okButton.LeftClickAction = () =>
             {
                 nameInput.Submit();
-                afterFadeOutAction = () => selectHandler?.Invoke(nameInput.Text, isFemale, portraitIndex);
+                afterFadeOutAction = () => selectHandler?.Invoke(nameInput.Text.ToUpper(), isFemale, portraitIndex);
                 DestroyAndFadeOut();
             };
             #endregion
