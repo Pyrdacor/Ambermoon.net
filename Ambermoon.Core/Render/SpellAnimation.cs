@@ -766,7 +766,7 @@ namespace Ambermoon.Render
                 {
                     var info = renderView.GraphicProvider.GetCombatGraphicInfo(CombatGraphicIndex.Landslide);
                     float scale = fromMonster ? 1.333f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow);
-                    float endScale = GetScaleXRelativeToCombatArea(info.GraphicInfo.Width, scale * 0.85f);
+                    float endScale = GetScaleXRelativeToCombatArea(info.GraphicInfo.Width, scale * 0.875f);
                     scale = endScale * 0.4f;
                     int halfSpriteHeight = Util.Round(0.5f * scale * info.GraphicInfo.Height);
                     var targetPosition = GetTargetPosition(targetRow * 6) - new Position(0, halfSpriteHeight);
@@ -776,7 +776,7 @@ namespace Ambermoon.Render
                     PlayMaterialization(startPosition, CombatGraphicIndex.Landslide, scale, displayLayer, () =>
                     {
                         var animation = AddAnimationThatRemains(CombatGraphicIndex.Landslide, 1, startPosition, targetPosition,
-                            Game.TicksPerSecond * 4 / 5, scale, endScale, displayLayer);
+                            Game.TicksPerSecond * 3 / 5, scale, endScale, displayLayer);
                         animation.ScaleType = BattleAnimation.AnimationScaleType.XOnly;
                         animation.ReferenceScale = endScale;
                         animation.SetStartFrame(startPosition, endScale);
@@ -818,7 +818,6 @@ namespace Ambermoon.Render
                             animation.AnimationFinished -= AnimationFinished;
 
                             animation.ScaleType = BattleAnimation.AnimationScaleType.None;
-                            animation.AnchorY = BattleAnimation.VerticalAnchor.Top;
                             animation.PlayWithoutAnimating(Game.TicksPerSecond / 2, game.CurrentBattleTicks,
                                 new Position(position.X, Global.CombatBackgroundArea.Bottom), null);
                             animation.AnimationFinished += () => RemoveAnimation(animation);
