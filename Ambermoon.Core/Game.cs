@@ -7700,6 +7700,7 @@ namespace Ambermoon
                     TrySpell(() =>
                     {
                         target.Ailments &= ~Ailment.DeadCorpse;
+                        target.HitPoints.CurrentValue = 1;
                         PartyMemberRevived(target as PartyMember, finishAction, false);
                     });
                     break;
@@ -7724,6 +7725,7 @@ namespace Ambermoon
                             return;
                         }
                         target.Ailments &= ~Ailment.DeadCorpse;
+                        target.HitPoints.CurrentValue = 1;
                         PartyMemberRevived(targetPlayer, finishAction);
                     }
                     if (checkFail)
@@ -7854,6 +7856,7 @@ namespace Ambermoon
                         target.Ailments &= ~Ailment.DeadCorpse;
                         target.Ailments &= ~Ailment.DeadAshes;
                         target.Ailments &= ~Ailment.DeadDust;
+                        target.HitPoints.CurrentValue = 1;
                         PartyMemberRevived(target as PartyMember, HealAll, false);
                     }
                     else
@@ -9454,7 +9457,10 @@ namespace Ambermoon
                         layout.UpdateCharacterStatus(currentlyHealedMember);
                         healedHandler?.Invoke(true);
                         if (ailment >= Ailment.DeadCorpse) // dead
+                        {
+                            currentlyHealedMember.HitPoints.CurrentValue = Math.Max(1, currentlyHealedMember.HitPoints.CurrentValue);
                             PartyMemberRevived(currentlyHealedMember);
+                        }
                     }
                     else
                     {
