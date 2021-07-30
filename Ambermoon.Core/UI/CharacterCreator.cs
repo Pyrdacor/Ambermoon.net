@@ -37,12 +37,16 @@ namespace Ambermoon.UI
 
         static readonly int[] MalePortraitIndices = new int[]
         {
-            2, 25, 7, 23
+            2, 25, 7, 23,
+            // New in remake
+            3, 16, 9, 17, 21
         };
 
         static readonly int[] FemalePortraitIndices = new int[]
         {
-            31, 38, 44, 51
+            31, 38, 44, 51,
+            // New in remake
+            39, 40, 41, 47, 52
         };
 
         public CharacterCreator(IRenderView renderView, Game game, Action<string, bool, int> selectHandler)
