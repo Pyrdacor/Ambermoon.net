@@ -12558,7 +12558,14 @@ namespace Ambermoon
                                                     }
                                                     else
                                                     {
-                                                        Exit(() => Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, gotoPoint.Key.Direction, out _, true));
+                                                        Exit(() =>
+                                                        {
+                                                            var xDiff = Math.Abs((int)gotoPoint.Key.X - (player3D.Position.X + 1));
+                                                            var yDiff = Math.Abs((int)gotoPoint.Key.Y - (player3D.Position.Y + 1));
+                                                            uint ticks = (uint)Util.Round((xDiff + yDiff) * 0.2f);
+                                                            GameTime.Ticks(ticks);
+                                                            Teleport(Map.Index, gotoPoint.Key.X, gotoPoint.Key.Y, gotoPoint.Key.Direction, out _, true);
+                                                        });
                                                     }
                                                 }
                                                 else

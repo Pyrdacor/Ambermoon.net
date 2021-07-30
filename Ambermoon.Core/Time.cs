@@ -163,9 +163,11 @@ namespace Ambermoon
             }
         }
 
+        public const int SecondsPerTimeSlot = 8;
+
         public void Update()
         {
-            if (DateTime.Now - lastTickTime > TimeSpan.FromSeconds(10))
+            if (DateTime.Now - lastTickTime > TimeSpan.FromSeconds(SecondsPerTimeSlot))
                 Tick();
         }
 
@@ -190,6 +192,25 @@ namespace Ambermoon
             currentMoveTicks = 0;
             ResetTickTimer();
             HandleTimePassed(0, 5);
+        }
+
+        public void Ticks(uint amount)
+        {
+            uint minutes = amount * 5;
+            savegame.Minute += minutes;
+            MinuteChanged?.Invoke(minutes);
+
+            while (savegame.Minute >= 60)
+            {
+                savegame.Minute -= 60;
+                ++savegame.Hour;
+                ++savegame.HoursWithoutSleep;
+                PostIncreaseUpdate();
+            }
+
+            currentMoveTicks = 0;
+            ResetTickTimer();
+            HandleTimePassed(minutes / 60, minutes % 60);
         }
 
         public void MoveTick(Map map, TravelType travelType)

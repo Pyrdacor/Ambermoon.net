@@ -1,12 +1,6 @@
 ## Battle
 
-- Can't skip spell reflect message with space key
-- Does spell reflect message use wrong color?
-- Winddevil and windhowler end animation looks wrong.
-- If monsters are in nearest row and can't attack anyone it should
-  - Either move diagonal up in direction of a player (best to attack him immediately)
-  - Or otherwise don't move at all
-- Initial scale of dissolve victim seems to be too small. Don't know why or if this is caused by anchor.
+- Initial scale of dissolve victim has bad anchor behavior if in front row.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 - If a near monster in the middle casts magic projectile (maybe similar things too) it isn't shown (tested with energy balls)
 
