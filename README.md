@@ -6,15 +6,19 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version | Normal | Standalone
---- | --- | --- 
-**0.9.5 RC2** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Windows.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Windows-Standalone.zip)
-**0.9.5 RC2** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Linux.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Linux-Standalone.tar.gz)
-**0.9.5 RC2** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Windows32Bit.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Windows32Bit-Standalone.zip)
-**0.9.5 RC2** (Mac 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Mac.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Mac-Standalone.zip)
-**0.9.5 RC2** (Mac 64bit bundled) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Bundle-Mac.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/v0.9.5rc2/Ambermoon.net-Mac-Bundle-Standalone.zip)
+- (*English*) The Test-Release is the most recent version. In august the first official main release will hopefully follow. Currently the Test-Release reflects the **state of 30 July 2021**.
+- (*German*) Das Test-Release ist die aktuellste Version. Im August wird hoffentlich das erste offizielle Hauptrelease folgen. Zur Zeit spiegelt das Test-Release den **Stand vom 30.07.2021** wider.
 
-The standalone versions should work without .NET installed but are larger in size.
+Version | Standalone | Size-Optimized (needs .NET installed)
+--- | --- | ---
+**1.0.0 Test-Release** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Windows-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Windows.zip)
+**1.0.0 Test-Release** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Linux-Standalone.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Linux.tar.gz)
+**1.0.0 Test-Release** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Windows32Bit-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Windows32Bit.zip)
+**1.0.0 Test-Release** (Mac 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Mac-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Mac.zip)
+**1.0.0 Test-Release** (Mac 64bit bundled) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Mac-Bundle-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/releases/download/TestRelease/Ambermoon.net-Bundle-Mac.zip)
+
+- (*English*) The standalone versions should work without .NET installed but are larger in size. I recommend the standalone version.
+- (*German*) Die Standalone-Versionen sollten ohne installierte .NET Runtime laufen, sind aber etwas größer. Ich empfehle die Standalone-Version.
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow. \
 An up-to-date overview for planned releases and features can be found [here](https://github.com/Pyrdacor/Ambermoon.net/issues/63).
@@ -28,9 +32,10 @@ new versions and patches of the original game files there as well.
 
 ### Need help?
 
-New to Ambermoon? Please have a look [here](FirstPlay.md). (auch in Deutsch ;) )
-
-If you have questions feel free to ask via email, on Twitter or here in GitHub in the issues. Some more info follows below as well.
+- (*English*) New to Ambermoon? Please have a look [here](FirstPlay.md). \
+If you have questions feel free to ask via [email](mailto:trobt@web.de), on [Twitter](https://twitter.com/Pyrdacor2) or here in GitHub on the [issues page](https://github.com/Pyrdacor/Ambermoon.net/issues). Some more info follows below as well.
+- (*German*) Du kennst Ambermoon noch nicht? Schau bitte [hier](FirstPlay.md). \
+Wenn du Fragen hast, meld dich einfach per [Email](mailto:trobt@web.de), auf [Twitter](https://twitter.com/Pyrdacor2) oder hier auf GitHub unter [Issues](https://github.com/Pyrdacor/Ambermoon.net/issues). Weiter unten gibt es auch noch einige Infos.
 
 ### Support the project
 
