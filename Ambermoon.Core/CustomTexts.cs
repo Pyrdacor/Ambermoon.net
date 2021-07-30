@@ -10,6 +10,7 @@ namespace Ambermoon
             FailedToLoadSavegame,
             FailedToLoadInitialSavegame,
             FailedToLoadSavegameUseInitial,
+            StartNewGameOrQuit
         }
 
         static readonly Dictionary<GameLanguage, Dictionary<Index, string>> entries = new Dictionary<GameLanguage, Dictionary<Index, string>>
@@ -20,6 +21,7 @@ namespace Ambermoon
                     { Index.FailedToLoadSavegame, "Fehler beim Laden des Spielstands." },
                     { Index.FailedToLoadInitialSavegame, "Fehler beim Laden des Start-Spielstands." },
                     { Index.FailedToLoadSavegameUseInitial, "Fehler beim Laden des Spielstands. Ein neues Spiel wurde stattdessen gestartet." },
+                    { Index.StartNewGameOrQuit, "Möchten Sie ein neues Spiel starten oder das Spiel verlassen?" }
                 }
             },
             { GameLanguage.English, new Dictionary<Index, string>
@@ -28,6 +30,7 @@ namespace Ambermoon
                     { Index.FailedToLoadSavegame, "Failed to load savegame." },
                     { Index.FailedToLoadInitialSavegame, "Failed to load initial savegame." },
                     { Index.FailedToLoadSavegameUseInitial, "Failed to load savegame. Loaded initial savegame instead." },
+                    { Index.StartNewGameOrQuit, "Do you want to start a new game or quit the game?" }
                 }
             }
         };

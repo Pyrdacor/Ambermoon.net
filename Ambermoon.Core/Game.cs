@@ -13023,7 +13023,11 @@ namespace Ambermoon
                 {
                     GameOverButtonsVisible = true;
                     InputEnable = true;
-                    layout.AddText(textArea, ProcessText(DataNameProvider.GameOverLoadOrQuit), TextColor.BrightGray);
+                    bool hasSavegames = SavegameManager.GetSavegameNames(renderView.GameData, out _).Any(n => !string.IsNullOrWhiteSpace(n));
+                    layout.AddText(textArea, ProcessText(hasSavegames
+                        ? DataNameProvider.GameOverLoadOrQuit
+                        : GetCustomText(CustomTexts.Index.StartNewGameOrQuit)),
+                        TextColor.BrightGray);
                     void ShowButtons()
                     {
                         ExecuteNextUpdateCycle(() => CursorType = CursorType.Sword);
@@ -13031,13 +13035,16 @@ namespace Ambermoon
                         {
                             if (load)
                             {
-                                layout.OpenLoadMenu(CloseWindow, ShowButtons, true);
+                                if (hasSavegames)
+                                    layout.OpenLoadMenu(CloseWindow, ShowButtons, true);
+                                else
+                                    NewGame();
                             }
                             else
                             {
                                 Quit(ShowButtons);
                             }
-                        });
+                        }, hasSavegames);
                     }
                     ShowButtons();
                 }

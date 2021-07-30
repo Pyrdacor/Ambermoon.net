@@ -14,7 +14,6 @@
 
 - Should piles block monsters? Test in grandfather's cellar.
 - 3D monster get easily stuck on wall edges. :(
-- When moving to go-to points the time progresses based on distance.
 
 
 ## UI
@@ -28,8 +27,6 @@
 - Add more savegame slots?
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
-- Copying ADF files next to Ambermoon.net.exe with versions.dat doesn't show the external version.
-  It also doesn't work when setting the data path in the cfg to the same directory (ADF files).
 - Maybe add emergency savegame that is stored when game crashes.
 - Where is the text "CannotCarryAllGold" used?
 - Check all unused DataNameProvider texts.

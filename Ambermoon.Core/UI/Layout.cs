@@ -2451,12 +2451,12 @@ namespace Ambermoon.UI
             return button;
         }
 
-        internal void ShowGameOverButtons(Action<bool> choiceEvent)
+        internal void ShowGameOverButtons(Action<bool> choiceEvent, bool hasSavegames)
         {
             var areas = new List<FilledArea>();
             questionYesButton?.Destroy();
             questionNoButton?.Destroy();
-            questionYesButton = AddButton(new Position(128, 169), ButtonType.Load, () => Choose(true), 2, areas);
+            questionYesButton = AddButton(new Position(128, 169), hasSavegames ? ButtonType.Load : ButtonType.Stats, () => Choose(true), 2, areas);
             questionNoButton = AddButton(new Position(128 + Button.Width, 169), ButtonType.Quit, () => Choose(false), 2, areas);
 
             void Choose(bool load)
