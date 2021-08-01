@@ -5358,7 +5358,8 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map, Position position)
+        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map,
+            Position position, bool fromEvent)
         {
             var chest = GetChest(1 + chestEvent.ChestIndex);
 
@@ -5383,7 +5384,7 @@ namespace Ambermoon
 
             void OpenChest()
             {
-                string initialText = map != null && chestEvent.TextIndex != 255 ?
+                string initialText = map != null && fromEvent && chestEvent.TextIndex != 255 ?
                     map.Texts[(int)chestEvent.TextIndex] : null;
                 layout.Reset();
                 ShowMap(false);
@@ -5397,7 +5398,7 @@ namespace Ambermoon
                     {
                         CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
                         currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
-                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position));
+                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true));
                     }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
@@ -5414,14 +5415,14 @@ namespace Ambermoon
                 Fade(OpenChest);
         }
 
-        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y)
+        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y, bool fromEvent)
         {
             if (!CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
                 return false;
 
             Fade(() =>
             {
-                string initialText = doorEvent.TextIndex != 255 ?
+                string initialText = fromEvent && doorEvent.TextIndex != 255 ?
                     map.Texts[(int)doorEvent.TextIndex] : null;
                 string unlockText = doorEvent.UnlockTextIndex != 255 ?
                     map.Texts[(int)doorEvent.UnlockTextIndex] : null;
@@ -5751,6 +5752,9 @@ namespace Ambermoon
             });
             // Exit button
             layout.AttachEventToButton(2, Exit);
+
+            if (!string.IsNullOrWhiteSpace(initialMessage))
+                layout.ShowChestMessage(initialMessage, TextAlign.Left);
         }
 
         /// <summary>
@@ -13552,7 +13556,7 @@ namespace Ambermoon
                     var map = (Map)currentWindow.WindowParameters[3];
                     var position = (Position)currentWindow.WindowParameters[4];
                     currentWindow = DefaultWindow;
-                    ShowChest(chestEvent, trapFound, trapDisarmed, map, position);
+                    ShowChest(chestEvent, trapFound, trapDisarmed, map, position, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
@@ -13566,7 +13570,7 @@ namespace Ambermoon
                     var x = (uint)currentWindow.WindowParameters[4];
                     var y = (uint)currentWindow.WindowParameters[5];
                     currentWindow = DefaultWindow;
-                    ShowDoor(doorEvent, trapFound, trapDisarmed, map, x, y);
+                    ShowDoor(doorEvent, trapFound, trapDisarmed, map, x, y, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
