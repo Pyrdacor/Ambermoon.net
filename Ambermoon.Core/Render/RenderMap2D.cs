@@ -29,6 +29,15 @@ namespace Ambermoon.Render
 {
     internal class RenderMap2D
     {
+        class Transport
+        {
+            // This is the array index in the savegame transport location array.
+            public int Index { get; set; }
+            public Position Position { get; set; }
+            public ISprite Sprite { get; set; }
+            public Position Offset { get; set; }
+        }
+
         public const int TILE_WIDTH = 16;
         public const int TILE_HEIGHT = 16;
         public const int NUM_VISIBLE_TILES_X = 11; // maps will always be at least 11x11 in size
@@ -43,7 +52,7 @@ namespace Ambermoon.Render
         ITextureAtlas textureAtlas = null;
         readonly List<IAnimatedSprite> backgroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
         readonly List<IAnimatedSprite> foregroundTileSprites = new List<IAnimatedSprite>(NUM_TILES);
-        readonly Dictionary<Position, KeyValuePair<ISprite, Position>> transportSprites = new Dictionary<Position, KeyValuePair<ISprite, Position>>();
+        readonly List<Transport> mapTransports = new List<Transport>();
         uint ticksPerFrame = 0;
         bool worldMap = false;
         uint lastFrame = 0;
@@ -280,8 +289,8 @@ namespace Ambermoon.Render
 
         public void ClearTransports()
         {
-            transportSprites.ToList().ForEach(sprite => sprite.Value.Key?.Delete());
-            transportSprites.Clear();
+            mapTransports.ForEach(transport => transport.Sprite?.Delete());
+            mapTransports.Clear();
         }
 
         void RepositionTransports(Map lastMap)
@@ -297,18 +306,18 @@ namespace Ambermoon.Render
                 return;
             }
 
-            foreach (var transportSprite in transportSprites.ToList())
+            foreach (var transport in mapTransports)
             {
                 var lastMapIndex = lastMap.Index;
 
-                if (transportSprite.Key.X >= lastMap.Width)
+                if (transport.Position.X >= lastMap.Width)
                 {
-                    if (transportSprite.Key.Y >= lastMap.Height)
+                    if (transport.Position.Y >= lastMap.Height)
                         lastMapIndex = lastMap.DownRightMapIndex.Value;
                     else
                         lastMapIndex = lastMap.RightMapIndex.Value;
                 }
-                else if (transportSprite.Key.Y >= lastMap.Height)
+                else if (transport.Position.Y >= lastMap.Height)
                     lastMapIndex = lastMap.RightMapIndex.Value;
 
                 if (lastMapIndex != Map.Index &&
@@ -316,28 +325,42 @@ namespace Ambermoon.Render
                     lastMapIndex != Map.DownMapIndex &&
                     lastMapIndex != Map.DownRightMapIndex)
                 {
-                    transportSprite.Value.Key.Delete();
-                    transportSprites.Remove(transportSprite.Key);
+                    transport.Sprite.Delete();
+                    mapTransports.Remove(transport);
                 }
                 else
                 {
-                    transportSprite.Key.X += offset.X * TILE_WIDTH;
-                    transportSprite.Key.Y += offset.Y * TILE_HEIGHT;
+                    transport.Position.X += offset.X * TILE_WIDTH;
+                    transport.Position.Y += offset.Y * TILE_HEIGHT;
                 }
             }
         }
 
         void UpdateTransports()
         {
-            foreach (var transportSprite in transportSprites)
+            foreach (var transport in mapTransports)
             {
-                transportSprite.Value.Key.X = Global.Map2DViewX + (int)(transportSprite.Key.X - ScrollX) * TILE_WIDTH + transportSprite.Value.Value.X;
-                transportSprite.Value.Key.Y = Global.Map2DViewY + (int)(transportSprite.Key.Y - ScrollY) * TILE_HEIGHT + transportSprite.Value.Value.Y;
+                transport.Sprite.X = Global.Map2DViewX + (int)(transport.Position.X - ScrollX) * TILE_WIDTH + transport.Offset.X;
+                transport.Sprite.Y = Global.Map2DViewY + (int)(transport.Position.Y - ScrollY) * TILE_HEIGHT + transport.Offset.Y;
             }
         }
 
-        public void RemoveTransportAt(uint mapIndex, uint x, uint y)
+        public void RemoveTransport(int index)
         {
+            var transport = mapTransports.FirstOrDefault(t => t.Index == index);
+
+            if (transport != null)
+            {
+                transport.Sprite.Delete();
+                mapTransports.Remove(transport);
+            }
+        }
+
+        public void PlaceTransport(uint mapIndex, uint x, uint y, TravelType travelType, int index)
+        {
+            if (mapTransports.Any(t => t.Index == index))
+                return;
+
             var position = new Position((int)x, (int)y);
 
             if (mapIndex != Map.Index)
@@ -353,47 +376,20 @@ namespace Ambermoon.Render
                     position.Y += Map.Height;
             }
 
-            if (transportSprites.ContainsKey(position))
-            {
-                transportSprites[position].Key?.Delete();
-                transportSprites.Remove(position);
-            }
-        }
-
-        public void PlaceTransport(uint mapIndex, uint x, uint y, TravelType travelType)
-        {
-            var position = new Position((int)x, (int)y);
-
-            if (mapIndex != Map.Index)
-            {
-                if (mapIndex != adjacentMaps[0].Index &&
-                    mapIndex != adjacentMaps[1].Index &&
-                    mapIndex != adjacentMaps[2].Index)
-                    return;
-
-                if (mapIndex == adjacentMaps[0].Index || mapIndex == adjacentMaps[2].Index)
-                    position.X += Map.Width;
-                if (mapIndex == adjacentMaps[1].Index || mapIndex == adjacentMaps[2].Index)
-                    position.Y += Map.Height;
-            }
-
-            if (!transportSprites.ContainsKey(position))
-            {
-                var stationaryImage = travelType.ToStationaryImage();
-                var info = renderView.GameData.StationaryImageInfos[stationaryImage];
-                var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters);
-                var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
-                var offset = new Position((TILE_WIDTH - info.Width) / 2 - 2, (TILE_HEIGHT - info.Height) / 2 - 2);
-                sprite.Layer = renderView.GetLayer(Layer.Characters);
-                sprite.ClipArea = Game.Map2DViewArea;
-                sprite.BaseLineOffset = TILE_HEIGHT / 2;
-                sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
-                sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + stationaryImage.AsIndex());
-                sprite.X = Global.Map2DViewX + (position.X - (int)ScrollX) * TILE_WIDTH + offset.X;
-                sprite.Y = Global.Map2DViewY + (position.Y - (int)ScrollY) * TILE_HEIGHT + offset.Y;
-                sprite.Visible = true;
-                transportSprites.Add(position, new KeyValuePair<ISprite, Position>(sprite, offset));
-            }
+            var stationaryImage = travelType.ToStationaryImage();
+            var info = renderView.GameData.StationaryImageInfos[stationaryImage];
+            var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters);
+            var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
+            var offset = new Position((TILE_WIDTH - info.Width) / 2 - 2, (TILE_HEIGHT - info.Height) / 2 - 2);
+            sprite.Layer = renderView.GetLayer(Layer.Characters);
+            sprite.ClipArea = Game.Map2DViewArea;
+            sprite.BaseLineOffset = TILE_HEIGHT / 2;
+            sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + stationaryImage.AsIndex());
+            sprite.X = Global.Map2DViewX + (position.X - (int)ScrollX) * TILE_WIDTH + offset.X;
+            sprite.Y = Global.Map2DViewY + (position.Y - (int)ScrollY) * TILE_HEIGHT + offset.Y;
+            sprite.Visible = true;
+            mapTransports.Add(new Transport { Index = index, Position = position, Sprite = sprite, Offset = offset });
         }
 
         internal void UpdateTile(uint x, uint y)

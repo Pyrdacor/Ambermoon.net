@@ -4758,6 +4758,7 @@ namespace Ambermoon
             {
                 if (TravelType.UsesMapObject())
                 {
+                    index = null;
                     for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
                     {
                         if (CurrentSavegame.TransportLocations[i] == null)
@@ -4768,11 +4769,15 @@ namespace Ambermoon
                                 Position = new Position((int)x % 50 + 1, (int)y % 50 + 1),
                                 TravelType = TravelType
                             };
+                            index = i;
                             break;
                         }
                     }
 
-                    renderMap2D.PlaceTransport(mapIndex, x % 50, y % 50, TravelType);
+                    if (index != null)
+                        renderMap2D.PlaceTransport(mapIndex, x % 50, y % 50, TravelType, index.Value);
+                    else
+                        return;
                 }
                 else
                 {
@@ -4798,7 +4803,7 @@ namespace Ambermoon
             else if (transport != null && TravelType == TravelType.Walk)
             {
                 CurrentSavegame.TransportLocations[index.Value] = null;
-                renderMap2D.RemoveTransportAt(mapIndex, x % 50, y % 50);
+                renderMap2D.RemoveTransport(index.Value);
                 ActivateTransport(transport.TravelType);
             }
         }
@@ -4934,10 +4939,11 @@ namespace Ambermoon
                     else if (tileType != Map.TileType.Water && TravelType == TravelType.Swim)
                         TravelType = TravelType.Walk;
 
+                    var transportLocations = CurrentSavegame.TransportLocations.ToList();
                     foreach (var transport in transports)
                     {
                         renderMap2D.PlaceTransport(transport.MapIndex,
-                            (uint)transport.Position.X - 1, (uint)transport.Position.Y - 1, transport.TravelType);
+                            (uint)transport.Position.X - 1, (uint)transport.Position.Y - 1, transport.TravelType, transportLocations.IndexOf(transport));
                     }
 
                     if (transportAtPlayerIndex != null && TravelType == TravelType.Walk)
