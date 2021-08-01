@@ -1067,17 +1067,18 @@ namespace Ambermoon.UI
                     // Page 1
                     "Musik",
                     "Lautstärke",
-                    "Schneller Kampfmodus",
+                    "Grafikfilter",
                     "Auflösung",
                     "Vollbild",
                     // Page 2
+                    "Schneller Kampfmodus",
                     "Tooltips anzeigen",
-                    "Musik cachen",
-                    "Cheats aktivieren",
                     "Runen als Text anzeigen",
-                    "Intro anzeigen",
-                    // TODO: later
-                    // Page 3
+                    "Musik cachen",
+                    "Cheats aktivieren",                    
+                    // TODO
+                    // Page3
+                    //"Intro anzeigen",
                     //"Fantasy Intro anzeigen",
                 }
             },
@@ -1088,17 +1089,18 @@ namespace Ambermoon.UI
                     // Page 1
                     "Music",
                     "Volume",
-                    "Fast battle mode",
+                    "Graphic filter",
                     "Resolution",
                     "Fullscreen",
                     // Page 2
+                    "Fast battle mode",
                     "Show tooltips",
-                    "Cache music",
-                    "Enable cheats",
                     "Show runes as text",
-                    "Show intro",
-                    // TODO: later
+                    "Cache music",
+                    "Enable cheats",                    
+                    // TODO
                     // Page 3
+                    //"Show intro",
                     //"Show fantasy intro",
                 }
             }
@@ -1121,18 +1123,21 @@ namespace Ambermoon.UI
             var toggleResolutionAction = (Action<int, string>)((index, _) => ToggleResolution());
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
+                // Page 1
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleVolume())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
+                KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : (Action<int, string>)null),
                 KeyValuePair.Create("", game.Configuration.Fullscreen ? null : toggleResolutionAction),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
+                // Page 2
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleCheats())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
-                KeyValuePair.Create("", (Action<int, string>)null/*(Action<int, string>)((index, _) => ToggleIntro())*/), // TODO: add later
-                // TODO
-                // KeyValuePair.Create("", (Action<int, string>)null/*(Action<int, string>)((index, _) => ToggleFantasyIntro())*/), // TODO: add later
+                // TODO: 3rd page later?
+                //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),              
+                //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
             };
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
 
@@ -1149,16 +1154,20 @@ namespace Ambermoon.UI
                 optionString += value;
                 listBox.SetItemText(optionIndex - page * OptionsPerPage, optionString);
             }
+            // Page 1
             void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
             void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
-            void SetFastBattleMode() => SetOptionString(2, game.Configuration.FastBattleMode ? on : off);
+            void SetGraphicFilter() => SetOptionString(2, game.Configuration.UseGraphicFilter ? on : off);
             void SetResolution() => SetOptionString(3, GetResolutionString());
             void SetFullscreen() => SetOptionString(4, game.Configuration.Fullscreen ? on : off);
+            // Page 2
+            void SetFastBattleMode() => SetOptionString(5, game.Configuration.FastBattleMode ? on : off);
             void SetTooltips() => SetOptionString(5, game.Configuration.ShowButtonTooltips ? on : off);
+            void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
             void SetMusicCaching() => SetOptionString(6, game.Configuration.CacheMusic ? on : off);
             void SetCheats() => SetOptionString(7, cheatsEnabled ? on : off);
-            void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
-            void SetIntro() => SetOptionString(9, game.Configuration.ShowIntro ? on : off);
+            // TODO: Page 3
+            // TODO: void SetIntro() => SetOptionString(9, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(8, game.Configuration.ShowFantasyIntro ? on : off);
 
             void ShowOptions()
@@ -1169,21 +1178,22 @@ namespace Ambermoon.UI
                     case 0:
                         SetMusic();
                         SetVolume();
-                        SetFastBattleMode();
+                        SetGraphicFilter();
                         SetResolution();
                         SetFullscreen();
                         break;
                     case 1:
+                        SetFastBattleMode();
                         SetTooltips();
+                        SetAutoDerune();
                         SetMusicCaching();
                         SetCheats();
-                        SetAutoDerune();
-                        SetIntro();
                         break;
-                        // TODO: later
-                    /*case 2:
-                        SetFantasyIntro();
-                        break;*/
+                    // TODO
+                    // case 2:
+                        //SetIntro();
+                        //SetFantasyIntro();
+                        //break;
                 }
             }
 
@@ -1207,11 +1217,10 @@ namespace Ambermoon.UI
                 SetVolume();
                 changedConfiguration = true;
             }
-            void ToggleFastBattleMode()
+            void ToggleGraphicFilter()
             {
-                game.Configuration.FastBattleMode = !game.Configuration.FastBattleMode;
-                SetFastBattleMode();
-                game.SetFastBattleMode(game.Configuration.FastBattleMode);
+                game.Configuration.UseGraphicFilter = !game.Configuration.UseGraphicFilter;
+                SetGraphicFilter();
                 changedConfiguration = true;
             }
             void ToggleResolution()
@@ -1238,6 +1247,13 @@ namespace Ambermoon.UI
                 SetFullscreen();
                 changedConfiguration = true;
                 windowChange = true;
+            }
+            void ToggleFastBattleMode()
+            {
+                game.Configuration.FastBattleMode = !game.Configuration.FastBattleMode;
+                SetFastBattleMode();
+                game.SetFastBattleMode(game.Configuration.FastBattleMode);
+                changedConfiguration = true;
             }
             void ToggleTooltips()
             {

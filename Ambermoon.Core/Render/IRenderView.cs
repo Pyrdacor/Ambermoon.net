@@ -46,6 +46,7 @@ namespace Ambermoon.Render
         Size MaxScreenSize { get; }
         List<Size> AvailableFullscreenModes { get; set; }
         bool Fullscreen { get; set; }
+        bool AllowFramebuffer { get; }
 
         ISpriteFactory SpriteFactory { get; }
         IColoredRectFactory ColoredRectFactory { get; }

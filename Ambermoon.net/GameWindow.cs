@@ -410,7 +410,7 @@ namespace Ambermoon
             var fontProvider = new FontProvider(executableData);
 
             // Create render view
-            renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
@@ -505,6 +505,14 @@ namespace Ambermoon
                                         {
                                             ChangeFullscreenMode(configuration.Fullscreen);
                                         }
+
+                                        if (configuration.UseGraphicFilter)
+                                        {
+                                            if (!renderView.TryUseFrameBuffer())
+                                                configuration.UseGraphicFilter = false;
+                                        }
+                                        else
+                                            renderView.DeactivateFramebuffer();
 
                                         if (configuration.EnableCheats && !Console.IsInputRedirected)
                                         {
@@ -640,7 +648,7 @@ namespace Ambermoon
             var fontProvider = new FontProvider(executableData);
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
-            renderView = CreateRenderView(gameData, executableData, graphicProvider, fontProvider, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, () =>
             {
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
                 return textureAtlasManager;
@@ -691,12 +699,15 @@ namespace Ambermoon
             renderView.RenderTextFactory.DigitGlyphTextureMapping = Enumerable.Range(0, 10).ToDictionary(x => (byte)(ExecutableData.DigitGlyphOffset + x), x => textureAtlas.GetOffset(100 + (uint)x));
         }
 
-        RenderView CreateRenderView(GameData gameData, ExecutableData executableData, GraphicProvider graphicProvider,
+        RenderView CreateRenderView(GameData gameData, IConfiguration configuration, GraphicProvider graphicProvider,
             FontProvider fontProvider, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
-            return new RenderView(this, gameData, graphicProvider, fontProvider,
+            var useFrameBuffer = configuration.UseGraphicFilter;
+            var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y));
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer);
+            configuration.UseGraphicFilter = useFrameBuffer;
+            return renderView;
         }
 
         string GetSavePath(string version)

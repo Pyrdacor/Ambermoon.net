@@ -30,6 +30,7 @@ namespace Ambermoon.Renderer
         internal static readonly string DefaultModelViewMatrixName = "mvMat";
         internal static readonly string DefaultProjectionMatrixName = "projMat";
         internal static readonly string DefaultSamplerName = "sampler";
+        internal static readonly string DefaultResolutionName = "resolution";
 
         internal ShaderProgram shaderProgram;
 
@@ -53,17 +54,27 @@ namespace Ambermoon.Renderer
             return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor}\n\n";
         }
 
+        static readonly string PixelWidth = (1.0f / 320.0f).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        static readonly string PixelHeight = (1.0f / 200.0f).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
         static string[] ScreenFragmentShader(State state) => new string[]
         {
             GetFragmentShaderHeader(state),
             $"uniform sampler2D {DefaultSamplerName};",
+            $"uniform vec2 {DefaultResolutionName};",
             $"in vec2 varTexCoord;",
             $"",
             $"void main()",
             $"{{",
+            $"    vec2 pixelSize = vec2(1.0f / {DefaultResolutionName}.x, 1.0f / {DefaultResolutionName}.y);",
+            $"    ",
             $"    vec4 color = texture({DefaultSamplerName}, varTexCoord);",
-            $"    if (abs(color.rgb - vec4(1, 0, 1)) < vec4(0.01, 0.01, 0.01))",
-            $"        discard;",
+            $"    vec4 right = texture({DefaultSamplerName}, vec2(varTexCoord.x+pixelSize.x, varTexCoord.y));",
+            $"    vec4 down = texture({DefaultSamplerName}, vec2(varTexCoord.x, varTexCoord.y+pixelSize.y));",
+            $"    vec4 downRight = texture({DefaultSamplerName}, vec2(varTexCoord.x+pixelSize.x, varTexCoord.y+pixelSize.y));",
+            $"    vec4 upperColor = mix(color, right, 0.5f);",
+            $"    vec4 lowerColor = mix(down, downRight, 0.5f);",
+            $"    color = mix(upperColor, lowerColor, 0.5f);",
             $"    {DefaultFragmentOutColorName} = color;",
             $"}}"
         };
@@ -74,24 +85,25 @@ namespace Ambermoon.Renderer
             $"in ivec2 {DefaultPositionName};",
             $"uniform mat4 {DefaultProjectionMatrixName};",
             $"uniform mat4 {DefaultModelViewMatrixName};",
+            $"uniform vec2 {DefaultResolutionName};",
             $"out vec2 varTexCoord;",
             $"",
             $"void main()",
             $"{{",
             $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
-            $"    varTexCoord = vec2(pos.x / 320.0f, (200.0f - pos.y) / 200.0f);",
+            $"    varTexCoord = vec2(pos.x / {DefaultResolutionName}.x, ({DefaultResolutionName}.y - pos.y) / {DefaultResolutionName}.y);",
             $"    ",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f, 1.0f);",
             $"}}"
         };
 
-        public void Use(State state)
+        public void Use(Matrix4 projectionMatrix)
         {
             if (shaderProgram != ShaderProgram.ActiveProgram)
                 shaderProgram.Use();
 
             shaderProgram.SetInputMatrix(DefaultModelViewMatrixName, Matrix4.Identity.ToArray(), true);
-            shaderProgram.SetInputMatrix(DefaultProjectionMatrixName, state.ProjectionMatrix2D.ToArray(), true);
+            shaderProgram.SetInputMatrix(DefaultProjectionMatrixName, projectionMatrix.ToArray(), true);
         }
 
         ScreenShader(State state)
@@ -113,6 +125,11 @@ namespace Ambermoon.Renderer
         public void SetSampler(int textureUnit = 0)
         {
             shaderProgram.SetInput(DefaultSamplerName, textureUnit);
+        }
+
+        public void SetResolution(Size resolution)
+        {
+            shaderProgram.SetInputVector2(DefaultResolutionName, (float)resolution.Width, (float)resolution.Height);
         }
 
         public static ScreenShader Create(State state) => new ScreenShader(state);

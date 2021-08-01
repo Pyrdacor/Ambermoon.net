@@ -49,6 +49,7 @@ namespace Ambermoon
         bool ShowButtonTooltips { get; set; }
         bool ShowFantasyIntro { get; set; }
         bool ShowIntro { get; set; }
+        bool UseGraphicFilter { get; set; }
     }
 
     public static class ConfigurationExtensions

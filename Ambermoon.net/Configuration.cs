@@ -30,6 +30,7 @@ namespace Ambermoon
         public bool ShowButtonTooltips { get; set; } = true;
         public bool ShowFantasyIntro { get; set; } = false; // TODO: change to true
         public bool ShowIntro { get; set; } = false; // TODO: change to true
+        public bool UseGraphicFilter { get; set; } = true;
 
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");

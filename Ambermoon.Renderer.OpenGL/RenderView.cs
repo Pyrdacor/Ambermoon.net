@@ -37,7 +37,8 @@ namespace Ambermoon.Renderer.OpenGL
     {
         bool disposed = false;
         readonly Context context;
-        readonly FrameBuffer framebuffer;
+        bool useFrameBuffer = false;
+        readonly FrameBuffer frameBuffer;
         readonly ScreenShader screenShader;
         readonly ScreenRenderBuffer screenBuffer;
         // Area inside the window where the rendering happens.
@@ -47,12 +48,12 @@ namespace Ambermoon.Renderer.OpenGL
         // The content size of the window in screen coordinates (not pixels!)
         Size windowSize;
         // The size of the framebuffer in pixels
-        Size framebufferSize;
+        Size frameBufferSize;
         // The rendering area in pixels
-        Rect framebufferWindowArea => new Rect
+        Rect frameBufferWindowArea => new Rect
         (
             new FloatPosition(renderDisplayArea.X / sizeFactorX, renderDisplayArea.Y / sizeFactorY).Round(),
-            framebufferSize
+            frameBufferSize
         );
         readonly SizingPolicy sizingPolicy;
         readonly OrientationPolicy orientationPolicy;
@@ -71,8 +72,8 @@ namespace Ambermoon.Renderer.OpenGL
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
 
-        float RenderFactorX => (float)framebufferSize.Width / Global.VirtualScreenWidth;
-        float RenderFactorY => (float)framebufferSize.Height / Global.VirtualScreenHeight;
+        float RenderFactorX => (float)frameBufferSize.Width / Global.VirtualScreenWidth;
+        float RenderFactorY => (float)frameBufferSize.Height / Global.VirtualScreenHeight;
         float WindowFactorX => (float)renderDisplayArea.Width / Global.VirtualScreenWidth;
         float WindowFactorY => (float)renderDisplayArea.Height / Global.VirtualScreenHeight;
 
@@ -121,7 +122,7 @@ namespace Ambermoon.Renderer.OpenGL
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
-            int framebufferWidth, int framebufferHeight, Size windowSize,
+            int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer,
             DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
             OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
@@ -130,7 +131,7 @@ namespace Ambermoon.Renderer.OpenGL
             GameData = gameData;
             GraphicProvider = graphicProvider;
             TextProcessor = textProcessor;
-            framebufferSize = new Size(framebufferWidth, framebufferHeight);
+            frameBufferSize = new Size(framebufferWidth, framebufferHeight);
             renderDisplayArea = new Rect(new Position(0, 0), windowSize);
             this.windowSize = new Size(windowSize);
             this.sizingPolicy = sizingPolicy;
@@ -180,19 +181,37 @@ namespace Ambermoon.Renderer.OpenGL
 
             try
             {
-                framebuffer = new FrameBuffer(State);
+                frameBuffer = new FrameBuffer(State);
                 screenShader = ScreenShader.Create(State);
                 screenBuffer = new ScreenRenderBuffer(State, screenShader);
+                this.useFrameBuffer = useFrameBuffer;
             }
             catch
             {
-                framebuffer?.Dispose();
-                framebuffer = null;
+                frameBuffer?.Dispose();
+                frameBuffer = null;
                 screenShader = null;
                 screenBuffer?.Dispose();
                 screenBuffer = null;
+                useFrameBuffer = false;
             }
         }
+
+        public bool AllowFramebuffer => frameBuffer != null;
+
+        public bool TryUseFrameBuffer()
+        {
+            if (AllowFramebuffer)
+            {
+                useFrameBuffer = true;
+                return true;
+            }
+
+            useFrameBuffer = false;
+            return false;
+        }
+
+        public void DeactivateFramebuffer() => useFrameBuffer = false;
 
         void UpdateAspect(float aspect)
         {
@@ -320,8 +339,8 @@ namespace Ambermoon.Renderer.OpenGL
 
         public void Resize(int width, int height, Orientation orientation)
         {
-            framebufferSize.Width = width;
-            framebufferSize.Height = height;
+            frameBufferSize.Width = width;
+            frameBufferSize.Height = height;
 
             SetRotation(orientation);
 
@@ -351,28 +370,28 @@ namespace Ambermoon.Renderer.OpenGL
                 {
                     int newHeight = Misc.Round(windowSize.Width / virtualRatio);
                     renderDisplayArea = new Rect(0, (windowSize.Height - newHeight) / 2, windowSize.Width, newHeight);
-                    framebufferSize.Height = Misc.Round(framebufferSize.Width / virtualRatio);
+                    frameBufferSize.Height = Misc.Round(frameBufferSize.Width / virtualRatio);
                 }
                 else // windowRatio > virtualRatio
                 {
                     int newWidth = Misc.Round(windowSize.Height * virtualRatio);
                     renderDisplayArea = new Rect((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
-                    framebufferSize.Width = Misc.Round(framebufferSize.Height * virtualRatio);
+                    frameBufferSize.Width = Misc.Round(frameBufferSize.Height * virtualRatio);
                 }
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
                 {
-                    sizeFactorX = (float)framebufferSize.Height / renderDisplayArea.Width;
-                    sizeFactorY = (float)framebufferSize.Width / renderDisplayArea.Height;
+                    sizeFactorX = (float)frameBufferSize.Height / renderDisplayArea.Width;
+                    sizeFactorY = (float)frameBufferSize.Width / renderDisplayArea.Height;
                 }
                 else
                 {
-                    sizeFactorX = (float)framebufferSize.Width / renderDisplayArea.Width;
-                    sizeFactorY = (float)framebufferSize.Height / renderDisplayArea.Height;
+                    sizeFactorX = (float)frameBufferSize.Width / renderDisplayArea.Width;
+                    sizeFactorY = (float)frameBufferSize.Height / renderDisplayArea.Height;
                 }
             }
 
-            var viewport = framebufferWindowArea;
+            var viewport = frameBufferWindowArea;
             State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
         }
 
@@ -412,9 +431,9 @@ namespace Ambermoon.Renderer.OpenGL
                     Util.Round((viewportOffset?.Y ?? 0.0f) * renderDisplayArea.Height)
                 );
 
-                State.Gl.ClearColor(framebuffer != null && render3DMap ? System.Drawing.Color.Magenta : System.Drawing.Color.Black);
+                State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-                if (framebuffer == null || render3DMap)
+                if (!useFrameBuffer || render3DMap)
                     State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
                 bool set2DViewport = false;
@@ -431,7 +450,7 @@ namespace Ambermoon.Renderer.OpenGL
                             var mapViewArea = new Rect(Global.Map3DViewX, Global.Map3DViewY, Global.Map3DViewWidth + 1, Global.Map3DViewHeight + 1);
                             mapViewArea.Position = PositionTransformation(mapViewArea.Position);
                             mapViewArea.Size = SizeTransformation(mapViewArea.Size);
-                            var viewport = framebufferWindowArea;
+                            var viewport = frameBufferWindowArea;
                             State.Gl.Viewport
                             (
                                 viewport.X + mapViewArea.X + viewOffset.X,
@@ -451,32 +470,34 @@ namespace Ambermoon.Renderer.OpenGL
                             State.RestoreModelViewMatrix(Matrix4.Identity);
                             State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
 
-                            if (framebuffer == null)
+                            if (!useFrameBuffer)
                             {
-                                var viewport = framebufferWindowArea;
+                                var viewport = frameBufferWindowArea;
                                 State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
                                     (uint)viewport.Width, (uint)viewport.Height);
                             }
                             else
                             {
-                                framebuffer.Bind(Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                                frameBuffer.Bind(Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                                State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
                                 State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
                                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+                                State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                             }
                             set2DViewport = true;
                         }
                     }
                     else if (!set2DViewport)
                     {
-                        if (framebuffer == null)
+                        if (!useFrameBuffer)
                         {
-                            var viewport = framebufferWindowArea;
+                            var viewport = frameBufferWindowArea;
                             State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
                                 (uint)viewport.Width, (uint)viewport.Height);
                         }
                         else
                         {
-                            framebuffer.Bind(Global.VirtualScreenWidth, Global.VirtualScreenHeight);
+                            frameBuffer.Bind(Global.VirtualScreenWidth, Global.VirtualScreenHeight);
                             State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
                             State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                         }
@@ -502,7 +523,7 @@ namespace Ambermoon.Renderer.OpenGL
                     layer.Value.Render();
                 }
 
-                if (framebuffer != null)
+                if (useFrameBuffer)
                     RenderToScreen(viewOffset);
 
                 accessViolationDetected = false;
@@ -519,14 +540,16 @@ namespace Ambermoon.Renderer.OpenGL
         void RenderToScreen(Position viewOffset)
         {
             State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit);
-            screenShader.Use(State);
+            screenBuffer.SetSize(frameBufferSize);
+            screenShader.Use(screenBuffer.ProjectionMatrix);
+            screenShader.SetResolution(frameBufferSize);
             screenShader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
             State.Gl.ActiveTexture(GLEnum.Texture0);
-            framebuffer.BindAsTexture();
-            State.Gl.Disable(EnableCap.Blend);
+            frameBuffer.BindAsTexture();
+            State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            State.Gl.Enable(EnableCap.Blend);
             State.Gl.Disable(EnableCap.DepthTest);
-            var viewport = framebufferWindowArea;
+            var viewport = frameBufferWindowArea;
             State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
                 (uint)viewport.Width, (uint)viewport.Height);
             screenBuffer.Render();

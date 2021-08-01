@@ -8,12 +8,14 @@
 ## 2D maps
 
 - Teleporting from a 2D map to a 2D world map via cheat with fixed positions (e.g. teleport 110 1 1) scrolls the map badly.
+- Spannenberg tavern: NPC still leaves map through main entrance.
 
 
 ## 3D maps
 
 - Should piles block monsters? Test in grandfather's cellar.
 - 3D monster get easily stuck on wall edges. :(
+- Luminor's flame in level 5 will hurt even after Luminor is dead and the flame is gone.
 
 
 ## UI

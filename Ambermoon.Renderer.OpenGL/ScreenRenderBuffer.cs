@@ -33,6 +33,9 @@ namespace Ambermoon.Renderer
         readonly PositionBuffer positionBuffer = null;
         readonly IndexBuffer indexBuffer = null;
 
+        Size size = null;
+        public Matrix4 ProjectionMatrix { get; private set; } = Matrix4.Identity;
+
         public ScreenRenderBuffer(State state, ScreenShader screenShader)
         {
             this.state = state;
@@ -46,6 +49,18 @@ namespace Ambermoon.Renderer
             indexBuffer = new IndexBuffer(state);
             indexBuffer.InsertQuad(0);
             vertexArrayObject.AddBuffer("index", indexBuffer);
+        }
+
+        public void SetSize(Size size)
+        {
+            if (this.size != size)
+            {
+                this.size = new Size(size);
+                positionBuffer.Update(1, (short)size.Width, 0);
+                positionBuffer.Update(2, (short)size.Width, (short)size.Height);
+                positionBuffer.Update(3, 0, (short)size.Height);
+                ProjectionMatrix = Matrix4.CreateOrtho2D(0, size.Width, 0, size.Height, 0, 1);
+            }
         }
 
         public void Render()
