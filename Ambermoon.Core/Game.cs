@@ -5573,9 +5573,35 @@ namespace Ambermoon
                         {
                             Unlocked(itemSlot.ItemIndex == LockpickItemIndex, () =>
                             {
-                                ItemAnimation.Play(this, renderView, ItemAnimation.Type.Consume, targetPosition, () =>
+                                var itemInfo = ItemManager.GetItem(itemSlot.ItemIndex);
+                                if (itemInfo.Flags.HasFlag(ItemFlags.DestroyAfterUsage))
                                 {
+                                    ItemAnimation.Play(this, renderView, ItemAnimation.Type.Consume, targetPosition, () =>
+                                    {
+                                        AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
+                                        {
+                                            itemGrid.ResetAnimation(itemSlot);
+                                            item.ShowItemAmount = false;
+                                            item.Visible = false;
+                                            itemGrid.HideTooltip();
+                                            itemGrid.Disabled = true;
+                                            EndSequence();
+                                            openedAction?.Invoke();
+                                        });
+                                    }, TimeSpan.FromMilliseconds(50));
                                     AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
+                                    {
+                                        item.Visible = false;
+                                        InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
+                                        itemSlot.Remove(1);
+                                    });
+                                }
+                                else
+                                {
+                                    // Just move back
+                                    StartSequence();
+                                    itemGrid.HideTooltip();
+                                    itemGrid.PlayMoveAnimation(itemSlot, null, () =>
                                     {
                                         itemGrid.ResetAnimation(itemSlot);
                                         item.ShowItemAmount = false;
@@ -5585,13 +5611,7 @@ namespace Ambermoon
                                         EndSequence();
                                         openedAction?.Invoke();
                                     });
-                                }, TimeSpan.FromMilliseconds(50));
-                                AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
-                                {
-                                    item.Visible = false;
-                                    InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
-                                    itemSlot.Remove(1);                                    
-                                });
+                                }
                             });
                         }
                         else
