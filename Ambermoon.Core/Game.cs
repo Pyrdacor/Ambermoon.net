@@ -217,6 +217,8 @@ namespace Ambermoon
         public const uint TicksPerSecond = 60;
         bool swamLastTick = false;
         bool swimDamageHandled = false;
+        uint lastSwimDamageHour = 0;
+        uint lastSwimDamageMinute = 0;
         /// <summary>
         /// This is used for screen shaking.
         /// Position is in percentage of the resolution.
@@ -1311,6 +1313,8 @@ namespace Ambermoon
             ingame = true;
             CurrentSavegame = savegame;
             GameTime = new SavegameTime(savegame);
+            lastSwimDamageHour = GameTime.Hour;
+            lastSwimDamageMinute = GameTime.Minute;
             GameTime.GotTired += GameTime_GotTired;
             GameTime.GotExhausted += GameTime_GotExhausted;
             GameTime.NewDay += GameTime_NewDay;
@@ -1572,14 +1576,14 @@ namespace Ambermoon
 
         void GameTime_HoursPassed(uint hours, bool notTiredNorExhausted = false)
         {
-            if (notTiredNorExhausted)
-                swimDamageHandled = true;
             UpdateLight();
             ProcessPoisonDamage(hours, () =>
             {
-                if (!swamLastTick && Map.IsWorldMap && TravelType == TravelType.Swim)
+                if (!notTiredNorExhausted && !swamLastTick && Map.IsWorldMap && TravelType == TravelType.Swim)
                 {
-                    DoSwimDamage(hours * 12);
+                    int hours = (int)(24 + GameTime.Hour - lastSwimDamageHour) % 24;
+                    int minutes = (int)GameTime.Minute - (int)lastSwimDamageMinute;
+                    DoSwimDamage((uint)(hours * 12 + minutes / 5));
                 }
             });
         }
@@ -4915,6 +4919,8 @@ namespace Ambermoon
 
         void DoSwimDamage(uint numTicks = 1)
         {
+            lastSwimDamageHour = GameTime.Hour;
+            lastSwimDamageMinute = GameTime.Minute;
             swamLastTick = true;
 
             uint CalculateDamage(PartyMember partyMember)
