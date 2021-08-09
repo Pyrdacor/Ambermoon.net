@@ -266,7 +266,7 @@ namespace Ambermoon
             this.game = game;
             this.layout = layout;
             this.partyMembers = partyMembers;
-            this.NeedsClickForNextAction = needsClickForNextAction;
+            NeedsClickForNextAction = needsClickForNextAction;
 
             // place characters
             for (int i = 0; i < partyMembers.Length; ++i)
@@ -3210,7 +3210,7 @@ namespace Ambermoon
                 }
             case BattleActionType.CastSpell:
                 {
-                    var maxPlayerDamage = averagePlayerDamage.Max();
+                    var maxPlayerDamage = averagePlayerDamage.Where((d, i) => partyMembers[i]?.Alive == true).Max();
                     uint getPrio(uint damage) => maxPlayerDamage == 0 ? 100 : damage * 100 / maxPlayerDamage;
                     var maxDamagePlayers = averagePlayerDamage.Select((d, i) => new { Damage = d, Player = partyMembers[i] })
                         .Where(x => x.Damage == maxPlayerDamage && x.Player?.Alive == true)
