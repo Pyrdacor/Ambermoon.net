@@ -306,7 +306,7 @@ namespace Ambermoon.Render
                 return;
             }
 
-            foreach (var transport in mapTransports)
+            foreach (var transport in mapTransports.ToList()) // ToList is needed as we might modify the collection
             {
                 var lastMapIndex = lastMap.Index;
 
