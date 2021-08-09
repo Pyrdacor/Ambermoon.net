@@ -155,11 +155,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 dataWriter.Write((ushort)(activeSpell?.Level ?? 0));
             }
 
-            dataWriter.Write((ushort)savegame.CurrentPartyMemberIndices.Count(i => i != 0)); // party member count
+            var memberIndices = savegame.CurrentPartyMemberIndices.Where(i => i != 0).ToArray();
+            dataWriter.Write((ushort)memberIndices.Length); // party member count
             dataWriter.Write((ushort)(1 + savegame.ActivePartyMemberSlot));
 
             for (int i = 0; i < 6; ++i)
-                dataWriter.Write((ushort)savegame.CurrentPartyMemberIndices[i]);
+                dataWriter.Write((ushort)(i < memberIndices.Length ? memberIndices[i] : 0));
 
             dataWriter.Write((ushort)savegame.YearsPassed);
             dataWriter.Write((ushort)savegame.TravelType);
