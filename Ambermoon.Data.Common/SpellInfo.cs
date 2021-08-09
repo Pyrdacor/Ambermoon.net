@@ -144,7 +144,7 @@ namespace Ambermoon.Data
             { Spell.Jump, new SpellInfo { SP = 50, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.DungeonOnly, Worlds = WorldFlag.All } },
             { Spell.Escape, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.WordOfMarking, new SpellInfo { SP = 150, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.Lyramion } },
-            { Spell.WordOfReturning, new SpellInfo { SP = 250, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.Lyramion } }, // TODO: castable on other worlds?
+            { Spell.WordOfReturning, new SpellInfo { SP = 250, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.Lyramion } },
             { Spell.MagicalShield, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.MagicalWall, new SpellInfo { SP = 30, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
             { Spell.MagicalBarrier, new SpellInfo { SP = 50, SLP = 20, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.All, Worlds = WorldFlag.All } },
@@ -170,7 +170,7 @@ namespace Ambermoon.Data
             { Spell.MapView, new SpellInfo { SP = 50, SLP = 15, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.NoBattle, Worlds = WorldFlag.All } },
             { Spell.MagicalCompass, new SpellInfo { SP = 5, SLP = 2, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
             { Spell.FindTraps, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
-            { Spell.FindMonsters, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap} },
+            { Spell.FindMonsters, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
             { Spell.FindPersons, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
             { Spell.FindSecretDoors, new SpellInfo { SP = 25, SLP = 10, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
             { Spell.MysticalMapping, new SpellInfo { SP = 100, SLP = 25, Target = SpellTarget.None, ApplicationArea = SpellApplicationArea.AnyMap, Worlds = WorldFlag.All } },
@@ -204,7 +204,7 @@ namespace Ambermoon.Data
             { Spell.Sleep, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.Fear, new SpellInfo { SP = 50, SLP = 10, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.Blind, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
-            { Spell.Drug, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } }, // TODO: sp/slp
+            { Spell.Drug, new SpellInfo { SP = 15, SLP = 10, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.DissolveVictim, new SpellInfo { SP = 250, SLP = 25, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.Mudsling, new SpellInfo { SP = 8, SLP = 1, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
             { Spell.Rockfall, new SpellInfo { SP = 15, SLP = 5, Target = SpellTarget.SingleEnemy, ApplicationArea = SpellApplicationArea.BattleOnly, Worlds = WorldFlag.All } },
