@@ -350,7 +350,12 @@ namespace Ambermoon.Renderer
                 byte glyphIndex = text.GlyphIndices[i];
 
                 if (glyphIndex >= (byte)SpecialGlyph.FirstColor)
+                {
                     colorIndex = (byte)(glyphIndex - SpecialGlyph.FirstColor);
+
+                    if (colorIndex == 32) // Special -> default color
+                        colorIndex = (byte)TextColor;
+                }
 
                 if (characterPositions[i] == null)
                     continue;

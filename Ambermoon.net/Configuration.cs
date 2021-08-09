@@ -25,6 +25,7 @@ namespace Ambermoon
         public int Volume { get; set; } = 100;
         public bool FastBattleMode { get; set; } = false;
         public bool CacheMusic { get; set; } = true;
+        public bool AutoDerune { get; set; } = true;
         public bool EnableCheats { get; set; } = false;
         public bool ShowButtonTooltips { get; set; } = true;
         public bool ShowFantasyIntro { get; set; } = false; // TODO: change to true

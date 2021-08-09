@@ -107,6 +107,8 @@ namespace Ambermoon.Data
             return true;
         }
 
+        public bool HasItem(uint itemIndex) => Inventory.Slots.Any(s => s.ItemIndex == itemIndex);
+
         public void AddGold(uint gold)
         {
             var newGold = (ushort)Math.Min(ushort.MaxValue, Gold + gold);

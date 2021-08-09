@@ -1069,8 +1069,11 @@ namespace Ambermoon.UI
                     "Tooltips anzeigen",
                     "Musik cachen",
                     "Cheats aktivieren",
-                    "Fantasy Intro anzeigen",
+                    "Runen als Text anzeigen",
                     "Intro anzeigen",
+                    // TODO: later
+                    // Page 3
+                    //"Fantasy Intro anzeigen",
                 }
             },
             {
@@ -1087,8 +1090,11 @@ namespace Ambermoon.UI
                     "Show tooltips",
                     "Cache music",
                     "Enable cheats",
-                    "Show fantasy intro",
+                    "Show runes as text",
                     "Show intro",
+                    // TODO: later
+                    // Page 3
+                    //"Show fantasy intro",
                 }
             }
         };
@@ -1118,8 +1124,10 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleCheats())),
-                KeyValuePair.Create("", (Action<int, string>)null/*(Action<int, string>)((index, _) => ToggleFantasyIntro())*/), // TODO: add later
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", (Action<int, string>)null/*(Action<int, string>)((index, _) => ToggleIntro())*/), // TODO: add later
+                // TODO
+                // KeyValuePair.Create("", (Action<int, string>)null/*(Action<int, string>)((index, _) => ToggleFantasyIntro())*/), // TODO: add later
             };
             listBox = activePopup.AddOptionsListBox(options.Take(OptionsPerPage).ToList());
 
@@ -1144,8 +1152,9 @@ namespace Ambermoon.UI
             void SetTooltips() => SetOptionString(5, game.Configuration.ShowButtonTooltips ? on : off);
             void SetMusicCaching() => SetOptionString(6, game.Configuration.CacheMusic ? on : off);
             void SetCheats() => SetOptionString(7, cheatsEnabled ? on : off);
-            void SetFantasyIntro() => SetOptionString(8, game.Configuration.ShowFantasyIntro ? on : off);
+            void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
             void SetIntro() => SetOptionString(9, game.Configuration.ShowIntro ? on : off);
+            // TODO: void SetFantasyIntro() => SetOptionString(8, game.Configuration.ShowFantasyIntro ? on : off);
 
             void ShowOptions()
             {
@@ -1163,9 +1172,13 @@ namespace Ambermoon.UI
                         SetTooltips();
                         SetMusicCaching();
                         SetCheats();
-                        SetFantasyIntro();
+                        SetAutoDerune();
                         SetIntro();
                         break;
+                        // TODO: later
+                    /*case 2:
+                        SetFantasyIntro();
+                        break;*/
                 }
             }
 
@@ -1237,6 +1250,12 @@ namespace Ambermoon.UI
             {
                 cheatsEnabled = !cheatsEnabled;
                 SetCheats();
+                changedConfiguration = true;
+            }
+            void ToggleAutoDerune()
+            {
+                game.Configuration.AutoDerune = !game.Configuration.AutoDerune;
+                SetAutoDerune();
                 changedConfiguration = true;
             }
 
@@ -2323,7 +2342,7 @@ namespace Ambermoon.UI
                 game.TrapMouse(Global.PartyMemberPortraitArea);
                 draggedGoldOrFoodRemover = chest == null
                     ? (Action<uint>)(gold => { game.CurrentInventory.RemoveGold(gold); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
-                    : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); };
+                    : gold => { chest.Gold -= gold; game.ChestGoldChanged(); UpdateLayoutButtons(); game.UntrapMouse(); };
                 if (chest != null)
                     ShowChestMessage(game.DataNameProvider.GiveToWhom);
                 else
@@ -2347,7 +2366,7 @@ namespace Ambermoon.UI
             GiveFood(chest == null ? game.CurrentInventory.Food : chest.Food,
                 chest == null
                     ? (Action<uint>)(food => { game.CurrentInventory.RemoveFood(food); game.UpdateCharacterInfo(); UpdateLayoutButtons(); game.UntrapMouse(); SetInventoryMessage(null); })
-                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); game.HideMessage(); },
+                    : food => { chest.Food -= food; game.ChestFoodChanged(); UpdateLayoutButtons(); game.UntrapMouse(); },
                 chest == null
                     ? (Action)(() => SetInventoryMessage(game.DataNameProvider.GiveToWhom))
                     : () => ShowChestMessage(game.DataNameProvider.GiveToWhom), null, () =>

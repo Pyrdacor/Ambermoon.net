@@ -401,7 +401,6 @@ namespace Ambermoon
         RenderMap3D renderMap3D = null;
         Player3D player3D = null;
         readonly ICamera3D camera3D = null;
-        readonly IRenderText messageText = null;
         readonly IRenderText windowTitle = null;
         byte currentUIPaletteIndex = 0;
         internal byte PrimaryUIPaletteIndex { get; }
@@ -498,8 +497,6 @@ namespace Ambermoon
             this.lightEffectProvider = lightEffectProvider;
             this.outroFactory = outroFactory;
             camera3D = renderView.Camera3D;
-            messageText = renderView.RenderTextFactory.Create();
-            messageText.Layer = renderView.GetLayer(Layer.Text);
             windowTitle = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
                 renderView.TextProcessor.CreateText(""), TextColor.BrightGray, true,
                 new Rect(8, 40, 192, 10), TextAlign.Center);
@@ -1130,7 +1127,6 @@ namespace Ambermoon
             player2D?.Destroy();
             player2D = null;
             player3D = null;
-            messageText.Visible = false;
 
             player = null;
             CurrentPartyMember = null;
@@ -1734,29 +1730,26 @@ namespace Ambermoon
         public List<string> Dictionary => textDictionary.Entries.Where((word, index) =>
             CurrentSavegame.IsDictionaryWordKnown((uint)index)).ToList();
 
+        public bool AutoDerune => Configuration.AutoDerune && PartyMembers.Any(p => p.HasItem(145)); // 145: Rune Table
+
         public IText ProcessText(string text)
         {
+            if (text.Contains("~RUN1~") && AutoDerune) // has rune alphabet and auto derune is active
+            {
+                // ~INK32~ resets to default color (at least in our implementation)
+                // ~INKcc~
+                // ~RUN1~text~NORM~ or ~"text"~
+                text = text
+                    .Replace("~RUN1~", $"~INK{(int)TextColor.Beige}~")
+                    .Replace("~NORM~", "~INK32~");
+            }
+
             return renderView.TextProcessor.ProcessText(text, nameProvider, Dictionary);
         }
 
         public IText ProcessText(string text, Rect bounds)
         {
             return renderView.TextProcessor.WrapText(ProcessText(text), bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
-        }
-
-        public void ShowMessage(Rect bounds, string text, TextColor color, bool shadow, TextAlign textAlign = TextAlign.Left)
-        {
-            messageText.Text = ProcessText(text, bounds);
-            messageText.PaletteIndex = TextPaletteIndex;
-            messageText.TextColor = color;
-            messageText.Shadow = shadow;
-            messageText.Place(bounds, textAlign);
-            messageText.Visible = true;
-        }
-
-        public void HideMessage()
-        {
-            messageText.Visible = false;
         }
 
         internal void DisplayOuch()

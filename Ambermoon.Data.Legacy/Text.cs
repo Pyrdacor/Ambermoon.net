@@ -214,40 +214,44 @@ namespace Ambermoon.Data.Legacy
                         line.Add(glyph);
                         NewLine();
                         break;
-                    case (byte)SpecialGlyph.FirstColor:
-                        line.Add(glyph);
-                        break;
                     default:
                     {
-                        x += glyphSize.Width;
-                        if (x > bounds.Right)
+                        if (glyph >= (byte)SpecialGlyph.FirstColor)
                         {
-                            if (lastSpaceIndex != -1)
-                            {
-                                line.Add(glyph);
-                                ++currentLineSize;
-                                line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
-                                int nextLineSize = (currentLineSize - lastSpaceIndex - 1) * glyphSize.Width;
-                                var tempLine = line.Skip(lastSpaceIndex + 1);
-                                line = line.Take(lastSpaceIndex + 1).ToList();
-                                currentLineSize = lastSpaceIndex;
-                                x = currentLineSize * glyphSize.Width;
-                                NewLine(nextLineSize);
-                                line = tempLine.ToList();
-                                currentLineSize = line.Count;
-                            }
-                            else
-                            {
-                                line.Add((byte)SpecialGlyph.NewLine);
-                                NewLine();
-                                line.Add(glyph);
-                                currentLineSize = 1;
-                            }
+                            line.Add(glyph);
                         }
                         else
                         {
-                            line.Add(glyph);
-                            ++currentLineSize;
+                            x += glyphSize.Width;
+                            if (x > bounds.Right)
+                            {
+                                if (lastSpaceIndex != -1)
+                                {
+                                    line.Add(glyph);
+                                    ++currentLineSize;
+                                    line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
+                                    int nextLineSize = (currentLineSize - lastSpaceIndex - 1) * glyphSize.Width;
+                                    var tempLine = line.Skip(lastSpaceIndex + 1);
+                                    line = line.Take(lastSpaceIndex + 1).ToList();
+                                    currentLineSize = lastSpaceIndex;
+                                    x = currentLineSize * glyphSize.Width;
+                                    NewLine(nextLineSize);
+                                    line = tempLine.ToList();
+                                    currentLineSize = line.Count;
+                                }
+                                else
+                                {
+                                    line.Add((byte)SpecialGlyph.NewLine);
+                                    NewLine();
+                                    line.Add(glyph);
+                                    currentLineSize = 1;
+                                }
+                            }
+                            else
+                            {
+                                line.Add(glyph);
+                                ++currentLineSize;
+                            }
                         }
                         break;
                     }
@@ -288,23 +292,14 @@ namespace Ambermoon.Data.Legacy
                     rune = false;
                 else if (name.StartsWith("INK"))
                 {
-                    if (!int.TryParse(name.Substring(3), out int colorIndex) || colorIndex < 0 || colorIndex > 31)
+                    if (!int.TryParse(name.Substring(3), out int colorIndex) || colorIndex < 0 || colorIndex > 32)
                         throw new AmbermoonException(ExceptionScope.Data, $"Invalid ink tag: ~{name}~");
 
                     glyphIndices.Add((byte)(SpecialGlyph.FirstColor + colorIndex));
                 }
                 else
                 {
-                    // Sometimes rune text is encoded as ~"text"~
-                    if (name.Length > 2 && name[0] == '"' && name[^1] == '"')
-                    {
-                        name.Substring(1, name.Length - 2).ToList().ForEach(c =>
-                            glyphIndices.Add(CharToGlyph(c, true, fallbackChar)));
-                    }
-                    else
-                    {
-                        throw new AmbermoonException(ExceptionScope.Data, $"Unknown tag: ~{name}~");
-                    }
+                    throw new AmbermoonException(ExceptionScope.Data, $"Unknown tag: ~{name}~");
                 }
             }
 
