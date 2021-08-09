@@ -443,6 +443,7 @@ namespace Ambermoon.UI
                 if (remaining < amountToDrop)
                 {
                     itemSlot.Update(false);
+                    itemSlot.Visible = SlotVisible(slot);
 
                     if (remaining == 0)
                         item.Item.Destroy();
