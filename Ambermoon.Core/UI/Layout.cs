@@ -4414,6 +4414,9 @@ namespace Ambermoon.UI
         {
             void FinishPickingTargetItem(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
             {
+                if (itemSlot.ItemIndex == 0)
+                    return;
+
                 itemGrids[0].ItemClicked -= FinishPickingTargetItem;
                 itemGrids[1].ItemClicked -= FinishPickingTargetItem;
                 game.FinishPickingTargetInventory(itemGrid, slotIndex, itemSlot);
