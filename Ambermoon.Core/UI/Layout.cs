@@ -2397,12 +2397,16 @@ namespace Ambermoon.UI
 
         internal void ShowChestMessage(string message, TextAlign textAlign = TextAlign.Center)
         {
-            var bounds = new Rect(114, 46, 189, 48);
             ChestText?.Destroy();
             if (message != null)
+            {
+                var bounds = new Rect(114, 46, 189, 48);
                 ChestText = AddText(bounds, game.ProcessText(message, bounds), TextColor.White, textAlign);
+            }
             else
+            {
                 ChestText = null;
+            }
         }
 
         internal void ShowClickChestMessage(string message, Action clickEvent = null, bool remainAfterClick = false)

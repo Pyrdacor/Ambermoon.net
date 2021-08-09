@@ -5760,7 +5760,7 @@ namespace Ambermoon
             layout.AttachEventToButton(2, Exit);
 
             if (!string.IsNullOrWhiteSpace(initialMessage))
-                layout.ShowChestMessage(initialMessage, TextAlign.Left);
+                layout.ShowClickChestMessage(initialMessage);
         }
 
         /// <summary>
