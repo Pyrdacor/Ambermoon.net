@@ -12205,7 +12205,7 @@ namespace Ambermoon
                             gotoPoints.Add(KeyValuePair.Create(gotoPoint,
                                 layout.AddTooltip(new Rect(x, y, 8, 8), gotoPoint.Name, TextColor.White)));
                         }
-                        if (automapType != AutomapType.None)
+                        if (automapType != AutomapType.None && automapType != AutomapType.Monster && automapType != AutomapType.Person)
                             AddAutomapType(tx, ty, x, y, automapType);
                         if (block.WallIndex != 0)
                         {
