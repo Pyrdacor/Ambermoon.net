@@ -3072,13 +3072,26 @@ namespace Ambermoon
             uint x = (uint)player.Position.X;
             uint y = (uint)player.Position.Y;
             var @event = is3D ? Map.GetEvent(x, y, CurrentSavegame) : renderMap2D.GetEvent(x, y, CurrentSavegame);
+            var map = is3D ? Map : renderMap2D.GetMapFromTile(x, y);
 
-            if (@event is ConditionEvent conditionEvent &&
-                conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.UseItem &&
-                conditionEvent.ObjectIndex == itemIndex)
+            bool TestEvent()
             {
-                return true;
+                if (!(@event is ConditionEvent conditionEvent))
+                    return false;
+
+                if (conditionEvent.TypeOfCondition == ConditionEvent.ConditionType.UseItem &&
+                    conditionEvent.ObjectIndex == itemIndex)
+                    return true;
+
+                bool lastEventStatus = true;
+                var trigger = (EventTrigger)((uint)EventTrigger.Item0 + itemIndex);
+                @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, x, y, CurrentTicks, ref lastEventStatus, out bool _, out var _);
+
+                return TestEvent();
             }
+
+            if (TestEvent())
+                return true;
 
             var mapWidth = Map.IsWorldMap ? int.MaxValue : Map.Width;
             var mapHeight = Map.IsWorldMap ? int.MaxValue : Map.Height;
@@ -3128,9 +3141,7 @@ namespace Ambermoon
                 @event = renderMap2D.GetEvent(x, y, CurrentSavegame);
             }
 
-            return  @event is ConditionEvent adjacentConditionEvent &&
-                    adjacentConditionEvent.TypeOfCondition == ConditionEvent.ConditionType.UseItem &&
-                    adjacentConditionEvent.ObjectIndex == itemIndex;
+            return TestEvent();
         }
 
         internal bool TriggerMapEvents(EventTrigger? trigger)
