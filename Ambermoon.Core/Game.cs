@@ -3571,6 +3571,9 @@ namespace Ambermoon
             }
             else
             {
+                closeWindowHandler?.Invoke();
+                closeWindowHandler = null;
+
                 Fade(() =>
                 {
                     openAction();
@@ -5515,10 +5518,10 @@ namespace Ambermoon
             }
 
             ActivePlayerChanged += PlayerSwitched;
+            closeWindowHandler = () => ActivePlayerChanged -= PlayerSwitched;
 
             void Exit()
             {
-                ActivePlayerChanged -= PlayerSwitched;
                 CloseWindow();
             }
 
@@ -10262,6 +10265,7 @@ namespace Ambermoon
 
             placeSetup?.Invoke(UpdateGoldDisplay, itemGrid);
             ActivePlayerChanged += activePlayerSwitchedHandler;
+            closeWindowHandler = () => ActivePlayerChanged -= activePlayerSwitchedHandler;
 
             // exit button
             layout.AttachEventToButton(2, () =>
@@ -10279,7 +10283,6 @@ namespace Ambermoon
 
                 void Exit()
                 {
-                    ActivePlayerChanged -= activePlayerSwitchedHandler;
                     CloseWindow();
 
                     // Distribute the gold
@@ -11050,10 +11053,10 @@ namespace Ambermoon
                 }
 
                 ActivePlayerChanged += PlayerSwitched;
+                closeWindowHandler = () => ActivePlayerChanged -= PlayerSwitched;
 
                 void Exit()
                 {
-                    ActivePlayerChanged -= PlayerSwitched;
                     CloseWindow();
                 }
 
