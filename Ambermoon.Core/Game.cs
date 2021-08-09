@@ -9357,7 +9357,7 @@ namespace Ambermoon
                     CursorType = CursorType.Sword;
                     var itemArea = new Rect(16, 139, 151, 53);
                     TrapMouse(itemArea);
-                    itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Select(s => s.Value).ToList()
+                    itemsGrid.Initialize(equipment ? CurrentPartyMember.Equipment.Slots.Where(s => s.Value.ItemIndex != 0).Select(s => s.Value).ToList()
                         : CurrentPartyMember.Inventory.Slots.ToList(), false);
                     void SetupRightClickAbort()
                     {
