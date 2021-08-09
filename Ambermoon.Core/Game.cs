@@ -1332,7 +1332,7 @@ namespace Ambermoon
                     UpdateLight();
                 }
 
-                if (!swamLastTick && Map.IsWorldMap && renderMap2D[player.Position].Type == Map.TileType.Water)
+                if (!swamLastTick && Map.IsWorldMap && TravelType == TravelType.Swim)
                 {
                     // Waiting or if a hour passes, it handles the swim damage instead.
                     // This is important as hour changes might also trigger exhaustion or tired
@@ -1577,7 +1577,7 @@ namespace Ambermoon
             UpdateLight();
             ProcessPoisonDamage(hours, () =>
             {
-                if (!swamLastTick && Map.IsWorldMap && renderMap2D[player.Position].Type == Map.TileType.Water)
+                if (!swamLastTick && Map.IsWorldMap && TravelType == TravelType.Swim)
                 {
                     DoSwimDamage(hours * 12);
                 }
