@@ -216,6 +216,7 @@ namespace Ambermoon
         public const int MaxPartyMembers = 6;
         public const uint TicksPerSecond = 60;
         bool swamLastTick = false;
+        bool swimDamageHandled = false;
         /// <summary>
         /// This is used for screen shaking.
         /// Position is in percentage of the resolution.
@@ -1332,9 +1333,25 @@ namespace Ambermoon
                 }
 
                 if (!swamLastTick && Map.IsWorldMap && renderMap2D[player.Position].Type == Map.TileType.Water)
-                    DoSwimDamage(amount / 5);
+                {
+                    // Waiting or if a hour passes, it handles the swim damage instead.
+                    // This is important as hour changes might also trigger exhaustion or tired
+                    // messages and will also process poison damage.
+                    // As this event comes before the hour change event, we will check only next cycle.
+                    ExecuteNextUpdateCycle(() =>
+                    {
+                        if (!swimDamageHandled)
+                            DoSwimDamage(amount / 5);
+                        else
+                            swimDamageHandled = false;
+                    });
+                }
+                else
+                {
+                    swimDamageHandled = false;
+                }
             };
-            GameTime.HourChanged += GameTime_HoursPassed;
+            GameTime.HourChanged += hours => GameTime_HoursPassed(hours, true);
             currentBattle = null;
 
             ClearPartyMembers();
@@ -1515,6 +1532,7 @@ namespace Ambermoon
 
         void GameTime_GotExhausted(uint hoursExhausted, uint hoursPassed)
         {
+            swimDamageHandled = true;
             bool alreadyExhausted = false;
             uint[] damageValues = new uint[MaxPartyMembers];
 
@@ -1524,10 +1542,11 @@ namespace Ambermoon
 
                 if (partyMember != null && partyMember.Alive)
                 {
-                    if (partyMember.Ailments.HasFlag(Ailment.Exhausted))
+                    bool exhausted = partyMember.Ailments.HasFlag(Ailment.Exhausted);
+                    if (exhausted)
                         alreadyExhausted = true;
                     partyMember.Ailments |= Ailment.Exhausted;
-                    damageValues[i] = AddExhaustion(partyMember, hoursExhausted);
+                    damageValues[i] = AddExhaustion(partyMember, hoursExhausted, !exhausted);
                     if (damageValues[i] < partyMember.HitPoints.CurrentValue)
                         layout.UpdateCharacterStatus(partyMember);
                 }
@@ -1547,13 +1566,22 @@ namespace Ambermoon
 
         void GameTime_GotTired(uint hoursPassed)
         {
+            swimDamageHandled = true;
             ShowMessagePopup(DataNameProvider.TiredMessage, () => GameTime_HoursPassed(hoursPassed));
         }
 
-        void GameTime_HoursPassed(uint hours)
+        void GameTime_HoursPassed(uint hours, bool notTiredNorExhausted = false)
         {
+            if (notTiredNorExhausted)
+                swimDamageHandled = true;
             UpdateLight();
-            ProcessPoisonDamage(hours);
+            ProcessPoisonDamage(hours, () =>
+            {
+                if (!swamLastTick && Map.IsWorldMap && renderMap2D[player.Position].Type == Map.TileType.Water)
+                {
+                    DoSwimDamage(hours * 12);
+                }
+            });
         }
 
         void AgePlayer(PartyMember partyMember, Action finishAction)
@@ -7088,7 +7116,7 @@ namespace Ambermoon
             }
         }
 
-        uint AddExhaustion(PartyMember partyMember, uint hours)
+        uint AddExhaustion(PartyMember partyMember, uint hours, bool crippleAttributes)
         {
             uint totalDamage = 0;
             long hitPoints = partyMember.HitPoints.CurrentValue;
@@ -7104,7 +7132,7 @@ namespace Ambermoon
                     break;
             }
 
-            if (hitPoints > 0)
+            if (crippleAttributes && hitPoints > 0)
             {
                 foreach (var attribute in Enum.GetValues<Attribute>())
                 {
@@ -7112,6 +7140,7 @@ namespace Ambermoon
                     partyMember.Attributes[attribute].CurrentValue /= 2;
                 }
             }
+
             return Math.Min(totalDamage, partyMember.HitPoints.CurrentValue);
         }
 
