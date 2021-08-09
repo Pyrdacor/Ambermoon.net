@@ -215,6 +215,7 @@ namespace Ambermoon
         const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         public const uint TicksPerSecond = 60;
+        bool swamLastTick = false;
         /// <summary>
         /// This is used for screen shaking.
         /// Position is in percentage of the resolution.
@@ -730,6 +731,7 @@ namespace Ambermoon
                 if (!paused)
                 {
                     GameTime?.Update();
+                    swamLastTick = false;
                     MonsterSeesPlayer = false; // Will be set by the monsters Update methods eventually
 
                     CurrentTicks = UpdateTicks(CurrentTicks, deltaTime);
@@ -1328,6 +1330,9 @@ namespace Ambermoon
                 {
                     UpdateLight();
                 }
+
+                if (!swamLastTick && Map.IsWorldMap && renderMap2D[player.Position].Type == Map.TileType.Water)
+                    DoSwimDamage(amount / 5);
             };
             GameTime.HourChanged += GameTime_HoursPassed;
             currentBattle = null;
@@ -1579,11 +1584,14 @@ namespace Ambermoon
         internal void ForeachPartyMember(Action<PartyMember, Action> action, Func<PartyMember, bool> condition = null,
             Action followUpAction = null)
         {
+            bool wasClickMoveActive = clickMoveActive;
+            StartSequence();
+
             void Run(int index)
             {
                 if (index == MaxPartyMembers)
                 {
-                    followUpAction?.Invoke();
+                    Finish();
                     return;
                 }
 
@@ -1600,6 +1608,13 @@ namespace Ambermoon
             }
 
             Run(0);
+
+            void Finish()
+            {
+                EndSequence();
+                followUpAction?.Invoke();
+                clickMoveActive = wasClickMoveActive;
+            }
         }
 
         void GameTime_NewDay()
@@ -4008,15 +4023,23 @@ namespace Ambermoon
                             }
 
                             bool inputWasEnabled = InputEnable;
+                            bool allInputWasDisabled = allInputDisabled;
                             newLeaderPicked += NewLeaderPicked;
+                            allInputDisabled = false;
                             RecheckActivePartyMember(out bool gameOver);
 
-                            if (gameOver)
+                            if (gameOver || !pickingNewLeader)
                                 newLeaderPicked -= NewLeaderPicked;
+
+                            if (gameOver)
+                                allInputDisabled = false;
+                            else if (!pickingNewLeader)
+                                allInputDisabled = allInputWasDisabled;
 
                             void NewLeaderPicked(int index)
                             {
                                 newLeaderPicked -= NewLeaderPicked;
+                                allInputDisabled = allInputWasDisabled;
                                 finished?.Invoke();
                                 InputEnable = inputWasEnabled;
                             }
@@ -4042,7 +4065,7 @@ namespace Ambermoon
         }
 
         void DamageAllPartyMembers(uint damage, Func<PartyMember, bool> affectChecker = null,
-            Action < PartyMember, Action> notAffectedHandler = null, Action followAction = null)
+            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null)
         {
             DamageAllPartyMembers(_ => damage, affectChecker, notAffectedHandler, followAction);
         }
@@ -4862,13 +4885,11 @@ namespace Ambermoon
             DoSwimDamage();
         }
 
-        void DoSwimDamage()
+        void DoSwimDamage(uint numTicks = 1)
         {
-            // TODO
-            // This is now called on each movement in water.
-            // But it also has to be called each 5 minutes (but not twice if also moving).
+            swamLastTick = true;
 
-            static uint CalculateDamage(PartyMember partyMember)
+            uint CalculateDamage(PartyMember partyMember)
             {
                 var swimAbility = partyMember.Abilities[Ability.Swim].TotalCurrentValue;
 
@@ -4876,7 +4897,17 @@ namespace Ambermoon
                     return 0;
 
                 var factor = (100 - swimAbility) / 2;
-                return Math.Max(1, factor * partyMember.HitPoints.CurrentValue / 100);
+                uint hitPoints = partyMember.HitPoints.CurrentValue;
+                uint totalDamage = 0;
+
+                for (uint i = 0; i < numTicks; ++i)
+                {
+                    uint damage = Math.Max(1, factor * hitPoints / 100);
+                    totalDamage += damage;
+                    hitPoints -= damage;
+                }
+
+                return totalDamage;
             }
 
             DamageAllPartyMembers(CalculateDamage);
