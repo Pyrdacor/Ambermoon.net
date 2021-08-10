@@ -63,9 +63,11 @@ namespace Ambermoon.Data
 
     public interface IText
     {
-        public IReadOnlyList<byte[]> Lines { get; }
-        public byte[] GlyphIndices { get; }
-        public int LineCount { get; }
-        public int MaxLineSize { get; }
+        IReadOnlyList<byte[]> Lines { get; }
+        byte[] GlyphIndices { get; }
+        int LineCount { get; }
+        int MaxLineSize { get; }
+        Size WrappedSize { get; set; }
+        Size WrappedGlyphSize { get; set; }
     }
 }

@@ -26,6 +26,8 @@ namespace Ambermoon.Data.Legacy
         public byte[] GlyphIndices { get; }
         public int LineCount { get; }
         public int MaxLineSize { get; }
+        public Size WrappedSize { get; set; }
+        public Size WrappedGlyphSize { get; set; }
     }
 
     public class TextProcessor : ITextProcessor
@@ -174,6 +176,10 @@ namespace Ambermoon.Data.Legacy
 
         public IText WrapText(IText text, Rect bounds, Size glyphSize)
         {
+            if (text.WrappedSize?.Width == bounds.Width && text.WrappedSize?.Height >= bounds.Height &&
+                text.WrappedGlyphSize == glyphSize)
+                return text;
+
             int x = bounds.Left;
             int y = bounds.Top;
             int lastSpaceIndex = -1;
@@ -183,13 +189,13 @@ namespace Ambermoon.Data.Legacy
             var wrappedGlyphLines = new List<KeyValuePair<byte[], int>>();
             var line = new List<byte>();
 
-            void NewLine(int newX = 0)
+            void NewLine()
             {
-                if (x > maxLineWidth)
-                    maxLineWidth = x;
+                if (x > bounds.Left + maxLineWidth)
+                    maxLineWidth = x - bounds.Left;
 
                 lastSpaceIndex = -1;
-                x = bounds.Left + newX;
+                x = bounds.Left;
                 y += glyphSize.Height;
                 height = y;
                 wrappedGlyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
@@ -210,6 +216,7 @@ namespace Ambermoon.Data.Legacy
                         x += glyphSize.Width;
                         if (x > bounds.Right)
                         {
+                            x -= glyphSize.Width;
                             line.Add((byte)SpecialGlyph.NewLine);
                             NewLine();
                         }
@@ -240,14 +247,14 @@ namespace Ambermoon.Data.Legacy
                                     line.Add(glyph);
                                     ++currentLineSize;
                                     line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
-                                    int nextLineSize = (currentLineSize - lastSpaceIndex - 1) * glyphSize.Width;
-                                    var tempLine = line.Skip(lastSpaceIndex + 1);
+                                    var newLine = line.Skip(lastSpaceIndex + 1);
                                     line = line.Take(lastSpaceIndex + 1).ToList();
-                                    currentLineSize = lastSpaceIndex;
-                                    x = currentLineSize * glyphSize.Width;
-                                    NewLine(nextLineSize);
-                                    line = tempLine.ToList();
-                                    currentLineSize = line.Count;
+                                    currentLineSize = line.Count(c => c < (byte)SpecialGlyph.FirstColor);
+                                    x = bounds.Left + (currentLineSize - 1) * glyphSize.Width;
+                                    NewLine();
+                                    currentLineSize = newLine.Count(c => c < (byte)SpecialGlyph.FirstColor);
+                                    x = bounds.Left + currentLineSize * glyphSize.Width;
+                                    line = newLine.ToList();
                                 }
                                 else
                                 {
@@ -274,13 +281,16 @@ namespace Ambermoon.Data.Legacy
             if (line.Count > 0)
                 wrappedGlyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
 
-            // Note: The added 1 is used as after the last new line character there are always other characters.
-            return new Text(wrappedGlyphLines);
+            return new Text(wrappedGlyphLines)
+            {
+                WrappedSize = new Size(bounds.Size),
+                WrappedGlyphSize = new Size(glyphSize)
+            };
         }
 
         public IText ProcessText(string text, ITextNameProvider nameProvider, List<string> dictionary, char? fallbackChar = null)
         {
-            List<byte> glyphIndices = new List<byte>();
+            var glyphIndices = new List<byte>();
 
             text = text.Replace("~LEAD~", nameProvider.LeadName);
             text = text.Replace("~SELF~", nameProvider.SelfName);

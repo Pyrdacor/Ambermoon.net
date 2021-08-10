@@ -220,8 +220,8 @@ namespace Ambermoon.Renderer
 
             bool NewLine()
             {
-                if (x > width)
-                    width = x;
+                if (x > X + width)
+                    width = x - X;
 
                 x = X;
                 y += LineHeight;
@@ -316,8 +316,8 @@ namespace Ambermoon.Renderer
                 }
             }
 
-            if (x > width)
-                width = x;
+            if (x - bounds.Left > width)
+                width = x - bounds.Left;
 
             Resize(width, y + characterHeight - Y);
 
