@@ -442,7 +442,7 @@ namespace Ambermoon.Render
 
             void ShowPopup(string text)
             {
-                game.ShowTextPopup(game.ProcessText(text), null);
+                game.ShowMessagePopup(text, null, TextAlign.Left);
             }
 
             void UpdatePosition()

@@ -133,6 +133,13 @@ namespace Ambermoon.Data.Legacy
 
             void NewLine()
             {
+                while (line.Count != 0 && line.Last() == (byte)SpecialGlyph.SoftSpace)
+                {
+                    // Trim end
+                    line.RemoveAt(line.Count - 1);
+                    --currentLineSize;
+                }
+
                 glyphLines.Add(new KeyValuePair<byte[], int>(line.ToArray(), currentLineSize));
                 currentLineSize = 0;
                 line.Clear();
@@ -141,6 +148,9 @@ namespace Ambermoon.Data.Legacy
 
             foreach (var glyph in glyphs)
             {
+                if (currentLineSize == 0 && glyph == (byte)SpecialGlyph.SoftSpace)
+                    continue; // Trim start
+
                 line.Add(glyph);
 
                 if (glyph == (byte)SpecialGlyph.NewLine)
