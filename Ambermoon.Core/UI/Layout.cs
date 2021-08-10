@@ -334,7 +334,8 @@ namespace Ambermoon.UI
                     previousSlot.Replace(game.OpenStorage.Slots[SourceSlot % 6, SourceSlot / 6]);
                     if (SourceGrid.DropItem(SourceSlot, this) == 0)
                     {
-                        updateGrid = false;
+                        if (!previousSlot.Empty)
+                            updateGrid = false;
                         previousSlot = new ItemSlot();
                     }
                 }

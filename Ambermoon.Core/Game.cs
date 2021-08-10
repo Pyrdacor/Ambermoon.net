@@ -224,7 +224,6 @@ namespace Ambermoon
         /// Position is in percentage of the resolution.
         /// </summary>
         public FloatPosition ViewportOffset { get; private set; } = null;
-        readonly bool legacyMode = false;
         public event Action QuitRequested;
         public bool Godmode
         {

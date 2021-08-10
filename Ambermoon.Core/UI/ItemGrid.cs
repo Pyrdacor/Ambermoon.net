@@ -415,7 +415,8 @@ namespace Ambermoon.UI
                     item.Item.Dragged = false;
                     slots[slot].Replace(item.Item.Item);
                     item.Item.SetItem(slots[slot]);
-                    item.Item.Position = slotPositions[slot - ScrollOffset];
+                    if (SlotVisible(slot))
+                        item.Item.Position = slotPositions[slot - ScrollOffset];
                     items[slot] = item.Item;
                     ItemDropped?.Invoke(slot, item.Item.Item, item.Item.Item.Amount);
                 }
