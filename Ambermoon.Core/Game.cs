@@ -1891,6 +1891,7 @@ namespace Ambermoon
             {
                 stepAction?.Invoke();
                 EndSequence();
+                ResetMoveKeys();
                 followUpAction?.Invoke();
             });
         }
