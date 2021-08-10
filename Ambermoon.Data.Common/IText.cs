@@ -7,6 +7,7 @@ namespace Ambermoon.Data
         SoftSpace = 94, // expressed with a normal space character
         HardSpace, // expressed with $
         NewLine, // expressed with ^
+        NoTrim,
         FirstColor // everything >= this is a color from 0 to 31
     }
 

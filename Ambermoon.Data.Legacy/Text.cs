@@ -150,14 +150,14 @@ namespace Ambermoon.Data.Legacy
 
             foreach (var glyph in glyphs)
             {
-                if (currentLineSize == 0 && glyph == (byte)SpecialGlyph.SoftSpace)
+                if (currentLineSize == 0 && line.Count != 0 && glyph == (byte)SpecialGlyph.SoftSpace)
                     continue; // Trim start
 
                 line.Add(glyph);
 
                 if (glyph == (byte)SpecialGlyph.NewLine)
                     NewLine();
-                else if (glyph < (byte)SpecialGlyph.FirstColor)
+                else if (glyph < (byte)SpecialGlyph.NoTrim)
                     ++currentLineSize;
             }
 
@@ -233,7 +233,7 @@ namespace Ambermoon.Data.Legacy
                         break;
                     default:
                     {
-                        if (glyph >= (byte)SpecialGlyph.FirstColor)
+                        if (glyph >= (byte)SpecialGlyph.NoTrim)
                         {
                             line.Add(glyph);
                         }
@@ -249,10 +249,10 @@ namespace Ambermoon.Data.Legacy
                                     line[lastSpaceIndex] = (byte)SpecialGlyph.NewLine;
                                     var newLine = line.Skip(lastSpaceIndex + 1);
                                     line = line.Take(lastSpaceIndex + 1).ToList();
-                                    currentLineSize = line.Count(c => c < (byte)SpecialGlyph.FirstColor);
+                                    currentLineSize = line.Count(c => c < (byte)SpecialGlyph.NoTrim);
                                     x = bounds.Left + (currentLineSize - 1) * glyphSize.Width;
                                     NewLine();
-                                    currentLineSize = newLine.Count(c => c < (byte)SpecialGlyph.FirstColor);
+                                    currentLineSize = newLine.Count(c => c < (byte)SpecialGlyph.NoTrim);
                                     x = bounds.Left + currentLineSize * glyphSize.Width;
                                     line = newLine.ToList();
                                 }
@@ -334,6 +334,9 @@ namespace Ambermoon.Data.Legacy
                         tagStart = i + 1;
                     else
                     {
+                        if (tagStart > 1 && text[tagStart - 2] == ' ')
+                            glyphIndices.Insert(glyphIndices.Count - 1, (byte)SpecialGlyph.NoTrim);
+
                         ProcessTag(text[tagStart..i]);
                         tagStart = -1;
                     }
@@ -359,6 +362,9 @@ namespace Ambermoon.Data.Legacy
                 }
                 else
                 {
+                    if (glyphIndices.Count != 0 && glyphIndices.Last() >= (byte)SpecialGlyph.FirstColor)
+                        glyphIndices.Add((byte)SpecialGlyph.NoTrim);
+
                     glyphIndices.Add(CharToGlyph(text[i], rune, fallbackChar));
                 }
             }

@@ -251,7 +251,7 @@ namespace Ambermoon.Renderer
             {
                 byte glyphIndex = text.GlyphIndices[i];
 
-                if (glyphIndex >= (byte)SpecialGlyph.FirstColor)
+                if (glyphIndex >= (byte)SpecialGlyph.NoTrim)
                 {
                     ++numEmptyCharacterInLine;
                     continue;
@@ -348,6 +348,9 @@ namespace Ambermoon.Renderer
             for (int i = 0; i <= lastCharacterToRender; ++i)
             {
                 byte glyphIndex = text.GlyphIndices[i];
+
+                if (glyphIndex == (byte)SpecialGlyph.NoTrim)
+                    continue;
 
                 if (glyphIndex >= (byte)SpecialGlyph.FirstColor)
                 {
