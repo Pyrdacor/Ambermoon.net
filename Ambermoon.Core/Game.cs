@@ -4155,10 +4155,21 @@ namespace Ambermoon
                     RollDice100() >= p.Attributes[Attribute.Luck].TotalCurrentValue;
             }, (p, finish) =>
             {
-                if (targetFilter?.Invoke(p) != false)
-                    ShowMessagePopup(p.Name + DataNameProvider.EscapedTheTrap, finish);
-                else
+                bool allInputWasDisabled = allInputDisabled;
+
+                void Next()
+                {
+                    allInputDisabled = allInputWasDisabled;
                     finish?.Invoke();
+                }
+
+                if (targetFilter?.Invoke(p) != false)
+                {
+                    allInputDisabled = false;
+                    ShowMessagePopup(p.Name + DataNameProvider.EscapedTheTrap, Next);
+                }
+                else
+                    Next();
             }, Finished, trapEvent.GetAilment());
 
             void Finished()
