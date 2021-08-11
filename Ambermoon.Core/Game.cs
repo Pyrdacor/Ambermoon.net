@@ -5306,6 +5306,25 @@ namespace Ambermoon
                             RemoveFromMap(MapManager.GetMap(Map.DownRightMapIndex.Value));
                     }
                 }
+                else
+                {
+                    // Refill chest
+                    var initialChest = GetInitialChest(1 + chestEvent.ChestIndex);
+
+                    if (initialChest != null)
+                    {
+                        var chest = GetChest(1 + chestEvent.ChestIndex);
+
+                        chest.Gold = initialChest.Gold;
+                        chest.Food = initialChest.Food;
+
+                        for (int y = 0; y < Chest.SlotRows; ++y)
+                        {
+                            for (int x = 0; x < Chest.SlotsPerRow; ++x)
+                                chest.Slots[x, y].Replace(initialChest.Slots[x, y]);
+                        }
+                    }
+                }
                 if (chestEvent.Next != null)
                 {
                     Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
@@ -5447,29 +5466,13 @@ namespace Ambermoon
             }
         }
 
-        internal void ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map,
+        internal bool ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map,
             Position position, bool fromEvent)
         {
             var chest = GetChest(1 + chestEvent.ChestIndex);
 
             if (chestEvent.CloseWhenEmpty && chest.Empty)
-            {
-                // This is used by the flowers on Kire's moon
-                // or the flowers on Lyramion.
-                // Chest events reuse the same chest and it is
-                // refilled each time another flower is looted.
-                var initialChest = GetInitialChest(1 + chestEvent.ChestIndex);
-                if (initialChest == null)
-                    return;
-                chest.Gold = initialChest.Gold;
-                chest.Food = initialChest.Food;
-
-                for (int y = 0; y < Chest.SlotRows; ++y)
-                {
-                    for (int x = 0; x < Chest.SlotsPerRow; ++x)
-                        chest.Slots[x, y].Replace(initialChest.Slots[x, y]);
-                }
-            }
+                return false; // Chest has gone due to looting
 
             void OpenChest()
             {
@@ -5502,6 +5505,8 @@ namespace Ambermoon
                 OpenChest();
             else
                 Fade(OpenChest);
+
+            return true;
         }
 
         internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y, bool fromEvent)
