@@ -7127,6 +7127,8 @@ namespace Ambermoon
 
         internal void RemoveAilment(Ailment ailment, Character target)
         {
+            bool removeExhaustion = ailment == Ailment.Exhausted && target.Ailments.HasFlag(Ailment.Exhausted);
+
             // Healing spells or potions.
             // Sleep can be removed by attacking as well.
             target.Ailments &= ~ailment;
@@ -7137,7 +7139,7 @@ namespace Ambermoon
                     UpdateBattleStatus(partyMember);
                 layout.UpdateCharacterNameColors(CurrentSavegame.ActivePartyMemberSlot);
 
-                if (ailment == Ailment.Exhausted)
+                if (removeExhaustion)
                     RemoveExhaustion(partyMember);
                 else if (ailment == Ailment.Blind && partyMember == CurrentPartyMember)
                     UpdateLight();
