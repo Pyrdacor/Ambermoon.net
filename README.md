@@ -6,8 +6,8 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-- (*English*) The Test-Release is the most recent version. In august the first official main release will hopefully follow. Currently the Test-Release reflects the **state of 30 July 2021**.
-- (*German*) Das Test-Release ist die aktuellste Version. Im August wird hoffentlich das erste offizielle Hauptrelease folgen. Zur Zeit spiegelt das Test-Release den **Stand vom 30.07.2021** wider.
+- (*English*) The Test-Release is the most recent version. In august the first official main release will hopefully follow. Currently the Test-Release reflects the **state of 11 August 2021**.
+- (*German*) Das Test-Release ist die aktuellste Version. Im August wird hoffentlich das erste offizielle Hauptrelease folgen. Zur Zeit spiegelt das Test-Release den **Stand vom 11.08.2021** wider.
 
 Version | Standalone | Size-Optimized (needs .NET installed)
 --- | --- | ---
