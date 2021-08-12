@@ -226,7 +226,7 @@ namespace Ambermoon
                         texts.ForEach(text => text.Destroy());
                         texts.Clear();
                         var graphicInfo = graphicInfos[action.ImageOffset.Value];
-                        picture.PaletteIndex = (byte)(paletteOffset + graphicInfo.PaletteIndex);
+                        picture.PaletteIndex = (byte)(paletteOffset + graphicInfo.PaletteIndex - 1);
                         picture.TextureAtlasOffset = textureAtlas.GetOffset(graphicInfo.GraphicIndex);
                         picture.Resize(graphicInfo.Width, graphicInfo.Height);
                         picture.X = (Global.VirtualScreenWidth - graphicInfo.Width) / 2;
