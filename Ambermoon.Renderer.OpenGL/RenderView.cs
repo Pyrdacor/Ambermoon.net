@@ -432,9 +432,7 @@ namespace Ambermoon.Renderer.OpenGL
                 );
 
                 State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-                if (!useFrameBuffer || render3DMap)
-                    State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
+                State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
                 bool set2DViewport = false;
 
@@ -506,6 +504,8 @@ namespace Ambermoon.Renderer.OpenGL
 
                     if (layer.Key == Layer.DrugEffect)
                     {
+                        if (useFrameBuffer)
+                            RenderToScreen(viewOffset);
                         if (DrugColorComponent != null)
                             State.Gl.BlendColor(System.Drawing.Color.FromArgb(255, System.Drawing.Color.FromArgb(0x202020 |
                                 (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
@@ -522,9 +522,6 @@ namespace Ambermoon.Renderer.OpenGL
 
                     layer.Value.Render();
                 }
-
-                if (useFrameBuffer)
-                    RenderToScreen(viewOffset);
 
                 accessViolationDetected = false;
             }

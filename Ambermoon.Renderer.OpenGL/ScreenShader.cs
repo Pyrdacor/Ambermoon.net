@@ -64,18 +64,25 @@ namespace Ambermoon.Renderer
             $"uniform vec2 {DefaultResolutionName};",
             $"in vec2 varTexCoord;",
             $"",
+            $"vec4 processColor(vec4 color)",
+            $"{{",
+            $"    if (color.a < 0.9999f)",
+            $"        return vec4(color.rgb, sqrt(color.a));",
+            $"    else",
+            $"        return color;",
+            $"}}",
+            $"",
             $"void main()",
             $"{{",
             $"    vec2 pixelSize = vec2(1.0f / {DefaultResolutionName}.x, 1.0f / {DefaultResolutionName}.y);",
             $"    ",
-            $"    vec4 color = texture({DefaultSamplerName}, varTexCoord);",
-            $"    vec4 right = texture({DefaultSamplerName}, vec2(varTexCoord.x+pixelSize.x, varTexCoord.y));",
-            $"    vec4 down = texture({DefaultSamplerName}, vec2(varTexCoord.x, varTexCoord.y+pixelSize.y));",
-            $"    vec4 downRight = texture({DefaultSamplerName}, vec2(varTexCoord.x+pixelSize.x, varTexCoord.y+pixelSize.y));",
+            $"    vec4 color = processColor(texture({DefaultSamplerName}, varTexCoord));",
+            $"    vec4 right = processColor(texture({DefaultSamplerName}, vec2(varTexCoord.x+pixelSize.x, varTexCoord.y)));",
+            $"    vec4 down = processColor(texture({DefaultSamplerName}, vec2(varTexCoord.x, varTexCoord.y+pixelSize.y)));",
+            $"    vec4 downRight = processColor(texture({DefaultSamplerName}, vec2(varTexCoord.x+pixelSize.x, varTexCoord.y+pixelSize.y)));",
             $"    vec4 upperColor = mix(color, right, 0.5f);",
             $"    vec4 lowerColor = mix(down, downRight, 0.5f);",
-            $"    color = mix(upperColor, lowerColor, 0.5f);",
-            $"    {DefaultFragmentOutColorName} = color;",
+            $"    {DefaultFragmentOutColorName} = mix(upperColor, lowerColor, 0.5f);",
             $"}}"
         };
 
@@ -93,7 +100,7 @@ namespace Ambermoon.Renderer
             $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
             $"    varTexCoord = vec2(pos.x / {DefaultResolutionName}.x, ({DefaultResolutionName}.y - pos.y) / {DefaultResolutionName}.y);",
             $"    ",
-            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f, 1.0f);",
+            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 0.001f, 1.0f);",
             $"}}"
         };
 
