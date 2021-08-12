@@ -1885,6 +1885,9 @@ namespace Ambermoon
                         currentlyAnimatedMonster = monster;
 
                         PlayBattleEffectAnimation(BattleEffect.HurtMonster, tile, battleTicks, null);
+
+                        if (game.Godmode)
+                            damage = target.HitPoints.CurrentValue;
                     }
                     ShowBattleFieldDamage((int)tile, damage);
                     if (target.Ailments.HasFlag(Ailment.Sleep))
@@ -2463,6 +2466,8 @@ namespace Ambermoon
                         }
                         if (target.Ailments.HasFlag(Ailment.Sleep))
                             RemoveAilment(Ailment.Sleep, target);
+                        if (game.Godmode && target is Monster monster)
+                            damage = target.HitPoints.CurrentValue;
                         if (!game.Godmode || target is Monster)
                             target.Damage(damage);
                         EndHurt();

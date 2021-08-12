@@ -23,7 +23,7 @@ namespace Ambermoon
             { "godmode",
                 Create
                 (
-                    "Makes the party invulnerable." + Environment.NewLine +
+                    "Makes the party invulnerable and kills enemies immediately." + Environment.NewLine +
                     "Usage: godmode [0/1]",
                     Godmode
                 )
@@ -331,7 +331,7 @@ namespace Ambermoon
 
             if (activate)
             {
-                Console.WriteLine("All party members are now immune to damage.");
+                Console.WriteLine("All party members are now immune to damage and kill instantly.");
 
                 if (!game.Godmode)
                 {
@@ -341,7 +341,7 @@ namespace Ambermoon
             }
             else
             {
-                Console.WriteLine("All party members are no longer immune to damage.");
+                Console.WriteLine("All party members are no longer immune to damage and deal normal damage.");
 
                 if (game.Godmode)
                 {
