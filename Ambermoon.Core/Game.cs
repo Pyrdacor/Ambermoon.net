@@ -2162,7 +2162,7 @@ namespace Ambermoon
                     else
                     {
                         var partyMember = GetPartyMember(characterSlot);
-                        ExecuteNextUpdateCycle(() => ShowConversation(partyMember, null, new ConversationItems()));
+                        ExecuteNextUpdateCycle(() => ShowConversation(partyMember, null, null, new ConversationItems()));
                     }
                 }
             }
@@ -3058,7 +3058,7 @@ namespace Ambermoon
 
             if (is3D)
             {
-                return renderMap3D.TriggerEvents(this, trigger, x, y, CurrentTicks, CurrentSavegame);
+                return renderMap3D.TriggerEvents(this, trigger, x, y, CurrentSavegame);
             }
             else // 2D
             {
@@ -3085,7 +3085,7 @@ namespace Ambermoon
 
                 bool lastEventStatus = true;
                 var trigger = (EventTrigger)((uint)EventTrigger.Item0 + itemIndex);
-                @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, x, y, CurrentTicks, ref lastEventStatus, out bool _, out var _);
+                @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, x, y, ref lastEventStatus, out bool _, out var _);
 
                 return TestEvent();
             }
@@ -4177,7 +4177,7 @@ namespace Ambermoon
                 if (trapEvent.Next != null)
                 {
                     EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
-                        (uint)player.Position.Y, CurrentTicks, trapEvent.Next, true);
+                        (uint)player.Position.Y, trapEvent.Next, true);
                 }
                 else
                 {
@@ -4378,7 +4378,7 @@ namespace Ambermoon
                     ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
                 var @event = match ? conditionEvent.Next : mapEventIfFalse;
                 if (@event != null)
-                    EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, CurrentTicks, @event, true);
+                    EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, @event, true);
             });
         }
 
@@ -4391,7 +4391,7 @@ namespace Ambermoon
                 var @event = (number == conditionEvent.ObjectIndex)
                     ? conditionEvent.Next : mapEventIfFalse;
                 if (@event != null)
-                    EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, CurrentTicks, @event, true);
+                    EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, @event, true);
             });
         }
 
@@ -4456,7 +4456,7 @@ namespace Ambermoon
                         else
                         {
                             levitating = true;
-                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, CurrentTicks, climbEvent, true);
+                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, climbEvent, true);
                         }
                     });
                 }
@@ -4615,7 +4615,7 @@ namespace Ambermoon
                 if (nextEvent != null)
                 {
                     EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
-                        (uint)player3D.Position.X, (uint)player.Position.Y, CurrentTicks, nextEvent, true);
+                        (uint)player3D.Position.X, (uint)player.Position.Y, nextEvent, true);
                 }
             });
         }
@@ -5328,7 +5328,7 @@ namespace Ambermoon
                 if (chestEvent.Next != null)
                 {
                     Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
-                        (uint)(position?.Y ?? 0), CurrentTicks, chestEvent.Next, true);
+                        (uint)(position?.Y ?? 0), chestEvent.Next, true);
                 }
             });
         }
@@ -5493,7 +5493,7 @@ namespace Ambermoon
                         ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true));
                     }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
-                    (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
+                    (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
                 }
                 else
                 {
@@ -5558,13 +5558,13 @@ namespace Ambermoon
                             if (doorEvent.Next != null)
                             {
                                 EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
-                                    (uint)player.Position.Y, CurrentTicks, doorEvent.Next, true);
+                                    (uint)player.Position.Y, doorEvent.Next, true);
                             }
                         });
                     }
                 }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 doorEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
-                    (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, map.Events[(int)doorEvent.UnlockFailedEventIndex], true));
+                    (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)doorEvent.UnlockFailedEventIndex], true));
             });
 
             return true;
@@ -5860,8 +5860,8 @@ namespace Ambermoon
         /// 
         /// The event chain may also contain rewards, new keywords, etc.
         /// </summary>
-        internal void ShowConversation(IConversationPartner conversationPartner, Event conversationEvent,
-            ConversationItems createdItems, bool showInitialText = true)
+        internal void ShowConversation(IConversationPartner conversationPartner, uint? characterIndex,
+            Event conversationEvent, ConversationItems createdItems, bool showInitialText = true)
         {
             if (!(conversationPartner is Character character))
                 throw new AmbermoonException(ExceptionScope.Application, "Conversation partner is no character.");
@@ -6201,9 +6201,6 @@ namespace Ambermoon
                     if (GetPartyMember(i) == null)
                     {
                         var partyMember = character as PartyMember;
-                        var index = partyMember.CharacterBitIndex;
-                        uint mapIndex = 1 + ((uint)index >> 5);
-                        uint characterIndex = (uint)index & 0x1f;
                         CurrentSavegame.CurrentPartyMemberIndices[i] =
                             CurrentSavegame.PartyMembers.FirstOrDefault(p => p.Value == partyMember).Key;
                         this.AddPartyMember(i, partyMember, followAction, true);
@@ -6220,7 +6217,7 @@ namespace Ambermoon
                         }
                         layout.EnableButton(4, true); // Enable "Ask to leave"
                         layout.EnableButton(5, false); // Disable "Ask to join"
-                        SetMapCharacterBit(mapIndex, characterIndex, true);
+                        SetMapCharacterBit(Map.Index, characterIndex.Value, true);
                         break;
                     }
                 }
@@ -6414,13 +6411,13 @@ namespace Ambermoon
                         conversationEvent.Type == EventType.StartBattle)
                     {
                         CloseWindow(() => EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
-                            (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, conversationEvent, true));
+                            (uint)player.Position.X, (uint)player.Position.Y, conversationEvent, true));
                     }
                     else
                     {
                         var trigger = EventTrigger.Always;
                         conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
-                            (uint)player.Position.X, (uint)player.Position.Y, CurrentTicks, ref lastEventStatus, out aborted,
+                            (uint)player.Position.X, (uint)player.Position.Y, ref lastEventStatus, out aborted,
                             out var eventProvider, conversationPartner);
                         if (conversationEvent == null && eventProvider != null)
                         {
@@ -6477,7 +6474,7 @@ namespace Ambermoon
 
             Fade(() =>
             {
-                SetWindow(Window.Conversation, conversationPartner, conversationEvent, createdItems);
+                SetWindow(Window.Conversation, conversationPartner, characterIndex, conversationEvent, createdItems);
                 layout.SetLayout(LayoutType.Conversation);
                 ShowMap(false);
                 layout.Reset();
@@ -8158,8 +8155,8 @@ namespace Ambermoon
                         {
                             if (nextEvent != null)
                             {
-                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
-                                    (uint)RenderPlayer.Position.Y, CurrentTicks, nextEvent, true);
+                                EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always,
+                                    (uint)RenderPlayer.Position.X, (uint)RenderPlayer.Position.Y, nextEvent, true);
                             }
                         });
                     }
@@ -8174,7 +8171,7 @@ namespace Ambermoon
                             if (nextEvent != null)
                             {
                                 EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)RenderPlayer.Position.X,
-                                    (uint)RenderPlayer.Position.Y, CurrentTicks, nextEvent, false);
+                                    (uint)RenderPlayer.Position.Y, nextEvent, false);
                             }
                         });
                     }
@@ -13700,10 +13697,11 @@ namespace Ambermoon
                 case Window.Conversation:
                 {
                     var conversationPartner = currentWindow.WindowParameters[0] as IConversationPartner;
-                    var conversationEvent = currentWindow.WindowParameters[1] as Event;
-                    var conversationItems = currentWindow.WindowParameters[2] as ConversationItems;
+                    var characterIndex = currentWindow.WindowParameters[1] as uint?;
+                    var conversationEvent = currentWindow.WindowParameters[2] as Event;
+                    var conversationItems = currentWindow.WindowParameters[3] as ConversationItems;
                     currentWindow = DefaultWindow;
-                    ShowConversation(conversationPartner, conversationEvent, conversationItems, false);
+                    ShowConversation(conversationPartner, characterIndex, conversationEvent, conversationItems, false);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

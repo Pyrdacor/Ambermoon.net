@@ -19,8 +19,9 @@ namespace Ambermoon
         }
 
         public static Event ExecuteEvent(this Event @event, Map map, Game game,
-            ref EventTrigger trigger, uint x, uint y, uint ticks, ref bool lastEventStatus,
-            out bool aborted, out EventProvider eventProvider, IConversationPartner conversationPartner = null)
+            ref EventTrigger trigger, uint x, uint y, ref bool lastEventStatus,
+            out bool aborted, out EventProvider eventProvider,
+            IConversationPartner conversationPartner = null, uint? characterIndex = null)
         {
             eventProvider = null;
 
@@ -130,8 +131,7 @@ namespace Ambermoon
                         {
                             if (conversationPartner == null)
                             {
-                                map.TriggerEventChain(game, EventTrigger.Always,
-                                    x, y, game.CurrentTicks, @event.Next, eventStatus);
+                                map.TriggerEventChain(game, EventTrigger.Always, x, y, @event.Next, eventStatus);
                             }
                             else
                             {
@@ -226,8 +226,7 @@ namespace Ambermoon
 
                     game.ShowRiddlemouth(map, riddleMouthEvent, () =>
                     {
-                        map.TriggerEventChain(game, EventTrigger.Always,
-                            x, y, game.CurrentTicks, @event.Next, true);
+                        map.TriggerEventChain(game, EventTrigger.Always, x, y, @event.Next, true);
                     });
                     return null; // next event is only executed after popup response
                 }
@@ -244,7 +243,7 @@ namespace Ambermoon
                         if (awardEvent.Next != null)
                         {
                             if (conversationPartner == null)
-                                TriggerEventChain(map, game, EventTrigger.Always, x, y, game.CurrentTicks, awardEvent.Next, true);
+                                TriggerEventChain(map, game, EventTrigger.Always, x, y, awardEvent.Next, true);
                             else
                                 provider?.Provide(awardEvent.Next);
                         }
@@ -847,7 +846,7 @@ namespace Ambermoon
                                 aborted = true;
                                 return null;
                             }
-                            game.ShowConversation(conversationPartner, conversationEvent, new Game.ConversationItems());
+                            game.ShowConversation(conversationPartner, characterIndex, conversationEvent, new Game.ConversationItems());
                             return null;
                         default:
                             // Note: this is handled by the conversation window.
@@ -875,14 +874,14 @@ namespace Ambermoon
                         if (response == PopupTextEvent.Response.Yes)
                         {
                             map.TriggerEventChain(game, EventTrigger.Always,
-                                x, y, game.CurrentTicks, @event.Next, true);
+                                x, y, @event.Next, true);
                         }
                         else // Close and No have the same meaning here
                         {
                             if (decisionEvent.NoEventIndex != 0xffff)
                             {
                                 map.TriggerEventChain(game, EventTrigger.Always,
-                                    x, y, game.CurrentTicks, events[(int)decisionEvent.NoEventIndex], false);
+                                    x, y, events[(int)decisionEvent.NoEventIndex], false);
                             }
                         }
                     });
@@ -913,13 +912,13 @@ namespace Ambermoon
         }
 
         public static bool TriggerEventChain(this Map map, Game game, EventTrigger trigger, uint x, uint y,
-            uint ticks, Event firstMapEvent, bool lastEventStatus = false)
+            Event firstMapEvent, bool lastEventStatus = false)
         {
             var mapEvent = firstMapEvent;
 
             while (mapEvent != null)
             {
-                mapEvent = mapEvent.ExecuteEvent(map, game, ref trigger, x, y, ticks, ref lastEventStatus, out bool aborted, out var _);
+                mapEvent = mapEvent.ExecuteEvent(map, game, ref trigger, x, y, ref lastEventStatus, out bool aborted, out var _);
 
                 if (aborted)
                     return false;

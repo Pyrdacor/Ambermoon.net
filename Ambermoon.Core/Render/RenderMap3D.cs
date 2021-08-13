@@ -294,7 +294,7 @@ namespace Ambermoon.Render
                     interacting = true;
                     game.CurrentMapCharacter = this;
                     var position = game.RenderPlayer.Position;
-                    return EventExtensions.TriggerEventChain(map.Map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
+                    return EventExtensions.TriggerEventChain(map.Map, game, trigger, (uint)position.X, (uint)position.Y, @event, true);
                 }
 
                 if (characterReference.Type == CharacterType.Monster)
@@ -413,9 +413,7 @@ namespace Ambermoon.Render
                             if (conversationPartner == null)
                                 throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC or party member index.");
 
-                            (conversationPartner as Character).CharacterBitIndex = (ushort)(((map.Map.Index - 1) << 5) | characterIndex);
-
-                            conversationPartner.ExecuteEvents(game, trigger);
+                            conversationPartner.ExecuteEvents(game, trigger, characterIndex);
                             return true;
                         }
                         else
@@ -1615,7 +1613,7 @@ namespace Ambermoon.Render
         }
 
         public bool TriggerEvents(Game game, EventTrigger trigger,
-            uint x, uint y, uint ticks, Savegame savegame)
+            uint x, uint y, Savegame savegame)
         {
             // first check for NPC interaction
             if (trigger == EventTrigger.Eye || trigger == EventTrigger.Mouth ||
@@ -1631,7 +1629,7 @@ namespace Ambermoon.Render
                 }
             }
 
-            return Map.TriggerEvents(game, trigger, x, y, ticks, savegame, out _);
+            return Map.TriggerEvents(game, trigger, x, y, savegame, out _);
         }
     }
 }

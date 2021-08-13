@@ -109,8 +109,7 @@ namespace Ambermoon.Render
 
             if (triggerEvents)
             {
-                map.Map.TriggerEvents(game, EventTrigger.Move, (uint)Position.X, (uint)Position.Y,
-                    ticks, game.CurrentSavegame);
+                map.Map.TriggerEvents(game, EventTrigger.Move, (uint)Position.X, (uint)Position.Y, game.CurrentSavegame);
             }
         }
 
@@ -217,7 +216,7 @@ namespace Ambermoon.Render
                         var oldMapIndex = map.Map.Index;
                         var oldMapPosition = new Position(Position);
                         anyEventTriggered = anyEventTriggered || map.Map.TriggerEvents(game, EventTrigger.Move,
-                            (uint)touchedPosition.X, (uint)touchedPosition.Y, ticks, game.CurrentSavegame, out hasMapEvent,
+                            (uint)touchedPosition.X, (uint)touchedPosition.Y, game.CurrentSavegame, out hasMapEvent,
                             Filter);
 
                         if (!anyEventTouched && hasMapEvent)

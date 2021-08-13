@@ -164,19 +164,19 @@ namespace Ambermoon.Render
             {
                 if (y >= Map.Height)
                     return adjacentMaps[2].TriggerEvents(game, trigger, x - (uint)Map.Width,
-                        y - (uint)Map.Height, ticks, savegame);
+                        y - (uint)Map.Height, savegame);
                 else
                     return adjacentMaps[0].TriggerEvents(game, trigger, x - (uint)Map.Width,
-                        y, ticks, savegame);
+                        y, savegame);
             }
             else if (y >= Map.Height)
             {
                 return adjacentMaps[1].TriggerEvents(game, trigger, x, y - (uint)Map.Height,
-                    ticks, savegame);
+                    savegame);
             }
             else
             {
-                return Map.TriggerEvents(game, trigger, x, y, ticks, savegame);
+                return Map.TriggerEvents(game, trigger, x, y, savegame);
             }
         }
 

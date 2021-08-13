@@ -373,7 +373,7 @@ namespace Ambermoon.Render
                 interacting = true;
                 game.CurrentMapCharacter = this;
                 var position = game.RenderPlayer.Position;
-                return EventExtensions.TriggerEventChain(map, game, trigger, (uint)position.X, (uint)position.Y, game.CurrentTicks, @event, true);
+                return EventExtensions.TriggerEventChain(map, game, trigger, (uint)position.X, (uint)position.Y, @event, true);
             }
 
             if (characterReference.CharacterFlags.HasFlag(Flags.TextPopup))
@@ -406,9 +406,7 @@ namespace Ambermoon.Render
                     if (conversationPartner == null)
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid NPC or party member index.");
 
-                    (conversationPartner as Character).CharacterBitIndex = (ushort)(((map.Index - 1) << 5) | characterIndex);
-
-                    conversationPartner.ExecuteEvents(game, trigger);
+                    conversationPartner.ExecuteEvents(game, trigger, characterIndex);
                     return true;
                 }
                 else

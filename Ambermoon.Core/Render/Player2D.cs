@@ -93,7 +93,7 @@ namespace Ambermoon.Render
                             if (ev is ConditionEvent conditionEvent)
                             {
                                 ev = conditionEvent.ExecuteEvent(map, game, ref trigger, (uint)Position.X,
-                                    (uint)Position.Y, game.CurrentTicks, ref lastEventStatus, out bool aborted, out _);
+                                    (uint)Position.Y, ref lastEventStatus, out bool aborted, out _);
 
                                 if (aborted || ev == null)
                                     return false;
@@ -111,7 +111,7 @@ namespace Ambermoon.Render
                         if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var type))
                         {
                             if ((type != EventType.Teleport || !travelType.BlockedByTeleport()) &&
-                                EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y, ticks,
+                                EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y,
                                     mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
                             {
                                 eventTriggered = true;

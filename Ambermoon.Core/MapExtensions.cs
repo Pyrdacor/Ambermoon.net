@@ -31,9 +31,9 @@ namespace Ambermoon
         public static uint PositionToTileIndex(this Map map, uint x, uint y) => x + y * (uint)map.Width;
 
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
-            uint x, uint y, uint ticks, Savegame savegame)
+            uint x, uint y, Savegame savegame)
         {
-            return TriggerEvents(map, game, trigger, x, y, ticks, savegame, out _);
+            return TriggerEvents(map, game, trigger, x, y, savegame, out _);
         }
 
         public static Event GetEvent(this Map map, uint x, uint y, Savegame savegame)
@@ -48,7 +48,7 @@ namespace Ambermoon
         }
 
         public static bool TriggerEvents(this Map map, Game game, EventTrigger trigger,
-            uint x, uint y, uint ticks, Savegame savegame, out bool hasMapEvent, Func<Event, bool> filter = null)
+            uint x, uint y, Savegame savegame, out bool hasMapEvent, Func<Event, bool> filter = null)
         {
             var mapEventId = map.Type == MapType.Map2D ? map.Tiles[x, y].MapEventId : map.Blocks[x, y].MapEventId;
 
@@ -87,7 +87,7 @@ namespace Ambermoon
             LastMapEventIndexMap = map.Index;
             LastMapEventIndex = mapEventId;
 
-            return map.TriggerEventChain(game, trigger, x, y, ticks, @event);
+            return map.TriggerEventChain(game, trigger, x, y, @event);
         }
 
         public static void ClearLastEvent(this Map map)
