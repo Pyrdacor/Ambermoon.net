@@ -517,11 +517,18 @@ namespace Ambermoon.Render
 
             bool TestPossibleCharacterMovement(FloatPosition position)
             {
+                var roundedPosition = position.Round(1.0f / Global.DistancePerBlock);
+                uint blockIndex = (uint)(roundedPosition.X + roundedPosition.Y * map.Map.Width);
+
+                if (map.characterBlockingBlocks.Contains(blockIndex) ||
+                    map.EventBlocksCharacter(roundedPosition))
+                    return false;
+
                 // Note: This is only used for monsters.
                 var collisionInfo = map.GetCollisionDetectionInfoForMonsterFromPositions
                 (
                     Position,
-                    position.Round(1.0f / Global.DistancePerBlock)
+                    roundedPosition
                 );
 
                 var lastX = character3D.RealPosition.X;

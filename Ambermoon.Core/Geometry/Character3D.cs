@@ -83,8 +83,6 @@ namespace Ambermoon.Geometry
                 ticksPerMovement = lastTilePosition.GetMaxDistance(targetTilePosition) * TicksPerMovement;
             }
 
-            InitMovement();
-
             if (currentState == State.Idle)
             {
                 // partial tile movement
@@ -93,6 +91,10 @@ namespace Ambermoon.Geometry
                 float yDiff = diff.Y / Global.DistancePerBlock;
                 float maxDiff = Math.Max(xDiff, yDiff);
                 ticksPerMovement += (uint)Util.Round(maxDiff * TicksPerMovement);
+            }
+            else
+            {
+                InitMovement();
             }
 
             currentState = State.MovingToTile;
