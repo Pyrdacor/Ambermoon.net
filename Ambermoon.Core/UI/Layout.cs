@@ -1162,13 +1162,13 @@ namespace Ambermoon.UI
             void SetFullscreen() => SetOptionString(4, game.Configuration.Fullscreen ? on : off);
             // Page 2
             void SetFastBattleMode() => SetOptionString(5, game.Configuration.FastBattleMode ? on : off);
-            void SetTooltips() => SetOptionString(5, game.Configuration.ShowButtonTooltips ? on : off);
-            void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
-            void SetMusicCaching() => SetOptionString(6, game.Configuration.CacheMusic ? on : off);
-            void SetCheats() => SetOptionString(7, cheatsEnabled ? on : off);
+            void SetTooltips() => SetOptionString(6, game.Configuration.ShowButtonTooltips ? on : off);
+            void SetAutoDerune() => SetOptionString(7, game.Configuration.AutoDerune ? on : off);
+            void SetMusicCaching() => SetOptionString(8, game.Configuration.CacheMusic ? on : off);
+            void SetCheats() => SetOptionString(9, cheatsEnabled ? on : off);
             // TODO: Page 3
-            // TODO: void SetIntro() => SetOptionString(9, game.Configuration.ShowIntro ? on : off);
-            // TODO: void SetFantasyIntro() => SetOptionString(8, game.Configuration.ShowFantasyIntro ? on : off);
+            // TODO: void SetIntro() => SetOptionString(10, game.Configuration.ShowIntro ? on : off);
+            // TODO: void SetFantasyIntro() => SetOptionString(11, game.Configuration.ShowFantasyIntro ? on : off);
 
             void ShowOptions()
             {
