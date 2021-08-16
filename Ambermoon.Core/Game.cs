@@ -4434,6 +4434,7 @@ namespace Ambermoon
         {
             layout.OpenAmountInputBox(DataNameProvider.WhichNumber, null, null, 9999, number =>
             {
+                ClosePopup();
                 var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
                     ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
                 var @event = (number == conditionEvent.ObjectIndex)
