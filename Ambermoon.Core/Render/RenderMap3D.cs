@@ -173,14 +173,17 @@ namespace Ambermoon.Render
                         return;
 
                     active = value;
-                    surface.Visible = active;
+                    bool visible = active && HasValidPosition;
+                    surface.Visible = visible;
                     children.ForEach(c =>
                     {
                         c.active = active;
-                        c.surface.Visible = active;
+                        c.surface.Visible = visible;
                     });
                 }
             }
+
+            public bool HasValidPosition => Position != null && Position.X != 0 && Position.Y != 0;
 
             public void Pause()
             {
@@ -206,7 +209,9 @@ namespace Ambermoon.Render
 
             public void ResetPosition(ITime gameTime)
             {
-                var position = new Position(characterReference.Positions[0]);
+                var position = new Position(characterReference.Positions.Count == 1
+                    ? characterReference.Positions[0]
+                    : characterReference.Positions[(int)gameTime.TimeSlot]);
                 position.Offset(-1, -1); // positions are 1-based
                 Position = position;
                 ResetFrame();
@@ -446,6 +451,10 @@ namespace Ambermoon.Render
             void UpdatePosition()
             {
                 map.UpdateCharacterSurfaceCoordinates(character3D.RealPosition, surface, objectPosition);
+
+                bool visible = active && HasValidPosition;
+                surface.Visible = visible;
+                children.ForEach(c => c.surface.Visible = visible);
             }
 
             void UpdateCurrentMovement(uint ticks)
@@ -602,8 +611,23 @@ namespace Ambermoon.Render
                     uint lastTimeSlot = gameTime.TimeSlot == 0 ? 287 : gameTime.TimeSlot - 1;
                     var lastPosition = new Position(characterReference.Positions[(int)lastTimeSlot]);
                     var newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);
-                    newPosition.Offset(-1, -1); // positions are 1-based
-                    lastPosition.Offset(-1, -1);
+                    if (newPosition.X != 0 && newPosition.Y != 0)
+                        newPosition.Offset(-1, -1); // positions are 1-based
+                    if (lastPosition.X == 0 && lastPosition.Y == 0)
+                    {
+                        if (newPosition.X == 0 && newPosition.Y == 0)
+                            return; // Stay hidden
+
+                        // Spawn at the new position
+                        lastPosition = newPosition;
+                    }
+                    else
+                    {
+                        if (newPosition.X == 0 && newPosition.Y == 0)
+                            lastPosition = newPosition;
+                        else
+                            lastPosition.Offset(-1, -1);
+                    }
                     character3D.MoveToTile((uint)newPosition.X, (uint)newPosition.Y, lastPosition);
                 }
 
@@ -1137,7 +1161,7 @@ namespace Ambermoon.Render
                 objectInfo.NumAnimationFrames, 8.0f);
             mapCharacter.Active = !game.CurrentSavegame.GetCharacterBit(Map.Index, characterIndex);
             if (mapCharacter.Active)
-                mapObject.Visible = true;
+                mapObject.Visible = mapCharacter.HasValidPosition;
             return mapCharacter;
         }
 

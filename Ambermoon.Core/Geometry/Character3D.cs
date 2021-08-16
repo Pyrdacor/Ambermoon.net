@@ -69,7 +69,7 @@ namespace Ambermoon.Geometry
                     Place((uint)lastPosition.X, (uint)lastPosition.Y, false);
                     lastTilePosition = new Position(lastPosition);
                     InitMovement();
-                    currentState = State.MovingToTile;
+                    currentState = direction == null ? State.IdleOnTile : State.MovingToTile;
                 }
                 return;
             }

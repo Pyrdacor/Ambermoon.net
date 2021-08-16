@@ -5286,6 +5286,9 @@ namespace Ambermoon
                 if (renderMap2D.IsMapVisible(changeTileEvent.MapIndex, ref x, ref y))
                     renderMap2D.UpdateTile(x, y);
             }
+
+            if (changeTileEvent.Next == null)
+                ResetMapCharacterInteraction(Map);
         }
 
         internal void SetMapEventBit(uint mapIndex, uint eventListIndex, bool bit)
