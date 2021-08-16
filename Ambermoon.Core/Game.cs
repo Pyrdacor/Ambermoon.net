@@ -5541,7 +5541,7 @@ namespace Ambermoon
                         CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
                         currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
                         ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true));
-                    }, initialText, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
+                    }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
                 }
