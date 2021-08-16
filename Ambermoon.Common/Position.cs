@@ -60,6 +60,13 @@ namespace Ambermoon
             Offset(position.X, position.Y);
         }
 
+        public float Distance(Position other)
+        {
+            float dx = other.X - X;
+            float dy = other.Y - Y;
+            return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
+
         public static Position operator +(Position position1, Position position2)
         {
             return new Position(position1.X + position2.X, position1.Y + position2.Y);
@@ -203,6 +210,13 @@ namespace Ambermoon
         public void Offset(Position position)
         {
             Offset(position.X, position.Y);
+        }
+
+        public float Distance(Position other)
+        {
+            float dx = other.X - X;
+            float dy = other.Y - Y;
+            return (float)Math.Sqrt(dx * dx + dy * dy);
         }
 
         public Position Round()

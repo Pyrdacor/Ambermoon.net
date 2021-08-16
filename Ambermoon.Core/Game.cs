@@ -1763,7 +1763,43 @@ namespace Ambermoon
 
         public void SaveGame(int slot, string name)
         {
+            // Note: In 3D it is possible to walk partly on tiles that block the player. For example
+            // small objects. But when you save and load you will get stuck with that position.
+            // We could avoid this partial movement but this feels bad ingame as you have to move around
+            // small objects in a larger way. So we will adjust the position only on saving. It won't
+            // have the same position after reload but you won't get stuck.
+            Position restorePosition = null;
+            if (is3D && renderMap3D.IsBlockingPlayer(CurrentSavegame.CurrentMapX - 1, CurrentSavegame.CurrentMapY - 1))
+            {
+                var touchedPositions = player3D.GetTouchedPositions(Global.DistancePerBlock);
+                var availablePositions = touchedPositions.Skip(1).Where(position => !renderMap3D.IsBlockingPlayer(position)).ToList();
+
+                if (availablePositions.Count != 0)
+                {
+                    camera3D.GetForwardPosition(0.5f, out float forwardX, out float forwardZ, false, false);
+                    camera3D.GetBackwardPosition(0.5f, out float backwardX, out float backwardZ, false, false);
+
+                    var forwardPosition = Geometry.Geometry.CameraToBlockPosition(Map, forwardX, forwardZ);
+                    var backwardPosition = Geometry.Geometry.CameraToBlockPosition(Map, backwardX, backwardZ);
+
+                    if (availablePositions.Contains(forwardPosition) || availablePositions.Contains(backwardPosition))
+                        availablePositions = availablePositions.Where(p => p == forwardPosition || p == backwardPosition).ToList();
+
+                    var savegamePosition = availablePositions.Count == 1 ? availablePositions[0] :
+                        availablePositions.OrderBy(position => touchedPositions[0].Distance(position)).First();
+                    restorePosition = new Position((int)CurrentSavegame.CurrentMapX, (int)CurrentSavegame.CurrentMapY);
+                    CurrentSavegame.CurrentMapX = 1 + (uint)savegamePosition.X;
+                    CurrentSavegame.CurrentMapY = 1 + (uint)savegamePosition.Y;
+                }
+            }
+
             SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame);
+
+            if (restorePosition != null)
+            {
+                CurrentSavegame.CurrentMapX = (uint)restorePosition.X;
+                CurrentSavegame.CurrentMapY = (uint)restorePosition.Y;
+            }
         }
 
         public void ContinueGame()

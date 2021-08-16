@@ -726,6 +726,10 @@ namespace Ambermoon.Render
             return character?.Type;
         }
 
+        public bool IsBlockingPlayer(Position position) => IsBlockingPlayer((uint)position.X, (uint)position.Y);
+
+        public bool IsBlockingPlayer(uint x, uint y) => playerBlockingBlocks.Contains(x + y * (uint)Map.Width);
+
         public RenderMap3D(Game game, Map map, IMapManager mapManager, IRenderView renderView, uint playerX, uint playerY, CharacterDirection playerDirection)
         {
             this.game = game;
