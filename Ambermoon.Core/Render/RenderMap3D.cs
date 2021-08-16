@@ -249,7 +249,7 @@ namespace Ambermoon.Render
 
             public bool Interact(EventTrigger trigger, bool bed)
             {
-                if (parent != null)
+                if (parent != null || !Active || character3D.Paused)
                     return false;
 
                 game.CurrentMapCharacter = null;

@@ -11749,11 +11749,18 @@ namespace Ambermoon
 
             if (loot.Empty)
             {
+                Pause();
+                void Finish()
+                {
+                    Resume();
+                    closeAction?.Invoke();
+                }
                 CloseWindow(() =>
                 {
                     ShowMessagePopup(string.Format(DataNameProvider.ReceiveExp, expPerPartyMember), () =>
                     {
-                        AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, closeAction);
+                        Pause();
+                        AddExperience(expReceivingPartyMembers, (uint)expPerPartyMember, Finish);
                     });
                 });
             }
