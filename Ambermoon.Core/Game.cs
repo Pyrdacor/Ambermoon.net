@@ -7112,7 +7112,9 @@ namespace Ambermoon
                     {
                         advancing = false;
 
-                        for (int i = 0; i < monsters.Count; ++i)
+                        // Note: It is important to move closer rows first. Otherwise monsters
+                        // will move to occupied spots and replace the monsters there before they move.
+                        for (int i = monsters.Count - 1; i >= 0; --i)
                             currentBattle.MoveCharacterTo(newPositions[i], monsters[i]);
 
                         layout.EnableButton(4, currentBattle.CanMoveForward);
