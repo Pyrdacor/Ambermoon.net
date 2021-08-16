@@ -1956,6 +1956,15 @@ namespace Ambermoon
 
                 if (!moveForward && !moveBackward)
                 {
+                    void PlayTurnSequence(int steps, Action turnAction)
+                    {
+                        PlayTimedSequence(steps, () =>
+                        {
+                            turnAction?.Invoke();
+                            CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                        }, 65);
+                    }
+
                     if (cursorTypes.Contains(CursorType.ArrowTurnLeft))
                     {
                         player3D.TurnLeft(movement.TurnSpeed3D * 0.7f * speedFactor3D);
@@ -1972,7 +1981,7 @@ namespace Ambermoon
                     {
                         if (fromNumpadButton)
                         {
-                            PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 65);
+                            PlayTurnSequence(12, () => player3D.TurnLeft(15.0f));
                         }
                         else
                         {
@@ -1985,7 +1994,7 @@ namespace Ambermoon
                     {
                         if (fromNumpadButton)
                         {
-                            PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 65);
+                            PlayTurnSequence(12, () => player3D.TurnRight(15.0f));
                         }
                         else
                         {
@@ -2002,7 +2011,7 @@ namespace Ambermoon
                     UntrapMouse();
                 }
 
-                player.Direction = player3D.Direction;
+                CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
             }
             else
             {
@@ -2037,7 +2046,7 @@ namespace Ambermoon
                         break;
                 }
 
-                player.Direction = player2D.Direction;
+                CurrentSavegame.CharacterDirection = player.Direction = player2D.Direction;
             }
         }
 
@@ -2583,19 +2592,28 @@ namespace Ambermoon
                     {
                         if (is3D)
                         {
+                            void PlayTurnSequence(int steps, Action turnAction)
+                            {
+                                PlayTimedSequence(steps, () =>
+                                {
+                                    turnAction?.Invoke();
+                                    CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                                }, 65);
+                            }
+
                             switch (CursorType)
                             {
                                 case CursorType.ArrowTurnLeft:
-                                    PlayTimedSequence(6, () => player3D.TurnLeft(15.0f), 65);
+                                    PlayTurnSequence(6, () => player3D.TurnLeft(15.0f));
                                     return;
                                 case CursorType.ArrowTurnRight:
-                                    PlayTimedSequence(6, () => player3D.TurnRight(15.0f), 65);
+                                    PlayTurnSequence(6, () => player3D.TurnRight(15.0f));
                                     return;
                                 case CursorType.ArrowRotateLeft:
-                                    PlayTimedSequence(12, () => player3D.TurnLeft(15.0f), 65);
+                                    PlayTurnSequence(12, () => player3D.TurnLeft(15.0f));
                                     return;
                                 case CursorType.ArrowRotateRight:
-                                    PlayTimedSequence(12, () => player3D.TurnRight(15.0f), 65);
+                                    PlayTurnSequence(12, () => player3D.TurnRight(15.0f));
                                     return;
                                 case CursorType.Wait:
                                     CursorType = CursorType.Target;
@@ -4606,6 +4624,8 @@ namespace Ambermoon
                     player3D.TurnRight(stepSize);
                 else
                     player3D.TurnRight(halfStepSize);
+
+                CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
             }
 
             PlayTimedSequence(fullSteps + 1, Step, 65, () =>

@@ -15,8 +15,6 @@ namespace Ambermoon
         readonly Font outroFont;
         readonly Font outroFontLarge;
         readonly IRenderView renderView;
-        readonly IRenderTextFactory renderTextFactory;
-        readonly ITextProcessor textProcessor;
         readonly IRenderLayer renderLayer;
         long ticks = 0;
         static readonly double[] PixelScrollPerSecond = new double[5] { 10.0, 20.0, 60.0, 100.0, 200.0 };
@@ -62,8 +60,6 @@ namespace Ambermoon
             picture.Layer = renderLayer;
             picture.PaletteIndex = paletteOffset = renderView.GraphicProvider.FirstOutroPaletteIndex;
             picture.Visible = false;
-            renderTextFactory = renderView.RenderTextFactory;
-            textProcessor = renderView.TextProcessor;
 
             fadeArea = renderView.ColoredRectFactory.Create(Global.VirtualScreenWidth, Global.VirtualScreenHeight, Color.Black, 255);
             fadeArea.Layer = renderView.GetLayer(Layer.Effects);

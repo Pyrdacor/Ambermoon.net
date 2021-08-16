@@ -9,7 +9,7 @@ namespace Ambermoon.UI
 {
     internal class Popup
     {
-        const byte BaseDisplayLayer = 20;
+        public const byte BaseDisplayLayer = 20;
         readonly Game game;
         readonly IRenderView renderView;
         readonly ITextureAtlas textureAtlas;
@@ -28,8 +28,8 @@ namespace Ambermoon.UI
         public byte DisplayLayer { get; private set; }
         public bool HasChildPopup => popup != null;
 
-        public Popup(Game game, IRenderView renderView, Position position, int columns, int rows, bool transparent,
-            byte displayLayerOffset = 0)
+        public Popup(Game game, IRenderView renderView, Position position, int columns, int rows,
+            bool transparent, byte displayLayerOffset = 0)
         {
             if (columns < 3 || rows < 3)
                 throw new AmbermoonException(ExceptionScope.Application, "Popups must at least have 3 columns and 3 rows.");
