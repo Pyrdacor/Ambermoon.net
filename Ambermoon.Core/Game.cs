@@ -788,7 +788,7 @@ namespace Ambermoon
                 {
                     if (!layout.OptionMenuOpen)
                     {
-                        double timeFactor = Configuration.FastBattleMode ? 2.0f : 1.0f;
+                        double timeFactor = Configuration.FastBattleMode ? 4.0f : 1.0f;
                         CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime * timeFactor);
                         UpdateBattle();
 
@@ -3992,7 +3992,7 @@ namespace Ambermoon
         internal void AddTimedEvent(TimeSpan delay, Action action)
         {
             if (currentBattle != null && Configuration.FastBattleMode)
-                delay = TimeSpan.FromMilliseconds(Math.Max(1.0, delay.TotalMilliseconds / 2));
+                delay = TimeSpan.FromMilliseconds(Math.Max(1.0, delay.TotalMilliseconds / 4));
 
             timedEvents.Add(new TimedGameEvent
             {
