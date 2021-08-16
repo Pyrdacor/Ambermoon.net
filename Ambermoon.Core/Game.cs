@@ -1776,17 +1776,11 @@ namespace Ambermoon
 
                 if (availablePositions.Count != 0)
                 {
-                    camera3D.GetForwardPosition(0.5f, out float forwardX, out float forwardZ, false, false);
-                    camera3D.GetBackwardPosition(0.5f, out float backwardX, out float backwardZ, false, false);
-
-                    var forwardPosition = Geometry.Geometry.CameraToBlockPosition(Map, forwardX, forwardZ);
-                    var backwardPosition = Geometry.Geometry.CameraToBlockPosition(Map, backwardX, backwardZ);
-
-                    if (availablePositions.Contains(forwardPosition) || availablePositions.Contains(backwardPosition))
-                        availablePositions = availablePositions.Where(p => p == forwardPosition || p == backwardPosition).ToList();
-
+                    float tileX = (-camera3D.X - 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
+                    float tileY = Map.Height - (camera3D.Z + 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
+                    var basePosition = new FloatPosition(tileX, tileY);
                     var savegamePosition = availablePositions.Count == 1 ? availablePositions[0] :
-                        availablePositions.OrderBy(position => touchedPositions[0].Distance(position)).First();
+                        availablePositions.OrderBy(position => basePosition.Distance(position)).First();
                     restorePosition = new Position((int)CurrentSavegame.CurrentMapX, (int)CurrentSavegame.CurrentMapY);
                     CurrentSavegame.CurrentMapX = 1 + (uint)savegamePosition.X;
                     CurrentSavegame.CurrentMapY = 1 + (uint)savegamePosition.Y;

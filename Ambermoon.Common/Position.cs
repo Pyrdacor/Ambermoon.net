@@ -212,7 +212,7 @@ namespace Ambermoon
             Offset(position.X, position.Y);
         }
 
-        public float Distance(Position other)
+        public float Distance(FloatPosition other)
         {
             float dx = other.X - X;
             float dy = other.Y - Y;
