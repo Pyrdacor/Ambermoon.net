@@ -790,7 +790,7 @@ namespace Ambermoon
                     {
                         double timeFactor = Configuration.FastBattleMode ? 4.0f : 1.0f;
                         CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime * timeFactor);
-                        UpdateBattle();
+                        UpdateBattle(1.0 / timeFactor);
 
                         // Note: The null check for currentBattle is important here even if checking above.
                         if (currentBattle != null && !currentBattle.RoundActive && currentPlayerBattleAction == PlayerBattleAction.PickEnemySpellTargetRow)
@@ -6623,7 +6623,7 @@ namespace Ambermoon
             ShowBattleWindow(null, failedEscape, combatBackgroundIndex);
         }
 
-        void UpdateBattle()
+        void UpdateBattle(double blinkingTimeFactor)
         {
             if (advancing)
             {
@@ -6637,7 +6637,8 @@ namespace Ambermoon
 
             if (highlightBattleFieldSprites.Count != 0)
             {
-                bool showBlinkingSprites = !blinkingHighlight || (CurrentBattleTicks % (2 * TicksPerSecond / 3)) < TicksPerSecond / 3;
+                var ticks = Math.Round(CurrentBattleTicks * blinkingTimeFactor);
+                bool showBlinkingSprites = !blinkingHighlight || (ticks % (2 * TicksPerSecond / 3)) < TicksPerSecond / 3;
 
                 foreach (var blinkingBattleFieldSprite in highlightBattleFieldSprites)
                 {
