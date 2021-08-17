@@ -212,7 +212,7 @@ namespace Ambermoon
         readonly Random random = new Random();
         internal SavegameTime GameTime { get; private set; } = null;
         readonly List<uint> changedMaps = new List<uint>();
-        const int FadeTime = 1000;
+        internal const int FadeTime = 1000;
         public const int MaxPartyMembers = 6;
         public const uint TicksPerSecond = 60;
         bool swamLastTick = false;
@@ -618,15 +618,22 @@ namespace Ambermoon
 
             characterCreator = new CharacterCreator(renderView, this, (name, female, portraitIndex) =>
             {
-                var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
-
-                initialSavegame.PartyMembers[1].Name = name;
-                initialSavegame.PartyMembers[1].Gender = female ? Gender.Female : Gender.Male;
-                initialSavegame.PartyMembers[1].PortraitIndex = (ushort)portraitIndex;
-
-                Start(initialSavegame);
+                LoadInitial(name, female, (uint)portraitIndex);
                 characterCreator = null;
             });
+        }
+
+        internal void LoadInitial(string name, bool female, uint portraitIndex, Action<Savegame> setup = null)
+        {
+            var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
+
+            initialSavegame.PartyMembers[1].Name = name;
+            initialSavegame.PartyMembers[1].Gender = female ? Gender.Female : Gender.Male;
+            initialSavegame.PartyMembers[1].PortraitIndex = (ushort)portraitIndex;
+
+            setup?.Invoke(initialSavegame);
+
+            Start(initialSavegame);
         }
 
         void Exit()
@@ -1698,6 +1705,10 @@ namespace Ambermoon
         public void LoadGame(int slot, bool showError = false, bool loadInitialOnError = false,
             Action<Action> preLoadAction = null, bool exitWhenFailing = true)
         {
+            // TODO: REMOVE
+            new CustomOutro(this, layout, CurrentSavegame).Start();
+            return;
+
             void Failed()
             {
                 if (exitWhenFailing)
