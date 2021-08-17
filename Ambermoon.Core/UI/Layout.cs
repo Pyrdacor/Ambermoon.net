@@ -4558,7 +4558,10 @@ namespace Ambermoon.UI
         public void HoverButtonGrid(Position position)
         {
             if (game.Configuration.ShowButtonTooltips)
+            {
+                HideTooltip();
                 buttonGrid?.Hover(position);
+            }
         }
 
         public bool Hover(Position position, ref CursorType cursorType)
