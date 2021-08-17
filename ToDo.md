@@ -8,7 +8,6 @@
 ## 2D maps
 
 - Teleporting from a 2D map to a 2D world map via cheat with fixed positions (e.g. teleport 110 1 1) scrolls the map badly.
-- Spannenberg tavern: NPC still leaves map through main entrance.
 
 
 ## 3D maps
@@ -21,7 +20,6 @@
 ## UI
 
 - "Do you accept this character?" message is missing in character creator.
-- Add "New game" button to game over screen
 
 
 ## Misc

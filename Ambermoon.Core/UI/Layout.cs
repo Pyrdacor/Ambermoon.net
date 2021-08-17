@@ -3349,8 +3349,8 @@ namespace Ambermoon.UI
 
         public void FillCharacterBars(int slot, PartyMember partyMember)
         {
-            uint hp = partyMember?.HitPoints.CurrentValue ?? 0;
-            uint sp = partyMember?.SpellPoints.CurrentValue ?? 0;
+            uint hp = partyMember?.Alive == false ? 0 : partyMember?.HitPoints.CurrentValue ?? 0;
+            uint sp = partyMember?.Alive == false ? 0 : partyMember?.SpellPoints.CurrentValue ?? 0;
             float lpPercentage = partyMember == null || !partyMember.Alive ? 0.0f
                 : Math.Min(1.0f, (float)hp / partyMember.HitPoints.TotalMaxValue);
             float spPercentage = partyMember == null || !partyMember.Alive || !partyMember.Class.IsMagic() ? 0.0f
