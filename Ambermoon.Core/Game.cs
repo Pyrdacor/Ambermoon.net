@@ -2135,7 +2135,10 @@ namespace Ambermoon
                         Move2D(-1, 0);
                 }
                 else
+                {
                     player3D.TurnLeft(movement.TurnSpeed3D);
+                    CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                }
             }
             if (right && !left)
             {
@@ -2146,7 +2149,10 @@ namespace Ambermoon
                         Move2D(1, 0);
                 }
                 else
+                {
                     player3D.TurnRight(movement.TurnSpeed3D);
+                    CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                }
             }
             if (up && !down)
             {
@@ -2157,7 +2163,10 @@ namespace Ambermoon
                     Move2D(x, -1);
                 }
                 else
+                {
                     player3D.MoveForward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                    CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                }
             }
             if (down && !up)
             {
@@ -2168,7 +2177,10 @@ namespace Ambermoon
                     Move2D(x, 1);
                 }
                 else
+                {
                     player3D.MoveBackward(movement.MoveSpeed3D * Global.DistancePerBlock, CurrentTicks);
+                    CurrentSavegame.CharacterDirection = player.Direction = player3D.Direction;
+                }
             }
         }
 

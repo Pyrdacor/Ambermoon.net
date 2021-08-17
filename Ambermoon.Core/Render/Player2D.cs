@@ -155,7 +155,7 @@ namespace Ambermoon.Render
                 else if (x < 0)
                     newDirection = CharacterDirection.Left;
 
-                player.Direction = newDirection;
+                game.CurrentSavegame.CharacterDirection = player.Direction = newDirection;
 
                 Map.Scroll(scrollX, scrollY);
 
