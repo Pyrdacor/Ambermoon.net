@@ -572,6 +572,8 @@ namespace Ambermoon.Render
                     if (!map.characterBlockingBlocks.Contains(blockIndex) &&
                         !map.EventBlocksCharacter(newPosition))
                         break;
+
+                    newPosition = null;
                 }
 
                 if (newPosition != null)
