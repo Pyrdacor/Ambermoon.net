@@ -99,7 +99,7 @@ namespace Ambermoon.Render
             animation.ScaleType = scaleType;
             animation.SetStartFrame(textureAtlas.GetOffset(Graphics.CombatGraphicOffset + (uint)graphicIndex),
                 size, startPosition, startScale, mirrorX, textureSize, anchorX, anchorY);
-            animation.Play(frameIndices, duration / (uint)frameIndices.Length, game.CurrentBattleTicks, endPosition, endScale);
+            animation.Play(frameIndices, Math.Max(1, duration / (uint)frameIndices.Length), game.CurrentBattleTicks, endPosition, endScale);
             animations.Add(animation);
 
             if (maskColors != null)
@@ -1542,7 +1542,7 @@ namespace Ambermoon.Render
                     {
                         var frames = (fromMonster ? Enumerable.Range(0, 12) : Enumerable.Range(16, 8)).ToArray();
                         AddAnimation(graphic, frames, sourcePosition, targetPosition,
-                            (uint)Math.Min(280, Math.Abs(targetPosition.X - sourcePosition.X) + rowDist * 50) * Game.TicksPerSecond / 560,
+                            Math.Max(Game.TicksPerSecond / 10, (uint)Math.Min(280, Math.Abs(targetPosition.X - sourcePosition.X) + rowDist * 50) * Game.TicksPerSecond / 560),
                             fromMonster ? endScale : 1.0f, fromMonster ? 1.0f : Math.Min(endScale, perspectiveScaleFactor), 255, null, null,
                             fromMonster || perspectiveScaleFactor >= endScale ? BattleAnimation.AnimationScaleType.Both : BattleAnimation.AnimationScaleType.XOnly,
                             BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Center, mirrorX);

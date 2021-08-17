@@ -2,7 +2,6 @@
 
 - Initial scale of dissolve victim has bad anchor behavior if in front row.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
-- If a near monster in the middle casts magic projectile (maybe similar things too) it isn't shown (tested with energy balls)
 
 
 ## 2D maps
