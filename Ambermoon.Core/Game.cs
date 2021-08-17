@@ -790,7 +790,7 @@ namespace Ambermoon
                 {
                     if (!layout.OptionMenuOpen)
                     {
-                        double timeFactor = Configuration.FastBattleMode ? 4.0f : 1.0f;
+                        double timeFactor = Configuration.FastBattleMode && currentBattle.RoundActive ? 4.0f : 1.0f;
                         CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime * timeFactor);
                         UpdateBattle(1.0 / timeFactor);
 
