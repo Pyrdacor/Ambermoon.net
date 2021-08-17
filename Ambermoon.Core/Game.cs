@@ -4094,6 +4094,16 @@ namespace Ambermoon
 
                 var damage = Godmode ? 0 : damageProvider?.Invoke(partyMember) ?? 0;
 
+                if (Godmode)
+                {
+                    if (inflictAilment.HasFlag(Ailment.DeadCorpse))
+                        inflictAilment &= ~Ailment.DeadCorpse;
+                    if (inflictAilment.HasFlag(Ailment.DeadAshes))
+                        inflictAilment &= ~Ailment.DeadAshes;
+                    if (inflictAilment.HasFlag(Ailment.DeadDust))
+                        inflictAilment &= ~Ailment.DeadDust;
+                }
+
                 if (damage > 0 || inflictAilment != Ailment.None)
                 {
                     partyMember.Damage(damage);
