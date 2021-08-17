@@ -350,6 +350,8 @@ namespace Ambermoon
                 inputEnable = value;
                 layout.ReleaseButtons();
                 clickMoveActive = false;
+                if (!inputEnable)
+                    layout.HideTooltip();
                 UntrapMouse();
 
                 if (!inputEnable)
