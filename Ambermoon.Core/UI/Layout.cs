@@ -2068,7 +2068,21 @@ namespace Ambermoon.UI
 
                 void ShowText()
                 {
-                    if (!ShowTextItem(item.TextIndex, item.TextSubIndex))
+                    if (game.Configuration.AutoDerune && item.Index == 145) // Special case: rune alphabet
+                    {
+                        game.Pause();
+                        game.InputEnable = false;
+
+                        OpenTextPopup(game.ProcessText(CustomTexts.GetText(game.GameLanguage, CustomTexts.Index.RuneTableUsage)),
+                            new Position(16, 52), 256, 112, true, true, false, TextColor.BrightGray, () =>
+                        {
+                            game.InputEnable = true;
+                            game.Resume();
+                            game.ResetCursor();
+                        });
+                        game.CursorType = CursorType.Click;
+                    }
+                    else if (!ShowTextItem(item.TextIndex, item.TextSubIndex))
                         throw new AmbermoonException(ExceptionScope.Data, $"Invalid text index for item '{item.Name}'");
                 }
                 return;
