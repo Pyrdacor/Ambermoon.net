@@ -861,12 +861,12 @@ namespace Ambermoon.Render
             }
         }
 
-        public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection, Race race)
+        public void SetMap(Map map, uint playerX, uint playerY, CharacterDirection playerDirection, Race race, bool forceReset = false)
         {
             if (map.Type != MapType.Map3D)
                 throw new AmbermoonException(ExceptionScope.Application, "Tried to load a 2D map into a 3D render map.");
 
-            if (Map != map)
+            if (forceReset || Map != map)
             {
                 Destroy();
 
@@ -1096,18 +1096,10 @@ namespace Ambermoon.Render
             }
             else
             {
-                // TODO: This works quiet well but not in all cases. For example the hanging stuff in grandfather's cellar are
-                //       a bit too small. Is scaled by 1/3 but should be 2/3 when comparing with original.
-                y = objectPosition.Z + objectPosition.Object.MappedTextureHeight;
-                if (y > 341)
-                {
-                    size.Height = 341 - objectPosition.Z;
-                    float factor = (float)size.Height / objectPosition.Object.MappedTextureHeight;
-                    size.Width = Util.Round(factor * objectPosition.Object.MappedTextureWidth);
-                    y = 341;
-                }
+                y = objectPosition.Z + objectPosition.Object.TextureHeight;
+                if (y + 0.0001f < ReferenceWallHeight)
+                    y = objectPosition.Z + objectPosition.Object.MappedTextureHeight;
                 y *= labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
-                //(objectPosition.Z + objectPosition.Object.MappedTextureHeight) * labdata.WallHeight * Global.DistancePerBlock / (ReferenceWallHeight * BlockSize);
             }
         }
 
@@ -1291,7 +1283,7 @@ namespace Ambermoon.Render
             {
                 var wall = surfaceFactory.Create(SurfaceType.Wall, Global.DistancePerBlock, wallHeight,
                     TextureWidth, TextureHeight, TextureWidth, TextureHeight, alpha, 1, 0.0f, wallOrientation,
-                    Map.Flags.HasFlag(MapFlags.Outdoor) ? labdata.CeilingColorIndex : (byte)0);
+                    Map.Flags.HasFlag(MapFlags.Outdoor) ? labdata.CeilingColorIndex : 0);
                 wall.Layer = layer;
                 wall.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                 wall.X = x;
