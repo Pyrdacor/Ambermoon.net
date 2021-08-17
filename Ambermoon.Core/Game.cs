@@ -1203,8 +1203,11 @@ namespace Ambermoon
             }
             else
             {
+                bool allInputWasDisabled = allInputDisabled;
+                allInputDisabled = false;
                 ShowMessagePopup(DataNameProvider.ReviveMessage, () =>
                 {
+                    allInputDisabled = allInputWasDisabled;
                     layout.SetCharacter(SlotFromPartyMember(partyMember).Value, partyMember, false, finishAction);
                     if (showHealAnimation)
                     {
