@@ -1734,10 +1734,6 @@ namespace Ambermoon
         public void LoadGame(int slot, bool showError = false, bool loadInitialOnError = false,
             Action<Action> preLoadAction = null, bool exitWhenFailing = true)
         {
-            // TODO: REMOVE
-            ShowCustomOutro();
-            return;
-
             void Failed()
             {
                 if (exitWhenFailing)
