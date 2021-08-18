@@ -1,5 +1,5 @@
 ﻿/*
- * ISprite.cs - Texture atlas interface
+ * ITextureAtlas.cs - Texture atlas interface
  *
  * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
