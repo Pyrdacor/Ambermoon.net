@@ -292,13 +292,16 @@ namespace Ambermoon.Data.Legacy
         {
             var glyphIndices = new List<byte>();
 
-            text = text.Replace("~LEAD~", nameProvider.LeadName);
-            text = text.Replace("~SELF~", nameProvider.SelfName);
-            text = text.Replace("~CAST~", nameProvider.CastName);
-            text = text.Replace("~INVN~", nameProvider.InvnName);
-            text = text.Replace("~SUBJ~", nameProvider.SubjName);
-            text = text.Replace("~SEX1~", nameProvider.Sex1Name);
-            text = text.Replace("~SEX2~", nameProvider.Sex2Name);
+            if (nameProvider != null)
+            {
+                text = text.Replace("~LEAD~", nameProvider.LeadName);
+                text = text.Replace("~SELF~", nameProvider.SelfName);
+                text = text.Replace("~CAST~", nameProvider.CastName);
+                text = text.Replace("~INVN~", nameProvider.InvnName);
+                text = text.Replace("~SUBJ~", nameProvider.SubjName);
+                text = text.Replace("~SEX1~", nameProvider.Sex1Name);
+                text = text.Replace("~SEX2~", nameProvider.Sex2Name);
+            }
 
             bool rune = false;
             int tagStart = -1;

@@ -1,4 +1,25 @@
-﻿using Ambermoon.Data;
+﻿/*
+ * Game.cs - Game core of Ambermoon
+ *
+ * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ *
+ * This file is part of Ambermoon.net.
+ *
+ * Ambermoon.net is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ambermoon.net is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using Ambermoon.Data;
 using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Serialization;
 using Ambermoon.Render;
@@ -242,6 +263,7 @@ namespace Ambermoon
         readonly IFow fow2D = null;
         IOutroFactory outroFactory;
         IOutro outro = null;
+        CustomOutro customOutro = null;
         internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) &&
             (!Map.Flags.HasFlag(MapFlags.Dungeon) || CurrentSavegame.IsSpellActive(ActiveSpellType.Light));
         internal bool GameOverButtonsVisible { get; private set; } = false;
@@ -599,6 +621,7 @@ namespace Ambermoon
         {
             if (cleanUp)
             {
+                customOutro = null;
                 ClosePopup();
                 CloseWindow();
                 Cleanup();
@@ -708,6 +731,12 @@ namespace Ambermoon
             if (outro?.Active == true)
             {
                 outro.Update(deltaTime);
+                return;
+            }
+
+            if (customOutro?.CreditsActive == true)
+            {
+                customOutro.Update(deltaTime);
                 return;
             }
 
@@ -1275,7 +1304,7 @@ namespace Ambermoon
             spellListScrollOffsets[slot] = 0;
         }
 
-        void RemovePartyMember(int slot, bool initialize, Action followAction = null)
+        internal void RemovePartyMember(int slot, bool initialize, Action followAction = null)
         {
             var partyMember = GetPartyMember(slot);
 
@@ -1706,7 +1735,7 @@ namespace Ambermoon
             Action<Action> preLoadAction = null, bool exitWhenFailing = true)
         {
             // TODO: REMOVE
-            new CustomOutro(this, layout, CurrentSavegame).Start();
+            ShowCustomOutro();
             return;
 
             void Failed()
@@ -4029,6 +4058,11 @@ namespace Ambermoon
             });
         }
 
+        internal void SetClickHandler(Action action)
+        {
+            nextClickHandler = _ => { action?.Invoke(); return true; };
+        }
+
         static readonly float[] ShakeOffsetFactors = new float[]
         {
             -0.5f, 0.0f, 1.0f, 0.5f, -1.0f, 0.0f, 0.5f
@@ -4853,6 +4887,20 @@ namespace Ambermoon
             }
         }
 
+        internal void PrepareOutro()
+        {
+            Cleanup();
+            layout.ShowPortraitArea(false);
+            layout.SetLayout(LayoutType.None);
+            windowTitle.Visible = false;
+            TrapMouse(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight));
+            cursor.Type = CursorType.None;
+            UpdateCursor(lastMousePosition, MouseButtons.None);
+            currentUIPaletteIndex = 0;
+            battleRoundActiveSprite.Visible = false;
+            paused = true;
+        }
+
         void ShowOutro()
         {
             ClosePopup();
@@ -4861,21 +4909,18 @@ namespace Ambermoon
             StartSequence();
             ExecuteNextUpdateCycle(() =>
             {
-                Cleanup();
-                layout.ShowPortraitArea(false);
-                layout.SetLayout(LayoutType.None);
-                windowTitle.Visible = false;
-                TrapMouse(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight));
-                cursor.Type = CursorType.None;
-                UpdateCursor(lastMousePosition, MouseButtons.None);
-                currentUIPaletteIndex = 0;
-                battleRoundActiveSprite.Visible = false;
-                paused = true;
+                PrepareOutro();
 
                 PlayMusic(Song.Outro);
-                outro ??= outroFactory.Create(() => NewGame(true));
+                outro ??= outroFactory.Create(ShowCustomOutro);
                 outro.Start(CurrentSavegame);
             });
+        }
+
+        void ShowCustomOutro()
+        {
+            customOutro = new CustomOutro(this, layout, CurrentSavegame);
+            customOutro.Start();
         }
 
         public bool ActivateTransport(TravelType travelType)
@@ -13645,6 +13690,17 @@ namespace Ambermoon
             InventoryItemAdded(itemToAdd, addedAmount, partyMember);
 
             return item.Amount;
+        }
+
+        internal void UpdateTransportPosition(int index)
+        {
+            if (!is3D && Map.IsWorldMap)
+            {
+                var transport = CurrentSavegame.TransportLocations[index];
+                renderMap2D.RemoveTransport(index);
+                renderMap2D.PlaceTransport(transport.MapIndex, (uint)transport.Position.X - 1,
+                    (uint)transport.Position.Y - 1, transport.TravelType, index);
+            }
         }
 
         void SetWindow(Window window, params object[] parameters)

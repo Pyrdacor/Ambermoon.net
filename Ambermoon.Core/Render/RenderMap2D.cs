@@ -336,7 +336,7 @@ namespace Ambermoon.Render
             }
         }
 
-        void UpdateTransports()
+        internal void UpdateTransports()
         {
             foreach (var transport in mapTransports)
             {

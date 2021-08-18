@@ -1,0 +1,213 @@
+﻿/*
+ * Credits.cs - Remake credits
+ *
+ * Copyright (C) 2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ *
+ * This file is part of Ambermoon.net.
+ *
+ * Ambermoon.net is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ambermoon.net is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Collections.Generic;
+
+namespace Ambermoon.Render
+{
+    internal class Credits
+    {
+        struct CreditsText
+        {
+            public uint EmptyLines;
+            public string Text;
+        }
+
+        readonly IRenderView renderView;
+        readonly Action<Action> finishAction;
+        readonly List<IRenderText> texts = new List<IRenderText>();
+        readonly Queue<CreditsText> creditsTexts = new Queue<CreditsText>();
+        long ticks = 0;
+        long nextTextTicks = 0;
+        long lastScrollTicks = 0;
+        long lineScrollTicks = 0;
+        const long TicksPerLine = 6 * Global.GlyphLineHeight;
+        CreditsText lastText;
+
+        public Credits(IRenderView renderView, Action<Action> finishAction)
+        {
+            this.renderView = renderView;
+            this.finishAction = finishAction;
+
+            AddHeader("Ambermoon");
+            AddText("rewritten by Pyrdacor");
+
+            AddText("With this project I fulfilled a dream of mine.", 6);
+            AddText("I loved Ambermoon from the start and making it");
+            AddText("available to more people makes me very happy.");
+
+            AddText("I am very grateful to Karsten Köper and the whole", 2);
+            AddText("team of Thalion Software for creating this game.");
+            AddText("It made my childhood an adventure too. Thank you!");
+
+            AddHeader("Special Thanks", 14);
+
+            AddText("First of all I want to thank kermitfrog for his", 1);
+            AddText("awesome m68k skills and introducing me to Ghidra.");
+            AddText("Without him much of this wouldn't have been possible.");
+
+            AddText("And of course I want to thank Alex Holland!", 3);
+            AddText("Not only managed he to save an english version");
+            AddText("of Ambermoon but also he knows so much about");
+            AddText("Ambermoon, Amberstar and Thalion. He also preserved");
+            AddText("so much knowledge and resources over the years that");
+            AddText("Ambermoon is not possible without Alex I guess.");
+
+            AddHeader("My supporters", 16);
+            AddText("Every nerd also needs something to eat. So I am very", 1);
+            AddText("thankful for all the support I get. Many people");
+            AddText("donated or even became a patron of mine.");
+            AddText("Thanks to you all! Especially to my top patrons:");
+
+            AddText("Other Retro Matt", 1);
+            AddText("Lorenz P.");
+            AddText("Stephan Mankie");
+            AddText("Jan Rennfanz");
+            AddText("Benjamin Ziebert");
+
+            AddHeader("Contributors", 12);
+            AddText("Over the years many people contributed to Ambermoon.", 1);
+            AddText("In honor of their efforts I list some of them here:");
+
+            AddText("meynaf", 1);
+            AddText("st-h");
+            AddText("dlfrSilver (Dennis Lechevalier)");
+            AddText("MetalliC (Vitaly Grebennik)");
+            AddText("Hexaae (Luca Longone)");
+            AddText("Oliver Gantert (amberworlds project)");
+            AddText("Daniel Schulz (slothsoft.net)");
+            AddText("Nico Bendlin (Ambermoon gitlab)");
+            AddText("Metibor");
+            AddText("prophesore");
+            AddText("Michael Bonisch");
+            AddText("Simone Bevilacqua");
+            AddText("Karol Kliestenec");
+            AddText("Georg Fuchs");
+
+            AddText("Thank you guys! You're awesome!", 1);
+
+            AddText("Also thanks to all the testers of Ambermoon.net!", 3);
+            AddText("Especially to Thallyrion, Uukrull and Nephilim.");
+
+            AddHeader("Projects to come", 16);
+            AddText("The next project will be ~INK17~Ambermoon Advanced~INK31~.", 1);
+            AddText("It will balance the game, add new quests, places,");
+            AddText("monsters, NPCs, items and much more.");
+            AddText("You can play it on the Amiga or with Ambermoon.net.");
+
+            AddText("After this I will start creating the ~INK17~third part~INK31~.", 3);
+            AddText("~INK17~of the Amber trilogy~INK31~. This will be a huge project.");
+
+            AddText("To stay informed visit me on github, follow me on", 3);
+            AddText("twitter or just stay in touch.");
+
+            AddHeader("The real end", 9);
+
+            AddText("Pyrdacor - trobt(at)web.de", 2);
+            AddText("github.com/Pyrdacor");
+            AddText("www.patreon.com/Pyrdacor");
+            AddText("twitter.com/Pyrdacor2");
+
+            lastText = creditsTexts.Peek();
+            SetupNextText(lastText.EmptyLines);
+        }
+
+        void SetupNextText(uint emptyLines)
+        {
+            nextTextTicks = ticks + emptyLines * TicksPerLine;
+        }
+
+        void AddHeader(string text, uint emptyLines = 0)
+        {
+            AddText(text, emptyLines);
+            AddText(new string('-', text.Length));
+        }
+
+        void AddText(string text, uint emptyLines = 0)
+        {
+            creditsTexts.Enqueue(new CreditsText { EmptyLines = emptyLines, Text = text });
+        }
+
+        void CreateText(string text)
+        {
+            var bounds = new Rect(0, Global.VirtualScreenHeight, Global.VirtualScreenWidth, Global.GlyphLineHeight);
+            var renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text),
+                renderView.TextProcessor.ProcessText(text, null, null), Data.Enumerations.Color.Bright, false, bounds, TextAlign.Center);
+            texts.Add(renderText);
+            renderText.Visible = true;
+        }
+
+        void Scroll()
+        {
+            int tickDiff = (int)(ticks - lastScrollTicks);
+            lastScrollTicks = ticks;
+            lineScrollTicks += tickDiff;
+            int scrollAmount = (int)(lineScrollTicks / 6);
+
+            if (scrollAmount != 0)
+            {
+                for (int i = texts.Count - 1; i >= 0; --i)
+                {
+                    texts[i].Place(new Rect(0, texts[i].Y - scrollAmount, Global.VirtualScreenWidth, texts[i].Height), TextAlign.Center);
+
+                    if (texts[i].Y <= -Global.GlyphLineHeight)
+                    {
+                        texts[i].Delete();
+                        texts.RemoveAt(i);
+                    }
+                }
+            }
+
+            lastScrollTicks -= lineScrollTicks % 6;
+            lineScrollTicks = 0;
+        }
+
+        public void Update(double deltaTime)
+        {
+            ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
+
+            Scroll();
+
+            if (ticks >= nextTextTicks)
+            {
+                if (creditsTexts.Count == 0)
+                {
+                    finishAction?.Invoke(() =>
+                    {
+                        texts.ForEach(text => text?.Delete());
+                        texts.Clear();
+                    });
+                    return;
+                }
+
+                var text = creditsTexts.Dequeue();
+
+                if (creditsTexts.Count == 0)
+                    nextTextTicks = ticks + 11 * Game.TicksPerSecond;
+                else
+                    SetupNextText(1 + creditsTexts.Peek().EmptyLines);
+
+                CreateText(text.Text);                
+            }
+        }
+    }
+}
