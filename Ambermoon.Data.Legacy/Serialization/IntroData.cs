@@ -133,13 +133,13 @@ namespace Ambermoon.Data.Legacy.Serialization
                 new Size(160, 128)
             };
 
-            var reader = introHunks[1];
-
-            if (reader.PeekDword() == 0x494d5021) // "IMP!", may be imploded
-                reader = new DataReader(Deploder.DeplodeFimp(reader).Reverse().ToArray());
-
             for (int i = 0; i < 8; ++i)
             {
+                var reader = introHunks[1];
+
+                if (reader.PeekDword() == 0x494d5021) // "IMP!", may be imploded
+                    reader = new DataReader(Deploder.DeplodeFimp(reader).Reverse().ToArray());
+
                 var graphicInfo = new GraphicInfo
                 {
                     Width = hunk1ImageSizes[i].Width,

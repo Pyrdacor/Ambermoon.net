@@ -6299,6 +6299,8 @@ namespace Ambermoon
                         layout.EnableButton(4, true); // Enable "Ask to leave"
                         layout.EnableButton(5, false); // Disable "Ask to join"
                         SetMapCharacterBit(Map.Index, characterIndex.Value, true);
+                        if (partyMember.CharacterBitIndex == 0xffff || partyMember.CharacterBitIndex == 0x0000)
+                            partyMember.CharacterBitIndex = (ushort)(((Map.Index - 1) << 5) | characterIndex.Value);
                         break;
                     }
                 }
