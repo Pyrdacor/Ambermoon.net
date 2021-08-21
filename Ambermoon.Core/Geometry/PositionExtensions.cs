@@ -32,11 +32,11 @@ namespace Ambermoon.Geometry
 
             int yOffset = 1;
 
-            if (target.X > position.X) // down
+            if (target.Y > position.Y) // down
             {
                 yOffset = 2;
             }
-            else if (target.X < position.X) // up
+            else if (target.Y < position.Y) // up
             {
                 yOffset = 0;
             }
