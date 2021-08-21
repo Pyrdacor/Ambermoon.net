@@ -102,8 +102,6 @@ namespace Ambermoon
             /// 
             /// After this an additional <see cref="Hurt"/> action will follow
             /// which plays the hurt animation and removed the hitpoints from the enemy.
-            /// 
-            /// TODO: If someone dies, call CharacterDied and remove it from the battle field
             /// </summary>
             Attack,
             /// <summary>
@@ -890,7 +888,7 @@ namespace Ambermoon
         {
             CharacterDied?.Invoke(target);
 
-            if (!partyMembers.Any(p => p != null && p.Alive && p.Ailments.CanFight()))
+            if (!partyMembers.Any(p => p != null && p.Alive && p.Ailments.CanFight() && !fledCharacters.Contains(p)))
             {
                 EndBattleCleanup();
                 BattleEnded?.Invoke(new Game.BattleEndInfo
@@ -3215,10 +3213,10 @@ namespace Ambermoon
                 }
             case BattleActionType.CastSpell:
                 {
-                    var maxPlayerDamage = averagePlayerDamage.Where((d, i) => partyMembers[i]?.Alive == true).Max();
+                    var maxPlayerDamage = averagePlayerDamage.Where((d, i) => partyMembers[i]?.Alive == true && !fledCharacters.Contains(partyMembers[i])).Max();
                     uint getPrio(uint damage) => maxPlayerDamage == 0 ? 100 : damage * 100 / maxPlayerDamage;
                     var maxDamagePlayers = averagePlayerDamage.Select((d, i) => new { Damage = d, Player = partyMembers[i] })
-                        .Where(x => x.Damage == maxPlayerDamage && x.Player?.Alive == true)
+                        .Where(x => x.Damage == maxPlayerDamage && x.Player?.Alive == true && !fledCharacters.Contains(x.Player))
                         .Select(x => new { x.Player, Prio = getPrio(x.Damage), Row = GetCharacterPosition(x.Player) / 6 });
                     var averagePrio = maxDamagePlayers.Average(x => x.Prio);
                     var spells = GetAvailableMonsterSpells(monster);
