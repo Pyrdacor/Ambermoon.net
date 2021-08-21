@@ -6033,6 +6033,38 @@ namespace Ambermoon
                 layout.ShowClickChestMessage(initialMessage);
         }
 
+        static readonly Dictionary<uint, ushort> PartyMemberCharacterBits = new Dictionary<uint, ushort>
+        {
+            // Netsrak
+            { 2,  0x2000 },
+            // Mando
+            { 3,  0x2001 },
+            // Erik
+            { 4,  0x2002 },
+            // Chris
+            { 5,  0x2003 },
+            // Monika
+            { 6,  0x2004 },
+            // Tar the dark
+            { 7,  0x2141 },
+            // Egil
+            { 8, 0x2163 },
+            // Selena
+            { 9,  0x22c2 },
+            // Nelvin
+            { 10,  0x2321 },
+            // Sabine
+            { 11,  0x23a0 },
+            // Valdyn
+            { 12,  0x2400 },
+            // Targor
+            { 13,  0x3320 },
+            // Leonaria
+            { 14,  0x3440 },
+            // Gryban
+            { 15,  0x35c0 }
+        };
+
         /// <summary>
         /// A conversation is started with a Conversation event but the
         /// displayed text depends on the following events. Mostly
@@ -6411,6 +6443,8 @@ namespace Ambermoon
             {
                 var partyMember = character as PartyMember;
                 var index = partyMember.CharacterBitIndex;
+                if (index == 0xffff)
+                    index = PartyMemberCharacterBits[partyMember.Index];
                 uint mapIndex = 1 + ((uint)index >> 5);
                 uint characterIndex = (uint)index & 0x1f;
                 this.RemovePartyMember(SlotFromPartyMember(character as PartyMember).Value, false, followAction);

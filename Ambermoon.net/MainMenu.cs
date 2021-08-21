@@ -18,9 +18,11 @@ namespace Ambermoon
 
         readonly IRenderView renderView;
         readonly Cursor cursor = null;
+        readonly string continueLoadingText;
+        readonly string newLoadingText;
         ILayerSprite background;
         IColoredRect fadeArea;
-        IRenderText loadingText;
+        UI.UIText loadingText;
         List<KeyValuePair<Rect, Text>> mainMenuTexts = new List<KeyValuePair<Rect, Text>>(4);
         int hoveredTextIndex = -1;
         DateTime? hoverStartTime = null;
@@ -43,10 +45,12 @@ namespace Ambermoon
         public event Action<CloseAction> Closed;
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
-            Font introFont, string[] texts, bool canContinue)
+            Font introFont, string[] texts, bool canContinue, string continueLoadingText, string newLoadingText)
         {
             this.renderView = renderView;
             this.cursor = cursor;
+            this.continueLoadingText = continueLoadingText;
+            this.newLoadingText = newLoadingText;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
 
             background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
@@ -82,10 +86,9 @@ namespace Ambermoon
             fadeArea.Y = 0;
             fadeArea.Visible = false;
 
-            var text = renderView.TextProcessor.CreateText("Preparing game ...");
-            loadingText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, TextColor.White, false,
-                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
-            loadingText.DisplayLayer = 254;
+            var text = renderView.TextProcessor.CreateText("");
+            loadingText = new UI.UIText(renderView, 51, text,
+                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), 254, TextColor.White, false, TextAlign.Center);
             loadingText.Visible = false;
 
             cursor.Type = Data.CursorType.Sword;
@@ -100,14 +103,15 @@ namespace Ambermoon
             mainMenuTexts = null;
             fadeArea?.Delete();
             fadeArea = null;
-            loadingText?.Delete();
+            loadingText?.Destroy();
             loadingText = null;
         }
 
-        public void FadeOutAndDestroy()
+        public void FadeOutAndDestroy(bool continued)
         {
             fadeArea.Color = new Color(0, 0, 0, 255);
             fadeArea.Visible = true;
+            loadingText.SetText(renderView.TextProcessor.CreateText(continued ? continueLoadingText : newLoadingText));
             loadingText.Visible = true;
             fadeOutStartTime = DateTime.Now;
         }

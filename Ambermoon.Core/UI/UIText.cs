@@ -26,7 +26,7 @@ using TextColor = Ambermoon.Data.Enumerations.Color;
 
 namespace Ambermoon.UI
 {
-    internal class UIText
+    public class UIText
     {
         readonly IRenderView renderView;
         IText text;

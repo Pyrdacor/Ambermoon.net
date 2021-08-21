@@ -351,7 +351,7 @@ namespace Ambermoon
         }
 
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
-            Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction)
+            Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage)
         {
             musicCache = new MusicCache(renderView.GameData, Data.Enumerations.Song.Menu, // TODO: use intro later maybe and initialize earlier then
                 Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
@@ -365,7 +365,8 @@ namespace Ambermoon
             if (audioOutput.Enabled)
                 musicCache.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
 
-            mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue);
+            mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
+                GetText(gameLanguage, 1), GetText(gameLanguage, 2));
             mainMenu.Closed += closeAction =>
             {
                 switch (closeAction)
@@ -392,6 +393,26 @@ namespace Ambermoon
                 }
             };
         }
+
+        static readonly Dictionary<GameLanguage, string[]> LoadingTexts = new Dictionary<GameLanguage, string[]>
+        {
+            { GameLanguage.German, new string[]
+                {
+                    "Spieldaten werden geladen ...",
+                    "Starte Spiel ...",
+                    "Bereite neues Spiel vor ..."
+                }
+            },
+            { GameLanguage.English, new string[]
+                {
+                    "Loading game data ...",
+                    "Starting game ...",
+                    "Preparing new game ..."
+                }
+            }
+        };
+
+        string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
         void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage)
         {
@@ -421,7 +442,7 @@ namespace Ambermoon
 
             InitGlyphs();
 
-            var text = renderView.TextProcessor.CreateText("Loading game data ...");
+            var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
             infoText.DisplayLayer = 254;
@@ -538,9 +559,9 @@ namespace Ambermoon
                         introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                     {
                         cursor.Type = Data.CursorType.None;
-                        mainMenu.FadeOutAndDestroy();
+                        mainMenu.FadeOutAndDestroy(continueGame);
                         Task.Run(() => SetupGameCreator(continueGame));
-                    });
+                    }, gameLanguage);
                 }
                 catch (Exception ex)
                 {
