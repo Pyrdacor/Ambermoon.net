@@ -234,6 +234,7 @@
         public string ChestNowFull => executableData.Messages.GetEntry(Messages.Index.ChestNowFull);
         public string NoOneCanCarryThatMuch => executableData.Messages.GetEntry(Messages.Index.NoOneCanCarryThatMuch);
         public string CannotCarryAllGold => executableData.Messages.GetEntry(Messages.Index.CannotCarryAllGold);
+        public string MapViewNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.MapViewNotWorkingHere);
 
 
         #region Conversations
@@ -315,7 +316,6 @@
         public string BattleMessageWhereToBlinkTo => executableData.Messages.GetEntry(Messages.Index.WhereToBlinkTo);
         public string BattleMessageHasBlinked => executableData.Messages.GetEntry(Messages.Index.HasBlinked);
         public string BattleMessageCannotBlink => executableData.Messages.GetEntry(Messages.Index.CannotBlink);
-        public string BattleMessageCannotCastCauseIrritation => executableData.Messages.GetEntry(Messages.Index.CannotCastCauseIrritation);
         public string BattleMessageCannotParry => executableData.Messages.GetEntry(Messages.Index.CannotParry);
         public string BattleMessageUseItOnWhom => executableData.Messages.GetEntry(Messages.Index.UseItOnWhom);
 

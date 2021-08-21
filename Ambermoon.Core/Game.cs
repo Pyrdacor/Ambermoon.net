@@ -10946,6 +10946,25 @@ namespace Ambermoon
                 return;
             }
 
+            if (!Map.Flags.HasFlag(MapFlags.Automapper))
+            {
+                if (spell == Spell.MapView)
+                {
+                    ShowMessagePopup(DataNameProvider.MapViewNotWorkingHere);
+                    return;
+                }
+
+                if (spell == Spell.FindMonsters ||
+                    spell == Spell.FindPersons ||
+                    spell == Spell.FindSecretDoors ||
+                    spell == Spell.FindTraps ||
+                    spell == Spell.MysticalMapping)
+                {
+                    ShowMessagePopup(DataNameProvider.AutomapperNotWorkingHere);
+                    return;
+                }
+            }
+
             var spellInfo = SpellInfos.Entries[spell];
 
             void ConsumeSP()

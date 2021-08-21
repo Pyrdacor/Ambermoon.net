@@ -204,6 +204,7 @@ namespace Ambermoon.Data
         string ChestNowFull { get; }
         string NoOneCanCarryThatMuch { get; }
         string CannotCarryAllGold { get; }
+        string MapViewNotWorkingHere { get; }
 
 
         #region Conversations
@@ -285,7 +286,6 @@ namespace Ambermoon.Data
         string BattleMessageWhereToBlinkTo { get; }
         string BattleMessageHasBlinked { get; }
         string BattleMessageCannotBlink { get; }
-        string BattleMessageCannotCastCauseIrritation { get; }
         string BattleMessageCannotParry { get; }
         string BattleMessageUseItOnWhom { get; }
 

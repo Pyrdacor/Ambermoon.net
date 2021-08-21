@@ -328,7 +328,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             NoCursedItemFound,
             CannotRepairUnbreakableItem,
             PriceForRepair,
-            CannotCastCauseIrritation,
+            MapViewNotWorkingHere,
             HappyWithCharacter,
             YouDontKnowAnySpellsYet,
             EscapedTheTrap,
