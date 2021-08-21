@@ -163,6 +163,8 @@ namespace Ambermoon
 
             public Song Song { get; }
 
+            public TimeSpan SongDuration => TimeSpan.FromSeconds(buffer.Length / 44100.0);
+
             public byte[] GetData() => buffer;
 
             public void Play(IAudioOutput audioOutput)

@@ -74,7 +74,7 @@ namespace Ambermoon.Render
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 2);
             AddAction(TimeSpan.FromSeconds(1), new ClearAction());
             AddAction(TimeSpan.Zero, new CustomAction(finished => game.RemovePartyMember(1, false, finished)));
-            AddAction(TimeSpan.FromSeconds(2), new CustomAction(finished =>
+            AddAction(TimeSpan.FromSeconds(3), new CustomAction(finished =>
             {
                 int numMoves = 7;
 
@@ -108,7 +108,9 @@ namespace Ambermoon.Render
             }));
             AddAction(TimeSpan.FromMilliseconds(500), new CustomAction(finished =>
             {
+                game.EnableMusicChange(false);
                 game.ToggleTransport();
+                game.EnableMusicChange(true);
                 finished?.Invoke();
             }));
             AddAction(TimeSpan.FromMilliseconds(500), new CustomAction(finished =>
@@ -116,10 +118,25 @@ namespace Ambermoon.Render
                 game.Move(false, 0.0f, CursorType.ArrowRight);
                 finished?.Invoke();
             }));
+            AddAction(TimeSpan.FromMilliseconds(250), new CustomAction(finished =>
+            {
+                game.Move(false, 0.0f, CursorType.ArrowRight);
+                finished?.Invoke();
+            }));
+            AddAction(TimeSpan.FromMilliseconds(250), new CustomAction(finished =>
+            {
+                game.Move(false, 0.0f, CursorType.ArrowRight);
+                finished?.Invoke();
+            }));
+            AddAction(TimeSpan.FromMilliseconds(250), new CustomAction(finished =>
+            {
+                game.Move(false, 0.0f, CursorType.ArrowRight);
+                finished?.Invoke();
+            }));
             AddAction(TimeSpan.FromSeconds(2), new ShowConversationPortraitAction(hero.PortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 3);
-            AddAction(TimeSpan.FromSeconds(2), new ClearAction());
-            AddAction(TimeSpan.Zero, new CustomAction(finished =>
+            AddAction(TimeSpan.FromMilliseconds(2500), new ClearAction());
+            AddAction(TimeSpan.FromMilliseconds(800), new CustomAction(finished =>
             {
                 int numMoves = 10;
                 int xPerMove = -8;
@@ -140,6 +157,8 @@ namespace Ambermoon.Render
                     if (--numMoves == 0)
                     {
                         game.PlayMusic(Song.TheUhOhSong);
+                        game.AddTimedEvent(game.GetCurrentSongDuration() * 2 - TimeSpan.FromMilliseconds(10),
+                            () => game.PlayMusic(Song.Ship));
                         finished?.Invoke();
                     }
                     else
@@ -170,7 +189,21 @@ namespace Ambermoon.Render
             AddAction(TimeSpan.FromSeconds(1), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(PyrdacorPortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 12);
-            AddAction(TimeSpan.FromSeconds(3), new CustomAction(finished =>
+            float volume = game.AudioOutput.Volume;
+            AddAction(TimeSpan.FromMilliseconds(3500), new CustomAction(finished =>
+            {
+                float factor = 0.99f;
+                void ReduceVolume()
+                {
+                    game.AudioOutput.Volume *= factor;
+                    factor -= 0.02f;
+                };
+                ReduceVolume();
+                for (int i = 0; i < 10; ++i)
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(100 + i * 100), ReduceVolume);
+                finished?.Invoke();
+            }));
+            AddAction(TimeSpan.FromMilliseconds(1050), new CustomAction(finished =>
             {
                 game.Pause();
                 game.StartSequence();
@@ -179,7 +212,8 @@ namespace Ambermoon.Render
                 {
                     Clear();
                     game.PrepareOutro();
-                    game.PlayMusic(Song.Outro);
+                    game.PlayMusic(Song.VoiceOfTheBagpipe);
+                    game.AudioOutput.Volume = volume;
                     ShowCredits();
                 });
             }));

@@ -231,6 +231,7 @@ namespace Ambermoon
         internal GameLanguage GameLanguage { get; private set; }
         CharacterCreator characterCreator = null;
         readonly Random random = new Random();
+        bool disableMusicChange = false;
         internal SavegameTime GameTime { get; private set; } = null;
         readonly List<uint> changedMaps = new List<uint>();
         internal const int FadeTime = 1000;
@@ -8245,7 +8246,14 @@ namespace Ambermoon
                         if (partyMemberBattleFieldTooltips[i] != null)
                         {
                             var partyMember = GetPartyMember(i);
-
+                            int position = currentBattle.GetSlotFromCharacter(partyMember);
+                            partyMemberBattleFieldTooltips[i].Area = new Rect
+                            (
+                                Global.BattleFieldX + (position % 6) * Global.BattleFieldSlotWidth,
+                                Global.BattleFieldY + (position / 6) * Global.BattleFieldSlotHeight - 1,
+                                Global.BattleFieldSlotWidth,
+                                Global.BattleFieldSlotHeight + 1
+                            );
                             partyMemberBattleFieldTooltips[i].Text =
                                 $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}";
                         }
@@ -11726,6 +11734,8 @@ namespace Ambermoon
         /// </summary>
         void PlayMapMusic() => PlayMusic(Song.Default);
 
+        internal void EnableMusicChange(bool enable) => disableMusicChange = !enable;
+
         /// <summary>
         /// Starts playing a specific music. If Song.Default is given
         /// the current map music is played instead.
@@ -11734,6 +11744,9 @@ namespace Ambermoon
         /// </summary>
         internal Song PlayMusic(Song song)
         {
+            if (disableMusicChange)
+                return currentSong?.Song ?? Song.Default;
+
             if (song == Song.Default || (int)song == 255)
             {
                 return PlayMusic(Map.MusicIndex == 0 || Map.MusicIndex == 255 ? Song.PloddingAlong : (Song)Map.MusicIndex);
@@ -11751,6 +11764,8 @@ namespace Ambermoon
 
             return oldSong;
         }
+
+        internal TimeSpan GetCurrentSongDuration() => currentSong?.SongDuration ?? TimeSpan.Zero;
 
         internal void ContinueMusic()
         {

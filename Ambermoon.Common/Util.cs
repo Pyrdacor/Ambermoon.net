@@ -37,6 +37,11 @@ namespace Ambermoon
             return (int)Math.Round(f);
         }
 
+        public static int Round(double f)
+        {
+            return (int)Math.Round(f);
+        }
+
         public static float Limit(float minValue, float value, float maxValue)
         {
             return Math.Max(minValue, Math.Min(value, maxValue));

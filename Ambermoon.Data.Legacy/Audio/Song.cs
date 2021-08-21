@@ -35,6 +35,7 @@ namespace Ambermoon.Data.Legacy.Audio
         public int InterruptsPerSecond => sonicArrangerSong.NBIrqps;
         public int InitialSongSpeed => sonicArrangerSong.SongSpeed;
         public int InitialBeatsPerMinute => sonicArrangerSong.InitialBPM;
+        public TimeSpan SongDuration { get; private set; } = TimeSpan.Zero;
 
         public Song(Enumerations.Song song, int songIndex, SongPlayer songPlayer, DataReader reader,
             Stream.ChannelMode channelMode, bool hardwareLPF, bool pal, bool waitForLoading = false, Action loadFinishedHandler = null)
@@ -47,6 +48,7 @@ namespace Ambermoon.Data.Legacy.Audio
             void Load()
             {
                 buffer = new Stream(sonicArrangerFile, songIndex, 44100, channelMode, hardwareLPF, pal).ToUnsignedArray();
+                SongDuration = TimeSpan.FromSeconds(buffer.Length / 44100.0);
                 loadFinishedHandler?.Invoke();
             }
             if (waitForLoading)

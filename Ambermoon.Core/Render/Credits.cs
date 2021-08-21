@@ -36,10 +36,10 @@ namespace Ambermoon.Render
         readonly Action<Action> finishAction;
         readonly List<IRenderText> texts = new List<IRenderText>();
         readonly Queue<CreditsText> creditsTexts = new Queue<CreditsText>();
-        long ticks = 0;
-        long nextTextTicks = 0;
-        long lastScrollTicks = 0;
-        long lineScrollTicks = 0;
+        double ticks = 0;
+        double nextTextTicks = 0;
+        double lastScrollTicks = 0;
+        double lineScrollTicks = 0;
         const long TicksPerLine = 6 * Global.GlyphLineHeight;
         CreditsText lastText;
 
@@ -70,7 +70,8 @@ namespace Ambermoon.Render
             AddText("of Ambermoon but also he knows so much about");
             AddText("Ambermoon, Amberstar and Thalion. He also preserved");
             AddText("so much knowledge and resources over the years that");
-            AddText("Ambermoon is not possible without Alex I guess.");
+            AddText("Ambermoon would not be possible without Alex I guess.");
+            AddText("Thank you so much for all you have done!");
 
             AddHeader("My supporters", 16);
             AddText("Every nerd also needs something to eat. So I am very", 1);
@@ -83,6 +84,7 @@ namespace Ambermoon.Render
             AddText("Stephan Mankie");
             AddText("Jan Rennfanz");
             AddText("Benjamin Ziebert");
+            AddText("Mike Valtix");
 
             AddHeader("Contributors", 12);
             AddText("Over the years many people contributed to Ambermoon.", 1);
@@ -98,10 +100,11 @@ namespace Ambermoon.Render
             AddText("Nico Bendlin (Ambermoon gitlab)");
             AddText("Metibor");
             AddText("prophesore");
-            AddText("Michael Bonisch");
+            AddText("Michael Böhnisch");
             AddText("Simone Bevilacqua");
             AddText("Karol Kliestenec");
             AddText("Georg Fuchs");
+            AddText("Gerald Müller-Bruhnke");
 
             AddText("Thank you guys! You're awesome!", 1);
 
@@ -126,6 +129,8 @@ namespace Ambermoon.Render
             AddText("github.com/Pyrdacor");
             AddText("www.patreon.com/Pyrdacor");
             AddText("twitter.com/Pyrdacor2");
+
+            AddText("August 2021", 2);
 
             lastText = creditsTexts.Peek();
             SetupNextText(lastText.EmptyLines);
@@ -158,10 +163,10 @@ namespace Ambermoon.Render
 
         void Scroll()
         {
-            int tickDiff = (int)(ticks - lastScrollTicks);
+            double tickDiff = ticks - lastScrollTicks;
             lastScrollTicks = ticks;
             lineScrollTicks += tickDiff;
-            int scrollAmount = (int)(lineScrollTicks / 6);
+            int scrollAmount = Util.Round(lineScrollTicks / 6.0);
 
             if (scrollAmount != 0)
             {
@@ -177,13 +182,13 @@ namespace Ambermoon.Render
                 }
             }
 
-            lastScrollTicks -= lineScrollTicks % 6;
+            lastScrollTicks -= lineScrollTicks - scrollAmount * 6;
             lineScrollTicks = 0;
         }
 
         public void Update(double deltaTime)
         {
-            ticks += (long)Math.Round(Game.TicksPerSecond * deltaTime);
+            ticks += Game.TicksPerSecond * deltaTime;
 
             Scroll();
 
@@ -202,7 +207,7 @@ namespace Ambermoon.Render
                 var text = creditsTexts.Dequeue();
 
                 if (creditsTexts.Count == 0)
-                    nextTextTicks = ticks + 11 * Game.TicksPerSecond;
+                    nextTextTicks = ticks + 9.25 * Game.TicksPerSecond;
                 else
                     SetupNextText(1 + creditsTexts.Peek().EmptyLines);
 

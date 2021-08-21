@@ -164,15 +164,18 @@ You can find the full changelog [here](changelog.md). You can also look at the [
 Special thanks to my top patreons:
 - [Other Retro Matt](https://twitter.com/GothmogPlays)
 - Lorenz P.
-- [Mankie](https://twitter.com/MankiesWorkshop)
+- Stephan [Mankie](https://twitter.com/MankiesWorkshop)
 - Jan Rennfanz
 - Benjamin Ziebert
+- Mike Valtix
 
-Special thanks to some special contributors as well:
+Special thanks to some special contributors and testers as well:
 - kermitfrog
+- a1exh (Alex Holland)
 - Metibor
 - Thallyrion
-- a1exh
+- Uukrull
+- Nephilim
 
 
 ## Other projects
