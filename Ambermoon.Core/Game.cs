@@ -8712,7 +8712,8 @@ namespace Ambermoon
                         if (row < 3)
                             return;
                         int position = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
-                        if (Math.Abs(column - position % 6) > 1 || Math.Abs(row - position / 6) > 1)
+                        uint maxDist = 1 + currentPickingActionMember.Attributes[Attribute.Speed].TotalCurrentValue / 80;
+                        if (Math.Abs(column - position % 6) > maxDist || Math.Abs(row - position / 6) > maxDist)
                         {
                             SetBattleMessageWithClick(DataNameProvider.BattleMessageTooFarAway, TextColor.BrightGray);
                             return;
@@ -8823,7 +8824,13 @@ namespace Ambermoon
                 case PlayerBattleAction.PickMoveSpot:
                 {
                     int position = column + row * 6;
-                    if (row > 2 && currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
+                    uint maxDist = 1 + currentPickingActionMember.Attributes[Attribute.Speed].TotalCurrentValue / 80;
+                    int currentPosition = currentBattle.GetSlotFromCharacter(currentPickingActionMember);
+                    int currentColumn = currentPosition % 6;
+                    int currentRow = currentPosition / 6;
+                    if (row > 2 && Math.Abs(column - currentColumn) <= maxDist &&
+                        Math.Abs(row - currentRow) <= maxDist &&
+                        currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
                     {
                         SetPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)position));
                         CancelSpecificPlayerAction();
@@ -8992,8 +8999,9 @@ namespace Ambermoon
                 }
                 case PlayerBattleAction.PickMoveSpot:
                 {
+                    int maxDist = 1 + (int)currentPickingActionMember.Attributes[Attribute.Speed].TotalCurrentValue / 80;
                     var valuableSlots = GetValuableBattleFieldSlots(position => currentBattle.IsBattleFieldEmpty(position),
-                        1, 3, 4);
+                        maxDist, 3, 4);
                     foreach (var slot in valuableSlots)
                     {
                         highlightBattleFieldSprites.Add
