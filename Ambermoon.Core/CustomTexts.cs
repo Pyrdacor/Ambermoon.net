@@ -32,7 +32,9 @@ namespace Ambermoon
             FailedToLoadInitialSavegame,
             FailedToLoadSavegameUseInitial,
             StartNewGameOrQuit,
-            RuneTableUsage
+            RuneTableUsage,
+            LoadCrashedGame,
+            FailedToRemoveCrashSavegame
         }
 
         static readonly Dictionary<GameLanguage, Dictionary<Index, string>> entries = new Dictionary<GameLanguage, Dictionary<Index, string>>
@@ -44,7 +46,9 @@ namespace Ambermoon
                     { Index.FailedToLoadInitialSavegame, "Fehler beim Laden des Start-Spielstands." },
                     { Index.FailedToLoadSavegameUseInitial, "Fehler beim Laden des Spielstands. Ein neues Spiel wurde stattdessen gestartet." },
                     { Index.StartNewGameOrQuit, "Möchten Sie ein neues Spiel starten oder das Spiel verlassen?" },
-                    { Index.RuneTableUsage, "Solange Sie das Runenalphabet bei sich tragen, werden Runen nun automatisch als Text angezeigt." }
+                    { Index.RuneTableUsage, "Solange Sie das Runenalphabet bei sich tragen, werden Runen nun automatisch als Text angezeigt." },
+                    { Index.LoadCrashedGame, "Ein Backup-Spielstand eines kürzlichen Absturzes wurde gefunden. Wollen Sie diesen laden?" },
+                    { Index.FailedToRemoveCrashSavegame, "Der Backup-Spielstand konnte nicht automatisch gelöscht werden. Bitte löschen Sie ihn manuell. Er wird im Unterordner 'Save.99' abgelegt." }
                 }
             },
             { GameLanguage.English, new Dictionary<Index, string>
@@ -54,7 +58,9 @@ namespace Ambermoon
                     { Index.FailedToLoadInitialSavegame, "Failed to load initial savegame." },
                     { Index.FailedToLoadSavegameUseInitial, "Failed to load savegame. Loaded initial savegame instead." },
                     { Index.StartNewGameOrQuit, "Do you want to start a new game or quit the game?" },
-                    { Index.RuneTableUsage, "As long as you have the rune table in your inventory, all runes will automatically be displayed as text now." }
+                    { Index.RuneTableUsage, "As long as you have the rune table in your inventory, all runes will automatically be displayed as text now." },
+                    { Index.LoadCrashedGame, "A crash backup savegame was detected. Do you want to load it?" },
+                    { Index.FailedToRemoveCrashSavegame, "The crash backup savegame could not be deleted automatically. Please do so yourself. It is stored in sub-folder 'Save.99'." }
                 }
             }
         };

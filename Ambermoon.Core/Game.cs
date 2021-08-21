@@ -692,12 +692,12 @@ namespace Ambermoon
 
             paused = true;
 
-            GameTime.Pause();
+            GameTime?.Pause();
 
             if (is3D)
-                renderMap3D.Pause();
+                renderMap3D?.Pause();
             else
-                renderMap2D.Pause();
+                renderMap2D?.Pause();
         }
 
         public void Resume()
@@ -707,12 +707,12 @@ namespace Ambermoon
 
             paused = false;
 
-            GameTime.Resume();
+            GameTime?.Resume();
 
             if (is3D)
-                renderMap3D.Resume();
+                renderMap3D?.Resume();
             else
-                renderMap2D.Resume();
+                renderMap2D?.Resume();
         }
 
         uint UpdateTicks(uint ticks, double deltaTime)
@@ -1803,7 +1803,7 @@ namespace Ambermoon
                 Start();
         }
 
-        public void SaveGame(int slot, string name)
+        void PrepareSaving(Action saveAction)
         {
             // Note: In 3D it is possible to walk partly on tiles that block the player. For example
             // small objects. But when you save and load you will get stuck with that position.
@@ -1811,41 +1811,89 @@ namespace Ambermoon
             // small objects in a larger way. So we will adjust the position only on saving. It won't
             // have the same position after reload but you won't get stuck.
             Position restorePosition = null;
-            if (is3D && renderMap3D.IsBlockingPlayer(CurrentSavegame.CurrentMapX - 1, CurrentSavegame.CurrentMapY - 1))
+            try
             {
-                var touchedPositions = player3D.GetTouchedPositions(Global.DistancePerBlock);
-                var availablePositions = touchedPositions.Skip(1).Where(position => !renderMap3D.IsBlockingPlayer(position)).ToList();
-
-                if (availablePositions.Count != 0)
+                if (is3D && renderMap3D.IsBlockingPlayer(CurrentSavegame.CurrentMapX - 1, CurrentSavegame.CurrentMapY - 1))
                 {
-                    float tileX = (-camera3D.X - 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
-                    float tileY = Map.Height - (camera3D.Z + 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
-                    var basePosition = new FloatPosition(tileX, tileY);
-                    var savegamePosition = availablePositions.Count == 1 ? availablePositions[0] :
-                        availablePositions.OrderBy(position => basePosition.Distance(position)).First();
-                    restorePosition = new Position((int)CurrentSavegame.CurrentMapX, (int)CurrentSavegame.CurrentMapY);
-                    CurrentSavegame.CurrentMapX = 1 + (uint)savegamePosition.X;
-                    CurrentSavegame.CurrentMapY = 1 + (uint)savegamePosition.Y;
+                    var touchedPositions = player3D.GetTouchedPositions(Global.DistancePerBlock);
+                    var availablePositions = touchedPositions.Skip(1).Where(position => !renderMap3D.IsBlockingPlayer(position)).ToList();
+
+                    if (availablePositions.Count != 0)
+                    {
+                        float tileX = (-camera3D.X - 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
+                        float tileY = Map.Height - (camera3D.Z + 0.5f * Global.DistancePerBlock) / Global.DistancePerBlock;
+                        var basePosition = new FloatPosition(tileX, tileY);
+                        var savegamePosition = availablePositions.Count == 1 ? availablePositions[0] :
+                            availablePositions.OrderBy(position => basePosition.Distance(position)).First();
+                        restorePosition = new Position((int)CurrentSavegame.CurrentMapX, (int)CurrentSavegame.CurrentMapY);
+                        CurrentSavegame.CurrentMapX = 1 + (uint)savegamePosition.X;
+                        CurrentSavegame.CurrentMapY = 1 + (uint)savegamePosition.Y;
+                    }
                 }
             }
-
-            SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame);
-
-            if (restorePosition != null)
+            catch
             {
-                CurrentSavegame.CurrentMapX = (uint)restorePosition.X;
-                CurrentSavegame.CurrentMapY = (uint)restorePosition.Y;
+                // ignore
             }
+
+            saveAction?.Invoke();
+
+            try
+            {
+                if (restorePosition != null)
+                {
+                    CurrentSavegame.CurrentMapX = (uint)restorePosition.X;
+                    CurrentSavegame.CurrentMapY = (uint)restorePosition.Y;
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        public void SaveCrashedGame()
+        {
+            PrepareSaving(() => SavegameManager.SaveCrashedGame(savegameSerializer, CurrentSavegame));
+        }
+
+        public void SaveGame(int slot, string name)
+        {
+            PrepareSaving(() => SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame));
         }
 
         public void ContinueGame()
         {
-            SavegameManager.GetSavegameNames(renderView.GameData, out int current);
-            LoadGame(current, false, true);
+            if (SavegameManager.HasCrashSavegame())
+            {
+                ingame = true;
+                ShowDecisionPopup(GetCustomText(CustomTexts.Index.LoadCrashedGame), response =>
+                {
+                    if (response == PopupTextEvent.Response.Yes)
+                    {
+                        LoadGame(99, false, true);
+                        if (!SavegameManager.RemoveCrashedSavegame())
+                            ShowMessagePopup(GetCustomText(CustomTexts.Index.FailedToRemoveCrashSavegame));
+                    }
+                    else
+                    {
+                        Continue();
+                    }
+                }, 1, 0, TextAlign.Center, false);
+                return;
+            }
+
+            Continue();
+
+            void Continue()
+            {
+                SavegameManager.GetSavegameNames(renderView.GameData, out int current);
+                LoadGame(current, false, true);
+            }
         }
 
         // TODO: Optimize to not query this every time
-        public List<string> Dictionary => textDictionary.Entries.Where((word, index) =>
+        public List<string> Dictionary => CurrentSavegame == null ? null : textDictionary.Entries.Where((word, index) =>
             CurrentSavegame.IsDictionaryWordKnown((uint)index)).ToList();
 
         public bool AutoDerune => Configuration.AutoDerune && PartyMembers.Any(p => p.HasItem(145)); // 145: Rune Table
@@ -3114,7 +3162,7 @@ namespace Ambermoon
 
         public IEnumerable<PartyMember> PartyMembers => Enumerable.Range(0, MaxPartyMembers)
             .Select(i => GetPartyMember(i)).Where(p => p != null);
-        public PartyMember GetPartyMember(int slot) => CurrentSavegame.GetPartyMember(slot);
+        public PartyMember GetPartyMember(int slot) => CurrentSavegame?.GetPartyMember(slot);
         internal Chest GetChest(uint index) => CurrentSavegame.Chests[index];
         internal Chest GetInitialChest(uint index)
         {

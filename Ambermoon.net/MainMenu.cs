@@ -12,7 +12,7 @@ namespace Ambermoon
         {
             Continue,
             NewGame,
-            Intro,
+            //Intro,
             Exit
         }
 
@@ -60,9 +60,12 @@ namespace Ambermoon
             // For now we use a font where each glyph has a height of 28. But the base glyph is inside a
             // 16 pixel height area in the y-center (from y=6 to y=22). So basically these 16 pixels are
             // the height we use for calculations.
-            int y = 56;
+            int y = 56 + 14;
             for (int i = 0; i < 4; ++i)
             {
+                if (i == 2) // TODO: for now we don't show the intro option as it is not implemented
+                    continue;
+
                 int textWidth = introFont.MeasureTextWidth(texts[i]);
                 int offsetX = (Global.VirtualScreenWidth - textWidth) / 2;
                 var area = new Rect(0, y - 6, Global.VirtualScreenWidth, 24);
@@ -153,13 +156,6 @@ namespace Ambermoon
                     }
                     else
                     {
-                        // TODO: REMOVE LATER
-                        if (i == 2) // Intro
-                        {
-                            mainMenuTexts[i].Value.TextColor = TextColor.Gray;
-                            continue;
-                        }
-
                         mainMenuTexts[i].Value.TextColor = TextColor.White;
                     }
                 }
@@ -210,10 +206,6 @@ namespace Ambermoon
             {
                 if (mainMenuTexts[i].Key.Contains(position))
                 {
-                    // TODO: REMOVE LATER
-                    if (i == 2) // Intro
-                        continue;
-
                     if (hoveredTextIndex != i)
                     {
                         hoveredTextIndex = i;

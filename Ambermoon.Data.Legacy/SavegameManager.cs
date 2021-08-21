@@ -100,14 +100,35 @@ namespace Ambermoon.Data.Legacy
             SavegameInputFiles savegameFiles;
             try
             {
-                savegameFiles = new SavegameInputFiles
+                if (saveSlot == 99 && Directory.Exists(Path.Combine(path, "Save.99")))
                 {
-                    SaveDataReader = gameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
-                    PartyMemberDataReaders = gameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
-                    ChestDataReaders = gameData.Files[$"Save.{saveSlot:00}/Chest_data.amb"],
-                    MerchantDataReaders = gameData.Files[$"Save.{saveSlot:00}/Merchant_data.amb"],
-                    AutomapDataReaders = gameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
-                };
+                    string backupPath = Path.Combine(path, "Save.99");
+                    var fileReader = new FileReader();
+                    IFileContainer ReadContainer(string name)
+                    {
+                        using var stream = File.OpenRead(Path.Combine(backupPath, name));
+                        return fileReader.ReadFile(name, stream);
+                    }
+                    savegameFiles = new SavegameInputFiles
+                    {
+                        SaveDataReader = new DataReader(File.ReadAllBytes(Path.Combine(backupPath, "Party_data.sav"))),
+                        PartyMemberDataReaders = ReadContainer("Party_char.amb"),
+                        ChestDataReaders = ReadContainer("Chest_data.amb"),
+                        MerchantDataReaders = ReadContainer("Merchant_data.amb"),
+                        AutomapDataReaders = ReadContainer("Automap.amb")
+                    };
+                }
+                else
+                {
+                    savegameFiles = new SavegameInputFiles
+                    {
+                        SaveDataReader = gameData.Files[$"Save.{saveSlot:00}/Party_data.sav"].Files[1],
+                        PartyMemberDataReaders = gameData.Files[$"Save.{saveSlot:00}/Party_char.amb"],
+                        ChestDataReaders = gameData.Files[$"Save.{saveSlot:00}/Chest_data.amb"],
+                        MerchantDataReaders = gameData.Files[$"Save.{saveSlot:00}/Merchant_data.amb"],
+                        AutomapDataReaders = gameData.Files[$"Save.{saveSlot:00}/Automap.amb"]
+                    };
+                }
             }
             catch (KeyNotFoundException)
             {
@@ -170,12 +191,43 @@ namespace Ambermoon.Data.Legacy
             return savegame;
         }
 
+        public bool HasCrashSavegame() => Directory.Exists(Path.Combine(path, "Save.99"));
+
         public void Save(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, string name, Savegame savegame)
         {
             var savegameFiles = savegameSerializer.Write(savegame);
             WriteSavegameName(gameData, saveSlot, ref name);
             SaveToGameData(gameData, savegameFiles, saveSlot);
             SaveToPath(path, savegameFiles, saveSlot, gameData.Files["Saves"]);
+        }
+
+        public void SaveCrashedGame(ISavegameSerializer savegameSerializer, Savegame savegame)
+        {
+            var savegameFiles = savegameSerializer.Write(savegame);
+            SaveToPath(path, savegameFiles, 99, null);
+        }
+
+        public bool RemoveCrashedSavegame()
+        {
+            try
+            {
+                var directory = new DirectoryInfo(Path.Combine(path, "Save.99"));
+                foreach (var file in directory.GetFiles())
+                {
+                    if (file.Name == "Party_data.sav" ||
+                        file.Name == "Party_char.amb" ||
+                        file.Name == "Chest_data.amb" ||
+                        file.Name == "Merchant_data.amb" ||
+                        file.Name == "Automap.amb")
+                        file.Delete();
+                }
+                directory.Delete();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         void SaveToGameData(IGameData gameData, SavegameOutputFiles savegameFiles, int saveSlot)
@@ -239,9 +291,12 @@ namespace Ambermoon.Data.Legacy
             WriteFiles($"Save.{saveSlot:00}/Merchant_data.amb", savegameFiles.MerchantDataWriters);
             WriteFiles($"Save.{saveSlot:00}/Automap.amb", savegameFiles.AutomapDataWriters);
 
-            var savesWriter = new DataWriter();
-            FileWriter.Write(savesWriter, savesContainer);
-            File.WriteAllBytes(Path.Combine(path, "Saves"), savesWriter.ToArray());
+            if (savesContainer != null)
+            {
+                var savesWriter = new DataWriter();
+                FileWriter.Write(savesWriter, savesContainer);
+                File.WriteAllBytes(Path.Combine(path, "Saves"), savesWriter.ToArray());
+            }
         }
     }
 }

@@ -378,10 +378,10 @@ namespace Ambermoon
                         configuration.FirstStart = false;
                         startGameAction?.Invoke(true);
                         break;
-                    case MainMenu.CloseAction.Intro:
+                    /*case MainMenu.CloseAction.Intro:
                         // TODO
                         musicCache.GetSong(Data.Enumerations.Song.Intro)?.Play(audioOutput);
-                        break;
+                        break;*/
                     case MainMenu.CloseAction.Exit:
                         mainMenu?.Destroy();
                         mainMenu = null;
@@ -443,101 +443,103 @@ namespace Ambermoon
                     cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
                     cursor.Type = Data.CursorType.None;
 
+                    void SetupGameCreator(bool continueGame)
+                    {
+                        try
+                        {
+                            var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
+                            var savegameSerializer = new SavegameSerializer();
+                            var dataNameProvider = new DataNameProvider(executableData);
+                            var characterManager = new CharacterManager(gameData, graphicProvider);
+                            var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
+                            var lightEffectProvider = new LightEffectProvider(executableData);
+                            musicCache?.WaitForAllSongsLoaded();
+
+                            gameCreator = () =>
+                            {
+                                var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
+                                    characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
+                                    cursor, lightEffectProvider, audioOutput, musicCache, FullscreenChangeRequest, ChangeResolution,
+                                    QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge));
+                                game.QuitRequested += window.Close;
+                                game.MousePositionChanged += position =>
+                                {
+                                    if (mouse != null)
+                                    {
+                                        mouse.MouseMove -= Mouse_MouseMove;
+                                        mouse.Position = new MousePosition(position.X, position.Y);
+                                        mouse.MouseMove += Mouse_MouseMove;
+                                    }
+                                };
+                                game.MouseTrappedChanged += (bool trapped, Position position) =>
+                                {
+                                    try
+                                    {
+                                        this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
+                                        trapMouse = false;
+                                    }
+                                    catch
+                                    {
+                                        // SDL etc needs special logic as CursorMode.Disabled is not available
+                                        trapMouse = trapped;
+                                        trappedMouseOffset = trapped ? new FloatPosition(position) : null;
+                                        trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
+                                        this.cursor.CursorMode = CursorMode.Hidden;
+                                    }
+                                    if (mouse != null)
+                                    {
+                                        mouse.MouseMove -= Mouse_MouseMove;
+                                        mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
+                                            new MousePosition(window.Size.X / 2, window.Size.Y / 2);
+                                        mouse.MouseMove += Mouse_MouseMove;
+                                    }
+                                };
+                                game.ConfigurationChanged += (configuration, windowChange) =>
+                                {
+                                    if (windowChange)
+                                    {
+                                        ChangeFullscreenMode(configuration.Fullscreen);
+                                    }
+
+                                    if (configuration.UseGraphicFilter)
+                                    {
+                                        if (!renderView.TryUseFrameBuffer())
+                                            configuration.UseGraphicFilter = false;
+                                    }
+                                    else
+                                        renderView.DeactivateFramebuffer();
+
+                                    if (configuration.EnableCheats && !Console.IsInputRedirected)
+                                    {
+                                        while (Console.KeyAvailable)
+                                            Console.ReadKey(true);
+                                        PrintCheatConsoleHeader();
+                                    }
+                                    else if (!configuration.EnableCheats && !Console.IsInputRedirected)
+                                    {
+                                        cheatHeaderPrinted = false;
+                                        Console.Clear();
+                                    }
+                                };
+                                game.DrugTicked += Drug_Ticked;
+                                mainMenu.GameDataLoaded = true;
+                                game.Run(continueGame, ConvertMousePosition(mouse.Position));
+                                return game;
+                            };
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error while preparing game: " + ex.Message);
+                            gameCreator = () => throw ex;
+                        }
+                    }
+
                     ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
                         introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                     {
                         cursor.Type = Data.CursorType.None;
                         mainMenu.FadeOutAndDestroy();
-                        Task.Run(() =>
-                        {
-                            try
-                            {
-                                var mapManager = new MapManager(gameData, new MapReader(), new TilesetReader(), new LabdataReader());
-                                var savegameSerializer = new SavegameSerializer();
-                                var dataNameProvider = new DataNameProvider(executableData);
-                                var characterManager = new CharacterManager(gameData, graphicProvider);
-                                var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
-                                var lightEffectProvider = new LightEffectProvider(executableData);
-                                musicCache?.WaitForAllSongsLoaded();
-
-                                gameCreator = () =>
-                                {
-                                    var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
-                                        characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                        cursor, lightEffectProvider, audioOutput, musicCache, FullscreenChangeRequest, ChangeResolution,
-                                        QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge));
-                                    game.QuitRequested += window.Close;
-                                    game.MousePositionChanged += position =>
-                                    {
-                                        if (mouse != null)
-                                        {
-                                            mouse.MouseMove -= Mouse_MouseMove;
-                                            mouse.Position = new MousePosition(position.X, position.Y);
-                                            mouse.MouseMove += Mouse_MouseMove;
-                                        }
-                                    };
-                                    game.MouseTrappedChanged += (bool trapped, Position position) =>
-                                    {
-                                        try
-                                        {
-                                            this.cursor.CursorMode = trapped ? CursorMode.Disabled : CursorMode.Hidden;
-                                            trapMouse = false;
-                                        }
-                                        catch
-                                        {
-                                            // SDL etc needs special logic as CursorMode.Disabled is not available
-                                            trapMouse = trapped;
-                                            trappedMouseOffset = trapped ? new FloatPosition(position) : null;
-                                            trappedMouseLastPosition = trapped ? new FloatPosition(window.Size.X / 2, window.Size.Y / 2) : null;
-                                            this.cursor.CursorMode = CursorMode.Hidden;
-                                        }
-                                        if (mouse != null)
-                                        {
-                                            mouse.MouseMove -= Mouse_MouseMove;
-                                            mouse.Position = !trapped || !trapMouse ? new MousePosition(position.X, position.Y) :
-                                                new MousePosition(window.Size.X / 2, window.Size.Y / 2);
-                                            mouse.MouseMove += Mouse_MouseMove;
-                                        }
-                                    };
-                                    game.ConfigurationChanged += (configuration, windowChange) =>
-                                    {
-                                        if (windowChange)
-                                        {
-                                            ChangeFullscreenMode(configuration.Fullscreen);
-                                        }
-
-                                        if (configuration.UseGraphicFilter)
-                                        {
-                                            if (!renderView.TryUseFrameBuffer())
-                                                configuration.UseGraphicFilter = false;
-                                        }
-                                        else
-                                            renderView.DeactivateFramebuffer();
-
-                                        if (configuration.EnableCheats && !Console.IsInputRedirected)
-                                        {
-                                            while (Console.KeyAvailable)
-                                                Console.ReadKey(true);
-                                            PrintCheatConsoleHeader();
-                                        }
-                                        else if (!configuration.EnableCheats && !Console.IsInputRedirected)
-                                        {
-                                            cheatHeaderPrinted = false;
-                                            Console.Clear();
-                                        }
-                                    };
-                                    game.DrugTicked += Drug_Ticked;
-                                    mainMenu.GameDataLoaded = true;
-                                    game.Run(continueGame, ConvertMousePosition(mouse.Position));
-                                    return game;
-                                };
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine("Error while preparing game: " + ex.Message);
-                                gameCreator = () => throw ex;
-                            }
-                        });
+                        Task.Run(() => SetupGameCreator(continueGame));
                     });
                 }
                 catch (Exception ex)
@@ -969,7 +971,17 @@ namespace Ambermoon
             }
             catch (Exception ex)
             {
-                // TODO: save emergency savegame?
+                if (Game != null)
+                {
+                    try
+                    {
+                        Game.SaveCrashedGame();
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
+                }
 
                 if (renderView != null && infoText != null)
                 {
