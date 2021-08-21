@@ -7219,14 +7219,17 @@ namespace Ambermoon
         {
             ExecuteNextUpdateCycle(() =>
             {
-                highlightBattleFieldSprites.ForEach(s => s?.Delete());
-                highlightBattleFieldSprites.Clear();
-                SetCurrentPlayerBattleAction(Battle.BattleActionType.None);
-
                 pickedSpell = spell;
                 spellItemSlotIndex = itemSlotIndex;
                 spellItemIsEquipped = itemIsEquipped;
                 currentPickingActionMember = caster ?? CurrentPartyMember;
+                SetPlayerBattleAction(Battle.BattleActionType.None);
+
+                if (currentPickingActionMember == CurrentPartyMember)
+                {
+                    highlightBattleFieldSprites.ForEach(s => s?.Delete());
+                    highlightBattleFieldSprites.Clear();
+                }
 
                 var spellInfo = SpellInfos.Entries[pickedSpell];
 
