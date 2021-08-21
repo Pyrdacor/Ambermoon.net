@@ -8823,7 +8823,7 @@ namespace Ambermoon
                 case PlayerBattleAction.PickMoveSpot:
                 {
                     int position = column + row * 6;
-                    if (currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
+                    if (row > 2 && currentBattle.IsBattleFieldEmpty(position) && !AnyPlayerMovesTo(position))
                     {
                         SetPlayerBattleAction(Battle.BattleActionType.Move, Battle.CreateMoveParameter((uint)position));
                         CancelSpecificPlayerAction();
