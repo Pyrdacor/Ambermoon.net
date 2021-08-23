@@ -2032,10 +2032,34 @@ namespace Ambermoon.UI
 
             if (!game.BattleActive && game.TestUseItemMapEvent(itemIndex))
             {
-                void Use()
+                void Use(bool broke)
                 {
                     ReduceItemCharge(itemSlot, true, itemGrid == itemGrids[1], game.CurrentInventory, () =>
                     {
+                        if (broke && itemGrid == itemGrids[1]) // equipped
+                        {
+                            // Try to unequip
+                            var emptyInventorySlot = game.CurrentInventory.Inventory.Slots.FirstOrDefault(s => s.Empty);
+
+                            if (emptyInventorySlot != null)
+                            {
+                                emptyInventorySlot.Replace(itemSlot);
+
+                                if (slot == (int)EquipmentSlot.RightHand - 1 && item.NumberOfHands == 2)
+                                {
+                                    // For equipped two-handed weapons also remove the red cross in second hand slot
+                                    itemGrids[1].GetItemSlot(slot + 2).Clear();
+                                    if (game.CurrentWindow.Window == Window.Inventory)
+                                        itemGrids[1].UpdateItem(slot + 2);
+                                }
+
+                                itemSlot.Clear();
+                                if (game.CurrentWindow.Window == Window.Inventory)
+                                    itemGrids[1].UpdateItem(slot);
+
+                            }
+                        }
+
                         game.CloseWindow(() =>
                         {
                             if (wasInputEnabled)
@@ -2047,16 +2071,15 @@ namespace Ambermoon.UI
                 }
                 if (item.CanBreak && RollDice1000() < item.BreakChance)
                 {
-                    // TODO: unequip, remove red cross for equipped two-handed weapons
-
                     itemSlot.Flags |= ItemSlotFlags.Broken;
                     UpdateItemSlot(itemSlot);
+
                     string message = game.CurrentInventory.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name);
-                    game.ShowMessagePopup(message, Use);
+                    game.ShowMessagePopup(message, () => Use(true));
                 }
                 else
                 {
-                    Use();
+                    Use(false);
                 }
                 return;
             }
