@@ -2441,7 +2441,7 @@ namespace Ambermoon
             if (pickingTargetInventory)
             {
                 if (key == Key.Escape)
-                    AbortPickingTargetInventory();                
+                    layout.AbortPickingTargetInventory();
                 return;
             }
 
@@ -7817,11 +7817,6 @@ namespace Ambermoon
             {
                 case Spell.Identification:
                 {
-                    if (itemSlot.Flags.HasFlag(ItemSlotFlags.Identified))
-                    {
-                        Error(DataNameProvider.ItemAlreadyIdentified);
-                        return;
-                    }
                     Cast(() =>
                     {
                         itemSlot.Flags |= ItemSlotFlags.Identified;
@@ -11256,9 +11251,12 @@ namespace Ambermoon
                     break;
                 }
                 case SpellTarget.Item:
-                    // Item spells will never come from an item so don't bother with consume logic here.
-                    layout.ShowChestMessage(spell == Spell.RemoveCurses ? DataNameProvider.BattleMessageWhichPartyMemberAsTarget
-                        : DataNameProvider.WhichInventoryAsTarget);
+                {
+                    string message = spell == Spell.RemoveCurses ? DataNameProvider.BattleMessageWhichPartyMemberAsTarget
+                        : DataNameProvider.WhichInventoryAsTarget;
+                    layout.OpenTextPopup(ProcessText(message), null, true, false, false, TextAlign.Center);
+                    if (CurrentWindow.Window == Window.Inventory)
+                        InputEnable = true;
                     PickTargetInventory();
                     bool TargetInventoryPicked(int characterSlot)
                     {
@@ -11277,13 +11275,14 @@ namespace Ambermoon
                                 void CleanUp()
                                 {
                                     itemGrid?.HideTooltip();
-                                    layout.SetInventoryMessage(null);
                                     UntrapMouse();
                                     EndSequence();
                                     layout.ShowChestMessage(null);
+                                    layout.SetInventoryMessage(null);
                                 }
 
-                                ConsumeSP();
+                                targetItemPicked -= TargetItemPicked;
+                                Consume();
                                 EndSequence();
                                 ShowMessagePopup(DataNameProvider.NoCursedItemFound, CleanUp);
                                 return false; // no item selection
@@ -11299,26 +11298,47 @@ namespace Ambermoon
                         layout.SetInventoryMessage(null);
                         if (itemSlot != null)
                         {
-                            ConsumeSP();
+                            Consume();
                             StartSequence();
                             ApplySpellEffect(spell, caster, itemSlot, () =>
                             {
-                                CloseWindow();
+                                if (!fromItem)
+                                    CloseWindow();
                                 UntrapMouse();
                                 EndSequence();
+                                layout.SetInventoryMessage(null);
                                 layout.ShowChestMessage(null);
                             }, checkFail);
                             return false; // manual window closing etc
                         }
                         else
                         {
+                            layout.SetInventoryMessage(null);
                             layout.ShowChestMessage(null);
-                            return true; // auto-close window and cleanup
+                            if (fromItem)
+                            {
+                                EndSequence();
+                                UntrapMouse();
+                                return false;
+                            }
+                            else
+                            {
+                                return true; // auto-close window and cleanup
+                            }
                         }
                     }
                     targetInventoryPicked += TargetInventoryPicked;
                     targetItemPicked += TargetItemPicked;
+
+                    void Consume()
+                    {
+                        if (consumeHandler != null)
+                            consumeHandler(ConsumeSP);
+                        else
+                            ConsumeSP();
+                    }
                     break;
+                }
                 case SpellTarget.None:
                 {
                     void Consume()
@@ -11385,8 +11405,6 @@ namespace Ambermoon
 
                         if (spellInfo.SP > CurrentPartyMember.SpellPoints.CurrentValue)
                             return DataNameProvider.NotEnoughSP;
-
-                        // TODO: Is there more to check? Irritated?
 
                         return null;
                     },

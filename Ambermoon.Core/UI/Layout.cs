@@ -2263,6 +2263,7 @@ namespace Ambermoon.UI
                     {
                         // Note: itemGrids[0] is inventory and itemGrids[1] is equipment
                         bool equipped = itemGrid == itemGrids[1];
+                        var usingPlayer = game.CurrentInventory;
 
                         void ConsumeItem(Action effectHandler)
                         {
@@ -2275,12 +2276,27 @@ namespace Ambermoon.UI
                             }
 
                             if (item.MaxCharges == 0 && item.Flags.HasFlag(ItemFlags.DestroyAfterUsage) && itemSlot.NumRemainingCharges <= 1)
-                                DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, Done);
+                            {
+                                if (game.CurrentInventory == usingPlayer)
+                                    DestroyItem(itemSlot, TimeSpan.FromMilliseconds(25), true, Done);
+                                else
+                                {
+                                    var item = itemManager.GetItem(itemSlot.ItemIndex);
+
+                                    usingPlayer.TotalWeight -= item.Weight;
+
+                                    if (equipped)
+                                        game.EquipmentRemoved(usingPlayer, itemSlot.ItemIndex, 1, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+
+                                    itemSlot.Remove(1);
+                                }
+                            }
                             else
                             {
                                 if (item.MaxCharges != 0 && itemSlot.NumRemainingCharges > 0)
                                     --itemSlot.NumRemainingCharges;
-                                ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), Done);
+                                if (game.CurrentInventory == usingPlayer)
+                                    ItemAnimation.Play(game, RenderView, ItemAnimation.Type.Enchant, itemGrid.GetSlotPosition(slot), Done);
                             }
                         }
 
@@ -3205,9 +3221,7 @@ namespace Ambermoon.UI
                 partyMember.TotalWeight -= item.Weight;
 
                 if (equipment)
-                {
-                    game.EquipmentRemoved(itemSlot.ItemIndex, itemSlot.Amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
-                }
+                    game.EquipmentRemoved(itemSlot.ItemIndex, 1, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
 
                 if (game.CurrentWindow.Window == Window.Inventory)
                     game.UpdateCharacterInfo();
@@ -4173,6 +4187,16 @@ namespace Ambermoon.UI
             }
         }
 
+        public void AbortPickingTargetInventory()
+        {
+            if (game.CurrentWindow.Window == Window.Inventory)
+            {
+                itemGrids[0]?.ClearItemClickEventHandlers();
+                itemGrids[1]?.ClearItemClickEventHandlers();
+            }
+            game.AbortPickingTargetInventory();
+        }
+
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
             uint currentTicks, bool pickingNewLeader = false, bool pickingTargetPlayer = false,
             bool pickingTargetInventory = false)
@@ -4201,7 +4225,7 @@ namespace Ambermoon.UI
 
                 if (buttons == MouseButtons.Right)
                 {
-                    game.AbortPickingTargetInventory();
+                    AbortPickingTargetInventory();
                     return true;
                 }
             }
@@ -4480,7 +4504,11 @@ namespace Ambermoon.UI
                             else if (pickingTargetInventory)
                             {
                                 if (partyMember != null)
-                                    TargetInventoryPlayerSelected(i, partyMember);
+                                {
+                                    bool canAccessInventory = !game.HasPartyMemberFled(partyMember) && partyMember.Ailments.CanOpenInventory();
+                                    if (canAccessInventory)
+                                        TargetInventoryPlayerSelected(i, partyMember);
+                                }
                                 return true;
                             }
 

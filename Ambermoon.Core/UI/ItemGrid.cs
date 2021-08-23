@@ -166,6 +166,8 @@ namespace Ambermoon.UI
             }
         }
 
+        public void ClearItemClickEventHandlers() => ItemClicked = null;
+
         public static ItemGrid CreateInventory(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
             IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
         {
