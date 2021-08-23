@@ -6223,6 +6223,7 @@ namespace Ambermoon
                             itemGrid.ResetAnimation(itemSlot);
                             EndSequence();
                             Abort();
+                            followAction?.Invoke();
                         }, 650);
                     }
                     EndSequence();
@@ -6249,22 +6250,48 @@ namespace Ambermoon
                                     // If we are here the user clicked the associated text etc.
                                     if (interactionType == InteractionType.GiveItem)
                                     {
-                                        // Consume
-                                        StartSequence();
-                                        itemGrid.HideTooltip();
-                                        layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
+                                        bool consume = eventType == EventType.Interact;
+
+                                        if (!consume)
                                         {
-                                            InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
-                                            itemSlot.Remove(1);
-                                            ShowCreatedItems();
-                                            EndSequence();
-                                            Abort();
-                                            HandleNextEvent(null);
-                                        }, new Position(215, 75), false);
+                                            var @event = conversationEvent;
+
+                                            while (@event != null)
+                                            {
+                                                if (@event.Type == EventType.Interact)
+                                                {
+                                                    consume = true;
+                                                    break;
+                                                }
+
+                                                @event = @event.Next;
+                                            }
+                                        }
+
+                                        if (consume)
+                                        {
+                                            // Consume
+                                            StartSequence();
+                                            itemGrid.HideTooltip();
+                                            layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true, () =>
+                                            {
+                                                InventoryItemRemoved(itemSlot.ItemIndex, 1, CurrentPartyMember);
+                                                itemSlot.Remove(1);
+                                                //ShowCreatedItems();
+                                                EndSequence();
+                                                Abort();
+                                                HandleNextEvent(null);
+                                            }, new Position(215, 75), false);
+                                        }
+                                        else
+                                            ExecuteNextUpdateCycle(() => HandleNextEvent(null));
                                     }
                                     else // Show item
                                     {
-                                        MoveBack(() => HandleNextEvent(null));
+                                        if (eventType == EventType.Interact)
+                                            MoveBack(() => HandleNextEvent(null));
+                                        else
+                                            ExecuteNextUpdateCycle(() => HandleNextEvent(null));
                                     }
                                 }
                                 else if (eventType == EventType.Invalid) // End of event chain
