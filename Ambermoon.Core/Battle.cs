@@ -234,6 +234,7 @@ namespace Ambermoon
         uint? animationStartTicks = null;
         Monster currentlyAnimatedMonster = null;
         BattleAnimation currentBattleAnimation = null;
+        bool startAnimationRunning = false;
         bool idleAnimationRunning = false;
         uint nextIdleAnimationTicks = 0;
         List<BattleAnimation> effectAnimations = null;
@@ -257,6 +258,7 @@ namespace Ambermoon
         public bool WaitForClick { get; set; } = false;
         public bool SkipNextBattleFieldClick { get; private set; } = false;
 
+        public event Action StartAnimationFinished;
         public event Action RoundFinished;
         public event Action<Character> CharacterDied;
         public event Action<Game.BattleEndInfo> BattleEnded;
@@ -278,6 +280,7 @@ namespace Ambermoon
         public bool RoundActive { get; private set; } = false;
         public bool CanMoveForward => !battleField.Skip(12).Take(6).Any(c => c != null) && // middle row empty
             !battleField.Skip(18).Take(6).Any(c => c?.Type == CharacterType.Monster); // and no monster in front row
+        public bool HasStartAnimation { get; } = false;
 
         public Battle(Game game, Layout layout, PartyMember[] partyMembers, MonsterGroup monsterGroup,
             Dictionary<int, BattleAnimation> monsterBattleAnimations, bool needsClickForNextAction)
@@ -332,7 +335,22 @@ namespace Ambermoon
 
             effectAnimations = new List<BattleAnimation>();
 
-            SetupNextIdleAnimation(0);
+            // TODO: for now only one monster start animation is played (in original there is only one -> Nera, so for now it's ok)
+            var startAnimationMonster = Monsters.FirstOrDefault(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0);
+
+            if (startAnimationMonster != null)
+            {
+                HasStartAnimation = true;
+                animationStartTicks = 0;
+                startAnimationRunning = true;
+                currentlyAnimatedMonster = startAnimationMonster;
+                layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, 0, 0);
+            }
+            else
+            {
+                game.EndSequence();
+                SetupNextIdleAnimation(0);
+            }
         }
 
         public void SetMonsterAnimations(Dictionary<int, BattleAnimation> monsterBattleAnimations)
@@ -389,7 +407,22 @@ namespace Ambermoon
                 }
             }
 
-            if (idleAnimationRunning)
+            if (startAnimationRunning)
+            {
+                var animationTicks = battleTicks - animationStartTicks.Value;
+
+                if (layout.UpdateMonsterCombatSprite(currentlyAnimatedMonster, MonsterAnimationType.Start, animationTicks, battleTicks)?.Finished != false)
+                {
+                    game.EndSequence();
+                    animationStartTicks = null;
+                    startAnimationRunning = false;
+                    if (currentlyAnimatedMonster != null)
+                        layout.ResetMonsterCombatSprite(currentlyAnimatedMonster);
+                    SetupNextIdleAnimation(battleTicks);
+                    StartAnimationFinished?.Invoke();
+                }
+            }
+            else if (idleAnimationRunning)
             {
                 var animationTicks = battleTicks - animationStartTicks.Value;
 

@@ -8302,6 +8302,7 @@ namespace Ambermoon
 
         void ShowBattleWindow(Event nextEvent, bool failedFlight, uint? combatBackgroundIndex = null)
         {
+            allInputDisabled = true;
             Fade(() =>
             {
                 PlayMusic(Song.SapphireFireballsOfPureLove);
@@ -8475,9 +8476,18 @@ namespace Ambermoon
 
                 if (failedFlight)
                 {
-                    SetBattleMessageWithClick(DataNameProvider.AttackEscapeFailedMessage, TextColor.BrightGray, () => StartBattleRound(true));
+                    void ShowFailedFlightMessage()
+                    {
+                        currentBattle.StartAnimationFinished -= ShowFailedFlightMessage;
+                        SetBattleMessageWithClick(DataNameProvider.AttackEscapeFailedMessage, TextColor.BrightGray, () => StartBattleRound(true));
+                    }
+
+                    if (currentBattle.HasStartAnimation)
+                        currentBattle.StartAnimationFinished += ShowFailedFlightMessage;
+                    else
+                        ShowFailedFlightMessage();
                 }
-            });
+            }, false);
         }
 
         void StartBattleRound(bool withoutPlayerActions)

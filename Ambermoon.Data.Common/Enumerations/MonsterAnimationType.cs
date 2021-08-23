@@ -8,7 +8,7 @@
         Unknown1,
         Hurt,
         Unknown2,
-        Transformation, // played at start
+        Start, // played at start of battle
         Unknown3
     }
 }
