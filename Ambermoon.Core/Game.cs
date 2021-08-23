@@ -5155,8 +5155,8 @@ namespace Ambermoon
             {
                 var map = is3D ? Map : renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y);
                 CurrentSavegame.CurrentMapIndex = map.Index;
-                CurrentSavegame.CurrentMapX = 1u + (uint)player.Position.X;
-                CurrentSavegame.CurrentMapY = 1u + (uint)player.Position.Y;
+                CurrentSavegame.CurrentMapX = 1u + (uint)(player.Position.X % Map.Width);
+                CurrentSavegame.CurrentMapY = 1u + (uint)(player.Position.Y % Map.Height);
                 CurrentSavegame.CharacterDirection = player.Direction;
             }
 
