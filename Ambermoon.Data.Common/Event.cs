@@ -494,7 +494,7 @@ namespace Ambermoon.Data
             PartyMember = 0x05,
             ItemOwned = 0x06,
             UseItem = 0x07,
-            KnowsKeyword = 0x08, // TODO: needs testing
+            KnowsKeyword = 0x08,
             LastEventResult = 0x09, // treasure fully looted, battle won, etc
             GameOptionSet = 0x0a,
             CanSee = 0x0b,

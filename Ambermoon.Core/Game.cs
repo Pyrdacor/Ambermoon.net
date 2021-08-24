@@ -2286,6 +2286,7 @@ namespace Ambermoon
             if (CurrentSavegame.ActivePartyMemberSlot != 0)
                 SetActivePartyMember(0);
 
+            Pause();
             layout.OpenTextPopup(ProcessText(DataNameProvider.WhoToTalkTo),
                 null, true, false, false, TextAlign.Center);
             PickTargetPlayer();
@@ -2295,6 +2296,8 @@ namespace Ambermoon
                 ClosePopup();
                 UntrapMouse();
                 InputEnable = true;
+                if (!WindowActive)
+                    Resume();
 
                 if (characterSlot != -1)
                 {
@@ -11159,6 +11162,7 @@ namespace Ambermoon
             {
                 case SpellTarget.SingleFriend:
                 {
+                    Pause();
                     layout.OpenTextPopup(ProcessText(DataNameProvider.BattleMessageWhichPartyMemberAsTarget), null, true, false, false, TextAlign.Center);
                     PickTargetPlayer();
                     void TargetPlayerPicked(int characterSlot)
@@ -11166,6 +11170,9 @@ namespace Ambermoon
                         targetPlayerPicked -= TargetPlayerPicked;
                         ClosePopup();
                         UntrapMouse();
+                        InputEnable = true;
+                        if (!WindowActive)
+                            Resume();
 
                         if (characterSlot != -1)
                         {
@@ -11257,6 +11264,8 @@ namespace Ambermoon
                     layout.OpenTextPopup(ProcessText(message), null, true, false, false, TextAlign.Center);
                     if (CurrentWindow.Window == Window.Inventory)
                         InputEnable = true;
+                    else
+                        Pause();
                     PickTargetInventory();
                     bool TargetInventoryPicked(int characterSlot)
                     {
@@ -11306,6 +11315,8 @@ namespace Ambermoon
                                     CloseWindow();
                                 UntrapMouse();
                                 EndSequence();
+                                if (!WindowActive)
+                                    Resume();
                                 layout.SetInventoryMessage(null);
                                 layout.ShowChestMessage(null);
                             }, checkFail);
@@ -11315,6 +11326,8 @@ namespace Ambermoon
                         {
                             layout.SetInventoryMessage(null);
                             layout.ShowChestMessage(null);
+                            if (!WindowActive)
+                                Resume();
                             if (fromItem)
                             {
                                 EndSequence();
