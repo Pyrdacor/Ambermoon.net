@@ -9621,6 +9621,12 @@ namespace Ambermoon
                         return;
                     }
 
+                    if (item.MaxCharges == 0)
+                    {
+                        Error(DataNameProvider.CannotRechargeAnymore, false);
+                        return;
+                    }
+
                     int numMissingCharges = itemSlot.NumRemainingCharges >= item.MaxCharges ? 0 : item.MaxCharges - itemSlot.NumRemainingCharges;
 
                     if (numMissingCharges == 0)
