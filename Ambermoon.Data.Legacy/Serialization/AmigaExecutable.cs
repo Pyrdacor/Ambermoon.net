@@ -41,11 +41,60 @@ namespace Ambermoon.Data.Legacy.Serialization
 		public interface IHunk
 		{
 			HunkType Type { get; }
+			uint Size { get; }
+			uint MemoryFlags { get; }
 		}
 
 		public struct Hunk : IHunk
         {
+			public Hunk(HunkType hunkType, uint memoryFlags = 0, byte[] data = null, uint? numEntries = null)
+			{
+				Type = hunkType;
+				MemoryFlags = memoryFlags;
+
+				if (Type == HunkType.Code || Type == HunkType.Data)
+				{
+					Data = data ?? throw new InvalidOperationException("Code/data hunks need non-null data value.");
+
+					if (numEntries != null)
+                    {
+						int size = (int)numEntries.Value * 4;
+
+						if (size > Data.Length)
+							throw new ArgumentOutOfRangeException("numEntries * 4 exceeds data size.");
+
+						if (size < Data.Length)
+							Data = Data.Take(size).ToArray();
+                    }
+					else if (Data.Length % 4 != 0)
+						throw new InvalidOperationException("Hunk data size must be a multiple of 4.");
+
+					Size = NumEntries = (uint)Data.Length / 4;
+				}
+				else if (Type == HunkType.BSS)
+                {
+					Size = NumEntries = numEntries ?? throw new NullReferenceException("BSS hunks need a non-null value for numEntries.");
+					Data = null;
+				}
+				else if (Type == HunkType.RELOC32)
+                {
+					throw new NotSupportedException("Creating RELOC32 hunks via constructor is not supported.");
+                }
+				else if (Type == HunkType.END)
+                {
+					NumEntries = 0;
+					Size = 0;
+					Data = null;
+                }
+				else
+                {
+					throw new NotSupportedException("Not supported or invalid hunk type.");
+                }
+			}
+
 			public HunkType Type { get; internal set; }
+			public uint Size { get; internal set; }
+			public uint MemoryFlags { get; internal set; }
 			public uint NumEntries;
 			public byte[] Data;
         }
@@ -53,6 +102,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 		public struct Reloc32Hunk : IHunk
         {
 			public HunkType Type { get; internal set; }
+			public uint Size { get; internal set; }
+			public uint MemoryFlags { get; internal set; }
 			public Dictionary<uint, List<uint>> Entries;
         }
 
@@ -64,6 +115,84 @@ namespace Ambermoon.Data.Legacy.Serialization
 			RELOC32 = 0x3EC,
 			END = 0x3F2
         }
+
+		public static void Write(IDataWriter dataWriter, List<IHunk> hunks)
+		{
+			var realHunks = hunks.Where(h => h.Type != HunkType.END && h.Type != HunkType.RELOC32).ToList();
+
+			dataWriter.Write(0x000003F3u);
+			dataWriter.Write(0u);
+			dataWriter.Write((uint)realHunks.Count);
+			dataWriter.Write(0u);
+			dataWriter.Write((uint)realHunks.Count - 1u);
+
+			foreach (var hunk in realHunks)
+			{
+				if ((hunk.MemoryFlags & 0x3fffffff) != 0 ||
+					hunk.MemoryFlags == 0xc0000000)
+					throw new AmbermoonException(ExceptionScope.Data, "Invalid hunk memory flags");
+
+				if (hunk.Size > 0x3fffffff)
+					throw new AmbermoonException(ExceptionScope.Data, "Invalid hunk size");
+
+				uint header = hunk.Size | hunk.MemoryFlags;
+				dataWriter.Write(header);
+			}
+
+			foreach (var hunk in hunks)
+			{
+				dataWriter.Write((uint)hunk.Type);
+
+				switch (hunk.Type)
+                {
+					case HunkType.Code:
+					case HunkType.Data:
+                    {
+						var dataHunk = (Hunk)hunk;
+
+						if (dataHunk.Data.Length != dataHunk.NumEntries * 4)
+							throw new AmbermoonException(ExceptionScope.Data, "Mismatching NumEntries value and Data length for code/data hunk.");
+
+						if (dataHunk.NumEntries != hunk.Size)
+							throw new AmbermoonException(ExceptionScope.Data, "Mismatching NumEntries value and hunk size for code/data hunk.");
+
+						dataWriter.Write(dataHunk.NumEntries);
+						dataWriter.Write(dataHunk.Data);
+						break;
+                    }
+					case HunkType.BSS:
+                    {
+						var bssHunk = (Hunk)hunk;
+
+						if (bssHunk.NumEntries != hunk.Size)
+							throw new AmbermoonException(ExceptionScope.Data, "Mismatching NumEntries value and hunk size for BSS hunk.");
+
+						dataWriter.Write(bssHunk.NumEntries);
+
+						break;
+                    }
+					case HunkType.RELOC32:
+                    {
+						var relocHunk = (Reloc32Hunk)hunk;
+						int start = dataWriter.Position;
+
+						foreach (var entry in relocHunk.Entries)
+                        {
+							dataWriter.Write((uint)entry.Value.Count);
+							dataWriter.Write(entry.Key);
+
+							foreach (var offset in entry.Value)
+								dataWriter.Write(offset);
+                        }
+
+						dataWriter.Write(0u); // end marker
+						if (dataWriter.Position - start != hunk.Size)
+							throw new AmbermoonException(ExceptionScope.Application, "Error writing RELOC32 hunk data");
+						break;
+					}
+                }
+			}
+		}
 
 		public static List<IHunk> Read(IDataReader dataReader, bool deplodeIfNecessary = true)
         {
@@ -77,7 +206,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 			if (dataReader.ReadDword() != 0x000003F3)
 				Throw();
 
-			if (dataReader.ReadDword() != 0) // number ob library strings (should be 0)
+			if (dataReader.ReadDword() != 0) // number of library strings (should be 0)
 				Throw();
 
 			uint numHunks = dataReader.ReadDword();
@@ -88,19 +217,22 @@ namespace Ambermoon.Data.Legacy.Serialization
 				Throw();
 
 			uint[] hunkSizes = new uint[numHunks];
+			uint[] hunkMemoryFlags = new uint[numHunks];
 
 			for (int i = 0; i < numHunks; ++i)
 			{
 				var hunkSize = dataReader.ReadDword();
-				var hunkMemFlags = hunkSize >> 30;
+				var hunkMemFlags = hunkSize & 0xc0000000;
 
-				if (hunkMemFlags == 3) // skip extended mem flags
-					dataReader.Position += 4;
+				if (hunkMemFlags == 0xc0000000) // extended mem flags
+					hunkMemFlags = dataReader.ReadDword() & 0x80000000;
 
 				hunkSizes[i] = hunkSize & 0x3FFFFFFF;
+				hunkMemoryFlags[i] = hunkMemFlags;
 			}
 
 			var hunks = new List<IHunk>((int)numHunks);
+			int realHunkIndex = 0;
 
 			for (int i = 0; i < numHunks; ++i)
 			{
@@ -116,9 +248,12 @@ namespace Ambermoon.Data.Legacy.Serialization
 						hunk = new Hunk
 						{
 							Type = type,
+							Size = hunkSizes[realHunkIndex],
+							MemoryFlags = hunkMemoryFlags[realHunkIndex],
 							NumEntries = numEntries,
 							Data = dataReader.ReadBytes((int)numEntries * 4)
 						};
+						++realHunkIndex;
 						break;
 					}
 					case HunkType.BSS:
@@ -127,15 +262,19 @@ namespace Ambermoon.Data.Legacy.Serialization
 						hunk = new Hunk
 						{
 							Type = type,
+							Size = hunkSizes[realHunkIndex],
+							MemoryFlags = hunkMemoryFlags[realHunkIndex],
 							NumEntries = allocSize,
 							Data = null
 						};
+						++realHunkIndex;
 						break;
 					}
 					case HunkType.RELOC32:
 					{
 						var entries = new Dictionary<uint, List<uint>>();
 						uint numOffsets;
+						int start = dataReader.Position;
 
 						while ((numOffsets = dataReader.ReadDword()) != 0)
 						{
@@ -150,6 +289,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 						hunk = new Reloc32Hunk
 						{
 							Type = type,
+							Size = (uint)(dataReader.Position - start),
+							MemoryFlags = 0,
 							Entries = entries
 						};
 
@@ -161,6 +302,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 						hunk = new Hunk
 						{
 							Type = type,
+							Size = 0,
+							MemoryFlags = 0,
 							NumEntries = 0,
 							Data = null
 						};
@@ -191,6 +334,15 @@ namespace Ambermoon.Data.Legacy.Serialization
 							break;
 						}
 					}
+
+					if (!imploded)
+					{
+						// Check if it is library imploded.
+						var start = Encoding.GetEncoding("iso-8859-1").GetString(firstHunkData.Take(200).ToArray());
+
+						if (start.Contains("I need explode.library"))
+							throw new NotSupportedException("Library imploded files are not supported!");
+					}
 				}
 
 				return imploded ? ReadImploded(hunks) : hunks;
@@ -206,7 +358,9 @@ namespace Ambermoon.Data.Legacy.Serialization
 
 		static List<IHunk> ReadImploded(List<IHunk> imploderHunks)
         {
-			var deplodedData = Deplode(imploderHunks, out var hunkSizes);
+			// TODO: There is one known bug where the second code hunk of AM2_BLIT is read as a data hunk instead.
+
+			var deplodedData = Deplode(imploderHunks, out var hunkSizes, out var hunkMemFlags);
 			var hunks = new List<IHunk>();
 			var reader = new DataReader(deplodedData);
 			int hunkSizeIndex = 0;
@@ -217,18 +371,19 @@ namespace Ambermoon.Data.Legacy.Serialization
 				var flags = header >> 30;
 				var hunkSize = header & 0x3FFFFFFF;
 
-				// Note: The following is just guessing.
-				// Code hunks seem to have flags = 0 and always have a RELOC32 followed?
-				// BSS and DATA have flags = 2 or 3 (BSS has size 0)
-				// 3 is used if no END hunk follows.
-				// RELOC32 seems to have flags = 1
-				// END hunks are inserted after each hunk expect for flags = 3.
+				// Note: The following is just guessing from analyzing the data but it works quiet good.
+				// Code hunks seem to have flags = 0.
+				// BSS and DATA have flags = 2 or 3 (BSS has size 0).
+				// 3 is used if no END hunk follows. This is the case for DATA hunks with RELOC32 following or hunks at the end.
+				// RELOC32 seems to have flags = 1.
+				// END hunks are inserted after each hunk expect for flags = 3 or if a RELOC32 follows.
+				// An END hunk should also not be added at the very end.
 
 				if (flags == 2 || flags == 3) // BSS or DATA
                 {
-					if (reader.Position < reader.Size && (reader.PeekDword() & 0x3FFFFFFF) != 0) // a size follows -> no BSS but DATA
+					if (reader.Position < reader.Size && (reader.PeekDword() & 0x3fffffff) != 0) // a size follows -> no BSS but DATA
 					{
-						hunkSize = reader.ReadDword() & 0x3FFFFFFF;
+						hunkSize = reader.ReadDword() & 0x3fffffff;
 
 						if (hunkSize * 4 != hunkSizes[hunkSizeIndex])
 							throw new AmbermoonException(ExceptionScope.Data, "Invalid hunk data size.");
@@ -236,6 +391,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 						hunks.Add(new Hunk
 						{
 							Type = HunkType.Data,
+							Size = hunkSize,
+							MemoryFlags = hunkMemFlags[hunkSizeIndex],
 							NumEntries = hunkSize,
 							Data = reader.ReadBytes((int)hunkSize * 4)
 						});
@@ -248,6 +405,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 						hunks.Add(new Hunk
 						{
 							Type = HunkType.BSS,
+							Size = hunkSizes[hunkSizeIndex] / 4,
+							MemoryFlags = hunkMemFlags[hunkSizeIndex],
 							NumEntries = hunkSizes[hunkSizeIndex] / 4
 						});
 					}
@@ -262,6 +421,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 					hunks.Add(new Hunk
 					{
 						Type = HunkType.Code,
+						Size = hunkSize,
+						MemoryFlags = hunkMemFlags[hunkSizeIndex],
 						NumEntries = hunkSize,
 						Data = reader.ReadBytes((int)hunkSize * 4)
 					});
@@ -272,6 +433,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 {
 					var entries = new Dictionary<uint, List<uint>>();
 					uint numOffsets;
+					int start = reader.Position;
 
 					while ((numOffsets = reader.ReadDword()) != 0)
 					{
@@ -286,28 +448,44 @@ namespace Ambermoon.Data.Legacy.Serialization
 					hunks.Add(new Reloc32Hunk
 					{
 						Type = HunkType.RELOC32,
+						Size = (uint)(reader.Position - start),
+						MemoryFlags = hunkSizeIndex == 0 ? 0 : hunkMemFlags[hunkSizeIndex - 1],
 						Entries = entries
 					});
 				}
 
-				if (flags != 0 && flags != 3) // add END hunk if necessary
-					hunks.Add(new Hunk { Type = HunkType.END });
+				if (reader.Position <= reader.Size - 4)
+                {
+					var nextHeader = reader.PeekDword();
+					var nextFlags = nextHeader >> 30;
+
+					if (nextFlags == 1) // RELOC32 follows, do not add END
+						continue;
+				}
 
 				if (reader.Position == reader.Size)
 					break;
+
+				// add END hunk if necessary
+				if (flags != 3)
+					hunks.Add(new Hunk { Type = HunkType.END });
 			}
+
+			if (hunks[^1].Type == HunkType.END)
+				hunks.RemoveAt(hunks.Count - 1);
 
 			return hunks;
 		}
 
-		public static unsafe byte[] Deplode(IDataReader dataReader, out List<uint> deplodedHunkSizes)
+		public static unsafe byte[] Deplode(IDataReader dataReader, out List<uint> deplodedHunkSizes, out List<uint> deplodedMemFlags)
         {
-			return Deplode(Read(dataReader, false), out deplodedHunkSizes);
+			return Deplode(Read(dataReader, false), out deplodedHunkSizes, out deplodedMemFlags);
 		}
 
-		static unsafe byte[] Deplode(List<IHunk> imploderHunks, out List<uint> deplodedHunkSizes)
+		static unsafe byte[] Deplode(List<IHunk> imploderHunks, out List<uint> deplodedHunkSizes, out List<uint> deplodedMemFlags)
         {
 			deplodedHunkSizes = null;
+			deplodedMemFlags = null;
 
 			var lastCodeHunk = (Hunk)imploderHunks.Last(h => h.Type == HunkType.Code);
 			var dataHunk = (Hunk)imploderHunks.Last(h => h.Type == HunkType.Data);
@@ -327,6 +505,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 			Buffer.BlockCopy(lastCodeHunk.Data, 0x188, table, 0, table.Length);
 			var bssHunks = imploderHunks.Where(h => h.Type == HunkType.BSS).ToList();
 			deplodedHunkSizes = bssHunks.Take(bssHunks.Count - 1).Select(h => ((Hunk)h).NumEntries * 4).ToList();
+			deplodedMemFlags = bssHunks.Take(bssHunks.Count - 1).Select(h => ((Hunk)h).MemoryFlags).ToList();
 			var data = dataHunk.Data;
 			uint firstLiteralLength = ((uint)lastCodeHunk.Data[0x1E6] << 8) | lastCodeHunk.Data[0x1E7];
 			byte initialBitBuffer = lastCodeHunk.Data[0x1E8];
