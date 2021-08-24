@@ -32,6 +32,7 @@ namespace Ambermoon.Data.Legacy
 
     public class TextProcessor : ITextProcessor
     {
+        // TODO: Load this from AM2_CPU later
         static byte CharToGlyph(char ch, bool rune, char? fallbackChar = null)
         {
             if (ch >= 'a' && ch <= 'z')
@@ -39,11 +40,11 @@ namespace Ambermoon.Data.Legacy
             else if (ch >= 'A' && ch <= 'Z')
                 return (byte)(ch - 'A' + (rune ? 64 : 0));
             else if (ch == 'ä' || ch == 'Ä')
-                return (byte)(rune ? 90 : 26);
+                return (byte)(rune ? 92 : 26);
             else if (ch == 'ü' || ch == 'Ü')
                 return (byte)(rune ? 91 : 27);
             else if (ch == 'ö' || ch == 'Ö')
-                return (byte)(rune ? 92 : 28);
+                return (byte)(rune ? 90 : 28);
             else if (ch == 'ß')
                 return (byte)(rune ? 93 : 29);
             else if (ch == ';')
