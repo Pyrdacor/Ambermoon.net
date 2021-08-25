@@ -87,7 +87,7 @@ namespace Ambermoon.UI
 
             if (canEdit && itemTexts.Count != 0)
             {
-                editInput = new TextInput(game, renderView, new Position(), (itemTexts[0].Width / Global.GlyphWidth) - 1,
+                editInput = new TextInput(game, renderView, new Position(), 38,
                     (byte)(popup.DisplayLayer + 6), TextInput.ClickAction.Submit, TextInput.ClickAction.Abort, TextAlign.Left)
                 {
                     ClearOnNewInput = false,

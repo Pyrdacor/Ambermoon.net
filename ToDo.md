@@ -13,12 +13,11 @@
 
 - Should piles block monsters? Test in grandfather's cellar.
 - 3D monster get easily stuck on wall edges. :(
-- Luminor's flame in level 5 will hurt even after Luminor is dead and the flame is gone.
 
 
 ## UI
 
-- When editing a savegame name (in save dialog list) and aborting, the text stays.
+- When editing a savegame name (in save dialog list) and aborting, the text stays (fixed?).
 - "Do you accept this character?" message is missing in character creator.
 
 
