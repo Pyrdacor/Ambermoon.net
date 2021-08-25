@@ -66,7 +66,6 @@ namespace Ambermoon.Data
 
         public static bool CanOpenInventory(this Ailment ailment)
         {
-            // TODO
             return
                 !ailment.HasFlag(Ailment.Crazy) &&
                 !ailment.HasFlag(Ailment.Panic) &&

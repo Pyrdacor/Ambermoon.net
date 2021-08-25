@@ -142,9 +142,6 @@ namespace Ambermoon
             /// 
             /// This plays the spell animation and also calculates and applies
             /// spell effects like damage. So this also plays hurt effects on monsters.
-            /// 
-            /// TODO: Can support spells miss? If not for those spells the
-            ///       parameter should be the monster/partymember index instead.
             /// </summary>
             CastSpell,
             /// <summary>
@@ -335,7 +332,7 @@ namespace Ambermoon
 
             effectAnimations = new List<BattleAnimation>();
 
-            // TODO: for now only one monster start animation is played (in original there is only one -> Nera, so for now it's ok)
+            // TODO: for now only one monster start animation is played (in original there is only one -> Nera - so for now it's ok)
             var startAnimationMonster = Monsters.FirstOrDefault(m => m.Animations[(int)MonsterAnimationType.Start].UsedAmount != 0);
 
             if (startAnimationMonster != null)
@@ -3524,7 +3521,7 @@ namespace Ambermoon
                 return AttackResult.NoDamage;
             }
 
-            // TODO: can monsters parry?
+            // Note: Monsters can't parry.
             if (target is PartyMember partyMember && parryingPlayers.Contains(partyMember) &&
                 game.RollDice100() < partyMember.Abilities[Ability.Parry].TotalCurrentValue)
                 return AttackResult.Blocked;

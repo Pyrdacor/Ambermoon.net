@@ -806,7 +806,7 @@ namespace Ambermoon
                 if ((!WindowActive ||
                     currentWindow.Window == Window.Inventory ||
                     currentWindow.Window == Window.Stats ||
-                    currentWindow.Window == Window.Chest) && // TODO: healer, etc?
+                    currentWindow.Window == Window.Chest) &&
                     !layout.IsDragging)
                 {
                     for (int i = 0; i < MaxPartyMembers; ++i)
@@ -3592,7 +3592,6 @@ namespace Ambermoon
                         partyMember.Equipment.Slots[EquipmentSlot.LeftHand].Clear();
                     }
 
-                    // TODO: rings/fingers
                     UpdateCharacterInfo();
                 }
                 void AddEquipment(int slotIndex, ItemSlot itemSlot, int amount)
@@ -3607,7 +3606,6 @@ namespace Ambermoon
                         partyMember.Equipment.Slots[EquipmentSlot.LeftHand].Replace(secondHandItemSlot);
                     }
 
-                    // TODO: rings/fingers
                     UpdateCharacterInfo();
                 }
                 void RemoveInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
@@ -3748,7 +3746,7 @@ namespace Ambermoon
                 foreach (var ailment in partyMember.VisibleAilments)
                 {
                     if (ailment == Ailment.DeadAshes || ailment == Ailment.DeadDust)
-                        continue; // TODO: is dead corpse set if those are set
+                        continue;
 
                     if (!partyMember.Ailments.HasFlag(ailment))
                         continue;
@@ -4305,7 +4303,6 @@ namespace Ambermoon
                     targetFilter = p => p == currentPartyMember;
                     break;
                 default:
-                    // TODO: are there more like random?
                     break;
             }
 
@@ -7690,22 +7687,18 @@ namespace Ambermoon
                     break;
                 case Spell.MysticalMapI:
                     // Duration: 32 (160 minutes = 2h40m)
-                    // TODO: level?
                     Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 32, 1));
                     break;
                 case Spell.MysticalMapII:
                     // Duration: 60 (300 minutes = 5h)
-                    // TODO: level?
                     Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 60, 1));
                     break;
                 case Spell.MysticalMapIII:
                     // Duration: 90 (450 minutes = 7h30m)
-                    // TODO: level?
                     Cast(() => CurrentSavegame.ActivateSpell(ActiveSpellType.MysticMap, 90, 1));
                     break;
                 case Spell.MysticalGlobe:
                     // Duration: 180 (900 minutes = 15h)
-                    // TODO: level?
                     Cast(() =>
                     {
                         CurrentSavegame.ActivateSpell(ActiveSpellType.Clairvoyance, 180, 1);
@@ -10558,7 +10551,7 @@ namespace Ambermoon
                     {
                         Ability.Attack => Picture80x80.Knight,
                         Ability.Parry => Picture80x80.Knight,
-                        Ability.Swim => Picture80x80.Knight, // TODO: right?
+                        Ability.Swim => Picture80x80.Knight,
                         Ability.CriticalHit => Picture80x80.Thief,
                         Ability.FindTraps => Picture80x80.Thief,
                         Ability.DisarmTraps => Picture80x80.Thief,

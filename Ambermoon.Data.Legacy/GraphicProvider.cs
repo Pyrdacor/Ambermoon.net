@@ -563,7 +563,6 @@ namespace Ambermoon.Data.Legacy
                     info.PaletteOffset = 0;
                     info.Alpha = false;
                     break;
-                // TODO
             }
 
             return info;

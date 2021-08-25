@@ -289,7 +289,6 @@ namespace Ambermoon.Data
         {
             ActivePlayer,
             All
-            // TODO: RandomPlayer? Hero?
         }
 
         public TrapAilment Ailment { get; set; }

@@ -29,7 +29,6 @@ using Silk.NET.OpenGL;
 
 namespace Ambermoon.Renderer
 {
-    // TODO: for OGL version < 4.1 we should use Gl.UniformX instead of Gl.ProgramUniformX
     internal class ShaderProgram : IDisposable
     {
         readonly State state = null;
@@ -188,6 +187,22 @@ namespace Ambermoon.Renderer
             return (uint)state.Gl.GetUniformLocation(ProgramIndex, name);
         }
 
+        bool UseNormalUniform => state.OpenGLVersionMajor < 4 || (state.OpenGLVersionMajor == 4 && state.OpenGLVersionMinor < 1);
+
+        void CallUniform(Action oldVersion, Action newVersion)
+        {
+            if (UseNormalUniform)
+            {
+                var activeProgram = ActiveProgram;
+                Use();
+                oldVersion?.Invoke();
+                if (activeProgram != ActiveProgram)
+                    activeProgram.Use();
+            }
+            else
+                newVersion?.Invoke();
+        }
+
         public void SetInputMatrix(string name, float[] matrix, bool transpose)
         {
             var location = GetLocation(name);
@@ -195,13 +210,25 @@ namespace Ambermoon.Renderer
             switch (matrix.Length)
             {
                 case 4: // 2x2
-                    state.Gl.ProgramUniformMatrix2(ProgramIndex, (int)location, 1, transpose, matrix);
+                    CallUniform
+                    (
+                        () => state.Gl.UniformMatrix2((int)location, 1, transpose, matrix),
+                        () => state.Gl.ProgramUniformMatrix2(ProgramIndex, (int)location, 1, transpose, matrix)
+                    );
                     break;
                 case 9: // 3x3
-                    state.Gl.ProgramUniformMatrix3(ProgramIndex, (int)location, 1, transpose, matrix);
+                    CallUniform
+                    (
+                        () => state.Gl.UniformMatrix3((int)location, 1, transpose, matrix),
+                        () => state.Gl.ProgramUniformMatrix3(ProgramIndex, (int)location, 1, transpose, matrix)
+                    );
                     break;
                 case 16: // 4x4
-                    state.Gl.ProgramUniformMatrix4(ProgramIndex, (int)location, 1, transpose, matrix);
+                    CallUniform
+                    (
+                        () => state.Gl.UniformMatrix4((int)location, 1, transpose, matrix),
+                        () => state.Gl.ProgramUniformMatrix4(ProgramIndex, (int)location, 1, transpose, matrix)
+                    );
                     break;
                 default:
                     throw new InvalidOperationException("ShaderProgram.SetInputMatrix: Unsupported matrix dimensions. Valid are 2x2, 3x3 or 4x4.");
@@ -212,105 +239,166 @@ namespace Ambermoon.Renderer
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform1(ProgramIndex, (int)location, (value) ? 1 : 0);
+            CallUniform
+            (
+                () => state.Gl.Uniform1((int)location, value ? 1 : 0),
+                () => state.Gl.ProgramUniform1(ProgramIndex, (int)location, value ? 1 : 0)
+            );
         }
 
         public void SetInput(string name, float value)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform1(ProgramIndex, (int)location, value);
+            CallUniform
+            (
+                () => state.Gl.Uniform1((int)location, value),
+                () => state.Gl.ProgramUniform1(ProgramIndex, (int)location, value)
+            );
         }
 
         public void SetInput(string name, double value)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform1(ProgramIndex, (int)location, (float)value);
+            CallUniform
+            (
+                () => state.Gl.Uniform1((int)location, (float)value),
+                () => state.Gl.ProgramUniform1(ProgramIndex, (int)location, (float)value)
+            );
         }
 
         public void SetInput(string name, int value)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform1(ProgramIndex, (int)location, value);
+            CallUniform
+            (
+                () => state.Gl.Uniform1((int)location, value),
+                () => state.Gl.ProgramUniform1(ProgramIndex, (int)location, value)
+            );
         }
 
         public void SetInput(string name, uint value)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform1(ProgramIndex, (int)location, value);
+            CallUniform
+            (
+                () => state.Gl.Uniform1((int)location, value),
+                () => state.Gl.ProgramUniform1(ProgramIndex, (int)location, value)
+            );
         }
 
         public void SetInputColorArray(string name, byte[] array)
         {
             var location = GetLocation(name);
+            var normalizedArray = array.Select(i => i / 255.0f).ToArray();
 
-            state.Gl.ProgramUniform4(ProgramIndex, (int)location, (uint)array.Length, array.Select(i => i / 255.0f).ToArray());
+            CallUniform
+            (
+                () => state.Gl.Uniform4((int)location, (uint)array.Length, normalizedArray),
+                () => state.Gl.ProgramUniform4(ProgramIndex, (int)location, (uint)array.Length, normalizedArray)
+            );
         }
 
         public void SetInputVector2(string name, float x, float y)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform2(ProgramIndex, (int)location, x, y);
+            CallUniform
+            (
+                () => state.Gl.Uniform2((int)location, x, y),
+                () => state.Gl.ProgramUniform2(ProgramIndex, (int)location, x, y)
+            );
         }
 
         public void SetInputVector2(string name, int x, int y)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform2(ProgramIndex, (int)location, x, y);
+            CallUniform
+            (
+                () => state.Gl.Uniform2((int)location, x, y),
+                () => state.Gl.ProgramUniform2(ProgramIndex, (int)location, x, y)
+            );
         }
 
         public void SetInputVector2(string name, uint x, uint y)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform2(ProgramIndex, (int)location, x, y);
+            CallUniform
+            (
+                () => state.Gl.Uniform2((int)location, x, y),
+                () => state.Gl.ProgramUniform2(ProgramIndex, (int)location, x, y)
+            );
         }
 
         public void SetInputVector3(string name, float x, float y, float z)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform3(ProgramIndex, (int)location, x, y, z);
+            CallUniform
+            (
+                () => state.Gl.Uniform3((int)location, x, y, z),
+                () => state.Gl.ProgramUniform3(ProgramIndex, (int)location, x, y, z)
+            );
         }
 
         public void SetInputVector3(string name, int x, int y, int z)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform3(ProgramIndex, (int)location, x, y, z);
+            CallUniform
+            (
+                () => state.Gl.Uniform3((int)location, x, y, z),
+                () => state.Gl.ProgramUniform3(ProgramIndex, (int)location, x, y, z)
+            );
         }
 
         public void SetInputVector3(string name, uint x, uint y, uint z)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform3(ProgramIndex, (int)location, x, y, z);
+            CallUniform
+            (
+                () => state.Gl.Uniform3((int)location, x, y, z),
+                () => state.Gl.ProgramUniform3(ProgramIndex, (int)location, x, y, z)
+            );
         }
 
         public void SetInputVector4(string name, float x, float y, float z, float w)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform4(ProgramIndex, (int)location, x, y, z, w);
+            CallUniform
+            (
+                () => state.Gl.Uniform4((int)location, x, y, z, w),
+                () => state.Gl.ProgramUniform4(ProgramIndex, (int)location, x, y, z, w)
+            );
         }
 
         public void SetInputVector4(string name, int x, int y, int z, int w)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform4(ProgramIndex, (int)location, x, y, z, w);
+            CallUniform
+            (
+                () => state.Gl.Uniform4((int)location, x, y, z, w),
+                () => state.Gl.ProgramUniform4(ProgramIndex, (int)location, x, y, z, w)
+            );
         }
 
         public void SetInputVector4(string name, uint x, uint y, uint z, uint w)
         {
             var location = GetLocation(name);
 
-            state.Gl.ProgramUniform4(ProgramIndex, (int)location, x, y, z, w);
+            CallUniform
+            (
+                () => state.Gl.Uniform4((int)location, x, y, z, w),
+                () => state.Gl.ProgramUniform4(ProgramIndex, (int)location, x, y, z, w)
+            );
         }
 
         public void Dispose()

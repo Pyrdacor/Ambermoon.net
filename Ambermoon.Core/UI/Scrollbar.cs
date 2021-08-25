@@ -77,8 +77,8 @@ namespace Ambermoon.UI
         public Scrollbar(Game game, Layout layout, ScrollbarType type, Rect scrollArea, int width, int height, int scrollRange, byte displayLayer = 1)
         {
             this.scrollArea = scrollArea;
-            vertical = type == ScrollbarType.SmallVertical || type == ScrollbarType.LargeVertical; // TODO: are there even horizontal ones?
-            this.ScrollRange = scrollRange;
+            vertical = type == ScrollbarType.SmallVertical || type == ScrollbarType.LargeVertical; // Note: There are no horizontal ones in Ambermoon.
+            ScrollRange = scrollRange;
             barSize = vertical ? height : width;
             position = new Position(scrollArea.Position);
             baseType = type;

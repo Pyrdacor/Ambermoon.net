@@ -2,7 +2,6 @@
 
 namespace Ambermoon.Data
 {
-    // TODO: Usable on world, usable at place, max recharges (most likely in UnknownBytes26To29)
     public class Item
     {
         public uint Index { get; set; }

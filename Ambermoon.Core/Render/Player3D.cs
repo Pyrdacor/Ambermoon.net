@@ -405,13 +405,11 @@ namespace Ambermoon.Render
 
         public void LevitateUp(float distance) // used for climbing up ladders/ropes or use levitation spell (distance is in the range of 0 to 1 where 1 is full room height)
         {
-            // TODO
             Camera.LevitateUp(distance);
         }
 
         public void LevitateDown(float distance) // used for climbing down ladders/ropes (distance is in the range of 0 to 1 where 1 is full room height)
         {
-            // TODO
             Camera.LevitateDown(distance);
         }
 

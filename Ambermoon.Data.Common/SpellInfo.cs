@@ -97,7 +97,7 @@ namespace Ambermoon.Data
         public WorldFlag Worlds;
     }
 
-    // TODO: can we load this from game data?
+    // TODO: this is stored in AM2_CPU. Load it from there later.
     public static class SpellInfos
     {
         static readonly Dictionary<Spell, SpellInfo> entries = new Dictionary<Spell, SpellInfo>

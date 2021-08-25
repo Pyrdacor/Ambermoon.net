@@ -1208,7 +1208,7 @@ namespace Ambermoon.Render
                 mapObject.Y = y;
                 mapObject.Z = z;
                 mapObject.TextureAtlasOffset = GetObjectTextureOffset(objectInfo.TextureIndex);
-                mapObject.Visible = true; // TODO: not all objects should be always visible
+                mapObject.Visible = true;
                 objects.SafeAdd(blockIndex, new MapObject(this, mapObject, objectInfo.TextureIndex,
                     objectInfo.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation), objectInfo.NumAnimationFrames, 8.0f));
 
@@ -1292,7 +1292,7 @@ namespace Ambermoon.Render
                 wall.Y = wallHeight;
                 wall.Z = z;
                 wall.TextureAtlasOffset = wallTextureOffset;
-                wall.Visible = true; // TODO: not all walls should be always visible
+                wall.Visible = true;
                 walls.SafeAdd(blockIndex, wall);
 
                 blockCollisionBodies[blockIndex].Add(new CollisionLine3D

@@ -4,6 +4,5 @@
     {
         FlyingDisc = 4,
         WitchBroom = 8
-        // TODO
     }
 }

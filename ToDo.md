@@ -26,6 +26,5 @@
 - Add more savegame slots?
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
-- Maybe add emergency savegame that is stored when game crashes.
 - Where is the text "CannotCarryAllGold" used?
 - Check all unused DataNameProvider texts.

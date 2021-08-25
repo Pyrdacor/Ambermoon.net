@@ -31,7 +31,7 @@ namespace Ambermoon
         Swimming,
         FlyingDisc,
         Rafting, // raft
-        Sailing, // boat
+        Sailing, // boat, sand ship
         WitchBroom,
         Eagle
     }
@@ -46,7 +46,7 @@ namespace Ambermoon
             TravelType.SandLizard => PlayerMovementAbility.Walking,
             TravelType.Swim => PlayerMovementAbility.Swimming,
             TravelType.MagicalDisc => PlayerMovementAbility.FlyingDisc,
-            TravelType.SandShip => PlayerMovementAbility.Sailing, // TODO
+            TravelType.SandShip => PlayerMovementAbility.Sailing,
             TravelType.Raft => PlayerMovementAbility.Rafting,
             TravelType.Ship => PlayerMovementAbility.Sailing,
             TravelType.WitchBroom => PlayerMovementAbility.WitchBroom,

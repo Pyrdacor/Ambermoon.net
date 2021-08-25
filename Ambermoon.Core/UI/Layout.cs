@@ -1593,7 +1593,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
                         buttonGrid.SetButton(4, ButtonType.Spells, game?.Map?.CanUseSpells != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
-                        buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap)); // TODO: is this disabled in some cases?
+                        buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap));
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
                         buttonGrid.SetButton(8, ButtonType.Options, false, OpenOptionMenu, false, GetTooltip(Button.TooltipType.Options));
                     }
@@ -3320,10 +3320,6 @@ namespace Ambermoon.UI
 
             if (partyMember == null)
             {
-                // TODO: in original portrait removing is animated by moving down the
-                // gray masked picture infront of the portrait. But this method is
-                // also used on game loading where this effect should not be used.
-
                 portraitBackgrounds[slot]?.Delete();
                 portraitBackgrounds[slot] = null;
                 portraitNames[slot]?.Delete();
@@ -4867,7 +4863,7 @@ namespace Ambermoon.UI
                 var animation = monsterCombatGraphic.Animation;
 
                 if (animationTicks == 0) // new animation
-                    animation.Play(monster.GetAnimationFrameIndices(animationType), Game.TicksPerSecond / 6, totalTicks); // TODO: ticks per frame
+                    animation.Play(monster.GetAnimationFrameIndices(animationType), Game.TicksPerSecond / 6, totalTicks);
 
                 animation.Update(totalTicks);
 

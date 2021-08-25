@@ -372,7 +372,7 @@ namespace Ambermoon.Render
             }
             else
             {
-                // TODO: finished
+                // Note: Finished handling is done by the last action which starts the credits.
             }
         }
 

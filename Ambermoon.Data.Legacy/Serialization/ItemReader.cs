@@ -33,7 +33,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             item.Damage = (sbyte)dataReader.ReadByte();
             item.AmmunitionType = (AmmunitionType)dataReader.ReadByte();
             item.UsedAmmunitionType = (AmmunitionType)dataReader.ReadByte();
-            // TODO: There are 4 items in Ambermoon which uses this:
+            // TODO: There are 4 items in Ambermoon which use this:
             // - Whip: 01 00 0A 00
             // - Banded Armour: 00 00 04 00
             // - Plate Armour: 00 00 06 00
