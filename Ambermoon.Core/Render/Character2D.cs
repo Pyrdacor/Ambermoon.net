@@ -44,12 +44,12 @@ namespace Ambermoon.Render
         readonly ITextureAtlas textureAtlas;
         IAnimatedSprite topSprite; // for non-world maps the upper half is drawn separatly
         readonly IAnimatedSprite sprite;
-        readonly Func<Character2DAnimationInfo> animationInfoProvider;
+        readonly Func<CharacterDirection?, Character2DAnimationInfo> animationInfoProvider;
         readonly Func<uint> paletteIndexProvider;
-        readonly Func<Position> drawOffsetProvider;
+        readonly Func<CharacterDirection?, Position> drawOffsetProvider;
         bool active = true;
         bool visible = true;
-        Character2DAnimationInfo CurrentAnimationInfo => animationInfoProvider();
+        Character2DAnimationInfo CurrentAnimationInfo => animationInfoProvider(Direction);
         public uint CurrentBaseFrameIndex { get; private set; }
         public uint CurrentFrameIndex { get; private set; }
         public uint CurrentFrame => sprite.CurrentFrame;
@@ -108,8 +108,8 @@ namespace Ambermoon.Render
         });
 
         public Character2D(Game game, IRenderLayer layer, ITextureAtlas textureAtlas, ISpriteFactory spriteFactory,
-            Func<Character2DAnimationInfo> animationInfoProvider, RenderMap2D map, Position startPosition,
-            Func<uint> paletteIndexProvider, Func<Position> drawOffsetProvider)
+            Func<CharacterDirection?, Character2DAnimationInfo> animationInfoProvider, RenderMap2D map, Position startPosition,
+            Func<uint> paletteIndexProvider, Func<CharacterDirection?, Position> drawOffsetProvider)
         {
             this.game = game;
             this.spriteFactory = spriteFactory;
@@ -121,7 +121,7 @@ namespace Ambermoon.Render
             var currentAnimationInfo = CurrentAnimationInfo;
             CurrentBaseFrameIndex = CurrentFrameIndex = currentAnimationInfo.StandFrameIndex;
             var textureOffset = textureAtlas.GetOffset(CurrentFrameIndex);
-            var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+            var drawOffset = drawOffsetProvider?.Invoke(null) ?? new Position();
             if (currentAnimationInfo.UseTopSprite)
             {
                 sprite = spriteFactory.CreateAnimated(currentAnimationInfo.FrameWidth, Math.Min(currentAnimationInfo.FrameHeight, RenderMap2D.TILE_HEIGHT),
@@ -205,7 +205,7 @@ namespace Ambermoon.Render
             }
             else
             {
-                var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+                var drawOffset = drawOffsetProvider?.Invoke(Direction) ?? new Position();
                 sprite.BaseLineOffset = baselineOffset + 1 - drawOffset.Y + (topSprite == null ? drawOffset.Y :
                     Math.Max(0, RenderMap2D.TILE_HEIGHT - CurrentAnimationInfo.FrameHeight % RenderMap2D.TILE_HEIGHT) - RenderMap2D.TILE_HEIGHT);
                 if (topSprite != null)
@@ -352,7 +352,7 @@ namespace Ambermoon.Render
                     Position.X = (int)x;
                     Position.Y = (int)y;
                 }
-                var drawOffset = drawOffsetProvider?.Invoke() ?? new Position();
+                var drawOffset = drawOffsetProvider?.Invoke(Direction) ?? new Position();
                 sprite.PaletteIndex = (byte)paletteIndexProvider();
                 if (topSprite == null)
                 {

@@ -187,7 +187,7 @@ namespace Ambermoon.Render
 
                     MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset, null);
 
-                    if (travelType == TravelType.Walk)
+                    if (!travelType.IgnoreEvents())
                     {
                         Map.TriggerEvents(this, EventTrigger.Move, (uint)newX,
                             (uint)newY, mapManager, ticks, game.CurrentSavegame);
@@ -214,7 +214,7 @@ namespace Ambermoon.Render
 
                     MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, player.Direction);
 
-                    if (travelType == TravelType.Walk)
+                    if (!travelType.IgnoreEvents())
                     {
                         Map.TriggerEvents(this, EventTrigger.Move, (uint)position.X,
                             (uint)position.Y, mapManager, ticks, game.CurrentSavegame);

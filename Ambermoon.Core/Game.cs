@@ -4842,7 +4842,8 @@ namespace Ambermoon
             player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction);
             this.player.Position.X = RenderPlayer.Position.X;
             this.player.Position.Y = RenderPlayer.Position.Y;
-            TravelType = TravelType.Walk; // After teleport you always walk (important when falling into a town etc)
+            // This will also update the appearance.
+            TravelType = TravelType.IgnoreEvents() ? TravelType.Walk : TravelType;
 
             if (!mapTypeChanged)
             {
@@ -13237,11 +13238,11 @@ namespace Ambermoon
 
         internal uint GetPlayerPaletteIndex() => Math.Max(1, Map.PaletteIndex) - 1;
 
-        internal Position GetPlayerDrawOffset()
+        internal Position GetPlayerDrawOffset(CharacterDirection? direction)
         {
             if (Map.IsWorldMap)
             {
-                var travelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, player.Direction);
+                var travelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, direction ?? player.Direction);
                 return new Position((int)travelInfo.OffsetX - 16, (int)travelInfo.OffsetY - 16);
             }
             else
@@ -13250,11 +13251,11 @@ namespace Ambermoon
             }
         }
 
-        internal Character2DAnimationInfo GetPlayerAnimationInfo()
+        internal Character2DAnimationInfo GetPlayerAnimationInfo(CharacterDirection? direction = null)
         {
             if (Map.IsWorldMap)
             {
-                var travelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, player.Direction);
+                var travelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, direction ?? player.Direction);
                 return new Character2DAnimationInfo
                 {
                     FrameWidth = (int)travelInfo.Width,
