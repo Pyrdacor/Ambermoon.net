@@ -10711,8 +10711,21 @@ namespace Ambermoon
             layout.Set80x80Picture(picture);
             var itemArea = new Rect(16, 139, 151, 53);
             int mode = -1; // -1: show bought items, 0: buy, 3: sell, 4: examine (= button index)
+            if (boughtItems == null)
+            {
+                // Note: Don't use boughtItems ??= Enumerable.Repeat(new ItemSlot(), 24).ToArray();
+                // as this would use the exact same ItemSlot instance for all slots!
+                boughtItems = new ItemSlot[24];
+                for (int i = 0; i < boughtItems.Length; ++i)
+                    boughtItems[i] = new ItemSlot();
+            }
             boughtItems ??= Enumerable.Repeat(new ItemSlot(), 24).ToArray();
             currentWindow.WindowParameters[4] = boughtItems;
+
+            void UpdateSellButton()
+            {
+                layout.EnableButton(3, buysGoods && CurrentPartyMember.Inventory.Slots.Any(s => !s.Empty));
+            }
 
             void SetupRightClickAbort()
             {
@@ -10811,8 +10824,8 @@ namespace Ambermoon
                 // you would have to buy some of this items before.
                 layout.EnableButton(0, boughtItems.Any(slot => slot == null || slot.Empty) && merchant.AvailableGold > 0);
                 bool anyItemsToSell = merchant.Slots.ToList().Any(s => !s.Empty);
-                layout.EnableButton(3, anyItemsToSell && buysGoods);
                 layout.EnableButton(4, anyItemsToSell);
+                UpdateSellButton();
             }
 
             void FillItems(bool fromMerchant)
@@ -10851,6 +10864,7 @@ namespace Ambermoon
                 {
                     foreach (var partyMember in PartyMembers)
                         layout.UpdateCharacterStatus(SlotFromPartyMember(partyMember).Value);
+                    itemGrid.Refresh();
                 }
             };
             itemGrid.ItemClicked += (ItemGrid _, int slotIndex, ItemSlot itemSlot) =>
@@ -11109,6 +11123,17 @@ namespace Ambermoon
             {
                 layout.ShowClickChestMessage(initialText);
             }
+
+            ActivePlayerChanged += UpdateSellButton;
+            layout.DraggedItemDropped += UpdateSellButton;
+
+            void CleanUp()
+            {
+                ActivePlayerChanged -= UpdateSellButton;
+                layout.DraggedItemDropped -= UpdateSellButton;
+            }
+
+            closeWindowHandler = CleanUp;
 
             void UpdateGoldDisplay()
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
