@@ -168,6 +168,7 @@ Special thanks to my top patreons:
 - Jan Rennfanz
 - Benjamin Ziebert
 - Mike Valtix
+- Thomas Ritschel
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
@@ -176,6 +177,7 @@ Special thanks to some special contributors and testers as well:
 - Thallyrion
 - Uukrull
 - Nephilim
+- skdubg
 
 
 ## Other projects

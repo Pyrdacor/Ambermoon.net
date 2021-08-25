@@ -85,6 +85,7 @@ namespace Ambermoon.Render
             AddText("Jan Rennfanz");
             AddText("Benjamin Ziebert");
             AddText("Mike Valtix");
+            AddText("Thomas Ritschel");
 
             AddHeader("Contributors", 12);
             AddText("Over the years many people contributed to Ambermoon.", 1);
@@ -109,7 +110,7 @@ namespace Ambermoon.Render
             AddText("Thank you guys! You're awesome!", 1);
 
             AddText("Also thanks to all the testers of Ambermoon.net!", 3);
-            AddText("Especially to Thallyrion, Uukrull and Nephilim.");
+            AddText("Especially to Thallyrion, Uukrull, Nephilim and skdubg.");
 
             AddHeader("Projects to come", 16);
             AddText("The next project will be ~INK17~Ambermoon Advanced~INK31~.", 1);
