@@ -141,17 +141,6 @@ namespace Ambermoon.Renderer
             ActiveProgram = this;
         }
 
-        public static void Use(ShaderProgram program)
-        {
-            if (program != null)
-                program.Use();
-            else
-            {
-                program.state.Gl.UseProgram(0);
-                ActiveProgram = null;
-            }
-        }
-
         public uint BindInputBuffer<T>(string name, BufferObject<T> buffer) where T : unmanaged, IEquatable<T>
         {
             if (ActiveProgram != this)
@@ -197,7 +186,13 @@ namespace Ambermoon.Renderer
                 Use();
                 oldVersion?.Invoke();
                 if (activeProgram != ActiveProgram)
-                    activeProgram.Use();
+                {
+                    if (activeProgram == null)
+                        state.Gl.UseProgram(0);
+                    else
+                        activeProgram.Use();
+                    ActiveProgram = activeProgram;
+                }
             }
             else
                 newVersion?.Invoke();
