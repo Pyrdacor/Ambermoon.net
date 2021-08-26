@@ -527,7 +527,7 @@ namespace Ambermoon.Data
         {
             string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff
                 ? "Stop here if false"
-                : $"Jump to event {ContinueIfFalseWithMapEventIndex + 1:x2} if false";
+                : $"Jump to event {ContinueIfFalseWithMapEventIndex:x2} if false";
 
             return TypeOfCondition switch
             {
@@ -662,7 +662,7 @@ namespace Ambermoon.Data
         {
             string falseHandling = ContinueIfFalseWithMapEventIndex == 0xffff
                 ? "Stop here if false"
-                : $"Jump to event {ContinueIfFalseWithMapEventIndex + 1:x2} if false";
+                : $"Jump to event {ContinueIfFalseWithMapEventIndex:x2} if false";
 
             return $"{Type}: Chance {Chance}%, {falseHandling}, Unused {string.Join(" ", Unused.Select(u => u.ToString("x2")))}";
         }
