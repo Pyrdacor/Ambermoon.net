@@ -134,12 +134,14 @@ namespace Ambermoon.Data
                 None = 0,
                 RandomMovement = 0x01,
                 UseTileset = 0x02,
-                TextPopup = 0x04
+                TextPopup = 0x04,
+                MoveOnlyWhenSeePlayer = 0x40,
+                Unknown = 0x80 // e.g. Tornaks use it
             }
 
             public CharacterType Type { get; set; }
             public Flags CharacterFlags { get; set; }
-            public bool OnlyMoveWhenSeePlayer { get; set; }
+            public bool OnlyMoveWhenSeePlayer => CharacterFlags.HasFlag(Flags.MoveOnlyWhenSeePlayer);
             public uint Index { get; set; } // of party member, npc, monster or map text
             /// <summary>
             /// Upper 4 bits of this contains the combat background index.

@@ -30,9 +30,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 else
                 {
                     dataWriter.Write((byte)map.CharacterReferences[i].Index);
-                    dataWriter.Write((byte)(map.CharacterReferences[i].OnlyMoveWhenSeePlayer ? 1 : 0));
-                    var type = (byte)((byte)map.CharacterReferences[i].Type | ((byte)map.CharacterReferences[i].CharacterFlags << 2));
-                    dataWriter.Write(type);
+                    var typeAndFlags = (ushort)((ushort)map.CharacterReferences[i].Type | ((ushort)map.CharacterReferences[i].CharacterFlags << 2));
+                    dataWriter.Write(typeAndFlags);
                     dataWriter.Write((byte)map.CharacterReferences[i].EventIndex);
                     dataWriter.Write((ushort)map.CharacterReferences[i].GraphicIndex);
                     dataWriter.Write((uint)map.CharacterReferences[i].TileFlags);
