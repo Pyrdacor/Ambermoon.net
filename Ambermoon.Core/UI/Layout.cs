@@ -3809,6 +3809,7 @@ namespace Ambermoon.UI
                 draggedFood = 0;
                 draggedGoldOrFoodRemover = null;
                 DropItem();
+                game.UntrapMouse();
             }
 
             // Remove hand icons and set current status icons
