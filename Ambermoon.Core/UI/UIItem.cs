@@ -148,6 +148,17 @@ namespace Ambermoon.UI
                 }
                 amountDisplay.Visible = Item.Stacked && ShowItemAmount;
             }
+            else if (Item.Stacked)
+            {
+                amountDisplay = renderView.RenderTextFactory.Create();
+                amountDisplay.Layer = renderView.GetLayer(Layer.Text);
+                amountDisplay.TextColor = TextColor.White;
+                amountDisplay.Shadow = true;
+                amountDisplay.X = Item.Amount < 10 ? sprite.X + 5 : sprite.X + 2;
+                amountDisplay.Y = sprite.Y + 17;
+                amountDisplay.Text = renderView.TextProcessor.CreateText(Item.Amount > 99 ? "**" : Item.Amount.ToString());
+                amountDisplay.Visible = ShowItemAmount;
+            }
 
             if (Item.ItemIndex != 0 && Item.Amount != 0 && Item.Flags.HasFlag(ItemSlotFlags.Broken))
             {
