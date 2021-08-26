@@ -128,6 +128,7 @@ namespace Ambermoon.Data
         {
             var tileset = new Tileset();
 
+            dataReader.Position = 0;
             tilesetReader.ReadTileset(tileset, dataReader);
 
             return tileset;

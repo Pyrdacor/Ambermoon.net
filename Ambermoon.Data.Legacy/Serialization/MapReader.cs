@@ -10,6 +10,10 @@ namespace Ambermoon.Data.Legacy.Serialization
     {
         public void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader, Dictionary<uint, Tileset> tilesets)
         {
+            if (textDataReader != null)
+                textDataReader.Position = 0;
+            dataReader.Position = 0;
+
             // Load map texts
             map.Texts = TextReader.ReadTexts(textDataReader);
 

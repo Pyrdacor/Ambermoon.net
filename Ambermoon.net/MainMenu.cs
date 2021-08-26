@@ -64,7 +64,7 @@ namespace Ambermoon
             // For now we use a font where each glyph has a height of 28. But the base glyph is inside a
             // 16 pixel height area in the y-center (from y=6 to y=22). So basically these 16 pixels are
             // the height we use for calculations.
-            int y = 56 + 14;
+            int y = 56 + 12;
             for (int i = 0; i < 4; ++i)
             {
                 if (i == 2) // TODO: for now we don't show the intro option as it is not implemented
