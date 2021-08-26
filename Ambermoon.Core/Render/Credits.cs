@@ -73,6 +73,9 @@ namespace Ambermoon.Render
             AddText("Ambermoon would not be possible without Alex I guess.");
             AddText("Thank you so much for all you have done!");
 
+            AddText("And of course I want to thank my wife.", 3);
+            AddText("She was very patient and supportive with me.");
+
             AddHeader("My supporters", 16);
             AddText("Every nerd also needs something to eat. So I am very", 1);
             AddText("thankful for all the support I get. Many people");
@@ -110,7 +113,13 @@ namespace Ambermoon.Render
             AddText("Thank you guys! You're awesome!", 1);
 
             AddText("Also thanks to all the testers of Ambermoon.net!", 3);
-            AddText("Especially to Thallyrion, Uukrull, Nephilim and skdubg.");
+            AddText("Especially to Thallyrion, Uukrull, Nephilim and");
+            AddText("skdubg who also helped fixing translation bugs.");
+
+            AddText("Matthias Steinwachs (the guy who made the incredible", 6);
+            AddText("music for Ambermoon) started creating remixes of");
+            AddText("all the beautiful tracks. Check his work out at:");
+            AddText("https://soundcloud.com/audiotexturat/sets");
 
             AddHeader("Projects to come", 16);
             AddText("The next project will be ~INK17~Ambermoon Advanced~INK31~.", 1);
