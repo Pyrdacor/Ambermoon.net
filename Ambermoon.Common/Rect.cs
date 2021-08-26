@@ -150,7 +150,7 @@ namespace Ambermoon
             if (Empty)
                 return false;
 
-            return x >= Left && x <= Right && y >= Top && y <= Bottom;
+            return x >= Left && x < Right && y >= Top && y < Bottom;
         }
 
         public bool Contains(Position point)
