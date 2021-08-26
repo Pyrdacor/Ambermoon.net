@@ -3013,7 +3013,7 @@ namespace Ambermoon
 
         uint GetBestMoveSpot(int characterPosition, Monster monster, bool wantsToFlee, List<int> forbiddenMonsterMoveSpots)
         {
-            int moveRange = monster.Attributes[Data.Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
+            int moveRange = monster.Attributes[Attribute.Speed].TotalCurrentValue >= 80 ? 2 : 1;
             GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY,
                 moveRange, RangeType.Move, wantsToFlee);
             int currentColumn = characterPosition % 6;
@@ -3081,8 +3081,75 @@ namespace Ambermoon
                     return (uint)nearPlayerPositions[game.RandomInt(0, nearPlayerPositions.Count - 1)];
                 }
 
+                // If down and left/right is no player, move to the other direction instead.
+                if (battleField[currentColumn + 18]?.Type != CharacterType.PartyMember &&
+                    battleField[currentColumn + 24]?.Type != CharacterType.PartyMember)
+                {
+                    var specificPositions = new List<int>(possiblePositions);
+
+                    // No target down below.
+                    if (currentColumn == 0)
+                    {
+                        foreach (var exclude in possiblePositions.Where(p => p % 6 == 0))
+                            specificPositions.Remove(exclude);
+                    }
+                    else if (currentColumn == 5)
+                    {
+                        if (currentColumn == 0)
+                        {
+                            foreach (var exclude in possiblePositions.Where(p => p % 6 == 5))
+                                specificPositions.Remove(exclude);
+                        }
+                    }
+                    else
+                    {
+                        bool[] hasTargetsInColumn = new bool[6];
+
+                        for (int i = 0; i < 6; ++i)
+                        {
+                            hasTargetsInColumn[i] = battleField[18 + i]?.Type == CharacterType.PartyMember ||
+                                battleField[24 + i]?.Type == CharacterType.PartyMember;
+                        }
+
+                        if (hasTargetsInColumn[currentColumn - 1] && !hasTargetsInColumn[currentColumn + 1])
+                        {
+                            foreach (var exclude in possiblePositions.Where(p => currentColumn < p % 6).ToList())
+                                specificPositions.Remove(exclude);
+                        }
+                        else if (hasTargetsInColumn[currentColumn + 1] && !hasTargetsInColumn[currentColumn - 1])
+                        {
+                            foreach (var exclude in possiblePositions.Where(p => currentColumn > p % 6).ToList())
+                                specificPositions.Remove(exclude);
+                        }
+                        else
+                        {
+                            bool hasLeftTargets = hasTargetsInColumn[currentColumn - 1] ||
+                                (currentColumn > 1 && hasTargetsInColumn[currentColumn - 2]) ||
+                                (currentColumn > 2 && hasTargetsInColumn[currentColumn - 3]) ||
+                                (currentColumn > 3 && hasTargetsInColumn[currentColumn - 4]);
+                            bool hasRightTargets = hasTargetsInColumn[currentColumn + 1] ||
+                                (currentColumn < 4 && hasTargetsInColumn[currentColumn + 2]) ||
+                                (currentColumn < 3 && hasTargetsInColumn[currentColumn + 3]) ||
+                                (currentColumn < 2 && hasTargetsInColumn[currentColumn + 4]);
+
+                            if (hasLeftTargets && !hasRightTargets)
+                            {
+                                foreach (var exclude in possiblePositions.Where(p => currentColumn <= p % 6).ToList())
+                                    specificPositions.Remove(exclude);
+                            }
+                            else if (hasRightTargets && !hasLeftTargets)
+                            {
+                                foreach (var exclude in possiblePositions.Where(p => currentColumn >= p % 6).ToList())
+                                    specificPositions.Remove(exclude);
+                            }
+                        }
+
+                        if (specificPositions.Count != 0)
+                            return (uint)specificPositions[game.RandomInt(0, specificPositions.Count - 1)];
+                    }
+                }
                 // Prefer moving straight down if not on left or right column
-                if (currentColumn != 0 && currentColumn != 5)
+                else if (currentColumn != 0 && currentColumn != 5)
                 {
                     for (int row = maxY; row > currentRow; --row)
                     {
