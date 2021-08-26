@@ -77,7 +77,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             // A position of 0,0 is possible. It means "not visible on the map".
             foreach (var characterReference in map.CharacterReferences)
             {
-                if (characterReference == null)
+                if (characterReference == null || characterReference.Index == 0)
                     continue;
 
                 if (characterReference.Type == CharacterType.Monster ||
