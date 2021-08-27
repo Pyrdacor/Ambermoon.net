@@ -969,7 +969,7 @@ namespace Ambermoon
             Height = screenSize.Height;
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build} Test Version";
+            gameVersion = $"Ambermoon.net v{version.Major}.{version.Minor}.{version.Build}";
             var videoMode = new VideoMode(60);
             var options = new WindowOptions(true, new WindowDimension(100, 100),
                 new WindowDimension(Width, Height), 60.0, 60.0, GraphicsAPI.Default, gameVersion,
