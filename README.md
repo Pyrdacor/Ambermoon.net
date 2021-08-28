@@ -34,10 +34,10 @@ new versions and patches of the original game files there as well.
 ### Additional Resources
 
 - [Map](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonMap.pdf)
-- [Rune Table](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/RuneTable.png)
+- [Rune Table](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonRuneTable.png)
 - [German Manual / Handbuch Deutsch](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/Ambermoon_Handbuch_Deutsch.pdf)
 - [English Manual](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonManualEnglish.pdf)
-- [English Amiga Walkthrough](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/Walkthrough.txt) by Michael Böhmisch (1999)
+- [English Amiga Walkthrough](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/Walkthrough.txt) by Michael Böhnisch (1999)
 
 ### Need help?
 
