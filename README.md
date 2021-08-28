@@ -6,6 +6,8 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
+**Version 1.0 Full is finally released!!! Yay!**
+
 The full package with additional resources can now also be downloaded from my new website at www.pyrdacor.net!
 
 Version | Standalone | Size-Optimized (needs .NET installed)
