@@ -6,7 +6,7 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-**Version 1.0 Full is finally released!!! Yay!**
+**Version 1.0 is finally released!!! Yay!**
 
 The full package with additional resources can now also be downloaded from my new website at www.pyrdacor.net!
 
@@ -30,6 +30,14 @@ An up-to-date overview for planned releases and features can be found [here](htt
 
 If you are interested in the original Amiga game files you can find them here: https://github.com/Pyrdacor/Ambermoon. I released some
 new versions and patches of the original game files there as well.
+
+### Additional Resources
+
+- [Map](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonMap.pdf)
+- [Rune Table](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/RuneTable.png)
+- [German Manual / Handbuch Deutsch](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/Ambermoon_Handbuch_Deutsch.pdf)
+- [English Manual](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonManualEnglish.pdf)
+- [English Amiga Walkthrough](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/Walkthrough.txt) by Michael Böhmisch (1999)
 
 ### Need help?
 
