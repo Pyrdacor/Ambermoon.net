@@ -26,10 +26,12 @@ An up-to-date overview for planned releases and features can be found [here](htt
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
-#### Amiga versions
+### Amiga versions
 
 If you are interested in the original Amiga game files you can find them here: https://github.com/Pyrdacor/Ambermoon. I released some
 new versions and patches of the original game files there as well.
+
+A new Mod is planned called [Ambermoon Advanced](https://GitHub.com/Pyrdacor/Ambermoon-Advanced).
 
 ### Additional Resources
 
