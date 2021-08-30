@@ -14,13 +14,14 @@ namespace Ambermoon.Data
         Dungeon = 1 << 2,
         Automapper = 1 << 3, // If set the map is available and the map has to be explored.
         CanRest = 1 << 4,
-        WorldSurface = 1 << 5,
+        Unknown1 = 1 << 5, // Unknown. All world maps use that in Ambermoon.
         Sky = 1 << 6, // All towns have this and the ruin tower. Only considered for 3D maps.
         NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours
-        StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images). Set for all world maps.
+        StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images) and therefore transports. Set for all world maps.
         Unknown2 = 1 << 9, // Unknown. Never used in Ambermoon.
-        SmallPlayer = 1 << 10, // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
-        CanUseMagic = 1 << 11 // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
+        WorldSurface = 1 << 10,
+        CanUseMagic = 1 << 11, // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
+        SmallPlayer = StationaryGraphics // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
     }
 
     public class Map

@@ -10,7 +10,7 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Amiga</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>10.0.0</Version>
+    <Version>10.0.1</Version>
     <UserSecretsId>485e4790-32fd-45f1-b729-c5ca93ba0fad</UserSecretsId>
   </PropertyGroup>
 
