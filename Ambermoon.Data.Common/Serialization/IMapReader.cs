@@ -4,6 +4,7 @@ namespace Ambermoon.Data.Serialization
 {
     public interface IMapReader
     {
-        void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader, Dictionary<uint, Tileset> tilesets);
+        void ReadMap(Map map, IDataReader dataReader, Dictionary<uint, Tileset> tilesets);
+        void ReadMapTexts(Map map, IDataReader textDataReader);
     }
 }

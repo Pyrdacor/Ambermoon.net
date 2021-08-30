@@ -8,14 +8,17 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public class MapReader : IMapReader
     {
-        public void ReadMap(Map map, IDataReader dataReader, IDataReader textDataReader, Dictionary<uint, Tileset> tilesets)
+        public void ReadMapTexts(Map map, IDataReader textDataReader)
         {
             if (textDataReader != null)
                 textDataReader.Position = 0;
-            dataReader.Position = 0;
 
-            // Load map texts
             map.Texts = TextReader.ReadTexts(textDataReader);
+        }
+
+        public void ReadMap(Map map, IDataReader dataReader, Dictionary<uint, Tileset> tilesets)
+        {
+            dataReader.Position = 0;
 
             map.Flags = (MapFlags)dataReader.ReadWord();
             map.Type = (MapType)dataReader.ReadByte();

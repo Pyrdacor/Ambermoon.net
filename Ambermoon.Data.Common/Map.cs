@@ -319,7 +319,17 @@ namespace Ambermoon.Data
         {
             var map = new Map { Index = index };
 
-            mapReader.ReadMap(map, dataReader, textDataReader, tilesets);
+            mapReader.ReadMap(map, dataReader, tilesets);
+            mapReader.ReadMapTexts(map, textDataReader);
+
+            return map;
+        }
+
+        public static Map LoadWithoutTexts(uint index, IMapReader mapReader, IDataReader dataReader, Dictionary<uint, Tileset> tilesets)
+        {
+            var map = new Map { Index = index };
+
+            mapReader.ReadMap(map, dataReader, tilesets);
 
             return map;
         }
