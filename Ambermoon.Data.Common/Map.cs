@@ -183,7 +183,7 @@ namespace Ambermoon.Data
         public uint TilesetOrLabdataIndex { get; set; }
         /// <summary>
         /// This is only used in non-world-surface 2D maps.
-        /// To more precise it could be used in any 2D map
+        /// To be more precise it could be used in any 2D map
         /// but it only makes sense for maps which have 2D NPCs.
         /// There are 2 NPC graphic files inside the NPC_gfx.amb.
         /// This index specifies which to load (0 = none, 1 or 2).
@@ -309,7 +309,7 @@ namespace Ambermoon.Data
         }
         public uint TicksPerAnimationFrame { get; set; } = 10; // This matches the frame speed in real game quiet good. TODO: changeable later? same for every map?
 
-        private Map()
+        public Map()
         {
 
         }
