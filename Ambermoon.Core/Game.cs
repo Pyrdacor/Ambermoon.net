@@ -2022,7 +2022,8 @@ namespace Ambermoon
                 GameTime.Wait(hours);
         }
 
-        bool CanPartyMove() => !PartyMembers.Any(p => !p.CanMove(false));
+        // Note: Eagle allows movement even with overweight.
+        bool CanPartyMove() => TravelType == TravelType.Eagle || !PartyMembers.Any(p => !p.CanMove(false));
 
         internal void Move(bool fromNumpadButton, float speedFactor3D, params CursorType[] cursorTypes)
         {
@@ -8394,7 +8395,7 @@ namespace Ambermoon
                         }
                         roundPlayerBattleActions.Clear();
                         UpdateBattleStatus();
-                        PlayMusic(Song.Default);
+                        PlayMusic(travelType.TravelSong());
                         currentBattleInfo.EndBattle(battleEndInfo);
                         currentBattleInfo = null;
                     }
