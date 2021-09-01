@@ -26,8 +26,10 @@ namespace Ambermoon.Audio.OpenAL
 
             al.SourceStop(source); // ensure stop
             al.BufferData(bufferIndex, format, data, sampleRate);
-            al.SetSourceProperty(source, SourceInteger.Buffer, bufferIndex);
+            Activate(source);
         }
+
+        public void Activate(uint source) => al.SetSourceProperty(source, SourceInteger.Buffer, bufferIndex);
 
         public void Dispose()
         {

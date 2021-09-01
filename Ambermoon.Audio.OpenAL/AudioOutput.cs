@@ -16,6 +16,7 @@ namespace Ambermoon.Audio.OpenAL
         float volume = 1.0f;
         bool enabled = true;
         readonly Dictionary<byte[], AudioBuffer> audioBuffers = new Dictionary<byte[], AudioBuffer>();
+        AudioBuffer currentBuffer = null;
 
         public AudioOutput(int channels = 1, int sampleRate = 44100)
         {
@@ -147,8 +148,12 @@ namespace Ambermoon.Audio.OpenAL
             if (source == 0)
                 throw new NotSupportedException("Start was called without a valid source.");
 
+            if (currentBuffer == null)
+                return;
+
             Streaming = true;
 
+            currentBuffer?.Activate(source);
             al.SourcePlay(source);
         }
 
@@ -182,7 +187,8 @@ namespace Ambermoon.Audio.OpenAL
             if (!audioBuffers.ContainsKey(data))
                 audioBuffers[data] = new AudioBuffer(al, 1, 44100);
 
-            audioBuffers[data]?.Fill(source, data);
+            currentBuffer = audioBuffers[data];
+            currentBuffer?.Fill(source, data);
         }
 
         /// <summary>
