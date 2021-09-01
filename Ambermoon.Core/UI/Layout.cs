@@ -3352,7 +3352,7 @@ namespace Ambermoon.UI
                 }
                 text.DisplayLayer = 3;
                 text.PaletteIndex = game.PrimaryUIPaletteIndex;
-                text.TextColor = partyMember.Alive ? TextColor.PartyMember : TextColor.DeadPartyMember;
+                text.TextColor = partyMember.Alive ? game.CurrentPartyMember == partyMember ? TextColor.ActivePartyMember : TextColor.PartyMember : TextColor.DeadPartyMember;
                 text.Visible = true;
                 UpdateCharacterStatus(partyMember);
             }
