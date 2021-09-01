@@ -8093,7 +8093,7 @@ namespace Ambermoon
                     break;
                 case Spell.Resurrection:
                 {
-                    TrySpell(() =>
+                    Cast(() =>
                     {
                         target.Ailments &= ~Ailment.DeadCorpse;
                         target.HitPoints.CurrentValue = 1;
@@ -11297,7 +11297,7 @@ namespace Ambermoon
                                 if (spell == Spell.Resurrection)
                                 {
                                     void Revive(PartyMember target, Action finishAction) =>
-                                        ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, checkFail);
+                                        ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
                                     ForeachPartyMember(Revive, p => p.Ailments.HasFlag(Ailment.DeadCorpse));
                                 }
                                 else
