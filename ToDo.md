@@ -4,11 +4,6 @@
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 
 
-## 2D maps
-
-- Teleporting from a 2D map to a 2D world map via cheat with fixed positions (e.g. teleport 110 1 1) scrolls the map badly.
-
-
 ## 3D maps
 
 - Should piles block monsters? Test in grandfather's cellar.

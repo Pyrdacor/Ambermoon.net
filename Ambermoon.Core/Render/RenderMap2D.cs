@@ -527,6 +527,49 @@ namespace Ambermoon.Render
                 index == Map.DownRightMapIndex;
         }
 
+        public void LimitScrollOffset(ref uint x, ref uint y, Map map = null)
+        {
+            map ??= Map;
+
+            if (map.IsWorldMap)
+            {
+                x = (uint)Util.Limit(0, x - NUM_VISIBLE_TILES_X / 2, map.Width - 1);
+                y = (uint)Util.Limit(0, y - NUM_VISIBLE_TILES_Y / 2, map.Height - 1);
+            }
+            else
+            {
+                x = (uint)Util.Limit(0, x - NUM_VISIBLE_TILES_X / 2, map.Width - NUM_VISIBLE_TILES_X);
+                y = (uint)Util.Limit(0, y - NUM_VISIBLE_TILES_Y / 2, map.Height - NUM_VISIBLE_TILES_Y);
+            }
+        }
+
+        public void LimitScrollOffset(Position position, out Map newMap)
+        {
+            newMap = Map;
+
+            if (Map.IsWorldMap)
+            {
+                if (position.X < 0)
+                {
+                    newMap = game.MapManager.GetMap(Map.LeftMapIndex.Value);
+                    position.X += Map.Width;
+                }
+                if (position.Y < 0)
+                {
+                    newMap = game.MapManager.GetMap(newMap.UpMapIndex.Value);
+                    position.Y += newMap.Height;
+                }
+
+                position.X = Util.Limit(0, position.X - NUM_VISIBLE_TILES_X / 2, Map.Width - 1);
+                position.Y = Util.Limit(0, position.Y - NUM_VISIBLE_TILES_Y / 2, Map.Height - 1);
+            }
+            else
+            {
+                position.X = Util.Limit(0, position.X - NUM_VISIBLE_TILES_X / 2, Map.Width - NUM_VISIBLE_TILES_X);
+                position.Y = Util.Limit(0, position.Y - NUM_VISIBLE_TILES_Y / 2, Map.Height - NUM_VISIBLE_TILES_Y);
+            }
+        }
+
         public void SetMap(Map map, uint initialScrollX = 0, uint initialScrollY = 0)
         {
             if (Map == map)
@@ -717,11 +760,14 @@ namespace Ambermoon.Render
 
         public void ScrollToPlayer(uint x, uint y) => ScrollToPlayer(new Position((int)x, (int)y));
 
-        public void ScrollToPlayer(Position playerPostion)
+        public void ScrollToPlayer(Position playerPosition)
         {
-            playerPostion ??= game.PartyPosition;
-            ScrollTo((uint)Util.Limit(0, playerPostion.X - NUM_VISIBLE_TILES_X / 2, Map.Width - NUM_VISIBLE_TILES_X),
-                (uint)Util.Limit(0, playerPostion.Y - NUM_VISIBLE_TILES_Y / 2, Map.Height - NUM_VISIBLE_TILES_Y));
+            playerPosition ??= game.PartyPosition;
+
+            uint x = (uint)playerPosition.X;
+            uint y = (uint)playerPosition.Y;
+            LimitScrollOffset(ref x, ref y);
+            ScrollTo(x, y);
         }
 
         public void ScrollTo(uint x, uint y, bool forceUpdate = false)

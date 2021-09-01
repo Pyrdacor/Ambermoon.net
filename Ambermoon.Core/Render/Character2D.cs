@@ -235,9 +235,10 @@ namespace Ambermoon.Render
 
                 if (map.Type == MapType.Map2D)
                 {
-                    Map.SetMap(map,
-                        (uint)Util.Limit(0, (int)x - RenderMap2D.NUM_VISIBLE_TILES_X / 2, map.Width - RenderMap2D.NUM_VISIBLE_TILES_X),
-                        (uint)Util.Limit(0, (int)y - RenderMap2D.NUM_VISIBLE_TILES_Y / 2, map.Height - RenderMap2D.NUM_VISIBLE_TILES_Y));
+                    uint scrollX = x;
+                    uint scrollY = y;
+                    Map.LimitScrollOffset(ref scrollX, ref scrollY, map);
+                    Map.SetMap(map, scrollX, scrollY);
                     Direction = newDirection.Value;
 
                     RecheckTopSprite();

@@ -493,6 +493,8 @@ namespace Ambermoon
                         World.Morag => 4u,
                         _ => 16u
                     };
+                    mapColumn %= worldSize;
+                    mapRow %= worldSize;
                     uint worldMapOffset = world.Value switch
                     {
                         World.Lyramion => 1u,
