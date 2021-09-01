@@ -484,21 +484,24 @@ namespace Ambermoon
 
                     uint mapColumn = (worldX.Value - 1) / 50;
                     uint mapRow = (worldY.Value - 1) / 50;
-                    uint mapX = worldX.Value % 50;
-                    uint mapY = worldY.Value % 50;
-                    uint worldMapIndex = mapColumn + mapRow * world.Value switch
+                    uint mapX = 1 + (worldX.Value - 1) % 50;
+                    uint mapY = 1 + (worldY.Value - 1) % 50;
+                    uint worldSize = world.Value switch
                     {
                         World.Lyramion => 16u,
                         World.ForestMoon => 6u,
                         World.Morag => 4u,
                         _ => 16u
-                    } + world.Value switch
+                    };
+                    uint worldMapOffset = world.Value switch
                     {
                         World.Lyramion => 1u,
                         World.ForestMoon => 300u,
                         World.Morag => 513u,
                         _ => 1u
                     };
+                    uint worldMapIndex = worldMapOffset + mapColumn + mapRow * worldSize;
+                    uint mapAmount = worldSize * worldSize;
 
                     if (!game.Teleport(worldMapIndex, mapX, mapY, worldDirection, out bool blocked))
                     {
