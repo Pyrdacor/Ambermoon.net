@@ -8286,8 +8286,13 @@ namespace Ambermoon
                     IncreaseAttribute(Attribute.AntiMagic);
                     break;
                 case Spell.DecreaseAge:
-                    if (target.Alive && !target.Ailments.HasFlag(Ailment.Petrified))
+                    if (target.Alive && !target.Ailments.HasFlag(Ailment.Petrified) && target.Attributes[Attribute.Age].CurrentValue > 18)
+                    {
                         target.Attributes[Attribute.Age].CurrentValue = (uint)Math.Max(18, (int)target.Attributes[Attribute.Age].CurrentValue - RandomInt(1, 10));
+
+                        if (CurrentWindow.Window == Window.Inventory && CurrentInventory == target)
+                            UpdateCharacterInfo();
+                    }
                     break;
                 case Spell.Drugs:
                     if (target is PartyMember partyMember)
