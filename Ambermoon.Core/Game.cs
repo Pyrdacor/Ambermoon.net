@@ -3581,16 +3581,19 @@ namespace Ambermoon
                         equipmentGrid.SetItem((int)equipmentSlot - 1, partyMember.Equipment.Slots[equipmentSlot]);
                     }
                 }
-                void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount)
+                void RemoveEquipment(int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot = true)
                 {
                     RecheckUsedBattleItem(CurrentInventoryIndex.Value, slotIndex, true);
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
                     EquipmentRemoved(item, amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
 
-                    if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
+                    if (updateSlot)
                     {
-                        equipmentGrid.SetItem(slotIndex + 2, null);
-                        partyMember.Equipment.Slots[EquipmentSlot.LeftHand].Clear();
+                        if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
+                        {
+                            equipmentGrid.SetItem(slotIndex + 2, null);
+                            partyMember.Equipment.Slots[EquipmentSlot.LeftHand].Clear();
+                        }
                     }
 
                     UpdateCharacterInfo();
@@ -3626,10 +3629,11 @@ namespace Ambermoon
                     AddEquipment(slotIndex, droppedItem, droppedItem.Amount);
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(draggedItem.ItemIndex));
                 };
-                equipmentGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+                equipmentGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot) =>
                 {
-                    RemoveEquipment(slotIndex, itemSlot, amount);
-                    partyMember.Equipment.Slots[(EquipmentSlot)(slotIndex + 1)].Remove(amount);
+                    RemoveEquipment(slotIndex, itemSlot, amount, updateSlot);
+                    if (updateSlot)
+                        partyMember.Equipment.Slots[(EquipmentSlot)(slotIndex + 1)].Remove(amount);
                     // TODO: When resetting the item back to the slot (even just dropping it there) the previous battle action should be restored.
                     RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slotIndex + 1), ItemManager.GetItem(itemSlot.ItemIndex));
                 };
@@ -3643,10 +3647,11 @@ namespace Ambermoon
                     RemoveInventoryItem(slotIndex, draggedItem, draggedAmount);
                     AddInventoryItem(slotIndex, droppedItem, droppedItem.Amount);
                 };
-                inventoryGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+                inventoryGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot) =>
                 {
                     RemoveInventoryItem(slotIndex, itemSlot, amount);
-                    partyMember.Inventory.Slots[slotIndex].Remove(amount);
+                    if (updateSlot)
+                        partyMember.Inventory.Slots[slotIndex].Remove(amount);
                 };
                 inventoryGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
                 {
@@ -5620,11 +5625,14 @@ namespace Ambermoon
                 layout.Set80x80Picture(Picture80x80.ChestOpenFull);
             }
 
-            itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+            itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot) =>
             {
-                int column = slotIndex % Chest.SlotsPerRow;
-                int row = slotIndex / Chest.SlotsPerRow;
-                storage.Slots[column, row].Remove(amount);
+                if (updateSlot)
+                {
+                    int column = slotIndex % Chest.SlotsPerRow;
+                    int row = slotIndex / Chest.SlotsPerRow;
+                    storage.Slots[column, row].Remove(amount);
+                }
             };
             itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
             {
@@ -6690,14 +6698,15 @@ namespace Ambermoon
                 }
             }
 
-            void ItemDragged(int slotIndex, ItemSlot itemSlot, int amount)
+            void ItemDragged(int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot)
             {
                 ExecuteNextUpdateCycle(() =>
                 {
                     moveItemMessage = layout.AddText(textArea, DataNameProvider.WhereToMoveIt,
                         TextColor.BrightGray, TextAlign.Center);
                     var draggedSourceSlot = itemGrid.GetItemSlot(slotIndex);
-                    draggedSourceSlot.Remove(amount);
+                    if (updateSlot)
+                        draggedSourceSlot.Remove(amount);
                     createdItemSlots[slotIndex].Replace(draggedSourceSlot);
                     itemGrid.SetItem(slotIndex, draggedSourceSlot);
                 });
@@ -10850,13 +10859,14 @@ namespace Ambermoon
                 return basePrice + bonus;
             }
             itemGrid.DisableDrag = false;
-            itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount) =>
+            itemGrid.ItemDragged += (int slotIndex, ItemSlot itemSlot, int amount, bool updateSlot) =>
             {
                 // This can only happen for bought items but we check for safety here
                 if (mode != -1)
                     throw new AmbermoonException(ExceptionScope.Application, "Non-bought items should not be draggable.");
 
-                boughtItems[slotIndex].Remove(amount);
+                if (updateSlot)
+                    boughtItems[slotIndex].Remove(amount);
                 layout.EnableButton(0, boughtItems.Any(slot => slot == null || slot.Empty) && merchant.AvailableGold > 0);
             };
             itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>

@@ -941,7 +941,7 @@ namespace Ambermoon.UI
             var renderText = RenderView.RenderTextFactory.Create(textLayer,
                 processedText, TextColor.BrightGray, true, textBounds, textAlign);
             renderText.PaletteIndex = game.TextPaletteIndex;
-            int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 31) / 16);
+            int popupRows = Math.Max(minLines + 2, 2 + (textBounds.Height + 47) / 16);
             activePopup = new Popup(game, RenderView, new Position(32, 74), 14, popupRows, false, displayLayerOffset)
             {
                 DisableButtons = true,

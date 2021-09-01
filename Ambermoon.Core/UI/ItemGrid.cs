@@ -65,7 +65,7 @@ namespace Ambermoon.UI
             Exchange
         }
 
-        public event Action<int, ItemSlot, int> ItemDragged;
+        public event Action<int, ItemSlot, int, bool> ItemDragged;
         public event Action<int, ItemSlot, int> ItemDropped;
         public event Action<int, ItemSlot, int, ItemSlot> ItemExchanged;
         public event Action<ItemGrid, int, ItemSlot> ItemClicked;
@@ -427,7 +427,30 @@ namespace Ambermoon.UI
                 return item.Item.Item.Amount;
 
             var itemSlot = items[slot];
+            bool shieldEquippedToTwoHanded = false;
+
+            if (itemSlot != null && itemSlot.Item.ItemIndex == 0 && SlotCount == 9 && slot == 5 && // Left hand equipment slot
+                (items[3]?.Item?.ItemIndex ?? 0) != 0)
+            {
+                itemSlot.Item.Clear();
+                itemSlot = items[3];
+                shieldEquippedToTwoHanded = true;
+            }
+
             var itemInfo = itemSlot == null ? null : itemManager.GetItem(itemSlot.Item.ItemIndex);
+            bool secondHandSlot = false;
+
+            if (!shieldEquippedToTwoHanded && itemSlot == null && SlotCount == 9 && slot == 3) // Right hand equipment slot -> weapon
+            {
+                var droppedItemInfo = itemManager.GetItem(item.Item.Item.ItemIndex);
+
+                if (droppedItemInfo.NumberOfHands == 2)
+                {
+                    itemSlot = items[5];
+                    itemInfo = itemSlot == null ? null : itemManager.GetItem(itemSlot.Item.ItemIndex);
+                    secondHandSlot = true;
+                }
+            }
 
             if (itemSlot == null)
             {
@@ -489,10 +512,42 @@ namespace Ambermoon.UI
                     return item.Item.Item.Amount; // Try to exchange an item stack on an equip slot
 
                 itemSlot.Item.Exchange(item.Item.Item);
-                itemSlot.Update(true);
-                itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
-                item.Item.Update(true);
-                ItemExchanged?.Invoke(slot, item.Item.Item, item.Item.Item.Amount, itemSlot.Item);
+
+                if (shieldEquippedToTwoHanded)
+                {
+                    items[3].Item.Exchange(items[5].Item);
+                    items[3].Destroy();
+                    items[3] = null;
+                    itemSlot = items[5];
+                    itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
+                    itemSlot.Update(true);
+                    item.Item.Update(true);
+                    ItemDragged?.Invoke(3, item.Item.Item, item.Item.Item.Amount, false);
+                    ItemDropped?.Invoke(5, itemSlot.Item, itemSlot.Item.Amount);
+                }
+                else if (secondHandSlot)
+                {
+                    if (items[3] == null)
+                        items[3] = new UIItem(renderView, itemManager, new ItemSlot { Amount = 1 }, false);
+                    else
+                        items[3].SetItem(new ItemSlot { Amount = 1 });
+                    items[3].Item.Exchange(itemSlot.Item);
+                    itemSlot.Update(true);
+                    itemSlot = items[3];
+                    itemSlot.Position = slotPositions[slot];
+                    itemSlot.Visible = true;
+                    itemSlot.Update(true);
+                    item.Item.Update(true);
+                    ItemDragged?.Invoke(5, item.Item.Item, item.Item.Item.Amount, false);
+                    ItemDropped?.Invoke(3, itemSlot.Item, itemSlot.Item.Amount);
+                }
+                else
+                {
+                    itemSlot.Update(true);
+                    itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
+                    item.Item.Update(true);
+                    ItemExchanged?.Invoke(slot, item.Item.Item, item.Item.Item.Amount, itemSlot.Item);
+                }
                 if (game.CurrentWindow.Window == Window.Inventory)
                     item.SourcePlayer = game.CurrentInventoryIndex;
                 item.SourceGrid = this;
@@ -727,7 +782,7 @@ namespace Ambermoon.UI
             {
                 item.Item.Item.Amount = amount;
                 item.Item.Update(false);
-                ItemDragged?.Invoke(slot, item.Item.Item, amount);
+                ItemDragged?.Invoke(slot, item.Item.Item, amount, true);
                 if (items[slot].Item.Empty)
                 {
                     items[slot].Destroy();
