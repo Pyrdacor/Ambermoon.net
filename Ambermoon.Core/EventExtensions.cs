@@ -641,13 +641,13 @@ namespace Ambermoon
                             break;
                         }
                         case ActionEvent.ActionType.LockDoor:
-                            if (!ClearSetToggle(() => !game.CurrentSavegame.IsDoorLocked(actionEvent.ObjectIndex)))
+                            if (ClearSetToggle(() => !game.CurrentSavegame.IsDoorLocked(actionEvent.ObjectIndex)))
                                 game.CurrentSavegame.UnlockDoor(actionEvent.ObjectIndex);
                             else
                                 game.CurrentSavegame.LockDoor(actionEvent.ObjectIndex);
                             break;
                         case ActionEvent.ActionType.LockChest:
-                            if (!ClearSetToggle(() => !game.CurrentSavegame.IsChestLocked(actionEvent.ObjectIndex)))
+                            if (ClearSetToggle(() => !game.CurrentSavegame.IsChestLocked(actionEvent.ObjectIndex)))
                                 game.CurrentSavegame.UnlockChest(actionEvent.ObjectIndex);
                             else
                                 game.CurrentSavegame.LockChest(actionEvent.ObjectIndex);

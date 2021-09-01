@@ -5762,10 +5762,13 @@ namespace Ambermoon
                                 }
                             }
                             // If this is a direct map event it is deactivated when the door is opened.
-                            int eventIndex = map.EventList.IndexOf(doorEvent);
-                            if (eventIndex != -1)
-                                CurrentSavegame.ActivateEvent(map.Index, (uint)eventIndex, false);
-                            if (doorEvent.Next != null)
+                            if (doorEvent.Next == null)
+                            {
+                                int eventIndex = map.EventList.IndexOf(doorEvent);
+                                if (eventIndex != -1)
+                                    CurrentSavegame.ActivateEvent(map.Index, (uint)eventIndex, false);
+                            }
+                            else
                             {
                                 EventExtensions.TriggerEventChain(map ?? Map, this, EventTrigger.Always, (uint)player.Position.X,
                                     (uint)player.Position.Y, doorEvent.Next, true);
