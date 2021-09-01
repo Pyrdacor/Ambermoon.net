@@ -400,6 +400,18 @@ namespace Ambermoon
                 {
                     player2D.BaselineOffset = CanSee() ? 0 : MaxBaseLine;
                 }
+
+                if (Map != null && layout.ButtonGridPage == 1)
+                {
+                    if (Map.Flags.HasFlag(MapFlags.CanRest) && travelType.CanCampOn())
+                    {
+                        layout.EnableButton(5, true);
+                    }
+                    else
+                    {
+                        layout.EnableButton(5, false);
+                    }
+                }
             }
         }
         bool clickMoveActive = false;
