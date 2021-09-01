@@ -21,6 +21,8 @@ Version | Standalone | Size-Optimized (needs .NET installed)
 - (*English*) The standalone versions should work without .NET installed but are larger in size. I recommend the standalone version.
 - (*German*) Die Standalone-Versionen sollten ohne installierte .NET Runtime laufen, sind aber etwas größer. Ich empfehle die Standalone-Version.
 
+Problems? The [FAQ](FAQ.md) might help.
+
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow. \
 An up-to-date overview for planned releases and features can be found [here](https://github.com/Pyrdacor/Ambermoon.net/issues/63).
 
