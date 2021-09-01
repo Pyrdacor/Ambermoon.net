@@ -132,7 +132,7 @@ namespace Ambermoon.Render
                         if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var type))
                         {
                             if ((type != EventType.Teleport || !travelType.BlockedByTeleport()) &&
-                                EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)x, (uint)y,
+                                EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)newX, (uint)newY,
                                     mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
                             {
                                 eventTriggered = true;
