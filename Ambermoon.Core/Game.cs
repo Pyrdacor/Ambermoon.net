@@ -322,7 +322,20 @@ namespace Ambermoon
         internal Character CurrentCaster { get; set; } = null;
         internal Character CurrentSpellTarget { get; set; } = null;
         public Map Map => !ingame ? null : is3D ? renderMap3D?.Map : renderMap2D?.Map;
-        public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : Map.MapOffset + player.Position;
+        public Position PartyPosition => !ingame || Map == null || player == null ? new Position() : LimitPartyPosition(Map.MapOffset + player.Position);
+        Position LimitPartyPosition(Position position)
+        {
+            int width = Map.IsWorldMap ? (int)Map.WorldMapDimension * 50 : Map.Width;
+            int height = Map.IsWorldMap ? (int)Map.WorldMapDimension * 50 : Map.Height;
+
+            while (position.X < 0)
+                position.X += width;
+            while (position.Y < 0)
+                position.Y += height;
+            position.X %= width;
+            position.Y %= height;
+            return position;
+        }
         internal bool MonsterSeesPlayer { get; set; } = false;
         bool monstersCanMoveImmediately = false; // this is set when the player just moved so that monsters who see the player can instantly move (2D only)
         Position lastPlayerPosition = null;
