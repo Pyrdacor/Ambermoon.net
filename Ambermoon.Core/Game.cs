@@ -3223,7 +3223,7 @@ namespace Ambermoon
             }
         }
 
-        bool TriggerMapEvents(EventTrigger trigger, uint x, uint y)
+        internal bool TriggerMapEvents(EventTrigger trigger, uint x, uint y)
         {
             if (noEvents)
                 return false;
@@ -3239,10 +3239,12 @@ namespace Ambermoon
             }
         }
 
-        internal bool TestUseItemMapEvent(uint itemIndex)
+        internal bool TestUseItemMapEvent(uint itemIndex, out uint x, out uint y)
         {
-            uint x = (uint)player.Position.X;
-            uint y = (uint)player.Position.Y;
+            x = (uint)player.Position.X;
+            y = (uint)player.Position.Y;
+            uint eventX = x;
+            uint eventY = y;
             var @event = is3D ? Map.GetEvent(x, y, CurrentSavegame) : renderMap2D.GetEvent(x, y, CurrentSavegame);
             var map = is3D ? Map : renderMap2D.GetMapFromTile(x, y);
 
@@ -3257,7 +3259,8 @@ namespace Ambermoon
 
                 bool lastEventStatus = true;
                 var trigger = (EventTrigger)((uint)EventTrigger.Item0 + itemIndex);
-                @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, x, y, ref lastEventStatus, out bool _, out var _);
+                
+                @event = EventExtensions.ExecuteEvent(conditionEvent, map, this, ref trigger, eventX, eventY, ref lastEventStatus, out bool _, out var _);
 
                 return TestEvent();
             }
@@ -3277,7 +3280,9 @@ namespace Ambermoon
                     position.X >= 0 && position.X < Map.Width &&
                     position.Y >= 0 && position.Y < Map.Height)
                 {
-                    @event = Map.GetEvent((uint)position.X, (uint)position.Y, CurrentSavegame);
+                    x = (uint)position.X;
+                    y = (uint)position.X;
+                    @event = Map.GetEvent(x, y, CurrentSavegame);
                 }
                 else
                 {
@@ -3312,6 +3317,9 @@ namespace Ambermoon
 
                 @event = renderMap2D.GetEvent(x, y, CurrentSavegame);
             }
+
+            eventX = x;
+            eventY = y;
 
             return TestEvent();
         }

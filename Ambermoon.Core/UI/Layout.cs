@@ -2030,7 +2030,7 @@ namespace Ambermoon.UI
             var item = itemManager.GetItem(itemIndex);
             int RollDice1000() => game.RandomInt(0, 999);
 
-            if (!game.BattleActive && game.TestUseItemMapEvent(itemIndex))
+            if (!game.BattleActive && game.TestUseItemMapEvent(itemIndex, out var eventX, out var eventY))
             {
                 void Use(bool broke)
                 {
@@ -2065,7 +2065,7 @@ namespace Ambermoon.UI
                             if (wasInputEnabled)
                                 game.InputEnable = true;
                             game.UpdateCursor();
-                            game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemIndex));
+                            game.TriggerMapEvents((EventTrigger)((uint)EventTrigger.Item0 + itemIndex), eventX, eventY);
                         });
                     });
                 }
