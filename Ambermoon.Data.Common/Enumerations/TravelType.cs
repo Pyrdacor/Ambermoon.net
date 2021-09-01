@@ -73,6 +73,7 @@ namespace Ambermoon.Data.Enumerations
             TravelType.Horse => true,
             TravelType.MagicalDisc => true,
             TravelType.SandLizard => true,
+            TravelType.SandShip => true,
             _ => false
         };
 
