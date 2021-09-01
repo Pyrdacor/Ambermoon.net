@@ -3929,6 +3929,7 @@ namespace Ambermoon
             }
 
             var character = conversationPartner ?? CurrentInventory;
+            bool magicClass = character.Class.IsMagic();
 
             UpdateText(CharacterInfo.Age, () => string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                 character.Attributes[Attribute.Age].CurrentValue));
@@ -3937,10 +3938,13 @@ namespace Ambermoon
                 character.ExperiencePoints));
             UpdateText(CharacterInfo.LP, () => string.Format(DataNameProvider.CharacterInfoHitPointsString,
                 character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue));
-            UpdateText(CharacterInfo.SP, () => string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue));
+            if (magicClass)
+            {
+                UpdateText(CharacterInfo.SP, () => string.Format(DataNameProvider.CharacterInfoSpellPointsString,
+                    character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue));
+            }
             UpdateText(CharacterInfo.SLPAndTP, () =>
-                string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) + " " +
+                (magicClass ? string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) : new string(' ', 7)) + " " +
                 string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints));
             UpdateText(CharacterInfo.GoldAndFood, () =>
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
