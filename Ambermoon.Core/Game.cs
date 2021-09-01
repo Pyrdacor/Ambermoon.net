@@ -1449,9 +1449,15 @@ namespace Ambermoon
             if (layout.ButtonGridPage == 1)
                 ToggleButtonGridPage();
 
-            // Trigger events after game load
-            TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
-                (uint)player.Position.Y);
+            if (!is3D)
+                player2D.Visible = true;
+
+            if (!TravelType.IgnoreEvents())
+            {
+                // Trigger events after game load
+                TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
+                    (uint)player.Position.Y);
+            }
         }
 
         internal void ProcessPoisonDamage(uint times, Action followAction = null)

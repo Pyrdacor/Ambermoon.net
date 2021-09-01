@@ -507,8 +507,7 @@ namespace Ambermoon.UI
                 if (!itemSlot.Item.Draggable)
                     return item.Item.Item.Amount;
 
-                if (item.Item.Item.Amount > 1 && dropLimiter != null &&
-                    dropLimiter(slot, 2) == 1)
+                if (item.Item.Item.Amount > 1 && dropLimiter != null && dropLimiter(slot, 2) == 1)
                     return item.Item.Item.Amount; // Try to exchange an item stack on an equip slot
 
                 itemSlot.Item.Exchange(item.Item.Item);
