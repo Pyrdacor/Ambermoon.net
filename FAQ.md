@@ -8,6 +8,10 @@ In general errors are printed to the console window which pops up in the backgro
 
 When you switch or temporarily disable your audio device or even disconnecting your headphones, the music player might be disabled. It is hard to detect such hardware changes in a cross platform manner. That's why you have to restart the game in this case to enjoy the music again.
 
+3. The game crashed and I did not save. Is it all lost?
+
+No don't worry. There is a crash backup savegame. It is stored as Save.99 inside the savegame folder (often a folder called "Saves" next to the Ambermoon.net executable). You might want to backup this folder on your own after the crash. When you continue a game, the game automatically detects the crash savegame and ask if you want to load it. After loading the backup is deleted! So make sure you back it up yourself or save immediately after loading it.
+
 
 # Häufig gestellte Fragen
 
@@ -18,3 +22,7 @@ Im Normalfall werden Fehler in das Konsolenfenster geschrieben, das im Hintergru
 2. Plötzlich ist die Musik weg. Was läuft falsch?
 
 Wenn du dein Audiogerät wechselst oder kurzzeitig deaktivierst oder einfach deine Kopfhörer rausziehst, kann der Musik-Player deaktiviert werden. Es ist schwierig solche Änderungen der Hardware platformübergreifend zu detektieren. Daher musst du dann leider das Spiel neustarten, wenn du die Musik wieder genießen möchtest.
+
+3. Das Spiel ist abgestürzt und ich habe nicht gespeichert. Ist alles verloren?
+
+Nein, keine Sorge. Es gibt einen Backup-Spielstand bei Abstürzen. Dieser wird als Save.99 im Spielstandsordner gespeichert (oft ein Ordner namens "Saves" im selben Verzeichnis wie die Ambermoon.net Exe). Am besten sicherst du diesen Ordner händisch irgendwo. Wenn du "Weiterspielen" wählst, findet das Spiel automatisch den Backup-Spielstand und fragt sich, ob er geladen werden soll. Nach dem Laden wird er gelöscht! Also stelle sicher, dass du selbst ein Backup gemacht hast oder speichere gleich nach dem Laden.
