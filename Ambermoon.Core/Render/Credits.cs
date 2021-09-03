@@ -85,7 +85,7 @@ namespace Ambermoon.Render
             AddText("Other Retro Matt", 1);
             AddText("Lorenz P.");
             AddText("Stephan Mankie");
-            AddText("Jan Rennfanz");
+            AddText("JR_Riketz");
             AddText("Benjamin Ziebert");
             AddText("Mike Valtix");
             AddText("Thomas Ritschel");

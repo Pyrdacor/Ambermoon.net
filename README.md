@@ -178,7 +178,7 @@ Special thanks to my top patreons:
 - [Other Retro Matt](https://twitter.com/GothmogPlays)
 - Lorenz P.
 - Stephan [Mankie](https://twitter.com/MankiesWorkshop)
-- Jan Rennfanz
+- JR_Riketz
 - Benjamin Ziebert
 - Mike Valtix
 - Thomas Ritschel
