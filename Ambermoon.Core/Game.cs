@@ -5766,7 +5766,12 @@ namespace Ambermoon
                         ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true));
                     }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
-                    (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true));
+                    (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true),
+                    () =>
+                    {
+                        if (chestEvent.Next != null)
+                            map.TriggerEventChain(this, EventTrigger.Always, (uint)player.Position.X, (uint)player.Position.Y, chestEvent.Next, false);
+                    });
                 }
                 else
                 {
@@ -5840,14 +5845,20 @@ namespace Ambermoon
                     }
                 }, initialText, doorEvent.KeyIndex, doorEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                 doorEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
-                    (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)doorEvent.UnlockFailedEventIndex], true));
+                    (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)doorEvent.UnlockFailedEventIndex], true),
+                () =>
+                {
+                    if (doorEvent.Next != null)
+                        map.TriggerEventChain(this, EventTrigger.Always, (uint)player.Position.X, (uint)player.Position.Y, doorEvent.Next, false);
+                });
             });
 
             return true;
         }
 
         void ShowLocked(Picture80x80 picture80X80, Action openedAction, string initialMessage,
-            uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action failedAction)
+            uint keyIndex, uint lockpickingChanceReduction, bool foundTrap, bool disarmedTrap, Action failedAction,
+            Action abortAction)
         {
             layout.SetLayout(LayoutType.Items);
             layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
@@ -5883,7 +5894,7 @@ namespace Ambermoon
 
             void Exit()
             {
-                CloseWindow();
+                CloseWindow(abortAction);
             }
 
             void StartUseItems()
