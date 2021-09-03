@@ -89,6 +89,7 @@ namespace Ambermoon.Render
             AddText("Benjamin Ziebert");
             AddText("Mike Valtix");
             AddText("Thomas Ritschel");
+            AddText("crediar");
 
             AddHeader("Contributors", 12);
             AddText("Over the years many people contributed to Ambermoon.", 1);

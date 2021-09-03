@@ -182,6 +182,7 @@ Special thanks to my top patreons:
 - Benjamin Ziebert
 - Mike Valtix
 - Thomas Ritschel
+- crediar
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
