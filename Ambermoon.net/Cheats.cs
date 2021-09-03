@@ -366,7 +366,8 @@ namespace Ambermoon
 
                 foreach (var attribute in Enum.GetValues<Data.Attribute>())
                 {
-                    partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].MaxValue;
+                    if (attribute < Data.Attribute.Age)
+                        partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].MaxValue;
                 }
 
                 foreach (var ability in Enum.GetValues<Ability>())
