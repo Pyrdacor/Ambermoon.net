@@ -1660,19 +1660,31 @@ namespace Ambermoon
             });
         }
 
-        void AgePlayer(PartyMember partyMember, Action finishAction)
+        void AgePlayer(PartyMember partyMember, Action finishAction, uint ageIncrease)
         {
-            if (++partyMember.Attributes[Attribute.Age].CurrentValue >= partyMember.Attributes[Attribute.Age].MaxValue)
+            partyMember.Attributes[Attribute.Age].CurrentValue += ageIncrease;
+
+            bool allInputWasDisabled = allInputDisabled;
+            allInputDisabled = false;
+
+            void Finish()
             {
+                allInputDisabled = allInputWasDisabled;
+                finishAction?.Invoke();
+            }
+
+            if (partyMember.Attributes[Attribute.Age].CurrentValue >= partyMember.Attributes[Attribute.Age].MaxValue)
+            {
+                partyMember.Attributes[Attribute.Age].CurrentValue = partyMember.Attributes[Attribute.Age].MaxValue;
                 ShowMessagePopup(partyMember.Name + DataNameProvider.HasDiedOfAge, () =>
                 {
                     partyMember.Die();
-                    finishAction?.Invoke();
+                    Finish();
                 });
             }
             else
             {
-                ShowMessagePopup(partyMember.Name + DataNameProvider.HasAged, finishAction);
+                ShowMessagePopup(partyMember.Name + DataNameProvider.HasAged, Finish);
             }
         }
 
@@ -1721,17 +1733,43 @@ namespace Ambermoon
             }
         }
 
-        void GameTime_NewDay()
+        void GameTime_NewDay(uint exhaustedHours, uint passedHours)
         {
-            ForeachPartyMember(AgePlayer, partyMember =>
+
+            void Age(PartyMember partyMember, Action finishAction)
+                => AgePlayer(partyMember, finishAction, 1);
+
+            ForeachPartyMember(Age, partyMember =>
                 partyMember.Alive && partyMember.Ailments.HasFlag(Ailment.Aging) &&
-                    !partyMember.Ailments.HasFlag(Ailment.Petrified));
+                    !partyMember.Ailments.HasFlag(Ailment.Petrified), () =>
+                    {
+                        if (exhaustedHours > 0)
+                            GameTime_GotExhausted(exhaustedHours, passedHours);
+                        else if (CurrentSavegame.HoursWithoutSleep >= 24)
+                            GameTime_GotTired(passedHours);
+                        else
+                            GameTime_HoursPassed(passedHours, true);
+                    });
         }
 
-        void GameTime_NewYear()
+        void GameTime_NewYear(uint exhaustedHours, uint passedHours)
         {
-            ForeachPartyMember(AgePlayer, partyMember =>
-                partyMember.Alive && !partyMember.Ailments.HasFlag(Ailment.Petrified));
+            void Age(PartyMember partyMember, Action finishAction)
+            {
+                uint ageIncrease = partyMember.Ailments.HasFlag(Ailment.Aging) ? 2u : 1u;
+                AgePlayer(partyMember, finishAction, ageIncrease);
+            }
+
+            ForeachPartyMember(Age, partyMember =>
+                partyMember.Alive && !partyMember.Ailments.HasFlag(Ailment.Petrified), () =>
+                {
+                    if (exhaustedHours > 0)
+                        GameTime_GotExhausted(exhaustedHours, passedHours);
+                    else if (CurrentSavegame.HoursWithoutSleep >= 24)
+                        GameTime_GotTired(passedHours);
+                    else
+                        GameTime_HoursPassed(passedHours, true);
+                });
         }
 
         void RunSavegameTileChangeEvents(uint mapIndex)

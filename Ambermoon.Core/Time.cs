@@ -275,8 +275,8 @@ namespace Ambermoon
         public event Action<uint> HourChanged;
         public event Action<uint> GotTired;
         public event Action<uint, uint> GotExhausted;
-        public event Action NewDay;
-        public event Action NewYear;
+        public event Action<uint, uint> NewDay;
+        public event Action<uint, uint> NewYear;
 
         public void Wait(uint hours)
         {
@@ -290,11 +290,14 @@ namespace Ambermoon
 
         void PostIncreaseUpdate(uint hours = 1)
         {
-            while (savegame.Hour >= 24)
+            bool dayPassed = false;
+            bool yearPassed = false;
+
+            if (savegame.Hour >= 24)
             {
                 savegame.Hour -= 24;
                 ++savegame.DayOfMonth;
-                NewDay?.Invoke();
+                dayPassed = true;
 
                 if (savegame.DayOfMonth > 31)
                 {
@@ -307,7 +310,7 @@ namespace Ambermoon
                         ++savegame.Year;
                         if (savegame.YearsPassed < 0xffff)
                             ++savegame.YearsPassed;
-                        NewYear?.Invoke();
+                        yearPassed = true;
 
                         if (savegame.Year > 0xffff)
                             savegame.Year = 0;
@@ -315,7 +318,11 @@ namespace Ambermoon
                 }
             }
 
-            if (savegame.HoursWithoutSleep >= 36)
+            if (yearPassed)
+                NewYear?.Invoke(savegame.HoursWithoutSleep < 36 ? 0 : Math.Min(hours, savegame.HoursWithoutSleep - 35), hours);
+            else if (dayPassed)
+                NewDay?.Invoke(savegame.HoursWithoutSleep < 36 ? 0 : Math.Min(hours, savegame.HoursWithoutSleep - 35), hours);
+            else if (savegame.HoursWithoutSleep >= 36)
                 GotExhausted?.Invoke(Math.Min(hours, savegame.HoursWithoutSleep - 35), hours);
             else if (savegame.HoursWithoutSleep >=24)
                 GotTired?.Invoke(hours);
