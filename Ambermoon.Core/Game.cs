@@ -9026,10 +9026,9 @@ namespace Ambermoon
                     var target = currentBattle.GetCharacterAt(column, row);
                     if (target != null && target.Type == CharacterType.PartyMember)
                     {
-                        if (!target.CanMove())
+                        if (!target.Ailments.CanBlink())
                         {
                             CancelSpecificPlayerAction();
-                            // TODO: Test this later. Is CanMove equal to CanBlink?
                             SetBattleMessageWithClick(target.Name + DataNameProvider.BattleMessageCannotBlink, TextColor.BrightGray);
                             return;
                         }
