@@ -86,7 +86,8 @@ namespace Ambermoon
                     if (!game.ShowDoor(doorEvent, false, false, map, x, y, true))
                     {
                         // already unlocked
-                        lastEventStatus = true;
+                        // Note that the original sets last event status to false in this case!
+                        lastEventStatus = false;
                         return doorEvent.Next;
                     }
                     return null;
