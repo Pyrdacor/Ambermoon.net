@@ -1430,6 +1430,7 @@ namespace Ambermoon
                 if (savegame.CurrentPartyMemberIndices[i] != 0)
                 {
                     var partyMember = savegame.GetPartyMember(i);
+                    CheckWeight(partyMember);
                     AddPartyMember(i, partyMember);
                 }
             }
@@ -1482,6 +1483,30 @@ namespace Ambermoon
                 // Trigger events after game load
                 TriggerMapEvents(EventTrigger.Move, (uint)player.Position.X,
                     (uint)player.Position.Y);
+            }
+
+            void CheckWeight(PartyMember partyMember)
+            {
+                // Adjust weight in case it was set to a wrong value before.
+                partyMember.TotalWeight = (uint)partyMember.Gold * 5 + (uint)partyMember.Food * 250;
+
+                foreach (var item in partyMember.Inventory.Slots)
+                {
+                    if (item != null && item.Amount != 0 && item.ItemIndex != 0)
+                    {
+                        var itemInfo = ItemManager.GetItem(item.ItemIndex);
+                        partyMember.TotalWeight += (uint)item.Amount * itemInfo.Weight;
+                    }
+                }
+
+                foreach (var item in partyMember.Equipment.Slots.Values)
+                {
+                    if (item != null && item.Amount != 0 && item.ItemIndex != 0)
+                    {
+                        var itemInfo = ItemManager.GetItem(item.ItemIndex);
+                        partyMember.TotalWeight += (uint)item.Amount * itemInfo.Weight;
+                    }
+                }
             }
         }
 
