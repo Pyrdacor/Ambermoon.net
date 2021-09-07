@@ -190,7 +190,7 @@ namespace Ambermoon.Data
             public int SpawnX => GetWord(2);
             public int SpawnY => GetWord(4);
             public int SpawnMapIndex => GetWord(6);
-            public StationaryImage StationaryImage => (StationaryImage)GetWord(8);
+            public virtual TravelType TravelType => (TravelType)GetWord(8);
         }
 
         public class RaftSalesman : Salesman
@@ -202,6 +202,7 @@ namespace Ambermoon.Data
             }
 
             public override PlaceType PlaceType => PlaceType.RaftDealer;
+            public override TravelType TravelType => TravelType.Raft;
         }
 
         public class ShipSalesman : Salesman
@@ -213,6 +214,7 @@ namespace Ambermoon.Data
             }
 
             public override PlaceType PlaceType => PlaceType.ShipDealer;
+            public override TravelType TravelType => TravelType.Ship;
         }
 
         public class HorseSalesman : Salesman
@@ -224,6 +226,7 @@ namespace Ambermoon.Data
             }
 
             public override PlaceType PlaceType => PlaceType.HorseDealer;
+            public override TravelType TravelType => TravelType.Horse;
         }
 
         public class Blacksmith : NonItemPlace

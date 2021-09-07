@@ -13,6 +13,7 @@
 
 ## UI
 
+- When rightclicking a place question the buttons stay (at least for blacksmith in Newlake).
 - When editing a savegame name (in save dialog list) and aborting, the text stays (fixed?).
 - "Do you accept this character?" message is missing in character creator.
 - "Really load savegame" popup is much to high. This is due to a change to YesNo popup sizing.

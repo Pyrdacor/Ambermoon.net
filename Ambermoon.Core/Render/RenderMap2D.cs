@@ -376,8 +376,7 @@ namespace Ambermoon.Render
                     position.Y += Map.Height;
             }
 
-            var stationaryImage = travelType.ToStationaryImage();
-            var info = renderView.GameData.StationaryImageInfos[stationaryImage];
+            var info = renderView.GameData.StationaryImageInfos[travelType];
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.Characters);
             var sprite = renderView.SpriteFactory.Create(info.Width, info.Height, false);
             var offset = new Position((TILE_WIDTH - info.Width) / 2 - 2, (TILE_HEIGHT - info.Height) / 2 - 2);
@@ -385,7 +384,7 @@ namespace Ambermoon.Render
             sprite.ClipArea = Game.Map2DViewArea;
             sprite.BaseLineOffset = TILE_HEIGHT / 2;
             sprite.PaletteIndex = (byte)game.GetPlayerPaletteIndex();
-            sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + stationaryImage.AsIndex());
+            sprite.TextureAtlasOffset = textureAtlas.GetOffset(3 * 17 + 11 * 4 + travelType.AsStationaryImageIndex());
             sprite.X = Global.Map2DViewX + (position.X - (int)ScrollX) * TILE_WIDTH + offset.X;
             sprite.Y = Global.Map2DViewY + (position.Y - (int)ScrollY) * TILE_HEIGHT + offset.Y;
             sprite.Visible = true;

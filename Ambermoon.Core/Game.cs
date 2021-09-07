@@ -10419,7 +10419,7 @@ namespace Ambermoon
                     return false;
 
                 if (CurrentSavegame.TransportLocations.Any(t => t != null && t.MapIndex == map.Index &&
-                    t.Position.X == salesman.SpawnX - 1 && t.Position.Y == salesman.SpawnY - 1))
+                    t.Position.X == salesman.SpawnX && t.Position.Y == salesman.SpawnY))
                     return false;
 
                 // TODO: Maybe change later

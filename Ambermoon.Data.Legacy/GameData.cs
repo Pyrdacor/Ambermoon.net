@@ -27,13 +27,13 @@ namespace Ambermoon.Data.Legacy
 
         public Dictionary<string, IFileContainer> Files { get; } = new Dictionary<string, IFileContainer>();
         public Dictionary<string, IDataReader> Dictionaries { get; } = new Dictionary<string, IDataReader>();
-        public Dictionary<StationaryImage, GraphicInfo> StationaryImageInfos { get; } = new Dictionary<StationaryImage, GraphicInfo>
+        public Dictionary<TravelType, GraphicInfo> StationaryImageInfos { get; } = new Dictionary<TravelType, GraphicInfo>
         {
-            { StationaryImage.Horse, new GraphicInfo { Width = 32, Height = 22, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
-            { StationaryImage.Raft, new GraphicInfo { Width = 32, Height = 11, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
-            { StationaryImage.Boat, new GraphicInfo { Width = 48, Height = 34, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
-            { StationaryImage.SandLizard, new GraphicInfo { Width = 48, Height = 21, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
-            { StationaryImage.SandShip, new GraphicInfo { Width = 48, Height = 39, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } }
+            { TravelType.Horse, new GraphicInfo { Width = 32, Height = 22, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { TravelType.Raft, new GraphicInfo { Width = 32, Height = 11, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { TravelType.Ship, new GraphicInfo { Width = 48, Height = 34, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { TravelType.SandLizard, new GraphicInfo { Width = 48, Height = 21, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } },
+            { TravelType.SandShip, new GraphicInfo { Width = 48, Height = 39, GraphicFormat = GraphicFormat.Palette5Bit, Alpha = true } }
         };
         private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
         private readonly LoadPreference loadPreference;

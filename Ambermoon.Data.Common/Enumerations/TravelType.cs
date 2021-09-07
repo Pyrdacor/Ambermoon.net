@@ -100,5 +100,15 @@ namespace Ambermoon.Data.Enumerations
             TravelType.SandShip => Song.PsychedelicDuneGroove,
             _ => Song.Default
         };
+
+        public static uint AsStationaryImageIndex(this TravelType travelType) => travelType switch
+        {
+            TravelType.Horse => 0,
+            TravelType.Raft => 1,
+            TravelType.Ship => 2,
+            TravelType.SandLizard => 3,
+            TravelType.SandShip => 4,
+            _ => throw new AmbermoonException(ExceptionScope.Application, $"Stationary image for travel type {travelType} does not exist.")
+        };
     }
 }
