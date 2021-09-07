@@ -246,11 +246,14 @@ namespace Ambermoon.Data
         }
 
         public void Damage(uint damage, Ailment deadAilment = Ailment.DeadCorpse)
+            => Damage(damage, deadAilment => Die(deadAilment), deadAilment);
+
+        public void Damage(uint damage, Action<Ailment> deathAction, Ailment deadAilment = Ailment.DeadCorpse)
         {
             HitPoints.CurrentValue = HitPoints.CurrentValue <= damage ? 0 : HitPoints.CurrentValue - damage;
 
             if (HitPoints.CurrentValue == 0)
-                Die(deadAilment);
+                deathAction?.Invoke(deadAilment);
         }
 
         public void Heal(uint amount)

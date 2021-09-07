@@ -1703,7 +1703,7 @@ namespace Ambermoon
                 partyMember.Attributes[Attribute.Age].CurrentValue = partyMember.Attributes[Attribute.Age].MaxValue;
                 ShowMessagePopup(partyMember.Name + DataNameProvider.HasDiedOfAge, () =>
                 {
-                    partyMember.Die();
+                    KillPartyMember(partyMember);
                     Finish();
                 });
             }
@@ -1711,6 +1711,12 @@ namespace Ambermoon
             {
                 ShowMessagePopup(partyMember.Name + DataNameProvider.HasAged, Finish);
             }
+        }
+
+        internal void KillPartyMember(PartyMember partyMember, Ailment deadAilment = Ailment.DeadCorpse)
+        {
+            RemoveAilment(Ailment.Exhausted, partyMember);
+            partyMember.Die(deadAilment);
         }
 
         /// <summary>
@@ -4309,11 +4315,11 @@ namespace Ambermoon
 
                 if (damage > 0 || inflictAilment != Ailment.None)
                 {
-                    partyMember.Damage(damage);
+                    partyMember.Damage(damage, _ => KillPartyMember(partyMember, Ailment.DeadCorpse));
 
                     if (partyMember.Alive && inflictAilment >= Ailment.DeadCorpse)
                     {
-                        partyMember.Die(inflictAilment);
+                        KillPartyMember(partyMember, inflictAilment);
                     }
 
                     if (partyMember.Alive) // update HP etc if not died already
@@ -4524,7 +4530,7 @@ namespace Ambermoon
                     // when a negative award would leave the LP at 0 but we do so here.
                     AwardValue(partyMember.HitPoints, true);
                     if (partyMember.Alive && partyMember.HitPoints.CurrentValue == 0)
-                        partyMember.Die();
+                        KillPartyMember(partyMember);
                     else
                         layout.UpdateCharacter(partyMember);
                     break;
@@ -7487,7 +7493,7 @@ namespace Ambermoon
 
             if (ailment >= Ailment.DeadCorpse && target.Alive)
             {
-                target.Die(ailment);
+                KillPartyMember(target, ailment);
                 return;
             }
 

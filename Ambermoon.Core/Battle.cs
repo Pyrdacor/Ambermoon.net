@@ -1941,8 +1941,10 @@ namespace Ambermoon
                     ShowBattleFieldDamage((int)tile, damage);
                     if (target.Ailments.HasFlag(Ailment.Sleep))
                         game.RemoveAilment(Ailment.Sleep, target);
-                    if (!game.Godmode || target is Monster)
+                    if (target is Monster)
                         target.Damage(damage);
+                    else if (!game.Godmode)
+                        target.Damage(damage, deadAilment => game.KillPartyMember(target as PartyMember, deadAilment));
                     return;
                 }
                 default:
@@ -2517,8 +2519,10 @@ namespace Ambermoon
                             RemoveAilment(Ailment.Sleep, target);
                         if (game.Godmode && target is Monster monster)
                             damage = target.HitPoints.CurrentValue;
-                        if (!game.Godmode || target is Monster)
+                        if (target is Monster)
                             target.Damage(damage);
+                        else if (!game.Godmode)
+                            target.Damage(damage, deadAilment => game.KillPartyMember(target as PartyMember, deadAilment));
                         EndHurt();
                     }
                 );
