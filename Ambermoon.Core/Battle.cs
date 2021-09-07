@@ -1456,7 +1456,7 @@ namespace Ambermoon
 
                     if (itemSlotIndex == null)
                     {
-                        battleAction.Character.SpellPoints.CurrentValue = Math.Max(0, battleAction.Character.SpellPoints.CurrentValue - spellInfo.SP);
+                        battleAction.Character.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)battleAction.Character.SpellPoints.CurrentValue - (int)spellInfo.SP);
 
                         if (battleAction.Character is PartyMember castingPartyMember)
                             layout.FillCharacterBars(castingPartyMember);
@@ -2442,22 +2442,26 @@ namespace Ambermoon
                     return;
                 case Spell.LPStealer:
                 {
-                    DealDamage(caster.Level, 0);
-                    caster.HitPoints.CurrentValue = Math.Min(caster.HitPoints.TotalMaxValue, caster.HitPoints.CurrentValue +
-                        Math.Min(caster.Level, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue));
+                    uint stealAmount = Math.Min(caster.Level, target.HitPoints.CurrentValue);
+                    DealDamage(stealAmount, 0);
+                    caster.HitPoints.CurrentValue = Math.Min(stealAmount, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
                     if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(castingMember);
                     return;
                 }
                 case Spell.SPStealer:
-                    // TODO: what happens if a monster wants to cast a spell afterwards but has not enough SP through SP stealer anymore?
-                    target.SpellPoints.CurrentValue = (uint)Math.Max(0, (int)target.SpellPoints.CurrentValue - caster.Level);
-                    caster.SpellPoints.CurrentValue += Math.Min(caster.Level, caster.SpellPoints.TotalMaxValue - caster.SpellPoints.CurrentValue);
+                {
+                    // Note: In original when you steal more SP as the monster would need for an already
+                    // locked-in spell, it still casts that spell.
+                    uint stealAmount = Math.Min(caster.Level, target.SpellPoints.CurrentValue);
+                    target.SpellPoints.CurrentValue = target.SpellPoints.CurrentValue - stealAmount;
+                    caster.SpellPoints.CurrentValue += Math.Min(stealAmount, caster.SpellPoints.TotalMaxValue - caster.SpellPoints.CurrentValue);
                     if (target is PartyMember targetMember)
                         layout.FillCharacterBars(targetMember);
                     else if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(castingMember);
                     break;
+                }
                 case Spell.MonsterKnowledge:
                 {
                     if (target is Monster monster)
