@@ -4,6 +4,11 @@
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 
 
+## 2D maps
+
+- Scroll on 2D maps is sometimes wrong. I fixed it for world maps and now it
+  is often wrong for indoor maps. For example prison of S'Angrila.
+
 ## 3D maps
 
 - 3D monster get easily stuck on wall edges. :(

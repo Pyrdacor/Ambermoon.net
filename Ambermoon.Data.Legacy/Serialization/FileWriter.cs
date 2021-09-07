@@ -80,7 +80,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 WriteContainer(writer, filesData.Select((f, i) => new { f, i }).ToDictionary(f => 1 + (uint)f.i, f => f.f), fileType);
         }
 
-        public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType)
+        public static void WriteContainer(DataWriter writer, Dictionary<uint, byte[]> filesData, FileType fileType, int? minimumFileCount = null)
         {
             switch (fileType)
             {
@@ -97,6 +97,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     var writerWithoutHeader = new DataWriter();
                     int totalFileNumber = (int)filesData.Keys.Max();
+                    if (minimumFileCount != null && minimumFileCount > totalFileNumber)
+                        totalFileNumber = minimumFileCount.Value;
                     List<int> fileSizes = Enumerable.Repeat(0, totalFileNumber).ToList();
 
                     foreach (var file in filesData)

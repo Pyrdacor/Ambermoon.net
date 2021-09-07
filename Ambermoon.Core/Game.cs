@@ -3656,6 +3656,21 @@ namespace Ambermoon
                         inventoryGrid.SetItem(i, partyMember.Inventory.Slots[i]);
                     }
                 }
+                var rightHandSlot = partyMember.Equipment.Slots[EquipmentSlot.RightHand];
+                if (rightHandSlot != null && !rightHandSlot.Empty)
+                {
+                    var rightHandItem = ItemManager.GetItem(rightHandSlot.ItemIndex);
+
+                    if (rightHandItem.NumberOfHands == 2)
+                    {
+                        var leftHandSlot = partyMember.Equipment.Slots[EquipmentSlot.LeftHand];
+
+                        if (leftHandSlot == null)
+                            leftHandSlot = new ItemSlot { Amount = 1, ItemIndex = 0 };
+                        else if (leftHandSlot.Empty)
+                            leftHandSlot.Amount = 1;
+                    }
+                }
                 var equipmentGrid = ItemGrid.CreateEquipment(this, layout, slot, renderView, ItemManager,
                     equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList(), itemSlot =>
                     {
@@ -6198,7 +6213,7 @@ namespace Ambermoon
             // Leonaria
             { 14,  0x3440 },
             // Gryban
-            { 15,  0x35c0 }
+            { 15,  0x35a0 }
         };
 
         /// <summary>
@@ -12911,18 +12926,18 @@ namespace Ambermoon
                             {
                                 otherWall = false;
 
+                                if (!walls.TryGetValue(x + y * Map.Width, out var wall))
+                                    return false;
+
                                 // Note: This is used to detect if walls should be
                                 // merged visually. There are some special walls that
                                 // have a different block sight state (e.g. the crystal
                                 // wall in the temple of brotherhood).
                                 // Those should be treated as "another" wall so we will
-                                // return false here if the color indices do not match.
-                                if (!walls.TryGetValue(x + y * Map.Width, out var wall))
-                                    return false;
-
+                                // return false here if the block sight states do not match.
                                 otherWall = blocksSight != wall.BlocksSight;
 
-                                return !otherWall || (type == null) != (wall.NormalWall == null);
+                                return !otherWall || wall.NormalWall == null;
                             }
 
                             bool hasOtherWallLeft = false;
