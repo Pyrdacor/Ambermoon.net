@@ -119,7 +119,7 @@ namespace Ambermoon.Data
         public uint Index { get; set; }
         public Tile[] Tiles { get; set; }
 
-        private Tileset()
+        public Tileset()
         {
 
         }
