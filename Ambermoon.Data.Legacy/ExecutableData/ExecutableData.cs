@@ -98,6 +98,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 null, new object[] { dataReader }, null);
         }
 
+        uint ReadOffsetAfterByteSequence(IDataReader dataReader, params byte[] sequence)
+        {
+            long index = dataReader.FindByteSequence(sequence, dataReader.Position);
+
+            if (index == -1)
+                throw new AmbermoonException(ExceptionScope.Data, "Could not find byte sequence.");
+
+            dataReader.Position = (int)index + sequence.Length;
+
+            return dataReader.ReadDword();
+        }
+
         /* Some interesting offsets:
          * 
          * 2nd data hunk
@@ -115,42 +127,34 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             var firstCodeHunk = hunks.FirstOrDefault(h => h.Type == AmigaExecutable.HunkType.Code);
 
             if (firstCodeHunk == null)
-                DataInfoString = "Unknown data version";
-            else
             {
-                var infoReader = new DataReader((firstCodeHunk as AmigaExecutable.Hunk?)?.Data);
-                infoReader.Position = 6;
-                DataVersionString = infoReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
-                DataInfoString = infoReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                DataInfoString = "Unknown data version";
+                return;
             }
 
-            var reloc32Hunk = (AmigaExecutable.Reloc32Hunk?)hunks.LastOrDefault(h => h.Type == AmigaExecutable.HunkType.RELOC32);
+            var codeReader = new DataReader((firstCodeHunk as AmigaExecutable.Hunk?)?.Data);
+            codeReader.Position = 6;
+            DataVersionString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+            DataInfoString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+
             var dataHunkReaders = hunks.Where(h => h.Type == AmigaExecutable.HunkType.Data)
                 .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data)).ToArray();
             int dataHunkIndex = 0;
-
-            if (reloc32Hunk == null || !reloc32Hunk.Value.Entries.ContainsKey(5) || reloc32Hunk.Value.Entries[5].Count != 15)
-                throw new AmbermoonException(ExceptionScope.Data, "Unexpected executable format.");
-
-            var relocOffsets = reloc32Hunk.Value.Entries[5];
-            uint digitOffset = relocOffsets.Take(9).Aggregate((a, b) => a + b) + 0x76D; // TODO: does this work for all versions?
-            uint codepageOffset = relocOffsets.Take(12).Aggregate((a, b) => a + b);
-            uint textOffset = codepageOffset + relocOffsets.Skip(12).Take(2).Aggregate((a, b) => a + b) + 4;
-            uint glyphOffset = codepageOffset + relocOffsets.Skip(12).Aggregate((a, b) => a + b) + 262;
-            if (glyphOffset % 4 != 0)
-                glyphOffset += 4 - glyphOffset % 4;
 
             dataHunkIndex = 0;
 
             UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
 
             dataHunkIndex = 1;
-            dataHunkReaders[1].Position = (int)digitOffset;
+            var reader = dataHunkReaders[1];
+            codeReader.Position = 115000;
+            reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x34, 0x3c, 0x03, 0xe7, 0x41, 0xf9);            
             DigitGlyphs = Read<DigitGlyphs>(dataHunkReaders, ref dataHunkIndex);
 
             // TODO ...
 
-            dataHunkReaders[1].Position = (int)glyphOffset;
+            codeReader.Position += 29000;
+            reader.Position = (int)ReadOffsetAfterByteSequence(codeReader, 0x22, 0x48, 0x41, 0xf9);
             Glyphs = Read<Glyphs>(dataHunkReaders, ref dataHunkIndex);
             Cursors = Read<Cursors>(dataHunkReaders, ref dataHunkIndex);
 

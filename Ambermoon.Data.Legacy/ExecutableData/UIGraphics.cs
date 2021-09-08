@@ -17,7 +17,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             var graphicInfo = new GraphicInfo
             {
                 Width = 16,
-                Height = 6,
+                Height = 16,
                 Alpha = true,
                 GraphicFormat = GraphicFormat.Palette3Bit,
                 PaletteOffset = 24
@@ -42,11 +42,30 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 return graphic;
             }
 
-            // Note: First 156 bytes seem to be some offsets etc.
+            // Note: First 160 bytes seem to be some offsets etc.
+            dataReader.Position = 160;
 
-            dataReader.Position = 156;
-            entries.Add(UIGraphic.DisabledOverlay16x6, ReadGraphic(dataReader));
-            graphicInfo.Height = 16;
+            // Now 32 bytes follow where each of the 256 bits indicates (1) black or (0) transparent.
+            var graphicData = new byte[256];
+            for (int y = 0; y < 16; ++y)
+            {
+                var bits = dataReader.ReadWord();
+
+                for (int x = 0; x < 16; ++x)
+                {
+                    if ((bits & 0x8000) != 0)
+                        graphicData[y * 16 + x] = 28;
+                    bits <<= 1;
+                }
+            }
+            entries.Add(UIGraphic.DisabledOverlay16x16, new Graphic
+            {
+                Data = graphicData,
+                Width = 16,
+                Height = 16,
+                IndexedGraphic = true
+            });
+            // Then real 3-bit graphics follow.
             // window frames
             entries.Add(UIGraphic.FrameUpperLeft, ReadGraphic(dataReader));
             entries.Add(UIGraphic.FrameLeft, ReadGraphic(dataReader));

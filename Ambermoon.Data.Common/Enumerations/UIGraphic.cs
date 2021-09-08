@@ -2,7 +2,7 @@
 {
     public enum UIGraphic
     {
-        DisabledOverlay16x6,
+        DisabledOverlay16x16,
         FrameUpperLeft,
         FrameLeft,
         FrameLowerLeft,
