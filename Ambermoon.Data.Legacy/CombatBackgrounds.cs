@@ -1,6 +1,6 @@
 ﻿namespace Ambermoon.Data.Legacy
 {
-    internal static class CombatBackgrounds
+    public static class CombatBackgrounds
     {
         public static readonly CombatBackgroundInfo[] Info2D = new CombatBackgroundInfo[16]
         {
