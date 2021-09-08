@@ -145,10 +145,11 @@ namespace Ambermoon.Data.Legacy
             return null;
         }
 
-        static string GetVersionFromAssembly(Span<byte> last128Bytes, out string language)
+        static string GetVersionFromAssembly(Span<byte> last128Bytes, out string language, bool reversed = true)
         {
             language = null;
-            last128Bytes.Reverse();
+            if (reversed)
+                last128Bytes.Reverse();
             string result = "";
             string version = null;
 
@@ -348,7 +349,13 @@ namespace Ambermoon.Data.Legacy
                         {
                             file.Position = file.Size - 128;
                             Version = GetVersionFromAssembly(file.ReadToEnd(), out var language);
-                            Language = language;
+                            if (Version == null)
+                            {
+                                file.Position = 0;
+                                Version = GetVersionFromAssembly(file.ReadBytes(128), out language, false);
+                            }
+                            if (language != null)
+                                Language = language;
                             file.Position = 0;
                             break;
                         }
