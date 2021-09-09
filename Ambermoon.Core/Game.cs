@@ -12285,7 +12285,14 @@ namespace Ambermoon
             (
                 DataNameProvider.GetSongName((Song)(index + 1)), PlaySong
             )).ToList());
-            void PlaySong(int index, string name) => PlayMusic((Song)(index + 1));
+            void PlaySong(int index, string name)
+            {
+                if (AudioOutput.Available)
+                {
+                    AudioOutput.Enabled = Configuration.Music = true;
+                    PlayMusic((Song)(index + 1));
+                }
+            }
             var exitButton = popup.AddButton(new Position(190, 166));
             exitButton.ButtonType = ButtonType.Exit;
             exitButton.Disabled = false;
