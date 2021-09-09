@@ -18,6 +18,7 @@
 
 ## UI
 
+- Aborting drag from equipment will instead place/exchange the item in the inventory.
 - When rightclicking a place question the buttons stay (at least for blacksmith in Newlake).
 - When editing a savegame name (in save dialog list) and aborting, the text stays (fixed?).
 - "Do you accept this character?" message is missing in character creator.
@@ -27,6 +28,7 @@
 
 ## Misc
 
+- If a curse leads to negative stats, they will be huge (negative overflow?).
 - Add more savegame slots?
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
