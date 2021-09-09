@@ -7198,7 +7198,7 @@ namespace Ambermoon
                                             // Exchange portrait
                                             var temp = battlePositions[i];
                                             battlePositions[i] = slotOfDraggedPartyMember.Value;
-                                            if (battlePositions[dragSource.Value] == slotOfDraggedPartyMember.Value)
+                                            if (dragSource.Value != i && battlePositions[dragSource.Value] == slotOfDraggedPartyMember.Value)
                                                 battlePositions.Remove(dragSource.Value);
                                             Drop(i, false);
                                             Pickup(i, false, temp);
