@@ -56,7 +56,17 @@ namespace Ambermoon.Render
         uint ticksPerFrame = 0;
         bool worldMap = false;
         uint lastFrame = 0;
+        Position lastUpdateScroll = null;
+        Map lastUpdateMap = null;
         readonly Dictionary<uint, MapCharacter2D> mapCharacters = new Dictionary<uint, MapCharacter2D>();
+        readonly RandomAnimationInfo[] randomAnimationFrames = new RandomAnimationInfo[NUM_TILES];
+
+        class RandomAnimationInfo
+        {
+            public int CurrentFrame { get; set; }
+            public int FrameCount { get; set; }
+            public bool Poison { get; set; }
+        }
 
         public event Action<Map, Map[]> MapChanged;
 
@@ -98,6 +108,27 @@ namespace Ambermoon.Render
         {
             uint frame = ticks / ticksPerFrame;
 
+            void PoisonPlayer(int x, int y)
+            {
+                var playerPosition = game.PartyPosition - Map.MapOffset;
+
+                if (playerPosition.X == x && playerPosition.Y == y)
+                {
+                    game.ForeachPartyMember((p, f) =>
+                    {
+                        if (game.RollDice100() >= p.Attributes[Data.Attribute.Luck].TotalCurrentValue)
+                        {
+                            game.AddAilment(Ailment.Poisoned, p);
+                            game.ShowDamageSplash(p, _ => 0, f);
+                        }
+                        else
+                        {
+                            f?.Invoke();
+                        }
+                    });
+                }
+            }
+
             if (frame != lastFrame)
             {
                 int index = 0;
@@ -106,10 +137,38 @@ namespace Ambermoon.Render
                 {
                     for (int column = 0; column < NUM_VISIBLE_TILES_X; ++column)
                     {
+                        uint animationFrame = frame;
+                        var randomAnimation = randomAnimationFrames[column + row * NUM_VISIBLE_TILES_X];
+
+                        if (randomAnimation != null)
+                        {
+                            int frameCount = randomAnimation.FrameCount;
+                            bool poison = randomAnimation.Poison;
+
+                            if (++randomAnimation.CurrentFrame >= frameCount) // full cycle passed
+                            {
+                                randomAnimationFrames[column + row * NUM_VISIBLE_TILES_X] = CreateRandomStart(frameCount, poison);
+                                animationFrame = 0;
+                            }
+                            else if (randomAnimation.CurrentFrame >= 0)
+                            {
+                                animationFrame = (uint)randomAnimation.CurrentFrame;
+
+                                if (randomAnimation.CurrentFrame == 0 && poison)
+                                {
+                                    PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
+                                }
+                            }
+                            else
+                            {
+                                animationFrame = 0;
+                            }
+                        }
+
                         if (backgroundTileSprites[index].NumFrames != 1)
-                            backgroundTileSprites[index].CurrentFrame = frame;
+                            backgroundTileSprites[index].CurrentFrame = animationFrame;
                         if (foregroundTileSprites[index].NumFrames != 1)
-                            foregroundTileSprites[index].CurrentFrame = frame;
+                            foregroundTileSprites[index].CurrentFrame = animationFrame;
                         ++index;
                     }
                 }
@@ -437,6 +496,17 @@ namespace Ambermoon.Render
             var frontLayer = renderView.GetLayer((Layer)((uint)Layer.MapForeground1 + tileset.Index - 1));
             textureAtlas = TextureAtlasManager.Instance.GetOrCreate((Layer)((uint)Layer.MapBackground1 + tileset.Index - 1));
             int index = 0;
+            bool mapChange = Map != lastUpdateMap;
+            if (mapChange)
+                lastUpdateScroll = null;
+            lastUpdateMap = Map;
+            var randomAnimationFramesBackup = mapChange ? null : new RandomAnimationInfo[NUM_TILES];
+            int scrolledX = lastUpdateScroll == null ? 0 : (int)ScrollX - lastUpdateScroll.X;
+            int scrolledY = lastUpdateScroll == null ? 0 : (int)ScrollY - lastUpdateScroll.Y;
+            lastUpdateScroll = new Position((int)ScrollX, (int)ScrollY);
+
+            if (!mapChange)
+                Array.Copy(randomAnimationFrames, randomAnimationFramesBackup, randomAnimationFramesBackup.Length);
 
             for (uint row = 0; row < NUM_VISIBLE_TILES_Y; ++row)
             {
@@ -450,6 +520,7 @@ namespace Ambermoon.Render
                     foregroundTileSprites[index].Layer = frontLayer;
                     foregroundTileSprites[index].TextureAtlasWidth = textureAtlas.Texture.Width;
                     foregroundTileSprites[index].PaletteIndex = (byte)(Map.PaletteIndex - 1);
+                    randomAnimationFrames[index] = null;
 
                     if (tile.BackTileIndex == 0)
                     {
@@ -465,6 +536,15 @@ namespace Ambermoon.Render
                         backgroundTileSprites[index].Alternate = backTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
                         backgroundTileSprites[index].Visible = true;
                         backgroundTileSprites[index].BaseLineOffset = 0;
+
+                        if (backTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart))
+                        {
+                            if (mapChange || column + scrolledX < 0 || column + scrolledX >= NUM_VISIBLE_TILES_X
+                                || row + scrolledY < 0 || row + scrolledY >= NUM_VISIBLE_TILES_Y)
+                                randomAnimationFrames[index] = CreateRandomStart(backTile);
+                            else
+                                randomAnimationFrames[index] = randomAnimationFramesBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
+                        }
                     }
 
                     if (tile.FrontTileIndex == 0)
@@ -481,6 +561,15 @@ namespace Ambermoon.Render
                         foregroundTileSprites[index].Visible = true;
                         foregroundTileSprites[index].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
                         foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? (Map.IsWorldMap ? TILE_HEIGHT : 2 * TILE_HEIGHT) + 2 : frontTile.Background ? -1 : 0;
+
+                        if (frontTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart))
+                        {
+                            if (mapChange || column + scrolledX < 0 || column + scrolledX >= NUM_VISIBLE_TILES_X
+                                || row + scrolledY < 0 || row + scrolledY >= NUM_VISIBLE_TILES_Y)
+                                randomAnimationFrames[index] = CreateRandomStart(frontTile);
+                            else
+                                randomAnimationFrames[index] = randomAnimationFramesBackup[column + scrolledX + (row + scrolledY) * NUM_VISIBLE_TILES_X];
+                        }
                     }
 
                     ++index;
@@ -609,6 +698,21 @@ namespace Ambermoon.Render
                 InvokeMapChangedHandler(lastMap, map, adjacentMaps[0], adjacentMaps[1], adjacentMaps[2]);
             else
                 InvokeMapChangedHandler(lastMap, map);
+        }
+
+        RandomAnimationInfo CreateRandomStart(int frameCount, bool poison)
+        {
+            return new RandomAnimationInfo
+            {
+                CurrentFrame = -game.RandomInt(0, frameCount * 4),
+                FrameCount = frameCount,
+                Poison = poison
+            };
+        }
+
+        RandomAnimationInfo CreateRandomStart(Tileset.Tile tile)
+        {
+            return CreateRandomStart(tile.NumAnimationFrames, tile.Flags.HasFlag(Tileset.TileFlags.AutoPoison));
         }
 
         internal void InvokeMapChange()

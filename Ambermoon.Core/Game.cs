@@ -4397,13 +4397,15 @@ namespace Ambermoon
                     finished?.Invoke();
                 }
             }
-            void ShowDamageSplash(PartyMember partyMember, Action finished)
-            {
-                int slot = SlotFromPartyMember(partyMember).Value;
-                layout.SetCharacter(slot, partyMember);
-                ShowPlayerDamage(slot, damageProvider?.Invoke(partyMember) ?? 0);
-                finished?.Invoke();
-            }
+            void ShowDamageSplash(PartyMember partyMember, Action finished) => this.ShowDamageSplash(partyMember, damageProvider, finished);
+        }
+
+        internal void ShowDamageSplash(PartyMember partyMember, Func<PartyMember, uint> damageProvider, Action finished)
+        {
+            int slot = SlotFromPartyMember(partyMember).Value;
+            layout.SetCharacter(slot, partyMember);
+            ShowPlayerDamage(slot, damageProvider?.Invoke(partyMember) ?? 0);
+            finished?.Invoke();
         }
 
         void DamageAllPartyMembers(uint damage, Func<PartyMember, bool> affectChecker = null,

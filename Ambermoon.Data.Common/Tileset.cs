@@ -12,6 +12,7 @@ namespace Ambermoon.Data
             BlockSight = 0x00000002, // TODO: this should be considered for 2D monsters
             Background = 0x00000004,
             Floor = 0x00000008, // TODO: Is this also true for 2D?
+            RandomAnimationStart = 0x00000010, // Most likely random animation start
             UseBackgroundTileFlags = 0x00000020,
             BringToFront = 0x00000040,
             BlockAllMovement = 0x00000080,
@@ -32,6 +33,7 @@ namespace Ambermoon.Data
             AllowMovementUnused15 = 0x00400000,
             AllowMovementUnused16 = 0x00800000,
             PlayerInvisible = 0x04000000,
+            AutoPoison = 0x08000000, // Most likely auto-poisoning (you can dodge the trap with LUK but there will be no popup). It only poisons while the animation is active.
             Transparency = Floor,
             AllowMovementMonster = AllowMovementHorse
         }
