@@ -164,6 +164,25 @@ namespace Ambermoon.Render
                                 animationFrame = 0;
                             }
                         }
+                        else if (animationFrame == 0)
+                        {
+                            var tile = this[ScrollX + (uint)column, ScrollY + (uint)row];
+
+                            if (tile.FrontTileIndex != 0)
+                            {
+                                var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
+
+                                if (frontTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
+                                    PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
+                            }
+                            else if (tile.BackTileIndex != 0)
+                            {
+                                var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
+
+                                if (backTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
+                                    PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
+                            }
+                        }
 
                         if (backgroundTileSprites[index].NumFrames != 1)
                             backgroundTileSprites[index].CurrentFrame = animationFrame;
