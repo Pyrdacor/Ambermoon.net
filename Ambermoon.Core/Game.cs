@@ -3363,7 +3363,7 @@ namespace Ambermoon
                     position.Y >= 0 && position.Y < Map.Height)
                 {
                     x = (uint)position.X;
-                    y = (uint)position.X;
+                    y = (uint)position.Y;
                     @event = Map.GetEvent(x, y, CurrentSavegame);
                 }
                 else
