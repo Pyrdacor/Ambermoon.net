@@ -259,6 +259,8 @@ namespace Ambermoon.Render
                         player.Direction = newDirection;
                         game.CurrentSavegame.CharacterDirection = newDirection;
                         UpdateAppearance(game.CurrentTicks);
+                        tile = Map[(uint)Position.X, (uint)Position.Y];
+                        Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
                     }
                 }
             }
