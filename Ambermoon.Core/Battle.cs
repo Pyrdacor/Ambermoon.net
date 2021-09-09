@@ -3576,7 +3576,7 @@ namespace Ambermoon
                 return AttackResult.Protected;
             }
 
-            if (game.RollDice100() > attacker.Abilities[Ability.Attack].TotalCurrentValue)
+            if ((!game.Godmode || attacker is Monster) && game.RollDice100() > attacker.Abilities[Ability.Attack].TotalCurrentValue)
                 return AttackResult.Failed;
 
             if (game.RollDice100() < attacker.Abilities[Ability.CriticalHit].TotalCurrentValue)
