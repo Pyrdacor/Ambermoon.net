@@ -35,6 +35,7 @@ namespace Ambermoon.Renderer
     {
         public readonly int OpenGLVersionMajor = 0;
         public readonly int OpenGLVersionMinor = 0;
+        public readonly bool Embedded = false;
         public readonly int GLSLVersionMajor = 0;
         public readonly int GLSLVersionMinor = 0;
         public readonly GL Gl = null;
@@ -48,6 +49,15 @@ namespace Ambermoon.Renderer
 
             var openGLVersion = Gl.GetStringS(StringName.Version).TrimStart();
 
+            if (openGLVersion.StartsWith("OpenGL"))
+                openGLVersion = openGLVersion.Substring(6).TrimStart();
+
+            if (openGLVersion.StartsWith("ES"))
+            {
+                Embedded = true;
+                openGLVersion = openGLVersion.Substring(2).TrimStart();
+            }
+
             Regex versionRegex = new Regex(@"([0-9]+)\.([0-9]+)", RegexOptions.Compiled);
 
             var match = versionRegex.Match(openGLVersion);
@@ -60,9 +70,21 @@ namespace Ambermoon.Renderer
             OpenGLVersionMajor = int.Parse(match.Groups[1].Value);
             OpenGLVersionMinor = int.Parse(match.Groups[2].Value);
 
-            if (OpenGLVersionMajor >= 2) // glsl is supported since OpenGL 2.0
+            if (OpenGLVersionMajor >= 2 || Embedded) // glsl is supported since OpenGL 2.0
             {
                 var glslVersion = Gl.GetStringS(StringName.ShadingLanguageVersion);
+
+                while (true)
+                {
+                    if (glslVersion.StartsWith("OpenGL"))
+                        glslVersion = glslVersion.Substring(6).TrimStart();
+                    else if (glslVersion.StartsWith("ES"))
+                        glslVersion = glslVersion.Substring(2).TrimStart();
+                    else if (glslVersion.StartsWith("GLSL"))
+                        glslVersion = glslVersion.Substring(4).TrimStart();
+                    else
+                        break;
+                }
 
                 match = versionRegex.Match(glslVersion);
 
