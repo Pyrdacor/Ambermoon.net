@@ -9813,6 +9813,7 @@ namespace Ambermoon
                         ClosePopup();
                         uint cost = charges * (uint)enchanter.Cost;
 
+                        nextClickHandler = null;
                         layout.ShowPlaceQuestion($"{DataNameProvider.PriceForEnchanting}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             nextClickHandler = null;
@@ -9947,6 +9948,7 @@ namespace Ambermoon
                             return;
                         }
 
+                        nextClickHandler = null;
                         layout.ShowPlaceQuestion($"{DataNameProvider.PriceForExamining}{sage.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             nextClickHandler = null;
@@ -9988,6 +9990,7 @@ namespace Ambermoon
 
             void Heal(uint lp)
             {
+                nextClickHandler = null;
                 layout.ShowPlaceQuestion($"{DataNameProvider.PriceForHealing}{lp * healer.HealLPCost}{DataNameProvider.AgreeOnPrice}", answer =>
                 {
                     if (answer) // yes
@@ -10009,7 +10012,7 @@ namespace Ambermoon
                 // like dust to ashes and ashes to body first.
 
                 var cost = (uint)healer.GetCostForHealingAilment(ailment);
-
+                nextClickHandler = null;
                 layout.ShowPlaceQuestion($"{DataNameProvider.PriceForHealingCondition}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
                 {
                     if (answer) // yes
@@ -10090,7 +10093,7 @@ namespace Ambermoon
 
                     int maxCursesToRemove = Math.Min((int)healer.AvailableGold / healer.RemoveCurseCost,
                         currentlyHealedMember.Equipment.Slots.Count(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
-
+                    nextClickHandler = null;
                     layout.ShowPlaceQuestion($"{DataNameProvider.PriceForRemovingCurses}{maxCursesToRemove * healer.RemoveCurseCost}{DataNameProvider.AgreeOnPrice}", answer =>
                     {
                         if (answer) // yes
@@ -10330,6 +10333,7 @@ namespace Ambermoon
                             return;
                         }
 
+                        nextClickHandler = null;
                         layout.ShowPlaceQuestion($"{DataNameProvider.PriceForRepair}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             nextClickHandler = null;
@@ -10379,6 +10383,7 @@ namespace Ambermoon
                         layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney);
                         return;
                     }
+                    nextClickHandler = null;
                     layout.ShowPlaceQuestion($"{DataNameProvider.StayWillCost}{totalCost}{DataNameProvider.AgreeOnPrice}", answer =>
                     {
                         if (answer) // yes
@@ -10496,6 +10501,7 @@ namespace Ambermoon
                             PlaceType.ShipDealer => DataNameProvider.PriceForShip,
                             _ => throw new AmbermoonException(ExceptionScope.Application, $"Invalid salesman place type: {salesman.PlaceType}")
                         };
+                        nextClickHandler = null;
                         layout.ShowPlaceQuestion($"{costText}{totalCost}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             if (answer) // yes
@@ -10594,6 +10600,7 @@ namespace Ambermoon
                         Math.Min(99, foodDealer.AvailableGold / (uint)foodDealer.Cost), amount =>
                     {
                         ClosePopup();
+                        nextClickHandler = null;
                         layout.ShowPlaceQuestion($"{DataNameProvider.PriceOfFood}{amount * foodDealer.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             if (answer) // yes
@@ -10679,6 +10686,7 @@ namespace Ambermoon
 
             void Train(uint times)
             {
+                nextClickHandler = null;
                 layout.ShowPlaceQuestion($"{DataNameProvider.PriceForTraining}{times * trainer.Cost}{DataNameProvider.AgreeOnPrice}", answer =>
                 {
                     if (answer) // yes
@@ -11089,6 +11097,7 @@ namespace Ambermoon
                     void Buy(uint amount)
                     {
                         ClosePopup();
+                        nextClickHandler = null;
                         layout.ShowPlaceQuestion($"{DataNameProvider.ThisWillCost}{amount * item.Price}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             if (answer) // yes
@@ -11224,6 +11233,7 @@ namespace Ambermoon
                     {
                         ClosePopup();
                         var sellPrice = amount * CalculatePrice(item.Price);
+                        nextClickHandler = null;
                         layout.ShowPlaceQuestion($"{DataNameProvider.ForThisIllGiveYou}{sellPrice}{DataNameProvider.AgreeOnPrice}", answer =>
                         {
                             if (answer) // yes
