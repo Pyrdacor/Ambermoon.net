@@ -4054,11 +4054,21 @@ namespace Ambermoon.UI
             {
                 case Key.Up:
                     if (!PopupActive && HasScrollableItemGrid)
-                        itemGrids[0].ScrollUp();
+                    {
+                        if (keyModifiers.HasFlag(KeyModifiers.Shift))
+                            itemGrids[0].ScrollToBegin();
+                        else
+                            itemGrids[0].ScrollUp();
+                    }
                     break;
                 case Key.Down:
                     if (!PopupActive && HasScrollableItemGrid)
-                        itemGrids[0].ScrollDown();
+                    {
+                        if (keyModifiers.HasFlag(KeyModifiers.Shift))
+                            itemGrids[0].ScrollToEnd();
+                        else
+                            itemGrids[0].ScrollDown();
+                    }
                     break;
                 case Key.PageUp:
                     if (!PopupActive && HasScrollableItemGrid)
