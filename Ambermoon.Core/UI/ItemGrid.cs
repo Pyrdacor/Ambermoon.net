@@ -551,6 +551,7 @@ namespace Ambermoon.UI
                     item.SourcePlayer = game.CurrentInventoryIndex;
                 item.SourceGrid = this;
                 item.SourceSlot = slot;
+                item.Equipped = game.CurrentWindow.Window == Window.Inventory && SlotCount == 9;
                 return itemSlot.Item.Amount;
             }
         }

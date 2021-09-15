@@ -13,7 +13,6 @@
 
 ## UI
 
-- Aborting drag from equipment will instead place/exchange the item in the inventory.
 - When rightclicking a place question the buttons stay (at least for blacksmith in Newlake).
 - When editing a savegame name (in save dialog list) and aborting, the text stays (fixed?).
 - "Do you accept this character?" message is missing in character creator.
