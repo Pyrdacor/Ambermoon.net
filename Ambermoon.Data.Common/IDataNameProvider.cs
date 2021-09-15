@@ -205,6 +205,7 @@ namespace Ambermoon.Data
         string NoOneCanCarryThatMuch { get; }
         string CannotCarryAllGold { get; }
         string MapViewNotWorkingHere { get; }
+        string TurnOnTuneInAndDropOut { get; }
 
 
         #region Conversations

@@ -235,6 +235,7 @@
         public string NoOneCanCarryThatMuch => executableData.Messages.GetEntry(Messages.Index.NoOneCanCarryThatMuch);
         public string CannotCarryAllGold => executableData.Messages.GetEntry(Messages.Index.CannotCarryAllGold);
         public string MapViewNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.MapViewNotWorkingHere);
+        public string TurnOnTuneInAndDropOut => executableData.Messages.GetEntry(Messages.Index.TurnOnTuneInAndDropOut);
 
 
         #region Conversations

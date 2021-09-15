@@ -256,6 +256,8 @@ namespace Ambermoon
         bool is3D = false;
         bool noEvents = false;
         bool levitating = false;
+        const string schnismEasterEgg = "schnismschnismschnism";
+        string schnism = "";
         internal const ushort MaxBaseLine = 0x4000;
         // Note: This is half the max base line which is used for the player in complete
         // darkness. Big gaps are needed as the z buffer precision is lower with higher distance.
@@ -2722,6 +2724,20 @@ namespace Ambermoon
             if (keyChar >= '1' && keyChar <= '6')
             {
                 SetActivePartyMember(keyChar - '1');
+            }
+
+            if (!WindowActive && !layout.PopupActive)
+            {
+                schnism += keyChar;
+
+                if (!schnismEasterEgg.StartsWith(schnism.ToLower()))
+                    schnism = "";
+                else if (schnism.ToLower() == schnismEasterEgg)
+                {
+                    schnism = "";
+                    ShowMessagePopup(DataNameProvider.TurnOnTuneInAndDropOut, () =>
+                        DamageAllPartyMembers(p => 0u, p => p.Alive, null, null, Ailment.Drugged));
+                }
             }
         }
 
