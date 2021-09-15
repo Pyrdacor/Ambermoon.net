@@ -640,13 +640,13 @@ namespace Ambermoon.Render
 
             if (map.IsWorldMap)
             {
-                x = (uint)Util.Limit(0, x - NUM_VISIBLE_TILES_X / 2, map.Width - 1);
-                y = (uint)Util.Limit(0, y - NUM_VISIBLE_TILES_Y / 2, map.Height - 1);
+                x = (uint)Util.Limit(0, (long)x - NUM_VISIBLE_TILES_X / 2, map.Width - 1);
+                y = (uint)Util.Limit(0, (long)y - NUM_VISIBLE_TILES_Y / 2, map.Height - 1);
             }
             else
             {
-                x = (uint)Util.Limit(0, x - NUM_VISIBLE_TILES_X / 2, map.Width - NUM_VISIBLE_TILES_X);
-                y = (uint)Util.Limit(0, y - NUM_VISIBLE_TILES_Y / 2, map.Height - NUM_VISIBLE_TILES_Y);
+                x = (uint)Util.Limit(0, (long)x - NUM_VISIBLE_TILES_X / 2, map.Width - NUM_VISIBLE_TILES_X);
+                y = (uint)Util.Limit(0, (long)y - NUM_VISIBLE_TILES_Y / 2, map.Height - NUM_VISIBLE_TILES_Y);
             }
         }
 
