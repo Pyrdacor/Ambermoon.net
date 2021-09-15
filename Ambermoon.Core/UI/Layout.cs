@@ -928,7 +928,7 @@ namespace Ambermoon.UI
         }
 
         internal Popup OpenYesNoPopup(IText text, Action yesAction, Action noAction,
-            Action closeAction, int minLines = 3, byte displayLayerOffset = 0,
+            Action closeAction, int minLines = 1, byte displayLayerOffset = 0,
             TextAlign textAlign = TextAlign.Left)
         {
             buttonGrid?.HideTooltips();

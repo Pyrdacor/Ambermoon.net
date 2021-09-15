@@ -15,8 +15,6 @@
 
 - When editing a savegame name (in save dialog list) and aborting, the text stays (fixed?).
 - "Do you accept this character?" message is missing in character creator.
-- "Really load savegame" popup is much to high. This is due to a change to YesNo popup sizing.
-  But without the change, the german crash savegame load question doesn't fit.
 
 
 ## Misc
