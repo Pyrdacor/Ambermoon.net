@@ -99,7 +99,8 @@ namespace Ambermoon.Renderer
             0.70f,  // OutroText
             0.97f,  // Effects
             0.98f,  // Cursor
-            0.99f   // DrugEffect
+            0.99f,  // DrugEffect
+            0.70f   // Misc / General purpose
         };
 
         public RenderLayer(State state, Layer layer, Texture texture, Texture palette)
@@ -114,11 +115,11 @@ namespace Ambermoon.Renderer
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, layer == Layer.DrugEffect, layer == Layer.Billboards3D, layer == Layer.Text,
-                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground);
+                opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc);
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
             if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.Effects || layer == Layer.DrugEffect ||
-                layer == Layer.IntroGraphics)
+                layer == Layer.IntroGraphics || layer == Layer.Misc)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
 
             Layer = layer;
@@ -215,8 +216,9 @@ namespace Ambermoon.Renderer
                     }
                     else
                     {
+                        bool special = Layer == Layer.Misc;
                         bool sky = Layer == Layer.Map3DBackground;
-                        TextureShader shader = sky ? RenderBuffer.SkyShader :
+                        TextureShader shader = special ? RenderBuffer.AlphaTextureShader : sky ? RenderBuffer.SkyShader :
                             RenderBuffer.Opaque ? RenderBuffer.OpaqueTextureShader : RenderBuffer.TextureShader;
 
                         shader.UpdateMatrices(state);
@@ -296,6 +298,11 @@ namespace Ambermoon.Renderer
         public void UpdateDisplayLayer(int index, byte displayLayer)
         {
             RenderBuffer.UpdateDisplayLayer(index, displayLayer);
+        }
+
+        public void UpdateAlpha(int index, byte alpha)
+        {
+            RenderBuffer.UpdateAlpha(index, alpha);
         }
 
         public void UpdateExtrude(int index, float extrude)

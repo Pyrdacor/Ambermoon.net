@@ -62,10 +62,11 @@ namespace Ambermoon.Renderer
         static readonly Dictionary<State, TextShader> textShaders = new Dictionary<State, TextShader>();
         static readonly Dictionary<State, FowShader> fowShaders = new Dictionary<State, FowShader>();
         static readonly Dictionary<State, SkyShader> skyShaders = new Dictionary<State, SkyShader>();
+        static readonly Dictionary<State, AlphaTextureShader> alphaTextureShaders = new Dictionary<State, AlphaTextureShader>();
 
         public RenderBuffer(State state, bool is3D, bool supportAnimations, bool layered,
             bool noTexture = false, bool isBillboard = false, bool isText = false, bool opaque = false,
-            bool fow = false, bool sky = false)
+            bool fow = false, bool sky = false, bool special = false)
         {
             this.state = state;
             Opaque = opaque;
@@ -76,7 +77,13 @@ namespace Ambermoon.Renderer
                     throw new AmbermoonException(ExceptionScope.Render, "3D render buffers can't be masked nor layered and must not lack a texture.");
             }
 
-            if (sky)
+            if (special)
+            {
+                if (!alphaTextureShaders.ContainsKey(state))
+                    alphaTextureShaders[state] = AlphaTextureShader.Create(state);
+                vertexArrayObject = new VertexArrayObject(state, alphaTextureShaders[state].ShaderProgram);
+            }
+            else if (sky)
             {
                 if (!skyShaders.ContainsKey(state))
                     skyShaders[state] = SkyShader.Create(state);
@@ -142,6 +149,9 @@ namespace Ambermoon.Renderer
             else
                 positionBuffer = new PositionBuffer(state, false);
             indexBuffer = new IndexBuffer(state);
+
+            if (special)
+                alphaBuffer = new ByteBuffer(state, false);
 
             if (fow)
             {
@@ -222,6 +232,9 @@ namespace Ambermoon.Renderer
                 vertexArrayObject.AddBuffer(ColorShader.DefaultPositionName, positionBuffer);
             vertexArrayObject.AddBuffer("index", indexBuffer);
 
+            if (special)
+                vertexArrayObject.AddBuffer(AlphaTextureShader.DefaultAlphaName, alphaBuffer);
+
             if (!fow && !noTexture)
             {
                 vertexArrayObject.AddBuffer(TextureShader.DefaultPaletteIndexName, paletteIndexBuffer);
@@ -237,6 +250,7 @@ namespace Ambermoon.Renderer
         internal TextShader TextShader => textShaders[state];
         internal FowShader FowShader => fowShaders[state];
         internal SkyShader SkyShader => skyShaders[state];
+        internal AlphaTextureShader AlphaTextureShader => alphaTextureShaders[state];
 
         public int GetDrawIndex(Render.IFow fow,
             Render.PositionTransformation positionTransformation,
@@ -410,7 +424,6 @@ namespace Ambermoon.Renderer
                     baseLineOffsetSize = sizeTransformation(baseLineOffsetSize);
 
                 ushort baseLine = (ushort)Math.Min(ushort.MaxValue, position.Y + size.Height + baseLineOffsetSize.Height);
-
                 int baseLineBufferIndex = baseLineBuffer.Add(baseLine, index);
                 baseLineBuffer.Add(baseLine, baseLineBufferIndex + 1);
                 baseLineBuffer.Add(baseLine, baseLineBufferIndex + 2);
@@ -420,7 +433,6 @@ namespace Ambermoon.Renderer
             if (layerBuffer != null)
             {
                 byte layer = sprite is Render.ILayerSprite layerSprite ? layerSprite.DisplayLayer : (byte)0;
-
                 int layerBufferIndex = layerBuffer.Add(layer, index);
                 layerBuffer.Add(layer, layerBufferIndex + 1);
                 layerBuffer.Add(layer, layerBufferIndex + 2);
@@ -445,6 +457,15 @@ namespace Ambermoon.Renderer
                 textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 1);
                 textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 2);
                 textColorIndexBuffer.Add(textColorIndex.Value, textColorIndexBufferIndex + 3);
+            }
+
+            if (alphaBuffer != null)
+            {
+                byte alpha = sprite is AlphaSprite alphaSprite ? alphaSprite.Alpha : (byte)0xff;
+                int alphaBufferIndex = alphaBuffer.Add(alpha, index);
+                alphaBuffer.Add(alpha, alphaBufferIndex + 1);
+                alphaBuffer.Add(alpha, alphaBufferIndex + 2);
+                alphaBuffer.Add(alpha, alphaBufferIndex + 3);
             }
 
             return index;
@@ -854,6 +875,17 @@ namespace Ambermoon.Renderer
                 layerBuffer.Update(index + 1, displayLayer);
                 layerBuffer.Update(index + 2, displayLayer);
                 layerBuffer.Update(index + 3, displayLayer);
+            }
+        }
+
+        public void UpdateAlpha(int index, byte alpha)
+        {
+            if (alphaBuffer != null)
+            {
+                alphaBuffer.Update(index, alpha);
+                alphaBuffer.Update(index + 1, alpha);
+                alphaBuffer.Update(index + 2, alpha);
+                alphaBuffer.Update(index + 3, alpha);
             }
         }
 

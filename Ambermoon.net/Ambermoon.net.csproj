@@ -35,11 +35,15 @@
     <None Remove="ambermoon.cfg" />
     <None Remove="Resources\app.ico" />
     <None Remove="Resources\IntroFont.dat" />
+    <None Remove="Resources\logo.pyr" />
     <None Remove="Resources\windowIcon.png" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\logo.pyr">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\windowIcon.png">

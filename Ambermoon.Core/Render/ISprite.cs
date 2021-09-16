@@ -76,6 +76,15 @@ namespace Ambermoon.Render
         }
     }
 
+    public interface IAlphaSprite : ILayerSprite
+    {
+        byte Alpha
+        {
+            get;
+            set;
+        }
+    }
+
     public interface IAnimatedSprite : ISprite
     {
         uint NumFrames
@@ -118,5 +127,6 @@ namespace Ambermoon.Render
     {
         ISprite Create(int width, int height, bool layered, byte displayLayer = 0);
         IAnimatedSprite CreateAnimated(int width, int height, int textureAtlasWidth, uint numFrames, bool layered = false, byte displayLayer = 0);
+        IAlphaSprite CreateWithAlpha(int width, int height, byte displayLayer = 0);
     }
 }

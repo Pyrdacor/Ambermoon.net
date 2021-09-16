@@ -226,6 +226,37 @@ namespace Ambermoon.Renderer
         }
     }
 
+    internal class AlphaSprite : LayerSprite, IAlphaSprite
+    {
+        byte alpha = 0xff;
+
+        public AlphaSprite(int width, int height, byte displayLayer, Rect virtualScreen)
+            : base(width, height, 0, 0, displayLayer, virtualScreen)
+        {
+
+        }
+
+        public byte Alpha
+        {
+            get => alpha;
+            set
+            {
+                if (alpha == value)
+                    return;
+
+                alpha = value;
+
+                UpdateAlpha();
+            }
+        }
+
+        void UpdateAlpha()
+        {
+            if (drawIndex != -1) // -1 means not attached to a layer
+                (Layer as RenderLayer).UpdateAlpha(drawIndex, alpha);
+        }
+    }
+
     internal class AnimatedSprite : Sprite, IAnimatedSprite
     {
         Position initialTextureOffset;
@@ -384,6 +415,11 @@ namespace Ambermoon.Renderer
                 return new AnimatedLayerSprite(width, height, 0, 0, displayLayer, VirtualScreen, numFrames, textureAtlasWidth);
             else
                 return new AnimatedSprite(width, height, 0, 0, VirtualScreen, numFrames, textureAtlasWidth);
+        }
+
+        public IAlphaSprite CreateWithAlpha(int width, int height, byte displayLayer = 0)
+        {
+            return new AlphaSprite(width, height, displayLayer, VirtualScreen);
         }
     }
 }

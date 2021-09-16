@@ -101,13 +101,19 @@ namespace Ambermoon.Render
             return builder.Create(bytesPerPixel);
         }
 
-        public Texture CreatePalette(IGraphicProvider graphicProvider)
+        public Texture CreatePalette(IGraphicProvider graphicProvider, params Graphic[] additionalPalettes)
         {
             var paletteBuilder = factory.Create();
             uint index = 0;
 
             foreach (var palette in graphicProvider.Palettes)
                 paletteBuilder.AddTexture(index++, palette.Value);
+
+            if (additionalPalettes != null && additionalPalettes.Length != 0 && additionalPalettes[0] != null)
+            {
+                foreach (var palette in additionalPalettes)
+                    paletteBuilder.AddTexture(index++, palette);
+            }
 
             return paletteBuilder.CreateUnpacked(32, 4).Texture;
         }

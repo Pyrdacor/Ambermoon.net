@@ -43,6 +43,7 @@ namespace Ambermoon
         bool trapMouse = false;
         FloatPosition trappedMouseOffset = null;
         FloatPosition trappedMouseLastPosition = null;
+        LogoPyrdacor logoPyrdacor = null;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -430,12 +431,15 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData);
             var fontProvider = new FontProvider(executableData);
 
+            logoPyrdacor = new LogoPyrdacor();
+
             // Create render view
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPyrdacor.Palettes, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
+                logoPyrdacor.Initialize();
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -446,12 +450,14 @@ namespace Ambermoon
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
             infoText.DisplayLayer = 254;
-            infoText.Visible = true;
+            infoText.Visible = false;//true;  // TODO: REMOVE
 
             renderView.Render(null);
 
             Task.Run(() =>
             {
+                System.Threading.Thread.Sleep(10000); // TODO: REMOVE
+
                 try
                 {
                     var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
@@ -623,7 +629,7 @@ namespace Ambermoon
                 builtinVersion.SourceStream.Position = builtinVersion.Offset;
                 var buffer = new byte[(int)builtinVersion.Size];
                 builtinVersion.SourceStream.Read(buffer, 0, buffer.Length);
-                var tempStream = new System.IO.MemoryStream(buffer);
+                var tempStream = new MemoryStream(buffer);
                 gameData.LoadFromMemoryZip(tempStream);
                 return gameData;
             }
@@ -669,11 +675,13 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             var fontProvider = new FontProvider(executableData);
+            logoPyrdacor = new LogoPyrdacor();
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPyrdacor.Palettes, () =>
             {
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
+                logoPyrdacor.Initialize();
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -723,12 +731,12 @@ namespace Ambermoon
         }
 
         RenderView CreateRenderView(GameData gameData, IConfiguration configuration, GraphicProvider graphicProvider,
-            FontProvider fontProvider, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
+            FontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
             var useFrameBuffer = configuration.UseGraphicFilter;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer);
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, additionalPalettes);
             configuration.UseGraphicFilter = useFrameBuffer;
             return renderView;
         }
@@ -861,6 +869,9 @@ namespace Ambermoon
                     window.Close();
                 return;
             }
+
+            if (logoPyrdacor != null)
+                logoPyrdacor.Update(renderView, delta);
 
             if (versionSelector != null)
                 versionSelector.Update(delta);

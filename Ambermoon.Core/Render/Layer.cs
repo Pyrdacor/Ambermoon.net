@@ -57,7 +57,8 @@ namespace Ambermoon
         OutroText,
         Effects,
         Cursor,
-        DrugEffect
+        DrugEffect,
+        Misc // general purpose layer
     }
 
     public partial class Global

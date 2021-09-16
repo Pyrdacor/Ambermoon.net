@@ -122,7 +122,7 @@ namespace Ambermoon.Renderer.OpenGL
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
-            int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer,
+            int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, Graphic[] additionalPalettes,
             DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
             OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
@@ -156,7 +156,7 @@ namespace Ambermoon.Renderer.OpenGL
             TextureAtlasManager.RegisterFactory(new TextureAtlasBuilderFactory(State));
 
             var textureAtlasManager = textureAtlasManagerProvider?.Invoke();
-            var palette = textureAtlasManager.CreatePalette(graphicProvider);
+            var palette = textureAtlasManager.CreatePalette(graphicProvider, additionalPalettes);
 
             foreach (var layer in Enum.GetValues<Layer>())
             {
@@ -511,11 +511,11 @@ namespace Ambermoon.Renderer.OpenGL
                                 (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
                         State.Gl.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusConstantColor);
                     }
-                    else if (layer.Key == Layer.FOW)
+                    else if (layer.Key == Layer.FOW || layer.Key == Layer.Misc)
                     {
                         State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                     }
-                    if (layer.Key == Layer.FOW || layer.Key == Layer.Effects || layer.Key == Layer.DrugEffect)
+                    if (layer.Key == Layer.FOW || layer.Key == Layer.Effects || layer.Key == Layer.DrugEffect || layer.Key == Layer.Misc)
                         State.Gl.Enable(EnableCap.Blend);
                     else
                         State.Gl.Disable(EnableCap.Blend);
