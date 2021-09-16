@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data;
+using Ambermoon.Data.Audio;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Render;
 using System;
@@ -34,9 +35,17 @@ namespace Ambermoon
         readonly Size frameSize = null;
         IAlphaSprite sprite1 = null;
         IAlphaSprite sprite2 = null;
+        readonly float oldVolume;
+        readonly Audio.OpenAL.AudioOutput audioOutput;
+        readonly ISong song;
 
-        public LogoPyrdacor()
+        public LogoPyrdacor(Audio.OpenAL.AudioOutput audioOutput, ISong song)
         {
+            this.audioOutput = audioOutput;
+            this.song = song;
+            if (audioOutput.Enabled)
+                song?.Play(audioOutput);
+            oldVolume = audioOutput.Volume;
             var logoStream = new MemoryStream(Resources.Logo);
             var deflateStream = new DeflateStream(logoStream, CompressionMode.Decompress);
             var decompressedStream = new MemoryStream();
@@ -56,11 +65,11 @@ namespace Ambermoon
                     Time = time
                 };
 
-                if (command.Type == CommandType.Blend || command.Type == CommandType.Replace)
-                {
+                if (command.Type == CommandType.Blend)
                     command.Parameters = logoData.ReadBytes(4);
+
+                if (command.Type == CommandType.Blend || command.Type == CommandType.Replace)
                     command.ImageIndex = logoData.ReadByte();
-                }
 
                 commands.Enqueue(command);
             }
@@ -110,7 +119,7 @@ namespace Ambermoon
             });
         }
 
-        public void Update(IRenderView renderView, double delta)
+        public void Update(IRenderView renderView, Action finished)
         {
             if (renderView == null)
                 return;
@@ -120,7 +129,14 @@ namespace Ambermoon
             if (currentCommand == null)
             {
                 if (commands.Count == 0)
+                {
+                    sprite1?.Delete();
+                    sprite2?.Delete();
+                    song.Stop();
+                    audioOutput.Volume = oldVolume;
+                    finished?.Invoke();
                     return;
+                }
 
                 currentCommand = commands.Dequeue();
                 currentCommandStartTime = DateTime.Now;
@@ -203,7 +219,7 @@ namespace Ambermoon
                         sprite.Alpha = (byte)Util.Round(elapsed * 0xff);
                         sprite.ClipArea = new Rect(sprite.X + startX, sprite.Y + minY, endX - startX, maxY - minY);
 
-                        if (elapsed > 0.9999)
+                        if (elapsed >= 1)
                             currentCommand = null;
                     }
                     break;
@@ -213,6 +229,7 @@ namespace Ambermoon
                     if (commandActivated)
                     {
                         bool noImage = sprite1 == null;
+                        bool noSecondImage = sprite2 == null;
                         EnsureSprites(renderView, noImage);
                         if (noImage)
                         {
@@ -223,7 +240,7 @@ namespace Ambermoon
                         }
                         else
                         {
-                            if (sprite2 != null)
+                            if (!noSecondImage && sprite2 != null)
                                 sprite1.TextureAtlasOffset = sprite2.TextureAtlasOffset;
                             sprite1.ClipArea = new Rect(sprite1.X, sprite1.Y, sprite1.Width, sprite1.Height);
                             sprite1.Alpha = 0xff;
@@ -246,7 +263,7 @@ namespace Ambermoon
                             sprite1.Alpha = (byte)(0xff - sprite2.Alpha);
                         }
 
-                        if (elapsed > 0.9999)
+                        if (elapsed >= 1)
                             currentCommand = null;
                     }
                     break;
@@ -270,8 +287,9 @@ namespace Ambermoon
                     {
                         var elapsed = command.Time == 0 ? 1.0 : Math.Min(1.0, (DateTime.Now - currentCommandStartTime).TotalMilliseconds / command.Time);
                         sprite1.Alpha = (byte)Util.Round(0xff - elapsed * 0xff);
+                        audioOutput.Volume = (float)(1.0 - elapsed) * oldVolume;
 
-                        if (elapsed > 0.9999)
+                        if (elapsed >= 1)
                             currentCommand = null;
                     }
                     break;

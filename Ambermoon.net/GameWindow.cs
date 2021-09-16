@@ -354,17 +354,7 @@ namespace Ambermoon
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage)
         {
-            musicCache = new MusicCache(renderView.GameData, Data.Enumerations.Song.Menu, // TODO: use intro later maybe and initialize earlier then
-                Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
-            audioOutput = new AudioOutput(1, 44100);
-
-            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
-            audioOutput.Enabled = audioOutput.Available && configuration.Music;
-
             infoText.Visible = false;
-
-            if (audioOutput.Enabled)
-                musicCache.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
                 GetText(gameLanguage, 1), GetText(gameLanguage, 2));
@@ -431,7 +421,12 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData);
             var fontProvider = new FontProvider(executableData);
 
-            logoPyrdacor = new LogoPyrdacor();
+            audioOutput = new AudioOutput(1, 44100);
+            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
+            audioOutput.Enabled = audioOutput.Available && configuration.Music;
+            musicCache = new MusicCache(gameData, Data.Enumerations.Song.Menu, Resources.Song, // TODO: use intro later maybe and initialize earlier then
+                Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
+            logoPyrdacor = new LogoPyrdacor(audioOutput, musicCache.GetLogoSong());
 
             // Create render view
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPyrdacor.Palettes, () =>
@@ -446,18 +441,17 @@ namespace Ambermoon
 
             InitGlyphs();
 
+            // TODO: REMOVE
             var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
             infoText.DisplayLayer = 254;
-            infoText.Visible = false;//true;  // TODO: REMOVE
+            infoText.Visible = false;
 
             renderView.Render(null);
 
             Task.Run(() =>
             {
-                System.Threading.Thread.Sleep(10000); // TODO: REMOVE
-
                 try
                 {
                     var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
@@ -560,6 +554,11 @@ namespace Ambermoon
                             gameCreator = () => throw ex;
                         }
                     }
+
+                    while (logoPyrdacor != null)
+                        System.Threading.Thread.Sleep(100);
+
+                    musicCache.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
 
                     ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
                         introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
@@ -675,7 +674,7 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             var fontProvider = new FontProvider(executableData);
-            logoPyrdacor = new LogoPyrdacor();
+            logoPyrdacor = new LogoPyrdacor(audioOutput, musicCache.GetLogoSong());
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPyrdacor.Palettes, () =>
@@ -871,7 +870,7 @@ namespace Ambermoon
             }
 
             if (logoPyrdacor != null)
-                logoPyrdacor.Update(renderView, delta);
+                logoPyrdacor.Update(renderView, () => logoPyrdacor = null);
 
             if (versionSelector != null)
                 versionSelector.Update(delta);
@@ -1061,7 +1060,7 @@ namespace Ambermoon
                 {
                     if (configuration?.CacheMusic == true && musicCache != null && !musicCache.Cached)
                     {
-                        MusicCache.Cache(musicCache, Configuration.ExecutableDirectoryPath,
+                        MusicCache.Cache(musicCache, musicCache.GetLogoSong(), Configuration.ExecutableDirectoryPath,
                             Configuration.FallbackConfigDirectory, Path.GetTempPath());
                     }
                 });

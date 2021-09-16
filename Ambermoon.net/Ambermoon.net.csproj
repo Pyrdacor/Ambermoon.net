@@ -36,6 +36,7 @@
     <None Remove="Resources\app.ico" />
     <None Remove="Resources\IntroFont.dat" />
     <None Remove="Resources\logo.pyr" />
+    <None Remove="Resources\song.pyr" />
     <None Remove="Resources\windowIcon.png" />
   </ItemGroup>
 
@@ -44,6 +45,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\logo.pyr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\song.pyr">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\windowIcon.png">
