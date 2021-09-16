@@ -53,6 +53,16 @@ namespace Ambermoon.Data.Legacy.Compression
                         currentHeaderPosition = compressedData.Count;
                         compressedData.Add(0); // new header
                     }
+                    else if (compressedData.Count % 2 == 1)
+                    {
+                        compressedData.Add(0xc0); // new header
+                        compressedData.Add(0); // padding byte
+                        compressedData.Add(0); // padding byte
+                    }
+                }
+                else if (last && compressedData.Count % 2 == 1)
+                {
+                    compressedData.Add(0); // padding byte
                 }
             }
 
@@ -101,31 +111,7 @@ namespace Ambermoon.Data.Legacy.Compression
 
             for (; i < data.Length; ++i)
             {
-                if (i == data.Length - 1)
-                {
-                    if (compressedData.Count % 2 == 0) // we add one last literal so it would become odd.
-                    {
-                        AddByte(data[i], false);
-                        // In that case we have to add another 0 byte.
-                        // It could be that by chance a new header byte was added as well,
-                        // so we have to check again for odd size.
-                        if (compressedData.Count % 2 == 1)
-                            AddByte(0, true);
-                        else
-                        {
-                            AddByte(0, false);
-                            AddByte(0, true);
-                        }
-                    }
-                    else
-                    {
-                        AddByte(data[i], true);
-                    }
-                }
-                else
-                {
-                    AddByte(data[i], false);
-                }
+                AddByte(data[i], i == data.Length - 1);
             }
 
             if (currentHeaderBitMask != 0x80)
