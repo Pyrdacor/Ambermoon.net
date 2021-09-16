@@ -12,10 +12,10 @@ namespace Ambermoon.Data.Legacy.Compression
         public static byte[] CompressData(byte[] data)
         {
             // ease algorithm by not compressing very small data (20 bytes)
-            if (data.Length <  MaxMatchLength + 2)
+            if (data.Length < MaxMatchLength + 2)
                 return data;
 
-            var compressedData = new List<byte>(data.Length / 2);
+            var compressedData = new List<byte>(data.Length);
             var trie = new MatchTrie();
             int currentHeaderPosition = 0;
             byte currentHeaderBitMask = 0x80 >> 1; // skip first bit
@@ -101,7 +101,31 @@ namespace Ambermoon.Data.Legacy.Compression
 
             for (; i < data.Length; ++i)
             {
-                AddByte(data[i], i == data.Length - 1);
+                if (i == data.Length - 1)
+                {
+                    if (compressedData.Count % 2 == 0) // we add one last literal so it would become odd.
+                    {
+                        AddByte(data[i], false);
+                        // In that case we have to add another 0 byte.
+                        // It could be that by chance a new header byte was added as well,
+                        // so we have to check again for odd size.
+                        if (compressedData.Count % 2 == 1)
+                            AddByte(0, true);
+                        else
+                        {
+                            AddByte(0, false);
+                            AddByte(0, true);
+                        }
+                    }
+                    else
+                    {
+                        AddByte(data[i], true);
+                    }
+                }
+                else
+                {
+                    AddByte(data[i], false);
+                }
             }
 
             if (currentHeaderBitMask != 0x80)

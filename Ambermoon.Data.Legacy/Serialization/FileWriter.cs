@@ -1,10 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
     public static class FileWriter
     {
+        static byte[] AlignData(byte[] data)
+        {
+            if (data.Length % 2 == 0)
+                return data;
+
+            var buffer = new byte[data.Length + 1];
+            Buffer.BlockCopy(data, 0, buffer, 0, data.Length);
+            return buffer;
+        }
+
         public static void Write(DataWriter writer, IFileContainer fileContainer)
         {
             var fileType = ((fileContainer.Header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)fileContainer.Header;
@@ -37,7 +48,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (additionalLobCompression)
             {
                 var lobWriter = new DataWriter();
-                WriteLob(lobWriter, fileData, (uint)FileType.LOB);
+                WriteLob(lobWriter, AlignData(fileData), (uint)FileType.LOB);
                 fileData = lobWriter.ToArray();
             }
 
@@ -54,17 +65,20 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public static void WriteLob(DataWriter writer, byte[] fileData)
         {
-            WriteLob(writer, fileData, (uint)FileType.LOB);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.LOB);
         }
 
         public static void WriteVol1(DataWriter writer, byte[] fileData)
         {
-            WriteLob(writer, fileData, (uint)FileType.VOL1);
+            WriteLob(writer, AlignData(fileData), (uint)FileType.VOL1);
         }
 
         static void WriteLob(DataWriter writer, byte[] fileData, uint header)
         {
             var compressedData = Compression.Lob.CompressData(fileData);
+
+            if (fileData.Length % 2 == 1 || compressedData.Length % 2 == 1)
+                throw new AmbermoonException(ExceptionScope.Application, "Lob source or compressed data is not word-aligned.");
 
             writer.Write(header);
             writer.Write((uint)fileData.Length | 0x06000000u);
