@@ -140,7 +140,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         {
                             // this may be lob compressed if size is better
                             var lobWriter = new DataWriter();
-                            WriteLob(lobWriter, fileData, (uint)FileType.LOB);
+                            WriteLob(lobWriter, fileData);
                             var data = lobWriter.Size - 4 < fileData.Length ? lobWriter.ToArray() : fileData;
                             bool lob = data != fileData;
                             // this is always JH encoded
