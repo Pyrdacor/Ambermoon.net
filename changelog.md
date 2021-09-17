@@ -1,8 +1,12 @@
 # Changelog
 
+## 1.1.0 - First patch
+
+- Version [1.1.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.0): Bugfixes
+
 ## 1.0.0 - Full version
 
-- Version [1.0.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.5rc2): Remake outro, credits, bugfixing, graphic filter, auto de-rune
+- Version [1.0.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.0): Remake outro, credits, bugfixing, graphic filter, auto de-rune
 
 ## 0.9.x beta - Finalizing
 - Version [0.9.5 RC2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.5rc2): Tutorial, button tooltips, more options, bugfixing
