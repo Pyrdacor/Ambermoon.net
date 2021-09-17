@@ -1,7 +1,6 @@
 ﻿using Ambermoon.Data;
 using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
-using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
@@ -17,14 +16,11 @@ namespace Ambermoon
         readonly CachedSongPlayer cachedSongPlayer = new CachedSongPlayer();
         const string CacheFileName = "music.cache";
         Data.Legacy.Audio.SongManager songManager = null;
-        ISong logoSong;
 
         public ISong GetSong(Song index) => songs[index];
-        public ISong GetLogoSong() => logoSong;
         public bool Cached => songManager == null;
 
-        public MusicCache(IGameData gameData, Song? immediateLoadSongIndex,
-            byte[] logoSongData, params string[] searchPaths)
+        public MusicCache(IGameData gameData, Song? immediateLoadSongIndex, params string[] searchPaths)
         {
             foreach (var searchPath in searchPaths)
             {
@@ -34,8 +30,6 @@ namespace Ambermoon
 
             // No cache found
             songManager = new Data.Legacy.Audio.SongManager(gameData, immediateLoadSongIndex);
-
-            logoSong = songManager.LoadSong(new DataReader(logoSongData), 0, false, false);
 
             foreach (var song in Songs)
             {
@@ -76,13 +70,9 @@ namespace Ambermoon
                 }
 
                 foreach (var song in Songs)
-                {
                     songs.Add(song, new CachedSong(cachedSongPlayer, song, LoadSong()));
-                }
 
                 this.songs = songs;
-
-                logoSong = new CachedSong(cachedSongPlayer, Song.Default, LoadSong());
 
                 return true;
             }
@@ -92,7 +82,7 @@ namespace Ambermoon
             }
         }
 
-        public static void Cache(ISongManager songManager, ISong logoSong, params string[] possiblePaths)
+        public static void Cache(ISongManager songManager, params string[] possiblePaths)
         {
             void Write(Stream stream)
             {
@@ -102,16 +92,6 @@ namespace Ambermoon
 
                     if (songData is Data.Legacy.Audio.ISongDataProvider songDataProvider)
                         WriteSongData(songDataProvider.GetData());
-                    else
-                        throw new NotSupportedException();
-                }
-
-                if (logoSong != null)
-                {
-                    var logoSongData = logoSong;
-
-                    if (logoSongData is Data.Legacy.Audio.ISongDataProvider logoSongDataProvider)
-                        WriteSongData(logoSongDataProvider.GetData());
                     else
                         throw new NotSupportedException();
                 }
@@ -146,11 +126,6 @@ namespace Ambermoon
                     continue;
                 }
             }
-        }
-
-        public ISong LoadSong(IDataReader dataReader, int songIndex, bool lpf, bool pal)
-        {
-            return songManager?.LoadSong(dataReader, songIndex, lpf, pal) ?? throw new NotSupportedException("LoadSong can not be used with caching.");
         }
 
         class CachedSongPlayer

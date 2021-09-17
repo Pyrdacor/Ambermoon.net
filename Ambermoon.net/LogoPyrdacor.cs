@@ -16,7 +16,8 @@ namespace Ambermoon
             Wait,
             Blend,
             Replace,
-            FadeOut
+            FadeOut,
+            PrintText
         }
 
         struct Command
@@ -38,13 +39,14 @@ namespace Ambermoon
         readonly float oldVolume;
         readonly Audio.OpenAL.AudioOutput audioOutput;
         readonly ISong song;
+        TextureAtlasManager textureAtlasManager = null;
+        IRenderText renderText = null;
+        IColoredRect textOverlay = null;
 
         public LogoPyrdacor(Audio.OpenAL.AudioOutput audioOutput, ISong song)
         {
             this.audioOutput = audioOutput;
             this.song = song;
-            if (audioOutput.Enabled)
-                song?.Play(audioOutput);
             oldVolume = audioOutput.Volume;
             var logoStream = new MemoryStream(Resources.Logo);
             var deflateStream = new DeflateStream(logoStream, CompressionMode.Decompress);
@@ -70,6 +72,12 @@ namespace Ambermoon
 
                 if (command.Type == CommandType.Blend || command.Type == CommandType.Replace)
                     command.ImageIndex = logoData.ReadByte();
+
+                if (command.Type == CommandType.PrintText)
+                {
+                    int length = logoData.ReadByte();
+                    command.Parameters = logoData.ReadBytes(length);
+                }
 
                 commands.Enqueue(command);
             }
@@ -111,12 +119,26 @@ namespace Ambermoon
             frameSize = new Size(frameWidth, frameHeight);
         }
 
-        public void Initialize()
+        public void Initialize(TextureAtlasManager textureAtlasManager)
         {
-            TextureAtlasManager.Instance.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
+            this.textureAtlasManager = textureAtlasManager;
+            textureAtlasManager.AddFromGraphics(Layer.Misc, new Dictionary<uint, Graphic>
             {
                 { 0u, logoGraphic }
             });
+
+            if (audioOutput.Enabled)
+                song?.Play(audioOutput);
+        }
+
+        public void Cleanup()
+        {
+            textOverlay?.Delete();
+            renderText?.Delete();
+            sprite1?.Delete();
+            sprite2?.Delete();
+            song.Stop();
+            audioOutput.Volume = oldVolume;
         }
 
         public void Update(IRenderView renderView, Action finished)
@@ -130,10 +152,7 @@ namespace Ambermoon
             {
                 if (commands.Count == 0)
                 {
-                    sprite1?.Delete();
-                    sprite2?.Delete();
-                    song.Stop();
-                    audioOutput.Volume = oldVolume;
+                    Cleanup();
                     finished?.Invoke();
                     return;
                 }
@@ -164,8 +183,31 @@ namespace Ambermoon
                 sprite2 = EnsureSprite(sprite2, 10);
         }
 
+        void EnsureText(IRenderView renderView, string text)
+        {
+            if (renderText == null)
+            {
+                var textArea = new Rect(sprite1.X, sprite1.Y + frameSize.Height + 2, frameSize.Width, Global.GlyphLineHeight);
+                var emptyText = renderView.TextProcessor.CreateText(text, '?');
+                renderText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), emptyText, Data.Enumerations.Color.White, false);
+                renderText.Place(textArea, TextAlign.Center);
+                textOverlay = renderView.ColoredRectFactory.Create(textArea.Width, textArea.Height + 2, Color.Black, 255);
+                textOverlay.X = textArea.X;
+                textOverlay.Y = textArea.Y - 1;
+                textOverlay.Layer = renderView.GetLayer(Layer.Misc);
+            }
+            else
+            {
+                renderText.Text = renderView.TextProcessor.CreateText(text, '?');
+                textOverlay.Color = Color.Black;
+            }
+
+            renderText.Visible = true;
+            textOverlay.Visible = true;
+        }
+
         Position GetImageOffset(int index)
-            => TextureAtlasManager.Instance.GetOrCreate(Layer.Misc).GetOffset(0) + new Position(index * frameSize.Width, 0);
+            => (textureAtlasManager ?? TextureAtlasManager.Instance).GetOrCreate(Layer.Misc).GetOffset(0) + new Position(index * frameSize.Width, 0);
 
         void ProcessCurrentCommand(IRenderView renderView, bool commandActivated)
         {
@@ -232,20 +274,20 @@ namespace Ambermoon
                         bool noSecondImage = sprite2 == null;
                         EnsureSprites(renderView, noImage);
                         if (noImage)
-                        {
-                            sprite1.Alpha = 0x00;
+                        {                            
                             sprite1.TextureAtlasOffset = GetImageOffset(command.ImageIndex);
-                            sprite1.Visible = true;
+                            sprite1.Alpha = 0x00;
                             sprite1.ClipArea = new Rect(sprite1.X, sprite1.Y, sprite1.Width, sprite1.Height);
+                            sprite1.Visible = true;                            
                         }
                         else
                         {
                             if (!noSecondImage && sprite2 != null)
                                 sprite1.TextureAtlasOffset = sprite2.TextureAtlasOffset;
-                            sprite1.ClipArea = new Rect(sprite1.X, sprite1.Y, sprite1.Width, sprite1.Height);
-                            sprite1.Alpha = 0xff;
-                            sprite2.Alpha = 0x00;
                             sprite2.TextureAtlasOffset = GetImageOffset(command.ImageIndex);
+                            sprite1.Alpha = 0xff;
+                            sprite2.Alpha = 0x00;                            
+                            sprite1.ClipArea = new Rect(sprite1.X, sprite1.Y, sprite1.Width, sprite1.Height);
                             sprite2.ClipArea = new Rect(sprite2.X, sprite2.Y, sprite2.Width, sprite2.Height);
                             sprite1.Visible = true;
                             sprite2.Visible = true;
@@ -282,6 +324,12 @@ namespace Ambermoon
 
                         sprite1.Alpha = 0xff;
                         sprite1.Visible = true;
+
+                        if (textOverlay != null)
+                        {
+                            textOverlay.Color = Color.Transparent;
+                            textOverlay.Visible = true;
+                        }
                     }
                     else
                     {
@@ -289,8 +337,29 @@ namespace Ambermoon
                         sprite1.Alpha = (byte)Util.Round(0xff - elapsed * 0xff);
                         audioOutput.Volume = (float)(1.0 - elapsed) * oldVolume;
 
+                        if (textOverlay != null)
+                            textOverlay.Color = new Color((byte)0, (byte)0, (byte)0, (byte)(0xff - sprite1.Alpha));
+
                         if (elapsed >= 1)
                             currentCommand = null;
+                    }
+                    break;
+                case CommandType.PrintText:
+                    if (commandActivated)
+                    {
+                        string text = System.Text.Encoding.UTF8.GetString(command.Parameters);
+                        EnsureText(renderView, text);
+                    }
+                    else
+                    {
+                        var elapsed = command.Time == 0 ? 1.0 : Math.Min(1.0, (DateTime.Now - currentCommandStartTime).TotalMilliseconds / command.Time);
+                        textOverlay.Color = new Color((byte)0, (byte)0, (byte)0, (byte)Util.Round(0xff - elapsed * 0xff));
+
+                        if (elapsed >= 1)
+                        {
+                            textOverlay.Visible = false;
+                            currentCommand = null;
+                        }
                     }
                     break;
             }

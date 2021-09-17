@@ -19,6 +19,7 @@ using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
 using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 using Ambermoon.Audio.OpenAL;
+using Ambermoon.Data.Legacy.Audio;
 
 namespace Ambermoon
 {
@@ -44,6 +45,7 @@ namespace Ambermoon
         FloatPosition trappedMouseOffset = null;
         FloatPosition trappedMouseLastPosition = null;
         LogoPyrdacor logoPyrdacor = null;
+        Graphic[] logoPalettes;
 
         static readonly string[] VersionSavegameFolders = new string[3]
         {
@@ -252,7 +254,12 @@ namespace Ambermoon
             }
             else
             {
-                if (versionSelector != null)
+                if (logoPyrdacor != null)
+                {
+                    logoPyrdacor?.Cleanup();
+                    logoPyrdacor = null;
+                }
+                else if (versionSelector != null)
                     versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
                 else if (Game != null)
                     Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
@@ -301,7 +308,12 @@ namespace Ambermoon
         {
             var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
 
-            if (versionSelector != null)
+            if (logoPyrdacor != null)
+            {
+                logoPyrdacor?.Cleanup();
+                logoPyrdacor = null;
+            }
+            else if (versionSelector != null)
                 versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
             else if (mainMenu != null)
                 mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
@@ -354,7 +366,8 @@ namespace Ambermoon
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage)
         {
-            infoText.Visible = false;
+            if (infoText != null)
+                infoText.Visible = false;
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
                 GetText(gameLanguage, 1), GetText(gameLanguage, 2));
@@ -421,34 +434,40 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData);
             var fontProvider = new FontProvider(executableData);
 
-            audioOutput = new AudioOutput(1, 44100);
-            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
-            audioOutput.Enabled = audioOutput.Available && configuration.Music;
-            musicCache = new MusicCache(gameData, Data.Enumerations.Song.Menu, Resources.Song, // TODO: use intro later maybe and initialize earlier then
+            if (audioOutput == null)
+            {
+                audioOutput = new AudioOutput(1, 44100);
+                audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
+                audioOutput.Enabled = audioOutput.Available && configuration.Music;
+                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                logoPalettes = logoPyrdacor.Palettes;
+            }
+
+            musicCache = new MusicCache(gameData, Data.Enumerations.Song.Menu, // TODO: use intro later maybe and initialize earlier then
                 Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
-            logoPyrdacor = new LogoPyrdacor(audioOutput, musicCache.GetLogoSong());
 
             // Create render view
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPyrdacor.Palettes, () =>
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPalettes, () =>
             {
                 var textureAtlasManager = TextureAtlasManager.Instance;
                 textureAtlasManager.AddAll(gameData, graphicProvider, fontProvider, introFont.GlyphGraphics,
                     introData.Graphics.ToDictionary(g => (uint)g.Key, g => g.Value));
-                logoPyrdacor.Initialize();
+                logoPyrdacor?.Initialize(textureAtlasManager);
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
 
             InitGlyphs();
 
-            // TODO: REMOVE
-            var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
-            infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
-                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
-            infoText.DisplayLayer = 254;
-            infoText.Visible = false;
-
-            renderView.Render(null);
+            if (logoPyrdacor == null)
+            {
+                var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
+                infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
+                    new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
+                infoText.DisplayLayer = 254;
+                infoText.Visible = true;
+                renderView.Render(null);
+            }
 
             Task.Run(() =>
             {
@@ -674,13 +693,19 @@ namespace Ambermoon
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             var fontProvider = new FontProvider(executableData);
-            logoPyrdacor = new LogoPyrdacor(audioOutput, musicCache.GetLogoSong());
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
-            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPyrdacor.Palettes, () =>
+
+            audioOutput = new AudioOutput(1, 44100);
+            audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
+            audioOutput.Enabled = audioOutput.Available && configuration.Music;
+            logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+            logoPalettes = logoPyrdacor.Palettes;
+
+            renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPalettes, () =>
             {
                 textureAtlasManager.AddUIOnly(graphicProvider, fontProvider);
-                logoPyrdacor.Initialize();
+                logoPyrdacor?.Initialize(textureAtlasManager);
                 return textureAtlasManager;
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
@@ -709,15 +734,22 @@ namespace Ambermoon
             }
             var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
                 textureAtlasManager);
-            versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
-            versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
+
+            Task.Run(() =>
             {
-                configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
-                configuration.GameVersionIndex = gameVersionIndex;
-                selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]),
-                    gameVersions[gameVersionIndex].Language.ToGameLanguage());
-                versionLoader.Dispose();
-            };
+                while (logoPyrdacor != null)
+                    System.Threading.Thread.Sleep(100);
+
+                versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
+                versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
+                {
+                    configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
+                    configuration.GameVersionIndex = gameVersionIndex;
+                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]),
+                        gameVersions[gameVersionIndex].Language.ToGameLanguage());
+                    versionLoader.Dispose();
+                };
+            });
 
             return true;
         }
@@ -1060,7 +1092,7 @@ namespace Ambermoon
                 {
                     if (configuration?.CacheMusic == true && musicCache != null && !musicCache.Cached)
                     {
-                        MusicCache.Cache(musicCache, musicCache.GetLogoSong(), Configuration.ExecutableDirectoryPath,
+                        MusicCache.Cache(musicCache, Configuration.ExecutableDirectoryPath,
                             Configuration.FallbackConfigDirectory, Path.GetTempPath());
                     }
                 });

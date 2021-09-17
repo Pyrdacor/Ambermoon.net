@@ -86,5 +86,11 @@ namespace Ambermoon.Data.Legacy.Audio
             return new Song(Enumerations.Song.Default, songIndex, songPlayer, dataReader as DataReader,
                 SonicArranger.Stream.ChannelMode.Mono, lpf, pal, true);
         }
+
+        public static ISong LoadCustomSong(IDataReader dataReader, int songIndex, bool lpf, bool pal)
+        {
+            return new Song(Enumerations.Song.Default, songIndex, new SongPlayer(), dataReader as DataReader,
+                SonicArranger.Stream.ChannelMode.Mono, lpf, pal, true);
+        }
     }
 }
