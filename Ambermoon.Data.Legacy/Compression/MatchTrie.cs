@@ -212,6 +212,102 @@ namespace Ambermoon.Data.Legacy.Compression
             Node node = rootNode;
             int i;
 
+            // Look for RLE
+            int rleSequenceLength = 0;
+            int rleOffset = 0;
+            if (searchOffset >= 4 && maxLength >= 4)
+            {
+                if (sequence[searchOffset - 4] == sequence[searchOffset + 0] &&
+                    sequence[searchOffset - 3] == sequence[searchOffset + 1] &&
+                    sequence[searchOffset - 2] == sequence[searchOffset + 2] &&
+                    sequence[searchOffset - 1] == sequence[searchOffset + 3])
+                {
+                    // AA BB CC DD AA BB CC DD ...
+                    rleSequenceLength = 4;
+                    rleOffset = 4;
+
+                    for (int j = 4; j < maxLength; ++j)
+                    {
+                        if (sequence[searchOffset + j] == sequence[searchOffset + j % 4])
+                            ++rleSequenceLength;
+                        else
+                            break;
+                    }
+                }
+            }
+            if (searchOffset >= 3)
+            {
+                if (sequence[searchOffset - 3] == sequence[searchOffset + 0] &&
+                    sequence[searchOffset - 2] == sequence[searchOffset + 1] &&
+                    sequence[searchOffset - 1] == sequence[searchOffset + 2])
+                {
+                    // AA BB CC AA BB CC ...
+                    int prevRleLength = rleSequenceLength;
+                    rleSequenceLength = 3;
+
+                    for (int j = 3; j < maxLength; ++j)
+                    {
+                        if (sequence[searchOffset + j] == sequence[searchOffset + j % 3])
+                            ++rleSequenceLength;
+                        else
+                            break;
+                    }
+
+                    if (rleSequenceLength >= prevRleLength)
+                        rleOffset = 3;
+                    else
+                        rleSequenceLength = prevRleLength;
+                }
+            }
+            if (searchOffset >= 2)
+            {
+                if (sequence[searchOffset - 2] == sequence[searchOffset + 0] &&
+                    sequence[searchOffset - 1] == sequence[searchOffset + 1] &&
+                    sequence[searchOffset - 2] == sequence[searchOffset + 2])
+                {
+                    // AA BB AA BB AA ...
+                    int prevRleLength = rleSequenceLength;
+                    rleSequenceLength = 3;
+
+                    for (int j = 3; j < maxLength; ++j)
+                    {
+                        if (sequence[searchOffset + j] == sequence[searchOffset + j % 2])
+                            ++rleSequenceLength;
+                        else
+                            break;
+                    }
+
+                    if (rleSequenceLength >= prevRleLength)
+                        rleOffset = 2;
+                    else
+                        rleSequenceLength = prevRleLength;
+                }
+            }
+            if (searchOffset >= 1)
+            {
+                if (sequence[searchOffset - 1] == sequence[searchOffset + 0] &&
+                    sequence[searchOffset - 1] == sequence[searchOffset + 1] &&
+                    sequence[searchOffset - 1] == sequence[searchOffset + 2])
+                {
+                    // AA AA AA ...
+                    int prevRleLength = rleSequenceLength;
+                    rleSequenceLength = 3;
+
+                    for (int j = 3; j < maxLength; ++j)
+                    {
+                        if (sequence[searchOffset + j] == sequence[searchOffset - 1])
+                            ++rleSequenceLength;
+                        else
+                            break;
+                    }
+
+                    if (rleSequenceLength >= prevRleLength)
+                        rleOffset = 1;
+                    else
+                        rleSequenceLength = prevRleLength;
+                }
+            }
+
             for (i = 0; i < maxLength; ++i)
             {
                 var child = node.GetChild(sequence[searchOffset + i]);
@@ -224,6 +320,9 @@ namespace Ambermoon.Data.Legacy.Compression
 
             if (node == rootNode)
                 return new KeyValuePair<int, int>(-1, 0);
+
+            if (rleSequenceLength >= i)
+                return new KeyValuePair<int, int>(rleOffset, rleSequenceLength);
 
             // node now contains the node with the longest match
             if (node is LeafNode leaf)
