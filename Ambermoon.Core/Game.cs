@@ -13529,7 +13529,7 @@ namespace Ambermoon
             mouthButton.LeftClickAction = () =>
                 layout.OpenInputPopup(new Position(51, 87), 20, WordEntered);
             exitButton.LeftClickAction = () => layout.ClosePopup();
-            var dictionaryList = popup.AddDictionaryListBox(Dictionary.Select(entry => new KeyValuePair<string, Action<int, string>>
+            var dictionaryList = popup.AddDictionaryListBox(Dictionary.OrderBy(entry => entry).Select(entry => new KeyValuePair<string, Action<int, string>>
             (
                 entry, (int _, string text) =>
                 {
