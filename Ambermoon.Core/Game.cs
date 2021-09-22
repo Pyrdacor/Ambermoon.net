@@ -3945,8 +3945,11 @@ namespace Ambermoon
             characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
                 string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                 character.Attributes[Attribute.Age].CurrentValue)));
-            characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
-                $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
+            if (character.Class < Class.Animal)
+            {
+                characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
+                    $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
+            }
             layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.PartyMember : TextColor.ActivePartyMember, TextAlign.Center);
             if (!conversation)
             {
