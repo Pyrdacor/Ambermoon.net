@@ -6,8 +6,8 @@
 
 ## 3D maps
 
-- 3D monster get easily stuck on wall edges. :(
-- With graphic filter one and fading, elements in front of the 3D view are semi-transparent.
+- 3D monster get easily stuck on wall edges.
+- With graphic filter on and fading, elements in front of the 3D view are semi-transparent.
   For example when entering Grandpa's cellar for the first time you can see through the popup.
 
 
