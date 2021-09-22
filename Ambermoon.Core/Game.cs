@@ -712,6 +712,38 @@ namespace Ambermoon
             }, 1, 50, TextAlign.Center);
         }
 
+        // Technical game pause settings
+        bool audioWasEnabled = false;
+        bool musicWasPlaying = false;
+        bool gameWasPaused = false;
+        bool gamePaused = false;
+
+        
+        public void PauseGame()
+        {
+            gamePaused = true;
+            audioWasEnabled = AudioOutput?.Available == true && AudioOutput?.Enabled == true;
+            musicWasPlaying = currentSong != null;
+            gameWasPaused = paused;
+            AudioOutput.Enabled = false;
+            Pause();
+        }
+
+        public void ResumeGame()
+        {
+            if (!gamePaused)
+                return;
+            gamePaused = false;
+            if (!gameWasPaused)
+                Resume();
+            if (audioWasEnabled)
+            {
+                AudioOutput.Enabled = true;
+                if (musicWasPlaying)
+                    ContinueMusic();
+            }
+        }
+
         public void Pause()
         {
             if (paused)
