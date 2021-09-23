@@ -14,8 +14,8 @@
 
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Common" Version="10.1.0" />
-    <PackageReference Include="Silk.NET.OpenAL" Version="2.6.0" />
-    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.6.0" />
+    <PackageReference Include="Silk.NET.OpenAL" Version="2.8.0" />
+    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.8.0" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.21.1.1" />
   </ItemGroup>
 

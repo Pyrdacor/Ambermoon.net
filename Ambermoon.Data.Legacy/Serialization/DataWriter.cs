@@ -136,12 +136,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public void WriteNullTerminated(string value, Encoding encoding)
         {
-            var bytes = encoding.GetBytes(value);
-
-            if (bytes.Length != 0)
-                Write(bytes);
-
-            Write((byte)0);
+            Write(encoding.GetBytes(value + "\0"));
         }
 
         public void WriteWithoutLength(string value)
@@ -160,15 +155,74 @@ namespace Ambermoon.Data.Legacy.Serialization
             Position += bytes.Length;
         }
 
+        public void Replace(int offset, bool value)
+        {
+            Replace(offset, (byte)(value ? 1 : 0));
+        }
+
+        public void Replace(int offset, byte value)
+        {
+            if (offset < 0 || offset + 1 > Size)
+                throw new IndexOutOfRangeException("Index was outside the data writer size.");
+
+            data[offset] = value;
+        }
+
+        public void Replace(int offset, word value)
+        {
+            if (offset < 0 || offset + 2 > Size)
+                throw new IndexOutOfRangeException("Index was outside the data writer size.");
+
+            data[offset + 0] = (byte)(value >> 8);
+            data[offset + 1] = (byte)value;
+        }
+
         public void Replace(int offset, dword value)
         {
-            if (offset + 4 > Size)
+            if (offset < 0 || offset + 4 > Size)
                 throw new IndexOutOfRangeException("Index was outside the data writer size.");
 
             data[offset + 0] = (byte)(value >> 24);
             data[offset + 1] = (byte)(value >> 16);
             data[offset + 2] = (byte)(value >> 8);
             data[offset + 3] = (byte)value;
+        }
+
+        public void Replace(int offset, qword value)
+        {
+            if (offset < 0 || offset + 8 > Size)
+                throw new IndexOutOfRangeException("Index was outside the data writer size.");
+
+            data[offset + 0] = (byte)(value >> 56);
+            data[offset + 1] = (byte)(value >> 48);
+            data[offset + 2] = (byte)(value >> 40);
+            data[offset + 3] = (byte)(value >> 32);
+            data[offset + 4] = (byte)(value >> 24);
+            data[offset + 5] = (byte)(value >> 16);
+            data[offset + 6] = (byte)(value >> 8);
+            data[offset + 7] = (byte)value;
+        }
+
+        public void Replace(int offset, byte[] data)
+        {
+            Replace(offset, data, 0);
+        }
+
+        public void Replace(int offset, byte[] data, int dataOffset)
+        {
+            Replace(offset, data, dataOffset, data.Length - dataOffset);
+        }
+
+        public void Replace(int offset, byte[] data, int dataOffset, int length)
+        {
+            if (dataOffset < 0 || dataOffset + length > data.Length)
+                throw new IndexOutOfRangeException("Index was outside the given data array.");
+
+            if (offset < 0 || offset + data.Length > Size)
+                throw new IndexOutOfRangeException("Index was outside the data writer size.");
+
+            for (int i = 0; i < length; ++i)
+                this.data[offset + i] = data[dataOffset + i];
         }
 
         public void CopyTo(Stream stream)

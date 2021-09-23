@@ -23,7 +23,14 @@ namespace Ambermoon.Data.Serialization
         void Write(string value, Encoding encoding);
         void Write(string value, Encoding encoding, int length, char fillChar = ' ');
         void Write(byte[] bytes);
+        void Replace(int offset, bool value);
+        void Replace(int offset, byte value);
+        void Replace(int offset, word value);
         void Replace(int offset, dword value);
+        void Replace(int offset, qword value);
+        void Replace(int offset, byte[] data);
+        void Replace(int offset, byte[] data, int dataOffset);
+        void Replace(int offset, byte[] data, int dataOffset, int length);
         void CopyTo(Stream stream);
         byte[] ToArray();
         void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible;

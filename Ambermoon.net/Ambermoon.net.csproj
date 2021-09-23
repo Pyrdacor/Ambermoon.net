@@ -62,9 +62,9 @@
     <PackageReference Include="Ambermoon.Data.Legacy" Version="10.1.0" />
     <PackageReference Include="glfw" Version="3.3.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Silk.NET.GLFW" Version="2.6.0" />
-    <PackageReference Include="Silk.NET.Input" Version="2.6.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.6.0" />
+    <PackageReference Include="Silk.NET.GLFW" Version="2.8.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.8.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.8.0" />
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
 
