@@ -228,13 +228,13 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             Buttons = Read<Buttons>(dataHunkReaders, ref dataHunkIndex);
 
             int itemCount = dataHunkReaders[dataHunkIndex].ReadWord();
-            if (dataHunkReaders[dataHunkIndex].ReadWord() != itemCount || itemCount != 402)
+            if (dataHunkReaders[dataHunkIndex].ReadWord() != itemCount)
                 throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
 
             var itemReader = new ItemReader();
             var items = new Dictionary<uint, Item>();
 
-            for (uint i = 1; i <= 402; ++i) // there are 402 items
+            for (uint i = 1; i <= itemCount; ++i) // in original Ambermoon there are 402 items
                 items.Add(i, Item.Load(i, itemReader, dataHunkReaders[dataHunkIndex]));
 
             ItemManager = new ItemManager(items);
