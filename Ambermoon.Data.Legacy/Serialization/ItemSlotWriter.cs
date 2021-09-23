@@ -8,7 +8,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             dataWriter.Write((byte)itemSlot.Amount);
             dataWriter.Write((byte)itemSlot.NumRemainingCharges);
-            dataWriter.Write((byte)itemSlot.RechargeTimes);
+            dataWriter.Write(itemSlot.RechargeTimes);
             dataWriter.WriteEnumAsByte(itemSlot.Flags);
             dataWriter.Write((ushort)itemSlot.ItemIndex);
         }

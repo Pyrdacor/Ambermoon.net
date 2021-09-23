@@ -4220,8 +4220,10 @@ namespace Ambermoon
                 character.Attributes[item.Attribute.Value].BonusValue += (cursed ? -1 : 1) * item.AttributeValue;
             if (item.Ability != null)
                 character.Abilities[item.Ability.Value].BonusValue += (cursed ? -1 : 1) * item.AbilityValue;
-            character.Abilities[Ability.Attack].BonusValue -= (int)item.AttackReduction;
-            character.Abilities[Ability.Parry].BonusValue -= (int)item.ParryReduction;
+            if (item.SkillPenalty1Value != 0)
+                character.Abilities[item.SkillPenalty1].BonusValue -= (int)item.SkillPenalty1Value;
+            if (item.SkillPenalty2Value != 0)
+                character.Abilities[item.SkillPenalty2].BonusValue -= (int)item.SkillPenalty2Value;
             character.TotalWeight += (uint)amount * item.Weight;
         }
 
@@ -4248,8 +4250,10 @@ namespace Ambermoon
                 character.Attributes[item.Attribute.Value].BonusValue -= (cursed ? -1 : 1) * item.AttributeValue;
             if (item.Ability != null)
                 character.Abilities[item.Ability.Value].BonusValue -= (cursed ? -1 : 1) * item.AbilityValue;
-            character.Abilities[Ability.Attack].BonusValue += (int)item.AttackReduction;
-            character.Abilities[Ability.Parry].BonusValue += (int)item.ParryReduction;
+            if (item.SkillPenalty1Value != 0)
+                character.Abilities[item.SkillPenalty1].BonusValue += (int)item.SkillPenalty1Value;
+            if (item.SkillPenalty2Value != 0)
+                character.Abilities[item.SkillPenalty2].BonusValue += (int)item.SkillPenalty2Value;
             character.TotalWeight -= (uint)amount * item.Weight;
         }
 

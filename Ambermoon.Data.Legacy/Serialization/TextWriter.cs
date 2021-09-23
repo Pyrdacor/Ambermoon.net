@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    public class TextWriter
+    public static class TextWriter
     {
         public static byte[] ToBytes(List<string> texts)
         {

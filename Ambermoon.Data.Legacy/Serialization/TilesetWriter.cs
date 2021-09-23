@@ -2,9 +2,9 @@
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    public class TilesetWriter
+    public static class TilesetWriter
     {
-        public void WriteTileset(Tileset tileset, IDataWriter dataWriter)
+        public static void WriteTileset(Tileset tileset, IDataWriter dataWriter)
         {
             dataWriter.Write((ushort)tileset.Tiles.Length);
 

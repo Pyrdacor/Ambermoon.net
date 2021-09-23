@@ -3,9 +3,9 @@ using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    public class MapWriter
+    public static class MapWriter
     {
-        public void WriteMap(Map map, IDataWriter dataWriter)
+        public static void WriteMap(Map map, IDataWriter dataWriter)
         {
             dataWriter.Write((ushort)map.Flags);
             dataWriter.Write((byte)map.Type);

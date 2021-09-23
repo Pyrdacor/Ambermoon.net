@@ -42,9 +42,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             // as for the other 3 the first or second byte is 0.
             // Either the data is wrong or the original code.
             // But it's hard to reverse engineer the meaning this way.
-            var reduction = dataReader.ReadBytes(4);
-            item.AttackReduction = reduction[0] == 0 ? 0u : reduction[2];
-            item.ParryReduction = reduction[1] == 0 ? 0u : reduction[3];
+            item.SkillPenalty1 = (Ability)dataReader.ReadByte();
+            item.SkillPenalty2 = (Ability)dataReader.ReadByte();
+            item.SkillPenalty1Value = dataReader.ReadByte();
+            item.SkillPenalty2Value = dataReader.ReadByte();
             item.SpecialValue = dataReader.ReadByte();
             item.TextSubIndex = dataReader.ReadByte();
             item.SpellSchool = (SpellSchool)dataReader.ReadByte();

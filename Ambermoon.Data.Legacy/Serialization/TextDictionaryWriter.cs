@@ -2,9 +2,9 @@
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    public class TextDictionaryWriter
+    public static class TextDictionaryWriter
     {
-        public void WriteTextDictionary(TextDictionary textDictionary, IDataWriter dataWriter)
+        public static void WriteTextDictionary(TextDictionary textDictionary, IDataWriter dataWriter)
         {
             dataWriter.Write((ushort)textDictionary.Entries.Count);
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
-    public class EventWriter
+    public static class EventWriter
     {
         public static void WriteEvents(IDataWriter dataWriter,
             List<Event> events, List<Event> eventList)
