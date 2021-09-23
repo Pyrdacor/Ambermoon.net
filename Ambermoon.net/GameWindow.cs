@@ -976,6 +976,14 @@ namespace Ambermoon
                 renderView.Resize(size.X, size.Y);
         }
 
+        void Window_StateChanged(WindowState state)
+        {
+            if (state == WindowState.Minimized)
+                Game?.PauseGame();
+            else
+                Game?.ResumeGame();
+        }
+
         void Window_Move(WindowDimension position)
         {
             WindowMoved();
@@ -1036,6 +1044,7 @@ namespace Ambermoon
                 window.Resize += Window_Resize;
                 window.FramebufferResize += Window_FramebufferResize;
                 window.Move += Window_Move;
+                window.StateChanged += Window_StateChanged;
                 window.Run();
             }
             catch (Exception ex)
