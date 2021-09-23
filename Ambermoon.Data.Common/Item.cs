@@ -86,7 +86,7 @@ namespace Ambermoon.Data
         }
         public Spell Spell => SpellIndex == 0 ? Spell.None : (Spell)((int)SpellSchool * 30 + SpellIndex);
 
-        private Item()
+        public Item()
         {
 
         }
