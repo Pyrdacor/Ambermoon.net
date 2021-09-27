@@ -43,10 +43,12 @@ namespace Ambermoon
 
                 var assemblyPath = Process.GetCurrentProcess().MainModule.FileName;
 
+#pragma warning disable IL3000
                 if (assemblyPath.EndsWith("dotnet"))
                 {
                     assemblyPath = Assembly.GetExecutingAssembly().Location;
                 }
+#pragma warning restore IL3000
 
                 var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
 
