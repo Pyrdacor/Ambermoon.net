@@ -1,5 +1,6 @@
 ﻿using Ambermoon.Data.Serialization;
 using System;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -66,7 +67,10 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.WriteEnumAsByte(item.Classes);
             dataWriter.Write((word)item.Price);
             dataWriter.Write((word)item.Weight);
-            dataWriter.WriteWithoutLength(item.Name.Substring(0, Math.Min(item.Name.Length, 19)).PadRight(20, '\0'));
+            if (item.Name == null)
+                dataWriter.Write(Enumerable.Repeat((byte)0, 20).ToArray());
+            else
+                dataWriter.WriteWithoutLength(item.Name.Substring(0, Math.Min(item.Name.Length, 19)).PadRight(20, '\0'));
         }
     }
 }
