@@ -64,7 +64,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             WriteSignedByte(item.MagicAttackLevel);
             dataWriter.WriteEnumAsByte(item.Flags);
             dataWriter.WriteEnumAsByte(item.DefaultSlotFlags);
-            dataWriter.WriteEnumAsByte(item.Classes);
+            dataWriter.WriteEnumAsWord(item.Classes);
             dataWriter.Write((word)item.Price);
             dataWriter.Write((word)item.Weight);
             if (item.Name == null)
