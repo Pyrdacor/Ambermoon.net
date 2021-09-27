@@ -19,8 +19,6 @@ namespace Ambermoon.Data.Legacy.Serialization
             dataWriter.WriteEnumAsByte(item.Genders);
             dataWriter.Write((byte)item.NumberOfHands);
             dataWriter.Write((byte)item.NumberOfFingers);
-            dataWriter.Write((byte)item.NumberOfHands);
-            dataWriter.Write((byte)item.NumberOfFingers);
             WriteSignedByte(item.HitPoints);
             WriteSignedByte(item.SpellPoints);
             if (item.Attribute == null)
