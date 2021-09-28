@@ -317,6 +317,23 @@ namespace Ambermoon.Data.Legacy.Serialization
 				hunks.Add(hunk);
 			}
 
+			// There might be an END hunk at the end
+			if (dataReader.Position <= dataReader.Size - 4)
+            {
+				if ((HunkType)(dataReader.PeekDword() & 0x1fffffff) == HunkType.END)
+                {
+					dataReader.Position += 4;
+					hunks.Add(new Hunk
+					{
+						Type = HunkType.END,
+						Size = 0,
+						MemoryFlags = 0,
+						NumEntries = 0,
+						Data = null
+					});
+				}
+            }
+
 			if (deplodeIfNecessary)
 			{
 				bool imploded = false;
