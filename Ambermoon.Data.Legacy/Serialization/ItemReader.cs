@@ -59,7 +59,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             item.MagicAttackLevel = (sbyte)dataReader.ReadByte();
             item.Flags = (ItemFlags)dataReader.ReadByte();
             item.DefaultSlotFlags = (ItemSlotFlags)dataReader.ReadByte();
-            item.Classes = (ClassFlag)dataReader.ReadWord() & ClassFlag.All;
+            item.Classes = (ClassFlag)dataReader.ReadWord();
             item.Price = dataReader.ReadWord();
             item.Weight = dataReader.ReadWord();
             item.Name = dataReader.ReadString(19).TrimEnd(' ', '\0');

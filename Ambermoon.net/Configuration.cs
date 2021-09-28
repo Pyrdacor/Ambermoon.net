@@ -54,7 +54,7 @@ namespace Ambermoon
 
                 if (isWindows)
                 {
-                    if (assemblyDirectory.EndsWith("Debug") || assemblyDirectory.EndsWith("Release") || assemblyDirectory.EndsWith("netcoreapp3.1"))
+                    if (assemblyDirectory.EndsWith("Debug") || assemblyDirectory.EndsWith("Release") || assemblyDirectory.EndsWith("net5.0"))
                     {
                         string projectFile = Path.GetFileNameWithoutExtension(assemblyPath) + ".csproj";
 
