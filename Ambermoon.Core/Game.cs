@@ -5321,7 +5321,7 @@ namespace Ambermoon
             {
                 var swimAbility = partyMember.Abilities[Ability.Swim].TotalCurrentValue;
 
-                if (swimAbility >= 100)
+                if (swimAbility >= 99)
                     return 0;
 
                 var factor = (100 - swimAbility) / 2;
