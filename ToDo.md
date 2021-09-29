@@ -13,7 +13,6 @@
 
 ## UI
 
-- When editing a savegame name (in save dialog list) and aborting, the text stays (fixed?).
 - "Do you accept this character?" message is missing in character creator.
 
 

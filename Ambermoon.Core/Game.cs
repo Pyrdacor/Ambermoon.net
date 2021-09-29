@@ -12413,7 +12413,7 @@ namespace Ambermoon
                     {
                         // Note: In original this seems bugged. The map border is drawn in different colors depending on savegame and who knows what.
                         // We just skip map border drawing at all by using color index 0 if there is no wall.
-                        if (map.Blocks[x, y].WallIndex == 0)
+                        if (map.Blocks[x, y].WallIndex == 0 || map.Blocks[x, y].WallIndex >= labdata.Walls.Count)
                             return KeyValuePair.Create((byte)0, (byte?)null);
                         else
                             return KeyValuePair.Create(labdata.Walls[(int)map.Blocks[x, y].WallIndex - 1].ColorIndex, (byte?)null);

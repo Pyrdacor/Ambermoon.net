@@ -143,6 +143,7 @@ namespace Ambermoon.UI
             hoverBox?.Delete();
             hoveredItem = -1;
             scrollOffset = 0;
+            editInput?.Destroy();
         }
 
         public void SetItemText(int index, string text, char? fallbackChar = null)
