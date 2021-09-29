@@ -1347,6 +1347,8 @@ namespace Ambermoon
 
                     partyMember.HitPoints.BonusValue += factor * item.HitPoints;
                     partyMember.SpellPoints.BonusValue += factor * item.SpellPoints;
+                    partyMember.BaseDefense = (short)(partyMember.BaseDefense + factor * item.Defense);
+                    partyMember.BaseAttack = (short)(partyMember.BaseAttack + factor * item.Damage);
 
                     if (item.Attribute != null)
                         partyMember.Attributes[item.Attribute.Value].BonusValue += factor * item.AttributeValue;
@@ -4206,8 +4208,8 @@ namespace Ambermoon
 
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            character.BaseAttack = (short)(character.BaseAttack + item.Damage);
-            character.BaseDefense = (short)(character.BaseDefense + item.Defense);
+            character.BaseAttack = (short)(character.BaseAttack + (cursed ? -1 : 1) * item.Damage);
+            character.BaseDefense = (short)(character.BaseDefense + (cursed ? -1 : 1) * item.Defense);
             character.MagicAttack = (short)(character.MagicAttack + item.MagicAttackLevel);
             character.MagicDefense = (short)(character.MagicDefense + item.MagicArmorLevel);
             character.HitPoints.BonusValue += (cursed ? -1 : 1) * item.HitPoints;
@@ -4236,8 +4238,8 @@ namespace Ambermoon
         {
             // Note: amount is only used for ammunition. The weight is
             // influenced by the amount but not the damage/defense etc.
-            character.BaseAttack = (short)(character.BaseAttack - item.Damage);
-            character.BaseDefense = (short)(character.BaseDefense - item.Defense);
+            character.BaseAttack = (short)(character.BaseAttack - (cursed ? -1 : 1) * item.Damage);
+            character.BaseDefense = (short)(character.BaseDefense - (cursed ? -1 : 1) * item.Defense);
             character.MagicAttack = (short)(character.MagicAttack - item.MagicAttackLevel);
             character.MagicDefense = (short)(character.MagicDefense - item.MagicArmorLevel);
             character.HitPoints.BonusValue -= (cursed ? -1 : 1) * item.HitPoints;
