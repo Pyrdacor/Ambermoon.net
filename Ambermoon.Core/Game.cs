@@ -9538,7 +9538,7 @@ namespace Ambermoon
                     AddTimedEvent(timeSpan, ChangeLightRadius);
             }
 
-            if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
+            if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) && TravelType != TravelType.Fly)
             {
                 lightIntensity = 0;
 
@@ -9586,8 +9586,9 @@ namespace Ambermoon
                 {
                     var lastRadius = mapChange ? 0 : (int)(lastIntensity >> 1);
                     var newRadius = (int)(lightIntensity >> 1);
-                    fow2D.Visible = lastIntensity < 224;
-                    ChangeLightRadius(lastRadius, newRadius);
+                    fow2D.Visible = lastIntensity < 224 && TravelType != TravelType.Fly;
+                    if (TravelType != TravelType.Fly)
+                        ChangeLightRadius(lastRadius, newRadius);
                 }
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))
