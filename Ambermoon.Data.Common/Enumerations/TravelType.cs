@@ -93,7 +93,7 @@ namespace Ambermoon.Data.Enumerations
             TravelType.Ship => Song.Ship,
             TravelType.MagicalDisc => Song.CompactDisc,
             TravelType.Eagle => Song.WholeLottaDove,
-            TravelType.Fly => Song.WholeLottaDove,
+            TravelType.Fly => Song.ChickenSoup,
             TravelType.Swim => Song.Default,
             TravelType.WitchBroom => Song.BurnBabyBurn,
             TravelType.SandLizard => Song.MellowCamelFunk,

@@ -3558,7 +3558,10 @@ namespace Ambermoon
                 Resume();
                 ResetMoveKeys();
                 UpdateLight();
-                PlayMapMusic();
+                if (!Map.IsWorldMap || TravelType == TravelType.Walk)
+                    PlayMapMusic();
+                else
+                    PlayMusic(TravelType.TravelSong());
             }
             else
             {
