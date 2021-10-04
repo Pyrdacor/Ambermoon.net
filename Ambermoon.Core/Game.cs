@@ -5717,7 +5717,8 @@ namespace Ambermoon
                 {
                     if (chest.Empty)
                     {
-                        layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+                        if (chest.Type == ChestType.Chest)
+                            layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
 
                         // If a chest has AllowsItemDrop = false this
                         // means it is removed when it is empty.
@@ -5726,7 +5727,8 @@ namespace Ambermoon
                     }
                     else
                     {
-                        layout.Set80x80Picture(Picture80x80.ChestOpenFull);
+                        if (chest.Type == ChestType.Chest)
+                            layout.Set80x80Picture(Picture80x80.ChestOpenFull);
                     }
                 }
             }
@@ -5742,7 +5744,7 @@ namespace Ambermoon
 
             if (chest.Gold > 0)
             {
-                if (!chest.IsBattleLoot)
+                if (chest.Type == ChestType.Chest)
                     layout.Set80x80Picture(Picture80x80.ChestOpenFull);
                 ShowTextPanel(CharacterInfo.ChestGold, true,
                     $"{DataNameProvider.GoldName}^{chest.Gold}", new Rect(111, 104, 43, 15));
@@ -5753,7 +5755,8 @@ namespace Ambermoon
 
                 if (chest.Empty && !chest.IsBattleLoot)
                 {
-                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+                    if (chest.Type == ChestType.Chest)
+                        layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
 
                     if (!chest.AllowsItemDrop)
                         ChestRemoved();
@@ -5767,7 +5770,7 @@ namespace Ambermoon
 
             if (chest.Food > 0)
             {
-                if (!chest.IsBattleLoot)
+                if (chest.Type == ChestType.Chest)
                     layout.Set80x80Picture(Picture80x80.ChestOpenFull);
                 ShowTextPanel(CharacterInfo.ChestFood, true,
                     $"{DataNameProvider.FoodName}^{chest.Food}", new Rect(260, 104, 43, 15));
@@ -5778,7 +5781,8 @@ namespace Ambermoon
 
                 if (chest.Empty && !chest.IsBattleLoot)
                 {
-                    layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
+                    if (chest.Type == ChestType.Chest)
+                        layout.Set80x80Picture(Picture80x80.ChestOpenEmpty);
 
                     if (!chest.AllowsItemDrop)
                         ChestRemoved();
@@ -5798,8 +5802,9 @@ namespace Ambermoon
                 OpenStorage.AllowsItemDrop, 12, 6, 24, new Rect(7 * 22, 139, 6, 53), new Size(6, 27), ScrollbarType.SmallVertical);
             itemGrid.Refresh();
             layout.AddItemGrid(itemGrid);
+            bool pile = storage.IsBattleLoot || (storage is Chest chest && chest.Type == ChestType.Pile);
 
-            if (storage.IsBattleLoot)
+            if (pile)
             {
                 layout.Set80x80Picture(Picture80x80.Treasure);
             }
@@ -5823,7 +5828,7 @@ namespace Ambermoon
             };
             itemGrid.ItemDropped += (int slotIndex, ItemSlot itemSlot, int amount) =>
             {
-                if (!storage.IsBattleLoot)
+                if (!pile)
                     layout.Set80x80Picture(Picture80x80.ChestOpenFull);
             };
 
@@ -5852,6 +5857,8 @@ namespace Ambermoon
 
             if (chestEvent.CloseWhenEmpty && chest.Empty)
                 return false; // Chest has gone due to looting
+
+            chest.Type = chestEvent.CloseWhenEmpty || chestEvent.AutoRemove ? ChestType.Pile : ChestType.Chest;
 
             void OpenChest()
             {
