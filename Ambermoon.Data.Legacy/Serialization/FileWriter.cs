@@ -117,6 +117,12 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                     foreach (var file in filesData)
                     {
+                        if (file.Value.Length == 0)
+                        {
+                            fileSizes[(int)file.Key - 1] = 0;
+                            continue;
+                        }
+
                         var fileData = file.Value;
                         int prevOffset = writerWithoutHeader.Position;
 
