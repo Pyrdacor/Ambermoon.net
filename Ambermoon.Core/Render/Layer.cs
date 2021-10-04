@@ -53,6 +53,7 @@ namespace Ambermoon
         Text,
         IntroGraphics,
         IntroText,
+        IntroEffects,
         OutroGraphics,
         OutroText,
         Effects,

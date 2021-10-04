@@ -95,6 +95,7 @@ namespace Ambermoon.Renderer
             0.70f,  // Text
             0.70f,  // IntroGraphics
             0.70f,  // IntroText
+            0.70f,  // IntroEffects
             0.70f,  // OutroGraphics
             0.70f,  // OutroText
             0.97f,  // Effects
@@ -118,8 +119,8 @@ namespace Ambermoon.Renderer
                 opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc);
 
             // UI uses color-filled areas and effects use colored areas for things like black fading map transitions.
-            if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.Effects || layer == Layer.DrugEffect ||
-                layer == Layer.IntroGraphics || layer == Layer.Misc)
+            if (layer == Layer.Map3DBackground || layer == Layer.UI || layer == Layer.IntroEffects ||
+                layer == Layer.Effects || layer == Layer.DrugEffect || layer == Layer.IntroGraphics || layer == Layer.Misc)
                 renderBufferColorRects = new RenderBuffer(state, false, false, true, true);
 
             Layer = layer;

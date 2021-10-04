@@ -515,7 +515,8 @@ namespace Ambermoon.Renderer.OpenGL
                     {
                         State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                     }
-                    if (layer.Key == Layer.FOW || layer.Key == Layer.Effects || layer.Key == Layer.DrugEffect || layer.Key == Layer.Misc)
+                    if (layer.Key == Layer.FOW || layer.Key == Layer.IntroEffects || layer.Key == Layer.Effects ||
+                        layer.Key == Layer.DrugEffect || layer.Key == Layer.Misc)
                         State.Gl.Enable(EnableCap.Blend);
                     else
                         State.Gl.Disable(EnableCap.Blend);

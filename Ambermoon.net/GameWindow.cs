@@ -370,7 +370,7 @@ namespace Ambermoon
                 infoText.Visible = false;
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
-                GetText(gameLanguage, 1), GetText(gameLanguage, 2));
+                GetText(gameLanguage, 1), GetText(gameLanguage, 2), song => musicCache.GetSong(song)?.Play(audioOutput));
             mainMenu.Closed += closeAction =>
             {
                 switch (closeAction)
@@ -577,14 +577,11 @@ namespace Ambermoon
                     while (logoPyrdacor != null)
                         System.Threading.Thread.Sleep(100);
 
-                    musicCache.GetSong(Data.Enumerations.Song.Menu)?.Play(audioOutput);
-
                     ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
                         introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                     {
                         cursor.Type = Data.CursorType.None;
-                        mainMenu.FadeOutAndDestroy(continueGame);
-                        Task.Run(() => SetupGameCreator(continueGame));
+                        mainMenu.FadeOutAndDestroy(continueGame, () => Task.Run(() => SetupGameCreator(continueGame)));
                     }, gameLanguage);
                 }
                 catch (Exception ex)
@@ -908,7 +905,7 @@ namespace Ambermoon
                 versionSelector.Update(delta);
             else if (mainMenu != null)
             {
-                mainMenu.Update(delta);
+                mainMenu.Update();
 
                 if (gameCreator != null)
                 {
