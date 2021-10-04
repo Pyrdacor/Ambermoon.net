@@ -154,7 +154,7 @@ namespace Ambermoon.Render
                             {
                                 animationFrame = (uint)randomAnimation.CurrentFrame;
 
-                                if (randomAnimation.CurrentFrame == 0 && poison)
+                                if (randomAnimation.CurrentFrame == 0 && poison && !game.TravelType.IgnoreEvents())
                                 {
                                     PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
                                 }
