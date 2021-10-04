@@ -3558,6 +3558,7 @@ namespace Ambermoon
                 Resume();
                 ResetMoveKeys();
                 UpdateLight();
+                PlayMapMusic();
             }
             else
             {
@@ -11689,6 +11690,7 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Camp, inn);
+                PlayMusic(Song.BarBrawlin);
                 layout.SetLayout(LayoutType.Items);
                 layout.Set80x80Picture(inn ? Picture80x80.RestInn : Map.Flags.HasFlag(MapFlags.Outdoor) ? Picture80x80.RestOutdoor : Picture80x80.RestDungeon);
                 layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
