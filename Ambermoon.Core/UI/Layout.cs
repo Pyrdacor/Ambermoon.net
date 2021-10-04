@@ -2160,6 +2160,14 @@ namespace Ambermoon.UI
                         return;
                     }
 
+                    var worldFlag = (WorldFlag)(1 << (int)game.Map.World);
+
+                    if (!SpellInfos.Entries[item.Spell].Worlds.HasFlag(worldFlag))
+                    {
+                        SetInventoryMessage(game.DataNameProvider.WrongWorldToUseItem, true);
+                        return;
+                    }
+
                     if (itemSlot.NumRemainingCharges == 0)
                     {
                         if (item.Flags.HasFlag(ItemFlags.Stackable))
@@ -2791,7 +2799,7 @@ namespace Ambermoon.UI
                         itemGrid.HideTooltip();
                     inventoryMessage?.Destroy();
                     game.CursorType = CursorType.Click;
-                    inventoryMessage = AddScrollableText(new Rect(21, 51, 156, 14), game.ProcessText(message));
+                    inventoryMessage = AddScrollableText(new Rect(21, 51, 156, 20), game.ProcessText(message));
                     inventoryMessage.Clicked += scrolledToEnd =>
                     {
                         if (scrolledToEnd)
