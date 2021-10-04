@@ -112,12 +112,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                 for (int i = 1; i <= fileInfo.NumFiles; ++i)
                 {
                     int size = (int)reader.ReadDword();
-
-                    if (size > 0)
-                    {
-                        fileContainer.Files.Add(i, DecodeFile(new DataReader(reader, offset, size), fileInfo.FileType, i));
-                        offset += size;
-                    }
+                    fileContainer.Files.Add(i, size == 0 ? new DataReader(new byte[0]) : DecodeFile(new DataReader(reader, offset, size), fileInfo.FileType, i));
+                    offset += size;
                 }
 
                 reader.Position = offset;

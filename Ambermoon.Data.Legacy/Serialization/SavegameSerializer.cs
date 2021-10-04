@@ -239,9 +239,9 @@ namespace Ambermoon.Data.Legacy.Serialization
             savegame.Merchants.Clear();
             savegame.Automaps.Clear();
 
-            foreach (var partyMemberDataReader in files.PartyMemberDataReaders.Files)
+            foreach (var partyMemberDataReader in files.PartyMemberDataReaders.Files.Where(f => f.Value.Size != 0))
             {
-                var partyTextFile = partyTextsContainer.Files.ContainsKey(partyMemberDataReader.Key)
+                var partyTextFile = partyTextsContainer.Files.ContainsKey(partyMemberDataReader.Key) && partyTextsContainer.Files[partyMemberDataReader.Key].Size != 0
                     ? partyTextsContainer.Files[partyMemberDataReader.Key] : null;
                 partyMemberDataReader.Value.Position = 0;
                 savegame.PartyMembers.Add((uint)partyMemberDataReader.Key,
@@ -249,17 +249,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                         partyMemberDataReader.Value, partyTextFile,
                             fallbackPartyMemberContainer?.Files[partyMemberDataReader.Key]));
             }
-            foreach (var chestDataReader in files.ChestDataReaders.Files)
+            foreach (var chestDataReader in files.ChestDataReaders.Files.Where(f => f.Value.Size != 0))
             {
                 chestDataReader.Value.Position = 0;
                 savegame.Chests.Add((uint)chestDataReader.Key, Chest.Load(chestReader, chestDataReader.Value));
             }
-            foreach (var merchantDataReader in files.MerchantDataReaders.Files)
+            foreach (var merchantDataReader in files.MerchantDataReaders.Files.Where(f => f.Value.Size != 0))
             {
                 merchantDataReader.Value.Position = 0;
                 savegame.Merchants.Add((uint)merchantDataReader.Key, Merchant.Load(merchantReader, merchantDataReader.Value));
             }
-            foreach (var automapDataReader in files.AutomapDataReaders.Files)
+            foreach (var automapDataReader in files.AutomapDataReaders.Files.Where(f => f.Value.Size != 0))
             {
                 automapDataReader.Value.Position = 0;
                 savegame.Automaps.Add((uint)automapDataReader.Key, Automap.Load(automapReader, automapDataReader.Value));

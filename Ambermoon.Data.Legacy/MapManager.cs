@@ -31,16 +31,22 @@ namespace Ambermoon.Data.Legacy
 
                 foreach (var mapFile in file.Files)
                 {
-                    uint index = (uint)mapFile.Key;
-                    var textFile = textFiles.Files.ContainsKey(mapFile.Key) ? textFiles.Files[mapFile.Key] : null;
-                    maps.Add(index, Map.Load(index, mapReader, mapFile.Value, textFile, tilesets));
+                    if (mapFile.Value.Size != 0)
+                    {
+                        uint index = (uint)mapFile.Key;
+                        var textFile = textFiles.Files.ContainsKey(mapFile.Key) ? textFiles.Files[mapFile.Key] : null;
+                        maps.Add(index, Map.Load(index, mapReader, mapFile.Value, textFile, tilesets));
+                    }
                 }
             }
 
             foreach (var labdataFile in gameData.Files["2Lab_data.amb"].Files) // Note: 2Lab_data.amb and 3Lab_data.amb both contain all lab data files
             {
-                var labdata = Labdata.Load(labdataReader, labdataFile.Value, gameData);
-                labdatas.Add((uint)labdataFile.Key, labdata);
+                if (labdataFile.Value.Size != 0)
+                {
+                    var labdata = Labdata.Load(labdataReader, labdataFile.Value, gameData);
+                    labdatas.Add((uint)labdataFile.Key, labdata);
+                }
             }
         }
 

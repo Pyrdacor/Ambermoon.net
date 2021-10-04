@@ -128,7 +128,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             if (ceilingTextureIndex != 0)
                 labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)ceilingTextureIndex], 64, 64, false, false, true);
             var objectTextureFiles = gameData.Files[$"2Object3D.amb"].Files;
-            gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f => objectTextureFiles[f.Key] = f.Value);
+            gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f =>
+            {
+                if (!objectTextureFiles.ContainsKey(f.Key) || objectTextureFiles[f.Key].Size == 0)
+                    objectTextureFiles[f.Key] = f.Value;
+            });
             labdata.ObjectGraphics.Clear();
             foreach (var objectInfo in labdata.ObjectInfos)
             {
@@ -155,8 +159,16 @@ namespace Ambermoon.Data.Legacy.Serialization
             }
             var wallTextureFiles = gameData.Files[$"2Wall3D.amb"].Files;
             var overlayTextureFiles = gameData.Files[$"2Overlay3D.amb"].Files;
-            gameData.Files[$"3Wall3D.amb"].Files.ToList().ForEach(f => wallTextureFiles[f.Key] = f.Value);
-            gameData.Files[$"3Overlay3D.amb"].Files.ToList().ForEach(f => overlayTextureFiles[f.Key] = f.Value);
+            gameData.Files[$"3Wall3D.amb"].Files.ToList().ForEach(f =>
+            {
+                if (!wallTextureFiles.ContainsKey(f.Key) || wallTextureFiles[f.Key].Size == 0)
+                    wallTextureFiles[f.Key] = f.Value;
+            });
+            gameData.Files[$"3Overlay3D.amb"].Files.ToList().ForEach(f =>
+            {
+                if (!overlayTextureFiles.ContainsKey(f.Key) || overlayTextureFiles[f.Key].Size == 0)
+                    overlayTextureFiles[f.Key] = f.Value;
+            });
             labdata.WallGraphics.Clear();
             int wallIndex = 0;
             foreach (var wall in labdata.Walls)

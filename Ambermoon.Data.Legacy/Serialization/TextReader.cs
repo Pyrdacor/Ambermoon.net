@@ -25,7 +25,7 @@ namespace Ambermoon.Data.Legacy.Serialization
         {
             var texts = new List<string>();
 
-            if (textDataReader != null)
+            if (textDataReader != null && textDataReader.Size != 0)
             {
                 textDataReader.Position = 0;
                 int numTexts = textDataReader.ReadWord();
