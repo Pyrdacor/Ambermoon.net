@@ -216,7 +216,7 @@ namespace Ambermoon
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
-            if (closed)
+            if (closed || loadingText.Visible)
                 return;
 
             if (thalionLogo == null && mainMenuFader?.HasFinished != true)

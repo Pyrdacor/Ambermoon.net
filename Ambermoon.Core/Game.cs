@@ -2032,7 +2032,8 @@ namespace Ambermoon
         public List<string> Dictionary => CurrentSavegame == null ? null : textDictionary.Entries.Where((word, index) =>
             CurrentSavegame.IsDictionaryWordKnown((uint)index)).ToList();
 
-        public bool AutoDerune => Configuration.AutoDerune && PartyMembers.Any(p => p.HasItem(145)); // 145: Rune Table
+        public bool AutoDerune => TravelType == TravelType.Fly || // Superman mode can also read runes as text
+            (Configuration.AutoDerune && PartyMembers.Any(p => p.HasItem(145))); // 145: Rune Table
 
         public IText ProcessText(string text)
         {
@@ -3896,6 +3897,8 @@ namespace Ambermoon
                         layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                             (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
                     }
+                    layout.AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAttributeTooltip(GameLanguage, attribute, partyMember), TextColor.LightOrange,
+                        TextAlign.Left, new Render.Color(Render.Color.LightGray, 0xa0));
                 }
                 #endregion
                 #region Abilities
@@ -3908,6 +3911,8 @@ namespace Ambermoon
                     layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityShortName(ability));
                     layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                         (abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%");
+                    layout.AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAbilityTooltip(GameLanguage, ability, partyMember), TextColor.LightOrange,
+                        TextAlign.Left, new Render.Color(Render.Color.LightGray, 0xa0));
                 }
                 #endregion
                 #region Languages
@@ -7435,6 +7440,7 @@ namespace Ambermoon
                 }
                 else
                 {
+                    layout.HideTooltip();
                     OpenSpellList(CurrentPartyMember,
                         spell =>
                         {

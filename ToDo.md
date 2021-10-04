@@ -14,6 +14,7 @@
 ## UI
 
 - "Do you accept this character?" message is missing in character creator.
+- The hover/click on main menu should work while fading already.
 
 
 ## Misc

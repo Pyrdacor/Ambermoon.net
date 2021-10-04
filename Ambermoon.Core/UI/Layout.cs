@@ -259,7 +259,10 @@ namespace Ambermoon.UI
     {
         public Rect Area;
         public string Text;
-        public TextColor TextColor;
+        public TextColor TextColor = TextColor.White;
+        public TextAlign TextAlign = TextAlign.Center;
+        public Render.Color BackgroundColor = null;
+        public bool CenterOnScreen = false;
     }
 
     internal enum BattleFieldSlotColor
@@ -504,7 +507,9 @@ namespace Ambermoon.UI
         readonly List<Tooltip> tooltips = new List<Tooltip>();
         readonly Dictionary<int, BattleFieldSlotMarker> battleFieldSlotMarkers = new Dictionary<int, BattleFieldSlotMarker>();
         public const uint TicksPerBlink = Game.TicksPerSecond / 4;
-        IRenderText activeTooltip = null;
+        IColoredRect activeTooltipBackground = null;
+        IRenderText activeTooltipText = null;
+        Tooltip activeTooltip = null;
         UIText inventoryMessage = null;
         UIText battleMessage = null;
         readonly List<BattleAnimation> battleEffectAnimations = new List<BattleAnimation>();
@@ -3016,8 +3021,13 @@ namespace Ambermoon.UI
             });
             Util.SafeCall(() =>
             {
-                activeTooltip?.Delete();
-                activeTooltip = null;
+                activeTooltipText?.Delete();
+                activeTooltipText = null;
+            });
+            Util.SafeCall(() =>
+            {
+                activeTooltipBackground?.Delete();
+                activeTooltipBackground = null;
             });
             Util.SafeCall(() =>
             {
@@ -3658,13 +3668,17 @@ namespace Ambermoon.UI
             return sprite;
         }
 
-        internal Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor)
+        internal Tooltip AddTooltip(Rect rect, string tooltip, TextColor tooltipTextColor, TextAlign textAlign = TextAlign.Center,
+            Render.Color backgroundColor = null, bool centerOnScreen = false)
         {
             var toolTip = new Tooltip
             {
                 Area = rect,
                 Text = tooltip,
-                TextColor = tooltipTextColor
+                TextColor = tooltipTextColor,
+                TextAlign = textAlign,
+                BackgroundColor = backgroundColor,
+                CenterOnScreen = centerOnScreen
             };
             tooltips.Add(toolTip);
             return toolTip;
@@ -3688,32 +3702,70 @@ namespace Ambermoon.UI
         {
             if (tooltip == null) // remove
             {
-                if (activeTooltip != null)
+                if (activeTooltipText != null)
                 {
-                    activeTooltip?.Delete();
-                    activeTooltip = null;
+                    activeTooltipText?.Delete();
+                    activeTooltipText = null;
+                }
+
+                if (activeTooltipBackground != null)
+                {
+                    activeTooltipBackground?.Delete();
+                    activeTooltipBackground = null;
                 }
             }
             else
             {
-                if (activeTooltip == null)
+                if (activeTooltipText == null)
                 {
-                    activeTooltip = RenderView.RenderTextFactory.Create();
-                    activeTooltip.Shadow = true;
-                    activeTooltip.DisplayLayer = 250;
-                    activeTooltip.Layer = RenderView.GetLayer(Layer.Text);
-                    activeTooltip.Visible = true;
+                    activeTooltipText = RenderView.RenderTextFactory.Create();
+                    activeTooltipText.Shadow = true;
+                    activeTooltipText.DisplayLayer = 250;
+                    activeTooltipText.Layer = RenderView.GetLayer(Layer.Text);
+                    activeTooltipText.Visible = true;
                 }
 
                 var text = RenderView.TextProcessor.CreateText(tooltip.Text);
                 int textWidth = text.MaxLineSize * Global.GlyphWidth;
 
-                activeTooltip.Text = text;
-                activeTooltip.TextColor = tooltip.TextColor;
-                int x = Util.Limit(0, cursorPosition.X - textWidth / 2, Global.VirtualScreenWidth - textWidth);
+                activeTooltipText.Text = text;
+                activeTooltipText.TextColor = tooltip.TextColor;
+                int x = Util.Limit(0, tooltip.CenterOnScreen ? (Global.VirtualScreenWidth - textWidth) / 2 : cursorPosition.X - textWidth / 2,
+                    Global.VirtualScreenWidth - textWidth);
                 int y = cursorPosition.Y - text.LineCount * Global.GlyphLineHeight - 1;
-                activeTooltip.Place(new Rect(x, y, textWidth, text.LineCount * Global.GlyphLineHeight), TextAlign.Center);
+                if (x == 0 && textWidth < Global.VirtualScreenWidth - 1)
+                    x = 2;
+                var textArea = new Rect(x, y, textWidth, text.LineCount * Global.GlyphLineHeight);
+                activeTooltipText.Place(textArea, tooltip.TextAlign);
+
+                if (tooltip.BackgroundColor != null)
+                {
+                    textArea = textArea.CreateModified(-2, -2, 4, 4);
+
+                    if (activeTooltipBackground == null)
+                    {
+                        activeTooltipBackground = RenderView.ColoredRectFactory.Create(textArea.Width, textArea.Height, tooltip.BackgroundColor, 249);
+                        activeTooltipBackground.Layer = RenderView.GetLayer(Layer.IntroEffects);
+                        activeTooltipBackground.Visible = true;
+                    }
+                    else
+                    {
+                        activeTooltipBackground.Resize(textArea.Width, textArea.Height);
+                        activeTooltipBackground.Color = tooltip.BackgroundColor;
+                    }
+
+                    activeTooltipBackground.X = textArea.X;
+                    activeTooltipBackground.Y = textArea.Y;
+
+                }
+                else if (activeTooltipBackground != null)
+                {
+                    activeTooltipBackground?.Delete();
+                    activeTooltipBackground = null;
+                }
             }
+
+            activeTooltip = tooltip;
         }
 
         public UIText AddText(Rect rect, string text, TextColor color = TextColor.White,
