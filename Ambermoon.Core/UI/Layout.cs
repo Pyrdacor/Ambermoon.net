@@ -508,6 +508,7 @@ namespace Ambermoon.UI
         readonly Dictionary<int, BattleFieldSlotMarker> battleFieldSlotMarkers = new Dictionary<int, BattleFieldSlotMarker>();
         public const uint TicksPerBlink = Game.TicksPerSecond / 4;
         IColoredRect activeTooltipBackground = null;
+        IColoredRect[] activeTooltipBorders = new IColoredRect[4];
         IRenderText activeTooltipText = null;
         Tooltip activeTooltip = null;
         UIText inventoryMessage = null;
@@ -1082,7 +1083,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 10;
+        const int OptionCount = 13;
         const int OptionsPerPage = 5;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1098,12 +1099,15 @@ namespace Ambermoon.UI
                     "Vollbild",
                     // Page 2
                     "Schneller Kampfmodus",
-                    "Tooltips anzeigen",
+                    "Button Tooltips anzeigen",
+                    "Stats Tooltips anzeigen",
                     "Runen als Text anzeigen",
-                    "Musik cachen",
                     "Cheats aktivieren",                    
-                    // TODO
                     // Page3
+                    "Musik cachen",
+                    "Pyrdacor Logo zeigen",
+                    "Thalion Logo zeigen"
+                    // TODO
                     //"Intro anzeigen",
                     //"Fantasy Intro anzeigen",
                 }
@@ -1120,12 +1124,15 @@ namespace Ambermoon.UI
                     "Fullscreen",
                     // Page 2
                     "Fast battle mode",
-                    "Show tooltips",
+                    "Show button tooltips",
+                    "Show stats tooltips",
                     "Show runes as text",
-                    "Cache music",
                     "Enable cheats",                    
-                    // TODO
                     // Page 3
+                    "Cache music",
+                    "Show Pyrdacor logo",
+                    "Show Thalion logo"
+                    // TODO
                     //"Show intro",
                     //"Show fantasy intro",
                 }
@@ -1158,10 +1165,14 @@ namespace Ambermoon.UI
                 // Page 2
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleCheats())),
-                // TODO: 3rd page later?
+                // Page 3
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
+                // TODO: later
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),              
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
             };
@@ -1189,10 +1200,13 @@ namespace Ambermoon.UI
             // Page 2
             void SetFastBattleMode() => SetOptionString(5, game.Configuration.FastBattleMode ? on : off);
             void SetTooltips() => SetOptionString(6, game.Configuration.ShowButtonTooltips ? on : off);
-            void SetAutoDerune() => SetOptionString(7, game.Configuration.AutoDerune ? on : off);
-            void SetMusicCaching() => SetOptionString(8, game.Configuration.CacheMusic ? on : off);
+            void SetPlayerStatsTooltips() => SetOptionString(7, game.Configuration.ShowPlayerStatsTooltips ? on : off);
+            void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
             void SetCheats() => SetOptionString(9, cheatsEnabled ? on : off);
-            // TODO: Page 3
+            // Page 3
+            void SetMusicCaching() => SetOptionString(10, game.Configuration.CacheMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(11, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetThalionLogo() => SetOptionString(12, game.Configuration.ShowThalionLogo ? on : off);
             // TODO: void SetIntro() => SetOptionString(10, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(11, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1211,15 +1225,18 @@ namespace Ambermoon.UI
                     case 1:
                         SetFastBattleMode();
                         SetTooltips();
+                        SetPlayerStatsTooltips();
                         SetAutoDerune();
-                        SetMusicCaching();
                         SetCheats();
-                        break;
-                    // TODO
-                    // case 2:
+                        break;                    
+                    case 2:
+                        SetMusicCaching();
+                        SetPyrdacorLogo();
+                        SetThalionLogo();
+                        // TODO
                         //SetIntro();
                         //SetFantasyIntro();
-                        //break;
+                        break;
                 }
             }
 
@@ -1287,6 +1304,12 @@ namespace Ambermoon.UI
                 SetTooltips();
                 changedConfiguration = true;
             }
+            void TogglePlayerStatsTooltips()
+            {
+                game.Configuration.ShowPlayerStatsTooltips = !game.Configuration.ShowPlayerStatsTooltips;
+                SetPlayerStatsTooltips();
+                changedConfiguration = true;
+            }
             void ToggleMusicCaching()
             {
                 game.Configuration.CacheMusic = !game.Configuration.CacheMusic;
@@ -1303,6 +1326,18 @@ namespace Ambermoon.UI
             {
                 game.Configuration.AutoDerune = !game.Configuration.AutoDerune;
                 SetAutoDerune();
+                changedConfiguration = true;
+            }
+            void TogglePyrdacorLogo()
+            {
+                game.Configuration.ShowPyrdacorLogo = !game.Configuration.ShowPyrdacorLogo;
+                SetPyrdacorLogo();
+                changedConfiguration = true;
+            }
+            void ToggleThalionLogo()
+            {
+                game.Configuration.ShowThalionLogo = !game.Configuration.ShowThalionLogo;
+                SetThalionLogo();
                 changedConfiguration = true;
             }
 
@@ -3028,6 +3063,14 @@ namespace Ambermoon.UI
             {
                 activeTooltipBackground?.Delete();
                 activeTooltipBackground = null;
+                if (activeTooltipBorders != null)
+                {
+                    for (int i = 0; i < activeTooltipBorders.Length; ++i)
+                    {
+                        activeTooltipBorders[i]?.Delete();
+                        activeTooltipBorders[i] = null;
+                    }
+                }
             });
             Util.SafeCall(() =>
             {
@@ -3712,6 +3755,12 @@ namespace Ambermoon.UI
                 {
                     activeTooltipBackground?.Delete();
                     activeTooltipBackground = null;
+
+                    for (int i = 0; i < activeTooltipBorders.Length; ++i)
+                    {
+                        activeTooltipBorders[i]?.Delete();
+                        activeTooltipBorders[i] = null;
+                    }
                 }
             }
             else
@@ -3733,8 +3782,20 @@ namespace Ambermoon.UI
                 int x = Util.Limit(0, tooltip.CenterOnScreen ? (Global.VirtualScreenWidth - textWidth) / 2 : cursorPosition.X - textWidth / 2,
                     Global.VirtualScreenWidth - textWidth);
                 int y = cursorPosition.Y - text.LineCount * Global.GlyphLineHeight - 1;
-                if (x == 0 && textWidth < Global.VirtualScreenWidth - 1)
-                    x = 2;
+                if (textWidth < Global.VirtualScreenWidth - 1)
+                {
+                    if (x == 0)
+                        x = 2;
+                    else if (x + textWidth >= Global.VirtualScreenWidth - 1)
+                        x = Global.VirtualScreenWidth - textWidth - 2;
+                }
+                if (tooltip.BackgroundColor != null)
+                {
+                    if (y >= 2)
+                        y -= 2;
+                }
+                if (y < 2 && cursorPosition.Y + text.LineCount * Global.GlyphLineHeight + 16 <= Global.VirtualScreenHeight)
+                    y = cursorPosition.Y + 16;
                 var textArea = new Rect(x, y, textWidth, text.LineCount * Global.GlyphLineHeight);
                 activeTooltipText.Place(textArea, tooltip.TextAlign);
 
@@ -3744,24 +3805,54 @@ namespace Ambermoon.UI
 
                     if (activeTooltipBackground == null)
                     {
-                        activeTooltipBackground = RenderView.ColoredRectFactory.Create(textArea.Width, textArea.Height, tooltip.BackgroundColor, 249);
+                        activeTooltipBackground = RenderView.ColoredRectFactory.Create(textArea.Width, textArea.Height, tooltip.BackgroundColor, 248);
                         activeTooltipBackground.Layer = RenderView.GetLayer(Layer.IntroEffects);
                         activeTooltipBackground.Visible = true;
+
+                        activeTooltipBorders[0] = RenderView.ColoredRectFactory.Create(textArea.Width, 1, Render.Color.Black, 249);
+                        activeTooltipBorders[1] = RenderView.ColoredRectFactory.Create(1, textArea.Height - 2, Render.Color.Black, 249);
+                        activeTooltipBorders[2] = RenderView.ColoredRectFactory.Create(1, textArea.Height - 2, Render.Color.Black, 249);
+                        activeTooltipBorders[3] = RenderView.ColoredRectFactory.Create(textArea.Width, 1, Render.Color.Black, 249);
+
+                        for (int i = 0; i < 4; ++i)
+                        {
+                            activeTooltipBorders[i].Layer = RenderView.GetLayer(Layer.UI);
+                            activeTooltipBorders[i].Visible = true;
+                        }
                     }
                     else
                     {
                         activeTooltipBackground.Resize(textArea.Width, textArea.Height);
                         activeTooltipBackground.Color = tooltip.BackgroundColor;
+
+                        activeTooltipBorders[0].Resize(textArea.Width, 1);
+                        activeTooltipBorders[1].Resize(1, textArea.Height - 2);
+                        activeTooltipBorders[2].Resize(1, textArea.Height - 2);
+                        activeTooltipBorders[3].Resize(textArea.Width, 1);
                     }
 
                     activeTooltipBackground.X = textArea.X;
                     activeTooltipBackground.Y = textArea.Y;
 
+                    activeTooltipBorders[0].X = textArea.X;
+                    activeTooltipBorders[0].Y = textArea.Y;
+                    activeTooltipBorders[1].X = textArea.X;
+                    activeTooltipBorders[1].Y = textArea.Y + 1;
+                    activeTooltipBorders[2].X = textArea.X + textArea.Width - 1;
+                    activeTooltipBorders[2].Y = textArea.Y + 1;
+                    activeTooltipBorders[3].X = textArea.X;
+                    activeTooltipBorders[3].Y = textArea.Y + textArea.Height - 1;
                 }
                 else if (activeTooltipBackground != null)
                 {
                     activeTooltipBackground?.Delete();
                     activeTooltipBackground = null;
+
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        activeTooltipBorders[i]?.Delete();
+                        activeTooltipBorders[i] = null;
+                    }
                 }
             }
 

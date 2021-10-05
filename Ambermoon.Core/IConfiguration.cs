@@ -70,6 +70,9 @@ namespace Ambermoon
         bool ShowFantasyIntro { get; set; }
         bool ShowIntro { get; set; }
         bool UseGraphicFilter { get; set; }
+        bool ShowPlayerStatsTooltips { get; set; }
+        bool ShowPyrdacorLogo { get; set; }
+        bool ShowThalionLogo { get; set; }
     }
 
     public static class ConfigurationExtensions

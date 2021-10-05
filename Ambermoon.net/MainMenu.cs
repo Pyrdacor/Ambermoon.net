@@ -50,6 +50,7 @@ namespace Ambermoon
         };
         bool closed = false;
         public event Action<CloseAction> Closed;
+        bool started = false;
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] texts, bool canContinue, string continueLoadingText, string newLoadingText,
@@ -185,23 +186,21 @@ namespace Ambermoon
 
             if (thalionLogo == null)
             {
-                if (mainMenuFader?.HasFinished == true)
+                for (int i = 0; i < mainMenuTexts.Count; ++i)
                 {
-                    for (int i = 0; i < mainMenuTexts.Count; ++i)
+                    if (i == hoveredTextIndex)
                     {
-                        if (i == hoveredTextIndex)
-                        {
-                            int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
-                            byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
-                            mainMenuTexts[i].Value.TextColor = (TextColor)colorIndex;
-                        }
-                        else
-                        {
-                            mainMenuTexts[i].Value.TextColor = TextColor.White;
-                        }
+                        int duration = (int)(DateTime.Now - hoverStartTime.Value).TotalMilliseconds / HoverColorTime;
+                        byte colorIndex = hoveredColorIndices[duration % hoveredColorIndices.Length];
+                        mainMenuTexts[i].Value.TextColor = (TextColor)colorIndex;
+                    }
+                    else
+                    {
+                        mainMenuTexts[i].Value.TextColor = TextColor.White;
                     }
                 }
-                else if (background != null)
+
+                if (background != null)
                 {
                     if (GameDataLoaded)
                         Destroy();
@@ -216,10 +215,7 @@ namespace Ambermoon
 
         public void OnMouseDown(Position position, MouseButtons buttons)
         {
-            if (closed || loadingText.Visible)
-                return;
-
-            if (thalionLogo == null && mainMenuFader?.HasFinished != true)
+            if (closed || loadingText.Visible || started)
                 return;
 
             if (buttons == MouseButtons.Left)
@@ -236,6 +232,7 @@ namespace Ambermoon
                 {
                     if (mainMenuTexts[i].Key.Contains(position))
                     {
+                        started = true;
                         Closed?.Invoke((CloseAction)i);
                         break;
                     }
@@ -245,12 +242,12 @@ namespace Ambermoon
 
         public void OnMouseMove(Position position, MouseButtons buttons)
         {
-            if (closed)
+            if (closed || started)
                 return;
 
             cursor.UpdatePosition(position, null);
 
-            if (thalionLogo != null || mainMenuFader?.HasFinished != true)
+            if (thalionLogo != null)
                 return;
 
             position = renderView.ScreenToGame(position);

@@ -31,6 +31,9 @@ namespace Ambermoon
         public bool ShowFantasyIntro { get; set; } = false; // TODO: change to true later
         public bool ShowIntro { get; set; } = false; // TODO: change to true later
         public bool UseGraphicFilter { get; set; } = true;
+        public bool ShowPlayerStatsTooltips { get; set; } = true;
+        public bool ShowPyrdacorLogo { get; set; } = true;
+        public bool ShowThalionLogo { get; set; } = true;
 
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");

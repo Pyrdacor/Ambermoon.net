@@ -3866,6 +3866,11 @@ namespace Ambermoon
                 var partyMember = GetPartyMember(slot);
                 int index;
 
+                void AddTooltip(Rect area, string tooltip)
+                {
+                    layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPaletteColor(50, 15), 0xb0));
+                }
+
                 #region Character info
                 DisplayCharacterInfo(partyMember, false);
                 #endregion
@@ -3897,8 +3902,8 @@ namespace Ambermoon
                         layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                             (attributeValues.TotalCurrentValue > 999 ? "***" : $"{attributeValues.TotalCurrentValue:000}") + $"/{attributeValues.MaxValue:000}");
                     }
-                    layout.AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAttributeTooltip(GameLanguage, attribute, partyMember), TextColor.LightOrange,
-                        TextAlign.Left, new Render.Color(Render.Color.LightGray, 0xa0));
+                    if (Configuration.ShowPlayerStatsTooltips)
+                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAttributeTooltip(GameLanguage, attribute, partyMember));
                 }
                 #endregion
                 #region Abilities
@@ -3911,8 +3916,8 @@ namespace Ambermoon
                     layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityShortName(ability));
                     layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
                         (abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%");
-                    layout.AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAbilityTooltip(GameLanguage, ability, partyMember), TextColor.LightOrange,
-                        TextAlign.Left, new Render.Color(Render.Color.LightGray, 0xa0));
+                    if (Configuration.ShowPlayerStatsTooltips)
+                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAbilityTooltip(GameLanguage, ability, partyMember));
                 }
                 #endregion
                 #region Languages
@@ -3945,8 +3950,13 @@ namespace Ambermoon
 
                     int x = 96 + column * 16;
                     int y = 124 + row * 17;
+                    var area = new Rect(x, y, 16, 16);
+                    string ailmentName = DataNameProvider.GetAilmentName(ailment);
+                    string tooltip = Configuration.ShowPlayerStatsTooltips ? null : ailmentName;
                     layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), UIPaletteIndex,
-                        2, DataNameProvider.GetAilmentName(ailment), ailment == Ailment.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
+                        2, tooltip, ailment == Ailment.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
+                    if (Configuration.ShowPlayerStatsTooltips)
+                        AddTooltip(new Rect(x, y, 16, 16), ailmentName + "^^" + BuiltinTooltips.GetAilmentTooltip(GameLanguage, ailment, partyMember));
                 }
                 #endregion
             }
@@ -3974,6 +3984,15 @@ namespace Ambermoon
             return true;
         }
 
+        void ShowSecondaryStatTooltip(Rect area, BuiltinTooltips.SecondaryStat secondaryStat, Character character)
+        {
+            if (character is PartyMember partyMember && Configuration.ShowPlayerStatsTooltips)
+            {
+                var tooltip = BuiltinTooltips.GetSecondaryStatTooltip(GameLanguage, secondaryStat, partyMember);
+                layout.AddTooltip(area, tooltip, TextColor.White, TextAlign.Left, new Render.Color(GetPaletteColor(50, 15), 0xb0));
+            }
+        }
+
         void DisplayCharacterInfo(Character character, bool conversation)
         {
             int offsetY = conversation ? -6 : 0;
@@ -3988,10 +4007,13 @@ namespace Ambermoon
             characterInfoTexts.Add(CharacterInfo.Age, layout.AddText(new Rect(242, offsetY + 63, 62, 7),
                 string.Format(DataNameProvider.CharacterInfoAgeString.Replace("000", "0"),
                 character.Attributes[Attribute.Age].CurrentValue)));
+            ShowSecondaryStatTooltip(new Rect(242, offsetY + 63, 62, 7), BuiltinTooltips.SecondaryStat.Age, character);
             if (character.Class < Class.Animal)
             {
                 characterInfoTexts.Add(CharacterInfo.Level, layout.AddText(new Rect(242, offsetY + 70, 62, 7),
                     $"{DataNameProvider.GetClassName(character.Class)} {character.Level}"));
+                ShowSecondaryStatTooltip(new Rect(242, offsetY + 70, 62, 7), character.AttacksPerRoundIncreaseLevels == 0
+                    ? BuiltinTooltips.SecondaryStat.LevelWithoutAPRIncrease : BuiltinTooltips.SecondaryStat.LevelWithAPRIncrease, character);
             }
             layout.AddText(new Rect(208, offsetY + 84, 96, 7), character.Name, conversation ? TextColor.PartyMember : TextColor.ActivePartyMember, TextAlign.Center);
             if (!conversation)
@@ -4000,24 +4022,33 @@ namespace Ambermoon
                 characterInfoTexts.Add(CharacterInfo.EP, layout.AddText(new Rect(242, 77, 62, 7),
                     string.Format(DataNameProvider.CharacterInfoExperiencePointsString.Replace("0000000000", "0"),
                     character.ExperiencePoints)));
+                ShowSecondaryStatTooltip(new Rect(242, 77, 62, 7), character.Level < 50 ?
+                    BuiltinTooltips.SecondaryStat.EPPre50 : BuiltinTooltips.SecondaryStat.EP50, character);
                 characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoHitPointsString,
                     character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue),
                     TextColor.White, TextAlign.Center));
+                ShowSecondaryStatTooltip(new Rect(208, 92, 96, 7), BuiltinTooltips.SecondaryStat.LP, character);
                 if (magicClass)
                 {
                     characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
                         string.Format(DataNameProvider.CharacterInfoSpellPointsString,
                         character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue),
                         TextColor.White, TextAlign.Center));
+                    ShowSecondaryStatTooltip(new Rect(208, 99, 96, 7), BuiltinTooltips.SecondaryStat.SP, character);
                 }
                 characterInfoTexts.Add(CharacterInfo.SLPAndTP, layout.AddText(new Rect(208, 106, 96, 7),
                     (magicClass ? string.Format(DataNameProvider.CharacterInfoSpellLearningPointsString, character.SpellLearningPoints) : new string(' ', 7)) + " " +
                     string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints), TextColor.White, TextAlign.Center));
+                if (magicClass)
+                    ShowSecondaryStatTooltip(new Rect(214, 106, 42, 7), BuiltinTooltips.SecondaryStat.SLP, character);
+                ShowSecondaryStatTooltip(new Rect(262, 106, 36, 7), BuiltinTooltips.SecondaryStat.TP, character);
                 var displayGold = OpenStorage is IPlace ? 0 : character.Gold;
                 characterInfoTexts.Add(CharacterInfo.GoldAndFood, layout.AddText(new Rect(208, 113, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, displayGold, character.Food),
                     TextColor.White, TextAlign.Center));
+                ShowSecondaryStatTooltip(new Rect(214, 113, 42, 7), BuiltinTooltips.SecondaryStat.Gold, character);
+                ShowSecondaryStatTooltip(new Rect(262, 113, 36, 7), BuiltinTooltips.SecondaryStat.Food, character);
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
                 {
@@ -4033,6 +4064,7 @@ namespace Ambermoon
                     string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack));
                     characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7), attackString, TextColor.White, TextAlign.Left));
                 }
+                ShowSecondaryStatTooltip(new Rect(214, 120, 36, 9), BuiltinTooltips.SecondaryStat.Damage, character);
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), UIPaletteIndex);
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
                 {
@@ -4048,6 +4080,7 @@ namespace Ambermoon
                     string defenseString = string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense));
                     characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7), defenseString, TextColor.White, TextAlign.Left));
                 }
+                ShowSecondaryStatTooltip(new Rect(261, 120, 37, 9), BuiltinTooltips.SecondaryStat.Defense, character);
             }
             else
             {
