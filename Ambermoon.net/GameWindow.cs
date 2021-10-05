@@ -370,7 +370,7 @@ namespace Ambermoon
                 infoText.Visible = false;
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
-                GetText(gameLanguage, 1), GetText(gameLanguage, 2), song => musicCache.GetSong(song)?.Play(audioOutput));
+                GetText(gameLanguage, 1), GetText(gameLanguage, 2), song => musicCache.GetSong(song)?.Play(audioOutput), configuration.ShowThalionLogo);
             mainMenu.Closed += closeAction =>
             {
                 switch (closeAction)
@@ -439,8 +439,15 @@ namespace Ambermoon
                 audioOutput = new AudioOutput(1, 44100);
                 audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
                 audioOutput.Enabled = audioOutput.Available && configuration.Music;
-                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
-                logoPalettes = logoPyrdacor.Palettes;
+                if (configuration.ShowPyrdacorLogo)
+                {
+                    logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                    logoPalettes = logoPyrdacor.Palettes;
+                }
+                else
+                {
+                    logoPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
+                }
             }
 
             musicCache = new MusicCache(gameData, Data.Enumerations.Song.Menu, // TODO: use intro later maybe and initialize earlier then
@@ -459,15 +466,11 @@ namespace Ambermoon
 
             InitGlyphs();
 
-            if (logoPyrdacor == null)
-            {
-                var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
-                infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
-                    new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
-                infoText.DisplayLayer = 254;
-                infoText.Visible = true;
-                renderView.Render(null);
-            }
+            var text = renderView.TextProcessor.CreateText("");
+            infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
+                new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
+            infoText.DisplayLayer = 254;
+            infoText.Visible = false;
 
             Task.Run(() =>
             {
@@ -696,8 +699,15 @@ namespace Ambermoon
             audioOutput = new AudioOutput(1, 44100);
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
-            logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
-            logoPalettes = logoPyrdacor.Palettes;
+            if (configuration.ShowPyrdacorLogo)
+            {
+                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                logoPalettes = logoPyrdacor.Palettes;
+            }
+            else
+            {
+                logoPalettes = new Graphic[1] { new Graphic { Width = 32, Height = 1, IndexedGraphic = false, Data = new byte[32 * 4] } };
+            }
 
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPalettes, () =>
             {

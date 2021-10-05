@@ -54,7 +54,7 @@ namespace Ambermoon
 
         public MainMenu(IRenderView renderView, Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] texts, bool canContinue, string continueLoadingText, string newLoadingText,
-            Action<Song> playMusicAction)
+            Action<Song> playMusicAction, bool showLogo)
         {
             this.renderView = renderView;
             this.cursor = cursor;
@@ -63,16 +63,20 @@ namespace Ambermoon
             this.playMusicAction = playMusicAction;
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
 
-            fader = new Fader(renderView, 0xff, 0x00, 255, false, true);
+            if (showLogo)
+                fader = new Fader(renderView, 0xff, 0x00, 255, false, true);
             mainMenuFader = new Fader(renderView, 0xff, 0x00, 50, false, true);
 
-            thalionLogo = renderView.SpriteFactory.Create(128, 82, true, 252) as ILayerSprite;
-            thalionLogo.Layer = renderView.GetLayer(Layer.IntroGraphics);
-            thalionLogo.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.ThalionLogo] - 1);
-            thalionLogo.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.ThalionLogo);
-            thalionLogo.X = (Global.VirtualScreenWidth - 128) / 2;
-            thalionLogo.Y = (Global.VirtualScreenHeight - 82) / 2;
-            thalionLogo.Visible = true;
+            if (showLogo)
+            {
+                thalionLogo = renderView.SpriteFactory.Create(128, 82, true, 252) as ILayerSprite;
+                thalionLogo.Layer = renderView.GetLayer(Layer.IntroGraphics);
+                thalionLogo.PaletteIndex = (byte)(renderView.GraphicProvider.FirstIntroPaletteIndex + paletteIndices[IntroGraphic.ThalionLogo] - 1);
+                thalionLogo.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.ThalionLogo);
+                thalionLogo.X = (Global.VirtualScreenWidth - 128) / 2;
+                thalionLogo.Y = (Global.VirtualScreenHeight - 82) / 2;
+                thalionLogo.Visible = true;
+            }
 
             background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
             background.Layer = renderView.GetLayer(Layer.IntroGraphics);
@@ -80,7 +84,7 @@ namespace Ambermoon
             background.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.MainMenuBackground);
             background.X = 0;
             background.Y = 0;
-            background.Visible = false;
+            background.Visible = !showLogo;
 
             // For now we use a font where each glyph has a height of 28. But the base glyph is inside a
             // 16 pixel height area in the y-center (from y=6 to y=22). So basically these 16 pixels are
@@ -107,15 +111,24 @@ namespace Ambermoon
             loadingText.Visible = false;
 
             cursor.Type = Data.CursorType.Sword;
-            fader.AttachFinishEvent(() =>
+            
+            if (showLogo)
             {
-                fader.AttachFinishEvent(SkipThalionLogo);
-                fader.StartAt(DateTime.Now + TimeSpan.FromMilliseconds(LogoDisplayDuration), LogoFadeOutTime, true);
-            });
-            fader.Start(LogoFadeInTime);
+                fader.AttachFinishEvent(() =>
+                {
+                    fader.AttachFinishEvent(SkipThalionLogo);
+                    fader.StartAt(DateTime.Now + TimeSpan.FromMilliseconds(LogoDisplayDuration), LogoFadeOutTime, true);
+                });
+                fader.Start(LogoFadeInTime);
 
-            ShowMainMenu(false);
-            playMusicAction?.Invoke(Song.Intro);
+
+                ShowMainMenu(false);
+                playMusicAction?.Invoke(Song.Intro);
+            }
+            else
+            {
+                FadeInMainMenu();
+            }
         }
 
         void ShowMainMenu(bool show)
@@ -127,6 +140,7 @@ namespace Ambermoon
 
         void FadeInMainMenu()
         {
+            playMusicAction?.Invoke(Song.Menu);
             ShowMainMenu(true);
             mainMenuFader.Start(FadeInTime);
         }
@@ -136,7 +150,6 @@ namespace Ambermoon
             fader?.DetachFinishEvent();
             fader?.Destroy();
             fader = null;
-            playMusicAction?.Invoke(Song.Menu);
             thalionLogo?.Delete();
             thalionLogo = null;
             FadeInMainMenu();
