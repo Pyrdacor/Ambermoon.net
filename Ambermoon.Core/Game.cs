@@ -2430,6 +2430,17 @@ namespace Ambermoon
             PickTargetPlayer();
             void TargetPlayerPicked(int characterSlot)
             {
+                if (characterSlot != -1)
+                {
+                    var partyMember = GetPartyMember(characterSlot);
+
+                    if (!partyMember.Alive || partyMember.Ailments.HasFlag(Ailment.Petrified))
+                    {
+                        ExecuteNextUpdateCycle(PickTargetPlayer);
+                        return;
+                    }
+                }
+
                 targetPlayerPicked -= TargetPlayerPicked;
                 ClosePopup();
                 UntrapMouse();
@@ -3941,7 +3952,7 @@ namespace Ambermoon
                     if (ailment == Ailment.DeadAshes || ailment == Ailment.DeadDust)
                         continue;
 
-                    if (!partyMember.Ailments.HasFlag(ailment))
+                    if (ailment != Ailment.DeadCorpse && !partyMember.Ailments.HasFlag(ailment))
                         continue;
 
                     int column = index % ailmentsPerRow;
@@ -3956,7 +3967,17 @@ namespace Ambermoon
                     layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), UIPaletteIndex,
                         2, tooltip, ailment == Ailment.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
                     if (Configuration.ShowPlayerStatsTooltips)
-                        AddTooltip(new Rect(x, y, 16, 16), ailmentName + "^^" + BuiltinTooltips.GetAilmentTooltip(GameLanguage, ailment, partyMember));
+                    {
+                        var tooltipAilment = ailment;
+                        if (tooltipAilment == Ailment.DeadCorpse)
+                        {
+                            if (partyMember.Ailments.HasFlag(Ailment.DeadDust))
+                                tooltipAilment = Ailment.DeadDust;
+                            else if (partyMember.Ailments.HasFlag(Ailment.DeadAshes))
+                                tooltipAilment = Ailment.DeadAshes;
+                        }
+                        AddTooltip(new Rect(x, y, 16, 16), ailmentName + "^^" + BuiltinTooltips.GetAilmentTooltip(GameLanguage, tooltipAilment, partyMember));
+                    }
                 }
                 #endregion
             }

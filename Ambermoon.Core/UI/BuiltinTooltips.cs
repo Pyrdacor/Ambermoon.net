@@ -130,17 +130,17 @@ namespace Ambermoon.UI
                 // Strength
                 "Strength^^Increases the max weight by 1kg per point.^Also increases damage by 1 every 25 points.^^Currently +{0}kg and +{1} damage",
                 // Intelligence
-                "Intelligence^^Adds 1 additional SP and SLP on level up for every 25 points.^^Currently +{0} SP and SLP",
+                "Intelligence^^Adds 1 additional SP and SLP on^level up for every 25 points.^^Currently +{0} SP and SLP",
                 // Dexterity
-                "Dexterity^^Chance in percent to not trigger a trap when messing with locks.^Adds, together with Luck, to the chance of avoiding fights.^^Currently {0}% trap avoid chance, {1}% fight avoid chance",
+                "Dexterity^^Chance in percent to not trigger^a trap when messing with locks.^Adds, together with Luck,^to the chance of avoiding fights.^^Currently {0}% trap avoid chance^          {1}% fight avoid chance",
                 // Speed
-                "Speed^^Higher speed values let you act earlier in battle.^Every 80 points you can move 1 additional field per round.^^Currently you can move {0} field(s).",
+                "Speed^^Higher speed values let you act earlier in battle.^Every 80 points you can move 1 additional field^per round.^^Currently you can move {0} field(s).",
                 // Stamina
                 "Stamina^^Increases defense by 1 every 25 points.^^Currently +{0} defense",
                 // Charisma
-                "Charisma^^Increases the sell price by 1% every full 10 points.^^Currently +{0}% sell price",
+                "Charisma^^Increases the sell price by 1%^every full 10 points.^^Currently +{0}% sell price",
                 // Luck
-                "Luck^^Chance in percent to avoid the effect of an already triggered trap.^Adds, together with Dexterity, to the chance of avoiding fights.^^Currently {0}% trap effect avoid chance, {1}% fight avoid chance",
+                "Luck^^Chance in percent to avoid the effect^of an already triggered trap.^Adds, together with Dexterity,^to the chance of avoiding fights.^^Currently {0}% trap effect avoid chance^          {1}% fight avoid chance",
                 // Anti-Magic
                 "Anti-Magic^^Chance in percent to block enemy spells.^^Currently {0}% spell block chance"
             } }
@@ -262,11 +262,11 @@ namespace Ambermoon.UI
                 // Aging
                 { Ailment.Aging, "The character ages every day.^Dependent on his race he will^eventually die at a specific age.^^Max age: {0}" },
                 // DeadCorpse
-                { Ailment.DeadCorpse, "The character does not participate in battles.^He can not commuicate." },
+                { Ailment.DeadCorpse, "The character does not participate in battles.^He can not communicate." },
                 // DeadAshes
-                { Ailment.DeadAshes, "The character does not participate in battles.^He can not commuicate.^His ashes must be converted to^flesh first to resurrect him." },
+                { Ailment.DeadAshes, "The character does not participate in battles.^He can not communicate.^His ashes must be converted to^flesh first to resurrect him." },
                 // DeadDust
-                { Ailment.DeadDust, "The character does not participate in battles.^He can not commuicate.^His dust must be converted to ashes^and then to flesh to resurrect him." }
+                { Ailment.DeadDust, "The character does not participate in battles.^He can not communicate.^His dust must be converted to ashes^and then to flesh to resurrect him." }
             } }
         };
 
@@ -297,7 +297,7 @@ namespace Ambermoon.UI
                 // EP50
                 "Erfahrungspunkte^^Werden für den Levelaufstieg benötigt.^^Maximallevel bereits erreicht.",
                 // LevelWithAPRIncrease
-                "Charakterlevel^^Jeder Levelaufstieg verbessert die^Werte des Charakters um:^^ {0} LP, {1} SP, {2} SLP und {3} TP^^Attacken pro Runde erhöhen sich^bei bestimmten Leveln:^^  {5}^^Attacken pro Runde sind {4}",
+                "Charakterlevel^^Jeder Levelaufstieg verbessert die^Werte des Charakters um:^^ {0} LP, {1} SP, {2} SLP und {3} TP^^Attacken pro Runde erhöhen sich^bei bestimmten Leveln:^^ {5}^^Attacken pro Runde sind {4}",
                 // LevelWithoutAPRIncrease
                 "Charakterlevel^^Jeder Levelaufstieg verbessert die^Werte des Charakters um:^^ {0} LP, {1} SP, {2} SLP und {3} TP^^Attacken pro Runde sind {4}"
             } },
@@ -312,24 +312,23 @@ namespace Ambermoon.UI
                 // SLP
                 "Spell Learning Points^^Are used to learn spells.",
                 // TP
-                "Training Points^^Are used to increase^abilities at trainers.",
+                "Training Points^^Are used to increase^skills at trainers.",
                 // Gold
                 "Gold^^Currency of Ambermoon.^Is used to buy goods.",
                 // Food
-                //"Food^^"
-                "Rationen^^Bei jeder Rast (außer in Gasthäusern),^wird 1 Ration pro Charakter^verbraucht um LP und SP aufzufüllen.",
+                "Rations^^For every rest (besides sleeping at inns),^1 ration is consumed per character to^refill LP and SP.",
                 // Damage
-                "Schaden^^Grundwert für den Schaden im Kampf.^^Wird durch die Ausrüstung und Stärke bestimmt.",
+                "Damage^^Base value for damage in battles.^^Is composed of equipment and strength.",
                 // Defense
-                "Abwehr^^Grundwert für die Schadensreduzierung^von physischen Angriffen.^^Wird durch Ausrüstung und Konstitution bestimmt.",
+                "Defense^^Base value for physical damage^reduction in battles.^^Is composed of equipment and stamina.",
                 // EPPre50
-                "Erfahrungspunkte^^Werden für den Levelaufstieg benötigt.^^Nächster Level bei {0} EP.",
+                "Experience Points^^Are needed to gain levels.^^Next level at {0} EP.",
                 // EP50
-                "Erfahrungspunkte^^Werden für den Levelaufstieg benötigt.^^Maximallevel bereits erreicht.",
+                "Experience Points^^Are needed to gain levels.^^Max level already reached.",
                 // LevelWithAPRIncrease
-                "Charakterlevel^^Jeder Levelaufstieg verbessert die^Werte des Charakters um:^^ LP: +{0:00}  SP: +{1:00}^SLP +{2:00}  TP +{3:00}^^Attacken pro Runde erhöhen sich^bei bestimmten Leveln:^  {5}^Attacken pro Runde sind {4}",
+                "Character Level^^Each level-up increases the^character's values by:^^ {0} LP, {1} SP, {2} SLP and {3} TP^^Attacks per round increase^at specific levels:^^ {5}^^Attacks per round are {4}",
                 // LevelWithoutAPRIncrease
-                "Charakterlevel^^Jeder Levelaufstieg verbessert die^Werte des Charakters um:^^ LP: +{0:00}  SP: +{1:00}^SLP +{2:00}  TP +{3:00}^^Attacken pro Runde sind {4}"
+                "Character Level^^Each level-up increases the^character's values by:^^ {0} LP, {1} SP, {2} SLP and {3} TP^^Attacks per round are {4}"
             } }
         };
     }
