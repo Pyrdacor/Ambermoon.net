@@ -1290,7 +1290,7 @@ namespace Ambermoon
             int? slot = SlotFromPartyMember(member);
 
             if (slot != null)
-                layout.SetCharacter(slot.Value, member);
+                layout.SetCharacter(slot.Value, member, false, () => ResetMoveKeys());
         }
 
         void PartyMemberRevived(PartyMember partyMember, Action finishAction = null, bool showHealAnimation = true)
