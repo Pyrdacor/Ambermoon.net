@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>10.1.0</Version>
+    <Version>10.2.0</Version>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>OpenAL audio interface implementation for Ambermoon</Description>
     <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon.net</RepositoryUrl>
@@ -13,9 +13,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="10.1.0" />
-    <PackageReference Include="Silk.NET.OpenAL" Version="2.8.0" />
-    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.8.0" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="10.2.1" />
+    <PackageReference Include="Silk.NET.OpenAL" Version="2.9.0" />
+    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.9.0" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.21.1.1" />
   </ItemGroup>
 

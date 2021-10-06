@@ -74,21 +74,37 @@ namespace Ambermoon.Data.Legacy
 
         static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.");
 
-        public void LoadFromMemoryZip(Stream stream)
+        public void LoadFromMemoryZip(Stream stream, Func<IGameData> fallbackGameDataProvider = null)
         {
             Loaded = false;
             GameDataSource = GameDataSource.Memory;
             using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read, true);
             var fileReader = new FileReader();
-            Func<string, IFileContainer> fileLoader = name =>
+            IGameData fallbackGameData = null;
+            IGameData EnsureFallbackData()
             {
+                if (fallbackGameDataProvider == null)
+                    return null;
+                if (fallbackGameData == null)
+                    fallbackGameData = fallbackGameDataProvider?.Invoke();
+                return fallbackGameData;
+            }
+            IFileContainer LoadFile(string name)
+            {
+                if (archive.GetEntry(name) == null)
+                    return EnsureFallbackData().Files[name];
+
                 using var uncompressedStream = new MemoryStream();
                 archive.GetEntry(name).Open().CopyTo(uncompressedStream);
                 uncompressedStream.Position = 0;
                 return fileReader.ReadFile(name, uncompressedStream);
-            };
-            Func<string, bool> fileExistChecker = name => archive.GetEntry(name) != null;
-            Load(fileLoader, null, fileExistChecker);
+            }
+            bool CheckFileExists(string name)
+            {
+                return archive.GetEntry(name) != null ||
+                    EnsureFallbackData()?.Files?.ContainsKey(name) == true;
+            }
+            Load(LoadFile, null, CheckFileExists);
         }
 
         public static string GetVersionInfo(string folderPath) => GetVersionInfo(folderPath, out _);

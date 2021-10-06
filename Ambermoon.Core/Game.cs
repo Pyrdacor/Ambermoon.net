@@ -12290,7 +12290,7 @@ namespace Ambermoon
         internal void ContinueMusic()
         {
             if (Configuration.Music)
-                currentSong?.Play(AudioOutput);
+                currentSong?.Play(AudioOutput, false);
         }
 
         void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)

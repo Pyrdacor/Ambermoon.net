@@ -59,10 +59,18 @@ namespace Ambermoon.Data.Legacy.Audio
 
         Enumerations.Song ISong.Song => song;
 
-        public void Play(IAudioOutput audioOutput)
+        public void Play(IAudioOutput audioOutput, bool waitTillLoaded)
         {
             if (buffer == null)
-                loadTask.GetAwaiter().OnCompleted(Start);
+            {
+                if (waitTillLoaded)
+                {
+                    loadTask.Wait();
+                    Start();
+                }
+                else
+                    loadTask.GetAwaiter().OnCompleted(Start);
+            }
             else
                 Start();
 

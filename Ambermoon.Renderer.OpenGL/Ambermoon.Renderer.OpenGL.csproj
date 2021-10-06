@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>10.1.0</Version>
+    <Version>10.2.0</Version>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>OpenGL render interface implementation for Ambermoon</Description>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="10.1.0" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="10.2.1" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -35,7 +35,7 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Silk.NET.OpenGL" Version="2.8.0" />
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.9.0" />
       </ItemGroup>
     </Otherwise>
   </Choose>

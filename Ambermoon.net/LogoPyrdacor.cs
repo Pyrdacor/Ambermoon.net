@@ -128,7 +128,7 @@ namespace Ambermoon
             });
 
             if (audioOutput.Enabled)
-                song?.Play(audioOutput);
+                song?.Play(audioOutput, false);
         }
 
         public void Cleanup()

@@ -173,7 +173,7 @@ namespace Ambermoon
 
             public byte[] GetData() => buffer;
 
-            public void Play(IAudioOutput audioOutput)
+            public void Play(IAudioOutput audioOutput, bool waitTillLoaded)
             {
                 songPlayer.Start(audioOutput, buffer);
             }

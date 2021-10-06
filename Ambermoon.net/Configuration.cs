@@ -36,7 +36,7 @@ namespace Ambermoon
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
         public bool ShowThalionLogo { get; set; } = true;
-        public bool ExtendedSavegameSlots { get; set; } = false;
+        public bool ExtendedSavegameSlots { get; set; } = true;
         public string[] AdditionalSavegameNames { get; set; } = new string[20];
         public int ContinueSavegameSlot { get; set; } = 0;
 

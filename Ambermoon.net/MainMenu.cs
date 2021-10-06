@@ -64,7 +64,7 @@ namespace Ambermoon
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.IntroGraphics);
 
             if (showLogo)
-                fader = new Fader(renderView, 0xff, 0x00, 255, false, true);
+                fader = new Fader(renderView, 0xff, 0x00, 253, false, true);
             mainMenuFader = new Fader(renderView, 0xff, 0x00, 50, false, true);
 
             if (showLogo)
@@ -75,7 +75,7 @@ namespace Ambermoon
                 thalionLogo.TextureAtlasOffset = textureAtlas.GetOffset((uint)IntroGraphic.ThalionLogo);
                 thalionLogo.X = (Global.VirtualScreenWidth - 128) / 2;
                 thalionLogo.Y = (Global.VirtualScreenHeight - 82) / 2;
-                thalionLogo.Visible = true;
+                thalionLogo.Visible = false;
             }
 
             background = renderView.SpriteFactory.Create(320, 256, true) as ILayerSprite;
@@ -109,24 +109,23 @@ namespace Ambermoon
             loadingText = new UI.UIText(renderView, 51, text,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), 254, TextColor.White, false, TextAlign.Center);
             loadingText.Visible = false;
-
-            cursor.Type = Data.CursorType.Sword;
             
             if (showLogo)
             {
+                ShowMainMenu(false);
+                playMusicAction?.Invoke(Song.Intro);
+                cursor.Type = Data.CursorType.Sword;                
                 fader.AttachFinishEvent(() =>
                 {
                     fader.AttachFinishEvent(SkipThalionLogo);
                     fader.StartAt(DateTime.Now + TimeSpan.FromMilliseconds(LogoDisplayDuration), LogoFadeOutTime, true);
                 });
                 fader.Start(LogoFadeInTime);
-
-
-                ShowMainMenu(false);
-                playMusicAction?.Invoke(Song.Intro);
+                thalionLogo.Visible = true;
             }
             else
             {
+                cursor.Type = Data.CursorType.Sword;
                 FadeInMainMenu();
             }
         }

@@ -20,6 +20,8 @@ using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 using Ambermoon.Audio.OpenAL;
 using Ambermoon.Data.Legacy.Audio;
+using Ambermoon.Data.Enumerations;
+using System.Threading;
 
 namespace Ambermoon
 {
@@ -129,6 +131,11 @@ namespace Ambermoon
                     return minDiffIndex;
                 }
             }
+        }
+
+        void RunTask(Action task)
+        {
+            Task.Factory.StartNew(task, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         void ChangeFullscreenMode(bool fullscreen)
@@ -366,11 +373,17 @@ namespace Ambermoon
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
             Font introFont, string[] mainMenuTexts, bool canContinue, Action<bool> startGameAction, GameLanguage gameLanguage)
         {
-            if (infoText != null)
-                infoText.Visible = false;
+            void PlayMusic(Song song)
+            {
+                if (configuration.Music)
+                    musicCache.GetSong(song)?.Play(audioOutput, true);
+
+                if (infoText != null)
+                    infoText.Visible = false;
+            }
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
-                GetText(gameLanguage, 1), GetText(gameLanguage, 2), song => musicCache.GetSong(song)?.Play(audioOutput), configuration.ShowThalionLogo);
+                GetText(gameLanguage, 1), GetText(gameLanguage, 2), PlayMusic, configuration.ShowThalionLogo);
             mainMenu.Closed += closeAction =>
             {
                 switch (closeAction)
@@ -402,14 +415,14 @@ namespace Ambermoon
         {
             { GameLanguage.German, new string[]
                 {
-                    "Spieldaten werden geladen ...",
+                    "Musik wird geladen ...",
                     "Starte Spiel ...",
                     "Bereite neues Spiel vor ..."
                 }
             },
             { GameLanguage.English, new string[]
                 {
-                    "Loading game data ...",
+                    "Loading music ...",
                     "Starting game ...",
                     "Preparing new game ..."
                 }
@@ -450,7 +463,7 @@ namespace Ambermoon
                 }
             }
 
-            musicCache = new MusicCache(gameData, Data.Enumerations.Song.Menu, // TODO: use intro later maybe and initialize earlier then
+            musicCache = new MusicCache(gameData, null,
                 Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
 
             // Create render view
@@ -466,13 +479,16 @@ namespace Ambermoon
 
             InitGlyphs();
 
-            var text = renderView.TextProcessor.CreateText("");
+            bool showLoadingText = !musicCache.Cached && configuration.Music;
+            var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
             infoText.DisplayLayer = 254;
-            infoText.Visible = false;
+            infoText.Visible = showLoadingText;
+            if (infoText.Visible)
+                renderView.Render(null);
 
-            Task.Run(() =>
+            RunTask(() =>
             {
                 try
                 {
@@ -496,7 +512,8 @@ namespace Ambermoon
                             var characterManager = new CharacterManager(gameData, graphicProvider);
                             var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
                             var lightEffectProvider = new LightEffectProvider(executableData);
-                            musicCache?.WaitForAllSongsLoaded();
+                            if (configuration.Music)
+                                musicCache?.WaitForAllSongsLoaded();
 
                             gameCreator = () =>
                             {
@@ -578,13 +595,13 @@ namespace Ambermoon
                     }
 
                     while (logoPyrdacor != null)
-                        System.Threading.Thread.Sleep(100);
+                        Thread.Sleep(100);
 
                     ShowMainMenu(renderView, cursor, IntroData.GraphicPalettes, introFont,
                         introData.Texts.Skip(8).Take(4).Select(t => t.Value).ToArray(), canContinue, continueGame =>
                     {
                         cursor.Type = Data.CursorType.None;
-                        mainMenu.FadeOutAndDestroy(continueGame, () => Task.Run(() => SetupGameCreator(continueGame)));
+                        mainMenu.FadeOutAndDestroy(continueGame, () => RunTask(() => SetupGameCreator(continueGame)));
                     }, gameLanguage);
                 }
                 catch (Exception ex)
@@ -641,14 +658,14 @@ namespace Ambermoon
                 return false;
             }
 
-            GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion)
+            GameData LoadBuiltinVersionData(BuiltinVersion builtinVersion, Func<IGameData> fallbackGameDataProvider)
             {
                 var gameData = new GameData();
                 builtinVersion.SourceStream.Position = builtinVersion.Offset;
                 var buffer = new byte[(int)builtinVersion.Size];
                 builtinVersion.SourceStream.Read(buffer, 0, buffer.Length);
                 var tempStream = new MemoryStream(buffer);
-                gameData.LoadFromMemoryZip(tempStream);
+                gameData.LoadFromMemoryZip(tempStream, fallbackGameDataProvider);
                 return gameData;
             }
 
@@ -669,7 +686,8 @@ namespace Ambermoon
 
             if (configuration.GameVersionIndex < 2)
             {
-                gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex]);
+                gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex],
+                    configuration.GameVersionIndex == 0 ? (Func<IGameData>)null : () => LoadBuiltinVersionData(versions[0], null));
             }
             else
             {
@@ -680,14 +698,14 @@ namespace Ambermoon
                 catch
                 {
                     configuration.GameVersionIndex = 0;
-                    gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex]);
+                    gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex], null);
                 }
             }
 
             var builtinVersionDataProviders = new Func<IGameData>[2]
             {
-                () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0]),
-                () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1])
+                () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null),
+                () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], () => LoadBuiltinVersionData(versions[0], null))
             };
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
@@ -742,7 +760,7 @@ namespace Ambermoon
             var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
                 textureAtlasManager);
 
-            Task.Run(() =>
+            RunTask(() =>
             {
                 while (logoPyrdacor != null)
                     System.Threading.Thread.Sleep(100);
