@@ -1018,12 +1018,30 @@ namespace Ambermoon.UI
         internal void OpenLoadMenu(Action<Action> preLoadAction = null, Action abortAction = null,
             bool loadInitialSavegameOnFailure = false)
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
-            var savegamePopup = OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.BrightGray, TextAlign.Center);
-            activePopup.AddSavegameListBox(savegameNames.Select(name =>
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, 10);
+            bool extended = game.Configuration.ExtendedSavegameSlots;
+            if (extended)
+            {
+                int remaining = 20 - Math.Min(20, game.Configuration.AdditionalSavegameNames?.Length ?? 0);
+                if (game.Configuration.AdditionalSavegameNames != null)
+                    savegameNames = Enumerable.Concat(savegameNames, game.Configuration.AdditionalSavegameNames.Take(20).Select(n => n ?? "")).ToArray();
+                if (remaining != 0)
+                    savegameNames = Enumerable.Concat(savegameNames, Enumerable.Repeat("", remaining)).ToArray();
+            }
+            var position = extended ? new Position(13, 38) : new Position(16, 62);
+            int maxItems = extended ? 16 : 10;
+            var savegamePopup = OpenPopup(position, extended ? 19 : 18, extended ? 10 : 7, true, false);
+            activePopup.AddText(new Rect(24, extended ? 54 : 78, 272, 6), game.DataNameProvider.LoadWhichSavegame, TextColor.BrightGray, TextAlign.Center);
+            var listBox = activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Load(slot + 1, name))
-            ).ToList(), false);
+            ).ToList(), false, maxItems, extended ? -23 : 0);
+
+            if (extended)
+            {
+                int scrollRange = Math.Max(0, savegameNames.Length - 10);
+                var scrollbar = activePopup.AddScrollbar(this, scrollRange, 2, 9);
+                scrollbar.Scrolled += offset => listBox.ScrollTo(offset);
+            }
 
             savegamePopup.Closed += Close;
 
@@ -1049,12 +1067,30 @@ namespace Ambermoon.UI
 
         void OpenSaveMenu()
         {
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
-            OpenPopup(new Position(16, 62), 18, 7, true, false);
-            activePopup.AddText(new Rect(24, 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, TextColor.BrightGray, TextAlign.Center);
-            activePopup.AddSavegameListBox(savegameNames.Select(name =>
+            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _, 10);
+            bool extended = game.Configuration.ExtendedSavegameSlots;
+            if (extended)
+            {
+                int remaining = 20 - Math.Min(20, game.Configuration.AdditionalSavegameNames?.Length ?? 0);
+                if (game.Configuration.AdditionalSavegameNames != null)
+                    savegameNames = Enumerable.Concat(savegameNames, game.Configuration.AdditionalSavegameNames.Take(20).Select(n => n ?? "")).ToArray();
+                if (remaining != 0)
+                    savegameNames = Enumerable.Concat(savegameNames, Enumerable.Repeat("", remaining)).ToArray();
+            }
+            var position = extended ? new Position(13, 38) : new Position(16, 62);
+            int maxItems = extended ? 16 : 10;
+            OpenPopup(position, extended ? 19 : 18, extended ? 10 : 7, true, false);
+            activePopup.AddText(new Rect(24, extended ? 54 : 78, 272, 6), game.DataNameProvider.SaveWhichSavegame, TextColor.BrightGray, TextAlign.Center);
+            var listBox = activePopup.AddSavegameListBox(savegameNames.Select(name =>
                 new KeyValuePair<string, Action<int, string>>(name, (int slot, string name) => Save(slot + 1, name))
-            ).ToList(), true);
+            ).ToList(), true, maxItems, extended ? -23 : 0);
+
+            if (extended)
+            {
+                int scrollRange = Math.Max(0, savegameNames.Length - 10);
+                var scrollbar = activePopup.AddScrollbar(this, scrollRange, 2, 9);
+                scrollbar.Scrolled += offset => listBox.ScrollTo(offset);
+            }
 
             void Close() => ClosePopup(false);
 
@@ -1083,7 +1119,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 13;
+        const int OptionCount = 14;
         const int OptionsPerPage = 5;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1102,8 +1138,9 @@ namespace Ambermoon.UI
                     "Button Tooltips anzeigen",
                     "Stats Tooltips anzeigen",
                     "Runen als Text anzeigen",
-                    "Cheats aktivieren",                    
+                    "Cheats aktivieren",
                     // Page3
+                    "Zusätzliche Spielstände",
                     "Musik cachen",
                     "Pyrdacor Logo zeigen",
                     "Thalion Logo zeigen"
@@ -1127,8 +1164,9 @@ namespace Ambermoon.UI
                     "Show button tooltips",
                     "Show stats tooltips",
                     "Show runes as text",
-                    "Enable cheats",                    
+                    "Enable cheats",
                     // Page 3
+                    "Additional saveslots",
                     "Cache music",
                     "Show Pyrdacor logo",
                     "Show Thalion logo"
@@ -1142,7 +1180,6 @@ namespace Ambermoon.UI
         void OpenOptions()
         {
             int page = 0;
-            var savegameNames = game.SavegameManager.GetSavegameNames(RenderView.GameData, out _);
             OpenPopup(new Position(48, 62), 14, 6, true, false);
             activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.BrightGray, TextAlign.Center);
             var optionNames = OptionNames[game.GameLanguage];
@@ -1169,6 +1206,7 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleCheats())),
                 // Page 3
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
@@ -1204,11 +1242,12 @@ namespace Ambermoon.UI
             void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
             void SetCheats() => SetOptionString(9, cheatsEnabled ? on : off);
             // Page 3
-            void SetMusicCaching() => SetOptionString(10, game.Configuration.CacheMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(11, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetThalionLogo() => SetOptionString(12, game.Configuration.ShowThalionLogo ? on : off);
-            // TODO: void SetIntro() => SetOptionString(10, game.Configuration.ShowIntro ? on : off);
-            // TODO: void SetFantasyIntro() => SetOptionString(11, game.Configuration.ShowFantasyIntro ? on : off);
+            void SetExtendedSaves() => SetOptionString(10, game.Configuration.ExtendedSavegameSlots ? on : off);
+            void SetMusicCaching() => SetOptionString(11, game.Configuration.CacheMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(12, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetThalionLogo() => SetOptionString(13, game.Configuration.ShowThalionLogo ? on : off);
+            // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
+            // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
             void ShowOptions()
             {
@@ -1228,8 +1267,9 @@ namespace Ambermoon.UI
                         SetPlayerStatsTooltips();
                         SetAutoDerune();
                         SetCheats();
-                        break;                    
+                        break;
                     case 2:
+                        SetExtendedSaves();
                         SetMusicCaching();
                         SetPyrdacorLogo();
                         SetThalionLogo();
@@ -1251,7 +1291,6 @@ namespace Ambermoon.UI
             }
             void ToggleVolume()
             {
-                var oldVolume = game.Configuration.Volume;
                 game.Configuration.Volume = ((game.Configuration.Volume + 10) / 10) * 10;
                 while (game.Configuration.Volume > 100)
                     game.Configuration.Volume -= 100;
@@ -1308,6 +1347,12 @@ namespace Ambermoon.UI
             {
                 game.Configuration.ShowPlayerStatsTooltips = !game.Configuration.ShowPlayerStatsTooltips;
                 SetPlayerStatsTooltips();
+                changedConfiguration = true;
+            }
+            void ToggleExtendedSaves()
+            {
+                game.Configuration.ExtendedSavegameSlots = !game.Configuration.ExtendedSavegameSlots;
+                SetExtendedSaves();
                 changedConfiguration = true;
             }
             void ToggleMusicCaching()
@@ -4248,6 +4293,9 @@ namespace Ambermoon.UI
 
         public bool ScrollY(bool down)
         {
+            if (OptionMenuOpen && PopupActive && activePopup.Scroll(down))
+                return true;
+
             if (!game.InputEnable)
                 return false;
 
@@ -4740,6 +4788,12 @@ namespace Ambermoon.UI
                 ShowChestMessage(game.DataNameProvider.WhereToMoveIt);
             else if (!(game.OpenStorage is Game.ConversationItems))
                 SetInventoryMessage(game.DataNameProvider.WhereToMoveIt);
+        }
+
+        public void SaveListScrollDrag(Position position, ref CursorType cursorType)
+        {
+            if (PopupActive && activePopup.Drag(position))
+                cursorType = CursorType.None;
         }
 
         public void Drag(Position position, ref CursorType cursorType)

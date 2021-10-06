@@ -45,6 +45,7 @@ namespace Ambermoon.UI
         readonly Position relativeHoverBoxOffset;
         int ScrollRange => items.Count - itemAreas.Count;
         public bool Editing => editingItem != -1;
+        public Rect Bounds { get; private set; }
 
         public event Action<int> HoverItem;
 
@@ -60,6 +61,7 @@ namespace Ambermoon.UI
             this.maxItems = maxItems;
             this.canEdit = canEdit;
             this.colorProvider = colorProvider;
+            Bounds = new Rect(area);
 
             popup.AddSunkenBox(area);
             hoverBox = popup.FillArea(new Rect(itemBasePosition + relativeHoverBoxOffset, new Size(hoverBoxWidth, itemHeight)),
@@ -105,10 +107,10 @@ namespace Ambermoon.UI
         }
 
         public static ListBox CreateSavegameListbox(IRenderView renderView, Game game, Popup popup,
-            List<KeyValuePair<string, Action<int, string>>> items, bool canEdit)
+            List<KeyValuePair<string, Action<int, string>>> items, bool canEdit, int maxItems, int yOffset)
         {
-            return new ListBox(renderView, game, popup, items, new Rect(32, 85, 256, 73),
-                new Position(33, 87), 7, 237, new Position(16, -1), true, 10, '?', canEdit);
+            return new ListBox(renderView, game, popup, items, new Rect(32, 85 + yOffset, 256, maxItems * Global.GlyphLineHeight + 3),
+                new Position(33, 87 + yOffset), 7, 237, new Position(16, -1), true, maxItems, '?', canEdit);
         }
 
         public static ListBox CreateDictionaryListbox(IRenderView renderView, Game game, Popup popup,
@@ -235,7 +237,7 @@ namespace Ambermoon.UI
         {
             editingItem = itemIndex;
             SetHoveredItem(-1);
-            itemTexts[itemIndex].Visible = false;
+            itemTexts[row].Visible = false;
             editInput.MoveTo(new Position(itemTexts[row].X, itemTexts[row].Y));
             editInput.Visible = true;
             editInput.SetText(items[itemIndex].Key);

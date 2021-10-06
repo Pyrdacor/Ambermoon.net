@@ -480,7 +480,7 @@ namespace Ambermoon
                     foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                         executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
                     var savegameManager = new SavegameManager(savePath);
-                    savegameManager.GetSavegameNames(gameData, out int currentSavegame);
+                    savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
                     bool canContinue = currentSavegame != 0;
                     var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
                     cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);

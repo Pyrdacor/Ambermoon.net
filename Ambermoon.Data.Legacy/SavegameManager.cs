@@ -18,7 +18,7 @@ namespace Ambermoon.Data.Legacy
             savesPath = Path.Combine(path, "Saves");
         }
 
-        public string[] GetSavegameNames(IGameData gameData, out int current)
+        public string[] GetSavegameNames(IGameData gameData, out int current, int totalSavegames)
         {
             current = 0;
 
@@ -28,7 +28,7 @@ namespace Ambermoon.Data.Legacy
             }
             else if (!gameData.Files.ContainsKey("Saves"))
             {
-                return Enumerable.Repeat("", 10).ToArray();
+                return Enumerable.Repeat("", totalSavegames).ToArray();
             }
             else
             {
@@ -50,7 +50,7 @@ namespace Ambermoon.Data.Legacy
             "Automap.amb"
         };
 
-        public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot)
+        public Savegame Load(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, int totalSavegames)
         {
             if (!transferredFolderSaves && File.Exists(savesPath))
             {
@@ -117,6 +117,31 @@ namespace Ambermoon.Data.Legacy
                         MerchantDataReaders = ReadContainer("Merchant_data.amb"),
                         AutomapDataReaders = ReadContainer("Automap.amb")
                     };
+                }
+                else if (saveSlot > 10 && saveSlot <= totalSavegames)
+                {
+                    if (Directory.Exists(Path.Combine(path, $"Save.{saveSlot:00}")))
+                    {
+                        string path = Path.Combine(this.path, $"Save.{saveSlot:00}");
+                        var fileReader = new FileReader();
+                        IFileContainer ReadContainer(string name)
+                        {
+                            using var stream = File.OpenRead(Path.Combine(path, name));
+                            return fileReader.ReadFile(name, stream);
+                        }
+                        savegameFiles = new SavegameInputFiles
+                        {
+                            SaveDataReader = new DataReader(File.ReadAllBytes(Path.Combine(path, "Party_data.sav"))),
+                            PartyMemberDataReaders = ReadContainer("Party_char.amb"),
+                            ChestDataReaders = ReadContainer("Chest_data.amb"),
+                            MerchantDataReaders = ReadContainer("Merchant_data.amb"),
+                            AutomapDataReaders = ReadContainer("Automap.amb")
+                        };
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
                 else
                 {
@@ -196,9 +221,12 @@ namespace Ambermoon.Data.Legacy
         public void Save(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, string name, Savegame savegame)
         {
             var savegameFiles = savegameSerializer.Write(savegame);
-            WriteSavegameName(gameData, saveSlot, ref name);
-            SaveToGameData(gameData, savegameFiles, saveSlot);
-            SaveToPath(path, savegameFiles, saveSlot, gameData.Files["Saves"]);
+            if (saveSlot <= 10)
+            {
+                WriteSavegameName(gameData, saveSlot, ref name);
+                SaveToGameData(gameData, savegameFiles, saveSlot);
+            }
+            SaveToPath(path, savegameFiles, saveSlot, saveSlot > 10 ? null : gameData.Files["Saves"]);
         }
 
         public void SaveCrashedGame(ISavegameSerializer savegameSerializer, Savegame savegame)

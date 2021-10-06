@@ -590,17 +590,16 @@ namespace Ambermoon.UI
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
 
-            listBox = ListBox.CreateOptionsListbox(renderView, game, this, items);
-
-            return listBox;
+            return listBox = ListBox.CreateOptionsListbox(renderView, game, this, items);
         }
 
-        public void AddSavegameListBox(List<KeyValuePair<string, Action<int, string>>> items, bool canEdit)
+        public ListBox AddSavegameListBox(List<KeyValuePair<string, Action<int, string>>> items,
+            bool canEdit, int maxItems, int yOffset)
         {
             if (listBox != null)
                 throw new AmbermoonException(ExceptionScope.Application, "Only one list box can be added.");
 
-            listBox = ListBox.CreateSavegameListbox(renderView, game, this, items, canEdit);
+            return listBox = ListBox.CreateSavegameListbox(renderView, game, this, items, canEdit, maxItems, yOffset);
         }
 
         public ListBox AddDictionaryListBox(List<KeyValuePair<string, Action<int, string>>> items,

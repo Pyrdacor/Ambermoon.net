@@ -73,6 +73,8 @@ namespace Ambermoon
         bool ShowPlayerStatsTooltips { get; set; }
         bool ShowPyrdacorLogo { get; set; }
         bool ShowThalionLogo { get; set; }
+        bool ExtendedSavegameSlots { get; set; }
+        string[] AdditionalSavegameNames { get; set; }
     }
 
     public static class ConfigurationExtensions

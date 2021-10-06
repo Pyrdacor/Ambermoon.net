@@ -1879,7 +1879,9 @@ namespace Ambermoon
                     ClosePopup();
             }
 
-            var savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot);
+            int totalSavegames = Configuration.ExtendedSavegameSlots ? 30 : 10;
+
+            var savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, slot, totalSavegames);
 
             if (savegame == null)
             {
@@ -1887,7 +1889,7 @@ namespace Ambermoon
                 {
                     if (loadInitialOnError && slot != 0)
                     {
-                        savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, 0);
+                        savegame = SavegameManager.Load(renderView.GameData, savegameSerializer, 0, totalSavegames);
 
                         if (savegame == null)
                         {
@@ -1995,7 +1997,23 @@ namespace Ambermoon
 
         public void SaveGame(int slot, string name)
         {
-            PrepareSaving(() => SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame));
+            PrepareSaving(() =>
+            {
+                SavegameManager.Save(renderView.GameData, savegameSerializer, slot, name, CurrentSavegame);
+
+                if (slot > 10) // extended slots
+                {
+                    if (Configuration.AdditionalSavegameNames == null)
+                        Configuration.AdditionalSavegameNames = new string[20];
+                    else if (Configuration.AdditionalSavegameNames.Length > 20)
+                        Configuration.AdditionalSavegameNames = Configuration.AdditionalSavegameNames.Take(20).ToArray();
+                    else if (Configuration.AdditionalSavegameNames.Length < 20)
+                        Configuration.AdditionalSavegameNames = Enumerable.Concat(Configuration.AdditionalSavegameNames,
+                            Enumerable.Repeat("", 20 - Configuration.AdditionalSavegameNames.Length)).ToArray();
+
+                    Configuration.AdditionalSavegameNames[slot - 11] = name;
+                }
+            });
         }
 
         public void ContinueGame()
@@ -2023,7 +2041,7 @@ namespace Ambermoon
 
             void Continue()
             {
-                SavegameManager.GetSavegameNames(renderView.GameData, out int current);
+                SavegameManager.GetSavegameNames(renderView.GameData, out int current, 10);
                 LoadGame(current, false, true);
             }
         }
@@ -3095,8 +3113,17 @@ namespace Ambermoon
                         layout.UpdateDraggedItemPosition(renderView.ScreenToGame(cursorPosition));
                     }
 
-                    if (layout.OptionMenuOpen && !layout.PopupActive)
-                        layout.HoverButtonGrid(renderView.ScreenToGame(cursorPosition));
+                    if (layout.OptionMenuOpen)
+                    {
+                        if (!layout.PopupActive)
+                            layout.HoverButtonGrid(renderView.ScreenToGame(cursorPosition));
+                        else
+                        {
+                            var cursorType = cursor.Type;
+                            layout.SaveListScrollDrag(renderView.ScreenToGame(cursorPosition), ref cursorType);
+                            CursorType = cursorType;
+                        }
+                    }
 
                     return;
                 }
@@ -10375,7 +10402,13 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Blacksmith, blacksmith);
                 ShowPlaceWindow(blacksmith.Name, showWelcome ? DataNameProvider.WelcomeBlacksmith : null,
-                    Picture80x80.Sage, blacksmith, SetupBlacksmith, null, null, null, 24);
+                    Map.World switch
+                    {
+                        World.Lyramion => Picture80x80.Sage,
+                        World.ForestMoon => Picture80x80.DwarfMerchant,
+                        World.Morag => Picture80x80.MoragMerchant,
+                        _ => Picture80x80.Sage
+                    }, blacksmith, SetupBlacksmith, null, null, null, 24);
                 void ShowDefaultMessage() => layout.ShowChestMessage(DataNameProvider.WhichItemToRepair, TextAlign.Left);
                 // Repair item button
                 layout.AttachEventToButton(3, () =>
@@ -10485,7 +10518,14 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Inn, inn);
-                ShowPlaceWindow(inn.Name, showWelcome ? DataNameProvider.WelcomeInnkeeper : null, Picture80x80.Innkeeper,
+                ShowPlaceWindow(inn.Name, showWelcome ? DataNameProvider.WelcomeInnkeeper : null,
+                    Map.World switch
+                    {
+                        World.Lyramion => Picture80x80.Innkeeper,
+                        World.ForestMoon => Picture80x80.DwarfMerchant,
+                        World.Morag => Picture80x80.MoragMerchant,
+                        _ => Picture80x80.Innkeeper
+                    },
                     inn, SetupInn, null, null, () => InputEnable = true);
                 // Rest button
                 layout.AttachEventToButton(3, () =>
@@ -12979,7 +13019,7 @@ namespace Ambermoon
                             if (wall.AutomapType == AutomapType.Wall || blockingWall || !wall.Flags.HasFlag(Tileset.TileFlags.Transparency))
                             {
                                 bool draw = automapType == AutomapType.None || wall.AutomapType == AutomapType.Wall ||
-                                    automapType == AutomapType.Tavern || automapType == AutomapType.Merchant;
+                                    automapType == AutomapType.Tavern || automapType == AutomapType.Merchant || automapType == AutomapType.Door;
 
                                 walls.Add(tx + ty * Map.Width, new AutomapWall
                                 {
@@ -13814,7 +13854,9 @@ namespace Ambermoon
                 {
                     GameOverButtonsVisible = true;
                     InputEnable = true;
-                    bool hasSavegames = SavegameManager.GetSavegameNames(renderView.GameData, out _).Any(n => !string.IsNullOrWhiteSpace(n));
+                    bool hasSavegames = SavegameManager.GetSavegameNames(renderView.GameData, out _, 10).Any(n => !string.IsNullOrWhiteSpace(n));
+                    if (!hasSavegames)
+                        hasSavegames = Configuration.ExtendedSavegameSlots && Configuration.AdditionalSavegameNames?.Any(s => !string.IsNullOrWhiteSpace(s)) == true;
                     layout.AddText(textArea, ProcessText(hasSavegames
                         ? DataNameProvider.GameOverLoadOrQuit
                         : GetCustomText(CustomTexts.Index.StartNewGameOrQuit)),
