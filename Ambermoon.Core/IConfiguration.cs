@@ -75,6 +75,7 @@ namespace Ambermoon
         bool ShowThalionLogo { get; set; }
         bool ExtendedSavegameSlots { get; set; }
         string[] AdditionalSavegameNames { get; set; }
+        int ContinueSavegameSlot { get; set; }
     }
 
     public static class ConfigurationExtensions

@@ -204,7 +204,7 @@ namespace Ambermoon
                         return null;
                     }
 
-                    game.TriggerTrap(trapEvent);
+                    game.TriggerTrap(trapEvent, lastEventStatus);
                     return null; // next event is only executed after trap effect
                 }
                 case EventType.RemoveBuffs:
@@ -259,13 +259,14 @@ namespace Ambermoon
                     EventProvider provider = null;
                     if (conversationPartner != null)
                         provider = eventProvider = new EventProvider();
+                    bool eventStatus = lastEventStatus;
                     void Award(PartyMember partyMember, Action followAction) => game.AwardPlayer(partyMember, awardEvent, followAction);
                     void Done()
                     {
                         if (awardEvent.Next != null)
                         {
                             if (conversationPartner == null)
-                                TriggerEventChain(map, game, EventTrigger.Always, x, y, awardEvent.Next, true);
+                                TriggerEventChain(map, game, EventTrigger.Always, x, y, awardEvent.Next, eventStatus);
                             else
                                 provider?.Provide(awardEvent.Next);
                         }
@@ -919,6 +920,7 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid spawn event.");
                     game.SpawnTransport(spawnEvent.MapIndex == 0 ? map.Index : spawnEvent.MapIndex,
                         spawnEvent.X, spawnEvent.Y, spawnEvent.TravelType);
+                    lastEventStatus = true;
                     break;
                 case EventType.Unknown:
                     // TODO
@@ -927,8 +929,6 @@ namespace Ambermoon
                     Console.WriteLine($"Unknown event type found: {@event.Type}");
                     return @event.Next;
             }
-
-            lastEventStatus = true;
 
             return @event.Next;
         }

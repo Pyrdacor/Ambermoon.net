@@ -68,7 +68,7 @@ namespace Ambermoon.Data.Legacy
                         return null;
                     }
 
-                    for (int i = 1; i <= 10; ++i)
+                    for (int i = 1; i <= totalSavegames; ++i)
                     {
                         var saveFiles = new List<KeyValuePair<string, IFileContainer>>(5);
                         foreach (var saveFileName in SaveFileNames)

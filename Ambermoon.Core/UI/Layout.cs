@@ -1038,7 +1038,7 @@ namespace Ambermoon.UI
 
             if (extended)
             {
-                int scrollRange = Math.Max(0, savegameNames.Length - 10);
+                int scrollRange = Math.Max(0, savegameNames.Length - 16);
                 var scrollbar = activePopup.AddScrollbar(this, scrollRange, 2, 9);
                 scrollbar.Scrolled += offset => listBox.ScrollTo(offset);
             }
@@ -1087,7 +1087,7 @@ namespace Ambermoon.UI
 
             if (extended)
             {
-                int scrollRange = Math.Max(0, savegameNames.Length - 10);
+                int scrollRange = Math.Max(0, savegameNames.Length - 16);
                 var scrollbar = activePopup.AddScrollbar(this, scrollRange, 2, 9);
                 scrollbar.Scrolled += offset => listBox.ScrollTo(offset);
             }
@@ -1106,6 +1106,7 @@ namespace Ambermoon.UI
                 {
                     ClosePopup();
                     game.SaveGame(slot, name);
+                    game.Configuration.ContinueSavegameSlot = slot;
                 }
                 else
                 {
@@ -1113,6 +1114,7 @@ namespace Ambermoon.UI
                     {
                         ClosePopup();
                         game.SaveGame(slot, name);
+                        game.Configuration.ContinueSavegameSlot = slot;
                     }, Close, Close);
                 }
             }

@@ -2041,7 +2041,11 @@ namespace Ambermoon
 
             void Continue()
             {
-                SavegameManager.GetSavegameNames(renderView.GameData, out int current, 10);
+                int current = Configuration.ExtendedSavegameSlots ? Configuration.ContinueSavegameSlot : 0;
+
+                if (current <= 0)
+                    SavegameManager.GetSavegameNames(renderView.GameData, out current, 10);
+
                 LoadGame(current, false, true);
             }
         }
@@ -4561,7 +4565,7 @@ namespace Ambermoon
             DamageAllPartyMembers(_ => damage, affectChecker, notAffectedHandler, followAction);
         }
 
-        internal void TriggerTrap(TrapEvent trapEvent)
+        internal void TriggerTrap(TrapEvent trapEvent, bool lastEventStatus)
         {
             Func<PartyMember, bool> targetFilter = null;
             Func<PartyMember, bool> genderFilter = null;
@@ -4624,7 +4628,7 @@ namespace Ambermoon
                 if (trapEvent.Next != null)
                 {
                     EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
-                        (uint)player.Position.Y, trapEvent.Next, true);
+                        (uint)player.Position.Y, trapEvent.Next, lastEventStatus);
                 }
                 else
                 {

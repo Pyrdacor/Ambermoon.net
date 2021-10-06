@@ -38,6 +38,7 @@ namespace Ambermoon
         public bool ShowThalionLogo { get; set; } = true;
         public bool ExtendedSavegameSlots { get; set; } = false;
         public string[] AdditionalSavegameNames { get; set; } = new string[20];
+        public int ContinueSavegameSlot { get; set; } = 0;
 
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
