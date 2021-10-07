@@ -11,7 +11,7 @@ Adjustments to work like the original
 - Added music to the camp
 - The world is now also checked in battles for spells
 - Non-chest treasures will now show the correct image
-- Dward/Moranian blacksmiths, merchants and innkeepers
+- Dwarf/Moranian blacksmiths, merchants and innkeepers
   will now use the correct image
 - The superman cheat now also grants full light
 - While on eagle, broom or flying, you won't be affected
