@@ -6,25 +6,21 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.1 is the most recent version from 17-09-2021.
+Version 1.2 is the most recent version from 07-10-2021.
 
 The full package with additional resources can now also be downloaded from my new website at www.pyrdacor.net!
 
-Version | Standalone | Size-Optimized (needs .NET installed)
---- | --- | ---
-**1.1.0** (Windows 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Windows-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Windows.zip)
-**1.1.0** (Linux 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Linux-Standalone.tar.gz) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Linux.tar.gz)
-**1.1.0** (Windows 32bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Windows32Bit-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Windows32Bit.zip)
-**1.1.0** (Mac 64bit) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Mac-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Mac.zip)
-**1.1.0** (Mac 64bit bundled) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Mac-Bundle-Standalone.zip) | [Download](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.1/Ambermoon.net-Mac-Bundle.zip)
-
-- (*English*) The standalone versions should work without .NET installed but are larger in size. I recommend the standalone version.
-- (*German*) Die Standalone-Versionen sollten ohne installierte .NET Runtime laufen, sind aber etwas größer. Ich empfehle die Standalone-Version.
+Version | Download
+--- | ---
+**1.2.0** (Windows 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Windows.zip)
+**1.2.0** (Linux 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Linux.tar.gz)
+**1.2.0** (Mac 64bit bundled) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Mac-Bundle.zip)
+**1.2.0** (Mac 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Mac.zip)
+**1.2.0** (Windows 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Windows32Bit.zip)
 
 Problems? The [FAQ](FAQ.md) might help.
 
 Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/releases). Other platforms will follow. \
-An up-to-date overview for planned releases and features can be found [here](https://github.com/Pyrdacor/Ambermoon.net/issues/63).
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
@@ -124,7 +120,7 @@ I will also post updates about releases and interesting stuff on twitter: https:
 </p>
 
 
-## Controls
+## Important controls
 
 Key | Description
 --- | ---
@@ -134,9 +130,16 @@ Left or A | Move left (2D) or turn left (3D)
 Right or D | Move right (2D) or turn right (3D)
 F11 | Toggle fullscreen mode
 ESC | Close ingame windows, stop item dragging/specific cursors/etc
-Num1-Num9 | Buttons 1-9
+Num1-Num9 | Action buttons 1-9 (button panel in the lower right corner)
 1-6 | Set party member 1-6 as active
 F1-F6 | Open inventory of party member 1-6
+
+### Left clicks
+
+- On portrait will select the party member as the active one.
+- Drag&drop of items.
+- On map center (Zzz) it will wait for 5 minutes.
+- All kinds of interactions and selections.
 
 ### Right clicks
 
@@ -149,16 +152,11 @@ F1-F6 | Open inventory of party member 1-6
 - On item it will pickup all the items without asking for the amount.
 - When dragging an item it will reset the item back to its source slot.
 
-### Left clicks
-
-- On portrait will select the party member as the active one.
-- Drag&drop of items.
-- On map center (Zzz) it will wait for 5 minutes.
-
 ### Mouse wheel
 
 - Scrolling the wheel on 2D maps changes the cursor.
 - Clicking the wheel or middle mouse button on 2D maps will show the crosshair or mouth cursor.
+- If a scrollbar is present, it can be controlled by the mouse wheel as well.
 
 
 ## Configuration

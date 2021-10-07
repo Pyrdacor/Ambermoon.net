@@ -1,8 +1,12 @@
 # Changelog
 
-## 1.1.0 - First patch
+## 1.2.0 - Second patch (October 2021)
 
-- Version [1.1.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.0): Bugfixes
+- Version [1.2.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.0): Thalion logo, more savegame slots, more tooltips, bugfixes
+
+## 1.1.0 - First patch (September 2021)
+
+- Version [1.1.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.0): Pyrdacor logo, added swamp poison, easteregg, bugfixes
 
 ## 1.0.0 - Full version
 
