@@ -11,6 +11,11 @@
   For example when entering Grandpa's cellar for the first time you can see through the popup.
 
 
+## Characters
+
+- Use tile flags of map characters (random animation start, alternating animation, movement blocking)
+
+
 ## UI
 
 - "Do you accept this character?" message is missing in character creator.

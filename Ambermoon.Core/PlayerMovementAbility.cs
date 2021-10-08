@@ -33,7 +33,8 @@ namespace Ambermoon
         Rafting, // raft
         Sailing, // boat, sand ship
         WitchBroom,
-        Eagle
+        Eagle,
+        Flying
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -50,7 +51,7 @@ namespace Ambermoon
             TravelType.Raft => PlayerMovementAbility.Rafting,
             TravelType.Ship => PlayerMovementAbility.Sailing,
             TravelType.WitchBroom => PlayerMovementAbility.WitchBroom,
-            TravelType.Fly => PlayerMovementAbility.Eagle,
+            TravelType.Fly => PlayerMovementAbility.Flying,
             TravelType.Eagle => PlayerMovementAbility.Eagle,
             _ => PlayerMovementAbility.NoMovement
         };

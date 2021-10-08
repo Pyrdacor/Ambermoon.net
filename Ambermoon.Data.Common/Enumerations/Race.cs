@@ -15,8 +15,8 @@
         Unknown10,
         Unknown11,
         Unknown12,
-        Unknown13,
         Animal, // only Necros the cat NPC on Nera's isle
-        Monster // all non-human monsters
+        Monster, // all non-human monsters
+        Unknown15
     }
 }

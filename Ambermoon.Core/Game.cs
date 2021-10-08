@@ -401,6 +401,7 @@ namespace Ambermoon
             get => travelType;
             set
             {
+                bool superman = travelType == TravelType.Fly || value == TravelType.Fly;
                 travelType = value;
                 CurrentSavegame.TravelType = value;
                 if (Map != null)
@@ -427,6 +428,9 @@ namespace Ambermoon
                         layout.EnableButton(5, false);
                     }
                 }
+
+                if (superman)
+                    UpdateLight();
             }
         }
         bool clickMoveActive = false;
@@ -1327,6 +1331,8 @@ namespace Ambermoon
             // We set the bonus values here dependent on equipment.
             partyMember.HitPoints.BonusValue = 0;
             partyMember.SpellPoints.BonusValue = 0;
+            partyMember.BaseDefense = 0;
+            partyMember.BaseAttack = 0;
 
             foreach (var attribute in Enum.GetValues<Attribute>())
             {
@@ -9632,7 +9638,13 @@ namespace Ambermoon
                     AddTimedEvent(timeSpan, ChangeLightRadius);
             }
 
-            if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) && TravelType != TravelType.Fly)
+            if (TravelType == TravelType.Fly)
+            {
+                // Full light
+                lightIntensity = 255;
+                fow2D.Visible = false;
+            }
+            else if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
             {
                 lightIntensity = 0;
 
@@ -9648,6 +9660,7 @@ namespace Ambermoon
             }
             else if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
+                
                 // Light is based on daytime and own light sources
                 // 17:00-18:59: 128
                 // 19:00-19:59: 80
@@ -9680,9 +9693,8 @@ namespace Ambermoon
                 {
                     var lastRadius = mapChange ? 0 : (int)(lastIntensity >> 1);
                     var newRadius = (int)(lightIntensity >> 1);
-                    fow2D.Visible = lastIntensity < 224 && TravelType != TravelType.Fly;
-                    if (TravelType != TravelType.Fly)
-                        ChangeLightRadius(lastRadius, newRadius);
+                    fow2D.Visible = lastIntensity < 224;
+                    ChangeLightRadius(lastRadius, newRadius);
                 }
             }
             else if (Map.Flags.HasFlag(MapFlags.Indoor))

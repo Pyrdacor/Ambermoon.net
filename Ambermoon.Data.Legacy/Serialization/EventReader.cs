@@ -36,9 +36,13 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             events.Clear();
 
+            uint numTotalEvents = 0;
+
+            if (dataReader.Position <= dataReader.Size - 4)
+                numTotalEvents = dataReader.ReadWord();
+
             if (numEvents > 0)
             {
-                uint numTotalEvents = dataReader.ReadWord();
                 var eventInfos = new List<Tuple<Event, int>>();
 
                 // read all events and the next event index
