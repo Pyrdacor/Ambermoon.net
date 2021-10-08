@@ -6,17 +6,17 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.2 is the most recent version from 07-10-2021.
+Version 1.2.1 is the most recent version from 08-10-2021.
 
 The full package with additional resources can now also be downloaded from my new website at www.pyrdacor.net!
 
 Version | Download
 --- | ---
-**1.2.0** (Windows 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Windows.zip)
-**1.2.0** (Linux 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Linux.tar.gz)
-**1.2.0** (Mac 64bit bundled) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Mac-Bundle.zip)
-**1.2.0** (Mac 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Mac.zip)
-**1.2.0** (Windows 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Windows32Bit.zip)
+**1.2.1** (Windows 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Windows.zip)
+**1.2.1** (Linux 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Linux.tar.gz)
+**1.2.1** (Mac 64bit bundled) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Mac-Bundle.zip)
+**1.2.1** (Mac 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Mac.zip)
+**1.2.1** (Windows 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.2/Ambermoon.net-Windows32Bit.zip)
 
 Problems? The [FAQ](FAQ.md) might help.
 
