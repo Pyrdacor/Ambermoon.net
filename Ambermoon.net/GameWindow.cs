@@ -800,17 +800,34 @@ namespace Ambermoon
         string GetSavePath(string version)
         {
             string suffix = $"Saves{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
+            string alternativeSuffix = $"SavesRemake{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
 
             try
             {
                 var path = Path.Combine(Configuration.ExecutableDirectoryPath, suffix);
-                Directory.CreateDirectory(path);
+                try
+                {
+                    Directory.CreateDirectory(path);
+                }
+                catch
+                {
+                    path = Path.Combine(Configuration.ExecutableDirectoryPath, alternativeSuffix);
+                    Directory.CreateDirectory(path);
+                }
                 return path;
             }
             catch
             {
                 var path = Path.Combine(Configuration.FallbackConfigDirectory, suffix);
-                Directory.CreateDirectory(path);
+                try
+                {
+                    Directory.CreateDirectory(path);
+                }
+                catch
+                {
+                    path = Path.Combine(Configuration.FallbackConfigDirectory, alternativeSuffix);
+                    Directory.CreateDirectory(path);
+                }
                 return path;
             }
         }
