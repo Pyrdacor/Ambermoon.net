@@ -20,7 +20,7 @@ Version | Download
 
 Problems? The [FAQ](FAQ.md) might help.
 
-Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads). Other platforms will follow. \
+Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads). Other platforms will follow.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
