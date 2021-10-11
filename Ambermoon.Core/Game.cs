@@ -1568,8 +1568,10 @@ namespace Ambermoon
                 p => p.Alive && p.Ailments.HasFlag(Ailment.Poisoned), null, followAction);
         }
 
-        void Sleep(bool inn)
+        void Sleep(bool inn, int healing)
         {
+            healing = Util.Limit(0, healing, 100);
+
             for (int i = 0; i < MaxPartyMembers; ++i)
             {
                 var partyMember = GetPartyMember(i);
@@ -1634,16 +1636,18 @@ namespace Ambermoon
                             }
                             else
                             {
-                                int lpRecovered = Math.Max(0, (int)partyMember.HitPoints.TotalMaxValue - (int)partyMember.HitPoints.CurrentValue);
-                                partyMember.HitPoints.CurrentValue = partyMember.HitPoints.TotalMaxValue;
-                                int spRecovered = Math.Max(0, (int)partyMember.SpellPoints.TotalMaxValue - (int)partyMember.SpellPoints.CurrentValue);
-                                partyMember.SpellPoints.CurrentValue = partyMember.SpellPoints.TotalMaxValue;
+                                int lpRecovered = Util.Limit(0, healing * (int)partyMember.HitPoints.TotalMaxValue / 100,
+                                    (int)partyMember.HitPoints.TotalMaxValue - (int)partyMember.HitPoints.CurrentValue);
+                                partyMember.HitPoints.CurrentValue += (uint)lpRecovered;
+                                int spRecovered = Util.Limit(0, healing * (int)partyMember.SpellPoints.TotalMaxValue / 100,
+                                    (int)partyMember.SpellPoints.TotalMaxValue - (int)partyMember.SpellPoints.CurrentValue);
+                                partyMember.SpellPoints.CurrentValue += (uint)spRecovered;
                                 layout.FillCharacterBars(partyMember);
 
                                 if (!inn)
                                     --partyMember.Food;
 
-                                if (partyMember.Class.IsMagic()) // Has SP
+                                if (partyMember.Class.IsMagic() && spRecovered != 0) // Has SP and was recovered
                                 {
                                     layout.ShowClickChestMessage(partyMember.Name + string.Format(DataNameProvider.RecoveredLPAndSP, lpRecovered, spRecovered), Next);
                                 }
@@ -10567,7 +10571,7 @@ namespace Ambermoon
                                 OpenStorage = null;
                                 Teleport((uint)inn.BedroomMapIndex, (uint)inn.BedroomX,
                                     (uint)inn.BedroomY, player.Direction, out _, true);
-                                OpenCamp(true);
+                                OpenCamp(true, inn.Healing);
                             });
                         }
                     }, TextAlign.Left);
@@ -11805,7 +11809,7 @@ namespace Ambermoon
             }
         }
 
-        internal void OpenCamp(bool inn)
+        internal void OpenCamp(bool inn, int healing = 50) // 50 when camping outside of inns
         {
             if (!inn && MonsterSeesPlayer)
             {
@@ -11817,7 +11821,7 @@ namespace Ambermoon
             {
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Camp, inn);
+                SetWindow(Window.Camp, inn, healing);
                 PlayMusic(Song.BarBrawlin);
                 layout.SetLayout(LayoutType.Items);
                 layout.Set80x80Picture(inn ? Picture80x80.RestInn : Map.Flags.HasFlag(MapFlags.Outdoor) ? Picture80x80.RestOutdoor : Picture80x80.RestDungeon);
@@ -11897,7 +11901,7 @@ namespace Ambermoon
                     }
                     else
                     {
-                        Sleep(inn);
+                        Sleep(inn, healing);
                     }
                 });
 
@@ -14497,7 +14501,8 @@ namespace Ambermoon
                 case Window.Camp:
                 {
                     bool inn = (bool)currentWindow.WindowParameters[0];
-                    OpenCamp(inn);
+                    int healing = (int)currentWindow.WindowParameters[1];
+                    OpenCamp(inn, healing);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
