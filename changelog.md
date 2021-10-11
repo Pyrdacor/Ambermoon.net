@@ -2,6 +2,7 @@
 
 ## 1.2.0 - Second patch (October 2021)
 
+- Version [1.2.2] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.2): Quick fix for 1.2.0 release
 - Version [1.2.1] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.1): Quick fix for 1.2.0 release
 - Version [1.2.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.0): Thalion logo, more savegame slots, more tooltips, bugfixes
 
