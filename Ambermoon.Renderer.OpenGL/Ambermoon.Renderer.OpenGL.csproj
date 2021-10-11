@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>10.2.1</Version>
+    <Version>10.2.2</Version>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>OpenGL render interface implementation for Ambermoon</Description>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
