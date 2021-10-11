@@ -7532,6 +7532,7 @@ namespace Ambermoon
                 else
                 {
                     layout.HideTooltip();
+                    currentBattle.HideAllBattleFieldDamage();
                     OpenSpellList(CurrentPartyMember,
                         spell =>
                         {

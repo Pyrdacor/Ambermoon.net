@@ -1954,6 +1954,14 @@ namespace Ambermoon
             throw new AmbermoonException(ExceptionScope.Application, "Not processed battle action.");
         }
 
+        internal void HideAllBattleFieldDamage()
+        {
+            foreach (var battleFieldDamageText in battleFieldDamageTexts)
+                battleFieldDamageText.Value?.Delete();
+
+            battleFieldDamageTexts.Clear();
+        }
+
         void HideBattleFieldDamage(int tile)
         {
             if (battleFieldDamageTexts.ContainsKey(tile))
