@@ -227,7 +227,7 @@ namespace Ambermoon.UI
 
         public void AbortEdit(int? index = null)
         {
-            itemTexts[index ?? editingItem].Visible = true;
+            itemTexts[(index ?? editingItem) - scrollOffset].Visible = true;
             editingItem = -1;
             editInput.LoseFocus();
             editInput.Visible = false;

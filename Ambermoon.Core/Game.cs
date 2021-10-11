@@ -3570,7 +3570,7 @@ namespace Ambermoon
             string mapName = Map.IsWorldMap
                 ? DataNameProvider.GetWorldName(Map.World)
                 : Map.Name;
-            windowTitle.Text = renderView.TextProcessor.CreateText(mapName);
+            windowTitle.Text = ProcessText(mapName);
             windowTitle.PaletteIndex = UIPaletteIndex;
             windowTitle.TextColor = TextColor.BrightGray;
         }
