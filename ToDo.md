@@ -13,12 +13,14 @@
 
 ## Characters
 
+- NPCs are partly above the player
 - Use tile flags of map characters (random animation start, alternating animation, movement blocking)
 
 
 ## UI
 
 - "Do you accept this character?" message is missing in character creator.
+- Question about taking items with you is missing from conversations.
 
 
 ## Misc

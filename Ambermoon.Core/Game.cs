@@ -4575,7 +4575,7 @@ namespace Ambermoon
             DamageAllPartyMembers(_ => damage, affectChecker, notAffectedHandler, followAction);
         }
 
-        internal void TriggerTrap(TrapEvent trapEvent, bool lastEventStatus)
+        internal void TriggerTrap(TrapEvent trapEvent, bool lastEventStatus, uint x, uint y)
         {
             Func<PartyMember, bool> targetFilter = null;
             Func<PartyMember, bool> genderFilter = null;
@@ -4637,8 +4637,8 @@ namespace Ambermoon
             {
                 if (trapEvent.Next != null)
                 {
-                    EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, (uint)player.Position.X,
-                        (uint)player.Position.Y, trapEvent.Next, lastEventStatus);
+                    EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, x,
+                        y, trapEvent.Next, lastEventStatus);
                 }
                 else
                 {
@@ -5167,15 +5167,17 @@ namespace Ambermoon
             return true;
         }
 
-        internal void Teleport(TeleportEvent teleportEvent)
+        internal void Teleport(TeleportEvent teleportEvent, uint x, uint y)
         {
             ResetMoveKeys();
             ResetMapCharacterInteraction(Map);
 
             void RunTransition()
             {
+                uint targetX = teleportEvent.X == 0 ? x + 1 : teleportEvent.X;
+                uint targetY = teleportEvent.Y == 0 ? y + 1 : teleportEvent.Y;
                 levitating = false;
-                Teleport(teleportEvent.MapIndex, teleportEvent.X, teleportEvent.Y, teleportEvent.Direction, out _, true);
+                Teleport(teleportEvent.MapIndex, targetX, targetY, teleportEvent.Direction, out _, true);
             }
 
             var transition = teleportEvent.Transition;

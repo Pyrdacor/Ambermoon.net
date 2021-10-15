@@ -121,7 +121,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     throw new AmbermoonException(ExceptionScope.Data, "For 3D maps the EventAutomapTypes collection size must match the EventList collection size.");
                 foreach (var automapType in map.EventAutomapTypes)
                 {
-                    if (automapType  == AutomapType.Invalid)
+                    if (automapType == AutomapType.Invalid)
                         dataWriter.Write(0);
                     else
                         dataWriter.Write((byte)automapType);

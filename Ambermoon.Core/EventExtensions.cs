@@ -70,7 +70,7 @@ namespace Ambermoon
                     if (!(@event is TeleportEvent teleportEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid teleport event.");
 
-                    game.Teleport(teleportEvent);
+                    game.Teleport(teleportEvent, x, y);
 
                     // Note: The teleporter from Mine 1 to 2 has a teleport event which has another
                     // one as its next event. We have to avoid further event execution by just return
@@ -204,7 +204,7 @@ namespace Ambermoon
                         return null;
                     }
 
-                    game.TriggerTrap(trapEvent, lastEventStatus);
+                    game.TriggerTrap(trapEvent, lastEventStatus, x, y);
                     return null; // next event is only executed after trap effect
                 }
                 case EventType.RemoveBuffs:

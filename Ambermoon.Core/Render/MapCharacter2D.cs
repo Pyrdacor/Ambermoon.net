@@ -520,7 +520,7 @@ namespace Ambermoon.Render
 
         void ShowPopup(string text)
         {
-            game.ShowMessagePopup(text, null, TextAlign.Left);
+            game.ShowMessagePopup(text, null, TextAlign.Center);
         }
     }
 }
