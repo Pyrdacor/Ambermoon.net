@@ -4865,7 +4865,7 @@ namespace Ambermoon
             {
                 var mapEventId = Map.Blocks[x, y].MapEventId;
 
-                if (mapEventId == 0)
+                if (mapEventId == 0 || !CurrentSavegame.IsEventActive(Map.Index, mapEventId - 1))
                     return false;
 
                 var @event = Map.EventList[(int)mapEventId - 1];
@@ -4918,7 +4918,8 @@ namespace Ambermoon
                         else
                         {
                             levitating = true;
-                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, 0u, 0u, climbEvent, true);
+                            EventExtensions.TriggerEventChain(Map, this, EventTrigger.Levitating, (uint)levitatePosition.X,
+                                (uint)levitatePosition.Y, climbEvent, true);
                         }
                     });
                 }
