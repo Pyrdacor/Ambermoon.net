@@ -2136,6 +2136,9 @@ namespace Ambermoon
 
         void AddAilment(Ailment ailment, Character target)
         {
+            if (target is PartyMember && game.Godmode)
+                return;
+
             target.Ailments |= ailment;
 
             if (target is PartyMember partyMember)

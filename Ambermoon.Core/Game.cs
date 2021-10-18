@@ -7695,6 +7695,9 @@ namespace Ambermoon
 
         internal void AddAilment(Ailment ailment, PartyMember target = null)
         {
+            if (Godmode)
+                return;
+
             target ??= CurrentPartyMember;
 
             if (ailment >= Ailment.DeadCorpse && target.Alive)

@@ -25,7 +25,6 @@
 
 ## Misc
 
-- Godmode should protect against curses/ailments.
 - If a curse leads to negative stats, they will be huge (negative overflow?).
 - Add more savegame slots?
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
