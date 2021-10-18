@@ -3463,8 +3463,13 @@ namespace Ambermoon
 
                 if (position != player.Position &&
                     position.X >= 0 && position.X < Map.Width &&
-                    position.Y >= 0 && position.Y < Map.Height)
+                    position.Y >= 0 && position.Y < Map.Height &&
+                    renderMap3D.IsBlockingPlayer(position))
                 {
+                    // Only check the forward position if it is blocking.
+                    // Sometimes use item events might be placed on walls etc.
+                    // Otherwise don't check the forward position as the
+                    // player can walk on the empty tile and use the item there.
                     x = (uint)position.X;
                     y = (uint)position.Y;
                     @event = Map.GetEvent(x, y, CurrentSavegame);
