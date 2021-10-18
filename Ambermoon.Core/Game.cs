@@ -12084,7 +12084,7 @@ namespace Ambermoon
         {
             layout.HideTooltip();
             var item = ItemManager.GetItem(itemSlot.ItemIndex);
-            bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) || item.Flags.HasFlag(ItemFlags.Accursed);
+            bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) && item.Flags.HasFlag(ItemFlags.Accursed);
             int factor = cursed ? -1 : 1;
             var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, 6);
 
