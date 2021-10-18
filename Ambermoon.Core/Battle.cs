@@ -1831,7 +1831,7 @@ namespace Ambermoon
                                 if (meleeWeaponSlot != null)
                                 {
                                     weaponSlot.Exchange(meleeWeaponSlot);
-                                    game.EquipmentAdded(weaponSlot.ItemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed), monster);
+                                    game.EquipmentAdded(weaponSlot.ItemIndex, 1, monster);
                                 }
                             }
 
@@ -2762,7 +2762,7 @@ namespace Ambermoon
                             {
                                 // Switch weapons
                                 weaponSlot.Exchange(meleeWeaponSlot);
-                                game.EquipmentAdded(weaponSlot.ItemIndex, 1, weaponSlot.Flags.HasFlag(ItemSlotFlags.Cursed), monster);
+                                game.EquipmentAdded(weaponSlot.ItemIndex, 1, monster);
                             }
                             else
                             {

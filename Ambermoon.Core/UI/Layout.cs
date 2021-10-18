@@ -321,7 +321,7 @@ namespace Ambermoon.UI
                         previousSlot.Replace(partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)]);
                         if (previousSlot.Empty) // Otherwise DropItem below will handle this
                         {
-                            game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, Item.Item.Flags.HasFlag(ItemSlotFlags.Cursed), partyMember);
+                            game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                             game.UpdateCharacterInfo();
                             partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Add(Item.Item);
                             updateSlot = partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)];

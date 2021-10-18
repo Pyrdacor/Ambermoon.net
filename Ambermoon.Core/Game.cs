@@ -3836,7 +3836,11 @@ namespace Ambermoon
                 void AddEquipment(int slotIndex, ItemSlot itemSlot, int amount)
                 {
                     var item = ItemManager.GetItem(itemSlot.ItemIndex);
-                    EquipmentAdded(item, amount, itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
+
+                    if (item.Flags.HasFlag(ItemFlags.Accursed))
+                        itemSlot.Flags |= ItemSlotFlags.Cursed;
+
+                    EquipmentAdded(item, amount);
 
                     if (item.NumberOfHands == 2 && slotIndex == (int)EquipmentSlot.RightHand - 1)
                     {
@@ -4311,8 +4315,10 @@ namespace Ambermoon
             InventoryItemRemoved(ItemManager.GetItem(itemIndex), amount, partyMember);
         }
 
-        void EquipmentAdded(Item item, int amount, bool cursed, Character character = null)
+        void EquipmentAdded(Item item, int amount, Character character = null)
         {
+            bool cursed = item.Flags.HasFlag(ItemFlags.Accursed);
+
             character ??= CurrentInventory;
 
             // Note: amount is only used for ammunition. The weight is
@@ -4338,9 +4344,9 @@ namespace Ambermoon
             character.TotalWeight += (uint)amount * item.Weight;
         }
 
-        internal void EquipmentAdded(uint itemIndex, int amount, bool cursed, Character character)
+        internal void EquipmentAdded(uint itemIndex, int amount, Character character)
         {
-            EquipmentAdded(ItemManager.GetItem(itemIndex), amount, cursed, character);
+            EquipmentAdded(ItemManager.GetItem(itemIndex), amount, character);
         }
 
         void EquipmentRemoved(Character character, Item item, int amount, bool cursed)
@@ -12084,7 +12090,7 @@ namespace Ambermoon
         {
             layout.HideTooltip();
             var item = ItemManager.GetItem(itemSlot.ItemIndex);
-            bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) && item.Flags.HasFlag(ItemFlags.Accursed);
+            bool cursed = itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed) || item.Flags.HasFlag(ItemFlags.Accursed);
             int factor = cursed ? -1 : 1;
             var detailsPopup = itemPopup.AddPopup(new Position(32, 52), 12, 6);
 
