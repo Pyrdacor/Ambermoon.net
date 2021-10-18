@@ -8632,13 +8632,21 @@ namespace Ambermoon
                 target.Heal(amount);
 
                 if (target is PartyMember partyMember)
+                {
                     layout.FillCharacterBars(partyMember);
+
+                    if (CurrentInventory == partyMember)
+                        UpdateCharacterInfo();
+                }
             }
 
             void FillSP(uint amount)
             {
                 target.SpellPoints.CurrentValue = Math.Min(target.SpellPoints.TotalMaxValue, target.SpellPoints.CurrentValue + amount);
                 layout.FillCharacterBars(target as PartyMember);
+
+                if (CurrentInventory == target)
+                    UpdateCharacterInfo();
             }
         }
 
