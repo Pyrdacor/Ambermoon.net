@@ -4950,8 +4950,17 @@ namespace Ambermoon
             MoveVertically(true, false, finishAction);
         }
 
-        void Fall(Action finishAction = null)
+        void Fall(uint tileX, uint tileY, Action finishAction = null)
         {
+            // Attach player to ladder or hole
+            float angle = camera3D.Angle;
+            Geometry.Geometry.BlockToCameraPosition(Map, new Position((int)tileX, (int)tileY), out float x, out float z);
+            camera3D.SetPosition(-x, z);
+            camera3D.TurnTowards(angle);
+            camera3D.GetBackwardPosition(0.45f * Global.DistancePerBlock, out x, out z, false, false);
+            camera3D.SetPosition(-x, z);
+            camera3D.TurnTowards(angle);
+
             MoveVertically(false, false, finishAction);
         }
 
@@ -5196,8 +5205,9 @@ namespace Ambermoon
                         RunTransition();
                     break;
                 case TeleportEvent.TransitionType.Falling:
+                {
                     Pause();
-                    Fall(() => Fade(() =>
+                    Fall(x, y, () => Fade(() =>
                     {
                         noEvents = true;
                         RunTransition();
@@ -5209,6 +5219,7 @@ namespace Ambermoon
                         });
                     }));
                     break;
+                }
                 case TeleportEvent.TransitionType.Climbing:
                     Pause();
                     Climb(() => Fade(() =>
