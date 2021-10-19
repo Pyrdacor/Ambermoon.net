@@ -5712,8 +5712,19 @@ namespace Ambermoon
 
             if (save)
             {
-                // Add it to the savegame as well.                
-                CurrentSavegame.TileChangeEvents.SafeAdd(map.Index, changeTileEvent);
+                // Add it to the savegame as well.
+                var changeEvents = CurrentSavegame.TileChangeEvents;
+                if (!changeEvents.ContainsKey(map.Index))
+                    changeEvents[map.Index] = new List<ChangeTileEvent> { changeTileEvent };
+                else
+                {
+                    var existing = changeEvents[map.Index].FirstOrDefault(e => e.X == changeTileEvent.X && e.Y == changeTileEvent.Y);
+
+                    if (existing != null)
+                        changeEvents[map.Index].Remove(existing);
+
+                    changeEvents[map.Index].Add(changeTileEvent);
+                }
             }
 
             if (!changedMaps.Contains(map.Index))
