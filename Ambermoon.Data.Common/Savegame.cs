@@ -215,6 +215,10 @@ namespace Ambermoon.Data
         {
             return ActiveSpells.Where(s => s?.Type == activeSpellType && s?.Duration > 0).Select(s => s.Level).DefaultIfEmpty(0u).Max();
         }
+        public uint GetActiveSpellDuration(ActiveSpellType activeSpellType)
+        {
+            return ActiveSpells.Where(s => s?.Type == activeSpellType && s?.Duration > 0).Select(s => s.Duration).DefaultIfEmpty(0u).Max();
+        }
         /// <summary>
         /// One bit for each available dictionary word.
         /// If the bit is set the word is available in conversations.

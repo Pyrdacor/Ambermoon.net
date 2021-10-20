@@ -306,6 +306,7 @@ namespace Ambermoon
         internal IAudioOutput AudioOutput { get; private set; }
         readonly ISongManager songManager;
         ISong currentSong;
+        Song? lastPlayedSong = null;
         internal ISavegameManager SavegameManager { get; }
         readonly ISavegameSerializer savegameSerializer;
         Player player;
@@ -1402,6 +1403,7 @@ namespace Ambermoon
 
         public void Start(Savegame savegame)
         {
+            lastPlayedSong = null;
             currentSong?.Stop();
             currentSong = null;
             Cleanup();
@@ -1438,6 +1440,15 @@ namespace Ambermoon
                     else
                         lightIntensity = 0;
                     UpdateLight();
+                }
+                else if (Map.Flags.HasFlag(MapFlags.Dungeon) &&
+                    CurrentSavegame.IsSpellActive(ActiveSpellType.Light) &&
+                    CurrentSavegame.GetActiveSpellDuration(ActiveSpellType.Light) * 5 < amount)
+                {
+                    lightIntensity = 0;
+                    CurrentSavegame.ActiveSpells.Where(s => s?.Type == ActiveSpellType.Light)
+                    .ToList().ForEach(s => s.Duration = 0);
+                    UpdateLight(true);
                 }
                 else if (Map.Flags.HasFlag(MapFlags.Outdoor) && this.is3D)
                 {
@@ -3616,8 +3627,8 @@ namespace Ambermoon
                 Resume();
                 ResetMoveKeys();
                 UpdateLight();
-                if (!Map.IsWorldMap || TravelType == TravelType.Walk)
-                    PlayMapMusic();
+                if (lastPlayedSong != null)
+                    PlayMusic(lastPlayedSong.Value);
                 else
                     PlayMusic(TravelType.TravelSong());
             }
@@ -6505,6 +6516,7 @@ namespace Ambermoon
 
             void ShowDictionary()
             {
+                aborted = false;
                 OpenDictionary(SayWord, word => !oldKeywords.Contains(word) || newKeywords.Contains(word)
                     ? TextColor.LightYellow : TextColor.BrightGray);
             }
@@ -6679,16 +6691,19 @@ namespace Ambermoon
 
             void ShowItem()
             {
+                aborted = false;
                 ShowItems(DataNameProvider.WhichItemToShow, InteractionType.ShowItem);
             }
 
             void GiveItem()
             {
+                aborted = false;
                 ShowItems(DataNameProvider.WhichItemToGive, InteractionType.GiveItem);
             }
 
             void GiveGold()
             {
+                aborted = false;
                 layout.OpenAmountInputBox(DataNameProvider.GiveHowMuchGoldToNPC, 96, DataNameProvider.GoldName,
                     CurrentPartyMember.Gold, gold =>
                     {
@@ -6719,6 +6734,7 @@ namespace Ambermoon
 
             void GiveFood()
             {
+                aborted = false;
                 layout.OpenAmountInputBox(DataNameProvider.GiveHowMuchFoodToNPC, 109, DataNameProvider.FoodName,
                     CurrentPartyMember.Food, food =>
                     {
@@ -6749,6 +6765,7 @@ namespace Ambermoon
 
             void AskToJoin()
             {
+                aborted = false;
                 if (PartyMembers.Count() == MaxPartyMembers)
                 {
                     conversationEvent = null;
@@ -6772,6 +6789,7 @@ namespace Ambermoon
 
             void AskToLeave()
             {
+                aborted = false;
                 if (character is PartyMember partyMember && PartyMembers.Contains(partyMember))
                 {
                     if (Map.World == World.ForestMoon)
@@ -6873,6 +6891,7 @@ namespace Ambermoon
 
             void Exit(bool showLeaveMessage = false)
             {
+                aborted = false;
                 if (showLeaveMessage)
                 {
                     if (createdItems.HasAnyImportantItem(ItemManager))
@@ -8672,7 +8691,7 @@ namespace Ambermoon
             allInputDisabled = true;
             Fade(() =>
             {
-                PlayMusic(Song.SapphireFireballsOfPureLove);
+                lastPlayedSong = PlayMusic(Song.SapphireFireballsOfPureLove);
                 roundPlayerBattleActions.Clear();
                 ShowBattleWindow(nextEvent, out byte paletteIndex, combatBackgroundIndex);
                 // Note: Create clones so we can change the values in battle for each monster.
@@ -8769,7 +8788,14 @@ namespace Ambermoon
                         }
                         roundPlayerBattleActions.Clear();
                         UpdateBattleStatus();
-                        PlayMusic(travelType.TravelSong());
+                        if (lastPlayedSong != null)
+                        {
+                            var temp = lastPlayedSong; // preserve as window close will play the map song otherwise
+                            PlayMusic(lastPlayedSong.Value);
+                            lastPlayedSong = temp;
+                        }
+                        else
+                            PlayMusic(travelType.TravelSong());
                         currentBattleInfo.EndBattle(battleEndInfo);
                         currentBattleInfo = null;
                     }
@@ -11869,7 +11895,7 @@ namespace Ambermoon
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Camp, inn, healing);
-                PlayMusic(Song.BarBrawlin);
+                lastPlayedSong = PlayMusic(Song.BarBrawlin);
                 layout.SetLayout(LayoutType.Items);
                 layout.Set80x80Picture(inn ? Picture80x80.RestInn : Map.Flags.HasFlag(MapFlags.Outdoor) ? Picture80x80.RestOutdoor : Picture80x80.RestDungeon);
                 layout.FillArea(new Rect(110, 43, 194, 80), GetUIColor(28), false);
@@ -12328,6 +12354,8 @@ namespace Ambermoon
         /// </summary>
         internal Song PlayMusic(Song song)
         {
+            lastPlayedSong = null;
+
             if (disableMusicChange)
                 return currentSong?.Song ?? Song.Default;
 
@@ -12363,6 +12391,7 @@ namespace Ambermoon
             bool inputWasEnabled = InputEnable;
             InputEnable = false;
             allInputDisabled = false;
+            var lastPlayedSong = this.lastPlayedSong;
             var previousSong = PlayMusic(Song.StairwayToLevel50);
             var popup = layout.OpenPopup(new Position(16, 62), 18, 6);
             bool magicClass = partyMember.Class.IsMagic();
@@ -12395,6 +12424,7 @@ namespace Ambermoon
                 InputEnable = inputWasEnabled;
                 allInputDisabled = allInputWasDisabled;
                 PlayMusic(previousSong);
+                this.lastPlayedSong = lastPlayedSong;
                 finishedEvent?.Invoke();
             };
         }

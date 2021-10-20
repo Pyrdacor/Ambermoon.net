@@ -21,10 +21,15 @@
 
 - "Do you accept this character?" message is missing in character creator.
 - Question about taking items with you is missing from conversations.
+- LevelUp popup while an item is given will draw that item in front of the popup.
+- After give food/gold in conversations and there is none left, the button has to be disabled.
+- Animations like item consumption is fasten during battles with fast battle mode on. Using items
+  that have an instant effect like the clock or compass look strange when consuming.
 
 
 ## Misc
 
+- Items that are consumed on usage should never break as they will be gone anyways (e.g. torches).
 - If a curse leads to negative stats, they will be huge (negative overflow?).
 - Add more savegame slots?
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
