@@ -6991,11 +6991,15 @@ namespace Ambermoon
                         case InteractionType.GiveGold:
                             CurrentPartyMember.RemoveGold(amount);
                             UpdateCharacterInfo(character);
+                            if (CurrentPartyMember.Gold == 0)
+                                layout.EnableButton(7, false);
                             nextAction?.Invoke(EventType.Interact);
                             break;
                         case InteractionType.GiveFood:
                             CurrentPartyMember.RemoveFood(amount);
                             UpdateCharacterInfo(character);
+                            if (CurrentPartyMember.Food == 0)
+                                layout.EnableButton(8, false);
                             nextAction?.Invoke(EventType.Interact);
                             break;
                         case InteractionType.JoinParty:
@@ -7040,6 +7044,11 @@ namespace Ambermoon
                         conversationEvent = EventExtensions.ExecuteEvent(conversationEvent, Map, this, ref trigger,
                             (uint)player.Position.X, (uint)player.Position.Y, ref lastEventStatus, out aborted,
                             out var eventProvider, conversationPartner);
+
+                        // Might be reduced or added by action events
+                        layout.EnableButton(7, CurrentPartyMember.Gold != 0);
+                        layout.EnableButton(8, CurrentPartyMember.Food != 0);
+
                         if (conversationEvent == null && eventProvider != null)
                         {
                             if (eventProvider.Event != null)

@@ -22,7 +22,6 @@
 - "Do you accept this character?" message is missing in character creator.
 - Question about taking items with you is missing from conversations.
 - LevelUp popup while an item is given will draw that item in front of the popup.
-- After give food/gold in conversations and there is none left, the button has to be disabled.
 - Animations like item consumption is fasten during battles with fast battle mode on. Using items
   that have an instant effect like the clock or compass look strange when consuming.
 
