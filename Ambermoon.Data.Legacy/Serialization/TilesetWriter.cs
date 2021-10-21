@@ -16,7 +16,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 if (tile.Sleep)
                     flags |= (5u << 23);
                 else if (tile.SitDirection != null)
-                    flags |= ((uint)tile.SitDirection.Value << 23);
+                    flags |= ((1u + (uint)tile.SitDirection.Value) << 23);
                 flags |= ((uint)tile.AllowedTravelTypes & 0x7ff) << 8;
 
                 dataWriter.Write(flags);
