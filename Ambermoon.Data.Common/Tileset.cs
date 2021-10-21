@@ -89,6 +89,7 @@ namespace Ambermoon.Data
                 // Bit 6: Draw above player (not sure as it is in combination with bit 2 often, but it seems to work if this overrides bit 2)
                 // Bit 7: Block all movement if set?
                 // Bit 8-18: Travel type allowed flags (1 means allowed, 0 means not allowed/blocking).
+                //           I guess it goes up to bit 22 for a total of 15 possible travel types. There are only 11 used though.
                 // Bit 23-25: Sit/sleep value
                 //  0 -> no sitting nor sleeping
                 //  1 -> sit and look up
