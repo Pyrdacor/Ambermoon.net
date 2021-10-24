@@ -1,5 +1,5 @@
 ﻿/*
- * Keys.cs - Keyboard mapping
+ * Key.cs - Keyboard mapping
  *
  * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
