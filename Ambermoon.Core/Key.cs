@@ -1,5 +1,5 @@
 ﻿/*
- * Key.cs - Keyboard mapping
+ * Number.cs - Numberboard mapping
  *
  * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
@@ -64,6 +64,15 @@ namespace Ambermoon
         W,
         A,
         S,
-        D
+        D,
+        Number1,
+        Number2,
+        Number3,
+        Number4,
+        Number5,
+        Number6,
+        Number7,
+        Number8,
+        Number9
     }
 }

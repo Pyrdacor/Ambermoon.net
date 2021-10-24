@@ -2651,7 +2651,11 @@ namespace Ambermoon
                 currentWindow.Window == Window.Blacksmith || currentWindow.Window == Window.Enchanter ||
                 currentWindow.Window == Window.Door || (currentWindow.Window == Window.Chest && OpenStorage == null)))
                 return;
-
+            if(key >= Key.Number1 && key <= Key.Number9 && modifiers.HasFlag(KeyModifiers.Control) && modifiers.HasFlag(KeyModifiers.Shift))
+            {
+                var saveGameId = key - Key.Number1 + 1;
+                SaveGame(saveGameId, "AutoSave"+saveGameId);
+            }
             switch (key)
             {
                 case Key.Escape:
