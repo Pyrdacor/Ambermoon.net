@@ -1,5 +1,5 @@
 ﻿/*
- * Number.cs - Numberboard mapping
+ * Keys.cs - Keyboard mapping
  *
  * Copyright (C) 2020-2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
