@@ -71,6 +71,8 @@ namespace Ambermoon.Data.Enumerations
         public static bool BlockedByTeleport(this TravelType travelType) => travelType switch
         {
             TravelType.Horse => true,
+            TravelType.Raft => true,
+            TravelType.Ship => true,
             TravelType.MagicalDisc => true,
             TravelType.SandLizard => true,
             TravelType.SandShip => true,

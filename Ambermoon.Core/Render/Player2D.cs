@@ -94,9 +94,9 @@ namespace Ambermoon.Render
                         var trigger = EventTrigger.Move;
                         bool lastEventStatus = false;
 
-                        bool HasSpecialEvent(Event ev, out EventType? eventType)
+                        bool HasSpecialEvent(Event ev, out Event @event)
                         {
-                            eventType = null;
+                            @event = null;
 
                             if (ev.Type == EventType.EnterPlace ||
                                 (ev is TeleportEvent teleportEvent && teleportEvent.Transition != TeleportEvent.TransitionType.WindGate) ||
@@ -104,7 +104,7 @@ namespace Ambermoon.Render
                                 (ev.Type == EventType.Chest && Map.Map.IsWorldMap) ||
                                 (ev is DoorEvent doorEvent && game.CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex)))
                             {
-                                eventType = ev.Type;
+                                @event = ev;
                                 return true;
                             }
 
@@ -124,14 +124,15 @@ namespace Ambermoon.Render
                                 ev = ev.Next;
                             }
 
-                            return HasSpecialEvent(ev, out eventType);
+                            return HasSpecialEvent(ev, out @event);
                         }
 
                         var mapAtNewPosition = Map.GetMapFromTile((uint)newX, (uint)newY);
 
-                        if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var type))
+                        if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var @event))
                         {
-                            if ((type != EventType.Teleport || !travelType.BlockedByTeleport()) &&
+                            if ((@event.Type != EventType.Teleport || !travelType.BlockedByTeleport() ||
+                                mapManager.GetMap((@event as TeleportEvent).MapIndex).IsWorldMap) &&
                                 EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)newX, (uint)newY,
                                     mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
                             {
