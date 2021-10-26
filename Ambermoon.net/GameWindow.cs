@@ -257,7 +257,6 @@ namespace Ambermoon
 
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
-            Console.WriteLine(key.ToString());
             if (key == Silk.NET.Input.Key.F11)
             {
                 if (Game != null)
@@ -272,7 +271,6 @@ namespace Ambermoon
             }
             else
             {
-                
                 if (logoPyrdacor != null)
                 {
                     logoPyrdacor?.Cleanup();
