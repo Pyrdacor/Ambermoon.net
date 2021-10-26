@@ -234,6 +234,7 @@ namespace Ambermoon
             Silk.NET.Input.Key.A => Key.A,
             Silk.NET.Input.Key.S => Key.S,
             Silk.NET.Input.Key.D => Key.D,
+            Silk.NET.Input.Key.Number0 => Key.Number0,
             Silk.NET.Input.Key.Number1 => Key.Number1,
             Silk.NET.Input.Key.Number2 => Key.Number2,
             Silk.NET.Input.Key.Number3 => Key.Number3,
@@ -256,6 +257,7 @@ namespace Ambermoon
 
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
+            Console.WriteLine(key.ToString());
             if (key == Silk.NET.Input.Key.F11)
             {
                 if (Game != null)
@@ -270,6 +272,7 @@ namespace Ambermoon
             }
             else
             {
+                
                 if (logoPyrdacor != null)
                 {
                     logoPyrdacor?.Cleanup();
