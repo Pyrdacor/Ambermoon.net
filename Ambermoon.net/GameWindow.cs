@@ -234,6 +234,16 @@ namespace Ambermoon
             Silk.NET.Input.Key.A => Key.A,
             Silk.NET.Input.Key.S => Key.S,
             Silk.NET.Input.Key.D => Key.D,
+            Silk.NET.Input.Key.Number0 => Key.Number0,
+            Silk.NET.Input.Key.Number1 => Key.Number1,
+            Silk.NET.Input.Key.Number2 => Key.Number2,
+            Silk.NET.Input.Key.Number3 => Key.Number3,
+            Silk.NET.Input.Key.Number4 => Key.Number4,
+            Silk.NET.Input.Key.Number5 => Key.Number5,
+            Silk.NET.Input.Key.Number6 => Key.Number6,
+            Silk.NET.Input.Key.Number7 => Key.Number7,
+            Silk.NET.Input.Key.Number8 => Key.Number8,
+            Silk.NET.Input.Key.Number9 => Key.Number9,
             _ => Key.Invalid,
         };
 
