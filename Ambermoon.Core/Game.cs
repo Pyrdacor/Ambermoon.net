@@ -5509,7 +5509,7 @@ namespace Ambermoon
                 {
                     renderMap2D.ClearTransports();
 
-                    if (player.MovementAbility <= PlayerMovementAbility.Walking)
+                    if (player.MovementAbility <= PlayerMovementAbility.Swimming)
                         player2D.BaselineOffset = CanSee() ? 0 : MaxBaseLine;
                 }
 
