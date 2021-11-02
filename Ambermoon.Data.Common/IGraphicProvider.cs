@@ -14,6 +14,7 @@ namespace Ambermoon.Data
         Tileset6,
         Tileset7,
         Tileset8,
+        Tileset9,
         Player,
         Portrait,
         Item,

@@ -373,7 +373,7 @@ namespace Ambermoon.Render
 
         void RepositionTransports(Map lastMap)
         {
-            if (lastMap == null || !lastMap.IsWorldMap || !Map.IsWorldMap)
+            if (lastMap == null || !lastMap.UseTravelTypes || !Map.UseTravelTypes)
                 return;
 
             var offset = Map.MapOffset - lastMap.MapOffset;
@@ -579,7 +579,7 @@ namespace Ambermoon.Render
                         foregroundTileSprites[index].CurrentFrame = 0;
                         foregroundTileSprites[index].Visible = true;
                         foregroundTileSprites[index].Alternate = frontTile.Flags.HasFlag(Tileset.TileFlags.AlternateAnimation);
-                        foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? (Map.IsWorldMap ? TILE_HEIGHT : 2 * TILE_HEIGHT) + 2 : frontTile.Background ? -1 : 0;
+                        foregroundTileSprites[index].BaseLineOffset = frontTile.BringToFront ? (Map.UseTravelTypes ? TILE_HEIGHT : 2 * TILE_HEIGHT) + 2 : frontTile.Background ? -1 : 0;
 
                         if (frontTile.Flags.HasFlag(Tileset.TileFlags.RandomAnimationStart))
                         {
@@ -699,13 +699,15 @@ namespace Ambermoon.Render
                     mapManager.GetMap(map.DownMapIndex.Value),
                     mapManager.GetMap(map.DownRightMapIndex.Value)
                 };
-                RepositionTransports(lastMap);
             }
             else
             {
                 worldMap = false;
                 adjacentMaps = null;
             }
+
+            if (map.UseTravelTypes)
+                RepositionTransports(lastMap);
 
             ClearCharacters();
 

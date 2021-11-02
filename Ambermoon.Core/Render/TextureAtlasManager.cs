@@ -188,7 +188,7 @@ namespace Ambermoon.Render
 
             #region Map 2D
 
-            for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset8; ++i)
+            for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset9; ++i)
             {
                 var tilesetGraphics = graphicProvider.GetGraphics((GraphicType)i);
 
@@ -234,7 +234,7 @@ namespace Ambermoon.Render
 
             var npcGraphics = graphicProvider.GetGraphics(GraphicType.NPC);
 
-            if (npcGraphics.Count != 34)
+            if (npcGraphics.Count < 34)
                 throw new AmbermoonException(ExceptionScope.Data, "Wrong number of NPC graphics.");
 
             for (int i = 0; i < npcGraphics.Count; ++i)

@@ -218,6 +218,7 @@ namespace Ambermoon.Data
         // But actually it should depend on flag SmallPlayer. It is only used
         // for all world maps in Ambermoon so it should be safe.
         public bool IsWorldMap => Flags.HasFlag(MapFlags.WorldSurface);
+        public bool UseTravelTypes => Flags.HasFlag(MapFlags.StationaryGraphics);
         public uint MoveWorldMapIndex(uint baseIndex, uint worldMapDimension, uint currentIndex, int changeX, int changeY)
         {
             uint relativeIndex = currentIndex - baseIndex;

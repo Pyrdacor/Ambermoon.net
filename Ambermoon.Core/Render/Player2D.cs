@@ -281,7 +281,7 @@ namespace Ambermoon.Render
 
             base.MoveTo(map, x, y, ticks, frameReset, newDirection);
 
-            if (frameReset && map.Type == MapType.Map2D && !map.IsWorldMap)
+            if (frameReset && map.Type == MapType.Map2D && !map.UseTravelTypes)
                 SetCurrentFrame(CurrentFrameIndex + 1); // Middle move frame = stand frame
         }
 

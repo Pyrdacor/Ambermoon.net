@@ -164,7 +164,7 @@ namespace Ambermoon.Data.Legacy
                 }
                 else if (type == GraphicType.NPC)
                 {
-                    var npcGraphics = new List<Graphic>(34);
+                    var npcGraphics = new List<Graphic>(35);
                     var graphicInfo = new GraphicInfo
                     {
                         Width = 16,
@@ -422,6 +422,7 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.Tileset6, new GraphicFile("2Icon_gfx.amb", 0, 6));
             AddGraphicFiles(GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 0, 7));
             AddGraphicFiles(GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 0, 8));
+            AddGraphicFiles(GraphicType.Tileset9, new GraphicFile("3Icon_gfx.amb", 0, 9));
             AddGraphicFiles(GraphicType.Player, new GraphicFile("Party_gfx.amb"));
             AddGraphicFiles(GraphicType.Portrait, new GraphicFile("Portraits.amb"));
             AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
@@ -511,6 +512,7 @@ namespace Ambermoon.Data.Legacy
                 case GraphicType.Tileset6:
                 case GraphicType.Tileset7:
                 case GraphicType.Tileset8:
+                case GraphicType.Tileset9:
                     info.Alpha = true;
                     break;
                 case GraphicType.Player:

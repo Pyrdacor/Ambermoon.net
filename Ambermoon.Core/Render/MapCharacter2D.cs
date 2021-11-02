@@ -57,7 +57,7 @@ namespace Ambermoon.Render
             3, 3, 6, 4, 5, 3, 3, 3, 4, 3,
             3, 4, 3, 3, 3, 2, 2, 1, 3, 3,
             4, 4, 2, 2, 2, 3, 3, 3, 3, 6,
-            3, 2, 3, 2
+            3, 2, 3, 2, 2
         };
 
         public static void Reset() => interacting = false;

@@ -77,6 +77,7 @@ namespace Ambermoon.Renderer
             0.01f,  // MapBackground6
             0.01f,  // MapBackground7
             0.01f,  // MapBackground8
+            0.01f,  // MapBackground9
             0.31f,  // Characters
             0.31f,  // MapForeground1
             0.31f,  // MapForeground2
@@ -86,6 +87,7 @@ namespace Ambermoon.Renderer
             0.31f,  // MapForeground6
             0.31f,  // MapForeground7
             0.31f,  // MapForeground8
+            0.31f,  // MapForeground9
             0.31f,  // FOW
             0.61f,  // CombatBackground
             0.62f,  // BattleMonsterRow
@@ -112,7 +114,7 @@ namespace Ambermoon.Renderer
             this.state = state;
             bool supportAnimations = layer != Layer.CombatBackground && layer != Layer.FOW && layer != Layer.Map3DBackground;
             bool layered = layer == Layer.Map3DBackground || layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
-            bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground8;
+            bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground9;
 
             RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, layer == Layer.DrugEffect, layer == Layer.Billboards3D, layer == Layer.Text,

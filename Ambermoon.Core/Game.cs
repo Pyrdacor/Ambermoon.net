@@ -408,7 +408,7 @@ namespace Ambermoon
                 if (Map != null)
                     PlayMusic(travelType.TravelSong());
                 player.MovementAbility = travelType.ToPlayerMovementAbility();
-                if (Map?.IsWorldMap == true)
+                if (Map?.UseTravelTypes == true)
                 {
                     player2D?.UpdateAppearance(CurrentTicks);
                     player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
@@ -500,14 +500,14 @@ namespace Ambermoon
                     (cursor.Type == CursorType.Eye ||
                     cursor.Type == CursorType.Hand))
                 {
-                    int yOffset = Map.IsWorldMap ? 12 : 0;
+                    int yOffset = Map.UseTravelTypes ? 12 : 0;
                     TrapMouse(new Rect(player2D.DisplayArea.X - 9, player2D.DisplayArea.Y - 9 - yOffset, 33, 49));
                 }
                 else if (!is3D && !WindowActive && !layout.PopupActive &&
                     (cursor.Type == CursorType.Mouth ||
                     cursor.Type == CursorType.Target))
                 {
-                    int yOffset = Map.IsWorldMap ? 12 : 0;
+                    int yOffset = Map.UseTravelTypes ? 12 : 0;
                     TrapMouse(new Rect(player2D.DisplayArea.X - 25, player2D.DisplayArea.Y - 25 - yOffset, 65, 65));
                 }
                 else if (!disableUntrapping)
@@ -1455,7 +1455,7 @@ namespace Ambermoon
                     UpdateLight();
                 }
 
-                if (!swamLastTick && Map.IsWorldMap && TravelType == TravelType.Swim)
+                if (!swamLastTick && Map.UseTravelTypes && TravelType == TravelType.Swim)
                 {
                     // Waiting or if a hour passes, it handles the swim damage instead.
                     // This is important as hour changes might also trigger exhaustion or tired
@@ -1733,7 +1733,7 @@ namespace Ambermoon
             UpdateLight();
             ProcessPoisonDamage(hours, () =>
             {
-                if (!notTiredNorExhausted && !swamLastTick && Map.IsWorldMap && TravelType == TravelType.Swim)
+                if (!notTiredNorExhausted && !swamLastTick && Map.UseTravelTypes && TravelType == TravelType.Swim)
                 {
                     int hours = (int)(24 + GameTime.Hour - lastSwimDamageHour) % 24;
                     int minutes = (int)GameTime.Minute - (int)lastSwimDamageMinute;
@@ -5313,7 +5313,7 @@ namespace Ambermoon
                 travelType == TravelType.Swim)
                 throw new AmbermoonException(ExceptionScope.Application, "Walking and swimming should not be set via ActivateTransport");
 
-            if (!Map.IsWorldMap)
+            if (!Map.UseTravelTypes)
                 return false;
 
             if (TravelType != TravelType.Walk)
@@ -5428,7 +5428,7 @@ namespace Ambermoon
             transportAtPlayerIndex = null;
             var transports = new List<TransportLocation>();
 
-            if (!Map.IsWorldMap)
+            if (!Map.UseTravelTypes)
                 return transports;
 
             var mapIndex = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
@@ -5520,7 +5520,7 @@ namespace Ambermoon
                         layout.EnableButton(3, enable);
                 }
 
-                if (Map.IsWorldMap)
+                if (Map.UseTravelTypes)
                 {
                     var transports = GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
                     var tile = renderMap2D[player.Position];
@@ -9854,7 +9854,7 @@ namespace Ambermoon
             }
             else // 2D
             {
-                player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Walking ? 32 : 0;
+                player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
             }
         }
 
@@ -10714,7 +10714,7 @@ namespace Ambermoon
 
                 var map = MapManager.GetMap((uint)salesman.SpawnMapIndex);
 
-                if (map == null || map.Type == MapType.Map3D || !map.IsWorldMap || // Should not happen but never allow buying in these cases
+                if (map == null || map.Type == MapType.Map3D || !map.UseTravelTypes || // Should not happen but never allow buying in these cases
                     salesman.SpawnX > map.Width || salesman.SpawnY > map.Height)
                     return false;
 
@@ -13723,7 +13723,7 @@ namespace Ambermoon
 
         internal Position GetPlayerDrawOffset(CharacterDirection? direction)
         {
-            if (Map.IsWorldMap)
+            if (Map.UseTravelTypes)
             {
                 var travelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, direction ?? player.Direction);
                 return new Position((int)travelInfo.OffsetX - 16, (int)travelInfo.OffsetY - 16);
@@ -13736,7 +13736,7 @@ namespace Ambermoon
 
         internal Character2DAnimationInfo GetPlayerAnimationInfo(CharacterDirection? direction = null)
         {
-            if (Map.IsWorldMap)
+            if (Map.UseTravelTypes)
             {
                 var travelInfo = renderView.GameData.GetTravelGraphicInfo(TravelType, direction ?? player.Direction);
                 return new Character2DAnimationInfo
@@ -14372,7 +14372,7 @@ namespace Ambermoon
 
         internal void UpdateTransportPosition(int index)
         {
-            if (!is3D && Map.IsWorldMap)
+            if (!is3D && Map.UseTravelTypes)
             {
                 var transport = CurrentSavegame.TransportLocations[index];
                 renderMap2D.RemoveTransport(index);
