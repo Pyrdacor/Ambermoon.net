@@ -4133,14 +4133,14 @@ namespace Ambermoon
                     BuiltinTooltips.SecondaryStat.EPPre50 : BuiltinTooltips.SecondaryStat.EP50, character);
                 characterInfoTexts.Add(CharacterInfo.LP, layout.AddText(new Rect(208, 92, 96, 7),
                     string.Format(DataNameProvider.CharacterInfoHitPointsString,
-                    character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue),
+                    Math.Min(character.HitPoints.CurrentValue, character.HitPoints.TotalMaxValue), character.HitPoints.TotalMaxValue),
                     TextColor.White, TextAlign.Center));
                 ShowSecondaryStatTooltip(new Rect(208, 92, 96, 7), BuiltinTooltips.SecondaryStat.LP, character);
                 if (magicClass)
                 {
                     characterInfoTexts.Add(CharacterInfo.SP, layout.AddText(new Rect(208, 99, 96, 7),
                         string.Format(DataNameProvider.CharacterInfoSpellPointsString,
-                        character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue),
+                        Math.Min(character.SpellPoints.CurrentValue, character.SpellPoints.TotalMaxValue), character.SpellPoints.TotalMaxValue),
                         TextColor.White, TextAlign.Center));
                     ShowSecondaryStatTooltip(new Rect(208, 99, 96, 7), BuiltinTooltips.SecondaryStat.SP, character);
                 }

@@ -26,8 +26,8 @@ namespace Ambermoon.Data
         /// This stores the actual value while exhaustion is active.
         /// </summary>
         public uint StoredValue { get; set; }
-        public uint TotalCurrentValue => Math.Max(0, (uint)(CurrentValue + BonusValue));
-        public uint TotalMaxValue => Math.Max(0, (uint)(MaxValue + BonusValue));
+        public uint TotalCurrentValue => (uint)Math.Max(0, (int)CurrentValue + BonusValue);
+        public uint TotalMaxValue => (uint)Math.Max(0, (int)MaxValue + BonusValue);
     }
 
     [Serializable]

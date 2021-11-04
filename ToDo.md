@@ -27,8 +27,6 @@
 ## Misc
 
 - Stepping on a tile with a text popup while you also get the "tired" or "exhausted" message will not show the text popup.
-- If a curse leads to negative stats, they will be huge (negative overflow?).
-- Add more savegame slots?
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Where is the text "CannotCarryAllGold" used?
