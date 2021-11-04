@@ -183,6 +183,8 @@ Special thanks to my top patreons:
 - Thomas Ritschel
 - crediar
 - AMike
+- frostwork
+- soulsuckingjerk
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
