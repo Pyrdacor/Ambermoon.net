@@ -9,18 +9,18 @@ namespace Ambermoon.Data
     public enum MapFlags
     {
         None = 0,
-        Indoor = 1 << 0,
-        Outdoor = 1 << 1,
-        Dungeon = 1 << 2,
-        Automapper = 1 << 3, // If set the map is available and the map has to be explored.
+        Indoor = 1 << 0, // Always at full light.
+        Outdoor = 1 << 1, // Light level is given by the daytime.
+        Dungeon = 1 << 2, // Only own light sources will grant light.
+        Automapper = 1 << 3, // If set the map is available and the map has to be explored. It also allows map-related spells. All Morag temples omit this.
         CanRest = 1 << 4,
         Unknown1 = 1 << 5, // Unknown. All world maps use that in Ambermoon.
         Sky = 1 << 6, // All towns have this and the ruin tower. Only considered for 3D maps.
-        NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours
-        StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images) and therefore transports. Set for all world maps.
+        NoSleepUntilDawn = 1 << 7, // If active sleep time is always 8 hours.
+        StationaryGraphics = 1 << 8, // Allow stationary graphics (travel type images) and therefore transports. Is set for all world maps.
         Unknown2 = 1 << 9, // Unknown. Never used in Ambermoon.
-        WorldSurface = 1 << 10,
-        CanUseMagic = 1 << 11, // only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug)
+        WorldSurface = 1 << 10, // If set the map doesn't use map text 0 as the title but uses the world name instead. Moreover based on world adjacent maps are shown with a size of 50x50.
+        CanUseMagic = 1 << 11, // Only 0 in map 269 which is the house of the baron of Spannenberg (also in map 148 but this is a bug). It just disables the spell book if not set but you still can use scrolls or items.
         SmallPlayer = StationaryGraphics // Display player smaller. Only all world maps have this set. Only considered for 2D maps.
     }
 

@@ -96,7 +96,7 @@ namespace Ambermoon
         {
             readonly uint[] tickDivider;
 
-            public uint TickDivider(bool is3D, bool worldMap, TravelType travelType) => tickDivider[is3D ? 0 : !worldMap ? 1 : 2 + (int)travelType];
+            uint TickDivider(bool is3D, bool worldMap, TravelType travelType) => tickDivider[is3D ? 0 : !worldMap ? 1 : 2 + (int)travelType];
             public uint MovementTicks(bool is3D, bool worldMap, TravelType travelType) => TicksPerSecond / TickDivider(is3D, worldMap, travelType);
             public float MoveSpeed3D { get; }
             public float TurnSpeed3D { get; }
@@ -856,7 +856,7 @@ namespace Ambermoon
 
                     var moveTicks = CurrentTicks >= lastMoveTicksReset ? CurrentTicks - lastMoveTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMoveTicksReset);
 
-                    if (moveTicks >= movement.MovementTicks(is3D, Map.IsWorldMap, TravelType))
+                    if (moveTicks >= movement.MovementTicks(is3D, Map.UseTravelTypes, TravelType))
                     {
                         lastMoveTicksReset = CurrentTicks;
 
@@ -1126,7 +1126,7 @@ namespace Ambermoon
             if (map.Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Application, "Given map is not 2D.");
 
-            layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map?.IsWorldMap == true, TravelType.Walk));
+            layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map?.UseTravelTypes == true, TravelType.Walk));
             is3D = false;
             int xOffset = (int)playerX - RenderMap2D.NUM_VISIBLE_TILES_X / 2;
             int yOffset = (int)playerY - RenderMap2D.NUM_VISIBLE_TILES_Y / 2;
@@ -3657,7 +3657,7 @@ namespace Ambermoon
             else
             {
                 if (show)
-                    layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map.IsWorldMap, TravelType));
+                    layout.SetLayout(LayoutType.Map2D, movement.MovementTicks(false, Map.UseTravelTypes, TravelType));
                 for (int i = (int)Global.First2DLayer; i <= (int)Global.Last2DLayer; ++i)
                     renderView.GetLayer((Layer)i).Visible = show;
             }
@@ -5580,7 +5580,7 @@ namespace Ambermoon
                     !Map.IsWorldMap || Map.World != lastMap.World)
                     ResetMoveKeys(lastMap == null || lastMap.Type != Map.Type);
                 if (!WindowActive)
-                    layout.UpdateLayoutButtons(movement.MovementTicks(Map.Type == MapType.Map3D, Map.IsWorldMap, TravelType.Walk));
+                    layout.UpdateLayoutButtons(movement.MovementTicks(Map.Type == MapType.Map3D, Map.UseTravelTypes, TravelType.Walk));
 
                 // Update UI palette
                 UpdateUIPalette(true);
