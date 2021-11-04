@@ -2683,6 +2683,8 @@ namespace Ambermoon
                                 layout.CancelDrag();
                                 CursorType = CursorType.Sword;
                             }
+                            else if (currentWindow.Window == Window.Automap)
+                                nextClickHandler?.Invoke(MouseButtons.Right);
                             else if (currentWindow.Closable)
                                 layout.PressButton(2, CurrentTicks);
                             else if (!WindowActive && !is3D)
@@ -2734,7 +2736,9 @@ namespace Ambermoon
                     break;
                 }
                 default:
-                    if (WindowActive || layout.PopupActive)
+                    if (currentWindow.Window == Window.Automap && key == Key.Space)
+                        nextClickHandler?.Invoke(MouseButtons.Right);
+                    else if (WindowActive || layout.PopupActive)
                         layout.KeyDown(key, modifiers);
                     else if (key == Key.Return)
                         ToggleButtonGridPage();
@@ -3751,6 +3755,13 @@ namespace Ambermoon
 
             void OpenInventory()
             {
+                if (currentWindow.Window == Window.Automap)
+                {
+                    currentWindow.Window = Window.Inventory;
+                    nextClickHandler?.Invoke(MouseButtons.Right);
+                    currentWindow.Window = Window.Automap;
+                }
+
                 CurrentInventoryIndex = slot;
                 var partyMember = GetPartyMember(slot);
 
@@ -12862,7 +12873,7 @@ namespace Ambermoon
 
         internal void ShowAutomap(AutomapOptions automapOptions)
         {
-            CloseWindow(() =>
+            Action create = () =>
             {
                 Fade(() =>
                 {
@@ -12885,7 +12896,7 @@ namespace Ambermoon
 
                     InputEnable = true;
                     ShowMap(false);
-                    SetWindow(Window.Automap);
+                    SetWindow(Window.Automap, automapOptions);
                     layout.Reset();
                     layout.SetLayout(LayoutType.Automap);
                     CursorType = CursorType.Sword;
@@ -13544,7 +13555,8 @@ namespace Ambermoon
                     {
                         closed = true;
                         UntrapMouse();
-                        CloseWindow(followAction);
+                        if (currentWindow.Window == Window.Automap)
+                            CloseWindow(followAction);
                     }
 
                     void CheckScroll()
@@ -13598,7 +13610,12 @@ namespace Ambermoon
                     TrapMouse(Global.AutomapArea);
                     UpdateCursor();
                 });
-            });
+            };
+
+            if (currentWindow.Window == Window.Automap)
+                create?.Invoke();
+            else
+                CloseWindow(create);
         }
 
         internal void ShowRiddlemouth(Map map, RiddlemouthEvent riddlemouthEvent, Action solvedHandler, bool showRiddle = true)
@@ -14668,7 +14685,7 @@ namespace Ambermoon
                 }
                 case Window.Automap:
                 {
-                    ShowAutomap();
+                    ShowAutomap((AutomapOptions)currentWindow.WindowParameters[0]);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
