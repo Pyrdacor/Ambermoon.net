@@ -14,12 +14,22 @@ namespace Ambermoon.Data.Legacy
             public string File;
             public int[] SubFiles; // null means all
             public int FileIndexOffset;
+            public bool Optional;
 
             public GraphicFile(string file, int fileIndexOffset = 0)
             {
                 File = file;
                 SubFiles = null;
                 FileIndexOffset = fileIndexOffset;
+                Optional = false;
+            }
+
+            public GraphicFile(string file, int fileIndexOffset, int subFile, bool optional = false)
+            {
+                File = file;
+                SubFiles = new int[1] { subFile };
+                FileIndexOffset = fileIndexOffset;
+                Optional = optional;
             }
 
             public GraphicFile(string file, int fileIndexOffset, params int[] subFiles)
@@ -27,6 +37,7 @@ namespace Ambermoon.Data.Legacy
                 File = file;
                 SubFiles = subFiles;
                 FileIndexOffset = fileIndexOffset;
+                Optional = false;
             }
         };
 
@@ -422,7 +433,7 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.Tileset6, new GraphicFile("2Icon_gfx.amb", 0, 6));
             AddGraphicFiles(GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 0, 7));
             AddGraphicFiles(GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 0, 8));
-            AddGraphicFiles(GraphicType.Tileset9, new GraphicFile("3Icon_gfx.amb", 0, 9));
+            AddGraphicFiles(GraphicType.Tileset9, new GraphicFile("3Icon_gfx.amb", 0, 9, true));
             AddGraphicFiles(GraphicType.Player, new GraphicFile("Party_gfx.amb"));
             AddGraphicFiles(GraphicType.Portrait, new GraphicFile("Portraits.amb"));
             AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
@@ -476,7 +487,10 @@ namespace Ambermoon.Data.Legacy
                     {
                         foreach (var file in graphicFile.SubFiles)
                         {
-                            allFiles[graphicFile.FileIndexOffset + file] = containerFile.Files[file];
+                            if (containerFile.Files.TryGetValue(file, out var fileReader))
+                                allFiles[graphicFile.FileIndexOffset + file] = fileReader;
+                            else if (!graphicFile.Optional)
+                                throw new KeyNotFoundException($"Sub file {file} of {graphicFile.File} was not found.");
                         }
                     }
                 }

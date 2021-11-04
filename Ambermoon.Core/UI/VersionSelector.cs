@@ -71,6 +71,7 @@ namespace Ambermoon.UI
                 }
             }
         }
+        uint ticks = 0;
 
         public event Action<int, IGameData, bool> Closed;
 
@@ -316,8 +317,9 @@ namespace Ambermoon.UI
 
         public void Update(double deltaTime)
         {
-            okButton.Update(0u);
-            changeSaveOptionButton.Update(0u);
+            ticks = Game.UpdateTicks(ticks, deltaTime);
+            okButton.Update(ticks);
+            changeSaveOptionButton.Update(ticks);
         }
 
         public void Render()
@@ -343,6 +345,20 @@ namespace Ambermoon.UI
                 case Key.End:
                     SelectedVersion = versionCount - 1;
                     break;
+                case Key.Return:
+                case Key.Space:
+                {
+                    var action = okButton.LeftClickAction;
+                    okButton.LeftClickAction = () =>
+                    {
+                        okButton.Release(true);
+                        okButton.Disabled = true;                        
+                        action?.Invoke();
+                    };
+                    okButton.ContinuousActionDelayInTicks = 3 * Game.TicksPerSecond / 2;
+                    okButton.Pressed = true;
+                    break;
+                }
             }
 
             if (SelectedVersion != 2)

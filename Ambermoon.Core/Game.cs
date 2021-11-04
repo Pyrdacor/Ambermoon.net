@@ -784,7 +784,7 @@ namespace Ambermoon
                 renderMap2D?.Resume();
         }
 
-        uint UpdateTicks(uint ticks, double deltaTime)
+        internal static uint UpdateTicks(uint ticks, double deltaTime)
         {
             uint add = (uint)Util.Round(TicksPerSecond * (float)deltaTime);
 

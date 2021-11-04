@@ -426,6 +426,9 @@ namespace Ambermoon.UI
                 if (pressed == value)
                     return;
 
+                if (value)
+                    released = false;
+
                 pressed = value;
                 frameSprite.TextureAtlasOffset =
                     textureAtlas.GetOffset(Graphics.GetUIGraphicIndex(pressed ? UIGraphic.ButtonFramePressed : UIGraphic.ButtonFrame));
@@ -524,7 +527,6 @@ namespace Ambermoon.UI
             {
                 pressedTime = DateTime.Now;
                 Pressed = true;
-                released = false;
                 rightMouse = false;
 
                 if (InstantAction)
@@ -549,7 +551,6 @@ namespace Ambermoon.UI
             {
                 pressedTime = DateTime.Now;
                 Pressed = true;
-                released = false;
                 rightMouse = true;
 
                 if (InstantAction)
@@ -602,7 +603,6 @@ namespace Ambermoon.UI
 
                     if (delayedPressAnimation)
                     {
-                        released = false;
                         Pressed = true;
                         game.AddTimedEvent(TimeSpan.FromMilliseconds(250), PressAction);
                     }
@@ -632,7 +632,6 @@ namespace Ambermoon.UI
 
             pressedTime = DateTime.Now;
             Pressed = true;
-            released = false;
             rightMouse = false;
 
             if (InstantAction)
