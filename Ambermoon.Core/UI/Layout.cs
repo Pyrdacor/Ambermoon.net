@@ -1415,6 +1415,24 @@ namespace Ambermoon.UI
             {
                 int numPages = (options.Count + OptionsPerPage - 1) / OptionsPerPage;
                 page = (page + 1) % numPages;
+                PageChanged();
+            };
+            changePageButton.Visible = true;
+
+            activePopup.Scrolled += down =>
+            {
+                int numPages = (options.Count + OptionsPerPage - 1) / OptionsPerPage;
+
+                if (down)
+                    page = (page + 1) % numPages;
+                else
+                    page = (page + numPages + 1) % numPages;
+
+                PageChanged();
+            };
+
+            void PageChanged()
+            {
                 var visibleOptions = options.Skip(page * OptionsPerPage).Take(OptionsPerPage).ToList();
                 for (int i = 0; i < OptionsPerPage; ++i)
                 {
@@ -1429,8 +1447,7 @@ namespace Ambermoon.UI
                     }
                 }
                 ShowOptions();
-            };
-            changePageButton.Visible = true;
+            }
         }
 
         public void AttachEventToButton(int index, Action action)

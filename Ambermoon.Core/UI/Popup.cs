@@ -48,6 +48,7 @@ namespace Ambermoon.UI
         public Action ReturnAction { get; set; } = null;
         public byte DisplayLayer { get; private set; }
         public bool HasChildPopup => popup != null;
+        public event Action<bool> Scrolled;
 
         public Popup(Game game, IRenderView renderView, Position position, int columns, int rows,
             bool transparent, byte displayLayerOffset = 0)
@@ -120,6 +121,8 @@ namespace Ambermoon.UI
 
         public void Destroy()
         {
+            Scrolled = null;
+
             borders.ForEach(border => border?.Delete());
             borders.Clear();
 
@@ -360,6 +363,12 @@ namespace Ambermoon.UI
                         ScrollTo(scrollOffset - 1);
                 }
 
+                return true;
+            }
+
+            if (Scrolled != null)
+            {
+                Scrolled(down);
                 return true;
             }
 
