@@ -104,7 +104,7 @@ namespace Ambermoon.Data
 
         public bool IsImportant => !Flags.HasFlag(ItemFlags.NotImportant) && !Flags.HasFlag(ItemFlags.Clonable);
 
-        public bool CanBreak => !Flags.HasFlag(ItemFlags.Indestructible) && Type switch
+        public bool CanBreak => !Flags.HasFlag(ItemFlags.Indestructible) && !Flags.HasFlag(ItemFlags.DestroyAfterUsage) && Type switch
         {
             ItemType.CloseRangeWeapon => true,
             ItemType.LongRangeWeapon => true,

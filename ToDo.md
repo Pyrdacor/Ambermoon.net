@@ -14,7 +14,7 @@
 ## Characters
 
 - NPCs are partly above the player
-- Use tile flags of map characters (random animation start, alternating animation, movement blocking)
+- Use tile flags of map characters (random animation start, movement blocking)
 
 
 ## UI
@@ -27,7 +27,6 @@
 ## Misc
 
 - Stepping on a tile with a text popup while you also get the "tired" or "exhausted" message will not show the text popup.
-- Items that are consumed on usage should never break as they will be gone anyways (e.g. torches).
 - If a curse leads to negative stats, they will be huge (negative overflow?).
 - Add more savegame slots?
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
