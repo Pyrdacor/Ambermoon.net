@@ -368,6 +368,12 @@ namespace Ambermoon.UI
 
         public bool KeyDown(Key key)
         {
+            if (CloseOnClick && (key == Key.Space || key == Key.Return || key == Key.Escape))
+            {
+                game.ClosePopup();
+                return true;
+            }
+
             if (listBox?.KeyDown(key) == true)
                 return true;
 

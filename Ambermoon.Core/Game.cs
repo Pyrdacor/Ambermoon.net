@@ -2610,7 +2610,7 @@ namespace Ambermoon
 
             if (!InputEnable)
             {
-                if (layout.PopupActive)
+                if (layout.PopupActive && !pickingNewLeader && !pickingTargetPlayer && !pickingTargetInventory)
                 {
                     layout.KeyDown(key, modifiers);
                     return;
@@ -12576,7 +12576,7 @@ namespace Ambermoon
             Pause();
             const int columns = 15;
             const int rows = 10;
-            var popupArea = new Rect(16, 36, columns * 16, rows * 16);
+            var popupArea = new Rect(16, 35, columns * 16, rows * 16);
             TrapMouse(new Rect(popupArea.Left + 16, popupArea.Top + 16, popupArea.Width - 32, popupArea.Height - 32));
             var popup = layout.OpenPopup(popupArea.Position, columns, rows, true, false);
             var songList = popup.AddSongListBox(Enumerable.Range(0, 32).Select(index => new KeyValuePair<string, Action<int, string>>
