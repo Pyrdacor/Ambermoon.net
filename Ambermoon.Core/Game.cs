@@ -2791,22 +2791,22 @@ namespace Ambermoon
             {
                 int slot = keyChar - '1';
 
-                if (keys[(int)Key.Num1 + slot])
-                    return;
-
-                var partyMember = GetPartyMember(slot);
-
-                if (pickingTargetPlayer)
+                if (!keys[(int)Key.Num1 + slot])
                 {
-                    if (partyMember != null)
-                        FinishPickingTargetPlayer(slot);
-                    return;
-                }
-                if (pickingTargetInventory)
-                {
-                    if (partyMember != null)
-                        layout.TargetInventoryPlayerSelected(slot, partyMember);
-                    return;
+                    var partyMember = GetPartyMember(slot);
+
+                    if (pickingTargetPlayer)
+                    {
+                        if (partyMember != null)
+                            FinishPickingTargetPlayer(slot);
+                        return;
+                    }
+                    if (pickingTargetInventory)
+                    {
+                        if (partyMember != null)
+                            layout.TargetInventoryPlayerSelected(slot, partyMember);
+                        return;
+                    }
                 }
             }
 
@@ -2818,7 +2818,10 @@ namespace Ambermoon
 
             if (keyChar >= '1' && keyChar <= '6')
             {
-                SetActivePartyMember(keyChar - '1');
+                int slot = keyChar - '1';
+
+                if (!keys[(int)Key.Num1 + slot])
+                    SetActivePartyMember(slot);
             }
 
             if (!WindowActive && !layout.PopupActive)
