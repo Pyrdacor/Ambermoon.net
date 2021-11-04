@@ -252,6 +252,11 @@ namespace Ambermoon
             get;
             set;
         } = false;
+        public bool NoClip
+        {
+            get;
+            set;
+        } = false;
         bool ingame = false;
         bool is3D = false;
         bool noEvents = false;

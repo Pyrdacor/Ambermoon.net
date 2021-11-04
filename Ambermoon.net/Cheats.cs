@@ -28,6 +28,14 @@ namespace Ambermoon
                     Godmode
                 )
             },
+            { "noclip",
+                Create
+                (
+                    "Allows moving through walls in 3D." + Environment.NewLine +
+                    "Usage: noclip [0/1]",
+                    NoClip
+                )
+            },
             { "netsrak",
                 Create
                 (
@@ -329,30 +337,42 @@ namespace Ambermoon
 
             Console.WriteLine();
 
-            if (activate)
+            if (activate && !game.Godmode)
             {
                 Console.WriteLine("All party members are now immune to damage and kill instantly.");
-
-                if (!game.Godmode)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("Robert was here I guess. :)");
-                }
+                Console.WriteLine();
+                Console.WriteLine("Robert was here I guess. :)");
             }
-            else
+            else if (!activate && game.Godmode)
             {
                 Console.WriteLine("All party members are no longer immune to damage and deal normal damage.");
-
-                if (game.Godmode)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("Robert has gone I guess. :)");
-                }
+                Console.WriteLine();
+                Console.WriteLine("Robert has gone I guess. :)");
             }
 
             Console.WriteLine();
 
             game.Godmode = activate;
+        }
+
+        static void NoClip(Game game, string[] args)
+        {
+            bool activate = args.Length == 0 || !int.TryParse(args[0], out int active) || active != 0;
+
+            Console.WriteLine();
+
+            if (activate && !game.NoClip)
+            {
+                Console.WriteLine("You can now move through walls in 3D.");
+            }
+            else if (!activate && game.NoClip)
+            {
+                Console.WriteLine("You can no longer move through walls in 3D.");
+            }
+
+            Console.WriteLine();
+
+            game.NoClip = activate;
         }
 
         static void Netsrak(Game game, string[] args)
