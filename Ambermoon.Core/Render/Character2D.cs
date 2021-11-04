@@ -53,6 +53,7 @@ namespace Ambermoon.Render
         public uint CurrentBaseFrameIndex { get; private set; }
         public uint CurrentFrameIndex { get; private set; }
         public uint CurrentFrame => sprite.CurrentFrame;
+        public uint FrameCount => sprite.NumFrames;
         uint lastFrameReset = 0u;
         int baselineOffset = 0;
         public int BaselineOffset
@@ -387,14 +388,22 @@ namespace Ambermoon.Render
             }
         }
 
-        public virtual void Update(uint ticks, ITime gameTime, bool allowInstantMovement = false,
-            Position lastPlayerPosition = null)
+        protected void Update(uint ticks, ITime gameTime, out bool maxFrameReached,
+            bool allowInstantMovement = false, Position lastPlayerPosition = null)
         {
+            uint lastFrame = sprite.CurrentFrame;
             uint elapsedTicks = ticks - lastFrameReset;
             sprite.CurrentFrame = elapsedTicks / CurrentAnimationInfo.TicksPerFrame; // this will take care of modulo frame count
+            maxFrameReached = lastFrame != sprite.CurrentFrame && sprite.CurrentFrame == 0;
             if (topSprite != null)
                 topSprite.CurrentFrame = sprite.CurrentFrame;
             CurrentFrameIndex = CurrentBaseFrameIndex + sprite.CurrentFrame;
+        }
+
+        public virtual void Update(uint ticks, ITime gameTime,
+            bool allowInstantMovement = false, Position lastPlayerPosition = null)
+        {
+            Update(ticks, gameTime, out _, allowInstantMovement, lastPlayerPosition);
         }
 
         public void SetCurrentFrame(uint frameIndex)
