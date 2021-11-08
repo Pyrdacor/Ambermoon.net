@@ -10701,7 +10701,7 @@ namespace Ambermoon
                 raftSalesman.AvailableGold = 0;
 
             OpenTransportSalesman(raftSalesman, buyText, TravelType.Raft, Window.RaftSalesman,
-                Picture80x80.Merchant, showWelcome ? DataNameProvider.WelcomeRaftSeller : null);
+                Picture80x80.Captain, showWelcome ? DataNameProvider.WelcomeRaftSeller : null);
         }
 
         void OpenShipSalesman(Places.ShipSalesman shipSalesman, string buyText, bool showWelcome = true)
@@ -12324,7 +12324,7 @@ namespace Ambermoon
             }
             else
             {
-                return false;
+                return true;
             }
         }
 

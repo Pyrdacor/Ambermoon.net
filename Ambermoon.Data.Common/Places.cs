@@ -73,6 +73,11 @@ namespace Ambermoon.Data
             public override PlaceType PlaceType => PlaceType.Trainer;
             public Ability Ability => (Ability)GetWord(0);
             public int Cost => GetWord(2);
+
+            public override string ToString()
+            {
+                return $"{Ability} Trainer, Cost: {Cost}";
+            }
         }
 
         public class Healer : NonItemPlace
@@ -117,6 +122,31 @@ namespace Ambermoon.Data
                     _ => 0
                 };
             }
+
+            public override string ToString()
+            {
+                string text = $"Healer, Heal LP: {HealLPCost}, RemoveCurses: {RemoveCurseCost}";
+
+                void AddAilment(Ailment ailment)
+                {
+                    text += $", Heal{ailment}: {GetCostForHealingAilment(ailment)}";
+                }
+
+                AddAilment(Ailment.Crazy);
+                AddAilment(Ailment.Blind);
+                AddAilment(Ailment.Drugged);
+                AddAilment(Ailment.Lamed);
+                AddAilment(Ailment.Poisoned);
+                AddAilment(Ailment.Petrified);
+                AddAilment(Ailment.Diseased);
+                AddAilment(Ailment.Aging);
+                AddAilment(Ailment.DeadCorpse);
+                AddAilment(Ailment.DeadAshes);
+                AddAilment(Ailment.DeadDust);
+
+
+                return text;
+            }
         }
 
         public class Sage : NonItemPlace
@@ -129,6 +159,11 @@ namespace Ambermoon.Data
 
             public override PlaceType PlaceType => PlaceType.Sage;
             public int Cost => GetWord(0);
+
+            public override string ToString()
+            {
+                return $"Sage, Cost: {Cost}";
+            }
         }
 
         public class Enchanter : NonItemPlace
@@ -141,6 +176,11 @@ namespace Ambermoon.Data
 
             public override PlaceType PlaceType => PlaceType.Enchanter;
             public int Cost => GetWord(0);
+
+            public override string ToString()
+            {
+                return $"Enchanter, Cost: {Cost}";
+            }
         }
 
         public class Inn : NonItemPlace
@@ -158,6 +198,11 @@ namespace Ambermoon.Data
             public int BedroomMapIndex => GetWord(6);
 
             public int Healing => GetWord(8); // in percent
+
+            public override string ToString()
+            {
+                return $"Inn, Cost: {Cost}, Healing: {Healing}%, Spawn: Map {BedroomMapIndex} at {BedroomX},{BedroomY}";
+            }
         }
 
         public class FoodDealer : NonItemPlace
@@ -171,6 +216,11 @@ namespace Ambermoon.Data
             public uint AvailableFood { get; set; }
             public override PlaceType PlaceType => PlaceType.FoodDealer;
             public int Cost => GetWord(0);
+
+            public override string ToString()
+            {
+                return $"FoodDealer, Cost: {Cost}";
+            }
         }
 
         public class Library : Merchant
@@ -191,6 +241,11 @@ namespace Ambermoon.Data
             public int SpawnY => GetWord(4);
             public int SpawnMapIndex => GetWord(6);
             public virtual TravelType TravelType => (TravelType)GetWord(8);
+
+            public override string ToString()
+            {
+                return $"{TravelType}Dealer, Cost: {Cost}, Spawn: Map {SpawnMapIndex} at {SpawnX},{SpawnY}";
+            }
         }
 
         public class RaftSalesman : Salesman
@@ -239,6 +294,11 @@ namespace Ambermoon.Data
 
             public override PlaceType PlaceType => PlaceType.Blacksmith;
             public int Cost => GetWord(0);
+
+            public override string ToString()
+            {
+                return $"Blacksmith, Cost: {Cost}";
+            }
         }
     }
 }
