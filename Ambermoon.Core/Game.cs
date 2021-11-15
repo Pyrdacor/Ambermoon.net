@@ -14132,7 +14132,7 @@ namespace Ambermoon
             {
                 layout.ClearBattleFieldSlotColors();
 
-                if (!PartyMembers.Any(p => p.Ailments.CanSelect()))
+                if (!PartyMembers.Any(p => p.Ailments.CanSelect() && currentBattle?.HasPartyMemberFled(p) != true))
                 {
                     if (battleRoundActiveSprite != null)
                         battleRoundActiveSprite.Visible = false;
