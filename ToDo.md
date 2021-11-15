@@ -13,7 +13,6 @@
 
 ## Characters
 
-- NPCs are partly above the player
 - Use tile flags of map characters (random animation start, movement blocking)
 
 

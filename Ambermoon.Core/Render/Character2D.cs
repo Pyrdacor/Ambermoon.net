@@ -55,7 +55,7 @@ namespace Ambermoon.Render
         public uint CurrentFrame => sprite.CurrentFrame;
         public uint FrameCount => sprite.NumFrames;
         uint lastFrameReset = 0u;
-        int baselineOffset = 0;
+        int baselineOffset = -1;
         public int BaselineOffset
         {
             get => baselineOffset;
