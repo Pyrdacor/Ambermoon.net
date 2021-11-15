@@ -1,5 +1,6 @@
 ## Battle
 
+- Vanishing of wind spells looks odd in some cases
 - Initial scale of dissolve victim has bad anchor behavior if in front row.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
 
@@ -30,3 +31,4 @@
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Where is the text "CannotCarryAllGold" used?
 - Check all unused DataNameProvider texts.
+- When leaving a map through a teleporter and there is an engaging monster, the attack might occur after the map change. This must be avoided.

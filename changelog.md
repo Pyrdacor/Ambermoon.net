@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0 - Third patch (November 2021)
+
+- Version [1.3.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.3.0): Screenshot function, quicksaves, noclip cheat, usability and bugfixes
+
 ## 1.2.0 - Second patch (October 2021)
 
 - Version [1.2.2] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.2): Quick fix for 1.2.0 release
