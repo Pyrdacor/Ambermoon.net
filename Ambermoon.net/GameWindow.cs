@@ -269,6 +269,42 @@ namespace Ambermoon
                 if (Game != null)
                     Game.PostFullscreenChanged();
             }
+            else if (renderView != null && (key == Silk.NET.Input.Key.PrintScreen ||
+                (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
+            {
+                var imageData = renderView.TakeScreenshot();
+                string directory = Path.Combine(Configuration.ExecutableDirectoryPath, "Screenshots");
+                string path;
+                static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
+                try
+                {
+                    Directory.CreateDirectory(directory);
+                    path = Path.Combine(directory, GetFileName());
+                }
+                catch
+                {
+                    directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
+
+                    try
+                    {
+                        Directory.CreateDirectory(directory);
+                        path = Path.Combine(directory, GetFileName());
+                    }
+                    catch
+                    {
+                        path = Path.Combine(Path.GetTempPath(), GetFileName());
+                    }
+                }
+                try
+                {
+                    WritePNG(path, imageData, renderView.FramebufferSize);
+                }
+                catch
+                {
+                    Console.WriteLine($"Failed to create screenshot at '{path}'.");
+                }
+            }
             else
             {
                 if (logoPyrdacor != null)
@@ -378,6 +414,98 @@ namespace Ambermoon
                 versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
             else if (Game != null)
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
+        }
+
+        void WritePNG(string filename, byte[] rgbData, Size imageSize)
+        {
+            if (File.Exists(filename))
+                filename += Guid.NewGuid().ToString();
+
+            filename += ".png";
+
+            var writer = new DataWriter();
+
+            void WriteChunk(string name, Action<DataWriter> dataWriter)
+            {
+                var internalDataWriter = new DataWriter();
+                dataWriter?.Invoke(internalDataWriter);
+                var data = internalDataWriter.ToArray();
+
+                writer.Write((uint)data.Length);
+                writer.WriteWithoutLength(name);
+                writer.Write(data);
+                var crc = new PngCrc();
+                uint headerCrc = crc.Calculate(new byte[] { (byte)name[0], (byte)name[1], (byte)name[2], (byte)name[3] });
+                writer.Write(crc.Calculate(headerCrc, data));
+            }
+
+            // Header
+            writer.Write(0x89);
+            writer.Write(0x50);
+            writer.Write(0x4E);
+            writer.Write(0x47);
+            writer.Write(0x0D);
+            writer.Write(0x0A);
+            writer.Write(0x1A);
+            writer.Write(0x0A);
+
+            // IHDR chunk
+            WriteChunk("IHDR", writer =>
+            {
+                writer.Write((uint)imageSize.Width);
+                writer.Write((uint)imageSize.Height);
+                writer.Write(8); // 8 bits per color
+                writer.Write(2); // Color only (RGB)
+                writer.Write(0); // Deflate compression
+                writer.Write(0); // Default filtering
+                writer.Write(0); // No interlace
+            });
+
+            WriteChunk("IDAT", writer =>
+            {
+                byte[] dataWithFilterBytes = new byte[rgbData.Length + imageSize.Height];
+                for (int y = 0; y < imageSize.Height; ++y)
+                {
+                    int i = imageSize.Height - y - 1;
+                    Buffer.BlockCopy(rgbData, y * imageSize.Width * 3, dataWithFilterBytes, 1 + i + i * imageSize.Width * 3, imageSize.Width * 3);
+                }
+                // Note: Data is initialized with 0 bytes so the filter bytes are already 0.
+                using var uncompressedStream = new MemoryStream(dataWithFilterBytes);
+                using var compressedStream = new MemoryStream();
+                var compressStream = new System.IO.Compression.DeflateStream(compressedStream, System.IO.Compression.CompressionLevel.Optimal, true);
+                uncompressedStream.CopyTo(compressStream);
+                compressStream.Close();
+
+                // Zlib header
+                writer.Write(0x78); // 32k window deflate method
+                writer.Write(0xDA); // Best compression, no dict and header is multiple of 31
+
+                uint Adler32()
+                {
+                    uint s1 = 1;
+                    uint s2 = 0;
+
+                    for (int n = 0; n < dataWithFilterBytes.Length; ++n)
+                    {
+                        s1 = (s1 + dataWithFilterBytes[n]) % 65521;
+                        s2 = (s2 + s1) % 65521;
+                    }
+
+                    return (s2 << 16) | s1;
+                }
+
+                // Compressed data
+                writer.Write(compressedStream.ToArray());
+
+                // Checksum
+                writer.Write(Adler32());
+            });
+
+            // IEND chunk
+            WriteChunk("IEND", null);
+
+            using var file = File.Create(filename);
+            writer.CopyTo(file);
         }
 
         void ShowMainMenu(IRenderView renderView, Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,

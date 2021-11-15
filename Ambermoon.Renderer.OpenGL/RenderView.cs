@@ -88,6 +88,7 @@ namespace Ambermoon.Renderer.OpenGL
 #pragma warning restore 0067
         public FullscreenRequestHandler FullscreenRequestHandler { get; set; }
 
+        public Size FramebufferSize => new Size(frameBufferSize);
         public Size MaxScreenSize { get; set; }
         public List<Size> AvailableFullscreenModes { get; set; }
         public bool IsLandscapeRatio { get; } = true;
@@ -393,6 +394,14 @@ namespace Ambermoon.Renderer.OpenGL
 
             var viewport = frameBufferWindowArea;
             State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
+        }
+
+        public byte[] TakeScreenshot()
+        {
+            var area = frameBufferWindowArea;
+            byte[] buffer = new byte[area.Width * area.Height * 3];
+            State.Gl.ReadPixels<byte>(area.X, area.Y, (uint)area.Width, (uint)area.Height, GLEnum.Rgb, GLEnum.UnsignedByte, buffer);
+            return buffer;
         }
 
         public void AddLayer(IRenderLayer layer)
