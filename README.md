@@ -134,6 +134,7 @@ Num1-Num9 | Action buttons 1-9 (button panel in the lower right corner)
 1-6 | Set party member 1-6 as active
 F1-F6 | Open inventory of party member 1-6
 Ctrl + 0-9 | Quicksave into save slot 1-10 (0 saves into slot 10)
+PrintScreen or Ctrl + P | Saves a screenshot to the folder "Screenshots" next to the program (or in config folder if you have no permissions to write there)
 
 ### Left clicks
 
