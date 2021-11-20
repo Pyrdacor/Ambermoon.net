@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30204.135
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6D2AB877-1253-42C6-8ACF-0DACC23AC2F4}"
 	ProjectSection(SolutionItems) = preProject
@@ -39,6 +39,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Audio.OpenAL", "Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj", "{9BEEF8E3-98D6-4B50-AC0A-6AD5A07DA181}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.PrepareIcons", "Ambermoon.PrepareIcons\Ambermoon.PrepareIcons.csproj", "{E63232A6-F6EE-4696-BB36-4B0D4C7B3882}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmbermoonAndroid", "AmbermoonAndroid\AmbermoonAndroid.csproj", "{C5250198-DA00-4210-982C-C8B057FA0319}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -158,6 +160,24 @@ Global
 		{E63232A6-F6EE-4696-BB36-4B0D4C7B3882}.Release|x64.Build.0 = Release|Any CPU
 		{E63232A6-F6EE-4696-BB36-4B0D4C7B3882}.Release|x86.ActiveCfg = Release|Any CPU
 		{E63232A6-F6EE-4696-BB36-4B0D4C7B3882}.Release|x86.Build.0 = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|x64.Build.0 = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|x64.Deploy.0 = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|x86.Build.0 = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Debug|x86.Deploy.0 = Debug|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x64.ActiveCfg = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x64.Build.0 = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x64.Deploy.0 = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x86.ActiveCfg = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x86.Build.0 = Release|Any CPU
+		{C5250198-DA00-4210-982C-C8B057FA0319}.Release|x86.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

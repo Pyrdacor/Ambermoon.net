@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AndroidLinkTool>r8</AndroidLinkTool>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AndroidLinkTool>r8</AndroidLinkTool>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Silk.NET.Input.Sdl" Version="2.10.1" />
+    <PackageReference Include="Silk.NET.SDL" Version="2.10.1" />
+    <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.10.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
+    <ProjectReference Include="..\Ambermoon.Common\Ambermoon.Common.csproj" />
+    <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
+    <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
+    <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
+    <ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />
+  </ItemGroup>
+</Project>

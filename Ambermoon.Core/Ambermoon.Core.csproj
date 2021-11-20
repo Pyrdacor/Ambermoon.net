@@ -10,9 +10,10 @@
     <RepositoryUrl>https://github.com/Pyrdacor/Ambermoon.net</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <Description>Core of the Ambermoon rework</Description>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
