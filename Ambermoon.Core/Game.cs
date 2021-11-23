@@ -416,7 +416,9 @@ namespace Ambermoon
                 if (Map?.UseTravelTypes == true)
                 {
                     player2D?.UpdateAppearance(CurrentTicks);
-                    player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
+                    GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
+                    player2D.BaselineOffset = !CanSee() || transportAtPlayerIndex != null ? MaxBaseLine :
+                        player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
                 }
                 else if (!is3D && player2D != null)
                 {
@@ -5569,6 +5571,7 @@ namespace Ambermoon
                     if (transportAtPlayerIndex != null && TravelType == TravelType.Walk)
                     {
                         EnableTransport();
+                        player2D.BaselineOffset = MaxBaseLine;
                     }
                     else if (TravelType.IsStoppable() && transportAtPlayerIndex == null)
                     {
@@ -9873,7 +9876,9 @@ namespace Ambermoon
             }
             else // 2D
             {
-                player2D.BaselineOffset = !CanSee() ? MaxBaseLine : player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
+                GetTransportsInVisibleArea(out TransportLocation transportAtPlayerIndex);
+                player2D.BaselineOffset = !CanSee() || transportAtPlayerIndex != null ? MaxBaseLine :
+                    player.MovementAbility > PlayerMovementAbility.Swimming ? 32 : 0;
             }
         }
 
