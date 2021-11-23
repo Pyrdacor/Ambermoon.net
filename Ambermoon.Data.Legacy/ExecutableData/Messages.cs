@@ -50,6 +50,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     {
         public enum Index
         {
+            TextBlockMissing = 4,
             DontForgetItems = 18,
             Comma,
             FullStop,

@@ -421,7 +421,7 @@ namespace Ambermoon.Render
                 }
                 else if (trigger == EventTrigger.Mouth)
                 {
-                    ShowPopup(map.Texts[(int)characterReference.Index]);
+                    ShowPopup(map.GetText((int)characterReference.Index, game.DataNameProvider.TextBlockMissing));
                     return true;
                 }
             }

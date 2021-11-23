@@ -236,6 +236,7 @@
         public string CannotCarryAllGold => executableData.Messages.GetEntry(Messages.Index.CannotCarryAllGold);
         public string MapViewNotWorkingHere => executableData.Messages.GetEntry(Messages.Index.MapViewNotWorkingHere);
         public string TurnOnTuneInAndDropOut => executableData.Messages.GetEntry(Messages.Index.TurnOnTuneInAndDropOut);
+        public string TextBlockMissing => executableData.Messages.GetEntry(Messages.Index.TextBlockMissing);
 
 
         #region Conversations

@@ -57,7 +57,7 @@ namespace Ambermoon.Data
                     return false;
                 }
 
-                if (Type > TileType.Normal && Type < TileType.Invisible)
+                if (travelType != TravelType.Swim && (Type > TileType.Normal && Type < TileType.Invisible))
                 {
                     return true;
                 }
@@ -219,6 +219,13 @@ namespace Ambermoon.Data
         // for all world maps in Ambermoon so it should be safe.
         public bool IsWorldMap => Flags.HasFlag(MapFlags.WorldSurface);
         public bool UseTravelTypes => Flags.HasFlag(MapFlags.StationaryGraphics);
+        public string GetText(int index, string fallbackText)
+        {
+            if (Texts == null || index < 0 || index >= Texts.Count)
+                return fallbackText;
+
+            return Texts[index];
+        }
         public uint MoveWorldMapIndex(uint baseIndex, uint worldMapDimension, uint currentIndex, int changeX, int changeY)
         {
             uint relativeIndex = currentIndex - baseIndex;

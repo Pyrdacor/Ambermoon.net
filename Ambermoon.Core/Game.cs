@@ -6038,7 +6038,7 @@ namespace Ambermoon
             void OpenChest()
             {
                 string initialText = map != null && fromEvent && chestEvent.TextIndex != 255 ?
-                    map.Texts[(int)chestEvent.TextIndex] : null;
+                    map.GetText((int)chestEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map, position);
@@ -6083,9 +6083,9 @@ namespace Ambermoon
             Fade(() =>
             {
                 string initialText = fromEvent && doorEvent.TextIndex != 255 ?
-                    map.Texts[(int)doorEvent.TextIndex] : null;
+                    map.GetText((int)doorEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
                 string unlockText = doorEvent.UnlockTextIndex != 255 ?
-                    map.Texts[(int)doorEvent.UnlockTextIndex] : null;
+                    map.GetText((int)doorEvent.UnlockTextIndex, DataNameProvider.TextBlockMissing) : null;
                 layout.Reset();
                 ShowMap(false);
                 SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map, x, y);
@@ -12279,7 +12279,8 @@ namespace Ambermoon
                     case PlaceType.Merchant:
                     case PlaceType.Library:
                         OpenMerchant(enterPlaceEvent.MerchantDataIndex, places.Entries[(int)enterPlaceEvent.PlaceIndex - 1].Name,
-                            enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex],
+                            enterPlaceEvent.UsePlaceTextIndex == 0xff ? null :
+                                map.GetText(enterPlaceEvent.UsePlaceTextIndex, DataNameProvider.TextBlockMissing),
                             enterPlaceEvent.PlaceType == PlaceType.Library, true, null);
                         return true;
                     case PlaceType.FoodDealer:
@@ -12291,19 +12292,22 @@ namespace Ambermoon
                     case PlaceType.HorseDealer:
                     {
                         var horseDealerData = new Places.HorseSalesman(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
-                        OpenHorseSalesman(horseDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                        OpenHorseSalesman(horseDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null :
+                            map.GetText(enterPlaceEvent.UsePlaceTextIndex, DataNameProvider.TextBlockMissing));
                         return true;
                     }
                     case PlaceType.RaftDealer:
                     {
                         var raftDealerData = new Places.RaftSalesman(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
-                        OpenRaftSalesman(raftDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                        OpenRaftSalesman(raftDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null :
+                            map.GetText(enterPlaceEvent.UsePlaceTextIndex, DataNameProvider.TextBlockMissing));
                         return true;
                     }
                     case PlaceType.ShipDealer:
                     {
                         var shipDealerData = new Places.ShipSalesman(places.Entries[(int)enterPlaceEvent.PlaceIndex - 1]);
-                        OpenShipSalesman(shipDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null : map.Texts[enterPlaceEvent.UsePlaceTextIndex]);
+                        OpenShipSalesman(shipDealerData, enterPlaceEvent.UsePlaceTextIndex == 0xff ? null :
+                            map.GetText(enterPlaceEvent.UsePlaceTextIndex, DataNameProvider.TextBlockMissing));
                         return true;
                     }
                     case PlaceType.Blacksmith:
@@ -12318,7 +12322,7 @@ namespace Ambermoon
             }
             else if (enterPlaceEvent.ClosedTextIndex != 255)
             {
-                string closedText = map.Texts[enterPlaceEvent.ClosedTextIndex];
+                string closedText = map.GetText((int)enterPlaceEvent.ClosedTextIndex, DataNameProvider.TextBlockMissing);
                 ShowTextPopup(ProcessText(closedText), null);
                 return true;
             }
@@ -13628,8 +13632,8 @@ namespace Ambermoon
                 layout.Reset();
                 var riddleArea = new Rect(16, 50, 176, 144);
                 layout.FillArea(riddleArea, GetUIColor(28), false);
-                var riddleText = ProcessText(map.Texts[(int)riddlemouthEvent.RiddleTextIndex]);
-                var solutionResponseText = ProcessText(map.Texts[(int)riddlemouthEvent.SolutionTextIndex]);
+                var riddleText = ProcessText(map.GetText((int)riddlemouthEvent.RiddleTextIndex, DataNameProvider.TextBlockMissing));
+                var solutionResponseText = ProcessText(map.GetText((int)riddlemouthEvent.SolutionTextIndex, DataNameProvider.TextBlockMissing));
                 void ShowRiddle()
                 {
                     InputEnable = false;
@@ -14029,7 +14033,7 @@ namespace Ambermoon
 
         internal void ShowTextPopup(Map map, PopupTextEvent popupTextEvent, Action<PopupTextEvent.Response> responseHandler)
         {
-            var text = ProcessText(map.Texts[(int)popupTextEvent.TextIndex]);
+            var text = ProcessText(map.GetText((int)popupTextEvent.TextIndex, DataNameProvider.TextBlockMissing));
 
             if (popupTextEvent.HasImage)
             {
@@ -14079,7 +14083,7 @@ namespace Ambermoon
 
         internal void ShowDecisionPopup(Map map, DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
         {
-            ShowDecisionPopup(map.Texts[(int)decisionEvent.TextIndex], responseHandler);
+            ShowDecisionPopup(map.GetText((int)decisionEvent.TextIndex, DataNameProvider.TextBlockMissing), responseHandler);
         }
 
         void RecheckUsedBattleItem(int partyMemberSlot, int slotIndex, bool equipped)
