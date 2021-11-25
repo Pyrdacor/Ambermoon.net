@@ -3088,9 +3088,12 @@ namespace Ambermoon
             var playerArea = player2D.DisplayArea;
 
             int xDiff = gamePosition.X < playerArea.Left ? playerArea.Left - gamePosition.X : gamePosition.X - playerArea.Right;
+
+            bool yTargetRange = gamePosition.Y < playerArea.Top ? playerArea.Top - gamePosition.Y <= 3 * RenderMap2D.TILE_HEIGHT / 2
+                : gamePosition.Y - playerArea.Bottom <= RenderMap2D.TILE_HEIGHT;
             int yDiff = gamePosition.Y < playerArea.Top ? playerArea.Top - gamePosition.Y : gamePosition.Y - playerArea.Bottom;
 
-            if (xDiff <= RenderMap2D.TILE_WIDTH && yDiff <= RenderMap2D.TILE_HEIGHT)
+            if (xDiff <= RenderMap2D.TILE_WIDTH && yTargetRange)
                 CursorType = CursorType.Target;
             else
                 CursorType = CursorType.Mouth;
@@ -5143,6 +5146,25 @@ namespace Ambermoon
             });
         }
 
+        bool CheckTeleportDestination(uint mapIndex, uint x, uint y)
+        {
+            if (mapIndex == 0)
+                mapIndex = Map.Index;
+
+            var newMap = MapManager.GetMap(mapIndex);
+
+            if (newMap == null)
+                return false;
+
+            uint newX = x == 0 ? (uint)player.Position.X : x - 1;
+            uint newY = y == 0 ? (uint)player.Position.Y : y - 1;
+
+            if (newMap.Type == MapType.Map3D)
+                return !newMap.Blocks[newX, newY].BlocksPlayer(MapManager.GetLabdataForMap(newMap));
+            else
+                return newMap.Tiles[newX, newY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType);
+        }
+
         /// <summary>
         /// This is used by external triggers like a cheat engine.
         /// </summary>
@@ -5157,6 +5179,13 @@ namespace Ambermoon
                 mapIndex = Map.Index;
 
             var newMap = MapManager.GetMap(mapIndex);
+
+            if (newMap == null)
+            {
+                blocked = true;
+                return false;
+            }
+
             bool mapChange = newMap.Index != Map.Index;
             var player = is3D ? (IRenderPlayer)player3D : player2D;
             bool mapTypeChanged = Map.Type != newMap.Type;
@@ -5171,7 +5200,7 @@ namespace Ambermoon
                 // Note: There are cases where teleporting onto a blocking tile is performed and allowed.
                 // One example is the Inn in Newlake where you are teleported on top of a table.
                 // In this case we force the teleport.
-                if (!force && !newMap.Tiles[newX, newY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType.Walk))
+                if (!force && !newMap.Tiles[newX, newY].AllowMovement(MapManager.GetTilesetForMap(newMap), TravelType, true, true))
                 {
                     blocked = true;
                     return false;
@@ -5228,13 +5257,18 @@ namespace Ambermoon
 
         internal void Teleport(TeleportEvent teleportEvent, uint x, uint y)
         {
+            uint targetX = teleportEvent.X == 0 ? x + 1 : teleportEvent.X;
+            uint targetY = teleportEvent.Y == 0 ? y + 1 : teleportEvent.Y;
+
+            if (TravelType != TravelType.Walk && TravelType != TravelType.Swim &&
+                !CheckTeleportDestination(teleportEvent.MapIndex, targetX, targetY))
+                return;
+
             ResetMoveKeys();
             ResetMapCharacterInteraction(Map);
 
             void RunTransition()
             {
-                uint targetX = teleportEvent.X == 0 ? x + 1 : teleportEvent.X;
-                uint targetY = teleportEvent.Y == 0 ? y + 1 : teleportEvent.Y;
                 levitating = false;
                 Teleport(teleportEvent.MapIndex, targetX, targetY, teleportEvent.Direction, out _, true);
             }

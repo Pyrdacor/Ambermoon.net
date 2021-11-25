@@ -50,7 +50,7 @@ namespace Ambermoon.Data
             public uint FrontTileIndex { get; set; }
             public uint MapEventId { get; set; }
             public TileType Type { get; set; }
-            public bool AllowMovement(Tileset tileset, TravelType travelType, bool isPlayer = true)
+            public bool AllowMovement(Tileset tileset, TravelType travelType, bool isPlayer = true, bool allowSwimWalkChange = false)
             {
                 if (!isPlayer && Type == TileType.Water)
                 {
@@ -62,7 +62,19 @@ namespace Ambermoon.Data
                     return true;
                 }
 
-                return tileset.AllowMovement(BackTileIndex, FrontTileIndex, travelType);
+                if (tileset.AllowMovement(BackTileIndex, FrontTileIndex, travelType))
+                    return true;
+
+                if (allowSwimWalkChange)
+                {
+                    if (travelType == TravelType.Swim && tileset.AllowMovement(BackTileIndex, FrontTileIndex, TravelType.Walk))
+                        return true;
+
+                    if (travelType == TravelType.Walk && tileset.AllowMovement(BackTileIndex, FrontTileIndex, TravelType.Swim))
+                        return true;
+                }
+
+                return false;
             }
             public bool BlocksSight(Tileset tileset)
             {
@@ -404,7 +416,7 @@ namespace Ambermoon.Data
             if (Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiles can only be updated for 2D maps.");
 
-            if (Tiles[x, y].BackTileIndex != 0 && newFrontTileIndex != 0 && newFrontTileIndex < 256)
+            if (Tiles[x, y].FrontTileIndex != 0 && newFrontTileIndex != 0 && newFrontTileIndex < 256)
                 Tiles[x, y].BackTileIndex = newFrontTileIndex;
             else
                 Tiles[x, y].FrontTileIndex = newFrontTileIndex;
