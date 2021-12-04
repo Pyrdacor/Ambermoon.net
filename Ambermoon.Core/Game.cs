@@ -4714,25 +4714,29 @@ namespace Ambermoon
 
             void AwardValue(CharacterValue characterValue, bool lpLike)
             {
+                uint value = RandomizeIfNecessary(awardEvent.Value);
+
                 switch (awardEvent.Operation)
                 {
                     case AwardEvent.AwardOperation.Increase:
-                        Change(characterValue, (int)awardEvent.Value, false, lpLike);
+                        Change(characterValue, (int)value, false, lpLike);
                         break;
                     case AwardEvent.AwardOperation.Decrease:
-                        Change(characterValue, -(int)awardEvent.Value, false, lpLike);
+                        Change(characterValue, -(int)value, false, lpLike);
                         break;
                     case AwardEvent.AwardOperation.IncreasePercentage:
-                        Change(characterValue, (int)awardEvent.Value, true, lpLike);
+                        Change(characterValue, (int)value, true, lpLike);
                         break;
                     case AwardEvent.AwardOperation.DecreasePercentage:
-                        Change(characterValue, -(int)awardEvent.Value, true, lpLike);
+                        Change(characterValue, -(int)value, true, lpLike);
                         break;
                     case AwardEvent.AwardOperation.Fill:
                         characterValue.CurrentValue = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
                         break;
                 }
             }
+
+            uint RandomizeIfNecessary(uint value) => awardEvent.Random ? 1u + random.Next() % value : value;
 
             switch (awardEvent.TypeOfAward)
             {
@@ -4775,10 +4779,10 @@ namespace Ambermoon
                     switch (awardEvent.Operation)
                     {
                         case AwardEvent.AwardOperation.Increase:
-                            partyMember.SpellLearningPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.SpellLearningPoints + awardEvent.Value);
+                            partyMember.SpellLearningPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.SpellLearningPoints + RandomizeIfNecessary(awardEvent.Value));
                             break;
                         case AwardEvent.AwardOperation.Decrease:
-                            partyMember.SpellLearningPoints = (ushort)Util.Max(0, (int)partyMember.SpellLearningPoints - (int)awardEvent.Value);
+                            partyMember.SpellLearningPoints = (ushort)Util.Max(0, (int)partyMember.SpellLearningPoints - (int)RandomizeIfNecessary(awardEvent.Value));
                             break;
                     }
                     break;
@@ -4857,10 +4861,10 @@ namespace Ambermoon
                     switch (awardEvent.Operation)
                     {
                         case AwardEvent.AwardOperation.Increase:
-                            AddExperience(partyMember, awardEvent.Value, followAction);
+                            AddExperience(partyMember, RandomizeIfNecessary(awardEvent.Value), followAction);
                             return;
                         case AwardEvent.AwardOperation.Decrease:
-                            partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - awardEvent.Value);
+                            partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - RandomizeIfNecessary(awardEvent.Value));
                             break;
                     }
                     break;
@@ -4870,10 +4874,10 @@ namespace Ambermoon
                     switch (awardEvent.Operation)
                     {
                         case AwardEvent.AwardOperation.Increase:
-                            partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + awardEvent.Value);
+                            partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + RandomizeIfNecessary(awardEvent.Value));
                             break;
                         case AwardEvent.AwardOperation.Decrease:
-                            partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)awardEvent.Value);
+                            partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)RandomizeIfNecessary(awardEvent.Value));
                             break;
                     }
                     break;
