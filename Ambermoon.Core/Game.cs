@@ -11056,7 +11056,7 @@ namespace Ambermoon
                         Ability.Attack => Picture80x80.Knight,
                         Ability.Parry => Picture80x80.Knight,
                         Ability.Swim => Picture80x80.Knight,
-                        Ability.CriticalHit => Picture80x80.Thief,
+                        Ability.CriticalHit => Picture80x80.Knight,
                         Ability.FindTraps => Picture80x80.Thief,
                         Ability.DisarmTraps => Picture80x80.Thief,
                         Ability.LockPicking => Picture80x80.Thief,
