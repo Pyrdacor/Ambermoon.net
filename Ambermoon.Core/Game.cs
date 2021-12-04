@@ -3891,6 +3891,7 @@ namespace Ambermoon
                     }
 
                     UpdateCharacterInfo();
+                    layout.FillCharacterBars(partyMember);
                 }
                 void RemoveInventoryItem(int slotIndex, ItemSlot itemSlot, int amount)
                 {

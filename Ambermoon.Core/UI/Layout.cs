@@ -323,6 +323,7 @@ namespace Ambermoon.UI
                         {
                             game.EquipmentAdded(Item.Item.ItemIndex, Item.Item.Amount, partyMember);
                             game.UpdateCharacterInfo();
+                            layout.FillCharacterBars(partyMember);
                             partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)].Add(Item.Item);
                             updateSlot = partyMember.Equipment.Slots[(EquipmentSlot)(SourceSlot + 1)];
                         }
