@@ -1263,7 +1263,7 @@ namespace Ambermoon
                         for (int i = 0; i < 5; ++i)
                         {
                             window.DoRender();
-                            System.Threading.Thread.Sleep(1000);
+                            Thread.Sleep(1000);
                         }
                     });
                 }

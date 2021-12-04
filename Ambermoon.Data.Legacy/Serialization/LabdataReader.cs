@@ -11,7 +11,8 @@ namespace Ambermoon.Data.Legacy.Serialization
         public void ReadLabdata(Labdata labdata, IDataReader dataReader, IGameData gameData)
         {
             labdata.WallHeight = dataReader.ReadWord();
-            labdata.CombatBackground = dataReader.ReadWord() & 0x0fu;
+            labdata.Flags = dataReader.ReadWord();
+            labdata.CombatBackground = labdata.Flags & 0x0fu;
             labdata.CeilingColorIndex = dataReader.ReadByte();
             labdata.FloorColorIndex = dataReader.ReadByte();
             // Note: The ceiling texture index can be 0 in which case a sky is used.
@@ -20,8 +21,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             // To be more precisely if the texture index (ceiling and also floor) is
             // 0, the color index is used to draw instead. For example the town of
             // S'Angrila doesn't use a floor texture but only a color.
-            uint ceilingTextureIndex = dataReader.ReadByte();
-            uint floorTextureIndex = dataReader.ReadByte();
+            labdata.CeilingTextureIndex = dataReader.ReadByte();
+            labdata.FloorTextureIndex = dataReader.ReadByte();
 
             labdata.Objects.Clear();
             int numObjects = dataReader.ReadWord();
@@ -123,10 +124,10 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             // Load labyrinth graphics
             var graphicReader = new GraphicReader();
-            if (floorTextureIndex != 0)
-                labdata.FloorGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)floorTextureIndex], 64, 64, false, false, true);
-            if (ceilingTextureIndex != 0)
-                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[(int)ceilingTextureIndex], 64, 64, false, false, true);
+            if (labdata.FloorTextureIndex != 0)
+                labdata.FloorGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[labdata.FloorTextureIndex], 64, 64, false, false, true);
+            if (labdata.CeilingTextureIndex != 0)
+                labdata.CeilingGraphic = ReadGraphic(graphicReader, gameData.Files["Floors.amb"].Files[labdata.CeilingTextureIndex], 64, 64, false, false, true);
             var objectTextureFiles = gameData.Files[$"2Object3D.amb"].Files;
             gameData.Files[$"3Object3D.amb"].Files.ToList().ForEach(f =>
             {
@@ -134,7 +135,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     objectTextureFiles[f.Key] = f.Value;
             });
             labdata.ObjectGraphics.Clear();
-            foreach (var objectInfo in labdata.ObjectInfos)
+            foreach (var objectInfo in labdata.ObjectInfos) 
             {
                 if (objectInfo.NumAnimationFrames == 1)
                 {

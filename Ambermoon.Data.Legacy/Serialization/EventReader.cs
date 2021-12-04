@@ -115,6 +115,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var unused = dataReader.ReadByte();
                     uint keyIndex = dataReader.ReadWord();
                     var unlockFailEventIndex = dataReader.ReadWord();
+
                     @event = new DoorEvent
                     {
                         LockpickingChanceReduction = lockpickingChanceReduction,

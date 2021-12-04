@@ -81,9 +81,11 @@ namespace Ambermoon.Data
         /// See <see cref="CombatBackgrounds"/>.
         /// </summary>
         public uint CombatBackground { get; set; }
-        public byte Unknown1 { get; set; }
+        public ushort Flags { get; set; }
         public byte CeilingColorIndex { get; set; }
         public byte FloorColorIndex { get; set; }
+        public byte CeilingTextureIndex { get; set; }
+        public byte FloorTextureIndex { get; set; }
         public List<Object> Objects { get; } = new List<Object>();
         public List<ObjectInfo> ObjectInfos { get; } = new List<ObjectInfo>();
         public List<WallData> Walls { get; } = new List<WallData>();

@@ -40,7 +40,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Audio.OpenAL", "A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.PrepareIcons", "Ambermoon.PrepareIcons\Ambermoon.PrepareIcons.csproj", "{E63232A6-F6EE-4696-BB36-4B0D4C7B3882}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmbermoonAndroid", "AmbermoonAndroid\AmbermoonAndroid.csproj", "{C5250198-DA00-4210-982C-C8B057FA0319}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmbermoonAndroid", "AmbermoonAndroid\AmbermoonAndroid.csproj", "{C5250198-DA00-4210-982C-C8B057FA0319}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
