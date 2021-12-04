@@ -8,7 +8,7 @@ environment:
       BUILD_CONFIG: Release
 
 platform: Any CPU
-configuration: $(BUILD_CONFIG)
+configuration: $env:BUILD_CONFIG
 
 before_build:
   - ps: if ($env:BUILD_CONFIG -eq 'ReleaseWithAndroid') { dotnet workload install android }
