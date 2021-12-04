@@ -4609,7 +4609,7 @@ namespace Ambermoon.UI
                     {
                         if (buttons == MouseButtons.Left)
                         {
-                            if (draggedItem.SourcePlayer == i)
+                            if (draggedItem.SourcePlayer == i && draggedItem.Equipped != true)
                             {
                                 CancelDrag();
                             }
@@ -4645,6 +4645,11 @@ namespace Ambermoon.UI
 
                                     droppedOnce = true;
                                 }
+                            }
+
+                            if (game.CurrentInventoryIndex == i)
+                            {
+                                itemGrids[0].Refresh();
                             }
                         }
                         else if (buttons == MouseButtons.Right)
