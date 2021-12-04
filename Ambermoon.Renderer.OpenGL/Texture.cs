@@ -88,12 +88,8 @@ namespace Ambermoon.Renderer
             {
                 case PixelFormat.RGBA8:
                     return GLEnum.Rgba;
-                //case PixelFormat.BGRA8:
-                //    return GLEnum.Bgra;
                 case PixelFormat.RGB8:
                     return GLEnum.Rgb;
-                //case PixelFormat.BGR8:
-                //    return GLEnum.Bgr;
                 case PixelFormat.Alpha:
                     // Note: for the supported image format GL_RED means one channel data, GL_ALPHA is only used for texture storage on the gpu, so we don't use it
                     // We always use RGBA8 as texture storage on the gpu
