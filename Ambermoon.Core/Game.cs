@@ -12061,8 +12061,9 @@ namespace Ambermoon
                 {
                     itemGrid.HideTooltip();
 
-                    void Error(string message, Action additionalAction = null)
+                    void ShowMessage(string message, Action additionalAction = null)
                     {
+                        nextClickHandler = null;
                         layout.ShowClickChestMessage(message, () =>
                         {
                             layout.ShowChestMessage(DataNameProvider.WhichScrollToRead);
@@ -12077,15 +12078,15 @@ namespace Ambermoon
 
                     if (item.Type != ItemType.SpellScroll || item.Spell == Spell.None)
                     {
-                        Error(DataNameProvider.ThatsNotASpellScroll);
+                        ShowMessage(DataNameProvider.ThatsNotASpellScroll);
                     }
                     else if (item.SpellSchool != CurrentPartyMember.Class.ToSpellSchool())
                     {
-                        Error(DataNameProvider.CantLearnSpellsOfType);
+                        ShowMessage(DataNameProvider.CantLearnSpellsOfType);
                     }
                     else if (CurrentPartyMember.HasSpell(item.Spell))
                     {
-                        Error(DataNameProvider.AlreadyKnowsSpell);
+                        ShowMessage(DataNameProvider.AlreadyKnowsSpell);
                     }
                     else
                     {
@@ -12093,7 +12094,7 @@ namespace Ambermoon
 
                         if (CurrentPartyMember.SpellLearningPoints < spellInfo.SLP)
                         {
-                            Error(DataNameProvider.NotEnoughSpellLearningPoints);
+                            ShowMessage(DataNameProvider.NotEnoughSpellLearningPoints);
                         }
                         else
                         {
@@ -12102,7 +12103,7 @@ namespace Ambermoon
                             if (RollDice100() < CurrentPartyMember.Abilities[Ability.ReadMagic].TotalCurrentValue)
                             {
                                 // Learned spell
-                                Error(DataNameProvider.ManagedToLearnSpell, () =>
+                                ShowMessage(DataNameProvider.ManagedToLearnSpell, () =>
                                 {
                                     CurrentPartyMember.AddSpell(item.Spell);
                                     layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50), true);
@@ -12111,7 +12112,7 @@ namespace Ambermoon
                             else
                             {
                                 // Failed to learn the spell
-                                Error(DataNameProvider.FailedToLearnSpell, () =>
+                                ShowMessage(DataNameProvider.FailedToLearnSpell, () =>
                                 {
                                     layout.DestroyItem(itemSlot, TimeSpan.FromMilliseconds(50));
                                 });
