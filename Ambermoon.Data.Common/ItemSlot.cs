@@ -117,5 +117,25 @@ namespace Ambermoon.Data
                 RechargeTimes = RechargeTimes
             };
         }
+
+        public bool Equals(ItemSlot other, bool includeChargesAndFlags = true)
+        {
+            if (other is null)
+                return false;
+
+            if (other == this)
+                return true;
+
+            if (includeChargesAndFlags)
+            {
+                return ItemIndex == other.ItemIndex &&
+                    Amount == other.Amount &&
+                    Flags == other.Flags &&
+                    NumRemainingCharges == other.NumRemainingCharges &&
+                    RechargeTimes == other.RechargeTimes;
+            }
+
+            return ItemIndex == other.ItemIndex && Amount == other.Amount;
+        }
     }
 }

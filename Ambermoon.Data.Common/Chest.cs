@@ -47,5 +47,28 @@ namespace Ambermoon.Data
         }
 
         public ItemSlot GetSlot(int slot) => Slots[slot % SlotsPerRow, slot / SlotsPerRow];
+
+        public bool Equals(Chest other, bool includeChargesAndFlags = true)
+        {
+            if (other is null)
+                return false;
+
+            if (other == this)
+                return true;
+
+            if (Gold != other.Gold || Food != other.Food)
+                return false;
+
+            for (int y = 0; y < SlotRows; ++y)
+            {
+                for (int x = 0; x < SlotsPerRow; ++x)
+                {
+                    if (!Slots[x, y].Equals(other.Slots[x, y], includeChargesAndFlags))
+                        return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

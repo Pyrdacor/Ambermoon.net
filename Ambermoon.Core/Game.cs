@@ -6075,7 +6075,8 @@ namespace Ambermoon
 
             void OpenChest()
             {
-                string initialText = map != null && fromEvent && chestEvent.TextIndex != 255 ?
+                bool changed = !chest.Equals(GetInitialChest(1 + chestEvent.ChestIndex), false);
+                string initialText = changed ? null : map != null && fromEvent && chestEvent.TextIndex != 255 ?
                     map.GetText((int)chestEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
                 layout.Reset();
                 ShowMap(false);
