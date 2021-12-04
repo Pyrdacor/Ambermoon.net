@@ -8515,7 +8515,7 @@ namespace Ambermoon
                     Cast(() =>
                     {
                         target.Ailments &= ~Ailment.DeadCorpse;
-                        target.HitPoints.CurrentValue = 1;
+                        target.HitPoints.CurrentValue = target.HitPoints.TotalMaxValue;
                         PartyMemberRevived(target as PartyMember, finishAction, false);
                     });
                     break;
