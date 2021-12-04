@@ -8,6 +8,7 @@ platform: Any CPU
 configuration: Release
 
 before_build:
+  - dotnet workload install android
   - dotnet restore Ambermoon.net.sln --verbosity normal
 
 build:
