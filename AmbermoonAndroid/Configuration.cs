@@ -44,56 +44,7 @@ namespace AmbermoonAndroid
         public static readonly string FallbackConfigDirectory =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ambermoon");
 
-        public static string ExecutableDirectoryPath
-        {
-            get
-            {
-                bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-
-                var assemblyPath = Process.GetCurrentProcess().MainModule.FileName;
-
-#pragma warning disable IL3000
-                if (assemblyPath.EndsWith("dotnet"))
-                {
-                    assemblyPath = Assembly.GetExecutingAssembly().Location;
-                }
-#pragma warning restore IL3000
-
-                var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
-
-                if (isWindows)
-                {
-                    if (assemblyDirectory.EndsWith("Debug") || assemblyDirectory.EndsWith("Release")
-                         || assemblyDirectory.EndsWith("netcoreapp3.1") || assemblyDirectory.EndsWith("net5.0"))
-                    {
-                        string projectFile = Path.GetFileNameWithoutExtension(assemblyPath) + ".csproj";
-
-                        var root = new DirectoryInfo(assemblyDirectory);
-
-                        while (root.Parent != null)
-                        {
-                            if (File.Exists(Path.Combine(root.FullName, projectFile)))
-                                break;
-
-                            root = root.Parent;
-
-                            if (root.Parent == null) // we could not find it (should not happen)
-                                return assemblyDirectory;
-                        }
-
-                        return root.FullName;
-                    }
-                    else
-                    {
-                        return assemblyDirectory;
-                    }
-                }
-                else
-                {
-                    return assemblyDirectory;
-                }
-            }
-        }
+        public static string ExecutableDirectoryPath => FallbackConfigDirectory;
 
         public static Configuration Load(string filename, Configuration defaultValue = null)
         {

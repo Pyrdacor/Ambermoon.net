@@ -11,19 +11,40 @@
     <Configurations>Debug;Release;ReleaseWithAndroid</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AndroidLinkTool>r8</AndroidLinkTool>
+    <DefineConstants>$(DefineConstants);GLES</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AndroidLinkTool>r8</AndroidLinkTool>
+    <DefineConstants>$(DefineConstants);GLES</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithAndroid|AnyCPU'">
     <AndroidLinkTool>r8</AndroidLinkTool>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Resources\IntroFont.dat" />
+    <None Remove="Resources\logo.pyr" />
+    <None Remove="Resources\song.pyr" />
+    <None Remove="Resources\versions.dat" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\IntroFont.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\logo.pyr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\song.pyr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\versions.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Silk.NET.Input.Sdl" Version="2.10.1" />
-    <PackageReference Include="Silk.NET.SDL" Version="2.10.1" />
-    <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.10.1" />
+    <PackageReference Include="Silk.NET.Input" Version="2.10.1" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.10.1" />
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.10.1" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.10.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
@@ -32,5 +53,8 @@
     <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
     <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
     <ProjectReference Include="..\Ambermoon.Renderer.OpenGL\Ambermoon.Renderer.OpenGL.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\raw\" />
   </ItemGroup>
 </Project>

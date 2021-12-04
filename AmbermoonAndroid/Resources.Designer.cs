@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using AmbermoonAndroid;
+using System.ComponentModel;
 using System.Globalization;
 using System.Resources;
 
@@ -23,8 +24,10 @@ namespace Ambermoon
 
         internal static byte[] WindowIcon => (byte[])ResourceManager.GetObject("windowIcon", Culture);
 
-        internal static byte[] Logo => (byte[])ResourceManager.GetObject("logo", Culture);
+        internal static Stream Logo => FileProvider.GetLogoData();
 
-        internal static byte[] Song => (byte[])ResourceManager.GetObject("song", Culture);
+        internal static byte[] Song => FileProvider.GetSongData();
+
+        internal static byte[] Versions => (byte[])ResourceManager.GetObject("versions", Culture);
     }
 }

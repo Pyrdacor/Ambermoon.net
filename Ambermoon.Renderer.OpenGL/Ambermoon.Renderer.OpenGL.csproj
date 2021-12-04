@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Common" Version="10.3.0" />
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.10.1" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -35,7 +36,7 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="Silk.NET.OpenGL" Version="2.9.0" />
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.10.1" />
       </ItemGroup>
     </Otherwise>
   </Choose>

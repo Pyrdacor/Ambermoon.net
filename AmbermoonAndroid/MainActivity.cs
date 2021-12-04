@@ -9,6 +9,8 @@ namespace AmbermoonAndroid
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
+            FileProvider.Initialize(this);
+
             appDataDir = ApplicationContext!.FilesDir!.AbsolutePath;
 
             var configuration = LoadConfig();

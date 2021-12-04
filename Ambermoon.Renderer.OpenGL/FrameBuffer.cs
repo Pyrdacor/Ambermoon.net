@@ -1,4 +1,8 @@
-﻿using Silk.NET.OpenGL;
+﻿#if GLES
+using Silk.NET.OpenGLES;
+#else
+using Silk.NET.OpenGL;
+#endif
 using System;
 
 namespace Ambermoon.Renderer.OpenGL
@@ -28,7 +32,7 @@ namespace Ambermoon.Renderer.OpenGL
                 size.Height = height;
                 var gl = state.Gl;
 
-                gl.BindFramebuffer(FramebufferTarget.Framebuffer, index);
+                gl.BindFramebuffer(GLEnum.Framebuffer, index);
 
                 gl.BindTexture(GLEnum.Texture2D, renderTexture);
                 unsafe

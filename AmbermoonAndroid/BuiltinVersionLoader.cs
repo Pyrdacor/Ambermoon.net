@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ambermoon;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -33,7 +34,7 @@ namespace AmbermoonAndroid
                 return ((uint)reader.ReadByte() << 24) | ((uint)reader.ReadByte() << 16) | ((uint)reader.ReadByte() << 8) | reader.ReadByte();
             }
 
-            executableStream = File.OpenRead(Process.GetCurrentProcess().MainModule.FileName);
+            executableStream = FileProvider.GetVersions();
             using var reader = new BinaryReader(executableStream, Encoding.UTF8, true);
 
             executableStream.Position = executableStream.Length - 2;

@@ -32,7 +32,7 @@ namespace AmbermoonAndroid
         string gameVersion = "Ambermoon.net";
         Configuration configuration;
         RenderView renderView;
-        IWindow window;
+        IView window;
         IKeyboard keyboard = null;
         IMouse mouse = null;
         ICursor cursor = null;
@@ -66,11 +66,10 @@ namespace AmbermoonAndroid
         public Game Game { get; private set; }
         public bool Fullscreen
         {
-            get => configuration.Fullscreen;
+            get => false;
             set
             {
-                configuration.Fullscreen = value;
-                window.WindowState = configuration.Fullscreen ? WindowState.Fullscreen : WindowState.Normal;
+                configuration.Fullscreen = false;
 
                 if (cursor != null)
                     cursor.CursorMode = CursorMode.Hidden;
@@ -991,22 +990,15 @@ namespace AmbermoonAndroid
 
         void Window_Load()
         {
-            if (window.Native.Glfw is null)
-            {
-                Console.WriteLine("WARNING: The current window is not a GLFW window." + Environment.NewLine +
-                                  "         Other window systems may be not fully supported!");
-            }
-
-            var windowIcon = new Silk.NET.Core.RawImage(16, 16, new Memory<byte>(Resources.WindowIcon));
-            window.SetWindowIcon(ref windowIcon);
+            //var windowIcon = new Silk.NET.Core.RawImage(16, 16, new Memory<byte>(Resources.WindowIcon));
+            //window.SetWindowIcon(ref windowIcon);
 
             window.MakeCurrent();
 
             // Setup input
             SetupInput(window.CreateInput());
 
-            availableFullscreenModes = window.Monitor.GetAllVideoModes().Select(mode =>
-                new Size(mode.Resolution.Value.X, mode.Resolution.Value.Y)).Distinct().ToList();
+            availableFullscreenModes = new List<Size>();
 
             var fullscreenSize = availableFullscreenModes.OrderBy(r => r.Width * r.Height).LastOrDefault();
 
@@ -1019,16 +1011,6 @@ namespace AmbermoonAndroid
             if (configuration.Fullscreen)
             {
                 ChangeFullscreenMode(true); // This will adjust the window
-            }
-
-            if (configuration.Width == null || configuration.Height == null)
-            {
-                var monitorSize = window.Monitor.Bounds.Size;
-                var size = ScreenResolutions.GetPossibleResolutions(new Size(monitorSize.X, monitorSize.Y))[1];
-                configuration.Width = Width = size.Width;
-                configuration.Height = Height = size.Height;
-                if (!configuration.Fullscreen)
-                    window.Size = new WindowDimension(Width, Height);
             }
 
             if (ShowVersionSelector((gameData, savePath, gameLanguage) =>
@@ -1045,7 +1027,7 @@ namespace AmbermoonAndroid
 
         void Window_Render(double delta)
         {
-            int refreshRate = Util.Limit(1, window.Monitor.VideoMode.RefreshRate ?? 60, 250);
+            const int refreshRate = 60;
             var timePerFrame = 1000.0 / refreshRate;
 
             window.VSync = lastRenderDuration.TotalMilliseconds <= timePerFrame;
@@ -1142,12 +1124,6 @@ namespace AmbermoonAndroid
 
         void Window_Resize(WindowDimension size)
         {
-            if (!Fullscreen && (size.X != Width || size.Y != Height))
-            {
-                // This seems to happen when changing the screen resolution.
-                window.Size = new WindowDimension(Width, Height);
-            }
-
             if (renderView != null)
                 renderView.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, size.X, size.Y);
         }
@@ -1174,10 +1150,7 @@ namespace AmbermoonAndroid
         void WindowMoved()
         {
             if (renderView != null)
-            {
-                var monitorSize = window.Monitor?.Bounds.Size ?? new WindowDimension(800, 500);
-                renderView.MaxScreenSize = new Size(monitorSize.X, monitorSize.Y);
-            }
+                renderView.MaxScreenSize = new Size(window.Size.X, window.Size.Y);
         }
 
         void UpdateWindow(IConfiguration configuration)
@@ -1187,7 +1160,6 @@ namespace AmbermoonAndroid
                 var size = configuration.GetScreenSize();
                 this.configuration.Width = Width = size.Width;
                 this.configuration.Height = Height = size.Height;
-                window.Size = new WindowDimension(size.Width, size.Height);
             }
 
             renderView?.Resize(window.FramebufferSize.X, window.FramebufferSize.Y, window.Size.X, window.Size.Y);
@@ -1211,7 +1183,8 @@ namespace AmbermoonAndroid
 
             try
             {
-                var window = Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
+                Silk.NET.Windowing.Sdl.SdlWindowing.Use();
+                window = Silk.NET.Windowing.Window.GetView(new ViewOptions(options));
                 window.Load += Window_Load;
                 window.Render += Window_Render;
                 window.Update += Window_Update;

@@ -49,7 +49,7 @@ namespace AmbermoonAndroid
             this.audioOutput = audioOutput;
             this.song = song;
             oldVolume = audioOutput.Volume;
-            var logoStream = new MemoryStream(Resources.Logo);
+            var logoStream = Resources.Logo;
             var deflateStream = new DeflateStream(logoStream, CompressionMode.Decompress);
             var decompressedStream = new MemoryStream();
             deflateStream.CopyTo(decompressedStream);

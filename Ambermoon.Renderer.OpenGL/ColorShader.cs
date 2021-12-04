@@ -36,14 +36,14 @@ namespace Ambermoon.Renderer
         protected static string GetFragmentShaderHeader(State state)
         {
 #if GLES
-            string header = $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor} es\n";
+            string header = $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor:00} es\n";
 #else
             string header = $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor}\n";
 #endif
 
             header += "\n";
             header += "#ifdef GL_ES\n";
-            header += " precision mediump float;\n";
+            header += " precision highp float;\n";
             header += " precision highp int;\n";
             header += "#endif\n";
             header += "\n";
@@ -55,7 +55,7 @@ namespace Ambermoon.Renderer
         protected static string GetVertexShaderHeader(State state)
         {
 #if GLES
-            return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor} es\n\n";
+            return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor:00} es\n\n";
 #else
             return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor}\n\n";
 #endif
@@ -86,7 +86,7 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
-            $"    pixelColor = vec4({DefaultColorName}.r / 255.0f, {DefaultColorName}.g / 255.0f, {DefaultColorName}.b / 255.0f, {DefaultColorName}.a / 255.0f);",
+            $"    pixelColor = vec4(float({DefaultColorName}.r) / 255.0f, float({DefaultColorName}.g) / 255.0f, float({DefaultColorName}.b) / 255.0f, float({DefaultColorName}.a) / 255.0f);",
             $"    ",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
             $"}}"

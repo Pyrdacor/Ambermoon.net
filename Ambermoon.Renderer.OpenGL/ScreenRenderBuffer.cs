@@ -19,7 +19,11 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if GLES
+using Silk.NET.OpenGLES;
+#else
 using Silk.NET.OpenGL;
+#endif
 using System;
 
 namespace Ambermoon.Renderer
@@ -76,7 +80,7 @@ namespace Ambermoon.Renderer
 
                 try
                 {
-                    state.Gl.DrawElements(PrimitiveType.Triangles, (uint)(positionBuffer.Size / 4) * 3, DrawElementsType.UnsignedInt, (void*)0);
+                    state.Gl.DrawElements(GLEnum.Triangles, (uint)(positionBuffer.Size / 4) * 3, DrawElementsType.UnsignedInt, (void*)0);
                     vertexArrayObject.Unbind();
                 }
                 catch

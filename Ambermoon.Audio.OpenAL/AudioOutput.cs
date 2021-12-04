@@ -33,8 +33,16 @@ namespace Ambermoon.Audio.OpenAL
             }
             catch
             {
-                al = AL.GetApi(false);
-                alContext = ALContext.GetApi(false);
+                try
+                {
+                    al = AL.GetApi(false);
+                    alContext = ALContext.GetApi(false);
+                }
+                catch
+                {
+                    Available = false;
+                    return;
+                }
             }
             device = alContext.OpenDevice("");
 
