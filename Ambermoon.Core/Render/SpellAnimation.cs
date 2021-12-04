@@ -593,6 +593,7 @@ namespace Ambermoon.Render
                 case Spell.AddCharisma:
                 case Spell.AddLuck:
                 case Spell.AddAntiMagic:
+                case Spell.DecreaseAge:
                     PlayHealingAnimation(partyMember, finishAction);
                     break;
                 default:
