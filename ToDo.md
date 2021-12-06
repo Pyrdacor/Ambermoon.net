@@ -1,5 +1,6 @@
 ## Battle
 
+- Can holy spells be deflected with A-M? If so this isn't working yet in the remake. Moreover such enemies stay in battle (icon on battle field) but the sprite is gone.
 - Vanishing of wind spells looks odd in some cases
 - Initial scale of dissolve victim has bad anchor behavior if in front row.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off

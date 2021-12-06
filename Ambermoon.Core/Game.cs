@@ -5658,65 +5658,68 @@ namespace Ambermoon
             if (Map.Type == MapType.Map3D)
             {
                 // Explore
-                if (CurrentSavegame.Automaps.TryGetValue(Map.Index, out var automap))
+                if (!CurrentSavegame.Automaps.TryGetValue(Map.Index, out var automap))
                 {
-                    var labdata = MapManager.GetLabdataForMap(Map);
+                    automap = new Automap { ExplorationBits = new byte[(Map.Width * Map.Height + 7) / 8] };
+                    CurrentSavegame.Automaps.Add(Map.Index, automap);
+                }
 
-                    for (int y = -1; y <= 1; ++y)
+                var labdata = MapManager.GetLabdataForMap(Map);
+
+                for (int y = -1; y <= 1; ++y)
+                {
+                    for (int x = -1; x <= 1; ++x)
                     {
-                        for (int x = -1; x <= 1; ++x)
+                        int totalX = player3D.Position.X + x;
+                        int totalY = player3D.Position.Y + y;
+
+                        if (totalX < 0 || totalX >= Map.Width ||
+                            totalY < 0 || totalY >= Map.Height)
+                            continue;
+
+                        automap.ExploreBlock(Map, (uint)totalX, (uint)totalY);
+
+                        if (Map.Blocks[totalX, totalY].BlocksPlayerSight(labdata))
+                            continue;
+
+                        if (x != 0) // left or right column
                         {
-                            int totalX = player3D.Position.X + x;
-                            int totalY = player3D.Position.Y + y;
+                            int adjacentX = totalX + x;
 
-                            if (totalX < 0 || totalX >= Map.Width ||
-                                totalY < 0 || totalY >= Map.Height)
-                                continue;
-
-                            automap.ExploreBlock(Map, (uint)totalX, (uint)totalY);
-
-                            if (Map.Blocks[totalX, totalY].BlocksPlayerSight(labdata))
-                                continue;
-
-                            if (x != 0) // left or right column
+                            if (adjacentX >= 0 && adjacentX < Map.Width)
                             {
-                                int adjacentX = totalX + x;
-
-                                if (adjacentX >= 0 && adjacentX < Map.Width)
+                                for (int i = -1; i <= 1; ++i)
                                 {
-                                    for (int i = -1; i <= 1; ++i)
-                                    {
-                                        int adjacentY = totalY + i;
+                                    int adjacentY = totalY + i;
 
-                                        if (adjacentY >= 0 && adjacentY < Map.Height)
-                                            automap.ExploreBlock(Map, (uint)adjacentX, (uint)adjacentY);
-                                    }
+                                    if (adjacentY >= 0 && adjacentY < Map.Height)
+                                        automap.ExploreBlock(Map, (uint)adjacentX, (uint)adjacentY);
                                 }
                             }
-                            if (y != 0) // upper or lower row
+                        }
+                        if (y != 0) // upper or lower row
+                        {
+                            int adjacentY = totalY + y;
+
+                            if (adjacentY >= 0 && adjacentY < Map.Height)
                             {
-                                int adjacentY = totalY + y;
-
-                                if (adjacentY >= 0 && adjacentY < Map.Height)
+                                for (int i = -1; i <= 1; ++i)
                                 {
-                                    for (int i = -1; i <= 1; ++i)
-                                    {
-                                        int adjacentX = totalX + i;
+                                    int adjacentX = totalX + i;
 
-                                        if (adjacentX >= 0 && adjacentX < Map.Width)
-                                            automap.ExploreBlock(Map, (uint)adjacentX, (uint)adjacentY);
-                                    }
+                                    if (adjacentX >= 0 && adjacentX < Map.Width)
+                                        automap.ExploreBlock(Map, (uint)adjacentX, (uint)adjacentY);
                                 }
                             }
-                            if (x != 0 && y != 0) // corners
-                            {
-                                int adjacentX = totalX + x;
-                                int adjacentY = totalY + y;
+                        }
+                        if (x != 0 && y != 0) // corners
+                        {
+                            int adjacentX = totalX + x;
+                            int adjacentY = totalY + y;
 
-                                if (adjacentX >= 0 && adjacentX < Map.Width &&
-                                    adjacentY >= 0 && adjacentY < Map.Height)
-                                    automap.ExploreBlock(Map, (uint)adjacentX, (uint)adjacentY);
-                            }
+                            if (adjacentX >= 0 && adjacentX < Map.Width &&
+                                adjacentY >= 0 && adjacentY < Map.Height)
+                                automap.ExploreBlock(Map, (uint)adjacentX, (uint)adjacentY);
                         }
                     }
                 }
@@ -5740,7 +5743,6 @@ namespace Ambermoon
                 {
                     bool trapFound = false;
                     bool spinnerFound = false;
-                    var labdata = MapManager.GetLabdataForMap(Map);
 
                     foreach (var touchedPosition in player3D.GetTouchedPositions(1.45f * Global.DistancePerBlock))
                     {
