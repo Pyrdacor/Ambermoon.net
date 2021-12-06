@@ -35,7 +35,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                             dataWriter.Write((ushort)subObject.X);
                             dataWriter.Write((ushort)subObject.Y);
                             dataWriter.Write((ushort)subObject.Z);
-                            dataWriter.Write((ushort)labdata.ObjectInfos.IndexOf(subObject.Object));
+                            dataWriter.Write((ushort)(1 + labdata.ObjectInfos.IndexOf(subObject.Object)));
                         }
                     }
                 }
