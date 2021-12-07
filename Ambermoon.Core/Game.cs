@@ -281,7 +281,7 @@ namespace Ambermoon
         WindowInfo currentWindow = DefaultWindow;
         internal WindowInfo LastWindow { get; private set; } = DefaultWindow;
         internal WindowInfo CurrentWindow => currentWindow;
-        Action closeWindowHandler = null;
+        Action<bool> closeWindowHandler = null;
         FilledArea mapViewRightFillArea = null;
         // Note: These are not meant for ingame stuff but for fade effects etc that use real time.
         readonly List<TimedGameEvent> timedEvents = new List<TimedGameEvent>();
@@ -4084,7 +4084,7 @@ namespace Ambermoon
             }
             else
             {
-                closeWindowHandler?.Invoke();
+                closeWindowHandler?.Invoke(false);
                 closeWindowHandler = null;
 
                 Fade(() =>
@@ -6009,8 +6009,20 @@ namespace Ambermoon
             }
         }
 
-        void ShowLoot(ITreasureStorage storage, string initialText, Action initialTextClosedEvent, ChestEvent chestEvent = null)
+        void ShowLoot(ITreasureStorage storage, string initialText, Action initialTextClosedEvent, ChestEvent chestEvent = null,
+            bool triggerFollowEvents = false, uint eventX = 0, uint eventY = 0)
         {
+            if (chestEvent?.Next != null && triggerFollowEvents)
+            {
+                var oldCloseWindowHandler = closeWindowHandler;
+                closeWindowHandler = backToMap =>
+                {
+                    oldCloseWindowHandler?.Invoke(backToMap);
+
+                    if (backToMap)
+                        EventExtensions.TriggerEventChain(Map, this, EventTrigger.Always, eventX, eventY, chestEvent.Next, true);
+                };
+            }
             OpenStorage = storage;
             OpenStorage.AllowsItemDrop = chestEvent == null ? false : !chestEvent.CloseWhenEmpty;
             layout.SetLayout(LayoutType.Items);
@@ -6070,7 +6082,7 @@ namespace Ambermoon
         }
 
         internal bool ShowChest(ChestEvent chestEvent, bool foundTrap, bool disarmedTrap, Map map,
-            Position position, bool fromEvent)
+            Position position, bool fromEvent, bool triggerFollowEvents = false)
         {
             var chest = GetChest(1 + chestEvent.ChestIndex);
 
@@ -6086,7 +6098,7 @@ namespace Ambermoon
                     map.GetText((int)chestEvent.TextIndex, DataNameProvider.TextBlockMissing) : null;
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map, position);
+                SetWindow(Window.Chest, chestEvent, foundTrap, disarmedTrap, map, position, triggerFollowEvents);
                 CursorType = CursorType.Sword;
                 ResetMapCharacterInteraction(map ?? Map, true);
 
@@ -6096,19 +6108,19 @@ namespace Ambermoon
                     {
                         CurrentSavegame.UnlockChest(chestEvent.ChestIndex);
                         currentWindow.Window = Window.Chest; // This avoids returning to locked screen when closing chest window.
-                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true));
+                        ExecuteNextUpdateCycle(() => ShowChest(chestEvent, false, false, map, position, true, true));
                     }, null, chestEvent.KeyIndex, chestEvent.LockpickingChanceReduction, foundTrap, disarmedTrap,
                     chestEvent.UnlockFailedEventIndex == 0xffff ? (Action)null : () => map.TriggerEventChain(this, EventTrigger.Always,
                     (uint)player.Position.X, (uint)player.Position.Y, map.Events[(int)chestEvent.UnlockFailedEventIndex], true),
                     () =>
                     {
                         if (chestEvent.Next != null)
-                            map.TriggerEventChain(this, EventTrigger.Always, (uint)player.Position.X, (uint)player.Position.Y, chestEvent.Next, false);
+                            map.TriggerEventChain(this, EventTrigger.Always, (uint)position.X, (uint)position.Y, chestEvent.Next, false);
                     });
                 }
                 else
                 {
-                    ShowLoot(chest, initialText, null, chestEvent);
+                    ShowLoot(chest, initialText, null, chestEvent, triggerFollowEvents, (uint)position.X, (uint)position.Y);
                 }
             }
 
@@ -6229,7 +6241,7 @@ namespace Ambermoon
             }
 
             ActivePlayerChanged += PlayerSwitched;
-            closeWindowHandler = () => ActivePlayerChanged -= PlayerSwitched;
+            closeWindowHandler = _ => ActivePlayerChanged -= PlayerSwitched;
 
             void Exit()
             {
@@ -6562,7 +6574,7 @@ namespace Ambermoon
             uint amount = 0; // gold, food, etc
             UIText moveItemMessage = null;
             layout.DraggedItemDropped += DraggedItemDropped;
-            closeWindowHandler = CleanUp;            
+            closeWindowHandler = _ => CleanUp();
 
             void SetText(string text, Action followAction = null)
             {
@@ -7403,7 +7415,7 @@ namespace Ambermoon
                 layout.FillArea(lowerBoxBounds, GetUIColor(28), 0);
                 layout.AddText(lowerBoxBounds, DataNameProvider.ChooseBattlePositions);
 
-                closeWindowHandler = () =>
+                closeWindowHandler = _ =>
                 {
                     battlePositionClickHandler = null;
                     battlePositionDragHandler = null;
@@ -11139,7 +11151,7 @@ namespace Ambermoon
 
             placeSetup?.Invoke(UpdateGoldDisplay, itemGrid);
             ActivePlayerChanged += activePlayerSwitchedHandler;
-            closeWindowHandler = () => ActivePlayerChanged -= activePlayerSwitchedHandler;
+            closeWindowHandler = _ => ActivePlayerChanged -= activePlayerSwitchedHandler;
 
             // exit button
             layout.AttachEventToButton(2, () =>
@@ -11651,7 +11663,7 @@ namespace Ambermoon
                 layout.DraggedItemDropped -= UpdateSellButton;
             }
 
-            closeWindowHandler = CleanUp;
+            closeWindowHandler = _ => CleanUp();
 
             void UpdateGoldDisplay()
                 => characterInfoTexts[CharacterInfo.ChestGold].SetText(renderView.TextProcessor.CreateText($"{DataNameProvider.GoldName}^{merchant.AvailableGold}"));
@@ -12008,7 +12020,7 @@ namespace Ambermoon
                 }
 
                 ActivePlayerChanged += PlayerSwitched;
-                closeWindowHandler = () => ActivePlayerChanged -= PlayerSwitched;
+                closeWindowHandler = _ => ActivePlayerChanged -= PlayerSwitched;
 
                 void Exit()
                 {
@@ -14509,7 +14521,7 @@ namespace Ambermoon
             ResetMapCharacterInteraction(Map);
             layout.SetCharacterHealSymbol(null);
 
-            closeWindowHandler?.Invoke();
+            closeWindowHandler?.Invoke(true);
             closeWindowHandler = null;
 
             characterInfoTexts.Clear();
@@ -14577,8 +14589,9 @@ namespace Ambermoon
                     bool trapDisarmed = (bool)currentWindow.WindowParameters[2];
                     var map = (Map)currentWindow.WindowParameters[3];
                     var position = (Position)currentWindow.WindowParameters[4];
+                    var triggerFollowEvents = (bool)currentWindow.WindowParameters[5];
                     currentWindow = DefaultWindow;
-                    ShowChest(chestEvent, trapFound, trapDisarmed, map, position, false);
+                    ShowChest(chestEvent, trapFound, trapDisarmed, map, position, false, triggerFollowEvents);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;
