@@ -1210,6 +1210,7 @@ namespace Ambermoon
             var options = new WindowOptions(true, new WindowDimension(100, 100),
                 new WindowDimension(Width, Height), 60.0, 60.0, api, gameVersion,
                 WindowState.Normal, WindowBorder.Fixed, true, false, videoMode, 24);
+            options.WindowClass = "Ambermoon.net";
 
             try
             {
