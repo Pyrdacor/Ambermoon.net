@@ -105,6 +105,14 @@ namespace Ambermoon
                     "Usage: fly",
                     Fly
                 )
+            },
+            { "explore",
+                Create
+                (
+                    "Explores the whole dungeon map." + Environment.NewLine +
+                    "Usage: explore",
+                    Explore
+                )
             }
         };
 
@@ -833,6 +841,22 @@ namespace Ambermoon
             else
             {
                 Console.WriteLine("You can't fly now.");
+            }
+
+            Console.WriteLine();
+        }
+
+        static void Explore(Game game, string[] args)
+        {
+            Console.WriteLine();
+
+            if (game.ExploreMap())
+            {
+                Console.WriteLine("The map has been explored!");
+            }
+            else
+            {
+                Console.WriteLine("You can't explore the map now.");
             }
 
             Console.WriteLine();

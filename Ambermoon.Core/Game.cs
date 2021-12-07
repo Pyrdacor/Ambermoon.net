@@ -5367,6 +5367,24 @@ namespace Ambermoon
             customOutro.Start();
         }
 
+        public bool ExploreMap()
+        {
+            if (!ingame || Map is null || !is3D)
+                return false;
+
+            if (!CurrentSavegame.Automaps.TryGetValue(Map.Index, out var automap))
+            {
+                automap = new Automap { ExplorationBits = Enumerable.Repeat((byte)0xff, (Map.Width * Map.Height + 7) / 8).ToArray() };
+                CurrentSavegame.Automaps[Map.Index] = automap;
+            }
+            else
+            {
+                automap.ExplorationBits = Enumerable.Repeat((byte)0xff, (Map.Width * Map.Height + 7) / 8).ToArray();
+            }
+
+            return true;
+        }
+
         public bool ActivateTransport(TravelType travelType)
         {
             if (travelType == TravelType.Walk ||
