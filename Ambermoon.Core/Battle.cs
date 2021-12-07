@@ -998,7 +998,7 @@ namespace Ambermoon
                     var itemIndex = equipSlot.ItemIndex;
                     var item = game.ItemManager.GetItem(itemIndex);
                     if (item.NumberOfHands == 2)
-                        target.Equipment.Slots[EquipmentSlot.LeftHand].Clear();
+                        target.Equipment.Slots[EquipmentSlot.LeftHand]?.Clear();
                     game.EquipmentRemoved(target, itemIndex, 1, equipSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                     brokenItems.Add(KeyValuePair.Create(itemIndex, equipSlot.Flags));
                     equipSlot.Clear();

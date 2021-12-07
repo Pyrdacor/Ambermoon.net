@@ -6120,7 +6120,7 @@ namespace Ambermoon
             return true;
         }
 
-        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y, bool fromEvent)
+        internal bool ShowDoor(DoorEvent doorEvent, bool foundTrap, bool disarmedTrap, Map map, uint x, uint y, bool fromEvent, bool moved)
         {
             if (!CurrentSavegame.IsDoorLocked(doorEvent.DoorIndex))
                 return false;
@@ -6133,9 +6133,15 @@ namespace Ambermoon
                     map.GetText((int)doorEvent.UnlockTextIndex, DataNameProvider.TextBlockMissing) : null;
                 layout.Reset();
                 ShowMap(false);
-                SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map, x, y);
+                SetWindow(Window.Door, doorEvent, foundTrap, disarmedTrap, map, x, y, moved);
                 ShowLocked(Picture80x80.Door, () =>
                 {
+                    if (moved && !is3D)
+                    {
+                        player2D.Position.X = player.Position.X = (int)x;
+                        player2D.Position.Y = player.Position.Y = (int)y;
+                        player2D.UpdateAppearance(CurrentTicks);
+                    }
                     CurrentSavegame.UnlockDoor(doorEvent.DoorIndex);
                     if (unlockText != null)
                     {
@@ -14585,8 +14591,9 @@ namespace Ambermoon
                     var map = (Map)currentWindow.WindowParameters[3];
                     var x = (uint)currentWindow.WindowParameters[4];
                     var y = (uint)currentWindow.WindowParameters[5];
+                    var moved = (bool)currentWindow.WindowParameters[6];
                     currentWindow = DefaultWindow;
-                    ShowDoor(doorEvent, trapFound, trapDisarmed, map, x, y, false);
+                    ShowDoor(doorEvent, trapFound, trapDisarmed, map, x, y, false, moved);
                     if (finishAction != null)
                         AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime), finishAction);
                     break;

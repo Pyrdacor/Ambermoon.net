@@ -83,7 +83,7 @@ namespace Ambermoon
                     if (!(@event is DoorEvent doorEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid door event.");
 
-                    if (!game.ShowDoor(doorEvent, false, false, map, x, y, true))
+                    if (!game.ShowDoor(doorEvent, false, false, map, x, y, true, trigger == EventTrigger.Move))
                     {
                         // already unlocked
                         // Note that the original sets last event status to false in this case!
