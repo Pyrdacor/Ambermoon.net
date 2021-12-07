@@ -1535,6 +1535,16 @@ namespace Ambermoon
                         int position = GetCharacterPosition(target);
                         bool failed = false;
                         bool spellBlocked = false;
+                        bool earlyCheckSpell = spell == Spell.DispellUndead || spell == Spell.DestroyUndead ||
+                            spell == Spell.HolyWord || spell == Spell.DissolveVictim;
+                        if (earlyCheckSpell)
+                        {
+                            // Check spell deflection first so the spell animation won't
+                            // shrink/remove the monster sprite.
+                            if (!CheckSpell(battleAction.Character, target, spell, _ =>
+                                finishAction?.Invoke(), true))
+                                return;
+                        }
                         // Note: Some spells like Fireball or Whirlwind move to the target.
                         currentSpellAnimation.MoveTo(position, (ticks, playHurt, finish) =>
                         {
@@ -1552,7 +1562,7 @@ namespace Ambermoon
                                         finishAction?.Invoke();
                                     return;
                                 }
-                                else if (!CheckSpell(battleAction.Character, target, spell, blocked =>
+                                else if (!earlyCheckSpell && !CheckSpell(battleAction.Character, target, spell, blocked =>
                                 {
                                     if (finish)
                                         finishAction?.Invoke();
