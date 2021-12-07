@@ -2827,7 +2827,7 @@ namespace Ambermoon
             if (!InputEnable)
                 return;
 
-            if (keyChar >= '1' && keyChar <= '6')
+            if (!PopupActive && (keyChar >= '1' && keyChar <= '6'))
             {
                 int slot = keyChar - '1';
 

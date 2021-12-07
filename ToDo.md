@@ -19,7 +19,6 @@
 
 ## UI
 
-- Slowly scroll text automatically when you click a scrollable text.
 - "Do you accept this character?" message is missing in character creator.
 - Question about taking items with you is missing from conversations.
 - LevelUp popup while an item is given will draw that item in front of the popup.
