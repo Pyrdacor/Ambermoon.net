@@ -996,10 +996,13 @@ namespace Ambermoon
                     var textColor = target.Type == CharacterType.PartyMember ? TextColor.BattlePlayer : TextColor.BattleMonster;
                     var equipSlot = target.Equipment.Slots[equipmentSlot];
                     var itemIndex = equipSlot.ItemIndex;
+                    var item = game.ItemManager.GetItem(itemIndex);
+                    if (item.NumberOfHands == 2)
+                        target.Equipment.Slots[EquipmentSlot.LeftHand].Clear();
                     game.EquipmentRemoved(target, itemIndex, 1, equipSlot.Flags.HasFlag(ItemSlotFlags.Cursed));
                     brokenItems.Add(KeyValuePair.Create(itemIndex, equipSlot.Flags));
                     equipSlot.Clear();
-                    layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, game.ItemManager.GetItem(itemIndex).Name), textColor);
+                    layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name), textColor);
                     Proceed(() => ActionFinished(true));
                 }
                 else
@@ -1344,7 +1347,7 @@ namespace Ambermoon
                             {
                                 var enemyShield = game.ItemManager.GetItem(enemyShieldIndex);
 
-                                if (enemyShield.CanBreak && RollDice1000() < enemyShield.BreakChance)
+                                if (enemyShield.Type == ItemType.Shield && enemyShield.CanBreak && RollDice1000() < enemyShield.BreakChance)
                                     followAction.ActionParameter = UpdateAttackFollowActionParameter(followAction.ActionParameter, AttackActionFlags.BreakDefenderShield);
                             }
                         }
