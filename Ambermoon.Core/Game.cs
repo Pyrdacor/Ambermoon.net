@@ -3738,6 +3738,8 @@ namespace Ambermoon
         internal bool OpenPartyMember(int slot, bool inventory, Action openedAction = null,
             bool changeInputEnableStateWhileFading = true)
         {
+            currentBattle?.HideAllBattleFieldDamage();
+
             if (CurrentSavegame.CurrentPartyMemberIndices[slot] == 0)
                 return false;
 
@@ -7705,6 +7707,7 @@ namespace Ambermoon
                 }
                 else
                 {
+                    StartSequence();
                     layout.HideTooltip();
                     currentBattle.HideAllBattleFieldDamage();
                     OpenSpellList(CurrentPartyMember,
@@ -7729,6 +7732,7 @@ namespace Ambermoon
                         },
                         spell => PickBattleSpell(spell)
                     );
+                    EndSequence();
                 }
             });
             if (currentBattle != null)

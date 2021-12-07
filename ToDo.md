@@ -19,6 +19,7 @@
 
 ## UI
 
+- When closing the spell book with RMB in battle and there is a battle actor behind the window, the inventory is opened afterwards.
 - "Do you accept this character?" message is missing in character creator.
 - Question about taking items with you is missing from conversations.
 - LevelUp popup while an item is given will draw that item in front of the popup.
