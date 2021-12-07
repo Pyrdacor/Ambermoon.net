@@ -188,6 +188,8 @@ namespace Ambermoon.Render
 
                     MoveTo(oldMap, (uint)newX, (uint)newY, ticks, frameReset, null);
 
+                    game.ResetMapCharacterInteraction(map);
+
                     if (!travelType.IgnoreEvents())
                     {
                         Map.TriggerEvents(this, EventTrigger.Move, (uint)newX,
@@ -214,6 +216,8 @@ namespace Ambermoon.Render
                     var position = Map.GetCenterPosition();
 
                     MoveTo(Map.Map, (uint)position.X, (uint)position.Y, ticks, false, player.Direction);
+
+                    game.ResetMapCharacterInteraction(map);
 
                     if (!travelType.IgnoreEvents())
                     {

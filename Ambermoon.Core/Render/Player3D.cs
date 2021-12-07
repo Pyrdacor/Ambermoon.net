@@ -285,6 +285,7 @@ namespace Ambermoon.Render
                     lastPosition = new Position(Position);
                     game.GameTime.MoveTick(map.Map, TravelType.Walk);
                     moved = true;
+                    game.ResetMapCharacterInteraction(map.Map);
                 }
 
                 if (!TriggerEvents(touchedPositions, oldX, oldY, Camera.X, Camera.Z) && moved)
