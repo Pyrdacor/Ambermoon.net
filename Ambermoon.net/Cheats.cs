@@ -333,7 +333,7 @@ namespace Ambermoon
 
         static void Godmode(Game game, string[] args)
         {
-            bool activate = args.Length == 0 || !int.TryParse(args[0], out int active) || active != 0;
+            bool activate = args.Length == 0 ? !game.Godmode : !int.TryParse(args[0], out int active) || active != 0;
 
             Console.WriteLine();
 
@@ -357,7 +357,7 @@ namespace Ambermoon
 
         static void NoClip(Game game, string[] args)
         {
-            bool activate = args.Length == 0 || !int.TryParse(args[0], out int active) || active != 0;
+            bool activate = args.Length == 0 ? !game.NoClip : !int.TryParse(args[0], out int active) || active != 0;
 
             Console.WriteLine();
 
