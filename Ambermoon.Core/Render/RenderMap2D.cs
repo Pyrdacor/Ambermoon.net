@@ -172,14 +172,14 @@ namespace Ambermoon.Render
                             {
                                 var frontTile = tileset.Tiles[(int)tile.FrontTileIndex - 1];
 
-                                if (frontTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
+                                if (frontTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison) && !game.TravelType.IgnoreEvents())
                                     PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
                             }
                             else if (tile.BackTileIndex != 0)
                             {
                                 var backTile = tileset.Tiles[(int)tile.BackTileIndex - 1];
 
-                                if (backTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison))
+                                if (backTile.Flags.HasFlag(Tileset.TileFlags.AutoPoison) && !game.TravelType.IgnoreEvents())
                                     PoisonPlayer((int)ScrollX + column, (int)ScrollY + row);
                             }
                         }
