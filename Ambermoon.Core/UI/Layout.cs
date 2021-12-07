@@ -3950,7 +3950,7 @@ namespace Ambermoon.UI
             TextAlign textAlign = TextAlign.Left, byte displayLayer = 2, bool shadow = true, byte? paletteIndex = null)
         {
             var scrollableText = new UIText(RenderView, paletteIndex ?? game.UIPaletteIndex, text, rect,
-                displayLayer, color, shadow, textAlign, true);
+                displayLayer, color, shadow, textAlign, true, game.AddTimedEvent);
             scrollableText.FreeScrollingStarted += () =>
             {
                 freeScrolledText = scrollableText;

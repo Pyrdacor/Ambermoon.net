@@ -170,9 +170,24 @@ namespace Ambermoon.Data.Legacy
 
         public IText GetLines(IText text, int lineOffset, int numLines)
         {
-            var lines = (text as Text).InternalLines.Skip(lineOffset);
-            lines = lines.Take(Util.Min(numLines, lines.Count()));
-            return new Text(lines.ToList());
+            if (lineOffset >= 0)
+            {
+                var lines = (text as Text).InternalLines.Skip(lineOffset);
+                lines = lines.Take(Util.Min(numLines, lines.Count()));
+                return new Text(lines.ToList());
+            }
+            else if (lineOffset == -numLines)
+            {
+                return new Text(Enumerable.Repeat(KeyValuePair.Create(new byte[1] { (byte)SpecialGlyph.NewLine }, 1), numLines).ToList());
+            }
+            else
+            {
+                var emptyLines = Enumerable.Repeat(KeyValuePair.Create(new byte[1] { (byte)SpecialGlyph.NewLine }, -lineOffset), -lineOffset).ToList();
+                int remainingLines = numLines + lineOffset;
+                var lines = (text as Text).InternalLines;
+                emptyLines.AddRange(lines.Take(Util.Min(remainingLines, lines.Count())));
+                return new Text(emptyLines);
+            }
         }
 
         public IText WrapText(IText text, Rect bounds, Size glyphSize)

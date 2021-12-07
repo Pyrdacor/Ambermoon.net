@@ -191,7 +191,7 @@ namespace Ambermoon.UI
             else
             {
                 uiText = new UIText(renderView, game.TextPaletteIndex, text, bounds, displayLayer,
-                    textColor, shadow, textAlign, scrolling);
+                    textColor, shadow, textAlign, scrolling, game.AddTimedEvent);
             }
             texts.Add(uiText);
             if (scrolling)

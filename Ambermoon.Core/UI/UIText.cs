@@ -34,8 +34,10 @@ namespace Ambermoon.UI
         readonly Rect bounds;
         bool allowScrolling;
         bool freeScrolling = false;
+        bool isScrolling = false;
         int lineOffset = 0;
         readonly int numVisibleLines;
+        readonly Action<TimeSpan, Action> timedEventCreator;
         public bool WithScrolling { get; internal set; }
 
         public event Action FreeScrollingStarted;
@@ -73,7 +75,7 @@ namespace Ambermoon.UI
 
         public UIText(IRenderView renderView, byte paletteIndex, IText text, Rect bounds, byte displayLayer = 1,
             TextColor textColor = TextColor.BrightGray, bool shadow = true, TextAlign textAlign = TextAlign.Left,
-            bool allowScrolling = false)
+            bool allowScrolling = false, Action<TimeSpan, Action> timedEventCreator = null)
         {
             this.renderView = renderView;
             this.text = renderView.TextProcessor.WrapText(text, bounds, new Size(Global.GlyphWidth, Global.GlyphLineHeight));
@@ -85,6 +87,13 @@ namespace Ambermoon.UI
             renderText.Visible = true;
             numVisibleLines = (bounds.Height + 1) / Global.GlyphLineHeight;
             WithScrolling = allowScrolling;
+            this.timedEventCreator = timedEventCreator;
+
+            if (allowScrolling && this.text.LineCount > numVisibleLines)
+            {
+                lineOffset = -numVisibleLines;
+                ScrollTo(0);
+            }
         }
 
         public void Destroy()
@@ -105,7 +114,14 @@ namespace Ambermoon.UI
             allowScrolling = WithScrolling;
             freeScrolling = false;
             lineOffset = 0;
-            UpdateText(0);
+
+            if (allowScrolling && this.text.LineCount > numVisibleLines)
+            {
+                lineOffset = -numVisibleLines;
+                ScrollTo(0);
+            }
+            else
+                UpdateText(0);
         }
 
         public void SetTextColor(TextColor textColor)
@@ -147,6 +163,9 @@ namespace Ambermoon.UI
 
         public bool Click(Position position)
         {
+            if (isScrolling)
+                return true;
+
             if (freeScrolling)
             {
                 freeScrolling = false;
@@ -176,12 +195,7 @@ namespace Ambermoon.UI
                 }
                 else
                 {
-                    lineOffset = Math.Min(lineOffset + numVisibleLines, text.LineCount - numVisibleLines);
-
-                    UpdateText(lineOffset);
-
-                    Scrolled?.Invoke(false);
-                    Clicked?.Invoke(false);
+                    ScrollTo(Math.Min(lineOffset + numVisibleLines, text.LineCount - numVisibleLines));
                 }
 
                 return true;
@@ -190,6 +204,22 @@ namespace Ambermoon.UI
             Clicked?.Invoke(true);
 
             return false;
+        }
+
+        void ScrollTo(int lineOffset)
+        {
+            if (this.lineOffset == lineOffset)
+            {
+                isScrolling = false;
+                Scrolled?.Invoke(false);
+                Clicked?.Invoke(false);
+            }
+            else
+            {
+                isScrolling = true;
+                UpdateText(++this.lineOffset);
+                timedEventCreator?.Invoke(TimeSpan.FromMilliseconds(50), () => ScrollTo(lineOffset));
+            }            
         }
 
         public void Clip(Rect area)
