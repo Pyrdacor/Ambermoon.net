@@ -13958,6 +13958,12 @@ namespace Ambermoon
         internal void ShowMessagePopup(string text, Action closeAction = null,
             TextAlign textAlign = TextAlign.Center, byte displayLayerOffset = 0)
         {
+            if (layout.PopupActive)
+            {
+                closeAction?.Invoke();
+                return;
+            }
+
             Pause();
             InputEnable = false;
             // Simple text popup
