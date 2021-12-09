@@ -42,13 +42,14 @@ namespace Ambermoon.Data
     [Flags]
     public enum SpellTypeImmunity
     {
-        Healing,
-        Alchemistic,
-        Mystic,
-        Destruction,
-        Unknown1,
-        Unknown2,
-        Function,
-        Unused
+        None = 0x00,
+        Healing = 0x01,
+        Alchemistic = 0x02,
+        Mystic = 0x04,
+        Destruction = 0x08,
+        Unknown1 = 0x10,
+        Unknown2 = 0x20,
+        Function = 0x40,
+        Unused = 0x80
     }
 }

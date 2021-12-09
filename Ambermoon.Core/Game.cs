@@ -9348,6 +9348,9 @@ namespace Ambermoon
             if (currentBattle.SkipNextBattleFieldClick)
                 return;
 
+            if (currentBattle.RoundActive)
+                return;
+
             if (row < 0 || row > 4 ||
                 column < 0 || column > 5)
                 return;

@@ -13,13 +13,13 @@ namespace Ambermoon.Data
     [Flags]
     public enum SpellType
     {
-        Healing,
-        Alchemistic,
-        Mystic,
-        Destruction,
-        Unknown1,
-        Unknown2,
-        Function // lockpicking, call eagle, play elf harp etc
+        Healing = 0x01,
+        Alchemistic = 0x02,
+        Mystic = 0x04,
+        Destruction = 0x08,
+        Unknown1 = 0x10,
+        Unknown2 = 0x20,
+        Function = 0x40 // lockpicking, call eagle, play elf harp etc
     }
 
     [Flags]
@@ -274,7 +274,7 @@ namespace Ambermoon.Data
                 case Spell.GhostWeapon:
                     return SpellType.Destruction;
                 default:
-                    return (SpellType)(((int)spell - 1) / 30);
+                    return (SpellType)(1 << (((int)spell - 1) / 30));
             }
         }
 
