@@ -62,7 +62,8 @@ namespace Ambermoon
             finally
             {
                 SaveConfig(configuration);
-                DotnetCleanup();
+                // Not needed in .NET6 anymore.
+                //DotnetCleanup();
             }
         }
 

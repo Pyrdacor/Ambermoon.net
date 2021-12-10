@@ -232,6 +232,7 @@ namespace Ambermoon
         CharacterCreator characterCreator = null;
         readonly Random random = new Random();
         bool disableMusicChange = false;
+        internal Features Features { get; }
         internal SavegameTime GameTime { get; private set; } = null;
         readonly List<uint> changedMaps = new List<uint>();
         internal const int FadeTime = 1000;
@@ -536,8 +537,9 @@ namespace Ambermoon
             ISavegameSerializer savegameSerializer, IDataNameProvider dataNameProvider, TextDictionary textDictionary,
             Places places, Cursor cursor, ILightEffectProvider lightEffectProvider, IAudioOutput audioOutput, ISongManager songManager,
             FullscreenChangeHandler fullscreenChangeHandler, ResolutionChangeHandler resolutionChangeHandler,
-            Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory)
+            Func<List<Key>> pressedKeyProvider, IOutroFactory outroFactory, Features features)
         {
+            Features = features;
             currentUIPaletteIndex = PrimaryUIPaletteIndex = (byte)(renderView.GraphicProvider.PrimaryUIPaletteIndex - 1);
             SecondaryUIPaletteIndex = (byte)(renderView.GraphicProvider.SecondaryUIPaletteIndex - 1);
             AutomapPaletteIndex = (byte)(renderView.GraphicProvider.AutomapPaletteIndex - 1);

@@ -570,7 +570,7 @@ namespace AmbermoonAndroid
 
         string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
-        void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage)
+        void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage, Features features)
         {
             // Load intro data
             var introData = new IntroData(gameData);
@@ -659,7 +659,7 @@ namespace AmbermoonAndroid
                                 var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                     characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
                                     cursor, lightEffectProvider, audioOutput, musicCache, FullscreenChangeRequest, ChangeResolution,
-                                    QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge));
+                                    QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
                                 game.QuitRequested += window.Close;
                                 game.MousePositionChanged += position =>
                                 {
@@ -781,7 +781,7 @@ namespace AmbermoonAndroid
             });
         }
 
-        bool ShowVersionSelector(Action<IGameData, string, GameLanguage> selectHandler)
+        bool ShowVersionSelector(Action<IGameData, string, GameLanguage, Features> selectHandler)
         {
             var versionLoader = new BuiltinVersionLoader();
             var versions = versionLoader.Load();
@@ -793,7 +793,7 @@ namespace AmbermoonAndroid
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]), gameData.Language.ToGameLanguage());
+                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]), gameData.Language.ToGameLanguage(), Features.None);
                 return false;
             }
 
@@ -883,7 +883,8 @@ namespace AmbermoonAndroid
                     Version = builtinVersion.Version,
                     Language = builtinVersion.Language,
                     Info = builtinVersion.Info,
-                    DataProvider = builtinVersionDataProviders[i]
+                    DataProvider = builtinVersionDataProviders[i],
+                    Features = builtinVersion.Features
                 });
             }
             if (additionalVersion != null)
@@ -893,7 +894,8 @@ namespace AmbermoonAndroid
                     Version = additionalVersion,
                     Language = language,
                     Info = "From external data",
-                    DataProvider = configuration.GameVersionIndex == 2 ? (Func<IGameData>)(() => gameData) : LoadGameDataFromDataPath
+                    DataProvider = configuration.GameVersionIndex == 2 ? (Func<IGameData>)(() => gameData) : LoadGameDataFromDataPath,
+                    Features = Features.None
                 });
             }
             var cursor = new Ambermoon.Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),
@@ -910,7 +912,7 @@ namespace AmbermoonAndroid
                     configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                     configuration.GameVersionIndex = gameVersionIndex;
                     selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]),
-                        gameVersions[gameVersionIndex].Language.ToGameLanguage());
+                        gameVersions[gameVersionIndex].Language.ToGameLanguage(), gameVersions[gameVersionIndex].Features);
                     versionLoader.Dispose();
                 };
             });
@@ -1013,10 +1015,10 @@ namespace AmbermoonAndroid
                 ChangeFullscreenMode(true); // This will adjust the window
             }
 
-            if (ShowVersionSelector((gameData, savePath, gameLanguage) =>
+            if (ShowVersionSelector((gameData, savePath, gameLanguage, features) =>
             {
                 renderView?.Dispose();
-                StartGame(gameData as GameData, savePath, gameLanguage);
+                StartGame(gameData as GameData, savePath, gameLanguage, features);
                 WindowMoved();
                 versionSelector = null;
             }))

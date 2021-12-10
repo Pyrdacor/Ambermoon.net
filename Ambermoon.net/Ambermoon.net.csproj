@@ -77,6 +77,14 @@
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(Platform)'=='x86'">
+	<PackageReference Include="runtime.win7-x86.Microsoft.NETCore.Windows.ApiSets" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Platform)'!='x86'">
+    <PackageReference Include="runtime.win7-x64.Microsoft.NETCore.Windows.ApiSets" Version="1.0.1" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
     <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />

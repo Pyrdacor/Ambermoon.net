@@ -1,4 +1,5 @@
 ﻿using Ambermoon;
+using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ namespace AmbermoonAndroid
         public string Version;
         public string Language;
         public string Info;
+        public Features Features;
         public uint Offset;
         public uint Size;
         public Stream SourceStream;
@@ -56,6 +58,7 @@ namespace AmbermoonAndroid
                     Version = reader.ReadString(),
                     Language = reader.ReadString(),
                     Info = reader.ReadString(),
+                    Features = (Features)reader.ReadByte(),
                     Size = ReadDword(reader),
                     SourceStream = executableStream
                 });

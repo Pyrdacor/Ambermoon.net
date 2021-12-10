@@ -2113,7 +2113,7 @@ namespace Ambermoon
                     return false;
                 }
 
-                if (target.IsImmuneToSpell(spell, out bool silent))
+                if (target.IsImmuneToSpell(spell, out bool silent, game.Features.HasFlag(Features.Elements)))
                 {
                     if (silent)
                         Fail();

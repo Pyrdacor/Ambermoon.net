@@ -20,6 +20,7 @@
  */
 
 using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using System;
 
 namespace Ambermoon
@@ -35,6 +36,7 @@ namespace Ambermoon
         public string Version;
         public string Language;
         public string Info;
+        public Features Features;
         public Func<IGameData> DataProvider;
     }
 
