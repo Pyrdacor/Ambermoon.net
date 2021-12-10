@@ -67,6 +67,7 @@ namespace Ambermoon.Renderer
         private static readonly float[] LayerBaseZ = new float[]
         {
             0.00f,  // Map3DBackground
+            0.00f,  // Map3DCeiling
             0.00f,  // Map3D
             0.00f,  // Billboards3D
             0.01f,  // MapBackground1
@@ -116,7 +117,7 @@ namespace Ambermoon.Renderer
             bool layered = layer == Layer.Map3DBackground || layer > Global.Last2DLayer; // map is not layered, drawing order depends on y-coordinate and not given layer
             bool opaque = layer == Layer.CombatBackground || layer >= Layer.MapBackground1 && layer <= Layer.MapBackground9;
 
-            RenderBuffer = new RenderBuffer(state, layer == Layer.Map3D || layer == Layer.Billboards3D,
+            RenderBuffer = new RenderBuffer(state, layer == Layer.Map3DCeiling || layer == Layer.Map3D || layer == Layer.Billboards3D,
                 supportAnimations, layered, layer == Layer.DrugEffect, layer == Layer.Billboards3D, layer == Layer.Text,
                 opaque, layer == Layer.FOW, layer == Layer.Map3DBackground, layer == Layer.Misc);
 
@@ -159,7 +160,7 @@ namespace Ambermoon.Renderer
                     if (!(Texture is Texture texture))
                         throw new AmbermoonException(ExceptionScope.Render, "Invalid texture for this renderer.");
 
-                    if (Layer == Layer.Map3D)
+                    if (Layer == Layer.Map3D || Layer == Layer.Map3DCeiling)
                     {
                         Texture3DShader shader = RenderBuffer.Texture3DShader;
 

@@ -25,6 +25,7 @@ namespace Ambermoon
     {
         None = -1,
         Map3DBackground, // Color floor, sky, etc
+        Map3DCeiling,
         Map3D,
         Billboards3D,
         MapBackground1,

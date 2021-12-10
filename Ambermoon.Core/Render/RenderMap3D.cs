@@ -1011,6 +1011,7 @@ namespace Ambermoon.Render
 
             textureAtlas = labdataTextures[Map.TilesetOrLabdataIndex];
             renderView.GetLayer(Layer.Map3DBackground).Texture = textureAtlas.Texture;
+            renderView.GetLayer(Layer.Map3DCeiling).Texture = textureAtlas.Texture;
             renderView.GetLayer(Layer.Map3D).Texture = textureAtlas.Texture;
             renderView.GetLayer(Layer.Billboards3D).Texture = textureAtlas.Texture;
         }
@@ -1434,7 +1435,7 @@ namespace Ambermoon.Render
                     FloorTextureWidth, FloorTextureHeight,
                     (uint)(Map.Width + 16) * FloorTextureWidth, (uint)(Map.Height + 16) * FloorTextureHeight, false);
                 ceiling.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-                ceiling.Layer = layer;
+                ceiling.Layer = renderView.GetLayer(Layer.Map3DCeiling);
                 ceiling.X = -8 * Global.DistancePerBlock;
                 ceiling.Y = WallHeight;
                 ceiling.Z = 8 * Global.DistancePerBlock;

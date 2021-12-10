@@ -169,7 +169,7 @@ namespace Ambermoon.Renderer.OpenGL
                     var texture = textureAtlasManager.GetOrCreate(layer)?.Texture;
                     var renderLayer = Create(layer, texture, palette);
 
-                    if (layer != Layer.Map3DBackground && layer != Layer.Map3D && layer != Layer.Billboards3D)
+                    if (layer != Layer.Map3DBackground && layer != Layer.Map3DCeiling && layer != Layer.Map3D && layer != Layer.Billboards3D)
                         renderLayer.Visible = true;
 
                     AddLayer(renderLayer);
@@ -449,7 +449,7 @@ namespace Ambermoon.Renderer.OpenGL
                 {
                     if (render3DMap)
                     {
-                        if (layer.Key == Layer.Map3D)
+                        if (layer.Key == Layer.Map3DCeiling)
                         {
                             // Setup 3D stuff
                             camera3D.Activate();
@@ -465,6 +465,11 @@ namespace Ambermoon.Renderer.OpenGL
                                 (uint)mapViewArea.Width, (uint)mapViewArea.Height
                             );
                             State.Gl.Enable(EnableCap.CullFace);
+                            State.Gl.Disable(EnableCap.DepthTest);
+                        }
+                        else if (layer.Key == Layer.Map3D)
+                        {
+                            State.Gl.Enable(EnableCap.DepthTest);
                         }
                         else if (layer.Key == Layer.Billboards3D)
                         {

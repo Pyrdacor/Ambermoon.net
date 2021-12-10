@@ -485,12 +485,12 @@ namespace Ambermoon.Renderer
                 case Ambermoon.Render.SurfaceType.Floor:
                     vectorBuffer.Add(surface.X, surface.Y, surface.Z + surface.Height);
                     vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z + surface.Height);
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);                   
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
                     break;
                 case Ambermoon.Render.SurfaceType.Ceiling:
                     vectorBuffer.Add(surface.X, surface.Y, surface.Z - surface.Height);
                     vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z - surface.Height);
-                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);                    
+                    vectorBuffer.Add(surface.X + surface.Width, surface.Y, surface.Z);
                     break;
                 case Ambermoon.Render.SurfaceType.Wall:
                     switch (surface.WallOrientation)
