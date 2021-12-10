@@ -6,9 +6,9 @@ namespace Ambermoon.Data
     public enum CharacterElement
     {
         None = 0,
-        Unknown0 = 0x01,
-        Psychic = 0x02,
-        Ghost = 0x04,
+        Mental = 0x01,
+        Spirit = 0x02,
+        Physical = 0x04,
         Undead = 0x08,
         Earth = 0x10,
         Wind = 0x20,
