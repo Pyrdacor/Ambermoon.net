@@ -31,7 +31,7 @@ namespace Ambermoon.Data
             public byte[] FrameIndices; // 32 bytes
         }
 
-        private Monster()
+        public Monster()
             : base(CharacterType.Monster)
         {
 
