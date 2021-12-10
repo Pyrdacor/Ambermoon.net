@@ -1102,12 +1102,7 @@ namespace AmbermoonAndroid
             }
             else if (Game != null)
             {
-                bool cheatsEnabled = configuration.EnableCheats;
-
                 Game.Update(delta);
-
-                if (cheatsEnabled && configuration.EnableCheats && !Console.IsInputRedirected && Console.KeyAvailable)
-                    Cheats.ProcessInput(Console.ReadKey(true), Game);
             }
         }
 
