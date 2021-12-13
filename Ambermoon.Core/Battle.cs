@@ -970,8 +970,8 @@ namespace Ambermoon
             averageMonsterDamage[index] = totalMonsterDamage[index] / numSuccessfulMonsterHits[index];
         }
 
-        void Proceed(Action action)
-            => game.AddTimedEvent(TimeSpan.FromMilliseconds(NeedsClickForNextAction ? 200 : 600), action);
+        void Proceed(Action action, bool important = false)
+            => game.AddTimedEvent(TimeSpan.FromMilliseconds(NeedsClickForNextAction ? 200 : important ? 3000 : 1000), action);
 
         void RunBattleAction(BattleAction battleAction, uint battleTicks)
         {
@@ -1003,7 +1003,7 @@ namespace Ambermoon
                     brokenItems.Add(KeyValuePair.Create(itemIndex, equipSlot.Flags));
                     equipSlot.Clear();
                     layout.SetBattleMessage(target.Name + string.Format(game.DataNameProvider.BattleMessageWasBroken, item.Name), textColor);
-                    Proceed(() => ActionFinished(true));
+                    Proceed(() => ActionFinished(true), true);
                 }
                 else
                 {
@@ -1289,7 +1289,7 @@ namespace Ambermoon
                         if (target.Type == CharacterType.Monster)
                         {
                             layout.SetBattleMessage(game.DataNameProvider.BattleMessageCannotDamagePetrifiedMonsters, textColor);
-                            Proceed(() => ActionFinished(true));
+                            Proceed(() => ActionFinished(true), true);
                         }
                         else
                         {
@@ -1851,7 +1851,7 @@ namespace Ambermoon
                             if (monster.BaseAttack == 0)
                                 monsterMorale[initialMonsters.IndexOf(monster)] /= 2;
                         }
-                        Proceed(() => ActionFinished(true));
+                        Proceed(() => ActionFinished(true), true);
                     }
                     else
                     {
@@ -1885,7 +1885,7 @@ namespace Ambermoon
                         layout.SetBattleMessage(battleAction.Character.Name + game.DataNameProvider.BattleMessageUsedLastAmmunition, textColor);
                         if (battleAction.Character is Monster monster)
                             droppedWeaponMonsters.Add(monster);
-                        Proceed(() => ActionFinished(true));
+                        Proceed(() => ActionFinished(true), true);
                     }
                     else
                     {
