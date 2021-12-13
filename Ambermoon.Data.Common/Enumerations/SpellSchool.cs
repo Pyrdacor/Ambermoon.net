@@ -36,6 +36,10 @@ namespace Ambermoon.Data
         Alchemistic = 0x02,
         Mystic = 0x04,
         Destruction = 0x08,
+        Unused1 = 0x10,
+        Unused2 = 0x20,
+        Function = 0x40,
+        All = 0x4f,
         Mastered = 0x80
     }
 
@@ -47,8 +51,8 @@ namespace Ambermoon.Data
         Alchemistic = 0x02,
         Mystic = 0x04,
         Destruction = 0x08,
-        Unknown1 = 0x10,
-        Unknown2 = 0x20,
+        Unused1 = 0x10,
+        Unused2 = 0x20,
         Function = 0x40,
         Unused = 0x80
     }

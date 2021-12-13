@@ -27,6 +27,7 @@
         CurseWesp,
         Tornak,
         Gizzek,
-        MoragMachine
+        MoragMachine,
+        SingleEye // Added in Ambermoon Advanced
     }
 }

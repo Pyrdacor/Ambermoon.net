@@ -227,7 +227,7 @@ namespace Ambermoon.Data.Legacy
 
                         if (combatGraphic.Key == CombatGraphicIndex.BattleFieldIcons)
                         {
-                            var battleFieldIcons = new List<Graphic>(35);
+                            var battleFieldIcons = new List<Graphic>(36);
                             var iconGraphicInfo = new GraphicInfo
                             {
                                 Width = 16,
@@ -237,7 +237,7 @@ namespace Ambermoon.Data.Legacy
                                 PaletteOffset = 0
                             };
 
-                            for (int i = 0; i < 35; ++i)
+                            while (reader.Position < reader.Size)
                             {
                                 var graphic = new Graphic();
                                 graphicReader.ReadGraphic(graphic, reader, iconGraphicInfo);
