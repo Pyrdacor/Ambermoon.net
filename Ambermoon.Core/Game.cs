@@ -5758,7 +5758,18 @@ namespace Ambermoon
                     if (!CurrentSavegame.IsGotoPointActive(gotoPoint.Index))
                     {
                         CurrentSavegame.ActivateGotoPoint(gotoPoint.Index);
-                        ShowMessagePopup(DataNameProvider.GotoPointSaved, null, TextAlign.Left);
+                        ShowMessagePopup(DataNameProvider.GotoPointSaved, () =>
+                        {
+                            // If a goto point save message appears after map change,
+                            // it will avoid triggering of map events so we have to call
+                            // it on closing the popup.
+                            if (mapChange)
+                            {
+                                TriggerMapEvents(EventTrigger.Move, (uint)this.player.Position.X,
+                                    (uint)this.player.Position.Y);
+                            }
+
+                        }, TextAlign.Left);
                         return;
                     }
                 }

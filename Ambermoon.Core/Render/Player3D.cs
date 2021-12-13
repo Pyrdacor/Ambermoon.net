@@ -96,11 +96,10 @@ namespace Ambermoon.Render
                 else
                 {
                     this.map.SetMap(map, x, y, newDirection.Value, game.CurrentPartyMember?.Race ?? Race.Human);
-                    var oldMapIndex = map.Index;
                     SetPosition((int)x, (int)y, ticks, false);
                     player.Position.X = Position.X;
                     player.Position.Y = Position.Y;
-                    game.PlayerMoved(oldMapIndex != game.Map.Index);
+                    game.PlayerMoved(true);
 
                     if (newDirection != null)
                         Angle = (float)newDirection.Value * 90.0f;

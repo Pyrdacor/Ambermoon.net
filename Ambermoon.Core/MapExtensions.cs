@@ -108,7 +108,14 @@ namespace Ambermoon
             LastMapEventIndexMap = map.Index;
             LastMapEventIndex = mapEventId;
 
-            return map.TriggerEventChain(game, trigger, x, y, @event);
+            if (!map.TriggerEventChain(game, trigger, x, y, @event))
+            {
+                LastMapEventIndexMap = null;
+                LastMapEventIndex = null;
+                return false;
+            }
+
+            return true;
         }
 
         public static void ClearLastEvent(this Map map)
