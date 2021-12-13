@@ -2468,7 +2468,7 @@ namespace Ambermoon
                 {
                     uint stealAmount = Math.Min(caster.Level, target.HitPoints.CurrentValue);
                     DealDamage(stealAmount, 0);
-                    caster.HitPoints.CurrentValue = Math.Min(stealAmount, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
+                    caster.HitPoints.CurrentValue += Math.Min(stealAmount, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
                     if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(castingMember);
                     return;
