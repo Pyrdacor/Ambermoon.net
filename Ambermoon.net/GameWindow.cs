@@ -817,15 +817,15 @@ namespace Ambermoon
                 return gameData;
             }
 
-            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > 2)
+            if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > 4)
                 configuration.GameVersionIndex = 0;
 
             var additionalVersion = GameData.GetVersionInfo(dataPath, out var language);
 
-            if (additionalVersion == null && configuration.GameVersionIndex == 2)
+            if (additionalVersion == null && configuration.GameVersionIndex == 4)
                 configuration.GameVersionIndex = 0;
 
-            if (configuration.GameVersionIndex < 2)
+            if (configuration.GameVersionIndex < 4)
             {
                 gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex],
                     configuration.GameVersionIndex == 0 ? (Func<IGameData>)null : () => LoadBuiltinVersionData(versions[0], null));
@@ -843,10 +843,12 @@ namespace Ambermoon
                 }
             }
 
-            var builtinVersionDataProviders = new Func<IGameData>[2]
+            var builtinVersionDataProviders = new Func<IGameData>[4]
             {
                 () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null),
-                () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], () => LoadBuiltinVersionData(versions[0], null))
+                () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], () => LoadBuiltinVersionData(versions[0], null)),
+                () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], () => LoadBuiltinVersionData(versions[0], null)),
+                () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], () => LoadBuiltinVersionData(versions[0], null))
             };
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
@@ -876,7 +878,7 @@ namespace Ambermoon
             });
             renderView.AvailableFullscreenModes = availableFullscreenModes;
             InitGlyphs(textureAtlasManager);
-            var gameVersions = new List<GameVersion>(3);
+            var gameVersions = new List<GameVersion>(5);
             for (int i = 0; i < versions.Count; ++i)
             {
                 var builtinVersion = versions[i];
@@ -906,7 +908,7 @@ namespace Ambermoon
             RunTask(() =>
             {
                 while (logoPyrdacor != null)
-                    System.Threading.Thread.Sleep(100);
+                    Thread.Sleep(100);
 
                 versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
                 versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>

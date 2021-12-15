@@ -134,7 +134,14 @@ namespace Ambermoon.Data.Legacy
                     stream.Position = stream.Length - 128;
                     Span<byte> buffer = new byte[128];
                     stream.Read(buffer);
-                    return GetVersionFromAssembly(buffer, out language);
+                    var version = GetVersionFromAssembly(buffer, out language);
+                    if (version == null)
+                    {
+                        stream.Position = 0;
+                        stream.Read(buffer);
+                        version = GetVersionFromAssembly(buffer, out language, false);
+                    }
+                    return version;
                 }
             }
 
@@ -153,7 +160,12 @@ namespace Ambermoon.Data.Legacy
                         if (data.Length < 128)
                             continue;
 
-                        return GetVersionFromAssembly(data.TakeLast(128).ToArray(), out language);
+                        var version = GetVersionFromAssembly(data.TakeLast(128).ToArray(), out language);
+
+                        if (version == null)
+                            version = GetVersionFromAssembly(data.ToArray(), out language, false);
+
+                        return version;
                     }
                 }
             }

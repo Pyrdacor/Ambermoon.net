@@ -35,8 +35,8 @@ namespace Ambermoon.UI
 
         readonly List<ILayerSprite> borders = new List<ILayerSprite>();
         readonly Cursor cursor = null;
-        readonly IRenderText[] versionTexts = new IRenderText[3];
-        readonly IColoredRect[] versionHighlights = new IColoredRect[3];
+        readonly IRenderText[] versionTexts = new IRenderText[5];
+        readonly IColoredRect[] versionHighlights = new IColoredRect[5];
         readonly Rect gameDataVersionTooltipArea = null;
         readonly IText gameDataVersionTooltipText = null;
         readonly IColoredRect selectedVersionMarker = null;
@@ -50,10 +50,10 @@ namespace Ambermoon.UI
         IColoredRect tooltipBackground = null;
         IText currentSaveTooltipText = null;
         readonly Button okButton = null;
-        readonly List<Rect> versionAreas = new List<Rect>(3);
+        readonly List<Rect> versionAreas = new List<Rect>(5);
         int selectedSaveOption = 0;
         int selectedVersion = 0;
-        readonly int versionCount = 2;
+        readonly int versionCount = 4;
         int SelectedVersion
         {
             get => selectedVersion;
@@ -62,7 +62,7 @@ namespace Ambermoon.UI
                 if (selectedVersion != value)
                 {
                     selectedVersion = value;
-                    bool externalVersion = selectedVersion == 2;
+                    bool externalVersion = selectedVersion == 4;
 
                     ShowSaveOptionButton(externalVersion);
                     saveOptionText.Visible = externalVersion;
@@ -89,11 +89,11 @@ namespace Ambermoon.UI
             this.cursor = cursor;
             versionCount = gameVersions.Count;
 
-            if (versionCount < 1 || versionCount > 3)
+            if (versionCount < 1 || versionCount > 5)
                 throw new AmbermoonException(ExceptionScope.Application, $"Invalid game version count: {versionCount}");
 
             #region Window
-            var windowSize = new Size(16, 6);
+            var windowSize = new Size(16, 8);
             var windowArea = new Rect
             (
                 (Global.VirtualScreenWidth - windowSize.Width * 16) / 2,
@@ -134,7 +134,7 @@ namespace Ambermoon.UI
             #endregion
 
             #region Version list
-            var versionListSize = new Size(14 * 16, 2 * 16 - 2);
+            var versionListSize = new Size(14 * 16, 52);
             var versionListArea = new Rect
             (
                 windowArea.Left + 16,
@@ -163,7 +163,7 @@ namespace Ambermoon.UI
             for (int i = 0; i < gameVersions.Count; ++i)
             {
                 var gameVersion = gameVersions[i];
-                string text = $"{gameVersion.Version} {gameVersion.Language.PadRight(9)} {gameVersion.Info.Substring(0, Math.Min(22, gameVersion.Info.Length))}";
+                string text = $"{gameVersion.Info.Substring(0, Math.Min(24, gameVersion.Info.Length)).PadRight(24)} {gameVersion.Version} {gameVersion.Language.PadRight(9)}";
                 var versionArea = new Rect(versionListArea.X, versionListArea.Y + i * 10, versionListArea.Width, 10);
                 var markerArea = versionArea.CreateModified(0, 0, 0, -1);
                 var highlight = versionHighlights[i] = FillArea(markerArea, Color.White, 2);
