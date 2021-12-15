@@ -707,16 +707,19 @@ namespace Ambermoon
                                     else
                                         renderView.DeactivateFramebuffer();
 
+                                    if (configuration.EnableCheats)
+                                        PrintCheatConsoleHeader();
+
                                     if (configuration.EnableCheats && !Console.IsInputRedirected)
                                     {
                                         while (Console.KeyAvailable)
                                             Console.ReadKey(true);
-                                        PrintCheatConsoleHeader();
                                     }
                                     else if (!configuration.EnableCheats && !Console.IsInputRedirected)
                                     {
                                         cheatHeaderPrinted = false;
-                                        Console.Clear();
+                                        if (!Console.IsOutputRedirected)
+                                            Console.Clear();
                                     }
                                 };
                                 game.DrugTicked += Drug_Ticked;
@@ -1110,7 +1113,7 @@ namespace Ambermoon
                     gameCreator = null;
 
                     // Show cheat info
-                    if (configuration.EnableCheats && !Console.IsInputRedirected)
+                    if (configuration.EnableCheats)
                     {
                         PrintCheatConsoleHeader();
                     }
@@ -1122,12 +1125,44 @@ namespace Ambermoon
 
                 Game.Update(delta);
 
-                if (cheatsEnabled && configuration.EnableCheats && !Console.IsInputRedirected && Console.KeyAvailable)
-                    Cheats.ProcessInput(Console.ReadKey(true), Game);
+                if (cheatsEnabled && configuration.EnableCheats)
+                {
+                    if (!Console.IsInputRedirected)
+                    {
+                        if (Console.KeyAvailable)
+                            Cheats.ProcessInput(Console.ReadKey(true), Game);
+                    }
+                    else
+                    {
+                        if (!cheatTaskStarted)
+                        {
+                            cheatTaskStarted = true;
+                            Task.Run(async () =>
+                            {
+                                while (!window.IsClosing && !cheatTaskCancellationTokenSource.Token.IsCancellationRequested)
+                                {
+                                    string input = await Console.In.ReadLineAsync();
+
+                                    if (cheatsEnabled && configuration.EnableCheats)
+                                    {
+                                        if (cheatsEnabled && configuration.EnableCheats)
+                                            Cheats.ProcessInput(input, Game);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Cheats are disabled so your input has no effect.");
+                                    }
+                                }
+                            }, cheatTaskCancellationTokenSource.Token);
+                        }
+                    }
+                }
             }
         }
 
         static bool cheatHeaderPrinted = false;
+        static bool cheatTaskStarted = false;        
+        static CancellationTokenSource cheatTaskCancellationTokenSource = new CancellationTokenSource();
 
         static void PrintCheatConsoleHeader()
         {
@@ -1228,6 +1263,7 @@ namespace Ambermoon
                 window.FramebufferResize += Window_FramebufferResize;
                 window.Move += Window_Move;
                 window.StateChanged += Window_StateChanged;
+                window.Closing += () => cheatTaskCancellationTokenSource.Cancel();
                 window.Run();
             }
             catch (Exception ex)

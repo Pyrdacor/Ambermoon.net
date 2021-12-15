@@ -56,9 +56,10 @@ namespace Ambermoon
             { "teleport",
                 Create
                 (
-                    "Makes the party invulnerable." + Environment.NewLine +
+                    "Teleports the group to a specific map." + Environment.NewLine +
                     "Usage: teleport <map_id> [x] [y] [direction]" + Environment.NewLine +
-                    "   or: teleport <world> <x> <y> [direction]",
+                    "   or: teleport <world> <x> <y> [direction]" + Environment.NewLine +
+                    "Worlds: lyramion, forestmoon, morag",
                     Teleport
                 )
             },
@@ -126,6 +127,13 @@ namespace Ambermoon
         static int historyIndex = -1;
         static readonly List<string> history = new List<string>();
 
+        public static void ProcessInput(string input, Game game)
+        {
+            currentAutoFillInput = null;
+            currentInput = input;
+            ProcessCurrentInput(game, true);
+        }
+
         public static void ProcessInput(ConsoleKeyInfo keyInfo, Game game)
         {
             if (keyInfo.Key != ConsoleKey.Tab)
@@ -154,7 +162,7 @@ namespace Ambermoon
             {
                 case ConsoleKey.Enter:
                     if (currentInput.Length != 0 || currentAutoFillInput != null)
-                        ProcessCurrentInput(game);
+                        ProcessCurrentInput(game, false);
                     return;
                 case ConsoleKey.Backspace:
                     if (Console.CursorLeft > 0)
@@ -265,7 +273,7 @@ namespace Ambermoon
                 Console.Write(new string(' ', lengthDiff));
         }
 
-        static void ProcessCurrentInput(Game game)
+        static void ProcessCurrentInput(Game game, bool redirectedInput)
         {
             if (currentAutoFillInput != null)
                 currentInput = currentAutoFillInput;
@@ -288,10 +296,12 @@ namespace Ambermoon
                             currentInput = "";
                             autoFillIndex = -1;
                             cursorPosition = 0;
-                            Console.CursorLeft = currentInput.Length;
+                            if (!redirectedInput)
+                            {
+                                Console.CursorLeft = currentInput.Length;
+                                Console.WriteLine();
+                            }
                             Console.WriteLine();
-                            Console.WriteLine();
-
                             cheat.Value.Value?.Invoke(game, parts.Skip(1).ToArray());
                             Console.WriteLine();
                             return;
@@ -304,8 +314,11 @@ namespace Ambermoon
                     currentInput = "";
                     autoFillIndex = -1;
                     cursorPosition = 0;
-                    Console.CursorLeft = currentInput.Length;
-                    Console.WriteLine();
+                    if (!redirectedInput)
+                    {
+                        Console.CursorLeft = currentInput.Length;
+                        Console.WriteLine();
+                    }
                     Console.WriteLine("Invalid cheat command. Type 'help' for a list of commands.");
                     Console.WriteLine();
                 }
