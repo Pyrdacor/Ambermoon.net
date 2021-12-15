@@ -873,12 +873,14 @@ namespace Ambermoon.Render
                             var endPosition = new Position(Util.Limit(rowPosition.X, position.X + game.RandomInt(-20, 20), rowEndPosition.X), position.Y);
                             var scale = 1.5f * (fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                             byte displayLayer = fromMonster ? (byte)255 : (byte)(targetRow * 60 + 60);
-                            AddAnimation(CombatGraphicIndex.Lightning, 1, position, endPosition,
-                                (uint)Util.Round((250.0f - whiteDuration) * 0.001f * Game.TicksPerSecond),
+                            uint duration = (uint)Util.Round((250.0f - whiteDuration) * 0.001f * Game.TicksPerSecond);
+                            if (game.Configuration.FastBattleMode)
+                                duration *= 3; // This avoids epileptic shock :D
+                            AddAnimation(CombatGraphicIndex.Lightning, 1, position, endPosition, duration,
                                 scale, scale, displayLayer, (--numLightnings == 0) ? (Action)null : PlayLightning, null,
                                 BattleAnimation.AnimationScaleType.Both, BattleAnimation.HorizontalAnchor.Center,
                                 BattleAnimation.VerticalAnchor.Center, game.RandomInt(0, 1) == 0);
-                        });
+                        }, true);
                     }
                     PlayLightning();
                     break;

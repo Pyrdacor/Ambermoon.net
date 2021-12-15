@@ -4446,9 +4446,11 @@ namespace Ambermoon
                 timedEvents.Add(timedGameEvent);
         }
 
-        internal void AddTimedEvent(TimeSpan delay, Action action)
+        internal void AddTimedEvent(TimeSpan delay, Action action) => AddTimedEvent(delay, action, false);
+
+        internal void AddTimedEvent(TimeSpan delay, Action action, bool ignoreFastBattleMode)
         {
-            if (currentBattle != null && Configuration.FastBattleMode && currentWindow.Window == Window.Battle)
+            if (!ignoreFastBattleMode && currentBattle != null && Configuration.FastBattleMode && currentWindow.Window == Window.Battle)
                 delay = TimeSpan.FromMilliseconds(Math.Max(1.0, delay.TotalMilliseconds / 4));
 
             timedEvents.Add(new TimedGameEvent

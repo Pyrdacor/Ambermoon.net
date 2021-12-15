@@ -19,6 +19,7 @@
 
 ## UI
 
+- Giving items per cheat to a char but have another char's inventory open, shows messed up item amounts.
 - When closing the spell book with RMB in battle and there is a battle actor behind the window, the inventory is opened afterwards.
 - "Do you accept this character?" message is missing in character creator.
 - Question about taking items with you is missing from conversations.

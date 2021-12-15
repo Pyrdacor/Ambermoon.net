@@ -1073,8 +1073,6 @@ namespace Ambermoon.Render
             {
                 if (game.CurrentSavegame.IsEventActive(Map.Index, block.MapEventId - 1))
                     return Map.EventAutomapTypes[(int)block.MapEventId - 1];
-                else
-                    return AutomapType.None;
             }
 
             if (block.WallIndex != 0)
