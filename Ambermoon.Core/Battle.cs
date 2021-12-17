@@ -2396,68 +2396,196 @@ namespace Ambermoon
                     AddAilment(Ailment.Drugged, target);
                     break;
                 case Spell.Mudsling:
-                    // 4-8 damage
-                    DealDamage(4, 4);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 5-10 damage
+                        DealDamage(5, 5);
+                    }
+                    else
+                    {
+                        // 4-8 damage
+                        DealDamage(4, 4);
+                    }                    
                     return;
                 case Spell.Rockfall:
-                    // 10-25 damage
-                    DealDamage(10, 15);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 12-25 damage
+                        DealDamage(12, 13);
+                    }
+                    else
+                    {
+                        // 10-25 damage
+                        DealDamage(10, 15);
+                    }
                     return;
                 case Spell.Earthslide:
-                    // 8-16 damage
-                    DealDamage(8, 8);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 10-20 damage
+                        DealDamage(10, 10);
+                    }
+                    else
+                    {
+                        // 8-16 damage
+                        DealDamage(8, 8);
+                    }
                     return;
                 case Spell.Earthquake:
-                    // 8-22 damage
-                    DealDamage(8, 14);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 8-18 damage
+                        DealDamage(8, 10);
+                    }
+                    else
+                    {
+                        // 8-22 damage
+                        DealDamage(8, 14);
+                    }
                     return;
                 case Spell.Winddevil:
-                    // 8-16 damage
-                    DealDamage(8, 8);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 20-35 damage
+                        DealDamage(20, 15);
+                    }
+                    else
+                    {
+                        // 8-16 damage
+                        DealDamage(8, 8);
+                    }
                     return;
                 case Spell.Windhowler:
-                    // 16-48 damage
-                    DealDamage(16, 32);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 30-50 damage
+                        DealDamage(30, 20);
+                    }
+                    else
+                    {
+                        // 16-48 damage
+                        DealDamage(16, 32);
+                    }
                     return;
                 case Spell.Thunderbolt:
-                    // 20-32 damage
-                    DealDamage(20, 12);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 25-45 damage
+                        DealDamage(25, 20);
+                    }
+                    else
+                    {
+                        // 20-32 damage
+                        DealDamage(20, 12);
+                    }
                     return;
                 case Spell.Whirlwind:
-                    // 20-35 damage
-                    DealDamage(20, 15);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 20-40 damage
+                        DealDamage(20, 20);
+                    }
+                    else
+                    {
+                        // 20-35 damage
+                        DealDamage(20, 15);
+                    }
                     return;
                 case Spell.Firebeam:
-                    // 20-30 damage
-                    DealDamage(20, 10);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 45-75 damage
+                        DealDamage(45, 30);
+                    }
+                    else
+                    {
+                        // 20-30 damage
+                        DealDamage(20, 10);
+                    }
                     return;
                 case Spell.Fireball:
-                    // 40-85 damage
-                    DealDamage(40, 45);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 70-120 damage
+                        DealDamage(70, 50);
+                    }
+                    else
+                    {
+                        // 40-85 damage
+                        DealDamage(40, 45);
+                    }
                     return;
                 case Spell.Firestorm:
-                    // 35-65 damage
-                    DealDamage(35, 30);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 65-110 damage
+                        DealDamage(65, 45);
+                    }
+                    else
+                    {
+                        // 35-65 damage
+                        DealDamage(35, 30);
+                    }
                     return;
                 case Spell.Firepillar:
-                    // 40-70 damage
-                    DealDamage(40, 30);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 60-100 damage
+                        DealDamage(60, 40);
+                    }
+                    else
+                    {
+                        // 40-70 damage
+                        DealDamage(40, 30);
+                    }
                     return;
                 case Spell.Waterfall:
-                    // 32-60 damage
-                    DealDamage(32, 28);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 110-150 damage
+                        DealDamage(110, 40);
+                    }
+                    else
+                    {
+                        // 32-60 damage
+                        DealDamage(32, 28);
+                    }
                     return;
                 case Spell.Iceball:
-                    // 90-180 damage
-                    DealDamage(90, 90);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 150-200 damage
+                        DealDamage(150, 50);
+                    }
+                    else
+                    {
+                        // 90-180 damage
+                        DealDamage(90, 90);
+                    }
                     return;
                 case Spell.Icestorm:
-                    // 64-128 damage
-                    DealDamage(64, 64);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 130-180 damage
+                        DealDamage(130, 50);
+                    }
+                    else
+                    {
+                        // 64-128 damage
+                        DealDamage(64, 64);
+                    }
                     return;
                 case Spell.Iceshower:
-                    // 128-256 damage
-                    DealDamage(128, 128);
+                    if (game.Features.HasFlag(Features.AdjustedSpellDamage))
+                    {
+                        // 125-175 damage
+                        DealDamage(125, 50);
+                    }
+                    else
+                    {
+                        // 128-256 damage
+                        DealDamage(128, 128);
+                    }
                     return;
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:

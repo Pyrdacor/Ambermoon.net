@@ -6,6 +6,7 @@ namespace Ambermoon.Data.Enumerations
     public enum Features
     {
         None = 0x00,
-        Elements = 0x01
+        Elements = 0x01,
+        AdjustedSpellDamage = 0x02
     }
 }
