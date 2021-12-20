@@ -2,7 +2,7 @@
 
 - Vanishing of wind spells looks odd in some cases
 - Initial scale of dissolve victim has bad anchor behavior if in front row.
-- While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks off
+- While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks strange
 
 
 ## 3D maps
@@ -28,7 +28,6 @@
 
 ## Misc
 
-- Continuing a 11+ slot messes up savegame names of the slot and another slot from 1-10 is continued
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Where is the text "CannotCarryAllGold" used?
