@@ -1752,8 +1752,13 @@ namespace Ambermoon.UI
                                         string.Join(", ", chest.GetImportantItemNames(itemManager)) + ".", null, true);
                                     return;
                                 }
+
+                                game.CloseWindow();
                             }
-                            game.CloseWindow();
+                            else
+                            {
+                                game.ChestClosed();
+                            }
                         }
                         buttonGrid.SetButton(0, ButtonType.Empty, false, null, false);
                         buttonGrid.SetButton(1, ButtonType.Empty, false, null, false);

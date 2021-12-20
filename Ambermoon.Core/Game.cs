@@ -5893,6 +5893,22 @@ namespace Ambermoon
             }
         }
 
+        internal void ChestClosed()
+        {
+            // This is called by manually close the chest window via the Exit button
+            var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
+            var position = (Position)currentWindow.WindowParameters[4];
+
+            CloseWindow(() =>
+            {
+                if (chestEvent.Next != null)
+                {
+                    Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
+                        (uint)(position?.Y ?? 0), chestEvent.Next, false);
+                }
+            });
+        }
+
         void ChestRemoved()
         {
             var chestEvent = (ChestEvent)currentWindow.WindowParameters[0];
