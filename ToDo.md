@@ -28,7 +28,6 @@
 
 ## Misc
 
-- Decision box is too height for small texts (mermaid)
 - Continuing a 11+ slot messes up savegame names of the slot and another slot from 1-10 is continued
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.

@@ -14214,7 +14214,7 @@ namespace Ambermoon
 
         internal void ShowDecisionPopup(Map map, DecisionEvent decisionEvent, Action<PopupTextEvent.Response> responseHandler)
         {
-            ShowDecisionPopup(map.GetText((int)decisionEvent.TextIndex, DataNameProvider.TextBlockMissing), responseHandler);
+            ShowDecisionPopup(map.GetText((int)decisionEvent.TextIndex, DataNameProvider.TextBlockMissing), responseHandler, 0);
         }
 
         void RecheckUsedBattleItem(int partyMemberSlot, int slotIndex, bool equipped)
