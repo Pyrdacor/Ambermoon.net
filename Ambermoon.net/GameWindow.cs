@@ -49,8 +49,10 @@ namespace Ambermoon
         LogoPyrdacor logoPyrdacor = null;
         Graphic[] logoPalettes;
 
-        static readonly string[] VersionSavegameFolders = new string[3]
+        static readonly string[] VersionSavegameFolders = new string[5]
         {
+            "advanced_german",
+            "advanced_english",
             "german",
             "english",
             "external"
@@ -795,7 +797,7 @@ namespace Ambermoon
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]), gameData.Language.ToGameLanguage(), Features.None);
+                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(), Features.None);
                 return false;
             }
 

@@ -207,7 +207,7 @@ namespace Ambermoon.UI
             okButton.Visible = true;
             okButton.LeftClickAction = () =>
             {
-                Closed?.Invoke(this.selectedVersion, gameVersions[this.selectedVersion].DataProvider?.Invoke(), this.selectedVersion == 2 && selectedSaveOption == 1);
+                Closed?.Invoke(this.selectedVersion, gameVersions[this.selectedVersion].DataProvider?.Invoke(), this.selectedVersion == 4 && selectedSaveOption == 1);
             };
             saveOptionTooltip.Area = new Rect(saveOptionPosition, new Size(savegameOptions[selectedSaveOption].Length * Global.GlyphWidth, Global.GlyphLineHeight));
             UpdateSaveOptionTooltip(savegameOptionTooltips);
@@ -361,7 +361,7 @@ namespace Ambermoon.UI
                 }
             }
 
-            if (SelectedVersion != 2)
+            if (SelectedVersion != 4)
                 HideTooltip();
         }
 
@@ -456,7 +456,7 @@ namespace Ambermoon.UI
                 tooltipBackground = FillArea(new Rect(x - 1, y - 2, textWidth + 2, textHeight + 2), backgroundColor, 249);
             }
 
-            if (selectedVersion == 2 && currentSaveTooltipText != null && saveOptionTooltip.Area.Contains(position))
+            if (selectedVersion == 4 && currentSaveTooltipText != null && saveOptionTooltip.Area.Contains(position))
             {
                 ShowTooltip(currentSaveTooltipText, saveOptionTooltip.TextColor, false);
             }
@@ -486,7 +486,7 @@ namespace Ambermoon.UI
                 else
                     SelectedVersion = (SelectedVersion + 1) % versionCount;
 
-                if (SelectedVersion != 2)
+                if (SelectedVersion != 4)
                     HideTooltip();
             }
         }
