@@ -646,6 +646,7 @@ namespace Ambermoon
                     var roundActors = battleField
                         .Where(f => f != null)
                         .OrderByDescending(c => c.Attributes[Attribute.Speed].TotalCurrentValue)
+                        .ThenBy(c => c.Type)
                         .ToList();
                     parryingPlayers.Clear();
                     bool monstersAdvance = false;
