@@ -1419,7 +1419,7 @@ namespace Ambermoon.Render
                     FloorTextureWidth, FloorTextureHeight,
                     (uint)(Map.Width + 16) * FloorTextureWidth, (uint)(Map.Height + 16) * FloorTextureHeight, false);
                 floor.PaletteIndex = (byte)(Map.PaletteIndex - 1);
-                floor.Layer = layer;
+                floor.Layer = renderView.GetLayer(Layer.Map3DCeiling);
                 floor.X = -8 * Global.DistancePerBlock;
                 floor.Y = 0.0f;
                 floor.Z = -(Map.Height + 8) * Global.DistancePerBlock;
