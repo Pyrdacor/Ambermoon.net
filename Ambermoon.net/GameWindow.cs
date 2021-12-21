@@ -843,13 +843,11 @@ namespace Ambermoon
                 }
             }
 
-            var builtinVersionDataProviders = new Func<IGameData>[4]
-            {
-                () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null),
-                () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], () => LoadBuiltinVersionData(versions[0], null)),
-                () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], () => LoadBuiltinVersionData(versions[0], null)),
-                () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], () => LoadBuiltinVersionData(versions[0], null))
-            };
+            var builtinVersionDataProviders = new Func<IGameData>[4];
+            builtinVersionDataProviders[0] = () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null);
+            builtinVersionDataProviders[1] = () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], builtinVersionDataProviders[0]);
+            builtinVersionDataProviders[2] = () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], null);
+            builtinVersionDataProviders[3] = () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], builtinVersionDataProviders[2]);
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
