@@ -12214,8 +12214,11 @@ namespace Ambermoon
             popup.AddText(new Position(32, 120), string.Format(DataNameProvider.ItemWeightDisplay.Replace("{0:00000}", "{0,5}"), item.Weight), TextColor.White);
             popup.AddText(new Position(32, 130), string.Format(DataNameProvider.ItemHandsDisplay, item.NumberOfHands), TextColor.White);
             popup.AddText(new Position(32, 138), string.Format(DataNameProvider.ItemFingersDisplay, item.NumberOfFingers), TextColor.White);
-            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace(" {0:000}", item.Damage.ToString("+#;-#; 0")), TextColor.White);
-            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace(" {0:000}", item.Defense.ToString("+#;-#; 0")), TextColor.White);
+            bool showCursed = item.Flags.HasFlag(ItemFlags.Accursed) && itemSlot.Flags.HasFlag(ItemSlotFlags.Identified);
+            int damage = showCursed ? -item.Damage : item.Damage;
+            int defense = showCursed ? -item.Defense : item.Defense;
+            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace("  {0:00}", damage.ToString("+#;-#; 0")).Replace(" {0:000}", damage.ToString("+#;-#; 0")), TextColor.White);
+            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace("  {0:00}", defense.ToString("+#;-#; 0")).Replace(" {0:000}", defense.ToString("+#;-#; 0")), TextColor.White);
 
             popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, TextColor.LightGray);
             int column = 0;
@@ -12331,7 +12334,7 @@ namespace Ambermoon
             {
                 var contentArea = detailsPopup.ContentArea;
                 AddAnimatedText((area, text, color, align) => detailsPopup.AddText(area, text, color, align),
-                    new Rect(contentArea.X, 124, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed,
+                    new Rect(contentArea.X, 127, contentArea.Width, Global.GlyphLineHeight), DataNameProvider.Cursed,
                     TextAlign.Center, () => layout.PopupActive && itemPopup?.HasChildPopup == true, 50, false);
             }
         }
