@@ -51,10 +51,10 @@ namespace Ambermoon
 
         static readonly string[] VersionSavegameFolders = new string[5]
         {
-            "advanced_german",
-            "advanced_english",
             "german",
             "english",
+            "advanced_german",
+            "advanced_english",
             "external"
         };
 
