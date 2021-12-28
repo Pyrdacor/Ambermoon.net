@@ -109,9 +109,13 @@ namespace Ambermoon.Data.Legacy
                         using var stream = File.OpenRead(Path.Combine(backupPath, name));
                         return fileReader.ReadFile(name, stream);
                     }
+                    IDataReader ReadFile(string name)
+                    {
+                        return ReadContainer(name).Files[1];
+                    }
                     savegameFiles = new SavegameInputFiles
                     {
-                        SaveDataReader = new DataReader(File.ReadAllBytes(Path.Combine(backupPath, "Party_data.sav"))),
+                        SaveDataReader = ReadFile("Party_data.sav"),
                         PartyMemberDataReaders = ReadContainer("Party_char.amb"),
                         ChestDataReaders = ReadContainer("Chest_data.amb"),
                         MerchantDataReaders = ReadContainer("Merchant_data.amb"),
@@ -129,9 +133,13 @@ namespace Ambermoon.Data.Legacy
                             using var stream = File.OpenRead(Path.Combine(path, name));
                             return fileReader.ReadFile(name, stream);
                         }
+                        IDataReader ReadFile(string name)
+                        {
+                            return ReadContainer(name).Files[1];
+                        }
                         savegameFiles = new SavegameInputFiles
                         {
-                            SaveDataReader = new DataReader(File.ReadAllBytes(Path.Combine(path, "Party_data.sav"))),
+                            SaveDataReader = ReadFile("Party_data.sav"),
                             PartyMemberDataReaders = ReadContainer("Party_char.amb"),
                             ChestDataReaders = ReadContainer("Chest_data.amb"),
                             MerchantDataReaders = ReadContainer("Merchant_data.amb"),
