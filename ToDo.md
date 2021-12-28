@@ -5,6 +5,11 @@
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks strange
 
 
+## 2D maps
+
+- Crypt door and most likely others like temple of gala are triggerable by horse and therefore remove it.
+
+
 ## 3D maps
 
 - 3D monster get easily stuck on wall edges.
@@ -19,6 +24,8 @@
 
 ## UI
 
+- Triggering a yes/no button by key takes very long to execute the action
+- Save scroll offset for save/load lists
 - Giving items per cheat to a char but have another char's inventory open, shows messed up item amounts.
 - When closing the spell book with RMB in battle and there is a battle actor behind the window, the inventory is opened afterwards.
 - "Do you accept this character?" message is missing in character creator.
@@ -28,6 +35,7 @@
 
 ## Misc
 
+- Around the Bandit's house you still get poisoned
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
 - Where is the text "CannotCarryAllGold" used?
