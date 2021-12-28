@@ -6616,6 +6616,7 @@ namespace Ambermoon
 
             conversationEvent ??= GetFirstMatchingEvent(e => e.Interaction == InteractionType.Talk);
 
+            bool creatingItems = false;
             var createdItemSlots = createdItems.Slots.ToList();
             var currentInteractionType = InteractionType.Talk;
             bool lastEventStatus = true;
@@ -7094,11 +7095,17 @@ namespace Ambermoon
                 }
                 else if (conversationEvent is ExitEvent)
                 {
+                    // Exit event triggered after create event -> abort.
+                    if (creatingItems)
+                        return;
+
                     Exit();
                     nextAction?.Invoke(EventType.Exit);
                 }
                 else if (conversationEvent is CreateEvent createEvent)
                 {
+                    creatingItems = true;
+
                     // Note: It is important to trigger the next action first
                     // as it might trigger a consumption of a previously given item.
                     // The create item only updates the grid of created items.
@@ -7118,7 +7125,9 @@ namespace Ambermoon
                             UpdateCharacterInfo(character);
                             break;
                     }
-                    
+
+                    if (conversationEvent == createEvent)
+                        conversationEvent = conversationEvent.Next;
                 }
                 else if (conversationEvent is InteractEvent)
                 {
@@ -7234,6 +7243,12 @@ namespace Ambermoon
                 itemGrid.Disabled = !createdItemSlots.Any(slot => !slot.Empty);
                 moveItemMessage?.Destroy();
                 moveItemMessage = null;
+
+                if (creatingItems && itemGrid.Disabled)
+                {
+                    creatingItems = false;
+                    HandleEvent();
+                }
             }
 
             void UpdateButtons()
