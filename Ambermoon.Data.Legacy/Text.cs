@@ -133,6 +133,7 @@ namespace Ambermoon.Data.Legacy
             int currentLineSize = 0;
             int numLines = 0;
             List<byte> line = new List<byte>();
+            byte lastGlyph = 0;
 
             void NewLine()
             {
@@ -154,7 +155,13 @@ namespace Ambermoon.Data.Legacy
                 if (currentLineSize == 0 && line.Count != 0 && glyph == (byte)SpecialGlyph.SoftSpace)
                     continue; // Trim start
 
+                if (glyph == (byte)SpecialGlyph.SoftSpace && lastGlyph == (byte)SpecialGlyph.SoftSpace)
+                    continue; // Trim double soft spaces
+
                 line.Add(glyph);
+
+                if (glyph < (byte)SpecialGlyph.NoTrim)
+                    lastGlyph = glyph;
 
                 if (glyph == (byte)SpecialGlyph.NewLine)
                     NewLine();

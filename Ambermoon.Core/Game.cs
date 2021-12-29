@@ -5274,10 +5274,6 @@ namespace Ambermoon
             uint targetX = teleportEvent.X == 0 ? x + 1 : teleportEvent.X;
             uint targetY = teleportEvent.Y == 0 ? y + 1 : teleportEvent.Y;
 
-            if (TravelType != TravelType.Walk && TravelType != TravelType.Swim &&
-                !CheckTeleportDestination(teleportEvent.MapIndex, targetX, targetY))
-                return;
-
             ResetMoveKeys();
             ResetMapCharacterInteraction(Map);
 
@@ -5285,6 +5281,15 @@ namespace Ambermoon
             {
                 levitating = false;
                 Teleport(teleportEvent.MapIndex, targetX, targetY, teleportEvent.Direction, out _, true);
+
+                if (TravelType.UsesMapObject() &&
+                    !CheckTeleportDestination(teleportEvent.MapIndex, targetX, targetY))
+                {
+                    ToggleTransport();
+                    var transport = GetTransportAtPlayerLocation(out int? index);
+                    CurrentSavegame.TransportLocations[index.Value] = null;
+                    renderMap2D.RemoveTransport(index.Value);
+                }
             }
 
             var transition = teleportEvent.Transition;

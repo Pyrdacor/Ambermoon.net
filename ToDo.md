@@ -3,6 +3,7 @@
 - Vanishing of wind spells looks odd in some cases
 - Initial scale of dissolve victim has bad anchor behavior if in front row.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks strange
+- There are other animations in monster data, maybe one of it is the "get moved by wind spell" animation?
 
 
 ## 3D maps
@@ -20,11 +21,11 @@
 ## UI
 
 - Triggering a yes/no button by key takes very long to execute the action
-- Save scroll offset for save/load lists
+- Save the scroll offset for save/load lists
 - Giving items per cheat to a char but have another char's inventory open, shows messed up item amounts.
 - When closing the spell book with RMB in battle and there is a battle actor behind the window, the inventory is opened afterwards.
 - "Do you accept this character?" message is missing in character creator.
-- Question about taking items with you is missing from conversations.
+- Question about taking items with you is missing from conversations. At least for non-essential items.
 - LevelUp popup while an item is given will draw that item in front of the popup.
 
 
