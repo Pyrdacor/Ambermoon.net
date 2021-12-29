@@ -5,11 +5,6 @@
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks strange
 
 
-## 2D maps
-
-- Crypt door and most likely others like temple of gala are triggerable by horse and therefore remove it.
-
-
 ## 3D maps
 
 - 3D monster get easily stuck on wall edges.

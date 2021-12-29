@@ -131,16 +131,27 @@ namespace Ambermoon.Render
 
                         if (HasSpecialEvent(mapAtNewPosition.EventList[(int)mapEventId.Value - 1], out var @event))
                         {
-                            if ((@event.Type != EventType.Teleport || !travelType.BlockedByTeleport() ||
-                                mapManager.GetMap((@event as TeleportEvent).MapIndex).UseTravelTypes) &&
-                                EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)newX, (uint)newY,
-                                    mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                            if (travelType.BlockedByTeleport())
                             {
-                                eventTriggered = true;
-                                return false;
+                                if (@event.Type == EventType.Teleport && !mapManager.GetMap((@event as TeleportEvent).MapIndex).UseTravelTypes)
+                                {
+                                    canMove = false;
+                                }
+                                else if (@event.Type == EventType.Door)
+                                {
+                                    canMove = false;
+                                }
                             }
-                            else
-                                canMove = false;
+
+                            if (canMove)
+                            {
+                                if (EventExtensions.TriggerEventChain(mapAtNewPosition, game, EventTrigger.Move, (uint)newX, (uint)newY,
+                                    mapAtNewPosition.EventList[(int)mapEventId.Value - 1]))
+                                {
+                                    eventTriggered = true;
+                                    return false;
+                                }
+                            }
                         }
                     }
                 }
