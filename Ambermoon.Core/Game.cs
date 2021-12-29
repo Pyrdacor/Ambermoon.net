@@ -10955,8 +10955,13 @@ namespace Ambermoon
 
         internal void SpawnTransport(uint mapIndex, uint x, uint y, TravelType travelType)
         {
-            // TODO: This could theoretically spawn the transport on the current
-            // map. In this case the transport should be added to the visual map immediately.
+            if (x == 0)
+                x = 1u + (uint)player.Position.X;
+            if (y == 0)
+                y = 1u + (uint)player.Position.Y;
+
+            int spawnIndex = -1;
+
             for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
             {
                 if (CurrentSavegame.TransportLocations[i] == null)
@@ -10967,6 +10972,7 @@ namespace Ambermoon
                         MapIndex = mapIndex,
                         Position = new Position((int)x, (int)y)
                     };
+                    spawnIndex = i;
                     break;
                 }
                 else if (CurrentSavegame.TransportLocations[i].TravelType == TravelType.Walk)
@@ -10974,8 +10980,20 @@ namespace Ambermoon
                     CurrentSavegame.TransportLocations[i].TravelType = travelType;
                     CurrentSavegame.TransportLocations[i].MapIndex = mapIndex;
                     CurrentSavegame.TransportLocations[i].Position = new Position((int)x, (int)y);
+                    spawnIndex = i;
                     break;
                 }
+            }
+
+            if (mapIndex == 0)
+                mapIndex = Map.Index;
+
+            if (mapIndex == Map.Index && spawnIndex != -1)
+            {
+                // TODO: In theory the transport could be visible even if the map index
+                // does not match as there might be adjacent maps visible. But for now
+                // there is no use case in Ambermoon nor Ambermoon Advanced.
+                renderMap2D.PlaceTransport(mapIndex, x - 1, y - 1, travelType, spawnIndex);
             }
         }
 
