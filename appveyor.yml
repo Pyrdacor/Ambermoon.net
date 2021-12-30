@@ -18,18 +18,11 @@ build:
   project: Ambermoon.net.sln
 
 artifacts:
-  - path: Ambermoon.net-Windows.zip
-    name: Ambermoon.net-Windows
-  - path: Ambermoon.net-Windows32Bit.zip
-    name: Ambermoon.net-Windows32Bit
-  - path: Ambermoon.net-Linux.tar.gz
-    name: Ambermoon.net-Linux
-  - path: Ambermoon.net-Mac.zip
-    name: Ambermoon.net-Mac
-  - path: Ambermoon.net-Mac-Bundle.zip
-    name: Ambermoon.net-Mac-Bundle
-  - path: nuget\*.nupkg
-    name: NugetPackages
+  - path: Ambermoon.net-Windows7.zip
+    name: Ambermoon.net-Windows7
+  - path: Ambermoon.net-Windows7-32Bit.zip
+    name: Ambermoon.net-Windows7-32Bit
+
 
 after_build:
     - ps: if ($env:APPVEYOR_REPO_TAG -eq $true) { ./publish.ps1 }
