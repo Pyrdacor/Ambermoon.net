@@ -59,7 +59,7 @@ namespace Ambermoon
 #pragma warning disable CS0618
         public void UpgradeAdditionalSavegameSlots()
         {
-            if (AdditionalSavegameSlots is not null)
+            if (AdditionalSavegameSlots != null)
                 return;
 
             AdditionalSavegameSlots = VersionSavegameFolders.Select(f => new AdditionalSavegameSlots
@@ -70,7 +70,7 @@ namespace Ambermoon
             }).ToArray();
 
             // Copy old savegame names to new format
-            if (AdditionalSavegameNames is not null && GameVersionIndex >= 0 && GameVersionIndex < 3)
+            if (AdditionalSavegameNames != null && GameVersionIndex >= 0 && GameVersionIndex < 3)
             {
                 // "external" moved from slot 2 to 4
                 var additionalSavegameSlot = AdditionalSavegameSlots[GameVersionIndex == 2 ? 4 : GameVersionIndex];
@@ -90,7 +90,7 @@ namespace Ambermoon
             if (GameVersionIndex < 0 || GameVersionIndex >= VersionSavegameFolders.Length)
                 GameVersionIndex = 0;
 
-            if (AdditionalSavegameSlots is null)
+            if (AdditionalSavegameSlots == null)
                 UpgradeAdditionalSavegameSlots();
             else if (GameVersionIndex >= AdditionalSavegameSlots.Length)
             {

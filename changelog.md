@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0 - Fourth patch (December 2021)
+
+- Version [1.4.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.0): Includes first Ambermoon Advanced release, huge amount of bugfixes
+
+
 ## 1.3.0 - Third patch (November 2021)
 
 - Version [1.3.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.3.0): Screenshot function, quicksaves, noclip cheat, usability and bugfixes
