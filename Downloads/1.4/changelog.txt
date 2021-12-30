@@ -1,0 +1,163 @@
+Version 1.4
+===========
+
+- Added fallback text "Textblock not found" if some text is missing (instead of just crashing)
+- The player is now always drawn on top of transports like ships
+- Fixed target cursor range
+- Teleport from land to water and vice versa is now allowed
+- Fixed some tile change events
+- LP/SP bars are now updaed when equipping an item which grants such values
+- Added magic animation for youth potion usage
+- Chest texts are no longer displayed when the chest is already looted
+- Corrected critical hit trainer picture
+- Resurrection spell will now correctly refill the LP
+- Rewards will now consider the random flag
+- Giving equipped items to self will now add them to the inventory instead of doing nothing
+- After a spell was learned, a right click will now correctly close the window and the spell is added
+- Failed dissolving spells will no longer remove or shrink the monster sprite
+- Text popups will now work if at the same time a tired or exhausted popup appears
+- Flying players will no longer be affected by map poison
+- Now always the same WM_CLASS is used so that window managers can rely on it for window settings
+- Kire's treasure chamber is now accessible
+- Fixed some issues with equip breaking during battle
+- Godmode and noclip cheats will now toggle
+- Unlocked chests will now show the correct map icon
+- Long text is now scrolled slowly so the eye can follow
+- Player switching via numpad is no longer possible if a popup is open
+- Added cheat to explore the whole map
+- Fixed some issues where text appeared above popups/windows in battle
+- Fixed wrong spell immunity handling
+- Fixed a crash when clicking during a battle
+- Ceilings an floors are now drawn behind all map objects
+- Fixed LP stealer spell
+- Battle messages with fast battle mode active, will now be shown a bit longer, important ones even longer
+- Thunderbolt is no longer only a white flash with fast battle mode active
+- Cheat console now also works when the game is started from terminals (CMD, bash, etc)
+- Closing chests without looting will now still trigger follow-up events
+- Improved size of decision boxes
+- In battle if a player and monster have same speed values, the player attacks first like in original
+- Extended savegame slot names are no longer shared between game versions
+- Copy original saves to an extended save slot will now work
+- You can no longer access doors on a horse
+- Fixed wrong music when leaving the camp window after you also opened the inventory
+- Spell book is now also disabled for non-magic c
+
+
+Version 1.3
+===========
+
+Features
+
+- Added quicksave with Ctrl+1 to Ctrl+0 (slots 1-10)
+- Added screenshot function (PrintScreen key or Ctrl+P)
+- Added alternating animations for some 2D characters
+- Options can now be scrolled with mouse wheel
+- Automap can now be closed by keys Space and Esc
+- You can now open the inventory with F1-F6 from automap
+- Game version can now also be confirmed with keys Space or Return
+- Other popups that can be closed by a click, can now also be closed with keys Space, Return or Esc
+- Added noclip cheat
+- Godmode now makes you immune to ailments
+
+Fixes
+
+- Fixed that NPCs are sometimes drawn partly above the player
+- When the last member is unable to select in fight, the game over screen is now shown
+- Fixed raft dealer picture
+- Places without 'closed' text index will now still block the player
+- If a curse leads to negative values, there is no longer a negative overflow
+- Items that are destroyed after use (e.g. torches) can not break anymore
+- You can now use the numpad keys to enter numbers
+- 2D movespeed now depends on the "travel graphics" map flag and not the world surface flag
+- While using a horse, raft, ship, lizard or sand ship you can now still teleport if the
+  target map allows travel types as well (e.g. teleport at the vortex or wind gates on a horse)
+- Fixed baseline (rendering) while swimming
+- Give gold/food buttons are now correctly enabled when your gold/food amount changes
+- Fixed issue when you gave an item twice to an NPC
+- Light will not be active in a dungeon when you sleep for hours just before the light source runs out
+- Music is now correctly remembered through event chains
+- LP/SP is now updated in the character info when using potions
+- Fixed cursed items
+- The item details will no longer show the "cursed" state if the item is not cursed anymore
+- Using items in 3D now requires you to stand more closely to the tile with the event
+- When falling down a hole or climbing down a ladder you are now placed at the correct position
+- Removing events which have some visual on the automap, will now remove that visual (e.g. a pile)
+- Levitating/climbing now only works if the event is still active
+- Levitating/climbing/falling will now place you on the correct position in all cases
+
+
+Version 1.2
+===========
+
+Adjustments to work like the original
+
+- Fixed APR (attacks per round) calculation
+- No level is shown for animal NPCs now
+- Dictionary words are sorted alphabetically
+- Cursed items will now also cripple Atk/Def
+- You won't receive damage anymore with 99 swim skill
+- Added music to the camp
+- The world is now also checked in battles for spells
+- Non-chest treasures will now show the correct image
+- Dward/Moranian blacksmiths, merchants and innkeepers
+  will now use the correct image
+- The superman cheat now also grants full light
+- While on eagle, broom or flying, you won't be affected
+  by swamp poison anymore
+- Corrected the superman music to 'Chicken Soup'
+
+Technical improvements and fixes
+
+- Added optional tooltips for all attributes, skills, ailments
+  and also for some character information fields like age or EP
+- Added 20 more savegame slots (can be disabled in the options)
+- On closing most temp files will be cleaned up
+- Minimizing the window now stops the music and pauses the game
+- Fixed crash when opening the dungeon map on some maps
+- When aborting the editing of a savegame name, the name no longer
+  stays there
+- When opening a popup in battle while hovering a monster, the
+  tooltip is no longer shown in front of that popup
+- Added the Thalion logo to the start (can be turned off in the options)
+- The Pyrdacor logo can be disabled in the options
+- Fixed a bug where the move keys were locked in when you die
+  while moving (e.g. due to poisoning)
+
+
+Version 1.1
+===========
+
+- Music is now correctly turned on when it is enabled in options
+- Eagle now allows movement when overweight
+- Fixed some issues with two-handed weapons
+- When loading a game on a broom or eagle, no map events will be triggered
+- Fixed teleport cheat for world maps
+- Fixed a crash related to wrong map position
+- Fixed camp button enabling when swimming
+- Fixed an issue where the text of the active player sometimes became red
+- Adjusted some popup sizes
+- Exchanged equipment will no longer reset to the inventory instead on right click
+- Shift + Up/Down scrolls to top or bottom
+- Added 2D map auto-poison and random animations (swamp thingies)
+- Playing the elf harp will automatically enable the music
+- With godmode you will now always hit
+- Fixed a crash in battle position window
+- Fixed a bug where the player could disappear on a broom or eagle
+- Fixed some SP stealer issues
+- Loading chars with equipped two-handed weapons will no show the second hand red cross
+- When dying the exhaustion effect (stat crippling) is now reverted as well
+- Fixed horse/raft/ship sellers
+- Adjusted unlocked door event chains to be conform with the original
+- Lamed and sleeping players can now be blinked
+- The Netsrak cheat no longer maxes the age
+- Fixed interaction of aging popups and exhaustion/tired popups (no game freeze anymore)
+- World map coordinates will no longer exceed the range (e.g 801 etc)
+- The sand ship can no longer enter doors
+- Use items will now also trigger events on adjacent tiles (even in 2D)
+- The youth potion can no longer increase the age when you are younger than 18
+- Using a water of life can no longer fail
+- SLP and SP no longer appear on non-magic chars when storing items etc
+- Toggling music will now correctly continue the music
+- The game now also works with unimploded original executables
+- Updated to the latest original game version (1.0en and 1.09de)
+- Added an easteregg which was also present in the original :)

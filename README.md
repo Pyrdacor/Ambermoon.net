@@ -6,17 +6,21 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.3.0 is the most recent version from 15-11-2021.
+Version 1.4.0 is the most recent version from 30-12-2021. It even includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced) now!
 
 The full package with additional resources can now also be downloaded from my new website at www.pyrdacor.net!
 
 Version | Download
 --- | ---
-**1.3.0** (Windows 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.3/Ambermoon.net-Windows.zip)
-**1.3.0** (Linux 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.3/Ambermoon.net-Linux.tar.gz)
-**1.3.0** (Mac 64bit bundled) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.3/Ambermoon.net-Mac-Bundle.zip)
-**1.3.0** (Mac 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.3/Ambermoon.net-Mac.zip)
-**1.3.0** (Windows 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.3/Ambermoon.net-Windows32Bit.zip)
+**1.4.0** (Windows 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.4/Ambermoon.net-Windows.zip)
+**1.4.0** (Linux 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.4/Ambermoon.net-Linux.tar.gz)
+**1.4.0** (Mac 64bit bundled) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.4/Ambermoon.net-Mac-Bundle.zip)
+**1.4.0** (Mac 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.4/Ambermoon.net-Mac.zip)
+**1.4.0** (Windows 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.4/Ambermoon.net-Windows32Bit.zip)
+**1.4.0** (Windows 7 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.4/Ambermoon.net-Windows7.zip)
+**1.4.0** (Windows 7 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads/1.4/Ambermoon.net-Windows7-32Bit.zip)
+
+Note: From version 1.4.0 onwards if you want to play on Windows 7 there are new extra downloads for it!
 
 Problems? The [FAQ](FAQ.md) might help.
 
@@ -29,7 +33,7 @@ Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/raw
 If you are interested in the original Amiga game files you can find them here: https://github.com/Pyrdacor/Ambermoon. I released some
 new versions and patches of the original game files there as well.
 
-A new Mod is planned called [Ambermoon Advanced](https://GitHub.com/Pyrdacor/Ambermoon-Advanced).
+A new extension was just released called [Ambermoon Advanced](https://GitHub.com/Pyrdacor/Ambermoon-Advanced). Check it out!
 
 ### Additional Resources
 
