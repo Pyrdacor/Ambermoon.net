@@ -69,9 +69,11 @@ namespace Ambermoon
                 Names = new string[Game.NumAdditionalSavegameSlots]
             }).ToArray();
 
-            if (AdditionalSavegameNames is not null && GameVersionIndex >= 0 && GameVersionIndex < VersionSavegameFolders.Length)
+            // Copy old savegame names to new format
+            if (AdditionalSavegameNames is not null && GameVersionIndex >= 0 && GameVersionIndex < 3)
             {
-                var additionalSavegameSlot = AdditionalSavegameSlots[GameVersionIndex];
+                // "external" moved from slot 2 to 4
+                var additionalSavegameSlot = AdditionalSavegameSlots[GameVersionIndex == 2 ? 4 : GameVersionIndex];
 
                 additionalSavegameSlot.ContinueSavegameSlot = ContinueSavegameSlot ?? 0;
 
