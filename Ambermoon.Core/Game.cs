@@ -3657,7 +3657,7 @@ namespace Ambermoon
                 Resume();
                 ResetMoveKeys();
                 UpdateLight();
-                if (lastPlayedSong != null)
+                if (lastPlayedSong != null && lastPlayedSong != Song.BarBrawlin)
                     PlayMusic(lastPlayedSong.Value);
                 else
                     PlayMusic(TravelType.TravelSong());

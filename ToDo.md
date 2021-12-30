@@ -31,8 +31,6 @@
 
 ## Misc
 
-- The additional save names are shared between game versions. This should not be the case!
-- Entering inventory while resting will keep playing the camp music after returning to map
 - Around the Bandit's house you still get poisoned
 - Teleport cheat can teleport to non-blocking map areas which are "outside" the map borders.
   For example map 344 (Ferrin's forge) has many areas that are considered outside the house.
