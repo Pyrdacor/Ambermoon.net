@@ -4,6 +4,7 @@
 - Initial scale of dissolve victim has bad anchor behavior if in front row.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks strange
 - There are other animations in monster data, maybe one of it is the "get moved by wind spell" animation?
+- In rare cases (I guess if two party members are killed with one spell in battle) there is a part of the head below the skull in the portrait area
 
 
 ## 3D maps
