@@ -14425,10 +14425,29 @@ namespace Ambermoon
                 }
 
                 if (switched)
+                {
                     UpdateLight(false, false, true);
+
+                    if (!WindowActive)
+                        layout.UpdateLayoutButtons();
+                }
 
                 ActivePlayerChanged?.Invoke();
             }
+        }
+
+        internal bool CanUseSpells()
+        {
+            if (Map?.CanUseSpells != true)
+                return false;
+
+            if (CurrentPartyMember?.Class.IsMagic() != true)
+                return false;
+
+            if (CurrentPartyMember?.Ailments.CanCastSpell() != true)
+                return false;
+
+            return true;
         }
 
         internal void DropGold(uint amount)

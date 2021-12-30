@@ -1670,7 +1670,7 @@ namespace Ambermoon.UI
                         buttonGrid.SetButton(1, ButtonType.Hand, false, null, false, GetTooltip(Button.TooltipType.Hand), () => CursorType.Hand);
                         buttonGrid.SetButton(2, ButtonType.Mouth, false, null, false, GetTooltip(Button.TooltipType.Mouth), () => CursorType.Mouth);
                         buttonGrid.SetButton(3, ButtonType.Transport, !TransportEnabled, game.ToggleTransport, false, GetTooltip(Button.TooltipType.Transport));
-                        buttonGrid.SetButton(4, ButtonType.Spells, game?.Map?.CanUseSpells != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
+                        buttonGrid.SetButton(4, ButtonType.Spells, game?.CanUseSpells() != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true || game?.TravelType.CanCampOn() != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
                         buttonGrid.SetButton(6, ButtonType.Map, true, null, false, null);
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
@@ -1702,7 +1702,7 @@ namespace Ambermoon.UI
                             }
                         }, true, GetTooltip(Button.TooltipType.Mouth));
                         buttonGrid.SetButton(3, ButtonType.Transport, true, null, false); // Never enabled or usable in 3D maps
-                        buttonGrid.SetButton(4, ButtonType.Spells, game?.Map?.CanUseSpells != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
+                        buttonGrid.SetButton(4, ButtonType.Spells, game?.CanUseSpells() != true, () => game.CastSpell(false), false, GetTooltip(Button.TooltipType.Spells));
                         buttonGrid.SetButton(5, ButtonType.Camp, game?.Map?.CanCamp != true, () => game.OpenCamp(false), false, GetTooltip(Button.TooltipType.Camp));
                         buttonGrid.SetButton(6, ButtonType.Map, false, game.ShowAutomap, false, GetTooltip(Button.TooltipType.Automap));
                         buttonGrid.SetButton(7, ButtonType.BattlePositions, false, game.ShowBattlePositionWindow, false, GetTooltip(Button.TooltipType.BattlePositions));
