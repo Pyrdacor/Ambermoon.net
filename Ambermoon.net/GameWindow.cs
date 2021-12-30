@@ -49,15 +49,6 @@ namespace Ambermoon
         LogoPyrdacor logoPyrdacor = null;
         Graphic[] logoPalettes;
 
-        static readonly string[] VersionSavegameFolders = new string[5]
-        {
-            "german",
-            "english",
-            "advanced_german",
-            "advanced_english",
-            "external"
-        };
-
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
         public int Width { get; private set; }
@@ -637,6 +628,8 @@ namespace Ambermoon
                         executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
                     var savegameManager = new SavegameManager(savePath);
                     savegameManager.GetSavegameNames(gameData, out int currentSavegame, 10);
+                    if (currentSavegame == 0 && configuration.ExtendedSavegameSlots)
+                        currentSavegame = configuration.GetOrCreateCurrentAdditionalSavegameSlots()?.ContinueSavegameSlot ?? 0;
                     bool canContinue = currentSavegame != 0;
                     var cursor = new Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly());
                     cursor.UpdatePosition(ConvertMousePosition(mouse.Position), null);
@@ -797,7 +790,7 @@ namespace Ambermoon
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(), Features.None);
+                selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(), Features.None);
                 return false;
             }
 
@@ -915,7 +908,7 @@ namespace Ambermoon
                 {
                     configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                     configuration.GameVersionIndex = gameVersionIndex;
-                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]),
+                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(Configuration.VersionSavegameFolders[gameVersionIndex]),
                         gameVersions[gameVersionIndex].Language.ToGameLanguage(), gameVersions[gameVersionIndex].Features);
                     versionLoader.Dispose();
                 };

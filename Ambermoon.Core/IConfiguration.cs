@@ -19,6 +19,7 @@
  * along with Ambermoon.net. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Collections.Generic;
 
 namespace Ambermoon
@@ -44,6 +45,13 @@ namespace Ambermoon
 
             return resolutions;
         }
+    }
+
+    public class AdditionalSavegameSlots
+    {
+        public string GameVersionName { get; set; }
+        public string[] Names { get; set; } = new string[20];
+        public int ContinueSavegameSlot { get; set; } = 0;
     }
 
     public interface IConfiguration
@@ -74,8 +82,14 @@ namespace Ambermoon
         bool ShowPyrdacorLogo { get; set; }
         bool ShowThalionLogo { get; set; }
         bool ExtendedSavegameSlots { get; set; }
+        [Obsolete("Use AdditionalSavegameSlots instead.")]
         string[] AdditionalSavegameNames { get; set; }
-        int ContinueSavegameSlot { get; set; }
+        [Obsolete("Use AdditionalSavegameSlots instead.")]
+        int? ContinueSavegameSlot { get; set; }
+        AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
+
+        void UpgradeAdditionalSavegameSlots();
+        AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots();
     }
 
     public static class ConfigurationExtensions

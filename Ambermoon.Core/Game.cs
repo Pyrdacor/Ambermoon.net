@@ -233,6 +233,7 @@ namespace Ambermoon
         readonly Random random = new Random();
         bool disableMusicChange = false;
         internal Features Features { get; }
+        public const int NumAdditionalSavegameSlots = 20;
         internal SavegameTime GameTime { get; private set; } = null;
         readonly List<uint> changedMaps = new List<uint>();
         internal const int FadeTime = 1000;
@@ -2035,15 +2036,17 @@ namespace Ambermoon
 
                 if (slot > 10) // extended slots
                 {
-                    if (Configuration.AdditionalSavegameNames == null)
-                        Configuration.AdditionalSavegameNames = new string[20];
-                    else if (Configuration.AdditionalSavegameNames.Length > 20)
-                        Configuration.AdditionalSavegameNames = Configuration.AdditionalSavegameNames.Take(20).ToArray();
-                    else if (Configuration.AdditionalSavegameNames.Length < 20)
-                        Configuration.AdditionalSavegameNames = Enumerable.Concat(Configuration.AdditionalSavegameNames,
-                            Enumerable.Repeat("", 20 - Configuration.AdditionalSavegameNames.Length)).ToArray();
+                    var additionalSavegameSlots = Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
 
-                    Configuration.AdditionalSavegameNames[slot - 11] = name;
+                    if (additionalSavegameSlots.Names == null)
+                        additionalSavegameSlots.Names = new string[NumAdditionalSavegameSlots];
+                    else if (additionalSavegameSlots.Names.Length > NumAdditionalSavegameSlots)
+                        additionalSavegameSlots.Names = additionalSavegameSlots.Names.Take(NumAdditionalSavegameSlots).ToArray();
+                    else if (additionalSavegameSlots.Names.Length < NumAdditionalSavegameSlots)
+                        additionalSavegameSlots.Names = Enumerable.Concat(additionalSavegameSlots.Names,
+                            Enumerable.Repeat("", NumAdditionalSavegameSlots - additionalSavegameSlots.Names.Length)).ToArray();
+
+                    additionalSavegameSlots.Names[slot - 11] = name;
                 }
             });
         }
@@ -2073,7 +2076,7 @@ namespace Ambermoon
 
             void Continue()
             {
-                int current = Configuration.ExtendedSavegameSlots ? Configuration.ContinueSavegameSlot : 0;
+                int current = Configuration.ExtendedSavegameSlots ? Configuration.GetOrCreateCurrentAdditionalSavegameSlots()?.ContinueSavegameSlot ?? 0 : 0;
 
                 if (current <= 0)
                     SavegameManager.GetSavegameNames(renderView.GameData, out current, 10);
@@ -14170,7 +14173,7 @@ namespace Ambermoon
                     InputEnable = true;
                     bool hasSavegames = SavegameManager.GetSavegameNames(renderView.GameData, out _, 10).Any(n => !string.IsNullOrWhiteSpace(n));
                     if (!hasSavegames)
-                        hasSavegames = Configuration.ExtendedSavegameSlots && Configuration.AdditionalSavegameNames?.Any(s => !string.IsNullOrWhiteSpace(s)) == true;
+                        hasSavegames = Configuration.ExtendedSavegameSlots && Configuration.GetOrCreateCurrentAdditionalSavegameSlots()?.Names?.Any(s => !string.IsNullOrWhiteSpace(s)) == true;
                     layout.AddText(textArea, ProcessText(hasSavegames
                         ? DataNameProvider.GameOverLoadOrQuit
                         : GetCustomText(CustomTexts.Index.StartNewGameOrQuit)),

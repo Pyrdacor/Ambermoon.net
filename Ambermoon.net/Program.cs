@@ -49,6 +49,7 @@ namespace Ambermoon
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             var configuration = LoadConfig();
+            configuration.UpgradeAdditionalSavegameSlots();
             var gameWindow = new GameWindow();
 
             try
