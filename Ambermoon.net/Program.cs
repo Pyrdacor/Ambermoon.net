@@ -96,7 +96,9 @@ namespace Ambermoon
             // NET6 needs to extract some native dependecies as well.
             // TODO: Maybe later (.NET6 etc) we can remove this.
             bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+#pragma warning disable IL3000
             string appFolder = Assembly.GetEntryAssembly().Location;
+#pragma warning restore IL3000
 
             if (string.IsNullOrEmpty(appFolder))
                 appFolder = AppContext.BaseDirectory;

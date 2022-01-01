@@ -7,12 +7,10 @@ if ($isWindows) {
   Write-Host Pack standalone zips for Windows
   cmd /c copy /b "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x64\publish\Ambermoon.net.exe"+"versions.dat" "Ambermoon.net\Ambermoon.net.exe"
   7z a Ambermoon.net-Windows.zip "Ambermoon.net\Ambermoon.net.exe"
-  7z a Ambermoon.net-Windows7.zip "Ambermoon.net\Ambermoon.net.exe"
-  7z a Ambermoon.net-Windows7.zip "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x64\publish\api-ms-win-core-winrt-l1-1-0.dll"
+  7z a Ambermoon.net-Windows7.zip "Ambermoon.net\Ambermoon.net.exe" "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x64\publish\api-ms-win-core-winrt-l1-1-0.dll"
   cmd /c copy /b "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x86\publish\Ambermoon.net.exe"+"versions.dat" "Ambermoon.net\Ambermoon.net.exe"
   7z a Ambermoon.net-Windows32Bit.zip "Ambermoon.net\Ambermoon.net.exe"
-  7z a Ambermoon.net-Windows7-32Bit.zip "Ambermoon.net\Ambermoon.net.exe"
-  7z a Ambermoon.net-Windows7-32Bit.zip "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x86\publish\api-ms-win-core-winrt-l1-1-0.dll"
+  7z a Ambermoon.net-Windows7-32Bit.zip "Ambermoon.net\Ambermoon.net.exe" "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x86\publish\api-ms-win-core-winrt-l1-1-0.dll"
 } elseif ($isLinux) {
   Write-Host Publish Linux executable
   Set-Variable -Name UseGLES -Value false
