@@ -47,20 +47,20 @@
     <None Remove="Resources\logo.pyr" />
     <None Remove="Resources\song.pyr" />
     <None Remove="Resources\windowIcon.png" />
-    <None Remove="x64\api-ms-win-core-winrt-l1-1-0.dll" />
-    <None Remove="x86\api-ms-win-core-winrt-l1-1-0.dll" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Platform)'!='x86'">
     <ContentWithTargetPath Include="x64\api-ms-win-core-winrt-l1-1-0.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  <TargetPath>api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
+	  <TargetPath>x64\api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
+	  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </ContentWithTargetPath>
   </ItemGroup>
   <ItemGroup Condition="'$(Platform)'=='x86'">
     <ContentWithTargetPath Include="x86\api-ms-win-core-winrt-l1-1-0.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  <TargetPath>api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
+	  <TargetPath>x86\api-ms-win-core-winrt-l1-1-0.dll</TargetPath>
+	  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </ContentWithTargetPath>
   </ItemGroup>
 
@@ -112,6 +112,15 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="x64\api-ms-win-core-winrt-l1-1-0.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="x86\api-ms-win-core-winrt-l1-1-0.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
