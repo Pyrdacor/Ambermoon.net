@@ -63,8 +63,7 @@ namespace Ambermoon
             finally
             {
                 SaveConfig(configuration);
-                // Not needed in .NET6 anymore.
-                //DotnetCleanup();
+                DotnetCleanup();
             }
         }
 
@@ -94,10 +93,17 @@ namespace Ambermoon
             // As of netcore 3.1 the self-contained assembly will extract
             // all dependencies to a temp location. This is not cleaned up
             // automatically. So we try to do so on termination.
+            // NET6 needs to extract some native dependecies as well.
             // TODO: Maybe later (.NET6 etc) we can remove this.
             bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-            string mainExecutable = Assembly.GetEntryAssembly().Location;
-            string appFolder = Path.TrimEndingDirectorySeparator(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+            string appFolder = Assembly.GetEntryAssembly().Location;
+
+            if (string.IsNullOrEmpty(appFolder))
+                appFolder = AppContext.BaseDirectory;
+            else
+                appFolder = Path.GetDirectoryName(appFolder);
+
+            appFolder = Path.TrimEndingDirectorySeparator(appFolder);
 
             if (isWindows)
             {

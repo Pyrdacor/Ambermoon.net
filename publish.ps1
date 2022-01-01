@@ -2,8 +2,8 @@ $ErrorActionPreference = 'Stop';
 
 if ($isWindows) {
   Write-Host Publish Windows executables
-  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r win-x86 --no-restore --nologo --self-contained
-  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r win-x64 --no-restore --nologo --self-contained
+  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -r win-x86 --no-restore --nologo --self-contained
+  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -r win-x64 --no-restore --nologo --self-contained
   Write-Host Pack standalone zips for Windows
   cmd /c copy /b "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x64\publish\Ambermoon.net.exe"+"versions.dat" "Ambermoon.net\Ambermoon.net.exe"
   7z a Ambermoon.net-Windows.zip "Ambermoon.net\Ambermoon.net.exe"
@@ -17,7 +17,7 @@ if ($isWindows) {
   Write-Host Publish Linux executable
   Set-Variable -Name UseGLES -Value false
   dotnet build -c Release "./Ambermoon.Renderer.OpenGL/Ambermoon.Renderer.OpenGL.csproj"
-  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r linux-x64 --no-restore --self-contained
+  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -r linux-x64 --no-restore --self-contained
   dotnet publish -c Release "./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj" -r linux-x64 --no-restore
   Write-Host Pack tar for Linux
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/linux-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/Release/net6.0/linux-x64/publish/Ambermoon.net"'
@@ -26,7 +26,7 @@ if ($isWindows) {
   rm Ambermoon.net-Linux.tar
 } else {
   Write-Host Publish Mac executable
-  dotnet publish -c ReleaseMac "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -r osx-x64 --no-restore --self-contained
+  dotnet publish -c ReleaseMac "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -r osx-x64 --no-restore --self-contained
   dotnet publish -c Release "./Ambermoon.ConcatFiles/Ambermoon.ConcatFiles.csproj" -r osx-x64 --no-restore
   Write-Host Pack zips for Mac
   Start-Process -FilePath "./Ambermoon.ConcatFiles/bin/Any CPU/Release/netcoreapp3.1/osx-x64/publish/Ambermoon.ConcatFiles" -Wait -WorkingDirectory . -ArgumentList '"./versions.dat"','"./Ambermoon.net/bin/Any CPU/ReleaseMac/netcoreapp3.1/osx-x64/publish/Ambermoon.net"'
