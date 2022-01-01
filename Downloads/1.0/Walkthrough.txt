@@ -2658,7 +2658,7 @@ killing these fierce foes.
 You  still might get attacked by curse wasps now and then but that can't be
 helped at the moment.
 
-Dor  Grestin  has  two entries, one at [104,65] and the other at [108,182].
+Dor  Grestin  has two entries, one at [104,165] and the other at [108,182].
 Enter  and  explore the city.  Note the mushrooms running around (!) in Dor
 Grestin.   You should have a close look at them and put one of it into your
 backpack.   The  curse  wasps don't like the intense smell of the mushrooms
