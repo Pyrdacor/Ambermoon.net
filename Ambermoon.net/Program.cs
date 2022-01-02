@@ -59,6 +59,7 @@ namespace Ambermoon
             catch (Exception ex)
             {
                 PrintException(ex);
+                Environment.Exit(1);
             }
             finally
             {
@@ -67,12 +68,28 @@ namespace Ambermoon
             }
         }
 
+        static void OutputError(string error)
+        {
+            Console.WriteLine(error);
+            
+            try
+            {
+                File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "error.txt"), error);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             if (e.ExceptionObject is Exception ex)
                 PrintException(ex);
             else
-                Console.WriteLine(e.ExceptionObject?.ToString() ?? "Unhandled exception without exception object");
+                OutputError(e.ExceptionObject?.ToString() ?? "Unhandled exception without exception object");
+
+            Environment.Exit(1);
         }
 
         static void PrintException(Exception ex)
@@ -85,7 +102,7 @@ namespace Ambermoon
                 ex = ex.InnerException;
             }
 
-            Console.WriteLine(message + Environment.NewLine + ex.StackTrace);
+            OutputError(message + Environment.NewLine + ex.StackTrace ?? "");
         }
 
         static void DotnetCleanup()
