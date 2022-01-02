@@ -6,7 +6,7 @@ Version 1.4
 - Fixed target cursor range
 - Teleport from land to water and vice versa is now allowed
 - Fixed some tile change events
-- LP/SP bars are now updaed when equipping an item which grants such values
+- LP/SP bars are now updated when equipping an item which grants such values
 - Added magic animation for youth potion usage
 - Chest texts are no longer displayed when the chest is already looted
 - Corrected critical hit trainer picture
@@ -40,7 +40,7 @@ Version 1.4
 - Copy original saves to an extended save slot will now work
 - You can no longer access doors on a horse
 - Fixed wrong music when leaving the camp window after you also opened the inventory
-- Spell book is now also disabled for non-magic c
+- Spell book is now also disabled for non-magic characters
 
 
 Version 1.3
