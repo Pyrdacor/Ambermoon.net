@@ -46,7 +46,7 @@ A new extension was just released called [Ambermoon Advanced](https://GitHub.com
 ### Need help?
 
 - (*English*) New to Ambermoon? Please have a look [here](FirstPlay.md). \
-If you have questions feel free to ask via [email](mailto:trobt@web.de), on [Twitter](https://twitter.com/Pyrdacor2) or here in GitHub on the [issues page](https://github.com/Pyrdacor/Ambermoon.net/issues). Some more info follows below as well.
+If you have questions feel free to ask via [email](mailto:trobt@web.de), on [Twitter](https://twitter.com/Pyrdacor2) or here on GitHub on the [issues page](https://github.com/Pyrdacor/Ambermoon.net/issues). Some more info follows below as well.
 - (*German*) Du kennst Ambermoon noch nicht? Schau bitte [hier](FirstPlay.md). \
 Wenn du Fragen hast, meld dich einfach per [Email](mailto:trobt@web.de), auf [Twitter](https://twitter.com/Pyrdacor2) oder hier auf GitHub unter [Issues](https://github.com/Pyrdacor/Ambermoon.net/issues). Weiter unten gibt es auch noch einige Infos.
 
@@ -190,6 +190,7 @@ Special thanks to my top patreons:
 - AMike
 - frostwork
 - soulsuckingjerk
+- Mahen
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
