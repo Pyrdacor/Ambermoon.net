@@ -93,6 +93,7 @@ namespace Ambermoon.Render
             AddText("AMike");
             AddText("frostwork");
             AddText("soulsuckingjerk");
+            AddText("Mahen");
 
             AddHeader("Contributors", 12);
             AddText("Over the years many people contributed to Ambermoon.", 1);
