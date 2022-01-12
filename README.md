@@ -191,6 +191,7 @@ Special thanks to my top patreons:
 - frostwork
 - soulsuckingjerk
 - Mahen
+- timbo t
 
 Special thanks to some special contributors and testers as well:
 - kermitfrog
