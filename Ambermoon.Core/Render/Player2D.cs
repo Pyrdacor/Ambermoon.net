@@ -216,7 +216,8 @@ namespace Ambermoon.Render
                         player.Position.Y = Position.Y;
 
                         tile = Map[(uint)player.Position.X, (uint)player.Position.Y];
-                        Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
+                        bool hidePlayer = tile.Type == Data.Map.TileType.Invisible && game.CanSee();
+                        Visible = travelType != TravelType.Walk || !hidePlayer;
 
                         game.PlayerMoved(false, lastPlayerPosition);
                     }
@@ -244,7 +245,8 @@ namespace Ambermoon.Render
                         // Note: For 3D maps the game/3D map will handle player position updating.
 
                         tile = Map[(uint)player.Position.X, (uint)player.Position.Y];
-                        Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
+                        bool hidePlayer = tile.Type == Data.Map.TileType.Invisible && game.CanSee();
+                        Visible = travelType != TravelType.Walk || !hidePlayer;
 
                         game.PlayerMoved(true, null, true, oldMap);
                     }
@@ -276,7 +278,8 @@ namespace Ambermoon.Render
                         game.CurrentSavegame.CharacterDirection = newDirection;
                         UpdateAppearance(game.CurrentTicks);
                         tile = Map[(uint)Position.X, (uint)Position.Y];
-                        Visible = travelType != TravelType.Walk || tile.Type != Data.Map.TileType.Invisible;
+                        bool hidePlayer = tile.Type == Data.Map.TileType.Invisible && game.CanSee();
+                        Visible = travelType != TravelType.Walk || !hidePlayer;
                     }
                 }
             }

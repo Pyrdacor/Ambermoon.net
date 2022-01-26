@@ -5285,6 +5285,9 @@ namespace Ambermoon
                 levitating = false;
                 Teleport(teleportEvent.MapIndex, targetX, targetY, teleportEvent.Direction, out _, true);
 
+                if (Map.IsWorldMap && teleportEvent.NewTravelType != null && teleportEvent.NewTravelType != TravelType)
+                    TravelType = teleportEvent.NewTravelType.Value;
+
                 if (TravelType.UsesMapObject() &&
                     !CheckTeleportDestination(teleportEvent.MapIndex, targetX, targetY))
                 {

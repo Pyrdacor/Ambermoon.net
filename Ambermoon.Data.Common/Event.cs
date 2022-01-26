@@ -131,14 +131,14 @@ namespace Ambermoon.Data
         public uint X { get; set; }
         public uint Y { get; set; }
         public CharacterDirection Direction { get; set; }
-        public byte Unknown1 { get; set; }
+        public TravelType? NewTravelType { get; set; }
         public TransitionType Transition { get; set; }
         public byte[] Unknown2 { get; set; }
 
         public override string ToString()
         {
             var position = X == 0 || Y == 0 ? "same" : $"{X},{Y}";
-            return $"{Type}: Map {MapIndex} / Position {position} / Direction {Direction}, Transition {Transition}, Unknown1 {Unknown1:x2}, Unknown3 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Map {MapIndex} / Position {position} / Direction {Direction}, Transition {Transition}, New Travel Type {NewTravelType?.ToString() ?? "None"}, Unknown3 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}";
         }
     }
 
@@ -209,8 +209,12 @@ namespace Ambermoon.Data
         /// - Unknown4
         /// - Unknown5
         /// So at least the lowest 6 bits seem to have some meaning.
+        /// 
+        /// The Ambermoon code just checks the whole byte for != 0 and then performs the search skill check.
+        /// Maybe it had some other meaning in Amberstar.
         /// </summary>
         public ChestFlags Flags { get; set; }
+        public bool SearchSkillCheck => Flags != 0;
 
         public override string ToString()
         {
@@ -249,12 +253,12 @@ namespace Ambermoon.Data
         public EventTrigger PopupTrigger { get; set; }
         public bool CanTriggerByMoving => PopupTrigger.HasFlag(EventTrigger.Move);
         public bool CanTriggerByCursor => PopupTrigger.HasFlag(EventTrigger.EyeCursor);
-        public bool UnknownBool { get; set; }
+        public bool TriggerIfBlind { get; set; }
         public byte[] Unknown { get; set; }
 
         public override string ToString()
         {
-            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, UnknownBool {UnknownBool}, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
+            return $"{Type}: Text {TextIndex}, Image {(EventImageIndex == 0xff ? "None" : EventImageIndex.ToString())}, Trigger {PopupTrigger}, {(TriggerIfBlind ? "" : "Not ")}Trigger If Blind, Unknown {string.Join(" ", Unknown.Select(u => u.ToString("x2")))}";
         }
     }
 

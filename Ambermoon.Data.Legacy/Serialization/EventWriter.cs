@@ -34,7 +34,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // 1. byte is the x coordinate
                     // 2. byte is the y coordinate
                     // 3. byte is the character direction
-                    // Then 1 unknown byte
+                    // Then 1 byte for the new travel type (0xff means keep the same)
                     // Then 1 byte for the transtion type (0-5)
                     // Then a word for the map index
                     // Then 2 unknown bytes (seem to be 00 FF)
@@ -42,7 +42,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((byte)teleportEvent.X);
                     dataWriter.Write((byte)teleportEvent.Y);
                     dataWriter.WriteEnumAsByte(teleportEvent.Direction);
-                    dataWriter.Write(teleportEvent.Unknown1);
+                    dataWriter.Write(teleportEvent.NewTravelType == null ? (byte)0xff : (byte)teleportEvent.NewTravelType.Value);
                     dataWriter.Write((byte)teleportEvent.Transition);
                     dataWriter.Write((ushort)teleportEvent.MapIndex);
                     dataWriter.Write(teleportEvent.Unknown2);
@@ -96,7 +96,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     var textEvent = @event as PopupTextEvent;
                     dataWriter.Write((byte)textEvent.EventImageIndex);
                     dataWriter.WriteEnumAsByte(textEvent.PopupTrigger);
-                    dataWriter.Write((byte)(textEvent.UnknownBool ? 1 : 0));
+                    dataWriter.Write((byte)(textEvent.TriggerIfBlind ? 1 : 0));
                     dataWriter.Write((ushort)textEvent.TextIndex);
                     dataWriter.Write(textEvent.Unknown);
                     break;

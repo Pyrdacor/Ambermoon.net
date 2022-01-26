@@ -103,7 +103,7 @@ namespace Ambermoon
                     if (!(@event is ChestEvent chestEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
-                    if (chestEvent.Flags.HasFlag(ChestEvent.ChestFlags.SearchSkillCheck) &&
+                    if (chestEvent.SearchSkillCheck &&
                         game.RandomInt(0, 99) >= game.CurrentPartyMember.Abilities[Ability.Searching].TotalCurrentValue)
                     {
                         aborted = true;
@@ -139,6 +139,12 @@ namespace Ambermoon
                         default:
                             aborted = true;
                             return null;
+                    }
+
+                    if (!popupTextEvent.TriggerIfBlind && !game.CanSee())
+                    {
+                        aborted = true;
+                        return null;
                     }
 
                     bool eventStatus = lastEventStatus;

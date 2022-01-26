@@ -76,14 +76,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // 1. byte is the x coordinate
                     // 2. byte is the y coordinate
                     // 3. byte is the character direction
-                    // Then 1 unknown byte
+                    // Then 1 byte for the new travel type (0xff means keep the current one)
                     // Then 1 byte for the transtion type (0-5)
                     // Then a word for the map index
                     // Then 2 unknown bytes (seem to be 00 FF)
                     uint x = dataReader.ReadByte();
                     uint y = dataReader.ReadByte();
                     var direction = (CharacterDirection)dataReader.ReadByte();
-                    var unknown1 = dataReader.ReadByte();
+                    var newTravelType = dataReader.ReadByte();
                     var transition = (TeleportEvent.TransitionType)dataReader.ReadByte();
                     uint mapIndex = dataReader.ReadWord();
                     var unknown2 = dataReader.ReadBytes(2);
@@ -93,8 +93,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                         X = x,
                         Y = y,
                         Direction = direction,
+                        NewTravelType = newTravelType == 0xff ? null : (TravelType?)newTravelType,
                         Transition = transition,
-                        Unknown1 = unknown1,
                         Unknown2 = unknown2,
                     };
                     break;
@@ -165,7 +165,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     // 4 unknown bytes
                     var eventImageIndex = dataReader.ReadByte();
                     var popupTrigger = (EventTrigger)dataReader.ReadByte();
-                    var unknownBool = dataReader.ReadByte() != 0;
+                    var triggerIfBlind = dataReader.ReadByte() != 0;
                     var textIndex = dataReader.ReadWord();
                     var unknown = dataReader.ReadBytes(4);
                     @event = new PopupTextEvent
@@ -173,7 +173,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                         EventImageIndex = eventImageIndex,
                         PopupTrigger = popupTrigger,
                         TextIndex = textIndex,
-                        UnknownBool = unknownBool,
+                        TriggerIfBlind = triggerIfBlind,
                         Unknown = unknown
                     };
                     break;

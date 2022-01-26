@@ -416,10 +416,16 @@ namespace Ambermoon.Data
             if (Type != MapType.Map2D)
                 throw new AmbermoonException(ExceptionScope.Data, "Tiles can only be updated for 2D maps.");
 
-            if (Tiles[x, y].FrontTileIndex != 0 && newFrontTileIndex != 0 && newFrontTileIndex < 256)
-                Tiles[x, y].BackTileIndex = newFrontTileIndex;
+            if (newFrontTileIndex == 0)
+                Tiles[x, y].FrontTileIndex = 0;
             else
-                Tiles[x, y].FrontTileIndex = newFrontTileIndex;
+            {
+                if (tileset.Tiles[newFrontTileIndex - 1].Flags.HasFlag(Tileset.TileFlags.Background))
+                    Tiles[x, y].FrontTileIndex = newFrontTileIndex;
+                else
+                    Tiles[x, y].BackTileIndex = newFrontTileIndex;
+            }
+
             Tiles[x, y].Type = TileTypeFromTile(Tiles[x, y], tileset);
         }
 

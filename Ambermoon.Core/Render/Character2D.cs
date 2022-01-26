@@ -372,9 +372,10 @@ namespace Ambermoon.Render
                     topSprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
                 }
                 sprite.Visible = Game.Map2DViewArea.IntersectsWith(DisplayArea);
-                if (sprite.Visible && tileType == Data.Map.TileType.Invisible)
+                bool hidePlayer = tileType == Data.Map.TileType.Invisible && game.CanSee();
+                if (sprite.Visible && hidePlayer)
                     sprite.Visible = false;
-                if (topSprite != null && topSprite.Visible && tileType == Data.Map.TileType.Invisible)
+                if (topSprite != null && topSprite.Visible && hidePlayer)
                     topSprite.Visible = false;
                 UpdateBaseline();
             }
