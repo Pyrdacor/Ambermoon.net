@@ -20,7 +20,8 @@ namespace Ambermoon
         Right,
         Down,
         Left,
-        Random
+        Random,
+        Keep = Random
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]

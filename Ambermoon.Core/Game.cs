@@ -5240,6 +5240,9 @@ namespace Ambermoon
                 renderMap2D.ScrollToPlayer(newX, newY);
             }
 
+            if (direction == CharacterDirection.Keep)
+                direction = PlayerDirection;
+
             player.MoveTo(newMap, newX, newY, CurrentTicks, true, direction);
             this.player.Position.X = RenderPlayer.Position.X;
             this.player.Position.Y = RenderPlayer.Position.Y;
