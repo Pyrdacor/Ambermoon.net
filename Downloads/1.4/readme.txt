@@ -6,9 +6,9 @@
         \/      \/    \/     \/            \/                   \/  \/      \/     \/      
 
 
-             ---------------------------------------------------------------
-             | Ambermoon rewrite by Pyrdacor - Version 1.4 - December 2021 |
-             ---------------------------------------------------------------
+            ----------------------------------------------------------------
+            | Ambermoon rewrite by Pyrdacor - Version 1.4.1 - January 2022 |
+            ----------------------------------------------------------------
 
 
 Thank you for playing Ambermoon.net. If you have any questions, suggestions or other
@@ -16,9 +16,9 @@ feedback, feel free to visit the project on github: https://github.com/Pyrdacor/
 
 
 
-             ---------------------------------------------------------------
-             |                             Content                         |
-             ---------------------------------------------------------------
+            ----------------------------------------------------------------
+            |                             Content                          |
+            ----------------------------------------------------------------
 
 
 This package includes the playable assembly for Ambermoon.net and some additional resources.

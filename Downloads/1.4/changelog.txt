@@ -1,6 +1,7 @@
 Version 1.4
 ===========
 
+- Hotfix 1.4.1: Item rewards in conversation now work correctly
 - Added fallback text "Textblock not found" if some text is missing (instead of just crashing)
 - The player is now always drawn on top of transports like ships
 - Fixed target cursor range

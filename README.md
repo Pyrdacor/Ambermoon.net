@@ -6,19 +6,19 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.4.0 is the most recent version from 30-12-2021. It even includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced) now!
+Version 1.4.1 is the most recent version from 30-01-2022. It even includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced) now!
 
 The full package with additional resources can now also be downloaded from my new website at www.pyrdacor.net!
 
 Version | Download
 --- | ---
-**1.4.0** (Windows 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows.zip)
-**1.4.0** (Linux 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Linux.tar.gz)
-**1.4.0** (Mac 64bit bundled) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac-Bundle.zip)
-**1.4.0** (Mac 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac.zip)
-**1.4.0** (Windows 32bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows32Bit.zip)
-**1.4.0** (Windows 7 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7.zip)
-**1.4.0** (Windows 7 32bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7-32Bit.zip)
+**1.4.1** (Windows 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows.zip)
+**1.4.1** (Linux 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Linux.tar.gz)
+**1.4.1** (Mac 64bit bundled) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac-Bundle.zip)
+**1.4.1** (Mac 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac.zip)
+**1.4.1** (Windows 32bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows32Bit.zip)
+**1.4.1** (Windows 7 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7.zip)
+**1.4.1** (Windows 7 32bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7-32Bit.zip)
 
 Note: From version 1.4.0 onwards if you want to play on Windows 7 there are new extra downloads for it!
 

@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.4.0 - Fourth patch (December 2021)
+## 1.4.0 - Fourth patch (December 2021 - January 2022)
 
+- Version [1.4.1] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.1): Hotfix for 1.4.0 release (fixes missing item rewards in conversations)
 - Version [1.4.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.0): Includes first Ambermoon Advanced release, huge amount of bugfixes
 
 
