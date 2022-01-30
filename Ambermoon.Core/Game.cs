@@ -6806,7 +6806,10 @@ namespace Ambermoon
                                                 //ShowCreatedItems();
                                                 EndSequence();
                                                 Abort();
-                                                HandleNextEvent(null);
+                                                if (eventType == EventType.Interact)
+                                                    HandleNextEvent(null);
+                                                else
+                                                    HandleEvent(null);
                                             }, new Position(215, 75), false);
                                         }
                                         else
