@@ -37,11 +37,11 @@ A new extension was just released called [Ambermoon Advanced](https://GitHub.com
 
 ### Additional Resources
 
-- [Map](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonMap.pdf)
-- [Rune Table](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonRuneTable.png)
-- [German Manual / Handbuch Deutsch](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/Ambermoon_Handbuch_Deutsch.pdf)
-- [English Manual](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/AmbermoonManualEnglish.pdf)
-- [English Amiga Walkthrough](https://github.com/Pyrdacor/Ambermoon.net/blob/master/Downloads/1.0/Walkthrough.txt) by Michael Böhnisch (1999)
+- [Map](https://ambermoon-net.pyrdacor.net/download/AmbermoonMap.pdf)
+- [Rune Table](https://ambermoon-net.pyrdacor.net/download/AmbermoonRuneTable.png)
+- [German Manual / Handbuch Deutsch](https://ambermoon-net.pyrdacor.net/download/Ambermoon_Handbuch_Deutsch.pdf)
+- [English Manual](https://ambermoon-net.pyrdacor.net/download/AmbermoonManualEnglish.pdf)
+- [English Amiga Walkthrough](https://ambermoon-net.pyrdacor.net/download/Walkthrough.txt) by Michael Böhnisch (1999)
 
 ### Need help?
 
