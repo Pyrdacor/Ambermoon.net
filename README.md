@@ -12,13 +12,13 @@ The full package with additional resources can now also be downloaded from my ne
 
 Version | Download
 --- | ---
-**1.4.0** (Windows 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon-Releases/raw/main/Ambermoon.net/1.4/Ambermoon.net-Windows.zip)
-**1.4.0** (Linux 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon-Releases/raw/main/Ambermoon.net/1.4/Ambermoon.net-Linux.tar.gz)
-**1.4.0** (Mac 64bit bundled) | [Link](https://github.com/Pyrdacor/Ambermoon-Releases/raw/main/Ambermoon.net/1.4/Ambermoon.net-Mac-Bundle.zip)
-**1.4.0** (Mac 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon-Releases/raw/main/Ambermoon.net/1.4/Ambermoon.net-Mac.zip)
-**1.4.0** (Windows 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon-Releases/raw/main/Ambermoon.net/1.4/Ambermoon.net-Windows32Bit.zip)
-**1.4.0** (Windows 7 64bit) | [Link](https://github.com/Pyrdacor/Ambermoon-Releases/raw/main/Ambermoon.net/1.4/Ambermoon.net-Windows7.zip)
-**1.4.0** (Windows 7 32bit) | [Link](https://github.com/Pyrdacor/Ambermoon-Releases/raw/main/Ambermoon.net/1.4/Ambermoon.net-Windows7-32Bit.zip)
+**1.4.0** (Windows 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows.zip)
+**1.4.0** (Linux 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Linux.tar.gz)
+**1.4.0** (Mac 64bit bundled) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac-Bundle.zip)
+**1.4.0** (Mac 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac.zip)
+**1.4.0** (Windows 32bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows32Bit.zip)
+**1.4.0** (Windows 7 64bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7.zip)
+**1.4.0** (Windows 7 32bit) | [Link](http://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7-32Bit.zip)
 
 Note: From version 1.4.0 onwards if you want to play on Windows 7 there are new extra downloads for it!
 
