@@ -7987,7 +7987,13 @@ namespace Ambermoon
                 foreach (var attribute in Enum.GetValues<Attribute>())
                 {
                     partyMember.Attributes[attribute].StoredValue = partyMember.Attributes[attribute].CurrentValue;
-                    partyMember.Attributes[attribute].CurrentValue /= 2;
+                    partyMember.Attributes[attribute].CurrentValue >>= 1;
+                }
+
+                foreach (var ability in Enum.GetValues<Ability>())
+                {
+                    partyMember.Abilities[ability].StoredValue = partyMember.Abilities[ability].CurrentValue;
+                    partyMember.Abilities[ability].CurrentValue >>= 1;
                 }
             }
 
@@ -8000,6 +8006,12 @@ namespace Ambermoon
             {
                 partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].StoredValue;
                 partyMember.Attributes[attribute].StoredValue = 0;
+            }
+
+            foreach (var ability in Enum.GetValues<Ability>())
+            {
+                partyMember.Abilities[ability].CurrentValue = partyMember.Abilities[ability].StoredValue;
+                partyMember.Abilities[ability].StoredValue = 0;
             }
         }
 
