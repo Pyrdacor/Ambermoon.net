@@ -521,6 +521,16 @@ namespace Ambermoon.UI
                     itemSlot.Position = itemSlot.Position; // Important to re-position amount display if added
                     itemSlot.Update(true);
                     item.Item.Update(true);
+                    if (items[3] != null)
+                    {
+                        slots[3].Replace(items[3].Item);
+                        items[3].SetItem(slots[3]);
+                    }
+                    if (items[5] != null)
+                    {
+                        slots[5].Replace(items[5].Item);
+                        items[5].SetItem(slots[5]);
+                    }
                     ItemDragged?.Invoke(3, item.Item.Item, item.Item.Item.Amount, false);
                     ItemDropped?.Invoke(5, itemSlot.Item, itemSlot.Item.Amount);
                 }
@@ -537,6 +547,16 @@ namespace Ambermoon.UI
                     itemSlot.Visible = true;
                     itemSlot.Update(true);
                     item.Item.Update(true);
+                    if (items[3] != null)
+                    {
+                        slots[3].Replace(items[3].Item);
+                        items[3].SetItem(slots[3]);
+                    }
+                    if (items[5] != null)
+                    {
+                        slots[5].Replace(items[5].Item);
+                        items[5].SetItem(slots[5]);
+                    }
                     ItemDragged?.Invoke(5, item.Item.Item, item.Item.Item.Amount, false);
                     ItemDropped?.Invoke(3, itemSlot.Item, itemSlot.Item.Amount);
                 }
