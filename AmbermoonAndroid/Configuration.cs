@@ -48,6 +48,8 @@ namespace AmbermoonAndroid
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
         public bool ShowThalionLogo { get; set; } = true;
+        public bool ShowFloor { get; set; } = true;
+        public bool ShowCeiling { get; set; } = true;
         public bool ExtendedSavegameSlots { get; set; } = true;
         [Obsolete("Use AdditionalSavegameSlots instead.")]
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

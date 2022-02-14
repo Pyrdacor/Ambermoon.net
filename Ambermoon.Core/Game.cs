@@ -275,7 +275,7 @@ namespace Ambermoon
         IOutro outro = null;
         CustomOutro customOutro = null;
         internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) &&
-            (!Map.Flags.HasFlag(MapFlags.Dungeon) || CurrentSavegame.IsSpellActive(ActiveSpellType.Light));
+            (!Map.Flags.HasFlag(MapFlags.Dungeon) || lightIntensity > 0);
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
         internal bool PopupActive => layout?.PopupActive ?? false;
@@ -999,6 +999,9 @@ namespace Ambermoon
 
         internal void NotifyConfigurationChange(bool windowChange)
         {
+            if (is3D)
+                renderMap3D?.UpdateFloorAndCeilingVisibility(Configuration.ShowFloor, Configuration.ShowCeiling);
+
             ConfigurationChanged?.Invoke(Configuration, windowChange);
 
             if (windowChange && !trapped)
@@ -10150,6 +10153,7 @@ namespace Ambermoon
                 var light3D = Get3DLight();
                 renderView.SetLight(light3D);
                 renderMap3D.UpdateSky(lightEffectProvider, GameTime);
+                renderMap3D.SetColorLightFactor(light3D);
             }
             else // 2D
             {

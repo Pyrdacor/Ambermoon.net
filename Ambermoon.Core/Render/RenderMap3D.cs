@@ -701,6 +701,8 @@ namespace Ambermoon.Render
         ITextureAtlas textureAtlas = null;
         IColoredRect floorColor = null;
         IColoredRect ceilingColor = null;
+        Color baseFloorColor = null;
+        Color baseCeilingColor = null;
         List<IColoredRect> skyColors = null;
         readonly List<KeyValuePair<Position, IColoredRect>> stars = new List<KeyValuePair<Position, IColoredRect>>();
         SkySprite horizonSprite = null;
@@ -814,6 +816,8 @@ namespace Ambermoon.Render
                 game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex), 0);
             ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
                 game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex), 0);
+            baseFloorColor = new Color(floorColor.Color);
+            baseCeilingColor = new Color(ceilingColor.Color);
 
             floorColor.X = Global.Map3DViewX;
             floorColor.Y = Global.Map3DViewY + ceilingColor.Height;
@@ -855,11 +859,15 @@ namespace Ambermoon.Render
                 byte cb = paletteReplacement.ColorData[ceilingIndex + 2];
                 floorColor.Color = new Color(fr, fg, fb);
                 ceilingColor.Color = new Color(cr, cg, cb);
+                baseFloorColor = null;
+                baseCeilingColor = null;
             }
             else
             {
                 floorColor.Color = game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex);
                 ceilingColor.Color = game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex);
+                baseFloorColor = new Color(floorColor.Color);
+                baseCeilingColor = new Color(ceilingColor.Color);
             }
         }
 
@@ -1402,6 +1410,14 @@ namespace Ambermoon.Render
             }
         }
 
+        internal void UpdateFloorAndCeilingVisibility(bool showFloor, bool showCeiling)
+        {
+            if (floor != null)
+                floor.Visible = showFloor;
+            if (ceiling != null)
+                ceiling.Visible = showCeiling && !Map.Flags.HasFlag(MapFlags.Sky);
+        }
+
         void UpdateSurfaces()
         {
             // Delete all surfaces
@@ -1424,7 +1440,7 @@ namespace Ambermoon.Render
                 floor.Y = 0.0f;
                 floor.Z = -(Map.Height + 8) * Global.DistancePerBlock;
                 floor.TextureAtlasOffset = FloorTextureOffset;
-                floor.Visible = true;
+                floor.Visible = game.Configuration.ShowFloor;
             }
             if (labdata.CeilingGraphic != null)
             {
@@ -1438,7 +1454,7 @@ namespace Ambermoon.Render
                 ceiling.Y = WallHeight;
                 ceiling.Z = 8 * Global.DistancePerBlock;
                 ceiling.TextureAtlasOffset = CeilingTextureOffset;
-                ceiling.Visible = true;
+                ceiling.Visible = game.Configuration.ShowCeiling && !Map.Flags.HasFlag(MapFlags.Sky);
             }
 
             // Add walls and objects
@@ -1466,10 +1482,21 @@ namespace Ambermoon.Render
             SetColors(null);            
         }
 
+        public void SetColorLightFactor(float lightFactor)
+        {
+            if (baseFloorColor != null)
+                floorColor.Color = baseFloorColor.WithLight(lightFactor);
+            if (baseCeilingColor != null)
+                ceilingColor.Color = baseCeilingColor.WithLight(lightFactor);
+        }
+
         public void UpdateSky(ILightEffectProvider lightEffectProvider, ITime time)
         {
             if (Map?.Flags.HasFlag(MapFlags.Outdoor) != true)
+            {
+                SetColors(null);
                 return;
+            }
 
             var skyParts = lightEffectProvider.GetSkyParts(Map, time.Hour, time.Minute,
                 renderView.GraphicProvider, out var paletteReplacement);

@@ -81,6 +81,8 @@ namespace Ambermoon
         bool ShowPlayerStatsTooltips { get; set; }
         bool ShowPyrdacorLogo { get; set; }
         bool ShowThalionLogo { get; set; }
+        bool ShowFloor { get; set; }
+        bool ShowCeiling { get; set; }
         bool ExtendedSavegameSlots { get; set; }
         [Obsolete("Use AdditionalSavegameSlots instead.")]
         string[] AdditionalSavegameNames { get; set; }

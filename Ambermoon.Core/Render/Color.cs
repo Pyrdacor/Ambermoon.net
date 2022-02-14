@@ -69,6 +69,14 @@ namespace Ambermoon.Render
             A = a;
         }
 
+        public Color(Color other)
+        {
+            R = other.R;
+            G = other.G;
+            B = other.B;
+            A = other.A;
+        }
+
         public Color(uint xrgb, byte a = 255)
         {
             R = (byte)((xrgb >> 16) & 0xff);
@@ -132,17 +140,7 @@ namespace Ambermoon.Render
 
         public override int GetHashCode()
         {
-            unchecked // overflow is fine, just wrap
-            {
-                int hash = 17;
-
-                hash = hash * 23 + R.GetHashCode();
-                hash = hash * 23 + G.GetHashCode();
-                hash = hash * 23 + B.GetHashCode();
-                hash = hash * 23 + A.GetHashCode();
-
-                return hash;
-            }
+            return HashCode.Combine(R, G, B, A);
         }
 
         public bool Equals(Color x, Color y)
@@ -156,6 +154,32 @@ namespace Ambermoon.Render
         public int GetHashCode(Color obj)
         {
             return (obj == null) ? 0 : obj.GetHashCode();
+        }
+
+        public Color WithFactor(float factor)
+        {
+            const byte zero = 0;
+
+            if (factor <= 0.0f)
+                return new Color(zero, zero, zero, A);
+
+            if (factor > 1.0f)
+                factor = 1.0f;
+
+            return new Color(factor * R / 255.0f, factor * G / 255.0f, factor * B / 255.0f, A);
+        }
+
+        public Color WithLight(float light)
+        {
+            if (light < 0.0f)
+                light = 0.0f;
+
+            if (light > 1.0f)
+                light = 1.0f;
+
+            float add = light - 1.0f;
+
+            return new Color(Util.Limit(0.0f, add + R / 255.0f, 1.0f), Util.Limit(0.0f, add + G / 255.0f, 1.0f), Util.Limit(0.0f, add + B / 255.0f, 1.0f), A);
         }
     }
 }

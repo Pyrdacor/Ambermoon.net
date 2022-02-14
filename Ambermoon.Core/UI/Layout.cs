@@ -1130,7 +1130,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 14;
+        const int OptionCount = 15;
         const int OptionsPerPage = 5;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1151,6 +1151,7 @@ namespace Ambermoon.UI
                     "Runen als Text anzeigen",
                     "Cheats aktivieren",
                     // Page3
+                    "3D Boden und Decke",
                     "Zusätzliche Spielstände",
                     "Musik cachen",
                     "Pyrdacor Logo zeigen",
@@ -1177,6 +1178,7 @@ namespace Ambermoon.UI
                     "Show runes as text",
                     "Enable cheats",
                     // Page 3
+                    "3D floor and ceiling",
                     "Additional saveslots",
                     "Cache music",
                     "Show Pyrdacor logo",
@@ -1184,6 +1186,29 @@ namespace Ambermoon.UI
                     // TODO
                     //"Show intro",
                     //"Show fantasy intro",
+                }
+            }
+        };
+        static readonly Dictionary<GameLanguage, string[]> FloorAndCeilingValues = new Dictionary<GameLanguage, string[]>
+        {
+            {
+                GameLanguage.German,
+                new string[4]
+                {
+                    "Aus",
+                    "Boden",
+                    "Decke",
+                    "Beide"
+                }
+            },
+            {
+                GameLanguage.English,
+                new string[4]
+                {
+                    "None",
+                    "Floor",
+                    "Ceiling",
+                    "Both"
                 }
             }
         };
@@ -1217,6 +1242,7 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleCheats())),
                 // Page 3
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
@@ -1240,6 +1266,24 @@ namespace Ambermoon.UI
                 optionString += value;
                 listBox.SetItemText(optionIndex - page * OptionsPerPage, optionString);
             }
+            string GetFloorAndCeilingValueString()
+            {
+                int index = 0;
+
+                if (game.Configuration.ShowFloor)
+                {
+                    if (game.Configuration.ShowCeiling)
+                        index = 3;
+                    else
+                        index = 1;
+                }
+                else if (game.Configuration.ShowCeiling)
+                {
+                    index = 2;
+                }
+
+                return FloorAndCeilingValues[game.GameLanguage][index];
+            }
             // Page 1
             void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
             void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
@@ -1253,10 +1297,11 @@ namespace Ambermoon.UI
             void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
             void SetCheats() => SetOptionString(9, cheatsEnabled ? on : off);
             // Page 3
-            void SetExtendedSaves() => SetOptionString(10, game.Configuration.ExtendedSavegameSlots ? on : off);
-            void SetMusicCaching() => SetOptionString(11, game.Configuration.CacheMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(12, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetThalionLogo() => SetOptionString(13, game.Configuration.ShowThalionLogo ? on : off);
+            void SetFloorAndCeiling() => SetOptionString(10, GetFloorAndCeilingValueString());
+            void SetExtendedSaves() => SetOptionString(11, game.Configuration.ExtendedSavegameSlots ? on : off);
+            void SetMusicCaching() => SetOptionString(12, game.Configuration.CacheMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(13, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetThalionLogo() => SetOptionString(14, game.Configuration.ShowThalionLogo ? on : off);
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1280,6 +1325,7 @@ namespace Ambermoon.UI
                         SetCheats();
                         break;
                     case 2:
+                        SetFloorAndCeiling();
                         SetExtendedSaves();
                         SetMusicCaching();
                         SetPyrdacorLogo();
@@ -1358,6 +1404,29 @@ namespace Ambermoon.UI
             {
                 game.Configuration.ShowPlayerStatsTooltips = !game.Configuration.ShowPlayerStatsTooltips;
                 SetPlayerStatsTooltips();
+                changedConfiguration = true;
+            }
+            void ToggleFloorAndCeiling()
+            {
+                if (!game.Configuration.ShowFloor && !game.Configuration.ShowCeiling)
+                {
+                    game.Configuration.ShowFloor = true;
+                }
+                else if (game.Configuration.ShowFloor && !game.Configuration.ShowCeiling)
+                {
+                    game.Configuration.ShowFloor = false;
+                    game.Configuration.ShowCeiling = true;
+                }
+                else if (!game.Configuration.ShowFloor && game.Configuration.ShowCeiling)
+                {
+                    game.Configuration.ShowFloor = true;
+                }
+                else
+                {
+                    game.Configuration.ShowFloor = false;
+                    game.Configuration.ShowCeiling = false;
+                }
+                SetFloorAndCeiling();
                 changedConfiguration = true;
             }
             void ToggleExtendedSaves()
