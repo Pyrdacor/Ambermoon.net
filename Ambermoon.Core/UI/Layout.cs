@@ -794,7 +794,7 @@ namespace Ambermoon.UI
         internal Popup OpenTextPopup(IText text, Position position, int maxWidth, int maxTextHeight,
             bool disableButtons = true, bool closeOnClick = true, bool transparent = false,
             TextColor textColor = TextColor.BrightGray, Action closeAction = null, TextAlign textAlign = TextAlign.Left,
-            byte displayLayerOffset = 0)
+            byte displayLayerOffset = 0, byte? paletteOverride = null)
         {
             buttonGrid?.HideTooltips();
             ClosePopup(false);
@@ -812,7 +812,9 @@ namespace Ambermoon.UI
                 CloseOnClick = closeOnClick
             };
             bool scrolling = textBounds.Height / Global.GlyphLineHeight < processedText.LineCount;
-            activePopup.AddText(textBounds, text, textColor, textAlign, true, 1, scrolling, this);
+            var uiText = activePopup.AddText(textBounds, text, textColor, textAlign, true, 1, scrolling, this);
+            if (paletteOverride != null)
+                uiText.PaletteIndex = paletteOverride.Value;
             if (closeAction != null)
                 activePopup.Closed += closeAction;
             return activePopup;
@@ -820,12 +822,12 @@ namespace Ambermoon.UI
 
         internal Popup OpenTextPopup(IText text, Action closeAction, bool disableButtons = false,
             bool closeOnClick = true, bool transparent = false, TextAlign textAlign = TextAlign.Left,
-            byte displayLayerOffset = 0)
+            byte displayLayerOffset = 0, byte? paletteOverride = null)
         {
             const int maxTextWidth = 256;
             const int maxTextHeight = 112;
             var popup = OpenTextPopup(text, new Position(16, 53), maxTextWidth, maxTextHeight, disableButtons,
-                closeOnClick, transparent, TextColor.BrightGray, closeAction, textAlign, displayLayerOffset);
+                closeOnClick, transparent, TextColor.BrightGray, closeAction, textAlign, displayLayerOffset, paletteOverride);
             return popup;
         }
 

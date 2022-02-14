@@ -34,7 +34,9 @@ namespace Ambermoon
             StartNewGameOrQuit,
             RuneTableUsage,
             LoadCrashedGame,
-            FailedToRemoveCrashSavegame
+            FailedToRemoveCrashSavegame,
+            QuickSaved,
+            QuickLoaded
         }
 
         static readonly Dictionary<GameLanguage, Dictionary<Index, string>> entries = new Dictionary<GameLanguage, Dictionary<Index, string>>
@@ -48,7 +50,9 @@ namespace Ambermoon
                     { Index.StartNewGameOrQuit, "Möchten Sie ein neues Spiel starten oder das Spiel verlassen?" },
                     { Index.RuneTableUsage, "Solange Sie das Runenalphabet bei sich tragen, werden Runen nun automatisch als Text angezeigt." },
                     { Index.LoadCrashedGame, "Ein Backup-Spielstand eines kürzlichen Absturzes wurde gefunden. Wollen Sie diesen laden?" },
-                    { Index.FailedToRemoveCrashSavegame, "Der Backup-Spielstand konnte nicht automatisch gelöscht werden. Bitte löschen Sie ihn manuell. Er wird im Unterordner 'Save.99' abgelegt." }
+                    { Index.FailedToRemoveCrashSavegame, "Der Backup-Spielstand konnte nicht automatisch gelöscht werden. Bitte löschen Sie ihn manuell. Er wird im Unterordner 'Save.99' abgelegt." },
+                    { Index.QuickSaved, "Gespeichert als ~INK 22~'{0}'~INK 31~."},
+                    { Index.QuickLoaded, "~INK 22~Spielstand '{0}~INK 31~ wurde geladen."}
                 }
             },
             { GameLanguage.English, new Dictionary<Index, string>
@@ -60,7 +64,9 @@ namespace Ambermoon
                     { Index.StartNewGameOrQuit, "Do you want to start a new game or quit the game?" },
                     { Index.RuneTableUsage, "As long as you have the rune table in your inventory, all runes will automatically be displayed as text now." },
                     { Index.LoadCrashedGame, "A crash backup savegame was detected. Do you want to load it?" },
-                    { Index.FailedToRemoveCrashSavegame, "The crash backup savegame could not be deleted automatically. Please do so yourself. It is stored in sub-folder 'Save.99'." }
+                    { Index.FailedToRemoveCrashSavegame, "The crash backup savegame could not be deleted automatically. Please do so yourself. It is stored in sub-folder 'Save.99'." },
+                    { Index.QuickSaved, "Saved as ~INK 22~'{0}'~INK 31~."},
+                    { Index.QuickLoaded, "~INK 22~Quicksave {0}~INK 31~ was loaded."}
                 }
             }
         };

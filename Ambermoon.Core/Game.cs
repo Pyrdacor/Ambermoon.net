@@ -1413,7 +1413,7 @@ namespace Ambermoon
             return null;
         }
 
-        public void Start(Savegame savegame)
+        public void Start(Savegame savegame, Action postAction = null)
         {
             lastPlayedSong = null;
             currentSong?.Stop();
@@ -1423,7 +1423,7 @@ namespace Ambermoon
             GameOverButtonsVisible = false;
             allInputDisabled = true;
             layout.AddFadeEffect(new Rect(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight), Render.Color.Black, FadeEffectType.FadeOut, FadeTime / 2);
-            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () => allInputDisabled = false);
+            AddTimedEvent(TimeSpan.FromMilliseconds(FadeTime / 2), () => { allInputDisabled = false; postAction?.Invoke(); });
 
             // Reset all maps
             foreach (var changedMap in changedMaps)
@@ -1902,7 +1902,7 @@ namespace Ambermoon
         internal string GetCustomText(CustomTexts.Index index) => CustomTexts.GetText(GameLanguage, index);
 
         public void LoadGame(int slot, bool showError = false, bool loadInitialOnError = false,
-            Action<Action> preLoadAction = null, bool exitWhenFailing = true)
+            Action<Action> preLoadAction = null, bool exitWhenFailing = true, Action postAction = null)
         {
             void Failed()
             {
@@ -1966,7 +1966,7 @@ namespace Ambermoon
                 return;
             }
 
-            void Start() => this.Start(savegame);
+            void Start() => this.Start(savegame, postAction);
 
             if (preLoadAction != null)
                 preLoadAction?.Invoke(Start);
@@ -2665,12 +2665,26 @@ namespace Ambermoon
                 currentWindow.Window == Window.Blacksmith || currentWindow.Window == Window.Enchanter ||
                 currentWindow.Window == Window.Door || (currentWindow.Window == Window.Chest && OpenStorage == null)))
                 return;
-            if(key >= Key.Number0 && key <= Key.Number9 && modifiers.HasFlag(KeyModifiers.Control))
+            if (!WindowActive && !PopupActive && key >= Key.Number0 && key <= Key.Number9 && modifiers.HasFlag(KeyModifiers.Control))
             {
                 var saveGameId = key - Key.Number0;
                 if (saveGameId == 0)
                     saveGameId = 10;
-                SaveGame(saveGameId, "QuickSave"+saveGameId);
+                if (modifiers.HasFlag(KeyModifiers.Shift))
+                {
+                    LoadGame(saveGameId, false, false, null, false,
+                        () => ShowBriefMessagePopup(
+                                string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.QuickLoaded), saveGameId),
+                                TimeSpan.FromMilliseconds(1500)));
+                }
+                else
+                {
+                    string name = $"QuickSave{saveGameId}";
+                    SaveGame(saveGameId, name);
+                    ShowBriefMessagePopup(
+                        string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.QuickSaved), name),
+                        TimeSpan.FromMilliseconds(1500));
+                }
             }
             switch (key)
             {
@@ -14195,6 +14209,28 @@ namespace Ambermoon
             if (spellListScrollOffsets[slot] > scrollRange)
                 spellListScrollOffsets[slot] = scrollRange;
             scrollbar.SetScrollPosition(spellListScrollOffsets[slot], true);
+        }
+
+        internal void ShowBriefMessagePopup(string text, TimeSpan displayTime,
+            TextAlign textAlign = TextAlign.Center, byte displayLayerOffset = 0)
+        {
+            if (layout.PopupActive)
+                return;
+
+            Pause();
+            InputEnable = false;
+            allInputDisabled = true;
+            // Simple text popup
+            var popup = layout.OpenTextPopup(ProcessText(text), () =>
+            {
+                allInputDisabled = false;
+                InputEnable = true;
+                Resume();
+                ResetCursor();
+            }, true, false, false, textAlign, displayLayerOffset, PrimaryUIPaletteIndex);
+            CursorType = CursorType.Wait;
+            TrapMouse(popup.ContentArea);
+            AddTimedEvent(displayTime, ClosePopup);
         }
 
         internal void ShowMessagePopup(string text, Action closeAction = null,
