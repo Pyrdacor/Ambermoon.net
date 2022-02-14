@@ -271,7 +271,7 @@ namespace Ambermoon
         const ushort FowBaseLine = 0x2000;
         uint lightIntensity = 0;
         readonly IFow fow2D = null;
-        IOutroFactory outroFactory;
+        readonly IOutroFactory outroFactory;
         IOutro outro = null;
         CustomOutro customOutro = null;
         internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) &&
@@ -322,10 +322,10 @@ namespace Ambermoon
         bool pickingNewLeader = false;
         bool pickingTargetPlayer = false;
         bool pickingTargetInventory = false;
-        event Action<int> newLeaderPicked;
-        event Action<int> targetPlayerPicked;
-        event Func<int, bool> targetInventoryPicked;
-        event Func<ItemGrid, int, ItemSlot, bool> targetItemPicked;
+        event Action<int> NewLeaderPicked;
+        event Action<int> TargetPlayerPicked;
+        event Func<int, bool> TargetInventoryPicked;
+        event Func<ItemGrid, int, ItemSlot, bool> TargetItemPicked;
         bool advancing = false; // party or monsters are advancing
         internal PartyMember CurrentInventory => CurrentInventoryIndex == null ? null : GetPartyMember(CurrentInventoryIndex.Value);
         internal int? CurrentInventoryIndex { get; private set; } = null;
@@ -2498,7 +2498,7 @@ namespace Ambermoon
                     }
                 }
 
-                targetPlayerPicked -= TargetPlayerPicked;
+                this.TargetPlayerPicked -= TargetPlayerPicked;
                 ClosePopup();
                 UntrapMouse();
                 InputEnable = true;
@@ -2516,7 +2516,7 @@ namespace Ambermoon
                     }
                 }
             }
-            targetPlayerPicked += TargetPlayerPicked;
+            this.TargetPlayerPicked += TargetPlayerPicked;
         }
 
         void PickTargetPlayer()
@@ -2535,7 +2535,7 @@ namespace Ambermoon
 
         internal void FinishPickingTargetPlayer(int characterSlot)
         {
-            targetPlayerPicked?.Invoke(characterSlot);
+            TargetPlayerPicked?.Invoke(characterSlot);
             pickingTargetPlayer = false;
             UntrapMouse();
         }
@@ -2543,12 +2543,12 @@ namespace Ambermoon
         internal void AbortPickingTargetPlayer()
         {
             pickingTargetPlayer = false;
-            targetPlayerPicked?.Invoke(-1);
+            TargetPlayerPicked?.Invoke(-1);
         }
 
         internal bool FinishPickingTargetInventory(int characterSlot)
         {
-            bool result = targetInventoryPicked?.Invoke(characterSlot) ?? true;
+            bool result = TargetInventoryPicked?.Invoke(characterSlot) ?? true;
 
             if (!result)
             {
@@ -2568,7 +2568,7 @@ namespace Ambermoon
         {
             pickingTargetInventory = false;
 
-            if (targetItemPicked?.Invoke(itemGrid, slotIndex, itemSlot) != false)
+            if (TargetItemPicked?.Invoke(itemGrid, slotIndex, itemSlot) != false)
             {
                 if (currentWindow.Window == Window.Inventory)
                     CloseWindow();
@@ -2582,9 +2582,9 @@ namespace Ambermoon
         {
             pickingTargetInventory = false;
 
-            if (targetInventoryPicked?.Invoke(-1) != false)
+            if (TargetInventoryPicked?.Invoke(-1) != false)
             {
-                if (targetItemPicked?.Invoke(null, 0, null) != false)
+                if (TargetItemPicked?.Invoke(null, 0, null) != false)
                 {
                     if (currentWindow.Window == Window.Inventory)
                         CloseWindow();
@@ -2918,7 +2918,7 @@ namespace Ambermoon
                 CursorType = CursorType.None;
         }
 
-        public void OnMouseDown(Position position, MouseButtons buttons)
+        public void OnMouseDown(Position position, MouseButtons buttons, KeyModifiers keyModifiers = KeyModifiers.None)
         {
             if (characterCreator != null)
             {
@@ -3066,7 +3066,7 @@ namespace Ambermoon
                     }
 
                     var cursorType = CursorType.Sword;
-                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetPlayer, pickingTargetInventory);
+                    layout.Click(relativePosition, buttons, ref cursorType, CurrentTicks, pickingNewLeader, pickingTargetPlayer, pickingTargetInventory, keyModifiers);
                     disableUntrapping = true;
                     CursorType = cursorType;
 
@@ -3806,8 +3806,30 @@ namespace Ambermoon
                     slot => new Position(Global.InventoryX + (slot % Inventory.Width) * Global.InventorySlotWidth,
                         Global.InventoryY + (slot / Inventory.Width) * Global.InventorySlotHeight)
                 ).ToList();
+                ItemGrid equipmentGrid = null;
+                equipmentGrid = ItemGrid.CreateEquipment(this, layout, slot, renderView, ItemManager,
+                    equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList(), itemSlot =>
+                    {
+                        if (itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed))
+                        {
+                            layout.SetInventoryMessage(DataNameProvider.ItemIsCursed, true);
+                            return false;
+                        }
+
+                        if (currentBattle != null)
+                        {
+                            var item = ItemManager.GetItem(itemSlot.ItemIndex);
+
+                            if (!item.Flags.HasFlag(ItemFlags.RemovableDuringFight))
+                            {
+                                layout.SetInventoryMessage(DataNameProvider.CannotUnequipInFight, true);
+                                return false;
+                            }
+                        }
+                        return true;
+                    }, UnequipItem, layout.UseItem);
                 var inventoryGrid = ItemGrid.CreateInventory(this, layout, slot, renderView, ItemManager,
-                    inventorySlotPositions, partyMember.Inventory.Slots.ToList());
+                    inventorySlotPositions, partyMember.Inventory.Slots.ToList(), EquipItem, layout.UseItem);
                 layout.AddItemGrid(inventoryGrid);
                 for (int i = 0; i < partyMember.Inventory.Slots.Length; ++i)
                 {
@@ -3834,27 +3856,102 @@ namespace Ambermoon
                             leftHandSlot.Amount = 1;
                     }
                 }
-                var equipmentGrid = ItemGrid.CreateEquipment(this, layout, slot, renderView, ItemManager,
-                    equipmentSlotPositions, partyMember.Equipment.Slots.Values.ToList(), itemSlot =>
+                void EquipItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
+                {
+                    if (itemSlot.Empty)
+                        return;
+
+                    if (itemSlot.ItemIndex == 0)
                     {
-                        if (itemSlot.Flags.HasFlag(ItemSlotFlags.Cursed))
+                        if (slot != (int)EquipmentSlot.LeftHand - 1 || itemGrid.GetItemSlot(3).Empty)
+                            return;
+
+                        slot -= 2; // used on two-handed secondary hand slot -> switch to primary hand slot
+                    }
+
+                    var targetSlot = layout.TryEquipmentDrop(itemSlot);
+
+                    if (targetSlot != null)
+                    {
+                        var equipGrid = layout.GetEquipmentGrid();
+                        var targetItemSlot = equipGrid.GetItemSlot(targetSlot.Value);
+
+
+                        if (itemSlot.Amount > 1)
                         {
-                            layout.SetInventoryMessage(DataNameProvider.ItemIsCursed, true);
-                            return false;
+                            // Allow equipping arrows (but only if the slot is free)
+                            if (targetSlot != (int)EquipmentSlot.LeftHand - 1 || !CurrentInventory.Equipment.Slots[EquipmentSlot.LeftHand].Empty)
+                                return;
+
+                            itemSlot.Remove(1);
+                            targetItemSlot.ItemIndex = itemSlot.ItemIndex;
+                            targetItemSlot.Amount = 1;
                         }
-
-                        if (currentBattle != null)
+                        else
                         {
-                            var item = ItemManager.GetItem(itemSlot.ItemIndex);
+                            targetItemSlot.Exchange(itemSlot);
+                        }
+                        RemoveInventoryItem(slot, targetItemSlot, targetItemSlot.Amount);
+                        equipGrid.SetItem(targetSlot.Value, targetItemSlot);
+                        itemGrid.SetItem(slot, itemSlot);
+                        AddEquipment(targetSlot.Value, targetItemSlot, targetItemSlot.Amount);
 
-                            if (!item.Flags.HasFlag(ItemFlags.RemovableDuringFight))
+                        if (itemSlot.Amount != 0 && itemSlot.ItemIndex != 0)
+                        {
+                            RemoveEquipment(targetSlot.Value, itemSlot, 1);
+                            AddInventoryItem(slot, itemSlot, 1);
+                            RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(targetSlot.Value + 1), ItemManager.GetItem(itemSlot.ItemIndex));
+                        }
+                    }
+                }
+                void UnequipItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
+                {
+                    var inventoryGrid = layout.GetInventoryGrid();
+                    int targetSlot = -1;
+
+                    if (ItemManager.GetItem(itemSlot.ItemIndex).Flags.HasFlag(ItemFlags.Stackable))
+                    {
+                        for (int i = 0; i < inventoryGrid.SlotCount; ++i)
+                        {
+                            var inventorySlot = inventoryGrid.GetItemSlot(i);
+
+                            if (inventorySlot.ItemIndex == itemSlot.ItemIndex && inventorySlot.Amount + itemSlot.Amount <= 99)
                             {
-                                layout.SetInventoryMessage(DataNameProvider.CannotUnequipInFight, true);
-                                return false;
+                                targetSlot = i;
+                                break;
                             }
                         }
-                        return true;
-                    });
+                    }
+
+                    if (targetSlot == -1)
+                    {
+                        for (int i = 0; i < inventoryGrid.SlotCount; ++i)
+                        {
+                            var inventorySlot = inventoryGrid.GetItemSlot(i);
+
+                            if (inventorySlot.Empty)
+                            {
+                                targetSlot = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (targetSlot == -1)
+                        return;
+
+                    RemoveEquipment(slot, itemSlot, itemSlot.Amount, true);
+                    AddInventoryItem(targetSlot, itemSlot, itemSlot.Amount);
+
+                    var targetItemSlot = inventoryGrid.GetItemSlot(targetSlot);
+                    targetItemSlot.Add(itemSlot);
+                    itemSlot.Clear();
+
+                    inventoryGrid.SetItem(targetSlot, targetItemSlot);
+                    itemGrid.SetItem(slot, itemSlot);
+
+                    RecheckBattleEquipment(CurrentInventoryIndex.Value, (EquipmentSlot)(slot + 1), ItemManager.GetItem(targetItemSlot.ItemIndex));
+                }
                 layout.AddItemGrid(equipmentGrid);
                 foreach (var equipmentSlot in Enum.GetValues<EquipmentSlot>().Skip(1))
                 {
@@ -4592,12 +4689,12 @@ namespace Ambermoon
 
                             bool inputWasEnabled = InputEnable;
                             bool allInputWasDisabled = allInputDisabled;
-                            newLeaderPicked += NewLeaderPicked;
+                            this.NewLeaderPicked += NewLeaderPicked;
                             allInputDisabled = false;
                             RecheckActivePartyMember(out bool gameOver);
 
                             if (gameOver || !pickingNewLeader)
-                                newLeaderPicked -= NewLeaderPicked;
+                                this.NewLeaderPicked -= NewLeaderPicked;
 
                             if (gameOver)
                                 allInputDisabled = false;
@@ -4606,7 +4703,7 @@ namespace Ambermoon
 
                             void NewLeaderPicked(int index)
                             {
-                                newLeaderPicked -= NewLeaderPicked;
+                                this.NewLeaderPicked -= NewLeaderPicked;
                                 allInputDisabled = allInputWasDisabled;
                                 finished?.Invoke();
                                 InputEnable = inputWasEnabled;
@@ -5591,6 +5688,9 @@ namespace Ambermoon
         internal void PlayerMoved(bool mapChange, Position lastPlayerPosition = null, bool updateSavegame = true,
             Map lastMap = null)
         {
+            if (mapChange)
+                lastMapTicksReset = CurrentTicks;
+
             if (updateSavegame)
             {
                 var map = is3D ? Map : renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y);
@@ -11843,7 +11943,7 @@ namespace Ambermoon
                     PickTargetPlayer();
                     void TargetPlayerPicked(int characterSlot)
                     {
-                        targetPlayerPicked -= TargetPlayerPicked;
+                        this.TargetPlayerPicked -= TargetPlayerPicked;
                         ClosePopup();
                         UntrapMouse();
                         InputEnable = true;
@@ -11889,7 +11989,7 @@ namespace Ambermoon
                                 Consume();
                         }
                     }
-                    targetPlayerPicked += TargetPlayerPicked;
+                    this.TargetPlayerPicked += TargetPlayerPicked;
                     break;
                 }
                 case SpellTarget.FriendRow:
@@ -11945,7 +12045,7 @@ namespace Ambermoon
                     PickTargetInventory();
                     bool TargetInventoryPicked(int characterSlot)
                     {
-                        targetInventoryPicked -= TargetInventoryPicked;
+                        this.TargetInventoryPicked -= TargetInventoryPicked;
 
                         if (characterSlot == -1)
                             return true; // abort, TargetItemPicked is called and will cleanup
@@ -11966,7 +12066,7 @@ namespace Ambermoon
                                     layout.SetInventoryMessage(null);
                                 }
 
-                                targetItemPicked -= TargetItemPicked;
+                                this.TargetItemPicked -= TargetItemPicked;
                                 Consume();
                                 EndSequence();
                                 ShowMessagePopup(DataNameProvider.NoCursedItemFound, CleanUp);
@@ -11978,7 +12078,7 @@ namespace Ambermoon
                     }
                     bool TargetItemPicked(ItemGrid itemGrid, int slotIndex, ItemSlot itemSlot)
                     {
-                        targetItemPicked -= TargetItemPicked;
+                        this.TargetItemPicked -= TargetItemPicked;
                         itemGrid?.HideTooltip();
                         layout.SetInventoryMessage(null);
                         if (itemSlot != null)
@@ -12016,8 +12116,8 @@ namespace Ambermoon
                             }
                         }
                     }
-                    targetInventoryPicked += TargetInventoryPicked;
-                    targetItemPicked += TargetItemPicked;
+                    this.TargetInventoryPicked += TargetInventoryPicked;
+                    this.TargetItemPicked += TargetItemPicked;
 
                     void Consume()
                     {
@@ -14438,7 +14538,7 @@ namespace Ambermoon
                     {
                         pickingNewLeader = false;
                         layout.ClosePopup(true, true);
-                        newLeaderPicked?.Invoke(index);
+                        NewLeaderPicked?.Invoke(index);
                     }
 
                     if (is3D)

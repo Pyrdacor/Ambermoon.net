@@ -364,7 +364,7 @@ namespace Ambermoon
             else if (mainMenu != null)
                 mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
             else if (Game != null)
-                Game.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
+                Game.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse), GetModifiers(keyboard));
         }
 
         void Mouse_MouseUp(IMouse mouse, MouseButton button)
@@ -409,7 +409,7 @@ namespace Ambermoon
                 Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
         }
 
-        void WritePNG(string filename, byte[] rgbData, Size imageSize)
+        static void WritePNG(string filename, byte[] rgbData, Size imageSize)
         {
             if (File.Exists(filename))
                 filename += Guid.NewGuid().ToString();

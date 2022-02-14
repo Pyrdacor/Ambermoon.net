@@ -2129,7 +2129,16 @@ namespace Ambermoon.UI
             return true;
         }
 
-        void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
+        internal int? TryEquipmentDrop(ItemSlot itemSlot)
+        {
+            return itemGrids[1].TryEquipmentDrop(itemSlot);
+        }
+
+        internal ItemGrid GetInventoryGrid() => itemGrids[0];
+        internal ItemGrid GetEquipmentGrid() => itemGrids[1];
+
+
+        internal void UseItem(ItemGrid itemGrid, int slot, ItemSlot itemSlot)
         {
             bool wasInputEnabled = game.InputEnable;
             game.InputEnable = false;
@@ -4436,7 +4445,7 @@ namespace Ambermoon.UI
 
         public bool Click(Position position, MouseButtons buttons, ref CursorType cursorType,
             uint currentTicks, bool pickingNewLeader = false, bool pickingTargetPlayer = false,
-            bool pickingTargetInventory = false)
+            bool pickingTargetInventory = false, KeyModifiers keyModifiers = KeyModifiers.None)
         {
             if (pickingTargetPlayer)
             {
@@ -4567,7 +4576,7 @@ namespace Ambermoon.UI
                                     draggedItem.Item.Position = position;
                                     draggedItem.SourcePlayer = IsInventory ? game.CurrentInventoryIndex : null;
                                     PostItemDrag();
-                                }
+                                }, keyModifiers
                             )
                         )
                         {

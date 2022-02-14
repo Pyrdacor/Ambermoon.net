@@ -56,6 +56,8 @@ namespace Ambermoon.UI
         Func<int, int, int> dropLimiter = null;
         bool showPrice = false;
         readonly Func<uint> availableGoldProvider = null;
+        Action<ItemGrid, int, ItemSlot> itemControlClickHandler = null;
+        Action<ItemGrid, int, ItemSlot> itemShiftClickHandler = null;
 
         internal enum ItemAction
         {
@@ -169,7 +171,8 @@ namespace Ambermoon.UI
         public void ClearItemClickEventHandlers() => ItemClicked = null;
 
         public static ItemGrid CreateInventory(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
-            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots)
+            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots,
+            Action<ItemGrid, int, ItemSlot> equipHandler, Action<ItemGrid, int, ItemSlot> useHandler)
         {
             var grid = new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, true,
                 (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
@@ -177,11 +180,14 @@ namespace Ambermoon.UI
                     () => Layout.DraggedItem.FromInventory(itemGrid, partyMemberIndex, slot, item, false)),
                 12, 3, 24, new Rect(109 + 3 * 22, 76, 6, 112), new Size(6, 56), ScrollbarType.LargeVertical);
             grid.dropSlotProvider = (position, broken, _) => grid.SlotFromPosition(position);
+            grid.itemControlClickHandler = useHandler;
+            grid.itemShiftClickHandler = equipHandler;
             return grid;
         }
 
         public static ItemGrid CreateEquipment(Game game, Layout layout, int partyMemberIndex, IRenderView renderView,
-            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots, Func<ItemSlot, bool> equipChecker)
+            IItemManager itemManager, List<Position> slotPositions, List<ItemSlot> slots, Func<ItemSlot, bool> equipChecker,
+            Action<ItemGrid, int, ItemSlot> unequipHandler, Action<ItemGrid, int, ItemSlot> useHandler)
         {
             var grid = new ItemGrid(game, layout, renderView, itemManager, slotPositions, slots, true,
                 (ItemGrid itemGrid, int slot, UIItem item, Action<Layout.DraggedItem, int> dragAction, bool takeAll) =>
@@ -301,6 +307,8 @@ namespace Ambermoon.UI
 
                 return (int)equipmentSlot - 1;
             };
+            grid.itemControlClickHandler = useHandler;
+            grid.itemShiftClickHandler = unequipHandler;
             return grid;
         }
 
@@ -704,7 +712,7 @@ namespace Ambermoon.UI
 
         public bool Click(Position position, Layout.DraggedItem draggedItem,
             out ItemAction itemAction, MouseButtons mouseButtons, ref CursorType cursorType,
-            Action<Layout.DraggedItem> dragHandler)
+            Action<Layout.DraggedItem> dragHandler, KeyModifiers keyModifiers = KeyModifiers.None)
         {
             itemAction = ItemAction.None;
 
@@ -766,28 +774,41 @@ namespace Ambermoon.UI
 
                 if (itemSlot != null)
                 {
-                    // Note: ItemClicked handler may re-enable dragging
-                    //       but we don't want to drag immediately here
-                    //       so remember drag disable state for this
-                    //       click execution.
-                    bool dragDisabled = DisableDrag;
-
-                    if (mouseButtons == MouseButtons.Left)
-                        ItemClicked?.Invoke(this, slot.Value, itemSlot.Item);
-
-                    if (!dragDisabled && itemSlot.Item.Draggable)
+                    if (keyModifiers.HasFlag(KeyModifiers.Control) && itemControlClickHandler != null)
+                        itemControlClickHandler(this, slot.Value, itemSlot.Item);
+                    else if (keyModifiers.HasFlag(KeyModifiers.Shift) && itemShiftClickHandler != null)
+                        itemShiftClickHandler(this, slot.Value, itemSlot.Item);
+                    else
                     {
-                        itemAction = ItemAction.Drag;
-                        Pickup(slot.Value, itemSlot, mouseButtons == MouseButtons.Right, item =>
+                        // Note: ItemClicked handler may re-enable dragging
+                        //       but we don't want to drag immediately here
+                        //       so remember drag disable state for this
+                        //       click execution.
+                        bool dragDisabled = DisableDrag;
+
+                        if (mouseButtons == MouseButtons.Left)
+                            ItemClicked?.Invoke(this, slot.Value, itemSlot.Item);
+
+                        if (!dragDisabled && itemSlot.Item.Draggable)
                         {
-                            Hover(position); // This updates the tooltip
-                            dragHandler?.Invoke(item);
-                        });
+                            itemAction = ItemAction.Drag;
+                            Pickup(slot.Value, itemSlot, mouseButtons == MouseButtons.Right, item =>
+                            {
+                                Hover(position); // This updates the tooltip
+                                dragHandler?.Invoke(item);
+                            });
+                        }
                     }
                 }
             }
 
             return true;
+        }
+
+        internal int? TryEquipmentDrop(ItemSlot itemSlot)
+        {
+            return dropSlotProvider?.Invoke(new Position(20, 72), itemSlot.Flags.HasFlag(ItemSlotFlags.Broken),
+                    itemManager.GetItem(itemSlot.ItemIndex));
         }
 
         internal void Pickup(ItemSlot itemSlot, bool takeAll)
