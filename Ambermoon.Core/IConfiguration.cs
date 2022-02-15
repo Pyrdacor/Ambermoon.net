@@ -57,6 +57,7 @@ namespace Ambermoon
     public interface IConfiguration
     {
         bool FirstStart { get; set; }
+        bool IsMobile { get; }
 
         int? Width { get; set; }
         int? Height { get; set; }

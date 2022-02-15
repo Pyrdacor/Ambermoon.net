@@ -82,6 +82,9 @@ namespace Ambermoon.Renderer
             Create(format, pixelData, numMipMapLevels);
         }
 
+        static InternalFormat ToOpenGLInternalFormat(PixelFormat format) =>
+            format == PixelFormat.Alpha ? InternalFormat.R8 : InternalFormat.Rgba8;
+
         static GLEnum ToOpenGLPixelFormat(PixelFormat format)
         {
             switch (format)
@@ -121,7 +124,7 @@ namespace Ambermoon.Renderer
             {
                 fixed (byte* ptr = &pixelData[0])
                 {
-                    state.Gl.TexImage2D(GLEnum.Texture2D, 0, (int)InternalFormat.Rgba8, (uint)Width, (uint)Height, 0, ToOpenGLPixelFormat(format), GLEnum.UnsignedByte, ptr);
+                    state.Gl.TexImage2D(GLEnum.Texture2D, 0, (int)ToOpenGLInternalFormat(format), (uint)Width, (uint)Height, 0, ToOpenGLPixelFormat(format), GLEnum.UnsignedByte, ptr);
                 }
             }
 

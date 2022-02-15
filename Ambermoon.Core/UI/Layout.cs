@@ -1225,7 +1225,7 @@ namespace Ambermoon.UI
             var on = game.DataNameProvider.On;
             var off = game.DataNameProvider.Off;
             int width = game.Configuration.Width ?? 1280;
-            bool cheatsEnabled = game.Configuration.EnableCheats;
+            bool cheatsEnabled = !game.Configuration.IsMobile && game.Configuration.EnableCheats;
             var toggleResolutionAction = (Action<int, string>)((index, _) => ToggleResolution());
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
@@ -1233,14 +1233,14 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleVolume())),
                 KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : (Action<int, string>)null),
-                KeyValuePair.Create("", game.Configuration.Fullscreen ? null : toggleResolutionAction),
+                KeyValuePair.Create("", game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
                 // Page 2
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleCheats())),
+                KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleCheats())),
                 // Page 3
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),

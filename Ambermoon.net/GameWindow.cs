@@ -1,5 +1,8 @@
-﻿using Ambermoon.Data;
+﻿using Ambermoon.Audio.OpenAL;
+using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
+using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
@@ -14,14 +17,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
-using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
-using MousePosition = System.Numerics.Vector2;
-using WindowDimension = Silk.NET.Maths.Vector2D<int>;
-using Ambermoon.Audio.OpenAL;
-using Ambermoon.Data.Legacy.Audio;
-using Ambermoon.Data.Enumerations;
 using System.Threading;
+using System.Threading.Tasks;
+using MousePosition = System.Numerics.Vector2;
+using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
+using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 
 namespace Ambermoon
 {
@@ -126,7 +126,7 @@ namespace Ambermoon
             }
         }
 
-        void RunTask(Action task)
+        static void RunTask(Action task)
         {
             Task.Factory.StartNew(task, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }

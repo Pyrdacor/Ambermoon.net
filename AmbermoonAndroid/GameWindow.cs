@@ -1,5 +1,9 @@
-﻿using Ambermoon.Data;
+﻿using Ambermoon;
+using Ambermoon.Audio.Android;
+using Ambermoon.Data;
+using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy;
+using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Legacy.Characters;
 using Ambermoon.Data.Legacy.ExecutableData;
 using Ambermoon.Data.Legacy.Serialization;
@@ -9,20 +13,11 @@ using Ambermoon.UI;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
 using Silk.NET.Windowing;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
-using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
-using MousePosition = System.Numerics.Vector2;
-using WindowDimension = Silk.NET.Maths.Vector2D<int>;
-using Ambermoon.Audio.Android;
-using Ambermoon.Data.Legacy.Audio;
-using Ambermoon.Data.Enumerations;
-using Ambermoon;
 using Key = Ambermoon.Key;
+using MousePosition = System.Numerics.Vector2;
+using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
+using WindowDimension = Silk.NET.Maths.Vector2D<int>;
 
 namespace AmbermoonAndroid
 {
@@ -49,13 +44,6 @@ namespace AmbermoonAndroid
         FloatPosition trappedMouseLastPosition = null;
         LogoPyrdacor logoPyrdacor = null;
         Graphic[] logoPalettes;
-
-        static readonly string[] VersionSavegameFolders = new string[3]
-        {
-            "german",
-            "english",
-            "external"
-        };
 
         public string Identifier { get; }
         public IGLContext GLContext => window?.GLContext;
@@ -133,7 +121,7 @@ namespace AmbermoonAndroid
             }
         }
 
-        void RunTask(Action task)
+        static void RunTask(Action task)
         {
             Task.Factory.StartNew(task, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
@@ -172,6 +160,8 @@ namespace AmbermoonAndroid
                 mouse.MouseMove += Mouse_MouseMove;
                 mouse.Scroll += Mouse_Scroll;
             }
+
+            window.Native.Android.Value.Window
         }
 
         static KeyModifiers GetModifiers(IKeyboard keyboard)
@@ -257,66 +247,15 @@ namespace AmbermoonAndroid
 
         void Keyboard_KeyDown(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
         {
-            if (key == Silk.NET.Input.Key.F11)
+            if (logoPyrdacor != null)
             {
-                if (Game != null)
-                    Game.PreFullscreenChanged();
-
-                // This can happen while a mouse trap is active in-game. Otherwise a fullscreen
-                // change can only happen from the options menu where mouse trapping can't be active.
-                ChangeFullscreenMode(!Fullscreen);
-
-                if (Game != null)
-                    Game.PostFullscreenChanged();
+                logoPyrdacor?.Cleanup();
+                logoPyrdacor = null;
             }
-            else if (renderView != null && (key == Silk.NET.Input.Key.PrintScreen ||
-                (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
-                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
-            {
-                var imageData = renderView.TakeScreenshot();
-                string directory = Path.Combine(Configuration.ExecutableDirectoryPath, "Screenshots");
-                string path;
-                static string GetFileName() => "Screenshot_" + DateTime.Now.ToString("dd-MM-yyyy.HH-mm-ss");
-                try
-                {
-                    Directory.CreateDirectory(directory);
-                    path = Path.Combine(directory, GetFileName());
-                }
-                catch
-                {
-                    directory = Path.Combine(Configuration.FallbackConfigDirectory, "Screenshots");
-
-                    try
-                    {
-                        Directory.CreateDirectory(directory);
-                        path = Path.Combine(directory, GetFileName());
-                    }
-                    catch
-                    {
-                        path = Path.Combine(Path.GetTempPath(), GetFileName());
-                    }
-                }
-                try
-                {
-                    WritePNG(path, imageData, renderView.FramebufferSize);
-                }
-                catch
-                {
-                    Console.WriteLine($"Failed to create screenshot at '{path}'.");
-                }
-            }
-            else
-            {
-                if (logoPyrdacor != null)
-                {
-                    logoPyrdacor?.Cleanup();
-                    logoPyrdacor = null;
-                }
-                else if (versionSelector != null)
-                    versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
-                else if (Game != null)
-                    Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
-            }
+            else if (versionSelector != null)
+                versionSelector.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
+            else if (Game != null)
+                Game.OnKeyDown(ConvertKey(key), GetModifiers(keyboard));
         }
 
         void Keyboard_KeyUp(IKeyboard keyboard, Silk.NET.Input.Key key, int value)
@@ -706,18 +645,6 @@ namespace AmbermoonAndroid
                                     }
                                     else
                                         renderView.DeactivateFramebuffer();
-
-                                    if (configuration.EnableCheats && !Console.IsInputRedirected)
-                                    {
-                                        while (Console.KeyAvailable)
-                                            Console.ReadKey(true);
-                                        PrintCheatConsoleHeader();
-                                    }
-                                    else if (!configuration.EnableCheats && !Console.IsInputRedirected)
-                                    {
-                                        cheatHeaderPrinted = false;
-                                        Console.Clear();
-                                    }
                                 };
                                 game.DrugTicked += Drug_Ticked;
                                 mainMenu.GameDataLoaded = true;
@@ -727,7 +654,6 @@ namespace AmbermoonAndroid
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("Error while preparing game: " + ex.Message);
                             gameCreator = () => throw ex;
                         }
                     }
@@ -743,13 +669,10 @@ namespace AmbermoonAndroid
                     }, gameLanguage);
                 }
                 catch (Exception ex)
-                {
-                    string error = "Error while loading data: " + ex.Message;
-                    Console.WriteLine(error);                   
-
+                {             
                     try
                     {
-                        error = @"Error loading data   \(o_o\)";
+                        string error = @"Error loading data   \(o_o\)";
                         if (ex is FileNotFoundException fileNotFoundException &&
                             fileNotFoundException.Source == "Silk.NET.Core")
                         {
@@ -792,7 +715,7 @@ namespace AmbermoonAndroid
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(VersionSavegameFolders[2]), gameData.Language.ToGameLanguage(), Features.None);
+                selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[2]), gameData.Language.ToGameLanguage(), Features.None);
                 return false;
             }
 
@@ -903,14 +826,14 @@ namespace AmbermoonAndroid
             RunTask(() =>
             {
                 while (logoPyrdacor != null)
-                    System.Threading.Thread.Sleep(100);
+                    Thread.Sleep(100);
 
                 versionSelector = new VersionSelector(gameVersion, renderView, textureAtlasManager, gameVersions, cursor, configuration.GameVersionIndex, configuration.SaveOption);
                 versionSelector.Closed += (gameVersionIndex, gameData, saveInDataPath) =>
                 {
                     configuration.SaveOption = saveInDataPath ? SaveOption.DataFolder : SaveOption.ProgramFolder;
                     configuration.GameVersionIndex = gameVersionIndex;
-                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(VersionSavegameFolders[gameVersionIndex]),
+                    selectHandler?.Invoke(gameData, saveInDataPath ? dataPath : GetSavePath(Configuration.VersionSavegameFolders[gameVersionIndex]),
                         gameVersions[gameVersionIndex].Language.ToGameLanguage(), gameVersions[gameVersionIndex].Features);
                     versionLoader.Dispose();
                 };
@@ -932,12 +855,14 @@ namespace AmbermoonAndroid
             var useFrameBuffer = configuration.UseGraphicFilter;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, additionalPalettes);
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, additionalPalettes, Ambermoon.Renderer.DeviceType.MobilePortrait,
+                //Ambermoon.Renderer.SizingPolicy.FitRatioForceLandscape, Ambermoon.Renderer.OrientationPolicy.Fixed);
+                Ambermoon.Renderer.SizingPolicy.FitRatio, Ambermoon.Renderer.OrientationPolicy.Support180DegreeRotation); // TODO
             configuration.UseGraphicFilter = useFrameBuffer;
             return renderView;
         }
 
-        string GetSavePath(string version)
+        static string GetSavePath(string version)
         {
             string suffix = $"Saves{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
             string alternativeSuffix = $"SavesRemake{Path.DirectorySeparatorChar}{version.Replace(' ', '_')}";
@@ -1082,39 +1007,19 @@ namespace AmbermoonAndroid
                     {
                         Game = gameCreator();
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Console.WriteLine("Error creating game: " + ex.Message);
                         window.Close();
                         return;
                     }
                     mainMenu?.Destroy();
                     mainMenu = null;
                     gameCreator = null;
-
-                    // Show cheat info
-                    if (configuration.EnableCheats && !Console.IsInputRedirected)
-                    {
-                        PrintCheatConsoleHeader();
-                    }
                 }
             }
             else if (Game != null)
             {
                 Game.Update(delta);
-            }
-        }
-
-        static bool cheatHeaderPrinted = false;
-
-        static void PrintCheatConsoleHeader()
-        {
-            if (!cheatHeaderPrinted)
-            {
-                cheatHeaderPrinted = true;
-                Console.WriteLine("***** Ambermoon Cheat Console *****");
-                Console.WriteLine("Type 'help' for more information.");
-                Console.WriteLine();
             }
         }
 

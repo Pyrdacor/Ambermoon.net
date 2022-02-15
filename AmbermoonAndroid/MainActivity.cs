@@ -30,12 +30,6 @@ namespace AmbermoonAndroid
             }
         }
 
-        public override void LoadLibraries()
-        {
-            base.LoadLibraries();
-            Console.WriteLine();
-        }
-
         const string ConfigurationFileName = "ambermoon.cfg";
         string appDataDir = "";
 

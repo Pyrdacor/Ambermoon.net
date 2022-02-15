@@ -21,6 +21,8 @@ namespace Ambermoon
 
         [JsonIgnore]
         public bool FirstStart { get; set; } = false;
+        [JsonIgnore]
+        public bool IsMobile { get; } = false;
 
         public int? Width { get; set; } = null;
         public int? Height { get; set; } = null;
