@@ -6,11 +6,13 @@ namespace Ambermoon.Audio.Android
 {
     public class AudioOutput : IAudioOutput, IDisposable
     {
-        readonly AudioTrack? audioTrack;
+        readonly int channels = 1;
+        readonly int sampleRate = 44100;
+        readonly Dictionary<byte[], AudioTrack> audioTracks = new();
         bool disposed = false;
         float volume = 1.0f;
         bool enabled = true;
-        byte[]? currentBuffer = null;
+        AudioTrack? currentTrack = null;
 
         public AudioOutput(int channels = 1, int sampleRate = 44100)
         {
@@ -20,22 +22,28 @@ namespace Ambermoon.Audio.Android
             if (sampleRate < 2000 || sampleRate > 200000)
                 throw new ArgumentOutOfRangeException(nameof(sampleRate));
 
-            try
-            {
+            this.channels = channels;
+            this.sampleRate = sampleRate;
+
+            Available = true;
+        }
+
+        private AudioTrack GetTrack(byte[] data)
+        {
+            if (audioTracks.TryGetValue(data, out var track))
+                return track;
+
 #pragma warning disable 0618
-                audioTrack = new AudioTrack(Media.Stream.Music, sampleRate,
+            track = new AudioTrack(Media.Stream.Music, sampleRate,
                     channels == 2 ? Media.ChannelOut.Stereo : Media.ChannelOut.Mono,
-                    Media.Encoding.Pcm8bit, 10 * 44100, Media.AudioTrackMode.Static);
+                    Media.Encoding.Pcm8bit, data.Length, Media.AudioTrackMode.Static);
 #pragma warning restore 0618
-                audioTrack.SetVolume(1.0f);
-                Available = true;
-            }
-            catch
-            {
-                audioTrack?.Dispose();
-                Available = false;
-                return;
-            }
+
+            track.Write(data, 0, data.Length);
+
+            audioTracks.Add(data, track);
+
+            return track;
         }
 
         /// <summary>
@@ -56,8 +64,9 @@ namespace Ambermoon.Audio.Android
 
                 if (!value && Available && Streaming)
                 {
-                    audioTrack?.Stop();
-                    audioTrack?.SetPlaybackHeadPosition(0);
+                    currentTrack?.Stop();
+                    currentTrack?.SetPlaybackHeadPosition(0);
+                    currentTrack = null;
                 }
 
                 enabled = value;
@@ -67,7 +76,7 @@ namespace Ambermoon.Audio.Android
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public bool Streaming { get; private set; } = false;
+        public bool Streaming { get; private set; }
 
         /// <summary>
         /// <inheritdoc/>
@@ -85,7 +94,10 @@ namespace Ambermoon.Audio.Android
                 volume = value;
 
                 if (Available)
-                    audioTrack?.SetVolume(volume);
+                {
+                    foreach (var track in audioTracks)
+                        track.Value.SetVolume(volume);
+                }
             }
         }
 
@@ -96,9 +108,14 @@ namespace Ambermoon.Audio.Android
 
             if (Available)
             {
-                audioTrack?.Dispose();
+                Stop();
+
+                foreach (var track in audioTracks)
+                    track.Value.Dispose();
+                audioTracks.Clear();
             }
 
+            currentTrack = null;
             Streaming = false;
             Enabled = false;
             Available = false;
@@ -116,15 +133,12 @@ namespace Ambermoon.Audio.Android
             if (Streaming)
                 return;
 
-            if (audioTrack == null)
-                throw new NotSupportedException("Start was called without a valid source.");
-
-            if (currentBuffer == null)
+            if (currentTrack == null)
                 return;
 
             Streaming = true;
 
-            audioTrack?.Play();
+            currentTrack.Play();
         }
 
         /// <summary>
@@ -138,9 +152,9 @@ namespace Ambermoon.Audio.Android
             if (!Streaming)
                 return;
 
+            currentTrack!.Stop();
+            currentTrack = null;
             Streaming = false;
-
-            audioTrack?.Stop();
         }
 
         /// <summary>
@@ -151,14 +165,11 @@ namespace Ambermoon.Audio.Android
             if (!Available)
                 return;
 
-            currentBuffer = data;
             Stop();
-            if (audioTrack != null)
-            {
-                if (audioTrack.BufferSizeInFrames < data.Length)
-                    audioTrack.SetBufferSizeInFrames(data.Length);
-                audioTrack.Write(data, 0, data.Length);
-            }
+
+            currentTrack = GetTrack(data);
+
+            Reset();
         }
 
         /// <summary>
@@ -169,7 +180,7 @@ namespace Ambermoon.Audio.Android
             if (!Available)
                 return;
 
-            audioTrack?.SetPlaybackHeadPosition(0);
+            currentTrack?.SetPlaybackHeadPosition(0);
         }
     }
 }
