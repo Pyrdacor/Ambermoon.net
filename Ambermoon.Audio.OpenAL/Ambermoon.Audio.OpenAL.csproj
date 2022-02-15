@@ -10,13 +10,13 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon OpenAL Audio Sound Music</PackageTags>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Configurations>Debug;Release</Configurations>
+    <Configurations>Debug;Release;DebugAndroid</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Common" Version="10.4.0" />
-    <PackageReference Include="Silk.NET.OpenAL" Version="2.11.0" />
-    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.11.0" />
+    <PackageReference Include="Silk.NET.OpenAL" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.13.0" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.21.1.1" />
   </ItemGroup>
 

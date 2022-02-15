@@ -38,13 +38,13 @@ namespace AmbermoonAndroid
         IAlphaSprite sprite1 = null;
         IAlphaSprite sprite2 = null;
         readonly float oldVolume;
-        readonly Ambermoon.Audio.OpenAL.AudioOutput audioOutput;
+        readonly IAudioOutput audioOutput;
         readonly ISong song;
         TextureAtlasManager textureAtlasManager = null;
         IRenderText renderText = null;
         IColoredRect textOverlay = null;
 
-        public LogoPyrdacor(Ambermoon.Audio.OpenAL.AudioOutput audioOutput, ISong song)
+        public LogoPyrdacor(IAudioOutput audioOutput, ISong song)
         {
             this.audioOutput = audioOutput;
             this.song = song;

@@ -46,9 +46,9 @@ namespace Ambermoon.Renderer
             $"{{",
             $"    vec2 realTexCoord = varTexCoord;",
             $"    if (realTexCoord.x >= textureEndCoord.x)",
-            $"        realTexCoord.x -= int((textureSize.x + realTexCoord.x - textureEndCoord.x) / textureSize.x) * textureSize.x;",
+            $"        realTexCoord.x -= floor((textureSize.x + realTexCoord.x - textureEndCoord.x) / textureSize.x) * textureSize.x;",
             $"    if (realTexCoord.y >= textureEndCoord.y)",
-            $"        realTexCoord.y -= int((textureSize.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
+            $"        realTexCoord.y -= floor((textureSize.y + realTexCoord.y - textureEndCoord.y) / textureSize.y) * textureSize.y;",
             $"    float colorIndex = texture({DefaultSamplerName}, realTexCoord).r * 255.0f;",
             $"    vec4 pixelColor = {DefaultUseColorReplaceName} > 0.5f && colorIndex < 15.5f ? {DefaultColorReplaceName}[int(colorIndex + 0.5f)]",
             $"        : texture({DefaultPaletteName}, vec2((colorIndex + 0.5f) / 32.0f, (palIndex + 0.5f) / {Shader.PaletteCount}));",
@@ -59,7 +59,7 @@ namespace Ambermoon.Renderer
             $"    else if (abs(colorIndex - {DefaultSkyColorIndexName}) < 0.001f)",
             $"        {DefaultFragmentOutColorName} = {DefaultSkyReplaceColorName};",
             $"    else",
-            $"        {DefaultFragmentOutColorName} = vec4(pixelColor.rgb + vec3({DefaultLightName}) - 1, pixelColor.a);",
+            $"        {DefaultFragmentOutColorName} = vec4(pixelColor.rgb + vec3({DefaultLightName}) - vec3(1), pixelColor.a);",
             $"}}"
         };
         // Note: gl_FragDepth = 0.5 * depth + 0.5 is basically (far-near)/2 * depth + (far+near)/2 with far = 1.0 and near = 0.0 (gl_DepthRange uses 0.0 to 1.0).
@@ -96,7 +96,7 @@ namespace Ambermoon.Renderer
             $"    {{",
             $"        localPos += vec4(offset.x, 0, offset.y + {DefaultExtrudeName}, 0);",
             $"    }}",
-            $"    vec2 atlasFactor = vec2(1.0f / {DefaultAtlasSizeName}.x, 1.0f / {DefaultAtlasSizeName}.y);",
+            $"    vec2 atlasFactor = vec2(1.0f / float({DefaultAtlasSizeName}.x), 1.0f / float({DefaultAtlasSizeName}.y));",
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
             $"    textureEndCoord = atlasFactor * vec2({DefaultTexEndCoordName}.x, {DefaultTexEndCoordName}.y);",

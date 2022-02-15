@@ -24,16 +24,20 @@ namespace AmbermoonAndroid
             return stream;
         }
 
-        public static Stream GetVersions() => LoadStream(Resource.Raw.versions);
-
-        public static byte[] GetSongData()
+        static byte[] LoadData(int id)
         {
-            using var stream = LoadStream(Resource.Raw.song);
+            using var stream = LoadStream(id);
             var data = new byte[stream.Length];
             stream.Read(data, 0, data.Length);
             return data;
         }
 
+        public static Stream GetVersions() => LoadStream(Resource.Raw.versions);
+
+        public static byte[] GetSongData() => LoadData(Resource.Raw.song);
+
         public static Stream GetLogoData() => LoadStream(Resource.Raw.logo);
+
+        public static byte[] GetIntroFontData() => LoadData(Resource.Raw.IntroFont);
     }
 }

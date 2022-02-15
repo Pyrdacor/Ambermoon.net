@@ -1,16 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0-android</TargetFramework>
-    <SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+	<RuntimeIdentifiers>android.24-x64</RuntimeIdentifiers>
     <OutputType>Exe</OutputType>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationId>com.pyrdacor.AmbermoonAndroid</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <Configurations>Debug;Release;ReleaseWithAndroid</Configurations>
+    <Configurations>Debug;Release;ReleaseWithAndroid;DebugAndroid</Configurations>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndroid|AnyCPU'">
+	<DefineConstants>$(DefineConstants);GLES</DefineConstants>
+	<EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants)</DefineConstants>
+    <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndroid|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
   </PropertyGroup>
@@ -46,13 +55,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Silk.NET.Input" Version="2.11.0" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.11.0" />
-    <PackageReference Include="Silk.NET.OpenGLES" Version="2.11.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.11.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.OpenGLES" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.13.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
+    <ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />
     <ProjectReference Include="..\Ambermoon.Common\Ambermoon.Common.csproj" />
     <ProjectReference Include="..\Ambermoon.Core\Ambermoon.Core.csproj" />
     <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />

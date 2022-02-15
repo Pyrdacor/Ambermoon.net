@@ -15,7 +15,7 @@
     <PackageTags>Ambermoon</PackageTags>
     <Description>Rework of the Amiga game Ambermoon</Description>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Configurations>Debug;Release;ReleaseMac</Configurations>
+    <Configurations>Debug;Release;ReleaseMac;DebugAndroid</Configurations>
   </PropertyGroup>
 	
   <PropertyGroup Condition="'$(Configuration)'!='ReleaseMac'">
@@ -27,6 +27,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndroid|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 
@@ -86,9 +90,9 @@
     <PackageReference Include="Ambermoon.Data.Legacy" Version="10.4.0" />
     <PackageReference Include="glfw" Version="3.3.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Silk.NET.GLFW" Version="2.11.0" />
-    <PackageReference Include="Silk.NET.Input" Version="2.11.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.11.0" />
+    <PackageReference Include="Silk.NET.GLFW" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.13.0" />
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>
 

@@ -128,7 +128,7 @@
     <value>Resources\song.pyr;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="versions" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\versions.dat;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>Resources\raw\versions.dat;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="windowIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\windowIcon.raw;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

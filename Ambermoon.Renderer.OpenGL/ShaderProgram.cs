@@ -103,13 +103,12 @@ namespace Ambermoon.Renderer
 
                 state.Gl.LinkProgram(ProgramIndex);
 
-                // TODO: uncomment when fixed in Silk.NET.OpenGLES
-                /*string infoLog = state.Gl.GetProgramInfoLog(ProgramIndex);
+                string infoLog = state.Gl.GetProgramInfoLog(ProgramIndex);
 
                 if (!string.IsNullOrWhiteSpace(infoLog))
                 {
                     throw new Exception(infoLog.Trim()); // TODO: throw specialized exception?
-                }*/
+                }
 
                 Linked = true;
             }

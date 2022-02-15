@@ -65,13 +65,12 @@ namespace Ambermoon.Renderer
             state.Gl.ShaderSource(ShaderIndex, code);
             state.Gl.CompileShader(ShaderIndex);
 
-            // TODO: uncomment when fixed in Silk.NET.OpenGLES
-            /*string infoLog = state.Gl.GetShaderInfoLog(ShaderIndex);
+            string infoLog = state.Gl.GetShaderInfoLog(ShaderIndex);
 
             if (!string.IsNullOrWhiteSpace(infoLog))
             {
                 throw new Exception(infoLog.Trim()); // TODO: throw specialized exception?
-            }*/
+            }
         }
 
         public void AttachToProgram(ShaderProgram program)

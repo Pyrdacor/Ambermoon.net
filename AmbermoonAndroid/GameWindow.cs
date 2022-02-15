@@ -18,10 +18,9 @@ using System.Threading.Tasks;
 using TextReader = Ambermoon.Data.Legacy.Serialization.TextReader;
 using MousePosition = System.Numerics.Vector2;
 using WindowDimension = Silk.NET.Maths.Vector2D<int>;
-using Ambermoon.Audio.OpenAL;
+using Ambermoon.Audio.Android;
 using Ambermoon.Data.Legacy.Audio;
 using Ambermoon.Data.Enumerations;
-using System.Threading;
 using Ambermoon;
 using Key = Ambermoon.Key;
 
@@ -568,13 +567,13 @@ namespace AmbermoonAndroid
             }
         };
 
-        string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
+        static string GetText(GameLanguage gameLanguage, int index) => LoadingTexts[gameLanguage][index];
 
         void StartGame(GameData gameData, string savePath, GameLanguage gameLanguage, Features features)
         {
             // Load intro data
             var introData = new IntroData(gameData);
-            var introFont = new Font(Resources.IntroFont, 12);
+            var introFont = new Font(FileProvider.GetIntroFontData(), 12);
 
             // Load outro data
             var outroData = new OutroData(gameData);
@@ -841,11 +840,11 @@ namespace AmbermoonAndroid
                 }
             }
 
-            var builtinVersionDataProviders = new Func<IGameData>[2]
-            {
-                () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null),
-                () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], () => LoadBuiltinVersionData(versions[0], null))
-            };
+            var builtinVersionDataProviders = new Func<IGameData>[4];
+            builtinVersionDataProviders[0] = () => configuration.GameVersionIndex == 0 ? gameData : LoadBuiltinVersionData(versions[0], null);
+            builtinVersionDataProviders[1] = () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], builtinVersionDataProviders[0]);
+            builtinVersionDataProviders[2] = () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], null);
+            builtinVersionDataProviders[3] = () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], builtinVersionDataProviders[2]);
             var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();

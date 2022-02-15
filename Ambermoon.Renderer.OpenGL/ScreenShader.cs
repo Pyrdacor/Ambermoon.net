@@ -36,11 +36,15 @@ namespace Ambermoon.Renderer
 
         protected static string GetFragmentShaderHeader(State state)
         {
+#if GLES
+            string header = $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor:00} es\n";
+#else
             string header = $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor}\n";
+#endif
 
             header += "\n";
             header += "#ifdef GL_ES\n";
-            header += " precision mediump float;\n";
+            header += " precision highp float;\n";
             header += " precision highp int;\n";
             header += "#endif\n";
             header += "\n";
@@ -51,7 +55,11 @@ namespace Ambermoon.Renderer
 
         protected static string GetVertexShaderHeader(State state)
         {
+#if GLES
+            return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor:00} es\n\n";
+#else
             return $"#version {state.GLSLVersionMajor}{state.GLSLVersionMinor}\n\n";
+#endif
         }
 
         static readonly string PixelWidth = (1.0f / 320.0f).ToString(System.Globalization.CultureInfo.InvariantCulture);
