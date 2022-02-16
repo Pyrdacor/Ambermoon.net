@@ -42,7 +42,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.PrepareIcons", "A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmbermoonAndroid", "AmbermoonAndroid\AmbermoonAndroid.csproj", "{C5250198-DA00-4210-982C-C8B057FA0319}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambermoon.Audio.Android", "Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj", "{AA5390B0-EBFF-42F0-9793-72C4B5596661}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Audio.Android", "Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj", "{AA5390B0-EBFF-42F0-9793-72C4B5596661}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -382,6 +382,7 @@ Global
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.Debug|x86.Build.0 = Debug|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.DebugAndroid|Any CPU.ActiveCfg = DebugAndroid|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.DebugAndroid|Any CPU.Build.0 = DebugAndroid|Any CPU
+		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.DebugAndroid|Any CPU.Deploy.0 = DebugAndroid|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.DebugAndroid|x64.ActiveCfg = Debug|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.DebugAndroid|x64.Build.0 = Debug|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.DebugAndroid|x86.ActiveCfg = Debug|Any CPU
@@ -400,6 +401,7 @@ Global
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseMac|x86.Build.0 = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|Any CPU.ActiveCfg = ReleaseWithAndroid|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|Any CPU.Build.0 = ReleaseWithAndroid|Any CPU
+		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|Any CPU.Deploy.0 = ReleaseWithAndroid|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|x64.ActiveCfg = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|x64.Build.0 = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|x86.ActiveCfg = Release|Any CPU

@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0-android</TargetFramework>
-    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
-	<RuntimeIdentifiers>android.24-x64</RuntimeIdentifiers>
+    <SupportedOSPlatformVersion>29.0</SupportedOSPlatformVersion>
+	<RuntimeIdentifiers>android.29-x64;android.29-arm;android.30-x64;android.30-arm</RuntimeIdentifiers>
     <OutputType>Exe</OutputType>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -11,27 +11,28 @@
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <Configurations>Debug;Release;ReleaseWithAndroid;DebugAndroid</Configurations>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndroid|AnyCPU'">
-	<DefineConstants>$(DefineConstants);GLES</DefineConstants>
-	<EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants)</DefineConstants>
-    <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+    <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAndroid|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
-    <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+    <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+	<AndroidUseAapt2>True</AndroidUseAapt2>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+    <PublishTrimmed>False</PublishTrimmed>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithAndroid|AnyCPU'">
+	<DefineConstants>$(DefineConstants);GLES</DefineConstants>
     <AndroidLinkTool>r8</AndroidLinkTool>
     <AndroidUseAapt2>True</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
     <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+    <Optimize>True</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\IntroFont.dat" />
@@ -58,7 +59,7 @@
     <PackageReference Include="Silk.NET.Input" Version="2.13.0" />
     <PackageReference Include="Silk.NET.OpenGL" Version="2.13.0" />
     <PackageReference Include="Silk.NET.OpenGLES" Version="2.13.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.13.0" />
+    <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.13.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj" />
