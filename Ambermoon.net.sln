@@ -366,8 +366,6 @@ Global
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseMac|x86.Build.0 = ReleaseWithAndroid|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseMac|x86.Deploy.0 = ReleaseWithAndroid|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseWithAndroid|Any CPU.ActiveCfg = ReleaseWithAndroid|Any CPU
-		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseWithAndroid|Any CPU.Build.0 = ReleaseWithAndroid|Any CPU
-		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseWithAndroid|Any CPU.Deploy.0 = ReleaseWithAndroid|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseWithAndroid|x64.ActiveCfg = ReleaseWithAndroid|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseWithAndroid|x64.Build.0 = ReleaseWithAndroid|Any CPU
 		{C5250198-DA00-4210-982C-C8B057FA0319}.ReleaseWithAndroid|x64.Deploy.0 = ReleaseWithAndroid|Any CPU
@@ -400,8 +398,6 @@ Global
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseMac|x86.ActiveCfg = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseMac|x86.Build.0 = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|Any CPU.ActiveCfg = ReleaseWithAndroid|Any CPU
-		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|Any CPU.Build.0 = ReleaseWithAndroid|Any CPU
-		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|Any CPU.Deploy.0 = ReleaseWithAndroid|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|x64.ActiveCfg = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|x64.Build.0 = Release|Any CPU
 		{AA5390B0-EBFF-42F0-9793-72C4B5596661}.ReleaseWithAndroid|x86.ActiveCfg = Release|Any CPU
