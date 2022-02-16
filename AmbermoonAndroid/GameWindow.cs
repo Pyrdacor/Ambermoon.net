@@ -160,8 +160,6 @@ namespace AmbermoonAndroid
                 mouse.MouseMove += Mouse_MouseMove;
                 mouse.Scroll += Mouse_Scroll;
             }
-
-            window.Native.Android.Value.Window
         }
 
         static KeyModifiers GetModifiers(IKeyboard keyboard)
@@ -296,33 +294,43 @@ namespace AmbermoonAndroid
             return new Position(Util.Round(position.X), Util.Round(position.Y));
         }
 
-        void Mouse_MouseDown(IMouse mouse, MouseButton button)
+        internal void OnMouseDown(Position position, MouseButtons buttons)
         {
-            var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
-
             if (logoPyrdacor != null)
             {
                 logoPyrdacor?.Cleanup();
                 logoPyrdacor = null;
             }
             else if (versionSelector != null)
-                versionSelector.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
+                versionSelector.OnMouseDown(position, buttons);
             else if (mainMenu != null)
-                mainMenu.OnMouseDown(ConvertMousePosition(position), ConvertMouseButtons(button));
+                mainMenu.OnMouseDown(position, buttons);
             else if (Game != null)
-                Game.OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
+                Game.OnMouseDown(position, buttons);
+        }
+
+        void Mouse_MouseDown(IMouse mouse, MouseButton button)
+        {
+            var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
+
+            OnMouseDown(ConvertMousePosition(position), GetMouseButtons(mouse));
+        }
+
+        internal void OnMouseUp(Position position, MouseButtons buttons)
+        {
+            if (versionSelector != null)
+                versionSelector.OnMouseUp(position, buttons);
+            else if (mainMenu != null)
+                mainMenu.OnMouseUp(position, buttons);
+            else if (Game != null)
+                Game.OnMouseUp(position, buttons);
         }
 
         void Mouse_MouseUp(IMouse mouse, MouseButton button)
         {
             var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
 
-            if (versionSelector != null)
-                versionSelector.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (mainMenu != null)
-                mainMenu.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
-            else if (Game != null)
-                Game.OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
+            OnMouseUp(ConvertMousePosition(position), ConvertMouseButtons(button));
         }
 
         void Mouse_MouseMove(IMouse mouse, MousePosition position)
@@ -345,106 +353,19 @@ namespace AmbermoonAndroid
                 Game.OnMouseMove(ConvertMousePosition(position), GetMouseButtons(mouse));
         }
 
+        internal void OnMouseScroll(Position position, int deltaX, int deltaY)
+        {
+            if (versionSelector != null)
+                versionSelector.OnMouseWheel(deltaX, deltaY, position);
+            else if (Game != null)
+                Game.OnMouseWheel(deltaX, deltaY, position);
+        }
+
         void Mouse_Scroll(IMouse mouse, ScrollWheel wheelDelta)
         {
             var position = trapMouse ? new MousePosition(trappedMouseOffset.X, trappedMouseOffset.Y) : mouse.Position;
 
-            if (versionSelector != null)
-                versionSelector.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
-            else if (Game != null)
-                Game.OnMouseWheel(Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y), ConvertMousePosition(position));
-        }
-
-        void WritePNG(string filename, byte[] rgbData, Size imageSize)
-        {
-            if (File.Exists(filename))
-                filename += Guid.NewGuid().ToString();
-
-            filename += ".png";
-
-            var writer = new DataWriter();
-
-            void WriteChunk(string name, Action<DataWriter> dataWriter)
-            {
-                var internalDataWriter = new DataWriter();
-                dataWriter?.Invoke(internalDataWriter);
-                var data = internalDataWriter.ToArray();
-
-                writer.Write((uint)data.Length);
-                writer.WriteWithoutLength(name);
-                writer.Write(data);
-                var crc = new PngCrc();
-                uint headerCrc = crc.Calculate(new byte[] { (byte)name[0], (byte)name[1], (byte)name[2], (byte)name[3] });
-                writer.Write(crc.Calculate(headerCrc, data));
-            }
-
-            // Header
-            writer.Write(0x89);
-            writer.Write(0x50);
-            writer.Write(0x4E);
-            writer.Write(0x47);
-            writer.Write(0x0D);
-            writer.Write(0x0A);
-            writer.Write(0x1A);
-            writer.Write(0x0A);
-
-            // IHDR chunk
-            WriteChunk("IHDR", writer =>
-            {
-                writer.Write((uint)imageSize.Width);
-                writer.Write((uint)imageSize.Height);
-                writer.Write(8); // 8 bits per color
-                writer.Write(2); // Color only (RGB)
-                writer.Write(0); // Deflate compression
-                writer.Write(0); // Default filtering
-                writer.Write(0); // No interlace
-            });
-
-            WriteChunk("IDAT", writer =>
-            {
-                byte[] dataWithFilterBytes = new byte[rgbData.Length + imageSize.Height];
-                for (int y = 0; y < imageSize.Height; ++y)
-                {
-                    int i = imageSize.Height - y - 1;
-                    Buffer.BlockCopy(rgbData, y * imageSize.Width * 3, dataWithFilterBytes, 1 + i + i * imageSize.Width * 3, imageSize.Width * 3);
-                }
-                // Note: Data is initialized with 0 bytes so the filter bytes are already 0.
-                using var uncompressedStream = new MemoryStream(dataWithFilterBytes);
-                using var compressedStream = new MemoryStream();
-                var compressStream = new System.IO.Compression.DeflateStream(compressedStream, System.IO.Compression.CompressionLevel.Optimal, true);
-                uncompressedStream.CopyTo(compressStream);
-                compressStream.Close();
-
-                // Zlib header
-                writer.Write(0x78); // 32k window deflate method
-                writer.Write(0xDA); // Best compression, no dict and header is multiple of 31
-
-                uint Adler32()
-                {
-                    uint s1 = 1;
-                    uint s2 = 0;
-
-                    for (int n = 0; n < dataWithFilterBytes.Length; ++n)
-                    {
-                        s1 = (s1 + dataWithFilterBytes[n]) % 65521;
-                        s2 = (s2 + s1) % 65521;
-                    }
-
-                    return (s2 << 16) | s1;
-                }
-
-                // Compressed data
-                writer.Write(compressedStream.ToArray());
-
-                // Checksum
-                writer.Write(Adler32());
-            });
-
-            // IEND chunk
-            WriteChunk("IEND", null);
-
-            using var file = File.Create(filename);
-            writer.CopyTo(file);
+            OnMouseScroll(ConvertMousePosition(position), Util.Round(wheelDelta.X), Util.Round(wheelDelta.Y));
         }
 
         void ShowMainMenu(IRenderView renderView, Ambermoon.Render.Cursor cursor, IReadOnlyDictionary<IntroGraphic, byte> paletteIndices,
@@ -855,9 +776,9 @@ namespace AmbermoonAndroid
             var useFrameBuffer = configuration.UseGraphicFilter;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, additionalPalettes, Ambermoon.Renderer.DeviceType.MobilePortrait,
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, additionalPalettes, Ambermoon.Renderer.DeviceType.MobileLandscape,
                 //Ambermoon.Renderer.SizingPolicy.FitRatioForceLandscape, Ambermoon.Renderer.OrientationPolicy.Fixed);
-                Ambermoon.Renderer.SizingPolicy.FitRatio, Ambermoon.Renderer.OrientationPolicy.Support180DegreeRotation); // TODO
+                Ambermoon.Renderer.SizingPolicy.FitRatio, Ambermoon.Renderer.OrientationPolicy.Fixed); // TODO
             configuration.UseGraphicFilter = useFrameBuffer;
             return renderView;
         }
