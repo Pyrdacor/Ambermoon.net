@@ -452,14 +452,20 @@ namespace Ambermoon.Data.Legacy.Serialization
 					uint numOffsets;
 					int start = reader.Position;
 
+					// Note: The imploder stores the reloc offsets as deltas!
+
 					while ((numOffsets = reader.ReadDword()) != 0)
 					{
+						uint currentOffset = 0;
 						uint hunkNumber = reader.ReadDword();
 						entries.Add(hunkNumber, new List<uint>((int)numOffsets));
 						var list = entries[hunkNumber];
 
 						for (int o = 0; o < numOffsets; ++o)
-							list.Add(reader.ReadDword());
+						{
+							currentOffset += reader.ReadDword();
+							list.Add(currentOffset);
+						}
 					}
 
 					hunks.Add(new Reloc32Hunk

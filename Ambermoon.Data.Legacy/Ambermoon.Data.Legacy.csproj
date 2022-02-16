@@ -9,7 +9,7 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Legacy Amiga Game Data</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>10.4.0</Version>
+    <Version>10.4.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release;DebugAndroid</Configurations>
   </PropertyGroup>
