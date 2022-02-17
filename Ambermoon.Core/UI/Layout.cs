@@ -1287,7 +1287,7 @@ namespace Ambermoon.UI
             // Page 1
             void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
             void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
-            void SetGraphicFilter() => SetOptionString(2, game.Configuration.UseGraphicFilter ? on : off);
+            void SetGraphicFilter() => SetOptionString(2, game.Configuration.GraphicFilter == GraphicFilter.None ? off : game.Configuration.GraphicFilter.ToString());
             void SetResolution() => SetOptionString(3, GetResolutionString());
             void SetFullscreen() => SetOptionString(4, game.Configuration.Fullscreen ? on : off);
             // Page 2
@@ -1358,9 +1358,10 @@ namespace Ambermoon.UI
             }
             void ToggleGraphicFilter()
             {
-                game.Configuration.UseGraphicFilter = !game.Configuration.UseGraphicFilter;
+                game.Configuration.GraphicFilter = (GraphicFilter)(((int)game.Configuration.GraphicFilter + 1) % Enum.GetValues<GraphicFilter>().Length);
                 SetGraphicFilter();
                 changedConfiguration = true;
+                game.NotifyConfigurationChange(false);
             }
             void ToggleResolution()
             {

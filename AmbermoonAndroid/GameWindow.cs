@@ -559,10 +559,10 @@ namespace AmbermoonAndroid
                                         ChangeFullscreenMode(configuration.Fullscreen);
                                     }
 
-                                    if (configuration.UseGraphicFilter)
+                                    if (configuration.GraphicFilter != GraphicFilter.None)
                                     {
                                         if (!renderView.TryUseFrameBuffer())
-                                            configuration.UseGraphicFilter = false;
+                                            configuration.GraphicFilter = GraphicFilter.None;
                                     }
                                     else
                                         renderView.DeactivateFramebuffer();
@@ -773,13 +773,15 @@ namespace AmbermoonAndroid
         RenderView CreateRenderView(GameData gameData, IConfiguration configuration, GraphicProvider graphicProvider,
             FontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
-            var useFrameBuffer = configuration.UseGraphicFilter;
+            var useFrameBuffer = configuration.GraphicFilter != GraphicFilter.None;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, additionalPalettes, Ambermoon.Renderer.DeviceType.MobileLandscape,
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, () => Math.Max(0, (int)configuration.GraphicFilter - 1),
+                additionalPalettes, Ambermoon.Renderer.DeviceType.MobileLandscape,
                 //Ambermoon.Renderer.SizingPolicy.FitRatioForceLandscape, Ambermoon.Renderer.OrientationPolicy.Fixed);
                 Ambermoon.Renderer.SizingPolicy.FitRatio, Ambermoon.Renderer.OrientationPolicy.Fixed); // TODO
-            configuration.UseGraphicFilter = useFrameBuffer;
+            if (!useFrameBuffer)
+                configuration.GraphicFilter = GraphicFilter.None;
             return renderView;
         }
 

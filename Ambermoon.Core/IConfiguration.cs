@@ -54,6 +54,15 @@ namespace Ambermoon
         public int ContinueSavegameSlot { get; set; } = 0;
     }
 
+    public enum GraphicFilter
+    {
+        None,
+        Smooth,
+        Oldschool,
+        Albion,
+        Scanlines
+    }
+
     public interface IConfiguration
     {
         bool FirstStart { get; set; }
@@ -78,7 +87,9 @@ namespace Ambermoon
         bool ShowButtonTooltips { get; set; }
         bool ShowFantasyIntro { get; set; }
         bool ShowIntro { get; set; }
-        bool UseGraphicFilter { get; set; }
+        [Obsolete("Use GraphicFilter instead.")]
+        bool? UseGraphicFilter { get; set; }
+        GraphicFilter GraphicFilter { get; set; }
         bool ShowPlayerStatsTooltips { get; set; }
         bool ShowPyrdacorLogo { get; set; }
         bool ShowThalionLogo { get; set; }

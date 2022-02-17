@@ -71,6 +71,7 @@ namespace Ambermoon.Renderer.OpenGL
         const float VirtualAspectRatio = Global.VirtualAspectRatio;
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
+        readonly Func<int> screenBufferModeProvider = null;
 
         float RenderFactorX => (float)frameBufferSize.Width / Global.VirtualScreenWidth;
         float RenderFactorY => (float)frameBufferSize.Height / Global.VirtualScreenHeight;
@@ -123,8 +124,8 @@ namespace Ambermoon.Renderer.OpenGL
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
-            int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, Graphic[] additionalPalettes,
-            DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
+            int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, Func<int> screenBufferModeProvider,
+            Graphic[] additionalPalettes, DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
             OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
@@ -151,6 +152,8 @@ namespace Ambermoon.Renderer.OpenGL
             surface3DFactory = new Surface3DFactory(visibleArea);
             renderTextFactory = new RenderTextFactory(visibleArea);
             fowFactory = new FowFactory(visibleArea);
+
+            this.screenBufferModeProvider = screenBufferModeProvider;
 
             camera3D = new Camera3D(State);
 
@@ -556,6 +559,7 @@ namespace Ambermoon.Renderer.OpenGL
             screenShader.Use(screenBuffer.ProjectionMatrix);
             screenShader.SetResolution(frameBufferSize);
             screenShader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+            screenShader.SetMode(screenBufferModeProvider?.Invoke() ?? 0);
             State.Gl.ActiveTexture(GLEnum.Texture0);
             frameBuffer.BindAsTexture();
             State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);

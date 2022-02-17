@@ -694,10 +694,10 @@ namespace Ambermoon
                                         ChangeFullscreenMode(configuration.Fullscreen);
                                     }
 
-                                    if (configuration.UseGraphicFilter)
+                                    if (configuration.GraphicFilter != GraphicFilter.None)
                                     {
                                         if (!renderView.TryUseFrameBuffer())
-                                            configuration.UseGraphicFilter = false;
+                                            configuration.GraphicFilter = GraphicFilter.None;
                                     }
                                     else
                                         renderView.DeactivateFramebuffer();
@@ -927,11 +927,13 @@ namespace Ambermoon
         RenderView CreateRenderView(GameData gameData, IConfiguration configuration, GraphicProvider graphicProvider,
             FontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
-            var useFrameBuffer = configuration.UseGraphicFilter;
+            var useFrameBuffer = configuration.GraphicFilter != GraphicFilter.None;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, additionalPalettes);
-            configuration.UseGraphicFilter = useFrameBuffer;
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, () => Math.Max(0, (int)configuration.GraphicFilter - 1),
+                additionalPalettes);
+            if (!useFrameBuffer)
+                configuration.GraphicFilter = GraphicFilter.None;
             return renderView;
         }
 
