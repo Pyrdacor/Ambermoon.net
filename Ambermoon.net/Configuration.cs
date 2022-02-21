@@ -49,6 +49,7 @@ namespace Ambermoon
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? UseGraphicFilter { get; set; } = null;
         public GraphicFilter GraphicFilter { get; set; } = GraphicFilter.None;
+        public Effects Effects { get; set; } = Effects.None;
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
         public bool ShowThalionLogo { get; set; } = true;

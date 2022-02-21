@@ -452,7 +452,7 @@ namespace AmbermoonAndroid
                 audioOutput.Enabled = audioOutput.Available && configuration.Music;
                 if (configuration.ShowPyrdacorLogo)
                 {
-                    logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                    logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(FileProvider.GetSongData()), 0, false, false));
                     logoPalettes = logoPyrdacor.Palettes;
                 }
                 else
@@ -566,6 +566,14 @@ namespace AmbermoonAndroid
                                     }
                                     else
                                         renderView.DeactivateFramebuffer();
+
+                                    if (configuration.Effects != Effects.None)
+                                    {
+                                        if (!renderView.TryUseEffects())
+                                            configuration.Effects = Effects.None;
+                                    }
+                                    else
+                                        renderView.DeactivateEffects();
                                 };
                                 game.DrugTicked += Drug_Ticked;
                                 mainMenu.GameDataLoaded = true;
@@ -701,7 +709,7 @@ namespace AmbermoonAndroid
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
             if (configuration.ShowPyrdacorLogo)
             {
-                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(Resources.Song), 0, false, false));
+                logoPyrdacor = new LogoPyrdacor(audioOutput, SongManager.LoadCustomSong(new DataReader(FileProvider.GetSongData()), 0, false, false));
                 logoPalettes = logoPyrdacor.Palettes;
             }
             else
@@ -774,14 +782,18 @@ namespace AmbermoonAndroid
             FontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
             var useFrameBuffer = configuration.GraphicFilter != GraphicFilter.None;
+            var useEffects = configuration.Effects != Effects.None;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, () => Math.Max(0, (int)configuration.GraphicFilter - 1),
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
+                () => Math.Max(0, (int)configuration.GraphicFilter - 1), () => (int)configuration.Effects,
                 additionalPalettes, Ambermoon.Renderer.DeviceType.MobileLandscape,
                 //Ambermoon.Renderer.SizingPolicy.FitRatioForceLandscape, Ambermoon.Renderer.OrientationPolicy.Fixed);
                 Ambermoon.Renderer.SizingPolicy.FitRatio, Ambermoon.Renderer.OrientationPolicy.Fixed); // TODO
             if (!useFrameBuffer)
                 configuration.GraphicFilter = GraphicFilter.None;
+            if (!useEffects)
+                configuration.Effects = Effects.None;
             return renderView;
         }
 

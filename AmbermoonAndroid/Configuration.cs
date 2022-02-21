@@ -46,7 +46,11 @@ namespace AmbermoonAndroid
         public bool ShowFantasyIntro { get; set; } = false; // TODO: change to true later
         [JsonIgnore] // TODO: remove attribute later
         public bool ShowIntro { get; set; } = false; // TODO: change to true later
-        public bool UseGraphicFilter { get; set; } = true;
+        [Obsolete("Use GraphicFilter instead.")]
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public bool? UseGraphicFilter { get; set; } = null;
+        public GraphicFilter GraphicFilter { get; set; } = GraphicFilter.None;
+        public Effects Effects { get; set; } = Effects.None;
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
         public bool ShowThalionLogo { get; set; } = true;
@@ -130,7 +134,15 @@ namespace AmbermoonAndroid
             if (!File.Exists(filename))
                 return defaultValue;
 
-            return JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(filename));
+            // TODO: ReadAllText on android possible?
+            var configuration = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(filename));
+
+#pragma warning disable CS0618
+            if (configuration?.UseGraphicFilter == true && configuration.GraphicFilter == GraphicFilter.None)
+                configuration.GraphicFilter = GraphicFilter.Smooth;
+#pragma warning restore CS0618
+
+            return configuration;
         }
 
         public void Save(string filename)

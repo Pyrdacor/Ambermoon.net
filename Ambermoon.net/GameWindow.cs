@@ -262,6 +262,40 @@ namespace Ambermoon
                 if (Game != null)
                     Game.PostFullscreenChanged();
             }
+            else if (key == Silk.NET.Input.Key.F9)
+            {
+                if (GetModifiers(keyboard) == KeyModifiers.None)
+                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter + 1) % Enum.GetValues<GraphicFilter>().Length);
+                else
+                    configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter - 1 + Enum.GetValues<GraphicFilter>().Length) % Enum.GetValues<GraphicFilter>().Length);
+
+                if (configuration.GraphicFilter != GraphicFilter.None)
+                {
+                    if (!renderView.TryUseFrameBuffer())
+                        configuration.GraphicFilter = GraphicFilter.None;
+                }
+                else
+                    renderView.DeactivateFramebuffer();
+
+                Game?.ExternalGraphicFilterChanged();
+            }
+            else if (key == Silk.NET.Input.Key.F10)
+            {
+                if (GetModifiers(keyboard) == KeyModifiers.None)
+                    configuration.Effects = (Effects)(((int)configuration.Effects + 1) % Enum.GetValues<Effects>().Length);
+                else
+                    configuration.Effects = (Effects)(((int)configuration.Effects - 1 + Enum.GetValues<Effects>().Length) % Enum.GetValues<Effects>().Length);
+
+                if (configuration.Effects != Effects.None)
+                {
+                    if (!renderView.TryUseEffects())
+                        configuration.Effects = Effects.None;
+                }
+                else
+                    renderView.DeactivateEffects();
+
+                Game?.ExternalEffectsChanged();
+            }
             else if (renderView != null && (key == Silk.NET.Input.Key.PrintScreen ||
                 (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
                  keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
@@ -702,6 +736,14 @@ namespace Ambermoon
                                     else
                                         renderView.DeactivateFramebuffer();
 
+                                    if (configuration.Effects != Effects.None)
+                                    {
+                                        if (!renderView.TryUseEffects())
+                                            configuration.Effects = Effects.None;
+                                    }
+                                    else
+                                        renderView.DeactivateEffects();
+
                                     if (configuration.EnableCheats)
                                         PrintCheatConsoleHeader();
 
@@ -928,12 +970,16 @@ namespace Ambermoon
             FontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
             var useFrameBuffer = configuration.GraphicFilter != GraphicFilter.None;
+            var useEffects = configuration.Effects != Effects.None;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
-                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, () => Math.Max(0, (int)configuration.GraphicFilter - 1),
+                new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
+                () => Math.Max(0, (int)configuration.GraphicFilter - 1), () => (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)
                 configuration.GraphicFilter = GraphicFilter.None;
+            if (!useEffects)
+                configuration.Effects = Effects.None;
             return renderView;
         }
 

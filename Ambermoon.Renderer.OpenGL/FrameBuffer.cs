@@ -52,7 +52,10 @@ namespace Ambermoon.Renderer.OpenGL
                 gl.FramebufferRenderbuffer(GLEnum.Framebuffer, GLEnum.DepthStencilAttachment, GLEnum.Renderbuffer, depthBuffer);
 
                 if (gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
+                {
+                    gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
                     throw new AmbermoonException(ExceptionScope.Render, "Unable to setup framebuffer");
+                }
 
                 gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             }
@@ -71,7 +74,10 @@ namespace Ambermoon.Renderer.OpenGL
         public void BindAsTexture()
         {
             if (!disposed)
+            {
+                state.Gl.ActiveTexture(GLEnum.Texture0);
                 state.Gl.BindTexture(GLEnum.Texture2D, renderTexture);
+            }
         }
 
         public void Dispose()

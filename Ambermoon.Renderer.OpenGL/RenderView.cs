@@ -41,6 +41,10 @@ namespace Ambermoon.Renderer.OpenGL
         readonly FrameBuffer frameBuffer;
         readonly ScreenShader screenShader;
         readonly ScreenRenderBuffer screenBuffer;
+        bool useEffectFrameBuffer = false;
+        readonly FrameBuffer effectFrameBuffer;
+        readonly EffectShader effectShader;
+        readonly ScreenRenderBuffer effectBuffer;
         // Area inside the window where the rendering happens.
         // Note that this area is in screen coordinates and not
         // necessarily in pixels!
@@ -72,6 +76,7 @@ namespace Ambermoon.Renderer.OpenGL
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
         readonly Func<int> screenBufferModeProvider = null;
+        readonly Func<int> effectProvider = null;
 
         float RenderFactorX => (float)frameBufferSize.Width / Global.VirtualScreenWidth;
         float RenderFactorY => (float)frameBufferSize.Height / Global.VirtualScreenHeight;
@@ -124,9 +129,9 @@ namespace Ambermoon.Renderer.OpenGL
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
             IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
-            int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, Func<int> screenBufferModeProvider,
-            Graphic[] additionalPalettes, DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
-            OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
+            int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, ref bool useEffectFrameBuffer,
+            Func<int> screenBufferModeProvider, Func<int> effectProvider, Graphic[] additionalPalettes, DeviceType deviceType = DeviceType.Desktop,
+            SizingPolicy sizingPolicy = SizingPolicy.FitRatio, OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
             AspectProcessor = UpdateAspect;
@@ -154,6 +159,7 @@ namespace Ambermoon.Renderer.OpenGL
             fowFactory = new FowFactory(visibleArea);
 
             this.screenBufferModeProvider = screenBufferModeProvider;
+            this.effectProvider = effectProvider;
 
             camera3D = new Camera3D(State);
 
@@ -199,9 +205,27 @@ namespace Ambermoon.Renderer.OpenGL
                 screenBuffer = null;
                 useFrameBuffer = false;
             }
+
+            try
+            {
+                effectFrameBuffer = new FrameBuffer(State);
+                effectShader = EffectShader.Create(State);
+                effectBuffer = new ScreenRenderBuffer(State, effectShader);
+                this.useEffectFrameBuffer = useEffectFrameBuffer;
+            }
+            catch
+            {
+                effectFrameBuffer?.Dispose();
+                effectFrameBuffer = null;
+                effectShader = null;
+                effectBuffer?.Dispose();
+                effectBuffer = null;
+                useEffectFrameBuffer = false;
+            }
         }
 
         public bool AllowFramebuffer => frameBuffer != null;
+        public bool AllowEffects => effectFrameBuffer != null;
 
         public bool TryUseFrameBuffer()
         {
@@ -215,7 +239,20 @@ namespace Ambermoon.Renderer.OpenGL
             return false;
         }
 
+        public bool TryUseEffects()
+        {
+            if (AllowEffects)
+            {
+                useEffectFrameBuffer = true;
+                return true;
+            }
+
+            useEffectFrameBuffer = false;
+            return false;
+        }
+
         public void DeactivateFramebuffer() => useFrameBuffer = false;
+        public void DeactivateEffects() => useEffectFrameBuffer = false;
 
         void UpdateAspect(float aspect)
         {
@@ -427,6 +464,14 @@ namespace Ambermoon.Renderer.OpenGL
 
         bool accessViolationDetected = false;
 
+        void BindEffectBuffer(Position viewOffset)
+        {
+            effectFrameBuffer.Bind(frameBufferSize.Width, frameBufferSize.Height);
+            var viewport = frameBufferWindowArea;
+            State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                (uint)viewport.Width, (uint)viewport.Height);
+        }
+
         public void Render(FloatPosition viewportOffset)
         {
             if (disposed)
@@ -442,6 +487,11 @@ namespace Ambermoon.Renderer.OpenGL
                     Util.Round((viewportOffset?.X ?? 0.0f) * renderDisplayArea.Width),
                     Util.Round((viewportOffset?.Y ?? 0.0f) * renderDisplayArea.Height)
                 );
+
+                if (useEffectFrameBuffer)
+                    BindEffectBuffer(viewOffset);
+                else
+                    State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
 
                 State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
@@ -488,8 +538,15 @@ namespace Ambermoon.Renderer.OpenGL
                             if (!useFrameBuffer)
                             {
                                 var viewport = frameBufferWindowArea;
-                                State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
-                                    (uint)viewport.Width, (uint)viewport.Height);
+                                if (useEffectFrameBuffer)
+                                {
+                                    State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
+                                }
+                                else
+                                {
+                                    State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                                        (uint)viewport.Width, (uint)viewport.Height);
+                                }
                             }
                             else
                             {
@@ -506,9 +563,12 @@ namespace Ambermoon.Renderer.OpenGL
                     {
                         if (!useFrameBuffer)
                         {
-                            var viewport = frameBufferWindowArea;
-                            State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
-                                (uint)viewport.Width, (uint)viewport.Height);
+                            if (!useEffectFrameBuffer)
+                            {
+                                var viewport = frameBufferWindowArea;
+                                State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                                    (uint)viewport.Width, (uint)viewport.Height);
+                            }
                         }
                         else
                         {
@@ -516,13 +576,24 @@ namespace Ambermoon.Renderer.OpenGL
                             State.Gl.Viewport(0, 0, Global.VirtualScreenWidth, Global.VirtualScreenHeight);
                             State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                         }
+  
                         set2DViewport = true;
+                    }
+
+                    if (useEffectFrameBuffer && layer.Key == Layer.Misc)
+                    {
+                        State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
+                        var viewport = frameBufferWindowArea;
+                        State.Gl.Viewport(viewport.X, viewport.Y, (uint)viewport.Width, (uint)viewport.Height);
+                        State.Gl.Clear((uint)ClearBufferMask.DepthBufferBit);
                     }
 
                     if (layer.Key == Layer.DrugEffect)
                     {
                         if (useFrameBuffer)
-                            RenderToScreen(viewOffset);
+                            RenderToScreen(viewOffset, useEffectFrameBuffer);
+                        if (useEffectFrameBuffer)
+                            RenderEffects(viewOffset);
                         if (DrugColorComponent != null)
                             State.Gl.BlendColor(System.Drawing.Color.FromArgb(255, System.Drawing.Color.FromArgb(0x202020 |
                                 (0x800000 >> (8 * (DrugColorComponent.Value % 3))))));
@@ -552,9 +623,12 @@ namespace Ambermoon.Renderer.OpenGL
             }
         }
 
-        void RenderToScreen(Position viewOffset)
+        void RenderToScreen(Position viewOffset, bool useEffects)
         {
-            State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            if (useEffects)
+                BindEffectBuffer(Position.Zero);
+            else
+                State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             screenBuffer.SetSize(frameBufferSize);
             screenShader.Use(screenBuffer.ProjectionMatrix);
             screenShader.SetResolution(frameBufferSize);
@@ -565,10 +639,33 @@ namespace Ambermoon.Renderer.OpenGL
             State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             State.Gl.Enable(EnableCap.Blend);
             State.Gl.Disable(EnableCap.DepthTest);
+            if (!useEffects)
+            {
+                var viewport = frameBufferWindowArea;
+                State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
+                    (uint)viewport.Width, (uint)viewport.Height);
+            }
+            screenBuffer.Render();
+            State.Gl.BindTexture(GLEnum.Texture2D, 0);
+            State.Gl.Enable(EnableCap.DepthTest);
+        }
+
+        void RenderEffects(Position viewOffset)
+        {
+            State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            effectBuffer.SetSize(frameBufferSize);
+            effectShader.Use(effectBuffer.ProjectionMatrix);
+            effectShader.SetResolution(frameBufferSize);
+            effectShader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
+            effectShader.SetMode(effectProvider?.Invoke() ?? 0);
+            State.Gl.ActiveTexture(GLEnum.Texture0);
+            effectFrameBuffer.BindAsTexture();
+            State.Gl.Disable(EnableCap.Blend);
+            State.Gl.Disable(EnableCap.DepthTest);
             var viewport = frameBufferWindowArea;
             State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
                 (uint)viewport.Width, (uint)viewport.Height);
-            screenBuffer.Render();
+            effectBuffer.Render();
             State.Gl.BindTexture(GLEnum.Texture2D, 0);
             State.Gl.Enable(EnableCap.DepthTest);
         }

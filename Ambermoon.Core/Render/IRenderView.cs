@@ -49,6 +49,7 @@ namespace Ambermoon.Render
         List<Size> AvailableFullscreenModes { get; set; }
         bool Fullscreen { get; set; }
         bool AllowFramebuffer { get; }
+        bool AllowEffects { get; }
 
         ISpriteFactory SpriteFactory { get; }
         IColoredRectFactory ColoredRectFactory { get; }

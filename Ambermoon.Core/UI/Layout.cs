@@ -1130,7 +1130,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 15;
+        const int OptionCount = 16;
         const int OptionsPerPage = 5;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1155,7 +1155,9 @@ namespace Ambermoon.UI
                     "Zusätzliche Spielstände",
                     "Musik cachen",
                     "Pyrdacor Logo zeigen",
-                    "Thalion Logo zeigen"
+                    "Thalion Logo zeigen",
+                    // Page 4
+                    "Effekt"
                     // TODO
                     //"Intro anzeigen",
                     //"Fantasy Intro anzeigen",
@@ -1182,7 +1184,9 @@ namespace Ambermoon.UI
                     "Additional saveslots",
                     "Cache music",
                     "Show Pyrdacor logo",
-                    "Show Thalion logo"
+                    "Show Thalion logo",
+                    // Page 4
+                    "Effect"
                     // TODO
                     //"Show intro",
                     //"Show fantasy intro",
@@ -1247,6 +1251,8 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
+                // Page 4
+                KeyValuePair.Create("", RenderView.AllowEffects ? (Action<int, string>)((index, _) => ToggleEffects()) : (Action<int, string>)null),
                 // TODO: later
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),              
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
@@ -1260,11 +1266,16 @@ namespace Ambermoon.UI
             }
             void SetOptionString(int optionIndex, string value)
             {
+                int index = optionIndex - page * OptionsPerPage;
+
+                if (index < 0 || index >= OptionsPerPage)
+                    return;
+
                 var optionString = optionNames[optionIndex];
                 int remainingSpace = 31 - optionString.Length - value.Length;
                 optionString += new string(' ', remainingSpace);
                 optionString += value;
-                listBox.SetItemText(optionIndex - page * OptionsPerPage, optionString);
+                listBox.SetItemText(index, optionString);
             }
             string GetFloorAndCeilingValueString()
             {
@@ -1302,6 +1313,8 @@ namespace Ambermoon.UI
             void SetMusicCaching() => SetOptionString(12, game.Configuration.CacheMusic ? on : off);
             void SetPyrdacorLogo() => SetOptionString(13, game.Configuration.ShowPyrdacorLogo ? on : off);
             void SetThalionLogo() => SetOptionString(14, game.Configuration.ShowThalionLogo ? on : off);
+            // Page 4
+            void SetEffects() => SetOptionString(15, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1330,6 +1343,9 @@ namespace Ambermoon.UI
                         SetMusicCaching();
                         SetPyrdacorLogo();
                         SetThalionLogo();
+                        break;
+                    case 3:
+                        SetEffects();
                         // TODO
                         //SetIntro();
                         //SetFantasyIntro();
@@ -1466,6 +1482,13 @@ namespace Ambermoon.UI
                 SetThalionLogo();
                 changedConfiguration = true;
             }
+            void ToggleEffects()
+            {
+                game.Configuration.Effects = (Effects)(((int)game.Configuration.Effects + 1) % Enum.GetValues<Effects>().Length);
+                SetEffects();
+                changedConfiguration = true;
+                game.NotifyConfigurationChange(false);
+            }
 
             var contentArea = activePopup.ContentArea;
             var exitButton = activePopup.AddButton(new Position(contentArea.Right - 32, contentArea.Bottom - 17));
@@ -1527,6 +1550,28 @@ namespace Ambermoon.UI
                 }
                 ShowOptions();
             }
+
+            externalGraphicFilterChanged += SetGraphicFilter;
+            externalEffectsChanged += SetEffects;
+            activePopup.Closed += () =>
+            {
+                externalGraphicFilterChanged -= SetGraphicFilter;
+                externalEffectsChanged -= SetEffects;
+            };
+        }
+
+        event Action externalGraphicFilterChanged;
+
+        public void ExternalGraphicFilterChanged()
+        {
+            externalGraphicFilterChanged?.Invoke();
+        }
+
+        event Action externalEffectsChanged;
+
+        public void ExternalEffectsChanged()
+        {
+            externalEffectsChanged?.Invoke();
         }
 
         public void AttachEventToButton(int index, Action action)

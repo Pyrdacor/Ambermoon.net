@@ -1013,6 +1013,9 @@ namespace Ambermoon
             }
         }
 
+        public void ExternalGraphicFilterChanged() => layout.ExternalGraphicFilterChanged();
+        public void ExternalEffectsChanged() => layout.ExternalEffectsChanged();
+
         internal int RollDice100()
         {
             return RandomInt(0, 99);

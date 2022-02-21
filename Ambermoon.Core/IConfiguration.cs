@@ -63,6 +63,13 @@ namespace Ambermoon
         Scanlines
     }
 
+    public enum Effects
+    {
+        None,
+        Grayscale,
+        Sepia
+    }
+
     public interface IConfiguration
     {
         bool FirstStart { get; set; }
@@ -90,6 +97,7 @@ namespace Ambermoon
         [Obsolete("Use GraphicFilter instead.")]
         bool? UseGraphicFilter { get; set; }
         GraphicFilter GraphicFilter { get; set; }
+        Effects Effects { get; set; }
         bool ShowPlayerStatsTooltips { get; set; }
         bool ShowPyrdacorLogo { get; set; }
         bool ShowThalionLogo { get; set; }
