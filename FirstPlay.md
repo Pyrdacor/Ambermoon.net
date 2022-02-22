@@ -2,9 +2,9 @@
 
 Here are some tips:
 
-- The action buttons in the lower right corners can be toggled with the right mouse button. You can switch between movement buttons and all kind of other actions.
+- The action buttons in the lower right corner can be toggled with the right mouse button. You can switch between movement buttons and all kind of other actions.
 - Right clicking on the map in 2D will change the cursor into an action cursor. You can interact with the map this way.
-- Right clicking on the map center in 3D interacts with the map objects in front of you.
+- Right clicking on the center of the 3D map screen interacts with the map objects in front of you.
 - You can use items from your inventory. Sometimes they can have an effect on the map as well. For example some cobwebs can be burned by a torch.
 - You can access many options in the option menu like resolution, music volume, button tooltips or faster battles.
 - Save often!
