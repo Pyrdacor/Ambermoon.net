@@ -269,13 +269,8 @@ namespace Ambermoon
                 else
                     configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter - 1 + Enum.GetValues<GraphicFilter>().Length) % Enum.GetValues<GraphicFilter>().Length);
 
-                if (configuration.GraphicFilter != GraphicFilter.None)
-                {
-                    if (!renderView.TryUseFrameBuffer())
-                        configuration.GraphicFilter = GraphicFilter.None;
-                }
-                else
-                    renderView.DeactivateFramebuffer();
+                if (!renderView.TryUseFrameBuffer())
+                    configuration.GraphicFilter = GraphicFilter.None;
 
                 Game?.ExternalGraphicFilterChanged();
             }
@@ -286,13 +281,8 @@ namespace Ambermoon
                 else
                     configuration.Effects = (Effects)(((int)configuration.Effects - 1 + Enum.GetValues<Effects>().Length) % Enum.GetValues<Effects>().Length);
 
-                if (configuration.Effects != Effects.None)
-                {
-                    if (!renderView.TryUseEffects())
-                        configuration.Effects = Effects.None;
-                }
-                else
-                    renderView.DeactivateEffects();
+                if (!renderView.TryUseEffects())
+                    configuration.Effects = Effects.None;
 
                 Game?.ExternalEffectsChanged();
             }
@@ -728,21 +718,11 @@ namespace Ambermoon
                                         ChangeFullscreenMode(configuration.Fullscreen);
                                     }
 
-                                    if (configuration.GraphicFilter != GraphicFilter.None)
-                                    {
-                                        if (!renderView.TryUseFrameBuffer())
-                                            configuration.GraphicFilter = GraphicFilter.None;
-                                    }
-                                    else
-                                        renderView.DeactivateFramebuffer();
-
-                                    if (configuration.Effects != Effects.None)
-                                    {
-                                        if (!renderView.TryUseEffects())
-                                            configuration.Effects = Effects.None;
-                                    }
-                                    else
-                                        renderView.DeactivateEffects();
+                                    if (!renderView.TryUseFrameBuffer())
+                                        configuration.GraphicFilter = GraphicFilter.None;
+ 
+                                    if (!renderView.TryUseEffects())
+                                        configuration.Effects = Effects.None;
 
                                     if (configuration.EnableCheats)
                                         PrintCheatConsoleHeader();
@@ -969,12 +949,12 @@ namespace Ambermoon
         RenderView CreateRenderView(GameData gameData, IConfiguration configuration, GraphicProvider graphicProvider,
             FontProvider fontProvider, Graphic[] additionalPalettes = null, Func<TextureAtlasManager> textureAtlasManagerProvider = null)
         {
-            var useFrameBuffer = configuration.GraphicFilter != GraphicFilter.None;
+            var useFrameBuffer = true;
             var useEffects = configuration.Effects != Effects.None;
             var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => Math.Max(0, (int)configuration.GraphicFilter - 1), () => (int)configuration.Effects,
+                () => (int)configuration.GraphicFilter, () => (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)
                 configuration.GraphicFilter = GraphicFilter.None;

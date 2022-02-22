@@ -5,7 +5,7 @@ namespace Ambermoon
 {
     public class Position : IEquatable<Position>, IEqualityComparer<Position>
     {
-        public static readonly Position Zero = new Position(0, 0);
+        public static Position Zero => new Position(0, 0);
 
         public int X { get; set; } = 0;
         public int Y { get; set; } = 0;
@@ -227,6 +227,16 @@ namespace Ambermoon
         public Position Round(float factor)
         {
             return new Position(Util.Round(factor * X), Util.Round(factor * Y));
+        }
+
+        public Position Floor()
+        {
+            return new Position(Util.Floor(X), Util.Floor(Y));
+        }
+
+        public Position Ceiling()
+        {
+            return new Position(Util.Ceiling(X), Util.Ceiling(Y));
         }
 
         public static FloatPosition operator +(FloatPosition position1, FloatPosition position2)

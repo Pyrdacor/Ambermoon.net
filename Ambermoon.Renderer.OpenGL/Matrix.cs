@@ -25,7 +25,7 @@ namespace Ambermoon.Renderer
 {
     public class Matrix4
     {
-        float[] matrix = new float[16];
+        readonly float[] matrix = new float[16];
         float[] inverse = null;
 
         public static readonly Matrix4 Identity = new Matrix4(new float[16]
@@ -49,7 +49,7 @@ namespace Ambermoon.Renderer
             {
                 2.0f / w,   0.0f,       0.0f,       -(right + left) / w,
                 0.0f,       2.0f / h,   0.0f,       -(bottom + top) / h,
-                0.0f,       0.0f,       2.0f/d,     -(far + near) / d,
+                0.0f,       0.0f,       2.0f / d,   -(far + near) / d,
                 0.0f,       0.0f,       0.0f,       1.0f
             });
         }

@@ -87,7 +87,8 @@ namespace Ambermoon.Renderer
             $"    varTexCoord = atlasFactor * vec2({DefaultTexCoordName}.x, {DefaultTexCoordName}.y);",
             $"    palIndex = float({DefaultPaletteIndexName});",
             $"    maskColIndex = float({DefaultMaskColorIndexName});",
-            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f, 1.0f);",
+            $"    float z = 1.0f - {DefaultZName} - float({DefaultLayerName}) * 0.00001f;",
+            $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, z, 1.0f);",
             $"}}"
         };
 

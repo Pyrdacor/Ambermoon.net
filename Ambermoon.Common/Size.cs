@@ -92,6 +92,11 @@ namespace Ambermoon
         {
             return (obj == null) ? 0 : obj.GetHashCode();
         }
+
+        public Position AsPosition()
+        {
+            return new Position(Width, Height);
+        }
     }
 
     public class FloatSize : IEquatable<FloatSize>, IEqualityComparer<FloatSize>
@@ -151,9 +156,19 @@ namespace Ambermoon
             return new FloatSize(size);
         }
 
-        public Size ToSize()
+        public static FloatSize operator /(FloatSize size1, FloatSize size2)
         {
-            return new Size(Util.Round(Width), Util.Round(Height));
+            return new FloatSize(size1.Width / size2.Width, size1.Height / size2.Height);
+        }
+
+        public Size ToSize(bool truncate = false)
+        {
+            return new Size(truncate ? Util.Floor(Width) : Util.Round(Width), truncate ? Util.Floor(Height) : Util.Round(Height));
+        }
+
+        public FloatPosition AsPosition()
+        {
+            return new FloatPosition(Width, Height);
         }
 
         public override bool Equals(object obj)
