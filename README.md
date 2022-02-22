@@ -6,9 +6,9 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.4.1 is the most recent version from 30-01-2022. It even includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced) now!
+Version 1.4.1 is the most recent version from 30-01-2022. It even includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced) now! Version 1.5 will be released soon as well.
 
-The full package with additional resources can now also be downloaded from my new website at www.pyrdacor.net!
+The full package with additional resources can also be downloaded from my website at www.pyrdacor.net!
 
 Version | Download
 --- | ---
@@ -20,11 +20,11 @@ Version | Download
 **1.4.1** (Windows 7 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7.zip)
 **1.4.1** (Windows 7 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7-32Bit.zip)
 
-Note: From version 1.4.0 onwards if you want to play on Windows 7 there are new extra downloads for it!
+Note: From version 1.4.0 onwards if you want to play on Windows 7, there are extra downloads for it!
 
 Problems? The [FAQ](FAQ.md) might help.
 
-Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads). Other platforms will follow.
+Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads). Other platforms like Android, iOS or Raspberry Pi4 might follow.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
@@ -33,7 +33,7 @@ Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/raw
 If you are interested in the original Amiga game files you can find them here: https://github.com/Pyrdacor/Ambermoon. I released some
 new versions and patches of the original game files there as well.
 
-A new extension was just released called [Ambermoon Advanced](https://GitHub.com/Pyrdacor/Ambermoon-Advanced). Check it out!
+A completely new game extension was also released called [Ambermoon Advanced](https://GitHub.com/Pyrdacor/Ambermoon-Advanced). Check it out!
 
 ### Additional Resources
 
