@@ -12,11 +12,11 @@ The full package with additional resources can also be downloaded from my websit
 
 Version | Download
 --- | ---
-**1.4.1** (Windows 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows.zip)
+**1.4.1** (Windows 8,10,11 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows.zip)
 **1.4.1** (Linux 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Linux.tar.gz)
 **1.4.1** (Mac 64bit bundled) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac-Bundle.zip)
 **1.4.1** (Mac 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac.zip)
-**1.4.1** (Windows 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows32Bit.zip)
+**1.4.1** (Windows 8,10,11 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows32Bit.zip)
 **1.4.1** (Windows 7 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7.zip)
 **1.4.1** (Windows 7 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7-32Bit.zip)
 
