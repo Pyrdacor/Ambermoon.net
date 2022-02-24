@@ -56,10 +56,16 @@ namespace Ambermoon
 
     public enum GraphicFilter
     {
-        None,
+        None,        
         Smooth,
-        Oldschool,
-        Albion,
+        Blur
+    }
+
+    public enum GraphicFilterOverlay
+    {
+        None,
+        Lines,
+        Grid,
         Scanlines
     }
 
@@ -97,6 +103,7 @@ namespace Ambermoon
         [Obsolete("Use GraphicFilter instead.")]
         bool? UseGraphicFilter { get; set; }
         GraphicFilter GraphicFilter { get; set; }
+        GraphicFilterOverlay GraphicFilterOverlay { get; set; }
         Effects Effects { get; set; }
         bool ShowPlayerStatsTooltips { get; set; }
         bool ShowPyrdacorLogo { get; set; }

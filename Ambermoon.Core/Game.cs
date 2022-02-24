@@ -1014,6 +1014,7 @@ namespace Ambermoon
         }
 
         public void ExternalGraphicFilterChanged() => layout.ExternalGraphicFilterChanged();
+        public void ExternalGraphicFilterOverlayChanged() => layout.ExternalGraphicFilterOverlayChanged();
         public void ExternalEffectsChanged() => layout.ExternalEffectsChanged();
 
         internal int RollDice100()

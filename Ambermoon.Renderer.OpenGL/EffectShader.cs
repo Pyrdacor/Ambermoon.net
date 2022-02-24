@@ -30,7 +30,7 @@ namespace Ambermoon.Renderer
             GetFragmentShaderHeader(state),
             $"uniform sampler2D {DefaultSamplerName};",
             $"uniform vec2 {DefaultResolutionName};",
-            $"uniform float {DefaultModeName};",
+            $"uniform float {DefaultPrimaryModeName};",
             $"in vec2 varTexCoord;",
             $"",
             $"float gray(vec4 color)",
@@ -46,12 +46,12 @@ namespace Ambermoon.Renderer
             $"void main()",
             $"{{",
             $"    vec4 color = getColor(varTexCoord);",
-            $"    if ({DefaultModeName} > 0.5f && {DefaultModeName} < 1.5f) // grayscale mode",
+            $"    if ({DefaultPrimaryModeName} > 0.5f && {DefaultPrimaryModeName} < 1.5f) // grayscale mode",
             $"    {{",
             $"        float g = gray(color);",
             $"        color = vec4(g, g, g, color.a);",
             $"    }}",
-            $"    else if ({DefaultModeName} > 1.5f && {DefaultModeName} < 2.5f) // sepia mode",
+            $"    else if ({DefaultPrimaryModeName} > 1.5f && {DefaultPrimaryModeName} < 2.5f) // sepia mode",
             $"    {{",
             $"        float r = (color.r * 0.393f) + (color.g * 0.769f) + (color.b * 0.189f);",
             $"        float g = (color.r * 0.349f) + (color.g * 0.686f) + (color.b * 0.168f);",
@@ -73,9 +73,8 @@ namespace Ambermoon.Renderer
             $"",
             $"void main()",
             $"{{",
-            $"    vec2 pos = vec2(float({DefaultPositionName}.x) + 0.49f, float({DefaultPositionName}.y) + 0.49f);",
+            $"    vec2 pos = vec2(float({DefaultPositionName}.x), float({DefaultPositionName}.y));",
             $"    varTexCoord = vec2(pos.x / {DefaultResolutionName}.x, ({DefaultResolutionName}.y - pos.y) / {DefaultResolutionName}.y);",
-            $"    ",
             $"    gl_Position = {DefaultProjectionMatrixName} * {DefaultModelViewMatrixName} * vec4(pos, 0.001f, 1.0f);",
             $"}}"
         };
@@ -84,6 +83,11 @@ namespace Ambermoon.Renderer
             : base(state, EffectFragmentShader(state), EffectVertexShader(state))
         {
 
+        }
+
+        public void SetMode(int mode)
+        {
+            shaderProgram.SetInput(DefaultPrimaryModeName, (float)mode);
         }
 
         public static new EffectShader Create(State state) => new EffectShader(state);

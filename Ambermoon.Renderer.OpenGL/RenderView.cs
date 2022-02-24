@@ -75,7 +75,7 @@ namespace Ambermoon.Renderer.OpenGL
         const float VirtualAspectRatio = Global.VirtualAspectRatio;
         float sizeFactorX = 1.0f;
         float sizeFactorY = 1.0f;
-        readonly Func<int> screenBufferModeProvider = null;
+        readonly Func<KeyValuePair<int, int>> screenBufferModeProvider = null;
         readonly Func<int> effectProvider = null;
 
         float RenderFactorX => (float)frameBufferSize.Width / Global.VirtualScreenWidth;
@@ -128,10 +128,11 @@ namespace Ambermoon.Renderer.OpenGL
 
 
         public RenderView(IContextProvider contextProvider, IGameData gameData, IGraphicProvider graphicProvider,
-            IFontProvider fontProvider, ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
+            ITextProcessor textProcessor, Func<TextureAtlasManager> textureAtlasManagerProvider,
             int framebufferWidth, int framebufferHeight, Size windowSize, ref bool useFrameBuffer, ref bool useEffectFrameBuffer,
-            Func<int> screenBufferModeProvider, Func<int> effectProvider, Graphic[] additionalPalettes, DeviceType deviceType = DeviceType.Desktop,
-            SizingPolicy sizingPolicy = SizingPolicy.FitRatio, OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
+            Func<KeyValuePair<int, int>> screenBufferModeProvider, Func<int> effectProvider, Graphic[] additionalPalettes,
+            DeviceType deviceType = DeviceType.Desktop, SizingPolicy sizingPolicy = SizingPolicy.FitRatio,
+            OrientationPolicy orientationPolicy = OrientationPolicy.Support180DegreeRotation)
             : base(new State(contextProvider))
         {
             AspectProcessor = UpdateAspect;
@@ -505,11 +506,11 @@ namespace Ambermoon.Renderer.OpenGL
                             int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
                             int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
 
-                            //if (useFrameBuffer)
-                            {
+                            if (useEffectFrameBuffer)
+                                State.Gl.Viewport(viewport.X - xOffset, viewport.Y + yOffset, (uint)viewport.Width, (uint)viewport.Height);
+                            else
                                 State.Gl.Viewport(viewport.X + viewOffset.X - xOffset, viewport.Y - viewOffset.Y + yOffset,
                                     (uint)viewport.Width, (uint)viewport.Height);
-                            }
                         }
                         else if (layer.Key == Layer.Map3DCeiling)
                         {
@@ -654,7 +655,8 @@ namespace Ambermoon.Renderer.OpenGL
             screenShader.Use(screenBuffer.ProjectionMatrix);
             screenShader.SetResolution(frameBufferSize);
             screenShader.SetSampler(0); // we use texture unit 0 -> see Gl.ActiveTexture below
-            screenShader.SetMode(screenBufferModeProvider?.Invoke() ?? 0);
+            var filterModes = screenBufferModeProvider?.Invoke() ?? KeyValuePair.Create(0, 0);
+            screenShader.SetMode(filterModes.Key, filterModes.Value);
             State.Gl.ActiveTexture(GLEnum.Texture0);
             frameBuffer.BindAsTexture();
             State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);

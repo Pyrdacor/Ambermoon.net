@@ -1130,8 +1130,8 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 16;
-        const int OptionsPerPage = 5;
+        const int OptionCount = 17;
+        const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
             {
@@ -1141,23 +1141,23 @@ namespace Ambermoon.UI
                     // Page 1
                     "Musik",
                     "Lautstärke",
-                    "Grafikfilter",
                     "Auflösung",
                     "Vollbild",
+                    "Grafikfilter",
+                    "Grafikoverlay",
+                    "Effekt",
                     // Page 2
                     "Schneller Kampfmodus",
                     "Button Tooltips anzeigen",
                     "Stats Tooltips anzeigen",
                     "Runen als Text anzeigen",
                     "Cheats aktivieren",
-                    // Page3
                     "3D Boden und Decke",
                     "Zusätzliche Spielstände",
+                    // Page3
                     "Musik cachen",
                     "Pyrdacor Logo zeigen",
                     "Thalion Logo zeigen",
-                    // Page 4
-                    "Effekt"
                     // TODO
                     //"Intro anzeigen",
                     //"Fantasy Intro anzeigen",
@@ -1170,23 +1170,23 @@ namespace Ambermoon.UI
                     // Page 1
                     "Music",
                     "Volume",
-                    "Graphic filter",
                     "Resolution",
                     "Fullscreen",
+                    "Graphic filter",
+                    "Graphic overlay",
+                    "Effect",
                     // Page 2
                     "Fast battle mode",
                     "Show button tooltips",
                     "Show stats tooltips",
                     "Show runes as text",
                     "Enable cheats",
-                    // Page 3
                     "3D floor and ceiling",
                     "Additional saveslots",
+                    // Page 3
                     "Cache music",
                     "Show Pyrdacor logo",
                     "Show Thalion logo",
-                    // Page 4
-                    "Effect"
                     // TODO
                     //"Show intro",
                     //"Show fantasy intro",
@@ -1220,7 +1220,7 @@ namespace Ambermoon.UI
         void OpenOptions()
         {
             int page = 0;
-            OpenPopup(new Position(48, 62), 14, 6, true, false);
+            OpenPopup(new Position(48, 62), 14, 7, true, false);
             activePopup.AddText(new Rect(56, 78, 208, 6), game.DataNameProvider.OptionsHeader, TextColor.BrightGray, TextAlign.Center);
             var optionNames = OptionNames[game.GameLanguage];
             bool changedConfiguration = false;
@@ -1231,28 +1231,29 @@ namespace Ambermoon.UI
             int width = game.Configuration.Width ?? 1280;
             bool cheatsEnabled = !game.Configuration.IsMobile && game.Configuration.EnableCheats;
             var toggleResolutionAction = (Action<int, string>)((index, _) => ToggleResolution());
+            var nullOptionAction = (Action<int, string>)null;
             var options = new List<KeyValuePair<string, Action<int, string>>>(OptionCount)
             {
                 // Page 1
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleVolume())),
-                KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : (Action<int, string>)null),
                 KeyValuePair.Create("", game.Configuration.Fullscreen || game.Configuration.IsMobile ? null : toggleResolutionAction),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFullscreen())),
+                KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilter()) : nullOptionAction),
+                KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilterAddition()) : nullOptionAction),
+                KeyValuePair.Create("", RenderView.AllowEffects ? ((index, _) => ToggleEffects()) : nullOptionAction),
                 // Page 2
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
                 KeyValuePair.Create("", game.Configuration.IsMobile ? null : (Action<int, string>)((index, _) => ToggleCheats())),
-                // Page 3
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
+                // Page 3
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
-                // Page 4
-                KeyValuePair.Create("", RenderView.AllowEffects ? (Action<int, string>)((index, _) => ToggleEffects()) : (Action<int, string>)null),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo()))
                 // TODO: later
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),              
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
@@ -1298,23 +1299,23 @@ namespace Ambermoon.UI
             // Page 1
             void SetMusic() => SetOptionString(0, game.Configuration.Music ? on : off);
             void SetVolume() => SetOptionString(1, Util.Limit(0, game.Configuration.Volume, 100).ToString());
-            void SetGraphicFilter() => SetOptionString(2, game.Configuration.GraphicFilter == GraphicFilter.None ? off : game.Configuration.GraphicFilter.ToString());
-            void SetResolution() => SetOptionString(3, GetResolutionString());
-            void SetFullscreen() => SetOptionString(4, game.Configuration.Fullscreen ? on : off);
+            void SetResolution() => SetOptionString(2, GetResolutionString());
+            void SetFullscreen() => SetOptionString(3, game.Configuration.Fullscreen ? on : off);
+            void SetGraphicFilter() => SetOptionString(4, game.Configuration.GraphicFilter == GraphicFilter.None ? off : game.Configuration.GraphicFilter.ToString());
+            void SetGraphicFilterOverlay() => SetOptionString(5, game.Configuration.GraphicFilterOverlay == GraphicFilterOverlay.None ? off : game.Configuration.GraphicFilterOverlay.ToString());
+            void SetEffects() => SetOptionString(6, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
             // Page 2
-            void SetFastBattleMode() => SetOptionString(5, game.Configuration.FastBattleMode ? on : off);
-            void SetTooltips() => SetOptionString(6, game.Configuration.ShowButtonTooltips ? on : off);
-            void SetPlayerStatsTooltips() => SetOptionString(7, game.Configuration.ShowPlayerStatsTooltips ? on : off);
-            void SetAutoDerune() => SetOptionString(8, game.Configuration.AutoDerune ? on : off);
-            void SetCheats() => SetOptionString(9, cheatsEnabled ? on : off);
+            void SetFastBattleMode() => SetOptionString(7, game.Configuration.FastBattleMode ? on : off);
+            void SetTooltips() => SetOptionString(8, game.Configuration.ShowButtonTooltips ? on : off);
+            void SetPlayerStatsTooltips() => SetOptionString(9, game.Configuration.ShowPlayerStatsTooltips ? on : off);
+            void SetAutoDerune() => SetOptionString(10, game.Configuration.AutoDerune ? on : off);
+            void SetCheats() => SetOptionString(11, cheatsEnabled ? on : off);
+            void SetFloorAndCeiling() => SetOptionString(12, GetFloorAndCeilingValueString());
+            void SetExtendedSaves() => SetOptionString(13, game.Configuration.ExtendedSavegameSlots ? on : off);
             // Page 3
-            void SetFloorAndCeiling() => SetOptionString(10, GetFloorAndCeilingValueString());
-            void SetExtendedSaves() => SetOptionString(11, game.Configuration.ExtendedSavegameSlots ? on : off);
-            void SetMusicCaching() => SetOptionString(12, game.Configuration.CacheMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(13, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetThalionLogo() => SetOptionString(14, game.Configuration.ShowThalionLogo ? on : off);
-            // Page 4
-            void SetEffects() => SetOptionString(15, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
+            void SetMusicCaching() => SetOptionString(14, game.Configuration.CacheMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(15, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetThalionLogo() => SetOptionString(16, game.Configuration.ShowThalionLogo ? on : off);
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1326,9 +1327,11 @@ namespace Ambermoon.UI
                     case 0:
                         SetMusic();
                         SetVolume();
-                        SetGraphicFilter();
                         SetResolution();
                         SetFullscreen();
+                        SetGraphicFilter();
+                        SetGraphicFilterOverlay();
+                        SetEffects();
                         break;
                     case 1:
                         SetFastBattleMode();
@@ -1336,20 +1339,17 @@ namespace Ambermoon.UI
                         SetPlayerStatsTooltips();
                         SetAutoDerune();
                         SetCheats();
-                        break;
-                    case 2:
                         SetFloorAndCeiling();
                         SetExtendedSaves();
+                        break;
+                    case 2:
                         SetMusicCaching();
                         SetPyrdacorLogo();
                         SetThalionLogo();
                         break;
-                    case 3:
-                        SetEffects();
-                        // TODO
-                        //SetIntro();
-                        //SetFantasyIntro();
-                        break;
+                    // TODO
+                    //SetIntro();
+                    //SetFantasyIntro();
                 }
             }
 
@@ -1376,6 +1376,13 @@ namespace Ambermoon.UI
             {
                 game.Configuration.GraphicFilter = (GraphicFilter)(((int)game.Configuration.GraphicFilter + 1) % Enum.GetValues<GraphicFilter>().Length);
                 SetGraphicFilter();
+                changedConfiguration = true;
+                game.NotifyConfigurationChange(false);
+            }
+            void ToggleGraphicFilterAddition()
+            {
+                game.Configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)game.Configuration.GraphicFilterOverlay + 1) % Enum.GetValues<GraphicFilterOverlay>().Length);
+                SetGraphicFilterOverlay();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
             }
@@ -1552,10 +1559,12 @@ namespace Ambermoon.UI
             }
 
             externalGraphicFilterChanged += SetGraphicFilter;
+            externalGraphicFilterOverlayChanged += SetGraphicFilterOverlay;
             externalEffectsChanged += SetEffects;
             activePopup.Closed += () =>
             {
                 externalGraphicFilterChanged -= SetGraphicFilter;
+                externalGraphicFilterOverlayChanged -= SetGraphicFilterOverlay;
                 externalEffectsChanged -= SetEffects;
             };
         }
@@ -1565,6 +1574,13 @@ namespace Ambermoon.UI
         public void ExternalGraphicFilterChanged()
         {
             externalGraphicFilterChanged?.Invoke();
+        }
+
+        event Action externalGraphicFilterOverlayChanged;
+
+        public void ExternalGraphicFilterOverlayChanged()
+        {
+            externalGraphicFilterOverlayChanged?.Invoke();
         }
 
         event Action externalEffectsChanged;

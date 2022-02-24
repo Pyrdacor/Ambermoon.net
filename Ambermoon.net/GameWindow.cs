@@ -262,7 +262,7 @@ namespace Ambermoon
                 if (Game != null)
                     Game.PostFullscreenChanged();
             }
-            else if (key == Silk.NET.Input.Key.F9)
+            else if (key == Silk.NET.Input.Key.F8)
             {
                 if (GetModifiers(keyboard) == KeyModifiers.None)
                     configuration.GraphicFilter = (GraphicFilter)(((int)configuration.GraphicFilter + 1) % Enum.GetValues<GraphicFilter>().Length);
@@ -273,6 +273,18 @@ namespace Ambermoon
                     configuration.GraphicFilter = GraphicFilter.None;
 
                 Game?.ExternalGraphicFilterChanged();
+            }
+            else if (key == Silk.NET.Input.Key.F9)
+            {
+                if (GetModifiers(keyboard) == KeyModifiers.None)
+                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay + 1) % Enum.GetValues<GraphicFilterOverlay>().Length);
+                else
+                    configuration.GraphicFilterOverlay = (GraphicFilterOverlay)(((int)configuration.GraphicFilterOverlay - 1 + Enum.GetValues<GraphicFilterOverlay>().Length) % Enum.GetValues<GraphicFilterOverlay>().Length);
+
+                if (!renderView.TryUseFrameBuffer())
+                    configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+
+                Game?.ExternalGraphicFilterOverlayChanged();
             }
             else if (key == Silk.NET.Input.Key.F10)
             {
@@ -951,13 +963,17 @@ namespace Ambermoon
         {
             var useFrameBuffer = true;
             var useEffects = configuration.Effects != Effects.None;
-            var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
+            var renderView = new RenderView(this, gameData, graphicProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => (int)configuration.GraphicFilter, () => (int)configuration.Effects,
+                () => KeyValuePair.Create((int)configuration.GraphicFilter, (int)configuration.GraphicFilterOverlay),
+                () => (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)
+            {
                 configuration.GraphicFilter = GraphicFilter.None;
+                configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+            }
             if (!useEffects)
                 configuration.Effects = Effects.None;
             return renderView;

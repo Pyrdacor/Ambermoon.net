@@ -778,15 +778,18 @@ namespace AmbermoonAndroid
         {
             var useFrameBuffer = true;
             var useEffects = configuration.Effects != Effects.None;
-            var renderView = new RenderView(this, gameData, graphicProvider, fontProvider,
+            var renderView = new RenderView(this, gameData, graphicProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => (int)configuration.GraphicFilter, () => (int)configuration.Effects,
-                additionalPalettes, Ambermoon.Renderer.DeviceType.MobileLandscape,
+                () => KeyValuePair.Create((int)configuration.GraphicFilter, (int)configuration.GraphicFilterOverlay),
+                () => (int)configuration.Effects, additionalPalettes, Ambermoon.Renderer.DeviceType.MobileLandscape,
                 //Ambermoon.Renderer.SizingPolicy.FitRatioForceLandscape, Ambermoon.Renderer.OrientationPolicy.Fixed);
                 Ambermoon.Renderer.SizingPolicy.FitRatio, Ambermoon.Renderer.OrientationPolicy.Fixed); // TODO
             if (!useFrameBuffer)
+            {
                 configuration.GraphicFilter = GraphicFilter.None;
+                configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+            }
             if (!useEffects)
                 configuration.Effects = Effects.None;
             return renderView;

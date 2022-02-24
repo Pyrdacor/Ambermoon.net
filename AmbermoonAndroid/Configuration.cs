@@ -50,6 +50,7 @@ namespace AmbermoonAndroid
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? UseGraphicFilter { get; set; } = null;
         public GraphicFilter GraphicFilter { get; set; } = GraphicFilter.None;
+        public GraphicFilterOverlay GraphicFilterOverlay { get; set; } = GraphicFilterOverlay.None;
         public Effects Effects { get; set; } = Effects.None;
         public bool ShowPlayerStatsTooltips { get; set; } = true;
         public bool ShowPyrdacorLogo { get; set; } = true;
@@ -139,7 +140,7 @@ namespace AmbermoonAndroid
 
 #pragma warning disable CS0618
             if (configuration?.UseGraphicFilter == true && configuration.GraphicFilter == GraphicFilter.None)
-                configuration.GraphicFilter = GraphicFilter.Smooth;
+                configuration.GraphicFilter = GraphicFilter.Blur; // matches the old graphic filter
 #pragma warning restore CS0618
 
             return configuration;

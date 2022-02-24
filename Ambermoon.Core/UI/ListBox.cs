@@ -103,7 +103,7 @@ namespace Ambermoon.UI
         public static ListBox CreateOptionsListbox(IRenderView renderView, Game game, Popup popup,
             List<KeyValuePair<string, Action<int, string>>> items)
         {
-            return new ListBox(renderView, game, popup, items, new Rect(64, 85, 191, 38), new Position(67, 87), 7, 189, new Position(-2, -1), false, 5);
+            return new ListBox(renderView, game, popup, items, new Rect(64, 85, 191, 52), new Position(67, 87), 7, 189, new Position(-2, -1), false, 7);
         }
 
         public static ListBox CreateSavegameListbox(IRenderView renderView, Game game, Popup popup,
