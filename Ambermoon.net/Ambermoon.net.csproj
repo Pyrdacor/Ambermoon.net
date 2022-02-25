@@ -15,7 +15,7 @@
     <PackageTags>Ambermoon</PackageTags>
     <Description>Rework of the Amiga game Ambermoon</Description>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Configurations>Debug;Release;ReleaseMac;DebugAndroid</Configurations>
+    <Configurations>Debug;Release;ReleaseMac;DebugAndroid;ReleaseNative;ReleaseNative</Configurations>
   </PropertyGroup>
 	
   <PropertyGroup Condition="'$(Configuration)'!='ReleaseMac'">
@@ -95,6 +95,10 @@
     <PackageReference Include="Silk.NET.Windowing" Version="2.13.0" />
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='ReleaseNative'">
+	<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
+  </ItemGroup>	
 
   <ItemGroup>
     <ProjectReference Include="..\Ambermoon.Audio.OpenAL\Ambermoon.Audio.OpenAL.csproj" />
