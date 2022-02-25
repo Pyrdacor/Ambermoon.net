@@ -36,6 +36,7 @@ namespace Ambermoon
         public bool LegacyMode { get; set; } = false;
         public bool Music { get; set; } = true;
         public int Volume { get; set; } = 100;
+        public bool ExternalMusic { get; set; } = false;
         public bool FastBattleMode { get; set; } = false;
         public bool CacheMusic { get; set; } = true;
         public bool AutoDerune { get; set; } = true;

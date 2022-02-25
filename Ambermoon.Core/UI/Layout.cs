@@ -1130,7 +1130,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 17;
+        const int OptionCount = 18;
         const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1156,6 +1156,7 @@ namespace Ambermoon.UI
                     "Zusätzliche Spielstände",
                     // Page3
                     "Musik cachen",
+                    "Externe Musik",
                     "Pyrdacor Logo zeigen",
                     "Thalion Logo zeigen",
                     // TODO
@@ -1185,6 +1186,7 @@ namespace Ambermoon.UI
                     "Additional saveslots",
                     // Page 3
                     "Cache music",
+                    "External music",
                     "Show Pyrdacor logo",
                     "Show Thalion logo",
                     // TODO
@@ -1252,6 +1254,7 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 // Page 3
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo()))
                 // TODO: later
@@ -1314,8 +1317,9 @@ namespace Ambermoon.UI
             void SetExtendedSaves() => SetOptionString(13, game.Configuration.ExtendedSavegameSlots ? on : off);
             // Page 3
             void SetMusicCaching() => SetOptionString(14, game.Configuration.CacheMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(15, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetThalionLogo() => SetOptionString(16, game.Configuration.ShowThalionLogo ? on : off);
+            void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(16, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetThalionLogo() => SetOptionString(17, game.Configuration.ShowThalionLogo ? on : off);
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1344,6 +1348,7 @@ namespace Ambermoon.UI
                         break;
                     case 2:
                         SetMusicCaching();
+                        SetExternalMusic();
                         SetPyrdacorLogo();
                         SetThalionLogo();
                         break;
@@ -1463,6 +1468,12 @@ namespace Ambermoon.UI
             {
                 game.Configuration.CacheMusic = !game.Configuration.CacheMusic;
                 SetMusicCaching();
+                changedConfiguration = true;
+            }
+            void ToggleExternalMusic()
+            {
+                game.Configuration.ExternalMusic = !game.Configuration.ExternalMusic;
+                SetExternalMusic();
                 changedConfiguration = true;
             }
             void ToggleCheats()

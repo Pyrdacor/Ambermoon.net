@@ -6,8 +6,6 @@ namespace Ambermoon.Audio.Android
 {
     public class AudioOutput : IAudioOutput, IDisposable
     {
-        readonly int channels = 1;
-        readonly int sampleRate = 44100;
         readonly Dictionary<byte[], AudioTrack> audioTracks = new();
         bool disposed = false;
         float volume = 1.0f;
@@ -16,19 +14,10 @@ namespace Ambermoon.Audio.Android
 
         public AudioOutput(int channels = 1, int sampleRate = 44100)
         {
-            if (channels < 1 || channels > 2)
-                throw new ArgumentOutOfRangeException(nameof(channels));
-
-            if (sampleRate < 2000 || sampleRate > 200000)
-                throw new ArgumentOutOfRangeException(nameof(sampleRate));
-
-            this.channels = channels;
-            this.sampleRate = sampleRate;
-
             Available = true;
         }
 
-        private AudioTrack GetTrack(byte[] data)
+        private AudioTrack GetTrack(byte[] data, int channels, int sampleRate, bool sample8Bit)
         {
             if (audioTracks.TryGetValue(data, out var track))
                 return track;
@@ -36,7 +25,7 @@ namespace Ambermoon.Audio.Android
 #pragma warning disable 0618
             track = new AudioTrack(Media.Stream.Music, sampleRate,
                     channels == 2 ? Media.ChannelOut.Stereo : Media.ChannelOut.Mono,
-                    Media.Encoding.Pcm8bit, data.Length, Media.AudioTrackMode.Static);
+                    sample8Bit ? Media.Encoding.Pcm8bit : Media.Encoding.Pcm16bit, data.Length, Media.AudioTrackMode.Static);
 #pragma warning restore 0618
 
             track.Write(data, 0, data.Length);
@@ -160,14 +149,14 @@ namespace Ambermoon.Audio.Android
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void StreamData(byte[] data)
+        public void StreamData(byte[] data, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
         {
             if (!Available)
                 return;
 
             Stop();
 
-            currentTrack = GetTrack(data);
+            currentTrack = GetTrack(data, channels, sampleRate, sample8Bit);
 
             Reset();
         }

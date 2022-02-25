@@ -1004,6 +1004,9 @@ namespace Ambermoon
 
             ConfigurationChanged?.Invoke(Configuration, windowChange);
 
+            // Ensure the music is updated
+            UpdateMusic();
+
             if (windowChange && !trapped)
             {
                 trappedMousePositionOffset.X = 0;
@@ -12733,6 +12736,12 @@ namespace Ambermoon
         {
             if (Configuration.Music)
                 currentSong?.Play(AudioOutput, false);
+        }
+
+        internal void UpdateMusic()
+        {
+            if (Configuration.Music && currentSong != null)
+                PlayMusic(currentSong.Song);
         }
 
         void ShowLevelUpWindow(PartyMember partyMember, Action finishedEvent)

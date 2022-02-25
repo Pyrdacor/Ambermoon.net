@@ -36,7 +36,7 @@ namespace Ambermoon
         ICursor cursor = null;
         MainMenu mainMenu = null;
         Func<Game> gameCreator = null;
-        MusicCache musicCache = null;
+        MusicManager musicManager = null;
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
         DateTime? initializeErrorTime = null;
@@ -543,7 +543,7 @@ namespace Ambermoon
             void PlayMusic(Song song)
             {
                 if (configuration.Music)
-                    musicCache.GetSong(song)?.Play(audioOutput, true);
+                    musicManager.GetSong(song)?.Play(audioOutput, true);
 
                 if (infoText != null)
                     infoText.Visible = false;
@@ -616,7 +616,7 @@ namespace Ambermoon
 
             if (audioOutput == null)
             {
-                audioOutput = new AudioOutput(1, 44100);
+                audioOutput = new AudioOutput();
                 audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
                 audioOutput.Enabled = audioOutput.Available && configuration.Music;
                 if (configuration.ShowPyrdacorLogo)
@@ -630,7 +630,7 @@ namespace Ambermoon
                 }
             }
 
-            musicCache = new MusicCache(gameData, null,
+            musicManager = new MusicManager(configuration, gameData, null,
                 Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
 
             // Create render view
@@ -646,7 +646,7 @@ namespace Ambermoon
 
             InitGlyphs();
 
-            bool showLoadingText = !musicCache.Cached && configuration.Music;
+            bool showLoadingText = !musicManager.Cached && configuration.Music;
             var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
@@ -682,13 +682,13 @@ namespace Ambermoon
                             var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
                             var lightEffectProvider = new LightEffectProvider(executableData);
                             if (configuration.Music)
-                                musicCache?.WaitForAllSongsLoaded();
+                                musicManager?.WaitForAllSongsLoaded();
 
                             gameCreator = () =>
                             {
                                 var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                     characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                    cursor, lightEffectProvider, audioOutput, musicCache, FullscreenChangeRequest, ChangeResolution,
+                                    cursor, lightEffectProvider, audioOutput, musicManager, FullscreenChangeRequest, ChangeResolution,
                                     QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
                                 game.QuitRequested += window.Close;
                                 game.MousePositionChanged += position =>
@@ -731,8 +731,11 @@ namespace Ambermoon
                                     }
 
                                     if (!renderView.TryUseFrameBuffer())
+                                    {
                                         configuration.GraphicFilter = GraphicFilter.None;
- 
+                                        configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
+                                    }
+
                                     if (!renderView.TryUseEffects())
                                         configuration.Effects = Effects.None;
 
@@ -884,7 +887,7 @@ namespace Ambermoon
             foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                 executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
 
-            audioOutput = new AudioOutput(1, 44100);
+            audioOutput = new AudioOutput();
             audioOutput.Volume = Util.Limit(0, configuration.Volume, 100) / 100.0f;
             audioOutput.Enabled = audioOutput.Available && configuration.Music;
             if (configuration.ShowPyrdacorLogo)
@@ -1357,9 +1360,9 @@ namespace Ambermoon
                 });
                 Util.SafeCall(() =>
                 {
-                    if (configuration?.CacheMusic == true && musicCache != null && !musicCache.Cached)
+                    if (configuration?.CacheMusic == true && musicManager != null && !musicManager.Cached)
                     {
-                        MusicCache.Cache(musicCache, Configuration.ExecutableDirectoryPath,
+                        MusicCache.Cache(musicManager, Configuration.ExecutableDirectoryPath,
                             Configuration.FallbackConfigDirectory, Path.GetTempPath());
                     }
                 });

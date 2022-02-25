@@ -18,14 +18,8 @@ namespace Ambermoon.Audio.OpenAL
         readonly Dictionary<byte[], AudioBuffer> audioBuffers = new Dictionary<byte[], AudioBuffer>();
         AudioBuffer currentBuffer = null;
 
-        public AudioOutput(int channels = 1, int sampleRate = 44100)
+        public AudioOutput()
         {
-            if (channels < 1 || channels > 2)
-                throw new ArgumentOutOfRangeException(nameof(channels));
-
-            if (sampleRate < 2000 || sampleRate > 200000)
-                throw new ArgumentOutOfRangeException(nameof(sampleRate));
-
             try
             {
                 al = AL.GetApi(true);
@@ -187,13 +181,13 @@ namespace Ambermoon.Audio.OpenAL
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void StreamData(byte[] data)
+        public void StreamData(byte[] data, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
         {
             if (!Available)
                 return;
 
             if (!audioBuffers.ContainsKey(data))
-                audioBuffers[data] = new AudioBuffer(al, 1, 44100);
+                audioBuffers[data] = new AudioBuffer(al, channels, sampleRate, sample8Bit);
 
             currentBuffer = audioBuffers[data];
             currentBuffer?.Fill(source, data);

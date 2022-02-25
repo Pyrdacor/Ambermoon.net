@@ -93,6 +93,7 @@ namespace Ambermoon
         bool LegacyMode { get; set; }
         bool Music { get; set; }
         int Volume { get; set; }
+        bool ExternalMusic { get; set; }
         bool FastBattleMode { get; set; }
         bool CacheMusic { get; set; }
         bool AutoDerune { get; set; }

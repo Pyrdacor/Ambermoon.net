@@ -89,6 +89,8 @@
   <ItemGroup>
     <PackageReference Include="Ambermoon.Data.Legacy" Version="10.4.0" />
     <PackageReference Include="glfw" Version="3.3.6" />
+    <PackageReference Include="NAudio.Core" Version="2.0.0" />
+    <PackageReference Include="NAudio.WinMM" Version="2.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Silk.NET.GLFW" Version="2.13.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.13.0" />
@@ -130,5 +132,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+	
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+	  <DefineConstants>WINDOWS</DefineConstants>
+  </PropertyGroup>
 
 </Project>

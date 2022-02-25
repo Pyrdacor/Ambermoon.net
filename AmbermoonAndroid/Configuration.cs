@@ -37,6 +37,8 @@ namespace AmbermoonAndroid
         public bool LegacyMode { get; set; } = false;
         public bool Music { get; set; } = true;
         public int Volume { get; set; } = 100;
+        [JsonIgnore] // not needed/supported on Android
+        public bool ExternalMusic { get; set; } = false;
         public bool FastBattleMode { get; set; } = false;
         public bool CacheMusic { get; set; } = true;
         public bool AutoDerune { get; set; } = true;

@@ -560,15 +560,13 @@ namespace AmbermoonAndroid
                                     }
 
                                     if (!renderView.TryUseFrameBuffer())
-                                        configuration.GraphicFilter = GraphicFilter.None;
-
-                                    if (configuration.Effects != Effects.None)
                                     {
-                                        if (!renderView.TryUseEffects())
-                                            configuration.Effects = Effects.None;
+                                        configuration.GraphicFilter = GraphicFilter.None;
+                                        configuration.GraphicFilterOverlay = GraphicFilterOverlay.None;
                                     }
-                                    else
-                                        renderView.DeactivateEffects();
+
+                                    if (!renderView.TryUseEffects())
+                                        configuration.Effects = Effects.None;
                                 };
                                 game.DrugTicked += Drug_Ticked;
                                 mainMenu.GameDataLoaded = true;

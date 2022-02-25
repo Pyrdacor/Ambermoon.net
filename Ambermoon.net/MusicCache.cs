@@ -17,8 +17,8 @@ namespace Ambermoon
         const string CacheFileName = "music.cache";
         Data.Legacy.Audio.SongManager songManager = null;
 
-        public ISong GetSong(Song index) => songs[index];
-        public bool Cached => songManager == null;
+        public virtual ISong GetSong(Song index) => songs[index];
+        public virtual bool Cached => songManager == null;
 
         public MusicCache(IGameData gameData, Song? immediateLoadSongIndex, params string[] searchPaths)
         {
@@ -38,7 +38,7 @@ namespace Ambermoon
             }
         }
 
-        public void WaitForAllSongsLoaded() => songManager?.WaitForAllSongsLoaded();
+        public virtual void WaitForAllSongsLoaded() => songManager?.WaitForAllSongsLoaded();
 
         bool LoadFromCache(string path)
         {
@@ -141,7 +141,7 @@ namespace Ambermoon
                 {
                     Stop();
                     currentStream = data;
-                    audioOutput.StreamData(data);
+                    audioOutput.StreamData(data, 1, 44100, true);
                 }
                 if (!audioOutput.Streaming)
                     audioOutput.Start();

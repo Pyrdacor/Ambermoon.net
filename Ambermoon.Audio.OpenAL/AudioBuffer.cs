@@ -11,11 +11,13 @@ namespace Ambermoon.Audio.OpenAL
         readonly int sampleRate;
         bool disposed = false;
 
-        public AudioBuffer(AL al, int channels, int sampleRate)
+        public AudioBuffer(AL al, int channels, int sampleRate, bool sample8Bit)
         {
             this.al = al;
             bufferIndex = al.GenBuffer();
-            format = channels == 1 ? BufferFormat.Mono8 : BufferFormat.Stereo8;
+            format = sample8Bit
+                ? (channels == 1 ? BufferFormat.Mono8 : BufferFormat.Stereo8)
+                : (channels == 1 ? BufferFormat.Mono16 : BufferFormat.Stereo16);
             this.sampleRate = sampleRate;
         }
 
