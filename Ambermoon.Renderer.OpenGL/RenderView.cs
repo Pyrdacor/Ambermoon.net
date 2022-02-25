@@ -521,10 +521,12 @@ namespace Ambermoon.Renderer.OpenGL
                             mapViewArea.Position = PositionTransformation(mapViewArea.Position);
                             mapViewArea.Size = SizeTransformation(mapViewArea.Size);
                             var viewport = frameBufferWindowArea;
+                            int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
+                            int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
                             State.Gl.Viewport
                             (
-                                viewport.X + mapViewArea.X + viewOffset.X,
-                                viewport.Height - (viewport.Y + mapViewArea.Y + mapViewArea.Height) + viewOffset.Y,
+                                viewport.X - xOffset + mapViewArea.X + viewOffset.X,
+                                viewport.Height - (viewport.Y + mapViewArea.Y + mapViewArea.Height) + yOffset + viewOffset.Y,
                                 (uint)mapViewArea.Width, (uint)mapViewArea.Height
                             );
                             State.Gl.Enable(EnableCap.CullFace);
