@@ -56,8 +56,7 @@ namespace Ambermoon.Renderer.OpenGL
         // The rendering area in pixels
         Rect frameBufferWindowArea => new Rect
         (
-            new FloatPosition(renderDisplayArea.X / sizeFactorX, renderDisplayArea.Y / sizeFactorY).Round(),
-            frameBufferSize
+            renderDisplayArea.Position, frameBufferSize
         );
         readonly SizingPolicy sizingPolicy;
         readonly OrientationPolicy orientationPolicy;
@@ -409,13 +408,13 @@ namespace Ambermoon.Renderer.OpenGL
                 {
                     int newHeight = Misc.Round(windowSize.Width / virtualRatio);
                     renderDisplayArea = new Rect(0, (windowSize.Height - newHeight) / 2, windowSize.Width, newHeight);
-                    frameBufferSize.Height = Misc.Round(frameBufferSize.Width / virtualRatio);
+                    frameBufferSize.Height = newHeight;
                 }
                 else // windowRatio > virtualRatio
                 {
                     int newWidth = Misc.Round(windowSize.Height * virtualRatio);
                     renderDisplayArea = new Rect((windowSize.Width - newWidth) / 2, 0, newWidth, windowSize.Height);
-                    frameBufferSize.Width = Misc.Round(frameBufferSize.Height * virtualRatio);
+                    frameBufferSize.Width = newWidth;
                 }
 
                 if (rotation == Rotation.Deg90 || rotation == Rotation.Deg270)
@@ -489,7 +488,10 @@ namespace Ambermoon.Renderer.OpenGL
                 if (useEffectFrameBuffer)
                     BindEffectBuffer(viewOffset);
                 else
+                {
                     State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0u);
+                    State.Gl.Viewport(0, 0, (uint)frameBufferSize.Width, (uint)frameBufferSize.Height);
+                }
 
                 State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
@@ -503,14 +505,16 @@ namespace Ambermoon.Renderer.OpenGL
                         if (layer.Key == Layer.Map3DBackground)
                         {
                             var viewport = frameBufferWindowArea;
-                            int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
-                            int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
 
                             if (useEffectFrameBuffer)
-                                State.Gl.Viewport(viewport.X - xOffset, viewport.Y + yOffset, (uint)viewport.Width, (uint)viewport.Height);
+                                State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
                             else
-                                State.Gl.Viewport(viewport.X + viewOffset.X - xOffset, viewport.Y - viewOffset.Y + yOffset,
+                            {
+                                int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
+                                int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
+                                State.Gl.Viewport(viewport.X + viewOffset.X - xOffset, viewport.Y + viewOffset.Y + yOffset,
                                     (uint)viewport.Width, (uint)viewport.Height);
+                            }
                         }
                         else if (layer.Key == Layer.Map3DCeiling)
                         {
@@ -521,14 +525,20 @@ namespace Ambermoon.Renderer.OpenGL
                             mapViewArea.Position = PositionTransformation(mapViewArea.Position);
                             mapViewArea.Size = SizeTransformation(mapViewArea.Size);
                             var viewport = frameBufferWindowArea;
-                            int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
-                            int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
-                            State.Gl.Viewport
-                            (
-                                viewport.X - xOffset + mapViewArea.X + viewOffset.X,
-                                viewport.Height - (viewport.Y + mapViewArea.Y + mapViewArea.Height) + yOffset + viewOffset.Y,
-                                (uint)mapViewArea.Width, (uint)mapViewArea.Height
-                            );
+                            if (useEffectFrameBuffer)
+                            {
+                                State.Gl.Viewport(mapViewArea.X, viewport.Height - (mapViewArea.Y + mapViewArea.Height),
+                                    (uint)mapViewArea.Width, (uint)mapViewArea.Height);
+                            }
+                            else
+                            {
+                                State.Gl.Viewport
+                                (
+                                    viewport.X + viewOffset.X + mapViewArea.X,
+                                    viewport.Height - (viewport.Y + viewOffset.Y + mapViewArea.Y + mapViewArea.Height),
+                                    (uint)mapViewArea.Width, (uint)mapViewArea.Height
+                                );
+                            }
                             State.Gl.Enable(EnableCap.CullFace);
                             State.Gl.Disable(EnableCap.DepthTest);
                         }
@@ -548,26 +558,20 @@ namespace Ambermoon.Renderer.OpenGL
                             State.RestoreProjectionMatrix(State.ProjectionMatrix2D);
 
                             var viewport = frameBufferWindowArea;
-                            int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
-                            int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
 
                             if (!useFrameBuffer)
                             {
                                 if (useEffectFrameBuffer)
-                                {
-                                    State.Gl.Viewport(viewport.X - xOffset, viewport.Y + yOffset, (uint)viewport.Width, (uint)viewport.Height);
-                                }
+                                    State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
                                 else
-                                {                                    
-                                    State.Gl.Viewport(viewport.X + viewOffset.X - xOffset, viewport.Y - viewOffset.Y + yOffset,
+                                    State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
                                         (uint)viewport.Width, (uint)viewport.Height);
-                                }
                             }
                             else
                             {
                                 frameBuffer.Bind(viewport.Width, viewport.Height);
                                 State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-                                State.Gl.Viewport(viewport.X - xOffset, viewport.Y + yOffset, (uint)viewport.Width, (uint)viewport.Height);
+                                State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
                                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                                 State.Gl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                             }
@@ -577,27 +581,19 @@ namespace Ambermoon.Renderer.OpenGL
                     else if (!set2DViewport)
                     {
                         var viewport = frameBufferWindowArea;
-                        int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
-                        int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
 
                         if (!useFrameBuffer)
                         {
-                            if (!useEffectFrameBuffer)
-                            {
-                                State.Gl.Viewport(viewport.X + viewOffset.X - xOffset, viewport.Y - viewOffset.Y + yOffset,
-                                    (uint)viewport.Width, (uint)viewport.Height);
-                            }
+                            if (useEffectFrameBuffer)
+                                State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
                             else
-                            {
-                                State.Gl.Viewport(viewport.X - xOffset, viewport.Y + yOffset,
+                                State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
                                     (uint)viewport.Width, (uint)viewport.Height);
-                            }
                         }
                         else
                         {
                             frameBuffer.Bind(viewport.Width, viewport.Height);
-                            State.Gl.Viewport(viewport.X - xOffset, viewport.Y + yOffset,
-                                    (uint)viewport.Width, (uint)viewport.Height);
+                            State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
                             State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
                         }
   
@@ -664,9 +660,13 @@ namespace Ambermoon.Renderer.OpenGL
             State.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             State.Gl.Enable(EnableCap.Blend);
             State.Gl.Disable(EnableCap.DepthTest);
-            if (!useEffects)
+            var viewport = frameBufferWindowArea;
+            if (useEffects)
             {
-                var viewport = frameBufferWindowArea;
+                State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
+            }
+            else
+            {
                 State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y - viewOffset.Y,
                     (uint)viewport.Width, (uint)viewport.Height);
             }
@@ -678,6 +678,8 @@ namespace Ambermoon.Renderer.OpenGL
         void RenderEffects(Position viewOffset)
         {
             State.Gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            State.Gl.Viewport(0, 0, (uint)frameBufferSize.Width, (uint)frameBufferSize.Height);
+            State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit);
             effectBuffer.SetSize(frameBufferSize);
             effectShader.Use(effectBuffer.ProjectionMatrix);
             effectShader.SetResolution(frameBufferSize);
