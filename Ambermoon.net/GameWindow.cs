@@ -969,7 +969,7 @@ namespace Ambermoon
             var renderView = new RenderView(this, gameData, graphicProvider,
                 new TextProcessor(), textureAtlasManagerProvider, window.FramebufferSize.X, window.FramebufferSize.Y,
                 new Size(window.Size.X, window.Size.Y), ref useFrameBuffer, ref useEffects,
-                () => KeyValuePair.Create((int)configuration.GraphicFilter, (int)configuration.GraphicFilterOverlay),
+                () => KeyValuePair.Create(logoPyrdacor != null ? 0 : (int)configuration.GraphicFilter, logoPyrdacor != null ? 0 : (int)configuration.GraphicFilterOverlay),
                 () => (int)configuration.Effects,
                 additionalPalettes);
             if (!useFrameBuffer)

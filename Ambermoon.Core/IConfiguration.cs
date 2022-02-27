@@ -66,7 +66,8 @@ namespace Ambermoon
         None,
         Lines,
         Grid,
-        Scanlines
+        Scanlines,
+        CRT
     }
 
     public enum Effects
