@@ -1563,6 +1563,8 @@ namespace Ambermoon
                     (uint)player.Position.Y);
             }
 
+            PlayerMoved(false, new Position(player.Position), false);
+
             void CheckWeight(PartyMember partyMember)
             {
                 // Adjust weight in case it was set to a wrong value before.
