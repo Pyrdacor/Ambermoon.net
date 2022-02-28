@@ -1094,7 +1094,7 @@ namespace Ambermoon
             trappedMousePositionOffset.Y = 0;
         }
 
-        void ResetMoveKeys(bool forceDisable = false)
+        internal void ResetMoveKeys(bool forceDisable = false)
         {
             var pressedKeys = pressedKeyProvider?.Invoke();
 

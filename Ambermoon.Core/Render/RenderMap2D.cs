@@ -125,7 +125,7 @@ namespace Ambermoon.Render
                         {
                             f?.Invoke();
                         }
-                    });
+                    }, p => p.Alive && !p.Ailments.HasFlag(Ailment.Petrified), () => game.ResetMoveKeys());
                 }
             }
 
