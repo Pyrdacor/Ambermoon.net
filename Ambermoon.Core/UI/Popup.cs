@@ -439,24 +439,24 @@ namespace Ambermoon.UI
                 return true;
             }
 
-            if (key == Key.Up || key == Key.PageUp || key == Key.Home)
+            if (key == Key.Up || key == Key.PageUp || key == Key.End)
             {
                 var upButton = buttons.FirstOrDefault(button => button.ButtonType == Data.Enumerations.ButtonType.MoveUp);
 
                 if (upButton != null)
                 {
-                    upButton.PressImmediately(game, key == Key.PageUp || key == Key.Home);
+                    upButton.PressImmediately(game, key == Key.PageUp || key == Key.End);
                     return true;
                 }
             }
 
-            if (key == Key.Down || key == Key.PageDown || key == Key.End)
+            if (key == Key.Down || key == Key.PageDown || key == Key.Home)
             {
                 var downButton = buttons.FirstOrDefault(button => button.ButtonType == Data.Enumerations.ButtonType.MoveDown);
 
                 if (downButton != null)
                 {
-                    downButton.PressImmediately(game, key == Key.PageDown || key == Key.End);
+                    downButton.PressImmediately(game, key == Key.PageDown || key == Key.Home);
                     return true;
                 }
             }

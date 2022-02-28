@@ -1218,6 +1218,15 @@ namespace Ambermoon.UI
                 }
             }
         };
+        static readonly Dictionary<GameLanguage, string> DefaultBattleSpeedName = new Dictionary<GameLanguage, string>
+        {
+            {
+                GameLanguage.German, "Standard"
+            },
+            {
+                GameLanguage.English, "Default"
+            }
+        };
 
         void OpenOptions()
         {
@@ -1308,7 +1317,7 @@ namespace Ambermoon.UI
             void SetGraphicFilterOverlay() => SetOptionString(5, game.Configuration.GraphicFilterOverlay == GraphicFilterOverlay.None ? off : game.Configuration.GraphicFilterOverlay.ToString());
             void SetEffects() => SetOptionString(6, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
             // Page 2
-            void SetBattleSpeed() => SetOptionString(7, $"+{game.Configuration.BattleSpeed}%");
+            void SetBattleSpeed() => SetOptionString(7, game.Configuration.BattleSpeed == 0 ? DefaultBattleSpeedName[game.GameLanguage] : $"+{game.Configuration.BattleSpeed}%");
             void SetTooltips() => SetOptionString(8, game.Configuration.ShowButtonTooltips ? on : off);
             void SetPlayerStatsTooltips() => SetOptionString(9, game.Configuration.ShowPlayerStatsTooltips ? on : off);
             void SetAutoDerune() => SetOptionString(10, game.Configuration.AutoDerune ? on : off);
@@ -1575,11 +1584,13 @@ namespace Ambermoon.UI
             externalGraphicFilterChanged += SetGraphicFilter;
             externalGraphicFilterOverlayChanged += SetGraphicFilterOverlay;
             externalEffectsChanged += SetEffects;
+            battleSpeedChanged += SetBattleSpeed;
             activePopup.Closed += () =>
             {
                 externalGraphicFilterChanged -= SetGraphicFilter;
                 externalGraphicFilterOverlayChanged -= SetGraphicFilterOverlay;
                 externalEffectsChanged -= SetEffects;
+                battleSpeedChanged -= SetBattleSpeed;
             };
         }
 
@@ -1602,6 +1613,13 @@ namespace Ambermoon.UI
         public void ExternalEffectsChanged()
         {
             externalEffectsChanged?.Invoke();
+        }
+
+        event Action battleSpeedChanged;
+
+        public void ExternalBattleSpeedChanged()
+        {
+            battleSpeedChanged?.Invoke();
         }
 
         public void AttachEventToButton(int index, Action action)

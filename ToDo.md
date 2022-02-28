@@ -21,6 +21,7 @@
 
 ## UI
 
+- When changing the battle speed etc by key and hover the option in the list, the text is gone
 - Triggering a yes/no button by key takes very long to execute the action
 - Save the scroll offset for save/load lists
 - Giving items per cheat to a char but have another char's inventory open, shows messed up item amounts.

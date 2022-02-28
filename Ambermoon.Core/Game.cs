@@ -353,7 +353,7 @@ namespace Ambermoon
         BattleInfo currentBattleInfo = null;
         Battle currentBattle = null;
         internal bool BattleActive => currentBattle != null;
-        internal bool BattleRoundActive => currentBattle?.RoundActive == true;
+        public bool BattleRoundActive => currentBattle?.RoundActive == true;
         readonly ILayerSprite[] partyMemberBattleFieldSprites = new ILayerSprite[MaxPartyMembers];
         readonly Tooltip[] partyMemberBattleFieldTooltips = new Tooltip[MaxPartyMembers];
         PlayerBattleAction currentPlayerBattleAction = PlayerBattleAction.PickPlayerAction;
@@ -1020,6 +1020,11 @@ namespace Ambermoon
         public void ExternalGraphicFilterChanged() => layout.ExternalGraphicFilterChanged();
         public void ExternalGraphicFilterOverlayChanged() => layout.ExternalGraphicFilterOverlayChanged();
         public void ExternalEffectsChanged() => layout.ExternalEffectsChanged();
+        public void ExternalBattleSpeedChanged()
+        {
+            SetBattleSpeed(Configuration.BattleSpeed);
+            layout.ExternalBattleSpeedChanged();
+        }
 
         internal int RollDice100()
         {
