@@ -81,7 +81,7 @@
         /// </summary>
         MistyDungeonHop,
         /// <summary>
-        /// Witch's broom
+        /// Witch's broom, Nera's house
         /// </summary>
         BurnBabyBurn,
         /// <summary>
@@ -101,7 +101,7 @@
         /// </summary>
         ThatHunchIsBack,
         /// <summary>
-        /// Nera's house?
+        /// Superman mode, Thalion office
         /// </summary>
         ChickenSoup,
         /// <summary>
@@ -113,7 +113,7 @@
         /// </summary>
         HisMastersVoice,
         /// <summary>
-        /// Empty song?
+        /// House of healers (has no title)
         /// </summary>
         NoName,
         /// <summary>
