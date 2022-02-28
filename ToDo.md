@@ -22,7 +22,6 @@
 ## UI
 
 - Test drug effect with new filters
-- 0 dmg/def in item view has still wrong identation
 - Triggering a yes/no button by key takes very long to execute the action
 - Save the scroll offset for save/load lists
 - Giving items per cheat to a char but have another char's inventory open, shows messed up item amounts.

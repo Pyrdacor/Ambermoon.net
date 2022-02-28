@@ -12419,8 +12419,9 @@ namespace Ambermoon
             bool showCursed = item.Flags.HasFlag(ItemFlags.Accursed) && itemSlot.Flags.HasFlag(ItemSlotFlags.Identified);
             int damage = showCursed ? -item.Damage : item.Damage;
             int defense = showCursed ? -item.Defense : item.Defense;
-            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Replace("  {0:00}", damage.ToString("+#;-#; 0")).Replace(" {0:000}", damage.ToString("+#;-#; 0")), TextColor.White);
-            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Replace("  {0:00}", defense.ToString("+#;-#; 0")).Replace(" {0:000}", defense.ToString("+#;-#; 0")), TextColor.White);
+            int valueOffset = DataNameProvider.ItemFingersDisplay.IndexOf("{") - 1;
+            popup.AddText(new Position(32, 146), DataNameProvider.ItemDamageDisplay.Substring(0, valueOffset) + damage.ToString("+#;-#; 0"), TextColor.White);
+            popup.AddText(new Position(32, 154), DataNameProvider.ItemDefenseDisplay.Substring(0, valueOffset) + defense.ToString("+#;-#; 0"), TextColor.White);
 
             popup.AddText(new Position(177, 99), DataNameProvider.ClassesHeaderString, TextColor.LightGray);
             int column = 0;
