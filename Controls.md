@@ -52,5 +52,8 @@ Input | Action
 Ctrl + Left Click | Use item
 Shift + Left Click | Equip or unequip item
 
+Right clicking a stack of items will take all of them immediately. Left clicks would open the amount popup to select how many you want to take.
+
+Dragging items can be aborted with right click or escape key.
 
 *to be continued ...*
