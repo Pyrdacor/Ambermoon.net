@@ -15,6 +15,8 @@ Ctrl + P | Take screenshot (stored in folder Screenshots)
 Escape | Generally aborts or closes things
 Return | Generally submits or closes things
 Space | Generally closes things
+Ctrl + 0 to 9 | Quick save in slots 1 to 10 (0 is slot 10)
+Ctrl + Shift + 0 to 9 | Quick load from slots 1 to 10 (0 is slot 10)
 NumPad 1 to 9 | Action buttons in lower right corner (see below)
 
 ![NumPad Example 1](docs/action_buttons_0.png "Move buttons")
