@@ -8,7 +8,7 @@
     <RepositoryType>Github</RepositoryType>
     <Description>Library that contains basic stuff for other Ambermoon libraries.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>10.4.0</Version>
+    <Version>10.5.0</Version>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
     <PackageTags>Ambermoon</PackageTags>
     <Configurations>Debug;Release;DebugAndroid</Configurations>
