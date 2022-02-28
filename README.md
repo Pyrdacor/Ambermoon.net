@@ -20,7 +20,7 @@ Version | Download
 **1.5.0** (Windows 7 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Windows7.zip)
 **1.5.0** (Windows 7 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Windows7-32Bit.zip)
 
-Note: From version 1.4.0 onwards if you want to play on Windows 7, there are extra downloads for it!
+From version 1.5.0 onwards you can use your own music with Ambermoon (e.g. Atari music or the remixes of Matthias Steinwachs). Read [here](CustomMusic.md).
 
 Problems? The [FAQ](FAQ.md) might help.
 

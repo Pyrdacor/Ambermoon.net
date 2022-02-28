@@ -11,7 +11,7 @@
 - 5 optional graphic overlays like scanlines or CRT
 - 2 optional visual effects (grayscale and sepia)
 - You can put your own mp3s as (01.mp3 etc) into a folder called "music" next to the exe so it is used as the ingame music instead (Windows only as of now)
-- Fast battle mode was replaced by a battle speed section with 10 levels
+- Fast battle mode was replaced by a battle speed option with 10 levels
 
 
 ### Bugfixes
