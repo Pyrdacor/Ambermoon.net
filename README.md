@@ -6,25 +6,25 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.4.1 is the most recent version from 30-01-2022. It even includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced) now! [Version 1.5](NextRelease.md) will be released soon as well.
+Version 1.5.0 is the most recent version from 28-02-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 The full package with additional resources can also be downloaded from my website at www.pyrdacor.net!
 
 Version | Download
 --- | ---
-**1.4.1** (Windows 8,10,11 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows.zip)
-**1.4.1** (Linux 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Linux.tar.gz)
-**1.4.1** (Mac 64bit bundled) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac-Bundle.zip)
-**1.4.1** (Mac 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Mac.zip)
-**1.4.1** (Windows 8,10,11 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows32Bit.zip)
-**1.4.1** (Windows 7 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7.zip)
-**1.4.1** (Windows 7 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.4.1/Ambermoon.net-Windows7-32Bit.zip)
+**1.5.0** (Windows 8,10,11 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Windows.zip)
+**1.5.0** (Linux 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Linux.tar.gz)
+**1.5.0** (Mac 64bit bundled) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Mac-Bundle.zip)
+**1.5.0** (Mac 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Mac.zip)
+**1.5.0** (Windows 8,10,11 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Windows32Bit.zip)
+**1.5.0** (Windows 7 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Windows7.zip)
+**1.5.0** (Windows 7 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.0/Ambermoon.net-Windows7-32Bit.zip)
 
 Note: From version 1.4.0 onwards if you want to play on Windows 7, there are extra downloads for it!
 
 Problems? The [FAQ](FAQ.md) might help.
 
-Older releases can be found [here](https://github.com/Pyrdacor/Ambermoon.net/raw/master/Downloads). Other platforms like Android, iOS or Raspberry Pi4 might follow.
+Other platforms like Android, iOS or Raspberry Pi4 might follow.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/cr6temgl1vknho6t?svg=true)](https://ci.appveyor.com/project/Pyrdacor/ambermoon-net)
 
@@ -125,6 +125,8 @@ I will also post updates about releases and interesting stuff on twitter: https:
 
 
 ## Important controls
+
+**Please also have a look [here](Controls.md).**
 
 Key | Description
 --- | ---

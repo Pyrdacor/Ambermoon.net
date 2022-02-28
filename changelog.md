@@ -1,28 +1,33 @@
 # Changelog
 
+## 1.5.0 - Fifth patch (January 2022 - February 2022)
+
+- Version [1.5.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.5.0): Graphic filters, overlays and effects, custom music interface, quickload, battle speed option
+
+
 ## 1.4.0 - Fourth patch (December 2021 - January 2022)
 
-- Version [1.4.1] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.1): Hotfix for 1.4.0 release (fixes missing item rewards in conversations)
-- Version [1.4.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.0): Includes first Ambermoon Advanced release, huge amount of bugfixes
+- Version [1.4.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.1): Hotfix for 1.4.0 release (fixes missing item rewards in conversations)
+- Version [1.4.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.0): Includes first Ambermoon Advanced release, huge amount of bugfixes
 
 
 ## 1.3.0 - Third patch (November 2021)
 
-- Version [1.3.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.3.0): Screenshot function, quicksaves, noclip cheat, usability and bugfixes
+- Version [1.3.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.3.0): Screenshot function, quicksaves, noclip cheat, usability and bugfixes
 
 ## 1.2.0 - Second patch (October 2021)
 
-- Version [1.2.2] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.2): Quick fix for 1.2.0 release
-- Version [1.2.1] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.1): Quick fix for 1.2.0 release
-- Version [1.2.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.0): Thalion logo, more savegame slots, more tooltips, bugfixes
+- Version [1.2.2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.2): Quick fix for 1.2.0 release
+- Version [1.2.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.1): Quick fix for 1.2.0 release
+- Version [1.2.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.2.0): Thalion logo, more savegame slots, more tooltips, bugfixes
 
 ## 1.1.0 - First patch (September 2021)
 
-- Version [1.1.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.0): Pyrdacor logo, added swamp poison, easteregg, bugfixes
+- Version [1.1.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.1.0): Pyrdacor logo, added swamp poison, easteregg, bugfixes
 
 ## 1.0.0 - Full version
 
-- Version [1.0.0] (https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.0): Remake outro, credits, bugfixing, graphic filter, auto de-rune
+- Version [1.0.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.0.0): Remake outro, credits, bugfixing, graphic filter, auto de-rune
 
 ## 0.9.x beta - Finalizing
 - Version [0.9.5 RC2](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v0.9.5rc2): Tutorial, button tooltips, more options, bugfixing
