@@ -43,4 +43,12 @@ Escape | Abort
 Right clicking on the arrow buttons will select the minimum or maximum as well but right clicking somewhere else will close the popup and abort.
 
 
+## Inventory
+
+Input | Action
+--- | ---
+Ctrl + Left Click | Use item
+Shift + Left Click | Equip or unequip item
+
+
 *to be continued ...*
