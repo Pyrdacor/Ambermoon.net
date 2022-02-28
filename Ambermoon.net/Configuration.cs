@@ -196,8 +196,12 @@ namespace Ambermoon
 
             if (configuration?.FastBattleMode == true && configuration.BattleSpeed == 0)
                 configuration.BattleSpeed = 100;
-            else if (configuration.BattleSpeed % 10 != 0)
-                configuration.BattleSpeed = Util.Limit(0, configuration.BattleSpeed + 10 - configuration.BattleSpeed % 10, 100);
+            else
+            {
+                if (configuration.BattleSpeed % 10 != 0)
+                    configuration.BattleSpeed += 10 - configuration.BattleSpeed % 10;
+                configuration.BattleSpeed = Util.Limit(0, configuration.BattleSpeed, 100);
+            }
 
             configuration.FastBattleMode = null;
 #pragma warning restore CS0618

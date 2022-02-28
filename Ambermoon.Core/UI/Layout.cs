@@ -1418,8 +1418,7 @@ namespace Ambermoon.UI
             }
             void ToggleBattleSpeed()
             {
-                game.Configuration.BattleSpeed = game.Configuration.BattleSpeed + 10;
-                if (game.Configuration.BattleSpeed == 100)
+                if (game.Configuration.BattleSpeed >= 100)
                     game.Configuration.BattleSpeed = 0;
                 else
                     game.Configuration.BattleSpeed += 10;
