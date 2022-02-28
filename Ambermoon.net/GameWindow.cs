@@ -850,7 +850,11 @@ namespace Ambermoon
             }
 
             if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > 4)
+#if DEBUG
+                configuration.GameVersionIndex = 4;
+#else
                 configuration.GameVersionIndex = 0;
+#endif
 
             var additionalVersion = GameData.GetVersionInfo(dataPath, out var language);
 

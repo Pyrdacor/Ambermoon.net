@@ -100,7 +100,11 @@ namespace Ambermoon
         public AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots()
         {
             if (GameVersionIndex < 0 || GameVersionIndex >= VersionSavegameFolders.Length)
+#if DEBUG
+                GameVersionIndex = VersionSavegameFolders.Length - 1; // external
+#else
                 GameVersionIndex = 0;
+#endif
 
             if (AdditionalSavegameSlots == null)
                 UpgradeAdditionalSavegameSlots();

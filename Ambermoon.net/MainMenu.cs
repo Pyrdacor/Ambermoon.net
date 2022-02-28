@@ -242,7 +242,7 @@ namespace Ambermoon
 
                 for (int i = 0; i < mainMenuTexts.Count; ++i)
                 {
-                    if (mainMenuTexts[i].Key.Contains(position))
+                    if (mainMenuTexts[i].Value.Visible && mainMenuTexts[i].Key.Contains(position))
                     {
                         started = true;
                         Closed?.Invoke((CloseAction)i);
