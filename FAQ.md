@@ -16,6 +16,10 @@ First check if the music is enabled inside the options and that the volume is gr
 
 No don't worry. There is a crash backup savegame. It is stored as Save.99 inside the savegame folder (often a folder called "Saves" next to the Ambermoon.net executable). You might want to backup this folder on your own after the crash. When you continue a game, the game automatically detects the crash savegame and asks if you want to load it. After loading the backup is deleted! So make sure you back it up yourself or save immediately after loading it.
 
+5. On my Mac the game won't start. It says that Ambermoon.net is damaged and can't be opened.
+
+There is an option which only allows apps from the app store to be used. As I don't want to pay 99$ each year to be able to publish through the store or sign my app, you have to disable this option for Ambermoon.net. This is a general problem of applications outside the app store, so you can find instructions on the web.
+
 
 # Häufig gestellte Fragen
 
@@ -34,3 +38,7 @@ Prüfe als erstes ob die Musik in den Einstellungen aktiviert ist und die Lautst
 4. Das Spiel ist abgestürzt und ich habe nicht gespeichert. Ist alles verloren?
 
 Nein, keine Sorge. Es gibt einen Backup-Spielstand bei Abstürzen. Dieser wird als Save.99 im Spielstandsordner gespeichert (oft ein Ordner namens "Saves" im selben Verzeichnis wie die Ambermoon.net Exe). Am besten sicherst du diesen Ordner händisch irgendwo. Wenn du "Weiterspielen" wählst, findet das Spiel automatisch den Backup-Spielstand und fragt dich, ob dieser geladen werden soll. Nach dem Laden wird er gelöscht! Also stelle sicher, dass du selbst ein Backup gemacht hast oder speichere gleich nach dem Laden.
+
+5. Auf meinem Mac startet das Spiel nicht. Ambermoon.net ist angeblich kaputt und kann nicht gestartet werden.
+
+Es gibt eine Option, die nur Apps aus dem offiziellen App Store erlaubt. Weil ich keine 99$ pro Jahr zahlen möchte, nur um das Spiel über den App Store zu vertreiben oder es zu signieren, musst du die Option für Ambermoon.net deaktivieren. Da dies ein generelles Problem mit Applikationen außerhalb des App Stores ist, findest du im Netz Anleitungen dazu.
