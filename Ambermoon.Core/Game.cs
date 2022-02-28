@@ -1287,13 +1287,15 @@ namespace Ambermoon
             if (CurrentMapCharacter != null)
             {
                 CurrentMapCharacter.ResetLastInteractionTime();
-                if (map.Type == MapType.Map3D)
-                    RenderMap3D.Reset();
-                else
-                    MapCharacter2D.Reset();
+                
                 if (!leaveMapCharacter)
                     CurrentMapCharacter = null;
             }
+
+            if (map.Type == MapType.Map3D)
+                RenderMap3D.Reset();
+            else
+                MapCharacter2D.Reset();
         }
 
         public void Destroy()
