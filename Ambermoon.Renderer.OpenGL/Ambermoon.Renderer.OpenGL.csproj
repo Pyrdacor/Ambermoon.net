@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Configurations>Debug;Release;DebugAndroid;ReleaseWithAndroid;ReleaseMac</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;ReleaseWithAndroid</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -45,10 +45,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
-	<PackageReference Include="Silk.NET.OpenGL" Version="2.13.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(Configuration)'=='ReleaseMac'">
 	<PackageReference Include="Silk.NET.OpenGL" Version="2.13.0" />
   </ItemGroup>
 

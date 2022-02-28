@@ -15,17 +15,9 @@
     <PackageTags>Ambermoon</PackageTags>
     <Description>Rework of the Amiga game Ambermoon</Description>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Configurations>Debug;Release;ReleaseMac;DebugAndroid;ReleaseNative;ReleaseNative</Configurations>
+    <Configurations>Debug;Release;DebugAndroid;ReleaseNative;ReleaseNative</Configurations>
   </PropertyGroup>
 	
-  <PropertyGroup Condition="'$(Configuration)'!='ReleaseMac'">
-    <TargetFramework>net6.0</TargetFramework>
-  </PropertyGroup>
-	
-  <PropertyGroup Condition="'$(Configuration)'=='ReleaseMac'">
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-  </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
