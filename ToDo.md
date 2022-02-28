@@ -21,6 +21,7 @@
 
 ## UI
 
+- Update transport button after game loading
 - Triggering a yes/no button by key takes very long to execute the action
 - Save the scroll offset for save/load lists
 - Giving items per cheat to a char but have another char's inventory open, shows messed up item amounts.

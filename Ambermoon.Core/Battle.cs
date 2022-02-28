@@ -973,7 +973,7 @@ namespace Ambermoon
         }
 
         void Proceed(Action action, bool important = false)
-            => game.AddTimedEvent(TimeSpan.FromMilliseconds(NeedsClickForNextAction ? 200 : important ? 3000 : 1000), action);
+            => game.AddTimedEvent(TimeSpan.FromMilliseconds(NeedsClickForNextAction ? 200 : (important ? 2750 : 850) + (100 - Speed) * 5), action);
 
         void RunBattleAction(BattleAction battleAction, uint battleTicks)
         {
