@@ -874,8 +874,8 @@ namespace Ambermoon.Render
                             var scale = 1.5f * (fromMonster ? 2.0f : renderView.GraphicProvider.GetMonsterRowImageScaleFactor((MonsterRow)targetRow));
                             byte displayLayer = fromMonster ? (byte)255 : (byte)(targetRow * 60 + 60);
                             uint duration = (uint)Util.Round((250.0f - whiteDuration) * 0.001f * Game.TicksPerSecond);
-                            if (game.Configuration.FastBattleMode)
-                                duration *= 3; // This avoids epileptic shock :D
+                            if (game.Configuration.BattleSpeed != 0)
+                                duration = (uint)Util.Round(duration * (2.0f + game.Configuration.BattleSpeed / 100.0f)); // This avoids epileptic shock :D
                             AddAnimation(CombatGraphicIndex.Lightning, 1, position, endPosition, duration,
                                 scale, scale, displayLayer, (--numLightnings == 0) ? (Action)null : PlayLightning, null,
                                 BattleAnimation.AnimationScaleType.Both, BattleAnimation.HorizontalAnchor.Center,

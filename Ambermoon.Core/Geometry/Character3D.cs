@@ -64,7 +64,7 @@ namespace Ambermoon.Geometry
         {
             this.game = game;
             ResetMovementTimer();
-            lastMoveTicks = game.CurrentTicks;
+            lastMoveTicks = game.CurrentMapTicks;
         }
 
         public void Place(uint x, uint y, bool waitForManualStart)
@@ -74,7 +74,7 @@ namespace Ambermoon.Geometry
             RealPosition = lastTilePosition * Global.DistancePerBlock;
             direction = null;
             currentState = State.IdleOnTile;
-            lastMoveTicks = game.CurrentTicks;
+            lastMoveTicks = game.CurrentMapTicks;
             NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 288;
         }
 
@@ -99,7 +99,7 @@ namespace Ambermoon.Geometry
             {
                 targetTilePosition = new Position((int)x, (int)y);
                 direction = lastTilePosition.GetDirectionTo(targetTilePosition);
-                lastMoveTicks = game.CurrentTicks;
+                lastMoveTicks = game.CurrentMapTicks;
                 movedTicks = 0;
                 ticksPerMovement = lastTilePosition.GetMaxDistance(targetTilePosition) * TicksPerMovement;
             }
@@ -137,7 +137,7 @@ namespace Ambermoon.Geometry
             direction = lastTilePosition.GetDirectionTo(targetTilePosition);
             currentState = State.MovingTowardsPlayer;
             NextMoveTimeSlot = uint.MaxValue;
-            lastMoveTicks = game.CurrentTicks;
+            lastMoveTicks = game.CurrentMapTicks;
 
             var distance = Math.Min(0.25f, RealPosition.GetMaxDistance(playerPosition) / Global.DistancePerBlock);
 
@@ -168,7 +168,7 @@ namespace Ambermoon.Geometry
             }
 
             NextMoveTimeSlot = waitForManualStart ? uint.MaxValue : (game.GameTime.TimeSlot + 1) % 288;
-            lastMoveTicks = game.CurrentTicks;
+            lastMoveTicks = game.CurrentMapTicks;
             movedTicks = 0;
         }
 

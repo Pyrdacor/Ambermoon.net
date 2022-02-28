@@ -37,7 +37,9 @@ namespace Ambermoon
         public bool Music { get; set; } = true;
         public int Volume { get; set; } = 100;
         public bool ExternalMusic { get; set; } = false;
-        public bool FastBattleMode { get; set; } = false;
+        [Obsolete("Use BattleSpeed instead.")]
+        public bool? FastBattleMode { get; set; } = null;
+        public int BattleSpeed { get; set; } = 0;
         public bool CacheMusic { get; set; } = true;
         public bool AutoDerune { get; set; } = true;
         public bool EnableCheats { get; set; } = false;
@@ -188,7 +190,16 @@ namespace Ambermoon
 
 #pragma warning disable CS0618
             if (configuration?.UseGraphicFilter == true && configuration.GraphicFilter == GraphicFilter.None)
-                configuration.GraphicFilter = GraphicFilter.Smooth;
+                configuration.GraphicFilter = GraphicFilter.Blur; // matches the old filter
+
+            configuration.UseGraphicFilter = null;
+
+            if (configuration?.FastBattleMode == true && configuration.BattleSpeed == 0)
+                configuration.BattleSpeed = 100;
+            else if (configuration.BattleSpeed % 10 != 0)
+                configuration.BattleSpeed = Util.Limit(0, configuration.BattleSpeed + 10 - configuration.BattleSpeed % 10, 100);
+
+            configuration.FastBattleMode = null;
 #pragma warning restore CS0618
 
             return configuration;
@@ -198,6 +209,7 @@ namespace Ambermoon
         {
 #pragma warning disable CS0618
             UseGraphicFilter = null; // not used anymore
+            FastBattleMode = null; // not used anymore
 #pragma warning restore CS0618
 
             Directory.CreateDirectory(Path.GetDirectoryName(filename));

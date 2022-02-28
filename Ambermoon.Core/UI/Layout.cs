@@ -1147,7 +1147,7 @@ namespace Ambermoon.UI
                     "Grafikoverlay",
                     "Effekt",
                     // Page 2
-                    "Schneller Kampfmodus",
+                    "Kampfgeschwindigkeit",
                     "Button Tooltips anzeigen",
                     "Stats Tooltips anzeigen",
                     "Runen als Text anzeigen",
@@ -1177,7 +1177,7 @@ namespace Ambermoon.UI
                     "Graphic overlay",
                     "Effect",
                     // Page 2
-                    "Fast battle mode",
+                    "Battle speed",
                     "Show button tooltips",
                     "Show stats tooltips",
                     "Show runes as text",
@@ -1245,7 +1245,7 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", RenderView.AllowFramebuffer ? ((index, _) => ToggleGraphicFilterAddition()) : nullOptionAction),
                 KeyValuePair.Create("", RenderView.AllowEffects ? ((index, _) => ToggleEffects()) : nullOptionAction),
                 // Page 2
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFastBattleMode())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleBattleSpeed())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePlayerStatsTooltips())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleAutoDerune())),
@@ -1308,7 +1308,7 @@ namespace Ambermoon.UI
             void SetGraphicFilterOverlay() => SetOptionString(5, game.Configuration.GraphicFilterOverlay == GraphicFilterOverlay.None ? off : game.Configuration.GraphicFilterOverlay.ToString());
             void SetEffects() => SetOptionString(6, game.Configuration.Effects == Effects.None ? off : game.Configuration.Effects.ToString());
             // Page 2
-            void SetFastBattleMode() => SetOptionString(7, game.Configuration.FastBattleMode ? on : off);
+            void SetBattleSpeed() => SetOptionString(7, $"+{game.Configuration.BattleSpeed}%");
             void SetTooltips() => SetOptionString(8, game.Configuration.ShowButtonTooltips ? on : off);
             void SetPlayerStatsTooltips() => SetOptionString(9, game.Configuration.ShowPlayerStatsTooltips ? on : off);
             void SetAutoDerune() => SetOptionString(10, game.Configuration.AutoDerune ? on : off);
@@ -1338,7 +1338,7 @@ namespace Ambermoon.UI
                         SetEffects();
                         break;
                     case 1:
-                        SetFastBattleMode();
+                        SetBattleSpeed();
                         SetTooltips();
                         SetPlayerStatsTooltips();
                         SetAutoDerune();
@@ -1416,11 +1416,15 @@ namespace Ambermoon.UI
                 changedConfiguration = true;
                 windowChange = true;
             }
-            void ToggleFastBattleMode()
+            void ToggleBattleSpeed()
             {
-                game.Configuration.FastBattleMode = !game.Configuration.FastBattleMode;
-                SetFastBattleMode();
-                game.SetFastBattleMode(game.Configuration.FastBattleMode);
+                game.Configuration.BattleSpeed = game.Configuration.BattleSpeed + 10;
+                if (game.Configuration.BattleSpeed == 100)
+                    game.Configuration.BattleSpeed = 0;
+                else
+                    game.Configuration.BattleSpeed += 10;
+                SetBattleSpeed();
+                game.SetBattleSpeed(game.Configuration.BattleSpeed);
                 changedConfiguration = true;
             }
             void ToggleTooltips()

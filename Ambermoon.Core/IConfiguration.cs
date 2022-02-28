@@ -95,7 +95,9 @@ namespace Ambermoon
         bool Music { get; set; }
         int Volume { get; set; }
         bool ExternalMusic { get; set; }
-        bool FastBattleMode { get; set; }
+        [Obsolete("Use BattleSpeed instead.")]
+        bool? FastBattleMode { get; set; }
+        int BattleSpeed { get; set; }
         bool CacheMusic { get; set; }
         bool AutoDerune { get; set; }
         bool EnableCheats { get; set; }

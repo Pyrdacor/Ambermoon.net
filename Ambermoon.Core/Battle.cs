@@ -251,6 +251,7 @@ namespace Ambermoon
         uint relativeDamageEfficiency = 0;
         bool showMonsterLP = false;
         internal bool NeedsClickForNextAction { get; set; }
+        internal int Speed { get; set; }
         public bool ReadyForNextAction { get; private set; } = false;
         public bool WaitForClick { get; set; } = false;
         public bool SkipNextBattleFieldClick { get; private set; } = false;
@@ -2052,7 +2053,7 @@ namespace Ambermoon
         void ShowSpellFailMessage(Character caster, SpellInfo spellInfo, string message, Action finishAction)
         {
             var color = caster.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer;
-            var delay = TimeSpan.FromMilliseconds(700);
+            var delay = TimeSpan.FromMilliseconds(1100 - Speed * 4);
 
             if (NeedsClickForNextAction && !spellInfo.Target.TargetsMultipleEnemies())
             {

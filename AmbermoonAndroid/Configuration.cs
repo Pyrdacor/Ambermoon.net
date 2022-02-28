@@ -1,9 +1,5 @@
 ﻿using Ambermoon;
 using Newtonsoft.Json;
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
 
 namespace AmbermoonAndroid
 {
@@ -39,7 +35,9 @@ namespace AmbermoonAndroid
         public int Volume { get; set; } = 100;
         [JsonIgnore] // not needed/supported on Android
         public bool ExternalMusic { get; set; } = false;
-        public bool FastBattleMode { get; set; } = false;
+        [Obsolete("Use BattleSpeed instead.")]
+        public bool? FastBattleMode { get; set; } = null;
+        public int BattleSpeed { get; set; } = 0;
         public bool CacheMusic { get; set; } = true;
         public bool AutoDerune { get; set; } = true;
         public bool EnableCheats { get; set; } = false;
@@ -142,7 +140,16 @@ namespace AmbermoonAndroid
 
 #pragma warning disable CS0618
             if (configuration?.UseGraphicFilter == true && configuration.GraphicFilter == GraphicFilter.None)
-                configuration.GraphicFilter = GraphicFilter.Blur; // matches the old graphic filter
+                configuration.GraphicFilter = GraphicFilter.Blur; // matches the old filter
+
+            configuration.UseGraphicFilter = null;
+
+            if (configuration?.FastBattleMode == true && configuration.BattleSpeed == 0)
+                configuration.BattleSpeed = 100;
+            else if (configuration.BattleSpeed % 10 != 0)
+                configuration.BattleSpeed = Util.Limit(0, configuration.BattleSpeed + 10 - configuration.BattleSpeed % 10, 100);
+
+            configuration.FastBattleMode = null;
 #pragma warning restore CS0618
 
             return configuration;

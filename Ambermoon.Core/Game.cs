@@ -289,6 +289,7 @@ namespace Ambermoon
         readonly List<TimedGameEvent> timedEvents = new List<TimedGameEvent>();
         readonly Movement movement;
         internal uint CurrentTicks { get; private set; } = 0;
+        internal uint CurrentMapTicks { get; private set; } = 0;
         internal uint CurrentBattleTicks { get; private set; } = 0;
         internal uint CurrentPopupTicks { get; private set; } = 0;
         internal uint CurrentAnimationTicks { get; private set; } = 0;
@@ -851,15 +852,15 @@ namespace Ambermoon
 
                     CurrentTicks = UpdateTicks(CurrentTicks, deltaTime);
 
-                    var animationTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
+                    CurrentMapTicks = CurrentTicks >= lastMapTicksReset ? CurrentTicks - lastMapTicksReset : (uint)((long)CurrentTicks + uint.MaxValue - lastMapTicksReset);
 
                     if (is3D)
                     {
-                        renderMap3D.Update(animationTicks, GameTime);
+                        renderMap3D.Update(CurrentMapTicks, GameTime);
                     }
                     else // 2D
                     {
-                        renderMap2D.Update(animationTicks, GameTime, monstersCanMoveImmediately, lastPlayerPosition);
+                        renderMap2D.Update(CurrentMapTicks, GameTime, monstersCanMoveImmediately, lastPlayerPosition);
                     }
 
                     monstersCanMoveImmediately = false;
@@ -901,7 +902,7 @@ namespace Ambermoon
                 {
                     if (!layout.OptionMenuOpen)
                     {
-                        double timeFactor = Configuration.FastBattleMode && currentBattle.RoundActive ? 4.0f : 1.0f;
+                        double timeFactor = BattleTimeFactor;
                         CurrentBattleTicks = UpdateTicks(CurrentBattleTicks, deltaTime * timeFactor);
                         UpdateBattle(1.0 / timeFactor);
 
@@ -4572,12 +4573,15 @@ namespace Ambermoon
                 timedEvents.Add(timedGameEvent);
         }
 
+        float BattleTimeFactor => currentBattle != null && Configuration.BattleSpeed != 0 && currentWindow.Window == Window.Battle
+            ? 1.0f + Configuration.BattleSpeed / 33.0f : 1.0f;
+
         internal void AddTimedEvent(TimeSpan delay, Action action) => AddTimedEvent(delay, action, false);
 
         internal void AddTimedEvent(TimeSpan delay, Action action, bool ignoreFastBattleMode)
         {
-            if (!ignoreFastBattleMode && currentBattle != null && Configuration.FastBattleMode && currentWindow.Window == Window.Battle)
-                delay = TimeSpan.FromMilliseconds(Math.Max(1.0, delay.TotalMilliseconds / 4));
+            if (!ignoreFastBattleMode && currentBattle != null && Configuration.BattleSpeed != 0 && currentWindow.Window == Window.Battle)
+                delay = TimeSpan.FromMilliseconds(Math.Max(1.0, delay.TotalMilliseconds / BattleTimeFactor));
 
             timedEvents.Add(new TimedGameEvent
             {
@@ -9003,10 +9007,19 @@ namespace Ambermoon
             }
         }
 
-        internal void SetFastBattleMode(bool active)
+        /// <summary>
+        /// Sets the speed of battles.
+        /// 
+        /// A value of 0 is the normal speed and will need a click to acknowledge battle actions.
+        /// </summary>
+        /// <param name="speed">Value from 0 to 100 where 0 is the normal speed.</param>
+        internal void SetBattleSpeed(int speed)
         {
             if (currentBattle != null)
-                currentBattle.NeedsClickForNextAction = !active;
+            {
+                currentBattle.NeedsClickForNextAction = speed == 0;
+                currentBattle.Speed = speed;
+            }
         }
 
         void ShowBattleWindow(Event nextEvent, bool failedFlight, uint? combatBackgroundIndex = null)
@@ -9037,7 +9050,7 @@ namespace Ambermoon
                     }
                 }
                 currentBattle = new Battle(this, layout, Enumerable.Range(0, MaxPartyMembers).Select(i => GetPartyMember(i)).ToArray(),
-                    monsterGroup, monsterBattleAnimations, !Configuration.FastBattleMode);
+                    monsterGroup, monsterBattleAnimations, Configuration.BattleSpeed == 0);
                 foreach (var monsterBattleAnimation in monsterBattleAnimations)
                     currentBattle.SetMonsterDisplayLayer(monsterBattleAnimation.Value, currentBattle.GetCharacterAt(monsterBattleAnimation.Key) as Monster);
                 currentBattle.RoundFinished += () =>
