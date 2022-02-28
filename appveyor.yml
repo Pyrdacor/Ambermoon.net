@@ -1,10 +1,6 @@
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-      configuration: ReleaseWithAndroid
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
       configuration: Release
 
 platform: Any CPU
