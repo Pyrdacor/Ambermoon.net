@@ -1917,7 +1917,8 @@ namespace Ambermoon
         internal string GetCustomText(CustomTexts.Index index) => CustomTexts.GetText(GameLanguage, index);
 
         public void LoadGame(int slot, bool showError = false, bool loadInitialOnError = false,
-            Action<Action> preLoadAction = null, bool exitWhenFailing = true, Action postAction = null)
+            Action<Action> preLoadAction = null, bool exitWhenFailing = true, Action postAction = null,
+            bool updateSlot = false)
         {
             void Failed()
             {
@@ -1979,6 +1980,18 @@ namespace Ambermoon
                 }
                 Failed();
                 return;
+            }
+
+            if (updateSlot && slot > 0)
+            {
+                if (slot <= 10)
+                    SavegameManager.SetActiveSavegame(renderView.GameData, slot);
+
+                if (Configuration.AdditionalSavegameSlots != null)
+                {
+                    var additionalSavegameSlots = Configuration.GetOrCreateCurrentAdditionalSavegameSlots();
+                    additionalSavegameSlots.ContinueSavegameSlot = slot;
+                }
             }
 
             void Start() => this.Start(savegame, postAction);

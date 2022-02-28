@@ -12,5 +12,6 @@ namespace Ambermoon.Data
         void Save(IGameData gameData, ISavegameSerializer savegameSerializer, int saveSlot, string name, Savegame savegame);
         string[] GetSavegameNames(IGameData gameData, out int current, int totalSavegames);
         void WriteSavegameName(IGameData gameData, int slot, ref string name);
+        void SetActiveSavegame(IGameData gameData, int slot);
     }
 }

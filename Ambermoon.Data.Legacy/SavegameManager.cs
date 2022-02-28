@@ -237,6 +237,21 @@ namespace Ambermoon.Data.Legacy
             SaveToPath(path, savegameFiles, saveSlot, saveSlot > 10 ? null : gameData.Files["Saves"]);
         }
 
+        public void SetActiveSavegame(IGameData gameData, int slot)
+        {
+            if (slot < 1)
+                throw new AmbermoonException(ExceptionScope.Application, "Savegame slots must be 1-based.");
+
+            if (slot <= 10)
+            {
+                string name = GetSavegameNames(gameData, out _, 10)[slot - 1];
+                WriteSavegameName(gameData, slot, ref name);
+                var savesWriter = new DataWriter();
+                FileWriter.Write(savesWriter, gameData.Files["Saves"]);
+                File.WriteAllBytes(Path.Combine(path, "Saves"), savesWriter.ToArray());
+            }
+        }
+
         public void SaveCrashedGame(ISavegameSerializer savegameSerializer, Savegame savegame)
         {
             var savegameFiles = savegameSerializer.Write(savegame);

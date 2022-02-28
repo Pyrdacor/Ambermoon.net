@@ -1063,7 +1063,7 @@ namespace Ambermoon.UI
                     OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyLoad), () =>
                     {
                         ClosePopup();
-                        game.LoadGame(slot, true, loadInitialSavegameOnFailure, preLoadAction, false);
+                        game.LoadGame(slot, true, loadInitialSavegameOnFailure, preLoadAction, false, null, true);
                     }, Close, Close);
                 }
             }
