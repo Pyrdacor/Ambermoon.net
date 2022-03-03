@@ -318,7 +318,7 @@ namespace Ambermoon
         internal ISavegameManager SavegameManager { get; }
         readonly ISavegameSerializer savegameSerializer;
         Player player;
-        internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D: player2D;
+        internal IRenderPlayer RenderPlayer => is3D ? (IRenderPlayer)player3D : player2D;
         public PartyMember CurrentPartyMember { get; private set; } = null;
         bool pickingNewLeader = false;
         bool pickingTargetPlayer = false;
@@ -734,7 +734,7 @@ namespace Ambermoon
         bool gameWasPaused = false;
         bool gamePaused = false;
 
-        
+
         public void PauseGame()
         {
             gamePaused = true;
@@ -1293,7 +1293,7 @@ namespace Ambermoon
             if (CurrentMapCharacter != null)
             {
                 CurrentMapCharacter.ResetLastInteractionTime();
-                
+
                 if (!leaveMapCharacter)
                     CurrentMapCharacter = null;
             }
@@ -1922,7 +1922,7 @@ namespace Ambermoon
         internal string GetCustomText(CustomTexts.Index index) => CustomTexts.GetText(GameLanguage, index);
 
         public void LoadGame(int slot, bool showError = false, bool loadInitialOnError = false,
-            Action<Action> preLoadAction = null, bool exitWhenFailing = true, Action postAction = null,
+            Action<Action> preLoadAction = null, bool exitWhenFailing = true, Action<int> postAction = null,
             bool updateSlot = false)
         {
             void Failed()
@@ -1999,7 +1999,7 @@ namespace Ambermoon
                 }
             }
 
-            void Start() => this.Start(savegame, postAction);
+            void Start() => this.Start(savegame, () => postAction?.Invoke(slot));
 
             if (preLoadAction != null)
                 preLoadAction?.Invoke(Start);
@@ -2705,18 +2705,26 @@ namespace Ambermoon
                     saveGameId = 10;
                 if (modifiers.HasFlag(KeyModifiers.Shift))
                 {
-                    LoadGame(saveGameId, false, false, null, false,
-                        () => ShowBriefMessagePopup(
-                                string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.QuickLoaded), saveGameId),
-                                TimeSpan.FromMilliseconds(1500)));
+                    LoadGame(saveGameId, false, false, null, false, _ =>
+                    {
+                        if (Configuration.ShowSaveLoadMessage)
+                        {
+                            ShowBriefMessagePopup(
+                                string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.GameLoaded), saveGameId),
+                                TimeSpan.FromMilliseconds(1500));
+                        }
+                    });
                 }
                 else
                 {
                     string name = $"QuickSave{saveGameId}";
                     SaveGame(saveGameId, name);
-                    ShowBriefMessagePopup(
-                        string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.QuickSaved), name),
-                        TimeSpan.FromMilliseconds(1500));
+                    if (Configuration.ShowSaveLoadMessage)
+                    {
+                        ShowBriefMessagePopup(
+                            string.Format(CustomTexts.GetText(GameLanguage, CustomTexts.Index.GameSaved), name),
+                            TimeSpan.FromMilliseconds(1500));
+                    }
                 }
             }
             switch (key)
@@ -14272,18 +14280,22 @@ namespace Ambermoon
 
             Pause();
             InputEnable = false;
-            allInputDisabled = true;
             // Simple text popup
-            var popup = layout.OpenTextPopup(ProcessText(text), () =>
+            Popup popup;
+            popup = layout.OpenTextPopup(ProcessText(text), () =>
             {
-                allInputDisabled = false;
+                popup = null;
                 InputEnable = true;
                 Resume();
                 ResetCursor();
-            }, true, false, false, textAlign, displayLayerOffset, PrimaryUIPaletteIndex);
+            }, true, true, false, textAlign, displayLayerOffset, PrimaryUIPaletteIndex);
             CursorType = CursorType.Wait;
             TrapMouse(popup.ContentArea);
-            AddTimedEvent(displayTime, ClosePopup);
+            AddTimedEvent(displayTime, () =>
+            {
+                if (popup != null)
+                    ClosePopup();
+            });
         }
 
         internal void ShowMessagePopup(string text, Action closeAction = null,

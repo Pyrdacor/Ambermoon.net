@@ -35,8 +35,9 @@ namespace Ambermoon
             RuneTableUsage,
             LoadCrashedGame,
             FailedToRemoveCrashSavegame,
-            QuickSaved,
-            QuickLoaded
+            GameSaved,
+            GameLoaded,
+            InitialGameLoaded
         }
 
         static readonly Dictionary<GameLanguage, Dictionary<Index, string>> entries = new Dictionary<GameLanguage, Dictionary<Index, string>>
@@ -51,8 +52,9 @@ namespace Ambermoon
                     { Index.RuneTableUsage, "Solange Sie das Runenalphabet bei sich tragen, werden Runen nun automatisch als Text angezeigt." },
                     { Index.LoadCrashedGame, "Ein Backup-Spielstand eines kürzlichen Absturzes wurde gefunden. Wollen Sie diesen laden?" },
                     { Index.FailedToRemoveCrashSavegame, "Der Backup-Spielstand konnte nicht automatisch gelöscht werden. Bitte löschen Sie ihn manuell. Er wird im Unterordner 'Save.99' abgelegt." },
-                    { Index.QuickSaved, "Gespeichert als ~INK 22~'{0}'~INK 31~."},
-                    { Index.QuickLoaded, "~INK 22~Spielstand '{0}~INK 31~ wurde geladen."}
+                    { Index.GameSaved, "Gespeichert als ~INK 22~'{0}'~INK 31~."},
+                    { Index.GameLoaded, "~INK 22~Spielstand {0}~INK 31~ wurde geladen."},
+                    { Index.InitialGameLoaded, "~INK 22~Initialer Spielstand~INK 31~ wurde geladen."}
                 }
             },
             { GameLanguage.English, new Dictionary<Index, string>
@@ -65,8 +67,9 @@ namespace Ambermoon
                     { Index.RuneTableUsage, "As long as you have the rune table in your inventory, all runes will automatically be displayed as text now." },
                     { Index.LoadCrashedGame, "A crash backup savegame was detected. Do you want to load it?" },
                     { Index.FailedToRemoveCrashSavegame, "The crash backup savegame could not be deleted automatically. Please do so yourself. It is stored in sub-folder 'Save.99'." },
-                    { Index.QuickSaved, "Saved as ~INK 22~'{0}'~INK 31~."},
-                    { Index.QuickLoaded, "~INK 22~Quicksave {0}~INK 31~ was loaded."}
+                    { Index.GameSaved, "Saved as ~INK 22~'{0}'~INK 31~."},
+                    { Index.GameLoaded, "~INK 22~Savegame {0}~INK 31~ was loaded."},
+                    { Index.InitialGameLoaded, "~INK 22~Initial savegame~INK 31~ was loaded."}
                 }
             }
         };

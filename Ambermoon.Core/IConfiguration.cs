@@ -120,6 +120,7 @@ namespace Ambermoon
         [Obsolete("Use AdditionalSavegameSlots instead.")]
         int? ContinueSavegameSlot { get; set; }
         AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
+        bool ShowSaveLoadMessage { get; set; }
 
         void UpgradeAdditionalSavegameSlots();
         AdditionalSavegameSlots GetOrCreateCurrentAdditionalSavegameSlots();

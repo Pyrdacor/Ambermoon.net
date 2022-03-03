@@ -1063,7 +1063,16 @@ namespace Ambermoon.UI
                     OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyLoad), () =>
                     {
                         ClosePopup();
-                        game.LoadGame(slot, true, loadInitialSavegameOnFailure, preLoadAction, false, null, true);
+                        game.LoadGame(slot, true, loadInitialSavegameOnFailure, preLoadAction, false, s =>
+                        {
+                            if (game.Configuration.ShowSaveLoadMessage)
+                            {
+                                game.ShowBriefMessagePopup(
+                                    s == 0 ? CustomTexts.GetText(game.GameLanguage, CustomTexts.Index.InitialGameLoaded) :
+                                    string.Format(CustomTexts.GetText(game.GameLanguage, CustomTexts.Index.GameLoaded), s),
+                                    TimeSpan.FromMilliseconds(1500));
+                            }
+                        }, true);
                     }, Close, Close);
                 }
             }
@@ -1112,25 +1121,34 @@ namespace Ambermoon.UI
                 if (string.IsNullOrEmpty(savegameNames[slot - 1]))
                 {
                     ClosePopup();
-                    game.SaveGame(slot, name);
-                    if (additionalSavegameSlots != null)
-                        additionalSavegameSlots.ContinueSavegameSlot = slot;
+                    Save(slot, name);
                 }
                 else
                 {
                     OpenYesNoPopup(game.ProcessText(game.DataNameProvider.ReallyOverwriteSave), () =>
                     {
                         ClosePopup();
-                        game.SaveGame(slot, name);
-                        if (additionalSavegameSlots != null)
-                            additionalSavegameSlots.ContinueSavegameSlot = slot;
+                        Save(slot, name);
                     }, Close, Close);
+                }
+
+                void Save(int slot, string name)
+                {
+                    game.SaveGame(slot, name);
+                    if (additionalSavegameSlots != null)
+                        additionalSavegameSlots.ContinueSavegameSlot = slot;
+                    if (game.Configuration.ShowSaveLoadMessage)
+                    {
+                        game.ShowBriefMessagePopup(
+                            string.Format(CustomTexts.GetText(game.GameLanguage, CustomTexts.Index.GameSaved), name),
+                            TimeSpan.FromMilliseconds(1500));
+                    }
                 }
             }
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 18;
+        const int OptionCount = 19;
         const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1159,6 +1177,7 @@ namespace Ambermoon.UI
                     "Externe Musik",
                     "Pyrdacor Logo zeigen",
                     "Thalion Logo zeigen",
+                    "Info beim Speichern/Laden"
                     // TODO
                     //"Intro anzeigen",
                     //"Fantasy Intro anzeigen",
@@ -1189,6 +1208,7 @@ namespace Ambermoon.UI
                     "External music",
                     "Show Pyrdacor logo",
                     "Show Thalion logo",
+                    "Show save/load info"
                     // TODO
                     //"Show intro",
                     //"Show fantasy intro",
@@ -1265,7 +1285,8 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo()))
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
+                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleSaveLoadInfo()))
                 // TODO: later
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleIntro())),              
                 //KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFantasyIntro())),
@@ -1329,6 +1350,7 @@ namespace Ambermoon.UI
             void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
             void SetPyrdacorLogo() => SetOptionString(16, game.Configuration.ShowPyrdacorLogo ? on : off);
             void SetThalionLogo() => SetOptionString(17, game.Configuration.ShowThalionLogo ? on : off);
+            void SetSaveLoadInfo() => SetOptionString(18, game.Configuration.ShowSaveLoadMessage ? on : off);
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1360,6 +1382,7 @@ namespace Ambermoon.UI
                         SetExternalMusic();
                         SetPyrdacorLogo();
                         SetThalionLogo();
+                        SetSaveLoadInfo();
                         break;
                     // TODO
                     //SetIntro();
@@ -1518,6 +1541,12 @@ namespace Ambermoon.UI
                 SetEffects();
                 changedConfiguration = true;
                 game.NotifyConfigurationChange(false);
+            }
+            void ToggleSaveLoadInfo()
+            {
+                game.Configuration.ShowSaveLoadMessage = !game.Configuration.ShowSaveLoadMessage;
+                SetSaveLoadInfo();
+                changedConfiguration = true;
             }
 
             var contentArea = activePopup.ContentArea;
