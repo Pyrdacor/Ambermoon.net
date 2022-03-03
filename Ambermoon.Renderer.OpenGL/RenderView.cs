@@ -497,6 +497,8 @@ namespace Ambermoon.Renderer.OpenGL
                 State.Gl.Clear((uint)ClearBufferMask.ColorBufferBit | (uint)ClearBufferMask.DepthBufferBit);
 
                 bool set2DViewport = false;
+                viewOffset.X -= Util.Floor(0.49f * frameBufferSize.Width / Global.VirtualScreenWidth);
+                viewOffset.Y -= Util.Floor(0.49f * frameBufferSize.Height / Global.VirtualScreenHeight);
 
                 foreach (var layer in layers)
                 {
@@ -510,9 +512,7 @@ namespace Ambermoon.Renderer.OpenGL
                                 State.Gl.Viewport(0, 0, (uint)viewport.Width, (uint)viewport.Height);
                             else
                             {
-                                int xOffset = Util.Round(viewport.Width * 0.5f / 320.0f);
-                                int yOffset = Util.Round(viewport.Height * 0.5f / 200.0f);
-                                State.Gl.Viewport(viewport.X + viewOffset.X - xOffset, viewport.Y + viewOffset.Y + yOffset,
+                                State.Gl.Viewport(viewport.X + viewOffset.X, viewport.Y + viewOffset.Y,
                                     (uint)viewport.Width, (uint)viewport.Height);
                             }
                         }
@@ -534,8 +534,8 @@ namespace Ambermoon.Renderer.OpenGL
                             {
                                 State.Gl.Viewport
                                 (
-                                    viewport.X + viewOffset.X + mapViewArea.X,
-                                    viewport.Height - (viewport.Y + viewOffset.Y + mapViewArea.Y + mapViewArea.Height),
+                                    viewport.X + mapViewArea.X,
+                                    viewport.Height - (viewport.Y + mapViewArea.Y + mapViewArea.Height),
                                     (uint)mapViewArea.Width, (uint)mapViewArea.Height
                                 );
                             }

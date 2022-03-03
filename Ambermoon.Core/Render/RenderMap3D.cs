@@ -812,9 +812,9 @@ namespace Ambermoon.Render
 
         void SetupBackground()
         {
-            floorColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
+            floorColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth + 1, Global.Map3DViewHeight / 2,
                 game.GetPaletteColor((byte)Map.PaletteIndex, labdata.FloorColorIndex), 0);
-            ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, Global.Map3DViewHeight / 2,
+            ceilingColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth + 1, Global.Map3DViewHeight / 2 + 1,
                 game.GetPaletteColor((byte)Map.PaletteIndex, labdata.CeilingColorIndex), 0);
             baseFloorColor = new Color(floorColor.Color);
             baseCeilingColor = new Color(ceilingColor.Color);
@@ -822,18 +822,19 @@ namespace Ambermoon.Render
             floorColor.X = Global.Map3DViewX;
             floorColor.Y = Global.Map3DViewY + ceilingColor.Height;
             ceilingColor.X = Global.Map3DViewX;
-            ceilingColor.Y = Global.Map3DViewY;
+            ceilingColor.Y = Global.Map3DViewY - 1;
 
             floorColor.Layer = ceilingColor.Layer = renderView.GetLayer(Layer.Map3DBackground);
             floorColor.Visible = ceilingColor.Visible = true;
 
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
             {
+                var clipArea = Game.Map3DViewArea.CreateModified(0, 0, 1, 0);
                 horizonSprite = new SkySprite(ceilingColor.Height - 20, (x, y) =>
                 {
                     var sprite = renderView.SpriteFactory.Create(144, 20, true, 2) as ILayerSprite;
                     sprite.TextureAtlasOffset = HorizonTextureOffset;
-                    sprite.ClipArea = Game.Map3DViewArea;
+                    sprite.ClipArea = clipArea;
                     sprite.PaletteIndex = (byte)(Map.PaletteIndex - 1);
                     sprite.Layer = ceilingColor.Layer;
                     sprite.X = x;
@@ -1520,9 +1521,9 @@ namespace Ambermoon.Render
             {
                 skyColors = skyParts.Select(part =>
                 {
-                    var skyColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth, part.Height, new Color(part.Color), 1);
+                    var skyColor = renderView.ColoredRectFactory.Create(Global.Map3DViewWidth + 1, part.Height, new Color(part.Color), 1);
                     skyColor.X = Global.Map3DViewX;
-                    skyColor.Y = Global.Map3DViewY + part.Y;
+                    skyColor.Y = Global.Map3DViewY - 1 + part.Y;
                     skyColor.Layer = ceilingColor.Layer;
                     skyColor.Visible = true;
                     return skyColor;
