@@ -191,7 +191,8 @@ namespace Ambermoon.Render
             int targetColumn = (int)targetTile % 6;
             int targetRow = (int)targetTile / 6;
 
-            return Math.Max(Game.TicksPerSecond / 5, (uint)((Math.Abs(targetColumn - sourceColumn) + Math.Abs(targetRow - sourceRow) * 2) * Game.TicksPerSecond / 12));
+            return Util.Limit(Game.TicksPerSecond / 5, (uint)((Math.Abs(targetColumn - sourceColumn) + Math.Abs(targetRow - sourceRow) * 2) * Game.TicksPerSecond / 12),
+                15 * Game.TicksPerSecond / 12);
         }
 
         public static List<BattleEffectInfo> GetEffectInfo(IRenderView renderView, BattleEffect battleEffect, uint sourceTile, uint targetTile,

@@ -719,8 +719,9 @@ namespace Ambermoon.Render
                             float dyFactor = (float)upperWidth / lowerWidth;
                             int yDiff = startPosition.Y - sourceYOffset;
                             float startScale = game.RandomInt(50, 150) / 100.0f;
+                            uint timeAdd = last ? 2u : 0u; // last animation should end a bit later as it triggers the finish handler
                             var animation = AddAnimation(CombatGraphicIndex.GreenStar, frames, startPosition, new Position(targetX, targetYOffset + Util.Round(dyFactor * yDiff) - 8),
-                                Game.TicksPerSecond * 5 / 2, startScale, 0.0f, 255, last ? (Action)null : () => { });
+                                Game.TicksPerSecond * 5 / 2 + timeAdd, startScale, 0.0f, 255, last ? (Action)null : () => { });
                             animation.AnimationUpdated += Updated;
                             animation.AnimationFinished += Finished;
                             void Updated(float progress)
@@ -903,10 +904,7 @@ namespace Ambermoon.Render
                 {
                     // This only makes the screen red for a brief duration.
                     ShowOverlay(Color.FireOverlay);
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
-                    {
-                        this.finishAction?.Invoke();
-                    });
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), this.finishAction);
                     break;
                 }
                 case Spell.Firestorm:
@@ -970,7 +968,7 @@ namespace Ambermoon.Render
                             this.finishAction?.Invoke();
                         }, new Size(info.GraphicInfo.Width * 3 / 2, info.GraphicInfo.Height), BattleAnimation.AnimationScaleType.Both,
                         BattleAnimation.HorizontalAnchor.Center, BattleAnimation.VerticalAnchor.Bottom);
-                    // TODO: The flame turns black afterwards
+                    // TODO: The flame turns black afterwards in original (but it looks ok this way)
                     break;
                 }
                 case Spell.Waterfall:
@@ -981,10 +979,7 @@ namespace Ambermoon.Render
                 {
                     // This only makes the screen blue for a brief duration.
                     ShowOverlay(Color.IceOverlay);
-                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), () =>
-                    {
-                        this.finishAction?.Invoke();
-                    });
+                    game.AddTimedEvent(TimeSpan.FromMilliseconds(250), this.finishAction);
                     break;
                 }
                 case Spell.Icestorm:
@@ -1049,8 +1044,9 @@ namespace Ambermoon.Render
                         int yDiff = startPosition.Y - sourceYOffset;
                         float startScale = fromMonster ? 0.0f : 1.5f;
                         float endScale = fromMonster ? 1.5f : 0.0f;
+                        uint timeAdd = last ? 2u : 0u; // last animation should end a bit later as it triggers the finish handler
                         var animation = AddAnimation(CombatGraphicIndex.IceBall, 1, startPosition, new Position(targetX, targetYOffset + Util.Round(dyFactor * yDiff)),
-                            Game.TicksPerSecond * 2, startScale, endScale, 255, () => { if (last) { HideOverlay(); this.finishAction?.Invoke(); } });
+                            Game.TicksPerSecond * 2 + timeAdd, startScale, endScale, 255, () => { if (last) { HideOverlay(); this.finishAction?.Invoke(); } });
                         animation.AnimationUpdated += Updated;
                         animation.AnimationFinished += Finished;
                         void Updated(float progress)

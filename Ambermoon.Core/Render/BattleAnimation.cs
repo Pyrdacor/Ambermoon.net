@@ -180,7 +180,7 @@ namespace Ambermoon.Render
         {
             Finished = false;
             this.frameIndices = frameIndices;
-            this.ticksPerFrame = ticksPerFrame;
+            this.ticksPerFrame = Math.Max(1, ticksPerFrame);
             startScale = scale;
             this.endScale = endScale ?? startScale;
             startX = baseSpriteLocation.X;
