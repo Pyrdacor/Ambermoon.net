@@ -1121,15 +1121,18 @@ namespace Ambermoon
 
             var startRenderTime = DateTime.Now;
 
-            if (versionSelector != null)
-                versionSelector.Render();
-            if (mainMenu != null)
-                mainMenu.Render();
-            else if (Game != null)
-                renderView.Render(Game.ViewportOffset);
-            else if (renderView != null)
-                renderView.Render(null);
-            window.SwapBuffers();
+            if (window.WindowState != WindowState.Minimized)
+            {
+                if (versionSelector != null)
+                    versionSelector.Render();
+                if (mainMenu != null)
+                    mainMenu.Render();
+                else if (Game != null)
+                    renderView.Render(Game.ViewportOffset);
+                else if (renderView != null)
+                    renderView.Render(null);
+                window.SwapBuffers();
+            }
 
             lastRenderTime = DateTime.Now;
             lastRenderDuration = lastRenderTime - startRenderTime;
