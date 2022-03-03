@@ -65,7 +65,7 @@ namespace AmbermoonAndroid
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? ContinueSavegameSlot { get; set; } = null;
         public AdditionalSavegameSlots[] AdditionalSavegameSlots { get; set; }
-        public bool ShowSaveLoadMessage { get; set; } = true;
+        public bool ShowSaveLoadMessage { get; set; } = false;
 
 #pragma warning disable CS0618
         public void UpgradeAdditionalSavegameSlots()
