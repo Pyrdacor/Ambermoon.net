@@ -11,4 +11,4 @@
 *.sh text eol=lf
 
 # Use core.eol settings (most likely 'native')
-*.{txt,[tT][xX][tT]} text !eol
+*.{txt,[tT][xX][tT]} text eol=native
