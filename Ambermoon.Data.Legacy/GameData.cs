@@ -149,7 +149,8 @@ namespace Ambermoon.Data.Legacy
 
             if (diskFile != null)
             {
-                var adf = ADFReader.ReadADF(File.OpenRead(diskFile));
+                using var stream = File.OpenRead(diskFile);
+                var adf = ADFReader.ReadADF(stream);
 
                 foreach (var assembly in possibleAssemblies)
                 {
@@ -220,7 +221,11 @@ namespace Ambermoon.Data.Legacy
 
             var fileReader = new FileReader();
             string GetPath(string name) => Path.Combine(folderPath, name.Replace('/', Path.DirectorySeparatorChar));
-            Func<string, IFileContainer> fileLoader = name => fileReader.ReadFile(name, File.OpenRead(GetPath(name)));
+            Func<string, IFileContainer> fileLoader = name =>
+            {
+                using var stream = File.OpenRead(GetPath(name));
+                return fileReader.ReadFile(name, stream);
+            };
             Func<char, Dictionary<string, byte[]>> diskLoader = disk =>
             {
                 string diskFile = FindDiskFile(folderPath, disk);
@@ -228,7 +233,9 @@ namespace Ambermoon.Data.Legacy
                 if (diskFile == null)
                     return null;
 
-                return ADFReader.ReadADF(File.OpenRead(diskFile));
+                using var stream = File.OpenRead(diskFile);
+
+                return ADFReader.ReadADF(stream);
             };
             Func<string, bool> fileExistChecker = name => File.Exists(GetPath(name));
             Load(fileLoader, diskLoader, fileExistChecker, savesOnly);

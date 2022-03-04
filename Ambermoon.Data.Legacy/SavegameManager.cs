@@ -248,7 +248,7 @@ namespace Ambermoon.Data.Legacy
                 WriteSavegameName(gameData, slot, ref name);
                 var savesWriter = new DataWriter();
                 FileWriter.Write(savesWriter, gameData.Files["Saves"]);
-                File.WriteAllBytes(Path.Combine(path, "Saves"), savesWriter.ToArray());
+                File.WriteAllBytes(savesPath, savesWriter.ToArray());
             }
         }
 
@@ -346,7 +346,7 @@ namespace Ambermoon.Data.Legacy
             {
                 var savesWriter = new DataWriter();
                 FileWriter.Write(savesWriter, savesContainer);
-                File.WriteAllBytes(Path.Combine(path, "Saves"), savesWriter.ToArray());
+                File.WriteAllBytes(savesPath, savesWriter.ToArray());
             }
         }
     }
