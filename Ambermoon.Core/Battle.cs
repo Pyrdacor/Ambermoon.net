@@ -2281,8 +2281,10 @@ namespace Ambermoon
                 game.DataNameProvider.DataHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
             position.Y += Global.GlyphLineHeight + 1;
             popup.AddText(position,
-                string.Format(game.DataNameProvider.CharacterInfoHitPointsString, monster.HitPoints.CurrentValue, monster.HitPoints.TotalMaxValue) + " " +
-                string.Format(game.DataNameProvider.CharacterInfoSpellPointsString, monster.SpellPoints.CurrentValue, monster.SpellPoints.TotalMaxValue),
+                string.Format(game.DataNameProvider.CharacterInfoHitPointsString, monster.HitPoints.CurrentValue > 999 ? "***" : monster.HitPoints.CurrentValue.ToString(),
+                monster.HitPoints.TotalMaxValue > 999 ? "***" : monster.HitPoints.TotalMaxValue.ToString()) + " " +
+                string.Format(game.DataNameProvider.CharacterInfoSpellPointsString, monster.SpellPoints.CurrentValue > 999 ? "***" : monster.SpellPoints.CurrentValue.ToString(),
+                monster.SpellPoints.TotalMaxValue > 999 ? "***" : monster.SpellPoints.TotalMaxValue.ToString()),
                 TextColor.BrightGray);
             position.Y += Global.GlyphLineHeight;
             popup.AddText(position,
