@@ -9,11 +9,7 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Legacy Amiga Game Data</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-<<<<<<< HEAD
-    <Version>10.5.0</Version>
-=======
-    <Version>10.4.2</Version>
->>>>>>> Made PartyMember and NPC ctor public
+    <Version>10.5.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release;DebugAndroid</Configurations>
   </PropertyGroup>
@@ -27,11 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-<<<<<<< HEAD
     <PackageReference Include="Ambermoon.Data.Common" Version="10.5.0" />
-=======
-    <PackageReference Include="Ambermoon.Data.Common" Version="10.4.1" />
->>>>>>> Made PartyMember and NPC ctor public
     <PackageReference Include="SonicArranger" Version="1.0.7" />
   </ItemGroup>
 
