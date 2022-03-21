@@ -9,7 +9,7 @@ namespace Ambermoon.Data
         public List<Event> Events { get; } = new List<Event>();
         public List<Event> EventList { get; } = new List<Event>();
 
-        private NPC()
+        public NPC()
             : base(CharacterType.NPC)
         {
 

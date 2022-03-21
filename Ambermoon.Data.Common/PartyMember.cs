@@ -48,7 +48,7 @@ namespace Ambermoon.Data
             return true;
         }
 
-        private PartyMember()
+        public PartyMember()
             : base(CharacterType.PartyMember)
         {
 
