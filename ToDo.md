@@ -1,5 +1,8 @@
 ## Battle
 
+- The default monster sprite should not be set to frame 0 but to the first movement animation index instead
+- Use animation alternate bits for monsters
+- More flames when being hit by fire spells
 - Vanishing of wind spells looks odd in some cases
 - Initial scale of dissolve victim has bad anchor behavior if in front row.
 - While a monster is hurt and moved (wind spells) it shortly changes the frame index back to normal which looks strange

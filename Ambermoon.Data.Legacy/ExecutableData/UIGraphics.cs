@@ -94,10 +94,16 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
             graphicInfo.PaletteOffset = 24;
             entries.Add(UIGraphic.Ouch, ReadGraphic(dataReader));
-
             graphicInfo.Width = 16;
-            graphicInfo.Height = 60;
-            entries.Add(UIGraphic.StarBlinkAnimation, ReadGraphic(dataReader));
+            graphicInfo.Height = 9;
+            graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
+            graphicInfo.PaletteOffset = 0;
+            var frames = new Graphic(64, 9, 0);
+            for (uint i = 0; i < 4; ++i)
+                frames.AddOverlay(i * 16u, 0u, ReadGraphic(dataReader), false);
+            entries.Add(UIGraphic.StarBlinkAnimation, frames);
+            graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
+            graphicInfo.PaletteOffset = 24;
             graphicInfo.Height = 40;
             entries.Add(UIGraphic.PlusBlinkAnimation, ReadGraphic(dataReader));
             graphicInfo.Height = 36;
@@ -166,14 +172,32 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.GraphicFormat = GraphicFormat.Palette5Bit;
             graphicInfo.PaletteOffset = 0;
             entries.Add(UIGraphic.Talisman, ReadGraphic(dataReader));
-            graphicInfo.Width = 16;
-            graphicInfo.Height = 47;
-            graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
-            graphicInfo.PaletteOffset = 24;
-            entries.Add(UIGraphic.UnknownChain, ReadGraphic(dataReader));
-            graphicInfo.Width = 8;
-            graphicInfo.Height = 84;
-            entries.Add(UIGraphic.BorderWithTriangles, ReadGraphic(dataReader));
+            var unused = new Graphic(16, 13, 0);
+            for (int y = 0; y < 13; ++y)
+            {
+                var bits = dataReader.ReadWord();
+
+                for (int x = 0; x < 16; ++x)
+                {
+                    if ((bits & 0x8000) != 0)
+                        unused.Data[y * 16 + x] = 28;
+                    bits <<= 1;
+                }
+            }
+            entries.Add(UIGraphic.Unused, unused);
+            var brokenOverlay = new Graphic(16, 16, 0);
+            for (int y = 0; y < 16; ++y)
+            {
+                var bits = dataReader.ReadWord();
+
+                for (int x = 0; x < 16; ++x)
+                {
+                    if ((bits & 0x8000) != 0)
+                        brokenOverlay.Data[y * 16 + x] = 26;
+                    bits <<= 1;
+                }
+            }
+            entries.Add(UIGraphic.BrokenItemOverlay, brokenOverlay); // TODO: use it
         }
     }
 }

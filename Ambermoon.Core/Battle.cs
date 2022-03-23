@@ -1598,7 +1598,7 @@ namespace Ambermoon
                                 {
                                     // We have to wait until the monster hurt animation finishes.
                                     // Otherwise the animation reset might not happen.
-                                    if (currentBattleAnimation == null)
+                                    if (currentBattleAnimation == null && currentlyAnimatedMonster == null)
                                         finishAction?.Invoke();
                                     else
                                         game.AddTimedEvent(TimeSpan.FromMilliseconds(25), EffectApplied);

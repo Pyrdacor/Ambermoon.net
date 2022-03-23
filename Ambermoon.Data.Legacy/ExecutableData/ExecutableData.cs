@@ -144,6 +144,9 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             dataHunkIndex = 0;
 
             UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
+            // Here follows the note period table for Sonic Arranger (110 words)
+            // Then the vibrato table (258 bytes)
+            // Then track data and many more SA tables
 
             dataHunkIndex = 1;
             var reader = dataHunkReaders[1];

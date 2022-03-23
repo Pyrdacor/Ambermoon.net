@@ -59,15 +59,15 @@
         Dawn,
         ButtonFrame,
         ButtonFramePressed,
-        ButtonDisabledOverlay, // 30x4
+        ButtonDisabledOverlay, // 32x11 (1-bit)
         Compass,
         Attack, // 16x9
         Defense, // 16x9
         Skull,
         EmptyCharacterSlot,
         ItemConsume, // 11 frames with 16x16 pixels
-        Talisman, // golden symbol / talisman
-        UnknownChain, // unsure what this is
-        BorderWithTriangles // two 8x42 border-like images with triangles in it
+        Talisman, // healer's golden symbol / talisman
+        Unused, // seems to be unused in original code, 26 bytes
+        BrokenItemOverlay // 16x16 (1-bit) is colored with color index 26
     }
 }
