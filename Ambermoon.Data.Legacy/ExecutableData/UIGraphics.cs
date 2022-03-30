@@ -42,9 +42,6 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 return graphic;
             }
 
-            // Note: First 160 bytes seem to be some offsets etc.
-            dataReader.Position = 160;
-
             // Now 32 bytes follow where each of the 256 bits indicates (1) black or (0) transparent.
             var graphicData = new byte[256];
             for (int y = 0; y < 16; ++y)
@@ -89,7 +86,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             graphicInfo.PaletteOffset = 0;
             entries.Add(UIGraphic.Eagle, ReadGraphic(dataReader));
             graphicInfo.Height = 26;
-            entries.Add(UIGraphic.Explosion, ReadGraphic(dataReader));
+            entries.Add(UIGraphic.DamageSplash, ReadGraphic(dataReader));
             graphicInfo.Height = 23;
             graphicInfo.GraphicFormat = GraphicFormat.Palette3Bit;
             graphicInfo.PaletteOffset = 24;

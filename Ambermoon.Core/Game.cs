@@ -598,7 +598,7 @@ namespace Ambermoon
                 hurtPlayerSprites[i] = renderView.SpriteFactory.Create(32, 26, true, 200) as ILayerSprite;
                 hurtPlayerSprites[i].Layer = renderView.GetLayer(Layer.UI);
                 hurtPlayerSprites[i].PaletteIndex = PrimaryUIPaletteIndex;
-                hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.Explosion));
+                hurtPlayerSprites[i].TextureAtlasOffset = TextureAtlasManager.Instance.GetOrCreate(Layer.UI).GetOffset(Graphics.GetUIGraphicIndex(UIGraphic.DamageSplash));
                 hurtPlayerSprites[i].Visible = false;
                 hurtPlayerDamageTexts[i] = renderView.RenderTextFactory.Create();
                 hurtPlayerDamageTexts[i].Layer = renderView.GetLayer(Layer.Text);
@@ -4325,9 +4325,9 @@ namespace Ambermoon
                 ShowSecondaryStatTooltip(new Rect(214, 113, 42, 7), BuiltinTooltips.SecondaryStat.Gold, character);
                 ShowSecondaryStatTooltip(new Rect(262, 113, 36, 7), BuiltinTooltips.SecondaryStat.Food, character);
                 layout.AddSprite(new Rect(214, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Attack), UIPaletteIndex);
+                int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
                 {
-                    int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                     if (attack > 0)
                         attack = (attack * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
                     string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack));
@@ -4336,14 +4336,14 @@ namespace Ambermoon
                 }
                 else
                 {
-                    string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack));
+                    string attackString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack));
                     characterInfoTexts.Add(CharacterInfo.Attack, layout.AddText(new Rect(220, 122, 30, 7), attackString, TextColor.White, TextAlign.Left));
                 }
                 ShowSecondaryStatTooltip(new Rect(214, 120, 36, 9), BuiltinTooltips.SecondaryStat.Damage, character);
                 layout.AddSprite(new Rect(261, 120, 16, 9), Graphics.GetUIGraphicIndex(UIGraphic.Defense), UIPaletteIndex);
+                int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                 if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
                 {
-                    int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                     if (defense > 0)
                         defense = (defense * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
                     string defenseString = string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense));
@@ -4352,7 +4352,7 @@ namespace Ambermoon
                 }
                 else
                 {
-                    string defenseString = string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense));
+                    string defenseString = string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense));
                     characterInfoTexts.Add(CharacterInfo.Defense, layout.AddText(new Rect(268, 122, 30, 7), defenseString, TextColor.White, TextAlign.Left));
                 }
                 ShowSecondaryStatTooltip(new Rect(261, 120, 37, 9), BuiltinTooltips.SecondaryStat.Defense, character);
@@ -4423,9 +4423,9 @@ namespace Ambermoon
                 string.Format(DataNameProvider.CharacterInfoTrainingPointsString, character.TrainingPoints));
             UpdateText(CharacterInfo.GoldAndFood, () =>
                 string.Format(DataNameProvider.CharacterInfoGoldAndFoodString, character.Gold, character.Food));
+            int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Attack))
             {
-                int attack = character.BaseAttack + (int)character.Attributes[Attribute.Strength].TotalCurrentValue / 25;
                 if (attack > 0)
                     attack = (attack * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Attack))) / 100;
                 UpdateText(CharacterInfo.Attack, () =>
@@ -4434,11 +4434,11 @@ namespace Ambermoon
             else
             {
                 UpdateText(CharacterInfo.Attack, () =>
-                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', character.BaseAttack < 0 ? '-' : '+'), Math.Abs(character.BaseAttack)));
+                    string.Format(DataNameProvider.CharacterInfoDamageString.Replace(' ', attack < 0 ? '-' : '+'), Math.Abs(attack)));
             }
+            int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
             if (CurrentSavegame.IsSpellActive(ActiveSpellType.Protection))
             {
-                int defense = character.BaseDefense + (int)character.Attributes[Attribute.Stamina].TotalCurrentValue / 25;
                 if (defense > 0)
                     defense = (defense * (100 + (int)CurrentSavegame.GetActiveSpellLevel(ActiveSpellType.Protection))) / 100;
                 UpdateText(CharacterInfo.Defense, () =>
@@ -4447,7 +4447,7 @@ namespace Ambermoon
             else
             {
                 UpdateText(CharacterInfo.Defense, () =>
-                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', character.BaseDefense < 0 ? '-' : '+'), Math.Abs(character.BaseDefense)));
+                    string.Format(DataNameProvider.CharacterInfoDefenseString.Replace(' ', defense < 0 ? '-' : '+'), Math.Abs(defense)));
             }
             UpdateText(CharacterInfo.Weight, () => string.Format(DataNameProvider.CharacterInfoWeightString,
                 character.TotalWeight / 1000, (character as PartyMember).MaxWeight / 1000), true);

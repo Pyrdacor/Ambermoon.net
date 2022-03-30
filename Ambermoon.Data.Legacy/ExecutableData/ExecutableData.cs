@@ -143,6 +143,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             dataHunkIndex = 0;
 
+            // Note: First 160 bytes are copper commands which can be dynamically filled
+            // to move data to some Amiga registers. The area is permanently used by the
+            // copper.
+            dataHunkReaders[dataHunkIndex].Position = 160;
+
             UIGraphics = Read<UIGraphics>(dataHunkReaders, ref dataHunkIndex);
             // Here follows the note period table for Sonic Arranger (110 words)
             // Then the vibrato table (258 bytes)

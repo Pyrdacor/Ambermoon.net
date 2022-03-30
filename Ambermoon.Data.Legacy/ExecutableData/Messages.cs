@@ -71,7 +71,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             CastsSpellFrom,
             IsNotTheRightAnswer,
             That,
-            NothingToRespond,
+            NothingToRespond, // In original code this is the first message so subtract 38 and you have the message id there
             EnterBattlePositions = 56,
             WhichScrollToRead,
             ThatsNotASpellScroll,
