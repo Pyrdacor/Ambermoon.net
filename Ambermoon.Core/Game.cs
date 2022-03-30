@@ -14278,6 +14278,8 @@ namespace Ambermoon
             if (layout.PopupActive)
                 return;
 
+            bool paused = this.paused;
+            bool inputEnabled = InputEnable;
             Pause();
             InputEnable = false;
             // Simple text popup
@@ -14285,8 +14287,10 @@ namespace Ambermoon
             popup = layout.OpenTextPopup(ProcessText(text), () =>
             {
                 popup = null;
-                InputEnable = true;
-                Resume();
+                if (inputEnabled)
+                    InputEnable = true;
+                if (!paused)
+                    Resume();
                 ResetCursor();
             }, true, true, false, textAlign, displayLayerOffset, PrimaryUIPaletteIndex);
             CursorType = CursorType.Wait;
