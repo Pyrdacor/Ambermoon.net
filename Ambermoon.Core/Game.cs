@@ -3897,7 +3897,7 @@ namespace Ambermoon
                     }
                 }
                 var rightHandSlot = partyMember.Equipment.Slots[EquipmentSlot.RightHand];
-                if (rightHandSlot != null && !rightHandSlot.Empty)
+                if (rightHandSlot != null && rightHandSlot.ItemIndex != 0)
                 {
                     var rightHandItem = ItemManager.GetItem(rightHandSlot.ItemIndex);
 
