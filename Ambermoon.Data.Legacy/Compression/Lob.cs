@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Serialization;
 using System;
 using System.Collections.Generic;
 
@@ -120,7 +121,7 @@ namespace Ambermoon.Data.Legacy.Compression
             return compressedData.ToArray();
         }
 
-        public static DataReader Decompress(DataReader reader, uint decodedSize)
+        public static DataReader Decompress(IDataReader reader, uint decodedSize)
         {
             var decodedData = new byte[decodedSize];
             uint decodeIndex = 0;

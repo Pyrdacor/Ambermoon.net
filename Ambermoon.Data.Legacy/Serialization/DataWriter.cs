@@ -41,8 +41,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         }
 
-        public DataWriter(DataWriter writer, int offset, int size)
-            : this(writer.data.ToArray(), offset, size)
+        public DataWriter(IDataWriter writer, int offset, int size)
+            : this(writer.ToArray(), offset, size)
         {
 
         }
@@ -231,6 +231,8 @@ namespace Ambermoon.Data.Legacy.Serialization
         }
 
         public byte[] ToArray() => data.ToArray();
+
+        public byte this[int index] => data[index];
 
         public void WriteEnumAsByte<T>(T value) where T : struct, System.Enum, IConvertible => Write(value.ToByte(null));
 

@@ -53,7 +53,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         public IFileContainer ReadFile(string name, byte[] rawData)
         {
-            var reader = new DataReader(rawData);
+            return ReadFile(name, new DataReader(rawData));
+        }
+
+        public IFileContainer ReadFile(string name, IDataReader reader)
+        {
             var header = reader.ReadDword();
             var fileType = ((header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)header;
             var fileInfo = new FileInfo { FileType = fileType };
@@ -75,7 +79,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     break;
                 default: // raw format
                     var fileContainer = new FileContainer { Name = name };
-                    fileContainer.Files.Add(1, new DataReader(rawData));
+                    fileContainer.Files.Add(1, new DataReader(reader.ToArray()));
                     return fileContainer;
             }
 
@@ -84,7 +88,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             return ProcessFileInfo(name, fileInfo, reader);
         }
 
-        private IFileContainer ProcessFileInfo(string name, FileInfo fileInfo, DataReader reader)
+        private IFileContainer ProcessFileInfo(string name, FileInfo fileInfo, IDataReader reader)
         {
             var fileContainer = new FileContainer { Name = name, FileType = fileInfo.FileType };
 
@@ -122,7 +126,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             return fileContainer;
         }
 
-        private DataReader DecodeFile(DataReader reader, FileType containerType, int fileNumber)
+        private IDataReader DecodeFile(IDataReader reader, FileType containerType, int fileNumber)
         {
             var header = reader.Size < 4 ? 0 : reader.PeekDword();
             var fileType = ((header & 0xffff0000) == (uint)FileType.JH) ? FileType.JH : (FileType)header;

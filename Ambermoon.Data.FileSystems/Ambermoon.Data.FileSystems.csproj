@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>disable</Nullable>
+	<Authors>Robert Schneckenhaus</Authors>
+	<Description>Library that provides file system abstraction for Ambermoon.</Description>
+	<RepositoryUrl>https://github.com/Pyrdacor/Ambermoon.net</RepositoryUrl>
+	<PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
+	<RepositoryType>Github</RepositoryType>
+	<PackageTags>Ambermoon</PackageTags>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<Version>10.5.0</Version>
+	<UserSecretsId>485e4790-32fd-45f1-b729-c5ca93ba0fad</UserSecretsId>
+	<Configurations>Debug;Release;DebugAndroid</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ambermoon.Data.Common\Ambermoon.Data.Common.csproj" />
+    <ProjectReference Include="..\Ambermoon.Data.Legacy\Ambermoon.Data.Legacy.csproj" />
+  </ItemGroup>
+
+</Project>

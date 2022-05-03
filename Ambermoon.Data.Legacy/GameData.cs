@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Enumerations;
 using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
+using Ambermoon.Data.Serialization.FileSystem;
 using Ambermoon.Render;
 using System;
 using System.Collections.Generic;
@@ -73,6 +74,28 @@ namespace Ambermoon.Data.Legacy
         }
 
         static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.");
+
+        public void LoadFromFileSystem(IReadOnlyFileSystem fileSystem)
+        {
+            GameDataSource = fileSystem.MemoryFileSystem ? GameDataSource.Memory : GameDataSource.LegacyFiles;
+            var fileReader = new FileReader();
+
+            IFileContainer LoadFile(string name)
+            {
+                var file = fileSystem.GetFile(name);
+
+                if (file == null || file.Stream == null)
+                    return null;
+
+                using var reader = file.Stream.GetReader();
+                return fileReader.ReadFile(name, reader);
+            }
+            bool CheckFileExists(string name)
+            {
+                return fileSystem.GetFile(name) != null;
+            }
+            Load(LoadFile, null, CheckFileExists);
+        }
 
         public void LoadFromMemoryZip(Stream stream, Func<IGameData> fallbackGameDataProvider = null)
         {

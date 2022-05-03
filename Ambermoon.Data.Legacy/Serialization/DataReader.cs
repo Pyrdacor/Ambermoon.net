@@ -51,10 +51,33 @@ namespace Ambermoon.Data.Legacy.Serialization
 
         }
 
-        public DataReader(DataReader reader, int offset, int size)
-            : this(reader.data, offset, size)
+        public DataReader(IDataReader reader, int offset, int size)
+            : this(reader.ToArray(), offset, size)
         {
 
+        }
+
+        public DataReader(System.IO.Stream stream)
+        {
+            long pos = stream.CanSeek ? stream.Position : -1;
+            data = new byte[stream.Length];
+            stream.Read(data, 0, data.Length);
+            if (pos != -1)
+                stream.Position = pos;
+        }
+
+        public DataReader(System.IO.Stream stream, int offset, int size)
+        {
+            if (!stream.CanSeek && offset != stream.Position)
+                throw new NotSupportedException("Stream does not support seeking.");
+
+            long pos = stream.CanSeek ? stream.Position : -1;
+            if (offset != stream.Position)
+                stream.Position = offset;
+            data = new byte[size];
+            stream.Read(data, 0, size);
+            if (pos != -1)
+                stream.Position = pos;
         }
 
         public bool ReadBool()

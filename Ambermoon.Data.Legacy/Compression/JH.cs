@@ -1,4 +1,5 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
+using Ambermoon.Data.Serialization;
 
 namespace Ambermoon.Data.Legacy.Compression
 {
@@ -30,7 +31,7 @@ namespace Ambermoon.Data.Legacy.Compression
             return data;
         }
 
-        public static byte[] Crypt(DataReader reader, ushort key, int offset = 0)
+        public static byte[] Crypt(IDataReader reader, ushort key, int offset = 0)
         {
             byte[] data = new byte[reader.Size - reader.Position];
             int numWords = (data.Length - offset + 1) >> 1;
