@@ -2,6 +2,6 @@
 {
     public interface ITextContainerWriter
     {
-        void WriteTextContainer(TextContainer textContainer, IDataWriter dataWriter);
+        void WriteTextContainer(TextContainer textContainer, IDataWriter dataWriter, bool withProcessedUIPlaceholders);
     }
 }

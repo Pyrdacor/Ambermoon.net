@@ -7,9 +7,11 @@ namespace Ambermoon.Data
 {
     public enum GameDataSource
     {
+        Unknown,
         Memory,
         ADF,
-        LegacyFiles
+        LegacyFiles,
+        ADFAndLegacyFiles
     }
 
     public interface IGameData

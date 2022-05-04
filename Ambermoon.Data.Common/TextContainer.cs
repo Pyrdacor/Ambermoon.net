@@ -22,5 +22,8 @@ namespace Ambermoon.Data
         public List<string> ItemTypeNames { get; } = new List<string>();
         public List<string> ConditionNames { get; } = new List<string>();
         public List<string> UITexts { get; } = new List<string>();
+        public List<int> UITextWithPlaceholderIndices { get; } = new List<int>();
+        public string VersionString { get; set; }
+        public string DateAndLanguageString { get; set; }
     }
 }

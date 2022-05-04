@@ -7,9 +7,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 {
     public class TextContainerWriter : ITextContainerWriter
     {
-        public void WriteTextContainer(TextContainer textContainer, IDataWriter dataWriter)
+        public void WriteTextContainer(TextContainer textContainer, IDataWriter dataWriter, bool withProcessedUIPlaceholders)
         {
-            int numFormatMessageOffsets = textContainer.WorldNames.Count + textContainer.FormatMessages.Count;
             int formatMessageDataSize = textContainer.WorldNames.Sum(n => n.Length + 1);
             var formatMessages = new List<string>(textContainer.FormatMessages);
             int i;
@@ -24,16 +23,17 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return text = text[..^length];
             }
 
-            formatMessages[7] = CheckAndReplaceMouseClickMessage(formatMessages[7]);
-            formatMessages[8] = CheckAndReplaceMouseClickMessage(formatMessages[8]);
+            formatMessages[4] = CheckAndReplaceMouseClickMessage(formatMessages[4]);
+            formatMessages[5] = CheckAndReplaceMouseClickMessage(formatMessages[5]);
 
             for (i = 0; i < TextContainerReader.FormatStringMergeInfos.Length; ++i)
             {
                 var mergeInfo = TextContainerReader.FormatStringMergeInfos[i];
                 var text = formatMessages[mergeInfo.FormatMessageIndex];
-                var parts = text.Split('{', '}'); // there is a '0' where a placeholder would be
+                var parts = text.Split(new char[] { '{', '}' }, System.StringSplitOptions.RemoveEmptyEntries); // there is a '0' where a placeholder would be
                 bool placeholder = mergeInfo.FirstFormatMessageTextPartIndex != 0;
                 bool first = true;
+                int index = mergeInfo.FormatMessageIndex;
 
                 for (int p = 0; p < mergeInfo.NumTotalParts; ++p)
                 {
@@ -41,12 +41,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                     {
                         if (first)
                         {
-                            formatMessages[mergeInfo.FormatMessageIndex] = parts[p];
+                            formatMessages[index++] = parts[p];
                             first = false;
                         }
                         else
                         {
-                            formatMessages.Add(parts[p]);
+                            formatMessages.Insert(index++, parts[p]);
                         }
                     }
 
@@ -54,6 +54,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
             }
 
+            int numFormatMessageOffsets = textContainer.WorldNames.Count + formatMessages.Count;
             formatMessageDataSize += formatMessages.Sum(m => m.Length + 1); // +1 for terminating 0, or 0xff for multi-line strings
             int formatMessageDataSizeInLongs = formatMessageDataSize + 3;
             formatMessageDataSizeInLongs >>= 2;
@@ -82,18 +83,27 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             foreach (var formatMessage in formatMessages)
             {
-                dataWriter.WriteNullTerminated(formatMessage);
-
                 if (i == 7 || i == 8)
+                {
+                    dataWriter.WriteNullTerminated(formatMessage.Replace('\n', '\0').TrimEnd('\0'));
                     dataWriter.Write((byte)0xff);
+                }
+                else
+                {
+                    dataWriter.WriteNullTerminated(formatMessage);
+                }
+
+                ++i;
             }
 
             while (formatMessageDataSize++ % 4 != 0)
                 dataWriter.Write((byte)0);
 
-            var placeholderRegex = new Regex(@"\{[0-9]+:([0-9]+)\}", RegexOptions.Compiled);
+            var placeholderRegex = withProcessedUIPlaceholders
+                ? new Regex(@"\{[0-9]+:([0-9]+)\}", RegexOptions.Compiled)
+                : new Regex(@"0(1(2(3(4(5(6(7(89?)?)?)?)?)?)?)?)?", RegexOptions.Compiled);
 
-            void WriteTextSection(List<string> texts, bool allowPlaceholders)
+            void WriteTextSection(List<string> texts, List<int> placeholderTextIndices)
             {
                 static string CreatePlaceholder(int length)
                 {
@@ -108,33 +118,56 @@ namespace Ambermoon.Data.Legacy.Serialization
                     return placeholder;
                 }
 
-                dataWriter.Write((ushort)texts.Count);
+                int countPosition = dataWriter.Position;
+                dataWriter.Write((ushort)0); // reserve space for text count
 
                 List<string> processedTexts = new List<string>(texts.Count);
+                int textIndex = 0;
+                int entryCount = texts.Count;
 
                 foreach (var text in texts)
                 {
                     string processedText = text;
 
-                    if (allowPlaceholders)
+                    if (placeholderTextIndices != null && placeholderTextIndices.Contains(textIndex))
                     {
-                        while (true)
+                        if (!withProcessedUIPlaceholders)
                         {
-                            var match = placeholderRegex.Match(processedText);
+                            var matches = placeholderRegex.Matches(processedText);
 
-                            if (!match.Success)
-                                break;
+                            // There is only 1 case with two placeholders and
+                            // it stores the second placeholder first.
+                            for (int i = matches.Count - 1; i >= 0; --i)
+                            {
+                                dataWriter.Write((byte)0xff);
+                                dataWriter.Write((byte)matches[i].Index);
+                                ++entryCount;
+                            }
+                        }
+                        else
+                        {
+                            while (true)
+                            {
+                                var match = placeholderRegex.Match(processedText);
 
-                            processedText = processedText.Remove(match.Index, match.Length);
-                            processedText = processedText.Insert(match.Index, CreatePlaceholder(match.Groups[1].Length));
-                            dataWriter.Write((byte)0xff);
-                            dataWriter.Write((byte)match.Index);
+                                if (!match.Success)
+                                    break;
+
+                                processedText = processedText.Remove(match.Index, match.Length);
+                                processedText = processedText.Insert(match.Index, CreatePlaceholder(match.Groups[1].Length));
+                                dataWriter.Write((byte)0xff);
+                                dataWriter.Write((byte)match.Index);
+                                ++entryCount;
+                            }
                         }
                     }
 
                     processedTexts.Add(processedText);
                     dataWriter.Write((ushort)(processedText.Length + 1));
+                    ++textIndex;
                 }
+
+                dataWriter.Replace(countPosition, (ushort)entryCount);
 
                 int offset = dataWriter.Position;
 
@@ -164,7 +197,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((byte)0);
             }
 
-            WriteTextSection(textContainer.Messages, false);
+            WriteTextSection(textContainer.Messages, null);
             WriteSimpleTextSection(textContainer.AutomapTypeNames, 17);
             WriteSimpleTextSection(textContainer.OptionNames, 5);
             WriteSimpleTextSection(textContainer.MusicNames, 32);
@@ -176,10 +209,28 @@ namespace Ambermoon.Data.Legacy.Serialization
             WriteSimpleTextSection(textContainer.SkillNames, 10);
             WriteSimpleTextSection(textContainer.AttributeNames, 9);
             WriteSimpleTextSection(textContainer.SkillShortNames, 10);
-            WriteSimpleTextSection(textContainer.AttributeShortNames, 9);
+            WriteSimpleTextSection(textContainer.AttributeShortNames, 8);
             WriteSimpleTextSection(textContainer.ItemTypeNames, 20);
             WriteSimpleTextSection(textContainer.ConditionNames, 16);
-            WriteTextSection(textContainer.UITexts, true);
+            WriteTextSection(textContainer.UITexts, textContainer.UITextWithPlaceholderIndices);
+
+            int versionStringLength = (textContainer.VersionString.Length + 1 + 3) >> 2;
+            int dateAndLanguageStringLength = (textContainer.DateAndLanguageString.Length + 1 + 3) >> 2;
+
+            dataWriter.Write((byte)versionStringLength);
+            dataWriter.Write((byte)dateAndLanguageStringLength);
+
+            dataWriter.WriteNullTerminated(textContainer.VersionString);
+            int padding = versionStringLength * 4 - textContainer.VersionString.Length - 1;
+
+            for (i = 0; i < padding; ++i)
+                dataWriter.Write((byte)0);
+
+            dataWriter.WriteNullTerminated(textContainer.DateAndLanguageString);
+            padding = dateAndLanguageStringLength * 4 - textContainer.DateAndLanguageString.Length - 1;
+
+            for (i = 0; i < padding; ++i)
+                dataWriter.Write((byte)0);
         }
     }
 }

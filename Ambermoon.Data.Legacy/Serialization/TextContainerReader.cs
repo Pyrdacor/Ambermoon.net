@@ -46,7 +46,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             new MergeInfo(41, 1, 2),
         };
 
-        public void ReadTextContainer(TextContainer textContainer, IDataReader dataReader)
+        public void ReadTextContainer(TextContainer textContainer, IDataReader dataReader, bool processUIPlaceholders)
         {
             int formatMessageDataSizeInLongs = dataReader.ReadWord();
             int numFormatMessageOffsets = dataReader.ReadWord();
@@ -58,6 +58,11 @@ namespace Ambermoon.Data.Legacy.Serialization
             formatMessageOffsets[i] = formatMessageDataSizeInLongs * 4;
 
             var formatMessageData = dataReader.ReadBytes(formatMessageDataSizeInLongs * 4);
+
+            // Avoid padding bytes in last text
+            while (formatMessageData[formatMessageOffsets[i] - 1] == 0)
+                --formatMessageOffsets[i];
+            ++formatMessageOffsets[i];
 
             var encoding = new AmbermoonEncoding();
 
@@ -98,7 +103,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 int start = formatMessageOffsets[i];
                 int end = formatMessageOffsets[i + 1];
 
-                if (i == 7 || i == 8)
+                if (i == 10 || i == 11)
                     ReadTextLines(formatMessageData, start, end, textContainer.FormatMessages);
                 else
                     ReadText(formatMessageData, start, end, textContainer.FormatMessages);
@@ -111,11 +116,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 int index = mergeInfo.FormatMessageIndex;
                 bool placeholder = mergeInfo.FirstFormatMessageTextPartIndex != 0;
                 int deleteCount = 0;
+                int placeholderIndex = 0;
 
                 for (int p = 0; p < mergeInfo.NumTotalParts; ++p)
                 {
                     if (placeholder)
-                        parts[p] = "{0}";
+                        parts[p] = "{" + (placeholderIndex++).ToString() +"}";
                     else
                     {
                         parts[p] = textContainer.FormatMessages[index];
@@ -133,6 +139,8 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             string ProcessPlaceholders(string text, List<int> placeholderOffsets)
             {
+                placeholderOffsets.Sort();
+
                 for (int i = placeholderOffsets.Count - 1; i >= 0; --i)
                 {
                     int offset = placeholderOffsets[i];
@@ -162,7 +170,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 return text;
             }
 
-            void ReadTextSection(List<string> targetList, bool supportPlaceholders)
+            void ReadTextSection(List<string> targetList, List<int> placeholderIndicesToWrite)
             {
                 int numberOfTexts = dataReader.ReadWord();
                 int[] textLengths = new int[numberOfTexts];
@@ -171,14 +179,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                     textLengths[i] = dataReader.ReadWord();
 
                 var placeholderOffsets = new List<int>();
+                int textDataSize = 0;
 
                 for (int i = 0; i < numberOfTexts; ++i)
                 {
                     int textLength = textLengths[i];
+                    textDataSize += textLength;
 
                     if ((textLength & 0xff00) == 0xff00)
                     {
-                        if (!supportPlaceholders)
+                        if (placeholderIndicesToWrite == null)
                             throw new AmbermoonException(ExceptionScope.Data, "Invalid text section data.");
 
                         // placeholder
@@ -191,15 +201,22 @@ namespace Ambermoon.Data.Legacy.Serialization
                         if (text[^1] == '\0')
                             text = text[..(textLength - 1)];
 
-                        if (supportPlaceholders)
+                        if (placeholderIndicesToWrite != null && placeholderOffsets.Count != 0)
                         {
-                            text = ProcessPlaceholders(text, placeholderOffsets);
+                            placeholderIndicesToWrite.Add(targetList.Count);
+
+                            if (processUIPlaceholders)
+                                text = ProcessPlaceholders(text, placeholderOffsets);
+
                             placeholderOffsets.Clear();
                         }
 
                         targetList.Add(text);
                     }
                 }
+
+                while (textDataSize++ % 4 != 0)
+                    ++dataReader.Position;
             }
 
             void ReadSimpleTextSection(List<string> targetList, int amount)
@@ -214,9 +231,11 @@ namespace Ambermoon.Data.Legacy.Serialization
 
                 if (dataReader.Position > end || end - dataReader.Position >= 4)
                     throw new AmbermoonException(ExceptionScope.Data, "Invalid simple text section or text amount.");
+
+                dataReader.Position = end;
             }
 
-            ReadTextSection(textContainer.Messages, false);
+            ReadTextSection(textContainer.Messages, null);
             ReadSimpleTextSection(textContainer.AutomapTypeNames, 17);
             ReadSimpleTextSection(textContainer.OptionNames, 5);
             ReadSimpleTextSection(textContainer.MusicNames, 32);
@@ -228,10 +247,16 @@ namespace Ambermoon.Data.Legacy.Serialization
             ReadSimpleTextSection(textContainer.SkillNames, 10);
             ReadSimpleTextSection(textContainer.AttributeNames, 9);
             ReadSimpleTextSection(textContainer.SkillShortNames, 10);
-            ReadSimpleTextSection(textContainer.AttributeShortNames, 9);
+            ReadSimpleTextSection(textContainer.AttributeShortNames, 8);
             ReadSimpleTextSection(textContainer.ItemTypeNames, 20);
             ReadSimpleTextSection(textContainer.ConditionNames, 16);
-            ReadTextSection(textContainer.UITexts, true);
+            ReadTextSection(textContainer.UITexts, textContainer.UITextWithPlaceholderIndices);
+
+            int versionStringLength = dataReader.ReadByte() * 4;
+            int dateAndLanguageStringLength = dataReader.ReadByte() * 4;
+
+            textContainer.VersionString = encoding.GetString(dataReader.ReadBytes(versionStringLength)).TrimEnd('\0');
+            textContainer.DateAndLanguageString = encoding.GetString(dataReader.ReadBytes(dateAndLanguageStringLength)).TrimEnd('\0');
         }
     }
 }

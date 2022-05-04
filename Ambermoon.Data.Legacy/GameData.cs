@@ -87,7 +87,7 @@ namespace Ambermoon.Data.Legacy
 
         public void LoadFromFileSystem(IReadOnlyFileSystem fileSystem)
         {
-            GameDataSource = fileSystem.MemoryFileSystem ? GameDataSource.Memory : GameDataSource.LegacyFiles;
+            GameDataSource = fileSystem.MemoryFileSystem ? GameDataSource.Memory : GameDataSource.Unknown;
             var fileReader = new FileReader();
 
             IFileContainer LoadFile(string name)
@@ -242,7 +242,7 @@ namespace Ambermoon.Data.Legacy
         public void Load(string folderPath, bool savesOnly = false)
         {
             Loaded = false;
-            GameDataSource = GameDataSource.LegacyFiles;
+            GameDataSource = GameDataSource.Unknown;
 
             if (!Directory.Exists(folderPath))
             {
@@ -293,8 +293,21 @@ namespace Ambermoon.Data.Legacy
                     ambermoonFiles.Add(file.Key, file.Value);
             }
 
-            void HandleFileLoaded(string file)
+            void HandleFileLoaded(string file, bool fromFiles)
             {
+                if (fromFiles)
+                {
+                    GameDataSource = GameDataSource == GameDataSource.ADF || GameDataSource == GameDataSource.ADFAndLegacyFiles
+                        ? GameDataSource.ADFAndLegacyFiles
+                        : GameDataSource.LegacyFiles;
+                }
+                else
+                {
+                    GameDataSource = GameDataSource == GameDataSource.LegacyFiles || GameDataSource == GameDataSource.ADFAndLegacyFiles
+                        ? GameDataSource.ADFAndLegacyFiles
+                        : GameDataSource.ADF;
+                }
+
                 if (log != null)
                     log.AppendLine("succeeded");
 
@@ -335,14 +348,14 @@ namespace Ambermoon.Data.Legacy
                 if (loadPreference == LoadPreference.PreferExtracted && fileExistChecker(name))
                 {
                     Files.Add(name, fileLoader(name));
-                    HandleFileLoaded(name);
+                    HandleFileLoaded(name, true);
                 }
                 else if (loadPreference == LoadPreference.ForceExtracted)
                 {
                     if (fileExistChecker(name))
                     {
                         Files.Add(name, fileLoader(name));
-                        HandleFileLoaded(name);
+                        HandleFileLoaded(name, true);
                     }
                     else
                     {
@@ -368,59 +381,76 @@ namespace Ambermoon.Data.Legacy
                     {
                         var loadedDisk = diskLoader?.Invoke(disk);
 
-                        if (loadedDisk == null)
+                        if (loadedDisk != null)
+                            loadedDisks.Add(disk, loadedDisk);
+                    }
+
+                    if (!loadedDisks.ContainsKey(disk) || !loadedDisks[disk].ContainsKey(name))
+                    {
+                        if (versionPreference != VersionPreference.Pre114 &&
+                            Legacy.Files.Renamed114Files.TryGetValue(name, out string newName) &&
+                            loadedDisks.ContainsKey(disk) &&
+                            loadedDisks[disk].ContainsKey(newName))
                         {
-                            // file not found
-                            if (loadPreference == LoadPreference.ForceAdf)
-                            {
-                                if (log != null)
-                                {
-                                    log.AppendLine("failed");
-                                    log.AppendLine($" -> Unabled to find ADF disk file with letter '{disk}'. Try to rename your ADF file to 'ambermoon_{disk}.adf'.");
-                                }
-
-                                if (stopAtFirstError)
-                                    throw new FileNotFoundException($"Unabled to find ADF disk file with letter '{disk}'. Try to rename your ADF file to 'ambermoon_{disk}.adf'.");
-                            }
-
-                            if (loadPreference == LoadPreference.PreferAdf)
-                            {
-                                if (!fileExistChecker(name))
-                                {
-                                    if (versionPreference != VersionPreference.Pre114 &&
-                                        Legacy.Files.Renamed114Files.TryGetValue(name, out string newName) &&
-                                        fileExistChecker(newName))
-                                    {
-                                        // Don't add it here, as it should be part of the file list anyway
-                                        continue;
-                                    }
-                                    else
-                                    {
-                                        HandleFileNotFound(name, disk);
-                                    }
-                                }
-                                else
-                                {
-                                    Files.Add(name, fileLoader(name));
-                                    HandleFileLoaded(name);
-                                }
-                            }
-
+                            // Don't add it here, as it should be part of the file list anyway
                             continue;
                         }
 
-                        loadedDisks.Add(disk, loadedDisk);
-                    }
+                        // file not found
+                        if (loadPreference == LoadPreference.ForceAdf)
+                        {
+                            if (log != null)
+                            {
+                                log.AppendLine("failed");
+                                log.AppendLine($" -> Unabled to find ADF disk file with letter '{disk}'. Try to rename your ADF file to 'ambermoon_{disk}.adf'.");
+                            }
 
-                    if (!loadedDisks[disk].ContainsKey(name))
-                    {
-                        HandleFileNotFound(name, disk);
+                            if (stopAtFirstError)
+                                throw new FileNotFoundException($"Unabled to find ADF disk file with letter '{disk}'. Try to rename your ADF file to 'ambermoon_{disk}.adf'.");
+                        }
+
+                        if (loadPreference == LoadPreference.PreferAdf)
+                        {
+                            if (!fileExistChecker(name))
+                            {
+                                if (versionPreference != VersionPreference.Pre114 &&
+                                    Legacy.Files.Renamed114Files.TryGetValue(name, out newName) &&
+                                    fileExistChecker(newName))
+                                {
+                                    // Don't add it here, as it should be part of the file list anyway
+                                    continue;
+                                }
+                                else
+                                {
+                                    HandleFileNotFound(name, disk);
+                                }
+                            }
+                            else
+                            {
+                                Files.Add(name, fileLoader(name));
+                                HandleFileLoaded(name, true);
+                            }
+                        }
+                        else if (loadPreference == LoadPreference.PreferExtracted)
+                        {
+                            if (versionPreference != VersionPreference.Pre114 &&
+                                Legacy.Files.Renamed114Files.TryGetValue(name, out newName) &&
+                                fileExistChecker(newName))
+                            {
+                                // Don't add it here, as it should be part of the file list anyway
+                                continue;
+                            }
+                            else
+                            {
+                                HandleFileNotFound(name, disk);
+                            }
+                        }
                     }
                     else
                     {
-                        GameDataSource = GameDataSource.ADF;
+                        GameDataSource = GameDataSource == GameDataSource.LegacyFiles ? GameDataSource.ADFAndLegacyFiles : GameDataSource.ADF;
                         Files.Add(name, fileReader.ReadFile(name, loadedDisks[disk][name]));
-                        HandleFileLoaded(name);
+                        HandleFileLoaded(name, false);
                     }
                 }
             }

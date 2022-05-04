@@ -2,6 +2,6 @@
 {
     public interface ITextContainerReader
     {
-        void ReadTextContainer(TextContainer textContainer, IDataReader dataReader);
+        void ReadTextContainer(TextContainer textContainer, IDataReader dataReader, bool processUIPlaceholders);
     }
 }
