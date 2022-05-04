@@ -20,6 +20,13 @@ namespace Ambermoon.Data.Legacy
             ForceExtracted
         }
 
+        public enum VersionPreference
+        {
+            Any,
+            Pre114,
+            Post114
+        }
+
         public interface ILogger
         {
             void Append(string text);
@@ -38,6 +45,7 @@ namespace Ambermoon.Data.Legacy
         };
         private readonly Dictionary<char, Dictionary<string, byte[]>> loadedDisks = new Dictionary<char, Dictionary<string, byte[]>>();
         private readonly LoadPreference loadPreference;
+        private readonly VersionPreference versionPreference;
         private readonly ILogger log;
         private readonly bool stopAtFirstError;
         private readonly List<TravelGraphicInfo> travelGraphicInfos = new List<TravelGraphicInfo>(44);
@@ -47,9 +55,11 @@ namespace Ambermoon.Data.Legacy
         public string Version { get; private set; } = "Unknown";
         public string Language { get; private set; } = "Unknown";
 
-        public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true)
+        public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true,
+            VersionPreference versionPreference = VersionPreference.Any)
         {
             this.loadPreference = loadPreference;
+            this.versionPreference = versionPreference;
             log = logger;
             this.stopAtFirstError = stopAtFirstError;
         }
@@ -73,7 +83,7 @@ namespace Ambermoon.Data.Legacy
             return null;
         }
 
-        static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.");
+        static bool IsDictionary(string file) => file.ToLower().StartsWith("dictionary.") || file.ToLower() == "dict.amb";
 
         public void LoadFromFileSystem(IReadOnlyFileSystem fileSystem)
         {
@@ -267,9 +277,21 @@ namespace Ambermoon.Data.Legacy
         void Load(Func<string, IFileContainer> fileLoader, Func<char, Dictionary<string, byte[]>> diskLoader,
             Func<string, bool> fileExistChecker, bool savesOnly = false)
         {
-            var ambermoonFiles = savesOnly ? Legacy.Files.AmigaSaveFiles : Legacy.Files.AmigaFiles;
+            var ambermoonFiles = new Dictionary<string, char>(savesOnly ? Legacy.Files.AmigaSaveFiles : Legacy.Files.AmigaFiles);
             var fileReader = new FileReader();
             bool foundNoDictionary = true;
+
+            if (versionPreference == VersionPreference.Post114)
+            {
+                foreach (var file in Legacy.Files.Removed114Files)
+                    ambermoonFiles.Remove(file);
+            }
+
+            if (versionPreference != VersionPreference.Pre114)
+            {
+                foreach (var file in Legacy.Files.New114Files)
+                    ambermoonFiles.Add(file.Key, file.Value);
+            }
 
             void HandleFileLoaded(string file)
             {
@@ -278,7 +300,10 @@ namespace Ambermoon.Data.Legacy
 
                 if (IsDictionary(file))
                 {
-                    Dictionaries.Add(file.Split('.').Last(), Files[file].Files[1]);
+                    if (file.ToLower() == "dict.amb")
+                        Dictionaries.Add("", Files[file].Files[1]);
+                    else
+                        Dictionaries.Add(file.Split('.').Last(), Files[file].Files[1]);
                     foundNoDictionary = false;
                 }
             }
@@ -321,7 +346,17 @@ namespace Ambermoon.Data.Legacy
                     }
                     else
                     {
-                        HandleFileNotFound(name, ambermoonFile.Value);
+                        if (versionPreference != VersionPreference.Pre114 &&
+                            Legacy.Files.Renamed114Files.TryGetValue(name, out string newName) &&
+                            fileExistChecker(newName))
+                        {
+                            // Don't add it here, as it should be part of the file list anyway
+                            continue;
+                        }
+                        else
+                        {
+                            HandleFileNotFound(name, ambermoonFile.Value);
+                        }
                     }
                 }
                 else
@@ -352,7 +387,17 @@ namespace Ambermoon.Data.Legacy
                             {
                                 if (!fileExistChecker(name))
                                 {
-                                    HandleFileNotFound(name, disk);
+                                    if (versionPreference != VersionPreference.Pre114 &&
+                                        Legacy.Files.Renamed114Files.TryGetValue(name, out string newName) &&
+                                        fileExistChecker(newName))
+                                    {
+                                        // Don't add it here, as it should be part of the file list anyway
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        HandleFileNotFound(name, disk);
+                                    }
                                 }
                                 else
                                 {

@@ -90,6 +90,26 @@ namespace Ambermoon.Data.Legacy
             { "Save.10/Party_data.sav", 'J' }
         };
 
+        public static Dictionary<string, char> New114Files = new Dictionary<string, char>
+        {
+            { "Dict.amb", 'G' },
+            { "Objects.amb", 'A' },
+            { "Text.amb", 'A' },
+            { "Monster_char.amb", 'H' }
+        };
+
+        public static Dictionary<string, string> Renamed114Files = new Dictionary<string, string>
+        {
+            { "Monster_char_data.amb", "Monster_char.amb" }
+        };
+
+        public static List<string> Removed114Files = new List<string>
+        {
+            "Dictionary.english",
+            "Dictionary.german",
+            "Monster_char_data.amb"
+        };
+
         // Key: Filename, Value: Disk letter
         public static readonly Dictionary<string, char> AmigaFiles = new Dictionary<string, char>
         {
