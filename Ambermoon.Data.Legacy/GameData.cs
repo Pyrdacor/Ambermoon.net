@@ -334,7 +334,13 @@ namespace Ambermoon.Data.Legacy
                     return;
 
                 if (stopAtFirstError)
+                {
+                    if (versionPreference != VersionPreference.Post114 &&
+                        Legacy.Files.New114Files.ContainsKey(file))
+                        return;
+
                     throw new FileNotFoundException($"Unable to find file '{file}'.");
+                }
             }
 
             foreach (var ambermoonFile in ambermoonFiles)
