@@ -774,8 +774,8 @@ namespace Ambermoon
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("Error while preparing game: " + ex.Message);
-                            gameCreator = () => throw ex;
+                            Console.WriteLine("Error while preparing game: " + ex.ToString());
+                            gameCreator = () => throw new AmbermoonException(ExceptionScope.Application, "Game preparation failed.");
                         }
                     }
 
