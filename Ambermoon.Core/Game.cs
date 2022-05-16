@@ -1025,6 +1025,8 @@ namespace Ambermoon
             SetBattleSpeed(Configuration.BattleSpeed);
             layout.ExternalBattleSpeedChanged();
         }
+        public void ExternalMusicChanged() => layout.ExternalMusicChanged();
+        public void ExternalVolumeChanged() => layout.ExternalVolumeChanged();
 
         internal int RollDice100()
         {
@@ -12775,7 +12777,7 @@ namespace Ambermoon
 
         internal TimeSpan GetCurrentSongDuration() => currentSong?.SongDuration ?? TimeSpan.Zero;
 
-        internal void ContinueMusic()
+        public void ContinueMusic()
         {
             if (Configuration.Music)
                 currentSong?.Play(AudioOutput, false);

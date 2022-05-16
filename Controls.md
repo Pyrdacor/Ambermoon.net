@@ -12,6 +12,9 @@ F9 | Change graphic overlay (use Ctrl, Shift or Alt to change backwards)
 F10 | Change color effect (use Ctrl, Shift or Alt to change backwards)
 PrintScreen | Take screenshot (stored in folder Screenshots)
 Ctrl + P | Take screenshot (stored in folder Screenshots)
+Ctrl + M | Toggle music
+Ctrl + , | Lower volume
+Ctrl + . | Increase volume
 Escape | Generally aborts or closes things
 Return | Generally submits or closes things
 Space | Generally closes things

@@ -1614,12 +1614,16 @@ namespace Ambermoon.UI
             externalGraphicFilterOverlayChanged += SetGraphicFilterOverlay;
             externalEffectsChanged += SetEffects;
             battleSpeedChanged += SetBattleSpeed;
+            musicChanged += SetMusic;
+            volumeChanged += SetVolume;
             activePopup.Closed += () =>
             {
                 externalGraphicFilterChanged -= SetGraphicFilter;
                 externalGraphicFilterOverlayChanged -= SetGraphicFilterOverlay;
                 externalEffectsChanged -= SetEffects;
                 battleSpeedChanged -= SetBattleSpeed;
+                musicChanged -= SetMusic;
+                volumeChanged -= SetVolume;
             };
         }
 
@@ -1649,6 +1653,20 @@ namespace Ambermoon.UI
         public void ExternalBattleSpeedChanged()
         {
             battleSpeedChanged?.Invoke();
+        }
+
+        event Action musicChanged;
+
+        public void ExternalMusicChanged()
+        {
+            musicChanged?.Invoke();
+        }
+
+        event Action volumeChanged;
+
+        public void ExternalVolumeChanged()
+        {
+            volumeChanged?.Invoke();
         }
 
         public void AttachEventToButton(int index, Action action)

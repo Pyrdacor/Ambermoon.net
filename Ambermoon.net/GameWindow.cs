@@ -310,6 +310,47 @@ namespace Ambermoon
 
                 Game?.ExternalEffectsChanged();
             }
+            else if (key == Silk.NET.Input.Key.M && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
+            {
+                configuration.Music = !configuration.Music;
+                audioOutput.Enabled = configuration.Music;
+                if (audioOutput.Available && audioOutput.Enabled)
+                    Game?.ContinueMusic();
+                Game?.ExternalMusicChanged();
+            }
+            else if (key == Silk.NET.Input.Key.Comma && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
+            {
+                if (configuration.Volume >= 10)
+                {
+                    configuration.Volume -= 10;
+                    audioOutput.Volume = configuration.Volume / 100.0f;
+                    Game?.ExternalVolumeChanged();
+                }
+                else if (configuration.Volume > 0)
+                {
+                    configuration.Volume = 0;
+                    audioOutput.Volume = configuration.Volume / 100.0f;
+                    Game?.ExternalVolumeChanged();
+                }
+            }
+            else if (key == Silk.NET.Input.Key.Period && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
+                 keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))
+            {
+                if (configuration.Volume <= 90)
+                {
+                    configuration.Volume += 10;
+                    audioOutput.Volume = configuration.Volume / 100.0f;
+                    Game?.ExternalVolumeChanged();
+                }
+                else if (configuration.Volume < 100)
+                {
+                    configuration.Volume = 100;
+                    audioOutput.Volume = configuration.Volume / 100.0f;
+                    Game?.ExternalVolumeChanged();
+                }
+            }
             else if (renderView != null && (key == Silk.NET.Input.Key.PrintScreen ||
                 (key == Silk.NET.Input.Key.P && (keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlLeft) ||
                  keyboard.IsKeyPressed(Silk.NET.Input.Key.ControlRight)))))
