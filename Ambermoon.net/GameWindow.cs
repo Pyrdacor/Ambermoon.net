@@ -876,7 +876,12 @@ namespace Ambermoon
             if (configuration.GameVersionIndex < 4)
             {
                 gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex],
-                    configuration.GameVersionIndex == 0 ? (Func<IGameData>)null : () => LoadBuiltinVersionData(versions[0], null));
+                    configuration.GameVersionIndex switch
+                    {
+                        1 => () => LoadBuiltinVersionData(versions[0], null),
+                        3 => () => LoadBuiltinVersionData(versions[2], null),
+                        _ => (Func<IGameData>)null
+                    });
             }
             else
             {
