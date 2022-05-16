@@ -185,7 +185,6 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 Height = 72
             };
             var graphicReader = new GraphicReader();
-            List<uint> colors = new List<uint>();
 
             for (int i = 0; i < 9; ++i)
             {
@@ -209,6 +208,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
                 var replacement = DaytimePaletteReplacements[i] = new Graphic();
                 graphicReader.ReadGraphic(replacement, dataHunkReaders[dataHunkIndex], daytimePaletteReplacementInfo);
             }
+
+            // TODO: Here the spell infos for all 210 possible spells follow (5 byte each).
+            // TODO: Then 1024 words follow. Most likely some 3D stuff. 101, 201, 302, 402, 503, ...
+            // TODO: Then 1025 words follow. Also 3D stuff I guess. 0, 1, 1, 2, 3, 3, 4, 4, 5, ...
+            // TODO: Then the class exp factors follow (11 words).
+            // TODO: Then for each travel type a number of additional ticks per step follows (11 bytes). 0 means move directly, 1 means pause for 1 additional tick after movement, etc.
+            // TODO: Then for each travel type a number follows which specifies how many steps are needed to increase the time by 5 minutes (11 bytes).
+            // TODO: Then for each travel type the music index follows (11 bytes).
+            // TODO: Then a fill byte to get to a even word boundary.
+            // TODO: Then there are 3 world infos. They contain 7 words each: MapsPerRow, MapsPerCol, MapWidth, MapHeight, MapIndexOffset, DayBeginHour, DayEndHour (not sure about the latter two).
+            // TODO: Then 2x16 combat background infos follow. First 16 for 2D, then 16 for 3D. Each info has 4 bytes. Image index and then 3 palette indices for day, twilight and night.
+            // TODO: Then the 9 character heights for the races follow (word each). The first (human -> 180) is also the reference height.
 
             // TODO ...
 
