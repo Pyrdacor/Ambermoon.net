@@ -152,7 +152,7 @@ namespace Ambermoon.Data
         public uint GetNextLevelExperiencePoints()
         {
             uint nextLevel = Level + 1u;
-            return Class.GetExpFactor() * (nextLevel * (nextLevel + 1) / 2);
+            return Class.GetExpFactor() * (nextLevel * nextLevel + nextLevel) / 2;
         }
 
         /// <summary>
