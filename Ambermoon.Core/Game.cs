@@ -6088,6 +6088,23 @@ namespace Ambermoon
 
             CloseWindow(() =>
             {
+                // Refill chest (is important if it is used elsewhere too)
+                var initialChest = GetInitialChest(1 + chestEvent.ChestIndex);
+
+                if (initialChest != null)
+                {
+                    var chest = GetChest(1 + chestEvent.ChestIndex);
+
+                    chest.Gold = initialChest.Gold;
+                    chest.Food = initialChest.Food;
+
+                    for (int y = 0; y < Chest.SlotRows; ++y)
+                    {
+                        for (int x = 0; x < Chest.SlotsPerRow; ++x)
+                            chest.Slots[x, y].Replace(initialChest.Slots[x, y]);
+                    }
+                }
+
                 if (chestEvent.AutoRemove)
                 {
                     bool RemoveFromMap(Map map)
@@ -6127,25 +6144,7 @@ namespace Ambermoon
                             RemoveFromMap(MapManager.GetMap(Map.DownRightMapIndex.Value));
                     }
                 }
-                else
-                {
-                    // Refill chest
-                    var initialChest = GetInitialChest(1 + chestEvent.ChestIndex);
 
-                    if (initialChest != null)
-                    {
-                        var chest = GetChest(1 + chestEvent.ChestIndex);
-
-                        chest.Gold = initialChest.Gold;
-                        chest.Food = initialChest.Food;
-
-                        for (int y = 0; y < Chest.SlotRows; ++y)
-                        {
-                            for (int x = 0; x < Chest.SlotsPerRow; ++x)
-                                chest.Slots[x, y].Replace(initialChest.Slots[x, y]);
-                        }
-                    }
-                }
                 if (chestEvent.Next != null)
                 {
                     Map.TriggerEventChain(this, EventTrigger.Always, (uint)(position?.X ?? 0),
