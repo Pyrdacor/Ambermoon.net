@@ -157,7 +157,7 @@ namespace Ambermoon.Render
                     if (--numMoves == 0)
                     {
                         game.PlayMusic(Song.TheUhOhSong);
-                        game.AddTimedEvent(game.GetCurrentSongDuration() * 2 - TimeSpan.FromMilliseconds(10),
+                        game.AddTimedEvent((game.GetCurrentSongDuration() ?? TimeSpan.FromSeconds(12)) * 2 - TimeSpan.FromMilliseconds(10),
                             () => game.PlayMusic(Song.Ship));
                         finished?.Invoke();
                     }

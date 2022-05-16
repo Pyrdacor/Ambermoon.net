@@ -6,8 +6,8 @@ namespace Ambermoon.Data.Audio
     public interface ISong
     {
         Song Song { get; }
-        TimeSpan SongDuration { get; }
-        void Play(IAudioOutput audioOutput, bool waitTillLoaded);
+        TimeSpan? SongDuration { get; }
+        void Play(IAudioOutput audioOutput);
         void Stop();
     }
 }

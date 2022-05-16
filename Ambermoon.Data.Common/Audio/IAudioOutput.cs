@@ -13,7 +13,7 @@
         /// <summary>
         /// Streams new data.
         /// </summary>
-        public void StreamData(byte[] data, int channels = 1, int sampleRate = 44100, bool sample8Bit = true);
+        public void StreamData(IAudioStream audioStream, int channels = 1, int sampleRate = 44100, bool sample8Bit = true);
         /// <summary>
         /// Resets the audio data.
         /// </summary>

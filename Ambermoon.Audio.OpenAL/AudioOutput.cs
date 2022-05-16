@@ -2,6 +2,7 @@
 using Silk.NET.OpenAL;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Ambermoon.Audio.OpenAL
 {
@@ -15,8 +16,9 @@ namespace Ambermoon.Audio.OpenAL
         bool disposed = false;
         float volume = 1.0f;
         bool enabled = true;
-        readonly Dictionary<byte[], AudioBuffer> audioBuffers = new Dictionary<byte[], AudioBuffer>();
-        AudioBuffer currentBuffer = null;
+        readonly Dictionary<IAudioStream, AudioBuffers> audioBuffers = new Dictionary<IAudioStream, AudioBuffers>();
+        AudioBuffers currentBuffer = null;
+        readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public AudioOutput()
         {
@@ -119,6 +121,8 @@ namespace Ambermoon.Audio.OpenAL
             if (disposed)
                 return;
 
+            cancellationTokenSource.Cancel();
+
             if (Available)
             {
                 al.DeleteSource(source);
@@ -155,8 +159,7 @@ namespace Ambermoon.Audio.OpenAL
 
             Streaming = true;
 
-            currentBuffer?.Activate(source);
-            al.SourcePlay(source);
+            currentBuffer?.Play(cancellationTokenSource.Token);
         }
 
         /// <summary>
@@ -175,22 +178,24 @@ namespace Ambermoon.Audio.OpenAL
 
             Streaming = false;
 
-            al.SourceStop(source);
+            if (currentBuffer != null)
+                currentBuffer.Stop();
+            else
+                al.SourceStop(source);
         }
 
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void StreamData(byte[] data, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
+        public void StreamData(IAudioStream audioStream, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
         {
             if (!Available)
                 return;
 
-            if (!audioBuffers.ContainsKey(data))
-                audioBuffers[data] = new AudioBuffer(al, channels, sampleRate, sample8Bit);
+            if (!audioBuffers.ContainsKey(audioStream))
+                audioBuffers[audioStream] = new AudioBuffers(al, source, channels, sampleRate, sample8Bit, audioStream);
 
-            currentBuffer = audioBuffers[data];
-            currentBuffer?.Fill(source, data);
+            currentBuffer = audioBuffers[audioStream];
         }
 
         /// <summary>

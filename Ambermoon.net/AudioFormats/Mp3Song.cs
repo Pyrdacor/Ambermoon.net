@@ -1,79 +1,71 @@
 ﻿using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
-using NAudio.Wave;
+using NLayer;
 using System;
-using System.Threading.Tasks;
+using System.Linq;
 
 namespace Ambermoon.AudioFormats
 {
 #if WINDOWS
-    class Mp3Song : ExternalSong
+    class Mp3Song : ExternalSong, IAudioStream, IDisposable
     {
         readonly MusicManager musicManager;
-        byte[] buffer;
-        int channels;
-        int sampleRate;
-        bool sample8Bit;
+        MpegFile file;
+        readonly int channels;
+        readonly int sampleRate;
+        readonly bool sample8Bit;
 
-        public Mp3Song(MusicManager musicManager, Song song, string filename, bool waitForLoading = false)
+        public void Dispose()
+        {
+            file?.Dispose();
+            file = null;
+        }
+
+        static byte SampleToByte(float sample)
+        {
+            int value = 128 + Util.Round(sample * 128.0f);
+
+            if (value == 256)
+                value = 255;
+
+            return (byte)value;
+        }
+
+        public Mp3Song(MusicManager musicManager, Song song, string filename)
         {
             this.musicManager = musicManager;
             Song = song;
 
-            bool Load()
-            {
-                try
-                {
-                    var builder = new Mp3FileReaderBase.FrameDecompressorBuilder(format => new AcmMp3FrameDecompressor(format));
-                    using var reader = new Mp3FileReaderBase(filename, builder);
-                    if (reader.Mp3WaveFormat.Channels < 1 || reader.Mp3WaveFormat.Channels > 2 ||
-                        (reader.Mp3WaveFormat.BitsPerSample != 0 && reader.Mp3WaveFormat.BitsPerSample != 8 && reader.Mp3WaveFormat.BitsPerSample != 16))
-                        return false; // invalid format
-                    buffer = new byte[reader.Length];
-                    reader.Read(buffer, 0, buffer.Length);
-                    SongDuration = reader.TotalTime;
-                    channels = reader.Mp3WaveFormat.Channels;
-                    sampleRate = reader.Mp3WaveFormat.SampleRate;
-                    sample8Bit = reader.Mp3WaveFormat.BitsPerSample == 8;
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-
-            if (waitForLoading)
-                Load();
-            else
-                LoadTask = Task.Run(Load);
+            file = new MpegFile(filename);
+            file.StereoMode = StereoMode.Both;
+            SongDuration = file.Duration;
+            channels = file.Channels;
+            sampleRate = file.SampleRate;
+            sample8Bit = true;
         }
 
         public override Song Song { get; }
 
-        public override TimeSpan SongDuration { get; protected set; } = TimeSpan.Zero;
+        public override TimeSpan? SongDuration { get; protected set; } = TimeSpan.Zero;
 
-        public override void Play(IAudioOutput audioOutput, bool waitTillLoaded)
+        public bool EndOfStream => file != null && file.Position == file.Length;
+
+        public override void Play(IAudioOutput audioOutput)
         {
-            if (buffer == null)
-            {
-                if (waitTillLoaded)
-                {
-                    LoadTask.Wait();
-                    Start();
-                }
-                else
-                    LoadTask.GetAwaiter().OnCompleted(Start);
-            }
-            else
-                Start();
-
-            void Start() => musicManager.Start(audioOutput, buffer, channels, sampleRate, sample8Bit);
+            musicManager.Start(audioOutput, this, channels, sampleRate, sample8Bit);
         }
 
         public override void Stop()
         {
             musicManager.Stop();
+        }
+
+        public byte[] Stream(TimeSpan duration)
+        {
+            int samples = Util.Round(duration.TotalSeconds * sampleRate);
+            float[] floatBuffer = new float[samples];
+            file.ReadSamples(floatBuffer, 0, floatBuffer.Length);
+            return floatBuffer.Select(sample => SampleToByte(sample)).ToArray();
         }
     }
 #endif

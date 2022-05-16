@@ -2,8 +2,6 @@
 using Ambermoon.Data.Legacy.Serialization;
 using SonicArranger;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ambermoon.Data.Legacy.Audio
 {
@@ -21,60 +19,39 @@ namespace Ambermoon.Data.Legacy.Audio
         byte[] GetData();
     }
 
-    class Song : ISong, ISonicArrangerSongInfo, ISongDataProvider
+    class Song : ISong, ISonicArrangerSongInfo, ISongDataProvider, IAudioStream
     {
         readonly SonicArranger.Song sonicArrangerSong;
         readonly SongPlayer songPlayer;
         readonly SonicArrangerFile sonicArrangerFile;
         readonly Enumerations.Song song;
-        byte[] buffer;
-        readonly Task loadTask = null;
+        Stream stream = null;
 
         public int SongLength => sonicArrangerSong.StopPos - sonicArrangerSong.StartPos;
         public int PatternLength => sonicArrangerSong.PatternLength;
         public int InterruptsPerSecond => sonicArrangerSong.NBIrqps;
         public int InitialSongSpeed => sonicArrangerSong.SongSpeed;
         public int InitialBeatsPerMinute => sonicArrangerSong.InitialBPM;
-        public TimeSpan SongDuration { get; private set; } = TimeSpan.Zero;
+        public TimeSpan? SongDuration { get; private set; } = null;
 
         public Song(Enumerations.Song song, int songIndex, SongPlayer songPlayer, DataReader reader,
-            Stream.ChannelMode channelMode, bool hardwareLPF, bool pal, bool waitForLoading = false, Action loadFinishedHandler = null)
+            Stream.ChannelMode channelMode, bool hardwareLPF, bool pal)
         {
             this.song = song;
             this.songPlayer = songPlayer;
             reader.Position = 0;
             sonicArrangerFile = new SonicArrangerFile(reader);
             sonicArrangerSong = sonicArrangerFile.Songs[songIndex];
-            void Load()
-            {
-                buffer = new Stream(sonicArrangerFile, songIndex, 44100, channelMode, hardwareLPF, pal).ToUnsignedArray();
-                SongDuration = TimeSpan.FromSeconds(buffer.Length / 44100.0);
-                loadFinishedHandler?.Invoke();
-            }
-            if (waitForLoading)
-                Load();
-            else
-                loadTask = Task.Run(Load);
+            stream = new Stream(sonicArrangerFile, songIndex, 44100, channelMode, hardwareLPF, pal);
         }
 
         Enumerations.Song ISong.Song => song;
 
-        public void Play(IAudioOutput audioOutput, bool waitTillLoaded)
-        {
-            if (buffer == null)
-            {
-                if (waitTillLoaded)
-                {
-                    loadTask.Wait();
-                    Start();
-                }
-                else
-                    loadTask.GetAwaiter().OnCompleted(Start);
-            }
-            else
-                Start();
+        public bool EndOfStream => stream != null && stream.EndOfStream;
 
-            void Start() => songPlayer.Start(audioOutput, buffer);
+        public void Play(IAudioOutput audioOutput)
+        {
+            songPlayer.Start(audioOutput, this);
         }
 
         public void Stop()
@@ -84,10 +61,12 @@ namespace Ambermoon.Data.Legacy.Audio
 
         public byte[] GetData()
         {
-            while (buffer == null && loadTask?.GetAwaiter().IsCompleted == false)
-                Thread.Sleep(10);
+            return stream?.ToUnsignedArray();
+        }
 
-            return buffer;
+        public byte[] Stream(TimeSpan duration)
+        {
+            return stream.ReadUnsigned(Util.Round(duration.TotalMilliseconds), false);
         }
     }
 }

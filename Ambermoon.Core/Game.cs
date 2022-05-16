@@ -12775,12 +12775,12 @@ namespace Ambermoon
             return oldSong;
         }
 
-        internal TimeSpan GetCurrentSongDuration() => currentSong?.SongDuration ?? TimeSpan.Zero;
+        internal TimeSpan? GetCurrentSongDuration() => currentSong?.SongDuration;
 
         public void ContinueMusic()
         {
             if (Configuration.Music)
-                currentSong?.Play(AudioOutput, false);
+                currentSong?.Play(AudioOutput);
         }
 
         internal void UpdateMusic()

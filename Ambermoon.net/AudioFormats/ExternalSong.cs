@@ -7,13 +7,11 @@ namespace Ambermoon.AudioFormats
 {
     internal abstract class ExternalSong : ISong
     {
-        public Task<bool> LoadTask { get; protected set; } = null;
-
         public abstract Song Song { get; }
 
-        public abstract TimeSpan SongDuration { get; protected set; }
+        public abstract TimeSpan? SongDuration { get; protected set; }
 
-        public abstract void Play(IAudioOutput audioOutput, bool waitTillLoaded);
+        public abstract void Play(IAudioOutput audioOutput);
 
         public abstract void Stop();
 

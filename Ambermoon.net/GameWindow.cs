@@ -596,14 +596,14 @@ namespace Ambermoon
             void PlayMusic(Song song)
             {
                 if (configuration.Music)
-                    musicManager.GetSong(song)?.Play(audioOutput, true);
+                    musicManager.GetSong(song)?.Play(audioOutput);
 
                 if (infoText != null)
                     infoText.Visible = false;
             }
 
             mainMenu = new MainMenu(renderView, cursor, paletteIndices, introFont, mainMenuTexts, canContinue,
-                GetText(gameLanguage, 1), GetText(gameLanguage, 2), PlayMusic, configuration.ShowThalionLogo);
+                GetText(gameLanguage, 0), GetText(gameLanguage, 1), PlayMusic, configuration.ShowThalionLogo);
             mainMenu.Closed += closeAction =>
             {
                 switch (closeAction)
@@ -635,14 +635,12 @@ namespace Ambermoon
         {
             { GameLanguage.German, new string[]
                 {
-                    "Musik wird geladen ...",
                     "Starte Spiel ...",
                     "Bereite neues Spiel vor ..."
                 }
             },
             { GameLanguage.English, new string[]
                 {
-                    "Loading music ...",
                     "Starting game ...",
                     "Preparing new game ..."
                 }
@@ -683,8 +681,7 @@ namespace Ambermoon
                 }
             }
 
-            musicManager = new MusicManager(configuration, gameData, null,
-                Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
+            musicManager = new MusicManager(configuration, gameData);
 
             // Create render view
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPalettes, () =>
@@ -699,14 +696,11 @@ namespace Ambermoon
 
             InitGlyphs();
 
-            bool showLoadingText = !musicManager.Cached && configuration.Music;
-            var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
+            var text = renderView.TextProcessor.CreateText("");
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Data.Enumerations.Color.White, false,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
             infoText.DisplayLayer = 254;
-            infoText.Visible = showLoadingText;
-            if (infoText.Visible)
-                renderView.Render(null);
+            infoText.Visible = false;
 
             RunTask(() =>
             {
@@ -734,8 +728,6 @@ namespace Ambermoon
                             var characterManager = new CharacterManager(gameData, graphicProvider);
                             var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
                             var lightEffectProvider = new LightEffectProvider(executableData);
-                            if (configuration.Music)
-                                musicManager?.WaitForAllSongsLoaded();
 
                             gameCreator = () =>
                             {
@@ -1370,7 +1362,12 @@ namespace Ambermoon
                 window.FramebufferResize += Window_FramebufferResize;
                 window.Move += Window_Move;
                 window.StateChanged += Window_StateChanged;
-                window.Closing += () => cheatTaskCancellationTokenSource.Cancel();
+                window.Closing += () =>
+                {
+                    audioOutput.Stop();
+                    audioOutput.Dispose();
+                    cheatTaskCancellationTokenSource.Cancel();
+                };
                 window.Run();
             }
             catch (Exception ex)
@@ -1422,14 +1419,6 @@ namespace Ambermoon
                 {
                     infoText?.Delete();
                     infoText = null;
-                });
-                Util.SafeCall(() =>
-                {
-                    if (configuration?.CacheMusic == true && musicManager != null && !musicManager.Cached)
-                    {
-                        MusicCache.Cache(musicManager, Configuration.ExecutableDirectoryPath,
-                            Configuration.FallbackConfigDirectory, Path.GetTempPath());
-                    }
                 });
                 Util.SafeCall(() => window?.Dispose());
             }

@@ -7,42 +7,51 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Ambermoon
 {
-    class MusicManager : MusicCache
+    class MusicManager : ISongManager, IDisposable
     {
-        delegate ExternalSong MusicLoader(MusicManager musicManager, Song song, string filename, bool waitForLoading);
+        delegate ExternalSong MusicLoader(MusicManager musicManager, Song song, string filename);
 
         static readonly Dictionary<string, MusicLoader> SupportedExtensions = new()
         {
             { "mp3", LoadMp3 }
         };
         readonly IConfiguration configuration;
-        readonly Dictionary<Song, ExternalSong> externalSongs = new();
-        readonly bool externalMusic;
+        readonly Dictionary<Song, ISong> externalSongs = new();
         IAudioOutput audioOutput = null;
-        byte[] currentExternalStream = null;
+        IAudioStream currentExternalStream = null;
+        Dictionary<Song, Tuple<ISong, long>> cachedSongs = new Dictionary<Song, Tuple<ISong, long>>();
+        protected static readonly Song[] Songs = Enum.GetValues<Song>().Skip(1).ToArray();
+        readonly Data.Legacy.Audio.SongManager songManager = null;
 
-        public MusicManager(IConfiguration configuration, IGameData gameData,
-            Song? immediateLoadSongIndex, params string[] searchPaths)
-            : base(gameData, immediateLoadSongIndex, searchPaths)
+        public MusicManager(IConfiguration configuration, IGameData gameData)
         {
-            // TODO: REMOVE
-            configuration.ExternalMusic = true;
+            songManager = new Data.Legacy.Audio.SongManager(gameData);
+
             this.configuration = configuration;
-            externalMusic = configuration.ExternalMusic;
 
             LoadExternalSongs();
         }
 
-        static ExternalSong LoadMp3(MusicManager musicManager, Song song, string filename, bool waitForLoading)
+        public void Dispose()
+        {
+            foreach (var song in externalSongs)
+            {
+                if (song.Value is IDisposable d)
+                    d.Dispose();
+            }
+
+            externalSongs.Clear();
+        }
+
+        static ExternalSong LoadMp3(MusicManager musicManager, Song song, string filename)
         {
 #if WINDOWS
-            var mp3Song = new Mp3Song(musicManager, song, filename, waitForLoading);
+            var mp3Song = new Mp3Song(musicManager, song, filename);
 
-            if (waitForLoading && mp3Song.SongDuration == TimeSpan.Zero)
+            if (mp3Song.SongDuration == TimeSpan.Zero)
                 return null;
 
             return mp3Song;
@@ -99,7 +108,18 @@ namespace Ambermoon
 
                 if (musicFiles.ContainsKey((int)song))
                 {
-                    var music = extension.Value?.Invoke(this, song, musicFiles[(int)song], externalMusic);
+                    if (cachedSongs.ContainsKey(song))
+                    {
+                        var fileInfo = new FileInfo(musicFiles[(int)song]);
+
+                        if (fileInfo.LastWriteTimeUtc.Ticks == cachedSongs[song].Item2)
+                        {
+                            externalSongs.Add(song, cachedSongs[song].Item1);
+                            continue;
+                        }
+                    }
+
+                    var music = extension.Value?.Invoke(this, song, musicFiles[(int)song]);
 
                     if (music is not null)
                         externalSongs.Add(song, music);
@@ -107,16 +127,7 @@ namespace Ambermoon
             }
         }
 
-        public override void WaitForAllSongsLoaded()
-        {
-            // TODO: Later use task wait here as well
-            base.WaitForAllSongsLoaded();
-
-            var tasks = externalSongs.Select(s => s.Value.LoadTask ?? Task.CompletedTask);
-            Task.WaitAll(tasks.ToArray());
-        }
-
-        public override ISong GetSong(Song index)
+        public ISong GetSong(Song index)
         {
             if (configuration.ExternalMusic)
             {
@@ -124,18 +135,18 @@ namespace Ambermoon
                     return song;
             }
 
-            return base.GetSong(index);
+            return songManager.GetSong(index);
         }
 
-        public void Start(IAudioOutput audioOutput, byte[] data, int channels, int sampleRate, bool sample8Bit)
+        public void Start(IAudioOutput audioOutput, IAudioStream audioStream, int channels, int sampleRate, bool sample8Bit)
         {
             this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));
 
-            if (currentExternalStream != data)
+            if (currentExternalStream != audioStream)
             {
                 Stop();
-                currentExternalStream = data;
-                audioOutput.StreamData(data, channels, sampleRate, sample8Bit);
+                currentExternalStream = audioStream;
+                audioOutput.StreamData(audioStream, channels, sampleRate, sample8Bit);
             }
             if (!audioOutput.Streaming)
                 audioOutput.Start();

@@ -149,14 +149,15 @@ namespace Ambermoon.Audio.Android
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public void StreamData(byte[] data, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
+        public void StreamData(IAudioStream audioStream, int channels = 1, int sampleRate = 44100, bool sample8Bit = true)
         {
             if (!Available)
                 return;
 
             Stop();
 
-            currentTrack = GetTrack(data, channels, sampleRate, sample8Bit);
+            // TODO: stream instead of fully load?
+            currentTrack = GetTrack(audioStream.Stream(TimeSpan.MaxValue), channels, sampleRate, sample8Bit);
 
             Reset();
         }

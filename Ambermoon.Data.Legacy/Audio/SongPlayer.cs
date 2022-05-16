@@ -5,18 +5,18 @@ namespace Ambermoon.Data.Legacy.Audio
 {
     class SongPlayer
     {
-        byte[] currentStream = null;
+        IAudioStream currentStream = null;
         IAudioOutput audioOutput = null;
 
-        public void Start(IAudioOutput audioOutput, byte[] data)
+        public void Start(IAudioOutput audioOutput, IAudioStream audioStream)
         {
             this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));
 
-            if (currentStream != data)
+            if (currentStream != audioStream)
             {
                 Stop();
-                currentStream = data;
-                audioOutput.StreamData(data, 1, 44100, true);
+                currentStream = audioStream;
+                audioOutput.StreamData(audioStream, 1, 44100, true);
             }
             if (!audioOutput.Streaming)
                 audioOutput.Start();

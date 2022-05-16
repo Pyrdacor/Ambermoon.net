@@ -11,6 +11,8 @@ namespace Ambermoon.Audio.OpenAL
         readonly int sampleRate;
         bool disposed = false;
 
+        public uint Index => bufferIndex;
+
         public AudioBuffer(AL al, int channels, int sampleRate, bool sample8Bit)
         {
             this.al = al;
@@ -21,17 +23,16 @@ namespace Ambermoon.Audio.OpenAL
             this.sampleRate = sampleRate;
         }
 
-        public void Fill(uint source, byte[] data)
+        public void Stream(uint source, byte[] data)
         {
             if (disposed)
                 throw new InvalidOperationException("Tried to fill a disposed audio buffer.");
 
-            al.SourceStop(source); // ensure stop
             al.BufferData(bufferIndex, format, data, sampleRate);
-            Activate(source);
+            //Activate(source);
         }
 
-        public void Activate(uint source) => al.SetSourceProperty(source, SourceInteger.Buffer, bufferIndex);
+        //public void Activate(uint source) => al.SetSourceProperty(source, SourceInteger.Buffer, bufferIndex);
 
         public void Dispose()
         {
@@ -40,6 +41,11 @@ namespace Ambermoon.Audio.OpenAL
                 al.DeleteBuffer(bufferIndex);
                 disposed = true;
             }
+        }
+
+        public void Queue(uint source)
+        {
+            al.SourceQueueBuffers(source, new uint[1] { bufferIndex });
         }
     }
 }

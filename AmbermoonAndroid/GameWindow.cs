@@ -32,7 +32,7 @@ namespace AmbermoonAndroid
         ICursor cursor = null;
         MainMenu mainMenu = null;
         Func<Game> gameCreator = null;
-        MusicCache musicCache = null;
+        SongManager songManager = null;
         AudioOutput audioOutput = null;
         IRenderText infoText = null;
         DateTime? initializeErrorTime = null;
@@ -374,7 +374,7 @@ namespace AmbermoonAndroid
             void PlayMusic(Song song)
             {
                 if (configuration.Music)
-                    musicCache.GetSong(song)?.Play(audioOutput, true);
+                    songManager.GetSong(song)?.Play(audioOutput);
 
                 if (infoText != null)
                     infoText.Visible = false;
@@ -461,9 +461,6 @@ namespace AmbermoonAndroid
                 }
             }
 
-            musicCache = new MusicCache(gameData, null,
-                Configuration.ExecutableDirectoryPath, Configuration.FallbackConfigDirectory, Path.GetTempPath());
-
             // Create render view
             renderView = CreateRenderView(gameData, configuration, graphicProvider, fontProvider, logoPalettes, () =>
             {
@@ -477,14 +474,13 @@ namespace AmbermoonAndroid
 
             InitGlyphs();
 
-            bool showLoadingText = !musicCache.Cached && configuration.Music;
-            var text = renderView.TextProcessor.CreateText(GetText(gameLanguage, 0));
+            songManager = new SongManager(gameData);
+
+            var text = renderView.TextProcessor.CreateText("");
             infoText = renderView.RenderTextFactory.Create(renderView.GetLayer(Layer.Text), text, Ambermoon.Data.Enumerations.Color.White, false,
                 new Rect(0, Global.VirtualScreenHeight / 2 - 3, Global.VirtualScreenWidth, 6), TextAlign.Center);
             infoText.DisplayLayer = 254;
-            infoText.Visible = showLoadingText;
-            if (infoText.Visible)
-                renderView.Render(null);
+            infoText.Visible = false;
 
             RunTask(() =>
             {
@@ -510,14 +506,12 @@ namespace AmbermoonAndroid
                             var characterManager = new CharacterManager(gameData, graphicProvider);
                             var places = Places.Load(new PlacesReader(), renderView.GameData.Files["Place_data"].Files[1]);
                             var lightEffectProvider = new LightEffectProvider(executableData);
-                            if (configuration.Music)
-                                musicCache?.WaitForAllSongsLoaded();
 
                             gameCreator = () =>
                             {
                                 var game = new Game(configuration, gameLanguage, renderView, mapManager, executableData.ItemManager,
                                     characterManager, savegameManager, savegameSerializer, dataNameProvider, textDictionary, places,
-                                    cursor, lightEffectProvider, audioOutput, musicCache, FullscreenChangeRequest, ChangeResolution,
+                                    cursor, lightEffectProvider, audioOutput, songManager, FullscreenChangeRequest, ChangeResolution,
                                     QueryPressedKeys, new OutroFactory(renderView, outroData, outroFont, outroFontLarge), features);
                                 game.QuitRequested += window.Close;
                                 game.MousePositionChanged += position =>
@@ -1073,14 +1067,6 @@ namespace AmbermoonAndroid
                 {
                     infoText?.Delete();
                     infoText = null;
-                });
-                Util.SafeCall(() =>
-                {
-                    if (configuration?.CacheMusic == true && musicCache != null && !musicCache.Cached)
-                    {
-                        MusicCache.Cache(musicCache, Configuration.ExecutableDirectoryPath,
-                            Configuration.FallbackConfigDirectory, Path.GetTempPath());
-                    }
                 });
                 Util.SafeCall(() => window?.Dispose());
             }

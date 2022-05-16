@@ -1148,7 +1148,7 @@ namespace Ambermoon.UI
         }
 
         // TODO: add more languages later and/or add these texts to the new game data format
-        const int OptionCount = 19;
+        const int OptionCount = 18;
         const int OptionsPerPage = 7;
         static readonly Dictionary<GameLanguage, string[]> OptionNames = new Dictionary<GameLanguage, string[]>
         {
@@ -1173,7 +1173,6 @@ namespace Ambermoon.UI
                     "3D Boden und Decke",
                     "Zusätzliche Spielstände",
                     // Page3
-                    "Musik cachen",
                     "Externe Musik",
                     "Pyrdacor Logo zeigen",
                     "Thalion Logo zeigen",
@@ -1204,7 +1203,6 @@ namespace Ambermoon.UI
                     "3D floor and ceiling",
                     "Additional saveslots",
                     // Page 3
-                    "Cache music",
                     "External music",
                     "Show Pyrdacor logo",
                     "Show Thalion logo",
@@ -1282,7 +1280,6 @@ namespace Ambermoon.UI
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleFloorAndCeiling())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExtendedSaves())),
                 // Page 3
-                KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleMusicCaching())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleExternalMusic())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => TogglePyrdacorLogo())),
                 KeyValuePair.Create("", (Action<int, string>)((index, _) => ToggleThalionLogo())),
@@ -1346,11 +1343,10 @@ namespace Ambermoon.UI
             void SetFloorAndCeiling() => SetOptionString(12, GetFloorAndCeilingValueString());
             void SetExtendedSaves() => SetOptionString(13, game.Configuration.ExtendedSavegameSlots ? on : off);
             // Page 3
-            void SetMusicCaching() => SetOptionString(14, game.Configuration.CacheMusic ? on : off);
-            void SetExternalMusic() => SetOptionString(15, game.Configuration.ExternalMusic ? on : off);
-            void SetPyrdacorLogo() => SetOptionString(16, game.Configuration.ShowPyrdacorLogo ? on : off);
-            void SetThalionLogo() => SetOptionString(17, game.Configuration.ShowThalionLogo ? on : off);
-            void SetSaveLoadInfo() => SetOptionString(18, game.Configuration.ShowSaveLoadMessage ? on : off);
+            void SetExternalMusic() => SetOptionString(14, game.Configuration.ExternalMusic ? on : off);
+            void SetPyrdacorLogo() => SetOptionString(15, game.Configuration.ShowPyrdacorLogo ? on : off);
+            void SetThalionLogo() => SetOptionString(16, game.Configuration.ShowThalionLogo ? on : off);
+            void SetSaveLoadInfo() => SetOptionString(17, game.Configuration.ShowSaveLoadMessage ? on : off);
             // TODO: void SetIntro() => SetOptionString(?, game.Configuration.ShowIntro ? on : off);
             // TODO: void SetFantasyIntro() => SetOptionString(?, game.Configuration.ShowFantasyIntro ? on : off);
 
@@ -1378,7 +1374,6 @@ namespace Ambermoon.UI
                         SetExtendedSaves();
                         break;
                     case 2:
-                        SetMusicCaching();
                         SetExternalMusic();
                         SetPyrdacorLogo();
                         SetThalionLogo();
@@ -1497,12 +1492,6 @@ namespace Ambermoon.UI
             {
                 game.Configuration.ExtendedSavegameSlots = !game.Configuration.ExtendedSavegameSlots;
                 SetExtendedSaves();
-                changedConfiguration = true;
-            }
-            void ToggleMusicCaching()
-            {
-                game.Configuration.CacheMusic = !game.Configuration.CacheMusic;
-                SetMusicCaching();
                 changedConfiguration = true;
             }
             void ToggleExternalMusic()
