@@ -40,7 +40,7 @@ namespace Ambermoon.Render
         SickleAttack,
         Death, // looks like a fire pillar to be honest
         BlockSpell, // blueish ring
-        PlayerAtack // sword swing
+        PlayerAttack // sword swing
     }
 
     internal struct BattleEffectInfo
@@ -211,7 +211,7 @@ namespace Ambermoon.Render
                 BattleEffect.SickleAttack => Effects(CreateFlyingEffect(renderView, sourceTile, targetTile, CombatGraphicIndex.FlyingSickle, battleField, 1.5f)),
                 BattleEffect.Death => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.DeathAnimation, battleField, Game.TicksPerSecond * 5 / 4, null, scale, true)),
                 BattleEffect.BlockSpell => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.SpellBlock, battleField, Game.TicksPerSecond / 2, monster => monster ? -32 : -46)),
-                BattleEffect.PlayerAtack => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackSword, battleField, Game.TicksPerSecond / 4, _ => -10)),
+                BattleEffect.PlayerAttack => Effects(CreateSimpleEffect(renderView, targetTile, CombatGraphicIndex.AttackSword, battleField, Game.TicksPerSecond / 4, _ => -10)),
                 _ => null
             };
         }

@@ -589,12 +589,26 @@ namespace Ambermoon
                 }
             }
 
+            bool hurtAnimFinished = false;
+            bool hurtSplashFinished = false;
+
             void HurtAnimationFinished()
             {
                 animation.AnimationFinished -= HurtAnimationFinished;
                 currentBattleAnimation = null;
                 currentlyAnimatedMonster = null;
-                EndHurt();
+                hurtAnimFinished = true;
+
+                if (hurtSplashFinished)
+                    EndHurt();
+            }
+
+            void HurtSplashFinished()
+            {
+                hurtSplashFinished = true;
+
+                if (hurtAnimFinished)
+                    EndHurt();
             }
             
             animation.AnimationFinished += HurtAnimationFinished;
@@ -604,7 +618,7 @@ namespace Ambermoon
             currentlyAnimatedMonster = monster;
             int tile = GetSlotFromCharacter(monster);
 
-            PlayBattleEffectAnimation(BattleEffect.HurtMonster, (uint)tile, game.CurrentBattleTicks, null);
+            PlayBattleEffectAnimation(BattleEffect.HurtMonster, (uint)tile, game.CurrentBattleTicks, HurtSplashFinished);
             ShowBattleFieldDamage(tile, damage);
             if (monster.Ailments.HasFlag(Ailment.Sleep))
                 game.RemoveAilment(Ailment.Sleep, monster);
@@ -1441,7 +1455,7 @@ namespace Ambermoon
                         }
                         else
                         {
-                            PlayBattleEffectAnimation(BattleEffect.PlayerAtack, targetTile, battleTicks, ShowAttackMessage);
+                            PlayBattleEffectAnimation(BattleEffect.PlayerAttack, targetTile, battleTicks, ShowAttackMessage);
                         }
                     }
                     return;
@@ -3576,6 +3590,7 @@ namespace Ambermoon
             var textureAtlas = TextureAtlasManager.Instance.GetOrCreate(Layer.BattleEffects);
             effectAnimation.SetDisplayLayer(initialDisplayLayer);
             effectAnimation.SetStartFrame(textureAtlas.GetOffset(graphicIndex), frameSize, startPosition, initialScale, mirrorX);
+            effectAnimation.AnimationFinished += EffectAnimationFinished;
             effectAnimation.Play(Enumerable.Range(0, (int)numFrames).ToArray(), ticksPerFrame, ticks, endPosition, endScale);
             effectAnimation.Visible = true;
 
@@ -3587,8 +3602,6 @@ namespace Ambermoon
                 effectAnimation.Visible = false;
                 finishedAction?.Invoke();
             }
-
-            effectAnimation.AnimationFinished += EffectAnimationFinished;
 
             void UpdateDisplayLayer(float progress)
             {
