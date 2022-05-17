@@ -1,7 +1,7 @@
 ﻿/*
  * Credits.cs - Remake credits
  *
- * Copyright (C) 2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2021-2022  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -145,8 +145,9 @@ namespace Ambermoon.Render
             AddText("github.com/Pyrdacor");
             AddText("www.patreon.com/Pyrdacor");
             AddText("twitter.com/Pyrdacor2");
+            AddText("www.pyrdacor.net");
 
-            AddText("August 2021", 2);
+            AddText("May 2022", 2);
 
             lastText = creditsTexts.Peek();
             SetupNextText(lastText.EmptyLines);

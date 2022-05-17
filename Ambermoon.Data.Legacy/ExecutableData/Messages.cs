@@ -2,6 +2,7 @@
 using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -378,6 +379,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly List<string> entries = new List<string>();
         public IReadOnlyList<string> Entries => entries.AsReadOnly();
         public string GetEntry(Index index) => entries[(int)index];
+        static readonly Regex PlaceHolderRegex = new Regex(@"\{[0-9]\}", RegexOptions.Compiled);
 
         internal Messages(List<string> formatMessages, List<string> messages)
         {
@@ -387,8 +389,33 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             entries.Add(""); // None
             entries.AddRange(formatMessages.Take(6));
             entries.AddRange(Enumerable.Repeat("", 11));
-            entries.AddRange(formatMessages.Skip(6));
+            entries.AddRange(formatMessages.Skip(6).Select(FixMessage));
             entries.AddRange(messages);
+        }
+
+        static string FixMessage(string message)
+        {
+            // The new Text.amb often prepends a format
+            // placeholder for the subject like "{0}'s weapon was broken!".
+            // In the old loader from the executable those placeholders
+            // were not added and the remake code is based on that. So if
+            // we encounter a placeholder at the start of the message, we
+            // remove it and adjust the following placeholder indices.
+            if (message.StartsWith("{0}"))
+            {
+                message = message.Substring(3);
+
+                var matches = PlaceHolderRegex.Matches(message);
+
+                for (int i = 0; i < matches.Count; ++i)
+                {
+                    var match = matches[i];
+                    char c = match.Value[1];
+                    message = message[..(match.Index + 1)] + ((char)(c - 1)).ToString() + message[(match.Index + 2)..];
+                }
+            }
+
+            return message;
         }
 
         /// <summary>

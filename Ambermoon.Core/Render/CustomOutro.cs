@@ -1,7 +1,7 @@
 ﻿/*
  * CustomOutro.cs - Remake outro sequence
  *
- * Copyright (C) 2021  Robert Schneckenhaus <robert.schneckenhaus@web.de>
+ * Copyright (C) 2021-2022  Robert Schneckenhaus <robert.schneckenhaus@web.de>
  *
  * This file is part of Ambermoon.net.
  *
@@ -182,13 +182,12 @@ namespace Ambermoon.Render
             AddAction(TimeSpan.FromSeconds(1), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(PyrdacorPortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 9);
-            AddConversationText(TimeSpan.FromMilliseconds(1250), conversationArea, 10);
             AddAction(TimeSpan.FromSeconds(2), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(hero.PortraitIndex, conversationImagePosition));
-            AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 11);
+            AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 10);
             AddAction(TimeSpan.FromSeconds(1), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(PyrdacorPortraitIndex, conversationImagePosition));
-            AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 12);
+            AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 11);
             float volume = game.AudioOutput.Volume;
             AddAction(TimeSpan.FromMilliseconds(3500), new CustomAction(finished =>
             {
@@ -232,8 +231,7 @@ namespace Ambermoon.Render
                     "Unbekannter: Mein Name ist ~INK17~Pyrdacor~INK31~. Ich habe nicht viel Zeit.",
                     "Unbekannter: Aber so viel sei gesagt: Das Abenteuer ist noch nicht vorbei.",
                     " ^~HERO~: Was meinst du damit?",
-                    "~INK17~Ambermoon Advanced~INK31~ - eine Erweiterung der Originalversion ist geplant.",
-                    " ^~INK17~Der dritte Teil der Amber-Triologie~INK31~ ist ebenfalls geplant.",
+                    " ^~INK17~Der dritte Teil der Amber-Triologie~INK31~ ist geplant.",
                     " ^~HERO~: Krass!",
                     "Pyrdacor: Danke, dass du ~INK22~Ambermoon~INK31~ gespielt hast! Ich hoffe du hattest Spaß."
                 }
@@ -249,8 +247,7 @@ namespace Ambermoon.Render
                     "Stranger: My name is ~INK17~Pyrdacor~INK31~. I don't have much time.",
                     "Stranger: But I can tell you this: The adventure is not yet over.",
                     " ^~HERO~: What are you talking about?",
-                    "~INK17~Ambermoon Advanced~INK31~ - an extension of the original version is planned.",
-                    " ^~INK17~The third part of the Amber trilogy~INK31~ is planned as well.",
+                    " ^~INK17~The third part of the Amber trilogy~INK31~ is planned.",
                     " ^~HERO~: Awesome!",
                     "Pyrdacor: Thank you for playing ~INK22~Ambermoon~INK31~! I hope you had fun."
                 }
