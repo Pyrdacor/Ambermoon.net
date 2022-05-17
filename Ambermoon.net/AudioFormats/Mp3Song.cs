@@ -6,7 +6,6 @@ using System.Linq;
 
 namespace Ambermoon.AudioFormats
 {
-#if WINDOWS
     class Mp3Song : ExternalSong, IAudioStream, IDisposable
     {
         readonly MusicManager musicManager;
@@ -68,5 +67,4 @@ namespace Ambermoon.AudioFormats
             return floatBuffer.Select(sample => SampleToByte(sample)).ToArray();
         }
     }
-#endif
 }

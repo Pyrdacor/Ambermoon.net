@@ -48,16 +48,12 @@ namespace Ambermoon
 
         static ExternalSong LoadMp3(MusicManager musicManager, Song song, string filename)
         {
-#if WINDOWS
             var mp3Song = new Mp3Song(musicManager, song, filename);
 
             if (mp3Song.SongDuration == TimeSpan.Zero)
                 return null;
 
             return mp3Song;
-#else
-            return null;
-#endif
         }
 
         void LoadExternalSongs()

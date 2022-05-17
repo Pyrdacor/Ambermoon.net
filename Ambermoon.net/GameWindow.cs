@@ -908,10 +908,8 @@ namespace Ambermoon
             {
                 additionalVersionInfo = GameData.GetInfo(dataPath);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine(ex.ToString());
-
                 if (configuration.GameVersionIndex == 4)
                     configuration.GameVersionIndex = 0;
             }

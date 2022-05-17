@@ -535,19 +535,26 @@ namespace Ambermoon.Data.Legacy
 
             LoadTravelGraphics();
 
-            if (Files.TryGetValue("Text.amb", out var textAmb))
+            try
             {
-                var info = GetInfo(null, () => textAmb.Files[1]);
-                Version = info.Version;
-                Language = info.Language;
-                Advanced = info.Advanced;
+                if (Files.TryGetValue("Text.amb", out var textAmb))
+                {
+                    var info = GetInfo(null, () => textAmb.Files[1]);
+                    Version = info.Version;
+                    Language = info.Language;
+                    Advanced = info.Advanced;
+                }
+                else if (Files.TryGetValue("AM2_CPU", out var exe) || Files.TryGetValue("AM2_BLIT", out exe))
+                {
+                    var info = GetInfo(() => exe.Files[1], null);
+                    Version = info.Version;
+                    Language = info.Language;
+                    Advanced = info.Advanced;
+                }
             }
-            else if (Files.TryGetValue("AM2_CPU", out var exe) || Files.TryGetValue("AM2_BLIT", out exe))
+            catch
             {
-                var info = GetInfo(() => exe.Files[1], null);
-                Version = info.Version;
-                Language = info.Language;
-                Advanced = info.Advanced;
+                // ignore
             }
 
             Loaded = true;
