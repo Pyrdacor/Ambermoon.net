@@ -108,7 +108,8 @@ namespace Ambermoon.Data.Legacy
         {
             "Dictionary.english",
             "Dictionary.german",
-            "Monster_char_data.amb"
+            "Monster_char_data.amb",
+            "AM2_BLIT"
         };
 
         // Key: Filename, Value: Disk letter

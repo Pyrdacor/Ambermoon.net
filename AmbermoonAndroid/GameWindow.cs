@@ -631,7 +631,8 @@ namespace AmbermoonAndroid
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[2]), gameData.Language.ToGameLanguage(), Features.None);
+                selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(),
+                    gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
                 return false;
             }
 
@@ -656,12 +657,19 @@ namespace AmbermoonAndroid
             if (configuration.GameVersionIndex < 0 || configuration.GameVersionIndex > 2)
                 configuration.GameVersionIndex = 0;
 
-            var additionalVersion = GameData.GetVersionInfo(dataPath, out var language);
+            GameData.GameDataInfo? additionalVersionInfo = null;
 
-            if (additionalVersion == null && configuration.GameVersionIndex == 2)
-                configuration.GameVersionIndex = 0;
+            try
+            {
+                additionalVersionInfo = GameData.GetInfo(dataPath);
+            }
+            catch
+            {
+                if (configuration.GameVersionIndex == 4)
+                    configuration.GameVersionIndex = 0;
+            }
 
-            if (configuration.GameVersionIndex < 2)
+            if (configuration.GameVersionIndex < 4)
             {
                 gameData = LoadBuiltinVersionData(versions[configuration.GameVersionIndex],
                     configuration.GameVersionIndex == 0 ? (Func<IGameData>)null : () => LoadBuiltinVersionData(versions[0], null));
@@ -725,15 +733,15 @@ namespace AmbermoonAndroid
                     Features = builtinVersion.Features
                 });
             }
-            if (additionalVersion != null)
+            if (additionalVersionInfo != null)
             {
                 gameVersions.Add(new GameVersion
                 {
-                    Version = additionalVersion,
-                    Language = language,
+                    Version = additionalVersionInfo.Value.Version,
+                    Language = additionalVersionInfo.Value.Language,
                     Info = "From external data",
-                    DataProvider = configuration.GameVersionIndex == 2 ? (Func<IGameData>)(() => gameData) : LoadGameDataFromDataPath,
-                    Features = Features.None
+                    DataProvider = configuration.GameVersionIndex == 4 ? (Func<IGameData>)(() => gameData) : LoadGameDataFromDataPath,
+                    Features = additionalVersionInfo.Value.Advanced ? Features.AmbermoonAdvanced : Features.None
                 });
             }
             var cursor = new Ambermoon.Render.Cursor(renderView, executableData.Cursors.Entries.Select(c => new Position(c.HotspotX, c.HotspotY)).ToList().AsReadOnly(),

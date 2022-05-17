@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Ambermoon.Data.Legacy
 {
@@ -141,103 +142,162 @@ namespace Ambermoon.Data.Legacy
             Load(LoadFile, null, CheckFileExists);
         }
 
-        public static string GetVersionInfo(string folderPath) => GetVersionInfo(folderPath, out _);
-
-        // TODO: preference settings?
-        public static string GetVersionInfo(string folderPath, out string language)
+        public struct GameDataInfo
         {
-            language = null;
+            public string Version;
+            public string Language;
+            public bool Advanced;
+        }
 
-            if (!Directory.Exists(folderPath))
-                return null;
+        static readonly Regex VersionRegex = new Regex(@"[vV]?([0-9]+[.][0-9]+)", RegexOptions.Compiled);
 
-            var possibleAssemblies = new string[2] { "AM2_CPU", "AM2_BLIT" };
+        static GameDataInfo GetInfo(Func<IDataReader> exeProvider, Func<IDataReader> textAmbProvider)
+        {
+            var info = new GameDataInfo();
+            var textAmb = textAmbProvider?.Invoke();
 
-            foreach (var assembly in possibleAssemblies)
+            if (textAmb != null)
             {
-                var assemblyPath = Path.Combine(folderPath, assembly);
+                textAmb.Position = textAmb.Size - 1;
 
-                if (File.Exists(assemblyPath))
+                while (textAmb.Position != 0)
                 {
-                    // check last 128 bytes
-                    using var stream = File.OpenRead(assemblyPath);
+                    var b = textAmb.PeekByte();
 
-                    if (stream.Length < 128)
-                        return null;
-
-                    stream.Position = stream.Length - 128;
-                    Span<byte> buffer = new byte[128];
-                    stream.Read(buffer);
-                    var version = GetVersionFromAssembly(buffer, out language);
-                    if (version == null)
+                    if (b == 0 || b >= 0x20)
                     {
-                        stream.Position = 0;
-                        stream.Read(buffer);
-                        version = GetVersionFromAssembly(buffer, out language, false);
+                        --textAmb.Position;
                     }
-                    return version;
+                    else
+                    {
+                        --textAmb.Position;
+                        int versionStringLength = textAmb.ReadByte() * 4;
+                        int languageStringLength = textAmb.ReadByte() * 4;
+                        string versionString = textAmb.ReadString(versionStringLength).TrimEnd('\0');
+                        var versionMatch = VersionRegex.Matches(versionString).LastOrDefault();
+                        if (versionMatch == null)
+                            info.Version = "1.0";
+                        else
+                            info.Version = versionMatch.Groups[1].Value;
+                        info.Advanced = versionString.ToLower().Contains("adv");
+                        string languageString = textAmb.ReadString(languageStringLength).TrimEnd('\0');
+                        info.Language = languageString.Trim().Split(' ').Last();
+                        textAmb.Position = 0;
+                        break;
+                    }
                 }
             }
-
-            var diskFile = FindDiskFile(folderPath, 'A');
-
-            if (diskFile != null)
+            else
             {
+                var exe = exeProvider();
+                int oldPosition = exe.Position;
+                var hunks = AmigaExecutable.Read(exe);
+                exe.Position = oldPosition;
+                var hunk = (AmigaExecutable.Hunk)hunks.First(h => h.Type == AmigaExecutable.HunkType.Code);
+                var reader = new DataReader(hunk.Data);
+                reader.Position = 6;
+                string versionString = reader.ReadNullTerminatedString();
+                var versionMatch = VersionRegex.Matches(versionString).LastOrDefault();
+                if (versionString == null)
+                    info.Version = "1.0";
+                else
+                    info.Version = versionMatch.Groups[1].Value;
+                info.Advanced = versionString.ToLower().Contains("adv");
+                string languageString = reader.ReadNullTerminatedString();
+                info.Language = languageString.Trim().Split(' ').Last();
+            }
+
+            return info;
+        }
+
+        public static GameDataInfo GetInfo(string folderPath, LoadPreference loadPreference = LoadPreference.PreferExtracted)
+        {
+            var possibleSources = new string[3] { "Text.amb", "AM2_CPU", "AM2_BLIT" };
+
+            KeyValuePair<int, IDataReader>? GetFirstReader(Func<string, IDataReader> readerProvider)
+            {
+                for (int i = 0; i < possibleSources.Length; ++i)
+                {
+                    var reader = readerProvider(possibleSources[i]);
+
+                    if (reader != null)
+                        return KeyValuePair.Create(i, reader);
+                }
+
+                return null;
+            }
+
+            KeyValuePair<int, IDataReader>? GetFirstFileReader()
+            {
+                return GetFirstReader(file =>
+                {
+                    var path = Path.Combine(folderPath, file);
+                    if (!File.Exists(path))
+                        return null;
+                    if (file == "Text.amb")
+                        return new FileReader().ReadFile(file, File.ReadAllBytes(path)).Files[1];
+                    return new DataReader(File.ReadAllBytes(path));
+                });
+            }
+
+            KeyValuePair<int, IDataReader>? GetFirstDiskFileReader()
+            {
+                var diskFile = FindDiskFile(folderPath, 'A');
+
+                if (diskFile == null)
+                    return null;
+
                 using var stream = File.OpenRead(diskFile);
                 var adf = ADFReader.ReadADF(stream);
 
-                foreach (var assembly in possibleAssemblies)
+                return GetFirstReader(file =>
                 {
-                    if (adf.ContainsKey(assembly))
+                    if (adf.ContainsKey(file))
                     {
-                        var data = adf[assembly];
-
-                        if (data.Length < 128)
-                            continue;
-
-                        var version = GetVersionFromAssembly(data.TakeLast(128).ToArray(), out language);
-
-                        if (version == null)
-                            version = GetVersionFromAssembly(data.ToArray(), out language, false);
-
-                        return version;
+                        var data = adf[file];
+                        if (file == "Text.amb")
+                            return new FileReader().ReadFile(file, data).Files[1];
+                        return new DataReader(data);
                     }
-                }
+
+                    return null;
+                });
             }
 
-            return null;
-        }
-
-        static string GetVersionFromAssembly(Span<byte> last128Bytes, out string language, bool reversed = true)
-        {
-            language = null;
-            if (reversed)
-                last128Bytes.Reverse();
-            string result = "";
-            string version = null;
-
-            for (int i = 0; i < last128Bytes.Length; ++i)
+            GameDataInfo GetInfo(params Func<KeyValuePair<int, IDataReader>?>[] providers)
             {
-                if (last128Bytes[i] >= 128)
-                    result = "";
-                else
+                foreach (var provider in providers)
                 {
-                    if (last128Bytes[i] == 0 && result.Contains("Ambermoon "))
+                    var reader = provider?.Invoke();
+
+                    if (reader != null)
                     {
-                        version = result.Substring(result.Length - 4, 4);
-                        result = "";
+                        if (reader.Value.Key == 0)
+                            return GameData.GetInfo(null, () => reader.Value.Value);
+                        else
+                            return GameData.GetInfo(() => reader.Value.Value, null);
                     }
-                    else if (version != null && last128Bytes[i] < 32)
-                    {
-                        language = result.Split(' ').LastOrDefault();
-                        return version;
-                    }
-                    else
-                        result += (char)last128Bytes[i];
                 }
+
+                throw new AmbermoonException(ExceptionScope.Data, "Incomplete game data.");
             }
 
-            return version;
+            if (loadPreference == LoadPreference.ForceExtracted)
+            {
+                return GetInfo(GetFirstFileReader);
+            }
+            else if (loadPreference == LoadPreference.ForceAdf)
+            {
+                return GetInfo(GetFirstDiskFileReader);
+            }
+            else if (loadPreference == LoadPreference.PreferAdf)
+            {
+                return GetInfo(GetFirstDiskFileReader, GetFirstFileReader);
+            }
+            else
+            {
+                return GetInfo(GetFirstFileReader, GetFirstDiskFileReader);
+            }
         }
 
         public void Load(string folderPath, bool savesOnly = false)
@@ -475,71 +535,22 @@ namespace Ambermoon.Data.Legacy
 
             LoadTravelGraphics();
 
-            try
+            if (Files.TryGetValue("Text.amb", out var textAmb))
             {
-                var possibleAssemblies = new string[2] { "AM2_CPU", "AM2_BLIT" };
-
-                foreach (var assembly in possibleAssemblies)
-                {
-                    if (Files.ContainsKey(assembly))
-                    {
-                        var file = Files[assembly].Files[1];
-
-                        if (file.Size >= 128)
-                        {
-                            file.Position = file.Size - 128;
-                            Version = GetVersionFromAssembly(file.ReadToEnd(), out var language);
-                            if (Version == null)
-                            {
-                                file.Position = 0;
-                                Version = GetVersionFromAssembly(file.ReadBytes(128), out language, false);
-                            }
-                            if (language != null)
-                                Language = language;
-                            file.Position = 0;
-                            break;
-                        }
-                    }
-                }
+                var info = GetInfo(null, () => textAmb.Files[1]);
+                Version = info.Version;
+                Language = info.Language;
+                Advanced = info.Advanced;
             }
-            catch
+            else if (Files.TryGetValue("AM2_CPU", out var exe) || Files.TryGetValue("AM2_BLIT", out exe))
             {
-                // ignore
+                var info = GetInfo(() => exe.Files[1], null);
+                Version = info.Version;
+                Language = info.Language;
+                Advanced = info.Advanced;
             }
 
             Loaded = true;
-
-            if (Files.TryGetValue("Text.amb", out var textAmb))
-            {
-                var reader = textAmb.Files[1];
-                reader.Position = reader.Size - 1;
-
-                while (reader.Position != 0)
-                {
-                    var b = reader.PeekByte();
-
-                    if (b == 0 || b >= 0x20)
-                        --reader.Position;
-                    else
-                    {
-                        ++reader.Position;
-                        string versionString = reader.ReadNullTerminatedString();
-                        Advanced = versionString.ToLower().Contains("adv");
-                        reader.Position = 0;
-                        break;
-                    }
-
-                }
-            }
-            else if (Files.TryGetValue("AM2_CPU", out var exe))
-            {
-                var hunk = (AmigaExecutable.Hunk)AmigaExecutable.Read(exe.Files[1]).First(h => h.Type == AmigaExecutable.HunkType.Code);
-                exe.Files[1].Position = 0;
-                var reader = new DataReader(hunk.Data);
-                reader.Position = 6;
-                string versionString = reader.ReadNullTerminatedString();
-                Advanced = versionString.ToLower().Contains("adv");
-            }
         }
 
         void LoadTravelGraphics()
