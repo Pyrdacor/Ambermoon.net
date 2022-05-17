@@ -158,53 +158,68 @@ namespace Ambermoon.Data.Legacy
 
             if (textAmb != null)
             {
-                textAmb.Position = textAmb.Size - 1;
+                int oldPosition = textAmb.Position;
 
-                while (textAmb.Position != 0)
+                try
                 {
-                    var b = textAmb.PeekByte();
+                    textAmb.Position = textAmb.Size - 1;
 
-                    if (b == 0 || b >= 0x20)
+                    while (textAmb.Position != 0)
                     {
-                        --textAmb.Position;
-                    }
-                    else
-                    {
-                        --textAmb.Position;
-                        int versionStringLength = textAmb.ReadByte() * 4;
-                        int languageStringLength = textAmb.ReadByte() * 4;
-                        string versionString = textAmb.ReadString(versionStringLength).TrimEnd('\0');
-                        var versionMatch = VersionRegex.Matches(versionString).LastOrDefault();
-                        if (versionMatch == null)
-                            info.Version = "1.0";
+                        var b = textAmb.PeekByte();
+
+                        if (b == 0 || b >= 0x20)
+                        {
+                            --textAmb.Position;
+                        }
                         else
-                            info.Version = versionMatch.Groups[1].Value;
-                        info.Advanced = versionString.ToLower().Contains("adv");
-                        string languageString = textAmb.ReadString(languageStringLength).TrimEnd('\0');
-                        info.Language = languageString.Trim().Split(' ').Last();
-                        textAmb.Position = 0;
-                        break;
+                        {
+                            --textAmb.Position;
+                            int versionStringLength = textAmb.ReadByte() * 4;
+                            int languageStringLength = textAmb.ReadByte() * 4;
+                            string versionString = textAmb.ReadString(versionStringLength).TrimEnd('\0');
+                            var versionMatch = VersionRegex.Matches(versionString).LastOrDefault();
+                            if (versionMatch == null)
+                                info.Version = "1.0";
+                            else
+                                info.Version = versionMatch.Groups[1].Value;
+                            info.Advanced = versionString.ToLower().Contains("adv");
+                            string languageString = textAmb.ReadString(languageStringLength).TrimEnd('\0');
+                            info.Language = languageString.Trim().Split(' ').Last();
+                            break;
+                        }
                     }
                 }
+                finally
+                {
+                    textAmb.Position = oldPosition;
+                }                
             }
             else
             {
                 var exe = exeProvider();
                 int oldPosition = exe.Position;
-                var hunks = AmigaExecutable.Read(exe);
-                exe.Position = oldPosition;
-                var hunk = (AmigaExecutable.Hunk)hunks.First(h => h.Type == AmigaExecutable.HunkType.Code);
-                var reader = new DataReader(hunk.Data);
-                reader.Position = 6;
-                string versionString = reader.ReadNullTerminatedString();
-                var versionMatch = VersionRegex.Matches(versionString).LastOrDefault();
-                if (versionString == null)
-                    info.Version = "1.0";
-                else
-                    info.Version = versionMatch.Groups[1].Value;
-                info.Advanced = versionString.ToLower().Contains("adv");
-                string languageString = reader.ReadNullTerminatedString();
-                info.Language = languageString.Trim().Split(' ').Last();
+
+                try
+                {
+                    var hunks = AmigaExecutable.Read(exe);
+                    var hunk = (AmigaExecutable.Hunk)hunks.First(h => h.Type == AmigaExecutable.HunkType.Code);
+                    var reader = new DataReader(hunk.Data);
+                    reader.Position = 6;
+                    string versionString = reader.ReadNullTerminatedString();
+                    var versionMatch = VersionRegex.Matches(versionString).LastOrDefault();
+                    if (versionString == null)
+                        info.Version = "1.0";
+                    else
+                        info.Version = versionMatch.Groups[1].Value;
+                    info.Advanced = versionString.ToLower().Contains("adv");
+                    string languageString = reader.ReadNullTerminatedString();
+                    info.Language = languageString.Trim().Split(' ').Last();
+                }
+                finally
+                {
+                    exe.Position = oldPosition;
+                }
             }
 
             return info;

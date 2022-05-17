@@ -130,7 +130,22 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             if (gameData.Files.TryGetValue("Text.amb", out var textAmb) &&
                 gameData.Files.TryGetValue("Objects.amb", out var objectsAmb) &&
                 gameData.Files.TryGetValue("Button_graphics", out var buttonGraphics))
-                return new ExecutableData(hunks, textAmb.Files[1], objectsAmb.Files[1], buttonGraphics.Files[1]);
+            {
+                int textAmbPosition = textAmb.Files[1].Position;
+                int objectsAmbPosition = objectsAmb.Files[1].Position;
+                int buttonGraphicsPosition = buttonGraphics.Files[1].Position;
+
+                try
+                {
+                    return new ExecutableData(hunks, textAmb.Files[1], objectsAmb.Files[1], buttonGraphics.Files[1]);
+                }
+                finally
+                {
+                    textAmb.Files[1].Position = textAmbPosition;
+                    objectsAmb.Files[1].Position = objectsAmbPosition;
+                    buttonGraphics.Files[1].Position = buttonGraphicsPosition;
+                }
+            } 
 
             return new ExecutableData(hunks);
         }
