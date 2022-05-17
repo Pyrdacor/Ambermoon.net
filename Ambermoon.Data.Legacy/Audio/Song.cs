@@ -26,13 +26,24 @@ namespace Ambermoon.Data.Legacy.Audio
         readonly SonicArrangerFile sonicArrangerFile;
         readonly Enumerations.Song song;
         Stream stream = null;
+        int bytesPerSecond = 0;
+        TimeSpan? songDuration = null;
 
         public int SongLength => sonicArrangerSong.StopPos - sonicArrangerSong.StartPos;
         public int PatternLength => sonicArrangerSong.PatternLength;
         public int InterruptsPerSecond => sonicArrangerSong.NBIrqps;
         public int InitialSongSpeed => sonicArrangerSong.SongSpeed;
         public int InitialBeatsPerMinute => sonicArrangerSong.InitialBPM;
-        public TimeSpan? SongDuration { get; private set; } = null;
+        public TimeSpan? SongDuration
+        {
+            get
+            {
+                if (songDuration == null && stream != null && stream.EndOfStream)
+                    songDuration = TimeSpan.FromMilliseconds(1000.0 * stream.ToUnsignedArray().Length / bytesPerSecond);
+
+                return songDuration;
+            }
+        }
 
         public Song(Enumerations.Song song, int songIndex, SongPlayer songPlayer, DataReader reader,
             Stream.ChannelMode channelMode, bool hardwareLPF, bool pal)
@@ -43,6 +54,7 @@ namespace Ambermoon.Data.Legacy.Audio
             sonicArrangerFile = new SonicArrangerFile(reader);
             sonicArrangerSong = sonicArrangerFile.Songs[songIndex];
             stream = new Stream(sonicArrangerFile, songIndex, 44100, channelMode, hardwareLPF, pal);
+            bytesPerSecond = 44100 * (int)channelMode;
         }
 
         Enumerations.Song ISong.Song => song;

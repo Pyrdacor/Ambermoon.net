@@ -54,6 +54,8 @@ namespace Ambermoon.Render
             renderView = layout.RenderView;
             this.savegame = savegame;
 
+            game.EnableTimeEvents(false);
+
             var hero = savegame.PartyMembers[1];
             string ProcessText(string text) => text.Replace("~HERO~", hero.Name);
 
@@ -68,11 +70,11 @@ namespace Ambermoon.Render
 
             AddAction(TimeSpan.Zero, new ShowConversationPortraitAction(EgilPortraiIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 0);
-            AddConversationText(TimeSpan.FromSeconds(1), conversationArea, 1);
-            AddAction(TimeSpan.FromSeconds(1), new ClearAction());
+            AddConversationText(TimeSpan.FromMilliseconds(1250), conversationArea, 1);
+            AddAction(TimeSpan.FromMilliseconds(1250), new ClearAction());
             AddAction(TimeSpan.FromMilliseconds(250), new ShowConversationPortraitAction(hero.PortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 2);
-            AddAction(TimeSpan.FromSeconds(1), new ClearAction());
+            AddAction(TimeSpan.FromMilliseconds(1250), new ClearAction());
             AddAction(TimeSpan.Zero, new CustomAction(finished => game.RemovePartyMember(1, false, finished)));
             AddAction(TimeSpan.FromSeconds(3), new CustomAction(finished =>
             {
@@ -157,7 +159,7 @@ namespace Ambermoon.Render
                     if (--numMoves == 0)
                     {
                         game.PlayMusic(Song.TheUhOhSong);
-                        game.AddTimedEvent((game.GetCurrentSongDuration() ?? TimeSpan.FromSeconds(12)) * 2 - TimeSpan.FromMilliseconds(10),
+                        game.AddTimedEvent((game.GetCurrentSongDuration() ?? TimeSpan.FromSeconds(11)) * 2 - TimeSpan.FromMilliseconds(10),
                             () => game.PlayMusic(Song.Ship));
                         finished?.Invoke();
                     }
@@ -169,23 +171,23 @@ namespace Ambermoon.Render
             }));
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(PyrdacorPortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 4);
-            AddAction(TimeSpan.FromSeconds(1), new ClearAction());
+            AddAction(TimeSpan.FromMilliseconds(1250), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(hero.PortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 5);
-            AddAction(TimeSpan.FromSeconds(1), new ClearAction());
+            AddAction(TimeSpan.FromMilliseconds(1250), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(PyrdacorPortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 6);
             AddConversationText(TimeSpan.FromMilliseconds(1250), conversationArea, 7);
             AddAction(TimeSpan.FromMilliseconds(1250), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(hero.PortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 8);
-            AddAction(TimeSpan.FromSeconds(1), new ClearAction());
+            AddAction(TimeSpan.FromMilliseconds(1250), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(PyrdacorPortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 9);
             AddAction(TimeSpan.FromSeconds(2), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(hero.PortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 10);
-            AddAction(TimeSpan.FromSeconds(1), new ClearAction());
+            AddAction(TimeSpan.FromMilliseconds(1250), new ClearAction());
             AddAction(TimeSpan.FromSeconds(1), new ShowConversationPortraitAction(PyrdacorPortraitIndex, conversationImagePosition));
             AddConversationText(TimeSpan.FromMilliseconds(250), conversationArea, 11);
             float volume = game.AudioOutput.Volume;
@@ -210,6 +212,7 @@ namespace Ambermoon.Render
                 game.AddTimedEvent(TimeSpan.FromMilliseconds(Game.FadeTime), () =>
                 {
                     Clear();
+                    game.EnableTimeEvents(true);
                     game.PrepareOutro();
                     game.PlayMusic(Song.VoiceOfTheBagpipe);
                     game.AudioOutput.Volume = volume;
@@ -285,6 +288,10 @@ namespace Ambermoon.Render
                 newSavegame.HoursWithoutSleep = 0;
                 // Activate all special items
                 newSavegame.SpecialItemsActive = 0xffff;
+            }, () =>
+            {
+                StopGame();
+                game.AddTimedEvent(TimeSpan.FromSeconds(2), ProcessActions);
             });
             void StopGame()
             {
@@ -294,8 +301,6 @@ namespace Ambermoon.Render
             StopGame();
             game.CursorType = CursorType.None;
             game.PlayMusic(Song.Ship);
-            game.AddTimedEvent(TimeSpan.FromMilliseconds(Game.FadeTime / 2), StopGame);
-            game.AddTimedEvent(TimeSpan.FromSeconds(3), ProcessActions);
         }
 
         void ShowCredits()

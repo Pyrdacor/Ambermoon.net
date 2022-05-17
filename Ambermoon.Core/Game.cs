@@ -232,6 +232,7 @@ namespace Ambermoon
         CharacterCreator characterCreator = null;
         readonly Random random = new Random();
         bool disableMusicChange = false;
+        bool disableTimeEvents = false;
         internal Features Features { get; }
         public const int NumAdditionalSavegameSlots = 20;
         internal SavegameTime GameTime { get; private set; } = null;
@@ -690,7 +691,8 @@ namespace Ambermoon
             });
         }
 
-        internal void LoadInitial(string name, bool female, uint portraitIndex, Action<Savegame> setup = null)
+        internal void LoadInitial(string name, bool female, uint portraitIndex, Action<Savegame> setup = null,
+            Action postStartAction = null)
         {
             var initialSavegame = SavegameManager.LoadInitial(renderView.GameData, savegameSerializer);
 
@@ -700,7 +702,7 @@ namespace Ambermoon
 
             setup?.Invoke(initialSavegame);
 
-            Start(initialSavegame);
+            Start(initialSavegame, postStartAction);
         }
 
         void Exit()
@@ -1463,6 +1465,9 @@ namespace Ambermoon
             GameTime.NewYear += GameTime_NewYear;
             GameTime.MinuteChanged += amount =>
             {
+                if (disableTimeEvents)
+                    return;
+
                 if (Map.Flags.HasFlag(MapFlags.Dungeon) &&
                     !CurrentSavegame.IsSpellActive(ActiveSpellType.Light) &&
                     lightIntensity > 0)
@@ -1724,6 +1729,9 @@ namespace Ambermoon
 
         void GameTime_GotExhausted(uint hoursExhausted, uint hoursPassed)
         {
+            if (disableTimeEvents)
+                return;
+
             swimDamageHandled = true;
             bool alreadyExhausted = false;
             uint[] damageValues = new uint[MaxPartyMembers];
@@ -1758,12 +1766,18 @@ namespace Ambermoon
 
         void GameTime_GotTired(uint hoursPassed)
         {
+            if (disableTimeEvents)
+                return;
+
             swimDamageHandled = true;
             ShowMessagePopup(DataNameProvider.TiredMessage, () => GameTime_HoursPassed(hoursPassed));
         }
 
         void GameTime_HoursPassed(uint hours, bool notTiredNorExhausted = false)
         {
+            if (disableTimeEvents)
+                return;
+
             UpdateLight();
             ProcessPoisonDamage(hours, () =>
             {
@@ -1857,6 +1871,8 @@ namespace Ambermoon
 
         void GameTime_NewDay(uint exhaustedHours, uint passedHours)
         {
+            if (disableTimeEvents)
+                return;
 
             void Age(PartyMember partyMember, Action finishAction)
                 => AgePlayer(partyMember, finishAction, 1);
@@ -1876,6 +1892,9 @@ namespace Ambermoon
 
         void GameTime_NewYear(uint exhaustedHours, uint passedHours)
         {
+            if (disableTimeEvents)
+                return;
+
             void Age(PartyMember partyMember, Action finishAction)
             {
                 uint ageIncrease = partyMember.Ailments.HasFlag(Condition.Aging) ? 2u : 1u;
@@ -12743,6 +12762,8 @@ namespace Ambermoon
         void PlayMapMusic() => PlayMusic(Song.Default);
 
         internal void EnableMusicChange(bool enable) => disableMusicChange = !enable;
+
+        internal void EnableTimeEvents(bool enable) => disableTimeEvents = !enable;
 
         /// <summary>
         /// Starts playing a specific music. If Song.Default is given
