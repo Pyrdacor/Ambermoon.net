@@ -6,21 +6,22 @@ Ambermoon.net is a full C# rewrite of Ambermoon and will run at least on Windows
 
 ### Download
 
-Version 1.5.1 is the most recent version from 05-03-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
+Version 1.6.0 is the most recent version from 17-05-2022. It also includes [Ambermoon Advanced](https://github.com/Pyrdacor/Ambermoon-Advanced).
 
 The full package with additional resources can also be downloaded from my website at www.pyrdacor.net!
 
-Version | Download
+Platform | Download 1.6.0
 --- | ---
-**1.5.1** (Windows 8,10,11 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.1/Ambermoon.net-Windows.zip)
-**1.5.1** (Linux 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.1/Ambermoon.net-Linux.tar.gz)
-**1.5.1** (Mac 64bit bundled) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.1/Ambermoon.net-Mac-Bundle.zip)
-**1.5.1** (Mac 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.1/Ambermoon.net-Mac.zip)
-**1.5.1** (Windows 8,10,11 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.1/Ambermoon.net-Windows32Bit.zip)
-**1.5.1** (Windows 7 64bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.1/Ambermoon.net-Windows7.zip)
-**1.5.1** (Windows 7 32bit) | [Link](https://ambermoon-net.pyrdacor.net/download/1.5.1/Ambermoon.net-Windows7-32Bit.zip)
+**Windows 8,10,11 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Windows.zip)
+**Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Linux.tar.gz)
+**Mac 64bit bundled** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Mac-Bundle.zip)
+**Mac 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Mac.zip)
+**Windows 8,10,11 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Windows32Bit.zip)
+**Windows 7 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Windows7.zip)
+**Windows 7 32bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Windows7-32Bit.zip)
 
 From version 1.5.0 onwards you can use your own music with Ambermoon (e.g. Atari music or the remixes of Matthias Steinwachs). Read [here](CustomMusic.md).
+I also provide the Atari tracks [here](https://ambermoon-net.pyrdacor.net/download/music_atari.zip). Just extract the mp3 to a folder called "music" next to the main executable to enjoy the music. Note that not all tracks were converted to Atari so only 13 out of 32 tracks are available.
 
 Problems? The [FAQ](FAQ.md) might help.
 

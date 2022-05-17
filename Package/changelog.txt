@@ -1,3 +1,31 @@
+Version 1.6
+===========
+
+Features
+
+- The remake can now also load the new original game data (english 1.14 and german 1.13)
+- Added the mentioned new original game data to the remake
+- Improved error messages when game preparation fails
+- Added shortcuts to toggle music (Ctrl+M) and change volume (Ctrl+Comma or Ctrl+Period)
+- Music is now streamed and there is no music cache needed anymore
+
+
+Fixes
+
+- Fixed a crash when starting a new english Ambermoon Advanced game for the second time
+- The monster info window will now show *** for monster LP/SP over 999
+- Fixed the effect of strength and stamina on damage and defense
+- After saving with the new save info popup, you can no longer move while the option menu is open
+- The original version sometimes stores empty right hand slots with an amount of 1 which led to a crash in the remake. This should be fixed now.
+- Fixed exp formula (slightly)
+- Hopefully avoid some battle freezes
+- Fixed an issue where some items couldn't be picked up (pieces of Amber in the dwarf mines)
+- Loading Ambermoon Advanced from external sources will now work as expected too
+- Fixed issues where you could possibly move around during the remake outro cutscene
+- Fixed some version selector issues
+
+
+
 Version 1.5
 ===========
 

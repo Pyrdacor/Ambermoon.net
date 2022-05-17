@@ -1,15 +1,18 @@
 # Changelog
 
+## 1.6.0 - Sixth patch (February 2022 - May 2022)
+
+- Version [1.6.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.6.0): Music streaming, added most recent original game data, bugfixes
+
 ## 1.5.0 - Fifth patch (January 2022 - February 2022)
 
+- Version [1.5.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.5.1): Some important fixes
 - Version [1.5.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.5.0): Graphic filters, overlays and effects, custom music interface, quickload, battle speed option
-
 
 ## 1.4.0 - Fourth patch (December 2021 - January 2022)
 
 - Version [1.4.1](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.1): Hotfix for 1.4.0 release (fixes missing item rewards in conversations)
 - Version [1.4.0](https://github.com/Pyrdacor/Ambermoon.net/releases/tag/v1.4.0): Includes first Ambermoon Advanced release, huge amount of bugfixes
-
 
 ## 1.3.0 - Third patch (November 2021)
 
