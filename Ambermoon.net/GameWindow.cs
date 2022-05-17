@@ -872,7 +872,8 @@ namespace Ambermoon
                 // no versions
                 versionLoader.Dispose();
                 gameData.Load(dataPath);
-                selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(), Features.None);
+                selectHandler?.Invoke(gameData, GetSavePath(Configuration.VersionSavegameFolders[4]), gameData.Language.ToGameLanguage(),
+                    gameData.Advanced ? Features.AmbermoonAdvanced : Features.None);
                 return false;
             }
 

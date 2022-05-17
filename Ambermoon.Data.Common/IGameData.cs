@@ -18,6 +18,7 @@ namespace Ambermoon.Data
     {
         bool Loaded { get; }
         GameDataSource GameDataSource { get; }
+        bool Advanced { get; }
         Dictionary<string, IFileContainer> Files { get; }
         Dictionary<string, IDataReader> Dictionaries { get; }
         Dictionary<TravelType, GraphicInfo> StationaryImageInfos { get; }

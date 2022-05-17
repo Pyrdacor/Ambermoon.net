@@ -54,6 +54,7 @@ namespace Ambermoon.Data.Legacy
         public GameDataSource GameDataSource { get; private set; } = GameDataSource.Memory;
         public string Version { get; private set; } = "Unknown";
         public string Language { get; private set; } = "Unknown";
+        public bool Advanced { get; private set; } = false;
 
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true,
             VersionPreference versionPreference = VersionPreference.Any)
@@ -507,6 +508,38 @@ namespace Ambermoon.Data.Legacy
             }
 
             Loaded = true;
+
+            if (Files.TryGetValue("Text.amb", out var textAmb))
+            {
+                var reader = textAmb.Files[1];
+                reader.Position = reader.Size - 1;
+
+                while (reader.Position != 0)
+                {
+                    var b = reader.PeekByte();
+
+                    if (b == 0 || b >= 0x20)
+                        --reader.Position;
+                    else
+                    {
+                        ++reader.Position;
+                        string versionString = reader.ReadNullTerminatedString();
+                        Advanced = versionString.ToLower().Contains("adv");
+                        reader.Position = 0;
+                        break;
+                    }
+
+                }
+            }
+            else if (Files.TryGetValue("AM2_CPU", out var exe))
+            {
+                var hunk = (AmigaExecutable.Hunk)AmigaExecutable.Read(exe.Files[1]).First(h => h.Type == AmigaExecutable.HunkType.Code);
+                exe.Files[1].Position = 0;
+                var reader = new DataReader(hunk.Data);
+                reader.Position = 6;
+                string versionString = reader.ReadNullTerminatedString();
+                Advanced = versionString.ToLower().Contains("adv");
+            }
         }
 
         void LoadTravelGraphics()
