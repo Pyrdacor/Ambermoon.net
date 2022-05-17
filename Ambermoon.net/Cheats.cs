@@ -411,7 +411,7 @@ namespace Ambermoon
                         partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].MaxValue;
                 }
 
-                foreach (var ability in Enum.GetValues<Ability>())
+                foreach (var ability in Enum.GetValues<Skill>())
                 {
                     partyMember.Abilities[ability].CurrentValue = partyMember.Abilities[ability].MaxValue;
                 }

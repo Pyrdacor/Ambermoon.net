@@ -104,7 +104,7 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
                     if (chestEvent.SearchSkillCheck &&
-                        game.RandomInt(0, 99) >= game.CurrentPartyMember.Abilities[Ability.Searching].TotalCurrentValue)
+                        game.RandomInt(0, 99) >= game.CurrentPartyMember.Abilities[Skill.Searching].TotalCurrentValue)
                     {
                         aborted = true;
                         return null;
@@ -291,7 +291,7 @@ namespace Ambermoon
                                     ? (Func<PartyMember, uint>)(_ => awardEvent.Value) : p => awardEvent.Value * p.HitPoints.TotalMaxValue / 100;
 
                                 // Note: Awards damage silently.
-                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done, Ailment.None, false);
+                                game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done, Condition.None, false);
                             }
                             else
                             {
@@ -525,7 +525,7 @@ namespace Ambermoon
                             break;
                         }
                         case ConditionEvent.ConditionType.HasAilment:
-                            if (game.CurrentPartyMember.Ailments.HasFlag((Ailment)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
+                            if (game.CurrentPartyMember.Ailments.HasFlag((Condition)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -765,7 +765,7 @@ namespace Ambermoon
                         }
                         case ActionEvent.ActionType.AddAilment:
                         {
-                            var ailment = (Ailment)(1 << (int)actionEvent.ObjectIndex);
+                            var ailment = (Condition)(1 << (int)actionEvent.ObjectIndex);
                             if (ClearSetToggle(() => game.CurrentPartyMember.Ailments.HasFlag(ailment)))
                                 game.AddAilment(ailment);
                             else

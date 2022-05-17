@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static Ambermoon.Data.Legacy.Serialization.AmigaExecutable;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -78,10 +79,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public LanguageNames LanguageNames { get; }
         public ClassNames ClassNames { get; }
         public RaceNames RaceNames { get; }
-        public AbilityNames AbilityNames { get; }
+        public SkillNames SkillNames { get; }
         public AttributeNames AttributeNames { get; }
         public ItemTypeNames ItemTypeNames { get; }
-        public AilmentNames AilmentNames { get; }
+        public ConditionNames ConditionNames { get; }
         public UITexts UITexts { get; }
         public Buttons Buttons { get; }
         public ItemManager ItemManager { get; }
@@ -122,7 +123,26 @@ namespace Ambermoon.Data.Legacy.ExecutableData
          *         text offsets will differ between german and english version!
          */
 
+        public static ExecutableData FromGameData(IGameData gameData)
+        {
+            var hunks = AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]);
+
+            if (gameData.Files.TryGetValue("Text.amb", out var textAmb) &&
+                gameData.Files.TryGetValue("Objects.amb", out var objectsAmb) &&
+                gameData.Files.TryGetValue("Button_graphics", out var buttonGraphics))
+                return new ExecutableData(hunks, textAmb.Files[1], objectsAmb.Files[1], buttonGraphics.Files[1]);
+
+            return new ExecutableData(hunks);
+        }
+
         public ExecutableData(List<AmigaExecutable.IHunk> hunks)
+            : this(hunks, null, null, null)
+        {
+
+        }
+
+        public ExecutableData(List<AmigaExecutable.IHunk> hunks, IDataReader textAmbReader, IDataReader objectsAmbReader,
+            IDataReader buttonGraphicsReader)
         {
             var firstCodeHunk = hunks.FirstOrDefault(h => h.Type == AmigaExecutable.HunkType.Code);
 
@@ -133,9 +153,22 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             }
 
             var codeReader = new DataReader((firstCodeHunk as AmigaExecutable.Hunk?)?.Data);
-            codeReader.Position = 6;
-            DataVersionString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
-            DataInfoString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+            TextContainer textContainer = null;
+
+            if (textAmbReader != null)
+            {
+                textContainer = new TextContainer();
+                var textContainerReader = new TextContainerReader();
+                textContainerReader.ReadTextContainer(textContainer, textAmbReader, true);
+                DataVersionString = textContainer.VersionString;
+                DataInfoString = textContainer.DateAndLanguageString;
+            }
+            else
+            {
+                codeReader.Position = 6;
+                DataVersionString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                DataInfoString = codeReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+            }
 
             var dataHunkReaders = hunks.Where(h => h.Type == AmigaExecutable.HunkType.Data)
                 .Select(h => new DataReader(((AmigaExecutable.Hunk)h).Data)).ToArray();
@@ -210,7 +243,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             }
 
             // TODO: Here the spell infos for all 210 possible spells follow (5 byte each).
-            // TODO: Then 1024 words follow. Most likely some 3D stuff. 101, 201, 302, 402, 503, ...
+            // TODO: Then 1024 words follow. Most likely some 3D stuff (cos/sin values). 101, 201, 302, 402, 503, ...
             // TODO: Then 1025 words follow. Also 3D stuff I guess. 0, 1, 1, 2, 3, 3, 4, 4, 5, ...
             // TODO: Then the class exp factors follow (11 words).
             // TODO: Then for each travel type a number of additional ticks per step follows (11 bytes). 0 means move directly, 1 means pause for 1 additional tick after movement, etc.
@@ -224,39 +257,115 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             // TODO ...
 
             const string search = "Amberfiles/";
-            dataHunkReaders[1].Position = (int)dataHunkReaders[1].FindString(search, dataHunkReaders[1].Position) + search.Length + 50;
+            dataHunkReaders[1].Position = (int)dataHunkReaders[1].FindString(search, dataHunkReaders[1].Position) + search.Length + 54;
 
-            FileList = Read<FileList>(dataHunkReaders, ref dataHunkIndex);
-            WorldNames = Read<WorldNames>(dataHunkReaders, ref dataHunkIndex);
-            Messages = Read<Messages>(dataHunkReaders, ref dataHunkIndex);
-            AutomapNames = Read<AutomapNames>(dataHunkReaders, ref dataHunkIndex);
-            OptionNames = Read<OptionNames>(dataHunkReaders, ref dataHunkIndex);
-            SongNames = Read<SongNames>(dataHunkReaders, ref dataHunkIndex);
-            SpellTypeNames = Read<SpellTypeNames>(dataHunkReaders, ref dataHunkIndex);
-            SpellNames = Read<SpellNames>(dataHunkReaders, ref dataHunkIndex);
-            LanguageNames = Read<LanguageNames>(dataHunkReaders, ref dataHunkIndex);
-            ClassNames = Read<ClassNames>(dataHunkReaders, ref dataHunkIndex);
-            RaceNames = Read<RaceNames>(dataHunkReaders, ref dataHunkIndex);
-            AbilityNames = Read<AbilityNames>(dataHunkReaders, ref dataHunkIndex);
-            AttributeNames = Read<AttributeNames>(dataHunkReaders, ref dataHunkIndex);
-            AbilityNames.AddShortNames(dataHunkReaders[dataHunkIndex]);
-            AttributeNames.AddShortNames(dataHunkReaders[dataHunkIndex]);
-            ItemTypeNames = Read<ItemTypeNames>(dataHunkReaders, ref dataHunkIndex);
-            AilmentNames = Read<AilmentNames>(dataHunkReaders, ref dataHunkIndex);
-            UITexts = Read<UITexts>(dataHunkReaders, ref dataHunkIndex);
-            Buttons = Read<Buttons>(dataHunkReaders, ref dataHunkIndex);
+            if (textContainer == null)
+            {
+                FileList = Read<FileList>(dataHunkReaders, ref dataHunkIndex);
+                WorldNames = Read<WorldNames>(dataHunkReaders, ref dataHunkIndex);
+                Messages = Read<Messages>(dataHunkReaders, ref dataHunkIndex);
+                AutomapNames = Read<AutomapNames>(dataHunkReaders, ref dataHunkIndex);
+                OptionNames = Read<OptionNames>(dataHunkReaders, ref dataHunkIndex);
+                SongNames = Read<SongNames>(dataHunkReaders, ref dataHunkIndex);
+                SpellTypeNames = Read<SpellTypeNames>(dataHunkReaders, ref dataHunkIndex);
+                SpellNames = Read<SpellNames>(dataHunkReaders, ref dataHunkIndex);
+                LanguageNames = Read<LanguageNames>(dataHunkReaders, ref dataHunkIndex);
+                ClassNames = Read<ClassNames>(dataHunkReaders, ref dataHunkIndex);
+                RaceNames = Read<RaceNames>(dataHunkReaders, ref dataHunkIndex);
+                SkillNames = Read<SkillNames>(dataHunkReaders, ref dataHunkIndex);
+                AttributeNames = Read<AttributeNames>(dataHunkReaders, ref dataHunkIndex);
+                SkillNames.AddShortNames(dataHunkReaders[dataHunkIndex]);
+                AttributeNames.AddShortNames(dataHunkReaders[dataHunkIndex]);
+                ItemTypeNames = Read<ItemTypeNames>(dataHunkReaders, ref dataHunkIndex);
+                ConditionNames = Read<ConditionNames>(dataHunkReaders, ref dataHunkIndex);
+                UITexts = Read<UITexts>(dataHunkReaders, ref dataHunkIndex);
+                Buttons = Read<Buttons>(dataHunkReaders, ref dataHunkIndex);
 
-            int itemCount = dataHunkReaders[dataHunkIndex].ReadWord();
-            if (dataHunkReaders[dataHunkIndex].ReadWord() != itemCount)
-                throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
+                int itemCount = dataHunkReaders[dataHunkIndex].ReadWord();
+                if (dataHunkReaders[dataHunkIndex].ReadWord() != itemCount)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid item data.");
 
-            var itemReader = new ItemReader();
-            var items = new Dictionary<uint, Item>();
+                var itemReader = new ItemReader();
+                var items = new Dictionary<uint, Item>();
 
-            for (uint i = 1; i <= itemCount; ++i) // in original Ambermoon there are 402 items
-                items.Add(i, Item.Load(i, itemReader, dataHunkReaders[dataHunkIndex]));
+                for (uint i = 1; i <= itemCount; ++i) // in original Ambermoon there are 402 items
+                    items.Add(i, Item.Load(i, itemReader, dataHunkReaders[dataHunkIndex]));
 
-            ItemManager = new ItemManager(items);
+                ItemManager = new ItemManager(items);
+            }
+            else
+            {
+                var hunkReader = dataHunkReaders[1];
+                int dataHunks = 0;
+                AmigaExecutable.Reloc32Hunk? relocHunk = null;
+                foreach (var hunk in hunks)
+                {
+                    if (hunk.Type == AmigaExecutable.HunkType.Data)
+                        ++dataHunks;
+
+                    if (hunk.Type == AmigaExecutable.HunkType.RELOC32 && dataHunks == 2)
+                    {
+                        relocHunk = (AmigaExecutable.Reloc32Hunk)hunk;
+                        break;
+                    }
+                }
+
+                if (relocHunk == null)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid executable file.");
+
+                int FindHunk(uint offset)
+                {
+                    foreach (var relocTable in relocHunk.Value.Entries)
+                    {
+                        if (relocTable.Value.Contains(offset))
+                            return (int)relocTable.Key;
+                    }
+
+                    return -1;
+                }
+
+                FileList = new FileList();
+
+                while (hunkReader.PeekWord() != 0)
+                {
+                    int hunkIndex = FindHunk((uint)hunkReader.Position);
+
+                    if (hunkIndex == -1)
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid executable file.");
+
+                    uint offset = hunkReader.ReadDword();
+
+                    var fileNameReader = new DataReader(((Hunk)hunks[hunkIndex]).Data);
+                    fileNameReader.Position = (int)offset;
+                    FileList.ReadFileEntry(fileNameReader);
+                }
+
+                WorldNames = new WorldNames(textContainer.WorldNames);
+                Messages = new Messages(textContainer.FormatMessages, textContainer.Messages);
+                AutomapNames = new AutomapNames(textContainer.AutomapTypeNames);
+                OptionNames = new OptionNames(textContainer.OptionNames);
+                SongNames = new SongNames(textContainer.MusicNames);
+                SpellTypeNames = new SpellTypeNames(textContainer.SpellClassNames);
+                SpellNames = new SpellNames(textContainer.SpellNames);
+                LanguageNames = new LanguageNames(textContainer.LanguageNames);
+                ClassNames = new ClassNames(textContainer.ClassNames);
+                RaceNames = new RaceNames(textContainer.RaceNames);
+                SkillNames = new SkillNames(textContainer.SkillNames, textContainer.SkillShortNames);
+                AttributeNames = new AttributeNames(textContainer.AttributeNames, textContainer.AttributeShortNames);
+                ItemTypeNames = new ItemTypeNames(textContainer.ItemTypeNames);
+                ConditionNames = new ConditionNames(textContainer.ConditionNames);
+                UITexts = new UITexts(textContainer.UITexts);
+                Buttons = new Buttons(buttonGraphicsReader);
+
+                int itemCount = objectsAmbReader.ReadWord();
+                var itemReader = new ItemReader();
+                var items = new Dictionary<uint, Item>();
+
+                for (uint i = 1; i <= itemCount; ++i) // in original Ambermoon there are 402 items
+                    items.Add(i, Item.Load(i, itemReader, objectsAmbReader));
+
+                ItemManager = new ItemManager(items);
+            }
         }
     }
 }

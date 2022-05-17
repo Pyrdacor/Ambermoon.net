@@ -661,7 +661,7 @@ namespace Ambermoon
             var outroFontLarge = new Font(outroData.LargeGlyphs, 10, (uint)outroData.Glyphs.Count);
 
             // Load game data
-            var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
+            var executableData = ExecutableData.FromGameData(gameData);
             var graphicProvider = new GraphicProvider(gameData, executableData, introData, outroData);
             var fontProvider = new FontProvider(executableData);
 
@@ -934,7 +934,7 @@ namespace Ambermoon
             builtinVersionDataProviders[1] = () => configuration.GameVersionIndex == 1 ? gameData : LoadBuiltinVersionData(versions[1], builtinVersionDataProviders[0]);
             builtinVersionDataProviders[2] = () => configuration.GameVersionIndex == 2 ? gameData : LoadBuiltinVersionData(versions[2], null);
             builtinVersionDataProviders[3] = () => configuration.GameVersionIndex == 3 ? gameData : LoadBuiltinVersionData(versions[3], builtinVersionDataProviders[2]);
-            var executableData = new ExecutableData(AmigaExecutable.Read(gameData.Files["AM2_CPU"].Files[1]));
+            var executableData = ExecutableData.FromGameData(gameData);
             var graphicProvider = new GraphicProvider(gameData, executableData, null, null);
             var textureAtlasManager = TextureAtlasManager.CreateEmpty();
             var fontProvider = new FontProvider(executableData);

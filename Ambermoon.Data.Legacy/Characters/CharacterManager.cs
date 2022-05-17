@@ -15,9 +15,12 @@ namespace Ambermoon.Data.Legacy.Characters
             var monsterReader = new MonsterReader(gameData, graphicProvider);
             var monsterGroupReader = new MonsterGroupReader();
 
+            if (!gameData.Files.TryGetValue("Monster_char_data.amb", out var monsterDataContainer))
+                monsterDataContainer = gameData.Files["Monster_char.amb"];
+
             foreach (var npcFile in gameData.Files["NPC_char.amb"].Files.Where(f => f.Value.Size != 0))
                 npcs.Add((uint)npcFile.Key, NPC.Load((uint)npcFile.Key, npcReader, npcFile.Value, gameData.Files["NPC_texts.amb"].Files[npcFile.Key]));
-            foreach (var monsterFile in gameData.Files["Monster_char_data.amb"].Files.Where(f => f.Value.Size != 0))
+            foreach (var monsterFile in monsterDataContainer.Files.Where(f => f.Value.Size != 0))
                 monsters.Add((uint)monsterFile.Key, Monster.Load((uint)monsterFile.Key, monsterReader, monsterFile.Value));
             foreach (var monsterGroupFile in gameData.Files["Monster_groups.amb"].Files.Where(f => f.Value.Size != 0)) // load after monsters!
                 monsterGroups.Add((uint)monsterGroupFile.Key, MonsterGroup.Load(this, monsterGroupReader, monsterGroupFile.Value));

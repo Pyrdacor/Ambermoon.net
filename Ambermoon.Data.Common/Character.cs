@@ -37,10 +37,10 @@ namespace Ambermoon.Data
         /// location.
         /// </summary>
         public ushort CharacterBitIndex { get; set; }
-        public Ailment Ailments { get; set; }
+        public Condition Ailments { get; set; }
         public ushort UnknownWord34 { get; set; }
         public CharacterValueCollection<Attribute> Attributes { get; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
-        public CharacterValueCollection<Ability> Abilities { get; } = new CharacterValueCollection<Ability>(10);
+        public CharacterValueCollection<Skill> Abilities { get; } = new CharacterValueCollection<Skill>(10);
         public CharacterValue HitPoints { get; } = new CharacterValue();
         public CharacterValue SpellPoints { get; } = new CharacterValue();
         public short BaseAttack { get; set; }
@@ -66,9 +66,9 @@ namespace Ambermoon.Data
         public uint TotalWeight { get; set; }
         public string Name { get; set; }
         public bool Alive =>
-            !Ailments.HasFlag(Ailment.DeadCorpse) &&
-            !Ailments.HasFlag(Ailment.DeadAshes) &&
-            !Ailments.HasFlag(Ailment.DeadDust);
+            !Ailments.HasFlag(Condition.DeadCorpse) &&
+            !Ailments.HasFlag(Condition.DeadAshes) &&
+            !Ailments.HasFlag(Condition.DeadDust);
         /// <summary>
         /// Checks if the character is immune to the given
         /// spell.
@@ -239,16 +239,16 @@ namespace Ambermoon.Data
 
         public Action<Character> Died;
 
-        public void Die(Ailment deadAilment = Ailment.DeadCorpse)
+        public void Die(Condition deadAilment = Condition.DeadCorpse)
         {
             Ailments = deadAilment;
             Died?.Invoke(this);
         }
 
-        public void Damage(uint damage, Ailment deadAilment = Ailment.DeadCorpse)
+        public void Damage(uint damage, Condition deadAilment = Condition.DeadCorpse)
             => Damage(damage, deadAilment => Die(deadAilment), deadAilment);
 
-        public void Damage(uint damage, Action<Ailment> deathAction, Ailment deadAilment = Ailment.DeadCorpse)
+        public void Damage(uint damage, Action<Condition> deathAction, Condition deadAilment = Condition.DeadCorpse)
         {
             HitPoints.CurrentValue = HitPoints.CurrentValue <= damage ? 0 : HitPoints.CurrentValue - damage;
 
@@ -274,16 +274,16 @@ namespace Ambermoon.Data
         public Inventory Inventory { get; } = new Inventory();
         public Equipment Equipment { get; } = new Equipment();
 
-        public static readonly List<Ailment> PossibleAilments = Enum.GetValues<Ailment>()
-            .Where(a => a != Ailment.None && a != Ailment.Unused).ToList();
-        public static readonly List<Ailment> PossibleVisibleAilments = PossibleAilments
-            .Where(a => a != Ailment.DeadAshes && a != Ailment.DeadDust).ToList();
-        public List<Ailment> VisibleAilments
+        public static readonly List<Condition> PossibleAilments = Enum.GetValues<Condition>()
+            .Where(a => a != Condition.None && a != Condition.Unused).ToList();
+        public static readonly List<Condition> PossibleVisibleAilments = PossibleAilments
+            .Where(a => a != Condition.DeadAshes && a != Condition.DeadDust).ToList();
+        public List<Condition> VisibleAilments
         {
             get
             {
                 if (!Alive) // When dead, only show the dead condition.
-                    return new List<Ailment> { Ailment.DeadCorpse };
+                    return new List<Condition> { Condition.DeadCorpse };
                 else
                     return PossibleVisibleAilments.Where(a => Ailments.HasFlag(a)).ToList();
             }

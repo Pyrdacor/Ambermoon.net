@@ -22,7 +22,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                 item.Attribute = attribute;
                 item.AttributeValue = attributeValue;
             }
-            Ability ability = (Ability)dataReader.ReadByte();
+            Skill ability = (Skill)dataReader.ReadByte();
             int abilityValue = (sbyte)dataReader.ReadByte();
             if (abilityValue != 0)
             {
@@ -42,8 +42,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             // as for the other 3 the first or second byte is 0.
             // Either the data is wrong or the original code.
             // But it's hard to reverse engineer the meaning this way.
-            item.SkillPenalty1 = (Ability)dataReader.ReadByte();
-            item.SkillPenalty2 = (Ability)dataReader.ReadByte();
+            item.SkillPenalty1 = (Skill)dataReader.ReadByte();
+            item.SkillPenalty2 = (Skill)dataReader.ReadByte();
             item.SkillPenalty1Value = dataReader.ReadByte();
             item.SkillPenalty2Value = dataReader.ReadByte();
             item.SpecialValue = dataReader.ReadByte();

@@ -9,12 +9,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// There is the list of files like Palettes.amb inside the second data
     /// hunk in the executables.
     /// 
-    /// It starts with a word which gives the number of entries divided by 4.
-    /// Or the number of entry offset longwords (32 bit) divided by 4.
-    /// 
-    /// Then there is another unknown word (seems to be 0).
-    /// 
-    /// Then follows the offset of the file entries. These are absolute offsets
+    /// It starts with the offset of the file entries. These are absolute offsets
     /// in relation to the hunk data. An offset of 0 means, there is no entry.
     /// Maybe it was used to build an index list with empty entries.
     /// 
@@ -64,6 +59,11 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         public IReadOnlyList<string[]> IndexedEntries => indexedEntries.AsReadOnly();
 
+        internal FileList()
+        {
+
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the file list.
@@ -72,8 +72,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal FileList(IDataReader dataReader)
         {
-            int numEntries = dataReader.ReadWord() * 4;
-            dataReader.ReadWord(); // TODO: always 0?
+            int numEntries = 44;
             var offsets = new uint[numEntries];
             int endOffset = dataReader.Position;
 
@@ -90,36 +89,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
                 dataReader.Position = (int)offsets[i];
 
-                byte diskNumber = dataReader.ReadByte();
-
-                if (dataReader.PeekByte() >= 0x20)
-                {
-                    if (diskNumber == 0)
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid disk number 0.");
-
-                    string filename = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
-                    entries[filename] = (char)('A' + diskNumber - 1);
-                    indexedEntries.Add(new string[1] { filename });
-                }
-                else
-                {
-                    --dataReader.Position;
-                    var diskNumbers = dataReader.ReadBytes(4);
-                    var baseFileName = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
-                    string[] filenames = new string[4];
-
-                    for (int d = 0; d < 4; ++d)
-                    {
-                        if (diskNumbers[d] != 0)
-                        {
-                            string filename = baseFileName.Replace('0', (char)('1' + d));
-                            entries[filename] = (char)('A' + diskNumbers[d] - 1);
-                            filenames[d] = filename;
-                        }
-                    }
-
-                    indexedEntries.Add(filenames);
-                }
+                ReadFileEntry(dataReader);
 
                 if (dataReader.Position > endOffset)
                     endOffset = dataReader.Position;
@@ -127,6 +97,40 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
             dataReader.Position = endOffset;
             dataReader.AlignToWord();
+        }
+
+        internal void ReadFileEntry(IDataReader dataReader)
+        {
+            byte diskNumber = dataReader.ReadByte();
+
+            if (dataReader.PeekByte() >= 0x20)
+            {
+                if (diskNumber == 0)
+                    throw new AmbermoonException(ExceptionScope.Data, "Invalid disk number 0.");
+
+                string filename = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                entries[filename] = (char)('A' + diskNumber - 1);
+                indexedEntries.Add(new string[1] { filename });
+            }
+            else
+            {
+                --dataReader.Position;
+                var diskNumbers = dataReader.ReadBytes(4);
+                var baseFileName = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
+                string[] filenames = new string[4];
+
+                for (int d = 0; d < 4; ++d)
+                {
+                    if (diskNumbers[d] != 0)
+                    {
+                        string filename = baseFileName.Replace('0', (char)('1' + d));
+                        entries[filename] = (char)('A' + diskNumbers[d] - 1);
+                        filenames[d] = filename;
+                    }
+                }
+
+                indexedEntries.Add(filenames);
+            }
         }
     }
 }

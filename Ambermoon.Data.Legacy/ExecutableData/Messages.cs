@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -50,7 +51,13 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     {
         public enum Index
         {
-            TextBlockMissing = 4,
+            None,
+            IOErrorOccured,
+            InsertDisk,
+            InsertSaveDisk,
+            TextBlockMissing,
+            DeactivateMusicLackOfMem,
+            RestartOutOfMem,            
             DontForgetItems = 18,
             Comma,
             FullStop,
@@ -71,8 +78,25 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             CastsSpellFrom,
             IsNotTheRightAnswer,
             That,
-            NothingToRespond, // In original code this is the first message so subtract 38 and you have the message id there
-            EnterBattlePositions = 56,
+            NothingToRespond, // = 38, in original code this is the first message so subtract 38 and you have the message id there
+            OSOutOfMemory,
+            FileInUse,
+            FileAlreadyExists,
+            DirectoryNotFound,
+            FileNotFound,
+            FileTooLarge,
+            InvalidFilename,
+            ObjectNotOfRequiredType,
+            DiskNotValidated,
+            Empty,
+            SeekError,
+            DiskFull,
+            IncompleteRead,
+            FileIsWriteProtected,
+            FileIsReadProtected,
+            NotADosDisk,
+            IncompleteWrite,
+            EnterBattlePositions,
             WhichScrollToRead,
             ThatsNotASpellScroll,
             CantLearnSpellsOfType,
@@ -192,7 +216,8 @@ namespace Ambermoon.Data.Legacy.ExecutableData
             WhichItemToSell,
             SellHowMany,
             WayBackTooDangerous,
-            CannotCarryAllGold = 177,
+            PleaseRemoveWriteProtection,
+            CannotCarryAllGold,
             ForThisIllGiveYou,
             ReallyWantToGoThere,
             Flees,
@@ -353,6 +378,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly List<string> entries = new List<string>();
         public IReadOnlyList<string> Entries => entries.AsReadOnly();
         public string GetEntry(Index index) => entries[(int)index];
+
+        internal Messages(List<string> formatMessages, List<string> messages)
+        {
+            if (formatMessages.Count != 26 || messages.Count != 300)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of messages.");
+
+            entries.Add(""); // None
+            entries.AddRange(formatMessages.Take(6));
+            entries.AddRange(Enumerable.Repeat("", 11));
+            entries.AddRange(formatMessages.Skip(6));
+            entries.AddRange(messages);
+        }
 
         /// <summary>
         /// The position of the data reader should be at

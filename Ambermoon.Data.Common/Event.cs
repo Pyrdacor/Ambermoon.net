@@ -303,18 +303,18 @@ namespace Ambermoon.Data
         public byte BaseDamage { get; set; }
         public GenderFlag AffectedGenders { get; set; }
         public byte[] Unused { get; set; } // 5 bytes
-        public Ailment GetAilment() => Ailment switch
+        public Condition GetAilment() => Ailment switch
         {
-            TrapAilment.Crazy => Data.Ailment.Crazy,
-            TrapAilment.Blind => Data.Ailment.Blind,
-            TrapAilment.Stoned => Data.Ailment.Drugged,
-            TrapAilment.Paralyzed => Data.Ailment.Lamed,
-            TrapAilment.Poisoned => Data.Ailment.Poisoned,
-            TrapAilment.Petrified => Data.Ailment.Petrified,
-            TrapAilment.Diseased => Data.Ailment.Diseased,
-            TrapAilment.Aging => Data.Ailment.Aging,
-            TrapAilment.Dead => Data.Ailment.DeadCorpse,
-            _ => Data.Ailment.None
+            TrapAilment.Crazy => Data.Condition.Crazy,
+            TrapAilment.Blind => Data.Condition.Blind,
+            TrapAilment.Stoned => Data.Condition.Drugged,
+            TrapAilment.Paralyzed => Data.Condition.Lamed,
+            TrapAilment.Poisoned => Data.Condition.Poisoned,
+            TrapAilment.Petrified => Data.Condition.Petrified,
+            TrapAilment.Diseased => Data.Condition.Diseased,
+            TrapAilment.Aging => Data.Condition.Aging,
+            TrapAilment.Dead => Data.Condition.DeadCorpse,
+            _ => Data.Condition.None
         };
 
         public override string ToString()
@@ -398,9 +398,9 @@ namespace Ambermoon.Data
         public bool Random { get; set; }
         public ushort AwardTypeValue { get; set; }
         public Attribute? Attribute => TypeOfAward == AwardType.Attribute ? (Attribute)AwardTypeValue : (Attribute?)null;
-        public Ability? Ability => TypeOfAward == AwardType.Ability ? (Ability)AwardTypeValue : (Ability?)null;
+        public Skill? Ability => TypeOfAward == AwardType.Ability ? (Skill)AwardTypeValue : (Skill?)null;
         public Language? Languages => TypeOfAward == AwardType.Languages ? (Language)(1 << AwardTypeValue) : (Language?)null;
-        public Ailment? Ailments => TypeOfAward == AwardType.Ailments ? (Ailment)(1 << AwardTypeValue) : (Ailment?)null;
+        public Condition? Ailments => TypeOfAward == AwardType.Ailments ? (Condition)(1 << AwardTypeValue) : (Condition?)null;
         public SpellTypeMastery? UsableSpellTypes => TypeOfAward == AwardType.UsableSpellTypes ? (SpellTypeMastery)(1 << AwardTypeValue) : (SpellTypeMastery?)null;
         public uint Value { get; set; }
         public byte Unknown { get; set; }
@@ -547,7 +547,7 @@ namespace Ambermoon.Data
                 ConditionType.LastEventResult => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.GameOptionSet => $"{Type}: Game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)} is {(Value == 0 ? "not set" : "set")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.CanSee => $"{Type}: {(Value == 0 ? "Can't see" : "Can see")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.HasAilment => $"{Type}: {(Value == 0 ? "Has not" : "Has")} ailment {(Ailment)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.HasAilment => $"{Type}: {(Value == 0 ? "Has not" : "Has")} ailment {(Condition)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.SayWord => $"{Type}: Say keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.EnterNumber => $"{Type}: Enter number {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
@@ -641,7 +641,7 @@ namespace Ambermoon.Data
                 ActionType.AddItem => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, Count)}x item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddKeyword => $"{Type}: {(Value == 0 ? "Remove" : "Add")} keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.SetGameOption => $"{Type}: {(Value == 0 ? "Deactivate" : "Activate")} game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
-                ActionType.AddAilment => $"{Type}: {(Value == 0 ? "Remove" : "Add")} ailment {(Ailment)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.AddAilment => $"{Type}: {(Value == 0 ? "Remove" : "Add")} ailment {(Condition)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddGold => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, ObjectIndex)} gold, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddFood => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, ObjectIndex)} food, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 _ => $"{Type}: Unknown ({TypeOfAction}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",

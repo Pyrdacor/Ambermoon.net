@@ -106,23 +106,23 @@ namespace Ambermoon.UI
             }
         }
 
-        public static string GetAbilityTooltip(GameLanguage gameLanguage, Ability ability, PartyMember partyMember)
+        public static string GetAbilityTooltip(GameLanguage gameLanguage, Skill ability, PartyMember partyMember)
         {
             var formatString = AbilityTooltips[gameLanguage][(int)ability];
             var abilityValue = partyMember.Abilities[ability].TotalCurrentValue;
 
             switch (ability)
             {
-                case Ability.Swim:
+                case Skill.Swim:
                     return string.Format(formatString, abilityValue / 2);
-                case Ability.Searching:
+                case Skill.Searching:
                     return formatString;
                 default:
                     return string.Format(formatString, abilityValue);
             }
         }
 
-        public static string GetAilmentTooltip(GameLanguage gameLanguage, Ailment ailment, PartyMember partyMember) => ailment == Ailment.Aging
+        public static string GetAilmentTooltip(GameLanguage gameLanguage, Condition ailment, PartyMember partyMember) => ailment == Condition.Aging
             ? string.Format(AilmentTooltips[gameLanguage][ailment], partyMember.Attributes[Attribute.Age].MaxValue) : AilmentTooltips[gameLanguage][ailment];
 
         static readonly Dictionary<GameLanguage, string[]> AttributeTooltips = new Dictionary<GameLanguage, string[]>
@@ -217,77 +217,77 @@ namespace Ambermoon.UI
             } }
         };
 
-        static readonly Dictionary<GameLanguage, Dictionary<Ailment, string>> AilmentTooltips = new Dictionary<GameLanguage, Dictionary<Ailment, string>>
+        static readonly Dictionary<GameLanguage, Dictionary<Condition, string>> AilmentTooltips = new Dictionary<GameLanguage, Dictionary<Condition, string>>
         {
-            { GameLanguage.German, new Dictionary<Ailment, string>
+            { GameLanguage.German, new Dictionary<Condition, string>
             {
                 // Irritated
-                { Ailment.Irritated, "Der Charakter kann keine Zauber wirken.^^Hält nur für die Dauer des Kampfes." },
+                { Condition.Irritated, "Der Charakter kann keine Zauber wirken.^^Hält nur für die Dauer des Kampfes." },
                 // Crazy
-                { Ailment.Crazy, "Der Charakter führt zufällige Aktionen im Kampf aus.^Sein Inventar ist nicht einsehbar." },
+                { Condition.Crazy, "Der Charakter führt zufällige Aktionen im Kampf aus.^Sein Inventar ist nicht einsehbar." },
                 // Sleep
-                { Ailment.Sleep, "Der Charakter kann keine Kampfaktion ausführen.^Erleidet er Schaden, endet der Status.^^Hält nur für die Dauer des Kampfes." },
+                { Condition.Sleep, "Der Charakter kann keine Kampfaktion ausführen.^Erleidet er Schaden, endet der Status.^^Hält nur für die Dauer des Kampfes." },
                 // Panic
-                { Ailment.Panic, "Der Charakter versucht zu fliehen.^Keine Kampfaktion möglich.^Inventar nicht einsehbar.^^Hält nur für die Dauer des Kampfes." },
+                { Condition.Panic, "Der Charakter versucht zu fliehen.^Keine Kampfaktion möglich.^Inventar nicht einsehbar.^^Hält nur für die Dauer des Kampfes." },
                 // Blind
-                { Ailment.Blind, "Der Charakter kann nicht sehen.^Lichtradius auf 2D-Karten nicht vorhanden.^Völlige Dunkelheit auf 3D-Karten." },
+                { Condition.Blind, "Der Charakter kann nicht sehen.^Lichtradius auf 2D-Karten nicht vorhanden.^Völlige Dunkelheit auf 3D-Karten." },
                 // Drugged
-                { Ailment.Drugged, "Der Charakter steht unter Drogeneinfluss.^Steuerung erschwert und visuelle Effekte." },
+                { Condition.Drugged, "Der Charakter steht unter Drogeneinfluss.^Steuerung erschwert und visuelle Effekte." },
                 // Exhausted
-                { Ailment.Exhausted, "Alle Attribute temporär halbiert.^Kann durch Schlafen beseitigt werden." },
+                { Condition.Exhausted, "Alle Attribute temporär halbiert.^Kann durch Schlafen beseitigt werden." },
                 // Unused
-                { Ailment.Unused, "" },
+                { Condition.Unused, "" },
                 // Lamed
-                { Ailment.Lamed, "Keine Bewegung und kein Angriff möglich." },
+                { Condition.Lamed, "Keine Bewegung und kein Angriff möglich." },
                 // Poisoned
-                { Ailment.Poisoned, "Der Charakter erleidet Schaden pro^Kampfrunde und sonst jede Stunde." },
+                { Condition.Poisoned, "Der Charakter erleidet Schaden pro^Kampfrunde und sonst jede Stunde." },
                 // Petrified
-                { Ailment.Petrified, "Das Inventar ist nicht verfügbar.^Der Charakter kann keine Aktion^ausführen und altert nicht." },
+                { Condition.Petrified, "Das Inventar ist nicht verfügbar.^Der Charakter kann keine Aktion^ausführen und altert nicht." },
                 // Diseased
-                { Ailment.Diseased, "Der Charakter verliert jeden Tag^dauerhaft einen Punkt eines^zufälligen Attributs." },
+                { Condition.Diseased, "Der Charakter verliert jeden Tag^dauerhaft einen Punkt eines^zufälligen Attributs." },
                 // Aging
-                { Ailment.Aging, "Der Charakter altert pro Tag um ein Jahr.^Je nach Rasse stirbt er ab^einem bestimmten Alter.^^Maximalalter: {0}" },
+                { Condition.Aging, "Der Charakter altert pro Tag um ein Jahr.^Je nach Rasse stirbt er ab^einem bestimmten Alter.^^Maximalalter: {0}" },
                 // DeadCorpse
-                { Ailment.DeadCorpse, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren." },
+                { Condition.DeadCorpse, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren." },
                 // DeadAshes
-                { Ailment.DeadAshes, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren.^Er muss zunächst in Fleisch verwandelt^werden, um ihn wiederzubeleben." },
+                { Condition.DeadAshes, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren.^Er muss zunächst in Fleisch verwandelt^werden, um ihn wiederzubeleben." },
                 // DeadDust
-                { Ailment.DeadDust, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren.^Er muss zunächst in Asche und danach^in Fleisch verwandelt werden,^um ihn wiederzubeleben." }
+                { Condition.DeadDust, "Der Charakter nimmt nicht an Kämpfen teil.^Er kann nicht kommunizieren.^Er muss zunächst in Asche und danach^in Fleisch verwandelt werden,^um ihn wiederzubeleben." }
             } },
-            { GameLanguage.English, new Dictionary<Ailment, string>
+            { GameLanguage.English, new Dictionary<Condition, string>
             {
                 // Irritated
-                { Ailment.Irritated,"The character can not cast spells.^^Only active during battle." },
+                { Condition.Irritated,"The character can not cast spells.^^Only active during battle." },
                 // Crazy
-                { Ailment.Crazy, "The character performs random actions in battle.^His inventory is not accessible." },
+                { Condition.Crazy, "The character performs random actions in battle.^His inventory is not accessible." },
                 // Sleep
-                { Ailment.Sleep, "The character can not perform battle actions.^Any damage will cancel the status.^^Only active during battle." },
+                { Condition.Sleep, "The character can not perform battle actions.^Any damage will cancel the status.^^Only active during battle." },
                 // Panic
-                { Ailment.Panic, "The character tries to flee.^No battle action possible.^Inventory not accessible.^^Only active during battle." },
+                { Condition.Panic, "The character tries to flee.^No battle action possible.^Inventory not accessible.^^Only active during battle." },
                 // Blind
-                { Ailment.Blind, "The character can not see.^Light radius on 2D maps is disabled.^Complete darkness on 3D maps." },
+                { Condition.Blind, "The character can not see.^Light radius on 2D maps is disabled.^Complete darkness on 3D maps." },
                 // Drugged
-                { Ailment.Drugged, "The charater is under the influence of drugs.^Complicated control and visual effects.." },
+                { Condition.Drugged, "The charater is under the influence of drugs.^Complicated control and visual effects.." },
                 // Exhausted
-                { Ailment.Exhausted, "All attributes halved temporarly.^Can be removed by sleeping." },
+                { Condition.Exhausted, "All attributes halved temporarly.^Can be removed by sleeping." },
                 // Unused
-                { Ailment.Unused, "" },
+                { Condition.Unused, "" },
                 // Lamed
-                { Ailment.Lamed, "No movement or attack is possible." },
+                { Condition.Lamed, "No movement or attack is possible." },
                 // Poisoned
-                { Ailment.Poisoned, "The character receives damage^every battle round or hour." },
+                { Condition.Poisoned, "The character receives damage^every battle round or hour." },
                 // Petrified
-                { Ailment.Petrified, "The inventory is not accessible.^The character can not take any^action and does not age." },
+                { Condition.Petrified, "The inventory is not accessible.^The character can not take any^action and does not age." },
                 // Diseased
-                { Ailment.Diseased, "The character loses a point of^a random attribute every day." },
+                { Condition.Diseased, "The character loses a point of^a random attribute every day." },
                 // Aging
-                { Ailment.Aging, "The character ages every day.^Dependent on his race he will^eventually die at a specific age.^^Max age: {0}" },
+                { Condition.Aging, "The character ages every day.^Dependent on his race he will^eventually die at a specific age.^^Max age: {0}" },
                 // DeadCorpse
-                { Ailment.DeadCorpse, "The character does not participate in battles.^He can not communicate." },
+                { Condition.DeadCorpse, "The character does not participate in battles.^He can not communicate." },
                 // DeadAshes
-                { Ailment.DeadAshes, "The character does not participate in battles.^He can not communicate.^His ashes must be converted to^flesh first to resurrect him." },
+                { Condition.DeadAshes, "The character does not participate in battles.^He can not communicate.^His ashes must be converted to^flesh first to resurrect him." },
                 // DeadDust
-                { Ailment.DeadDust, "The character does not participate in battles.^He can not communicate.^His dust must be converted to ashes^and then to flesh to resurrect him." }
+                { Condition.DeadDust, "The character does not participate in battles.^He can not communicate.^His dust must be converted to ashes^and then to flesh to resurrect him." }
             } }
         };
 

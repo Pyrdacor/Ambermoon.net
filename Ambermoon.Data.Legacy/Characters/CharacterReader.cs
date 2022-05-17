@@ -35,7 +35,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.Gold = dataReader.ReadWord();
             character.Food = dataReader.ReadWord();
             character.CharacterBitIndex = dataReader.ReadWord();
-            character.Ailments = (Ailment)dataReader.ReadWord();
+            character.Ailments = (Condition)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
             character.UnknownWord34 = dataReader.ReadWord(); // Unknown
             // mark of return location is stored here: word x, word y, word mapIndex

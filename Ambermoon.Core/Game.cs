@@ -274,7 +274,7 @@ namespace Ambermoon
         readonly IOutroFactory outroFactory;
         IOutro outro = null;
         CustomOutro customOutro = null;
-        internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Ailment.Blind) &&
+        internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Condition.Blind) &&
             (!Map.Flags.HasFlag(MapFlags.Dungeon) || lightIntensity > 0);
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
@@ -965,7 +965,7 @@ namespace Ambermoon
 
             layout.Update(CurrentTicks);
 
-            if (CurrentPartyMember != null && CurrentPartyMember.Ailments.HasFlag(Ailment.Drugged) &&
+            if (CurrentPartyMember != null && CurrentPartyMember.Ailments.HasFlag(Condition.Drugged) &&
                 !layout.OptionMenuOpen)
             {
                 if (CurrentAnimationTicks - lastDrugColorChangeTicks >= 16)
@@ -1372,7 +1372,7 @@ namespace Ambermoon
                 partyMember.Attributes[attribute].BonusValue = 0;
             }
 
-            foreach (var ability in Enum.GetValues<Ability>())
+            foreach (var ability in Enum.GetValues<Skill>())
             {
                 partyMember.Abilities[ability].BonusValue = 0;
             }
@@ -1610,7 +1610,7 @@ namespace Ambermoon
             }
 
             DamageAllPartyMembers(_ => GetDamage(),
-                p => p.Alive && p.Ailments.HasFlag(Ailment.Poisoned), null, followAction);
+                p => p.Alive && p.Ailments.HasFlag(Condition.Poisoned), null, followAction);
         }
 
         void Sleep(bool inn, int healing)
@@ -1623,9 +1623,9 @@ namespace Ambermoon
 
                 if (partyMember != null && partyMember.Alive)
                 {
-                    if (partyMember.Ailments.HasFlag(Ailment.Exhausted))
+                    if (partyMember.Ailments.HasFlag(Condition.Exhausted))
                     {
-                        partyMember.Ailments &= ~Ailment.Exhausted;
+                        partyMember.Ailments &= ~Condition.Exhausted;
                         RemoveExhaustion(partyMember);
                         layout.UpdateCharacterStatus(partyMember);
                     }
@@ -1734,10 +1734,10 @@ namespace Ambermoon
 
                 if (partyMember != null && partyMember.Alive)
                 {
-                    bool exhausted = partyMember.Ailments.HasFlag(Ailment.Exhausted);
+                    bool exhausted = partyMember.Ailments.HasFlag(Condition.Exhausted);
                     if (exhausted)
                         alreadyExhausted = true;
-                    partyMember.Ailments |= Ailment.Exhausted;
+                    partyMember.Ailments |= Condition.Exhausted;
                     damageValues[i] = AddExhaustion(partyMember, hoursExhausted, !exhausted);
                     if (damageValues[i] < partyMember.HitPoints.CurrentValue)
                         layout.UpdateCharacterStatus(partyMember);
@@ -1804,9 +1804,9 @@ namespace Ambermoon
             }
         }
 
-        internal void KillPartyMember(PartyMember partyMember, Ailment deadAilment = Ailment.DeadCorpse)
+        internal void KillPartyMember(PartyMember partyMember, Condition deadAilment = Condition.DeadCorpse)
         {
-            RemoveAilment(Ailment.Exhausted, partyMember);
+            RemoveAilment(Condition.Exhausted, partyMember);
             partyMember.Die(deadAilment);
         }
 
@@ -1862,8 +1862,8 @@ namespace Ambermoon
                 => AgePlayer(partyMember, finishAction, 1);
 
             ForeachPartyMember(Age, partyMember =>
-                partyMember.Alive && partyMember.Ailments.HasFlag(Ailment.Aging) &&
-                    !partyMember.Ailments.HasFlag(Ailment.Petrified), () =>
+                partyMember.Alive && partyMember.Ailments.HasFlag(Condition.Aging) &&
+                    !partyMember.Ailments.HasFlag(Condition.Petrified), () =>
                     {
                         if (exhaustedHours > 0)
                             GameTime_GotExhausted(exhaustedHours, passedHours);
@@ -1878,12 +1878,12 @@ namespace Ambermoon
         {
             void Age(PartyMember partyMember, Action finishAction)
             {
-                uint ageIncrease = partyMember.Ailments.HasFlag(Ailment.Aging) ? 2u : 1u;
+                uint ageIncrease = partyMember.Ailments.HasFlag(Condition.Aging) ? 2u : 1u;
                 AgePlayer(partyMember, finishAction, ageIncrease);
             }
 
             ForeachPartyMember(Age, partyMember =>
-                partyMember.Alive && !partyMember.Ailments.HasFlag(Ailment.Petrified), () =>
+                partyMember.Alive && !partyMember.Ailments.HasFlag(Condition.Petrified), () =>
                 {
                     if (exhaustedHours > 0)
                         GameTime_GotExhausted(exhaustedHours, passedHours);
@@ -2526,7 +2526,7 @@ namespace Ambermoon
                 {
                     var partyMember = GetPartyMember(characterSlot);
 
-                    if (!partyMember.Alive || partyMember.Ailments.HasFlag(Ailment.Petrified))
+                    if (!partyMember.Alive || partyMember.Ailments.HasFlag(Condition.Petrified))
                     {
                         ExecuteNextUpdateCycle(PickTargetPlayer);
                         return;
@@ -2909,7 +2909,7 @@ namespace Ambermoon
                 {
                     schnism = "";
                     ShowMessagePopup(DataNameProvider.TurnOnTuneInAndDropOut, () =>
-                        DamageAllPartyMembers(p => 0u, p => p.Alive, null, null, Ailment.Drugged));
+                        DamageAllPartyMembers(p => 0u, p => p.Alive, null, null, Condition.Drugged));
                 }
             }
         }
@@ -4176,7 +4176,7 @@ namespace Ambermoon
                 #region Abilities
                 layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.AbilitiesHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
-                foreach (var ability in Enum.GetValues<Ability>())
+                foreach (var ability in Enum.GetValues<Skill>())
                 {
                     int y = 122 + index++ * Global.GlyphLineHeight;
                     var abilityValues = partyMember.Abilities[ability];
@@ -4205,10 +4205,10 @@ namespace Ambermoon
                 const int ailmentsPerRow = 5;
                 foreach (var ailment in partyMember.VisibleAilments)
                 {
-                    if (ailment == Ailment.DeadAshes || ailment == Ailment.DeadDust)
+                    if (ailment == Condition.DeadAshes || ailment == Condition.DeadDust)
                         continue;
 
-                    if (ailment != Ailment.DeadCorpse && !partyMember.Ailments.HasFlag(ailment))
+                    if (ailment != Condition.DeadCorpse && !partyMember.Ailments.HasFlag(ailment))
                         continue;
 
                     int column = index % ailmentsPerRow;
@@ -4221,16 +4221,16 @@ namespace Ambermoon
                     string ailmentName = DataNameProvider.GetAilmentName(ailment);
                     string tooltip = Configuration.ShowPlayerStatsTooltips ? null : ailmentName;
                     layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), UIPaletteIndex,
-                        2, tooltip, ailment == Ailment.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
+                        2, tooltip, ailment == Condition.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
                     if (Configuration.ShowPlayerStatsTooltips)
                     {
                         var tooltipAilment = ailment;
-                        if (tooltipAilment == Ailment.DeadCorpse)
+                        if (tooltipAilment == Condition.DeadCorpse)
                         {
-                            if (partyMember.Ailments.HasFlag(Ailment.DeadDust))
-                                tooltipAilment = Ailment.DeadDust;
-                            else if (partyMember.Ailments.HasFlag(Ailment.DeadAshes))
-                                tooltipAilment = Ailment.DeadAshes;
+                            if (partyMember.Ailments.HasFlag(Condition.DeadDust))
+                                tooltipAilment = Condition.DeadDust;
+                            else if (partyMember.Ailments.HasFlag(Condition.DeadAshes))
+                                tooltipAilment = Condition.DeadAshes;
                         }
                         AddTooltip(new Rect(x, y, 16, 16), ailmentName + "^^" + BuiltinTooltips.GetAilmentTooltip(GameLanguage, tooltipAilment, partyMember));
                     }
@@ -4661,7 +4661,7 @@ namespace Ambermoon
         }
 
         internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
-            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Ailment inflictAilment = Ailment.None,
+            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Condition inflictAilment = Condition.None,
             bool showDamageSplash = true)
         {
             // In original all players are damaged one after the other
@@ -4671,7 +4671,7 @@ namespace Ambermoon
             // party member is checked.
             // At the end all affected living characters will show the damage splash.
             List<PartyMember> damagedPlayers = new List<PartyMember>();
-            ForeachPartyMember(Damage, p => p.Alive && !p.Ailments.HasFlag(Ailment.Petrified), () =>
+            ForeachPartyMember(Damage, p => p.Alive && !p.Ailments.HasFlag(Condition.Petrified), () =>
             {
                 if (showDamageSplash)
                 {
@@ -4703,19 +4703,19 @@ namespace Ambermoon
 
                 if (Godmode)
                 {
-                    if (inflictAilment.HasFlag(Ailment.DeadCorpse))
-                        inflictAilment &= ~Ailment.DeadCorpse;
-                    if (inflictAilment.HasFlag(Ailment.DeadAshes))
-                        inflictAilment &= ~Ailment.DeadAshes;
-                    if (inflictAilment.HasFlag(Ailment.DeadDust))
-                        inflictAilment &= ~Ailment.DeadDust;
+                    if (inflictAilment.HasFlag(Condition.DeadCorpse))
+                        inflictAilment &= ~Condition.DeadCorpse;
+                    if (inflictAilment.HasFlag(Condition.DeadAshes))
+                        inflictAilment &= ~Condition.DeadAshes;
+                    if (inflictAilment.HasFlag(Condition.DeadDust))
+                        inflictAilment &= ~Condition.DeadDust;
                 }
 
-                if (damage > 0 || inflictAilment != Ailment.None)
+                if (damage > 0 || inflictAilment != Condition.None)
                 {
-                    partyMember.Damage(damage, _ => KillPartyMember(partyMember, Ailment.DeadCorpse));
+                    partyMember.Damage(damage, _ => KillPartyMember(partyMember, Condition.DeadCorpse));
 
-                    if (partyMember.Alive && inflictAilment >= Ailment.DeadCorpse)
+                    if (partyMember.Alive && inflictAilment >= Condition.DeadCorpse)
                     {
                         KillPartyMember(partyMember, inflictAilment);
                     }
@@ -4724,11 +4724,11 @@ namespace Ambermoon
                     {
                         damagedPlayers.Add(partyMember);
 
-                        if (inflictAilment != Ailment.None && inflictAilment < Ailment.DeadCorpse)
+                        if (inflictAilment != Condition.None && inflictAilment < Condition.DeadCorpse)
                         {
                             partyMember.Ailments |= inflictAilment;
 
-                            if (inflictAilment == Ailment.Blind && partyMember == CurrentPartyMember)
+                            if (inflictAilment == Condition.Blind && partyMember == CurrentPartyMember)
                                 UpdateLight();
                         }
                     }
@@ -4977,7 +4977,7 @@ namespace Ambermoon
                             break;
                     }
 
-                    if (awardEvent.Ailments.Value.HasFlag(Ailment.Blind) && partyMember == CurrentPartyMember)
+                    if (awardEvent.Ailments.Value.HasFlag(Condition.Blind) && partyMember == CurrentPartyMember)
                         UpdateLight();
                     break;
                 }
@@ -5723,7 +5723,7 @@ namespace Ambermoon
 
             uint CalculateDamage(PartyMember partyMember)
             {
-                var swimAbility = partyMember.Abilities[Ability.Swim].TotalCurrentValue;
+                var swimAbility = partyMember.Abilities[Skill.Swim].TotalCurrentValue;
 
                 if (swimAbility >= 99)
                     return 0;
@@ -6644,7 +6644,7 @@ namespace Ambermoon
             {
                 // TODO: Can locks theoretically be lockpicked if they need a key? I guess in Ambermoon all locks with key have a lockpickingChanceReduction of 100%.
                 //       But what would happen if this value was below 100% for such doors? For now we allow lockpicking those doors as we don't check for key index.
-                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Ability.LockPicking].TotalCurrentValue, 100) - (int)lockpickingChanceReduction;
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Skill.LockPicking].TotalCurrentValue, 100) - (int)lockpickingChanceReduction;
 
                 if (chance <= 0 || RollDice100() >= chance)
                 {
@@ -6671,7 +6671,7 @@ namespace Ambermoon
             // Find trap button
             layout.AttachEventToButton(3, () =>
             {
-                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Ability.FindTraps].TotalCurrentValue, 100);
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Skill.FindTraps].TotalCurrentValue, 100);
 
                 if (hasTrap && chance > 0 && RollDice100() < chance)
                 {
@@ -6688,7 +6688,7 @@ namespace Ambermoon
             // Disarm trap button
             layout.AttachEventToButton(6, () =>
             {
-                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Ability.DisarmTraps].TotalCurrentValue, 100); // TODO: Is there a "find trap" reduction as well?
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Skill.DisarmTraps].TotalCurrentValue, 100); // TODO: Is there a "find trap" reduction as well?
 
                 if (chance <= 0 || RollDice100() >= chance)
                 {
@@ -7546,13 +7546,13 @@ namespace Ambermoon
         {
             if (!partyMember.Alive)
                 return UIGraphic.StatusDead;
-            else if (partyMember.Ailments.HasFlag(Ailment.Petrified))
+            else if (partyMember.Ailments.HasFlag(Condition.Petrified))
                 return UIGraphic.StatusPetrified;
-            else if (partyMember.Ailments.HasFlag(Ailment.Sleep))
+            else if (partyMember.Ailments.HasFlag(Condition.Sleep))
                 return UIGraphic.StatusSleep;
-            else if (partyMember.Ailments.HasFlag(Ailment.Panic))
+            else if (partyMember.Ailments.HasFlag(Condition.Panic))
                 return UIGraphic.StatusPanic;
-            else if (partyMember.Ailments.HasFlag(Ailment.Crazy))
+            else if (partyMember.Ailments.HasFlag(Condition.Crazy))
                 return UIGraphic.StatusCrazy;
             else
                 throw new AmbermoonException(ExceptionScope.Application, $"Party member {partyMember.Name} is not disabled.");
@@ -8073,14 +8073,14 @@ namespace Ambermoon
             layout.RemoveAllActiveSpells();
         }
 
-        internal void AddAilment(Ailment ailment, PartyMember target = null)
+        internal void AddAilment(Condition ailment, PartyMember target = null)
         {
             if (Godmode)
                 return;
 
             target ??= CurrentPartyMember;
 
-            if (ailment >= Ailment.DeadCorpse && target.Alive)
+            if (ailment >= Condition.DeadCorpse && target.Alive)
             {
                 KillPartyMember(target, ailment);
                 return;
@@ -8095,7 +8095,7 @@ namespace Ambermoon
                     if (gameOver)
                         return;
 
-                    if (ailment == Ailment.Blind)
+                    if (ailment == Condition.Blind)
                         UpdateLight();
                 }
             }
@@ -8104,9 +8104,9 @@ namespace Ambermoon
             layout.UpdateCharacter(target);
         }
 
-        internal void RemoveAilment(Ailment ailment, Character target)
+        internal void RemoveAilment(Condition ailment, Character target)
         {
-            bool removeExhaustion = ailment == Ailment.Exhausted && target.Ailments.HasFlag(Ailment.Exhausted);
+            bool removeExhaustion = ailment == Condition.Exhausted && target.Ailments.HasFlag(Condition.Exhausted);
 
             // Healing spells or potions.
             // Sleep can be removed by attacking as well.
@@ -8120,7 +8120,7 @@ namespace Ambermoon
 
                 if (removeExhaustion)
                     RemoveExhaustion(partyMember);
-                else if (ailment == Ailment.Blind && partyMember == CurrentPartyMember)
+                else if (ailment == Condition.Blind && partyMember == CurrentPartyMember)
                     UpdateLight();
             }
         }
@@ -8149,7 +8149,7 @@ namespace Ambermoon
                     partyMember.Attributes[attribute].CurrentValue >>= 1;
                 }
 
-                foreach (var ability in Enum.GetValues<Ability>())
+                foreach (var ability in Enum.GetValues<Skill>())
                 {
                     partyMember.Abilities[ability].StoredValue = partyMember.Abilities[ability].CurrentValue;
                     partyMember.Abilities[ability].CurrentValue >>= 1;
@@ -8167,7 +8167,7 @@ namespace Ambermoon
                 partyMember.Attributes[attribute].StoredValue = 0;
             }
 
-            foreach (var ability in Enum.GetValues<Ability>())
+            foreach (var ability in Enum.GetValues<Skill>())
             {
                 partyMember.Abilities[ability].CurrentValue = partyMember.Abilities[ability].StoredValue;
                 partyMember.Abilities[ability].StoredValue = 0;
@@ -8512,7 +8512,7 @@ namespace Ambermoon
 
         void TrySpell(Action successAction, Action failAction)
         {
-            if (RollDice100() < CurrentPartyMember.Abilities[Ability.UseMagic].TotalCurrentValue)
+            if (RollDice100() < CurrentPartyMember.Abilities[Skill.UseMagic].TotalCurrentValue)
                 successAction?.Invoke();
             else
                 failAction?.Invoke();
@@ -8740,19 +8740,19 @@ namespace Ambermoon
                     break;
                 case Spell.RemoveFear:
                 case Spell.RemovePanic:
-                    Cast(() => RemoveAilment(Ailment.Panic, target));
+                    Cast(() => RemoveAilment(Condition.Panic, target));
                     break;
                 case Spell.RemoveShadows:
                 case Spell.RemoveBlindness:
-                    Cast(() => RemoveAilment(Ailment.Blind, target));
+                    Cast(() => RemoveAilment(Condition.Blind, target));
                     break;
                 case Spell.RemovePain:
                 case Spell.RemoveDisease:
-                    Cast(() => RemoveAilment(Ailment.Diseased, target));
+                    Cast(() => RemoveAilment(Condition.Diseased, target));
                     break;
                 case Spell.RemovePoison:
                 case Spell.NeutralizePoison:
-                    Cast(() => RemoveAilment(Ailment.Poisoned, target));
+                    Cast(() => RemoveAilment(Condition.Poisoned, target));
                     break;
                 case Spell.HealingHand:
                     Cast(() => Heal(target.HitPoints.TotalMaxValue / 10)); // 10%
@@ -8769,26 +8769,26 @@ namespace Ambermoon
                     break;
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
-                    Cast(() => RemoveAilment(Ailment.Lamed, target));
+                    Cast(() => RemoveAilment(Condition.Lamed, target));
                     break;
                 case Spell.HealAging:
                 case Spell.StopAging:
-                    Cast(() => RemoveAilment(Ailment.Aging, target));
+                    Cast(() => RemoveAilment(Condition.Aging, target));
                     break;
                 case Spell.WakeUp:
-                    Cast(() => RemoveAilment(Ailment.Sleep, target));
+                    Cast(() => RemoveAilment(Condition.Sleep, target));
                     break;
                 case Spell.RemoveIrritation:
-                    Cast(() => RemoveAilment(Ailment.Irritated, target));
+                    Cast(() => RemoveAilment(Condition.Irritated, target));
                     break;
                 case Spell.RemoveDrugged:
-                    Cast(() => RemoveAilment(Ailment.Drugged, target));
+                    Cast(() => RemoveAilment(Condition.Drugged, target));
                     break;
                 case Spell.RemoveMadness:
-                    Cast(() => RemoveAilment(Ailment.Crazy, target));
+                    Cast(() => RemoveAilment(Condition.Crazy, target));
                     break;
                 case Spell.RestoreStamina:
-                    Cast(() => RemoveAilment(Ailment.Exhausted, target));
+                    Cast(() => RemoveAilment(Condition.Exhausted, target));
                     break;
                 case Spell.CreateFood:
                     Cast(() => ++target.Food);
@@ -8797,7 +8797,7 @@ namespace Ambermoon
                 {
                     Cast(() =>
                     {
-                        target.Ailments &= ~Ailment.DeadCorpse;
+                        target.Ailments &= ~Condition.DeadCorpse;
                         target.HitPoints.CurrentValue = target.HitPoints.TotalMaxValue;
                         PartyMemberRevived(target as PartyMember, finishAction, false);
                     });
@@ -8812,9 +8812,9 @@ namespace Ambermoon
                     }
                     void Revive()
                     {
-                        if (!target.Ailments.HasFlag(Ailment.DeadCorpse) ||
-                            target.Ailments.HasFlag(Ailment.DeadAshes) ||
-                            target.Ailments.HasFlag(Ailment.DeadDust))
+                        if (!target.Ailments.HasFlag(Condition.DeadCorpse) ||
+                            target.Ailments.HasFlag(Condition.DeadAshes) ||
+                            target.Ailments.HasFlag(Condition.DeadDust))
                         {
                             if (target.Alive)
                                 ShowMessagePopup(DataNameProvider.IsNotDead, finishAction);
@@ -8822,7 +8822,7 @@ namespace Ambermoon
                                 ShowMessagePopup(DataNameProvider.CannotBeResurrected, finishAction);
                             return;
                         }
-                        target.Ailments &= ~Ailment.DeadCorpse;
+                        target.Ailments &= ~Condition.DeadCorpse;
                         target.HitPoints.CurrentValue = 1;
                         PartyMemberRevived(targetPlayer, finishAction);
                     }
@@ -8833,10 +8833,10 @@ namespace Ambermoon
                             EndSequence();
                             ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
                             {
-                                if (target.Ailments.HasFlag(Ailment.DeadCorpse))
+                                if (target.Ailments.HasFlag(Condition.DeadCorpse))
                                 {
-                                    target.Ailments &= ~Ailment.DeadCorpse;
-                                    target.Ailments |= Ailment.DeadAshes;
+                                    target.Ailments &= ~Condition.DeadCorpse;
+                                    target.Ailments |= Condition.DeadAshes;
                                     ShowMessagePopup(DataNameProvider.BodyBurnsUp, finishAction);
                                 }
                             });
@@ -8857,14 +8857,14 @@ namespace Ambermoon
                     }
                     void TransformToBody()
                     {
-                        if (!target.Ailments.HasFlag(Ailment.DeadAshes) ||
-                            target.Ailments.HasFlag(Ailment.DeadDust))
+                        if (!target.Ailments.HasFlag(Condition.DeadAshes) ||
+                            target.Ailments.HasFlag(Condition.DeadDust))
                         {
                             ShowMessagePopup(DataNameProvider.IsNotAsh, finishAction);
                             return;
                         }
-                        target.Ailments &= ~Ailment.DeadAshes;
-                        target.Ailments |= Ailment.DeadCorpse;
+                        target.Ailments &= ~Condition.DeadAshes;
+                        target.Ailments |= Condition.DeadCorpse;
                         ShowMessagePopup(DataNameProvider.AshesChangedToBody, finishAction);
                     }
                     if (checkFail)
@@ -8874,10 +8874,10 @@ namespace Ambermoon
                             EndSequence();
                             ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
                             {
-                                if (target.Ailments.HasFlag(Ailment.DeadAshes))
+                                if (target.Ailments.HasFlag(Condition.DeadAshes))
                                 {
-                                    target.Ailments &= ~Ailment.DeadAshes;
-                                    target.Ailments |= Ailment.DeadDust;
+                                    target.Ailments &= ~Condition.DeadAshes;
+                                    target.Ailments |= Condition.DeadDust;
                                     ShowMessagePopup(DataNameProvider.AshesFallToDust, finishAction);
                                 }
                             });
@@ -8898,13 +8898,13 @@ namespace Ambermoon
                     }
                     void TransformToAshes()
                     {
-                        if (!target.Ailments.HasFlag(Ailment.DeadDust))
+                        if (!target.Ailments.HasFlag(Condition.DeadDust))
                         {
                             ShowMessagePopup(DataNameProvider.IsNotDust, finishAction);
                             return;
                         }
-                        target.Ailments &= ~Ailment.DeadDust;
-                        target.Ailments |= Ailment.DeadAshes;
+                        target.Ailments &= ~Condition.DeadDust;
+                        target.Ailments |= Condition.DeadAshes;
                         ShowMessagePopup(DataNameProvider.DustChangedToAshes, finishAction);
                     }
                     if (checkFail)
@@ -8942,18 +8942,18 @@ namespace Ambermoon
                     {
                         // Removes all curses and heals full LP
                         Heal(target.HitPoints.TotalMaxValue);
-                        foreach (var ailment in Enum.GetValues<Ailment>())
+                        foreach (var ailment in Enum.GetValues<Condition>())
                         {
-                            if (ailment != Ailment.None && target.Ailments.HasFlag(ailment))
+                            if (ailment != Condition.None && target.Ailments.HasFlag(ailment))
                                 RemoveAilment(ailment, target);
                         }
                         finishAction?.Invoke();
                     }
                     if (!target.Alive)
                     {
-                        target.Ailments &= ~Ailment.DeadCorpse;
-                        target.Ailments &= ~Ailment.DeadAshes;
-                        target.Ailments &= ~Ailment.DeadDust;
+                        target.Ailments &= ~Condition.DeadCorpse;
+                        target.Ailments &= ~Condition.DeadAshes;
+                        target.Ailments &= ~Condition.DeadDust;
                         target.HitPoints.CurrentValue = 1;
                         PartyMemberRevived(target as PartyMember, HealAll, false);
                     }
@@ -8988,7 +8988,7 @@ namespace Ambermoon
                     IncreaseAttribute(Attribute.AntiMagic);
                     break;
                 case Spell.DecreaseAge:
-                    if (target.Alive && !target.Ailments.HasFlag(Ailment.Petrified) && target.Attributes[Attribute.Age].CurrentValue > 18)
+                    if (target.Alive && !target.Ailments.HasFlag(Condition.Petrified) && target.Attributes[Attribute.Age].CurrentValue > 18)
                     {
                         target.Attributes[Attribute.Age].CurrentValue = (uint)Math.Max(18, (int)target.Attributes[Attribute.Age].CurrentValue - RandomInt(1, 10));
 
@@ -8998,7 +8998,7 @@ namespace Ambermoon
                     break;
                 case Spell.Drugs:
                     if (target is PartyMember partyMember)
-                        AddAilment(Ailment.Drugged, partyMember);
+                        AddAilment(Condition.Drugged, partyMember);
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
@@ -9307,7 +9307,7 @@ namespace Ambermoon
             // Attributes, abilities, LP and SP is special for monsters.
             foreach (var attribute in Enum.GetValues<Attribute>())
                 FixValue(game, monster.Attributes[attribute]);
-            foreach (var ability in Enum.GetValues<Ability>())
+            foreach (var ability in Enum.GetValues<Skill>())
                 FixValue(game, monster.Abilities[ability]);
             // TODO: the given max value might be used for something else
             monster.HitPoints.MaxValue = monster.HitPoints.CurrentValue;
@@ -10020,7 +10020,7 @@ namespace Ambermoon
         {
             uint usedLightIntensity;
 
-            if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
+            if (CurrentPartyMember.Ailments.HasFlag(Condition.Blind))
                 return 0.0f;
 
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
@@ -10090,7 +10090,7 @@ namespace Ambermoon
                 lightIntensity = 255;
                 fow2D.Visible = false;
             }
-            else if (CurrentPartyMember.Ailments.HasFlag(Ailment.Blind))
+            else if (CurrentPartyMember.Ailments.HasFlag(Condition.Blind))
             {
                 lightIntensity = 0;
 
@@ -10609,7 +10609,7 @@ namespace Ambermoon
                 }, TextAlign.Left);
             }
 
-            void HealAilment(Ailment ailment, Action<bool> healedHandler)
+            void HealAilment(Condition ailment, Action<bool> healedHandler)
             {
                 // TODO: At the moment DeadAshes and DeadDust will be healed fully so that the
                 // character is alive afterwards. As this is bugged in original I don't know how
@@ -10629,7 +10629,7 @@ namespace Ambermoon
                         PlayHealAnimation(currentlyHealedMember);
                         layout.UpdateCharacterStatus(currentlyHealedMember);
                         healedHandler?.Invoke(true);
-                        if (ailment >= Ailment.DeadCorpse) // dead
+                        if (ailment >= Condition.DeadCorpse) // dead
                         {
                             currentlyHealedMember.HitPoints.CurrentValue = Math.Max(1, currentlyHealedMember.HitPoints.CurrentValue);
                             PartyMemberRevived(currentlyHealedMember);
@@ -10642,9 +10642,9 @@ namespace Ambermoon
                 }, TextAlign.Left);
             }
 
-            var healableAilments = Ailment.Lamed | Ailment.Poisoned | Ailment.Petrified | Ailment.Diseased |
-                Ailment.Aging | Ailment.DeadCorpse | Ailment.DeadAshes | Ailment.DeadDust | Ailment.Crazy |
-                Ailment.Blind | Ailment.Drugged;
+            var healableAilments = Condition.Lamed | Condition.Poisoned | Condition.Petrified | Condition.Diseased |
+                Condition.Aging | Condition.DeadCorpse | Condition.DeadAshes | Condition.DeadDust | Condition.Crazy |
+                Condition.Blind | Condition.Drugged;
 
             void PlayerSwitched()
             {
@@ -10735,19 +10735,19 @@ namespace Ambermoon
                     var itemArea = new Rect(16, 139, 151, 53);
                     TrapMouse(itemArea);
                     var slots = new List<ItemSlot>(12);
-                    var slotAilments = new List<Ailment>(12);
+                    var slotAilments = new List<Condition>(12);
                     // Ensure that only one dead state is present
-                    if (currentlyHealedMember.Ailments.HasFlag(Ailment.DeadDust))
-                        currentlyHealedMember.Ailments = Ailment.DeadDust;
-                    else if (currentlyHealedMember.Ailments.HasFlag(Ailment.DeadAshes))
-                        currentlyHealedMember.Ailments = Ailment.DeadAshes;
-                    else if (currentlyHealedMember.Ailments.HasFlag(Ailment.DeadCorpse))
-                        currentlyHealedMember.Ailments = Ailment.DeadCorpse;
+                    if (currentlyHealedMember.Ailments.HasFlag(Condition.DeadDust))
+                        currentlyHealedMember.Ailments = Condition.DeadDust;
+                    else if (currentlyHealedMember.Ailments.HasFlag(Condition.DeadAshes))
+                        currentlyHealedMember.Ailments = Condition.DeadAshes;
+                    else if (currentlyHealedMember.Ailments.HasFlag(Condition.DeadCorpse))
+                        currentlyHealedMember.Ailments = Condition.DeadCorpse;
                     for (int i = 0; i < 16; ++i)
                     {
                         if (((uint)healableAilments & (1u << i)) != 0)
                         {
-                            var ailment = (Ailment)(1 << i);
+                            var ailment = (Condition)(1 << i);
 
                             if (currentlyHealedMember.Ailments.HasFlag(ailment))
                             {
@@ -10755,14 +10755,14 @@ namespace Ambermoon
                                 {
                                     ItemIndex = ailment switch
                                     {
-                                        Ailment.Lamed => 1,
-                                        Ailment.Poisoned => 2,
-                                        Ailment.Petrified => 3,
-                                        Ailment.Diseased => 4,
-                                        Ailment.Aging => 5,
-                                        Ailment.Crazy => 7,
-                                        Ailment.Blind => 8,
-                                        Ailment.Drugged => 9,
+                                        Condition.Lamed => 1,
+                                        Condition.Poisoned => 2,
+                                        Condition.Petrified => 3,
+                                        Condition.Diseased => 4,
+                                        Condition.Aging => 5,
+                                        Condition.Crazy => 7,
+                                        Condition.Blind => 8,
+                                        Condition.Drugged => 9,
                                         _ => 6 // dead states
                                     },
                                     Amount = 1
@@ -10820,7 +10820,7 @@ namespace Ambermoon
                             {
                                 if (healed)
                                 {
-                                    if (currentlyHealedMember.Ailments != Ailment.None)
+                                    if (currentlyHealedMember.Ailments != Condition.None)
                                     {
                                         conditionGrid.SetItem(slotIndex, null);
                                         TrapMouse(itemArea);
@@ -11353,30 +11353,30 @@ namespace Ambermoon
                 ShowPlaceWindow(trainer.Name, showWelcome ?
                     trainer.Ability switch
                     {
-                        Ability.Attack => DataNameProvider.WelcomeAttackTrainer,
-                        Ability.Parry => DataNameProvider.WelcomeParryTrainer,
-                        Ability.Swim => DataNameProvider.WelcomeSwimTrainer,
-                        Ability.CriticalHit => DataNameProvider.WelcomeCriticalHitTrainer,
-                        Ability.FindTraps => DataNameProvider.WelcomeFindTrapTrainer,
-                        Ability.DisarmTraps => DataNameProvider.WelcomeDisarmTrapTrainer,
-                        Ability.LockPicking => DataNameProvider.WelcomeLockPickingTrainer,
-                        Ability.Searching => DataNameProvider.WelcomeSearchTrainer,
-                        Ability.ReadMagic => DataNameProvider.WelcomeReadMagicTrainer,
-                        Ability.UseMagic => DataNameProvider.WelcomeUseMagicTrainer,
+                        Skill.Attack => DataNameProvider.WelcomeAttackTrainer,
+                        Skill.Parry => DataNameProvider.WelcomeParryTrainer,
+                        Skill.Swim => DataNameProvider.WelcomeSwimTrainer,
+                        Skill.CriticalHit => DataNameProvider.WelcomeCriticalHitTrainer,
+                        Skill.FindTraps => DataNameProvider.WelcomeFindTrapTrainer,
+                        Skill.DisarmTraps => DataNameProvider.WelcomeDisarmTrapTrainer,
+                        Skill.LockPicking => DataNameProvider.WelcomeLockPickingTrainer,
+                        Skill.Searching => DataNameProvider.WelcomeSearchTrainer,
+                        Skill.ReadMagic => DataNameProvider.WelcomeReadMagicTrainer,
+                        Skill.UseMagic => DataNameProvider.WelcomeUseMagicTrainer,
                         _ => throw new AmbermoonException(ExceptionScope.Data, "Invalid ability for trainer")
                     } : null,
                     trainer.Ability switch
                     {
-                        Ability.Attack => Picture80x80.Knight,
-                        Ability.Parry => Picture80x80.Knight,
-                        Ability.Swim => Picture80x80.Knight,
-                        Ability.CriticalHit => Picture80x80.Knight,
-                        Ability.FindTraps => Picture80x80.Thief,
-                        Ability.DisarmTraps => Picture80x80.Thief,
-                        Ability.LockPicking => Picture80x80.Thief,
-                        Ability.Searching => Picture80x80.Thief,
-                        Ability.ReadMagic => Picture80x80.Magician,
-                        Ability.UseMagic => Picture80x80.Magician,
+                        Skill.Attack => Picture80x80.Knight,
+                        Skill.Parry => Picture80x80.Knight,
+                        Skill.Swim => Picture80x80.Knight,
+                        Skill.CriticalHit => Picture80x80.Knight,
+                        Skill.FindTraps => Picture80x80.Thief,
+                        Skill.DisarmTraps => Picture80x80.Thief,
+                        Skill.LockPicking => Picture80x80.Thief,
+                        Skill.Searching => Picture80x80.Thief,
+                        Skill.ReadMagic => Picture80x80.Magician,
+                        Skill.UseMagic => Picture80x80.Magician,
                         _ =>  Picture80x80.Knight
                     }, trainer, SetupTrainer, PlayerSwitched
                 );
@@ -12082,7 +12082,7 @@ namespace Ambermoon
                                 {
                                     void Revive(PartyMember target, Action finishAction) =>
                                         ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
-                                    ForeachPartyMember(Revive, p => p.Ailments.HasFlag(Ailment.DeadCorpse));
+                                    ForeachPartyMember(Revive, p => p.Ailments.HasFlag(Condition.DeadCorpse));
                                 }
                                 else
                                 {
@@ -12410,7 +12410,7 @@ namespace Ambermoon
                         {
                             CurrentPartyMember.SpellLearningPoints -= (ushort)spellInfo.SLP;
 
-                            if (RollDice100() < CurrentPartyMember.Abilities[Ability.ReadMagic].TotalCurrentValue)
+                            if (RollDice100() < CurrentPartyMember.Abilities[Skill.ReadMagic].TotalCurrentValue)
                             {
                                 // Learned spell
                                 ShowMessage(DataNameProvider.ManagedToLearnSpell, () =>

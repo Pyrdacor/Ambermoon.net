@@ -15,6 +15,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<ItemType, string> entries = new Dictionary<ItemType, string>();
         public IReadOnlyDictionary<ItemType, string> Entries => entries;
 
+        internal ItemTypeNames(List<string> names)
+        {
+            if (names.Count != 20)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of item type names.");
+
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add((ItemType)(i + 1), names[i]);
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the item type names just behind the

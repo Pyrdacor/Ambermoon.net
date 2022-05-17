@@ -13,6 +13,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<Language, string> entries = new Dictionary<Language, string>();
         public IReadOnlyDictionary<Language, string> Entries => entries;
 
+        internal LanguageNames(List<string> names)
+        {
+            if (names.Count != 8)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of language names.");
+
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add((Language)(1 << i), names[i]);
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the language names just behind the

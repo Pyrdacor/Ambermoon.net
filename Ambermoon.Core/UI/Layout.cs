@@ -3738,7 +3738,7 @@ namespace Ambermoon.UI
                 // Overweight
                 UpdateCharacterStatus(slot, UIGraphic.StatusOverweight);
             }
-            else if (partyMember.Ailments != Ailment.None)
+            else if (partyMember.Ailments != Condition.None)
             {
                 var ailments = partyMember.VisibleAilments;
                 uint ailmentCount = (uint)ailments.Count;

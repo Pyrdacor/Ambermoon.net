@@ -16,7 +16,7 @@ namespace Ambermoon.Data
         public int SpellPoints { get; set; }
         public Attribute? Attribute { get; set; }
         public int AttributeValue { get; set; }
-        public Ability? Ability { get; set; }
+        public Skill? Ability { get; set; }
         public int AbilityValue { get; set; }
         public int Defense { get; set; }
         public int Damage { get; set; }
@@ -28,9 +28,9 @@ namespace Ambermoon.Data
         /// Used if this is a long-ranged weapon with ammunition.
         /// </summary>
         public AmmunitionType UsedAmmunitionType { get; set; }
-        public Ability SkillPenalty1 { get; set; }
+        public Skill SkillPenalty1 { get; set; }
         public uint SkillPenalty1Value { get; set; }
-        public Ability SkillPenalty2 { get; set; }
+        public Skill SkillPenalty2 { get; set; }
         public uint SkillPenalty2Value { get; set; }
         /// <summary>
         /// This value is used for:

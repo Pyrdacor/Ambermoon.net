@@ -71,7 +71,7 @@ namespace Ambermoon.Data
             }
 
             public override PlaceType PlaceType => PlaceType.Trainer;
-            public Ability Ability => (Ability)GetWord(0);
+            public Skill Ability => (Skill)GetWord(0);
             public int Cost => GetWord(2);
 
             public override string ToString()
@@ -104,21 +104,21 @@ namespace Ambermoon.Data
             public int HealLPCost => GetWord(22);
             public int RemoveCurseCost => GetWord(24);
 
-            public int GetCostForHealingAilment(Ailment ailment)
+            public int GetCostForHealingAilment(Condition ailment)
             {
                 return ailment switch
                 {
-                    Ailment.Crazy => HealCrazyCost,
-                    Ailment.Blind => HealBlindCost,
-                    Ailment.Drugged => HealDruggedCost,
-                    Ailment.Lamed => HealLamedCost,
-                    Ailment.Poisoned => HealPoisonedCost,
-                    Ailment.Petrified => HealPetrifiedCost,
-                    Ailment.Diseased => HealDiseasedCost,
-                    Ailment.Aging => HealAgingCost,
-                    Ailment.DeadCorpse => HealDeadCorpseCost,
-                    Ailment.DeadAshes => HealDeadAshesCost,
-                    Ailment.DeadDust => HealDeadDustCost,
+                    Condition.Crazy => HealCrazyCost,
+                    Condition.Blind => HealBlindCost,
+                    Condition.Drugged => HealDruggedCost,
+                    Condition.Lamed => HealLamedCost,
+                    Condition.Poisoned => HealPoisonedCost,
+                    Condition.Petrified => HealPetrifiedCost,
+                    Condition.Diseased => HealDiseasedCost,
+                    Condition.Aging => HealAgingCost,
+                    Condition.DeadCorpse => HealDeadCorpseCost,
+                    Condition.DeadAshes => HealDeadAshesCost,
+                    Condition.DeadDust => HealDeadDustCost,
                     _ => 0
                 };
             }
@@ -127,22 +127,22 @@ namespace Ambermoon.Data
             {
                 string text = $"Healer, Heal LP: {HealLPCost}, RemoveCurses: {RemoveCurseCost}";
 
-                void AddAilment(Ailment ailment)
+                void AddAilment(Condition ailment)
                 {
                     text += $", Heal{ailment}: {GetCostForHealingAilment(ailment)}";
                 }
 
-                AddAilment(Ailment.Crazy);
-                AddAilment(Ailment.Blind);
-                AddAilment(Ailment.Drugged);
-                AddAilment(Ailment.Lamed);
-                AddAilment(Ailment.Poisoned);
-                AddAilment(Ailment.Petrified);
-                AddAilment(Ailment.Diseased);
-                AddAilment(Ailment.Aging);
-                AddAilment(Ailment.DeadCorpse);
-                AddAilment(Ailment.DeadAshes);
-                AddAilment(Ailment.DeadDust);
+                AddAilment(Condition.Crazy);
+                AddAilment(Condition.Blind);
+                AddAilment(Condition.Drugged);
+                AddAilment(Condition.Lamed);
+                AddAilment(Condition.Poisoned);
+                AddAilment(Condition.Petrified);
+                AddAilment(Condition.Diseased);
+                AddAilment(Condition.Aging);
+                AddAilment(Condition.DeadCorpse);
+                AddAilment(Condition.DeadAshes);
+                AddAilment(Condition.DeadDust);
 
 
                 return text;

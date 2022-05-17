@@ -17,6 +17,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<World, string> entries = new Dictionary<World, string>(3);
         public IReadOnlyDictionary<World, string> Entries => entries;
 
+        internal WorldNames(List<string> names)
+        {
+            if (names.Count != 3)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of world names.");
+
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add((World)i, names[i]);
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the world names just behind the

@@ -14,6 +14,12 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<Option, string> entries = new Dictionary<Option, string>();
         public IReadOnlyDictionary<Option, string> Entries => entries;
 
+        internal OptionNames(List<string> names)
+        {
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add((Option)(1 << i), names[i]);
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the option names just behind the

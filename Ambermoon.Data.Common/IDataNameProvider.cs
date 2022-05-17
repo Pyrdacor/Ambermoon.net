@@ -13,7 +13,7 @@ namespace Ambermoon.Data
         string GetGenderName(Gender gender);
         string GetGenderName(GenderFlag gender);
         string GetLanguageName(Language language);
-        string GetAilmentName(Ailment ailment);
+        string GetAilmentName(Condition ailment);
         string GetSpellName(Spell spell);
         string GetWorldName(World world);
         string GetItemTypeName(ItemType itemType);
@@ -37,9 +37,9 @@ namespace Ambermoon.Data
         string AilmentsHeaderString { get; }
         string DataHeaderString { get; }
         string GetAttributeShortName(Attribute attribute);
-        string GetAbilityShortName(Ability ability);
+        string GetAbilityShortName(Skill ability);
         string GetAttributeName(Attribute attribute);
-        string GetAbilityName(Ability ability);
+        string GetAbilityName(Skill ability);
         string OptionsHeader { get; }
         string ClassesHeaderString { get; }
         string GenderHeaderString { get; }

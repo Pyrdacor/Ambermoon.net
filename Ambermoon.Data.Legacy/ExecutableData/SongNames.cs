@@ -16,6 +16,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         const int NumSongs = 32;
 
+        internal SongNames(List<string> names)
+        {
+            if (names.Count != NumSongs)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of songs.");
+
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add(Song.WhoSaidHiHo + i, names[i]);
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the song names just behind the

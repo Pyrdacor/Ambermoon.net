@@ -93,6 +93,7 @@ namespace Ambermoon.Data.Legacy
         public static Dictionary<string, char> New114Files = new Dictionary<string, char>
         {
             { "Dict.amb", 'G' },
+            { "Button_graphics", 'A' },
             { "Objects.amb", 'A' },
             { "Text.amb", 'A' },
             { "Monster_char.amb", 'H' }

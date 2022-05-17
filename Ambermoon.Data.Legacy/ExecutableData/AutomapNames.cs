@@ -18,6 +18,15 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<AutomapType, string> entries = new Dictionary<AutomapType, string>();
         public IReadOnlyDictionary<AutomapType, string> Entries => entries;
 
+        internal AutomapNames(List<string> names)
+        {
+            if (names.Count != 17)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of automap type names.");
+
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add(AutomapType.Riddlemouth + i, names[i]);
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the automap names just behind the

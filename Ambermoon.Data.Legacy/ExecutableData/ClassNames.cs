@@ -13,6 +13,18 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<Class, string> entries = new Dictionary<Class, string>();
         public IReadOnlyDictionary<Class, string> Entries => entries;
 
+        internal ClassNames(List<string> names)
+        {
+            if (names.Count != 9)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of class names.");
+
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add((Class)i, names[i]);
+
+            entries.Add(Class.Animal, "");
+            entries.Add(Class.Monster, "");
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the class names just behind the

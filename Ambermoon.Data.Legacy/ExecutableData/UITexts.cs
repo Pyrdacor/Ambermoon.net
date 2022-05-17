@@ -30,10 +30,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         She,
         His,
         Her,
-        Abilities,
+        Skills,
         Attributes,
         Languages,
-        Ailments,
+        Conditions,
         Male,
         Female,
         /// <summary>
@@ -143,7 +143,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         MBRDisplay,
         Attribute,
-        Ability,
+        Skill,
         Placeholder2Digit,
         Placeholder2DigitInParentheses,
         Cursed,
@@ -162,13 +162,36 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     }
 
     /// <summary>
-    /// After the <see cref="AilmentNames"/> there are the
+    /// After the <see cref="ConditionNames"/> there are the
     /// UI texts.
     /// </summary>
     public class UITexts
     {
         readonly Dictionary<UITextIndex, string> entries = new Dictionary<UITextIndex, string>();
         public IReadOnlyDictionary<UITextIndex, string> Entries => entries;
+
+        internal UITexts(List<string> uiTexts)
+        {
+            if (uiTexts.Count != 49)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of UI texts.");
+
+            for (int i = 0; i < uiTexts.Count; ++i)
+            {
+                if (i < 11)
+                    entries.Add((UITextIndex)i, uiTexts[i]);
+                else if (i == 11)
+                    entries.Add(UITextIndex.BothSexes, uiTexts[i]);
+                else if (i < 28)
+                    entries.Add((UITextIndex)(i - 1), uiTexts[i]);
+                else if (i < 39)
+                    entries.Add((UITextIndex)i, uiTexts[i]);
+                else
+                    entries.Add((UITextIndex)(i + 2), uiTexts[i]);
+            }
+
+            entries.Add(UITextIndex.Placeholder2Digit, "{0:00}");
+            entries.Add(UITextIndex.Placeholder2DigitInParentheses, "({0:00})");
+        }
 
         /// <summary>
         /// The position of the data reader should be at

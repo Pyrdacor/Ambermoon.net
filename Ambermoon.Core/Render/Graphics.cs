@@ -59,26 +59,26 @@ namespace Ambermoon.Render
         public static uint GetUIGraphicIndex(UIGraphic graphic) => UIGraphicOffset + (uint)graphic;
         public static uint GetButtonGraphicIndex(ButtonType buttonType) => ButtonOffset + (uint)buttonType;
         public static uint GetPopupFrameGraphicIndex(PopupFrame frame) => PopupFrameOffset + (uint)frame;
-        public static UIGraphic? GetAilmentGraphic(Ailment ailment) => ailment switch
+        public static UIGraphic? GetAilmentGraphic(Condition ailment) => ailment switch
         {
-            Ailment.Irritated => UIGraphic.StatusIrritated,
-            Ailment.Crazy => UIGraphic.StatusCrazy,
-            Ailment.Sleep => UIGraphic.StatusSleep,
-            Ailment.Panic => UIGraphic.StatusPanic,
-            Ailment.Blind => UIGraphic.StatusBlind,
-            Ailment.Drugged => UIGraphic.StatusDrugs,
-            Ailment.Exhausted => UIGraphic.StatusExhausted,
-            Ailment.Lamed => UIGraphic.StatusLamed,
-            Ailment.Poisoned => UIGraphic.StatusPoisoned,
-            Ailment.Petrified => UIGraphic.StatusPetrified,
-            Ailment.Diseased => UIGraphic.StatusDiseased,
-            Ailment.Aging => UIGraphic.StatusAging,
-            Ailment.DeadCorpse => UIGraphic.StatusDead,
-            Ailment.DeadAshes => UIGraphic.StatusDead,
-            Ailment.DeadDust => UIGraphic.StatusDead,
+            Condition.Irritated => UIGraphic.StatusIrritated,
+            Condition.Crazy => UIGraphic.StatusCrazy,
+            Condition.Sleep => UIGraphic.StatusSleep,
+            Condition.Panic => UIGraphic.StatusPanic,
+            Condition.Blind => UIGraphic.StatusBlind,
+            Condition.Drugged => UIGraphic.StatusDrugs,
+            Condition.Exhausted => UIGraphic.StatusExhausted,
+            Condition.Lamed => UIGraphic.StatusLamed,
+            Condition.Poisoned => UIGraphic.StatusPoisoned,
+            Condition.Petrified => UIGraphic.StatusPetrified,
+            Condition.Diseased => UIGraphic.StatusDiseased,
+            Condition.Aging => UIGraphic.StatusAging,
+            Condition.DeadCorpse => UIGraphic.StatusDead,
+            Condition.DeadAshes => UIGraphic.StatusDead,
+            Condition.DeadDust => UIGraphic.StatusDead,
             _ => null
         };
-        public static uint GetAilmentGraphicIndex(Ailment ailment) => GetUIGraphicIndex(GetAilmentGraphic(ailment).Value);
+        public static uint GetAilmentGraphicIndex(Condition ailment) => GetUIGraphicIndex(GetAilmentGraphic(ailment).Value);
         public static uint GetAutomapGraphicIndex(AutomapGraphic automapGraphic) => AutomapOffset + (uint)automapGraphic;
         public static uint GetNPCGraphicIndex(uint npcFileIndex, uint npcIndex, IGraphicProvider graphicProvider) =>
             NPCGraphicOffset + (graphicProvider.NPCGraphicOffsets.TryGetValue((int)npcFileIndex, out var offset) ? (uint)offset : 0) + npcIndex;

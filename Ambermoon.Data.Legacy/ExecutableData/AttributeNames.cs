@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
     /// <summary>
-    /// After the <see cref="AbilityNames"/> there are the
+    /// After the <see cref="SkillNames"/> there are the
     /// attribute names like "Strength", "Dexterity", etc.
     /// </summary>
     public class AttributeNames
@@ -14,6 +14,23 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<Attribute, string> shortNames = new Dictionary<Attribute, string>();
         public IReadOnlyDictionary<Attribute, string> Entries => entries;
         public IReadOnlyDictionary<Attribute, string> ShortNames => shortNames;
+
+        internal AttributeNames(List<string> names, List<string> shortNames)
+        {
+            if (names.Count != 9 || shortNames.Count != 8)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of attribute names.");
+
+            for (int i = 0; i < names.Count; ++i)
+            {
+                entries.Add((Attribute)i, names[i]);
+                if (i != 8)
+                    this.shortNames.Add((Attribute)i, shortNames[i]);
+            }
+
+            entries.Add(Attribute.Unknown, "");
+            this.shortNames.Add(Attribute.Age, "");
+            this.shortNames.Add(Attribute.Unknown, "");
+        }
 
         /// <summary>
         /// The position of the data reader should be at

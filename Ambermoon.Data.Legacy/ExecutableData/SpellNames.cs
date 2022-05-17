@@ -20,6 +20,21 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         public IReadOnlyDictionary<Spell, string> Entries => entries;
         public IReadOnlyDictionary<SpellSchool, List<string>> EntriesPerType => entriesPerType;
 
+        internal SpellNames(List<string> names)
+        {
+            if (names.Count != 210)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of spell names.");
+
+            for (int i = 0; i < 7; ++i)
+                entriesPerType.Add((SpellSchool)i, new List<string>());
+
+            for (int i = 0; i < names.Count; ++i)
+            {
+                entries.Add((Spell)(i + 1), names[i]);
+                entriesPerType[(SpellSchool)(i / 30)].Add(names[i]);
+            }
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the spell names just behind the

@@ -13,6 +13,17 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         readonly Dictionary<Race, string> entries = new Dictionary<Race, string>();
         public IReadOnlyDictionary<Race, string> Entries => entries;
 
+        internal RaceNames(List<string> names)
+        {
+            if (names.Count != 15)
+                throw new AmbermoonException(ExceptionScope.Data, "Invalid number of race names.");
+
+            for (int i = 0; i < names.Count; ++i)
+                entries.Add((Race)i, names[i]);
+
+            entries.Add(Race.Unknown15, "");
+        }
+
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the race names just behind the
