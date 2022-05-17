@@ -11,7 +11,7 @@ Version 1.6.0 is the most recent version from 17-05-2022. It also includes [Ambe
 The full package with additional resources can also be downloaded from my website at www.pyrdacor.net!
 
 Platform | Download 1.6.0
---- | ---
+--- | :-:
 **Windows 8,10,11 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Windows.zip)
 **Linux 64bit** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Linux.tar.gz)
 **Mac 64bit bundled** | [Link](https://ambermoon-net.pyrdacor.net/download/1.6.0/Ambermoon.net-Mac-Bundle.zip)
