@@ -43,7 +43,8 @@ namespace Ambermoon.Data.Legacy.Serialization
             for (int i = 0; i < 32; ++i)
             {
                 var index = dataReader.ReadByte();
-                var typeAndFlags = dataReader.ReadWord();
+                var collisionClass = dataReader.ReadByte();
+                var typeAndFlags = dataReader.ReadByte();
                 var eventIndex = dataReader.ReadByte();
                 var gfxIndex = dataReader.ReadWord();
                 var tileFlags = dataReader.ReadDword();
@@ -53,6 +54,7 @@ namespace Ambermoon.Data.Legacy.Serialization
                     Index = index,
                     Type = (CharacterType)(typeAndFlags & 0x03),
                     CharacterFlags = (Map.CharacterReference.Flags)(typeAndFlags >> 2),
+                    CollisionClass = collisionClass,
                     EventIndex = eventIndex,
                     GraphicIndex = gfxIndex,
                     TileFlags = (Tileset.TileFlags)tileFlags,

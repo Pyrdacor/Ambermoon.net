@@ -148,13 +148,18 @@ namespace Ambermoon.Data
                 RandomMovement = 0x01,
                 UseTileset = 0x02,
                 TextPopup = 0x04,
-                MoveOnlyWhenSeePlayer = 0x40,
-                Unknown = 0x80 // e.g. Tornaks use it
+                Stationary = 0x80, // new in Ambermoon Advanced
+                MoveOnlyWhenSeePlayer = 0x80 // new in Ambermoon Advanced
             }
 
             public CharacterType Type { get; set; }
             public Flags CharacterFlags { get; set; }
-            public bool OnlyMoveWhenSeePlayer => CharacterFlags.HasFlag(Flags.MoveOnlyWhenSeePlayer);
+            public bool OnlyMoveWhenSeePlayer => Type == CharacterType.Monster && CharacterFlags.HasFlag(Flags.MoveOnlyWhenSeePlayer);
+            public bool Stationary => Type != CharacterType.Monster && CharacterFlags.HasFlag(Flags.Stationary);
+            /// <summary>
+            /// Bit index of the travel type.
+            /// </summary>
+            public int CollisionClass { get; set; }
             public uint Index { get; set; } // of party member, npc, monster or map text
             /// <summary>
             /// Upper 4 bits of this contains the combat background index.
