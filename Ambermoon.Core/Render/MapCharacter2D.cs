@@ -293,7 +293,7 @@ namespace Ambermoon.Render
                         lastTimeSlot = gameTime.TimeSlot;
                     }
                 }
-                else
+                else if (!characterReference.Stationary)
                 {
                     // Walk a given path every day time slot
                     newPosition = new Position(characterReference.Positions[(int)gameTime.TimeSlot]);

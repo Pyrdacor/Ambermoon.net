@@ -148,8 +148,8 @@ namespace Ambermoon.Data
                 RandomMovement = 0x01,
                 UseTileset = 0x02,
                 TextPopup = 0x04,
-                Stationary = 0x80, // new in Ambermoon Advanced
-                MoveOnlyWhenSeePlayer = 0x80 // new in Ambermoon Advanced
+                Stationary = 0x20, // new in Ambermoon Advanced
+                MoveOnlyWhenSeePlayer = 0x20 // new in Ambermoon Advanced
             }
 
             public CharacterType Type { get; set; }
@@ -157,7 +157,7 @@ namespace Ambermoon.Data
             public bool OnlyMoveWhenSeePlayer => Type == CharacterType.Monster && CharacterFlags.HasFlag(Flags.MoveOnlyWhenSeePlayer);
             public bool Stationary => Type != CharacterType.Monster && CharacterFlags.HasFlag(Flags.Stationary);
             /// <summary>
-            /// Bit index of the travel type.
+            /// Equals travel type.
             /// </summary>
             public int CollisionClass { get; set; }
             public uint Index { get; set; } // of party member, npc, monster or map text

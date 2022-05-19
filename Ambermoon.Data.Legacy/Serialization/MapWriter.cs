@@ -82,7 +82,8 @@ namespace Ambermoon.Data.Legacy.Serialization
                     continue;
 
                 if (characterReference.Type == CharacterType.Monster ||
-                    characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement))
+                    characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.RandomMovement) ||
+                    characterReference.CharacterFlags.HasFlag(Map.CharacterReference.Flags.Stationary))
                 {
                     // For random movement only the start position is given.
                     dataWriter.Write((byte)characterReference.Positions[0].X);
