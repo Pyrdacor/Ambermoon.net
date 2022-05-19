@@ -5315,6 +5315,8 @@ namespace Ambermoon
             float stepSize = right ? 15.0f : -15.0f;
             int fullSteps = Math.Max(180 / 15, Util.Round(dist / stepSize));
             float halfStepSize = dist % 15.0f;
+            if (!right)
+                halfStepSize = -halfStepSize;
             int stepIndex = 0;
 
             void Step()
