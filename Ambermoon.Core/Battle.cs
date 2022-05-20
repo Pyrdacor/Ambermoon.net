@@ -2344,7 +2344,7 @@ namespace Ambermoon
             switch (spell)
             {
                 case Spell.GhostWeapon:
-                    DealDamage(25, 0);
+                    DealDamage((uint)Math.Max(1, caster.BaseAttack + caster.VariableAttack), 0);
                     return;
                 case Spell.Blink:
                     game.SetBattleMessageWithClick(target.Name + game.DataNameProvider.BattleMessageHasBlinked, TextColor.BattlePlayer,
