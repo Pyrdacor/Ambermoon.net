@@ -2608,7 +2608,9 @@ namespace Ambermoon
                 case Spell.MagicalProjectile:
                 case Spell.MagicalArrows:
                     // Those deal half the caster level as damage.
-                    DealDamage(Math.Max(1, (uint)caster.Level / 2), 0);
+                    // Monsters deal full level as damage instead.
+                    int damage = caster is Monster ? caster.Level : caster.Level / 2;
+                    DealDamage(Math.Max(1, (uint)damage), 0);
                     return;
                 case Spell.LPStealer:
                 {
