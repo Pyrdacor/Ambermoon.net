@@ -434,6 +434,7 @@ namespace Ambermoon.Data.Legacy
             AddGraphicFiles(GraphicType.Tileset7, new GraphicFile("2Icon_gfx.amb", 0, 7));
             AddGraphicFiles(GraphicType.Tileset8, new GraphicFile("3Icon_gfx.amb", 0, 8));
             AddGraphicFiles(GraphicType.Tileset9, new GraphicFile("3Icon_gfx.amb", 0, 9, true));
+            AddGraphicFiles(GraphicType.Tileset10, new GraphicFile("2Icon_gfx.amb", 0, 10, true));
             AddGraphicFiles(GraphicType.Player, new GraphicFile("Party_gfx.amb"));
             AddGraphicFiles(GraphicType.Portrait, new GraphicFile("Portraits.amb"));
             AddGraphicFiles(GraphicType.Item, new GraphicFile("Object_icons"));
@@ -527,6 +528,7 @@ namespace Ambermoon.Data.Legacy
                 case GraphicType.Tileset7:
                 case GraphicType.Tileset8:
                 case GraphicType.Tileset9:
+                case GraphicType.Tileset10:
                     info.Alpha = true;
                     break;
                 case GraphicType.Player:

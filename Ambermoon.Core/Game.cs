@@ -4888,7 +4888,7 @@ namespace Ambermoon
             }
         }
 
-        internal void AwardPlayer(PartyMember partyMember, AwardEvent awardEvent, Action followAction)
+        internal void AwardPlayer(PartyMember partyMember, RewardEvent awardEvent, Action followAction)
         {
             void Change(CharacterValue characterValue, int amount, bool percentage, bool lpLike)
             {
@@ -4906,19 +4906,19 @@ namespace Ambermoon
 
                 switch (awardEvent.Operation)
                 {
-                    case AwardEvent.AwardOperation.Increase:
+                    case RewardEvent.AwardOperation.Increase:
                         Change(characterValue, (int)value, false, lpLike);
                         break;
-                    case AwardEvent.AwardOperation.Decrease:
+                    case RewardEvent.AwardOperation.Decrease:
                         Change(characterValue, -(int)value, false, lpLike);
                         break;
-                    case AwardEvent.AwardOperation.IncreasePercentage:
+                    case RewardEvent.AwardOperation.IncreasePercentage:
                         Change(characterValue, (int)value, true, lpLike);
                         break;
-                    case AwardEvent.AwardOperation.DecreasePercentage:
+                    case RewardEvent.AwardOperation.DecreasePercentage:
                         Change(characterValue, -(int)value, true, lpLike);
                         break;
-                    case AwardEvent.AwardOperation.Fill:
+                    case RewardEvent.AwardOperation.Fill:
                         characterValue.CurrentValue = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
                         break;
                 }
@@ -4928,7 +4928,7 @@ namespace Ambermoon
 
             switch (awardEvent.TypeOfAward)
             {
-                case AwardEvent.AwardType.Attribute:
+                case RewardEvent.AwardType.Attribute:
                     if (awardEvent.Attribute != null && awardEvent.Attribute < Attribute.Age)
                         AwardValue(partyMember.Attributes[awardEvent.Attribute.Value], false);
                     else
@@ -4937,7 +4937,7 @@ namespace Ambermoon
                         return;
                     }
                     break;
-                case AwardEvent.AwardType.Ability:
+                case RewardEvent.AwardType.Ability:
                     if (awardEvent.Ability != null)
                         AwardValue(partyMember.Abilities[awardEvent.Ability.Value], false);
                     else
@@ -4946,7 +4946,7 @@ namespace Ambermoon
                         return;
                     }
                     break;
-                case AwardEvent.AwardType.HitPoints:
+                case RewardEvent.AwardType.HitPoints:
                 {
                     // Note: Awards happen silently so there is no damage splash.
                     // Looking at the original code there isn't even a die handling
@@ -4958,24 +4958,24 @@ namespace Ambermoon
                         layout.UpdateCharacter(partyMember);
                     break;
                 }
-                case AwardEvent.AwardType.SpellPoints:
+                case RewardEvent.AwardType.SpellPoints:
                     AwardValue(partyMember.SpellPoints, true);
                     layout.UpdateCharacter(partyMember);
                     break;
-                case AwardEvent.AwardType.SpellLearningPoints:
+                case RewardEvent.AwardType.SpellLearningPoints:
                 {
                     switch (awardEvent.Operation)
                     {
-                        case AwardEvent.AwardOperation.Increase:
+                        case RewardEvent.AwardOperation.Increase:
                             partyMember.SpellLearningPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.SpellLearningPoints + RandomizeIfNecessary(awardEvent.Value));
                             break;
-                        case AwardEvent.AwardOperation.Decrease:
+                        case RewardEvent.AwardOperation.Decrease:
                             partyMember.SpellLearningPoints = (ushort)Util.Max(0, (int)partyMember.SpellLearningPoints - (int)RandomizeIfNecessary(awardEvent.Value));
                             break;
                     }
                     break;
                 }
-                case AwardEvent.AwardType.Ailments:
+                case RewardEvent.AwardType.Ailments:
                 {
                     if (awardEvent.Ailments == null)
                     {
@@ -4985,13 +4985,13 @@ namespace Ambermoon
 
                     switch (awardEvent.Operation)
                     {
-                        case AwardEvent.AwardOperation.Add:
+                        case RewardEvent.AwardOperation.Add:
                             partyMember.Ailments |= awardEvent.Ailments.Value;
                             break;
-                        case AwardEvent.AwardOperation.Remove:
+                        case RewardEvent.AwardOperation.Remove:
                             partyMember.Ailments &= ~awardEvent.Ailments.Value;
                             break;
-                        case AwardEvent.AwardOperation.Toggle:
+                        case RewardEvent.AwardOperation.Toggle:
                             partyMember.Ailments ^= awardEvent.Ailments.Value;
                             break;
                     }
@@ -5000,7 +5000,7 @@ namespace Ambermoon
                         UpdateLight();
                     break;
                 }
-                case AwardEvent.AwardType.UsableSpellTypes:
+                case RewardEvent.AwardType.UsableSpellTypes:
                 {
                     if (awardEvent.UsableSpellTypes == null)
                     {
@@ -5010,19 +5010,19 @@ namespace Ambermoon
 
                     switch (awardEvent.Operation)
                     {
-                        case AwardEvent.AwardOperation.Add:
+                        case RewardEvent.AwardOperation.Add:
                             partyMember.SpellMastery |= awardEvent.UsableSpellTypes.Value;
                             break;
-                        case AwardEvent.AwardOperation.Remove:
+                        case RewardEvent.AwardOperation.Remove:
                             partyMember.SpellMastery &= ~awardEvent.UsableSpellTypes.Value;
                             break;
-                        case AwardEvent.AwardOperation.Toggle:
+                        case RewardEvent.AwardOperation.Toggle:
                             partyMember.SpellMastery ^= awardEvent.UsableSpellTypes.Value;
                             break;
                     }
                     break;
                 }
-                case AwardEvent.AwardType.Languages:
+                case RewardEvent.AwardType.Languages:
                 {
                     if (awardEvent.Languages == null)
                     {
@@ -5032,39 +5032,39 @@ namespace Ambermoon
 
                     switch (awardEvent.Operation)
                     {
-                        case AwardEvent.AwardOperation.Add:
+                        case RewardEvent.AwardOperation.Add:
                             partyMember.SpokenLanguages |= awardEvent.Languages.Value;
                             break;
-                        case AwardEvent.AwardOperation.Remove:
+                        case RewardEvent.AwardOperation.Remove:
                             partyMember.SpokenLanguages &= ~awardEvent.Languages.Value;
                             break;
-                        case AwardEvent.AwardOperation.Toggle:
+                        case RewardEvent.AwardOperation.Toggle:
                             partyMember.SpokenLanguages ^= awardEvent.Languages.Value;
                             break;
                     }
                     break;
                 }
-                case AwardEvent.AwardType.Experience:
+                case RewardEvent.AwardType.Experience:
                 {
                     switch (awardEvent.Operation)
                     {
-                        case AwardEvent.AwardOperation.Increase:
+                        case RewardEvent.AwardOperation.Increase:
                             AddExperience(partyMember, RandomizeIfNecessary(awardEvent.Value), followAction);
                             return;
-                        case AwardEvent.AwardOperation.Decrease:
+                        case RewardEvent.AwardOperation.Decrease:
                             partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - RandomizeIfNecessary(awardEvent.Value));
                             break;
                     }
                     break;
                 }
-                case AwardEvent.AwardType.TrainingPoints:
+                case RewardEvent.AwardType.TrainingPoints:
                 {
                     switch (awardEvent.Operation)
                     {
-                        case AwardEvent.AwardOperation.Increase:
+                        case RewardEvent.AwardOperation.Increase:
                             partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + RandomizeIfNecessary(awardEvent.Value));
                             break;
-                        case AwardEvent.AwardOperation.Decrease:
+                        case RewardEvent.AwardOperation.Decrease:
                             partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)RandomizeIfNecessary(awardEvent.Value));
                             break;
                     }
@@ -5095,7 +5095,7 @@ namespace Ambermoon
                 ClosePopup();
                 var mapEventIfFalse = conditionEvent.ContinueIfFalseWithMapEventIndex == 0xffff
                     ? null : events[(int)conditionEvent.ContinueIfFalseWithMapEventIndex];
-                var @event = (number == conditionEvent.ObjectIndex)
+                var @event = (number == conditionEvent.ObjectIndex) == (conditionEvent.Value != 0)
                     ? conditionEvent.Next : mapEventIfFalse;
                 if (@event != null)
                     EventExtensions.TriggerEventChain(map, this, EventTrigger.Always, x, y, @event, true);
@@ -5636,7 +5636,9 @@ namespace Ambermoon
                             CurrentSavegame.TransportLocations[i] = new TransportLocation
                             {
                                 MapIndex = mapIndex,
-                                Position = new Position((int)x % 50 + 1, (int)y % 50 + 1),
+                                Position = Map.IsWorldMap
+                                    ? new Position((int)x % 50 + 1, (int)y % 50 + 1)
+                                    : new Position((int)x + 1, (int)y + 1),
                                 TravelType = TravelType
                             };
                             index = i;
@@ -5645,7 +5647,7 @@ namespace Ambermoon
                     }
 
                     if (index != null)
-                        renderMap2D.PlaceTransport(mapIndex, x % 50, y % 50, TravelType, index.Value);
+                        renderMap2D.PlaceTransport(mapIndex, Map.IsWorldMap ? x % 50 : x, Map.IsWorldMap ? y % 50 : y, TravelType, index.Value);
                     else
                         return;
                 }
@@ -5683,7 +5685,9 @@ namespace Ambermoon
             index = null;
             var mapIndex = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
             // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
-            var position = new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1);
+            var position = Map.IsWorldMap
+                ? new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1)
+                : new Position(player.Position.X + 1, player.Position.Y + 1);
 
             for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
             {
@@ -5712,7 +5716,9 @@ namespace Ambermoon
 
             var mapIndex = renderMap2D.GetMapFromTile((uint)player.Position.X, (uint)player.Position.Y).Index;
             // Note: Savegame stores positions 1-based but we 0-based so increase by 1,1 for tests below.
-            var position = new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1);
+            var position = Map.IsWorldMap
+                ? new Position(player.Position.X % 50 + 1, player.Position.Y % 50 + 1)
+                : new Position(player.Position.X + 1, player.Position.Y + 1);
 
             for (int i = 0; i < CurrentSavegame.TransportLocations.Length; ++i)
             {

@@ -113,8 +113,8 @@ namespace Ambermoon.Render
 
                             if (ev is ConditionEvent conditionEvent)
                             {
-                                ev = conditionEvent.ExecuteEvent(map, game, ref trigger, (uint)Position.X,
-                                    (uint)Position.Y, ref lastEventStatus, out bool aborted, out _);
+                                ev = conditionEvent.ExecuteEvent(map, game, ref trigger, (uint)newX,
+                                    (uint)newY, ref lastEventStatus, out bool aborted, out _);
 
                                 if (aborted || ev == null)
                                     return false;

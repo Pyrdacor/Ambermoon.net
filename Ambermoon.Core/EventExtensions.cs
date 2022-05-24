@@ -258,48 +258,48 @@ namespace Ambermoon
                     });
                     return null; // next event is only executed after popup response
                 }
-                case EventType.Award:
+                case EventType.Reward:
                 {
-                    if (!(@event is AwardEvent awardEvent))
+                    if (!(@event is RewardEvent rewardEvent))
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid award event.");
                     EventProvider provider = null;
                     if (conversationPartner != null)
                         provider = eventProvider = new EventProvider();
                     bool eventStatus = lastEventStatus;
-                    void Award(PartyMember partyMember, Action followAction) => game.AwardPlayer(partyMember, awardEvent, followAction);
+                    void Reward(PartyMember partyMember, Action followAction) => game.AwardPlayer(partyMember, rewardEvent, followAction);
                     void Done()
                     {
-                        if (awardEvent.Next != null)
+                        if (rewardEvent.Next != null)
                         {
                             if (conversationPartner == null)
-                                TriggerEventChain(map, game, EventTrigger.Always, x, y, awardEvent.Next, eventStatus);
+                                TriggerEventChain(map, game, EventTrigger.Always, x, y, rewardEvent.Next, eventStatus);
                             else
-                                provider?.Provide(awardEvent.Next);
+                                provider?.Provide(rewardEvent.Next);
                         }
                     }
-                    switch (awardEvent.Target)
+                    switch (rewardEvent.Target)
                     {
-                        case AwardEvent.AwardTarget.ActivePlayer:
-                            Award(game.CurrentPartyMember, Done);
+                        case RewardEvent.RewardTarget.ActivePlayer:
+                            Reward(game.CurrentPartyMember, Done);
                             break;
-                        case AwardEvent.AwardTarget.All:
-                            if (awardEvent.TypeOfAward == AwardEvent.AwardType.HitPoints &&
-                                (awardEvent.Operation == AwardEvent.AwardOperation.Decrease ||
-                                awardEvent.Operation == AwardEvent.AwardOperation.DecreasePercentage))
+                        case RewardEvent.RewardTarget.All:
+                            if (rewardEvent.TypeOfAward == RewardEvent.AwardType.HitPoints &&
+                                (rewardEvent.Operation == RewardEvent.AwardOperation.Decrease ||
+                                rewardEvent.Operation == RewardEvent.AwardOperation.DecreasePercentage))
                             {
-                                Func<PartyMember, uint> damageProvider = awardEvent.Operation == AwardEvent.AwardOperation.Decrease
-                                    ? (Func<PartyMember, uint>)(_ => awardEvent.Value) : p => awardEvent.Value * p.HitPoints.TotalMaxValue / 100;
+                                Func<PartyMember, uint> damageProvider = rewardEvent.Operation == RewardEvent.AwardOperation.Decrease
+                                    ? (Func<PartyMember, uint>)(_ => rewardEvent.Value) : p => rewardEvent.Value * p.HitPoints.TotalMaxValue / 100;
 
                                 // Note: Awards damage silently.
                                 game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done, Condition.None, false);
                             }
                             else
                             {
-                                game.ForeachPartyMember(Award, p => p.Alive, Done);
+                                game.ForeachPartyMember(Reward, p => p.Alive, Done);
                             }
                             break;
                         default:
-                            return awardEvent.Next;
+                            return rewardEvent.Next;
                     }
                     return null;
                 }
@@ -533,7 +533,7 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.Hand:
-                            if (trigger != EventTrigger.Hand)
+                            if ((trigger == EventTrigger.Hand) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -542,13 +542,17 @@ namespace Ambermoon
                             break;
                         case ConditionEvent.ConditionType.SayWord:
                         {
-                            if (trigger != EventTrigger.Mouth)
+                            if ((trigger == EventTrigger.Mouth) != (conditionEvent.Value != 0))
                             {
                                 aborted = true;
                                 return null;
                             }
-                            game.SayWord(map, x, y, events, conditionEvent);
-                            return null;
+                            if (trigger == EventTrigger.Mouth)
+                            {
+                                game.SayWord(map, x, y, events, conditionEvent);
+                                return null;
+                            }
+                            break;
                         }
                         case ConditionEvent.ConditionType.EnterNumber:
                         {
@@ -556,7 +560,7 @@ namespace Ambermoon
                             return null;
                         }
                         case ConditionEvent.ConditionType.Levitating:
-                            if (trigger != EventTrigger.Levitating)
+                            if ((trigger == EventTrigger.Levitating) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -580,7 +584,63 @@ namespace Ambermoon
                             }
                             break;
                         case ConditionEvent.ConditionType.Eye:
-                            if (trigger != EventTrigger.Eye)
+                            if ((trigger == EventTrigger.Eye) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        // New Ambermoon Advanced conditions
+                        case ConditionEvent.ConditionType.Mouth:
+                            if ((trigger == EventTrigger.Mouth) != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        case ConditionEvent.ConditionType.TransportAtLocation:
+                        {
+                            var transport = game.CurrentSavegame.TransportLocations.FirstOrDefault(l => l != null && l.MapIndex == map.Index && l.Position.X == x + 1 && l.Position.Y == y + 1);
+                            bool result = true;
+                            if (transport == null)
+                            {
+                                result = false;
+                            }
+                            else if (conditionEvent.ObjectIndex != 0 && conditionEvent.ObjectIndex != (uint)transport.TravelType)
+                            {
+                                result = false;
+                            }
+                            if (result != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.MultiCursor:
+                        {
+                            var flags = conditionEvent.ObjectIndex;
+                            bool result = false;
+
+                            if (trigger == EventTrigger.Hand && (flags & 0x1) != 0)
+                                result = true;
+                            else if (trigger == EventTrigger.Eye && (flags & 0x2) != 0)
+                                result = true;
+                            else if (trigger == EventTrigger.Mouth && (flags & 0x4) != 0)
+                                result = true;
+                            if (result != (conditionEvent.Value != 0))
+                            {
+                                aborted = mapEventIfFalse == null;
+                                lastEventStatus = false;
+                                return mapEventIfFalse;
+                            }
+                            break;
+                        }
+                        case ConditionEvent.ConditionType.TravelType:
+                            if (((uint)game.TravelType == conditionEvent.ObjectIndex) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -594,7 +654,7 @@ namespace Ambermoon
                         trigger != EventTrigger.Move && trigger != EventTrigger.Always &&
                         conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
                         conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Eye &&
-                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Hand &&
+                        conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Mouth &&
                         conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.UseItem &&
                         conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.Levitating &&
                         conditionEvent.TypeOfCondition != ConditionEvent.ConditionType.EnterNumber &&
@@ -604,7 +664,7 @@ namespace Ambermoon
                         var next = conditionEvent.Next;
 
                         while (next != null && (next.Type == EventType.Condition ||
-                            next.Type == EventType.Action || next.Type == EventType.Award ||
+                            next.Type == EventType.Action || next.Type == EventType.Reward ||
                             next.Type == EventType.ChangeMusic || next.Type == EventType.Dice100Roll))
                             next = next.Next;
 

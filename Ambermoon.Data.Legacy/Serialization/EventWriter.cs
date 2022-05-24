@@ -135,9 +135,9 @@ namespace Ambermoon.Data.Legacy.Serialization
                     dataWriter.Write((ushort)riddleMouthEvent.CorrectAnswerDictionaryIndex2);
                     break;
                 }
-                case EventType.Award:
+                case EventType.Reward:
                 {
-                    var awardEvent = @event as AwardEvent;
+                    var awardEvent = @event as RewardEvent;
                     dataWriter.WriteEnumAsByte(awardEvent.TypeOfAward);
                     dataWriter.WriteEnumAsByte(awardEvent.Operation);
                     dataWriter.Write((byte)(awardEvent.Random ? 1 : 0));

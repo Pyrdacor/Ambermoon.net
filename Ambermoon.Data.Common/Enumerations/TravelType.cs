@@ -46,7 +46,7 @@ namespace Ambermoon.Data.Enumerations
         {
             TravelType.Walk => true,
             TravelType.Horse => true,
-            TravelType.Raft => true,
+            TravelType.Raft => false,
             TravelType.Ship => true,
             TravelType.SandLizard => true,
             TravelType.SandShip => true,

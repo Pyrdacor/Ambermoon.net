@@ -188,7 +188,7 @@ namespace Ambermoon.Render
 
             #region Map 2D
 
-            for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset9; ++i)
+            for (int i = (int)GraphicType.Tileset1; i <= (int)GraphicType.Tileset10; ++i)
             {
                 var tilesetGraphics = graphicProvider.GetGraphics((GraphicType)i);
 

@@ -234,16 +234,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                     };
                     break;
                 }
-                case EventType.Award:
+                case EventType.Reward:
                 {
-                    var awardType = (AwardEvent.AwardType)dataReader.ReadByte();
-                    var awardOperation = (AwardEvent.AwardOperation)dataReader.ReadByte();
+                    var awardType = (RewardEvent.AwardType)dataReader.ReadByte();
+                    var awardOperation = (RewardEvent.AwardOperation)dataReader.ReadByte();
                     var random = dataReader.ReadByte() != 0;
-                    var awardTarget = (AwardEvent.AwardTarget)dataReader.ReadByte();
+                    var awardTarget = (RewardEvent.RewardTarget)dataReader.ReadByte();
                     var unknown = dataReader.ReadByte();
                     var awardTypeValue = dataReader.ReadWord();
                     var value = dataReader.ReadWord();
-                    @event = new AwardEvent
+                    @event = new RewardEvent
                     {
                         TypeOfAward = awardType,
                         Operation = awardOperation,

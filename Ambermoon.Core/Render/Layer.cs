@@ -37,6 +37,7 @@ namespace Ambermoon
         MapBackground7,
         MapBackground8,
         MapBackground9,
+        MapBackground10,
         Characters,
         MapForeground1,
         MapForeground2,
@@ -47,6 +48,7 @@ namespace Ambermoon
         MapForeground7,
         MapForeground8,
         MapForeground9,
+        MapForeground10,
         FOW,
         CombatBackground,
         BattleMonsterRow,
@@ -68,6 +70,6 @@ namespace Ambermoon
     public partial class Global
     {
         public const Layer First2DLayer = Layer.MapBackground1;
-        public const Layer Last2DLayer = Layer.MapForeground9;
+        public const Layer Last2DLayer = Layer.MapForeground10;
     }
 }

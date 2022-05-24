@@ -47,7 +47,7 @@ namespace Ambermoon.Data
         /// <summary>
         /// Awards, rewards, punishments
         /// </summary>
-        Award,
+        Reward,
         /// <summary>
         /// Change map tiles.
         /// </summary>
@@ -354,7 +354,7 @@ namespace Ambermoon.Data
         }
     }
 
-    public class AwardEvent : Event
+    public class RewardEvent : Event
     {
         public enum AwardType
         {
@@ -383,14 +383,14 @@ namespace Ambermoon.Data
         }
 
         // Note: This is actually a bool so there are only those two targets.
-        public enum AwardTarget
+        public enum RewardTarget
         {
             ActivePlayer,
             All
         }
 
         public AwardType TypeOfAward { get; set; }
-        public AwardTarget Target { get; set; }
+        public RewardTarget Target { get; set; }
         public AwardOperation Operation { get; set; }
         /// <summary>
         /// If set the real value is random in the range 0 to Value.
@@ -509,7 +509,11 @@ namespace Ambermoon.Data
             Levitating = 0x11,
             HasGold = 0x12,
             HasFood = 0x13,
-            Eye = 0x14
+            Eye = 0x14,
+            Mouth = 0x15,
+            TransportAtLocation = 0x16,
+            MultiCursor = 0x17,
+            TravelType = 0x18
         }
 
         public ConditionType TypeOfCondition { get; set; }
