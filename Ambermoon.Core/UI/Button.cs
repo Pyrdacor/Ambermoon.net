@@ -65,7 +65,7 @@ namespace Ambermoon.UI
             Train,
             HealPerson,
             RemoveCurse,
-            HealAilment,
+            HealCondition,
             RestInn,
             IdentifyEquipment,
             IdentifyInventory,

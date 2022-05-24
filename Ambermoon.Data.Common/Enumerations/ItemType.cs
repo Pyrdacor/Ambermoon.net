@@ -25,7 +25,7 @@ namespace Ambermoon.Data
         MagicalItem, // lantern, torch, etc
         SpecialItem, // clock, monster eye, compass, etc
         Transportation, // witch broom, flute, magical flying disc, etc
-        Ailment
+        Condition
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]

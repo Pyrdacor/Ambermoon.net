@@ -9,7 +9,7 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Legacy Amiga Game Data</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>10.6.5</Version>
+    <Version>10.6.6</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release;DebugAndroid</Configurations>
   </PropertyGroup>
@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="10.6.3" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="10.6.4" />
     <PackageReference Include="SonicArranger" Version="1.0.7" />
   </ItemGroup>
 

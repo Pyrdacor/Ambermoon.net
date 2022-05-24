@@ -106,24 +106,24 @@ namespace Ambermoon.UI
             }
         }
 
-        public static string GetAbilityTooltip(GameLanguage gameLanguage, Skill ability, PartyMember partyMember)
+        public static string GetSkillTooltip(GameLanguage gameLanguage, Skill skill, PartyMember partyMember)
         {
-            var formatString = AbilityTooltips[gameLanguage][(int)ability];
-            var abilityValue = partyMember.Abilities[ability].TotalCurrentValue;
+            var formatString = SkillTooltips[gameLanguage][(int)skill];
+            var skillValue = partyMember.Skills[skill].TotalCurrentValue;
 
-            switch (ability)
+            switch (skill)
             {
                 case Skill.Swim:
-                    return string.Format(formatString, abilityValue / 2);
+                    return string.Format(formatString, skillValue / 2);
                 case Skill.Searching:
                     return formatString;
                 default:
-                    return string.Format(formatString, abilityValue);
+                    return string.Format(formatString, skillValue);
             }
         }
 
-        public static string GetAilmentTooltip(GameLanguage gameLanguage, Condition ailment, PartyMember partyMember) => ailment == Condition.Aging
-            ? string.Format(AilmentTooltips[gameLanguage][ailment], partyMember.Attributes[Attribute.Age].MaxValue) : AilmentTooltips[gameLanguage][ailment];
+        public static string GetConditionTooltip(GameLanguage gameLanguage, Condition condition, PartyMember partyMember) => condition == Condition.Aging
+            ? string.Format(ConditionTooltips[gameLanguage][condition], partyMember.Attributes[Attribute.Age].MaxValue) : ConditionTooltips[gameLanguage][condition];
 
         static readonly Dictionary<GameLanguage, string[]> AttributeTooltips = new Dictionary<GameLanguage, string[]>
         {
@@ -167,7 +167,7 @@ namespace Ambermoon.UI
             } }
         };
 
-        static readonly Dictionary<GameLanguage, string[]> AbilityTooltips = new Dictionary<GameLanguage, string[]>
+        static readonly Dictionary<GameLanguage, string[]> SkillTooltips = new Dictionary<GameLanguage, string[]>
         {
             { GameLanguage.German, new string[]
             {
@@ -217,7 +217,7 @@ namespace Ambermoon.UI
             } }
         };
 
-        static readonly Dictionary<GameLanguage, Dictionary<Condition, string>> AilmentTooltips = new Dictionary<GameLanguage, Dictionary<Condition, string>>
+        static readonly Dictionary<GameLanguage, Dictionary<Condition, string>> ConditionTooltips = new Dictionary<GameLanguage, Dictionary<Condition, string>>
         {
             { GameLanguage.German, new Dictionary<Condition, string>
             {

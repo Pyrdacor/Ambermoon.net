@@ -30,7 +30,7 @@ namespace Ambermoon.Data.Legacy.Characters
             dataWriter.Write(character.Gold);
             dataWriter.Write(character.Food);
             dataWriter.Write(character.CharacterBitIndex);
-            dataWriter.WriteEnumAsWord(character.Ailments);
+            dataWriter.WriteEnumAsWord(character.Conditions);
             dataWriter.Write(GetIfMonster<ushort>(character, monster => monster.DefeatExperience, 0));
             dataWriter.Write(character.UnknownWord34); // Unknown
             dataWriter.Write(GetIfPartyMember<ushort>(character, member => member.MarkOfReturnX, 0));
@@ -43,12 +43,12 @@ namespace Ambermoon.Data.Legacy.Characters
                 dataWriter.Write((ushort)attribute.BonusValue);
                 dataWriter.Write((ushort)attribute.StoredValue);
             }
-            foreach (var ability in character.Abilities)
+            foreach (var skill in character.Skills)
             {
-                dataWriter.Write((ushort)ability.CurrentValue);
-                dataWriter.Write((ushort)ability.MaxValue);
-                dataWriter.Write((ushort)ability.BonusValue);
-                dataWriter.Write((ushort)ability.StoredValue);
+                dataWriter.Write((ushort)skill.CurrentValue);
+                dataWriter.Write((ushort)skill.MaxValue);
+                dataWriter.Write((ushort)skill.BonusValue);
+                dataWriter.Write((ushort)skill.StoredValue);
             }
             dataWriter.Write((ushort)character.HitPoints.CurrentValue);
             dataWriter.Write((ushort)character.HitPoints.MaxValue);

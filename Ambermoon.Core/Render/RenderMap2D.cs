@@ -118,14 +118,14 @@ namespace Ambermoon.Render
                     {
                         if (game.RollDice100() >= p.Attributes[Data.Attribute.Luck].TotalCurrentValue)
                         {
-                            game.AddAilment(Condition.Poisoned, p);
+                            game.AddCondition(Condition.Poisoned, p);
                             game.ShowDamageSplash(p, _ => 0, f);
                         }
                         else
                         {
                             f?.Invoke();
                         }
-                    }, p => p.Alive && !p.Ailments.HasFlag(Condition.Petrified), () => game.ResetMoveKeys());
+                    }, p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified), () => game.ResetMoveKeys());
                 }
             }
 

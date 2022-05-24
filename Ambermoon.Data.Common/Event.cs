@@ -45,7 +45,7 @@ namespace Ambermoon.Data
         /// </summary>
         Riddlemouth,
         /// <summary>
-        /// Awards, rewards, punishments
+        /// Rewards and punishments
         /// </summary>
         Reward,
         /// <summary>
@@ -305,16 +305,16 @@ namespace Ambermoon.Data
         public byte[] Unused { get; set; } // 5 bytes
         public Condition GetAilment() => Ailment switch
         {
-            TrapAilment.Crazy => Data.Condition.Crazy,
-            TrapAilment.Blind => Data.Condition.Blind,
-            TrapAilment.Stoned => Data.Condition.Drugged,
-            TrapAilment.Paralyzed => Data.Condition.Lamed,
-            TrapAilment.Poisoned => Data.Condition.Poisoned,
-            TrapAilment.Petrified => Data.Condition.Petrified,
-            TrapAilment.Diseased => Data.Condition.Diseased,
-            TrapAilment.Aging => Data.Condition.Aging,
-            TrapAilment.Dead => Data.Condition.DeadCorpse,
-            _ => Data.Condition.None
+            TrapAilment.Crazy => Condition.Crazy,
+            TrapAilment.Blind => Condition.Blind,
+            TrapAilment.Stoned => Condition.Drugged,
+            TrapAilment.Paralyzed => Condition.Lamed,
+            TrapAilment.Poisoned => Condition.Poisoned,
+            TrapAilment.Petrified => Condition.Petrified,
+            TrapAilment.Diseased => Condition.Diseased,
+            TrapAilment.Aging => Condition.Aging,
+            TrapAilment.Dead => Condition.DeadCorpse,
+            _ => Condition.None
         };
 
         public override string ToString()
@@ -356,21 +356,21 @@ namespace Ambermoon.Data
 
     public class RewardEvent : Event
     {
-        public enum AwardType
+        public enum RewardType
         {
             Attribute = 0x00,
-            Ability = 0x01,
+            Skill = 0x01,
             HitPoints = 0x02,
             SpellPoints = 0x03,
             SpellLearningPoints = 0x04,
-            Ailments = 0x05,
+            Conditions = 0x05,
             UsableSpellTypes = 0x06,
             Languages = 0x07,
             Experience = 0x08,
             TrainingPoints = 0x09
         }
 
-        public enum AwardOperation
+        public enum RewardOperation
         {
             Increase,
             Decrease,
@@ -389,19 +389,19 @@ namespace Ambermoon.Data
             All
         }
 
-        public AwardType TypeOfAward { get; set; }
+        public RewardType TypeOfReward { get; set; }
         public RewardTarget Target { get; set; }
-        public AwardOperation Operation { get; set; }
+        public RewardOperation Operation { get; set; }
         /// <summary>
         /// If set the real value is random in the range 0 to Value.
         /// </summary>
         public bool Random { get; set; }
-        public ushort AwardTypeValue { get; set; }
-        public Attribute? Attribute => TypeOfAward == AwardType.Attribute ? (Attribute)AwardTypeValue : (Attribute?)null;
-        public Skill? Ability => TypeOfAward == AwardType.Ability ? (Skill)AwardTypeValue : (Skill?)null;
-        public Language? Languages => TypeOfAward == AwardType.Languages ? (Language)(1 << AwardTypeValue) : (Language?)null;
-        public Condition? Ailments => TypeOfAward == AwardType.Ailments ? (Condition)(1 << AwardTypeValue) : (Condition?)null;
-        public SpellTypeMastery? UsableSpellTypes => TypeOfAward == AwardType.UsableSpellTypes ? (SpellTypeMastery)(1 << AwardTypeValue) : (SpellTypeMastery?)null;
+        public ushort RewardTypeValue { get; set; }
+        public Attribute? Attribute => TypeOfReward == RewardType.Attribute ? (Attribute)RewardTypeValue : (Attribute?)null;
+        public Skill? Skill => TypeOfReward == RewardType.Skill ? (Skill)RewardTypeValue : (Skill?)null;
+        public Language? Languages => TypeOfReward == RewardType.Languages ? (Language)(1 << RewardTypeValue) : (Language?)null;
+        public Condition? Conditions => TypeOfReward == RewardType.Conditions ? (Condition)(1 << RewardTypeValue) : (Condition?)null;
+        public SpellTypeMastery? UsableSpellTypes => TypeOfReward == RewardType.UsableSpellTypes ? (SpellTypeMastery)(1 << RewardTypeValue) : (SpellTypeMastery?)null;
         public uint Value { get; set; }
         public byte Unknown { get; set; }
 
@@ -409,22 +409,22 @@ namespace Ambermoon.Data
         {
             string operationString = Operation switch
             {
-                AwardOperation.Increase => Random ? $"+rand(0~{Value})" : $"+{Value}",
-                AwardOperation.Fill => "max",
+                RewardOperation.Increase => Random ? $"+rand(0~{Value})" : $"+{Value}",
+                RewardOperation.Fill => "max",
                 _ => $"?op={(int)Operation}?"
             };
 
-            return TypeOfAward switch
+            return TypeOfReward switch
             {
-                AwardType.Attribute => $"{Type}: {Attribute} on {Target} {operationString}, Unknown {Unknown:x2}",
-                AwardType.Ability => $"{Type}: {Ability} on {Target} {operationString}, Unknown {Unknown:x2}",
-                AwardType.HitPoints => $"{Type}: HP on {Target} {operationString}, Unknown {Unknown:x2}",
-                AwardType.SpellPoints => $"{Type}: SP on {Target} {operationString}, Unknown {Unknown:x2}",
-                AwardType.SpellLearningPoints => $"{Type}: SLP on {Target} {operationString}, Unknown {Unknown:x2}",
-                AwardType.TrainingPoints => $"{Type}: TP on {Target} {operationString}, Unknown {Unknown:x2}",
-                AwardType.Languages => $"{Type}: Add {Languages} on {Target}, Unknown {Unknown:x2}",
-                AwardType.Experience => $"{Type}: Exp on {Target} {operationString}, Unknown {Unknown:x2}",
-                _ => $"{Type}: Unknown ({(int)TypeOfAward}:{AwardTypeValue}) on {Target} {operationString}, Unknown {Unknown:x2}"
+                RewardType.Attribute => $"{Type}: {Attribute} on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.Skill => $"{Type}: {Skill} on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.HitPoints => $"{Type}: HP on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.SpellPoints => $"{Type}: SP on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.SpellLearningPoints => $"{Type}: SLP on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.TrainingPoints => $"{Type}: TP on {Target} {operationString}, Unknown {Unknown:x2}",
+                RewardType.Languages => $"{Type}: Add {Languages} on {Target}, Unknown {Unknown:x2}",
+                RewardType.Experience => $"{Type}: Exp on {Target} {operationString}, Unknown {Unknown:x2}",
+                _ => $"{Type}: Unknown ({(int)TypeOfReward}:{RewardTypeValue}) on {Target} {operationString}, Unknown {Unknown:x2}"
             };
         }
     }
@@ -502,7 +502,7 @@ namespace Ambermoon.Data
             GameOptionSet = 0x0a,
             CanSee = 0x0b,
             Direction = 0x0c,
-            HasAilment = 0x0d,
+            HasCondition = 0x0d,
             Hand = 0x0e,
             SayWord = 0x0f, // it also pops up the dictionary to say something
             EnterNumber = 0x10, // enter number popup with correct number
@@ -551,7 +551,7 @@ namespace Ambermoon.Data
                 ConditionType.LastEventResult => $"{Type}: Success of last event, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.GameOptionSet => $"{Type}: Game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)} is {(Value == 0 ? "not set" : "set")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.CanSee => $"{Type}: {(Value == 0 ? "Can't see" : "Can see")}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
-                ConditionType.HasAilment => $"{Type}: {(Value == 0 ? "Has not" : "Has")} ailment {(Condition)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
+                ConditionType.HasCondition => $"{Type}: {(Value == 0 ? "Has not" : "Has")} condition {(Condition)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.Hand => $"{Type}: Hand cursor, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.SayWord => $"{Type}: Say keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
                 ConditionType.EnterNumber => $"{Type}: Enter number {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, {falseHandling}",
@@ -609,9 +609,9 @@ namespace Ambermoon.Data
             /// </summary>
             SetDirection = 0x0c,
             /// <summary>
-            /// Adds or removes an ailment
+            /// Adds or removes a condition
             /// </summary>
-            AddAilment = 0x0d,
+            AddCondition = 0x0d,
             /// <summary>
             /// Adds or removes gold
             /// </summary>
@@ -645,7 +645,7 @@ namespace Ambermoon.Data
                 ActionType.AddItem => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, Count)}x item {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddKeyword => $"{Type}: {(Value == 0 ? "Remove" : "Add")} keyword {ObjectIndex}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.SetGameOption => $"{Type}: {(Value == 0 ? "Deactivate" : "Activate")} game option {(Data.Enumerations.Option)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
-                ActionType.AddAilment => $"{Type}: {(Value == 0 ? "Remove" : "Add")} ailment {(Condition)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
+                ActionType.AddCondition => $"{Type}: {(Value == 0 ? "Remove" : "Add")} condition {(Condition)(1 << (int)ObjectIndex)}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddGold => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, ObjectIndex)} gold, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 ActionType.AddFood => $"{Type}: {(Value == 0 ? "Remove" : "Add")} {Math.Max(1, ObjectIndex)} food, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",
                 _ => $"{Type}: Unknown ({TypeOfAction}), Index {ObjectIndex}, Value {Value}, Unknown1 {string.Join(" ", Unknown1.Select(u => u.ToString("x2")))}, Unknown2 {string.Join(" ", Unknown2.Select(u => u.ToString("x2")))}",

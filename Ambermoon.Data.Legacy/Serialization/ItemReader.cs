@@ -22,12 +22,12 @@ namespace Ambermoon.Data.Legacy.Serialization
                 item.Attribute = attribute;
                 item.AttributeValue = attributeValue;
             }
-            Skill ability = (Skill)dataReader.ReadByte();
-            int abilityValue = (sbyte)dataReader.ReadByte();
-            if (abilityValue != 0)
+            Skill skill = (Skill)dataReader.ReadByte();
+            int skillValue = (sbyte)dataReader.ReadByte();
+            if (skillValue != 0)
             {
-                item.Ability = ability;
-                item.AbilityValue = abilityValue;
+                item.Skill = skill;
+                item.SkillValue = skillValue;
             }
             item.Defense = (sbyte)dataReader.ReadByte();
             item.Damage = (sbyte)dataReader.ReadByte();
@@ -38,7 +38,7 @@ namespace Ambermoon.Data.Legacy.Serialization
             // - Banded Armour: 00 00 04 00
             // - Plate Armour: 00 00 06 00
             // - Knight's Armour: 00 00 08 00
-            // Only the whip has an effect of -10 Attack ability
+            // Only the whip has an effect of -10 Attack skill
             // as for the other 3 the first or second byte is 0.
             // Either the data is wrong or the original code.
             // But it's hard to reverse engineer the meaning this way.

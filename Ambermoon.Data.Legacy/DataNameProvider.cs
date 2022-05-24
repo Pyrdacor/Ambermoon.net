@@ -28,7 +28,7 @@
         public string CharacterInfoWeightString => executableData.UITexts.Entries[UITextIndex.WeightKilogramDisplay];
         public string CharacterInfoDamageString => executableData.UITexts.Entries[UITextIndex.LabeledValueDisplay];
         public string CharacterInfoDefenseString => executableData.UITexts.Entries[UITextIndex.LabeledValueDisplay];
-        public string GetAilmentName(Condition ailment) => executableData.ConditionNames.Entries[ailment];
+        public string GetConditionName(Condition condition) => executableData.ConditionNames.Entries[condition];
         public string GetClassName(Class @class) => executableData.ClassNames.Entries[@class];
         public string GetGenderName(Gender gender) => gender switch
         {
@@ -59,14 +59,14 @@
             };
         public string InventoryTitleString => executableData.UITexts.Entries[UITextIndex.Inventory];
         public string AttributesHeaderString => executableData.UITexts.Entries[UITextIndex.Attributes];
-        public string AbilitiesHeaderString => executableData.UITexts.Entries[UITextIndex.Skills];
+        public string SkillsHeaderString => executableData.UITexts.Entries[UITextIndex.Skills];
         public string LanguagesHeaderString => executableData.UITexts.Entries[UITextIndex.Languages];
-        public string AilmentsHeaderString => executableData.UITexts.Entries[UITextIndex.Conditions];
+        public string ConditionsHeaderString => executableData.UITexts.Entries[UITextIndex.Conditions];
         public string DataHeaderString => executableData.UITexts.Entries[UITextIndex.DataHeader];
         public string GetAttributeShortName(Attribute attribute) => executableData.AttributeNames.ShortNames[attribute];
-        public string GetAbilityShortName(Skill ability) => executableData.SkillNames.ShortNames[ability];
+        public string GetSkillShortName(Skill skill) => executableData.SkillNames.ShortNames[skill];
         public string GetAttributeName(Attribute attribute) => executableData.AttributeNames.Entries[attribute];
-        public string GetAbilityName(Skill ability) => executableData.SkillNames.Entries[ability];
+        public string GetSkillName(Skill skill) => executableData.SkillNames.Entries[skill];
         public string OptionsHeader => executableData.Messages.GetEntry(Messages.Index.Options);
         public string ClassesHeaderString => executableData.UITexts.Entries[UITextIndex.ClassHeader];
         public string GenderHeaderString => executableData.UITexts.Entries[UITextIndex.Sex];
@@ -172,7 +172,7 @@
         public string MBWDisplay => executableData.UITexts.Entries[UITextIndex.MBWDisplay];
         public string MBRDisplay => executableData.UITexts.Entries[UITextIndex.MBRDisplay];
         public string AttributeHeader => executableData.UITexts.Entries[UITextIndex.Attribute];
-        public string AbilityHeader => executableData.UITexts.Entries[UITextIndex.Skill];
+        public string SkillHeader => executableData.UITexts.Entries[UITextIndex.Skill];
         public string FunctionHeader => executableData.SpellTypeNames.Entries[SpellSchool.Function];
         public string Cursed => executableData.UITexts.Entries[UITextIndex.Cursed];
         public string TiredMessage => executableData.Messages.GetEntry(Messages.Index.GettingTired);

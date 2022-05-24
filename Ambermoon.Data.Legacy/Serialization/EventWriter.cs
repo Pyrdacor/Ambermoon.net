@@ -137,14 +137,14 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Reward:
                 {
-                    var awardEvent = @event as RewardEvent;
-                    dataWriter.WriteEnumAsByte(awardEvent.TypeOfAward);
-                    dataWriter.WriteEnumAsByte(awardEvent.Operation);
-                    dataWriter.Write((byte)(awardEvent.Random ? 1 : 0));
-                    dataWriter.WriteEnumAsByte(awardEvent.Target);
-                    dataWriter.Write(awardEvent.Unknown);
-                    dataWriter.Write(awardEvent.AwardTypeValue);
-                    dataWriter.Write((ushort)awardEvent.Value);
+                    var rewardEvent = @event as RewardEvent;
+                    dataWriter.WriteEnumAsByte(rewardEvent.TypeOfReward);
+                    dataWriter.WriteEnumAsByte(rewardEvent.Operation);
+                    dataWriter.Write((byte)(rewardEvent.Random ? 1 : 0));
+                    dataWriter.WriteEnumAsByte(rewardEvent.Target);
+                    dataWriter.Write(rewardEvent.Unknown);
+                    dataWriter.Write(rewardEvent.RewardTypeValue);
+                    dataWriter.Write((ushort)rewardEvent.Value);
                     break;
                 }
                 case EventType.ChangeTile:

@@ -48,7 +48,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         AgeDisplay,
         /// <summary>
-        /// Use for things like 50%/80% (e.g. ability values).
+        /// Use for things like 50%/80% (e.g. skill values).
         /// Contains 2 2-digit placeholders.
         /// </summary>
         PercentageValueDisplay,
@@ -196,7 +196,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the UI texts just behind the
-        /// ailment names.
+        /// condition names.
         /// 
         /// It will be behind the UI texts after this.
         /// </summary>

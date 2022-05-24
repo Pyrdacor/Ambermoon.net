@@ -28,118 +28,118 @@ namespace Ambermoon.Data
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class ConditionExtensions
     {
-        public static Condition WithoutBattleOnlyAilments(this Condition ailments)
+        public static Condition WithoutBattleOnlyConditions(this Condition conditions)
         {
-            return (Condition)((int)ailments & 0xfff2);
+            return (Condition)((int)conditions & 0xfff2);
         }
 
-        public static bool CanFight(this Condition ailment)
+        public static bool CanFight(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanSelect(this Condition ailment)
+        public static bool CanSelect(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Sleep) &&
-                !ailment.HasFlag(Condition.Panic) &&
-                !ailment.HasFlag(Condition.Crazy) &&
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Sleep) &&
+                !conditions.HasFlag(Condition.Panic) &&
+                !conditions.HasFlag(Condition.Crazy) &&
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanTalk(this Condition ailment)
+        public static bool CanTalk(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Crazy) && // TODO: correct?
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Crazy) && // TODO: correct?
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanOpenInventory(this Condition ailment)
+        public static bool CanOpenInventory(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Crazy) &&
-                !ailment.HasFlag(Condition.Panic) &&
-                !ailment.HasFlag(Condition.Petrified);
+                !conditions.HasFlag(Condition.Crazy) &&
+                !conditions.HasFlag(Condition.Panic) &&
+                !conditions.HasFlag(Condition.Petrified);
         }
 
-        public static bool CanMove(this Condition ailment)
+        public static bool CanMove(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Sleep) &&
-                !ailment.HasFlag(Condition.Lamed) &&
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Sleep) &&
+                !conditions.HasFlag(Condition.Lamed) &&
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanBlink(this Condition ailment)
+        public static bool CanBlink(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanFlee(this Condition ailment)
+        public static bool CanFlee(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Sleep) &&
-                !ailment.HasFlag(Condition.Lamed) &&
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Sleep) &&
+                !conditions.HasFlag(Condition.Lamed) &&
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanAttack(this Condition ailment)
+        public static bool CanAttack(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Sleep) &&
-                !ailment.HasFlag(Condition.Panic) &&
-                !ailment.HasFlag(Condition.Lamed) &&
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Sleep) &&
+                !conditions.HasFlag(Condition.Panic) &&
+                !conditions.HasFlag(Condition.Lamed) &&
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanParry(this Condition ailment)
+        public static bool CanParry(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Sleep) &&
-                !ailment.HasFlag(Condition.Panic) &&
-                !ailment.HasFlag(Condition.Exhausted) &&
-                !ailment.HasFlag(Condition.Lamed) &&
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Sleep) &&
+                !conditions.HasFlag(Condition.Panic) &&
+                !conditions.HasFlag(Condition.Exhausted) &&
+                !conditions.HasFlag(Condition.Lamed) &&
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
 
-        public static bool CanCastSpell(this Condition ailment)
+        public static bool CanCastSpell(this Condition conditions)
         {
             return
-                !ailment.HasFlag(Condition.Irritated) &&
-                !ailment.HasFlag(Condition.Sleep) &&
-                !ailment.HasFlag(Condition.Panic) &&
-                !ailment.HasFlag(Condition.Drugged) &&
-                !ailment.HasFlag(Condition.Petrified) &&
-                !ailment.HasFlag(Condition.Unused) && // the original code states that this disables casting as well
-                !ailment.HasFlag(Condition.DeadCorpse) &&
-                !ailment.HasFlag(Condition.DeadAshes) &&
-                !ailment.HasFlag(Condition.DeadDust);
+                !conditions.HasFlag(Condition.Irritated) &&
+                !conditions.HasFlag(Condition.Sleep) &&
+                !conditions.HasFlag(Condition.Panic) &&
+                !conditions.HasFlag(Condition.Drugged) &&
+                !conditions.HasFlag(Condition.Petrified) &&
+                !conditions.HasFlag(Condition.Unused) && // the original code states that this disables casting as well
+                !conditions.HasFlag(Condition.DeadCorpse) &&
+                !conditions.HasFlag(Condition.DeadAshes) &&
+                !conditions.HasFlag(Condition.DeadDust);
         }
     }
 }

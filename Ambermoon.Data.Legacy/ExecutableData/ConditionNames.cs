@@ -8,7 +8,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// After the <see cref="ItemTypeNames"/> there are the
     /// condition names like "Sleep", "Panic", etc.
     /// 
-    /// Only the first of the 3 dead ailments has a text.
+    /// Only the first of the 3 dead conditions has a text.
     /// The other two are empty strings and use the other one.
     /// 
     /// The unused condition has an empty text as well. Maybe a
@@ -37,10 +37,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         /// <summary>
         /// The position of the data reader should be at
-        /// the start of the ailment names just behind the
+        /// the start of the condition names just behind the
         /// item type names.
         /// 
-        /// It will be behind the ailment names after this.
+        /// It will be behind the condition names after this.
         /// </summary>
         internal ConditionNames(IDataReader dataReader)
         {

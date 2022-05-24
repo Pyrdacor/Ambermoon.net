@@ -71,12 +71,12 @@ namespace Ambermoon.Data
             }
 
             public override PlaceType PlaceType => PlaceType.Trainer;
-            public Skill Ability => (Skill)GetWord(0);
+            public Skill Skill => (Skill)GetWord(0);
             public int Cost => GetWord(2);
 
             public override string ToString()
             {
-                return $"{Ability} Trainer, Cost: {Cost}";
+                return $"{Skill} Trainer, Cost: {Cost}";
             }
         }
 
@@ -104,9 +104,9 @@ namespace Ambermoon.Data
             public int HealLPCost => GetWord(22);
             public int RemoveCurseCost => GetWord(24);
 
-            public int GetCostForHealingAilment(Condition ailment)
+            public int GetCostForHealingCondition(Condition condition)
             {
-                return ailment switch
+                return condition switch
                 {
                     Condition.Crazy => HealCrazyCost,
                     Condition.Blind => HealBlindCost,
@@ -127,22 +127,22 @@ namespace Ambermoon.Data
             {
                 string text = $"Healer, Heal LP: {HealLPCost}, RemoveCurses: {RemoveCurseCost}";
 
-                void AddAilment(Condition ailment)
+                void AddCondition(Condition condition)
                 {
-                    text += $", Heal{ailment}: {GetCostForHealingAilment(ailment)}";
+                    text += $", Heal{condition}: {GetCostForHealingCondition(condition)}";
                 }
 
-                AddAilment(Condition.Crazy);
-                AddAilment(Condition.Blind);
-                AddAilment(Condition.Drugged);
-                AddAilment(Condition.Lamed);
-                AddAilment(Condition.Poisoned);
-                AddAilment(Condition.Petrified);
-                AddAilment(Condition.Diseased);
-                AddAilment(Condition.Aging);
-                AddAilment(Condition.DeadCorpse);
-                AddAilment(Condition.DeadAshes);
-                AddAilment(Condition.DeadDust);
+                AddCondition(Condition.Crazy);
+                AddCondition(Condition.Blind);
+                AddCondition(Condition.Drugged);
+                AddCondition(Condition.Lamed);
+                AddCondition(Condition.Poisoned);
+                AddCondition(Condition.Petrified);
+                AddCondition(Condition.Diseased);
+                AddCondition(Condition.Aging);
+                AddCondition(Condition.DeadCorpse);
+                AddCondition(Condition.DeadAshes);
+                AddCondition(Condition.DeadDust);
 
 
                 return text;

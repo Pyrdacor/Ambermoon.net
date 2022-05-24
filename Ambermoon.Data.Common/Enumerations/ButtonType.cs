@@ -41,7 +41,7 @@
         SellItem,
         RepairItem,
         RechargeItem,
-        HealAilment,
+        HealCondition,
         HealPerson,
         RemoveCurse,
         Train,

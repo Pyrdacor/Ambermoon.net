@@ -31,15 +31,15 @@ namespace Ambermoon.Data.Legacy.Serialization
                 dataWriter.WriteEnumAsByte(item.Attribute.Value);
                 WriteSignedByte(item.AttributeValue);
             }
-            if (item.Ability == null)
+            if (item.Skill == null)
             {
                 dataWriter.Write((byte)0);
                 dataWriter.Write((byte)0);
             }
             else
             {
-                dataWriter.WriteEnumAsByte(item.Ability.Value);
-                WriteSignedByte(item.AbilityValue);
+                dataWriter.WriteEnumAsByte(item.Skill.Value);
+                WriteSignedByte(item.SkillValue);
             }
             WriteSignedByte(item.Defense);
             WriteSignedByte(item.Damage);

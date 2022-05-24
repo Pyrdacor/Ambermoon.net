@@ -35,7 +35,7 @@ namespace Ambermoon.Data.Legacy.Characters
             character.Gold = dataReader.ReadWord();
             character.Food = dataReader.ReadWord();
             character.CharacterBitIndex = dataReader.ReadWord();
-            character.Ailments = (Condition)dataReader.ReadWord();
+            character.Conditions = (Condition)dataReader.ReadWord();
             ProcessIfMonster(dataReader, character, (Monster monster, ushort value) => monster.DefeatExperience = value);
             character.UnknownWord34 = dataReader.ReadWord(); // Unknown
             // mark of return location is stored here: word x, word y, word mapIndex
@@ -49,12 +49,12 @@ namespace Ambermoon.Data.Legacy.Characters
                 attribute.BonusValue = (short)dataReader.ReadWord();
                 attribute.StoredValue = dataReader.ReadWord();
             }
-            foreach (var ability in character.Abilities)
+            foreach (var skill in character.Skills)
             {
-                ability.CurrentValue = dataReader.ReadWord();
-                ability.MaxValue = dataReader.ReadWord();
-                ability.BonusValue = (short)dataReader.ReadWord();
-                ability.StoredValue = dataReader.ReadWord();
+                skill.CurrentValue = dataReader.ReadWord();
+                skill.MaxValue = dataReader.ReadWord();
+                skill.BonusValue = (short)dataReader.ReadWord();
+                skill.StoredValue = dataReader.ReadWord();
             }
             character.HitPoints.CurrentValue = dataReader.ReadWord();
             character.HitPoints.MaxValue = dataReader.ReadWord();

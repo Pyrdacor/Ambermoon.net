@@ -35,7 +35,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// <summary>
         /// The position of the data reader should be at
         /// the start of the attribute names just behind the
-        /// ability names.
+        /// skill names.
         /// 
         /// It will be behind the attribute names after this.
         /// </summary>

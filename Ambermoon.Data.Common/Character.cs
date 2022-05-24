@@ -37,10 +37,10 @@ namespace Ambermoon.Data
         /// location.
         /// </summary>
         public ushort CharacterBitIndex { get; set; }
-        public Condition Ailments { get; set; }
+        public Condition Conditions { get; set; }
         public ushort UnknownWord34 { get; set; }
         public CharacterValueCollection<Attribute> Attributes { get; } = new CharacterValueCollection<Attribute>(10); // 8 attribute + age + a hidden attribute
-        public CharacterValueCollection<Skill> Abilities { get; } = new CharacterValueCollection<Skill>(10);
+        public CharacterValueCollection<Skill> Skills { get; } = new CharacterValueCollection<Skill>(10);
         public CharacterValue HitPoints { get; } = new CharacterValue();
         public CharacterValue SpellPoints { get; } = new CharacterValue();
         public short BaseAttack { get; set; }
@@ -66,9 +66,9 @@ namespace Ambermoon.Data
         public uint TotalWeight { get; set; }
         public string Name { get; set; }
         public bool Alive =>
-            !Ailments.HasFlag(Condition.DeadCorpse) &&
-            !Ailments.HasFlag(Condition.DeadAshes) &&
-            !Ailments.HasFlag(Condition.DeadDust);
+            !Conditions.HasFlag(Condition.DeadCorpse) &&
+            !Conditions.HasFlag(Condition.DeadAshes) &&
+            !Conditions.HasFlag(Condition.DeadDust);
         /// <summary>
         /// Checks if the character is immune to the given
         /// spell.
@@ -239,21 +239,21 @@ namespace Ambermoon.Data
 
         public Action<Character> Died;
 
-        public void Die(Condition deadAilment = Condition.DeadCorpse)
+        public void Die(Condition deathCondition = Condition.DeadCorpse)
         {
-            Ailments = deadAilment;
+            Conditions = deathCondition;
             Died?.Invoke(this);
         }
 
-        public void Damage(uint damage, Condition deadAilment = Condition.DeadCorpse)
-            => Damage(damage, deadAilment => Die(deadAilment), deadAilment);
+        public void Damage(uint damage, Condition deathCondition = Condition.DeadCorpse)
+            => Damage(damage, deathCondition => Die(deathCondition), deathCondition);
 
-        public void Damage(uint damage, Action<Condition> deathAction, Condition deadAilment = Condition.DeadCorpse)
+        public void Damage(uint damage, Action<Condition> deathAction, Condition deathCondition = Condition.DeadCorpse)
         {
             HitPoints.CurrentValue = HitPoints.CurrentValue <= damage ? 0 : HitPoints.CurrentValue - damage;
 
             if (HitPoints.CurrentValue == 0)
-                deathAction?.Invoke(deadAilment);
+                deathAction?.Invoke(deathCondition);
         }
 
         public void Heal(uint amount)
@@ -263,29 +263,29 @@ namespace Ambermoon.Data
 
         public virtual bool CanMove(bool battle = true)
         {
-            return Ailments.CanMove();
+            return Conditions.CanMove();
         }
 
         public virtual bool CanFlee()
         {
-            return Ailments.CanFlee();
+            return Conditions.CanFlee();
         }
 
         public Inventory Inventory { get; } = new Inventory();
         public Equipment Equipment { get; } = new Equipment();
 
-        public static readonly List<Condition> PossibleAilments = Enum.GetValues<Condition>()
+        public static readonly List<Condition> PossibleConditions = Enum.GetValues<Condition>()
             .Where(a => a != Condition.None && a != Condition.Unused).ToList();
-        public static readonly List<Condition> PossibleVisibleAilments = PossibleAilments
+        public static readonly List<Condition> PossibleVisibleConditions = PossibleConditions
             .Where(a => a != Condition.DeadAshes && a != Condition.DeadDust).ToList();
-        public List<Condition> VisibleAilments
+        public List<Condition> VisibleConditions
         {
             get
             {
                 if (!Alive) // When dead, only show the dead condition.
                     return new List<Condition> { Condition.DeadCorpse };
                 else
-                    return PossibleVisibleAilments.Where(a => Ailments.HasFlag(a)).ToList();
+                    return PossibleVisibleConditions.Where(a => Conditions.HasFlag(a)).ToList();
             }
         }
 

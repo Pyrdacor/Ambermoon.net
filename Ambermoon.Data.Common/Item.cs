@@ -16,8 +16,8 @@ namespace Ambermoon.Data
         public int SpellPoints { get; set; }
         public Attribute? Attribute { get; set; }
         public int AttributeValue { get; set; }
-        public Skill? Ability { get; set; }
-        public int AbilityValue { get; set; }
+        public Skill? Skill { get; set; }
+        public int SkillValue { get; set; }
         public int Defense { get; set; }
         public int Damage { get; set; }
         /// <summary>

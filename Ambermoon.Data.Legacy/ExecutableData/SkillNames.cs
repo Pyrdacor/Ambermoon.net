@@ -6,7 +6,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 {
     /// <summary>
     /// After the <see cref="RaceNames"/> there are the
-    /// ability names like "Attack", "Parry", etc.
+    /// skill names like "Attack", "Parry", etc.
     /// </summary>
     public class SkillNames
     {
@@ -29,10 +29,10 @@ namespace Ambermoon.Data.Legacy.ExecutableData
 
         /// <summary>
         /// The position of the data reader should be at
-        /// the start of the ability names just behind the
+        /// the start of the skill names just behind the
         /// race names.
         /// 
-        /// It will be behind the ability names after this.
+        /// It will be behind the skill names after this.
         /// </summary>
         internal SkillNames(IDataReader dataReader)
         {

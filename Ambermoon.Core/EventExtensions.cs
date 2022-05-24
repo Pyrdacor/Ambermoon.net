@@ -104,7 +104,7 @@ namespace Ambermoon
                         throw new AmbermoonException(ExceptionScope.Data, "Invalid chest event.");
 
                     if (chestEvent.SearchSkillCheck &&
-                        game.RandomInt(0, 99) >= game.CurrentPartyMember.Abilities[Skill.Searching].TotalCurrentValue)
+                        game.RandomInt(0, 99) >= game.CurrentPartyMember.Skills[Skill.Searching].TotalCurrentValue)
                     {
                         aborted = true;
                         return null;
@@ -261,12 +261,12 @@ namespace Ambermoon
                 case EventType.Reward:
                 {
                     if (!(@event is RewardEvent rewardEvent))
-                        throw new AmbermoonException(ExceptionScope.Data, "Invalid award event.");
+                        throw new AmbermoonException(ExceptionScope.Data, "Invalid reward event.");
                     EventProvider provider = null;
                     if (conversationPartner != null)
                         provider = eventProvider = new EventProvider();
                     bool eventStatus = lastEventStatus;
-                    void Reward(PartyMember partyMember, Action followAction) => game.AwardPlayer(partyMember, rewardEvent, followAction);
+                    void Reward(PartyMember partyMember, Action followAction) => game.RewardPlayer(partyMember, rewardEvent, followAction);
                     void Done()
                     {
                         if (rewardEvent.Next != null)
@@ -283,14 +283,14 @@ namespace Ambermoon
                             Reward(game.CurrentPartyMember, Done);
                             break;
                         case RewardEvent.RewardTarget.All:
-                            if (rewardEvent.TypeOfAward == RewardEvent.AwardType.HitPoints &&
-                                (rewardEvent.Operation == RewardEvent.AwardOperation.Decrease ||
-                                rewardEvent.Operation == RewardEvent.AwardOperation.DecreasePercentage))
+                            if (rewardEvent.TypeOfReward == RewardEvent.RewardType.HitPoints &&
+                                (rewardEvent.Operation == RewardEvent.RewardOperation.Decrease ||
+                                rewardEvent.Operation == RewardEvent.RewardOperation.DecreasePercentage))
                             {
-                                Func<PartyMember, uint> damageProvider = rewardEvent.Operation == RewardEvent.AwardOperation.Decrease
+                                Func<PartyMember, uint> damageProvider = rewardEvent.Operation == RewardEvent.RewardOperation.Decrease
                                     ? (Func<PartyMember, uint>)(_ => rewardEvent.Value) : p => rewardEvent.Value * p.HitPoints.TotalMaxValue / 100;
 
-                                // Note: Awards damage silently.
+                                // Note: Rewards damage silently.
                                 game.DamageAllPartyMembers(damageProvider, p => p.Alive, null, Done, Condition.None, false);
                             }
                             else
@@ -524,8 +524,8 @@ namespace Ambermoon
                             }
                             break;
                         }
-                        case ConditionEvent.ConditionType.HasAilment:
-                            if (game.CurrentPartyMember.Ailments.HasFlag((Condition)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
+                        case ConditionEvent.ConditionType.HasCondition:
+                            if (game.CurrentPartyMember.Conditions.HasFlag((Condition)(1 << (int)conditionEvent.ObjectIndex)) != (conditionEvent.Value != 0))
                             {
                                 aborted = mapEventIfFalse == null;
                                 lastEventStatus = false;
@@ -823,13 +823,13 @@ namespace Ambermoon
                             game.SetPlayerDirection((CharacterDirection)(actionEvent.ObjectIndex % 5));
                             break;
                         }
-                        case ActionEvent.ActionType.AddAilment:
+                        case ActionEvent.ActionType.AddCondition:
                         {
-                            var ailment = (Condition)(1 << (int)actionEvent.ObjectIndex);
-                            if (ClearSetToggle(() => game.CurrentPartyMember.Ailments.HasFlag(ailment)))
-                                game.AddAilment(ailment);
+                            var condition = (Condition)(1 << (int)actionEvent.ObjectIndex);
+                            if (ClearSetToggle(() => game.CurrentPartyMember.Conditions.HasFlag(condition)))
+                                game.AddCondition(condition);
                             else
-                                game.RemoveAilment(ailment, game.CurrentPartyMember);
+                                game.RemoveCondition(condition, game.CurrentPartyMember);
                             break;
                         }
                         case ActionEvent.ActionType.AddGold:

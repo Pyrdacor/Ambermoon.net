@@ -2023,7 +2023,7 @@ namespace Ambermoon.UI
                                 buttonGrid.SetButton(3, ButtonType.RemoveCurse, false, null, false, GetTooltip(Button.TooltipType.RemoveCurse)); // this is set later manually
                                 buttonGrid.SetButton(4, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(5, ButtonType.Empty, false, null, false);
-                                buttonGrid.SetButton(6, ButtonType.HealAilment, false, null, false, GetTooltip(Button.TooltipType.HealAilment)); // this is set later manually
+                                buttonGrid.SetButton(6, ButtonType.HealCondition, false, null, false, GetTooltip(Button.TooltipType.HealCondition)); // this is set later manually
                                 buttonGrid.SetButton(7, ButtonType.Empty, false, null, false);
                                 buttonGrid.SetButton(8, ButtonType.Empty, false, null, false);
                                 break;
@@ -3404,7 +3404,7 @@ namespace Ambermoon.UI
                 {
                     if (i == slot)
                         portraitNames[i].TextColor = TextColor.ActivePartyMember;
-                    else if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
+                    else if (!partyMembers[i].Alive || !partyMembers[i].Conditions.CanSelect())
                         portraitNames[i].TextColor = TextColor.DeadPartyMember;
                     else if (game.HasPartyMemberFled(partyMembers[i]))
                         portraitNames[i].TextColor = TextColor.DeadPartyMember;
@@ -3422,7 +3422,7 @@ namespace Ambermoon.UI
             {
                 if (portraitNames[i] != null)
                 {
-                    if (!partyMembers[i].Alive || !partyMembers[i].Ailments.CanSelect())
+                    if (!partyMembers[i].Alive || !partyMembers[i].Conditions.CanSelect())
                         portraitNames[i].TextColor = TextColor.DeadPartyMember;
                     else if (game.HasPartyMemberFled(partyMembers[i]))
                         portraitNames[i].TextColor = TextColor.DeadPartyMember;
@@ -3738,20 +3738,20 @@ namespace Ambermoon.UI
                 // Overweight
                 UpdateCharacterStatus(slot, UIGraphic.StatusOverweight);
             }
-            else if (partyMember.Ailments != Condition.None)
+            else if (partyMember.Conditions != Condition.None)
             {
-                var ailments = partyMember.VisibleAilments;
-                uint ailmentCount = (uint)ailments.Count;
+                var conditions = partyMember.VisibleConditions;
+                uint conditionCount = (uint)conditions.Count;
 
-                if (ailmentCount == 1)
+                if (conditionCount == 1)
                 {
-                    UpdateCharacterStatus(slot, Graphics.GetAilmentGraphic(ailments[0]));
+                    UpdateCharacterStatus(slot, Graphics.GetConditionGraphic(conditions[0]));
                 }
                 else
                 {
-                    uint ticksPerAilment = Game.TicksPerSecond * 2;
-                    int index = (int)((game.CurrentTicks % (ailmentCount * ticksPerAilment)) / ticksPerAilment);
-                    UpdateCharacterStatus(slot, Graphics.GetAilmentGraphic(ailments[index]));
+                    uint ticksPerCondition = Game.TicksPerSecond * 2;
+                    int index = (int)((game.CurrentTicks % (conditionCount * ticksPerCondition)) / ticksPerCondition);
+                    UpdateCharacterStatus(slot, Graphics.GetConditionGraphic(conditions[index]));
                 }
             }
             else
@@ -4957,7 +4957,7 @@ namespace Ambermoon.UI
                             {
                                 if (partyMember != null)
                                 {
-                                    bool canAccessInventory = !game.HasPartyMemberFled(partyMember) && partyMember.Ailments.CanOpenInventory();
+                                    bool canAccessInventory = !game.HasPartyMemberFled(partyMember) && partyMember.Conditions.CanOpenInventory();
                                     if (canAccessInventory)
                                         TargetInventoryPlayerSelected(i, partyMember);
                                 }
@@ -5002,7 +5002,7 @@ namespace Ambermoon.UI
 
             if (game.FinishPickingTargetInventory(slot))
             {
-                if (partyMember.Ailments.CanOpenInventory())
+                if (partyMember.Conditions.CanOpenInventory())
                 {
                     game.OpenPartyMember(slot, true, () =>
                     {

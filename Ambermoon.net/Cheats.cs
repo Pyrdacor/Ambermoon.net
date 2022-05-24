@@ -411,9 +411,9 @@ namespace Ambermoon
                         partyMember.Attributes[attribute].CurrentValue = partyMember.Attributes[attribute].MaxValue;
                 }
 
-                foreach (var ability in Enum.GetValues<Skill>())
+                foreach (var skill in Enum.GetValues<Skill>())
                 {
-                    partyMember.Abilities[ability].CurrentValue = partyMember.Abilities[ability].MaxValue;
+                    partyMember.Skills[skill].CurrentValue = partyMember.Skills[skill].MaxValue;
                 }
 
                 game.UpdateCharacterBars();
@@ -441,7 +441,7 @@ namespace Ambermoon
             }
 
             Console.WriteLine("All party members' LP and SP were filled.");
-            Console.WriteLine("All their attributes and abilites are maxed.");
+            Console.WriteLine("All their attributes and skills are maxed.");
             Console.WriteLine("They all speak all languages now.");
             Console.WriteLine("And they learned all spells of their school.");
             Console.WriteLine();

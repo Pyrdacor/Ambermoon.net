@@ -130,7 +130,7 @@ namespace Ambermoon
             /// 
             /// This is not used as a real action and it is only available for party members.
             /// Each player who picks this action will get a chance equal to his Parry
-            /// ability to block physical attacks. This is only checked if the attack did
+            /// skill to block physical attacks. This is only checked if the attack did
             /// not miss or failed before.
             /// </summary>
             Parry,
@@ -438,7 +438,7 @@ namespace Ambermoon
             {
                 if (battleTicks >= nextIdleAnimationTicks)
                 {
-                    var monsters = Monsters.Where(m => m.Ailments.CanMove()).ToList();
+                    var monsters = Monsters.Where(m => m.Conditions.CanMove()).ToList();
 
                     if (monsters.Count != 0)
                     {
@@ -620,8 +620,8 @@ namespace Ambermoon
 
             PlayBattleEffectAnimation(BattleEffect.HurtMonster, (uint)tile, game.CurrentBattleTicks, HurtSplashFinished);
             ShowBattleFieldDamage(tile, damage);
-            if (monster.Ailments.HasFlag(Condition.Sleep))
-                game.RemoveAilment(Condition.Sleep, monster);
+            if (monster.Conditions.HasFlag(Condition.Sleep))
+                game.RemoveCondition(Condition.Sleep, monster);
         }
 
         /// <summary>
@@ -633,7 +633,7 @@ namespace Ambermoon
         {
             game.ProcessPoisonDamage(1, () =>
             {
-                var poisonedMonsters = Monsters.Where(m => m.Alive && m.Ailments.HasFlag(Condition.Poisoned)).ToList();
+                var poisonedMonsters = Monsters.Where(m => m.Alive && m.Conditions.HasFlag(Condition.Poisoned)).ToList();
 
                 if (poisonedMonsters.Count == 0)
                     Start();
@@ -717,11 +717,11 @@ namespace Ambermoon
                             int playerIndex = partyMembers.ToList().IndexOf(partyMember);
                             var playerAction = playerBattleActions[playerIndex];
 
-                            if (partyMember.Ailments.HasFlag(Condition.Panic))
+                            if (partyMember.Conditions.HasFlag(Condition.Panic))
                             {
                                 PickPanicAction(partyMember, playerAction, forbiddenMoveSpots);
                             }
-                            else if (partyMember.Ailments.HasFlag(Condition.Crazy))
+                            else if (partyMember.Conditions.HasFlag(Condition.Crazy))
                             {
                                 PickMadAction(partyMember, playerAction, forbiddenMoveSpots);
                             }
@@ -955,7 +955,7 @@ namespace Ambermoon
         {
             CharacterDied?.Invoke(target);
 
-            if (!partyMembers.Any(p => p != null && p.Alive && p.Ailments.CanFight() && !fledCharacters.Contains(p)))
+            if (!partyMembers.Any(p => p != null && p.Alive && p.Conditions.CanFight() && !fledCharacters.Contains(p)))
             {
                 EndBattleCleanup();
                 BattleEnded?.Invoke(new Game.BattleEndInfo
@@ -1968,12 +1968,12 @@ namespace Ambermoon
                             damage = target.HitPoints.CurrentValue;
                     }
                     ShowBattleFieldDamage((int)tile, damage);
-                    if (target.Ailments.HasFlag(Condition.Sleep))
-                        game.RemoveAilment(Condition.Sleep, target);
+                    if (target.Conditions.HasFlag(Condition.Sleep))
+                        game.RemoveCondition(Condition.Sleep, target);
                     if (target is Monster)
                         target.Damage(damage);
                     else if (!game.Godmode)
-                        target.Damage(damage, deadAilment => game.KillPartyMember(target as PartyMember, deadAilment));
+                        target.Damage(damage, deathCondition => game.KillPartyMember(target as PartyMember, deathCondition));
                     return;
                 }
                 default:
@@ -2054,7 +2054,7 @@ namespace Ambermoon
 
         bool CheckSpellCast(Character caster, SpellInfo spellInfo)
         {
-            if (game.RollDice100() >= caster.Abilities[Skill.UseMagic].TotalCurrentValue)
+            if (game.RollDice100() >= caster.Skills[Skill.UseMagic].TotalCurrentValue)
             {
                 layout.SetBattleMessage(caster.Name + game.DataNameProvider.SpellFailed,
                     caster.Type == CharacterType.Monster ? TextColor.BattleMonster : TextColor.BattlePlayer);
@@ -2139,7 +2139,7 @@ namespace Ambermoon
                 }
             }
 
-            if (target.Ailments.HasFlag(Condition.Petrified) && spell.FailsAgainstPetrifiedEnemy())
+            if (target.Conditions.HasFlag(Condition.Petrified) && spell.FailsAgainstPetrifiedEnemy())
             {
                 // Note: In original there is no message in this case but I think
                 //       it's better to show the reason.
@@ -2150,11 +2150,11 @@ namespace Ambermoon
             return true;
         }
 
-        void RemoveAilment(Condition ailment, Character target)
+        void RemoveCondition(Condition condition, Character target)
         {
             // Healing spells or potions.
             // Sleep can be removed by attacking as well.
-            target.Ailments &= ~ailment;
+            target.Conditions &= ~condition;
 
             if (target is PartyMember partyMember)
             {
@@ -2163,16 +2163,16 @@ namespace Ambermoon
             }
         }
 
-        void AddAilment(Condition ailment, Character target)
+        void AddCondition(Condition condition, Character target)
         {
             if (target is PartyMember && game.Godmode)
                 return;
 
-            target.Ailments |= ailment;
+            target.Conditions |= condition;
 
             if (target is PartyMember partyMember)
             {
-                if (!ailment.CanParry() && parryingPlayers.Contains(partyMember))
+                if (!condition.CanParry() && parryingPlayers.Contains(partyMember))
                     parryingPlayers.Remove(partyMember);
 
                 game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, 0);
@@ -2186,25 +2186,25 @@ namespace Ambermoon
                     action.Skip = true;
             }
 
-            if (!ailment.CanSelect()) // disabled
+            if (!condition.CanSelect()) // disabled
             {
                 SkipActions();
             }
             else
             {
-                if (!ailment.CanAttack() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Attack))
+                if (!condition.CanAttack() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Attack))
                 {
                     SkipActions();
                 }
-                else if (!ailment.CanCastSpell() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.CastSpell))
+                else if (!condition.CanCastSpell() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.CastSpell))
                 {
                     SkipActions();
                 }
-                else if (!ailment.CanMove() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Move))
+                else if (!condition.CanMove() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Move))
                 {
                     SkipActions();
                 }
-                else if (!ailment.CanFlee() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Flee))
+                else if (!condition.CanFlee() && roundBattleActions.Any(a => a.Character == target && a.Action == BattleActionType.Flee))
                 {
                     SkipActions();
                 }
@@ -2275,16 +2275,16 @@ namespace Ambermoon
                     TextColor.BrightGray);
                 position.Y += Global.GlyphLineHeight;
             }
-            // Abilities
+            // Skills
             position = area.Position + new Position(panelWidth + Global.GlyphWidth, 0);
             popup.AddText(new Rect(position, new Size(panelWidth, Global.GlyphLineHeight)),
-                game.DataNameProvider.AbilitiesHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
+                game.DataNameProvider.SkillsHeaderString, TextColor.MonsterInfoHeader, TextAlign.Center);
             position.Y += Global.GlyphLineHeight + 1;
-            foreach (var ability in Enum.GetValues<Skill>())
+            foreach (var skill in Enum.GetValues<Skill>())
             {
-                var abilityValues = monster.Abilities[ability];
+                var skillValues = monster.Skills[skill];
                 popup.AddText(position,
-                    $"{game.DataNameProvider.GetAbilityShortName(ability)}  {((abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%")}",
+                    $"{game.DataNameProvider.GetSkillShortName(skill)}  {((skillValues.TotalCurrentValue > 99 ? "**" : $"{skillValues.TotalCurrentValue:00}") + $"%/{skillValues.MaxValue:00}%")}",
                     TextColor.BrightGray);
                 position.Y += Global.GlyphLineHeight - 1;
             }
@@ -2381,37 +2381,37 @@ namespace Ambermoon
                     break;
                 }
                 case Spell.Lame:
-                    AddAilment(Condition.Lamed, target);
+                    AddCondition(Condition.Lamed, target);
                     break;
                 case Spell.Poison:
-                    AddAilment(Condition.Poisoned, target);
+                    AddCondition(Condition.Poisoned, target);
                     break;
                 case Spell.Petrify:
-                    AddAilment(Condition.Petrified, target);
+                    AddCondition(Condition.Petrified, target);
                     break;
                 case Spell.CauseDisease:
-                    AddAilment(Condition.Diseased, target);
+                    AddCondition(Condition.Diseased, target);
                     break;
                 case Spell.CauseAging:
-                    AddAilment(Condition.Aging, target);
+                    AddCondition(Condition.Aging, target);
                     break;
                 case Spell.Irritate:
-                    AddAilment(Condition.Irritated, target);
+                    AddCondition(Condition.Irritated, target);
                     break;
                 case Spell.CauseMadness:
-                    AddAilment(Condition.Crazy, target);
+                    AddCondition(Condition.Crazy, target);
                     break;
                 case Spell.Sleep:
-                    AddAilment(Condition.Sleep, target);
+                    AddCondition(Condition.Sleep, target);
                     break;
                 case Spell.Fear:
-                    AddAilment(Condition.Panic, target);
+                    AddCondition(Condition.Panic, target);
                     break;
                 case Spell.Blind:
-                    AddAilment(Condition.Blind, target);
+                    AddCondition(Condition.Blind, target);
                     break;
                 case Spell.Drug:
-                    AddAilment(Condition.Drugged, target);
+                    AddCondition(Condition.Drugged, target);
                     break;
                 case Spell.Mudsling:
                     if (game.Features.HasFlag(Features.AdjustedSpellDamage))
@@ -2615,7 +2615,7 @@ namespace Ambermoon
                 case Spell.LPStealer:
                 {
                     uint stealAmount = Math.Min(caster.Level, target.HitPoints.CurrentValue);
-                    DealDamage(stealAmount, 0);
+                    DealDamage(stealAmount, 0, false);
                     caster.HitPoints.CurrentValue += Math.Min(stealAmount, caster.HitPoints.TotalMaxValue - caster.HitPoints.CurrentValue);
                     if (caster is PartyMember castingMember)
                         layout.FillCharacterBars(castingMember);
@@ -2662,8 +2662,11 @@ namespace Ambermoon
 
             finishAction?.Invoke();
 
-            void DealDamage(uint baseDamage, uint variableDamage)
+            void DealDamage(uint baseDamage, uint variableDamage, bool useSpellBonusDamage = true)
             {
+                if (!game.Features.HasFlag(Features.SpellDamageBonus))
+                    useSpellBonusDamage = false;
+
                 void EndHurt()
                 {
                     if (!target.Alive)
@@ -2683,6 +2686,43 @@ namespace Ambermoon
                     TrackMonsterHit(monster, trackDamage);
                 else if (caster is PartyMember partyMember)
                     TrackPlayerHit(partyMember, trackDamage);
+                if (useSpellBonusDamage)
+                {
+                    int factor = caster.Level + ((int)caster.Attributes[Attribute.Intelligence].TotalCurrentValue - 50) / 5;
+
+                    if (target is Monster)
+                    {
+                        int GetWorstBonus(int elementRowIndex)
+                        {
+                            int worstBonus = 255;
+                            var element = target.Element;
+
+                            for (int i = 0; i < 8; ++i)
+                            {
+                                if (((uint)element & (1 << i)) != 0) // has this element
+                                {
+                                    int bonus = SpellBonusTable[elementRowIndex + i];
+
+                                    if (bonus < worstBonus)
+                                        worstBonus = bonus;
+                                }
+                            }
+
+                            return worstBonus == 255 ? 100 : worstBonus;
+                        }
+
+                        factor += GetWorstBonus(GetElementIndex(spell) * 8);
+                    }
+                    else
+                    {
+                        factor += 100;
+                    }
+
+                    if (factor <= 0)
+                        damage = 1;
+                    else
+                        damage = Math.Max(1, damage * (uint)factor / 100);
+                }
                 uint position = (uint)GetSlotFromCharacter(target);
                 PlayBattleEffectAnimation(target.Type == CharacterType.Monster ? BattleEffect.HurtMonster : BattleEffect.HurtPlayer,
                     position, ticks, () =>
@@ -2691,20 +2731,45 @@ namespace Ambermoon
                         {
                             game.ShowPlayerDamage(game.SlotFromPartyMember(partyMember).Value, damage);
                         }
-                        if (target.Ailments.HasFlag(Condition.Sleep))
-                            RemoveAilment(Condition.Sleep, target);
+                        if (target.Conditions.HasFlag(Condition.Sleep))
+                            RemoveCondition(Condition.Sleep, target);
                         if (game.Godmode && target is Monster monster)
                             damage = target.HitPoints.CurrentValue;
                         if (target is Monster)
                             target.Damage(damage);
                         else if (!game.Godmode)
-                            target.Damage(damage, deadAilment => game.KillPartyMember(target as PartyMember, deadAilment));
+                            target.Damage(damage, deathCondition => game.KillPartyMember(target as PartyMember, deathCondition));
                         EndHurt();
                     }
                 );
                 ShowBattleFieldDamage(GetSlotFromCharacter(target), damage);
             }
         }
+
+        static int GetElementIndex(Spell spell)
+        {
+            if (spell >= Spell.Mudsling && spell <= Spell.Earthquake)
+                return 4;
+            if (spell >= Spell.Winddevil && spell <= Spell.Whirlwind)
+                return 5;
+            if (spell >= Spell.Firebeam && spell <= Spell.Firepillar)
+                return 6;
+            if (spell >= Spell.Waterfall && spell <= Spell.Iceshower)
+                return 7;
+            return 1; // all other relevant spells are spirit spells
+        }
+
+        static readonly int[] SpellBonusTable = new int[]
+        {
+            0,100,100,100,100,100,100,100, // Mental spells
+            100,0,150,150,100,100,100,100, // Spirit spells
+            100,100,0,100,100,100,100,100, // Physical spells
+            100,100,100,0,100,100,100,100, // Undead spells
+            100,100,100,75,0,50,100,150, // Earth spells
+            100,100,100,75,150,0,50,150, // Wind spells
+            100,75,100,125,100,150,0,50, // Fire spells
+            100,100,100,75,50,100,150,0 // Water spells
+        };
 
         public void StartMonsterAnimation(Monster monster, Action<BattleAnimation> setupAction, Action<BattleAnimation> finishAction)
         {
@@ -2816,7 +2881,7 @@ namespace Ambermoon
 
             bool TryAttack()
             {
-                if (partyMember.Ailments.CanAttack() &&
+                if (partyMember.Conditions.CanAttack() &&
                     !partyMember.HasLongRangedWeapon(game.ItemManager) &&
                     AttackSpotAvailable(position, partyMember, true))
                 {
@@ -2886,7 +2951,7 @@ namespace Ambermoon
                 if (MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
                     return BattleActionType.Move;
             }
-            if (monster.Ailments.HasFlag(Condition.Crazy))
+            if (monster.Conditions.HasFlag(Condition.Crazy))
             {
                 return AttackOrMove(true);
             }
@@ -2899,7 +2964,7 @@ namespace Ambermoon
 
                 if (rand < 8)
                 {
-                    if (canCast && monster.HasAnySpell() && monster.Ailments.CanCastSpell() && CanCastAnySpell(monster))
+                    if (canCast && monster.HasAnySpell() && monster.Conditions.CanCastSpell() && CanCastAnySpell(monster))
                         return BattleActionType.CastSpell;
 
                     canCast = false;
@@ -2958,7 +3023,7 @@ namespace Ambermoon
                 if (mad)
                 {
                     bool TryAttack() =>
-                        monster.Ailments.CanAttack() &&
+                        monster.Conditions.CanAttack() &&
                         !monster.HasLongRangedWeapon(game.ItemManager) &&
                         AttackSpotAvailable(position, monster, false);
                     bool TryMove() =>
@@ -2981,7 +3046,7 @@ namespace Ambermoon
                 }
                 else
                 {
-                    if (monster.Ailments.CanAttack() && AttackSpotAvailable(position, monster, false))
+                    if (monster.Conditions.CanAttack() && AttackSpotAvailable(position, monster, false))
                         return BattleActionType.Attack;
                     else if (monster.CanMove() && MoveSpotAvailable(position, monster, wantsToFlee, forbiddenMonsterMoveSpots))
                         return BattleActionType.Move;
@@ -3406,10 +3471,10 @@ namespace Ambermoon
             if (monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
                 return false;
 
-            if (monster.Ailments.HasFlag(Condition.Panic))
+            if (monster.Conditions.HasFlag(Condition.Panic))
                 return true;
 
-            if (monster.Ailments.HasFlag(Condition.Crazy))
+            if (monster.Conditions.HasFlag(Condition.Crazy))
                 return false;
 
             int lowLPEffect = (int)((monster.HitPoints.TotalMaxValue - monster.HitPoints.CurrentValue) * 75 / monster.HitPoints.TotalMaxValue);
@@ -3436,7 +3501,7 @@ namespace Ambermoon
             int range = monster.HasLongRangedAttack(game.ItemManager, out bool hasAmmo) && hasAmmo ? 6 : 1;
             GetRangeMinMaxValues(characterPosition, monster, out int minX, out int maxX, out int minY, out int maxY, range, RangeType.Enemy);
             var possiblePositions = new Dictionary<int, uint>();
-            bool mad = monster.Ailments.HasFlag(Condition.Crazy);
+            bool mad = monster.Conditions.HasFlag(Condition.Crazy);
             var targetCheck = mad
                 ? (Func<Character, bool>)(c => c != null && c != monster)
                 : (Func<Character, bool>)(c => c != null && c.Type == CharacterType.PartyMember);
@@ -3713,7 +3778,7 @@ namespace Ambermoon
         enum AttackResult
         {
             Damage,
-            Failed, // Chance depending on attackers ATT ability
+            Failed, // Chance depending on attackers ATT skill
             NoDamage, // Chance depending on ATK / DEF
             Missed, // Target moved
             Blocked, // Parry
@@ -3735,7 +3800,7 @@ namespace Ambermoon
 
             var target = GetCharacterAt(attackedSlot);
 
-            if (target.Ailments.HasFlag(Condition.Petrified))
+            if (target.Conditions.HasFlag(Condition.Petrified))
             {
                 abortAttacking = true;
                 return AttackResult.Petrified;
@@ -3747,10 +3812,10 @@ namespace Ambermoon
                 return AttackResult.Protected;
             }
 
-            if ((!game.Godmode || attacker is Monster) && game.RollDice100() > attacker.Abilities[Skill.Attack].TotalCurrentValue)
+            if ((!game.Godmode || attacker is Monster) && game.RollDice100() > attacker.Skills[Skill.Attack].TotalCurrentValue)
                 return AttackResult.Failed;
 
-            if (game.RollDice100() < attacker.Abilities[Skill.CriticalHit].TotalCurrentValue)
+            if (game.RollDice100() < attacker.Skills[Skill.CriticalHit].TotalCurrentValue)
             {
                 if (!(target is Monster monster) || !monster.MonsterFlags.HasFlag(MonsterFlags.Boss))
                 {
@@ -3769,7 +3834,7 @@ namespace Ambermoon
 
             // Note: Monsters can't parry.
             if (target is PartyMember partyMember && parryingPlayers.Contains(partyMember) &&
-                game.RollDice100() < partyMember.Abilities[Skill.Parry].TotalCurrentValue)
+                game.RollDice100() < partyMember.Skills[Skill.Parry].TotalCurrentValue)
                 return AttackResult.Blocked;
 
             return AttackResult.Damage;

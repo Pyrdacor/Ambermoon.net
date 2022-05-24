@@ -236,20 +236,20 @@ namespace Ambermoon.Data.Legacy.Serialization
                 }
                 case EventType.Reward:
                 {
-                    var awardType = (RewardEvent.AwardType)dataReader.ReadByte();
-                    var awardOperation = (RewardEvent.AwardOperation)dataReader.ReadByte();
+                    var rewardType = (RewardEvent.RewardType)dataReader.ReadByte();
+                    var rewardOperation = (RewardEvent.RewardOperation)dataReader.ReadByte();
                     var random = dataReader.ReadByte() != 0;
-                    var awardTarget = (RewardEvent.RewardTarget)dataReader.ReadByte();
+                    var rewardTarget = (RewardEvent.RewardTarget)dataReader.ReadByte();
                     var unknown = dataReader.ReadByte();
-                    var awardTypeValue = dataReader.ReadWord();
+                    var rewardTypeValue = dataReader.ReadWord();
                     var value = dataReader.ReadWord();
                     @event = new RewardEvent
                     {
-                        TypeOfAward = awardType,
-                        Operation = awardOperation,
+                        TypeOfReward = rewardType,
+                        Operation = rewardOperation,
                         Random = random,
-                        Target = awardTarget,
-                        AwardTypeValue = awardTypeValue,
+                        Target = rewardTarget,
+                        RewardTypeValue = rewardTypeValue,
                         Value = value,
                         Unknown = unknown
                     };

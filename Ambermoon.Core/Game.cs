@@ -275,7 +275,7 @@ namespace Ambermoon
         readonly IOutroFactory outroFactory;
         IOutro outro = null;
         CustomOutro customOutro = null;
-        internal bool CanSee() => !CurrentPartyMember.Ailments.HasFlag(Condition.Blind) &&
+        internal bool CanSee() => !CurrentPartyMember.Conditions.HasFlag(Condition.Blind) &&
             (!Map.Flags.HasFlag(MapFlags.Dungeon) || lightIntensity > 0);
         internal bool GameOverButtonsVisible { get; private set; } = false;
         internal bool WindowActive => currentWindow.Window != Window.MapView;
@@ -967,7 +967,7 @@ namespace Ambermoon
 
             layout.Update(CurrentTicks);
 
-            if (CurrentPartyMember != null && CurrentPartyMember.Ailments.HasFlag(Condition.Drugged) &&
+            if (CurrentPartyMember != null && CurrentPartyMember.Conditions.HasFlag(Condition.Drugged) &&
                 !layout.OptionMenuOpen)
             {
                 if (CurrentAnimationTicks - lastDrugColorChangeTicks >= 16)
@@ -1374,9 +1374,9 @@ namespace Ambermoon
                 partyMember.Attributes[attribute].BonusValue = 0;
             }
 
-            foreach (var ability in Enum.GetValues<Skill>())
+            foreach (var skill in Enum.GetValues<Skill>())
             {
-                partyMember.Abilities[ability].BonusValue = 0;
+                partyMember.Skills[skill].BonusValue = 0;
             }
 
             foreach (var itemSlot in partyMember.Equipment.Slots)
@@ -1393,8 +1393,8 @@ namespace Ambermoon
 
                     if (item.Attribute != null)
                         partyMember.Attributes[item.Attribute.Value].BonusValue += factor * item.AttributeValue;
-                    if (item.Ability != null)
-                        partyMember.Abilities[item.Ability.Value].BonusValue += factor * item.AbilityValue;
+                    if (item.Skill != null)
+                        partyMember.Skills[item.Skill.Value].BonusValue += factor * item.SkillValue;
                 }
             }
         }
@@ -1615,7 +1615,7 @@ namespace Ambermoon
             }
 
             DamageAllPartyMembers(_ => GetDamage(),
-                p => p.Alive && p.Ailments.HasFlag(Condition.Poisoned), null, followAction);
+                p => p.Alive && p.Conditions.HasFlag(Condition.Poisoned), null, followAction);
         }
 
         void Sleep(bool inn, int healing)
@@ -1628,9 +1628,9 @@ namespace Ambermoon
 
                 if (partyMember != null && partyMember.Alive)
                 {
-                    if (partyMember.Ailments.HasFlag(Condition.Exhausted))
+                    if (partyMember.Conditions.HasFlag(Condition.Exhausted))
                     {
-                        partyMember.Ailments &= ~Condition.Exhausted;
+                        partyMember.Conditions &= ~Condition.Exhausted;
                         RemoveExhaustion(partyMember);
                         layout.UpdateCharacterStatus(partyMember);
                     }
@@ -1742,10 +1742,10 @@ namespace Ambermoon
 
                 if (partyMember != null && partyMember.Alive)
                 {
-                    bool exhausted = partyMember.Ailments.HasFlag(Condition.Exhausted);
+                    bool exhausted = partyMember.Conditions.HasFlag(Condition.Exhausted);
                     if (exhausted)
                         alreadyExhausted = true;
-                    partyMember.Ailments |= Condition.Exhausted;
+                    partyMember.Conditions |= Condition.Exhausted;
                     damageValues[i] = AddExhaustion(partyMember, hoursExhausted, !exhausted);
                     if (damageValues[i] < partyMember.HitPoints.CurrentValue)
                         layout.UpdateCharacterStatus(partyMember);
@@ -1818,10 +1818,10 @@ namespace Ambermoon
             }
         }
 
-        internal void KillPartyMember(PartyMember partyMember, Condition deadAilment = Condition.DeadCorpse)
+        internal void KillPartyMember(PartyMember partyMember, Condition deathCondition = Condition.DeadCorpse)
         {
-            RemoveAilment(Condition.Exhausted, partyMember);
-            partyMember.Die(deadAilment);
+            RemoveCondition(Condition.Exhausted, partyMember);
+            partyMember.Die(deathCondition);
         }
 
         /// <summary>
@@ -1878,8 +1878,8 @@ namespace Ambermoon
                 => AgePlayer(partyMember, finishAction, 1);
 
             ForeachPartyMember(Age, partyMember =>
-                partyMember.Alive && partyMember.Ailments.HasFlag(Condition.Aging) &&
-                    !partyMember.Ailments.HasFlag(Condition.Petrified), () =>
+                partyMember.Alive && partyMember.Conditions.HasFlag(Condition.Aging) &&
+                    !partyMember.Conditions.HasFlag(Condition.Petrified), () =>
                     {
                         if (exhaustedHours > 0)
                             GameTime_GotExhausted(exhaustedHours, passedHours);
@@ -1897,12 +1897,12 @@ namespace Ambermoon
 
             void Age(PartyMember partyMember, Action finishAction)
             {
-                uint ageIncrease = partyMember.Ailments.HasFlag(Condition.Aging) ? 2u : 1u;
+                uint ageIncrease = partyMember.Conditions.HasFlag(Condition.Aging) ? 2u : 1u;
                 AgePlayer(partyMember, finishAction, ageIncrease);
             }
 
             ForeachPartyMember(Age, partyMember =>
-                partyMember.Alive && !partyMember.Ailments.HasFlag(Condition.Petrified), () =>
+                partyMember.Alive && !partyMember.Conditions.HasFlag(Condition.Petrified), () =>
                 {
                     if (exhaustedHours > 0)
                         GameTime_GotExhausted(exhaustedHours, passedHours);
@@ -2527,7 +2527,7 @@ namespace Ambermoon
         {
             var hero = GetPartyMember(0);
 
-            if (!hero.Alive || !hero.Ailments.CanTalk())
+            if (!hero.Alive || !hero.Conditions.CanTalk())
             {
                 ShowMessagePopup(DataNameProvider.UnableToTalk);
                 return;
@@ -2545,7 +2545,7 @@ namespace Ambermoon
                 {
                     var partyMember = GetPartyMember(characterSlot);
 
-                    if (!partyMember.Alive || partyMember.Ailments.HasFlag(Condition.Petrified))
+                    if (!partyMember.Alive || partyMember.Conditions.HasFlag(Condition.Petrified))
                     {
                         ExecuteNextUpdateCycle(PickTargetPlayer);
                         return;
@@ -3829,7 +3829,7 @@ namespace Ambermoon
 
             bool switchedFromOtherPartyMember = CurrentInventory != null;
             var partyMember = GetPartyMember(slot);
-            bool canAccessInventory = !HasPartyMemberFled(partyMember) && partyMember.Ailments.CanOpenInventory();
+            bool canAccessInventory = !HasPartyMemberFled(partyMember) && partyMember.Conditions.CanOpenInventory();
 
             if (inventory && !canAccessInventory)
             {
@@ -4192,18 +4192,18 @@ namespace Ambermoon
                         AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAttributeTooltip(GameLanguage, attribute, partyMember));
                 }
                 #endregion
-                #region Abilities
-                layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.AbilitiesHeaderString, TextColor.LightGreen, TextAlign.Center);
+                #region Skills
+                layout.AddText(new Rect(22, 115, 72, Global.GlyphLineHeight), DataNameProvider.SkillsHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
-                foreach (var ability in Enum.GetValues<Skill>())
+                foreach (var skill in Enum.GetValues<Skill>())
                 {
                     int y = 122 + index++ * Global.GlyphLineHeight;
-                    var abilityValues = partyMember.Abilities[ability];
-                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetAbilityShortName(ability));
+                    var skillValues = partyMember.Skills[skill];
+                    layout.AddText(new Rect(22, y, 30, Global.GlyphLineHeight), DataNameProvider.GetSkillShortName(skill));
                     layout.AddText(new Rect(52, y, 42, Global.GlyphLineHeight),
-                        (abilityValues.TotalCurrentValue > 99 ? "**" : $"{abilityValues.TotalCurrentValue:00}") + $"%/{abilityValues.MaxValue:00}%");
+                        (skillValues.TotalCurrentValue > 99 ? "**" : $"{skillValues.TotalCurrentValue:00}") + $"%/{skillValues.MaxValue:00}%");
                     if (Configuration.ShowPlayerStatsTooltips)
-                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetAbilityTooltip(GameLanguage, ability, partyMember));
+                        AddTooltip(new Rect(22, y, 72, Global.GlyphLineHeight), BuiltinTooltips.GetSkillTooltip(GameLanguage, skill, partyMember));
                 }
                 #endregion
                 #region Languages
@@ -4217,41 +4217,41 @@ namespace Ambermoon
                         layout.AddText(new Rect(106, y, 72, Global.GlyphLineHeight), DataNameProvider.GetLanguageName(language));
                 }
                 #endregion
-                #region Ailments
-                layout.AddText(new Rect(106, 115, 72, Global.GlyphLineHeight), DataNameProvider.AilmentsHeaderString, TextColor.LightGreen, TextAlign.Center);
+                #region Conditions
+                layout.AddText(new Rect(106, 115, 72, Global.GlyphLineHeight), DataNameProvider.ConditionsHeaderString, TextColor.LightGreen, TextAlign.Center);
                 index = 0;
-                // Total space is 80 pixels wide. Each ailment icon is 16 pixels wide. So there is space for 5 ailment icons per line.
-                const int ailmentsPerRow = 5;
-                foreach (var ailment in partyMember.VisibleAilments)
+                // Total space is 80 pixels wide. Each condition icon is 16 pixels wide. So there is space for 5 condition icons per line.
+                const int conditionsPerRow = 5;
+                foreach (var condition in partyMember.VisibleConditions)
                 {
-                    if (ailment == Condition.DeadAshes || ailment == Condition.DeadDust)
+                    if (condition == Condition.DeadAshes || condition == Condition.DeadDust)
                         continue;
 
-                    if (ailment != Condition.DeadCorpse && !partyMember.Ailments.HasFlag(ailment))
+                    if (condition != Condition.DeadCorpse && !partyMember.Conditions.HasFlag(condition))
                         continue;
 
-                    int column = index % ailmentsPerRow;
-                    int row = index / ailmentsPerRow;
+                    int column = index % conditionsPerRow;
+                    int row = index / conditionsPerRow;
                     ++index;
 
                     int x = 96 + column * 16;
                     int y = 124 + row * 17;
                     var area = new Rect(x, y, 16, 16);
-                    string ailmentName = DataNameProvider.GetAilmentName(ailment);
-                    string tooltip = Configuration.ShowPlayerStatsTooltips ? null : ailmentName;
-                    layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetAilmentGraphicIndex(ailment), UIPaletteIndex,
-                        2, tooltip, ailment == Condition.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
+                    string conditionName = DataNameProvider.GetConditionName(condition);
+                    string tooltip = Configuration.ShowPlayerStatsTooltips ? null : conditionName;
+                    layout.AddSprite(new Rect(x, y, 16, 16), Graphics.GetConditionGraphicIndex(condition), UIPaletteIndex,
+                        2, tooltip, condition == Condition.DeadCorpse ? TextColor.DeadPartyMember : TextColor.ActivePartyMember);
                     if (Configuration.ShowPlayerStatsTooltips)
                     {
-                        var tooltipAilment = ailment;
-                        if (tooltipAilment == Condition.DeadCorpse)
+                        var tooltipCondition = condition;
+                        if (tooltipCondition == Condition.DeadCorpse)
                         {
-                            if (partyMember.Ailments.HasFlag(Condition.DeadDust))
-                                tooltipAilment = Condition.DeadDust;
-                            else if (partyMember.Ailments.HasFlag(Condition.DeadAshes))
-                                tooltipAilment = Condition.DeadAshes;
+                            if (partyMember.Conditions.HasFlag(Condition.DeadDust))
+                                tooltipCondition = Condition.DeadDust;
+                            else if (partyMember.Conditions.HasFlag(Condition.DeadAshes))
+                                tooltipCondition = Condition.DeadAshes;
                         }
-                        AddTooltip(new Rect(x, y, 16, 16), ailmentName + "^^" + BuiltinTooltips.GetAilmentTooltip(GameLanguage, tooltipAilment, partyMember));
+                        AddTooltip(new Rect(x, y, 16, 16), conditionName + "^^" + BuiltinTooltips.GetConditionTooltip(GameLanguage, tooltipCondition, partyMember));
                     }
                 }
                 #endregion
@@ -4560,12 +4560,12 @@ namespace Ambermoon
                 character.SpellPoints.CurrentValue = character.SpellPoints.TotalMaxValue;
             if (item.Attribute != null)
                 character.Attributes[item.Attribute.Value].BonusValue += (cursed ? -1 : 1) * item.AttributeValue;
-            if (item.Ability != null)
-                character.Abilities[item.Ability.Value].BonusValue += (cursed ? -1 : 1) * item.AbilityValue;
+            if (item.Skill != null)
+                character.Skills[item.Skill.Value].BonusValue += (cursed ? -1 : 1) * item.SkillValue;
             if (item.SkillPenalty1Value != 0)
-                character.Abilities[item.SkillPenalty1].BonusValue -= (int)item.SkillPenalty1Value;
+                character.Skills[item.SkillPenalty1].BonusValue -= (int)item.SkillPenalty1Value;
             if (item.SkillPenalty2Value != 0)
-                character.Abilities[item.SkillPenalty2].BonusValue -= (int)item.SkillPenalty2Value;
+                character.Skills[item.SkillPenalty2].BonusValue -= (int)item.SkillPenalty2Value;
             character.TotalWeight += (uint)amount * item.Weight;
         }
 
@@ -4590,12 +4590,12 @@ namespace Ambermoon
                 character.SpellPoints.CurrentValue = character.SpellPoints.TotalMaxValue;
             if (item.Attribute != null)
                 character.Attributes[item.Attribute.Value].BonusValue -= (cursed ? -1 : 1) * item.AttributeValue;
-            if (item.Ability != null)
-                character.Abilities[item.Ability.Value].BonusValue -= (cursed ? -1 : 1) * item.AbilityValue;
+            if (item.Skill != null)
+                character.Skills[item.Skill.Value].BonusValue -= (cursed ? -1 : 1) * item.SkillValue;
             if (item.SkillPenalty1Value != 0)
-                character.Abilities[item.SkillPenalty1].BonusValue += (int)item.SkillPenalty1Value;
+                character.Skills[item.SkillPenalty1].BonusValue += (int)item.SkillPenalty1Value;
             if (item.SkillPenalty2Value != 0)
-                character.Abilities[item.SkillPenalty2].BonusValue += (int)item.SkillPenalty2Value;
+                character.Skills[item.SkillPenalty2].BonusValue += (int)item.SkillPenalty2Value;
             character.TotalWeight -= (uint)amount * item.Weight;
         }
 
@@ -4680,7 +4680,7 @@ namespace Ambermoon
         }
 
         internal void DamageAllPartyMembers(Func<PartyMember, uint> damageProvider, Func<PartyMember, bool> affectChecker = null,
-            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Condition inflictAilment = Condition.None,
+            Action<PartyMember, Action> notAffectedHandler = null, Action followAction = null, Condition inflictCondition = Condition.None,
             bool showDamageSplash = true)
         {
             // In original all players are damaged one after the other
@@ -4690,7 +4690,7 @@ namespace Ambermoon
             // party member is checked.
             // At the end all affected living characters will show the damage splash.
             List<PartyMember> damagedPlayers = new List<PartyMember>();
-            ForeachPartyMember(Damage, p => p.Alive && !p.Ailments.HasFlag(Condition.Petrified), () =>
+            ForeachPartyMember(Damage, p => p.Alive && !p.Conditions.HasFlag(Condition.Petrified), () =>
             {
                 if (showDamageSplash)
                 {
@@ -4722,37 +4722,37 @@ namespace Ambermoon
 
                 if (Godmode)
                 {
-                    if (inflictAilment.HasFlag(Condition.DeadCorpse))
-                        inflictAilment &= ~Condition.DeadCorpse;
-                    if (inflictAilment.HasFlag(Condition.DeadAshes))
-                        inflictAilment &= ~Condition.DeadAshes;
-                    if (inflictAilment.HasFlag(Condition.DeadDust))
-                        inflictAilment &= ~Condition.DeadDust;
+                    if (inflictCondition.HasFlag(Condition.DeadCorpse))
+                        inflictCondition &= ~Condition.DeadCorpse;
+                    if (inflictCondition.HasFlag(Condition.DeadAshes))
+                        inflictCondition &= ~Condition.DeadAshes;
+                    if (inflictCondition.HasFlag(Condition.DeadDust))
+                        inflictCondition &= ~Condition.DeadDust;
                 }
 
-                if (damage > 0 || inflictAilment != Condition.None)
+                if (damage > 0 || inflictCondition != Condition.None)
                 {
                     partyMember.Damage(damage, _ => KillPartyMember(partyMember, Condition.DeadCorpse));
 
-                    if (partyMember.Alive && inflictAilment >= Condition.DeadCorpse)
+                    if (partyMember.Alive && inflictCondition >= Condition.DeadCorpse)
                     {
-                        KillPartyMember(partyMember, inflictAilment);
+                        KillPartyMember(partyMember, inflictCondition);
                     }
 
                     if (partyMember.Alive) // update HP etc if not died already
                     {
                         damagedPlayers.Add(partyMember);
 
-                        if (inflictAilment != Condition.None && inflictAilment < Condition.DeadCorpse)
+                        if (inflictCondition != Condition.None && inflictCondition < Condition.DeadCorpse)
                         {
-                            partyMember.Ailments |= inflictAilment;
+                            partyMember.Conditions |= inflictCondition;
 
-                            if (inflictAilment == Condition.Blind && partyMember == CurrentPartyMember)
+                            if (inflictCondition == Condition.Blind && partyMember == CurrentPartyMember)
                                 UpdateLight();
                         }
                     }
 
-                    if (partyMember.Alive && partyMember.Ailments.CanSelect())
+                    if (partyMember.Alive && partyMember.Conditions.CanSelect())
                     {
                         finished?.Invoke();
                     }
@@ -4760,7 +4760,7 @@ namespace Ambermoon
                     {
                         if (CurrentPartyMember == partyMember && currentBattle == null)
                         {
-                            if (!PartyMembers.Any(p => p.Alive && p.Ailments.CanSelect()))
+                            if (!PartyMembers.Any(p => p.Alive && p.Conditions.CanSelect()))
                             {
                                 GameOver();
                                 return;
@@ -4888,7 +4888,7 @@ namespace Ambermoon
             }
         }
 
-        internal void AwardPlayer(PartyMember partyMember, RewardEvent awardEvent, Action followAction)
+        internal void RewardPlayer(PartyMember partyMember, RewardEvent rewardEvent, Action followAction)
         {
             void Change(CharacterValue characterValue, int amount, bool percentage, bool lpLike)
             {
@@ -4900,172 +4900,172 @@ namespace Ambermoon
                 characterValue.CurrentValue = (uint)Util.Limit(0, (int)characterValue.CurrentValue + amount, (int)max);
             }
 
-            void AwardValue(CharacterValue characterValue, bool lpLike)
+            void RewardValue(CharacterValue characterValue, bool lpLike)
             {
-                uint value = RandomizeIfNecessary(awardEvent.Value);
+                uint value = RandomizeIfNecessary(rewardEvent.Value);
 
-                switch (awardEvent.Operation)
+                switch (rewardEvent.Operation)
                 {
-                    case RewardEvent.AwardOperation.Increase:
+                    case RewardEvent.RewardOperation.Increase:
                         Change(characterValue, (int)value, false, lpLike);
                         break;
-                    case RewardEvent.AwardOperation.Decrease:
+                    case RewardEvent.RewardOperation.Decrease:
                         Change(characterValue, -(int)value, false, lpLike);
                         break;
-                    case RewardEvent.AwardOperation.IncreasePercentage:
+                    case RewardEvent.RewardOperation.IncreasePercentage:
                         Change(characterValue, (int)value, true, lpLike);
                         break;
-                    case RewardEvent.AwardOperation.DecreasePercentage:
+                    case RewardEvent.RewardOperation.DecreasePercentage:
                         Change(characterValue, -(int)value, true, lpLike);
                         break;
-                    case RewardEvent.AwardOperation.Fill:
+                    case RewardEvent.RewardOperation.Fill:
                         characterValue.CurrentValue = lpLike ? characterValue.TotalMaxValue : characterValue.MaxValue;
                         break;
                 }
             }
 
-            uint RandomizeIfNecessary(uint value) => awardEvent.Random ? 1u + random.Next() % value : value;
+            uint RandomizeIfNecessary(uint value) => rewardEvent.Random ? 1u + random.Next() % value : value;
 
-            switch (awardEvent.TypeOfAward)
+            switch (rewardEvent.TypeOfReward)
             {
-                case RewardEvent.AwardType.Attribute:
-                    if (awardEvent.Attribute != null && awardEvent.Attribute < Attribute.Age)
-                        AwardValue(partyMember.Attributes[awardEvent.Attribute.Value], false);
+                case RewardEvent.RewardType.Attribute:
+                    if (rewardEvent.Attribute != null && rewardEvent.Attribute < Attribute.Age)
+                        RewardValue(partyMember.Attributes[rewardEvent.Attribute.Value], false);
                     else
                     {
-                        ShowMessagePopup($"ERROR: Invalid award event attribute type.", followAction);
+                        ShowMessagePopup($"ERROR: Invalid reward event attribute type.", followAction);
                         return;
                     }
                     break;
-                case RewardEvent.AwardType.Ability:
-                    if (awardEvent.Ability != null)
-                        AwardValue(partyMember.Abilities[awardEvent.Ability.Value], false);
+                case RewardEvent.RewardType.Skill:
+                    if (rewardEvent.Skill != null)
+                        RewardValue(partyMember.Skills[rewardEvent.Skill.Value], false);
                     else
                     {
-                        ShowMessagePopup($"ERROR: Invalid award event ability type.", followAction);
+                        ShowMessagePopup($"ERROR: Invalid reward event skill type.", followAction);
                         return;
                     }
                     break;
-                case RewardEvent.AwardType.HitPoints:
+                case RewardEvent.RewardType.HitPoints:
                 {
-                    // Note: Awards happen silently so there is no damage splash.
+                    // Note: Rewards happen silently so there is no damage splash.
                     // Looking at the original code there isn't even a die handling
-                    // when a negative award would leave the LP at 0 but we do so here.
-                    AwardValue(partyMember.HitPoints, true);
+                    // when a negative reward would leave the LP at 0 but we do so here.
+                    RewardValue(partyMember.HitPoints, true);
                     if (partyMember.Alive && partyMember.HitPoints.CurrentValue == 0)
                         KillPartyMember(partyMember);
                     else
                         layout.UpdateCharacter(partyMember);
                     break;
                 }
-                case RewardEvent.AwardType.SpellPoints:
-                    AwardValue(partyMember.SpellPoints, true);
+                case RewardEvent.RewardType.SpellPoints:
+                    RewardValue(partyMember.SpellPoints, true);
                     layout.UpdateCharacter(partyMember);
                     break;
-                case RewardEvent.AwardType.SpellLearningPoints:
+                case RewardEvent.RewardType.SpellLearningPoints:
                 {
-                    switch (awardEvent.Operation)
+                    switch (rewardEvent.Operation)
                     {
-                        case RewardEvent.AwardOperation.Increase:
-                            partyMember.SpellLearningPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.SpellLearningPoints + RandomizeIfNecessary(awardEvent.Value));
+                        case RewardEvent.RewardOperation.Increase:
+                            partyMember.SpellLearningPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.SpellLearningPoints + RandomizeIfNecessary(rewardEvent.Value));
                             break;
-                        case RewardEvent.AwardOperation.Decrease:
-                            partyMember.SpellLearningPoints = (ushort)Util.Max(0, (int)partyMember.SpellLearningPoints - (int)RandomizeIfNecessary(awardEvent.Value));
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.SpellLearningPoints = (ushort)Util.Max(0, (int)partyMember.SpellLearningPoints - (int)RandomizeIfNecessary(rewardEvent.Value));
                             break;
                     }
                     break;
                 }
-                case RewardEvent.AwardType.Ailments:
+                case RewardEvent.RewardType.Conditions:
                 {
-                    if (awardEvent.Ailments == null)
+                    if (rewardEvent.Conditions == null)
                     {
-                        ShowMessagePopup($"ERROR: Invalid award event ailment.", followAction);
+                        ShowMessagePopup($"ERROR: Invalid reward event condition.", followAction);
                         return;
                     }
 
-                    switch (awardEvent.Operation)
+                    switch (rewardEvent.Operation)
                     {
-                        case RewardEvent.AwardOperation.Add:
-                            partyMember.Ailments |= awardEvent.Ailments.Value;
+                        case RewardEvent.RewardOperation.Add:
+                            partyMember.Conditions |= rewardEvent.Conditions.Value;
                             break;
-                        case RewardEvent.AwardOperation.Remove:
-                            partyMember.Ailments &= ~awardEvent.Ailments.Value;
+                        case RewardEvent.RewardOperation.Remove:
+                            partyMember.Conditions &= ~rewardEvent.Conditions.Value;
                             break;
-                        case RewardEvent.AwardOperation.Toggle:
-                            partyMember.Ailments ^= awardEvent.Ailments.Value;
+                        case RewardEvent.RewardOperation.Toggle:
+                            partyMember.Conditions ^= rewardEvent.Conditions.Value;
                             break;
                     }
 
-                    if (awardEvent.Ailments.Value.HasFlag(Condition.Blind) && partyMember == CurrentPartyMember)
+                    if (rewardEvent.Conditions.Value.HasFlag(Condition.Blind) && partyMember == CurrentPartyMember)
                         UpdateLight();
                     break;
                 }
-                case RewardEvent.AwardType.UsableSpellTypes:
+                case RewardEvent.RewardType.UsableSpellTypes:
                 {
-                    if (awardEvent.UsableSpellTypes == null)
+                    if (rewardEvent.UsableSpellTypes == null)
                     {
-                        ShowMessagePopup($"ERROR: Invalid award event spell mastery.", followAction);
+                        ShowMessagePopup($"ERROR: Invalid reward event spell mastery.", followAction);
                         return;
                     }
 
-                    switch (awardEvent.Operation)
+                    switch (rewardEvent.Operation)
                     {
-                        case RewardEvent.AwardOperation.Add:
-                            partyMember.SpellMastery |= awardEvent.UsableSpellTypes.Value;
+                        case RewardEvent.RewardOperation.Add:
+                            partyMember.SpellMastery |= rewardEvent.UsableSpellTypes.Value;
                             break;
-                        case RewardEvent.AwardOperation.Remove:
-                            partyMember.SpellMastery &= ~awardEvent.UsableSpellTypes.Value;
+                        case RewardEvent.RewardOperation.Remove:
+                            partyMember.SpellMastery &= ~rewardEvent.UsableSpellTypes.Value;
                             break;
-                        case RewardEvent.AwardOperation.Toggle:
-                            partyMember.SpellMastery ^= awardEvent.UsableSpellTypes.Value;
+                        case RewardEvent.RewardOperation.Toggle:
+                            partyMember.SpellMastery ^= rewardEvent.UsableSpellTypes.Value;
                             break;
                     }
                     break;
                 }
-                case RewardEvent.AwardType.Languages:
+                case RewardEvent.RewardType.Languages:
                 {
-                    if (awardEvent.Languages == null)
+                    if (rewardEvent.Languages == null)
                     {
-                        ShowMessagePopup($"ERROR: Invalid award event language.", followAction);
+                        ShowMessagePopup($"ERROR: Invalid reward event language.", followAction);
                         return;
                     }
 
-                    switch (awardEvent.Operation)
+                    switch (rewardEvent.Operation)
                     {
-                        case RewardEvent.AwardOperation.Add:
-                            partyMember.SpokenLanguages |= awardEvent.Languages.Value;
+                        case RewardEvent.RewardOperation.Add:
+                            partyMember.SpokenLanguages |= rewardEvent.Languages.Value;
                             break;
-                        case RewardEvent.AwardOperation.Remove:
-                            partyMember.SpokenLanguages &= ~awardEvent.Languages.Value;
+                        case RewardEvent.RewardOperation.Remove:
+                            partyMember.SpokenLanguages &= ~rewardEvent.Languages.Value;
                             break;
-                        case RewardEvent.AwardOperation.Toggle:
-                            partyMember.SpokenLanguages ^= awardEvent.Languages.Value;
+                        case RewardEvent.RewardOperation.Toggle:
+                            partyMember.SpokenLanguages ^= rewardEvent.Languages.Value;
                             break;
                     }
                     break;
                 }
-                case RewardEvent.AwardType.Experience:
+                case RewardEvent.RewardType.Experience:
                 {
-                    switch (awardEvent.Operation)
+                    switch (rewardEvent.Operation)
                     {
-                        case RewardEvent.AwardOperation.Increase:
-                            AddExperience(partyMember, RandomizeIfNecessary(awardEvent.Value), followAction);
+                        case RewardEvent.RewardOperation.Increase:
+                            AddExperience(partyMember, RandomizeIfNecessary(rewardEvent.Value), followAction);
                             return;
-                        case RewardEvent.AwardOperation.Decrease:
-                            partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - RandomizeIfNecessary(awardEvent.Value));
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.ExperiencePoints = (uint)Util.Max(0, (long)partyMember.ExperiencePoints - RandomizeIfNecessary(rewardEvent.Value));
                             break;
                     }
                     break;
                 }
-                case RewardEvent.AwardType.TrainingPoints:
+                case RewardEvent.RewardType.TrainingPoints:
                 {
-                    switch (awardEvent.Operation)
+                    switch (rewardEvent.Operation)
                     {
-                        case RewardEvent.AwardOperation.Increase:
-                            partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + RandomizeIfNecessary(awardEvent.Value));
+                        case RewardEvent.RewardOperation.Increase:
+                            partyMember.TrainingPoints = (ushort)Util.Min(ushort.MaxValue, partyMember.TrainingPoints + RandomizeIfNecessary(rewardEvent.Value));
                             break;
-                        case RewardEvent.AwardOperation.Decrease:
-                            partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)RandomizeIfNecessary(awardEvent.Value));
+                        case RewardEvent.RewardOperation.Decrease:
+                            partyMember.TrainingPoints = (ushort)Util.Max(0, (int)partyMember.TrainingPoints - (int)RandomizeIfNecessary(rewardEvent.Value));
                             break;
                     }
                     break;
@@ -5750,12 +5750,12 @@ namespace Ambermoon
 
             uint CalculateDamage(PartyMember partyMember)
             {
-                var swimAbility = partyMember.Abilities[Skill.Swim].TotalCurrentValue;
+                var swimSkill = partyMember.Skills[Skill.Swim].TotalCurrentValue;
 
-                if (swimAbility >= 99)
+                if (swimSkill >= 99)
                     return 0;
 
-                var factor = (100 - swimAbility) / 2;
+                var factor = (100 - swimSkill) / 2;
                 uint hitPoints = partyMember.HitPoints.CurrentValue;
                 uint totalDamage = 0;
 
@@ -6671,7 +6671,7 @@ namespace Ambermoon
             {
                 // TODO: Can locks theoretically be lockpicked if they need a key? I guess in Ambermoon all locks with key have a lockpickingChanceReduction of 100%.
                 //       But what would happen if this value was below 100% for such doors? For now we allow lockpicking those doors as we don't check for key index.
-                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Skill.LockPicking].TotalCurrentValue, 100) - (int)lockpickingChanceReduction;
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Skills[Skill.LockPicking].TotalCurrentValue, 100) - (int)lockpickingChanceReduction;
 
                 if (chance <= 0 || RollDice100() >= chance)
                 {
@@ -6698,7 +6698,7 @@ namespace Ambermoon
             // Find trap button
             layout.AttachEventToButton(3, () =>
             {
-                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Skill.FindTraps].TotalCurrentValue, 100);
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Skills[Skill.FindTraps].TotalCurrentValue, 100);
 
                 if (hasTrap && chance > 0 && RollDice100() < chance)
                 {
@@ -6715,7 +6715,7 @@ namespace Ambermoon
             // Disarm trap button
             layout.AttachEventToButton(6, () =>
             {
-                int chance = Util.Limit(0, (int)CurrentPartyMember.Abilities[Skill.DisarmTraps].TotalCurrentValue, 100); // TODO: Is there a "find trap" reduction as well?
+                int chance = Util.Limit(0, (int)CurrentPartyMember.Skills[Skill.DisarmTraps].TotalCurrentValue, 100); // TODO: Is there a "find trap" reduction as well?
 
                 if (chance <= 0 || RollDice100() >= chance)
                 {
@@ -7573,13 +7573,13 @@ namespace Ambermoon
         {
             if (!partyMember.Alive)
                 return UIGraphic.StatusDead;
-            else if (partyMember.Ailments.HasFlag(Condition.Petrified))
+            else if (partyMember.Conditions.HasFlag(Condition.Petrified))
                 return UIGraphic.StatusPetrified;
-            else if (partyMember.Ailments.HasFlag(Condition.Sleep))
+            else if (partyMember.Conditions.HasFlag(Condition.Sleep))
                 return UIGraphic.StatusSleep;
-            else if (partyMember.Ailments.HasFlag(Condition.Panic))
+            else if (partyMember.Conditions.HasFlag(Condition.Panic))
                 return UIGraphic.StatusPanic;
-            else if (partyMember.Ailments.HasFlag(Condition.Crazy))
+            else if (partyMember.Conditions.HasFlag(Condition.Crazy))
                 return UIGraphic.StatusCrazy;
             else
                 throw new AmbermoonException(ExceptionScope.Application, $"Party member {partyMember.Name} is not disabled.");
@@ -7602,7 +7602,7 @@ namespace Ambermoon
                 layout.UpdateCharacterStatus(slot, null);
                 roundPlayerBattleActions.Remove(slot);
             }
-            else if (!partyMember.Ailments.CanSelect())
+            else if (!partyMember.Conditions.CanSelect())
             {
                 // Note: Disabled players will show the status icon next to
                 // their portraits instead of an action icon. For mad players
@@ -7896,7 +7896,7 @@ namespace Ambermoon
                         Global.BattleFieldSlotHeight + 1
                     ), Graphics.BattleFieldIconOffset + (uint)partyMember.Class, PrimaryUIPaletteIndex, (byte)(3 + battleRow),
                     $"{partyMember.HitPoints.CurrentValue}/{partyMember.HitPoints.TotalMaxValue}^{partyMember.Name}",
-                    partyMember.Ailments.CanSelect() ? TextColor.White : TextColor.DeadPartyMember, null, out partyMemberBattleFieldTooltips[i]);
+                    partyMember.Conditions.CanSelect() ? TextColor.White : TextColor.DeadPartyMember, null, out partyMemberBattleFieldTooltips[i]);
                 }
             }
             UpdateBattleStatus();
@@ -8100,20 +8100,20 @@ namespace Ambermoon
             layout.RemoveAllActiveSpells();
         }
 
-        internal void AddAilment(Condition ailment, PartyMember target = null)
+        internal void AddCondition(Condition condition, PartyMember target = null)
         {
             if (Godmode)
                 return;
 
             target ??= CurrentPartyMember;
 
-            if (ailment >= Condition.DeadCorpse && target.Alive)
+            if (condition >= Condition.DeadCorpse && target.Alive)
             {
-                KillPartyMember(target, ailment);
+                KillPartyMember(target, condition);
                 return;
             }
 
-            target.Ailments |= ailment;
+            target.Conditions |= condition;
 
             if (CurrentPartyMember == target)
             {
@@ -8122,7 +8122,7 @@ namespace Ambermoon
                     if (gameOver)
                         return;
 
-                    if (ailment == Condition.Blind)
+                    if (condition == Condition.Blind)
                         UpdateLight();
                 }
             }
@@ -8131,13 +8131,13 @@ namespace Ambermoon
             layout.UpdateCharacter(target);
         }
 
-        internal void RemoveAilment(Condition ailment, Character target)
+        internal void RemoveCondition(Condition condition, Character target)
         {
-            bool removeExhaustion = ailment == Condition.Exhausted && target.Ailments.HasFlag(Condition.Exhausted);
+            bool removeExhaustion = condition == Condition.Exhausted && target.Conditions.HasFlag(Condition.Exhausted);
 
             // Healing spells or potions.
             // Sleep can be removed by attacking as well.
-            target.Ailments &= ~ailment;
+            target.Conditions &= ~condition;
 
             if (target is PartyMember partyMember)
             {
@@ -8147,7 +8147,7 @@ namespace Ambermoon
 
                 if (removeExhaustion)
                     RemoveExhaustion(partyMember);
-                else if (ailment == Condition.Blind && partyMember == CurrentPartyMember)
+                else if (condition == Condition.Blind && partyMember == CurrentPartyMember)
                     UpdateLight();
             }
         }
@@ -8176,10 +8176,10 @@ namespace Ambermoon
                     partyMember.Attributes[attribute].CurrentValue >>= 1;
                 }
 
-                foreach (var ability in Enum.GetValues<Skill>())
+                foreach (var skill in Enum.GetValues<Skill>())
                 {
-                    partyMember.Abilities[ability].StoredValue = partyMember.Abilities[ability].CurrentValue;
-                    partyMember.Abilities[ability].CurrentValue >>= 1;
+                    partyMember.Skills[skill].StoredValue = partyMember.Skills[skill].CurrentValue;
+                    partyMember.Skills[skill].CurrentValue >>= 1;
                 }
             }
 
@@ -8194,10 +8194,10 @@ namespace Ambermoon
                 partyMember.Attributes[attribute].StoredValue = 0;
             }
 
-            foreach (var ability in Enum.GetValues<Skill>())
+            foreach (var skill in Enum.GetValues<Skill>())
             {
-                partyMember.Abilities[ability].CurrentValue = partyMember.Abilities[ability].StoredValue;
-                partyMember.Abilities[ability].StoredValue = 0;
+                partyMember.Skills[skill].CurrentValue = partyMember.Skills[skill].StoredValue;
+                partyMember.Skills[skill].StoredValue = 0;
             }
         }
 
@@ -8539,7 +8539,7 @@ namespace Ambermoon
 
         void TrySpell(Action successAction, Action failAction)
         {
-            if (RollDice100() < CurrentPartyMember.Abilities[Skill.UseMagic].TotalCurrentValue)
+            if (RollDice100() < CurrentPartyMember.Skills[Skill.UseMagic].TotalCurrentValue)
                 successAction?.Invoke();
             else
                 failAction?.Invoke();
@@ -8767,19 +8767,19 @@ namespace Ambermoon
                     break;
                 case Spell.RemoveFear:
                 case Spell.RemovePanic:
-                    Cast(() => RemoveAilment(Condition.Panic, target));
+                    Cast(() => RemoveCondition(Condition.Panic, target));
                     break;
                 case Spell.RemoveShadows:
                 case Spell.RemoveBlindness:
-                    Cast(() => RemoveAilment(Condition.Blind, target));
+                    Cast(() => RemoveCondition(Condition.Blind, target));
                     break;
                 case Spell.RemovePain:
                 case Spell.RemoveDisease:
-                    Cast(() => RemoveAilment(Condition.Diseased, target));
+                    Cast(() => RemoveCondition(Condition.Diseased, target));
                     break;
                 case Spell.RemovePoison:
                 case Spell.NeutralizePoison:
-                    Cast(() => RemoveAilment(Condition.Poisoned, target));
+                    Cast(() => RemoveCondition(Condition.Poisoned, target));
                     break;
                 case Spell.HealingHand:
                     Cast(() => Heal(target.HitPoints.TotalMaxValue / 10)); // 10%
@@ -8796,26 +8796,26 @@ namespace Ambermoon
                     break;
                 case Spell.RemoveRigidness:
                 case Spell.RemoveLamedness:
-                    Cast(() => RemoveAilment(Condition.Lamed, target));
+                    Cast(() => RemoveCondition(Condition.Lamed, target));
                     break;
                 case Spell.HealAging:
                 case Spell.StopAging:
-                    Cast(() => RemoveAilment(Condition.Aging, target));
+                    Cast(() => RemoveCondition(Condition.Aging, target));
                     break;
                 case Spell.WakeUp:
-                    Cast(() => RemoveAilment(Condition.Sleep, target));
+                    Cast(() => RemoveCondition(Condition.Sleep, target));
                     break;
                 case Spell.RemoveIrritation:
-                    Cast(() => RemoveAilment(Condition.Irritated, target));
+                    Cast(() => RemoveCondition(Condition.Irritated, target));
                     break;
                 case Spell.RemoveDrugged:
-                    Cast(() => RemoveAilment(Condition.Drugged, target));
+                    Cast(() => RemoveCondition(Condition.Drugged, target));
                     break;
                 case Spell.RemoveMadness:
-                    Cast(() => RemoveAilment(Condition.Crazy, target));
+                    Cast(() => RemoveCondition(Condition.Crazy, target));
                     break;
                 case Spell.RestoreStamina:
-                    Cast(() => RemoveAilment(Condition.Exhausted, target));
+                    Cast(() => RemoveCondition(Condition.Exhausted, target));
                     break;
                 case Spell.CreateFood:
                     Cast(() => ++target.Food);
@@ -8824,7 +8824,7 @@ namespace Ambermoon
                 {
                     Cast(() =>
                     {
-                        target.Ailments &= ~Condition.DeadCorpse;
+                        target.Conditions &= ~Condition.DeadCorpse;
                         target.HitPoints.CurrentValue = target.HitPoints.TotalMaxValue;
                         PartyMemberRevived(target as PartyMember, finishAction, false);
                     });
@@ -8839,9 +8839,9 @@ namespace Ambermoon
                     }
                     void Revive()
                     {
-                        if (!target.Ailments.HasFlag(Condition.DeadCorpse) ||
-                            target.Ailments.HasFlag(Condition.DeadAshes) ||
-                            target.Ailments.HasFlag(Condition.DeadDust))
+                        if (!target.Conditions.HasFlag(Condition.DeadCorpse) ||
+                            target.Conditions.HasFlag(Condition.DeadAshes) ||
+                            target.Conditions.HasFlag(Condition.DeadDust))
                         {
                             if (target.Alive)
                                 ShowMessagePopup(DataNameProvider.IsNotDead, finishAction);
@@ -8849,7 +8849,7 @@ namespace Ambermoon
                                 ShowMessagePopup(DataNameProvider.CannotBeResurrected, finishAction);
                             return;
                         }
-                        target.Ailments &= ~Condition.DeadCorpse;
+                        target.Conditions &= ~Condition.DeadCorpse;
                         target.HitPoints.CurrentValue = 1;
                         PartyMemberRevived(targetPlayer, finishAction);
                     }
@@ -8860,10 +8860,10 @@ namespace Ambermoon
                             EndSequence();
                             ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
                             {
-                                if (target.Ailments.HasFlag(Condition.DeadCorpse))
+                                if (target.Conditions.HasFlag(Condition.DeadCorpse))
                                 {
-                                    target.Ailments &= ~Condition.DeadCorpse;
-                                    target.Ailments |= Condition.DeadAshes;
+                                    target.Conditions &= ~Condition.DeadCorpse;
+                                    target.Conditions |= Condition.DeadAshes;
                                     ShowMessagePopup(DataNameProvider.BodyBurnsUp, finishAction);
                                 }
                             });
@@ -8884,14 +8884,14 @@ namespace Ambermoon
                     }
                     void TransformToBody()
                     {
-                        if (!target.Ailments.HasFlag(Condition.DeadAshes) ||
-                            target.Ailments.HasFlag(Condition.DeadDust))
+                        if (!target.Conditions.HasFlag(Condition.DeadAshes) ||
+                            target.Conditions.HasFlag(Condition.DeadDust))
                         {
                             ShowMessagePopup(DataNameProvider.IsNotAsh, finishAction);
                             return;
                         }
-                        target.Ailments &= ~Condition.DeadAshes;
-                        target.Ailments |= Condition.DeadCorpse;
+                        target.Conditions &= ~Condition.DeadAshes;
+                        target.Conditions |= Condition.DeadCorpse;
                         ShowMessagePopup(DataNameProvider.AshesChangedToBody, finishAction);
                     }
                     if (checkFail)
@@ -8901,10 +8901,10 @@ namespace Ambermoon
                             EndSequence();
                             ShowMessagePopup(DataNameProvider.TheSpellFailed, () =>
                             {
-                                if (target.Ailments.HasFlag(Condition.DeadAshes))
+                                if (target.Conditions.HasFlag(Condition.DeadAshes))
                                 {
-                                    target.Ailments &= ~Condition.DeadAshes;
-                                    target.Ailments |= Condition.DeadDust;
+                                    target.Conditions &= ~Condition.DeadAshes;
+                                    target.Conditions |= Condition.DeadDust;
                                     ShowMessagePopup(DataNameProvider.AshesFallToDust, finishAction);
                                 }
                             });
@@ -8925,13 +8925,13 @@ namespace Ambermoon
                     }
                     void TransformToAshes()
                     {
-                        if (!target.Ailments.HasFlag(Condition.DeadDust))
+                        if (!target.Conditions.HasFlag(Condition.DeadDust))
                         {
                             ShowMessagePopup(DataNameProvider.IsNotDust, finishAction);
                             return;
                         }
-                        target.Ailments &= ~Condition.DeadDust;
-                        target.Ailments |= Condition.DeadAshes;
+                        target.Conditions &= ~Condition.DeadDust;
+                        target.Conditions |= Condition.DeadAshes;
                         ShowMessagePopup(DataNameProvider.DustChangedToAshes, finishAction);
                     }
                     if (checkFail)
@@ -8969,18 +8969,18 @@ namespace Ambermoon
                     {
                         // Removes all curses and heals full LP
                         Heal(target.HitPoints.TotalMaxValue);
-                        foreach (var ailment in Enum.GetValues<Condition>())
+                        foreach (var condition in Enum.GetValues<Condition>())
                         {
-                            if (ailment != Condition.None && target.Ailments.HasFlag(ailment))
-                                RemoveAilment(ailment, target);
+                            if (condition != Condition.None && target.Conditions.HasFlag(condition))
+                                RemoveCondition(condition, target);
                         }
                         finishAction?.Invoke();
                     }
                     if (!target.Alive)
                     {
-                        target.Ailments &= ~Condition.DeadCorpse;
-                        target.Ailments &= ~Condition.DeadAshes;
-                        target.Ailments &= ~Condition.DeadDust;
+                        target.Conditions &= ~Condition.DeadCorpse;
+                        target.Conditions &= ~Condition.DeadAshes;
+                        target.Conditions &= ~Condition.DeadDust;
                         target.HitPoints.CurrentValue = 1;
                         PartyMemberRevived(target as PartyMember, HealAll, false);
                     }
@@ -9015,7 +9015,7 @@ namespace Ambermoon
                     IncreaseAttribute(Attribute.AntiMagic);
                     break;
                 case Spell.DecreaseAge:
-                    if (target.Alive && !target.Ailments.HasFlag(Condition.Petrified) && target.Attributes[Attribute.Age].CurrentValue > 18)
+                    if (target.Alive && !target.Conditions.HasFlag(Condition.Petrified) && target.Attributes[Attribute.Age].CurrentValue > 18)
                     {
                         target.Attributes[Attribute.Age].CurrentValue = (uint)Math.Max(18, (int)target.Attributes[Attribute.Age].CurrentValue - RandomInt(1, 10));
 
@@ -9025,7 +9025,7 @@ namespace Ambermoon
                     break;
                 case Spell.Drugs:
                     if (target is PartyMember partyMember)
-                        AddAilment(Condition.Drugged, partyMember);
+                        AddCondition(Condition.Drugged, partyMember);
                     break;
                 default:
                     throw new AmbermoonException(ExceptionScope.Application, $"The spell {spell} is no character-targeted spell.");
@@ -9176,7 +9176,7 @@ namespace Ambermoon
                             var partyMember = GetPartyMember(i);
 
                             if (partyMember != null)
-                                partyMember.Ailments = partyMember.Ailments.WithoutBattleOnlyAilments();
+                                partyMember.Conditions = partyMember.Conditions.WithoutBattleOnlyConditions();
                         }
                         roundPlayerBattleActions.Clear();
                         UpdateBattleStatus();
@@ -9204,7 +9204,7 @@ namespace Ambermoon
                             }
                         });
                     }
-                    else if (PartyMembers.Any(p => p.Alive && p.Ailments.CanFight()))
+                    else if (PartyMembers.Any(p => p.Alive && p.Conditions.CanFight()))
                     {
                         // There are fled survivors
                         currentBattle = null;
@@ -9331,11 +9331,11 @@ namespace Ambermoon
                 AdjustMonsterValue(game, characterValue);
             }
 
-            // Attributes, abilities, LP and SP is special for monsters.
+            // Attributes, skills, LP and SP is special for monsters.
             foreach (var attribute in Enum.GetValues<Attribute>())
                 FixValue(game, monster.Attributes[attribute]);
-            foreach (var ability in Enum.GetValues<Skill>())
-                FixValue(game, monster.Abilities[ability]);
+            foreach (var skill in Enum.GetValues<Skill>())
+                FixValue(game, monster.Skills[skill]);
             // TODO: the given max value might be used for something else
             monster.HitPoints.MaxValue = monster.HitPoints.CurrentValue;
             monster.SpellPoints.MaxValue = monster.SpellPoints.CurrentValue;
@@ -9394,15 +9394,15 @@ namespace Ambermoon
             }
             else
             {
-                layout.UpdateCharacterStatus(partyMemberSlot, CurrentPartyMember.Ailments.CanSelect() ? (UIGraphic?)null : GetDisabledStatusGraphic(CurrentPartyMember));
+                layout.UpdateCharacterStatus(partyMemberSlot, CurrentPartyMember.Conditions.CanSelect() ? (UIGraphic?)null : GetDisabledStatusGraphic(CurrentPartyMember));
             }
 
             layout.EnableButton(0, battleFieldSlot >= 24 && CurrentPartyMember.CanFlee()); // flee button, only enable in last row
             layout.EnableButton(3, CurrentPartyMember.CanMove()); // Note: If no slot is available the button still is enabled but after clicking you get "You can't move anywhere".
             layout.EnableButton(4, currentBattle.CanMoveForward);
-            layout.EnableButton(6, CurrentPartyMember.BaseAttack > 0 && CurrentPartyMember.Ailments.CanAttack());
-            layout.EnableButton(7, CurrentPartyMember.Ailments.CanParry());
-            layout.EnableButton(8, CurrentPartyMember.Ailments.CanCastSpell() && CurrentPartyMember.HasAnySpell());
+            layout.EnableButton(6, CurrentPartyMember.BaseAttack > 0 && CurrentPartyMember.Conditions.CanAttack());
+            layout.EnableButton(7, CurrentPartyMember.Conditions.CanParry());
+            layout.EnableButton(8, CurrentPartyMember.Conditions.CanCastSpell() && CurrentPartyMember.HasAnySpell());
         }
 
         /// <summary>
@@ -9494,7 +9494,7 @@ namespace Ambermoon
         /// <param name="action"></param>
         void CheckPlayerActionVisuals(PartyMember partyMember, Battle.PlayerBattleAction action)
         {
-            bool remove = !partyMember.Ailments.CanSelect();
+            bool remove = !partyMember.Conditions.CanSelect();
 
             if (!remove)
             {
@@ -9506,11 +9506,11 @@ namespace Ambermoon
                         remove = true;
                         break;
                     case Battle.BattleActionType.Attack:
-                        if (partyMember.BaseAttack <= 0 || !partyMember.Ailments.CanAttack())
+                        if (partyMember.BaseAttack <= 0 || !partyMember.Conditions.CanAttack())
                             remove = true;
                         break;
                     case Battle.BattleActionType.Parry:
-                        if (!partyMember.Ailments.CanParry())
+                        if (!partyMember.Conditions.CanParry())
                             remove = true;
                         break;
                     default:
@@ -9652,7 +9652,7 @@ namespace Ambermoon
                     {
                         var partyMember = character as PartyMember;
 
-                        if (currentPickingActionMember != partyMember && partyMember.Ailments.CanSelect())
+                        if (currentPickingActionMember != partyMember && partyMember.Conditions.CanSelect())
                         {
                             int partyMemberSlot = SlotFromPartyMember(partyMember).Value;
                             SetActivePartyMember(partyMemberSlot, false);
@@ -9712,7 +9712,7 @@ namespace Ambermoon
                     var target = currentBattle.GetCharacterAt(column, row);
                     if (target != null && target.Type == CharacterType.PartyMember)
                     {
-                        if (!target.Ailments.CanBlink())
+                        if (!target.Conditions.CanBlink())
                         {
                             CancelSpecificPlayerAction();
                             SetBattleMessageWithClick(target.Name + DataNameProvider.BattleMessageCannotBlink, TextColor.BrightGray);
@@ -9867,7 +9867,7 @@ namespace Ambermoon
                 return false;
             }
 
-            if (currentPickingActionMember.BaseAttack <= 0 || !currentPickingActionMember.Ailments.CanAttack())
+            if (currentPickingActionMember.BaseAttack <= 0 || !currentPickingActionMember.Conditions.CanAttack())
             {
                 CancelSpecificPlayerAction();
                 SetBattleMessageWithClick(DataNameProvider.BattleMessageUnableToAttack, TextColor.BrightGray);
@@ -10047,7 +10047,7 @@ namespace Ambermoon
         {
             uint usedLightIntensity;
 
-            if (CurrentPartyMember.Ailments.HasFlag(Condition.Blind))
+            if (CurrentPartyMember.Conditions.HasFlag(Condition.Blind))
                 return 0.0f;
 
             if (Map.Flags.HasFlag(MapFlags.Outdoor))
@@ -10117,7 +10117,7 @@ namespace Ambermoon
                 lightIntensity = 255;
                 fow2D.Visible = false;
             }
-            else if (CurrentPartyMember.Ailments.HasFlag(Condition.Blind))
+            else if (CurrentPartyMember.Conditions.HasFlag(Condition.Blind))
             {
                 lightIntensity = 0;
 
@@ -10636,14 +10636,14 @@ namespace Ambermoon
                 }, TextAlign.Left);
             }
 
-            void HealAilment(Condition ailment, Action<bool> healedHandler)
+            void HealCondition(Condition condition, Action<bool> healedHandler)
             {
                 // TODO: At the moment DeadAshes and DeadDust will be healed fully so that the
                 // character is alive afterwards. As this is bugged in original I don't know how
                 // it was supposed to be. Either reviving completely or transform to next stage
                 // like dust to ashes and ashes to body first.
 
-                var cost = (uint)healer.GetCostForHealingAilment(ailment);
+                var cost = (uint)healer.GetCostForHealingCondition(condition);
                 nextClickHandler = null;
                 layout.ShowPlaceQuestion($"{DataNameProvider.PriceForHealingCondition}{cost}{DataNameProvider.AgreeOnPrice}", answer =>
                 {
@@ -10651,12 +10651,12 @@ namespace Ambermoon
                     {
                         healer.AvailableGold -= cost;
                         updatePartyGold?.Invoke();
-                        RemoveAilment(ailment, currentlyHealedMember);
+                        RemoveCondition(condition, currentlyHealedMember);
                         PlayerSwitched();
                         PlayHealAnimation(currentlyHealedMember);
                         layout.UpdateCharacterStatus(currentlyHealedMember);
                         healedHandler?.Invoke(true);
-                        if (ailment >= Condition.DeadCorpse) // dead
+                        if (condition >= Condition.DeadCorpse) // dead
                         {
                             currentlyHealedMember.HitPoints.CurrentValue = Math.Max(1, currentlyHealedMember.HitPoints.CurrentValue);
                             PartyMemberRevived(currentlyHealedMember);
@@ -10669,7 +10669,7 @@ namespace Ambermoon
                 }, TextAlign.Left);
             }
 
-            var healableAilments = Condition.Lamed | Condition.Poisoned | Condition.Petrified | Condition.Diseased |
+            var healableConditions = Condition.Lamed | Condition.Poisoned | Condition.Petrified | Condition.Diseased |
                 Condition.Aging | Condition.DeadCorpse | Condition.DeadAshes | Condition.DeadDust | Condition.Crazy |
                 Condition.Blind | Condition.Drugged;
 
@@ -10677,7 +10677,7 @@ namespace Ambermoon
             {
                 layout.EnableButton(0, currentlyHealedMember.HitPoints.CurrentValue < currentlyHealedMember.HitPoints.TotalMaxValue);
                 layout.EnableButton(3, currentlyHealedMember.Equipment.Slots.Any(slot => slot.Value.Flags.HasFlag(ItemSlotFlags.Cursed)));
-                layout.EnableButton(6, ((uint)currentlyHealedMember.Ailments & (uint)healableAilments) != 0);
+                layout.EnableButton(6, ((uint)currentlyHealedMember.Conditions & (uint)healableConditions) != 0);
             }
 
             uint GetMaxLPHealing() => Math.Max(0, Util.Min(healer.AvailableGold / (uint)healer.HealLPCost,
@@ -10762,25 +10762,25 @@ namespace Ambermoon
                     var itemArea = new Rect(16, 139, 151, 53);
                     TrapMouse(itemArea);
                     var slots = new List<ItemSlot>(12);
-                    var slotAilments = new List<Condition>(12);
+                    var slotConditions = new List<Condition>(12);
                     // Ensure that only one dead state is present
-                    if (currentlyHealedMember.Ailments.HasFlag(Condition.DeadDust))
-                        currentlyHealedMember.Ailments = Condition.DeadDust;
-                    else if (currentlyHealedMember.Ailments.HasFlag(Condition.DeadAshes))
-                        currentlyHealedMember.Ailments = Condition.DeadAshes;
-                    else if (currentlyHealedMember.Ailments.HasFlag(Condition.DeadCorpse))
-                        currentlyHealedMember.Ailments = Condition.DeadCorpse;
+                    if (currentlyHealedMember.Conditions.HasFlag(Condition.DeadDust))
+                        currentlyHealedMember.Conditions = Condition.DeadDust;
+                    else if (currentlyHealedMember.Conditions.HasFlag(Condition.DeadAshes))
+                        currentlyHealedMember.Conditions = Condition.DeadAshes;
+                    else if (currentlyHealedMember.Conditions.HasFlag(Condition.DeadCorpse))
+                        currentlyHealedMember.Conditions = Condition.DeadCorpse;
                     for (int i = 0; i < 16; ++i)
                     {
-                        if (((uint)healableAilments & (1u << i)) != 0)
+                        if (((uint)healableConditions & (1u << i)) != 0)
                         {
-                            var ailment = (Condition)(1 << i);
+                            var condition = (Condition)(1 << i);
 
-                            if (currentlyHealedMember.Ailments.HasFlag(ailment))
+                            if (currentlyHealedMember.Conditions.HasFlag(condition))
                             {
                                 slots.Add(new ItemSlot
                                 {
-                                    ItemIndex = ailment switch
+                                    ItemIndex = condition switch
                                     {
                                         Condition.Lamed => 1,
                                         Condition.Poisoned => 2,
@@ -10794,7 +10794,7 @@ namespace Ambermoon
                                     },
                                     Amount = 1
                                 });
-                                slotAilments.Add(ailment);
+                                slotConditions.Add(condition);
                             }
                         }
                     }
@@ -10826,11 +10826,11 @@ namespace Ambermoon
                     conditionGrid.ItemClicked += ConditionClicked;
                     void ConditionClicked(ItemGrid _, int slotIndex, ItemSlot itemSlot)
                     {
-                        if (slotIndex < slotAilments.Count)
+                        if (slotIndex < slotConditions.Count)
                         {
                             conditionGrid.HideTooltip();
 
-                            if (healer.AvailableGold < healer.GetCostForHealingAilment(slotAilments[slotIndex]))
+                            if (healer.AvailableGold < healer.GetCostForHealingCondition(slotConditions[slotIndex]))
                             {
                                 layout.ShowClickChestMessage(DataNameProvider.NotEnoughMoney, () =>
                                 {
@@ -10843,11 +10843,11 @@ namespace Ambermoon
                             nextClickHandler = null;
                             UntrapMouse();
 
-                            HealAilment(slotAilments[slotIndex], healed =>
+                            HealCondition(slotConditions[slotIndex], healed =>
                             {
                                 if (healed)
                                 {
-                                    if (currentlyHealedMember.Ailments != Condition.None)
+                                    if (currentlyHealedMember.Conditions != Condition.None)
                                     {
                                         conditionGrid.SetItem(slotIndex, null);
                                         TrapMouse(itemArea);
@@ -11356,7 +11356,7 @@ namespace Ambermoon
                     {
                         trainer.AvailableGold -= times * (uint)trainer.Cost;
                         updatePartyGold?.Invoke();
-                        CurrentPartyMember.Abilities[trainer.Ability].CurrentValue += times;
+                        CurrentPartyMember.Skills[trainer.Skill].CurrentValue += times;
                         CurrentPartyMember.TrainingPoints -= (ushort)times;
                         PlayerSwitched();
                         layout.ShowClickChestMessage(DataNameProvider.IncreasedAfterTraining);
@@ -11366,11 +11366,11 @@ namespace Ambermoon
 
             void PlayerSwitched()
             {
-                layout.EnableButton(3, CurrentPartyMember.Abilities[trainer.Ability].CurrentValue < CurrentPartyMember.Abilities[trainer.Ability].MaxValue);
+                layout.EnableButton(3, CurrentPartyMember.Skills[trainer.Skill].CurrentValue < CurrentPartyMember.Skills[trainer.Skill].MaxValue);
             }
 
             uint GetMaxTrains() => Math.Max(0, Util.Min(trainer.AvailableGold / (uint)trainer.Cost, CurrentPartyMember.TrainingPoints,
-                CurrentPartyMember.Abilities[trainer.Ability].MaxValue - CurrentPartyMember.Abilities[trainer.Ability].CurrentValue));
+                CurrentPartyMember.Skills[trainer.Skill].MaxValue - CurrentPartyMember.Skills[trainer.Skill].CurrentValue));
 
             Fade(() =>
             {
@@ -11378,7 +11378,7 @@ namespace Ambermoon
                 ShowMap(false);
                 SetWindow(Window.Trainer, trainer);
                 ShowPlaceWindow(trainer.Name, showWelcome ?
-                    trainer.Ability switch
+                    trainer.Skill switch
                     {
                         Skill.Attack => DataNameProvider.WelcomeAttackTrainer,
                         Skill.Parry => DataNameProvider.WelcomeParryTrainer,
@@ -11390,9 +11390,9 @@ namespace Ambermoon
                         Skill.Searching => DataNameProvider.WelcomeSearchTrainer,
                         Skill.ReadMagic => DataNameProvider.WelcomeReadMagicTrainer,
                         Skill.UseMagic => DataNameProvider.WelcomeUseMagicTrainer,
-                        _ => throw new AmbermoonException(ExceptionScope.Data, "Invalid ability for trainer")
+                        _ => throw new AmbermoonException(ExceptionScope.Data, "Invalid skill for trainer")
                     } : null,
-                    trainer.Ability switch
+                    trainer.Skill switch
                     {
                         Skill.Attack => Picture80x80.Knight,
                         Skill.Parry => Picture80x80.Knight,
@@ -12109,7 +12109,7 @@ namespace Ambermoon
                                 {
                                     void Revive(PartyMember target, Action finishAction) =>
                                         ApplySpellEffect(Spell.Resurrection, caster, target, finishAction, false);
-                                    ForeachPartyMember(Revive, p => p.Ailments.HasFlag(Condition.DeadCorpse));
+                                    ForeachPartyMember(Revive, p => p.Conditions.HasFlag(Condition.DeadCorpse));
                                 }
                                 else
                                 {
@@ -12437,7 +12437,7 @@ namespace Ambermoon
                         {
                             CurrentPartyMember.SpellLearningPoints -= (ushort)spellInfo.SLP;
 
-                            if (RollDice100() < CurrentPartyMember.Abilities[Skill.ReadMagic].TotalCurrentValue)
+                            if (RollDice100() < CurrentPartyMember.Skills[Skill.ReadMagic].TotalCurrentValue)
                             {
                                 // Learned spell
                                 ShowMessage(DataNameProvider.ManagedToLearnSpell, () =>
@@ -12576,11 +12576,11 @@ namespace Ambermoon
                 detailsPopup.AddText(new Position(48, 89), DataNameProvider.GetAttributeName(item.Attribute.Value), TextColor.White);
                 detailsPopup.AddText(new Position(170, 89), (factor * item.AttributeValue).ToString("+#;-#; 0"), TextColor.White);
             }
-            detailsPopup.AddText(new Position(48, 96), DataNameProvider.AbilitiesHeaderString, TextColor.LightOrange);
-            if (item.Ability != null && item.AbilityValue != 0)
+            detailsPopup.AddText(new Position(48, 96), DataNameProvider.SkillsHeaderString, TextColor.LightOrange);
+            if (item.Skill != null && item.SkillValue != 0)
             {
-                detailsPopup.AddText(new Position(48, 103), DataNameProvider.GetAbilityName(item.Ability.Value), TextColor.White);
-                detailsPopup.AddText(new Position(170, 103), (factor * item.AbilityValue).ToString("+#;-#; 0"), TextColor.White);
+                detailsPopup.AddText(new Position(48, 103), DataNameProvider.GetSkillName(item.Skill.Value), TextColor.White);
+                detailsPopup.AddText(new Position(170, 103), (factor * item.SkillValue).ToString("+#;-#; 0"), TextColor.White);
             }
             detailsPopup.AddText(new Position(48, 110), DataNameProvider.FunctionHeader, TextColor.LightOrange);
             if (item.Spell != Spell.None && item.InitialCharges != 0)
@@ -14563,11 +14563,11 @@ namespace Ambermoon
         {
             gameOver = false;
 
-            if (!CurrentPartyMember.Ailments.CanSelect() || currentBattle?.GetSlotFromCharacter(CurrentPartyMember) == -1)
+            if (!CurrentPartyMember.Conditions.CanSelect() || currentBattle?.GetSlotFromCharacter(CurrentPartyMember) == -1)
             {
                 layout.ClearBattleFieldSlotColors();
 
-                if (!PartyMembers.Any(p => p.Ailments.CanSelect() && currentBattle?.HasPartyMemberFled(p) != true))
+                if (!PartyMembers.Any(p => p.Conditions.CanSelect() && currentBattle?.HasPartyMemberFled(p) != true))
                 {
                     if (battleRoundActiveSprite != null)
                         battleRoundActiveSprite.Visible = false;
@@ -14647,7 +14647,7 @@ namespace Ambermoon
             if (BattleActive && !BattleRoundActive && currentPlayerBattleAction != PlayerBattleAction.PickPlayerAction)
                 return;
 
-            if (partyMember != null && (partyMember.Ailments.CanSelect() || currentWindow.Window == Window.Healer))
+            if (partyMember != null && (partyMember.Conditions.CanSelect() || currentWindow.Window == Window.Healer))
             {
                 bool switched = CurrentPartyMember != partyMember;
 
@@ -14700,7 +14700,7 @@ namespace Ambermoon
             if (CurrentPartyMember?.Class.IsMagic() != true)
                 return false;
 
-            if (CurrentPartyMember?.Ailments.CanCastSpell() != true)
+            if (CurrentPartyMember?.Conditions.CanCastSpell() != true)
                 return false;
 
             return true;

@@ -8,7 +8,7 @@ namespace Ambermoon.Data.Legacy.ExecutableData
     /// After the attribute short names there are the item
     /// type names like "Potion", "Shield", etc.
     /// 
-    /// The ailment item type has an empty string entry.
+    /// The condition item type has an empty string entry.
     /// </summary>
     public class ItemTypeNames
     {

@@ -59,7 +59,7 @@ namespace Ambermoon.Render
         public static uint GetUIGraphicIndex(UIGraphic graphic) => UIGraphicOffset + (uint)graphic;
         public static uint GetButtonGraphicIndex(ButtonType buttonType) => ButtonOffset + (uint)buttonType;
         public static uint GetPopupFrameGraphicIndex(PopupFrame frame) => PopupFrameOffset + (uint)frame;
-        public static UIGraphic? GetAilmentGraphic(Condition ailment) => ailment switch
+        public static UIGraphic? GetConditionGraphic(Condition condition) => condition switch
         {
             Condition.Irritated => UIGraphic.StatusIrritated,
             Condition.Crazy => UIGraphic.StatusCrazy,
@@ -78,7 +78,7 @@ namespace Ambermoon.Render
             Condition.DeadDust => UIGraphic.StatusDead,
             _ => null
         };
-        public static uint GetAilmentGraphicIndex(Condition ailment) => GetUIGraphicIndex(GetAilmentGraphic(ailment).Value);
+        public static uint GetConditionGraphicIndex(Condition condition) => GetUIGraphicIndex(GetConditionGraphic(condition).Value);
         public static uint GetAutomapGraphicIndex(AutomapGraphic automapGraphic) => AutomapOffset + (uint)automapGraphic;
         public static uint GetNPCGraphicIndex(uint npcFileIndex, uint npcIndex, IGraphicProvider graphicProvider) =>
             NPCGraphicOffset + (graphicProvider.NPCGraphicOffsets.TryGetValue((int)npcFileIndex, out var offset) ? (uint)offset : 0) + npcIndex;
