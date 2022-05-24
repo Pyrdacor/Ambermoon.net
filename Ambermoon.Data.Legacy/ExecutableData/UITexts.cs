@@ -1,6 +1,7 @@
 ﻿using Ambermoon.Data.Legacy.Serialization;
 using Ambermoon.Data.Serialization;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Ambermoon.Data.Legacy.ExecutableData
 {
@@ -202,39 +203,19 @@ namespace Ambermoon.Data.Legacy.ExecutableData
         /// </summary>
         internal UITexts(IDataReader dataReader)
         {
+            var placeholderRegex = new Regex("[0-9]+", RegexOptions.Compiled);
+
             foreach (var type in Enum.GetValues<UITextIndex>())
             {
-                // TODO: This needs improvement!
                 var text = dataReader.ReadNullTerminatedString(AmigaExecutable.Encoding);
-                text = text.Replace("0123456789", "{1:1111111111}");
-                text = text.Replace("012345678", "{1:111111111}");
-                text = text.Replace("01234567", "{1:11111111}");
-                text = text.Replace("0123456", "{1:1111111}");
-                text = text.Replace("012345", "{1:111111}");
-                text = text.Replace("01234", "{1:11111}");
-                text = text.Replace("0123", "{1:1111}");
-                text = text.Replace("012", "{1:111}");
-                text = text.Replace("01", "{1:11}");
-                text = text.Replace("0", "{1:1}");
-                text = text.Replace('1', '0');
-                int offset = 0;
-                int n = 0;
-                while (offset < text.Length)
+                var matches = placeholderRegex.Matches(text);
+
+                for (int m = matches.Count - 1; m >= 0; --m)
                 {
-                    int index = text.IndexOf("0:", offset);
-
-                    if (index == -1)
-                        break;
-
-                    if (n == 0)
-                        ++n;
-                    else
-                    {
-                        text = text.Remove(index, 1);
-                        text = text.Insert(index, (n++).ToString());
-                    }
-                    offset = index + 3;
+                    var match = matches[m];
+                    text = text.Remove(match.Index, match.Length).Insert(match.Index, "{" + m.ToString() + ":" + new string('0', match.Length) + "}");
                 }
+                
                 entries.Add(type, text);
             }
 

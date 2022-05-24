@@ -1,6 +1,6 @@
 ﻿using Ambermoon.Data.Serialization;
-using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Ambermoon.Data.Legacy.Serialization
 {
@@ -172,6 +172,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             void ReadTextSection(List<string> targetList, List<int> placeholderIndicesToWrite)
             {
+                var placeholderRegex = new Regex("[0-9]+", RegexOptions.Compiled);
                 int numberOfTexts = dataReader.ReadWord();
                 int[] textLengths = new int[numberOfTexts];
 
@@ -209,6 +210,16 @@ namespace Ambermoon.Data.Legacy.Serialization
                                 text = ProcessPlaceholders(text, placeholderOffsets);
 
                             placeholderOffsets.Clear();
+                        }
+                        else if (processUIPlaceholders)
+                        {
+                            var matches = placeholderRegex.Matches(text);
+
+                            for (int m = matches.Count - 1; m >= 0; --m)
+                            {
+                                var match = matches[m];
+                                text = text.Remove(match.Index, match.Length).Insert(match.Index, "{" + m.ToString() + ":" + new string('0', match.Length) + "}");
+                            }
                         }
 
                         targetList.Add(text);

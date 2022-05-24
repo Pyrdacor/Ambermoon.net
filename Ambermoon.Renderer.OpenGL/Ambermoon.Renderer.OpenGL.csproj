@@ -19,7 +19,7 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>10.6.0</Version>
+    <Version>10.6.2</Version>
     <Authors>Robert Schneckenhaus</Authors>
     <Description>OpenGL render interface implementation for Ambermoon</Description>
     <PackageProjectUrl>https://github.com/Pyrdacor/Ambermoon.net</PackageProjectUrl>
@@ -29,7 +29,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Common" Version="10.6.0" />
+    <PackageReference Include="Ambermoon.Data.Common" Version="10.6.5" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='DebugAndroid'">
