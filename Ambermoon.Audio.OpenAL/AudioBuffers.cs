@@ -128,11 +128,15 @@ namespace Ambermoon.Audio.OpenAL
                         {
                             var newBuffers = buffers.Skip(queuedBuffers.Count).Take(buffers.Count - queuedBuffers.Count);
                             queuedBuffers.AddRange(newBuffers);
-                            queuedBuffers.Add(buffer);
-                            var bufferIndices = Enumerable.Concat(newBuffers.Select(b => b.Index), new uint[1] { buffer.Index });
-                            al.SourceQueueBuffers(source, bufferIndices.ToArray());
+                            if (buffer != null)
+                                queuedBuffers.Add(buffer);
+                            var bufferIndices = buffer != null
+                                ? Enumerable.Concat(newBuffers.Select(b => b.Index), new uint[1] { buffer.Index })
+                                : newBuffers.Select(b => b.Index);
+                            if (bufferIndices.Any())
+                                al.SourceQueueBuffers(source, bufferIndices.ToArray());
                         }
-                        else
+                        else if (buffer != null)
                         {
                             buffer.Queue(source);
                             queuedBuffers.Add(buffer);
@@ -155,9 +159,9 @@ namespace Ambermoon.Audio.OpenAL
 
         public void Stop()
         {
+            al.SourceStop(source);
             al.SourceUnqueueBuffers(source, queuedBuffers.Select(b => b.Index).ToArray());
             queuedBuffers.Clear();
-            al.SourceStop(source);
             CurrentBuffers = null;
         }
     }
