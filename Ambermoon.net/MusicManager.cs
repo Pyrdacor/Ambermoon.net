@@ -22,8 +22,7 @@ namespace Ambermoon
         readonly IConfiguration configuration;
         readonly Dictionary<Song, ISong> externalSongs = new();
         IAudioOutput audioOutput = null;
-        IAudioStream currentExternalStream = null;
-        Dictionary<Song, Tuple<ISong, long>> cachedSongs = new Dictionary<Song, Tuple<ISong, long>>();
+        IAudioStream currentStream = null;
         protected static readonly Song[] Songs = Enum.GetValues<Song>().Skip(1).ToArray();
         readonly Data.Legacy.Audio.SongManager songManager = null;
 
@@ -107,17 +106,6 @@ namespace Ambermoon
 
                 if (musicFiles.ContainsKey((int)song))
                 {
-                    if (cachedSongs.ContainsKey(song))
-                    {
-                        var fileInfo = new FileInfo(musicFiles[(int)song]);
-
-                        if (fileInfo.LastWriteTimeUtc.Ticks == cachedSongs[song].Item2)
-                        {
-                            externalSongs.Add(song, cachedSongs[song].Item1);
-                            continue;
-                        }
-                    }
-
                     var music = extension.Value?.Invoke(this, song, musicFiles[(int)song]);
 
                     if (music is not null)
@@ -141,10 +129,10 @@ namespace Ambermoon
         {
             this.audioOutput = audioOutput ?? throw new ArgumentNullException(nameof(audioOutput));
 
-            if (currentExternalStream != audioStream)
+            if (currentStream != audioStream)
             {
                 Stop();
-                currentExternalStream = audioStream;
+                currentStream = audioStream;
                 audioOutput.StreamData(audioStream, channels, sampleRate, sample8Bit);
             }
             if (!audioOutput.Streaming)
@@ -155,7 +143,7 @@ namespace Ambermoon
         {
             audioOutput?.Stop();
             audioOutput?.Reset();
-            currentExternalStream = null;
+            currentStream = null;
         }
     }
 }

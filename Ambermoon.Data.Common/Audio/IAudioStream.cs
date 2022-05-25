@@ -4,7 +4,8 @@ namespace Ambermoon.Data.Audio
 {
     public interface IAudioStream
     {
-        public bool EndOfStream { get; }
-        public byte[] Stream(TimeSpan duration);
+        bool EndOfStream { get; }
+        byte[] Stream(TimeSpan duration);
+        void Reset();
     }
 }

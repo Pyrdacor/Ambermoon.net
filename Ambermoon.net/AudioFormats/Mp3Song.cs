@@ -66,5 +66,10 @@ namespace Ambermoon.AudioFormats
             file.ReadSamples(floatBuffer, 0, floatBuffer.Length);
             return floatBuffer.Select(sample => SampleToByte(sample)).ToArray();
         }
+
+        public void Reset()
+        {
+            file.Position = 0;
+        }
     }
 }

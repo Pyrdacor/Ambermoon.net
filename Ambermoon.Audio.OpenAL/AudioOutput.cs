@@ -192,10 +192,10 @@ namespace Ambermoon.Audio.OpenAL
             if (!Available)
                 return;
 
-            if (!audioBuffers.ContainsKey(audioStream))
-                audioBuffers[audioStream] = new AudioBuffers(al, source, channels, sampleRate, sample8Bit, audioStream);
-
-            currentBuffer = audioBuffers[audioStream];
+            if (!audioBuffers.TryGetValue(audioStream, out var buffer))
+                currentBuffer = audioBuffers[audioStream] = new AudioBuffers(al, source, channels, sampleRate, sample8Bit, audioStream);
+            else
+                currentBuffer = buffer;
         }
 
         /// <summary>

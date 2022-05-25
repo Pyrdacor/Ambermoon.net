@@ -49,7 +49,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmbermoonAndroid", "Ambermo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Audio.Android", "Ambermoon.Audio.Android\Ambermoon.Audio.Android.csproj", "{AA5390B0-EBFF-42F0-9793-72C4B5596661}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ambermoon.Data.FileSystems", "Ambermoon.Data.FileSystems\Ambermoon.Data.FileSystems.csproj", "{46185D6F-7AC2-4BAA-802D-E704C27955B3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ambermoon.Data.FileSystems", "Ambermoon.Data.FileSystems\Ambermoon.Data.FileSystems.csproj", "{46185D6F-7AC2-4BAA-802D-E704C27955B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

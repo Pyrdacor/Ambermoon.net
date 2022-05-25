@@ -10,11 +10,11 @@ namespace Ambermoon.Audio.OpenAL
 {
     internal class AudioBuffers : IDisposable
     {
-        static readonly List<AudioBuffer> queuedBuffers = new List<AudioBuffer>();
+        static readonly Queue<AudioBuffer> queuedBuffers = new Queue<AudioBuffer>();
 
         public static AudioBuffers CurrentBuffers { get; private set; } = null;
 
-        static readonly TimeSpan BufferDuration = TimeSpan.FromSeconds(1); // buffer 1 second
+        static readonly TimeSpan BufferDuration = TimeSpan.FromSeconds(4); // buffer 4 seconds
         readonly List<AudioBuffer> buffers = new List<AudioBuffer>();
         readonly AL al;
         readonly uint source;
@@ -22,7 +22,8 @@ namespace Ambermoon.Audio.OpenAL
         readonly int sampleRate;
         readonly bool sample8Bit;
         readonly IAudioStream audioStream;
-        bool fullyLoaded => audioStream.EndOfStream;
+        int bufferPosition = 0;
+        readonly object mutex = new object();
 
         public AudioBuffers(AL al, uint source, int channels, int sampleRate, bool sample8Bit, IAudioStream audioStream)
         {
@@ -37,132 +38,139 @@ namespace Ambermoon.Audio.OpenAL
         public void Dispose()
         {
             Stop();
+        }
 
-            foreach (var buffer in buffers)
-                buffer?.Dispose();
+        void StreamWhilePlaying(CancellationToken cancellationToken)
+        {
+            Stream(buffer =>
+            {
+                if (buffer != null && CurrentBuffers == this)
+                {
+                    lock (mutex)
+                    {
+                        if (audioStream.EndOfStream)
+                        {
+                            bufferPosition = 0;
+                            audioStream.Reset();
+                        }
+                        else
+                            bufferPosition += buffer.Size;
+                        buffer.Queue(source);
+                        queuedBuffers.Enqueue(buffer);
+                    }
+                    WaitForNextStream(1000, cancellationToken);
+                }
+            }, cancellationToken);
+        }
 
-            buffers.Clear();
+        void WaitForNextStream(int delayPerWait, CancellationToken cancellationToken)
+        {
+            if (CurrentBuffers != this)
+                return;
+
+            if (queuedBuffers.Any(b => b.Position == bufferPosition)) // for short music we might have loaded all parts already
+                return;
+
+            int queuedCount;
+
+            lock (mutex)
+            {
+                al.GetSourceProperty(source, GetSourceInteger.ByteOffset, out int position);
+                var buffersToRemove = new List<AudioBuffer>();
+                while (queuedBuffers.Count != 0 && queuedBuffers.Peek().Size <= position)
+                {
+                    var bufferToRemove = queuedBuffers.Dequeue();
+                    buffersToRemove.Add(bufferToRemove);
+                    position -= bufferToRemove.Size;
+                }
+                if (buffersToRemove.Count != 0)
+                {
+                    al.SourceUnqueueBuffers(source, buffersToRemove.Select(b => b.Index).ToArray());
+                    buffersToRemove.ForEach(b => b.Dispose());
+                }
+                queuedCount = queuedBuffers.Count;
+            }
+
+            if (queuedCount < 2)
+            {
+                StreamWhilePlaying(cancellationToken);
+            }
+            else
+            {
+                Task.Delay(delayPerWait, cancellationToken).ContinueWith(_ =>
+                {
+                    WaitForNextStream(delayPerWait, cancellationToken);
+                });
+            }
         }
 
         void Stream(Action<AudioBuffer> finishHandler, CancellationToken cancellationToken)
         {
-            if (source == 0)
+            Task.Run(() =>
             {
-                finishHandler?.Invoke(null);
-                return;
-            }
+                AudioBuffer buffer;
 
-            if (!fullyLoaded)
-            {
-                Task.Run(() =>
+                lock (mutex)
                 {
-                    var buffer = new AudioBuffer(al, channels, sampleRate, sample8Bit);
+                    buffer = new AudioBuffer(al, channels, sampleRate, sample8Bit, bufferPosition);
                     var data = audioStream.Stream(BufferDuration);
-                    buffer.Stream(source, data);
+                    buffer.Stream(data);
                     buffers.Add(buffer);
+                }
 
-                    finishHandler?.Invoke(buffer);
-                }, cancellationToken);
-            }
-            else
-            {
-                finishHandler?.Invoke(null);
-            }
+                finishHandler?.Invoke(buffer);
+            }, cancellationToken);
         }
 
         public void Play(CancellationToken cancellationToken)
         {
+            CurrentBuffers?.Stop();
+
             if (CurrentBuffers != this)
             {
-                Stop();
                 CurrentBuffers = this;
 
-                if (queuedBuffers.Count == 0)
+                audioStream.Reset();
+
+                lock (mutex)
                 {
-                    if (fullyLoaded)
-                    {
-                        if (queuedBuffers.Count < buffers.Count)
-                        {
-                            var newBuffers = buffers.Skip(queuedBuffers.Count).Take(buffers.Count - queuedBuffers.Count);
-                            queuedBuffers.AddRange(newBuffers);
-                            var bufferIndices = newBuffers.Select(b => b.Index);
-                            al.SourceQueueBuffers(source, bufferIndices.ToArray());
-                        }
-                    }
-                    else
-                    {
-                        Stream(buffer =>
-                        {
-                            if (buffer == null)
-                                return;
-                            if (CurrentBuffers == this)
-                            {
-                                buffer.Queue(source);
-                                queuedBuffers.Add(buffer);
-                                al.SetSourceProperty(source, SourceInteger.SampleOffset, 0);
-                                al.SourcePlay(source);
-                            }
-                            StreamChain(cancellationToken);
-                        }, cancellationToken);
-                        return;
-                    }
+                    bufferPosition = 0;
                 }
             }
 
-            al.SetSourceProperty(source, SourceInteger.SampleOffset, 0);
-            al.SourcePlay(source);
-        }
-
-        void StreamChain(CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-                return;
-
-            if (!fullyLoaded)
+            Stream(buffer =>
             {
-                Stream(buffer =>
+                if (buffer != null && CurrentBuffers == this)
                 {
-                    if (CurrentBuffers == this)
+                    lock (mutex)
                     {
-                        if (queuedBuffers.Count < buffers.Count - 1)
+                        if (audioStream.EndOfStream)
                         {
-                            var newBuffers = buffers.Skip(queuedBuffers.Count).Take(buffers.Count - queuedBuffers.Count);
-                            queuedBuffers.AddRange(newBuffers);
-                            if (buffer != null)
-                                queuedBuffers.Add(buffer);
-                            var bufferIndices = buffer != null
-                                ? Enumerable.Concat(newBuffers.Select(b => b.Index), new uint[1] { buffer.Index })
-                                : newBuffers.Select(b => b.Index);
-                            if (bufferIndices.Any())
-                                al.SourceQueueBuffers(source, bufferIndices.ToArray());
+                            bufferPosition = 0;
+                            audioStream.Reset();
                         }
-                        else if (buffer != null)
-                        {
-                            buffer.Queue(source);
-                            queuedBuffers.Add(buffer);
-                        }
+                        else
+                            bufferPosition += buffer.Size;
+                        buffer.Queue(source);
+                        queuedBuffers.Enqueue(buffer);
+                        al.SetSourceProperty(source, SourceInteger.ByteOffset, 0);
+                        al.SourcePlay(source);
                     }
-                    StreamChain(cancellationToken);
-                }, cancellationToken);
-            }
-            else if (CurrentBuffers == this)
-            {
-                if (queuedBuffers.Count < buffers.Count)
-                {
-                    var newBuffers = buffers.Skip(queuedBuffers.Count).Take(buffers.Count - queuedBuffers.Count);
-                    queuedBuffers.AddRange(newBuffers);
-                    var bufferIndices = newBuffers.Select(b => b.Index);
-                    al.SourceQueueBuffers(source, bufferIndices.ToArray());                    
+                     StreamWhilePlaying(cancellationToken);
                 }
-            }
+            }, cancellationToken);
         }
 
         public void Stop()
         {
-            al.SourceStop(source);
-            al.SourceUnqueueBuffers(source, queuedBuffers.Select(b => b.Index).ToArray());
-            queuedBuffers.Clear();
-            CurrentBuffers = null;
+            lock (mutex)
+            {
+                al.SourceStop(source);
+                al.SourceUnqueueBuffers(source, queuedBuffers.Select(b => b.Index).ToArray());
+                queuedBuffers.ToList().ForEach(b => b.Dispose());
+                queuedBuffers.Clear();
+                CurrentBuffers = null;
+            }
         }
     }
 }

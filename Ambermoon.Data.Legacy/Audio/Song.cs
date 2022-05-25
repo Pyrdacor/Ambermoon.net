@@ -2,6 +2,7 @@
 using Ambermoon.Data.Legacy.Serialization;
 using SonicArranger;
 using System;
+using System.Collections.Generic;
 
 namespace Ambermoon.Data.Legacy.Audio
 {
@@ -78,7 +79,22 @@ namespace Ambermoon.Data.Legacy.Audio
 
         public byte[] Stream(TimeSpan duration)
         {
-            return stream.ReadUnsigned(Util.Round(duration.TotalMilliseconds), false);
+            double remainingDuration = duration.TotalMilliseconds;
+            var buffer = new List<byte>();
+
+            do
+            {
+                var readDuration = Math.Min(remainingDuration, 1000.0);
+                buffer.AddRange(stream.ReadUnsigned(Util.Round(readDuration), false));
+                remainingDuration -= readDuration;
+            } while (remainingDuration > 0 && !stream.EndOfStream);
+
+            return buffer.ToArray();
+        }
+
+        public void Reset()
+        {
+            stream?.Reset();
         }
     }
 }
