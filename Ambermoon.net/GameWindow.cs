@@ -921,7 +921,7 @@ namespace Ambermoon
                     {
                         1 => () => LoadBuiltinVersionData(versions[0], null),
                         3 => () => LoadBuiltinVersionData(versions[2], null),
-                        _ => (Func<IGameData>)null
+                        _ => null
                     });
             }
             else
