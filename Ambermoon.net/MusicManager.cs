@@ -4,6 +4,7 @@ using Ambermoon.Data.Audio;
 using Ambermoon.Data.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -86,8 +87,10 @@ namespace Ambermoon
 
         void LoadExternalSongs(string[] files, KeyValuePair<string, MusicLoader> extension)
         {
-            var musicFileRegex = new Regex($"^([0-9]+)[.]{extension.Key}$", RegexOptions.IgnoreCase);
-            var musicFiles = files.Select(f =>
+            var comparer = new EqualityComparer<Tuple<int, string, bool>, int>(t => t.Item1);
+            var fileNameComparer = new FileNameComparer();
+            var musicFileRegex = new Regex($"^([0-9]+)([ _-][^.]+)?[.]{extension.Key}$", RegexOptions.IgnoreCase);
+            var musicFiles = files.OrderBy(f => f, fileNameComparer).Select(f =>
             {
                 var match = musicFileRegex.Match(Path.GetFileName(f));
 
@@ -95,7 +98,7 @@ namespace Ambermoon
                     return Tuple.Create(int.Parse(match.Groups[1].Value), f, true);
 
                 return Tuple.Create(0, (string)null, false);
-            }).Where(f => f.Item3).ToDictionary(f => f.Item1, f => f.Item2);
+            }).Where(f => f.Item3).Distinct(comparer).ToDictionary(f => f.Item1, f => f.Item2);
 
             foreach (var song in Enum.GetValues<Song>())
             {
