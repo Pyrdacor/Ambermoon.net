@@ -8,6 +8,7 @@ Features
 - Improved error messages when game preparation fails
 - Added shortcuts to toggle music (Ctrl+M) and change volume (Ctrl+Comma or Ctrl+Period)
 - Music is now streamed and there is no music cache needed anymore
+- External music is now also recognized if the filename only starts with the song number
 
 
 Fixes
@@ -23,6 +24,9 @@ Fixes
 - Loading Ambermoon Advanced from external sources will now work as expected too
 - Fixed issues where you could possibly move around during the remake outro cutscene
 - Fixed some version selector issues
+- Fixed wrong ghost weapon damage
+- Fixed wrong magic projectile damage for monsters
+- Fixed wrong spinner end direction
 
 
 

@@ -57,6 +57,17 @@ namespace Ambermoon.Data.Legacy
         public string Language { get; private set; } = "Unknown";
         public bool Advanced { get; private set; } = false;
 
+        public KeyValuePair<string, IDataReader> GetDictionary()
+        {
+            if (versionPreference != VersionPreference.Pre114 && Dictionaries.TryGetValue("", out var dictionary))
+                return KeyValuePair.Create(Language, dictionary);
+
+            if (Dictionaries.TryGetValue(Language.ToLower(), out dictionary))
+                return KeyValuePair.Create(Language, dictionary);
+
+            return Dictionaries.First();
+        }
+
         public GameData(LoadPreference loadPreference = LoadPreference.PreferExtracted, ILogger logger = null, bool stopAtFirstError = true,
             VersionPreference versionPreference = VersionPreference.Any)
         {
@@ -392,7 +403,7 @@ namespace Ambermoon.Data.Legacy
                     if (file.ToLower() == "dict.amb")
                         Dictionaries.Add("", Files[file].Files[1]);
                     else
-                        Dictionaries.Add(file.Split('.').Last(), Files[file].Files[1]);
+                        Dictionaries.Add(file.ToLower().Split('.').Last(), Files[file].Files[1]);
                     foundNoDictionary = false;
                 }
             }

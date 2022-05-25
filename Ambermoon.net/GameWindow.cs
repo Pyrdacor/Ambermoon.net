@@ -706,7 +706,7 @@ namespace Ambermoon
             {
                 try
                 {
-                    var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.Dictionaries.First()); // TODO: maybe allow choosing the language later?
+                    var textDictionary = TextDictionary.Load(new TextDictionaryReader(), gameData.GetDictionary());
                     foreach (var objectTextFile in gameData.Files["Object_texts.amb"].Files)
                         executableData.ItemManager.AddTexts((uint)objectTextFile.Key, TextReader.ReadTexts(objectTextFile.Value));
                     var savegameManager = new SavegameManager(savePath);
