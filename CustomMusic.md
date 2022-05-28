@@ -1,6 +1,6 @@
 # Custom music
 
-From version 1.5 onwards you can use external MP3 files for the music in Ambermoon. For now this **only works on Windows**.
+From version 1.5 onwards you can use external MP3 files for the music in Ambermoon.
 
 To do so, create a folder called "music" next to your Ambermoon.net executable. Then copy your MP3 files to this folder and rename the files 01.mp3, 02.mp3 and so on.
 
