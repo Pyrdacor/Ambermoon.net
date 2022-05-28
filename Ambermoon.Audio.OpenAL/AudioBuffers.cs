@@ -10,12 +10,11 @@ namespace Ambermoon.Audio.OpenAL
 {
     internal class AudioBuffers : IDisposable
     {
-        static readonly Queue<AudioBuffer> queuedBuffers = new Queue<AudioBuffer>();
+        readonly Queue<AudioBuffer> queuedBuffers = new Queue<AudioBuffer>();
 
         public static AudioBuffers CurrentBuffers { get; private set; } = null;
 
         static readonly TimeSpan BufferDuration = TimeSpan.FromSeconds(4); // buffer 4 seconds
-        readonly List<AudioBuffer> buffers = new List<AudioBuffer>();
         readonly AL al;
         readonly uint source;
         readonly int channels;
@@ -65,33 +64,18 @@ namespace Ambermoon.Audio.OpenAL
 
         void WaitForNextStream(int delayPerWait, CancellationToken cancellationToken)
         {
+            if (!al.IsSource(source))
+                return;
+
             if (CurrentBuffers != this)
                 return;
 
-            if (queuedBuffers.Any(b => b.Position == bufferPosition)) // for short music we might have loaded all parts already
-                return;
+            Unqueue();
 
-            int queuedCount;
+            al.GetSourceProperty(source, GetSourceInteger.BuffersQueued, out int queuedCount);
+            al.GetSourceProperty(source, GetSourceInteger.BuffersProcessed, out int processedCount);
 
-            lock (mutex)
-            {
-                al.GetSourceProperty(source, GetSourceInteger.ByteOffset, out int position);
-                var buffersToRemove = new List<AudioBuffer>();
-                while (queuedBuffers.Count != 0 && queuedBuffers.Peek().Size <= position)
-                {
-                    var bufferToRemove = queuedBuffers.Dequeue();
-                    buffersToRemove.Add(bufferToRemove);
-                    position -= bufferToRemove.Size;
-                }
-                if (buffersToRemove.Count != 0)
-                {
-                    al.SourceUnqueueBuffers(source, buffersToRemove.Select(b => b.Index).ToArray());
-                    buffersToRemove.ForEach(b => b.Dispose());
-                }
-                queuedCount = queuedBuffers.Count;
-            }
-
-            if (queuedCount < 2)
+            if (queuedCount - processedCount < 3)
             {
                 StreamWhilePlaying(cancellationToken);
             }
@@ -112,10 +96,15 @@ namespace Ambermoon.Audio.OpenAL
 
                 lock (mutex)
                 {
+                    if (audioStream.EndOfStream)
+                    {
+                        audioStream.Reset();
+                        bufferPosition = 0;
+                    }
+
                     buffer = new AudioBuffer(al, channels, sampleRate, sample8Bit, bufferPosition);
                     var data = audioStream.Stream(BufferDuration);
                     buffer.Stream(data);
-                    buffers.Add(buffer);
                 }
 
                 finishHandler?.Invoke(buffer);
@@ -156,7 +145,7 @@ namespace Ambermoon.Audio.OpenAL
                         al.SetSourceProperty(source, SourceInteger.ByteOffset, 0);
                         al.SourcePlay(source);
                     }
-                     StreamWhilePlaying(cancellationToken);
+                    StreamWhilePlaying(cancellationToken);
                 }
             }, cancellationToken);
         }
@@ -166,10 +155,43 @@ namespace Ambermoon.Audio.OpenAL
             lock (mutex)
             {
                 al.SourceStop(source);
-                al.SourceUnqueueBuffers(source, queuedBuffers.Select(b => b.Index).ToArray());
-                queuedBuffers.ToList().ForEach(b => b.Dispose());
-                queuedBuffers.Clear();
+                al.SetSourceProperty(source, SourceInteger.Buffer, 0);
+                Unqueue();
                 CurrentBuffers = null;
+            }
+        }
+
+        int Unqueue(int maxAmount = int.MaxValue)
+        {
+            lock (mutex)
+            {
+                if (source == 0 || !al.IsSource(source))
+                {
+                    queuedBuffers.Clear();
+                    return 0;
+                }
+
+                al.GetSourceProperty(source, GetSourceInteger.BuffersProcessed, out int numProcessed);
+
+                if (numProcessed == 0)
+                    return 0;
+
+                int amount = Math.Min(numProcessed, maxAmount);
+                al.SourceUnqueueBuffers(source, queuedBuffers.Take(amount).Select(b => b.Index).ToArray());
+                var error = al.GetError();
+
+                if (error != AudioError.NoError)
+                {
+                    Console.WriteLine("OpenAL error while unqueuing buffers: " + error);
+                    return 0;
+                }
+
+                for (int i = 0; i < amount; ++i)
+                {
+                    queuedBuffers.Dequeue()?.Dispose();
+                }
+
+                return amount;
             }
         }
     }

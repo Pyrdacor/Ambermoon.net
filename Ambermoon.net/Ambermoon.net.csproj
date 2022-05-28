@@ -80,7 +80,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Data.Legacy" Version="10.6.7" />
+    <PackageReference Include="Ambermoon.Data.Legacy" Version="10.6.8" />
     <PackageReference Include="glfw" Version="3.3.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NLayer" Version="1.14.0" />

@@ -61,9 +61,15 @@ namespace Ambermoon.AudioFormats
 
         public byte[] Stream(TimeSpan duration)
         {
+            long prevPosition = file.Position;
             int samples = Util.Round(duration.TotalSeconds * channels * sampleRate);
             float[] floatBuffer = new float[samples];
             file.ReadSamples(floatBuffer, 0, floatBuffer.Length);
+            if (prevPosition == file.Position) // no read
+            {
+                file.Position = 0;
+                file.ReadSamples(floatBuffer, 0, floatBuffer.Length);
+            }
             return floatBuffer.Select(sample => SampleToByte(sample)).ToArray();
         }
 

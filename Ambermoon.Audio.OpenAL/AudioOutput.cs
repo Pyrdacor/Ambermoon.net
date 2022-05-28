@@ -60,7 +60,7 @@ namespace Ambermoon.Audio.OpenAL
                     return;
                 }
                 source = al.GenSource();
-                al.SetSourceProperty(source, SourceBoolean.Looping, true);
+                al.SetSourceProperty(source, SourceBoolean.Looping, false);
                 al.SetSourceProperty(source, SourceFloat.Gain, 1.0f);
             }
         }

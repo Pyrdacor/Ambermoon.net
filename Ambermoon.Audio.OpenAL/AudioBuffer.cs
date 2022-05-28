@@ -31,15 +31,23 @@ namespace Ambermoon.Audio.OpenAL
             if (disposed)
                 throw new InvalidOperationException("Tried to fill a disposed audio buffer.");
 
-            al.BufferData(bufferIndex, format, data, sampleRate);
             Size = data.Length;
+            al.BufferData(bufferIndex, format, data, sampleRate);
         }
 
         public void Dispose()
         {
             if (!disposed)
             {
-                al.DeleteBuffer(bufferIndex);
+                if (al.IsBuffer(bufferIndex))
+                {
+                    al.DeleteBuffer(bufferIndex);
+                    var error = al.GetError();
+                    if (error != AudioError.NoError)
+                    {
+                        Console.WriteLine($"OpenAL error while deleting buffer: " + error);
+                    }
+                }
                 Size = 0;
                 disposed = true;
             }

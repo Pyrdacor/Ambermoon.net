@@ -10,12 +10,12 @@
     <RepositoryType>Github</RepositoryType>
     <PackageTags>Ambermoon Amiga</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>10.6.5</Version>
+    <Version>10.6.6</Version>
     <Configurations>Debug;Release;DebugAndroid</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ambermoon.Common" Version="10.6.2" />
+    <PackageReference Include="Ambermoon.Common" Version="10.6.3" />
   </ItemGroup>
 
   <ItemGroup>
