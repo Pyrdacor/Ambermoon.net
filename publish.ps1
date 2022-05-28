@@ -3,12 +3,12 @@ $ErrorActionPreference = 'Stop';
 if ($isWindows) {
   Write-Host Publish Windows executables
   dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x86 --no-restore --nologo --self-contained
-  dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x64 --no-restore --nologo --self-contained
+  #dotnet publish -c Release "./Ambermoon.net/Ambermoon.net.csproj" -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -r win-x64 --no-restore --nologo --self-contained
   Write-Host Pack standalone zips for Windows
-  cmd /c copy /b "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x64\publish\Ambermoon.net.exe"+"versions.dat" "Ambermoon.net\Ambermoon.net.exe"
-  7z a Ambermoon.net-Windows.zip "./Ambermoon.net/Ambermoon.net.exe" "./Ambermoon.net/x64/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
+  #cmd /c copy /b "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x64\publish\Ambermoon.net.exe"+"versions.dat" "Ambermoon.net\Ambermoon.net.exe"
+  #7z a Ambermoon.net-Windows.zip "./Ambermoon.net/Ambermoon.net.exe" "./Ambermoon.net/x64/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
   cmd /c copy /b "Ambermoon.net\bin\Any CPU\Release\net6.0\win-x86\publish\Ambermoon.net.exe"+"versions.dat" "Ambermoon.net\Ambermoon.net.exe"
-  7z a Ambermoon.net-Windows-32Bit.zip "./Ambermoon.net/Ambermoon.net.exe" "./Ambermoon.net/x86/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
+  7z a Ambermoon.net-Windows32Bit.zip "./Ambermoon.net/Ambermoon.net.exe" "./Ambermoon.net/x86/api-ms-win-core-winrt-l1-1-0.dll" "./Package/*" -mx9
 } elseif ($isLinux) {
   Write-Host Publish Linux executable
   Set-Variable -Name UseGLES -Value false

@@ -2,10 +2,10 @@ environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-      configuration: Release
+    #- APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    #  configuration: Release
+    #- APPVEYOR_BUILD_WORKER_IMAGE: macOS
+    #  configuration: Release
 
 platform: Any CPU
 
@@ -22,10 +22,6 @@ artifacts:
     name: Ambermoon.net-Windows
   - path: Ambermoon.net-Windows32Bit.zip
     name: Ambermoon.net-Windows32Bit
-  - path: Ambermoon.net-Windows7.zip
-    name: Ambermoon.net-Windows7
-  - path: Ambermoon.net-Windows7-32Bit.zip
-    name: Ambermoon.net-Windows7-32Bit
   - path: Ambermoon.net-Linux.tar.gz
     name: Ambermoon.net-Linux
   - path: Ambermoon.net-Mac.zip
