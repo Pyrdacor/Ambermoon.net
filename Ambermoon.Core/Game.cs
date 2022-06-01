@@ -1539,6 +1539,10 @@ namespace Ambermoon
 
             player = new Player();
             var map = MapManager.GetMap(savegame.CurrentMapIndex);
+
+            if (map == null)
+                throw new AmbermoonException(ExceptionScope.Data, $"Map with index {savegame.CurrentMapIndex} does not exist.");
+
             bool is3D = map.Type == MapType.Map3D;
             renderMap2D = new RenderMap2D(this, null, MapManager, renderView);
             renderMap3D = new RenderMap3D(this, null, MapManager, renderView, 0, 0, CharacterDirection.Up);

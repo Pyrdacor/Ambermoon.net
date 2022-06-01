@@ -172,7 +172,7 @@ namespace Ambermoon.Data.Legacy.Serialization
 
             void ReadTextSection(List<string> targetList, List<int> placeholderIndicesToWrite)
             {
-                var placeholderRegex = new Regex("[0-9]+", RegexOptions.Compiled);
+                var placeholderRegex = new Regex("[0-9]+(?![~])", RegexOptions.Compiled);
                 int numberOfTexts = dataReader.ReadWord();
                 int[] textLengths = new int[numberOfTexts];
 
