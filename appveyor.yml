@@ -2,10 +2,10 @@ environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-      configuration: Release
-    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-      configuration: Release
+    #- APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    #  configuration: Release
+    #- APPVEYOR_BUILD_WORKER_IMAGE: macOS
+    #  configuration: Release
 
 platform: Any CPU
 
@@ -54,32 +54,6 @@ deploy:
   - provider: GitHub
     name: Ambermoon.net-Windows32Bit
     artifact: Ambermoon.net-Windows32Bit
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
-    auth_token:
-      secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
-    draft: true
-    prerelease: true
-    force_update: true
-    on:
-      APPVEYOR_REPO_TAG: true
-  - provider: GitHub
-    name: Ambermoon.net-Windows7
-    artifact: Ambermoon.net-Windows7
-    tag: $(APPVEYOR_REPO_TAG_NAME)
-    release: $(APPVEYOR_REPO_TAG_NAME)
-    description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
-    auth_token:
-      secure: ku89dMTVkz+PE5bvxWQCLG9PbNTa9tQUsidZ/7726rLEZjIAvDcxEC668Ix9zYmw
-    draft: true
-    prerelease: true
-    force_update: true
-    on:
-      APPVEYOR_REPO_TAG: true
-  - provider: GitHub
-    name: Ambermoon.net-Windows7-32Bit
-    artifact: Ambermoon.net-Windows7-32Bit
     tag: $(APPVEYOR_REPO_TAG_NAME)
     release: $(APPVEYOR_REPO_TAG_NAME)
     description: 'Release $(APPVEYOR_REPO_TAG_NAME)'
